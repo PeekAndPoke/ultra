@@ -72,7 +72,7 @@ GUI alive but superuser-gated") died with the finding above. Decided in discussi
 | Question | Decision |
 |---|---|
 | When does the GUI go? | **Now**, in this pass — not deferred to the Vue rewrite |
-| The rendering code itself | **Comment it out in place**, do not delete. It is the reference for what each Vue tab has to show |
+| The rendering code itself | **Preserved whole in `funktor/insights/reference/`**, outside the compile path — chosen over commenting in place once the volume was measured: ~1,062 render lines across ten collectors, 714 of them in Kontainer and Vault alone |
 | `detailsUri` / `detailsUrl` | **Removed entirely.** It only ever existed as a cross-domain link to the `admin.*`-mounted staticweb routes; removing it also simplifies how api-responses are built |
 | staticweb / semanticui deps | Removed from `funktor/insights` as a consequence |
 
@@ -80,9 +80,10 @@ Deleting the renderers first is what makes the rest cheap: the collector `Data` 
 half-DTO-half-view, so the Slumber-compat blockers can be fixed without every shape change rippling into
 kotlinx.html.
 
-**Mark the commented-out blocks `// VUE-REF:`.** Commented code rots and nobody dares delete it later
-because nobody knows whether it is still the truth. A grep marker gives it an explicit expiry: when a
-collector's Vue tab ships, grep the marker and delete that block. Recorded here as the removal condition.
+**Every live collector carries a `// VUE-REF:` pointer** to its preserved original, so
+`grep -rn VUE-REF` lists what is still outstanding. Removal condition, recorded in
+`reference/README.md`: when a collector's Vue tab ships, delete its reference copy; when every tab is
+done, delete the directory.
 
 ### Cross-agent coordination: `detailsUri`/`detailsUrl` is a wire-format change
 
@@ -101,23 +102,23 @@ agent if they build mid-change.
 
 ## Build list
 
-- [ ] `ApiRoutes("insights", authFloor = { isSuperUser() })` + `InsightsApiFeature : ApiFeature`,
+- [x] `ApiRoutes("insights", authFloor = { isSuperUser() })` + `InsightsApiFeature : ApiFeature`,
       registered in `insights_module.kt` beside the existing singletons
-- [ ] `GET /insights` — recent records: path, ts, method, url, status, durationMs
-- [ ] `GET /insights/{bucket}/{file}` — one full record
-- [ ] Explicit `key` on the collector data interface, replacing the FQN-derived `templateKey`
+- [x] `GET /insights` — recent records: path, ts, method, url, status, durationMs
+- [x] `GET /insights/{bucket}/{file}` — one full record
+- [x] Explicit `key` on the collector data interface, replacing the FQN-derived `templateKey`
       (`InsightsCollectorData.kt:15`) and the stored `it::class.jvmName` (`impl/InsightsFull.kt:68`)
-- [ ] **`InsightsFull`'s hardcoded URI filter (`impl/InsightsFull.kt:33`) must exclude the new API route.**
+- [x] **`InsightsFull`'s hardcoded URI filter (`impl/InsightsFull.kt:33`) must exclude the new API route.**
       It currently excludes `/insights/bar` and `/insights/details`; miss this and the API collects
       insights about itself on every call
-- [ ] `funktor/insights/build.gradle.kts` — `api(project(":funktor:rest"))` (already added while
+- [x] `funktor/insights/build.gradle.kts` — `api(project(":funktor:rest"))` (already added while
       verifying the cycle question)
-- [ ] **Header redaction is broken in both directions** (raised by the maintainer 2026-07-31; see the
+- [x] **Header redaction is broken in both directions** (raised by the maintainer 2026-07-31; see the
       section below). Shared, extensible denylist; replace values entirely, never truncate
-- [ ] Fix `InsightsDataLoader.kt:36` — `Class.forName(it.cls)` runs before the `InsightsCollectorData`
+- [x] Fix `InsightsDataLoader.kt:36` — `Class.forName(it.cls)` runs before the `InsightsCollectorData`
       subtype check, so reading a stored file runs static initializers of whatever class it names.
       Resolve the declared key against a registry of known collectors instead
-- [ ] Before touching them: check what still calls `getRequestDetailsUrl()` / `getRequestDetailsUri()`
+- [x] Before touching them: check what still calls `getRequestDetailsUrl()` / `getRequestDetailsUri()`
       (plan checklist item, not yet done)
 
 ## Credential capture in the collectors (found 2026-07-31)
