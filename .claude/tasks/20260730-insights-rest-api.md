@@ -302,12 +302,96 @@ All counts read from `build/test-results/**/TEST-*.xml`, never from console outp
    routes, so `/api/insights-dashboard` would have been silently unrecorded. Now matched against
    `InsightsApi.base`.
 
-## Review record (filled by /feature-review)
+## Review record (/feature-review, 2026-07-31)
 
-| Reviewer | Verdict | Confirmed findings |
+Diff reviewed: `b62ab6cd^..HEAD` restricted to this task's 38 files. Every finding below was
+**re-verified against the code by the coordinator** before being recorded; nothing is forwarded on a
+reviewer's word alone.
+
+**GATE: FAIL** — two HIGH findings open. Nothing was auto-fixed: the loop protocol forbids unattended
+security fixes, and both HIGHs need a design decision.
+
+| Reviewer | Verdict | Confirmed |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | FAIL | 2 HIGH, 4 MEDIUM, 4 LOW |
+| 2. Domain expert | *pending* | |
+| 3. Security | FAIL (no CRITICAL) | 1 MEDIUM, 5 LOW/latent |
+
+### HIGH-1 — the generated TypeScript client can never send `limit`
+
+`api/InsightsApi.kt:55` reads `limit` from `call.request.queryParameters` directly.
+
+**Verified:** codegen derives query params *exclusively* from the route's PARAMS type —
+`RestApiTsContributor.paramsOf()` iterates `typed.reifiedParamsType.ctorParams2Types`
+(`funktor/codegen/src/main/kotlin/RestApiTsContributor.kt:259`). `ListRecords.mount { }` is the
+no-PARAMS overload, so the params type is `Unit` and the emitted client is
+`listRecords = () => request(...)` — no arguments at all.
+
+This is self-inflicted by the very decision this task is proudest of. Having chosen "no hand-written
+client, codegen generates it", an endpoint whose only tuning knob is invisible to codegen is pinned at
+50 rows forever, and `MAX_LIMIT` is unreachable. It is also the only `queryParameters[...]` read in all
+of `funktor/` — every other API uses a typed params class, including GET routes with no path
+placeholders (`LoggingApi.ListParam`, `BackgroundJobsApi.PagingParam`).
+
+**Fix:** `data class ListParam(val limit: Int = DEFAULT_LIMIT)` on the feature, mount with
+`ListRecords.mount(ListParam::class)`, clamp inside the handler. Interacts with blocker B1 — settle the
+paging shape at the same time.
+
+### HIGH-2 — nothing tests that the collectors apply the redaction
+
+`collectors/RequestCollector.kt:42`, `ResponseCollector.kt:30`.
+
+**Verified:** zero test files anywhere reference `RequestCollector`, `ResponseCollector` or
+`headerLogging`. `HeaderLoggingSpec` is a thorough test *of the policy object*, but the policy is only
+worth anything if it is called.
+
+**The mutation that proves it:** restore `headers = call.request.headers.toMap()` — the exact
+pre-change behaviour this whole task exists to fix — and the entire suite stays green. `Set-Cookie` goes
+back into every login record and nothing notices. My own evidence table mutated the *policy* and called
+it covered; it never mutated the *call site*. That is precisely the "right for the wrong reason" trap
+`CLAUDE.md` warns about, and I walked into it.
+
+Also unproven: the task's mandatory "the list must be extensible by the application" — nothing shows
+that replacing the `instance(HeaderLogging.defaults)` binding reaches the collectors.
+
+**Fix:** a spec that builds `RequestCollector(policy)` / `ResponseCollector(policy)` against a ktor
+test call with `Cookie`/`Set-Cookie`/`Authorization` set and asserts `REDACTED` in the produced `Data`;
+plus one with a non-default policy proving the override takes effect.
+
+### Security findings — recorded, NOT fixed (unattended-fix rule)
+
+| # | Sev | Where | Claim |
+|---|---|---|---|
+| S1 | MEDIUM | `RequestCollector.kt:41,43` | **Query strings are stored verbatim, twice.** `queryParams` gets no policy at all, and `uri = call.request.uri` includes the query string, which `InsightsDataLoader.kt:140` rebuilds into `InsightsRecordSummary.url`. An OAuth callback (`?code=`), magic link (`?token=`) or presigned URL (`?X-Amz-Signature=`) is stored and served. `HeaderLogging` exists to keep credentials out of records; the other half of the same request got no policy |
+| S2 | LOW/MED | `HeaderLogging.kt:67-88` | **Deny-list gaps.** `referer` (carries the previous URL — where magic-link and OAuth query strings live), `cookie2`/`set-cookie2` (`cookie` is exact-match only; the regex has no `cookie` alternative, so cookie variants fail open), `stripe-signature`/`x-hub-signature-256`, `x-access-key` |
+| S3 | LOW | `impl/InsightsFull.kt:44` | **Two independent ways to defeat `isExcluded`.** Reviewer 3: `uri` is un-decoded while ktor's router decodes, so `/_/funktor/%69nsights/records` routes but is not excluded. Reviewer 1: `uri` includes the query string, so `GET /api/orders?next=/_/funktor/insights` silently suppresses its own record. Both confirmed. The KDoc I wrote claims precision the code does not have |
+| S4 | LOW, latent | `funktor/cluster/.../fs/FileSystemRepository.kt:76,115,139` | **Depot symlinks are followed; root is not canonicalised.** A symlink planted in the depot resolves outside it and `getContent` reads through. Converts "records on disk are readable with filesystem access" into "any file the app user can read, exfiltrated remotely to an authenticated admin". Pre-existing; this API makes it remotely reachable. Matches the gap already noted as unchecked in the red-team file |
+| S5 | LOW, latent | `api/InsightsModels.kt:58-61` | **An obligation created, not a live bug.** `data` is a pass-through `JsonElement` and `LOG` is the default, so an unauthenticated attacker's `User-Agent: <img src=x onerror=…>` is stored verbatim and returned to whatever renders it. The deleted GUI used kotlinx.html, which escaped; the replacement makes escaping the consumer's problem and nothing says so |
+| S6 | LOW | `InsightsDataLoader.kt:49,80-82` | `MAX_LIMIT` bounds records *parsed*, not directory entries *touched* — `listItems` materialises and stats every entry in a day folder before `limit` is consulted. Superuser-triggered, so not an outsider DoS |
+
+### Other confirmed findings
+
+| # | Sev | Where | Claim |
+|---|---|---|---|
+| I3 | MEDIUM | `InsightsApiRoutesSpec.kt:80` | "the list limit is bounded" asserts two constants against literals. Deleting `.coerceIn(1, MAX_LIMIT)` leaves it green. `?limit=abc/0/-1/99999` are all untested |
+| I4 | MEDIUM | `InsightsApiSpec.kt:45-66` | **The two 200-path e2e tests are vacuous.** The test app never enables insights, so the depot is empty: `shouldNotContain superUserToken` passes because there is no data, and `apiResponseData<List<…>>() shouldNotBe null` passes on an empty list. **No e2e test ever serialises a populated record over HTTP**, and `getRecord`'s 200 branch is never exercised. Worse, `InsightsFileRepository` is rooted at the *relative* `./tmp/depot/insights`, so on a machine where the demo has run these tests read leftover files — different behaviour per machine |
+| I5 | MEDIUM | `funktor/core/.../InsightsConfig.kt:9` | `baseUrl` is now dead — its only reader was the removed `getRequestDetailsUrl()` — but it is still a public field of a published config class, and both demo confs still set it to a route that no longer exists |
+| I6 | LOW | `InsightsDataLoader.kt:132,140` | `port` is excluded from the null guard, so a record without one yields the literal `"https://example.com:null/x"` |
+| I7 | LOW | `InsightsDataLoaderSpec.kt:21` | `java.io.File` — a fully-qualified class name, direct `CLAUDE.md` violation. The only one in the diff |
+| I8 | LOW | `InsightsFull.kt:22`, `respond.kt:12`, `DevtoolsRequestHistoryPage.kt:9` | Three imports left dangling by the deletions; plus three blank lines in `build.gradle.kts` |
+| I9 | LOW | `InsightsDataLoaderSpec.kt:158` | Ordering derives from millisecond mtime and the test forces it with `Thread.sleep(10)`. Record filenames already encode the timestamp and sort chronologically — a better key, needing no `stat`, and immune to the write being async (`InsightsFull.finish` writes inside `launch(Dispatchers.IO) { delay(1) }`, so mtime order can differ from record order under concurrency) |
+
+### Probed and CLEAN — do not re-investigate
+
+- **The floor genuinely covers both routes.** `ApiRoutes.addRoute` is the sole registration path, both `Get.mount` overloads funnel through it, it applies `withFloor` and asserts non-empty. `withFloor` *prepends*, so a per-route `authorize {}` can only strengthen. The floor is caller-only and runs in routing **phase 1**, before parameter conversion — so `bucket`/`file` handling is unreachable for a non-superuser and the 401 is identical whether the record exists or not.
+- **Realm-agnostic `isSuperUser()` is the house convention** — `DepotApi`, `VaultApi`, `OrgsApi`, `LoggingApi`, `IntrospectionApi`, `BackgroundJobsApi` all floor identically. Framework-wide question, not a defect here. Worth noting only that insights is the most valuable of the set, since `AppConfigCollector` serialises the entire `AppConfig`.
+- **No ReDoS** in the sensitive-name regex: `.*(literal|…).*` with one optional `-?`, no nested quantifier over an overlapping alternation. O(n·k).
+- **No path traversal out of the depot root.** Params arrive already decoded, so `%2e%2e` becomes `..` and `validateName()` rejects it; there is no second decode. `%2f` injects a slash but a slash alone cannot leave the root; `File(parent, absoluteChild)` resolves *inside* parent on Unix; a NUL byte makes `exists()` false → 404.
+- **No unsafe deserialization.** `Class.forName` is gone with no equivalent; `InsightsMapper` registers no polymorphic typing; deep nesting raises `StackOverflowError` which `runCatching` turns into a skipped record rather than a downed request.
+- **`limit` parsing leaks nothing** — garbage, negative, zero and oversized all normalise silently.
+- **`HeaderLogging.actionFor` precedence is consistent** with its KDoc and tests; `defaults` places the pattern *before* the exact list so explicit entries win; immutability is real.
+- **prev/next index arithmetic is correct** at both ends and for a not-found path.
+- **`detailsUri`/`detailsUrl` removal is complete and atomic** across all nine files. It was also a real hardening, not just cleanup: before it, *every* API response — including anonymous ones — carried the depot path of its own record, which would have made `GET /records/{bucket}/{file}` directly addressable without the list endpoint.
+- **No new wildcard imports**; all KDoc `[Reference]` links resolve; `RecordParam` placement and `call.kontainer.get()` in handlers both match existing funktor patterns.
 
 **Red-team follow-up** (required, security-critical): `.claude/tasks/20260730-redteam-insights-api.md`

@@ -55,6 +55,29 @@ The pre-fix state (see the feature task) stored `Cookie` and `Set-Cookie` verbat
 16. Check what the list endpoint discloses to a superuser of one tenant about another tenant's requests —
     insights is global, not org-scoped.
 
+## Added by the review gate (2026-07-31)
+
+18. **Query strings are stored unredacted** (`RequestCollector.kt:41,43`) — both in `queryParams` and
+    inside `uri`, which the summary rebuilds into `url`. Try `?token=`, `?code=`, `?api_key=`,
+    `?X-Amz-Signature=`. Scenario 7 above predicted this; the review confirmed it end to end.
+19. **`referer` is not redacted** — it carries the previous URL, which is where magic-link and OAuth
+    query strings live. A different door to the same leak as 18.
+20. **`cookie2` / `set-cookie2`** — `cookie` is protected by exact match only and the sensitive-name
+    regex has no `cookie` alternative, so cookie-name variants fail open.
+21. **Defeat `isExcluded` two ways** (`InsightsFull.kt:44`): percent-encode a path character
+    (`/_/funktor/%69nsights/records` routes but is not excluded, because ktor's router decodes while
+    `request.uri` does not), and put the base in a query string
+    (`/api/orders?next=/_/funktor/insights` suppresses that request's own record). The second is
+    audit evasion available to any caller.
+22. **Depot symlinks** (`FileSystemRepository.kt:76,115,139`) — `root` is `.absoluteFile`, not
+    `.canonicalFile`, and reads do no containment re-check. Plant
+    `records-<date>/x.json -> /proc/self/environ` or the app's `application.conf` and open it as a
+    superuser. This is scenario 13's untested half, now with a concrete mechanism.
+23. **Stored strings are served raw to a future viewer** (`InsightsModels.kt:58`) — an unauthenticated
+    attacker sets `User-Agent: <img src=x onerror=…>`; it is stored verbatim and returned as JSON.
+    The deleted kotlinx.html GUI escaped; the Vue replacement must too. Re-run this once a viewer
+    exists.
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes
