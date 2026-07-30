@@ -44,11 +44,26 @@ class TsRuntimeSpec : FreeSpec() {
         }
 
         "the import specifier and the emitted path agree" - {
-            // Generated code imports `./runtime/http`; the file must land at `runtime/http.ts`, or
+            // Generated code imports `./runtime/http.ts`; the file must land at `runtime/http.ts`, or
             // every generated import is a dead link that only `tsc` would catch.
             TsRuntime.Module.entries.forEach { module ->
                 "${module.name}" {
-                    module.moduleSpecifier shouldBe "./" + module.path.removeSuffix(".ts")
+                    module.moduleSpecifier shouldBe "./" + module.path
+                }
+            }
+        }
+
+        "the import specifier keeps the .ts extension" - {
+            // Asserted SEPARATELY from the agreement above, which held just as well when both sides
+            // were extensionless — that is exactly how this shipped. An extensionless specifier
+            // resolves under `moduleResolution: bundler` and NOWHERE else: Node's type stripping and
+            // node16/nodenext answer ERR_MODULE_NOT_FOUND while `tsc` stays silent, so the SDK
+            // type-checks and then fails to load. Measured 2026-07-30, both forms, one compiler.
+            TsRuntime.Module.entries.forEach { module ->
+                "${module.name}" {
+                    withClue("an extensionless specifier only resolves under bundler resolution") {
+                        module.moduleSpecifier.endsWith(".ts") shouldBe true
+                    }
                 }
             }
         }

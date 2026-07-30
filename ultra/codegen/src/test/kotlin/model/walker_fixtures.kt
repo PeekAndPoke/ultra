@@ -1,5 +1,8 @@
 package io.peekandpoke.ultra.codegen.model
 
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.slumber.Slumber
 import kotlin.reflect.KClass
@@ -449,3 +452,19 @@ sealed class FxSame<X, Y>
 data class FxBoth<A>(val a: A) : FxSame<A, A>()
 
 data class FxHoldsSame(val same: FxSame<String, String>)
+
+//  Claimed types reached from a root  ///////////////////////////////////////////////////////////////
+
+/**
+ * Reaches CLAIMED types, so the emitted file carries a real `import ... from './runtime/datetime.ts'`.
+ *
+ * Every other fixture imports nothing but `zod`, which is why an extensionless module specifier
+ * survived until 2026-07-30: `tsc` resolves it under `moduleResolution: bundler`, and nothing ever
+ * asked Node to load a generated file that imports a runtime module.
+ */
+data class FxDated(
+    val at: MpInstant,
+    val day: MpLocalDate,
+    val zone: MpTimezone,
+    val optional: MpInstant?,
+)

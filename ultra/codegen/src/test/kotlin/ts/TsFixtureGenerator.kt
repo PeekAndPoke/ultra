@@ -1,6 +1,8 @@
 package io.peekandpoke.ultra.codegen.ts
 
+import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
 import io.peekandpoke.ultra.codegen.model.FxBox
+import io.peekandpoke.ultra.codegen.model.FxDated
 import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxGAlphaBranch
 import io.peekandpoke.ultra.codegen.model.FxGAlphaLeaf
@@ -30,6 +32,9 @@ import io.peekandpoke.ultra.codegen.model.TsTypeDecl
 import io.peekandpoke.ultra.codegen.model.TypeId
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.slumber.Codec
 import java.io.File
@@ -156,6 +161,21 @@ object TsFixtureGenerator {
             instance = FxQuoted.Apostrophe(plain = "ok", `it's` = "apostrophe", `dashed-name` = "dashed"),
             schemaType = typeOf<FxQuoted.Apostrophe>(),
         ),
+        // The ONLY fixture whose emitted file imports a runtime module rather than just `zod`. Until
+        // 2026-07-30 every generated import was extensionless, which `tsc` accepts under
+        // `moduleResolution: bundler` and Node refuses with ERR_MODULE_NOT_FOUND — so the emitted SDK
+        // type-checked and then failed to load. Nothing caught it because nothing ever asked Node to
+        // load a generated file that imports one. `verify.ts` importing this fixture is that ask.
+        Fixture(
+            name = "dated",
+            root = typeOf<FxDated>(),
+            instance = FxDated(
+                at = MpInstant.parse("2026-07-30T10:15:30Z"),
+                day = MpLocalDate.of(2026, 7, 30),
+                zone = MpTimezone.of("Europe/Berlin"),
+                optional = null,
+            ),
+        ),
     )
 
     fun generate(targetDir: File) {
@@ -175,8 +195,13 @@ object TsFixtureGenerator {
             ).toJson()
         )
 
+        // The datetime claims are registered for every fixture, not just the one that reaches them:
+        // a claim only takes effect when its type is actually walked to, so this cannot change any
+        // other fixture's output.
+        val claims = TsTypeClaims().also { MpDateTimeTsContributor().claimTypes(it.scopeFor("fixtures")) }
+
         val entries = fixtures.map { fixture ->
-            val model: TypeModel = TypeWalker(TsTypeClaims())
+            val model: TypeModel = TypeWalker(claims)
                 .walk(listOf(TypeWalker.Root(fixture.root, fixture.name)))
 
             File(targetDir, "${fixture.name}.ts").writeText(TsModelEmitter(model).emit())

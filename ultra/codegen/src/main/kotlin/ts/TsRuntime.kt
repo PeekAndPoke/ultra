@@ -15,26 +15,42 @@ import io.peekandpoke.ultra.codegen.sdk.TsSdkOutput
  */
 object TsRuntime {
 
-    /** A runtime module, as both a classpath resource and an import specifier. */
+    /**
+     * A runtime module, as both a classpath resource and an import specifier.
+     *
+     * [moduleSpecifier] carries the `.ts` EXTENSION deliberately. Extensionless resolves only under
+     * `moduleResolution: bundler`; Node's type stripping and `node16`/`nodenext` both reject it with
+     * `ERR_MODULE_NOT_FOUND` while `tsc` stays silent, so the SDK would type-check and then fail to
+     * load. With the extension it resolves identically under bundler, node16/nodenext, Node type
+     * stripping and Vite — which is also what lets `ts-verify` EXECUTE generated code rather than
+     * only type-check it. The cost is `allowImportingTsExtensions` in the consuming tsconfig.
+     */
     enum class Module(
-        /** How generated code imports it, relative to the SDK root. */
-        val moduleSpecifier: String,
         /** Where it is emitted, relative to the SDK root. */
         val path: String,
         /** Where it lives on the classpath. */
         val resource: String,
     ) {
         /** `HttpTransport`, the `fetch` default, and `buildUrl`. */
-        Http("./runtime/http", "runtime/http.ts", "ts/runtime/http.ts"),
+        Http("runtime/http.ts", "ts/runtime/http.ts"),
 
         /** The `ApiResponse<T>` envelope, its `apiResponse(schema)` factory, and `Message` / `Insights`. */
-        ApiResponse("./runtime/apiResponse", "runtime/apiResponse.ts", "ts/runtime/apiResponse.ts"),
+        ApiResponse("runtime/apiResponse.ts", "ts/runtime/apiResponse.ts"),
 
         /** `sseStream` and the `text/event-stream` frame parser. */
-        Sse("./runtime/sse", "runtime/sse.ts", "ts/runtime/sse.ts"),
+        Sse("runtime/sse.ts", "ts/runtime/sse.ts"),
 
         /** The ultra/datetime types, whose shapes come from custom Slumber codecs. */
-        DateTime("./runtime/datetime", "runtime/datetime.ts", "ts/runtime/datetime.ts"),
+        DateTime("runtime/datetime.ts", "ts/runtime/datetime.ts");
+
+        /**
+         * How generated code imports it, relative to the SDK root.
+         *
+         * Derived from [path] rather than declared, so the emitted import and the emitted file cannot
+         * name different things — and so the `.ts` extension the resolution rule depends on is
+         * structural rather than repeated once per module.
+         */
+        val moduleSpecifier: String get() = "./$path"
     }
 
     /**
