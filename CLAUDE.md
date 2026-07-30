@@ -61,6 +61,11 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
   written against SETTLED code, not reviewed code — the user's own review comes after the gate, so
   documenting at review time just means rewriting. A tracked follow-up also stops "update the docs"
   depending on anyone remembering. Skip it for internals, tests and refactors.
+- **Settled is a precondition, not just a preference. Code still in flux gets NO docs task yet** —
+  research, prototypes, and anything under active redesign where the public surface is still moving.
+  Documenting a shape that changes next week produces two costs and no benefit: the rewrite, and a
+  reader who trusted the stale version. Ask "would I be surprised if this API changed next week?" —
+  if not, skip the docs task and say so in the archive note. Revisit when it stabilises.
 - **Security-critical features** get a follow-up red-team task (`YYYYMMDD-redteam-<slug>.md`) in
   `.claude/tasks/`, describing concrete break-in/attack scenarios to attempt. These are COLLECTED,
   not executed — dedicated penetration-test sessions sweep them later. Never run attack scenarios
