@@ -171,11 +171,8 @@ constructed the same top three findings. Fixed in `72937b71` and `caa4cd01`.
 
 ### Confirmed but NOT fixed — tracked
 
-- [ ] **`TypeId.of` can never match a generic declaration** (`model/TypeId.kt:26` vs `:42`). Declarations
-      are keyed `com.acme.PageOf`; `TypeId.of(typeOf<PageOf<Talk>>())` yields `com.acme.PageOf<…>`, so
-      the lookup always misses. `TsFixtureGenerator:188` already does exactly this and `error()`s on a
-      miss — it survives only because no fixture uses a generic ROOT. **Phase 2 hits this on its first
-      paged endpoint.** Fix: a `TypeModel.declFor(type: KType)` helper. Do this BEFORE Phase 2.
+- [x] **DONE — `TypeModel.declFor`** added and `TsFixtureGenerator` rerouted through it. Pinned by four
+      cases including the negative one (the raw id lookup must NOT match). Mutation-tested.
 - [ ] **Claim imports are always value imports** (`ts/TsModelEmitter.kt:54`). If a claimed `tsName`
       resolves to an `interface`/`type`, `verbatimModuleSyntax` gives TS1484. Latent only because every
       shipped claim points at a `const` — and `runtime/apiResponse.ts` is exactly the shape that breaks
