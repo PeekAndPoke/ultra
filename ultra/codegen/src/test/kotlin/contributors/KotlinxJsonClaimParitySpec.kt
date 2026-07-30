@@ -2,13 +2,19 @@ package io.peekandpoke.ultra.codegen.contributors
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.ultra.codegen.model.FxHoldsJsonElement
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
+import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
+import io.peekandpoke.ultra.codegen.sdk.TsSdkContributor
+import io.peekandpoke.ultra.codegen.sdk.TsSdkRoots
 import io.peekandpoke.ultra.slumber.Codec
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
@@ -94,6 +100,36 @@ class KotlinxJsonClaimParitySpec : FreeSpec() {
 
             withClue("JsonElement holds any of the above, so it alone is unconstrained") {
                 registry.find(JsonElement::class)!!.schema shouldBe "z.unknown()"
+            }
+        }
+
+        "the JsonElement claim is reported in the run summary, not silently applied" {
+            // `unknown` accepts anything, so a schema carrying one has stopped validating that field.
+            // `map()` hardcodes opaque=false and `opaqueAdvisories` filters on opaque==true, so this
+            // claim used to be the single construct that disabled validation AND never appeared in the
+            // summary — the exact inversion of the design's wrong-and-loud rule.
+            val result = TsSdkBuilder
+                .forTesting(
+                    listOf(
+                        KotlinxJsonTsContributor(),
+                        object : TsSdkContributor {
+                            override val name = "roots"
+                            override fun contribute(roots: TsSdkRoots) =
+                                roots.root(typeOf<FxHoldsJsonElement>(), "Api.get")
+                        },
+                    )
+                )
+                .build()
+
+            withClue("advisories: ${result.advisories}") {
+                result.advisories.map { it.subject } shouldContain JsonElement::class.qualifiedName
+                result.advisories.first { it.subject == JsonElement::class.qualifiedName }
+                    .detail shouldContain "unknown"
+            }
+
+            withClue("the emitted TypeScript is unchanged — only the reporting differs") {
+                result.output.entries().first { it.path == "models.ts" }
+                    .content shouldContain "payload: z.unknown()"
             }
         }
 

@@ -2,8 +2,9 @@ package io.peekandpoke.ultra.codegen.model
 
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.slumber.Slumber
-import kotlinx.serialization.SerialName
 import kotlin.reflect.KClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.json.JsonElement
 
 //  Simple shapes  //////////////////////////////////////////////////////////////////////////////////
 
@@ -312,3 +313,6 @@ data class FxManyUndetermined(
     val b: Map<String, *>,
     val c: Any,
 )
+
+/** Reaches a kotlinx `JsonElement`, whose claim is deliberately opaque. */
+data class FxHoldsJsonElement(val payload: JsonElement)

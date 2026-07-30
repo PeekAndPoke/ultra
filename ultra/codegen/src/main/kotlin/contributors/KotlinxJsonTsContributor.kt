@@ -23,8 +23,13 @@ class KotlinxJsonTsContributor : TsSdkContributor {
     override val name: String = "ultra:codegen:kotlinx-json"
 
     override fun claimTypes(claims: TsTypeClaims.Scope) {
-        // Any JSON value at all.
-        claims.map<JsonElement>(tsName = "unknown", schema = "z.unknown()")
+        // Any JSON value at all — and the ONLY claim here that reduces validation to accept-anything,
+        // so it goes through `opaque` rather than `map`. Both emit exactly the same TypeScript; the
+        // difference is that `opaque` sets the flag `opaqueAdvisories` filters on, so this one appears
+        // in the run summary. Reaching `unknown` silently is the thing this module exists to prevent.
+        claims.opaque<JsonElement>(
+            reason = "any JSON value — the shape is whatever the runtime value holds",
+        )
 
         // A JSON object with arbitrary keys.
         claims.map<JsonObject>(tsName = "Record<string, unknown>", schema = "z.record(z.string(), z.unknown())")
