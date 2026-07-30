@@ -41,8 +41,13 @@ These landed in the review round with **no tests**. Each needs a test that fails
       and `zod` check the hostile output for real. Mutation-tested 5/5.
       **Reusable technique:** a round-trip against a strict decoder beats one assertion per character —
       it fails for characters nobody thought to list. Worth copying for the remaining items.
-- [ ] `TypeId` type-argument nullability — `Box<String>` and `Box<String?>` in ONE model must produce
-      two declarations. Assert both are emitted and differ.
+- [x] **DONE `2623a08d`** — `TypeId` type-argument nullability. The open question resolved to: **the
+      review fix was incomplete.** `canonicalKey` was fixed but `TsNames.of` was not, so the two
+      declarations existed and then competed for one const. `TsNames.of` now reads arguments off the
+      `KType` and appends `OrNull`; `TypeId.typeArguments` removed (no callers, and it cannot express
+      nullability). Mutation-tested 2/2.
+      **Lesson worth carrying:** asserting the three properties SEPARATELY is what exposed this — only
+      the name assertion was red. A single "two declarations exist" test would have passed and hidden it.
 - [ ] Claimed polymorphic child lands in `usedClaims` — assert the import IS emitted and the variant
       does not render as the literal `unknown`. Run it through `TsSdkBuilder`, not `TypeWalker` alone.
 - [ ] `declareUnion` root-parent hop — needs an intermediate sealed class whose companion is on the
@@ -92,8 +97,13 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 1 (2026-07-30, ~02:00).** Backlog §1 item 1 done and committed (`ef5eba72`). 127 tests
-green (was 120), 6 ts-verify fixtures (was 5). Working tree clean for `ultra/codegen`.
+**Iteration 2 (2026-07-30, ~02:05).** Backlog §1 items 1 and 2 done (`ef5eba72`, `2623a08d`).
+130 tests green (was 120 at review end), 6 ts-verify fixtures. Working tree clean for `ultra/codegen`.
+
+**Item 2 found that a review-round fix was incomplete.** Treat the other applied fixes the same way —
+assume nothing, assert each property separately. Two of the six remaining §1 items are the most likely
+to hide the same problem: the classloader one (its current test passes BECAUSE of the old bug) and the
+`usedClaims` one (the review changed `declare` but nothing checks the emitted import).
 
 Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding; see the Review record.
 
@@ -101,11 +111,10 @@ Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding
 `.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
 `.idea/compiler.xml` is modified in the tree and is NOT ours to commit — leave it.
 
-**Next action:** backlog §1 item 2 (`TypeId` type-argument nullability). Add `Box<String>` and
-`Box<String?>` as properties of ONE fixture; assert two distinct declarations are emitted. Note the
-name must differ too, else `TsNames.of` collides — check whether the fix needs a `TsNames` change as
-well, since the review only altered `TypeId.canonicalKey`. **This is a real open question, resolve it
-before writing the test.**
+**Next action:** backlog §1 item 3 — claimed polymorphic child lands in `usedClaims`. Run it through
+`TsSdkBuilder` (NOT `TypeWalker` alone — that is why the original defect survived). The `FxPartlyClaimed`
+fixture already exists. Assert the `import { … } from './runtime/…'` IS emitted and that the union
+variant does not render as the literal `unknown`. Expect this to need a claim with a real `importFrom`.
 
 Still nothing from §2 until §1 is fully done.
 
