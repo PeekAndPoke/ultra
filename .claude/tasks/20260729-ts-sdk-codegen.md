@@ -1238,11 +1238,40 @@ external packages and are exempt. This is what survives of a rejected proposal t
 ownership onto the claim; the profile decision above made the restructuring unnecessary, but the gap it
 found is real and general.
 
-**Proposal only, do not build:** `claims.expects<T>(tsName)` — the inverse of a claim, verifying that a
-hand-written component's assumed TS name matches what the model emits (monomorphization makes
-`PageOf<Lock>` emit as `PageOfLock`, which an author must otherwise guess). Deferred by the maintainer
-until misnaming actually recurs; the `vue-tsc` gate is the backstop until then. Rationale recorded in the
-design doc so it is not re-derived.
+**`claims.expects<T>(tsName)` is WITHDRAWN, not deferred.** It was proposed as the inverse of a claim, to
+verify that a hand-written component's assumed TS name matches what the model emits — but its only
+motivation was monomorphization's computed names (`PageOf<Lock>` → `PageOfLock`). Real generics landed the
+same day (`20260730-codegen-generic-emission.md`, `63f9f186`), so a component author writes `PageOf<Lock>`
+verbatim and there is nothing left to guess. Do not build it.
+
+### i18n also lands here (analysed 2026-07-30)
+
+Full analysis in the design doc's "i18n in the SDK" section. What it means for `ultra/codegen`:
+
+- **The TS is emitted by the BUILDER, from the live generated catalog object** — not pre-generated as a
+  jar resource by the Gradle plugin. Reason: the builder then sees every key, so the cross-module
+  namespace collision check and the "every accessor has a fallback entry" check are real rather than
+  derived claims that can drift; and the TS shape evolves with the generator instead of being frozen at
+  each module's build time. Needs `ultra/codegen` to depend on the key-tree model, which currently lives
+  in the **unpublished** `:tooling` and must move to `ultra/i18n` (published, zero commonMain deps).
+- **A 6th registry target:** the i18n catalog set + merged accessor root.
+- **A registry entry MUST carry a declared layer** (`Framework` < `App`), and emission order derives from
+  it. This is the one place where the "contributor order is structurally irrelevant" property is not
+  enough: catalog precedence is genuinely order-dependent — `I18n.Builder.build()` reverses the install
+  list so the app's override wins (`ultra/i18n/src/commonMain/kotlin/I18n.kt:61`). Aggregate by
+  contribution order and whether an override takes effect depends on DI iteration order, silently and
+  per-key. Ties within a layer are a hard error.
+- **Two modules claiming the same top-level namespace is a hard error naming both.** Kotlin gets this
+  free (ambiguous extension at the call site); merging TS objects would silently drop one.
+- **A new `TsRuntime.Module.I18n`** — hand-written `ts/runtime/i18n.ts` mirroring `MessageResolver`
+  (locale chain, catalog precedence, single-pass `{{name}}` substitution, `_other` plural fallback,
+  key-as-miss-marker). Standing rule applies: it needs a parity test, and the corpus already exists in
+  `tooling/i18n-fixture` — one expectation table read by both the Kotlin spec and the node harness.
+- **No new name-mangling module.** Quoting every key in the emitted object literal makes TS reserved
+  words and hyphenated keys work as-is, so there is no `TsNames` sibling to `KotlinNames.kt`.
+- **i18n is an emit action + registry entry, not a contributor kind** — a catalog is not a type, so an
+  i18n contributor would have no root to condition on and could not be profiled. Whichever contributor
+  ships a component ships its strings too, under one emit condition.
 
 **Also:** a `JavaTimeTsContributor` will be needed (`java.time.LocalDateTime`/`Instant` go through custom
 Slumber codecs in `builtin/datetime/javatime/`, so they need claims plus a parity test — the standing

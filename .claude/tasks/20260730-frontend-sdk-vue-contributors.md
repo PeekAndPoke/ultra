@@ -345,29 +345,222 @@ all five JS/CSS assets under `resources/assets/funktor/insights/`.
 - [ ] `InsightsFull`'s hardcoded URI filter (`impl/InsightsFull.kt:33`) excludes `/insights/bar` and
       `/insights/details`; it must exclude the new API route instead.
 
-## PROPOSAL, not scheduled: `expects<T>(tsName)`
+## WITHDRAWN: `expects<T>(tsName)`
 
-**Do not build this yet.** Decision 2026-07-30: build it only if misnaming actually becomes a recurring
-problem. Recorded so the idea is not re-derived.
+Proposed and deferred 2026-07-30, then made unnecessary the same day: **real TypeScript generics are
+emitted** (`.claude/tasks/20260730-codegen-generic-emission.md`, code done `63f9f186`). The proposal
+existed solely because monomorphization turned `PageOf<Lock>` into the computed name `PageOfLock`, which a
+component author had to guess. With generics the author writes `PageOf<Lock>` — the same text as the
+Kotlin — so there is nothing left to guess and nothing to verify. The `vue-tsc` gate remains the backstop
+for the ordinary case of a plain wrong name.
 
-Generated TS names are computed, not literal — monomorphization means `PageOf<Lock>` emits as
-`PageOfLock` (`20260729-ts-sdk-codegen.md`, "Generics"). A hand-written component importing
-`PageOfLock` is guessing at that, and a wrong guess surfaces as a TypeScript error inside generated
-output rather than as something naming the contributor.
+## i18n in the SDK
 
-The proposal is to let a contributor declare the dependency and have the builder verify it:
+Analysed 2026-07-30. Nothing implemented; the recommendations below are marked as such.
 
-```kotlin
-claims.expects<GlobalLockEntry>(tsName = "GlobalLockEntry")
+### Two localization mechanisms exist — only one is frontend-facing
+
+| Mechanism | Where | Goes to the frontend? |
+|---|---|---|
+| YAML catalogs → typed Kotlin accessors (`I18nPlugin`, `buildSrc/src/main/kotlin/I18nPlugin.kt`) | `src/<sourceSet>/i18n/messages.<locale>.yaml` | **Yes** — this is the one |
+| Per-locale renderer functions + markdown resources (`EmailTemplate.renderers`, `funktor/messaging/src/jvmMain/kotlin/templates/EmailTemplate.kt:59`) | `funktor/auth/src/jvmMain/resources/i18n/emails/*.md` | No — emails are rendered server-side and stay there |
+
+Do not route email templates through the SDK. They resolve against a locale the server already has
+(`EmailTemplate.rendererFor(preferred)`, same file `:97`) and their output is a sent message, not a view.
+
+**Today's frontend-facing catalog is exactly one:** `KraftForms`, 40-odd form-validation strings in
+`kraft/core/src/jsMain/i18n/messages.{en,de}.yaml`. Everything else a Vue frontend needs is greenfield —
+the strings for the insights/ops components in step 7+. So this is not a migration, and no back-compat
+constrains the TS shape.
+
+### Where the TS is emitted: at SDK-build time, from the live catalog
+
+Three options were weighed.
+
+| Option | Verdict |
+|---|---|
+| **A.** New `TsEmitter` in `:tooling`, plugin emits TS into jar resources, a contributor copies them | Rejected |
+| **B.** Builder emits TS from the *live generated catalog object*, via a shared key-tree model | **Recommended** |
+| **C.** Ship the YAML as a resource and re-parse it at SDK-build time | Rejected |
+
+C is worst: it puts a YAML parser on the runtime classpath and re-does work the owning module's build
+already did.
+
+A is the obvious one and it is nearly right — it matches the `TsRuntime` resource pattern and needs no
+module to move. It loses on two counts:
+
+- **Shape skew.** The TS shape is frozen at each module's build time, so an SDK can mix accessors emitted
+  by two framework versions. The Kotlin side bounds this with the `I18nCatalog` interface; TS would need
+  the same discipline anyway, so this is manageable but not free.
+- **The builder only sees opaque files.** It cannot check anything about the keys — in particular the
+  cross-module collision below becomes uncheckable, unless each contributor *also declares* its top-level
+  namespaces in a registry, which is a derived claim that can drift from the file it describes.
+
+B keeps one TS emitter, in `ultra/codegen` next to all the other TS emission, evolving in lockstep with
+the generator. It sees every key, so the checks are real. And it makes **app-defined catalogs work
+identically** — an app's own generated catalog object registers the same way and gets the same accessors
+and the same checks, which matters for a framework whose point is that apps extend it.
+
+### What B takes — four prerequisites, all small
+
+- [ ] **Catalog enumeration.** `I18nCatalog` answers point queries only (`template(key, locale)`,
+      `ultra/i18n/src/commonMain/kotlin/I18nCatalog.kt:12`), so a contributor holding one cannot dump it.
+      The generated object already holds the full map privately (`tooling/src/main/kotlin/i18n/KotlinEmitter.kt:42`).
+      Add a narrow second interface — `EnumerableI18nCatalog { fun all(): Map<String, Map<String, String>> }` —
+      implemented by generated catalogs and `MapI18nCatalog`. Not on `I18nCatalog` itself: a hand-written
+      or remote catalog need not be enumerable.
+- [ ] **Move the key-tree model into `ultra/i18n`.** `I18nModelBuilder` (`tooling/src/main/kotlin/i18n/I18nModelBuilder.kt`)
+      and the `I18nNode`/`I18nNamespace`/`I18nMessage` types (`tooling/src/main/kotlin/i18n/model.kt:30-50`)
+      are pure structure: flat dotted map in, namespace tree with placeholders and plural flags out. No
+      YAML, no deps beyond stdlib. `:tooling` is **unpublished** (`tooling/build.gradle.kts` — plain
+      `kotlin("jvm")`, no publish plugin), so a published `ultra:codegen` cannot depend on it.
+      `ultra/i18n` is published and has **zero commonMain deps**, and this model is i18n domain rather
+      than build tooling. Put it in its own subdirectory (e.g. `commonMain/kotlin/keys/`) so buildSrc can
+      keep source-including exactly what it needs — buildSrc already does this for `:tooling`
+      (`buildSrc/build.gradle.kts`, `srcDir("../tooling/src/main/kotlin/i18n")`) and must not pull the
+      whole runtime in.
+- [ ] **Frontend-facing catalogs must be JVM-visible.** The SDK builder runs on the JVM and reads a
+      classpath. `kraft/core` generates into `jsMain` (`kraft/core/build.gradle.kts:40`,
+      `sourceSet.set("jsMain")`), which no JVM artifact carries. Move it to `commonMain` when those
+      strings are needed — kraft/core has a `jvm()` target so this is a one-line change. This is a hard
+      requirement, not a preference, and it applies to option A equally.
+- [ ] **`TsRuntime.Module.I18n`** — a hand-written `ts/runtime/i18n.ts` mirroring `MessageResolver`
+      (`ultra/i18n/src/commonMain/kotlin/MessageResolver.kt`): the locale chain
+      (`locale → base → fallback → fallback.base`, distinct, `:26`), catalog precedence inner
+      (`:53-60`), single-pass `{{name}}` substitution (`:63`), plural suffix lookup with `_other`
+      fallback and base-key-as-miss-marker (`:45-51`), plus `Locale.parse`/`base`/`tag`. ~60 lines,
+      same shape as the four existing modules in `ultra/codegen/src/main/resources/ts/runtime/`.
+
+### Emitted shape
+
+The namespace tree becomes nested objects; the messages become functions taking **one options object**.
+That is strictly better than the Kotlin side, whose `vararg forcedNamed: Unit` trick
+(`KotlinEmitter.kt:100`) exists only to force named arguments — TS gets that by construction, plus
+errors on unknown and missing keys.
+
+```ts
+t.forms.minLength({ count: 3 })        // plural: count is a normal member of the options object
+t.forms.notEmpty()                     // no placeholders → no argument
+t.fixture["greet-user"]({ "first-name": "Sam" })
 ```
 
-failing with *"funktor:insights:vue expects TS type `GlobalLockEntry`; the model emits
-`GlobalLockEntryV2`"*.
+**Quote every key in the emitted object literal.** Then TS reserved words and hyphenated keys need no
+name mangling at all (`{ is: ..., "greet-user": ... }` is legal, and bracket access is callable), so no
+`TsNames` sibling to `KotlinNames.kt` is needed. Only the per-module export name must be an identifier.
+This removes an assumed blocker — the fixture's deliberately hostile keys (`` `is` ``,
+`` `greet-user` `` with a `` `first-name` `` placeholder, `tooling/i18n-fixture/.../messages.en.yaml`)
+work without special handling.
 
-It is exactly `TsTypeClaims` inverted — a claim says *"I own this Kotlin type, here is its TS name"*;
-this says *"I depend on this Kotlin type appearing under this TS name"* — so it could share the
-registry. **Until then the `vue-tsc` gate is the backstop**: cheaper, loud, but the error lands a layer
-away from the cause.
+### Catalog precedence must be DECLARED DATA, not contributor order
+
+The strongest finding here. Two invariants collide:
+
+- The codegen contract deliberately makes contributor order **structurally irrelevant** — every operation
+  is a keyed insert (`20260729-ts-sdk-codegen.md`).
+- Catalog precedence is **order-dependent**: `I18n.Builder.build()` reverses the install list so the
+  last-installed wins, which is how an app overrides a framework string (D3,
+  `ultra/i18n/src/commonMain/kotlin/I18n.kt:61`).
+
+Aggregate them by contribution order and whether an override takes effect depends on DI iteration order —
+a silent, per-key, per-locale bug. So a registry entry carries an explicit layer (`Framework` < `App`),
+and the builder sorts by it. Ties within a layer are a hard error, not a coin flip.
+
+- [ ] Registry entry: `i18n(module, layer, catalog)`. Emission order derives from `layer`, never position.
+- [ ] A **top-level namespace claimed by two modules is a hard error naming both.** Kotlin gets this free
+      (two `val I18nTranslate.forms` extensions are an ambiguity at the call site); merging TS objects
+      would silently drop one. Same semantics, earlier and clearer error.
+
+### i18n is an emit action + a registry, not a contributor kind
+
+Given "a profile selects ROOTS, never contributors" (§1), an i18n *contributor* would have no root to
+condition on — a catalog is not a type — so it could not be profiled at all. The fix falls out of the
+same rule already applied to pages: **whichever contributor ships a component also ships that
+component's strings**, and both are conditional on the same surviving root. One emit condition, so a
+component can never ship without its strings or vice versa.
+
+That matters because the failure is quiet: a missing catalog does not error, it renders the raw key
+(`MessageResolver.resolve` returns `key` on a miss, `:33`). A mis-tagged separate i18n contributor would
+show `forms.minLength` in the UI rather than failing the build.
+
+Modules with strings but no components (a shared base catalog) still register directly; those are
+framework-layer and always ship.
+
+- [ ] Add a 6th row to the aggregation-registry table in §3: the i18n catalog set + merged accessor root.
+
+### The one wire-format decision — and it needs the maintainer
+
+`Message.text` is a **resolved string** today (`ultra/codegen/src/main/resources/ts/runtime/apiResponse.ts`,
+mirroring `ultra/remote/.../ApiResponse.kt`). So the server currently translates. With a Vue SPA that is
+wrong in three ways: a language switch cannot re-render an existing message without a round-trip; the
+server does not reliably know the user's language (a pre-auth request has only `Accept-Language`, a hint);
+and the response becomes locale-dependent, which is a caching loss.
+
+**Recommendation: keys on the wire.** `Message` grows `key` + `args` and the client resolves; `text`
+stays as the already-resolved fallback so curl, logs and non-SDK consumers keep working, with the client
+preferring `key` when present. Purely additive. Server-rendered output (emails) keeps resolving
+server-side — it already does, with its own mechanism, and that stays correct.
+
+Consequence to accept knowingly: every server-sent message key becomes public API, and the framework's
+message catalog must then ship in the SDK.
+
+Also needed either way: the generated `HttpTransport` should send the client's locale as a header, so
+anything the server *does* resolve matches what the client would have shown.
+
+### Locale chunking — deferrable, and the seam already exists
+
+Baking every locale of every module into one bundle is what the Kotlin side does and is fine at framework
+scale, but it is the whole translation corpus in every app. Recommended: **one TS file per locale plus a
+lazy `import()`**, with the fallback locale bundled eagerly so nothing can ever render empty. Vite
+code-splits this for free.
+
+This costs nothing to defer: the per-locale file layout is the same either way, only the index differs.
+And the async seam is already designed on the Kotlin side — `I18nController.setLang` is `suspend`
+"the seam where a language's catalog would be fetched before the new snapshot is emitted once lazy
+loading lands" (`kraft/core/src/jsMain/kotlin/i18n/I18nController.kt:85`). The Vue composable mirrors it:
+`await setLang(locale)`.
+
+### Rules to write down before the first string is rendered
+
+- **A translated string is text, never markup.** Vue's `{{ }}` escapes; `v-html` on a resolved string is
+  XSS, and a catalog is translator-editable data. Messages needing a link use component interpolation
+  (slots), not `<a>` in the YAML. The email side hit the same problem and solved it with
+  `HtmlValueSubstitution` (`funktor/messaging/src/jvmMain/kotlin/templates/`) — the frontend answer is
+  slots, not an escaper.
+- **Parity applies to translation, not formatting.** `I18nFormat` is a deliberate stub
+  (`ultra/i18n/src/commonMain/kotlin/I18nFormat.kt:10`) while TS has `Intl` for free. The TS side will be
+  *better* than Kotlin here, so formatted output must never enter the parity corpus.
+- **The checker needs no TS counterpart.** `I18nChecker` runs on the parsed catalogs in the owning
+  module's build, before either emitter, and the fallback catalog is the sole API surface (D8). The TS
+  surface inherits its guarantees unchanged. Good news worth stating so nobody builds a second checker.
+
+### The parity test, and the corpus that already exists
+
+The claim "the TS resolver behaves like the Kotlin one" is the one that must not drift: a divergence
+means the frontend shows different text than the server for the same key, silently, in one language only.
+
+`tooling/i18n-fixture` is already the corpus — a KMP module whose accessors are generated, with a spec
+pinning six behaviours (language selection, regional override + inheritance, plurals, nested namespaces,
+keyword/hyphen keys, fallback chain to `en` for an absent language). Extend it rather than writing a
+second corpus:
+
+- [ ] A single declarative expectation table (locale, accessor path, args, expected string) read by
+      **both** the Kotlin spec and the node harness in `ultra/codegen/ts-verify/`. Two hand-maintained
+      lists would drift, which is the failure this test exists to catch.
+
+### Consolidation the TS mirror forces
+
+Two facts are already declared three times each, and the TS runtime would make it four:
+
+- The placeholder pattern `\{\{([a-zA-Z0-9_-]+)\}\}` — `MessageResolver.kt:22`, `I18nChecker.kt:40`,
+  `I18nModelBuilder.kt:9`. Widen it in one place only and the checker stops seeing placeholders the
+  resolver substitutes: the ERROR it exists to raise ("introduces placeholder not in the fallback")
+  silently stops firing.
+- The plural suffix set — `I18nModelBuilder.kt:7`, `I18nChecker.kt:41`, and `PluralCategory`'s enum
+  values (`ultra/i18n/src/commonMain/kotlin/PluralCategory.kt:8-15`). `:tooling` cannot see the enum
+  because it does not depend on `:ultra:i18n`; adding a CLDR category would leave both tooling sets stale.
+
+Moving the key-tree model into `ultra/i18n` (prerequisite 2) makes both derivable from one declaration.
+Worth doing as part of that move, not as a separate cleanup.
 
 ## Ordering
 
@@ -392,6 +585,15 @@ This task depends on `20260729-ts-sdk-codegen.md` Phase 2 (`RestApiTsContributor
    model files in `funktor/inspect/src/commonMain`.
 9. **staticweb cleanup**, once nothing renders server-side HTML.
 
+**Where i18n slots in.** The TS emission itself is a prerequisite of **step 7** — the first component with
+user-visible text — not of the generator or of the insights API. Two pieces of it belong earlier because
+they are cheap now and expensive later:
+
+- the **layer/precedence requirement** goes into step 3, when the registry is designed. Retrofitting it
+  means reworking the registry's contract.
+- the **`Message` key-vs-text fork** should be settled before step 5 stabilizes the API shape. It is
+  additive, so it is not a blocker — but doing it after clients exist means changing them.
+
 Note `funktor/cluster` has **no frontend at all** — it is already nine pure `ApiRoutes` classes. The
 cluster ops UI is `funktor/inspect/src/jsMain`, mounted by `funktor-demo/adminapp` via
 `mountFunktorInspect(ui)` (`nav.kt:86`). Its `commonMain` clients are exactly what codegen replaces, so
@@ -408,6 +610,10 @@ the rewrite has a deletion payoff.
       framework is installed. With Tailwind chosen, settle whether components assume the app has
       Tailwind configured (and its content globs cover the SDK dir) or ship fully scoped CSS.
 - [ ] Whether `funktor-demo` eventually becomes a starter template with its own DX story. Further out.
+- [ ] **Does `Message` carry a resolved string or a key + args?** See the i18n section. Recommendation is
+      keys with `text` kept as a fallback, but it is a wire-format change and the maintainer's call.
+- [ ] Whether the SDK bakes all locales or emits per-locale chunks with a lazy loader. Deferrable — the
+      file layout is the same either way, only the index differs.
 
 ## Test evidence
 
@@ -422,6 +628,12 @@ the rewrite has a deletion payoff.
 - [ ] Unit: `scaffold` writes when absent, does NOT overwrite when present, and is excluded from
       `--check` (otherwise the user's own edits report as drift)
 - [ ] Manifest test: every `.vue` in a resource dir is declared by a contributor
+- [ ] i18n: **resolver parity** — one expectation table driving both the Kotlin spec in
+      `tooling/i18n-fixture` and the node harness. Must cover the miss marker (unknown key returns the
+      key), the `_other` plural fallback, and a regional variant inheriting from its base
+- [ ] i18n: two modules claiming the same top-level namespace is a hard error naming both
+- [ ] i18n: emission order derives from the declared layer, **not** contributor order — assert by
+      registering an app-layer catalog *before* a framework-layer one and checking the app still wins
 - [ ] `vue-tsc --noEmit` over a fully generated SDK, as a Gradle gate wired into `check`
 - [ ] Mutation-test the gate itself — an always-green gate is worthless
 - [ ] Full test command(s) run + green: `...`
