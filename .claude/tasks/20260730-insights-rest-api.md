@@ -1,6 +1,6 @@
 # Insights: split data from rendering, expose it through a superuser REST API
 
-**Status:** IN REVIEW — steps 1-7 done, `/feature-review` pending
+**Status:** REVIEW FAILED — steps 1-8 run; 1 CRITICAL + 4 HIGH open, awaiting maintainer decisions
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
 **Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
 
@@ -175,7 +175,7 @@ Running unattended. Work the queue top-down; each step is done only when its cri
 | 5 ✅ | E2E: open envelope | a record with an unknown collector key round-trips instead of failing the response |
 | 6 ✅ | E2E: no self-observation | calling the API produces no insights record of itself |
 | 7 ✅ | Compile sweep + full module tests | `^e:`-free; counts confirmed from `build/test-results/**/TEST-*.xml`, not from console alone |
-| 8 | `/feature-review` | **run it, record findings, then STOP.** Do not auto-fix security findings unattended — leave them for the maintainer |
+| 8 ✅ | `/feature-review` | **run it, record findings, then STOP.** Do not auto-fix security findings unattended — leave them for the maintainer |
 
 ### On hitting a wall: park it, do not exit
 
