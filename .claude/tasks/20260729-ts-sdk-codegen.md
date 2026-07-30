@@ -554,6 +554,7 @@ Tests: `CodePrinterSpec` 11, `TypeWalkerSpec` 24 — all green, counts confirmed
   reifies type arguments anyway (staying generic would mean *un*-reifying), and generic zod schemas need
   function-valued schemas that `z.infer` cannot see through. Cost: one declaration per instantiation.
   Reversible if the instantiation count gets unpleasant.
+  **⚠ THE SECOND REASON IS FALSE — measured 2026-07-30, see "Generics spike" below.** Decision reopened.
 - **`Set` and `List` share one reference shape** (`ArrayOf`) — both slumber to a JSON array. `Map` becomes
   `RecordOf` with a `string` key, since JSON object keys are always strings regardless of the Kotlin key type.
 - **Optional = constructor parameter has a default.** Deliberately loose and direction-dependent: responses
@@ -1045,6 +1046,38 @@ Method note worth keeping: for anything that changes emitted TEXT, add a ts-veri
 `:ultra:codegen:tsVerify` against the REVERTED code. That turned two "the string looks right" claims
 into "a real compiler rejects the alternative" — an unterminated string literal for the escaping, and
 TS2448 for the recursive alias.
+
+### Generics spike — the monomorphization decision rests on a false premise (2026-07-30)
+
+Prompted by the maintainer asking why TypeScript generics are not emitted at all. Run as a throwaway
+`ts-verify` fixture against the real toolchain (tsc 7.0.2 + zod 4.4.3, full harness config: `strict`,
+`erasableSyntaxOnly`, `verbatimModuleSyntax`). **tsc clean, 8/8 runtime checks pass.**
+
+**`z.infer` CAN see through a factory.** `type PageOf<T> = z.infer<ReturnType<typeof pageOf<T>>>`
+compiles — TypeScript instantiation expressions handle it, so no hand-written interface is needed. That
+was the load-bearing justification for monomorphizing and it does not hold.
+
+What the spike verified, in both the factory-only and explicit-interface forms: parsing real payloads,
+REJECTING bad ones, nesting (`pageOf(Box(Talk))`), a generic as a `z.discriminatedUnion` option (a
+factory returns a concrete object schema at call time), and recursion via `z.lazy`.
+
+Each form carries a `@ts-expect-error` assigning a wrong shape. Had inference degraded to `any` those
+lines would not have errored, and `@ts-expect-error` would itself have failed the build — so the types
+genuinely bind, including element types inside containers. Without that, "it compiled" would have
+proven nothing.
+
+**A cost claim of mine was also wrong and is corrected here:** generic emission does NOT turn every
+reference into a call. Type positions stay plain references (`PageOf<Talk>`, nicer than `PageOfTalk`);
+only SCHEMA positions become calls (`pageOf(Talk)`), with the same ordering constraints as today, and
+`TsRenderer` already splits `type()` from `schema()`. The real cost is in the WALKER, which currently
+reifies and would need the un-reified declaration plus a parameter mapping.
+
+**Three open problems trace back to monomorphization**, so this is worth more than tidiness: the
+generic sealed-hierarchy defect (below), the `expects<T>` proposal in the Vue design (which exists only
+because `PageOf<Lock>` → `PageOfLock` is a computed name authors must guess), and declaration count
+growing with instantiation count.
+
+Decision pending with the maintainer.
 
 ### Post-review hardening run, 2026-07-30 (13 iterations, autonomous)
 
