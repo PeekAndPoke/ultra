@@ -1256,11 +1256,19 @@ Full analysis in the design doc's "i18n in the SDK" section. What it means for `
   catalog entries, which the generated object bakes verbatim, so re-deriving the tree at SDK-build time
   reproduces it exactly. Only `fallbackLang` and `moduleName` are dropped; bake both onto the generated
   object.
-- **`ultra/codegen` needs the key-tree model, which lives in the unpublished `:tooling`.** Move
-  `I18nModelBuilder` + the node types + `LocaleCatalog` into `ultra/i18n` (published, zero commonMain
-  deps); the YAML parser, Kotlin emitter and checker stay in `:tooling`. **Do not unify `:tooling` into
-  `ultra/codegen`** — that would ship a YAML parser and a Kotlin source emitter to every SDK consumer and
-  inverts the dependency sense. Full split table and the buildSrc consequence in the design doc.
+- **DONE — the key-tree model is already yours to use.** `9dd2befb` moved `I18nModelBuilder`, the node
+  types and `LocaleCatalog` from the unpublished `:tooling` into `io.peekandpoke.ultra.i18n.model`
+  (published), along with the `{{name}}` pattern (`I18nPlaceholders`), the plural suffixes
+  (`pluralSuffixes`, `splitPluralSuffix`, `basePluralKey`) and the locale-tag grammar
+  (`splitLocaleTag`, `normalizeLocaleTag`). The YAML parser, Kotlin emitter and checker stayed in
+  `:tooling`. **Do not unify `:tooling` into `ultra/codegen`** — that would ship a YAML parser and a
+  Kotlin source emitter to every SDK consumer and inverts the dependency sense.
+  - `ultra/codegen` does **not** yet declare `api(project(":ultra:i18n"))` — deliberately, since nothing
+    consumes it. Add it when you start.
+  - The one rule on `ultra/i18n/src/commonMain/kotlin/model/`: it is source-included into buildSrc, so it
+    must reference nothing outside its own directory. Breaking that fails the buildSrc compile before any
+    project builds. (It was also restricted to Kotlin 1.8 until `9dd2befb` took buildSrc off `kotlin-dsl`;
+    that limit is gone, which is why `LocaleCatalog` still carries a `String` tag it no longer needs to.)
 - **A 6th registry target:** the i18n catalog set + merged accessor root.
 - **A registry entry MUST carry a declared layer** (`Framework` < `App`), and emission order derives from
   it. This is the one place where the "contributor order is structurally irrelevant" property is not
@@ -1279,6 +1287,33 @@ Full analysis in the design doc's "i18n in the SDK" section. What it means for `
 - **i18n is an emit action + registry entry, not a contributor kind** — a catalog is not a type, so an
   i18n contributor would have no root to condition on and could not be profiled. Whichever contributor
   ships a component ships its strings too, under one emit condition.
+
+#### Sequencing — what to pick up when
+
+The design above is settled; nothing here is waiting on a maintainer decision. But most of it sits behind
+the aggregation registry, so the order matters:
+
+1. **`TsRuntime.Module.I18n` — startable NOW, independent of everything else.** Hand-written
+   `ts/runtime/i18n.ts`, no registry, no profiles, no catalog enumeration. Take it first: it is the
+   highest-risk piece (a resolver divergence means the frontend renders different text than the server —
+   silently, in one language only), and its corpus already exists. Extend `tooling/i18n-fixture` with a
+   single declarative expectation table (locale, accessor path, args, expected) read by **both** the
+   Kotlin spec and the node harness; two hand-maintained lists would drift, which is the exact failure
+   this test exists to catch.
+2. **`EnumerableI18nCatalog` + `moduleName`/`fallbackTag` on the generated catalog object.** Small, and
+   it lands in `ultra/i18n` + `:tooling`/`KotlinEmitter` rather than in `ultra/codegen` — say so if you
+   would rather it came from this side.
+3. **The single-module accessor emitter** — catalog data + key tree → TS. Testable against one module
+   before aggregation exists.
+4. **Everything multi-module** (the registry target, the layer ordering, the namespace-collision check)
+   waits on aggregation registries, addition #3 above.
+
+Two things stay open and block **none** of the above:
+
+- The `Message` key-vs-text wire fork — a maintainer decision, and it governs whether the framework's
+  *message* catalogs ship at all, not how the emitter works.
+- Bake-all-locales vs per-locale lazy chunks — the file layout is identical either way; only the index
+  differs, so it can be decided after the emitter exists.
 
 **Also:** a `JavaTimeTsContributor` will be needed (`java.time.LocalDateTime`/`Instant` go through custom
 Slumber codecs in `builtin/datetime/javatime/`, so they need claims plus a parity test — the standing
