@@ -141,16 +141,22 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 11 (2026-07-30, ~03:30).** §1 complete; §2 six done, six left. 162 tests green, 7
-ts-verify fixtures. Tree clean for `ultra/codegen`.
+**Iteration 12 (2026-07-30, ~03:40).** §1 complete; §2 seven done. 162 tests green, 7 ts-verify
+fixtures. Tree clean for `ultra/codegen`.
 
-§2 done: `appendUnion` type-vs-schema (`56292476`), `ultra/slumber` round-trip reproduced and handed to
-its own task, `slumberConfig` mandatory (`53b68126`), walker `unknown` now a hard failure (`efe2b6ad`),
-collision check counts claims (`d605b996`), kotlinx JSON drift guard (`3bc64c41`).
+**§2 has ONE undecided-free item left (`JsonElement` advisory). Everything after it is decision-gated**
+and now marked as such in the backlog, with the specific question spelled out per item. That is a STOP
+condition: "the next item needs a design decision the maintainer has not pre-authorized."
 
-Running tally: **three fixes were wrong, incomplete or over-applied, and FOUR assertions passed for the
-WRONG reason** — the newest being iteration 11's first draft, which tested the codec instead of the
-claim and so would not have failed if a claim were wrong. All caught by mutation.
+**So: do the `JsonElement` advisory, then STOP the loop** with `ScheduleWakeup(stop: true)` and leave a
+closing summary. Do not start a decision-gated item, and do not start Phase 2 — Phase 2 was authorized
+("continue with the new plan and/or Phase 2"), but it is a large new surface and starting it unattended
+right after a run that found this many defects is the wrong trade. Better to hand back a clean, fully
+green tree with the decisions queued.
+
+Running tally: **three fixes were wrong, incomplete or over-applied, and four assertions passed for the
+WRONG reason.** All caught by mutation, none by review or re-reading. Two of the four were tests I had
+just written in this run.
 
 ### Habits that keep paying (and one I keep failing)
 
@@ -162,17 +168,18 @@ claim and so would not have failed if a claim were wrong. All caught by mutation
 - **FAILING REPEATEDLY: read the test count from `TEST-*.xml` BEFORE writing the commit message.** Two
   amends so far for a wrong number.
 
-**Next action:** §2, the two known-vacuous test assertions. Both are already diagnosed, so this is
-small and mechanical:
+**Next action (LAST):** `JsonElement` → `z.unknown()` should reach the advisory list.
+`contributors/KotlinxJsonTsContributor.kt:27` uses `map()`, which hardcodes `opaque = false`
+(`model/TsTypeClaims.kt:78`), while `opaqueAdvisories` filters on `opaque == true`
+(`sdk/TsModelValidator.kt`). So the one claim that reduces validation to accept-anything is the one the
+run summary never mentions — the opposite of the design's stated "wrong-and-loud".
 
-1. `ts/TsModelEmitterSpec.kt` — `out.indexOf(x) shouldBe out.indexOf(x)` compares a value with itself,
-   and the two neighbouring `<` comparisons pass when the variant is ABSENT because `indexOf` returns
-   -1. Assert presence first, then order.
-2. `contributors/MpDateTimeFieldParitySpec.kt:~108` — "the contributor claims every Mp type that has a
-   codec" compares `CLAIMED.keys` against a hand-written list of the same six names, with no reference
-   to Slumber at all, so it cannot detect the thing it claims to. Drive it from something real: iterate
-   the `Mp*` classes and assert a codec exists iff a claim exists. **Use the technique from
-   `3bc64c41`** — derive the expectation from observed behaviour, never from a second copy of the list.
+Use `claims.opaque<JsonElement>(reason = ...)`. Leave `JsonObject`/`JsonArray`/`JsonPrimitive`/`JsonNull`
+as `map()`: those are honest structural shapes, not escape hatches. The drift guard `3bc64c41` asserts
+`JsonElement`'s schema is exactly `z.unknown()`, so **that assertion will need updating** — check what
+`opaque()` sets the schema to rather than assuming.
+
+Then STOP per the note above.
 
 ### Working notes that paid off (keep using)
 
