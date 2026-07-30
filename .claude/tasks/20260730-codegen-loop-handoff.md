@@ -140,9 +140,12 @@ In order:
       (`funktor/core/src/jvmMain/kotlin/broker/TypedRoute.kt:170`) requires every NON-OPTIONAL params
       property to be a URI placeholder — so a query parameter always has a Kotlin default, and is
       therefore always optional in TypeScript.
-- [ ] **Param-claim mechanism.** Blocks the demo: `Stored<T>` entity params are refused without it.
-      A URL-param type is a different axis from a body-shape claim — design it, do not assume the
-      sketch in the task file is right.
+- [x] **DONE `60a96c19` — param-claim mechanism.** `TsUrlParamClaims` + a `claimUrlParams` phase, and
+      `FunktorUrlParamsTsContributor` claiming the datetime and vault types. A SEPARATE registry,
+      because the two memberships are independent (measured table in the `TsUrlParamClaims` KDoc).
+      **The claim list mirrors funktor's converter registry and must not outgrow it** — a claim says
+      "the server can parse this back", so `FunktorUrlParamsParitySpec` derives its expectation from
+      `OutgoingMpDateTimeConverter.canHandle`, never from a second list.
 - [ ] **`WithBody` / `WithBodyAndParams`.** Root `bodyType` as well; the body reaches `request` via
       `options.body`, already implemented and verified in `runtime/client.ts`.
 - [ ] **`Sse`.** `responseType` is `TypeRef<Unit>`, so the stream payload is NOT on the route — decide
@@ -182,23 +185,27 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-## ITERATION 2 DONE 2026-07-30 — `WithParams` landed (`d579099c`)
+## ITERATION 3 DONE 2026-07-30 — URL-param claims landed (`60a96c19`)
 
-**Next item: the param-claim mechanism** (§3, second box). It BLOCKS the demo — `Stored<T>` entity
-params are refused today, and nearly every detail route uses one. It is a DESIGN step, not a
-mechanical one: the maintainer offered to approve its shape rather than have the loop pick. **If the
-design is not obvious from §4 of the task file, stop the loop and ask rather than guessing** — a
-URL-param type is a different axis from a body-shape claim, and the sketch there is explicitly marked
-as needing design, not adoption.
+**Next item: `WithBody` / `WithBodyAndParams`** (§3, third box). Mechanical — root `bodyType` as well,
+and pass it through `options.body`, which `runtime/client.ts` already implements and verifies. No
+maintainer decision is pending on it.
 
-**Baseline:** `:ultra:codegen:check` 215 tests, `:funktor:codegen:check` 15 tests, 0 failures,
-10 ts-verify fixtures, compile sweep clean, at `d579099c`.
+**Then `Sse`, which IS a decision, not work.** `ApiRoute.Sse.responseType` is `TypeRef<Unit>` — the
+stream's payload type is not on the route at all, so what an SSE member should return has to be
+settled before anything is written. **Stop and ask rather than inventing one.**
 
-**What this iteration found:** a green positive check proved less than it looked. Every ts-verify
-check passed while the emitter marked every parameter optional, because the harness only ever CALLED
-members correctly. `@ts-expect-error` fixed that — see the new rule above. Also: funktor already
-rejects a non-optional params property that is not a placeholder, so the first refusal fixture never
-reached the generator.
+**Baseline:** `:ultra:codegen:check` 220 tests, `:funktor:codegen:check` 21 tests, 0 failures,
+10 ts-verify fixtures, compile sweep clean, at `60a96c19`.
+
+**What this iteration found:** the duplicate-claim guard on the new registry SURVIVED its mutant. The
+guard itself was copied from `TsTypeClaims` — but its TEST was not, so last-wins passed everything.
+**When you copy a pattern, copy its spec in the same breath**; the pattern is the part that looks
+done.
+
+**From iteration 2, still the sharpest rule here:** a green positive check proves less than it looks.
+Every ts-verify check passed while the emitter marked every parameter optional, because the harness
+only ever CALLED members correctly. `@ts-expect-error` is the negative side.
 
 **Two bugs this slice found, both by fixtures and neither by reading the code twice:**
 
