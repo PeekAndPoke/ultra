@@ -119,13 +119,66 @@ class RestApiTsContributorSpec : FreeSpec() {
         }
 
         "a route variant the generator cannot handle is refused, naming the route" {
-            val thrown = runCatching { build(listOf(FxParamApiRoutes())) }.exceptionOrNull()
+            val thrown = runCatching { build(listOf(FxBodyApiRoutes())) }.exceptionOrNull()
 
-            thrown!!.message!! shouldContain "/api/fx/talks/{id}"
-            thrown.message!! shouldContain "WithParams"
+            thrown!!.message!! shouldContain "/api/fx/talks"
+            thrown.message!! shouldContain "WithBody"
 
             withClue("it must name the route rather than silently emitting a half client") {
-                thrown.message!! shouldContain "getTalk"
+                thrown.message!! shouldContain "createTalk"
+            }
+        }
+
+        "url parameters" - {
+
+            "path params fill the pattern, everything else becomes a query param" {
+                val out = clientOf(build(listOf(FxParamApiRoutes())))
+
+                withClue("the caller passes ONE object, mirroring the Kotlin PARAMS class") {
+                    out shouldContain
+                            "readonly getTalk = (params: { id: string; page?: number; " +
+                            "search?: string | null; order?: 'ASC' | 'DESC'; exact?: boolean }) =>"
+                }
+
+                withClue("`id` is in the pattern so it fills the path; the rest go to the query") {
+                    out shouldContain "path: { id: params.id },"
+                    out shouldContain
+                            "query: { page: params.page, search: params.search, " +
+                            "order: params.order, exact: params.exact },"
+                }
+            }
+
+            "a defaulted Kotlin parameter is optional in TypeScript, a required one is not" {
+                val out = clientOf(build(listOf(FxParamApiRoutes())))
+
+                withClue("`id` has no default, so it must not be optional") {
+                    out shouldContain "id: string;"
+                    out shouldNotContain "id?: string"
+                }
+            }
+
+            "wire types are mapped, not Kotlin types" {
+                // A value class travels as its underlying value, and an enum as its constant name.
+                val out = clientOf(build(listOf(FxParamApiRoutes())))
+
+                withClue("FxTalkId is a value class over String, so it is `string` on the wire") {
+                    out shouldNotContain "FxTalkId"
+                }
+
+                withClue("an enum is the union of its constant names, needing no import") {
+                    out shouldContain "'ASC' | 'DESC'"
+                }
+            }
+
+            "a parameter whose wire form is not provable is refused, naming it and its type" {
+                val thrown = runCatching { build(listOf(FxBadParamApiRoutes())) }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "'model'"
+                thrown.message!! shouldContain "FxTalkModel"
+
+                withClue("the message must say what IS mappable, or the reader has to guess") {
+                    thrown.message!! shouldContain "value classes"
+                }
             }
         }
 

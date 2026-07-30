@@ -50,17 +50,63 @@ class FxSpeakersApiRoutes : ApiRoutes("fx-speakers", authFloor = { public() }) {
         }
 }
 
-/** A route the generator cannot handle yet, used to prove it refuses loudly. */
+/** Path and query parameters, including a defaulted one, a nullable one, an enum and a value class. */
 class FxParamApiRoutes : ApiRoutes("fx-params", authFloor = { public() }) {
 
-    data class Params(val id: String)
+    data class Params(
+        /** Fills the `{id}` placeholder. */
+        val id: FxTalkId,
+        /** Not in the pattern, so it becomes a query parameter. Defaulted, so optional in TS. */
+        val page: Int = 1,
+        val search: String? = null,
+        val order: FxOrder = FxOrder.ASC,
+        val exact: Boolean = false,
+    )
 
     val getTalk = TypedApiEndpoint
         .Get(uri = "/api/fx/talks/{id}", response = FxTalkModel.serializer().api())
         .mount(Params::class) {
             docs { name = "Get one talk" }
                 .codeGen { funcName = "getTalk" }
-                .handle { ApiResponse.ok(FxTalkModel(it.id, "Hello")) }
+                .handle { ApiResponse.ok(FxTalkModel(it.id.value, "Hello")) }
+        }
+}
+
+enum class FxOrder { ASC, DESC }
+
+@JvmInline
+value class FxTalkId(val value: String)
+
+/**
+ * A parameter whose wire form is not provable, used to prove the generator refuses by name.
+ *
+ * The placeholder is required: funktor itself rejects a non-optional PARAMS property that is not in
+ * the pattern (`TypedRoute.validateUriPattern`, `funktor/core/.../broker/TypedRoute.kt:170`), so
+ * without it this never reaches the generator at all. That rule is also why every QUERY parameter is
+ * optional in the emitted signature — a query parameter must have a Kotlin default to be legal.
+ */
+class FxBadParamApiRoutes : ApiRoutes("fx-bad-params", authFloor = { public() }) {
+
+    data class Params(val model: FxTalkModel)
+
+    val broken = TypedApiEndpoint
+        .Get(uri = "/api/fx/broken/{model}", response = FxTalkModel.serializer().api())
+        .mount(Params::class) {
+            codeGen { funcName = "broken" }.handle { ApiResponse.ok(it.model) }
+        }
+}
+
+/** A request body — a variant the generator does not support yet. */
+class FxBodyApiRoutes : ApiRoutes("fx-body", authFloor = { public() }) {
+
+    val createTalk = TypedApiEndpoint
+        .Post(
+            uri = "/api/fx/talks",
+            body = FxTalkModel.serializer(),
+            response = FxTalkModel.serializer().api(),
+        )
+        .mount {
+            codeGen { funcName = "createTalk" }.handle { ApiResponse.ok(it) }
         }
 }
 

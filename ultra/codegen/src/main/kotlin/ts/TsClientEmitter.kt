@@ -48,6 +48,27 @@ data class TsClientSpec(
          */
         val responseRef: TsTypeRef,
         val doc: String?,
+        /** Parameters filling `{name}` placeholders in [pattern]. */
+        val pathParams: List<Param> = emptyList(),
+        /** Parameters appended to the query string. */
+        val queryParams: List<Param> = emptyList(),
+    ) {
+        /** Every parameter, in one object as the caller sees it. */
+        val allParams: List<Param> get() = pathParams + queryParams
+    }
+
+    /**
+     * One URL parameter.
+     *
+     * [tsType] is the type ON THE WIRE, already rendered — a URL parameter is not JSON, so it is not
+     * a [TsTypeRef]. Whoever builds the spec owns that mapping, because it depends on the server's
+     * parameter converters rather than on TypeScript.
+     */
+    data class Param(
+        val name: String,
+        val tsType: String,
+        /** True when the Kotlin constructor parameter has a default, so the caller may omit it. */
+        val optional: Boolean,
     )
 }
 
@@ -137,17 +158,57 @@ class TsClientEmitter(private val model: TypeModel) {
             group.endpoints.forEach { endpoint ->
                 nl()
                 endpoint.doc?.let { appendLine("/** ${it.oneLine()} */") }
-                appendLine("readonly ${endpoint.member} = () =>")
-                indentedRaw {
-                    appendLine(
-                        "request(this.config, ${tsStringLiteral(endpoint.httpMethod)}, " +
-                                "${tsStringLiteral(endpoint.pattern)}, ${schemas.getValue(endpoint.member)})"
-                    )
-                }
+                appendEndpoint(endpoint, schemas.getValue(endpoint.member))
             }
         }
 
         appendLine("}")
+    }
+
+    /**
+     * One endpoint member.
+     *
+     * Path and query parameters are taken as ONE object, mirroring the Kotlin PARAMS class the caller
+     * would fill in — which side of the URL each lands on is the route pattern's business, not the
+     * caller's — and split back apart in the call. Their names cannot collide: they are properties of
+     * a single class.
+     */
+    private fun CodePrinter.appendEndpoint(endpoint: TsClientSpec.Endpoint, schema: String) {
+        val params = endpoint.allParams
+
+        val signature = when {
+            params.isEmpty() -> "()"
+
+            else -> params.joinToString(separator = "; ", prefix = "(params: { ", postfix = " })") {
+                "${it.name}${if (it.optional) "?" else ""}: ${it.tsType}"
+            }
+        }
+
+        appendLine("readonly ${endpoint.member} = $signature =>")
+
+        indentedRaw {
+            val call = "request(this.config, ${tsStringLiteral(endpoint.httpMethod)}, " +
+                    "${tsStringLiteral(endpoint.pattern)}, $schema"
+
+            if (params.isEmpty()) {
+                appendLine("$call)")
+                return@indentedRaw
+            }
+
+            appendLine("$call, {")
+
+            indentedRaw {
+                listOf("path" to endpoint.pathParams, "query" to endpoint.queryParams)
+                    .filter { (_, group) -> group.isNotEmpty() }
+                    .forEach { (key, group) ->
+                        appendLine(
+                            group.joinToString(", ", "$key: { ", " },") { "${it.name}: params.${it.name}" }
+                        )
+                    }
+            }
+
+            appendLine("})")
+        }
     }
 
     private fun CodePrinter.appendAggregate(spec: TsClientSpec) {

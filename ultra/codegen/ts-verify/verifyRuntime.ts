@@ -296,9 +296,14 @@ async function checkGeneratedClient(report: Report): Promise<void> {
         send: (req) => {
             sent = req
 
+            // One stub, answering each route with a payload its own schema accepts — otherwise a
+            // parse failure reads as a client bug when it is really a fixture bug.
             const payload = req.url.includes('/speakers')
                 ? '[{"name":"Ada","bio":null}]'
-                : '{"ts":1785406530000,"timezone":"UTC","human":"2026-07-30T10:15:30.000Z"}'
+                : req.url.includes('/talks/')
+                  ? '{"id":"t-1","title":"Hello","status":"ACTIVE","speakers":[],"tags":[],' +
+                    '"meta":{},"seats":42,"durationMs":1234,"rating":null,"featured":true}'
+                  : '{"ts":1785406530000,"timezone":"UTC","human":"2026-07-30T10:15:30.000Z"}'
 
             return Promise.resolve({
                 status: 200,
@@ -327,7 +332,44 @@ async function checkGeneratedClient(report: Report): Promise<void> {
     report(time.data?.timezone === 'UTC', 'client: a claimed payload type parses through the client')
     report(sent?.method === 'GET' && sent?.url === 'http://x/api/fx/time', 'client: second group is wired')
 
-    // 3. THE reason members are arrow-function class fields. A prototype method type-checks here and
+    // 3. A parameterised member: the path param fills the placeholder, the query params append, and
+    //    an omitted optional one is left out entirely rather than sent empty.
+    await client.talks.getTalk({ id: 'a b', page: 2 })
+
+    report(
+        sent?.url === 'http://x/api/fx/talks/a%20b?page=2',
+        'client: path params fill the pattern and query params append',
+        sent?.url,
+    )
+
+    await client.talks.getTalk({ id: 't-1' })
+
+    report(
+        sent?.url === 'http://x/api/fx/talks/t-1',
+        'client: an omitted optional param is not sent at all',
+        sent?.url,
+    )
+
+    // 4. NEGATIVE TYPE CHECKS. Calling a member correctly proves the signature EXISTS; it does not
+    //    prove the signature is ENFORCED — emitting every parameter as optional passes every check
+    //    above. `@ts-expect-error` inverts that: tsc fails when the line STOPS erroring, so these
+    //    break the moment the emitted types get looser.
+
+    // @ts-expect-error `id` has no Kotlin default, so omitting it must not compile.
+    void client.talks.getTalk({ page: 1 })
+
+    // @ts-expect-error `order` is a union of the enum's constants, not an arbitrary string.
+    void client.talks.getTalk({ id: 't-1', order: 'SIDEWAYS' })
+
+    // @ts-expect-error a path param is a string; passing an object would stringify to "[object Object]".
+    void client.talks.getTalk({ id: { nope: true } })
+
+    // @ts-expect-error an unknown parameter is a typo, not something to send silently.
+    void client.talks.getTalk({ id: 't-1', pge: 2 })
+
+    report(true, 'client: the emitted signature rejects wrong calls (4 @ts-expect-error sites)')
+
+    // 5. THE reason members are arrow-function class fields. A prototype method type-checks here and
     //    throws at run time, and this is the Vue-composable idiom, so it would break in real use.
     const { listSpeakers } = client.talks
 

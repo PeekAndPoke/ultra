@@ -280,12 +280,27 @@ object TsFixtureGenerator {
                             responseRef = model.refForRoot("client:listSpeakers"),
                             doc = "List all speakers",
                         ),
+                        // Path AND query parameters, including an optional one and an enum union.
+                        // `tsc` is what proves the emitted signature is usable: a required parameter
+                        // that the caller must pass, an optional one they may omit, and a literal
+                        // union that rejects anything else.
                         TsClientSpec.Endpoint(
                             member = "getTalk",
                             httpMethod = "GET",
                             pattern = "/api/fx/talks/{id}",
                             responseRef = model.refForRoot("client:getTalk"),
                             doc = null,
+                            pathParams = listOf(
+                                TsClientSpec.Param(name = "id", tsType = "string", optional = false),
+                            ),
+                            queryParams = listOf(
+                                TsClientSpec.Param(name = "page", tsType = "number", optional = true),
+                                TsClientSpec.Param(
+                                    name = "order",
+                                    tsType = "'ASC' | 'DESC'",
+                                    optional = true,
+                                ),
+                            ),
                         ),
                     ),
                 ),
