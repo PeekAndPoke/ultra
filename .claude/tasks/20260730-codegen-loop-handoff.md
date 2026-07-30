@@ -103,7 +103,7 @@ Suggested order:
       ultra/datetime artifact plus `MpDateTimeModule` itself, and asserts the enumeration found
       something so it cannot pass by scanning nothing. Mutation-tested 2/2; both OLD versions survived
       their mutations, which is why they were rewritten rather than tweaked.
-- [ ] `JsonElement` → `z.unknown()` should reach the advisory list
+- [x] **DONE `29a1015d`** — `JsonElement` now claimed via `opaque()`, so it reaches the run summary. Emitted TypeScript unchanged. Mutation-tested.
 **Everything below needs a MAINTAINER DECISION and is NOT pre-authorized — see the stop conditions.**
 
 - [ ] Generic sealed hierarchy loses payload type (`createBareType()` for variants). Needs a design
@@ -141,22 +141,38 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 12 (2026-07-30, ~03:40).** §1 complete; §2 seven done. 162 tests green, 7 ts-verify
-fixtures. Tree clean for `ultra/codegen`.
+## LOOP STOPPED 2026-07-30 ~03:50 — stop condition met
 
-**§2 has ONE undecided-free item left (`JsonElement` advisory). Everything after it is decision-gated**
-and now marked as such in the backlog, with the specific question spelled out per item. That is a STOP
-condition: "the next item needs a design decision the maintainer has not pre-authorized."
+**Every remaining backlog item needs a maintainer decision** (see §2, each one annotated with the
+specific question). That is the first stop condition. The loop ended deliberately, not because it ran
+out of road.
 
-**So: do the `JsonElement` advisory, then STOP the loop** with `ScheduleWakeup(stop: true)` and leave a
-closing summary. Do not start a decision-gated item, and do not start Phase 2 — Phase 2 was authorized
-("continue with the new plan and/or Phase 2"), but it is a large new surface and starting it unattended
-right after a run that found this many defects is the wrong trade. Better to hand back a clean, fully
-green tree with the decisions queued.
+**Final state — all green:**
 
-Running tally: **three fixes were wrong, incomplete or over-applied, and four assertions passed for the
-WRONG reason.** All caught by mutation, none by review or re-reading. Two of the four were tests I had
-just written in this run.
+| Gate | Result |
+|---|---|
+| `:ultra:codegen:check` | 163 tests, 0 failures; 7 ts-verify fixtures |
+| `:ultra:slumber:jvmTest` | 1232 tests, 0 failures — array support unaffected |
+| Compile sweep (6 targets, `--continue`) | no `^e:` |
+| Working tree | clean for `ultra/codegen` and this task's docs |
+
+**Done across 13 iterations:** backlog §1 complete (regression tests for all six review-round fixes),
+and §2 down to the decision-gated tail — 8 of 14 items.
+
+**What the run actually found.** Starting from code that had already passed a 3-reviewer round and was
+described as mutation-tested throughout:
+
+- **Three of the six review-round FIXES were wrong, incomplete or over-applied.** `TypeId` nullability
+  was half-done; the root-parent hop was applied to variants as well as the discriminator; and the
+  `appendUnion` finding turned out real once reproduced.
+- **Four assertions passed for the WRONG reason** — including two written during this run, one of them
+  a drift guard that tested the codec instead of the claim it was meant to guard.
+- **Two defects were found that no reviewer raised**: the union type-vs-schema position bug, and an
+  `ultra/slumber` round-trip failure now handed to its own task file.
+
+Every one was caught by mutation testing. None by reading the code, including when read carefully and
+twice. **If you take one thing from this run into the next: a green suite says nothing until you have
+watched it go red.**
 
 ### Habits that keep paying (and one I keep failing)
 
@@ -168,27 +184,7 @@ just written in this run.
 - **FAILING REPEATEDLY: read the test count from `TEST-*.xml` BEFORE writing the commit message.** Two
   amends so far for a wrong number.
 
-**Next action (LAST):** `JsonElement` → `z.unknown()` should reach the advisory list.
-`contributors/KotlinxJsonTsContributor.kt:27` uses `map()`, which hardcodes `opaque = false`
-(`model/TsTypeClaims.kt:78`), while `opaqueAdvisories` filters on `opaque == true`
-(`sdk/TsModelValidator.kt`). So the one claim that reduces validation to accept-anything is the one the
-run summary never mentions — the opposite of the design's stated "wrong-and-loud".
-
-Use `claims.opaque<JsonElement>(reason = ...)`. Leave `JsonObject`/`JsonArray`/`JsonPrimitive`/`JsonNull`
-as `map()`: those are honest structural shapes, not escape hatches. The drift guard `3bc64c41` asserts
-`JsonElement`'s schema is exactly `z.unknown()`, so **that assertion will need updating** — check what
-`opaque()` sets the schema to rather than assuming.
-
-Then STOP per the note above.
-
-### Working notes that paid off (keep using)
-
-- `cp` the target file to the scratchpad with the source-set path in the name before mutating; restore
-  with `cp`, never `git checkout` — the tree carries another agent's uncommitted work.
-- `sed` on Kotlin string literals full of backslashes is a trap; use Edit or a python heredoc.
-- Verify the restore with `git diff --stat -- <file>` (must be empty) before committing.
-- Confirm counts from `build/test-results/**/TEST-*.xml`, not from the gradle task result.
-- Running `:ultra:codegen:tsVerify` alone (skipping `test`) shows whether the TypeScript gate catches a
-  mutation independently of the Kotlin assertions. Worth doing for anything that changes emitted text.
-
-Suggested first move each iteration: `git log --oneline -3`, then the first unchecked box above.
+**No next action — the loop is stopped.** Restart it only after the §2 decisions are made; each item
+states its question. Phase 2 (`funktor/codegen`) is authorized but was deliberately NOT started
+unattended: it is a large new surface, and beginning it straight after a run that found this many
+defects in reviewed code is the wrong trade. A clean green tree with decisions queued is worth more.

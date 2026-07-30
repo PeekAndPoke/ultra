@@ -1046,6 +1046,35 @@ Method note worth keeping: for anything that changes emitted TEXT, add a ts-veri
 into "a real compiler rejects the alternative" — an unterminated string literal for the escaping, and
 TS2448 for the recursive alias.
 
+### Post-review hardening run, 2026-07-30 (13 iterations, autonomous)
+
+Backlog and per-iteration detail in `.claude/tasks/20260730-codegen-loop-handoff.md`. Final state:
+**163 codegen tests + 7 ts-verify fixtures green, `:ultra:slumber:jvmTest` 1232 green, compile sweep
+clean.** Commits `ef5eba72` … `29a1015d`.
+
+Beyond regression-testing all six review fixes, the run fixed eight further confirmed findings and
+turned up two nobody had raised:
+
+| Fix | Note |
+|---|---|
+| `appendUnion` used TYPE names in SCHEMA position | a claimed variant emitted `z.union([CustomType])`, a type where a value is required. Found by reproducing an earlier reading-only finding |
+| `slumberConfig` was optional | the codec-parity check was off by default; now required, with `TsSdkBuilder.forTesting` as the named entry point and NO way to disable it |
+| Walker degraded to `unknown` in 5 positions silently | new `TypeModel.Undetermined` channel, now a hard failure. `List<*>` used to emit `unknown[]` with no report — the Dart `dynamic` defect returning |
+| Collision check ignored claimed names | an app type named `MpInstant` beside the datetime claim was TS2440 inside generated code, reported by nothing |
+| kotlinx JSON claims had no drift test | all five probed and found correct; guard now derives the expected zod combinator FROM the observed codec shape |
+| Two vacuous assertions | one compared a value with itself; one compared a list against a hand-written copy of itself |
+| `JsonElement` claim was silently opaque | the one construct that disables validation was the one the run summary never mentioned |
+
+**The finding that matters most for future work on this module.** Of the six fixes applied during the
+review round, **three were wrong, incomplete or over-applied** — and **four assertions written across
+the review and this run passed for the wrong reason**, two of them tests written minutes earlier. Every
+single one was caught by mutation testing; none by reading the code, including when read carefully and
+more than once. Treat "the suite is green" as meaning nothing until the suite has been watched going
+red. This is now the strongest evidence in the repo for the mutation-testing rule in `CLAUDE.md`.
+
+A defect in `ultra/slumber` was also found and reproduced but deliberately NOT fixed — battle-tested
+code gets its own task and review round. See `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`.
+
 ### Confirmed, NOT yet fixed — tracked
 
 | Finding | Where | Why deferred |
