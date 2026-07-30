@@ -497,11 +497,48 @@ refresh is reported instead of vanishing (F4, partially).
 - slumber **1232**, vault **285** — 0 failures, after deleting their compiled test classes.
 - Compile sweep across every module and target — 0 errors.
 
+### F3 — RESOLVED 2026-07-30 (second pass)
+
+All five ask-first sites wired to `removeSilently`'s return value: the two TTL `evict()`s, the
+`MaxEntries` and `MaxMemory` evict+loop pairs, and `RefreshAfterWrite`'s hard-TTL loop (which
+forgot `writeTimestamps` before asking — the second unhealable site alongside `ExpireAfterWrite`).
+
+The re-read sharpened the reachability picture first: a decline implies a pending action, and that
+action reaches every behaviour next round — so behaviours that re-track on reads (`ExpireAfterAccess`,
+`MaxEntries`, `MaxMemory`) self-healed one iteration later, while `ExpireAfterWrite` (ignores reads
+by contract) and `RefreshAfterWrite` never recovered: **immortal, never-refreshed entries**.
+`MaxMemory` additionally decremented `totalSize` before asking (transient under-count).
+
+The naive one-line fix is a trap: `while (data.size > maxEntries)` over kept-tracked entries picks
+the same declined key forever. Both size/overflow loops now walk a snapshot, skip declined keys for
+one round (transiently over budget, by design) and retry next iteration once the pending drains.
+
+**Tests-first, deterministic**: `FastCacheEvictionDeclineSpec` (4, commonTest, all 3 platforms)
+drives each behaviour's `process()` by hand against a cache whose loop has no behaviours — an
+un-drained `get()` guarantees "declined", a drain-wait guarantees "accepted". All 4 red before the
+fix, green after. First version of the maxMemory/maxEntries tests used the initial `put` as the
+decline trigger, which races the loop's *first* drain — rewritten to mid-sleep `get`s like the
+other two.
+
+**Mutations: 5/5 killed** (M12 ExpireAfterWrite remove-first, M13 Refresh forget-first, M14
+MaxMemory decrement-first, M15 naive while-loop, M16 MaxEntries remove-first), each by exactly its
+own test. Two honesty notes:
+- **M15 was caught by assertion, not the predicted hang**: in the test the drainer runs on another
+  coroutine, so the naive loop busy-waits ~100 ms until the next drain frees the key and the
+  mid-assert catches the wrongly-completed eviction. In production, drain and `process()` share one
+  coroutine, so the same code **would** hang forever there. Mutation dead either way.
+- **The `ExpireAfterAccess` site is unverifiable by design.** Its remove-first form is fully
+  self-healing (any decline-causing pending is a Read/Put, and both re-track with a fresh stamp
+  next round, producing identical state to ask-first). Changed to ask-first anyway — relying on
+  "every decline implies a re-tracking action" couples it silently to `removeSilently`'s decline
+  condition — but no test can distinguish the two forms today, so a mutation there survives. Said
+  rather than papered over with a vacuous test.
+
+Evidence: cache jvm **138** / js **124** / native **123**, slumber 1232, vault 285 — 0 failures;
+compile sweep clean.
+
 ### Still open, deliberately
 
-- **F3 immortal entries.** `removeSilently` now reports whether it removed, but the four `evict()`
-  call sites still drop their own tracking *before* asking. Wiring them to the return value is the
-  remaining half.
 - **F9** statistics/`totalSize` memory visibility; **C9** JVM `Class -> Field[]` memoization;
   **C6** the blanket `catch (_: Throwable)` in JVM `getFieldsOf`; **F15** estimating on reads;
   **F16** eviction listeners running under the lock; **F17** LRU resolved only per loop iteration.

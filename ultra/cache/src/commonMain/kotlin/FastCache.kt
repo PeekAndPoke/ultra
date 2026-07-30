@@ -217,11 +217,14 @@ class FastCache<K, V>(
             }
         }
 
-        // TODO(scan): drops the key from `data` before removeSilently decides - a concurrent read
-        //   re-adds it, but any other pending action leaves the entry in the map yet untracked.
         private fun evict(cache: FastCache<K, V>, key: K) {
-            data.remove(key)
-            cache.removeSilently(key)
+            // Ask FIRST. removeSilently declines when the key was touched after the batch was
+            // taken, and dropping our tracking for a declined eviction left the entry in the map
+            // with nothing watching it. A declined key stays tracked; the pending read that spared
+            // it re-stamps its access time next iteration, which is exactly this behaviour's rule.
+            if (cache.removeSilently(key)) {
+                data.remove(key)
+            }
         }
 
         private fun evictAllNecessary(now: Long, cache: FastCache<K, V>) {
@@ -274,11 +277,14 @@ class FastCache<K, V>(
             }
         }
 
-        // TODO(scan): drops the key from `data` before removeSilently decides. Only a PutAction can
-        //   put it back here, so an entry declined because of a pending read is never expired again.
         private fun evict(cache: FastCache<K, V>, key: K) {
-            data.remove(key)
-            cache.removeSilently(key)
+            // Ask FIRST - the one behaviour where remove-before-ask was unrecoverable. Reads are
+            // deliberately ignored here, so only a PutAction could re-track a dropped key; an entry
+            // whose eviction was declined because of a pending READ therefore stayed in the map
+            // forever. Kept tracked, it is simply retried once the pending action has drained.
+            if (cache.removeSilently(key)) {
+                data.remove(key)
+            }
         }
 
         private fun evictAllNecessary(now: Long, cache: FastCache<K, V>) {
@@ -334,17 +340,29 @@ class FastCache<K, V>(
             }
         }
 
-        // TODO(scan): drops the key from `data` before removeSilently decides - see ExpireAfterAccessBehaviour.
-        private fun evict(cache: FastCache<K, V>, key: K) {
-            data.remove(key)
-            cache.removeSilently(key)
+        private fun evict(cache: FastCache<K, V>, key: K): Boolean {
+            // Ask FIRST - see ExpireAfterAccessBehaviour.evict. Reports whether it really evicted,
+            // because the loop below must not count a declined attempt as progress.
+            return cache.removeSilently(key).also { removed ->
+                if (removed) data.remove(key)
+            }
         }
 
         private fun evictAllNecessary(cache: FastCache<K, V>) {
-            while (data.size > maxEntries) {
-                val next = data.ascending().first().second
+            var overshoot = data.size - maxEntries
 
-                evict(cache, next.key)
+            if (overshoot <= 0) return
+
+            // A snapshot, NOT `while (data.size > maxEntries)`: a declined eviction keeps the key
+            // tracked, so a size-based loop would pick the same key again and spin the processing
+            // coroutine forever. Skipped keys stay over-capacity for one round and are retried
+            // next iteration, when their pending action has drained.
+            for ((key, _) in data.ascending().toList()) {
+                if (overshoot <= 0) break
+
+                if (evict(cache, key)) {
+                    overshoot--
+                }
             }
         }
     }
@@ -428,9 +446,13 @@ class FastCache<K, V>(
             data.remove(entry.key)
         }
 
-        private fun evict(cache: FastCache<K, V>, entry: Entry<K>) {
-            remove(entry)
-            cache.removeSilently(entry.key)
+        private fun evict(cache: FastCache<K, V>, entry: Entry<K>): Boolean {
+            // Ask FIRST, and only release the bytes for an entry that was really removed:
+            // decrementing totalSize for a declined eviction under-counted a cache that still
+            // holds the entry.
+            return cache.removeSilently(entry.key).also { removed ->
+                if (removed) remove(entry)
+            }
         }
 
         private fun evictAllNecessary(cache: FastCache<K, V>) {
@@ -438,12 +460,14 @@ class FastCache<K, V>(
 
             if (overflow <= 0) return
 
-            while (overflow > 0 && data.isNotEmpty()) {
-                val next = data.ascending().first().second
+            // Snapshot for the same reason as MaxEntriesBehaviour: a declined eviction stays
+            // tracked, and a `while (overflow > 0)` over live state would retry it forever.
+            for ((_, entry) in data.ascending().toList()) {
+                if (overflow <= 0) break
 
-                overflow -= next.size
-
-                evict(cache, next)
+                if (evict(cache, entry)) {
+                    overflow -= entry.size
+                }
             }
         }
     }
@@ -590,13 +614,16 @@ class FastCache<K, V>(
                 }
             }
 
-            // Evict hard-expired entries
-            // TODO(scan): an in-flight refresh is not cancelled here, so its put() resurrects the
-            //   hard-expired key once the loader finishes.
+            // Evict hard-expired entries. (An in-flight refresh cannot resurrect one: its result
+            // goes through putIfPresent, which refuses once the entry is gone.)
             for (key in keysToEvict) {
-                writeTimestamps.remove(key)
-                refreshingKeys.remove(key)
-                cache.removeSilently(key)
+                // Only forget a key that was really removed. removeSilently declines when the key
+                // was touched after the batch was taken - forgetting it anyway meant that entry
+                // was never refreshed and never hard-evicted again. Kept, it is retried next loop.
+                if (cache.removeSilently(key)) {
+                    writeTimestamps.remove(key)
+                    refreshingKeys.remove(key)
+                }
             }
 
             // Launch refresh coroutines
