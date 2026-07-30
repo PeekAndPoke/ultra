@@ -47,7 +47,8 @@ class RestApiTsContributor(
         val member: String,
         val httpMethod: String,
         val pattern: String,
-        val responseType: KType,
+        /** `null` for a stream: `ApiRoute.Sse` carries no payload type. */
+        val responseType: KType?,
         /** Unique across the whole run — how the resolved reference is found again at emit time. */
         val rootLabel: String,
         val doc: String?,
@@ -57,6 +58,7 @@ class RestApiTsContributor(
         val bodyType: KType?,
         /** Root label for [bodyType]; `null` exactly when [bodyType] is. */
         val bodyRootLabel: String?,
+        val stream: Boolean,
     )
 
     private data class SelectedGroup(
@@ -101,7 +103,7 @@ class RestApiTsContributor(
                 group.endpoints.forEach { endpoint ->
                     // The PAYLOAD is rooted, not the envelope: `ApiResponse<T>` is hand-written in
                     // runtime/apiResponse.ts and no walk should reach it.
-                    roots.root(endpoint.responseType, endpoint.rootLabel)
+                    endpoint.responseType?.let { roots.root(it, endpoint.rootLabel) }
 
                     // The body is a second root. It must be WALKED, not merely named: a request type
                     // reachable from nowhere else would otherwise never be declared in models.ts, and
@@ -115,7 +117,18 @@ class RestApiTsContributor(
     override fun emit(context: TsSdkEmitContext) {
         if (selection.isEmpty()) return
 
-        TsRuntime.emit(context.out, setOf(TsRuntime.Module.Client))
+        // The SSE runtime ships only when a stream endpoint exists — an SDK with no streams must not
+        // carry the event-stream parser. `TsRuntime.emit` closes over each module's requirements, so
+        // asking for Sse also brings Client and Http.
+        val runtime = buildSet {
+            add(TsRuntime.Module.Client)
+
+            if (selection.any { c -> c.groups.any { g -> g.endpoints.any { it.stream } } }) {
+                add(TsRuntime.Module.Sse)
+            }
+        }
+
+        TsRuntime.emit(context.out, runtime)
 
         val emitter = TsClientEmitter(context.model)
 
@@ -139,11 +152,12 @@ class RestApiTsContributor(
                         member = endpoint.member,
                         httpMethod = endpoint.httpMethod,
                         pattern = endpoint.pattern,
-                        responseRef = context.model.refForRoot(endpoint.rootLabel),
+                        responseRef = endpoint.responseType?.let { context.model.refForRoot(endpoint.rootLabel) },
                         doc = endpoint.doc,
                         pathParams = endpoint.pathParams,
                         queryParams = endpoint.queryParams,
                         bodyRef = endpoint.bodyRootLabel?.let { context.model.refForRoot(it) },
+                        stream = endpoint.stream,
                     )
                 },
             )
@@ -197,13 +211,7 @@ class RestApiTsContributor(
         // than skipped: silently emitting a client that is missing half its endpoints is the
         // wrong-and-quiet failure this whole module exists to remove, and a frontend would only
         // notice at the call site.
-        check(route !is ApiRoute.Sse<*>) {
-            "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
-                    "${group.name} / $member) is an ${route::class.simpleName} route, which the " +
-                    "TypeScript generator does not support yet — server-sent events need a decision " +
-                    "about what the member returns, because the stream's payload type is not on the " +
-                    "route. See .claude/tasks/20260730-funktor-codegen-rest-contributor.md."
-        }
+        val stream = route is ApiRoute.Sse<*>
 
         val (pathParams, queryParams) = paramsOf(route, feature, group, member, urlParams)
 
@@ -218,7 +226,9 @@ class RestApiTsContributor(
             member = member,
             httpMethod = route.method.value,
             pattern = route.pattern.pattern,
-            responseType = payloadTypeOf(route, feature, group, member),
+            // A stream has no payload type to unwrap: `ApiRoute.Sse.responseType` is TypeRef<Unit>,
+            // so events are delivered as raw `data` strings (maintainer decision, 2026-07-30).
+            responseType = if (stream) null else payloadTypeOf(route, feature, group, member),
             // Qualified so two features, or two groups, cannot collide — the builder rejects that
             // anyway, but with a message about labels rather than about routes.
             rootLabel = "$NAME:${feature.codeGenName}:${group.name}:$member",
@@ -227,6 +237,7 @@ class RestApiTsContributor(
             queryParams = queryParams,
             bodyType = bodyType,
             bodyRootLabel = bodyType?.let { "$NAME:${feature.codeGenName}:${group.name}:$member:body" },
+            stream = stream,
         )
     }
 

@@ -382,6 +382,51 @@ async function checkGeneratedClient(report: Report): Promise<void> {
         'client: a body route declares its content type',
     )
 
+    // 3c. A STREAM. Executed, not merely type-checked: the member has no response schema at all, so
+    //     the only thing that can confirm it is usable is consuming it.
+    {
+        const frames =
+            'event: tick\ndata: {"n":1}\n\n' +
+            'event: tick\ndata: {"n":2}\n\n'
+
+        let requested: string | undefined
+
+        const fakeFetch: typeof fetch = (url) => {
+            requested = String(url)
+
+            return Promise.resolve(
+                new Response(frames, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+            )
+        }
+
+        const seen: Array<{ event: string; data: string }> = []
+
+        for await (const event of client.status.watch({ room: 'r 1' }, { fetchImpl: fakeFetch })) {
+            seen.push({ event: event.event, data: event.data })
+        }
+
+        report(
+            requested === 'http://x/api/fx/watch/r%201',
+            'client: a stream builds and encodes its URL',
+            requested,
+        )
+
+        report(
+            equal(seen, [
+                { event: 'tick', data: '{"n":1}' },
+                { event: 'tick', data: '{"n":2}' },
+            ]),
+            'client: a stream yields the parsed events',
+        )
+
+        // The decision this records: events carry RAW data strings, because the payload type is not on
+        // the route. If that ever changes, this line stops compiling and the choice gets revisited.
+        report(
+            typeof seen[0]?.data === 'string',
+            'client: stream event data is an unparsed string, per the untyped-SSE decision',
+        )
+    }
+
     // 4. NEGATIVE TYPE CHECKS. Calling a member correctly proves the signature EXISTS; it does not
     //    prove the signature is ENFORCED — emitting every parameter as optional passes every check
     //    above. `@ts-expect-error` inverts that: tsc fails when the line STOPS erroring, so these
@@ -405,7 +450,10 @@ async function checkGeneratedClient(report: Report): Promise<void> {
     // @ts-expect-error a body route still requires its params argument.
     void client.talks.importNodes([{ name: 'root', children: [], parent: null }])
 
-    report(true, 'client: the emitted signature rejects wrong calls (6 @ts-expect-error sites)')
+    // @ts-expect-error a stream still requires its path params.
+    void client.status.watch({})
+
+    report(true, 'client: the emitted signature rejects wrong calls (7 @ts-expect-error sites)')
 
     // 5. THE reason members are arrow-function class fields. A prototype method type-checks here and
     //    throws at run time, and this is the Vue-composable idiom, so it would break in real use.

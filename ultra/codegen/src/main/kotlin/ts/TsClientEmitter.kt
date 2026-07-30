@@ -41,12 +41,12 @@ data class TsClientSpec(
         /** The route pattern with `{name}` placeholders, passed through to `buildUrl`. */
         val pattern: String,
         /**
-         * The RESPONSE PAYLOAD's reference — not the envelope's.
+         * The RESPONSE PAYLOAD's reference — not the envelope's. `null` exactly when [stream].
          *
          * `ApiResponse<T>` is hand-written in `runtime/apiResponse.ts` and no walk reaches it; the
          * generated call wraps this payload schema at run time.
          */
-        val responseRef: TsTypeRef,
+        val responseRef: TsTypeRef?,
         val doc: String?,
         /** Parameters filling `{name}` placeholders in [pattern]. */
         val pathParams: List<Param> = emptyList(),
@@ -60,7 +60,28 @@ data class TsClientSpec(
          * is correct: the server is the authority on what it accepts.
          */
         val bodyRef: TsTypeRef? = null,
+        /**
+         * True for a server-sent-events endpoint.
+         *
+         * Such a member returns `AsyncGenerator<SseEvent>` and has NO response schema: `ApiRoute.Sse`
+         * declares `responseType: TypeRef<Unit>`, so the stream's payload type is not on the route at
+         * all. Events carry raw `data` strings and the caller parses them. Typing them would mean
+         * changing how SSE endpoints are declared server-side — a decision taken deliberately, not an
+         * omission (maintainer, 2026-07-30).
+         */
+        val stream: Boolean = false,
     ) {
+        init {
+            require((responseRef == null) == stream) {
+                "An endpoint has a response schema iff it is not a stream: '$member' has " +
+                        "responseRef=${responseRef != null} and stream=$stream."
+            }
+
+            require(!(stream && bodyRef != null)) {
+                "'$member' is a stream with a request body. ApiRoute.Sse routes are GET and carry none."
+            }
+        }
+
         /** Every parameter, in one object as the caller sees it. */
         val allParams: List<Param> get() = pathParams + queryParams
     }
@@ -109,12 +130,17 @@ class TsClientEmitter(private val model: TypeModel) {
     fun emit(spec: TsClientSpec): String {
         val endpoints = spec.groups.flatMap { it.endpoints }
 
-        val schemas = endpoints.associate { it.member to renderer.schema(it.responseRef) }
+        val schemas = endpoints
+            .filter { !it.stream }
+            .associate { it.member to renderer.schema(it.responseRef!!) }
 
         // Bodies count too: their type names are referenced in the member signature, so a client with
         // a body type it never imports does not compile.
         val referenced = endpoints
-            .flatMap { it.responseRef.referencedIds() + (it.bodyRef?.referencedIds() ?: emptyList()) }
+            .flatMap {
+                (it.responseRef?.referencedIds() ?: emptyList()) +
+                        (it.bodyRef?.referencedIds() ?: emptyList())
+            }
             .distinct()
 
         // A claimed type is NOT exported by models.ts — it is imported into it from the module that
@@ -143,6 +169,15 @@ class TsClientEmitter(private val model: TypeModel) {
             }
 
             appendLine("import { type SdkConfig, request } from ${tsStringLiteral(CLIENT_MODULE)}")
+
+            // Only when a stream endpoint exists: an SDK without SSE must not carry the event-stream
+            // parser, which the runtime dependency closure would otherwise pull in.
+            if (endpoints.any { it.stream }) {
+                appendLine(
+                    "import { type SseEvent, type SseOptions, stream } from " +
+                            tsStringLiteral(SSE_MODULE)
+                )
+            }
 
             if (modelNames.isNotEmpty()) {
                 appendLine("import { ${modelNames.joinToString(", ")} } from ${tsStringLiteral(MODELS_MODULE)}")
@@ -178,7 +213,7 @@ class TsClientEmitter(private val model: TypeModel) {
             group.endpoints.forEach { endpoint ->
                 nl()
                 appendEndpointDoc(endpoint)
-                appendEndpoint(endpoint, schemas.getValue(endpoint.member))
+                appendEndpoint(endpoint, schemas[endpoint.member])
             }
         }
 
@@ -217,7 +252,7 @@ class TsClientEmitter(private val model: TypeModel) {
      * caller's — and split back apart in the call. Their names cannot collide: they are properties of
      * a single class.
      */
-    private fun CodePrinter.appendEndpoint(endpoint: TsClientSpec.Endpoint, schema: String) {
+    private fun CodePrinter.appendEndpoint(endpoint: TsClientSpec.Endpoint, schema: String?) {
         val params = endpoint.allParams
 
         // `(params, body)`, mirroring the Kotlin endpoint's own argument order. `params` stays
@@ -233,16 +268,30 @@ class TsClientEmitter(private val model: TypeModel) {
             }
 
             endpoint.bodyRef?.let { add("body: ${renderer.type(it)}") }
+
+            // Trailing and optional: headers and an AbortSignal are the caller's business, and an SSE
+            // stream does not go through the transport, so auth cannot be inherited from a wrapper.
+            if (endpoint.stream) add("options?: SseOptions")
         }
 
-        appendLine("readonly ${endpoint.member} = (${arguments.joinToString(", ")}) =>")
+        val returns = if (endpoint.stream) ": AsyncGenerator<SseEvent>" else ""
+
+        appendLine("readonly ${endpoint.member} = (${arguments.joinToString(", ")})$returns =>")
 
         indentedRaw {
-            val call = "request(this.config, ${tsStringLiteral(endpoint.httpMethod)}, " +
-                    "${tsStringLiteral(endpoint.pattern)}, $schema"
+            // `stream` and `request` deliberately mirror each other: same config, same pattern, same
+            // path/query object. Only the payload differs, because a stream has no envelope.
+            val call = when {
+                endpoint.stream ->
+                    "stream(this.config, ${tsStringLiteral(endpoint.pattern)}"
 
-            if (arguments.isEmpty()) {
-                appendLine("$call)")
+                else ->
+                    "request(this.config, ${tsStringLiteral(endpoint.httpMethod)}, " +
+                            "${tsStringLiteral(endpoint.pattern)}, $schema"
+            }
+
+            if (params.isEmpty() && endpoint.bodyRef == null) {
+                appendLine(if (endpoint.stream) "$call, {}, options)" else "$call)")
                 return@indentedRaw
             }
 
@@ -262,7 +311,7 @@ class TsClientEmitter(private val model: TypeModel) {
                 }
             }
 
-            appendLine("})")
+            appendLine(if (endpoint.stream) "}, options)" else "})")
         }
     }
 
@@ -297,6 +346,8 @@ class TsClientEmitter(private val model: TypeModel) {
 
     companion object {
         private val CLIENT_MODULE: String = TsRuntime.Module.Client.moduleSpecifier
+
+        private val SSE_MODULE: String = TsRuntime.Module.Sse.moduleSpecifier
 
         /** Where the type declarations live. Emitted by `TsSdkBuilder`, at the SDK root. */
         private const val MODELS_MODULE: String = "./models.ts"

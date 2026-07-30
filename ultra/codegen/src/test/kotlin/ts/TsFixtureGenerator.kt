@@ -338,6 +338,20 @@ object TsFixtureGenerator {
                             responseRef = model.refForRoot("client:latest"),
                             doc = "Nullable payload",
                         ),
+                        // A STREAM. It has no response schema at all — `ApiRoute.Sse` carries no
+                        // payload type — so `tsc` is what proves the emitted member is still usable:
+                        // an AsyncGenerator the caller can `for await` over.
+                        TsClientSpec.Endpoint(
+                            member = "watch",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/watch/{room}",
+                            responseRef = null,
+                            doc = "Watch a room",
+                            pathParams = listOf(
+                                TsClientSpec.Param(name = "room", tsType = "string", optional = false),
+                            ),
+                            stream = true,
+                        ),
                         TsClientSpec.Endpoint(
                             member = "serverTime",
                             httpMethod = "GET",

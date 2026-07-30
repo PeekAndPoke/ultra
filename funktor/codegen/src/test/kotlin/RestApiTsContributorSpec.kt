@@ -2,6 +2,8 @@ package io.peekandpoke.funktor.codegen
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -119,14 +121,56 @@ class RestApiTsContributorSpec : FreeSpec() {
             thrown!!.message!! shouldContain "supplied any root type"
         }
 
-        "a route variant the generator cannot handle is refused, naming the route" {
-            val thrown = runCatching { build(listOf(FxSseApiRoutes())) }.exceptionOrNull()
+        "server-sent events" - {
 
-            thrown!!.message!! shouldContain "/api/fx/watch/{room}"
-            thrown.message!! shouldContain "Sse"
+            "a stream member returns an AsyncGenerator and takes SseOptions" {
+                val out = clientOf(build(listOf(FxTalksApiRoutes(), FxSseApiRoutes())))
 
-            withClue("it must name the route rather than silently emitting a half client") {
-                thrown.message!! shouldContain "watch"
+                out shouldContain
+                        "readonly watch = (params: { room: string }, options?: SseOptions)" +
+                        ": AsyncGenerator<SseEvent> =>"
+
+                withClue("path params fill the pattern exactly as they do for a request") {
+                    out shouldContain "stream(this.config, '/api/fx/watch/{room}', {"
+                    out shouldContain "path: { room: params.room },"
+                    out shouldContain "}, options)"
+                }
+            }
+
+            "a stream has NO response schema — the payload type is not on the route" {
+                val out = clientOf(build(listOf(FxTalksApiRoutes(), FxSseApiRoutes())))
+
+                withClue("ApiRoute.Sse.responseType is TypeRef<Unit>; nothing may be invented from it") {
+                    out shouldNotContain "stream(this.config, '/api/fx/watch/{room}', z."
+                }
+            }
+
+            "the SSE runtime ships only when a stream endpoint exists" {
+                val withSse = build(listOf(FxTalksApiRoutes(), FxSseApiRoutes()))
+                    .output.entries().map { it.path }
+
+                withSse shouldContain "runtime/sse.ts"
+
+                val withoutSse = build(listOf(FxTalksApiRoutes())).output.entries().map { it.path }
+
+                withClue("an SDK with no streams must not carry the event-stream parser") {
+                    withoutSse shouldNotContain "runtime/sse.ts"
+                }
+            }
+
+            "a stream-free client does not IMPORT the sse runtime either" {
+                // The file emission and the import are two separate conditions. Getting only the first
+                // right leaves a client importing a module that was never written — a broken SDK that
+                // no Kotlin assertion about emitted paths would notice, and that `tsc` cannot catch
+                // here because ts-verify copies every runtime module into place regardless.
+                val out = clientOf(build(listOf(FxTalksApiRoutes())))
+
+                out shouldNotContain "runtime/sse.ts"
+
+                withClue("and one WITH a stream must import it, or the emitted call is unresolved") {
+                    clientOf(build(listOf(FxTalksApiRoutes(), FxSseApiRoutes()))) shouldContain
+                            "from './runtime/sse.ts'"
+                }
             }
         }
 

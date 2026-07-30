@@ -27,12 +27,29 @@ class TsRuntimeSpec : FreeSpec() {
             }
         }
 
-        "emit plans exactly the requested modules" {
+        "emit plans the requested modules and nothing more than their closure" {
             val out = TsSdkOutput()
 
-            TsRuntime.emit(out.scopeFor("test"), setOf(TsRuntime.Module.Http, TsRuntime.Module.Sse))
+            TsRuntime.emit(out.scopeFor("test"), setOf(TsRuntime.Module.Http))
 
-            out.entries().map { it.path } shouldContainExactlyInAnyOrder listOf("runtime/http.ts", "runtime/sse.ts")
+            withClue("Http requires nothing, so asking for it must not drag anything else in") {
+                out.entries().map { it.path } shouldContainExactlyInAnyOrder listOf("runtime/http.ts")
+            }
+        }
+
+        "emit closes over what the requested modules import" {
+            val out = TsSdkOutput()
+
+            TsRuntime.emit(out.scopeFor("test"), setOf(TsRuntime.Module.Sse))
+
+            // Transitive: Sse -> Client -> {Http, ApiResponse}. Asking for the stream runtime alone
+            // and getting only sse.ts would emit a module whose imports resolve to nothing.
+            out.entries().map { it.path } shouldContainExactlyInAnyOrder listOf(
+                "runtime/sse.ts",
+                "runtime/client.ts",
+                "runtime/http.ts",
+                "runtime/apiResponse.ts",
+            )
         }
 
         "emit also plans what the requested modules import" {

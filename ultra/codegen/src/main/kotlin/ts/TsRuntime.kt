@@ -65,7 +65,11 @@ object TsRuntime {
             get() = when (this) {
                 // client.ts imports buildUrl/fetchTransport and the apiResponse factory.
                 Client -> setOf(Http, ApiResponse)
-                Http, ApiResponse, Sse, DateTime -> emptySet()
+                // sse.ts's `stream` takes an SdkConfig and builds the URL, so it needs both. The
+                // dependency runs THIS way round on purpose: a client without SSE endpoints must not
+                // drag the event-stream parser into the SDK.
+                Sse -> setOf(Client, Http)
+                Http, ApiResponse, DateTime -> emptySet()
             }
     }
 

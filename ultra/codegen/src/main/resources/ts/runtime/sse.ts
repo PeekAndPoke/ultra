@@ -22,6 +22,8 @@
  * payload — so events are delivered as raw `data` strings and callers parse them with whatever schema
  * applies.
  */
+import { type SdkConfig } from './client.ts'
+import { type UrlParam, buildUrl } from './http.ts'
 
 /** One dispatched event. */
 export interface SseEvent {
@@ -170,6 +172,28 @@ export class SseParser {
 
         return event
     }
+}
+
+/**
+ * Opens the stream for a generated endpoint.
+ *
+ * The counterpart of `request` in `client.ts`, and the one line every generated SSE member reduces
+ * to. It takes the whole [SdkConfig] for symmetry with `request`, though only `baseUrl` is used —
+ * **an SSE stream does not go through `config.transport`.** `sseStream` calls `fetch` directly,
+ * because the response is consumed as a byte stream rather than as a string, which the transport
+ * interface has no way to express. Auth is therefore NOT inherited from a transport wrapper here:
+ * pass it per call via [SseOptions.headers].
+ */
+export function stream(
+    config: SdkConfig,
+    pattern: string,
+    params: { path?: Record<string, UrlParam>; query?: Record<string, UrlParam> } = {},
+    options: SseOptions = {},
+): AsyncGenerator<SseEvent> {
+    return sseStream(
+        buildUrl(config.baseUrl, pattern, params.path ?? {}, params.query ?? {}),
+        options,
+    )
 }
 
 /** Options for [sseStream]. */
