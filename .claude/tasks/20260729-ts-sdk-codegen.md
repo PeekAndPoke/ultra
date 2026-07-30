@@ -554,7 +554,9 @@ Tests: `CodePrinterSpec` 11, `TypeWalkerSpec` 24 — all green, counts confirmed
   reifies type arguments anyway (staying generic would mean *un*-reifying), and generic zod schemas need
   function-valued schemas that `z.infer` cannot see through. Cost: one declaration per instantiation.
   Reversible if the instantiation count gets unpleasant.
-  **⚠ THE SECOND REASON IS FALSE — measured 2026-07-30, see "Generics spike" below.** Decision reopened.
+  **⚠ REVERSED 2026-07-30 (`63f9f186`).** The second reason was measured and found false. Generics are
+  now emitted GENERICALLY: one declaration per class, arguments on the reference — `PageOf<Talk>` in
+  type position, `PageOf(Talk)` in schema position. See `20260730-codegen-generic-emission.md`.
 - **`Set` and `List` share one reference shape** (`ArrayOf`) — both slumber to a JSON array. `Map` becomes
   `RecordOf` with a `string` key, since JSON object keys are always strings regardless of the Kotlin key type.
 - **Optional = constructor parameter has a default.** Deliberately loose and direction-dependent: responses
@@ -909,6 +911,7 @@ Independent of all of it, and the only item with a deadline shape: **gate the ex
 | Phased contract, not ordered contributors       | Makes contributor order structurally irrelevant — stronger than "lazy builders"                                           |
 | Symbolic `TypeId` refs                          | Cycles cost nothing; no topological sort; TS type imports are legal circular                                              |
 | Hard error on unmapped types                    | The Dart gen's silent `dynamic` fallback is the defect being fixed                                                        |
+| Generics emitted generically, not monomorphized | Chosen 2026-07-30, reversing the original. The `z.infer` objection was measured and is false; monomorphization silently collapsed generic sealed hierarchies onto `unknown` |
 | zod schemas, not types-only                     | Chosen 2026-07-29. Parse-time errors at the boundary with a precise path                                                  |
 | Bare `.ts`, not npm package                     | Chosen 2026-07-29. Still no npm publishing — but **config emission inside `<out>/` is now in scope** (2026-07-30), so `--package` is narrower than it was, not merely deferred |
 | Generator owns `<out>/`, writes nothing outside | Chosen 2026-07-30. Makes "regenerating destroys my edits" impossible by construction, so no file-merging mechanism is needed — merging JSONC/TS config could only be wrong-and-quiet |

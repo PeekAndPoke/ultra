@@ -1,6 +1,6 @@
 # Emit real TypeScript generics instead of monomorphizing
 
-**Status:** IN PROGRESS — direction and sub-decisions agreed 2026-07-30 (maintainer: "full effort, this is pure foundation")
+**Status:** CODE DONE `63f9f186` — needs `/feature-review` before DONE. Direction and sub-decisions agreed 2026-07-30 — direction and sub-decisions agreed 2026-07-30 (maintainer: "full effort, this is pure foundation")
 **Plan:** `.claude/tasks/20260729-ts-sdk-codegen.md` — reverses its "Generics are monomorphized" decision
 **Security-critical:** no (dev-time generator)
 
@@ -58,30 +58,30 @@ positions, with the same ordering constraints as today.)
 
 ### Model
 
-- [ ] A declaration for a generic type is keyed by the RAW class, not by an instantiation. `TypeId`
+- [x] A declaration for a generic type is keyed by the RAW class, not by an instantiation. `TypeId`
       currently canonicalises the reified type including arguments; generic declarations need an
       identity that does not.
-- [ ] New `TsTypeRef.TypeParam(name)` for a property that refers to its owner's parameter.
-- [ ] References to an instantiation carry arguments: `TsTypeRef.Named(id, args)` or a new variant.
-- [ ] `TsTypeDecl` gains the declared parameter names, in order.
+- [x] New `TsTypeRef.TypeParam(name)` for a property that refers to its owner's parameter.
+- [x] References to an instantiation carry arguments: `TsTypeRef.Named(id, args)` or a new variant.
+- [x] `TsTypeDecl` gains the declared parameter names, in order.
 
 ### Walker
 
-- [ ] `declareObj` must build props from the UN-substituted constructor types, mapping each type
+- [x] `declareObj` must build props from the UN-substituted constructor types, mapping each type
       parameter to `TypeParam`. `ReifiedKType` exists to do the opposite, so expect this to be the bulk
       of the work.
-- [ ] The walk must still traverse instantiations to discover reachable types — `PageOf<Talk>` has to
+- [x] The walk must still traverse instantiations to discover reachable types — `PageOf<Talk>` has to
       enqueue `Talk` — while declaring `PageOf` exactly once.
-- [ ] `declareUnion` substitutes the parent's arguments into each variant instead of
+- [x] `declareUnion` substitutes the parent's arguments into each variant instead of
       `createBareType()`. This is what fixes problem 1 above.
-- [ ] Value classes with parameters (`value class Box<T>(val v: T)`) alias to a parameter.
+- [x] Value classes with parameters (`value class Box<T>(val v: T)`) alias to a parameter.
 
 ### Emitter
 
-- [ ] Generic declarations emit interface + factory. Non-generic output must stay byte-identical —
+- [x] Generic declarations emit interface + factory. Non-generic output must stay byte-identical —
       pin that with the existing golden tests before touching anything.
-- [ ] Recursion still needs `z.lazy`; the spike confirms a recursive generic works.
-- [ ] A generic variant inside `z.discriminatedUnion` is fine: a factory call returns a concrete object
+- [x] Recursion still needs `z.lazy`; the spike confirms a recursive generic works.
+- [x] A generic variant inside `z.discriminatedUnion` is fine: a factory call returns a concrete object
       schema. Confirmed by the spike.
 
 ## Sub-decisions — SETTLED 2026-07-30
@@ -100,19 +100,51 @@ positions, with the same ordering constraints as today.)
 
 ## Test evidence
 
-- [ ] Non-generic output is byte-identical to today — assert FIRST, so the blast radius is known.
-- [ ] `PageOf<Talk>` and `PageOf<Speaker>` produce ONE declaration and two distinct use sites.
-- [ ] The nullability distinction survives: `Box<String>` vs `Box<String?>` (see `2623a08d` — this was
+- [x] Non-generic output is byte-identical to today — assert FIRST, so the blast radius is known.
+- [x] `PageOf<Talk>` and `PageOf<Speaker>` produce ONE declaration and two distinct use sites.
+- [x] The nullability distinction survives: `Box<String>` vs `Box<String?>` (see `2623a08d` — this was
       already got wrong once, and generic emission changes how it is represented).
-- [ ] Generic sealed hierarchy: `Storable<Organisation>` carries a real payload type, not `unknown`.
-- [ ] Recursive generic emits `z.lazy` and parses.
-- [ ] Generic variant as a `z.discriminatedUnion` option.
-- [ ] ts-verify fixtures for each of the above — `tsc` is what proves the emitted text is real. Note
+- [x] Generic sealed hierarchy: `Storable<Organisation>` carries a real payload type, not `unknown`.
+- [x] Recursive generic emits `z.lazy` and parses.
+- [x] Generic variant as a `z.discriminatedUnion` option.
+- [x] ts-verify fixtures for each of the above — `tsc` is what proves the emitted text is real. Note
       `TsFixtureGenerator` derives `requiredFields` from a declaration's props, which for a generic
       declaration reference parameters; the manifest will need the instantiated form.
-- [ ] Mutation-test every claim. This run found three wrong fixes and four assertions that passed for
+- [x] Mutation-test every claim. This run found three wrong fixes and four assertions that passed for
       the wrong reason — all by mutation, none by reading.
-- [ ] Compile sweep, and `:ultra:slumber:jvmTest` still green.
+- [x] Compile sweep, and `:ultra:slumber:jvmTest` still green.
+
+## What `tsc` caught that nothing else would have
+
+Both surfaced only because the emitted text is compiled for real, and neither is visible in a Kotlin
+assertion about that text:
+
+1. **Annotating a factory `: z.ZodType<Foo<T>>` erases its object-ness**, so a generic variant is
+   rejected as a `z.discriminatedUnion` option — TS2322. Fixed with `satisfies`, which checks the schema
+   against the interface while KEEPING the narrower inferred type. Verified erasable under
+   `erasableSyntaxOnly`.
+2. **A recursive generic cannot use `satisfies`** — `z.lazy` has nothing to infer from — so it stays
+   annotated. That is the same trade the non-generic path already makes, and a lazy variant already
+   forces its union onto `z.union`.
+
+## Emitted shape, for reference
+
+```ts
+export interface FxBox<T> { item: T; label: string }
+export const FxBox = <T>(TSchema: z.ZodType<T>) =>
+    z.object({ item: TSchema, label: z.string() }) satisfies z.ZodType<FxBox<T>>
+
+export interface FxTreeOf<T> { value: T; children: FxTreeOf<T>[] }
+export const FxTreeOf = <T>(TSchema: z.ZodType<T>): z.ZodType<FxTreeOf<T>> =>
+    z.lazy(() => z.object({ value: TSchema, children: z.array(FxTreeOf(TSchema)) }))
+
+export type FxStorable<T> = FxStorableNew<T> | FxStorableStored<T>
+export const FxStorable = <T>(TSchema: z.ZodType<T>): z.ZodType<FxStorable<T>> =>
+    z.discriminatedUnion('_type', [FxStorableNew(TSchema), FxStorableStored(TSchema)])
+```
+
+The schema argument is named `<Param>Schema` — suffixed rather than case-mangled so it is injective:
+parameter names are unique within a declaration, whereas lower-casing would collapse `T` and `t`.
 
 ## Review record (filled by /feature-review)
 
@@ -124,7 +156,8 @@ positions, with the same ordering constraints as today.)
 
 ## Follow-ups
 
-- [ ] Re-check whether `expects<T>(tsName)` is still wanted once names are no longer computed — it may
-      become unnecessary, which would be a second problem removed.
-- [ ] Update the plan doc's locked-decisions table and the DOCS follow-up: generic emission changes the
+- [ ] **`expects<T>(tsName)` now looks unnecessary.** A generated name is the class's simple name and
+      nothing else, so a component author no longer has to guess at `PageOfLock`. Confirm and delete the
+      proposal from `20260730-frontend-sdk-vue-contributors.md`.
+- [x] Update the plan doc's locked-decisions table and the DOCS follow-up: generic emission changes the
       public shape of every generated SDK.
