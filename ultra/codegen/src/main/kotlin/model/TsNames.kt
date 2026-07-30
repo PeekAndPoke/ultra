@@ -6,10 +6,12 @@ import kotlin.reflect.jvm.jvmName
 /**
  * Derives TypeScript names from Kotlin types.
  *
- * Generic types are monomorphized: `PageOf<Talk>` becomes `PageOfTalk`, not a generic `PageOf<T>`.
- * See the task doc for the rationale — in short, the walker reifies type arguments anyway (so
- * monomorphizing is free while staying generic would mean un-reifying), and generic zod schemas
- * require function-valued schemas that `z.infer` cannot see through.
+ * A name is the class's own name and nothing else.
+ *
+ * Generic types are emitted GENERICALLY, so type arguments live on the reference — `PageOf<Talk>` in
+ * type position, `PageOf(Talk)` in schema position — rather than being baked into a monomorphized name
+ * such as `PageOfTalk`. Two same-named classes in different packages therefore still collapse onto one
+ * name; that is caught by the collision check in `TsModelValidator`.
  */
 object TsNames {
 

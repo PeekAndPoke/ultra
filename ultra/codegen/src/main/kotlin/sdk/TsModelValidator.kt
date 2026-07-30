@@ -79,6 +79,7 @@ class TsModelValidator(
             addAll(unresolvedProblems(model))
             addAll(undeterminedProblems(model))
             addAll(nameCollisionProblems(model))
+            addAll(identifierProblems(model))
             addAll(danglingReferenceProblems(model))
             addAll(missingSchemaProblems(model))
             addAll(codecParityProblems(model))
@@ -119,6 +120,81 @@ class TsModelValidator(
             fix = "claim it in a TsSdkContributor: claims.map<${it.id.simpleName}>(tsName = ..., from = ...), " +
                     "or claims.opaque<${it.id.simpleName}>(reason = ...)",
         )
+    }
+
+    /**
+     * Identifiers TypeScript will not accept, or will bind to something other than what we mean.
+     *
+     * Declaration names and type-parameter names are spliced into the emitted source raw — escaping
+     * only applies to string literals and property keys, which are different positions. Kotlin permits
+     * names TypeScript reserves (`infer`, `string`, `never`), and permits a type parameter to shadow a
+     * class. Generic emission widened this sharply: an interface body used to be written out only for
+     * a RECURSIVE declaration, and now every generic declaration has one, so every `Map` inside a
+     * generic reaches a `Record<string, …>` type position where a local `Record` would capture it.
+     *
+     * Some of these are loud in `tsc` and some are silent, but a consumer generating an SDK has no
+     * `tsc` in the pipeline — and a parameter named `infer` is a SYNTAX error, which makes `tsc` skip
+     * semantic checking for the whole file and mask every other problem in it.
+     */
+    private fun identifierProblems(model: TypeModel): List<Problem> {
+        val bare = Regex("[A-Za-z_$][A-Za-z0-9_$]*")
+
+        // TypeScript reserves these in type position; `z` is the zod import; `Record` and `Array` are
+        // globals the emitter itself emits references to.
+        val reserved = setOf(
+            "any", "unknown", "never", "void", "object", "string", "number", "boolean", "symbol",
+            "bigint", "null", "undefined", "infer", "keyof", "typeof", "readonly", "z",
+            "Record", "Array", "Promise",
+        )
+
+        fun problem(name: String, where: String, why: String) = Problem(
+            subject = name,
+            detail = "$why — emitted as $where",
+            path = emptyList(),
+            fix = "rename the Kotlin declaration or type parameter, or claim the type with an " +
+                    "explicit distinct tsName",
+        )
+
+        return model.decls.values.flatMap { decl ->
+            val declNames = model.decls.values.map { it.name }.toSet()
+
+            buildList {
+                if (!decl.name.matches(bare)) {
+                    add(problem(decl.name, "a TypeScript declaration name", "not a valid identifier"))
+                }
+
+                if (decl.name in reserved) {
+                    add(problem(decl.name, "a TypeScript declaration name", "shadows a TypeScript built-in"))
+                }
+
+                decl.typeParams.forEach { param ->
+                    if (!param.matches(bare)) {
+                        add(problem(param, "a type parameter of '${decl.name}'", "not a valid identifier"))
+                    }
+
+                    if (param in reserved) {
+                        add(problem(param, "a type parameter of '${decl.name}'", "is reserved by TypeScript"))
+                    }
+
+                    // A parameter shadowing a declaration makes every reference to that declaration
+                    // inside this body silently mean the parameter instead.
+                    if (param in declNames) {
+                        add(
+                            problem(
+                                param,
+                                "a type parameter of '${decl.name}'",
+                                "shadows the generated type '$param'",
+                            )
+                        )
+                    }
+                }
+
+                // Two parameters whose schema arguments collide would bind the same identifier twice.
+                decl.typeParams.groupBy { "${it}Schema" }.filterValues { it.size > 1 }.forEach { (arg, ps) ->
+                    add(problem(arg, "a factory argument of '${decl.name}'", "collides for ${ps.joinToString()}"))
+                }
+            }
+        }
     }
 
     /** Two distinct Kotlin types that would generate the same TypeScript name. */

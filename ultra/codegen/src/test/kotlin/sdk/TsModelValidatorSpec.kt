@@ -4,8 +4,12 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.peekandpoke.ultra.codegen.model.FxGenericMatrix
 import io.peekandpoke.ultra.codegen.model.FxHoldsAny
+import io.peekandpoke.ultra.codegen.model.FxHoldsInferParam
 import io.peekandpoke.ultra.codegen.model.FxHoldsInterface
+import io.peekandpoke.ultra.codegen.model.FxHoldsRecordShadow
+import io.peekandpoke.ultra.codegen.model.FxHoldsSelfShadow
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
 import io.peekandpoke.ultra.codegen.model.FxStarList
 import io.peekandpoke.ultra.codegen.model.FxTalk
@@ -86,6 +90,45 @@ class TsModelValidatorSpec : FreeSpec() {
                 )
 
                 TsModelValidator(SlumberConfig.default).validate(claimed).ok shouldBe true
+            }
+        }
+
+        "identifiers TypeScript will not accept" - {
+
+            // Escaping (ef5eba72) covers string literals and property keys. Declaration names and type
+            // parameters are DIFFERENT positions and were spliced in raw. Generic emission widened the
+            // blast radius: an interface body used to be written out only for a recursive declaration,
+            // and now every generic declaration has one.
+
+            fun report(type: KType) = TsModelValidator(SlumberConfig.default).validate(walk(type))
+
+            "a class named Record captures the global the emitter uses for every Map" {
+                // Emits `entries: Record<string, T>` inside the interface, which binds to the LOCAL
+                // Record — tsc reports TS2315, "Type 'Record' is not generic".
+                val r = report(typeOf<FxHoldsRecordShadow>())
+
+                r.ok shouldBe false
+                r.format() shouldContain "Record"
+                r.format() shouldContain "built-in"
+            }
+
+            "a type parameter named `infer` is a TypeScript syntax error" {
+                // Worse than it looks: a syntax error makes tsc skip semantic checking for the whole
+                // file, masking every other problem in it.
+                val r = report(typeOf<FxHoldsInferParam>())
+
+                r.ok shouldBe false
+                r.format() shouldContain "reserved"
+            }
+
+            "a type parameter shadowing its own declaration" {
+                report(typeOf<FxHoldsSelfShadow>()).format() shouldContain "shadows the generated type"
+            }
+
+            "an ordinary model raises nothing" {
+                withClue("this must not fire for well-named code, or it is just noise") {
+                    report(typeOf<FxGenericMatrix>()).ok shouldBe true
+                }
             }
         }
 

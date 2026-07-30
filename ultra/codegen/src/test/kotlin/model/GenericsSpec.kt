@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.ultra.codegen.model.FxHoldsSame
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -250,6 +251,14 @@ class GenericsSpec : FreeSpec() {
                 // FxBatched<U> : FxFeed<List<U>> has matching arity but is not a pass-through, so the
                 // old arity check accepted it and emitted a schema demanding one list level too many.
                 val model = walk(typeOf<FxHoldsFeed>())
+
+                model.undetermined.map { it.reason }.any { "one-to-one" in it } shouldBe true
+            }
+
+            "a child binding one parameter to BOTH of its parent's is reported" {
+                // FxBoth<A> : FxSame<A, A>. Arity matches and every child parameter IS bound, so only
+                // checking coverage lets it through with a last-wins map — emitting FxBoth<Y>.
+                val model = walk(typeOf<FxHoldsSame>())
 
                 model.undetermined.map { it.reason }.any { "one-to-one" in it } shouldBe true
             }

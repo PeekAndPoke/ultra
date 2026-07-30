@@ -423,3 +423,29 @@ data class FxSingle<T>(val item: T) : FxFeed<T>()
 data class FxBatched<U>(val items: List<U>) : FxFeed<List<U>>()
 
 data class FxHoldsFeed(val feed: FxFeed<List<String>>)
+
+//  Identifiers TypeScript will not accept  //////////////////////////////////////////////////////////
+
+/** A Kotlin class named `Record` captures the TypeScript global the emitter uses for every Map. */
+data class Record(val id: String)
+
+data class FxUsesRecord<T>(val entries: Map<String, T>, val rec: Record)
+
+data class FxHoldsRecordShadow(val cfg: FxUsesRecord<String>)
+
+/** `infer` is not a Kotlin keyword; in TypeScript it is a SYNTAX error in type-parameter position. */
+data class FxInferParam<infer>(val v: infer)
+
+data class FxHoldsInferParam(val p: FxInferParam<String>)
+
+/** A type parameter shadowing its own declaration's name. */
+data class FxSelfShadow<FxSelfShadow>(val v: FxSelfShadow)
+
+data class FxHoldsSelfShadow(val s: FxSelfShadow<String>)
+
+/** A child binding ONE of its parameters to BOTH of its parent's — not a bijection either. */
+sealed class FxSame<X, Y>
+
+data class FxBoth<A>(val a: A) : FxSame<A, A>()
+
+data class FxHoldsSame(val same: FxSame<String, String>)

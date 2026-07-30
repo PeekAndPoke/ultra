@@ -127,6 +127,10 @@ class TypeWalker(
             }
         }
 
+        // A duplicate binding (`Both<A> : Same<A, A>`) is not a bijection either — without this the
+        // map silently last-wins and emits `Both<Y>`, which the KDoc above promises not to do.
+        if (binding.size != parentParams.size) return null
+
         // Every one of the child's parameters must be accounted for, or the reference is incomplete.
         return child.typeParameters
             .map { binding[it.name] ?: return null }
