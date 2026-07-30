@@ -381,11 +381,135 @@ Also replaced two `ValueSortedMapSpec` tests that only existed to exercise the d
 - Dependent modules after deleting their compiled test classes: slumber **1232**, vault **285**, 0 failures.
 - Compile sweep (`compileKotlin{,Test}{Jvm,Js,}`) — 0 errors.
 
-## Follow-ups
+---
 
-- [ ] **DESIGN, awaiting the maintainer** — the five questions: eviction notification (root cause),
-      `V : Any` bound, `maxMemoryUsage` credibility, `NullableCache` per-key single-flight, refresh
-      cancellation. Agreed approach: **write the failing tests first**, then decide.
+## DESIGN ROUND — failing specs written 2026-07-30, awaiting decisions
+
+`CacheKnownDefectsSpec` (commonTest, 7) and `CacheKnownDefectsJvmSpec` (jvmTest, 3).
+**Deliberately RED and deliberately NOT COMMITTED** — they pin each defect so its scope is a fact
+rather than a description. Every one asserts what the existing contract already promises.
+
+| # | Assertion | Fails on | Actual failure |
+|---|---|---|---|
+| Q1a | a key evicted by `maxEntries` is not reloaded by `refreshAfterWrite` | all 3 | `"a"` reloaded at indexes **[0, 2, 4, 6, 8]** — five reloads in 600 ms |
+| Q1b | `totalSize` stops counting an entry another behaviour evicted | all 3 | `expected 100, was 200` — exactly double, the evicted entry still counted |
+| Q2 | a stored `null` is visible to `has`/`getOrPut` | all 3 | `has("k")` -> `false` while `size == 1` |
+| Q3a | an estimate reflects how much data an object holds | **native only** | flat charge, `ByteArray(8)` == `ByteArray(100_000)` |
+| Q3b | a `Double` costs more than a `Byte` | **JS only** | both charged 1 byte |
+| Q3c | a JDK type with inaccessible fields is not charged an empty object's size | JVM | `StringBuilder` holding 200k chars -> **16** |
+| Q3d | JDK leaf types are not all one constant | JVM | `BigDecimal(35 digits)` and `Instant` both -> **16** |
+| Q3e | a map is charged for its per-entry nodes | JVM | overhead **16016** for 1000 entries = 16 B/entry vs ~48 B real |
+| Q4 | `getOrPutAsync` does not deadlock on a nested resolve | all 3 | `TimeoutCancellationException` after 3 s — a real deadlock |
+| Q5 | a hard-evicted entry does not come back when the loader returns | all 3 | it reappears |
+
+**The platform predictions held exactly**: Q3a fails on native and nowhere else; Q3b fails on JS and
+nowhere else. Both pass on the platforms where the defect does not apply, so they are pinning the
+platform gap rather than a generic weakness. This is the first running confirmation of the JS
+number-sizing claim, which until now was only read out of compiled output.
+
+**Two probes were wrong on the first attempt** and are recorded because the corrections change what
+the findings mean:
+
+- **Q5 initially PASSED.** A single late assertion missed it: the resurrected entry gets a *fresh*
+  write timestamp, so the hard TTL evicts it again ~200 ms later and a late snapshot shows it absent.
+  The resurrection is real but transient — it needs polling, not a delay-then-check.
+- **Q3e initially PASSED** against a total-size threshold, because the `String` keys dominate the
+  total and hid the container overhead completely. Isolating overhead (`estimate(map) -
+  sum(estimate(k) + estimate(v))`) is what makes the 16-vs-48 bytes/entry gap visible.
+
+---
+
+## DESIGN ROUND — RESOLVED 2026-07-30
+
+Maintainer decisions, and what was implemented for each.
+
+### Q1 — evictions are now announced (agreed)
+
+`removeSilently` records a `RemoveAction`, so **every** behaviour learns about an eviction, not just
+the one that asked for it. Every behaviour already handled `RemoveAction`, so the notification path
+did not have to be invented. It also now returns whether it actually removed anything.
+
+Fixes Q1a (refresh no longer reloads evicted keys) and Q1b (`totalSize` stops counting freed bytes).
+
+### Q2 — the cache is null-tolerant, `V : Any` NOT introduced (maintainer's preference)
+
+Rather than bounding `V`, `FastCache` now distinguishes "absent" from "present and null" throughout —
+`has`, `get`, `getOrPut` and `removeSilently`.
+
+The cost is nil for caches that never store null: `map[key]` returning non-null already settles
+presence, so only the null case pays the extra `containsKey`. Implemented as a private
+`lookup(key): Holder<V>?`, where `null` means absent and a `Holder` may legitimately carry `null`.
+
+This keeps slumber's `Cache<Any?, Any?>` (`DataClassSlumberer.kt:70`) working untouched, which the
+`V : Any` route would have broken.
+
+Folded in: `getOrPut`'s "another thread won" branch now records a `ReadAction` (F13). Without it a
+key served only through that branch aged as if never touched and was evicted early.
+
+### Q3 — documented, not fixed (maintainer: "put a comment")
+
+`ObjectSizeEstimator`'s KDoc now states the accuracy limits per platform, with the measured figures:
+native charges every custom object a flat 32 bytes; JS charges every number 1 byte; JVM under-counts
+map entries ~3x and charges JPMS-inaccessible types (`Instant`, `BigDecimal`, `StringBuilder`) a flat
+16 bytes. `Builder.maxMemoryUsage` says outright that it is a budget in estimated bytes, not a memory
+bound.
+
+The five Q3 specs were **deleted** — they pinned defects that are staying, and leaving them red or
+inverting them into characterisation tests would have blessed the behaviour as contract.
+The measurements survive here and in the KDoc.
+
+### Q4 — per-key single-flight (agreed)
+
+The process-wide `kotlinx.coroutines.sync.Mutex` is gone. `getOrPutAsync` now claims a key under the
+short existing lock and runs the provider with **no lock held**, so nested resolution works and
+unrelated keys do not serialise. Concurrent callers for one key join a `CompletableDeferred`.
+
+A joiner whose owner failed retries rather than inheriting an exception raised on another call
+stack, so a failed provider does not poison the key.
+
+**Replacing the mutex removed a guarantee it gave for free**, so three tests were added to show the
+replacement still provides it: single-flight for a non-null result, for a null result, and recovery
+after a failing provider.
+
+### Q5 — refresh re-checks membership (agreed, "if possible")
+
+Possible and cheap: a private `putIfPresent`. A refresh whose loader outlives the hard TTL no longer
+resurrects the entry. Same protection for an explicit `remove()` racing an in-flight refresh.
+
+Folded in while there: the refresh `catch` no longer swallows `CancellationException`, and a failed
+refresh is reported instead of vanishing (F4, partially).
+
+### Mutation results — design round
+
+| Mutation | Killed by |
+|---|---|
+| M7 stop recording `RemoveAction` | `Q1a` **and** `Q1b` — both root-cause symptoms, correctly |
+| M8 presence test back to `value != null` | `Q2` |
+| M9 restore the mutex-based `getOrPutAsync` | `Q4` |
+| M10 refresh puts back unconditionally | `Q5` |
+| M11 never join an in-flight provider | `NullableCacheConcurrencySpec` (2) |
+
+**5 mutations, 5 killed**, each hitting exactly its own test and nothing else.
+
+### Test evidence — design round
+
+- cache: jvmTest **134**, jsBrowserTest **120**, linuxX64Test **119** — 0 failures.
+- slumber **1232**, vault **285** — 0 failures, after deleting their compiled test classes.
+- Compile sweep across every module and target — 0 errors.
+
+### Still open, deliberately
+
+- **F3 immortal entries.** `removeSilently` now reports whether it removed, but the four `evict()`
+  call sites still drop their own tracking *before* asking. Wiring them to the return value is the
+  remaining half.
+- **F9** statistics/`totalSize` memory visibility; **C9** JVM `Class -> Field[]` memoization;
+  **C6** the blanket `catch (_: Throwable)` in JVM `getFieldsOf`; **F15** estimating on reads;
+  **F16** eviction listeners running under the lock; **F17** LRU resolved only per loop iteration.
+- `VisitedSet` is O(n²) by identity scan — correct, but an identity-keyed set needs an expect/actual.
+- Test hygiene: two filename/class mismatches, and `FastCacheMaxMemoryUsageSpec.kt:188` is still
+  `.config(enabled = false)` — it can be re-enabled now that `totalSize` is correct.
+
+## Follow-ups
 - [ ] `VisitedSet` is now O(n²) by identity scan. Correct, but an identity-keyed set
       (`IdentityHashMap` / JS `Set` / native fallback) needs an expect/actual — deferred with the
       estimator design question.

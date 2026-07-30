@@ -1,8 +1,7 @@
 package io.peekandpoke.ultra.cache
 
 import io.peekandpoke.ultra.common.RunSync
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CompletableDeferred
 
 /**
  * Memoizes lookups that can legitimately resolve to nothing, so a miss is only paid for once.
@@ -13,17 +12,34 @@ import kotlinx.coroutines.sync.withLock
  * this one deliberately does not. Nothing is ever evicted here, so use it where the key space is
  * bounded or the instance is short-lived.
  *
- * [getOrPut] and [getOrPutAsync] each run the provider at most once per key among concurrent callers
- * of that same method. They lock independently, so a blocking and a suspending caller racing for one
- * key can both run their provider.
+ * [getOrPutAsync] is single-flight **per key**: concurrent callers for one key share one provider
+ * run, and callers for different keys never wait on each other. A provider may therefore safely
+ * resolve other keys through the same cache — which is the normal shape for nested reference
+ * resolution.
+ *
+ * [getOrPut] is single-flight per key among blocking callers. The two do not coordinate with each
+ * other, so a blocking and a suspending caller racing for the same key can both run their provider.
  */
 class NullableCache<K : Any, V : Any> {
 
     private val lock = Any()
 
-    private val mutex = Mutex()
-
     private val entries = mutableMapOf<K, Any>()
+
+    /** Providers currently running, by key, so concurrent callers join instead of duplicating work. */
+    private val inFlight = mutableMapOf<K, CompletableDeferred<Any>>()
+
+    /** Outcome of trying to take responsibility for computing one key. */
+    private sealed interface Claim {
+        /** Already cached — nothing to compute. */
+        class Cached(val encoded: Any) : Claim
+
+        /** Someone else is computing it; wait for them rather than running the provider again. */
+        class Join(val deferred: CompletableDeferred<Any>) : Claim
+
+        /** Nobody is computing it; this caller must, and must complete [deferred] either way. */
+        class Own(val deferred: CompletableDeferred<Any>) : Claim
+    }
 
     /** Number of cached keys, counting those cached as null. */
     val size: Int get() = RunSync(lock) { entries.size }
@@ -61,16 +77,55 @@ class NullableCache<K : Any, V : Any> {
         }
     }
 
-    /** Suspending [getOrPut], for providers that need to await, such as a database round trip. */
+    /**
+     * Suspending [getOrPut], for providers that need to await, such as a database round trip.
+     *
+     * The provider runs while **no** lock is held, so it may resolve other keys through this same
+     * cache. A single process-wide [kotlinx.coroutines.sync.Mutex] used to span the provider here;
+     * being non-reentrant, any nested resolve deadlocked permanently, and unrelated keys serialised
+     * behind each other's round trips.
+     */
     suspend fun getOrPutAsync(key: K, provider: suspend () -> V?): V? {
-        read(key)?.let { return it.decode() }
+        while (true) {
+            when (val claim = claim(key)) {
+                is Claim.Cached -> return claim.encoded.decode()
 
-        // TODO(scan): the Mutex is not re-entrant and spans all keys - a nested call deadlocks, others serialise.
-        return mutex.withLock {
-            read(key)?.let { return@withLock it.decode() }
+                is Claim.Join -> {
+                    // Await outside the lock, then re-claim: if the owner succeeded the value is
+                    // cached, and if it failed this caller takes over rather than inheriting an
+                    // exception raised on somebody else's call stack.
+                    runCatching { claim.deferred.await() }
+                }
 
-            provider().also { put(key, it) }
+                is Claim.Own -> {
+                    val encoded = try {
+                        provider().encode()
+                    } catch (e: Throwable) {
+                        RunSync(lock) { inFlight.remove(key) }
+                        claim.deferred.completeExceptionally(e)
+                        throw e
+                    }
+
+                    RunSync(lock) {
+                        entries[key] = encoded
+                        inFlight.remove(key)
+                    }
+
+                    claim.deferred.complete(encoded)
+
+                    return encoded.decode()
+                }
+            }
         }
+    }
+
+    /** Decides, under the lock, whether this caller reads, waits, or computes. */
+    private fun claim(key: K): Claim = RunSync(lock) {
+        entries[key]?.let { return@RunSync Claim.Cached(it) }
+
+        inFlight[key]?.let { return@RunSync Claim.Join(it) }
+
+        Claim.Own(CompletableDeferred<Any>().also { inFlight[key] = it })
     }
 
     private fun read(key: K): Any? = RunSync(lock) { entries[key] }

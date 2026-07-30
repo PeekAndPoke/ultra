@@ -7,6 +7,29 @@ import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
  *
  * Used by [FastCache.MaxMemoryUsageBehaviour] to track cumulative memory
  * consumption and trigger eviction when a threshold is exceeded.
+ *
+ * ## Accuracy — read this before relying on a byte budget
+ *
+ * The result is a rough heuristic, and its error is not uniform across platforms. Measured
+ * 2026-07-30; every figure below is reproducible, and the known-wrong cases are recorded in
+ * `.claude/tasks/20260730-cache-scan-findings.md` rather than fixed. **Treat
+ * [FastCache.Builder.maxMemoryUsage] as a relative pressure signal, not a guarantee.**
+ *
+ * - **Native: no per-object detail at all.** `ObjectSizeEstimatorPlatform.getFieldsOf` returns
+ *   `null`, so *every* custom object is charged a flat `objectHeader + 2 * pointerSize` = 32 bytes.
+ *   A data class holding a 10 MB `ByteArray` is charged 32 bytes, so a memory bound never fires.
+ * - **JS: every number costs 1 byte.** `Int`, `Short`, `Float` and `Double` are all a JS `number`,
+ *   which the `is Byte` branch matches first — an 8x under-estimate for numeric payloads.
+ * - **JVM: collections and maps are under-counted several-fold.** A map is charged
+ *   `objectHeader + 2n * pointerSize`, i.e. 16 bytes per entry, against roughly 48 real once the
+ *   backing table, its growth slack and each `LinkedHashMap.Entry` are counted. Elements are also
+ *   charged their raw value size rather than the box.
+ * - **JVM: types whose fields are inaccessible are charged 16 bytes.** Under JPMS `setAccessible`
+ *   throws and the field is dropped, so `Instant`, `LocalDate`, `UUID`, `BigDecimal`,
+ *   `StringBuilder` and `ByteBuffer` all estimate as an empty object regardless of what they hold.
+ *
+ * Errors do not cancel: `String` is over-counted under compact strings, and a key shared with a
+ * value is charged twice — both in the safe direction, the ones above are not.
  */
 interface ObjectSizeEstimator {
     /** Factory for the default implementation. */

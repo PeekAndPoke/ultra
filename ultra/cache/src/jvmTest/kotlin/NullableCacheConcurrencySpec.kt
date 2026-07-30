@@ -2,6 +2,10 @@ package io.peekandpoke.ultra.cache
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
@@ -47,6 +51,62 @@ class NullableCacheConcurrencySpec : StringSpec({
 
         subject.has("key") shouldBe true
         subject.get("key") shouldBe null
+    }
+
+    "getOrPutAsync runs the provider once per key for concurrent callers" {
+        val subject = NullableCache<String, String>()
+        val calls = AtomicInteger(0)
+
+        // The per-key single-flight replaced a process-wide Mutex. The Mutex guaranteed this for
+        // free; the replacement has to be shown to still do it, or the deadlock fix traded one
+        // defect for another.
+        val results = coroutineScope {
+            (1..8).map {
+                async {
+                    subject.getOrPutAsync("key") {
+                        calls.incrementAndGet()
+                        delay(50)
+                        "value"
+                    }
+                }
+            }.awaitAll()
+        }
+
+        calls.get() shouldBe 1
+        results.all { it == "value" } shouldBe true
+    }
+
+    "getOrPutAsync runs the provider once per key for a NULL result too" {
+        val subject = NullableCache<String, String>()
+        val calls = AtomicInteger(0)
+
+        coroutineScope {
+            (1..8).map {
+                async {
+                    subject.getOrPutAsync("key") {
+                        calls.incrementAndGet()
+                        delay(50)
+                        null
+                    }
+                }
+            }.awaitAll()
+        }
+
+        calls.get() shouldBe 1
+        subject.has("key") shouldBe true
+    }
+
+    "a failing provider does not poison the key for later callers" {
+        val subject = NullableCache<String, String>()
+
+        // The owner removes its in-flight marker on failure, so a joiner must be able to take over
+        // rather than inheriting an exception raised on someone else's call stack.
+        runCatching {
+            subject.getOrPutAsync("key") { error("provider blew up") }
+        }.isFailure shouldBe true
+
+        subject.has("key") shouldBe false
+        subject.getOrPutAsync("key") { "recovered" } shouldBe "recovered"
     }
 
     "getOrPut runs the provider once for a non-null result under the same contention" {

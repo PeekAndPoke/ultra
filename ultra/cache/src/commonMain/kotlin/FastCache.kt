@@ -76,7 +76,14 @@ class FastCache<K, V>(
         /** Adds the [MaxEntriesBehaviour] to the cache. */
         fun maxEntries(maxEntries: Int) = addBehaviour(MaxEntriesBehaviour(maxEntries))
 
-        /** Adds the [MaxMemoryUsageBehaviour] to the cache. */
+        /**
+         * Adds the [MaxMemoryUsageBehaviour] to the cache.
+         *
+         * [maxMemorySize] is a **budget in estimated bytes, not a real memory bound** — see
+         * [ObjectSizeEstimator] for how far the estimate can be off, which differs per platform and
+         * is worst on native, where every custom object counts as 32 bytes whatever it holds. Pass a
+         * tuned [estimator], or a purpose-built one, where the number has to mean something.
+         */
         fun maxMemoryUsage(maxMemorySize: Long, estimator: ObjectSizeEstimator = ObjectSizeEstimator()) =
             addBehaviour(MaxMemoryUsageBehaviour(maxMemorySize, estimator))
 
@@ -598,12 +605,21 @@ class FastCache<K, V>(
                 cache.scope.launch {
                     try {
                         val newValue = loader(key)
-                        // TODO(scan): puts unconditionally, even if the key was removed meanwhile.
-                        cache.put(key, newValue)
-                    } catch (_: Exception) {
-                        // TODO(scan): swallows every failure without a trace, CancellationException included.
-                        // Refresh failed: allow retry on next loop iteration
+
+                        // Only refresh an entry that is still cached. A loader slower than the hard
+                        // TTL used to have its result put back unconditionally, so the entry
+                        // reappeared after being hard-evicted - i.e. the hard TTL was not hard. The
+                        // same applies to an explicit remove() racing an in-flight refresh.
+                        cache.putIfPresent(key, newValue)
+                    } catch (e: CancellationException) {
+                        // never swallow cancellation - it is how the scope is torn down
                         refreshingKeys.remove(key)
+                        throw e
+                    } catch (e: Exception) {
+                        // Refresh failed: allow retry on next loop iteration. There is no logger
+                        // here, so a repeatedly failing loader would otherwise be entirely silent.
+                        refreshingKeys.remove(key)
+                        println("FastCache refresh for key [$key] failed: $e")
                     }
                 }
             }
@@ -713,29 +729,52 @@ class FastCache<K, V>(
         lastActionsKeys.clear()
     }
 
-    /** Check if the cache contains the given key */
-    // TODO(scan): a stored null is indistinguishable from an absent key here and in get(), so a
-    //   null-valued entry reports false / records a MissAction while still occupying the map.
-    override fun has(key: K): Boolean = sync {
-        val value = map[key]
-        if (value != null) {
-            addAction(ReadAction(key, value))
-            true
-        } else {
-            addAction(MissAction(key))
-            false
+    /**
+     * Whether [key] is cached — including when it is cached with a `null` value.
+     *
+     * A `null` value is a legitimate cache entry: `V` is unconstrained and `FastCache<Any?, Any?>`
+     * is a real use (slumber caches serialized results, which can be null). Testing presence with
+     * `map[key] != null` made such an entry occupy a slot while every accessor denied it existed.
+     */
+    override fun has(key: K): Boolean = sync { readAndRecord(key) != null }
+
+    /**
+     * Returns the value for [key], or `null` if absent. Records a [ReadAction] or [MissAction].
+     *
+     * A cached `null` and an absent key both return `null` — use [has] to tell them apart. The
+     * recorded action distinguishes them correctly either way.
+     */
+    override fun get(key: K): V? = sync { readAndRecord(key)?.value }
+
+    /** Carries a cached value so that "absent" stays distinguishable from "present and null". */
+    private class Holder<V>(val value: V)
+
+    /** [lookup], plus the matching [ReadAction] / [MissAction]. Caller must hold the lock. */
+    private fun readAndRecord(key: K): Holder<V>? {
+        val holder = lookup(key)
+
+        when (holder) {
+            null -> addAction(MissAction(key))
+            else -> addAction(ReadAction(key, holder.value))
         }
+
+        return holder
     }
 
-    /** Returns the value for [key], or `null` if absent. Records a [ReadAction] or [MissAction]. */
-    override fun get(key: K): V? = sync {
+    /**
+     * Presence-tolerant read: `null` means absent, a [Holder] means present, possibly holding `null`.
+     *
+     * A non-null value settles presence without a second probe, so a cache that never stores null
+     * pays nothing; only the null case costs the extra `containsKey`. Caller must hold the lock.
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun lookup(key: K): Holder<V>? {
         val value = map[key]
-        if (value != null) {
-            addAction(ReadAction(key, value))
-        } else {
-            addAction(MissAction(key))
+
+        return when {
+            value != null || map.containsKey(key) -> Holder(value as V)
+            else -> null
         }
-        value
     }
 
     /** Inserts or updates the [value] for [key] and records a [PutAction]. */
@@ -753,18 +792,28 @@ class FastCache<K, V>(
      * value that lands in the map is returned.
      */
     override fun getOrPut(key: K, producer: () -> V): V {
-        // Fast path: try to get the existing value
-        get(key)?.let { return it }
+        // Fast path. Tests presence rather than nullness, so a key cached as null is served from the
+        // cache instead of re-running the producer on every call.
+        sync { readAndRecord(key) }?.let { return it.value }
 
         // Slow path: compute the value outside the lock
         // Tradeoff: the producer might be called multiple times when a race-condition occurs
         val newValue = producer()
 
         // Insert if it hasn't been put by another thread in the meantime
-        // TODO(scan): the "already there" branch records no ReadAction, so that access is invisible to
-        //   the statistics and to the access-ordered behaviours; a stored null also re-runs the put.
         return sync {
-            map[key] ?: newValue.also {
+            val existing = lookup(key)
+
+            if (existing != null) {
+                // Another thread won. Record the access: without it this hit is invisible to the
+                // statistics AND to the access-ordered behaviours, so a key served only through
+                // this branch ages as if it were never touched and gets evicted early.
+                addAction(ReadAction(key, existing.value))
+
+                return@sync existing.value
+            }
+
+            newValue.also {
                 map[key] = it
                 addAction(PutAction(key, it))
             }
@@ -778,21 +827,58 @@ class FastCache<K, V>(
         }
     }
 
-    private fun removeSilently(key: K) = sync {
+    /**
+     * Updates [key] to [value] only if it is still cached, and reports whether it did.
+     *
+     * Used by the refresh path: a value loaded for an entry that has since been evicted must not
+     * resurrect it.
+     */
+    private fun putIfPresent(key: K, value: V): Boolean = sync {
+        if (!map.containsKey(key)) {
+            return@sync false
+        }
+
+        map[key] = value
+        addAction(PutAction(key, value))
+
+        true
+    }
+
+    /**
+     * Evicts [key] on behalf of a behaviour, unless it was touched since the current batch was taken.
+     *
+     * Returns true when the entry was actually removed. Callers must not drop their own tracking for
+     * a key this declined, or the entry stays in the map with no behaviour watching it — never
+     * expired and never evicted again.
+     *
+     * Records a [RemoveAction] so that *every* behaviour learns about the eviction, not just the one
+     * that asked for it. Without it, `refreshAfterWrite` kept reloading keys `maxEntries` had
+     * evicted, and `MaxMemoryUsageBehaviour.totalSize` kept counting bytes that were already freed.
+     */
+    private fun removeSilently(key: K): Boolean = sync {
         // If there is a pending action for this key (e.g. it was just Put or Read),
         // it means the entry was recently updated or accessed, so we should NOT evict it.
         val hasPendingUpdates = lastActionsKeys.contains(key)
 
-        if (!hasPendingUpdates) {
-            // TODO(scan): `removed != null` cannot tell "was not there" from "held null", so evicting a
-            //   null value fires no listener and bumps no eviction count.
-            val removed = map.remove(key)
-            if (removed != null) {
-                // TODO(scan): user callbacks run while the lock is held - on native that is the single
-                //   process-wide spin lock, and a throwing callback kills the processing loop.
-                evictionListeners.forEach { listener -> listener(key, removed) }
-            }
+        if (hasPendingUpdates) {
+            return@sync false
         }
+
+        // containsKey, not `removed != null`: a null value is a real entry, and testing for null
+        // meant evicting one fired no listener and bumped no eviction count.
+        val wasPresent = map.containsKey(key)
+        val removed = map.remove(key)
+
+        if (wasPresent) {
+            addAction(RemoveAction(key))
+
+            // TODO(scan): user callbacks run while the lock is held - on native that is the single
+            //   process-wide spin lock, and a throwing callback starves the listeners behind it.
+            @Suppress("UNCHECKED_CAST")
+            evictionListeners.forEach { listener -> listener(key, removed as V) }
+        }
+
+        wasPresent
     }
 
     private fun addAction(action: Action<K, V>) {
