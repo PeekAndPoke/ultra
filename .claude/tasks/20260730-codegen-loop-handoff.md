@@ -83,7 +83,9 @@ Suggested order:
 - [x] **DONE `b68d3a61`** — `appendUnion` type-vs-schema position. Reproduced, fixed, mutation-tested
       2/2. Needed a union that is ITSELF lazy to cover type position; see the commit for why a union
       with nested variants can never be lazy.
-- [ ] `slumberConfig` — parity check on by default + named test entry point (authorized above)
+- [x] **DONE `53b68126`** — `slumberConfig` is now required; `TsSdkBuilder.forTesting(...)` is the
+      named test entry point and the check still RUNS there. No way to disable it at all. Enabling it
+      everywhere changed no existing result. Mutation-tested (4 tests die when the check is stubbed).
 - [ ] Walker `unknown` degradation in 5 positions → a `TypeModel` channel + advisory, fail by default
 - [ ] Name-collision check must include claimed `tsName`s (and `nameCollisionProblems` /
       `danglingReferenceProblems` have ZERO tests — add them)
@@ -117,19 +119,14 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 7 (2026-07-30, ~02:50).** §1 complete; §2 started. Both previously-unverified findings are
-now resolved by EXECUTION rather than reading:
+**Iteration 8 (2026-07-30, ~03:00).** §1 complete; §2 three items done. 139 tests green, 7 ts-verify
+fixtures. Tree clean for `ultra/codegen`.
 
-- `appendUnion` type-vs-schema position: real, fixed, mutation-tested 2/2 (`b68d3a61`).
-- `ultra/slumber` intermediate-sealed round-trip: real, REPRODUCED, and handed off to its own task file
-  `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`. **Not fixed here on purpose** —
-  battle-tested code needs its own review round. Codegen needs no change; it already reads what the
-  slumberer writes, which is the correct side.
+Done in §2 so far: `appendUnion` type-vs-schema (`56292476`), the `ultra/slumber` round-trip finding
+reproduced and handed to its own task file, and `slumberConfig` now mandatory (`53b68126`).
 
-138 tests green, 7 ts-verify fixtures, compile sweep green. Tree clean for `ultra/codegen`.
-
-Running tally: **three fixes so far were wrong, incomplete, or over-applied**, every one caught by
-writing the test rather than by re-reading the code.
+Running tally: **three fixes were wrong, incomplete or over-applied, and three assertions passed for
+the WRONG reason** — all six caught by mutation, none by review or re-reading.
 
 ### Habits that keep paying (and one I keep failing)
 
@@ -141,14 +138,15 @@ writing the test rather than by re-reading the code.
 - **FAILING REPEATEDLY: read the test count from `TEST-*.xml` BEFORE writing the commit message.** Two
   amends so far for a wrong number.
 
-**Next action:** §2, `slumberConfig` — make the codec-parity check the default and give the unsafe
-path a name at the call site. **This is pre-authorized**, so no decision is needed.
+**Next action:** §2, walker `unknown` degradation in 5 positions (`model/TypeWalker.kt` — record value,
+array item, alias target, non-`KClass` classifier). This is the Dart `dynamic` defect returning:
+`data class Report(val rows: List<*>)` emits `unknown[]` with NO entry in `unresolved` and no advisory.
 
-Shape: keep the constructor requiring a `SlumberConfig`, add something like
-`TsSdkBuilder.withoutCodecParityCheck(contributors)` for tests. Then fix the call sites — several specs
-construct `TsSdkBuilder(contributors = ...)` with no config today, and each needs a deliberate choice
-between supplying a real config and naming the unsafe path. Two reviewers raised this independently; it
-is the module's headline check and it is currently off by default.
+Needs a design call the maintainer has NOT pre-authorized: fail by default, or advise by default?
+Failing is consistent with "hard error on unmapped types" and with wrong-and-loud; but `List<*>` also
+NPEs on Slumber's own awake path, so such a type is already broken server-side and a hard error may be
+the honest answer. **Take the failing default, and say so in the note** — it is reversible and matches
+the locked decision. If it turns out to break existing fixtures, downgrade to an advisory and flag it.
 
 ### Working notes that paid off (keep using)
 
