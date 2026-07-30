@@ -228,14 +228,21 @@ class TypeWalker(
 
     /** A polymorphic parent becomes a discriminated union over its concrete children. */
     private fun declareUnion(id: TypeId, cls: KClass<*>, path: List<String>): TsTypeDecl.Union {
-        // Resolve the ROOT parent first, exactly as `createParentSlumberer` does — the children and
-        // the discriminator both hang off the class carrying the `Polymorphic.Parent` companion, which
-        // for an intermediate sealed class is not the declared class. The child path below already
-        // does this hop, so skipping it here made the two halves of one union disagree: the variants
-        // would carry `kind` while the union discriminated on `_type`.
+        // The DISCRIMINATOR hops to the root, the CHILDREN do not — and the asymmetry is deliberate.
+        //
+        // The field name comes from whatever `createParentSlumberer` writes, and that resolves
+        // `getParent(cls)` first (`builtin/polymorphism/Polymorphic.kt:122-124`). Skipping the hop made
+        // the two halves of one union disagree: variants carried `kind` while the union discriminated
+        // on `_type`, which throws at module evaluation.
+        //
+        // The variant SET is a different question. `createParentSlumberer` builds a wide map because it
+        // looks up the runtime class of any value; but a field declared as an intermediate sealed class
+        // can only ever hold that class's own subclasses, so widening to the root would emit
+        // declarations for types the endpoint cannot return. `createParentAwaker` — the parsing
+        // direction, which is what the generated schema performs — keys on `cls` for the same reason.
         val parent = PolymorphicParentUtil.getParent(cls) ?: cls
 
-        val children = PolymorphicParentUtil.getChildren(parent)
+        val children = PolymorphicParentUtil.getChildren(cls)
 
         val variants = children.map { child ->
             val childId = TypeId.of(child.createBareType())

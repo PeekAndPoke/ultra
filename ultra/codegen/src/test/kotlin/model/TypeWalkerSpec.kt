@@ -152,6 +152,59 @@ class TypeWalkerSpec : FreeSpec() {
                 }
             }
 
+            "resolves the discriminator from the ROOT parent, not from the declared class" {
+                val model = walkOf(typeOf<FxDeepRoot.Middle>())
+
+                val union = model.declFor(typeOf<FxDeepRoot.Middle>())
+                    .shouldBeInstanceOf<TsTypeDecl.Union>()
+
+                withClue("Middle has no companion of its own; createParentSlumberer hops to the root") {
+                    union.discriminatorField shouldBe "kind"
+                }
+            }
+
+            "an intermediate sealed class lists only ITS OWN subclasses as variants" {
+                val model = walkOf(typeOf<FxDeepRoot.Middle>())
+
+                val union = model.declFor(typeOf<FxDeepRoot.Middle>())
+                    .shouldBeInstanceOf<TsTypeDecl.Union>()
+
+                withClue("a Middle-typed field cannot hold Direct, so the SDK must not declare it") {
+                    union.variants shouldContainExactly listOf(
+                        TypeId.of(FxDeepRoot.Leaf::class.createBareType()),
+                    )
+                }
+
+                withClue("and the unreachable sibling must not be pulled into the model at all") {
+                    model.declFor(FxDeepRoot.Direct::class.createBareType()) shouldBe null
+                }
+            }
+
+            "every union agrees with its variants on the discriminator field" {
+                // The invariant that actually breaks: z.discriminatedUnion(field, [...]) throws at
+                // module evaluation when an option does not carry `field`. The root-parent bug produced
+                // exactly that — the union said `_type` while its children said `kind`.
+                listOf(
+                    typeOf<FxDeepRoot.Middle>(),
+                    typeOf<FxDeepRoot>(),
+                    typeOf<FxShape>(),
+                    typeOf<FxEvent>(),
+                    typeOf<FxResult>(),
+                ).forEach { root ->
+                    val model = walkOf(root)
+
+                    model.decls.values.filterIsInstance<TsTypeDecl.Union>().forEach { union ->
+                        union.variants.forEach { variant ->
+                            val decl = model.decls[variant].shouldBeInstanceOf<TsTypeDecl.Obj>()
+
+                            withClue("$root: variant ${decl.name} of union ${union.name}") {
+                                decl.discriminator.shouldNotBeNull().field shouldBe union.discriminatorField
+                            }
+                        }
+                    }
+                }
+            }
+
             "honours Polymorphic.Child.identifier and @SerialName" {
                 val model = walkOf(typeOf<FxEvent>())
 

@@ -77,6 +77,32 @@ sealed class FxEvent {
     data class Deleted(val at: String) : FxEvent()
 }
 
+//  Polymorphism — the Polymorphic.Parent companion sits on the ROOT  ///////////////////////////////
+
+/**
+ * A three-level hierarchy whose `Polymorphic.Parent` companion is on the root.
+ *
+ * Walking the INTERMEDIATE class is what discriminates here: for the root, the declared class already
+ * is the companion holder, so correct and incorrect resolution agree and the test proves nothing.
+ * `createParentSlumberer` resolves `getParent(cls)` before reading the discriminator, so anything
+ * typed as [FxDeepRoot.Middle] is still written with the root's `kind`.
+ */
+sealed class FxDeepRoot {
+    companion object : Polymorphic.Parent {
+        override val discriminator: String = "kind"
+
+        // Left empty on purpose: `getChildren` unions this with `sealedSubclasses` and recurses, so a
+        // sealed hierarchy is discovered without listing anything here.
+        override val childTypes: Set<KClass<*>> = emptySet()
+    }
+
+    sealed class Middle : FxDeepRoot()
+
+    data class Leaf(val v: String) : Middle()
+
+    data class Direct(val w: String) : FxDeepRoot()
+}
+
 //  Wire strings that are not identifier-shaped  ////////////////////////////////////////////////////
 
 /**
