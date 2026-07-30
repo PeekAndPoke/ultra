@@ -1,6 +1,6 @@
 # Insights: split data from rendering, expose it through a superuser REST API
 
-**Status:** DESIGN — awaiting confirmation before implementing
+**Status:** IN REVIEW — steps 1-7 done, `/feature-review` pending
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
 **Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
 
@@ -167,13 +167,13 @@ Running unattended. Work the queue top-down; each step is done only when its cri
 
 | # | Step | Done when |
 |---|---|---|
-| 1 | `HeaderLogging` unit tests | exact + regex rules, last-match-wins, case-insensitivity, `DROP` removes the name, `REDACT` keeps it, the sensitive-name regex catches `x-amz-security-token`, an explicit later `LOG` beats it. **Mutation: flip a default rule to `LOG` and confirm a test fails** |
-| 2 | API DTOs | Slumber can describe every field; no `Any`, no star projections, no computed properties |
-| 3 | `InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() })` + `InsightsApiFeature`, registered in `insights_module.kt` | both endpoints answer; boot-time `AuthChainBootCheck` passes |
-| 4 | E2E via `AppSpec`/`AppUnderTest` | anonymous denied, non-superuser denied, superuser 200. **Mutation: set `authFloor = { public() }` and confirm the denial tests fail** — a gate test that survives the gate's removal is worthless |
-| 5 | E2E: open envelope | a record with an unknown collector key round-trips instead of failing the response |
-| 6 | E2E: no self-observation | calling the API produces no insights record of itself |
-| 7 | Compile sweep + full module tests | `^e:`-free; counts confirmed from `build/test-results/**/TEST-*.xml`, not from console alone |
+| 1 ✅ | `HeaderLogging` unit tests | exact + regex rules, last-match-wins, case-insensitivity, `DROP` removes the name, `REDACT` keeps it, the sensitive-name regex catches `x-amz-security-token`, an explicit later `LOG` beats it. **Mutation: flip a default rule to `LOG` and confirm a test fails** |
+| 2 ✅ | API DTOs | Slumber can describe every field; no `Any`, no star projections, no computed properties |
+| 3 ✅ | `InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() })` + `InsightsApiFeature`, registered in `insights_module.kt` | both endpoints answer; boot-time `AuthChainBootCheck` passes |
+| 4 ✅ | E2E via `AppSpec`/`AppUnderTest` | anonymous denied, non-superuser denied, superuser 200. **Mutation: set `authFloor = { public() }` and confirm the denial tests fail** — a gate test that survives the gate's removal is worthless |
+| 5 ✅ | E2E: open envelope | a record with an unknown collector key round-trips instead of failing the response |
+| 6 ✅ | E2E: no self-observation | calling the API produces no insights record of itself |
+| 7 ✅ | Compile sweep + full module tests | `^e:`-free; counts confirmed from `build/test-results/**/TEST-*.xml`, not from console alone |
 | 8 | `/feature-review` | **run it, record findings, then STOP.** Do not auto-fix security findings unattended — leave them for the maintainer |
 
 ### On hitting a wall: park it, do not exit
@@ -271,14 +271,35 @@ the complementary property, that the shape Slumber emits is the one a client par
 
 ## Test evidence
 
-- [ ] E2E via `AppSpec`/`AppUnderTest`: anonymous → denied; authenticated non-superuser → denied;
-      superuser → 200 with the record
-- [ ] **Mutation-test the gate** — flip `authFloor` to `public()` and confirm the denial tests fail. A
-      gate test that still passes with the gate removed is worthless
-- [ ] E2E: a record with an unknown collector key round-trips (proves the envelope stays open)
-- [ ] E2E: calling the API does not produce an insights record of itself (the URI-filter item above)
-- [ ] Unit: a short Authorization header neither throws nor is partially disclosed
-- [ ] Full test command(s) run + green: `...`
+All counts read from `build/test-results/**/TEST-*.xml`, never from console output.
+
+- [x] E2E via `AppSpec`/`AppUnderTest` (`funktor/all/src/jvmTest/kotlin/InsightsApiSpec.kt`, 8 tests):
+      anonymous → denied, authenticated non-superuser → denied, superuser → 200; a missing record is a
+      404 rather than an error; two different record paths are refused identically, so status cannot be
+      used to probe which files exist; the response never echoes the token that fetched it
+- [x] **Gate mutation** — `authFloor = { public() }` fails **5 of 8** e2e tests and **2 of 6** route
+      tests. Restored and re-verified green
+- [x] E2E/unit: a record naming an unknown collector round-trips with its payload intact
+      (`InsightsDataLoaderSpec`), and arbitrary JSON survives Slumber (`InsightsModelsSlumberSpec`)
+- [x] Unit: `InsightsFull.isExcluded` covers the API's own routes, derived from `InsightsApi.base`
+- [x] Unit: a short Authorization header neither throws nor is partially disclosed; no fragment of a
+      redacted value survives (`HeaderLoggingSpec`)
+- [x] **Redaction mutation** — flipping the sensitive-name rule to `LOG` fails 1 test; dropping `cookie`
+      from the known list fails exactly the Cookie/Set-Cookie test
+- [x] Compile sweep across jvm/js/common — no `^e:`
+- [x] Full commands: `./gradlew :funktor:insights:jvmTest :funktor:all:jvmTest` →
+      **42 tests / 5 specs** in insights and **146 tests / 10 specs** in funktor:all, 0 failures,
+      0 errors
+
+### Defects found by the tests themselves
+
+1. **Redaction rule shadowing** — the sensitive-name heuristic was appended after the known-sensitive
+   list, and last-match-wins meant `.*auth.*` overrode `authorization`'s own rule. Invisible while both
+   said REDACT; it would have surfaced as an un-redacted credential the first time the pattern's action
+   changed. Found by mutation, not by reading.
+2. **Over-broad self-observation filter** — `contains("/insights")` also matched an application's own
+   routes, so `/api/insights-dashboard` would have been silently unrecorded. Now matched against
+   `InsightsApi.base`.
 
 ## Review record (filled by /feature-review)
 
