@@ -8,6 +8,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.ultra.codegen.model.FxCustomCodecType
 import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxHoldsClaimed
+import io.peekandpoke.ultra.codegen.model.FxIdHolder
 import io.peekandpoke.ultra.codegen.model.FxMutualA
 import io.peekandpoke.ultra.codegen.model.FxNode
 import io.peekandpoke.ultra.codegen.model.FxPartlyClaimed
@@ -154,6 +155,19 @@ class TsModelEmitterSpec : FreeSpec() {
                 out shouldContain "parent: FxNode | null"
             }
 
+            "a value class on a cycle is deferred like any other recursive declaration" {
+                val out = emit(typeOf<FxIdHolder>())
+
+                withClue("FxIdHolder sorts before FxIds, so the ALIAS is emitted first and must defer") {
+                    out shouldContain "export const FxIds: z.ZodType<FxIds> = z.lazy(() =>"
+                    out shouldContain "export type FxIds ="
+                }
+
+                withClue("z.infer cannot see through z.lazy, so the alias cannot infer its own type") {
+                    out shouldNotContain "export type FxIds = z.infer"
+                }
+            }
+
             "mutually recursive types break the cycle exactly once" {
                 val out = emit(typeOf<FxMutualA>())
 
@@ -168,7 +182,11 @@ class TsModelEmitterSpec : FreeSpec() {
             "no schema references a const that is declared later, unless it is lazy" {
                 // The invariant that actually matters: a zod schema is a `const`, so referencing one
                 // declared further down the file is a temporal-dead-zone crash at import time.
-                listOf(typeOf<FxMutualA>(), typeOf<FxNode>(), typeOf<FxShape>(), typeOf<FxEvent>())
+                listOf(
+                    typeOf<FxMutualA>(), typeOf<FxNode>(), typeOf<FxShape>(), typeOf<FxEvent>(),
+                    // An ALIAS on a cycle — a shape none of the others cover.
+                    typeOf<FxIdHolder>(),
+                )
                     .forEach { root ->
                         val out = emit(root)
 

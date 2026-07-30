@@ -77,6 +77,21 @@ sealed class FxEvent {
     data class Deleted(val at: String) : FxEvent()
 }
 
+//  A value class ON a cycle  ///////////////////////////////////////////////////////////////////////
+
+/**
+ * A value class whose underlying type reaches back to the class holding it.
+ *
+ * Aliases are the one declaration kind that can be recursive without being an object or a union —
+ * `TsTypeDecl.Alias.referencedIds()` delegates to its target — so the emitter has to defer this one
+ * exactly as it defers a recursive object. A zod schema is a `const`, so an eager forward reference is
+ * a temporal-dead-zone error at module evaluation rather than a compile warning.
+ */
+@JvmInline
+value class FxIds(val items: List<FxIdHolder>)
+
+data class FxIdHolder(val ids: FxIds)
+
 //  Polymorphism — the Polymorphic.Parent companion sits on the ROOT  ///////////////////////////////
 
 /**

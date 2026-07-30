@@ -1,6 +1,8 @@
 package io.peekandpoke.ultra.codegen.ts
 
 import io.peekandpoke.ultra.codegen.model.FxEvent
+import io.peekandpoke.ultra.codegen.model.FxIdHolder
+import io.peekandpoke.ultra.codegen.model.FxIds
 import io.peekandpoke.ultra.codegen.model.FxNode
 import io.peekandpoke.ultra.codegen.model.FxQuoted
 import io.peekandpoke.ultra.codegen.model.FxResult
@@ -80,6 +82,14 @@ object TsFixtureGenerator {
             root = typeOf<FxResult>(),
             instance = FxResult.Done("done"),
             schemaType = typeOf<FxResult.Done>(),
+        ),
+        // A value class ON a cycle. `tsc` is what proves the deferral is needed: emitted eagerly this
+        // is TS2448, "block-scoped variable used before its declaration", which no Kotlin assertion
+        // about the emitted text can demonstrate.
+        Fixture(
+            name = "idHolder",
+            root = typeOf<FxIdHolder>(),
+            instance = FxIdHolder(FxIds(emptyList())),
         ),
         // Emitted TypeScript carrying a quote, a backslash and non-identifier keys. This is the only
         // check that the escaping produces something a real parser accepts: `tsc` compiles the file and
