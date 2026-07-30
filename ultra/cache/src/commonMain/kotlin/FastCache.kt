@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.cache
 import io.peekandpoke.ultra.common.RunSync
 import io.peekandpoke.ultra.common.WeakReference
 import io.peekandpoke.ultra.datetime.Kronos
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -99,7 +100,10 @@ class FastCache<K, V>(
         /** Builds the [FastCache] instance. */
         fun build() = FastCache(
             scope = scope,
-            behaviours = behaviours,
+            // Copied: handing the builder's own list over means reusing the builder afterwards
+            // mutates an already-built cache, and a behaviour added that way silently never gets
+            // its eviction listener registered - that happens once, in init.
+            behaviours = behaviours.toList(),
             loopDelay = loopDelay,
         )
     }
@@ -113,10 +117,18 @@ class FastCache<K, V>(
     }
 
     /** Records that a value was read from the cache. */
-    class ReadAction<K, V>(override val key: K, val value: V) : Action<K, V>
+    class ReadAction<K, V>(
+        override val key: K,
+        /** The value that was read. */
+        val value: V,
+    ) : Action<K, V>
 
     /** Records that a value was inserted or updated in the cache. */
-    class PutAction<K, V>(override val key: K, val value: V) : Action<K, V>
+    class PutAction<K, V>(
+        override val key: K,
+        /** The value that was written. */
+        val value: V,
+    ) : Action<K, V>
 
     /** Records that a key was removed from the cache. */
     class RemoveAction<K, V>(override val key: K) : Action<K, V>
@@ -131,6 +143,7 @@ class FastCache<K, V>(
      * recent action per key without re-scanning the list.
      */
     data class ActionUpdates<K, V>(
+        /** The recorded actions, in the order they happened. */
         val actions: List<Action<K, V>>,
     ) {
         /** Actions grouped by their key. */
@@ -165,15 +178,15 @@ class FastCache<K, V>(
      */
     @Suppress("DuplicatedCode")
     class ExpireAfterAccessBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
-        private data class Entry<K, V>(
-            val key: K,
-            val value: V,
+        // Deliberately holds no value: the behaviour never reads it, and keeping it would give every
+        // cached value a second strong reference that outlives the cache entry itself.
+        private data class Entry(
             val accessed: Long,
         )
 
         private val ttlMs = ttl.inWholeMilliseconds
         private val clock = Kronos.systemUtc
-        private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.accessed }
+        private val data = ValueSortedMap<K, Entry, Long> { it.accessed }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
@@ -188,12 +201,7 @@ class FastCache<K, V>(
         private fun handle(now: Long, key: K, action: Action<K, V>) {
             when (action) {
                 is ReadAction, is PutAction -> {
-                    val value = when (action) {
-                        is ReadAction -> action.value
-                        is PutAction -> action.value
-                    }
-
-                    data[action.key] = Entry(key = action.key, value = value, accessed = now)
+                    data[action.key] = Entry(accessed = now)
                 }
 
                 is RemoveAction -> data.remove(key)
@@ -202,6 +210,8 @@ class FastCache<K, V>(
             }
         }
 
+        // TODO(scan): drops the key from `data` before removeSilently decides - a concurrent read
+        //   re-adds it, but any other pending action leaves the entry in the map yet untracked.
         private fun evict(cache: FastCache<K, V>, key: K) {
             data.remove(key)
             cache.removeSilently(key)
@@ -223,15 +233,14 @@ class FastCache<K, V>(
      */
     @Suppress("DuplicatedCode")
     class ExpireAfterWriteBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
-        private data class Entry<K, V>(
-            val key: K,
-            val value: V,
+        // Deliberately holds no value - see ExpireAfterAccessBehaviour.Entry.
+        private data class Entry(
             val written: Long,
         )
 
         private val ttlMs = ttl.inWholeMilliseconds
         private val clock = Kronos.systemUtc
-        private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.written }
+        private val data = ValueSortedMap<K, Entry, Long> { it.written }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
@@ -246,7 +255,7 @@ class FastCache<K, V>(
         private fun handle(now: Long, key: K, action: Action<K, V>) {
             when (action) {
                 is PutAction -> {
-                    data[key] = Entry(key = key, value = action.value, written = now)
+                    data[key] = Entry(written = now)
                 }
 
                 is RemoveAction -> data.remove(key)
@@ -258,6 +267,8 @@ class FastCache<K, V>(
             }
         }
 
+        // TODO(scan): drops the key from `data` before removeSilently decides. Only a PutAction can
+        //   put it back here, so an entry declined because of a pending read is never expired again.
         private fun evict(cache: FastCache<K, V>, key: K) {
             data.remove(key)
             cache.removeSilently(key)
@@ -277,16 +288,20 @@ class FastCache<K, V>(
      * The least recently accessed entries are evicted first.
      */
     @Suppress("DuplicatedCode")
-    class MaxEntriesBehaviour<K, V>(maxEntries: Int) : Behaviour<K, V> {
-        private data class Entry<K, V>(
+    class MaxEntriesBehaviour<K, V>(private val maxEntries: Int) : Behaviour<K, V> {
+        // Holds the key (the eviction loop needs it) but never the value - see ExpireAfterAccess.
+        private data class Entry<K>(
             val key: K,
-            val value: V,
             val accessed: Long,
         )
 
         private val clock = Kronos.systemUtc
-        private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.accessed }
-        private val maxEntries = maxEntries.coerceAtLeast(1)
+        private val data = ValueSortedMap<K, Entry<K>, Long> { it.accessed }
+
+        init {
+            // Silently coercing to 1 turned `maxEntries(0)`, meant as "disable", into a 1-entry cache
+            require(maxEntries > 0) { "maxEntries must be > 0, but was $maxEntries" }
+        }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
@@ -298,15 +313,12 @@ class FastCache<K, V>(
             evictAllNecessary(cache)
         }
 
+        // TODO(scan): every action in one batch is stamped with the same `now`, so LRU order is only
+        //   resolved down to one loop iteration - within a batch it falls back to arrival order.
         private fun handle(now: Long, key: K, action: Action<K, V>) {
             when (action) {
                 is ReadAction, is PutAction -> {
-                    val value = when (action) {
-                        is ReadAction -> action.value
-                        is PutAction -> action.value
-                    }
-
-                    data[action.key] = Entry(key = action.key, value = value, accessed = now)
+                    data[action.key] = Entry(key = action.key, accessed = now)
                 }
 
                 is RemoveAction -> data.remove(key)
@@ -315,6 +327,7 @@ class FastCache<K, V>(
             }
         }
 
+        // TODO(scan): drops the key from `data` before removeSilently decides - see ExpireAfterAccessBehaviour.
         private fun evict(cache: FastCache<K, V>, key: K) {
             data.remove(key)
             cache.removeSilently(key)
@@ -342,19 +355,25 @@ class FastCache<K, V>(
         val estimator: ObjectSizeEstimator = ObjectSizeEstimator(),
     ) : Behaviour<K, V> {
 
-        private data class Entry<K, V>(
+        // Holds the key (the eviction loop needs it) but never the value - see ExpireAfterAccess.
+        private data class Entry<K>(
             val key: K,
-            val value: V,
             val accessed: Long,
             val size: Long,
         )
 
+        // TODO(scan): mutated on the loop thread and read by callers without any memory barrier, and
+        //   it keeps counting entries that another behaviour evicted, because eviction records no action.
         /** The total estimated memory usage (in bytes) of all entries tracked by this behaviour. */
         var totalSize = 0L
             private set
 
         private val clock = Kronos.systemUtc
-        private val data = ValueSortedMap<K, Entry<K, V>, Long> { it.accessed }
+        private val data = ValueSortedMap<K, Entry<K>, Long> { it.accessed }
+
+        init {
+            require(maxMemorySize > 0) { "maxMemorySize must be > 0, but was $maxMemorySize" }
+        }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
@@ -377,13 +396,15 @@ class FastCache<K, V>(
                         is PutAction -> action.value
                     }
 
+                    // TODO(scan): re-walks the whole object graph of key and value on every read, not
+                    //   just on writes.
                     val newKeySize = estimator.estimate(action.key)
                     val newValueSize = estimator.estimate(value)
                     val newSize = newKeySize + newValueSize
 
                     totalSize += newSize - currentSize
 
-                    data[action.key] = Entry(key = action.key, value = value, accessed = now, size = newSize)
+                    data[action.key] = Entry(key = action.key, accessed = now, size = newSize)
                 }
 
                 is RemoveAction -> {
@@ -395,12 +416,12 @@ class FastCache<K, V>(
             }
         }
 
-        private fun remove(entry: Entry<K, V>) {
+        private fun remove(entry: Entry<K>) {
             totalSize -= entry.size
             data.remove(entry.key)
         }
 
-        private fun evict(cache: FastCache<K, V>, entry: Entry<K, V>) {
+        private fun evict(cache: FastCache<K, V>, entry: Entry<K>) {
             remove(entry)
             cache.removeSilently(entry.key)
         }
@@ -423,12 +444,15 @@ class FastCache<K, V>(
     /**
      * Behaviour that fires a [handler] callback when entries are evicted by other behaviours.
      *
-     * Does NOT fire on explicit [remove] calls — only on automatic eviction via the processing loop.
+     * Does NOT fire on explicit [FastCache.remove] calls — only on automatic eviction via the
+     * processing loop.
      */
     class OnEvictionBehaviour<K, V>(
+        // TODO(scan): the handler is skipped for entries whose value is null - see removeSilently.
         /** The callback invoked with the key and value of each evicted entry. */
         internal val handler: (K, V) -> Unit,
     ) : Behaviour<K, V> {
+        /** No-op — [handler] is wired up as an eviction listener when the [FastCache] is constructed. */
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             // No-op: eviction notifications are handled via the listener registered in FastCache.init
         }
@@ -459,6 +483,8 @@ class FastCache<K, V>(
             val hitRate: Double get() = if (requestCount == 0L) Double.NaN else hitCount.toDouble() / requestCount
         }
 
+        // TODO(scan): plain fields - written on the processing-loop thread, read by callers of snapshot()
+        //   with no memory barrier, and any action dropped by clear() is never counted.
         private var _hitCount = 0L
         private var _missCount = 0L
         private var _putCount = 0L
@@ -508,8 +534,12 @@ class FastCache<K, V>(
         private val refreshAfterMs = refreshAfter.inWholeMilliseconds
         private val hardTtlMs = hardTtl?.inWholeMilliseconds
         private val clock = Kronos.systemUtc
+
+        // TODO(scan): only a RemoveAction or the hard TTL drops a key here - an entry evicted by any
+        //   other behaviour stays and keeps being reloaded, putting the evicted key back into the cache.
         private val writeTimestamps = mutableMapOf<K, Long>()
 
+        // TODO(scan): also mutated from the launched refresh coroutine, so it races with process().
         /** Keys currently being refreshed — used for deduplication. */
         private val refreshingKeys = mutableSetOf<K>()
 
@@ -554,6 +584,8 @@ class FastCache<K, V>(
             }
 
             // Evict hard-expired entries
+            // TODO(scan): an in-flight refresh is not cancelled here, so its put() resurrects the
+            //   hard-expired key once the loader finishes.
             for (key in keysToEvict) {
                 writeTimestamps.remove(key)
                 refreshingKeys.remove(key)
@@ -566,8 +598,10 @@ class FastCache<K, V>(
                 cache.scope.launch {
                     try {
                         val newValue = loader(key)
+                        // TODO(scan): puts unconditionally, even if the key was removed meanwhile.
                         cache.put(key, newValue)
                     } catch (_: Exception) {
+                        // TODO(scan): swallows every failure without a trace, CancellationException included.
                         // Refresh failed: allow retry on next loop iteration
                         refreshingKeys.remove(key)
                     }
@@ -597,7 +631,19 @@ class FastCache<K, V>(
                 val updates = ActionUpdates(actions)
 
                 cache.behaviours.forEach { behaviour ->
-                    behaviour.process(cache, updates)
+                    try {
+                        behaviour.process(cache, updates)
+                    } catch (e: CancellationException) {
+                        // never swallow cancellation - it is how the scope is torn down
+                        throw e
+                    } catch (e: Exception) {
+                        // Without this, one throw ends the coroutine for good: no expiry, no
+                        // eviction, no statistics, no refresh - while get/put keep working, so the
+                        // cache silently grows without bound. A user onEviction handler throwing is
+                        // enough, since removeSilently invokes those from inside process().
+                        // There is no logger here, so it goes to the platform's default channel.
+                        println("FastCache behaviour [${behaviour::class.simpleName}] failed: $e")
+                    }
                 }
 
                 // Wait for the next cycle
@@ -615,6 +661,8 @@ class FastCache<K, V>(
     private val evictionListeners = mutableListOf<(K, V) -> Unit>()
 
     /** List with last taken actions, to be processed by the behaviours */
+    // TODO(scan): unbounded - if `scope` is cancelled or the loop dies, this grows forever and pins
+    //   every value that was ever read or written.
     private var lastActions = ArrayList<Action<K, V>>(1_000)
 
     /** Set of keys that are included in [lastActions] */
@@ -657,6 +705,8 @@ class FastCache<K, V>(
     override val size: Int get() = sync { map.size }
 
     /** Clears the cache */
+    // TODO(scan): behaviours are never told - their tracking maps, totalSize and refresh timestamps
+    //   survive the clear, and the pending actions dropped here are lost to the statistics.
     override fun clear() = sync {
         map.clear()
         lastActions.clear()
@@ -664,6 +714,8 @@ class FastCache<K, V>(
     }
 
     /** Check if the cache contains the given key */
+    // TODO(scan): a stored null is indistinguishable from an absent key here and in get(), so a
+    //   null-valued entry reports false / records a MissAction while still occupying the map.
     override fun has(key: K): Boolean = sync {
         val value = map[key]
         if (value != null) {
@@ -709,6 +761,8 @@ class FastCache<K, V>(
         val newValue = producer()
 
         // Insert if it hasn't been put by another thread in the meantime
+        // TODO(scan): the "already there" branch records no ReadAction, so that access is invisible to
+        //   the statistics and to the access-ordered behaviours; a stored null also re-runs the put.
         return sync {
             map[key] ?: newValue.also {
                 map[key] = it
@@ -730,8 +784,12 @@ class FastCache<K, V>(
         val hasPendingUpdates = lastActionsKeys.contains(key)
 
         if (!hasPendingUpdates) {
+            // TODO(scan): `removed != null` cannot tell "was not there" from "held null", so evicting a
+            //   null value fires no listener and bumps no eviction count.
             val removed = map.remove(key)
             if (removed != null) {
+                // TODO(scan): user callbacks run while the lock is held - on native that is the single
+                //   process-wide spin lock, and a throwing callback kills the processing loop.
                 evictionListeners.forEach { listener -> listener(key, removed) }
             }
         }

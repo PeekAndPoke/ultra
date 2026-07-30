@@ -30,6 +30,7 @@ class NullableCache<K : Any, V : Any> {
 
     /** Drops every entry. */
     fun clear() {
+        // TODO(scan): an in-flight getOrPutAsync re-inserts its key after this returns.
         RunSync(lock) { entries.clear() }
     }
 
@@ -51,8 +52,12 @@ class NullableCache<K : Any, V : Any> {
         read(key)?.let { return it.decode() }
 
         return RunSync(lock) {
-            entries[key]?.decode()
-                ?: provider().also { entries[key] = it.encode() }
+            // Branch on PRESENCE, never on the decoded value: MISSING decodes to null, so an elvis
+            // here would re-run the provider for every key already cached as a miss.
+            entries[key]?.let { return@RunSync it.decode() }
+
+            // TODO(scan): provider runs under the lock - on native that is the process-wide RunSync spin lock.
+            provider().also { entries[key] = it.encode() }
         }
     }
 
@@ -60,6 +65,7 @@ class NullableCache<K : Any, V : Any> {
     suspend fun getOrPutAsync(key: K, provider: suspend () -> V?): V? {
         read(key)?.let { return it.decode() }
 
+        // TODO(scan): the Mutex is not re-entrant and spans all keys - a nested call deadlocks, others serialise.
         return mutex.withLock {
             read(key)?.let { return@withLock it.decode() }
 

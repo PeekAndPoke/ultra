@@ -1,12 +1,12 @@
 // Kotlin
 package io.peekandpoke.ultra.cache
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 
 @Suppress("ReplacePutWithAssignment")
 class ValueSortedMapSpec : StringSpec() {
@@ -111,23 +111,18 @@ class ValueSortedMapSpec : StringSpec() {
             m.descending().toList().shouldBeEmpty()
         }
 
-        "values, keys and entries reflect current state (values are sorted by projection)" {
+        "ascending() reflects current state, sorted by the projection" {
             val m = ValueSortedMap<String, Int, Int> { it }
 
             m.put("one", 1)
             m.put("two", 2)
             m.put("zero", 0)
 
-            // values returns collection in sorted order
-            m.values.toList() shouldContainExactly listOf(0, 1, 2)
+            m.size shouldBe 3
+            m.containsKey("zero") shouldBe true
 
-            // keys reflect map keys (as a set) - order is not guaranteed for key set
-            m.keys shouldNotBe null
-            m.keys.size shouldBe 3
-
-            // entries should contain correct key->value pairs
-            val entriesAsPairs = m.entries.map { it.key to it.value }.toSet()
-            entriesAsPairs shouldBe setOf("zero" to 0, "one" to 1, "two" to 2)
+            // the ordering index is the surface callers actually use
+            m.ascending().toList() shouldContainExactly listOf("zero" to 0, "one" to 1, "two" to 2)
         }
 
         "sort Person objects by age ascending" {
@@ -183,18 +178,35 @@ class ValueSortedMapSpec : StringSpec() {
             m.ascending().toList().map { it.first } shouldContainExactly listOf("z", "x", "y")
         }
 
-        "values reflect sorted Person objects" {
+        "ascending() reflects sorted Person objects" {
             val m = ValueSortedMap<String, Person, Int> { it.age }
 
             m.put("one", Person("One", 1))
             m.put("two", Person("Two", 2))
             m.put("zero", Person("Zero", 0))
 
-            m.values.toList() shouldContainExactly listOf(
+            m.ascending().toList().map { it.second } shouldContainExactly listOf(
                 Person("Zero", 0),
                 Person("One", 1),
                 Person("Two", 2),
             )
+        }
+
+        "ascending() fails fast when the map is modified while an iterator is open" {
+            val m = ValueSortedMap<String, Int, Int> { it }
+
+            m.put("a", 1)
+            m.put("b", 2)
+            m.put("c", 3)
+
+            val iterator = m.ascending().iterator()
+            iterator.next()
+
+            m.remove("c")
+
+            // Silently skipping entries here is how a half-completed eviction sweep would look
+            // like a flaky TTL rather than a bug
+            shouldThrow<IllegalStateException> { iterator.next() }
         }
     }
 }

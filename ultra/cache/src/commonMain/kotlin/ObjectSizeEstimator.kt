@@ -9,6 +9,7 @@ import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
  * consumption and trigger eviction when a threshold is exceeded.
  */
 interface ObjectSizeEstimator {
+    /** Factory for the default implementation. */
     companion object {
         /** Creates a default [ObjectSizeEstimatorImpl] with the given [cfg]. */
         operator fun invoke(cfg: EstimatorConfig = EstimatorConfig()): ObjectSizeEstimator {
@@ -27,8 +28,11 @@ interface ObjectSizeEstimator {
  * (see [ObjectSizeEstimatorPlatform]) and sums up estimated sizes for
  * primitives, strings, arrays, collections, maps, and arbitrary objects.
  *
- * An identity set of already-visited objects guards against infinite loops caused by circular
- * references. It is built per call, so an estimate never depends on what was measured before.
+ * An identity set of already-visited objects keeps a shared sub-object from being charged twice.
+ * It is built per call, so an estimate never depends on what was measured before.
+ *
+ * The result is a heuristic, not a measurement: the default [EstimatorConfig] describes a
+ * 64-bit HotSpot heap and is used unchanged on JS and native.
  *
  * @param cfg tuning knobs for header and pointer sizes
  */
@@ -36,6 +40,7 @@ class ObjectSizeEstimatorImpl(
     /** Configuration for header, array, and pointer size heuristics. */
     val cfg: EstimatorConfig = EstimatorConfig(),
 ) : ObjectSizeEstimator {
+    /** Per-value size constants used by [ObjectSizeEstimatorImpl.estimate]. */
     companion object {
         /** Estimated size of a null reference. */
         const val NULL_SIZE = 4L
@@ -81,22 +86,29 @@ class ObjectSizeEstimatorImpl(
     /**
      * Tracks the objects visited during one walk, by identity.
      *
-     * Buckets by `hashCode` but compares with `===`, so two equal-but-distinct objects are counted
-     * separately — each really occupies memory. Structural matching would report the second as
-     * already-seen and charge it zero bytes.
+     * Compares with `===`, so two equal-but-distinct objects are counted separately — each really
+     * occupies memory. Structural matching would report the second as already-seen and charge it
+     * zero bytes.
+     *
+     * **Never calls `hashCode()` or `equals()` on the tracked objects.** Doing so defeats the whole
+     * purpose: a cyclic graph of data classes, `List`s or `Map`s hashes recursively, so the guard
+     * would overflow the stack on exactly the input it exists to detect. That also keeps a
+     * user-supplied `hashCode()` off the cache's hot path.
      */
     private class VisitedSet {
-        private val buckets = mutableMapOf<Int, MutableList<Any>>()
+        // Linear scan by identity: O(n^2) in graph size, traded for correctness. A keyed structure
+        // would have to hash its keys, which is the defect above; an identity-keyed set needs an
+        // expect/actual (IdentityHashMap / JS Set / native fallback) and is tracked as a follow-up.
+        // The practical bound is the recursion depth the stack allows, since estimate() has none.
+        private val seen = mutableListOf<Any>()
 
         /** Records [obj] and returns true when it had not been visited before. */
         fun add(obj: Any): Boolean {
-            val bucket = buckets.getOrPut(obj.hashCode()) { mutableListOf() }
-
-            if (bucket.any { it === obj }) {
+            if (seen.any { it === obj }) {
                 return false
             }
 
-            bucket.add(obj)
+            seen.add(obj)
 
             return true
         }
@@ -112,6 +124,8 @@ class ObjectSizeEstimatorImpl(
 
     private fun estimate(obj: Any?, seen: VisitedSet): Long {
         // Primitives: no cycle detection needed, they cannot form reference cycles
+        // TODO(scan): on JS every number is a JS `number`, so the `is Byte` branch swallows Int,
+        //  Short, Float and Double and charges all of them 1 byte.
         when (obj) {
             null -> return NULL_SIZE
             is Boolean -> return BOOL_SIZE
@@ -127,6 +141,8 @@ class ObjectSizeEstimatorImpl(
         // For reference types: avoid cycles. Already visited means already counted.
         if (!seen.add(obj)) return 0L
 
+        // TODO(scan): the recursion below has no depth bound, so a deep graph (long linked list,
+        //  deeply nested collections) overflows the stack out of a cache put/read.
         return when (obj) {
             is String -> {
                 val chars = obj.length.toLong() * CHAR_SIZE
@@ -150,6 +166,9 @@ class ObjectSizeEstimatorImpl(
                 sum
             }
 
+            // TODO(scan): a collection/map is charged one (or two) pointers per entry, which omits
+            //  the backing array and the per-entry node objects, and an element that is a boxed
+            //  primitive is charged its raw value size. Both under-count on the JVM.
             is Collection<*> -> {
                 var sum = cfg.objectHeader + obj.size.toLong() * cfg.pointerSize
                 for (e in obj) sum += estimate(e, seen)
@@ -173,6 +192,8 @@ class ObjectSizeEstimatorImpl(
 
     private fun estimateObject(obj: Any, seen: VisitedSet): Long {
 
+        // TODO(scan): the `2L` is unexplained, and on native this branch is taken for EVERY custom
+        //  object, so a data class holding megabytes is charged a flat 32 bytes.
         val fields = ObjectSizeEstimatorPlatform.getFieldsOf(obj)
             ?: return cfg.objectHeader + 2L * cfg.pointerSize // No reflection (e.g., Native): charge a plain object.
 

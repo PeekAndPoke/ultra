@@ -15,6 +15,11 @@ import kotlinx.coroutines.SupervisorJob
  */
 interface Cache<K, V> {
 
+    /**
+     * Shared defaults plus the [isEmpty] / [isNotEmpty] extensions.
+     *
+     * Being members of the companion, the extensions need `Cache.Companion` in scope to be callable.
+     */
     companion object {
         /** Default [CoroutineScope] used by cache implementations for background processing. */
         val defaultCoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -44,6 +49,7 @@ interface Cache<K, V> {
     /** Returns `true` if the cache contains the given [key]. */
     fun has(key: K): Boolean
 
+    // TODO(scan): V is unbounded, so a stored null is indistinguishable from an absent key here.
     /** Returns the value for the given [key], or `null` if not present. */
     fun get(key: K): V?
 
@@ -53,6 +59,7 @@ interface Cache<K, V> {
     /** Removes and returns the value for the given [key], or `null` if not present. */
     fun remove(key: K): V?
 
+    // TODO(scan): atomicity unspecified - FastCache may run the producer more than once, callers assume it does not.
     /**
      * Returns the value for the given [key] if present.
      *
