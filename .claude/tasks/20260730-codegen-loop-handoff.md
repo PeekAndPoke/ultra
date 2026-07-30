@@ -94,7 +94,11 @@ Suggested order:
       mirroring `appendImports`). Both previously-untested validator checks are now pinned, including
       `danglingReferenceProblems` via a hand-built `TypeModel`. New `model/other` fixture package for
       the cross-package name clash. Mutation-tested 4/4.
-- [ ] `KotlinxJsonTsContributor` drift test — 5 claims, standing rule, currently unprotected
+- [x] **DONE `3bc64c41`** — kotlinx JSON claim drift guard. All five claims probed and found CORRECT,
+      including `JsonObject` (`JsonUtil.unwrap` does flatten nested elements). The guard derives each
+      expected zod combinator FROM the observed codec shape, so it fails if either side moves.
+      Mutation-tested 4/4 against the CLAIMS. Also found: a non-nullable `JsonElement` holding
+      `JsonNull` refuses to slumber — asserted because it is surprising, not wrong.
 - [ ] Tautological assertion `ts/TsModelEmitterSpec.kt:62` + neighbours that pass when absent
 - [ ] `MpDateTimeFieldParitySpec:108` compares the contributor against a copy of itself
 - [ ] `JsonElement` → `z.unknown()` should reach the advisory list
@@ -124,15 +128,16 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 10 (2026-07-30, ~03:20).** §1 complete; §2 five items done, seven left. 153 tests green,
-7 ts-verify fixtures. Tree clean for `ultra/codegen`.
+**Iteration 11 (2026-07-30, ~03:30).** §1 complete; §2 six done, six left. 162 tests green, 7
+ts-verify fixtures. Tree clean for `ultra/codegen`.
 
-§2 so far: `appendUnion` type-vs-schema (`56292476`), the `ultra/slumber` round-trip finding reproduced
-and handed to its own task, `slumberConfig` mandatory (`53b68126`), walker `unknown` degradation now a
-hard failure (`efe2b6ad`), collision check counts claimed names (`d605b996`).
+§2 done: `appendUnion` type-vs-schema (`56292476`), `ultra/slumber` round-trip reproduced and handed to
+its own task, `slumberConfig` mandatory (`53b68126`), walker `unknown` now a hard failure (`efe2b6ad`),
+collision check counts claims (`d605b996`), kotlinx JSON drift guard (`3bc64c41`).
 
-Running tally: **three fixes were wrong, incomplete or over-applied, and three assertions passed for
-the WRONG reason** — all six caught by mutation, none by review or re-reading.
+Running tally: **three fixes were wrong, incomplete or over-applied, and FOUR assertions passed for the
+WRONG reason** — the newest being iteration 11's first draft, which tested the codec instead of the
+claim and so would not have failed if a claim were wrong. All caught by mutation.
 
 ### Habits that keep paying (and one I keep failing)
 
@@ -144,16 +149,17 @@ the WRONG reason** — all six caught by mutation, none by review or re-reading.
 - **FAILING REPEATEDLY: read the test count from `TEST-*.xml` BEFORE writing the commit message.** Two
   amends so far for a wrong number.
 
-**Next action:** §2, `KotlinxJsonTsContributor` drift test — five claims with NO parity test, which
-violates this plan's own standing rule ("claims are trusted, never verified; the only defence is a test
-that slumbers a real value"). `MpDateTimeFieldParitySpec` is the template.
+**Next action:** §2, the two known-vacuous test assertions. Both are already diagnosed, so this is
+small and mechanical:
 
-Slumber a real `JsonObject`, `JsonArray`, `JsonPrimitive` (string, number, bool), `JsonNull` and a
-nested `JsonElement` through `Codec.default`, and assert the result matches what each claim asserts.
-The one most likely to be WRONG is `JsonObject` → `Record<string, unknown>`: its shape is whatever
-`JsonUtil.unwrap` produces, and nothing pins that it flattens NESTED elements rather than leaving
-`JsonElement`s in the map. Check that specifically — a claim being wrong is exactly the failure this
-rule exists for, and two of six datetime claims were wrong when first written.
+1. `ts/TsModelEmitterSpec.kt` — `out.indexOf(x) shouldBe out.indexOf(x)` compares a value with itself,
+   and the two neighbouring `<` comparisons pass when the variant is ABSENT because `indexOf` returns
+   -1. Assert presence first, then order.
+2. `contributors/MpDateTimeFieldParitySpec.kt:~108` — "the contributor claims every Mp type that has a
+   codec" compares `CLAIMED.keys` against a hand-written list of the same six names, with no reference
+   to Slumber at all, so it cannot detect the thing it claims to. Drive it from something real: iterate
+   the `Mp*` classes and assert a codec exists iff a claim exists. **Use the technique from
+   `3bc64c41`** — derive the expectation from observed behaviour, never from a second copy of the list.
 
 ### Working notes that paid off (keep using)
 
