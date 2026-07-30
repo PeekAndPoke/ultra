@@ -203,7 +203,7 @@ class ThirdPartyContributorSpec : FreeSpec() {
                     contributor::class.java.classLoader shouldBe loader
                 }
 
-                val result = TsSdkBuilder(contributors = listOf(contributor)).build()
+                val result = TsSdkBuilder.forTesting(listOf(contributor)).build()
 
                 result.output.entries().first { it.path == "runtime/isolated.ts" }
                     .content shouldContain "only-here"

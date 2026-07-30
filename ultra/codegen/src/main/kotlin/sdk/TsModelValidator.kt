@@ -23,11 +23,8 @@ import kotlin.reflect.full.withNullability
  * silently produced wrong output. Here it fails the build.
  */
 class TsModelValidator(
-    /**
-     * The live serialization config. When `null` the codec-parity probe is skipped — useful in unit
-     * tests, but a real generation run should always pass one.
-     */
-    private val slumberConfig: SlumberConfig? = null,
+    /** The live serialization config, probed to detect types a custom codec reshapes. */
+    private val slumberConfig: SlumberConfig,
 ) {
     /** A blocking problem. */
     data class Problem(
@@ -163,7 +160,7 @@ class TsModelValidator(
      * unwrapped. Asking for the nullable variant returns the underlying slumberer directly.
      */
     private fun codecParityProblems(model: TypeModel): List<Problem> {
-        val config = slumberConfig ?: return emptyList()
+        val config = slumberConfig
 
         return model.decls.values.mapNotNull { decl ->
             val slumberer = runCatching {

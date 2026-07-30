@@ -71,7 +71,7 @@ class TsSdkBuilderSpec : FreeSpec() {
                 // discovery ORDER does, and emitting in discovery order made the file differ between
                 // runs. Invisible to a compiler, fatal to `--check`.
                 fun run(vararg contributors: TsSdkContributor): String =
-                    TsSdkBuilder(contributors.toList())
+                    TsSdkBuilder.forTesting(contributors.toList())
                         .build().output.entries().first { it.path == "models.ts" }.content
 
                 val alpha = RootContributor("alpha", typeOf<FxSpeaker>())
@@ -96,9 +96,9 @@ class TsSdkBuilderSpec : FreeSpec() {
             }
 
             "models.ts is always emitted" {
-                val result = TsSdkBuilder(
-                    contributors = listOf(RootContributor("roots", typeOf<FxSpeaker>())),
-                ).build()
+                val result = TsSdkBuilder
+                    .forTesting(listOf(RootContributor("roots", typeOf<FxSpeaker>())))
+                    .build()
 
                 result.output.entries().map { it.path } shouldContainExactly listOf("models.ts")
             }
@@ -151,8 +151,8 @@ class TsSdkBuilderSpec : FreeSpec() {
 
             "two contributors writing the same path fail, naming both" {
                 val thrown = runCatching {
-                    TsSdkBuilder(
-                        contributors = listOf(
+                    TsSdkBuilder.forTesting(
+                        listOf(
                             FileContributor("alpha", "clients/Same.ts"),
                             FileContributor("beta", "clients/Same.ts"),
                         ),
@@ -177,8 +177,8 @@ class TsSdkBuilderSpec : FreeSpec() {
 
             "duplicate contributor names are rejected" {
                 val thrown = runCatching {
-                    TsSdkBuilder(
-                        contributors = listOf(
+                    TsSdkBuilder.forTesting(
+                        listOf(
                             RootContributor("same", typeOf<FxSpeaker>()),
                             RootContributor("same", typeOf<FxSpeaker>()),
                         ),
@@ -192,7 +192,7 @@ class TsSdkBuilderSpec : FreeSpec() {
         "guards" - {
 
             "no contributors at all is an error, not an empty SDK" {
-                runCatching { TsSdkBuilder(contributors = emptyList()).build() }
+                runCatching { TsSdkBuilder.forTesting(emptyList()).build() }
                     .exceptionOrNull()!!.message!! shouldContain "No TsSdkContributor"
             }
 
@@ -201,8 +201,22 @@ class TsSdkBuilderSpec : FreeSpec() {
                     override val name = "silent"
                 }
 
-                runCatching { TsSdkBuilder(contributors = listOf(silent)).build() }
+                runCatching { TsSdkBuilder.forTesting(listOf(silent)).build() }
                     .exceptionOrNull()!!.message!! shouldContain "supplied any root type"
+            }
+
+            "the codec-parity check runs on the path that passes no config explicitly" {
+                // MpInstant goes through a custom codec, so an unclaimed one must fail. The point is
+                // WHICH entry point is used: `slumberConfig` used to default to null, so the module's
+                // headline check — the only thing standing between a custom codec and a schema that
+                // does not describe the wire — was off unless a caller opted in.
+                // Assert the CODEC name, not the type name. "MpInstant" alone also appears in an
+                // unresolved-type message, so it passes whether or not the parity check ran — verified
+                // by mutation, the looser assertion survived. Only this phase names the slumberer.
+                runCatching {
+                    TsSdkBuilder.forTesting(listOf(RootContributor("roots", typeOf<HoldsInstant>())))
+                        .build()
+                }.exceptionOrNull()!!.message!! shouldContain "MpInstantSlumberer"
             }
         }
 

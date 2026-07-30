@@ -41,10 +41,26 @@ class TsSdkBuilder(
     private val contributors: List<TsSdkContributor>,
     /**
      * The live serialization config, used to detect types whose JSON shape a custom codec reshapes.
-     * Null skips that check — acceptable in unit tests, never in a real run.
+     *
+     * Required, deliberately. This used to default to null, which silently disabled the codec-parity
+     * check — the one thing standing between a custom codec and a schema that does not describe what
+     * the server writes, and the module's whole reason to exist. A default argument is not a place to
+     * put a safety net's off switch.
      */
-    private val slumberConfig: SlumberConfig? = null,
+    private val slumberConfig: SlumberConfig,
 ) {
+    companion object {
+        /**
+         * A builder for tests, using [SlumberConfig.default].
+         *
+         * The codec-parity check still RUNS; only the config is stock. There is deliberately no way to
+         * turn the check off — a test whose fixtures cannot be slumbered is describing output no server
+         * can produce, which is worth failing on.
+         */
+        fun forTesting(contributors: List<TsSdkContributor>): TsSdkBuilder =
+            TsSdkBuilder(contributors = contributors, slumberConfig = SlumberConfig.default)
+    }
+
     /** The outcome of a run. */
     data class Result(
         val model: TypeModel,

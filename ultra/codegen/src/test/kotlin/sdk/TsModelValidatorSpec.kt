@@ -72,7 +72,7 @@ class TsModelValidatorSpec : FreeSpec() {
             "are reported with the path that reached them" {
                 val model = walk(typeOf<FxHoldsInterface>())
 
-                val report = TsModelValidator().validate(model)
+                val report = TsModelValidator(SlumberConfig.default).validate(model)
 
                 report.ok shouldBe false
                 report.format() shouldContain "reached via: root -> thing"
@@ -88,7 +88,7 @@ class TsModelValidatorSpec : FreeSpec() {
 
                 val model = walk(typeOf<FxHoldsInstant>(), claims)
 
-                val report = TsModelValidator().validate(model)
+                val report = TsModelValidator(SlumberConfig.default).validate(model)
 
                 withClue("z.infer needs a schema to infer from") {
                     report.ok shouldBe false
@@ -103,7 +103,7 @@ class TsModelValidatorSpec : FreeSpec() {
 
                 val model = walk(typeOf<FxHoldsInstant>(), claims)
 
-                val report = TsModelValidator().validate(model)
+                val report = TsModelValidator(SlumberConfig.default).validate(model)
 
                 report.ok shouldBe true
                 report.advisories.map { it.subject } shouldBe listOf(MpInstant::class.qualifiedName)
@@ -131,7 +131,7 @@ class TsModelValidatorSpec : FreeSpec() {
 
                 val model = walk(typeOf<FxTalk>(), claims)
 
-                val report = TsModelValidator().validate(model)
+                val report = TsModelValidator(SlumberConfig.default).validate(model)
 
                 report.advisories.map { it.detail }.any { it.contains("2^53") } shouldBe true
             }
