@@ -201,6 +201,17 @@ data class FxBox<T>(val item: T, val label: String)
 
 data class FxPair<A, B>(val first: A, val second: B)
 
+/**
+ * The same generic instantiated with a nullable and a non-nullable argument.
+ *
+ * `ReifiedKType` preserves the argument's nullability, so these reify to different props — `item` is
+ * `string` in one and `string | null` in the other. They must not collapse onto one declaration.
+ */
+data class FxNullableArgs(
+    val required: FxBox<String>,
+    val optional: FxBox<String?>,
+)
+
 /** Generic in a property position, nested in containers, and doubly nested. */
 data class FxGenericHolder(
     val page: FxPageOf<FxSpeaker>,

@@ -56,9 +56,6 @@ class TypeId private constructor(
     /** Simple (unqualified) name, used as the basis for the generated TypeScript name. */
     val simpleName: String get() = cls.simpleName ?: cls.jvmName.substringAfterLast('.')
 
-    /** The reified type arguments, empty for a non-generic type. */
-    val typeArguments: List<TypeId> get() = type.arguments.mapNotNull { arg -> arg.type?.let { of(it) } }
-
     override fun equals(other: Any?): Boolean = this === other || (other is TypeId && other.key == key)
 
     override fun hashCode(): Int = key.hashCode()

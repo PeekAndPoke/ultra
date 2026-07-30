@@ -2,9 +2,11 @@ package io.peekandpoke.ultra.codegen.model
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -29,6 +31,42 @@ class GenericsSpec : FreeSpec() {
     init {
         "every generic position resolves — nothing is left unclassified" {
             walk(typeOf<FxGenericHolder>()).unresolved shouldContainExactly emptyList()
+        }
+
+        "a nullable type argument is a different instantiation from a non-nullable one" - {
+            // Both halves matter. Sharing a TypeId gives the second property the first one's schema,
+            // so a server sending `{"item": null}` is rejected by a schema that says `z.string()`.
+            // Sharing a NAME is a different failure: two declarations compete for one const.
+
+            "the two instantiations get separate declarations" {
+                val model = walk(typeOf<FxNullableArgs>())
+
+                withClue("distinct TypeIds") {
+                    TypeId.of(typeOf<FxBox<String>>()) shouldNotBe TypeId.of(typeOf<FxBox<String?>>())
+                }
+
+                model.decls.keys shouldContain TypeId.of(typeOf<FxBox<String>>())
+                model.decls.keys shouldContain TypeId.of(typeOf<FxBox<String?>>())
+            }
+
+            "each declaration carries the nullability of its own argument" {
+                val model = walk(typeOf<FxNullableArgs>())
+
+                fun itemTypeOf(owner: KType): TsTypeRef = model.propTypeOf(owner, "item")
+
+                itemTypeOf(typeOf<FxBox<String>>()) shouldBe TsTypeRef.TsString
+                itemTypeOf(typeOf<FxBox<String?>>()) shouldBe TsTypeRef.Nullable(TsTypeRef.TsString)
+            }
+
+            "the two declarations do not compete for one TypeScript name" {
+                val model = walk(typeOf<FxNullableArgs>())
+
+                val names = model.names()
+
+                withClue("emitted names: $names") {
+                    names.size shouldBe names.distinct().size
+                }
+            }
         }
 
         "a generic as a property is monomorphized" {

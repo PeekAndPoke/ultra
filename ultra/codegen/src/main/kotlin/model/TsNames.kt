@@ -22,11 +22,19 @@ object TsNames {
     fun of(id: TypeId): String {
         val base = baseName(id.cls)
 
-        val args = id.typeArguments
+        // Read the arguments off the KType rather than via `TypeId`, because a nullable argument is a
+        // separate instantiation — `FxBox<String>` and `FxBox<String?>` have different props — and a
+        // TypeId deliberately carries no nullability. Without the suffix the two declarations exist
+        // (their keys differ) but compete for one TypeScript const.
+        val args = id.type.arguments.mapNotNull { arg ->
+            arg.type?.let { argType ->
+                of(TypeId.of(argType)) + if (argType.isMarkedNullable) "OrNull" else ""
+            }
+        }
 
         return when {
             args.isEmpty() -> base
-            else -> base + args.joinToString("") { of(it) }
+            else -> base + args.joinToString("")
         }
     }
 
