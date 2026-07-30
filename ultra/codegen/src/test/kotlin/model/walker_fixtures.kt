@@ -77,6 +77,24 @@ sealed class FxEvent {
     data class Deleted(val at: String) : FxEvent()
 }
 
+//  A RECURSIVE polymorphic hierarchy  //////////////////////////////////////////////////////////////
+
+/**
+ * A union that is ITSELF emitted lazily, which is the only branch that writes `export type X = A | B`
+ * — and therefore the only place a variant's TYPE name is used rather than its schema.
+ *
+ * Getting there needs care. `TsDeclOrder` seeds a DFS from `decls.keys.sortedBy { it.key }` and a
+ * declaration is lazy iff it references something at or after its own index, so a union whose variants
+ * are NESTED classes is never lazy: `Parent.Child` sorts after `Parent`, the walk starts at the parent,
+ * and post-order puts every child first. The variants here are TOP-LEVEL and named to sort BEFORE the
+ * parent, so the walk starts at a variant and the union lands mid-order with a forward reference.
+ */
+sealed class FxZeta
+
+data class FxAlphaBranch(val kids: List<FxZeta>) : FxZeta()
+
+data class FxAlphaLeaf(val v: String) : FxZeta()
+
 //  A value class ON a cycle  ///////////////////////////////////////////////////////////////////////
 
 /**

@@ -142,7 +142,12 @@ class TsModelEmitter(
     }
 
     private fun CodePrinter.appendUnion(decl: TsTypeDecl.Union) {
-        val variants = decl.variants.map { renderer.nameOf(it) }
+        // Two lists, not one. For a DECLARATION the type and the schema share a name — that is the zod
+        // pattern, `export const X` beside `export type X`. For a CLAIM they need not: `JsonElement` is
+        // claimed as the type `unknown` with the schema `z.unknown()`. Using the type name inside
+        // z.union/z.discriminatedUnion emits a type where a value is required.
+        val typeNames = decl.variants.map { renderer.nameOf(it) }
+        val schemaNames = decl.variants.map { renderer.schemaNameOf(it) }
 
         // z.discriminatedUnion needs its options to be concrete object schemas at construction, so a
         // lazily-emitted variant rules it out. z.union still works and stays correct — it just reports
@@ -150,14 +155,14 @@ class TsModelEmitter(
         val anyLazy = decl.variants.any { order.isRecursive(it) } || order.isRecursive(decl.id)
 
         val schema = when {
-            anyLazy -> "z.union([${variants.joinToString(", ")}])"
+            anyLazy -> "z.union([${schemaNames.joinToString(", ")}])"
             else ->
                 "z.discriminatedUnion(${tsStringLiteral(decl.discriminatorField)}, " +
-                        "[${variants.joinToString(", ")}])"
+                        "[${schemaNames.joinToString(", ")}])"
         }
 
         if (order.isRecursive(decl.id)) {
-            appendLine("export type ${decl.name} = ${variants.joinToString(" | ")}")
+            appendLine("export type ${decl.name} = ${typeNames.joinToString(" | ")}")
             appendLine("export const ${decl.name}: z.ZodType<${decl.name}> = z.lazy(() => $schema)")
             return
         }

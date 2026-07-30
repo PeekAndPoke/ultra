@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.ultra.codegen.model.FxAlphaLeaf
 import io.peekandpoke.ultra.codegen.model.FxCustomCodecType
 import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxHoldsClaimed
@@ -19,6 +20,7 @@ import io.peekandpoke.ultra.codegen.model.FxSpeaker
 import io.peekandpoke.ultra.codegen.model.FxStatus
 import io.peekandpoke.ultra.codegen.model.FxTalk
 import io.peekandpoke.ultra.codegen.model.FxTalkId
+import io.peekandpoke.ultra.codegen.model.FxZeta
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
 import io.peekandpoke.ultra.codegen.model.TsTypeRef
 import io.peekandpoke.ultra.codegen.model.TypeModel
@@ -99,6 +101,51 @@ class TsModelEmitterSpec : FreeSpec() {
 
             withClue("the unclaimed sibling is still declared normally") {
                 out shouldContain "export const FxPartlyClaimedPlain = z.object({"
+            }
+        }
+
+        "a claimed union variant uses its SCHEMA expression in schema position" {
+            val claims = TsTypeClaims().apply {
+                scopeFor("test").map<FxPartlyClaimed.Custom>(
+                    tsName = "CustomType",
+                    importFrom = "./runtime/custom",
+                    schema = "customSchema",
+                )
+            }
+
+            val out = emit(typeOf<FxPartlyClaimed>(), claims)
+
+            // Asserting only `out shouldContain "customSchema"` passes for the WRONG reason: the
+            // import line lists both the tsName and the schema. The union line is the one under test.
+            withClue("z.discriminatedUnion takes SCHEMAS; a tsName is a type and is not a value") {
+                out shouldContain "z.discriminatedUnion('_type', [customSchema, FxPartlyClaimedPlain])"
+                out shouldNotContain "[CustomType,"
+            }
+
+            withClue("the type name is still what belongs in the import and in type position") {
+                out shouldContain "import { CustomType, customSchema } from './runtime/custom'"
+            }
+        }
+
+        "a recursive union uses type names in type position and schemas in schema position" {
+            // The z.lazy branch is the ONLY one that writes `export type X = A | B`, so it is the only
+            // place a variant's TYPE name is used. A claim is what makes the two differ at all.
+            val claims = TsTypeClaims().apply {
+                scopeFor("test").map<FxAlphaLeaf>(
+                    tsName = "LeafType",
+                    importFrom = "./runtime/leaf",
+                    schema = "leafSchema",
+                )
+            }
+
+            val out = emit(typeOf<FxZeta>(), claims)
+
+            withClue("type position takes the tsName — a schema expression is not a type") {
+                out shouldContain "export type FxZeta = FxAlphaBranch | LeafType"
+            }
+
+            withClue("schema position takes the schema — a tsName is not a value") {
+                out shouldContain "z.union([FxAlphaBranch, leafSchema])"
             }
         }
 
