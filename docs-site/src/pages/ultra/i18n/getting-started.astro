@@ -1,0 +1,101 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {i18nSidebar} from '../../../data/i18n-sidebar';
+import {Code} from 'astro:components';
+import {dep} from '../../../data/site';
+---
+
+<DocsLayout title="Getting Started" sidebar={i18nSidebar}
+            description="Add the dependency, write a catalog, resolve a message">
+
+    <h1>Getting Started</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        A catalog, an <code>I18n</code> instance, and a resolved string.
+    </p>
+
+    <h2>Dependency</h2>
+
+    <Code code={`dependencies {
+    implementation("${dep.i18n}")
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The runtime is multiplatform and has no dependencies of its own.</p>
+
+    <h2>The runtime, without codegen</h2>
+
+    <p>You can use the resolver directly. This is what the generated accessors call underneath, and it is
+        the quickest way to see the moving parts.</p>
+
+    <Code code={`import io.peekandpoke.ultra.i18n.I18n
+import io.peekandpoke.ultra.i18n.Locale
+import io.peekandpoke.ultra.i18n.MapI18nCatalog
+
+val catalog = MapI18nCatalog(
+    "en" to mapOf(
+        "checkout.greeting" to "Hello {{name}}!",
+        "checkout.items_one" to "{{count}} item",
+        "checkout.items_other" to "{{count}} items",
+    ),
+    "de" to mapOf(
+        "checkout.greeting" to "Hallo {{name}}!",
+    ),
+)
+
+val i18n = I18n(locale = Locale("de"), fallback = Locale("en")) {
+    install(catalog)
+}
+
+i18n.resolve("checkout.greeting", mapOf("name" to "Alice"))
+// -> "Hallo Alice!"
+
+i18n.resolvePlural("checkout.items", count = 3)
+// -> "3 items"   (no German plural in the catalog, so the chain falls through to en)`}
+          lang="kotlin" theme="vitesse-dark"/>
+
+    <h2>Two things to note</h2>
+
+    <p><strong>The fallback is required, and it is not derived from the locale.</strong> It has to be a
+        concrete target language you know is complete. Deriving it from <code>locale.base</code> would leave
+        <code>de-CH</code> falling back to <code>de</code> and then to nothing.</p>
+
+    <p><strong>A missing key returns the key itself</strong> rather than throwing or rendering empty. A
+        visible <code>checkout.greeting</code> in the UI is a bug report; a blank space is not.</p>
+
+    <h2>Placeholders</h2>
+
+    <p>Placeholders are <code>{'{{name}}'}</code>. Substitution is <strong>single-pass</strong>: a value is
+        never re-scanned, so a value that itself contains <code>{'{{...}}'}</code> can never be
+        re-interpreted as another placeholder.</p>
+
+    <Code code={`i18n.resolve("greeting", mapOf("name" to "{{secret}}", "secret" to "hunter2"))
+// -> "Hello {{secret}}!"   — NOT "Hello hunter2!"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>That matters when any part of a message comes from user input. Unknown placeholders are left in place
+        for the same reason as missing keys &mdash; visibly wrong beats silently blank.</p>
+
+    <h2>Plurals</h2>
+
+    <p>Plural forms are separate keys with a <code>_one</code> / <code>_other</code> suffix.
+        <code>resolvePlural</code> picks the form and supplies <code>{'{{count}}'}</code> for you.</p>
+
+    <Code code={`i18n.resolvePlural("checkout.items", count = 1)   // "1 item"
+i18n.resolvePlural("checkout.items", count = 7)   // "7 items"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>If the <code>_one</code> form is missing the <code>_other</code> form is used, and if both are
+        missing the base key is returned. Selection currently uses the simple <code>count == 1</code> rule
+        rather than CLDR plural categories.</p>
+
+    <h2>Next</h2>
+
+    <p>Writing catalogs by hand gets old quickly, and it puts the key strings back in your code. The Gradle
+        plugin generates typed accessors from YAML and checks your languages against each other.</p>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/i18n/catalogs"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Catalogs &amp; codegen &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

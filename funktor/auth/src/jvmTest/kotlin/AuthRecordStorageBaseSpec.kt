@@ -6,9 +6,11 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -33,28 +35,28 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             authRecords.adapter.removeAll()
 
             authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner1", token = "pw1"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner1"), token = "pw1"))
 
             // ensure they get a different timestamp
             delay(1.milliseconds)
 
             val owner1pw2 = authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner1", token = "pw2"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner1"), token = "pw2"))
 
             delay(2.milliseconds)
 
             authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner2", token = "pw1"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner2"), token = "pw1"))
 
             // ensure they get a different timestamp
             delay(1.milliseconds)
 
             val owner2pw2 = authRecords
-                .create(AuthRecord.Password(realm = "realm", ownerId = "owner2", token = "pw2"))
+                .create(AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner2"), token = "pw2"))
 
             withClue("Loading latest password of owner1") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "realm", "owner1")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), UserId("owner1"))
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe owner1pw2._id
@@ -65,7 +67,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading latest password of owner2") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "realm", "owner2")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), UserId("owner2"))
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe owner2pw2._id
@@ -76,14 +78,14 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading from a realm that does not have password stored") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "UNKNOWN", "owner1")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("UNKNOWN"), UserId("owner1"))
 
                 loaded.shouldBeNull()
             }
 
             withClue("Loading for an owner that does not have password stored") {
                 val loaded = authRecords
-                    .findLatestRecordBy(AuthRecord.Password, "realm", "UNKNOWN")
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), UserId("UNKNOWN"))
 
                 loaded.shouldBeNull()
             }
@@ -97,8 +99,8 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             val token1 = authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
-                    ownerId = "owner1",
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner1"),
                     token = "token1",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
@@ -106,8 +108,8 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             val token2 = authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
-                    ownerId = "owner2",
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner2"),
                     token = "token2",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
@@ -115,7 +117,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading password reset token of owner1") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm", token = "token1")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "token1")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token1._id
@@ -127,7 +129,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading password reset token of owner2") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm", token = "token2")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "token2")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token2._id
@@ -146,15 +148,15 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
-                    ownerId = "owner1",
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner1"),
                     token = "token1",
                     expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(),
                 )
             )
 
             val loaded = authRecords
-                .findLatestRecordBy(AuthRecord.PasswordRecoveryToken, "realm", "owner1")
+                .findLatestRecordBy(AuthRecord.PasswordRecoveryToken, RealmId("realm"), UserId("owner1"))
 
             loaded.shouldBeNull()
         }
@@ -168,15 +170,15 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             // Populate the store so the backend isn't just returning null from an empty table.
             authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm",
-                    ownerId = "owner1",
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner1"),
                     token = "known-token",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
             )
 
             val loaded = authRecords
-                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm", token = "unknown-token")
+                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "unknown-token")
 
             loaded.shouldBeNull()
         }
@@ -189,8 +191,8 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             authRecords.create(
                 AuthRecord.PasswordRecoveryToken(
-                    realm = "realm-a",
-                    ownerId = "owner1",
+                    realm = RealmId("realm-a"),
+                    ownerId = UserId("owner1"),
                     token = "shared-token",
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
@@ -198,14 +200,214 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Same token in a different realm should not match") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm-b", token = "shared-token")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-b"), token = "shared-token")
                 loaded.shouldBeNull()
             }
 
             withClue("Same token in the right realm should match") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = "realm-a", token = "shared-token")
+                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-a"), token = "shared-token")
                 loaded.shouldNotBeNull()
+            }
+        }
+
+        "A pending-activation marker must round-trip with no token and no expiry" {
+            // The shape is unique among auth records: BOTH `token` and `expiresAt` are null. And the
+            // null expiry is load-bearing rather than incidental — `findLatestRecordBy` drops expired
+            // records, so a marker that read back as expired would silently activate the account.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            authRecords.create(
+                AuthRecord.PendingActivation(realm = RealmId("realm"), ownerId = UserId("owner1"))
+            )
+
+            val loaded = authRecords
+                .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+
+            loaded.shouldNotBeNull()
+            loaded.resolve().ownerId shouldBe UserId("owner1")
+            loaded.resolve().token.shouldBeNull()
+            loaded.resolve().expiresAt.shouldBeNull()
+        }
+
+        "removeAllByOwner must remove a user's records, scoped to realm and owner" {
+            // This is what "activate the account" actually does. Untested until activation needed it,
+            // and a backend where it silently removed nothing would leave every activated account
+            // still locked out — with the API answering success = true.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            authRecords.create(AuthRecord.PendingActivation(RealmId("realm-a"), UserId("owner1")))
+            authRecords.create(AuthRecord.PendingActivation(RealmId("realm-a"), UserId("owner2")))
+            authRecords.create(AuthRecord.PendingActivation(RealmId("realm-b"), UserId("owner1")))
+            authRecords.create(
+                AuthRecord.Password(realm = RealmId("realm-a"), ownerId = UserId("owner1"), token = "pw")
+            )
+
+            authRecords.removeAllByOwner(AuthRecord.PendingActivation, RealmId("realm-a"), UserId("owner1"))
+
+            withClue("the target marker is gone") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm-a"), UserId("owner1"))
+                    .shouldBeNull()
+            }
+
+            withClue("another owner in the same realm keeps theirs") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm-a"), UserId("owner2"))
+                    .shouldNotBeNull()
+            }
+
+            withClue("the same owner in another realm keeps theirs") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm-b"), UserId("owner1"))
+                    .shouldNotBeNull()
+            }
+
+            withClue("another record TYPE of the same owner is untouched") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm-a"), UserId("owner1"))
+                    .shouldNotBeNull()
+            }
+        }
+
+        "hasNotExpired must treat a NULL expiresAt as never expiring" {
+            // THE property that makes a PendingActivation marker permanent. A marker has no expiry, and
+            // every lookup filters on `hasNotExpired()` — so if null were ever read as "expired", the
+            // marker would vanish from every query and an unactivated account would silently become
+            // activated. Nothing else in the suite pins this.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(
+                AuthRecord.PendingActivation(realm = RealmId("realm"), ownerId = UserId("owner1"))
+            )
+
+            with(authRecords) {
+                withClue("a record with no expiry has not expired") {
+                    marker.hasNotExpired() shouldBe true
+                    marker.hasExpired() shouldBe false
+                }
+            }
+        }
+
+        "hasExpired must be decided by the clock, on both sides of the boundary" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val future = authRecords.create(
+                AuthRecord.PasswordRecoveryToken(
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner1"),
+                    token = "future",
+                    expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
+                )
+            )
+
+            val past = authRecords.create(
+                AuthRecord.PasswordRecoveryToken(
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner2"),
+                    token = "past",
+                    expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(),
+                )
+            )
+
+            // Exactly `now` in whole seconds. `hasNotExpired` compares `expiresAt > secondsNow()`, so
+            // the boundary second counts as EXPIRED — asserted rather than left to chance, because a
+            // flipped comparison would keep a just-expired token usable for one more second.
+            val boundary = authRecords.create(
+                AuthRecord.PasswordRecoveryToken(
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner3"),
+                    token = "boundary",
+                    expiresAt = kronos.secondsNow(),
+                )
+            )
+
+            with(authRecords) {
+                withClue("expiry in the future") {
+                    future.hasNotExpired() shouldBe true
+                    future.hasExpired() shouldBe false
+                }
+
+                withClue("expiry in the past") {
+                    past.hasNotExpired() shouldBe false
+                    past.hasExpired() shouldBe true
+                }
+
+                withClue("expiry exactly now counts as expired") {
+                    boundary.hasExpired() shouldBe true
+                }
+            }
+        }
+
+        "findAllByOwner must return every live record, scoped to type, realm and owner, and drop expired ones" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            suspend fun token(realm: String, owner: String, token: String, expiresIn: Long) =
+                authRecords.create(
+                    AuthRecord.PasswordRecoveryToken(
+                        realm = RealmId(realm),
+                        ownerId = UserId(owner),
+                        token = token,
+                        expiresAt = kronos.instantNow().plus(expiresIn.hours).toEpochSeconds(),
+                    )
+                )
+
+            token(realm = "realm-a", owner = "owner1", token = "a1", expiresIn = 1)
+            token(realm = "realm-a", owner = "owner1", token = "a2", expiresIn = 1)
+            token(realm = "realm-a", owner = "owner1", token = "expired", expiresIn = -1)
+            token(realm = "realm-a", owner = "owner2", token = "other-owner", expiresIn = 1)
+            token(realm = "realm-b", owner = "owner1", token = "other-realm", expiresIn = 1)
+
+            authRecords.create(
+                AuthRecord.PendingActivation(realm = RealmId("realm-a"), ownerId = UserId("owner1"))
+            )
+
+            val found = authRecords.findAllByOwner(
+                AuthRecord.PasswordRecoveryToken, RealmId("realm-a"), UserId("owner1"),
+            )
+
+            withClue("only the live tokens of that type, realm and owner") {
+                found.map { it.resolve().token }.sorted() shouldBe listOf("a1", "a2")
+            }
+        }
+
+        "removeById must remove exactly one record" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val keep = authRecords.create(
+                AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner1"), token = "keep")
+            )
+            val drop = authRecords.create(
+                AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner2"), token = "drop")
+            )
+
+            authRecords.removeById(drop._id)
+
+            withClue("the removed record is gone") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), UserId("owner2"))
+                    .shouldBeNull()
+            }
+
+            withClue("the other record is untouched") {
+                authRecords
+                    .findLatestRecordBy(AuthRecord.Password, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull()
+                    .resolve().token shouldBe keep.resolve().token
             }
         }
     }

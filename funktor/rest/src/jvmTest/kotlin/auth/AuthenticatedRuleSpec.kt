@@ -9,21 +9,13 @@ import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.security.user.User
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
 
 class AuthenticatedRuleSpec : StringSpec({
 
-    fun authenticatedRule(): AuthRule<Unit, Unit> {
-        val builder = AuthRuleBuilder<Unit, Unit>(
-            route = ApiRoute.Plain(
-                method = HttpMethod.Get,
-                route = TypedRoute.Plain(pattern = UriPattern("/test")),
-                responseType = kType<Unit>(),
-            )
-        )
-        return builder.authenticated()
-    }
+    fun authenticatedRule(): AuthRule<Unit, Unit> = AuthRule.authenticated()
 
     fun routeWith(rule: AuthRule<Unit, Unit>): ApiRoute<Unit> {
         return ApiRoute.Plain(
@@ -36,7 +28,7 @@ class AuthenticatedRuleSpec : StringSpec({
 
     "authenticated() grants for a logged-in user with roles" {
         val user = User(
-            record = UserRecord.LoggedIn(userId = "alice"),
+            record = UserRecord.LoggedIn(userId = UserId("alice")),
             permissions = UserPermissions(roles = setOf("editor")),
         )
         val ctx = AuthRule.EstimateCtx(user = user)
@@ -46,7 +38,7 @@ class AuthenticatedRuleSpec : StringSpec({
 
     "authenticated() grants for a logged-in user without roles" {
         val user = User(
-            record = UserRecord.LoggedIn(userId = "bob"),
+            record = UserRecord.LoggedIn(userId = UserId("bob")),
             permissions = UserPermissions(),
         )
         val ctx = AuthRule.EstimateCtx(user = user)
@@ -56,7 +48,7 @@ class AuthenticatedRuleSpec : StringSpec({
 
     "authenticated() grants for a super user" {
         val user = User(
-            record = UserRecord.LoggedIn(userId = "admin"),
+            record = UserRecord.LoggedIn(userId = UserId("admin")),
             permissions = UserPermissions(isSuperUser = true),
         )
         val ctx = AuthRule.EstimateCtx(user = user)
@@ -74,7 +66,7 @@ class AuthenticatedRuleSpec : StringSpec({
         val route = routeWith(authenticatedRule())
 
         val authenticatedUser = User(
-            record = UserRecord.LoggedIn(userId = "alice"),
+            record = UserRecord.LoggedIn(userId = UserId("alice")),
             permissions = UserPermissions(),
         )
 

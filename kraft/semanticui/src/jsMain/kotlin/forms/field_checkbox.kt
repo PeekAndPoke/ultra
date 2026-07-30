@@ -17,7 +17,6 @@ import org.w3c.dom.HTMLInputElement
 import kotlin.reflect.KMutableProperty0
 
 /** Provides a [UiCheckboxFieldRenderer] for rendering checkbox form fields. */
-@io.peekandpoke.kraft.forms.KraftFormsDsl
 val Tag.UiCheckboxField get() = UiCheckboxFieldRenderer(this)
 
 /**
@@ -30,7 +29,6 @@ val Tag.UiCheckboxField get() = UiCheckboxFieldRenderer(this)
  * @param builder Optional configuration for field options.
  */
 @Suppress("FunctionName")
-@io.peekandpoke.kraft.forms.KraftFormsDsl
 fun <T> Tag.UiCheckboxField(
     value: T,
     onChange: (T) -> Unit,
@@ -149,7 +147,6 @@ class UiCheckboxFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Boolean
      */
-    @io.peekandpoke.kraft.forms.KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<Boolean>,
         builder: Options<Boolean>.() -> Unit = {},
@@ -158,7 +155,6 @@ class UiCheckboxFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Boolean
      */
-    @io.peekandpoke.kraft.forms.KraftFormsDsl
     operator fun invoke(
         value: Boolean,
         onChange: (Boolean) -> Unit,
@@ -168,7 +164,6 @@ class UiCheckboxFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for the type [T]
      */
-    @io.peekandpoke.kraft.forms.KraftFormsDsl
     operator fun <T> invoke(
         value: T,
         onChange: (T) -> Unit,

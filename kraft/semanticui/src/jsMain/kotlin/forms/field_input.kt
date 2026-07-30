@@ -6,7 +6,9 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.forms.AbstractFormField
 import io.peekandpoke.kraft.forms.FieldOptions
-import io.peekandpoke.kraft.forms.KraftFormsDsl
+import io.peekandpoke.kraft.forms.SettingsBuilder
+import io.peekandpoke.kraft.i18n.generated.forms
+import io.peekandpoke.kraft.i18n.generated.invalidValue
 import io.peekandpoke.kraft.semanticui.forms.UiInputFieldComponent.Options
 import io.peekandpoke.kraft.utils.dateToYmd
 import io.peekandpoke.kraft.utils.localDateTimeToYmdHms
@@ -46,23 +48,18 @@ import org.w3c.dom.HTMLInputElement
 import kotlin.reflect.KMutableProperty0
 
 /** Provides a [UiInputFieldRenderer] for rendering text and number input fields. */
-@KraftFormsDsl
 val Tag.UiInputField get() = UiInputFieldRenderer(this)
 
 /** Provides a [UiPasswordFieldRenderer] for rendering password input fields. */
-@KraftFormsDsl
 val Tag.UiPasswordField get() = UiPasswordFieldRenderer(this)
 
 /** Provides a [UiDateFieldRenderer] for rendering date input fields. */
-@KraftFormsDsl
 val Tag.UiDateField get() = UiDateFieldRenderer(this)
 
 /** Provides a [UiDateTimeFieldRenderer] for rendering date-time input fields. */
-@KraftFormsDsl
 val Tag.UiDateTimeField get() = UiDateTimeFieldRenderer(this)
 
 /** Provides a [UiTimeFieldRenderer] for rendering time input fields. */
-@KraftFormsDsl
 val Tag.UiTimeField get() = UiTimeFieldRenderer(this)
 
 /**
@@ -193,8 +190,7 @@ class UiInputFieldComponent<T, P : UiInputFieldComponent.Props<T>>(ctx: Ctx<P>) 
             setValue(newValue)
         } catch (t: Throwable) {
             console.warn(t)
-            // TODO: how to translate this?
-            errors = listOf("Invalid value")
+            errors = listOf(translate.forms.invalidValue())
         }
     }
 
@@ -279,7 +275,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a String
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<String>,
         builder: Options<String>.() -> Unit = {},
@@ -288,7 +283,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a String
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: String,
         onChange: (String) -> Unit,
@@ -298,7 +292,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable String
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<String?>,
         builder: Options<String?>.() -> Unit = {},
@@ -307,7 +300,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable String
      */
-    @KraftFormsDsl
     fun nullable(
         value: String?,
         onChange: (String?) -> Unit,
@@ -317,7 +309,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an Int
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<Int>,
         builder: Options<Int>.() -> Unit = {},
@@ -326,7 +317,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an Int
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: Int,
         onChange: (Int) -> Unit,
@@ -339,7 +329,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable Int
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<Int?>,
         builder: Options<Int?>.() -> Unit = {},
@@ -348,7 +337,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable Int
      */
-    @KraftFormsDsl
     fun nullable(
         value: Int?,
         onChange: (Int?) -> Unit,
@@ -361,7 +349,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Float
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<Float>,
         builder: Options<Float>.() -> Unit = {},
@@ -370,7 +357,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Float
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: Float,
         onChange: (Float) -> Unit,
@@ -383,7 +369,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable Float
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<Float?>,
         builder: Options<Float?>.() -> Unit = {},
@@ -392,7 +377,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable Float
      */
-    @KraftFormsDsl
     fun nullable(
         value: Float?,
         onChange: (Float?) -> Unit,
@@ -405,7 +389,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Double
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<Double>,
         builder: Options<Double>.() -> Unit = {},
@@ -414,7 +397,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a Double
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: Double,
         onChange: (Double) -> Unit,
@@ -427,7 +409,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable Double
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<Double?>,
         builder: Options<Double?>.() -> Unit = {},
@@ -436,7 +417,6 @@ class UiInputFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable Double
      */
-    @KraftFormsDsl
     fun nullable(
         value: Double?,
         onChange: (Double?) -> Unit,
@@ -452,7 +432,6 @@ class UiPasswordFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a String
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<String>,
         builder: Options<String>.() -> Unit = {},
@@ -461,7 +440,6 @@ class UiPasswordFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a String
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: String,
         onChange: (String) -> Unit,
@@ -481,7 +459,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalDate
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpLocalDate>,
         builder: Options<MpLocalDate>.() -> Unit = {},
@@ -490,7 +467,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalDate
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpLocalDate,
         onChange: (MpLocalDate) -> Unit,
@@ -504,7 +480,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalDate
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<MpLocalDate?>,
         builder: Options<MpLocalDate?>.() -> Unit = {},
@@ -513,7 +488,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalDate
      */
-    @KraftFormsDsl
     fun nullable(
         value: MpLocalDate?,
         onChange: (MpLocalDate?) -> Unit,
@@ -526,16 +500,14 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpLocalDateTime>,
-        builder: io.peekandpoke.kraft.forms.SettingsBuilder<MpLocalDate> = {},
+        builder: SettingsBuilder<MpLocalDate> = {},
     ) = invoke(prop(), prop::set, builder)
 
     /**
      * Renders the field for an MpLocalDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpLocalDateTime,
         onChange: (MpLocalDateTime) -> Unit,
@@ -549,7 +521,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<MpLocalDateTime?>,
         builder: io.peekandpoke.kraft.forms.SettingsBuilder<MpLocalDate?> = {},
@@ -558,7 +529,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         value: MpLocalDateTime?,
         onChange: (MpLocalDateTime?) -> Unit,
@@ -576,7 +546,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpZonedDateTime>,
         builder: Options<MpLocalDate>.() -> Unit = {},
@@ -585,7 +554,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpZonedDateTime,
         onChange: (MpZonedDateTime) -> Unit,
@@ -600,7 +568,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpZonedDateTime>,
         timezone: MpTimezone,
@@ -610,7 +577,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpZonedDateTime,
         timezone: MpTimezone,
@@ -625,7 +591,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpZonedDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<MpZonedDateTime?>,
         timezone: MpTimezone,
@@ -635,7 +600,6 @@ class UiDateFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpZonedDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         value: MpZonedDateTime?,
         timezone: MpTimezone,
@@ -664,7 +628,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpLocalDateTime>,
         builder: Options<MpLocalDateTime>.() -> Unit = {},
@@ -673,7 +636,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpLocalDateTime,
         onChange: (MpLocalDateTime) -> Unit,
@@ -687,7 +649,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<MpLocalDateTime?>,
         builder: Options<MpLocalDateTime?>.() -> Unit = {},
@@ -696,7 +657,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         value: MpLocalDateTime?,
         onChange: (MpLocalDateTime?) -> Unit,
@@ -711,7 +671,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an [MpInstant]
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpInstant>,
         timezone: MpTimezone,
@@ -721,7 +680,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpInstant,
         timezone: MpTimezone,
@@ -740,7 +698,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpZonedDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<MpInstant?>,
         timezone: MpTimezone,
@@ -750,7 +707,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpZonedDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         value: MpInstant?,
         timezone: MpTimezone,
@@ -771,7 +727,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpZonedDateTime>,
         builder: Options<MpZonedDateTime>.() -> Unit = {},
@@ -780,7 +735,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpZonedDateTime,
         onChange: (MpZonedDateTime) -> Unit,
@@ -790,7 +744,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpZonedDateTime>,
         timezone: MpTimezone,
@@ -800,7 +753,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpZonedDateTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpZonedDateTime,
         timezone: MpTimezone,
@@ -819,7 +771,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpZonedDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         prop: KMutableProperty0<MpZonedDateTime?>,
         timezone: MpTimezone,
@@ -829,7 +780,6 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpZonedDateTime
      */
-    @KraftFormsDsl
     fun nullable(
         value: MpZonedDateTime?,
         timezone: MpTimezone,
@@ -851,7 +801,6 @@ class UiTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpLocalTime>,
         builder: Options<MpLocalTime>.() -> Unit = {},
@@ -860,7 +809,6 @@ class UiTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for an MpLocalTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         value: MpLocalTime,
         onChange: (MpLocalTime) -> Unit,
@@ -873,7 +821,6 @@ class UiTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalTime
      */
-    @KraftFormsDsl
     operator fun invoke(
         prop: KMutableProperty0<MpLocalTime?>,
         builder: Options<MpLocalTime?>.() -> Unit = {},
@@ -882,7 +829,6 @@ class UiTimeFieldRenderer(private val tag: Tag) {
     /**
      * Renders the field for a nullable MpLocalTime
      */
-    @KraftFormsDsl
     fun nullable(
         value: MpLocalTime?,
         onChange: (MpLocalTime?) -> Unit,

@@ -23,8 +23,8 @@ plugins {
 }
 
 dependencies {
-    implementation("${dep.monko}")
-    ksp("${dep.monko}")  // KSP processor for type-safe property paths
+    implementation("${dep.monkoCore}")
+    ksp("${dep.monkoKsp}")  // KSP processor for type-safe property paths
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>2. Define an entity</h2>
@@ -80,7 +80,7 @@ val stored = repo.insert("person-1", Person(name = "Alice", age = 30, email = "a
 val found = repo.findById("persons/person-1")
 
 // Update
-val updated = found!!.modify { copy(age = 31) }
+val updated = found!!.modify { it.copy(age = 31) }
 repo.save(updated)
 
 // Atomic read-modify-write

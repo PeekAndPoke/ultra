@@ -21,6 +21,18 @@ import kotlin.random.Random
 /** Ktor status page handlers that map exceptions to typed [ApiResponse] errors. */
 object ApiStatusPages {
 
+    /**
+     * Whether error responses may carry a full stack trace, which is only acceptable outside of
+     * production.
+     *
+     * This deliberately asks for `isNotProduction` rather than negating `isProduction`, so that it
+     * fails closed: when there is no kontainer or no [AppConfig] the environment is unknown, and an
+     * unknown environment must be treated as production rather than leaking internals.
+     */
+    fun exposesStackTraces(config: AppConfig?): Boolean {
+        return config?.ktor?.isNotProduction == true
+    }
+
     fun isClientError(cause: Throwable): Boolean {
         return cause is ChannelWriteException ||
                 cause is CancellationException ||
@@ -35,9 +47,9 @@ object ApiStatusPages {
             fun <T> ApiResponse<T>.withCause(call: ApplicationCall, cause: Throwable): ApiResponse<T> {
                 val config = call.kontainerOrNull?.getOrNull(AppConfig::class)
 
-                return when (config?.ktor?.isProduction) {
-                    true -> this.withError(cause.message ?: "")
-                    else -> this.withError(cause.stackTraceToString())
+                return when (exposesStackTraces(config)) {
+                    true -> this.withError(cause.stackTraceToString())
+                    else -> this.withError(cause.message ?: "")
                 }
             }
 

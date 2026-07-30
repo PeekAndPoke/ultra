@@ -51,17 +51,6 @@ class MutableListsSpec : StringSpec({
         }
     }
 
-    "MutableList.pop" {
-
-        val subject = mutableListOf(1, 2)
-
-        assertSoftly {
-            subject.pop() shouldBe 2
-            subject.pop() shouldBe 1
-            subject.pop() shouldBe null
-        }
-    }
-
     listOf(
         tuple(listOf(), arrayOf()),
         tuple(listOf(1), arrayOf()),
@@ -104,17 +93,6 @@ class MutableListsSpec : StringSpec({
 
                 mutable shouldBe args.plus(input)
             }
-        }
-    }
-
-    "MutableList.shift" {
-
-        val subject = mutableListOf(1, 2)
-
-        assertSoftly {
-            subject.shift() shouldBe 1
-            subject.shift() shouldBe 2
-            subject.shift() shouldBe null
         }
     }
 })

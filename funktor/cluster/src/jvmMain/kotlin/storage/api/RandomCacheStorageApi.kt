@@ -16,15 +16,13 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.map
 
-class RandomCacheStorageApi : ApiRoutes("random-cache") {
+class RandomCacheStorageApi : ApiRoutes("random-cache", authFloor = { isSuperUser() }) {
 
     val list = RandomCacheStorageApiClient.List.mount(QueryParams.List::class) {
         docs {
             name = "List cache data"
         }.codeGen {
             funcName = "list"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
             val result = cluster.storage.randomCache
                 .list(search = params.search, page = params.page, epp = params.epp)
@@ -45,8 +43,6 @@ class RandomCacheStorageApi : ApiRoutes("random-cache") {
             name = "Get cache data"
         }.codeGen {
             funcName = "get"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
 
             val result = cluster.storage.randomCache.get(id = params.id)

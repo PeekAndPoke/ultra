@@ -1,6 +1,9 @@
 package io.peekandpoke.funktor.auth.domain
 
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.vault.Vault
 import io.peekandpoke.ultra.vault.hooks.Timestamped
@@ -9,8 +12,8 @@ import io.peekandpoke.ultra.vault.hooks.Timestamped
 sealed interface AuthRecord : Timestamped {
 
     data class Password(
-        override val realm: String,
-        override val ownerId: String,
+        override val realm: RealmId,
+        override val ownerId: UserId,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
         /** The hashed password */
@@ -27,8 +30,8 @@ sealed interface AuthRecord : Timestamped {
     }
 
     data class PasswordRecoveryToken(
-        override val realm: String,
-        override val ownerId: String,
+        override val realm: RealmId,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -44,12 +47,90 @@ sealed interface AuthRecord : Timestamped {
     }
 
     /**
+     * The account has not yet proven it owns its email address. PRESENCE is the state — there is no
+     * "activated" flag anywhere, and no row means activated.
+     *
+     * Deliberately separate from [EmailVerificationToken], and deliberately non-expiring. Using "an
+     * unexpired verification token exists" as the state would fail OPEN: `findLatestRecordBy` filters
+     * expired records out, so every account that let its activation link lapse would silently become
+     * activated. Keeping the state here lets the token expire on its own schedule.
+     *
+     * Written by `EmailAndPasswordAuth.signUp`, removed by `activateAccount` — and also by a completed
+     * password reset.
+     *
+     * **The rule for clearing it: an operation must BOTH prove control of the mailbox AND invalidate
+     * every password set before it.** A password reset does both — the token was mailed to the
+     * address, and `findLatestPasswordRecord` only ever validates the NEWEST password record, so the
+     * password chosen at sign-up stops working the moment the reset writes a new one.
+     *
+     * That rule is why two neighbouring operations deliberately do NOT clear it, even though both look
+     * like they prove enough:
+     * - **SSO sign-in for the same address.** It proves the mailbox but leaves the sign-up password
+     *   intact. Clearing here would REOPEN the attack this whole feature closes: an attacker registers
+     *   `victim@corp.com` with a password of their choosing, the victim later signs in with Google,
+     *   and the attacker's password would silently start working. The victim's own way back is
+     *   "forgot password", which satisfies both halves.
+     * - **Authenticated `setPassword`.** It proves knowledge of the current password but says nothing
+     *   about the mailbox.
+     *
+     * The cost is that an account which signed up by password and never activated cannot use its
+     * password until it goes through a reset, even if it signs in via SSO. That is the intended
+     * trade: a stuck credential, not a shared account.
+     */
+    data class PendingActivation(
+        override val realm: RealmId,
+        override val ownerId: UserId,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<PendingActivation> {
+            override val identifier = "pending-activation"
+        }
+
+        /** Never expires: it is state, not a secret. */
+        override val expiresAt: Long? = null
+
+        /** Carries no secret. */
+        override val token: String? = null
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
+     * Single-use, short-lived proof that a caller passed the password check for an account that is
+     * still pending activation. Exchanged at `resend-activation` for a fresh activation mail.
+     *
+     * The exact shape of [OrgSelectionToken], for the exact same reason: the follow-up call needs an
+     * authorization, and the credential check is the only thing that can supply one. Without it,
+     * "resend the activation mail" is a mail primitive any stranger can aim at any address — the
+     * per-account cooldown bounds mail PER ACCOUNT while an attacker picks how many accounts exist.
+     */
+    data class ActivationResendToken(
+        override val realm: RealmId,
+        override val ownerId: UserId,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret handed to the client after a refused-but-correct sign-in. */
+        override val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<ActivationResendToken> {
+            override val identifier = "activation-resend-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
      * Single-use token sent to a user's email address to verify ownership at sign-up time.
-     * Consumed by `AuthSystem.verifyEmail(realm, token)`.
+     * Consumed by `EmailAndPasswordAuth.activateAccount`, which also removes the [PendingActivation]
+     * marker.
      */
     data class EmailVerificationToken(
-        override val realm: String,
-        override val ownerId: String,
+        override val realm: RealmId,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -70,15 +151,15 @@ sealed interface AuthRecord : Timestamped {
      * `AuthSystem.confirmEmailChange(realm, token)`.
      */
     data class EmailChangeToken(
-        override val realm: String,
-        override val ownerId: String,
+        override val realm: RealmId,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
         /** Random secret token sent to the new email address. */
         override val token: String,
-        /** The email the user wants to switch to. */
-        val pendingEmail: String,
+        /** The email the user wants to switch to. Canonical — see [EmailAddress]. */
+        val pendingEmail: EmailAddress,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<EmailChangeToken> {
             override val identifier = "email-change-token"
@@ -89,13 +170,38 @@ sealed interface AuthRecord : Timestamped {
     }
 
     /**
-     * An active login session. Each successful sign-in creates one row; the JWT issued to the
-     * client carries the row's `_id` as a `sessionId` claim and the auth middleware validates
-     * the session still exists on each request (cached). Revoking the row logs the user out.
+     * Single-use, short-lived token issued when a sign-in resolves to multiple organisations.
+     * The user exchanges it (plus a chosen org id) at `select-org` for a full session.
+     */
+    data class OrgSelectionToken(
+        override val realm: RealmId,
+        override val ownerId: UserId,
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret token handed to the client between credential-check and org-selection. */
+        override val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<OrgSelectionToken> {
+            override val identifier = "org-selection-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
+     * An active login session.
+     *
+     * **The row is modelled but not yet issued.** The design is that each successful sign-in creates
+     * one, the JWT carries its id as a `sessionId` claim, and the middleware validates the session on
+     * each request (cached) so revoking the row logs the user out. Today nothing creates these rows in
+     * production and no JWT carries the claim — see `SESSION_ID_CLAIM` and
+     * `.claude/tasks/20260728-session-revocation-wiring.md`.
      */
     data class Session(
-        override val realm: String,
-        override val ownerId: String,
+        override val realm: RealmId,
+        override val ownerId: UserId,
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
@@ -121,11 +227,16 @@ sealed interface AuthRecord : Timestamped {
 
     /** The realm that record belongs to */
     @Vault.Field
-    val realm: String
+    val realm: RealmId
 
-    /** The id of the owner / user */
+    /**
+     * The id of the owner / user.
+     *
+     * Always the realm-qualified Vault `_id` (`<user collection>/<key>`), which is what makes it
+     * globally unique across the per-realm user stores.
+     */
     @Vault.Field
-    val ownerId: String
+    val ownerId: UserId
 
     /** Epoch seconds timestamp, when this entry expires, or NULL if it never expires */
     @Vault.Field

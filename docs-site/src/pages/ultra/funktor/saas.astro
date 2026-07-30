@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {funktorSidebar} from '../../../data/funktor-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="SaaS" sidebar={funktorSidebar}
+            description="Organisations, memberships and a structural cross-tenant isolation boundary">
+
+    <h1>SaaS</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Organisations, memberships, and a boot-enforced boundary that stops one tenant reading another's data.
+    </p>
+
+    <h2>Wiring</h2>
+
+    <Code code={`funktor(
+    config = config,
+    auth = { useKarango() },
+    saas = { useKarango() },   // or useMonko()
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>This registers the organisation and membership repositories, the <code>orgs</code> API, and &mdash;
+        importantly &mdash; the isolation boot check and request guard described below.</p>
+
+    <h2>Storage</h2>
+
+    <p>Two storages, both backend-agnostic (Karango or Monko):</p>
+
+    <Code code={`orgs.findBySlug("acme")
+orgs.ensureBySlug(slug = "acme", name = "Acme Inc")
+orgs.create(organisation)
+orgs.save(organisation)
+
+orgMembers.sessionMembershipsOf(UserId(user._id))   // -> Set<OrgMembership>`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>An organisation carries a <code>slug</code>, a <code>name</code> and an
+        <code>OrgStatus</code>. Only <code>Active</code> organisations should be sign-in-able &mdash; see
+        <a href="/ultra/funktor/auth">Auth</a> for how a realm turns memberships into a session.</p>
+
+    <h2>Slugs are subdomain-safe</h2>
+
+    <p>Slugs end up in hostnames, so <code>Slugs</code> validates them for that: 2&ndash;63 characters,
+        and <code>normalize()</code> trims and lower-cases. <code>validationError(slug)</code> returns a
+        human-readable reason rather than a bare boolean, so an API can say what was wrong.</p>
+
+    <h2>Org isolation &mdash; the part that matters</h2>
+
+    <p>Two interfaces turn tenant isolation from a convention into something the framework enforces.</p>
+
+    <Code code={`// 1. Mark the entity as owned by an organisation
+data class Invoice(
+    override val org: Ref<Organisation>,
+    val total: Money,
+) : OrgAware
+
+// 2. The route's params must carry the addressed organisation
+data class InvoiceParams(
+    override val org: Stored<Organisation>,
+    val invoice: Stored<Invoice>,
+) : OrgAwareParam`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Marking an entity <code>OrgAware</code> is the developer's opt-in. Once marked:</p>
+
+    <ul>
+        <li><strong>At boot</strong>, any route resolving that entity is forced to be
+            <code>OrgAwareParam</code> &mdash; a route that loads an org-owned entity without knowing which
+            organisation the request addresses fails app start, not review.
+        </li>
+        <li><strong>At request time</strong>, the guard compares each loaded entity's <code>org</code>
+            reference against the request's organisation. A mismatch is refused.
+        </li>
+    </ul>
+
+    <Aside>The boot check is the interesting half. A runtime guard only protects the routes someone
+        remembered to route through it; a boot check protects the ones they forgot, which are the ones
+        that leak.
+    </Aside>
+
+    <h2>The one contract to get right</h2>
+
+    <p><code>OrgAware.org</code> must carry the organisation's <strong>canonical <code>_id</code></strong>
+        (collection-qualified, e.g. <code>organisation/acme</code>), because the guard compares on
+        <code>_id</code>. A persisted <code>Ref&lt;Organisation&gt;</code> satisfies this automatically. If
+        you construct one by hand, use <code>_id</code> &mdash; never a bare <code>_key</code>.</p>
+
+    <p>Getting it wrong fails <em>closed</em>: every same-org request 404s. That makes it an availability
+        landmine rather than a data leak, which is the right direction to be wrong in &mdash; but it is a
+        confusing outage, so get it right.</p>
+
+    <Aside>Enforcement lives in the saas module, not in the marker interfaces. An app that uses
+        <code>OrgAware</code> without installing <code>funktor(saas = &#123; … &#125;)</code> gets the interfaces and
+        none of the checks.
+    </Aside>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/funktor/auth"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Auth &amp; realms &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

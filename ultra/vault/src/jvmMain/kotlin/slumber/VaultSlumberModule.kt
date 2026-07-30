@@ -10,14 +10,15 @@ import io.peekandpoke.ultra.vault.EntityCache
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Stored
-import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule.DatabaseKey
-import io.peekandpoke.ultra.vault.slumber.VaultSlumberModule.EntityCacheKey
 import kotlin.reflect.KType
 
 /**
  * Slumber module that registers codecs for Vault domain types.
  *
- * Provides [Awaker] and [Slumberer] implementations for [Ref], [Stored], and [New].
+ * Provides [Slumberer]s for [Ref], [Stored] and [New], but [Awaker]s only for [Ref] and [Stored]:
+ * a [New] can be written to the database, never read back through this module. A declared [New]
+ * type falls through to the built-in data-class awaker, which expects a nested `_value` instead of
+ * the flat map [StoredSlumberer] writes — persisted documents come back as [Stored].
  *
  * Context attributes:
  * - [DatabaseKey] -- the [Database] used by [RefCodec] to resolve references.
@@ -33,8 +34,16 @@ object VaultSlumberModule : SlumberModule {
 
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
         return when (type.classifier) {
-            Ref::class -> RefCodec
+            // A reference that cannot be read is an AwakerException naming the offending field,
+            // rather than a null that quietly takes the whole document with it.
+            // RefCodec is both an Awaker and a Slumberer, hence the cast to pick the overload.
+            Ref::class -> type.wrapIfNonNull(RefCodec as Awaker)
+
+            // NOT wrapped: a null row is how a missing document is reported. Karango's findById
+            // issues DOCUMENT(repo, id), which yields null when nothing matches, and turns that
+            // into a null result rather than an error.
             Stored::class -> type.arguments.firstOrNull()?.type?.let { StoredAwaker(it) }
+
             else -> null
         }
     }

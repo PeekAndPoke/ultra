@@ -68,10 +68,9 @@ onClick { state = state.copy(agreed = true) }`} lang="kotlin" theme="vitesse-dar
 <Code code={`class SearchBox(ctx: NoProps) : PureComponent(ctx) {
 
     // Debounce input by 300ms before searching
-    private var query by stream("") {
-        it.debounce(300.milliseconds)
-    } handler { debouncedQuery ->
-        performSearch(debouncedQuery)
+    // config is a POSITIONAL receiver lambda; the trailing lambda is the handler
+    private var query by stream("", { debounce(300.milliseconds) }) { debounced ->
+        performSearch(debounced)
     }
 
     override fun VDom.render() {

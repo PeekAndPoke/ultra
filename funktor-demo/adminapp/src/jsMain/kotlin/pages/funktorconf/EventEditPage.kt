@@ -17,7 +17,6 @@ import io.peekandpoke.kraft.semanticui.forms.old.select.SelectField
 import io.peekandpoke.kraft.toasts.ToastsManager.Companion.toasts
 import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.doubleClickProtection
-import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.icon
@@ -155,8 +154,8 @@ class EventEditPage(ctx: Ctx<Props>) : Component<EventEditPage.Props>(ctx) {
                 .givenNot(noDblClick.canRun) { loading }
                 .button {
                     onClick {
-                        if (formCtrl.validate()) {
-                            launch { saveEvent(draft) }
+                        formCtrl.validate {
+                            saveEvent(draft)
                         }
                     }
 

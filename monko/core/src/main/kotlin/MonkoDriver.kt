@@ -17,6 +17,7 @@ import io.peekandpoke.ultra.slumber.awake
 import io.peekandpoke.ultra.slumber.slumber
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.VaultHookScope
 import io.peekandpoke.ultra.vault.ensureKey
 import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
@@ -34,6 +35,7 @@ class MonkoDriver(
     private val lazyDatabase: Lazy<MongoDatabase>,
     private val lazyProfiler: Lazy<QueryProfiler> = lazy { NullQueryProfiler },
     val log: Log = NullLog,
+    val hookScope: VaultHookScope = VaultHookScope.Inline(),
 ) {
     companion object {
         private val prettyJsonWriterSettings = JsonWriterSettings.builder().indent(true).build()
@@ -112,6 +114,7 @@ class MonkoDriver(
         lazyDatabase = lazyDatabase,
         lazyProfiler = lazyProfiler,
         log = newLog,
+        hookScope = hookScope,
     )
 
     fun withProfiler(newProfiler: QueryProfiler) = MonkoDriver(
@@ -120,6 +123,7 @@ class MonkoDriver(
         lazyDatabase = lazyDatabase,
         lazyProfiler = lazy { newProfiler },
         log = log,
+        hookScope = hookScope,
     )
 
     private val version: String by lazy {

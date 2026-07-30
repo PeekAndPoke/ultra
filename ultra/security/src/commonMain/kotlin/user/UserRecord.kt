@@ -8,13 +8,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface UserRecord {
     @Slumber.Field
-    val userId: String
+    val userId: UserId
 
     @Slumber.Field
     val clientIp: String?
 
     @Slumber.Field
-    val email: String? get() = null
+    val email: EmailAddress? get() = null
 
     @Slumber.Field
     val desc: String? get() = null
@@ -31,7 +31,7 @@ sealed interface UserRecord {
     data class Anonymous(
         override val clientIp: String? = null,
     ) : UserRecord {
-        override val userId: String get() = ANONYMOUS_ID
+        override val userId: UserId get() = ANONYMOUS_ID
     }
 
     /** Internal system actor (background jobs, internal calls). */
@@ -40,16 +40,16 @@ sealed interface UserRecord {
     data class System(
         override val clientIp: String? = null,
     ) : UserRecord {
-        override val userId: String get() = SYSTEM_ID
+        override val userId: UserId get() = SYSTEM_ID
     }
 
     /** End-user authenticated via a JWT (or equivalent session). */
     @Serializable
     @SerialName("logged-in")
     data class LoggedIn(
-        override val userId: String,
+        override val userId: UserId,
         override val clientIp: String? = null,
-        override val email: String? = null,
+        override val email: EmailAddress? = null,
         override val desc: String? = null,
         override val type: String? = null,
     ) : UserRecord
@@ -58,21 +58,21 @@ sealed interface UserRecord {
     @Serializable
     @SerialName("api-key")
     data class ApiKey(
-        override val userId: String,
+        override val userId: UserId,
         override val clientIp: String? = null,
         val keyId: String,
         val keyName: String? = null,
-        override val email: String? = null,
+        override val email: EmailAddress? = null,
         override val desc: String? = null,
         override val type: String? = null,
     ) : UserRecord
 
     companion object {
         /** User id for anonymous users. */
-        const val ANONYMOUS_ID = "anonymous"
+        val ANONYMOUS_ID: UserId = UserId("anonymous")
 
         /** User id for system users. */
-        const val SYSTEM_ID = "system"
+        val SYSTEM_ID: UserId = UserId("system")
 
         /** Singleton anonymous user record. */
         val anonymous: UserRecord = Anonymous()

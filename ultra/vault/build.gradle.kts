@@ -50,6 +50,7 @@ kotlin {
 
                 implementation(Deps.Ktor.Client.core)
 
+                api(project(":ultra:cache"))
                 api(project(":ultra:common"))
                 api(project(":ultra:datetime"))
                 api(project(":ultra:slumber"))

@@ -13,7 +13,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-class RestShowcaseApi : ApiRoutes("showcase-rest") {
+class RestShowcaseApi : ApiRoutes("showcase-rest", authFloor = { public() }) {
 
     data class EchoParams(val message: String)
     data class ItemParams(val id: String)
@@ -23,8 +23,6 @@ class RestShowcaseApi : ApiRoutes("showcase-rest") {
             name = "Get server time (plain route demo)"
         }.codeGen {
             funcName = "getPlain"
-        }.authorize {
-            public()
         }.handle {
             val now = Instant.now()
 
@@ -42,8 +40,6 @@ class RestShowcaseApi : ApiRoutes("showcase-rest") {
             name = "Echo message (params route demo)"
         }.codeGen {
             funcName = "getEcho"
-        }.authorize {
-            public()
         }.handle { params ->
             val now = Instant.now()
 
@@ -61,8 +57,6 @@ class RestShowcaseApi : ApiRoutes("showcase-rest") {
             name = "Transform text (body route demo)"
         }.codeGen {
             funcName = "postTransform"
-        }.authorize {
-            public()
         }.handle { body ->
             val transformed = when (body.operation) {
                 "uppercase" -> body.text.uppercase()
@@ -87,8 +81,6 @@ class RestShowcaseApi : ApiRoutes("showcase-rest") {
             name = "Update item (params + body route demo)"
         }.codeGen {
             funcName = "putItem"
-        }.authorize {
-            public()
         }.handle { params, body ->
             val now = Instant.now()
 

@@ -7,11 +7,13 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.MinimalTestRealm
+import io.peekandpoke.funktor.auth.MinimalTestUser
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -242,7 +244,7 @@ class GithubSsoAuthSpec : FreeSpec() {
 
             "should throw InvalidCredentials when user is not found by email" {
                 val ghAccessToken = buildJsonObject { put("access_token", "gh-access-token") }
-                val ghUser = buildJsonObject { put("email", "user@example.com") }
+                val ghUser = buildJsonObject { put("email", "  User@EXAMPLE.com  ") }
 
                 // Remote client mock
                 val remoteClient = object : GithubSsoAuth.RemoteClient {
@@ -267,7 +269,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                 // A realm that returns 'null' for the user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         // NOT FOUND
                         null
                     }
@@ -282,7 +284,7 @@ class GithubSsoAuthSpec : FreeSpec() {
 
             "should return the user when sign in is successful" {
                 val ghAccessToken = buildJsonObject { put("access_token", "gh-access-token") }
-                val ghUser = buildJsonObject { put("email", "user@example.com") }
+                val ghUser = buildJsonObject { put("email", "  User@EXAMPLE.com  ") }
 
                 // Remote client mock
                 val remoteClient = object : GithubSsoAuth.RemoteClient {
@@ -302,14 +304,14 @@ class GithubSsoAuthSpec : FreeSpec() {
                     remoteClient = lazy { remoteClient }
                 )
 
-                val storedUser = Stored(_id = "repo/user-id", value = Any())
+                val storedUser = Stored(_id = "repo/user-id", value = MinimalTestUser())
 
                 val request = AuthSignInRequest.OAuth(provider = subject.id, token = "some-token")
 
                 // A realm that returns the user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         // USER FOUND
                         storedUser
                     }
@@ -438,7 +440,7 @@ class GithubSsoAuthSpec : FreeSpec() {
             "should sign-up a new user when the user does not exist yet" {
                 val ghAccessToken = buildJsonObject { put("access_token", "gh-access-token") }
                 val ghUser = buildJsonObject {
-                    put("email", "user@example.com")
+                    put("email", "  User@EXAMPLE.com  ")
                     put("name", "User Name")
                 }
 
@@ -460,16 +462,16 @@ class GithubSsoAuthSpec : FreeSpec() {
                     remoteClient = lazy { remoteClient }
                 )
 
-                val newUser = Stored(_id = "new-user-id", value = Any())
+                val newUser = Stored(_id = "new-user-id", value = MinimalTestUser())
 
                 // A realm that creates a new user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         null // User does not exist
                     },
                     onCreateUserForSignup = { params ->
-                        params.email shouldBe "user@example.com"
+                        params.email shouldBe EmailAddress("user@example.com")
                         params.displayName shouldBe "User Name"
                         newUser
                     }
@@ -486,7 +488,7 @@ class GithubSsoAuthSpec : FreeSpec() {
             "should return the existing user when the user already exists" {
                 val ghAccessToken = buildJsonObject { put("access_token", "gh-access-token") }
                 val ghUser = buildJsonObject {
-                    put("email", "user@example.com")
+                    put("email", "  User@EXAMPLE.com  ")
                     put("name", "User Name")
                 }
 
@@ -508,12 +510,12 @@ class GithubSsoAuthSpec : FreeSpec() {
                     remoteClient = lazy { remoteClient }
                 )
 
-                val existingUser = Stored(_id = "existing-user-id", value = Any())
+                val existingUser = Stored(_id = "existing-user-id", value = MinimalTestUser())
 
                 // A realm that finds an existing user
                 val realm = MinimalTestRealm(
                     onLoadUserByEmail = { email ->
-                        email shouldBe "user@example.com"
+                        email shouldBe EmailAddress("user@example.com")
                         existingUser // User exists
                     },
                     onCreateUserForSignup = { _ ->

@@ -31,11 +31,12 @@ class MailingOverrides(
             val env = "${config.ktor.application.id} | ${config.ktor.deployment.environment}"
 
             prefixBody(
-                """
+                htmlPrefix = """
                     <div style="background-color: #ff0000; color: #ffffff; padding: 10px; font-family: monospace;">
                         DEV $env
                     </div>
-                """.trimIndent()
+                """.trimIndent(),
+                textPrefix = "*** DEV $env ***\n\n",
             )
 
             prefixSubject("[$env]")
@@ -45,8 +46,8 @@ class MailingOverrides(
             addOverride(MailingOverride.ReplaceDestination.to(to))
         }
 
-        fun prefixBody(prefix: String) {
-            addOverride(MailingOverride.PrefixBody(prefix))
+        fun prefixBody(htmlPrefix: String, textPrefix: String = htmlPrefix) {
+            addOverride(MailingOverride.PrefixBody(htmlPrefix = htmlPrefix, textPrefix = textPrefix))
         }
 
         fun prefixSubject(prefix: String) {
@@ -82,20 +83,45 @@ interface MailingOverride {
         }
     }
 
-    /** Prepends a prefix to the email body (e.g. a dev-mode warning banner). */
-    class PrefixBody(private val prefix: String) : MailingOverride {
+    /**
+     * Prepends a prefix to the email body (e.g. a dev-mode warning banner).
+     *
+     * [htmlPrefix] is inserted after the opening `<body` tag whatever attributes it carries — matching
+     * the literal `"<body>"` silently did nothing for a template written as
+     * `body { style = "margin:0" }`, so the dev banner simply never appeared and a dev-box mail was
+     * indistinguishable from a production one.
+     *
+     * [textPrefix] is used for a text body, because injecting markup there shows the user raw HTML.
+     */
+    class PrefixBody(
+        private val htmlPrefix: String,
+        private val textPrefix: String = htmlPrefix,
+    ) : MailingOverride {
+
+        companion object {
+            private val openingBodyTagRegex = "<body(\\s[^>]*)?>".toRegex(RegexOption.IGNORE_CASE)
+        }
+
         override operator fun invoke(email: Email): Email = email.copy(
             body = when (val body = email.body) {
                 is EmailBody.Text -> {
-                    body.copy(content = prefix + email.body.content)
+                    body.copy(content = textPrefix + body.content)
                 }
 
                 is EmailBody.Html -> {
+                    val match = openingBodyTagRegex.find(body.content)
+
                     body.copy(
-                        content = email.body.content.replace(
-                            oldValue = "<body>",
-                            newValue = "<body><div>$prefix</div>"
-                        )
+                        content = when (match) {
+                            // No <body> at all — a fragment template. Prepend, so the banner is never
+                            // silently dropped.
+                            null -> "<div>$htmlPrefix</div>" + body.content
+                            else -> body.content.replaceRange(
+                                match.range.last + 1,
+                                match.range.last + 1,
+                                "<div>$htmlPrefix</div>",
+                            )
+                        }
                     )
                 }
             }

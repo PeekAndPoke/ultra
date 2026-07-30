@@ -110,22 +110,24 @@ val updated = company.mutate {
 }
 ```
 
-### Coming Soon
+### Funktor
 
-- **Funktor** — Full-stack Kotlin framework on Ktor (auth, REST, clustering, static web)
+Full-stack Kotlin on Ktor — auth, REST, SaaS organisations, messaging, clustering, static web.
+See <https://peekandpoke.io/ultra/funktor/>.
 
 ## Getting Started
 
-All libraries are published on [Maven Central](https://central.sonatype.com/namespace/io.peekandpoke.ultra):
+Each product line publishes under its own group id — `io.peekandpoke.{ultra,kraft,funktor,karango,monko,mutator}`.
+All are on [Maven Central](https://central.sonatype.com/search?q=io.peekandpoke):
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:mutator-core:0.108.0")
-    ksp("io.peekandpoke.ultra:mutator-ksp:0.108.0")
     implementation("io.peekandpoke.ultra:kontainer:0.108.0")
     implementation("io.peekandpoke.ultra:slumber:0.108.0")
     implementation("io.peekandpoke.ultra:streams:0.108.0")
-    implementation("io.peekandpoke.ultra:karango-core:0.108.0")
+    implementation("io.peekandpoke.mutator:core:0.108.0")
+    ksp("io.peekandpoke.mutator:ksp:0.108.0")
+    implementation("io.peekandpoke.karango:core:0.108.0")
     implementation("io.peekandpoke.kraft:core:0.108.0")
 }
 ```

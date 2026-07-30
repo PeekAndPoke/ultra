@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.core.websocket
 
-import com.benasher44.uuid.uuid4
+import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 
 /** A typed message sent from the websocket client to the server. */
@@ -13,7 +13,7 @@ data class WsClientMessage<T>(
 ) {
     companion object {
         fun <T> withUuid(type: String, token: String, data: T) = WsClientMessage(
-            uuid = uuid4().toString(),
+            uuid = Uuid.random().toString(),
             type = type,
             token = token,
             data = data,

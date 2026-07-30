@@ -22,43 +22,22 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.map
 import kotlinx.coroutines.delay
+import java.util.Base64
 import kotlin.time.Duration.Companion.seconds
 
-class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
+data class ClusterShowcaseRepoParams(val repo: String)
 
-    data class RepoParams(val repo: String)
-
-    // Background Jobs
-
-    val queueJob = ShowcaseApiClient.PostQueueJob.mount {
-        docs {
-            name = "Queue a demo background job"
-        }.codeGen {
-            funcName = "queueJob"
-        }.authorize {
-            isSuperUser()
-        }.handle { body ->
-            val handler = call.kontainer.get(DemoBackgroundJobHandler::class)
-
-            handler.queue(
-                data = DemoBackgroundJobHandler.Input(
-                    text = body.text,
-                    execDelayMs = body.delayMs,
-                    shouldFail = body.shouldFail,
-                )
-            )
-
-            ApiResponse.ok(QueueJobResponse(queued = true, message = "Job queued successfully"))
-        }
-    }
+/**
+ * Public cluster showcase reads (list jobs / depot files / storage / locks / workers).
+ * Floor: `public()`. The super-user actions live in the separate [ClusterAdminShowcaseApi] group.
+ */
+class ClusterShowcaseApi : ApiRoutes("showcase-cluster", authFloor = { public() }) {
 
     val getQueuedJobs = ShowcaseApiClient.GetQueuedJobs.mount {
         docs {
             name = "List queued jobs"
         }.codeGen {
             funcName = "getQueuedJobs"
-        }.authorize {
-            public()
         }.handle {
             val jobs = cluster.backgroundJobs.listQueuedJobs(page = 1, epp = 20)
 
@@ -81,8 +60,6 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
             name = "List archived jobs"
         }.codeGen {
             funcName = "getArchivedJobs"
-        }.authorize {
-            public()
         }.handle {
             val jobs = cluster.backgroundJobs.listArchivedJobs(page = 1, epp = 20)
 
@@ -100,15 +77,11 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
         }
     }
 
-    // File Depot
-
     val getDepotRepos = ShowcaseApiClient.GetDepotRepos.mount {
         docs {
             name = "List depot repositories"
         }.codeGen {
             funcName = "getDepotRepos"
-        }.authorize {
-            public()
         }.handle {
             val repos = cluster.depot.getRepos()
 
@@ -124,13 +97,11 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
         }
     }
 
-    val getDepotFiles = ShowcaseApiClient.GetDepotFiles.mount(RepoParams::class) {
+    val getDepotFiles = ShowcaseApiClient.GetDepotFiles.mount(ClusterShowcaseRepoParams::class) {
         docs {
             name = "List files in depot repository"
         }.codeGen {
             funcName = "getDepotFiles"
-        }.authorize {
-            public()
         }.handle { params ->
             val repo = cluster.depot.getRepo(params.repo)
             val items = repo?.listItems() ?: emptyList()
@@ -148,35 +119,11 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
         }
     }
 
-    val uploadToDepot = ShowcaseApiClient.PostDepotUpload.mount {
-        docs {
-            name = "Upload file to depot"
-        }.codeGen {
-            funcName = "uploadToDepot"
-        }.authorize {
-            isSuperUser()
-        }.handle { body ->
-            val repo = cluster.depot.getRepo(body.repo)
-
-            if (repo == null) {
-                ApiResponse.ok(DepotUploadResponse(success = false, path = body.path))
-            } else {
-                val content = java.util.Base64.getDecoder().decode(body.contentBase64)
-                repo.putFile(body.path, content)
-                ApiResponse.ok(DepotUploadResponse(success = true, path = body.path))
-            }
-        }
-    }
-
-    // Key-Value Storage
-
     val getStorageEntries = ShowcaseApiClient.GetStorageEntries.mount {
         docs {
             name = "List random data storage entries"
         }.codeGen {
             funcName = "getStorageEntries"
-        }.authorize {
-            public()
         }.handle {
             val entries = cluster.storage.randomData.list(search = "", page = 1, epp = 20)
 
@@ -195,38 +142,11 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
         }
     }
 
-    val saveStorageEntry = ShowcaseApiClient.PostStorageSave.mount {
-        docs {
-            name = "Save data to random data storage"
-        }.codeGen {
-            funcName = "saveStorageEntry"
-        }.authorize {
-            isSuperUser()
-        }.handle { body ->
-            val category = RandomDataStorage.category<String>(body.category)
-            val saved = cluster.storage.randomData.save(category, body.dataId, body.jsonValue)
-
-            ApiResponse.ok(
-                StorageEntry(
-                    id = "${body.category}/${body.dataId}",
-                    category = body.category,
-                    dataId = body.dataId,
-                    createdAt = saved.createdAt.toIsoString(),
-                    updatedAt = saved.updatedAt.toIsoString(),
-                )
-            )
-        }
-    }
-
-    // Distributed Locks
-
     val getActiveLocks = ShowcaseApiClient.GetActiveLocks.mount {
         docs {
             name = "List active global locks"
         }.codeGen {
             funcName = "getActiveLocks"
-        }.authorize {
-            public()
         }.handle {
             val locks = cluster.locks.global.list()
 
@@ -242,39 +162,11 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
         }
     }
 
-    val acquireLock = ShowcaseApiClient.PostAcquireLock.mount {
-        docs {
-            name = "Acquire a demo lock"
-        }.codeGen {
-            funcName = "acquireLock"
-        }.authorize {
-            isSuperUser()
-        }.handle { body ->
-            try {
-                cluster.locks.global.lock(body.key, timeout = 5.seconds) {
-                    delay(body.holdForMs)
-                }
-                ApiResponse.ok(
-                    LockAcquireResponse(
-                        acquired = true,
-                        message = "Lock acquired and released after ${body.holdForMs}ms"
-                    )
-                )
-            } catch (e: Exception) {
-                ApiResponse.ok(LockAcquireResponse(acquired = false, message = "Failed: ${e.message}"))
-            }
-        }
-    }
-
-    // Workers
-
     val getWorkers = ShowcaseApiClient.GetWorkers.mount {
         docs {
             name = "List workers with stats"
         }.codeGen {
             funcName = "getWorkers"
-        }.authorize {
-            public()
         }.handle {
             val stats = cluster.workers.stats()
 
@@ -295,6 +187,94 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster") {
             }
 
             ApiResponse.ok(result)
+        }
+    }
+}
+
+/**
+ * Super-user cluster showcase actions (queue job, upload, save storage, acquire lock).
+ * Floor: `isSuperUser()`.
+ */
+class ClusterAdminShowcaseApi : ApiRoutes("showcase-cluster-admin", authFloor = { isSuperUser() }) {
+
+    val queueJob = ShowcaseApiClient.PostQueueJob.mount {
+        docs {
+            name = "Queue a demo background job"
+        }.codeGen {
+            funcName = "queueJob"
+        }.handle { body ->
+            val handler = call.kontainer.get(DemoBackgroundJobHandler::class)
+
+            handler.queue(
+                data = DemoBackgroundJobHandler.Input(
+                    text = body.text,
+                    execDelayMs = body.delayMs,
+                    shouldFail = body.shouldFail,
+                )
+            )
+
+            ApiResponse.ok(QueueJobResponse(queued = true, message = "Job queued successfully"))
+        }
+    }
+
+    val uploadToDepot = ShowcaseApiClient.PostDepotUpload.mount {
+        docs {
+            name = "Upload file to depot"
+        }.codeGen {
+            funcName = "uploadToDepot"
+        }.handle { body ->
+            val repo = cluster.depot.getRepo(body.repo)
+
+            if (repo == null) {
+                ApiResponse.ok(DepotUploadResponse(success = false, path = body.path))
+            } else {
+                val content = Base64.getDecoder().decode(body.contentBase64)
+                repo.putFile(body.path, content)
+                ApiResponse.ok(DepotUploadResponse(success = true, path = body.path))
+            }
+        }
+    }
+
+    val saveStorageEntry = ShowcaseApiClient.PostStorageSave.mount {
+        docs {
+            name = "Save data to random data storage"
+        }.codeGen {
+            funcName = "saveStorageEntry"
+        }.handle { body ->
+            val category = RandomDataStorage.category<String>(body.category)
+            val saved = cluster.storage.randomData.save(category, body.dataId, body.jsonValue)
+
+            ApiResponse.ok(
+                StorageEntry(
+                    id = "${body.category}/${body.dataId}",
+                    category = body.category,
+                    dataId = body.dataId,
+                    createdAt = saved.createdAt.toIsoString(),
+                    updatedAt = saved.updatedAt.toIsoString(),
+                )
+            )
+        }
+    }
+
+    val acquireLock = ShowcaseApiClient.PostAcquireLock.mount {
+        docs {
+            name = "Acquire a demo lock"
+        }.codeGen {
+            funcName = "acquireLock"
+        }.handle { body ->
+            try {
+                cluster.locks.global.lock(body.key, timeout = 5.seconds) {
+                    delay(body.holdForMs)
+                }
+                ApiResponse.ok(
+                    LockAcquireResponse(
+                        acquired = true,
+                        message = "Lock acquired and released after ${body.holdForMs}ms"
+                    )
+                )
+            } catch (e: Exception) {
+                ApiResponse.ok(LockAcquireResponse(acquired = false, message = "Failed: ${e.message}"))
+            }
         }
     }
 }

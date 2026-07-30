@@ -14,11 +14,11 @@ fun JWTCreator.Builder.expiresInMinutes(minutes: Long) = apply {
 
 /** Encodes [user] data as claims under the given [namespace]. */
 fun JWTCreator.Builder.encodeUser(namespace: String = "user", user: JwtUserData) = apply {
-    withClaim("$namespace/id", user.id)
+    withClaim("$namespace/id", user.id.value)
     withClaim("$namespace/desc", user.desc)
     withClaim("$namespace/type", user.type)
 
-    user.email?.let { withClaim("$namespace/email", it) }
+    user.email?.let { withClaim("$namespace/email", it.value) }
 }
 
 /** Encodes [permissions] as claims under the given [namespace]. */
@@ -28,8 +28,12 @@ fun JWTCreator.Builder.encodePermissions(namespace: String = "permissions", perm
         withClaim("$namespace/superuser", permissions.isSuperUser)
     }
 
-    if (permissions.organisations.isNotEmpty()) {
-        withArrayClaim("$namespace/organisations", permissions.organisations.toTypedArray())
+    permissions.org?.let {
+        withClaim("$namespace/org", it.value)
+    }
+
+    if (permissions.accessibleOrgs.isNotEmpty()) {
+        withArrayClaim("$namespace/accessibleOrgs", permissions.accessibleOrgs.map { it.value }.toTypedArray())
     }
 
     if (permissions.branches.isNotEmpty()) {

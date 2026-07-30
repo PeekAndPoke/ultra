@@ -4,13 +4,14 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.security.user.User
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
 
 class AccessLevelCheckSpec : StringSpec({
 
     val authenticatedUser = User(
-        record = UserRecord.LoggedIn(userId = "alice"),
+        record = UserRecord.LoggedIn(userId = UserId("alice")),
         permissions = UserPermissions(),
     )
 
@@ -68,15 +69,15 @@ class AccessLevelCheckSpec : StringSpec({
         }
 
         val superUser = User(
-            record = UserRecord.LoggedIn(userId = "admin"),
+            record = UserRecord.LoggedIn(userId = UserId("admin")),
             permissions = UserPermissions(isSuperUser = true),
         )
         val editor = User(
-            record = UserRecord.LoggedIn(userId = "editor"),
+            record = UserRecord.LoggedIn(userId = UserId("editor")),
             permissions = UserPermissions(roles = setOf("editor")),
         )
         val viewer = User(
-            record = UserRecord.LoggedIn(userId = "viewer"),
+            record = UserRecord.LoggedIn(userId = UserId("viewer")),
             permissions = UserPermissions(),
         )
 

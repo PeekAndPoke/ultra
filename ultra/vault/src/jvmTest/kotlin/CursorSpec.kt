@@ -29,6 +29,11 @@ class CursorSpec : StringSpec({
         cursor.fullCount shouldBe null
     }
 
+    "in-memory cursors report no query time" {
+        Cursor.empty<String>().timeMs shouldBe 0.0
+        Cursor.of(listOf(1, 2)).timeMs shouldBe 0.0
+    }
+
     "of(type, items) wraps with explicit type" {
         val cursor = Cursor.of(type = kType<Int>(), items = listOf(1, 2, 3))
 

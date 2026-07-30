@@ -50,11 +50,11 @@ Every string below must move from `$CURRENT` to `$1`. Use the Edit tool, not sed
    `mutator-ksp`, `kontainer`, `slumber`, `streams`, `karango-core`, `kraft:core`). Use `Edit` with `replace_all: true`
    on the old version string, scoped to this file.
 
-4. **`.claude/plans/v1-roadmap.md`** — header line `**Current version:** $CURRENT → **Target:** 1.0.0` and the
+4. **`.claude/tasks/v1-roadmap.md`** — header line `**Current version:** $CURRENT → **Target:** 1.0.0` and the
    `**Released:**` bullet if present.
 
 **Sanity check after edits:** run
-`grep -rn "$CURRENT" gradle.properties docs-site/src/data/site.ts README.MD .claude/plans/v1-roadmap.md` and confirm
+`grep -rn "$CURRENT" gradle.properties docs-site/src/data/site.ts README.MD .claude/tasks/v1-roadmap.md` and confirm
 zero hits.
 
 ## Verification (mandatory — blocks publish)
@@ -102,13 +102,13 @@ Once the new version is live on Maven Central, the three external Kraft example 
 `kraft-example-router`, `kraft-example-remote`) need their dependency versions bumped. That's a separate repo, not in
 this monorepo. Use the `update-kraft-examples` skill — it handles those projects end-to-end.
 
-## Shipping Checklist (mirrors `.claude/plans/v1-roadmap.md`)
+## Shipping Checklist (mirrors `.claude/tasks/v1-roadmap.md`)
 
 Run through this before publishing any v1.x / major release. For patch releases (0.x.y → 0.x.(y+1) where only bug fixes
 landed), skip items marked *(major/minor only)*.
 
 - [ ] Clean working tree on the release branch
-- [ ] All CRITICAL/HIGH audit findings resolved — check `.claude/plans-archive/*issues*.md` *(major/minor only)*
+- [ ] All CRITICAL/HIGH audit findings resolved — check `.claude/tasks-archive/**/*issues*.md` *(major/minor only)*
 - [ ] Every shippable module has test coverage ≥25% *(major/minor only)*
 - [ ] Zero unresolved TODOs without `// TODO(post-v1)` justification *(major/minor only)*
 - [ ] Every public API has KDoc *(major only)*
@@ -117,7 +117,7 @@ landed), skip items marked *(major/minor only)*.
 - [ ] Every library has a README
 - [ ] CHANGELOG.md updated with release notes *(major/minor only)*
 - [ ] Root README points at the new version
-- [ ] `gradle.properties`, `docs-site/src/data/site.ts`, `README.MD`, `.claude/plans/v1-roadmap.md` all bumped
+- [ ] `gradle.properties`, `docs-site/src/data/site.ts`, `README.MD`, `.claude/tasks/v1-roadmap.md` all bumped
 - [ ] funktor-demo runs end-to-end on both ArangoDB and MongoDB *(major/minor only)*
 - [ ] Release commit + annotated git tag created (not yet pushed)
 - [ ] User has given explicit go-ahead for `git push --tags`
@@ -134,7 +134,7 @@ At the end of a successful release, report to the user:
 - gradle.properties: VERSION_NAME=$1
 - docs-site/src/data/site.ts: ultraVersion, kraftVersion
 - README.MD: 7 dependency strings
-- .claude/plans/v1-roadmap.md: header
+- .claude/tasks/v1-roadmap.md: header
 
 **Verified:**
 - ./gradlew clean build — green

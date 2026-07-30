@@ -301,7 +301,7 @@ Variants:
 val nullable = source.filter { it > 10 }  // Stream<Int?>
 
 // Filter nulls out of a nullable stream
-val nonNull = nullableStream.filterNotNull()
+val nonNull = nullableStream.filterNotNull(initial = "")
 
 // Filter by type
 val strings = mixedStream.filterIsInstance<String>()

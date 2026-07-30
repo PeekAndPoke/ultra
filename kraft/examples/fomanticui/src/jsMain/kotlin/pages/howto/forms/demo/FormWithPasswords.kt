@@ -88,7 +88,7 @@ class FormWithPasswords(ctx: NoProps) : PureComponent(ctx) {
 
                 ui.blue.button.given(!canSubmit) { disabled }.then {
                     onClick {
-                        if (formCtrl.validate() && canSubmit) {
+                        if (canSubmit) formCtrl.validate {
                             state = draft
                         }
                     }

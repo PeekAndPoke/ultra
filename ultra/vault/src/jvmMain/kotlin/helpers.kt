@@ -3,12 +3,13 @@ package io.peekandpoke.ultra.vault
 import kotlin.reflect.KClass
 
 /**
- * Extracts the document key from a database identifier string.
+ * Extracts the document key from an id of the form `"collection/key"`.
  *
- * If the string contains a slash (e.g. `"collection/key"`), returns the part after the slash.
- * Otherwise returns the string unchanged, assuming it is already a bare key.
+ * A string without a slash is returned unchanged, assuming it is already a bare key. Document keys
+ * must not contain slashes — ArangoDB rejects them and the id format would be ambiguous — so this
+ * splits at the FIRST slash rather than returning a middle segment if a malformed id shows up.
  */
-val String.ensureKey get() = if (contains('/')) split('/')[1] else this
+val String.ensureKey get() = substringAfter('/')
 
 /**
  * Filters a collection of [Storable] items, keeping only those whose value is an instance of [T].

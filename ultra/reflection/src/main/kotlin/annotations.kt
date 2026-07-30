@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.reflection
 
-import io.peekandpoke.ultra.common.recursion.flattenTreeToSet
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -12,15 +11,23 @@ import kotlin.reflect.full.declaredMemberProperties
  *
  * Meta-annotations (annotations on annotations) are included in the search,
  * so an annotation applied indirectly through a meta-annotated annotation will be found.
+ *
+ * Each annotation appears once, no matter how many paths reach it.
  */
 fun KAnnotatedElement.findAnnotationsRecursive(
     predicate: (Annotation) -> Boolean,
 ): List<Annotation> {
-    val all = annotations.flatMap { an ->
-        an.flattenTreeToSet {
-            it.annotationClass.annotations
+    // One traversal across all direct annotations, sharing a single visited set. Walking each
+    // direct annotation separately would report a shared meta-annotation once per path.
+    val all = mutableSetOf<Annotation>()
+
+    fun visit(annotation: Annotation) {
+        if (all.add(annotation)) {
+            annotation.annotationClass.annotations.forEach { visit(it) }
         }
     }
+
+    annotations.forEach { visit(it) }
 
     return all.filter { an -> predicate(an) }
 }
@@ -42,6 +49,8 @@ fun KAnnotatedElement.hasAnyAnnotationRecursive(
  *
  * This is useful when a child class overrides a property without re-declaring annotations,
  * and you need to check whether the original definition in a super-type was annotated.
+ *
+ * @see hasAnyAnnotationRecursive
  */
 fun KProperty<*>.hasAnyAnnotationOnPropertyDefinedOnSuperTypes(
     cls: KClass<*>,

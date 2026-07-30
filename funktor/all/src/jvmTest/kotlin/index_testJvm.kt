@@ -32,6 +32,10 @@ fun createBlueprint(config: FunktorAllTestConfig) = kontainer {
         messaging = {
             useKarango()
         },
+        saas = {
+            useKarango()
+            ensureOrganisation(slug = "system-default", name = "System Default")
+        },
         auth = {
             useKarango()
         },

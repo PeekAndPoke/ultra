@@ -24,7 +24,7 @@ import {Code} from 'astro:components';
     private val usersRepo: AdminUsersRepo,
 ) : AuthRealm<AdminUser> {
 
-    override val id = "admin-user"
+    override val id = RealmId("admin-user")
 
     override val providers = listOf(
         EmailAndPasswordAuth(deps),
@@ -34,11 +34,21 @@ import {Code} from 'astro:components';
 
     override val passwordPolicy = PasswordPolicy.default
 
-    override suspend fun loadUserByEmail(email: String) =
-        usersRepo.findByEmail(email)
+    // Operations on users live on AuthUserAdapter, reached via \`realm.users\`.
+    override val users = object : AuthUserAdapter<AdminUser> {
+        override suspend fun loadById(id: UserId) = usersRepo.findById(id.value)
 
-    override suspend fun createUser(email: String): Stored<AdminUser> {
-        return usersRepo.insert(AdminUser(email = email, name = ""))
+        // EmailAddress is always canonical (trimmed + lowercased), so this lookup is
+        // case-insensitive by TYPE — callers no longer have to remember to normalize.
+        override suspend fun loadByEmail(email: EmailAddress) = usersRepo.findByEmail(email)
+
+        override suspend fun createForSignup(
+            params: AuthUserAdapter.CreateUserForSignupParams,
+        ): Stored<AdminUser> = usersRepo.insert(
+            AdminUser(email = params.email, name = params.displayName),
+        )
+
+        override suspend fun serialize(user: Stored<AdminUser>) = /* ... */
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -49,16 +59,19 @@ import {Code} from 'astro:components';
 
     <Code code={`override suspend fun generateJwt(
     user: Stored<AdminUser>,
+    selectedOrg: SelectedOrg?,
 ): AuthSignInResponse.Token {
-    val gen: JwtGenerator = deps.jwtGenerator
+    val gen = deps.jwtGenerator
+    val userValue = user.resolve()
 
     val token = gen.createJwt(
         user = JwtUserData(
-            id = user._key,
-            desc = user().name,
-            type = "admin",
+            id = UserId(user._id),
+            desc = userValue.name,
+            type = AdminUser.USER_TYPE,
+            email = userValue.email,
         ),
-        permissions = UserPermissions(isSuperUser = true),
+        permissions = UserPermissions(isSuperUser = userValue.isSuperUser),
     ) {
         withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
     }
@@ -69,6 +82,9 @@ import {Code} from 'astro:components';
         userNs = gen.userNs,
     )
 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>selectedOrg</code> is <code>null</code> for an org-less realm. <code>JwtUserData.id</code> is a
+        <code>UserId</code>, not a string &mdash; see <a href="#typed-identifiers">typed identifiers</a>.</p>
 
     <h2>Providers</h2>
 
@@ -90,6 +106,89 @@ import {Code} from 'astro:components';
             <p class="text-sm text-gray-400">GitHub OAuth flow. Exchanges authorization codes for access tokens.</p>
         </div>
     </div>
+
+    <h2>Account activation</h2>
+
+    <p>A realm can require a new account to prove its email address before it can sign in. Sign-up mails a
+        link and issues <strong>no session</strong>; sign-in with the correct password answers with a
+        response case rather than an error, so the frontend can offer to resend rather than showing a
+        generic failure.</p>
+
+    <Code code={`when (val response = api.auth.signIn(realm, credentials)) {
+    is AuthSignInResponse.Success            -> gotoDashboard(response)
+    is AuthSignInResponse.ActivationRequired -> offerResend(response.resendToken)
+    is AuthSignInResponse.OrgSelectionRequired -> showOrgPicker(response)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>&ldquo;Not activated&rdquo; is modelled as the <em>presence</em> of a marker record, not a flag on the
+        user and not &ldquo;an unexpired token exists&rdquo;. A flag would need a default, and the only safe
+        default locks out every existing account; the token test erases itself once the token expires.</p>
+
+    <p>Resending is authorized by a <strong>single-use token</strong> minted only on the sign-in path that
+        proved the password &mdash; not by naming an email address. That is what keeps the endpoint from
+        being an open mail relay aimed at any mailbox. A resend rotates the token, so the superseded link
+        dies immediately, and a cooldown bounds how fast a caller can trigger mail.</p>
+
+    <Aside>The first cut took a bare email address on an anonymous route, which would have turned sign-up
+        into a sustained mail faucet pointed at anyone. The review caught it; the token is the fix.
+    </Aside>
+
+    <p>Clearing the marker requires proving the mailbox <strong>and</strong> invalidating every earlier
+        password. Completing a password reset does both, so it also activates. SSO sign-in proves the mailbox
+        but leaves an attacker-set password intact, so it deliberately does not.</p>
+
+    <h2>Organisations</h2>
+
+    <p>A realm declares how it relates to organisations through its <code>orgPolicy</code>. The default is
+        <code>OrgPolicy.None</code> &mdash; an org-less realm, such as an internal operator console.</p>
+
+    <p>Under <code>OrgPolicy.Required</code>, sign-in resolves the user's accessible organisations and
+        answers with the 0/1/n flow: none is a refusal, exactly one auto-selects, and several return an
+        <code>OrgSelectionRequired</code> response backed by a single-use selection token. Refresh keeps the
+        same organisation &mdash; it never silently changes which one is active.</p>
+
+    <Code code={`class B2bRealm(...) : AuthRealm<B2bUser> {
+    override val orgPolicy = OrgPolicy.Required()
+
+    override suspend fun getMemberships(user: Stored<B2bUser>): Set<OrgMembership> =
+        orgMembers.sessionMembershipsOf(UserId(user._id))
+
+    // How "accessible" is defined is the APP's call — the framework only asks.
+    // The demo filters to active orgs and dedupes; see saas_org_hooks.kt.
+    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> =
+        orgs.accessibleActiveOrgs(memberships)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <h2 id="typed-identifiers">Typed identifiers</h2>
+
+    <p>Identity values are value classes rather than raw strings &mdash; <code>RealmId</code>,
+        <code>UserId</code>, <code>OrgId</code> and <code>EmailAddress</code>. They are threaded end to end:
+        through JWT claims, URI parameters, storage and the API surface.</p>
+
+    <p><code>EmailAddress</code> canonicalizes on construction (trim + lower-case), which is what makes
+        lookups case-insensitive by type rather than by remembering to call <code>.lowercase()</code> at
+        every call site.</p>
+
+    <h2>Localized emails</h2>
+
+    <p>Auth emails render per locale. The language is chosen from the user's own setting, then the realm's
+        <code>defaultLanguage</code>, then the framework's guaranteed fallback &mdash; a chain, not an
+        either/or, so a German-only deployment does not mail English to a user whose stored language it has
+        no rendering for.</p>
+
+    <Code code={`class MyRealm(...) : AuthRealm<MyUser> {
+    override val defaultLanguage = Locale("de")
+
+    override val messaging = AuthRealm.DefaultMessaging(
+        senderEmail = "noreply@example.com",
+        senderName = "Example",
+        applicationName = "Example",
+        realm = this,
+        templates = AuthEmailTemplates.default(myBrandedLayout),
+    )
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>See <a href="/ultra/funktor/messaging">Messaging</a> for the template and layout surface.</p>
 
     <h2>Wiring in Kontainer</h2>
 

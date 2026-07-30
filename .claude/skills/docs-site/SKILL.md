@@ -9,6 +9,10 @@ argument-hint: "[ library name or task description ]"
 Creates and updates documentation pages on the PeekAndPoke docs site (Astro-based, deployed to peekandpoke.io). Handles
 adding new libraries, creating pages, updating navigation, and maintaining consistency across the site.
 
+**Read [tone-of-voice.md](tone-of-voice.md) before writing any prose for the site.** The site uses a
+deliberate two-voice system, and the rules about what NOT to say (no superlatives, no bragging) are
+as load-bearing as the structure.
+
 ## Project Structure
 
 ```
@@ -95,22 +99,24 @@ When adding a new library, add its dependency string to `site.ts` first.
 
 5. **Update navigation** — add to `src/components/Nav.astro` navLinks array.
 
-6. **Update `llms.txt`** — add or update the library's entry in `public/llms.txt` with:
-   - Library name, tagline, docs URL, source URL, Maven coordinates
-   - One-paragraph description
-   - List of all documentation page URLs
+6. **Write the LLM mirror** — `src/data/llms/<library>.md`. NEVER edit anything under `public/`:
+   those files are generated. Use `{{ultraVersion}}` / `{{kraftVersion}}` placeholders; they are
+   substituted at build time by `src/data/llmsTemplate.ts`.
 
-7. **Update `llms-full.txt`** — regenerate `public/llms-full.txt` to include content from the new pages.
-   - Extract content from all .astro pages, convert to plain markdown
-   - Strip Astro template syntax, convert `<Code>` blocks to markdown code fences
-   - Convert `${'$'}` escapes back to plain `$`
-   - Include ALL code examples in full
+7. **Register the mirror in three places**, or it will not be served:
+   - `src/data/llmsTemplate.ts` — add the `?raw` import and the `templates` map entry
+   - `src/pages/llms/[slug].md.ts` — add the slug to the `slugs` array
+   - `src/data/llms/llms.txt` — add the index entry with the library description and its page URLs
 
 8. **Build and verify** — run `pnpm run build` from the `docs-site/` directory. Check page count and zero errors.
 
 ## Page Content Guidelines
 
 - **Keep pages short and focused.** One concept per page. Split if a page covers more than 3-4 topics.
+- **Compact beats comprehensive.** Overflowing docs hide the part the reader needed and rot faster.
+  Prefer deleting an example to adding a second one that makes the same point.
+- **A stale section gets REWRITTEN, not amended.** Appending a correction leaves both readings in the
+  file and doubles its length. Delete and restate.
 - **Lead with a code example**, not prose. Show what the library does in the first 10 lines.
 - **Subtitle pattern:** Use `<p class="text-xl text-gray-400 !mt-2 !mb-8">` after h1 for the page subtitle.
 - **Feature grids:** Use `<div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">` with card divs.
@@ -130,13 +136,19 @@ When adding a new library, add its dependency string to `site.ts` first.
 
 ## LLM Files (`llms.txt` and `llms-full.txt`)
 
-The site serves two files for LLM consumption at the root:
+The site serves LLM mirrors at the root. **The sources live in `src/data/llms/`, NOT in `public/`** —
+`public/` output is generated and must never be hand-edited.
 
-- **`public/llms.txt`** — lightweight index: library names, descriptions, Maven coordinates, and page URLs. Keep under
-  200 lines.
-- **`public/llms-full.txt`** — complete documentation content in plain markdown. One file an LLM can read to understand
-  everything.
+- **`src/data/llms/llms.txt`** — lightweight index: library names, descriptions, Maven coordinates and
+  page URLs. Keep under 200 lines.
+- **`src/data/llms/llms-full.txt`** — complete documentation in plain markdown, one file an LLM can read.
+- **`src/data/llms/<library>.md`** — one mirror per library, served at `/llms/<library>.md`.
+- Rendering goes through `src/data/llmsTemplate.ts` (version placeholder substitution) and the endpoints
+  `src/pages/llms.txt.ts`, `src/pages/llms-full.txt.ts`, `src/pages/llms/[slug].md.ts`.
 - **`<link rel="llms" href="/llms.txt" />`** is in BaseLayout.astro's `<head>`.
 
-**CRITICAL**: When adding or updating documentation pages, ALWAYS update both files. The `llms.txt` needs the new page
-URLs. The `llms-full.txt` needs the actual content.
+**CRITICAL**: the docs pages and their LLM mirror are a PAIR and must move together. Adding a page means
+adding its URL to `llms.txt` and its content to the library mirror.
+
+**Do NOT restate library documentation inside a skill** — see the docs/skills split rule in `CLAUDE.md`.
+Docs answer "how do I use this"; a skill answers "what will bite me".

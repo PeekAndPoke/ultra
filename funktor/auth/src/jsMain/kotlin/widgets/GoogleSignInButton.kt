@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.auth.widgets
 
-import com.benasher44.uuid.uuid4
+import kotlin.uuid.Uuid
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
@@ -59,7 +59,7 @@ class GoogleSignInButton(ctx: Ctx<Props>) : Component<GoogleSignInButton.Props>(
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private val cbName = "_google_sso_${uuid4().toString().replace("-", "")}"
+    private val cbName = "_google_sso_${Uuid.random().toString().replace("-", "")}"
 
     private var mounted by value(false)
     private var widthPx by value<Int?>(null)

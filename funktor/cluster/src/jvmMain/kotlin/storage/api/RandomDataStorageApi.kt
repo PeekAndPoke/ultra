@@ -15,15 +15,13 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.map
 
-class RandomDataStorageApi : ApiRoutes("random-data") {
+class RandomDataStorageApi : ApiRoutes("random-data", authFloor = { isSuperUser() }) {
 
     val list = RandomDataStorageApiClient.List.mount(QueryParams.List::class) {
         docs {
             name = "List random data"
         }.codeGen {
             funcName = "list"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
 
             val result = cluster.storage.randomData
@@ -45,8 +43,6 @@ class RandomDataStorageApi : ApiRoutes("random-data") {
             name = "Get random data"
         }.codeGen {
             funcName = "get"
-        }.authorize {
-            isSuperUser()
         }.handle { params ->
 
             val result = cluster.storage.randomData.get(id = params.id)

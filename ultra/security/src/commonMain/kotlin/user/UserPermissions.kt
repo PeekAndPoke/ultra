@@ -7,7 +7,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserPermissions(
     val isSuperUser: Boolean = false,
-    val organisations: Set<String> = emptySet(),
+    /**
+     * The single organisation selected for the current session, or `null` for org-less realms.
+     *
+     * An [OrgId] is always the collection-qualified `_id` — the type enforces it — so caller-binding
+     * compares `_id` against `_id`. Where a bare `_key` is genuinely needed (a URL segment), project
+     * it with [OrgId.key].
+     */
+    val org: OrgId? = null,
+    /** All organisations the user may log into. Non-authz — drives the login org picker. */
+    val accessibleOrgs: Set<OrgId> = emptySet(),
     val branches: Set<String> = emptySet(),
     val groups: Set<String> = emptySet(),
     val roles: Set<String> = emptySet(),
@@ -25,11 +34,13 @@ data class UserPermissions(
      *
      * this.mergeWith(other) != other.mergeWith(this)
      *
-     * The [isSuperUser] flag will be taken from [other].
+     * The [isSuperUser] flag will be taken from [other]. The selected [org] is taken from [other]
+     * when it has one, otherwise from `this` (so merging in org-less extras does not clear it).
      */
     infix fun mergedWith(other: UserPermissions) = UserPermissions(
         isSuperUser = other.isSuperUser,
-        organisations = organisations.plus(other.organisations),
+        org = other.org ?: org,
+        accessibleOrgs = accessibleOrgs.plus(other.accessibleOrgs),
         branches = branches.plus(other.branches),
         groups = groups.plus(other.groups),
         roles = roles.plus(other.roles),
@@ -37,34 +48,26 @@ data class UserPermissions(
     )
 
     /**
-     * Return 'true' when the given [organisation] is present
+     * Return 'true' when the given [organisation] is the one selected for this session.
      */
-    fun hasOrganisation(organisation: String) =
-        isSuperUser || this.organisations.contains(organisation)
+    fun hasOrganisation(organisation: OrgId) =
+        isSuperUser || this.org == organisation
 
     /**
-     * Return 'true' when any of the given [organisations] is present
+     * Return 'true' when the selected [org] is one of the given [organisations].
      */
-    fun hasAnyOrganisation(organisations: Collection<String>) =
-        isSuperUser || this.organisations.containsAny(organisations)
+    fun hasAnyOrganisation(organisations: Collection<OrgId>) =
+        isSuperUser || (org != null && organisations.contains(org))
+
+    // NOTE: no `vararg` overload for organisations — Kotlin prohibits a vararg of an inline value
+    // class. Pass a collection instead. (The branch/group/role/permission varargs below are plain
+    // Strings and stay as they are.)
 
     /**
-     * Return 'true' when any of the given [organisations] is present
+     * Return 'true' when the given [organisation] is among the [accessibleOrgs] the user may log into.
      */
-    fun hasAnyOrganisation(vararg organisations: String) =
-        isSuperUser || hasAnyOrganisation(organisations.toList())
-
-    /**
-     * Return 'true' when all the given [organisations] are present
-     */
-    fun hasAllOrganisations(organisations: Collection<String>) =
-        isSuperUser || this.organisations.containsAll(organisations)
-
-    /**
-     * Return 'true' when all the given [organisations] are present
-     */
-    fun hasAllOrganisations(vararg organisations: String) =
-        isSuperUser || hasAllOrganisations(organisations.toList())
+    fun canAccessOrg(organisation: OrgId) =
+        isSuperUser || this.accessibleOrgs.contains(organisation)
 
     /**
      * Return 'true' when the given [branch] is present

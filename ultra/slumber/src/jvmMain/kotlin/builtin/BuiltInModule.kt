@@ -20,6 +20,8 @@ import io.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
 import io.peekandpoke.ultra.slumber.builtin.objects.EnumCodec
 import io.peekandpoke.ultra.slumber.builtin.objects.NullCodec
 import io.peekandpoke.ultra.slumber.builtin.objects.ObjectInstanceCodec
+import io.peekandpoke.ultra.slumber.builtin.objects.ValueClassAwaker
+import io.peekandpoke.ultra.slumber.builtin.objects.ValueClassSlumberer
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import io.peekandpoke.ultra.slumber.builtin.primitive.BooleanAwaker
@@ -46,6 +48,20 @@ import java.io.Serializable
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
+
+/**
+ * A `@JvmInline value class` we serialize generically via its backing field — EXCLUDING kotlin STDLIB
+ * value classes (`Duration`, `UInt`/`ULong`/…, `Result`), whose generic backing-field serialization
+ * would diverge from kotlinx (`Duration` -> a packed `Long`, `UInt` -> a signed `Int`) and is fragile
+ * across Kotlin versions, so they fail fast here (as before) or must get a dedicated codec.
+ *
+ * ONLY the kotlin stdlib (`kotlin.*`) is special-cased; a THIRD-PARTY value class (e.g. `kotlinx.*`) is
+ * treated as generic (backing-field). That is correct for a plain wrapper, but a library value class
+ * whose serialized form differs from its backing field must get its own `SlumberModule` — as the
+ * kotlinx datetime/json types already do — rather than rely on this generic path.
+ */
+private fun KClass<*>.isUserValueClass(): Boolean =
+    isValue && qualifiedName?.startsWith("kotlin.") != true
 
 /**
  * Default [SlumberModule] that provides awakers and slumberers for all built-in types:
@@ -87,11 +103,16 @@ object BuiltInModule : SlumberModule {
                     KotlinXJsonArrayCodec.appliesTo(cls) -> KotlinXJsonArrayCodec as Awaker
                     KotlinXJsonPrimitiveCodec.appliesTo(cls) -> KotlinXJsonPrimitiveCodec as Awaker
                     KotlinXJsonElementCodec.appliesTo(cls) -> KotlinXJsonElementCodec as Awaker
+                    // @JvmInline value classes — awake the underlying scalar + construct via ctor.
+                    cls.isUserValueClass() -> ValueClassAwaker(type)
                     // Lists
                     cls == Iterable::class || cls == List::class || cls == MutableList::class ->
                         CollectionAwaker.forList(type)
                     // Sets
                     cls == Set::class || cls == MutableSet::class -> CollectionAwaker.forSet(type)
+                    // Arrays — Array<T> and the eight primitive arrays. Not covered by the branches
+                    // above: an Array is not an Iterable, and IntArray & co. are not Array<T> either.
+                    CollectionAwaker.isArrayClass(cls) -> CollectionAwaker.forArray(type)
                     // Maps
                     cls == Map::class || cls == MutableMap::class -> MapAwaker.forMap(type)
                     // Enum
@@ -131,6 +152,13 @@ object BuiltInModule : SlumberModule {
                 // we do not wrap JsonNull with wrapIfNonNull
                 KotlinXJsonNullCodec.appliesTo(cls) -> KotlinXJsonNullCodec as Slumberer
 
+                // @JvmInline value classes — slumber the underlying scalar via its inner codec.
+                // NOT wrapped with wrapIfNonNull: reflection boxes a NULL nullable-value-class field as
+                // Box(null) (a non-null box), which must slumber to null, not throw a non-null error.
+                // (Trade-off: a root-level slumber of a non-null value-class type with a null value
+                // returns null instead of reporting a non-null error — a degenerate, no-round-trip case.)
+                cls.isUserValueClass() -> ValueClassSlumberer(type)
+
                 else -> when {
                     // Any, Object or Serializable type
                     cls in listOf(Any::class, Serializable::class) -> AnySlumberer
@@ -152,6 +180,9 @@ object BuiltInModule : SlumberModule {
                     KotlinXJsonElementCodec.appliesTo(cls) -> KotlinXJsonElementCodec as Slumberer
                     // Iterables
                     Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
+                    // Arrays — an Array is not an Iterable, so it needs its own branch. Handled by the
+                    // same slumberer, which reads any array shape element-wise.
+                    cls.java.isArray -> CollectionSlumberer
                     // Maps
                     Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
                     // Enum

@@ -6,6 +6,8 @@
         <language minSize="60" name="Kotlin" />
       </Languages>
     </inspection_tool>
+    <inspection_tool class="KotlinPrintToLogpoint" enabled="false" level="DEBUGGER_SUGGESTION" enabled_by_default="false" />
+    <inspection_tool class="LombokKotlinCompilerPlugin" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessaryVariable" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
   </profile>
 </component>

@@ -5,6 +5,8 @@ import kotlin.reflect.KType
 /**
  * Returns `true` if this type represents a Kotlin primitive type
  * (Boolean, Char, Byte, Short, Int, Long, Float, or Double).
+ *
+ * Nullability is ignored, so `Int?` is a primitive as well. Unsigned types are not.
  */
 val KType.isPrimitive
     get(): Boolean = classifier in listOf(

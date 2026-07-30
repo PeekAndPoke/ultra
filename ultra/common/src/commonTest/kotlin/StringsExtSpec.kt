@@ -118,4 +118,56 @@ class StringsExtSpec : StringSpec({
         "camelCaseWord".camelCaseDivide() shouldBe "camel Case Word"
         "camelCaseWord".camelCaseDivide("-") shouldBe "camel-Case-Word"
     }
+
+    "isForbiddenInId bans what could forge a key boundary or a log line" {
+        // Written as Char(code) rather than '\uXXXX' escapes so this source stays pure ASCII.
+        // A bare U+2028/U+2029 is a LINE TERMINATOR in Kotlin source, so a slip that lands the
+        // raw character here instead of the escape either breaks the literal or silently tests
+        // the wrong character. Codes cannot be mistyped invisibly.
+        Char(0x00).isForbiddenInId() shouldBe true // NUL — the composite-key delimiter
+        '\n'.isForbiddenInId() shouldBe true
+        '\r'.isForbiddenInId() shouldBe true
+        Char(0x7F).isForbiddenInId() shouldBe true // DEL
+        Char(0x85).isForbiddenInId() shouldBe true // NEL, a C1 control
+        Char(0x2028).isForbiddenInId() shouldBe true // LINE SEPARATOR
+        Char(0x2029).isForbiddenInId() shouldBe true // PARAGRAPH SEPARATOR
+    }
+
+    "isForbiddenInId allows everything an id legitimately contains" {
+        "b2b_users/abc123".none { it.isForbiddenInId() } shouldBe true
+        "user@example.com".none { it.isForbiddenInId() } shouldBe true
+        ' '.isForbiddenInId() shouldBe false // ugly in an id, but not a security boundary
+        Char(0xE4).isForbiddenInId() shouldBe false
+    }
+
+    "isForbiddenInId bans EXACTLY the C0 controls, DEL, the C1 controls and U+2028 / U+2029" {
+        // Enumerated, not spot-checked. Every id value class gates on this one predicate, so the
+        // boundary has to be pinned in both directions: widening it starts rejecting ids already in
+        // the database, narrowing it lets a log-forging character back through.
+        val actual = (0..0x2100).map { it.toChar() }.filter { it.isForbiddenInId() }.toSet()
+
+        val expected = ((0x00..0x1F) + listOf(0x7F) + (0x80..0x9F) + listOf(0x2028, 0x2029))
+            .map { it.toChar() }
+            .toSet()
+
+        actual shouldBe expected
+    }
+    "isEmail rejects anything longer than the RFC 5321 limit" {
+        val local = "a".repeat(MAX_EMAIL_LENGTH - "@example.com".length)
+
+        // exactly at the limit is still answered on its merits
+        "$local@example.com".length shouldBe MAX_EMAIL_LENGTH
+        "$local@example.com".isEmail() shouldBe true
+
+        // one over is rejected without matching
+        "a$local@example.com".isEmail() shouldBe false
+    }
+
+    "isEmail answers a pathological input instead of exhausting the stack" {
+        // EmailRegex walks its nested repetitions recursively; without the length guard an input
+        // this size raises StackOverflowError, which is an Error and escapes catch (Exception)
+        val pathological = "a.".repeat(10_000) + "a@example.com"
+
+        pathological.isEmail() shouldBe false
+    }
 })

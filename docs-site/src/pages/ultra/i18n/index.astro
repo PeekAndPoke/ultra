@@ -1,0 +1,110 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {i18nSidebar} from '../../../data/i18n-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="i18n" sidebar={i18nSidebar}
+            description="Type-safe translations for Kotlin Multiplatform — YAML catalogs, generated accessors, build-time checks">
+
+    <h1>i18n</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Translations for Kotlin Multiplatform. YAML in, typed Kotlin out, mistakes caught at build time.
+    </p>
+
+    <h2>Why translations are a build problem</h2>
+
+    <p>Most translation setups look up a string by key at runtime. That means a renamed key, a missing
+        language, or a placeholder the translator dropped are all discovered the same way: a user sees
+        something wrong. The failure is silent, it is in production, and it is usually in the language
+        nobody on the team reads.</p>
+
+    <p>The interesting part of the problem is therefore not the lookup &mdash; it is everything around it.
+        Which keys exist? Which languages must be complete? Does every language agree on the placeholders?
+        Those are questions a build can answer.</p>
+
+    <Aside>The runtime here is genuinely small &mdash; a map, a fallback chain and a single-pass
+        substitution. The part worth the effort was the build step, because that is where you find out
+        that the Swiss catalog has been missing a key since March.
+    </Aside>
+
+    <h2>What it looks like</h2>
+
+    <p>Write a catalog per language. The fallback language defines the API surface.</p>
+
+    <Code code={`# src/commonMain/i18n/messages.en.yaml
+checkout:
+  greeting: "Hello {{name}}!"
+  items_one: "{{count}} item in your basket"
+  items_other: "{{count}} items in your basket"`} lang="yaml" theme="vitesse-dark"/>
+
+    <p>The Gradle plugin turns that into typed accessors and a baked catalog. Call them like functions:</p>
+
+    <Code code={`val i18n = I18n(locale = Locale("de"), fallback = Locale("en")) {
+    install(AppI18nCatalog)
+}
+
+i18n.translate.checkout.greeting(name = "Alice")   // named params, no string keys
+i18n.translate.checkout.items(count = 3)           // plural form picked for you`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>A key that no longer exists will not compile, and a translation that invents a placeholder nobody
+        supplies fails the build rather than the checkout page.</p>
+
+    <h2>What you get</h2>
+
+    <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Typed accessors</h3>
+            <p class="text-sm text-gray-400">Generated from the fallback catalog. Placeholders become
+                named parameters &mdash; a forgotten one is a compile error.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Build-time checks</h3>
+            <p class="text-sm text-gray-400">A missing required language, or a translation inventing an
+                unknown placeholder, fails the build. Softer findings warn, and become errors under
+                <code>-Pi18n.strict</code>.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Locale fallback chain</h3>
+            <p class="text-sm text-gray-400"><code>de-CH</code> falls back to <code>de</code>, then to the
+                configured fallback. A regional catalog only carries what differs.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Catalog precedence</h3>
+            <p class="text-sm text-gray-400">Each module ships its own catalog. An app installs later and
+                wins on shared keys, so framework strings can be overridden without forking.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Plurals</h3>
+            <p class="text-sm text-gray-400"><code>_one</code> / <code>_other</code> suffixes, selected by
+                count, with <code>{'{{count}}'}</code> supplied automatically.</p>
+        </div>
+        <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">Reactive in Kraft</h3>
+            <p class="text-sm text-gray-400">Switching language re-renders subscribed components. The
+                choice persists in localStorage.</p>
+        </div>
+    </div>
+
+    <h2>Scope, honestly</h2>
+
+    <p>The locale model covers language and region &mdash; <code>de</code>, <code>de-CH</code>. Script and
+        variant subtags such as <code>zh-Hant</code> are not modelled: the second subtag is always read as a
+        region, so those tags are mis-parsed. Plural selection is currently the simple
+        <code>count == 1</code> rule rather than full CLDR, and <code>i18n.format</code> is a seam with a
+        default implementation rather than locale-aware date and number formatting.</p>
+
+    <Aside>Those three gaps are known and deliberate &mdash; shipping the build step mattered more than
+        shipping CLDR. The seams are in place so filling them in later does not move any call sites.
+    </Aside>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/i18n/getting-started"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Get started &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

@@ -5,6 +5,9 @@ package io.peekandpoke.ultra.common
  *
  * Holds a reference to [ref] that does not prevent garbage collection of the referent.
  *
+ * When the referent becomes collectable is up to the platform GC, so [get] may keep returning a
+ * value indefinitely. On JS, primitives are held strongly and are never released at all.
+ *
  * @param T The type of the referenced object.
  * @param ref The object to reference weakly.
  */

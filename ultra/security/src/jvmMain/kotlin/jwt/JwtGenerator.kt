@@ -8,6 +8,7 @@ import com.auth0.jwt.interfaces.JWTVerifier
 import com.auth0.jwt.interfaces.Payload
 import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserPermissions
+import io.peekandpoke.ultra.security.user.UserRecord
 
 /** Creates, signs, and verifies JWTs encoding user data and permissions. */
 class JwtGenerator(
@@ -51,7 +52,7 @@ class JwtGenerator(
         // properties that cannot be overridden but the builder
         .withIssuer(config.issuer)
         .withAudience(config.audience)
-        .withSubject(user.id)
+        .withSubject(user.id.value)
         .encodeUser(config.userNs, user)
         .encodePermissions(config.permissionsNs, permissions)
         .sign(signingAlgorithm)
@@ -66,10 +67,29 @@ class JwtGenerator(
         return payload.extractPermissions(config.permissionsNs)
     }
 
-    /** Extracts a full [User] from the given [jwt] payload, attaching the [clientIp]. */
+    /**
+     * Extracts a full [User] from the given [jwt] payload, attaching the [clientIp].
+     *
+     * The anonymous subject NEVER carries permissions. That sentinel is what an absent or malformed
+     * id claim degrades to (see [io.peekandpoke.ultra.security.jwt.extractUser]), and identity and
+     * permissions are read from independent claim sets — so keeping the token's permissions here
+     * would let a token bearing permission claims but no usable id still satisfy every
+     * permission-only auth rule. Degrade both together, and return a real
+     * [UserRecord.Anonymous] rather than a [UserRecord.LoggedIn] that merely reports
+     * `isAnonymous() == true`.
+     */
     fun extractUser(clientIp: String, jwt: Payload): User {
+        val data = extractUserData(jwt)
+
+        if (data.id == UserRecord.ANONYMOUS_ID) {
+            return User(
+                record = UserRecord.Anonymous(clientIp = clientIp),
+                permissions = UserPermissions.anonymous,
+            )
+        }
+
         return User(
-            record = extractUserData(jwt).toUserRecord(clientIp),
+            record = data.toUserRecord(clientIp),
             permissions = extractPermissions(jwt),
         )
     }

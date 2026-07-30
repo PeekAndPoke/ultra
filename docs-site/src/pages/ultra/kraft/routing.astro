@@ -167,7 +167,7 @@ fun A.href(route: Route.Bound) {
         if (AppState.auth.isLoggedIn) {
             RouterMiddlewareResult.Proceed
         } else {
-            RouterMiddlewareResult.Redirect(Nav.login())
+            ctx.redirect(router.strategy.render(Nav.login()))
         }
     }) {
         layout({ LoggedInLayout(it) }) {

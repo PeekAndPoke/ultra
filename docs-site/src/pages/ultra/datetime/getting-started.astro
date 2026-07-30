@@ -87,10 +87,7 @@ println(backToUtc == instant)  // true`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Format dates and times with pattern strings:</p>
 
-    <Code code={`import io.peekandpoke.ultra.datetime.MpDateTimeFormatter
-
-val formatter = MpDateTimeFormatter("dd MMM yyyy HH:mm")
-val zoned = instant.atZone(berlin)
+    <Code code={`val zoned = instant.atZone(berlin)
 
 println(zoned.format("dd MMM yyyy"))       // "15 Jun 2025"
 println(zoned.format("yyyy-MM-dd HH:mm"))  // "2025-06-15 14:00"

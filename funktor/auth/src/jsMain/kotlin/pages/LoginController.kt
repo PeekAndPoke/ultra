@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.widgets.GithubSignInButton
 import io.peekandpoke.funktor.auth.widgets.GoogleSignInButton
@@ -22,6 +23,7 @@ import io.peekandpoke.ultra.html.css
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.html.onSubmit
 import io.peekandpoke.ultra.model.Message
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
@@ -68,10 +70,17 @@ class LoginController<USER>(
             val message: Message? = null,
         ) : DisplayState
 
+        // Credentials were valid but the user belongs to multiple orgs and must pick one.
+        data class SelectOrg(
+            val selection: AuthSignInResponse.OrgSelectionRequired,
+            val message: Message? = null,
+        ) : DisplayState
+
         fun withMessage(message: Message?) = when (this) {
             is Login -> copy(message = message)
             is RecoverPassword -> copy(message = message)
             is SignUp -> copy(message = message)
+            is SelectOrg -> copy(message = message)
         }
     }
 
@@ -117,6 +126,32 @@ class LoginController<USER>(
                 ui.header { +"Sign Up" }
 
                 renderSignUpProvidersAsList()
+            }
+        }
+
+        fun FlowContent.renderSelectOrgState(s: DisplayState.SelectOrg) {
+            renderMessage(s.message)
+
+            ui.header { +"Choose an organisation" }
+
+            s.selection.organisations.forEach { org ->
+                ui.fluid.givenNot(noDblClick.canRun) { loading }.button {
+                    onClick { selectOrg(org.id) }
+                    +org.name
+                }
+                ui.hidden.divider()
+            }
+
+            ui.field {
+                a {
+                    onClick { evt ->
+                        evt.preventDefault()
+                        // Cancel the pending selection so it can't be resurfaced by a later attempt.
+                        state.clearPendingOrgSelection()
+                        displayState = DisplayState.Login()
+                    }
+                    +"Back"
+                }
             }
         }
 
@@ -177,7 +212,7 @@ class LoginController<USER>(
             ui.form Form {
                 onSubmit { evt ->
                     evt.preventDefault()
-                    if (formCtrl.validate()) {
+                    formCtrl.validate {
                         val req = AuthSignUpRequest.EmailAndPassword(
                             provider = s.provider.id,
                             email = s.email,
@@ -449,6 +484,18 @@ class LoginController<USER>(
         }
     }
 
+    fun selectOrg(orgId: OrgId) {
+        launch {
+            doSelectOrg(orgId)
+        }
+    }
+
+    private fun redirectAfterLogin() {
+        val uri = host.router.strategy.render(state.frontend.config.redirectAfterLogin)
+        console.info("Login success. Redirecting to $uri")
+        state.redirectAfterLogin(uri)
+    }
+
     suspend fun initPasswordReset(
         request: AuthRecoverAccountRequest.InitPasswordReset,
     ): AuthRecoverAccountResponse.InitPasswordReset? {
@@ -468,12 +515,41 @@ class LoginController<USER>(
 
         val result = state.login(request)
 
+        when {
+            result.isLoggedIn -> redirectAfterLogin()
+
+            // Valid credentials, multiple orgs — show the picker.
+            state.pendingOrgSelection != null -> {
+                displayState = DisplayState.SelectOrg(state.pendingOrgSelection!!)
+            }
+
+            // Valid credentials, but the address was never proven. Send them to the activation page,
+            // which is where a new link can be requested. Showing "Login failed" here — which is what
+            // this branch used to fall through to — leaves the user with no idea what went wrong and
+            // nothing to do about it.
+            state.pendingActivation != null -> {
+                val pending = state.pendingActivation!!
+
+                host.router.navToUri(
+                    host.router.strategy.render(
+                        state.frontend.routes.resendActivation(pending.provider)
+                    )
+                )
+            }
+
+            else -> displayState = displayState.withMessage(Message.error("Login failed"))
+        }
+    }
+
+    private suspend fun doSelectOrg(orgId: OrgId) = noDblClick.runBlocking {
+        displayState = displayState.withMessage(message = null)
+
+        val result = state.selectOrg(orgId)
+
         if (result.isLoggedIn) {
-            val uri = host.router.strategy.render(state.frontend.config.redirectAfterLogin)
-            console.info("Login success. Redirecting to $uri")
-            state.redirectAfterLogin(uri)
+            redirectAfterLogin()
         } else {
-            displayState = displayState.withMessage(Message.error("Login failed"))
+            displayState = displayState.withMessage(Message.error("Could not select organisation"))
         }
     }
 

@@ -113,8 +113,8 @@ In your `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    kotlin("multiplatform") version "2.3.10"
-    kotlin("plugin.serialization") version "2.3.10"
+    kotlin("multiplatform") version "{{kotlinVersion}}"
+    kotlin("plugin.serialization") version "{{kotlinVersion}}"
 }
 
 kotlin {
@@ -624,10 +624,9 @@ For state that should be debounced, throttled, or transformed before triggering 
 class SearchBox(ctx: NoProps) : PureComponent(ctx) {
 
     // Debounce input by 300ms before searching
-    private var query by stream("") {
-        it.debounce(300.milliseconds)
-    } handler { debouncedQuery ->
-        performSearch(debouncedQuery)
+    // config is a POSITIONAL receiver lambda; the trailing lambda is the handler
+    private var query by stream("", { debounce(300.milliseconds) }) { debounced ->
+        performSearch(debounced)
     }
 
     override fun VDom.render() {
@@ -1185,7 +1184,7 @@ routing {
         if (AppState.auth.isLoggedIn) {
             RouterMiddlewareResult.Proceed
         } else {
-            RouterMiddlewareResult.Redirect(Nav.login())
+            ctx.redirect(router.strategy.render(Nav.login()))
         }
     }) {
         layout({ LoggedInLayout(it) }) {

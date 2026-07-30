@@ -15,15 +15,14 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.map
 
-class MessagingShowcaseApi : ApiRoutes("showcase-messaging") {
+/** Super-user showcase writes (send email). Split from the public reads to keep the floor clean. */
+class MessagingAdminShowcaseApi : ApiRoutes("showcase-messaging-admin", authFloor = { isSuperUser() }) {
 
     val sendTestEmail = ShowcaseApiClient.PostSendTestEmail.mount {
         docs {
             name = "Send a test email"
         }.codeGen {
             funcName = "sendTestEmail"
-        }.authorize {
-            isSuperUser()
         }.handle { body ->
             val emailBody = if (body.isHtml) EmailBody.Html(body.body) else EmailBody.Text(body.body)
 
@@ -45,14 +44,16 @@ class MessagingShowcaseApi : ApiRoutes("showcase-messaging") {
             )
         }
     }
+}
+
+/** Public showcase reads (list sent messages, sender info). */
+class MessagingShowcaseApi : ApiRoutes("showcase-messaging", authFloor = { public() }) {
 
     val getSentMessages = ShowcaseApiClient.GetSentMessages.mount {
         docs {
             name = "List sent messages"
         }.codeGen {
             funcName = "getSentMessages"
-        }.authorize {
-            public()
         }.handle {
             val messages = funktorMessaging.sentMessages.findByRefs(refs = emptySet())
 
@@ -79,8 +80,6 @@ class MessagingShowcaseApi : ApiRoutes("showcase-messaging") {
             name = "Get email sender info"
         }.codeGen {
             funcName = "getEmailSenderInfo"
-        }.authorize {
-            public()
         }.handle {
             val sender = funktorMessaging.mailing
 

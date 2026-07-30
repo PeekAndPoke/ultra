@@ -13,19 +13,26 @@ import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
 import io.peekandpoke.ultra.vault.tools.DatabaseTools
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
+/** Registers [Ultra_Vault] with the given [config]. */
 fun KontainerBuilder.ultraVault(config: VaultConfig) = module(Ultra_Vault, config)
 
 /**
  * Vault kontainer module.
  *
- * Defines two dynamic services :
+ * Dynamic — one instance per kontainer, i.e. per request, because they carry per-request state:
+ * [Database], [EntityCache] (defaulting to [DefaultEntityCache]), [TimestampedHook],
+ * [TimestampedMillisHook], [QueryProfiler] and [DatabaseGraphBuilder].
  *
- * - [EntityCache] which defaults to [DefaultEntityCache]
+ * Process-wide singletons, and only because they declare no constructor dependencies:
+ * [SharedRepoClassLookup], whose repository lookup cache has to outlive the per-request [Database],
+ * and [DeferredVaultHookScope], which is bound to the application scope after the kontainer was
+ * built and would be invisible to requests if it were rebuilt for each of them.
+ *
+ * [DatabaseTools] and the CLI commands are declared as singletons but each reaches a dynamic
+ * service, so the kontainer downgrades them to semi-dynamic — again one instance per kontainer.
+ * They are stateless, so this costs an allocation and nothing more; nothing may start caching
+ * in them.
  */
 val Ultra_Vault = module { config: VaultConfig ->
         // Database
@@ -38,6 +45,10 @@ val Ultra_Vault = module { config: VaultConfig ->
         // Hooks
         dynamic(TimestampedHook::class)
         dynamic(TimestampedMillisHook::class)
+
+        // Runs after-save / after-delete hooks. Injectable as VaultHookScope as well.
+        // Stays inline until something binds an application scope to it.
+        singleton(DeferredVaultHookScope::class)
 
         // Profiling
     dynamic(QueryProfiler::class) {
@@ -52,24 +63,9 @@ val Ultra_Vault = module { config: VaultConfig ->
         singleton(DatabaseTools::class)
         dynamic(DatabaseGraphBuilder::class)
 
-        // Cli command
+        // CLI commands
         singleton(VaultRepositoriesEnsureCommand::class)
         singleton(VaultIndexesEnsureCommand::class)
         singleton(VaultIndexesRecreateCommand::class)
         singleton(VaultIndexesValidateCommand::class)
     }
-
-object VaultScope {
-    private val job = SupervisorJob()
-    private val scope = CoroutineScope(job + Dispatchers.IO)
-
-    fun launch(block: suspend () -> Unit) {
-        scope.launch {
-            block()
-        }
-    }
-
-    fun shutdown() {
-        job.cancel()
-    }
-}

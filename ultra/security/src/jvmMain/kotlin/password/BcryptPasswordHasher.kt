@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.security.password
 import com.password4j.BcryptFunction
 import com.password4j.Password
 import com.password4j.types.Bcrypt
+import io.peekandpoke.ultra.common.toBase64
 
 class BcryptPasswordHasher(
     logRounds: Int,
@@ -24,9 +25,10 @@ class BcryptPasswordHasher(
 
         return PasswordHasher.Hash(
             id = id,
-            // The salt is embedded in the hash output by bcrypt,
-            // but Password4j's `hash` object makes it available.
-            salt = hash.salt,
+            // The salt is already embedded in the bcrypt hash output; we base64 password4j's raw
+            // salt here only so the serialized "id:salt:hash" form can never contain the ':'
+            // delimiter (matches PBKDF2). It is not read back on check.
+            salt = hash.salt.toBase64(),
             hash = hash.result,
         )
     }

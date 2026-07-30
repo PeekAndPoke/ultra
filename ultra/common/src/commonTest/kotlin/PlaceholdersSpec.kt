@@ -1,8 +1,10 @@
 package io.peekandpoke.ultra.common
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
 class PlaceholdersSpec : StringSpec() {
     // Define enum classes at class level
@@ -180,6 +182,190 @@ class PlaceholdersSpec : StringSpec() {
             val filled = placeholders.fill { it.name.lowercase() }
 
             filled("  {{FOO}}, {{BAR}}!  ") shouldBe "  foo, bar!  "
+        }
+
+        // --- Adversarial / security regressions: substitution must be single-pass -----------------
+
+        "SECURITY: a substituted value containing a placeholder is NOT re-interpreted" {
+            // FOO's value is literally the BAR placeholder. It must be emitted verbatim, never
+            // expanded into BAR's (potentially secret) value. This is the second-order injection.
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "{{BAR}}"
+                    SmallEnum.BAR -> "SECRET"
+                }
+            }
+
+            filled("name={{FOO}} token={{BAR}}") shouldBe "name={{BAR}} token=SECRET"
+        }
+
+        "SECURITY: chained values are not amplified (no billion-laughs)" {
+            // Each value expands to two of the next placeholder. Single-pass => the nested
+            // placeholders are emitted literally, not recursively expanded.
+            val placeholders = Placeholders.DoubleCurly<TestEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    TestEnum.ONE -> "{{TWO}}{{TWO}}"
+                    TestEnum.TWO -> "{{THREE}}{{THREE}}"
+                    TestEnum.THREE -> "x"
+                }
+            }
+
+            filled("{{ONE}}") shouldBe "{{TWO}}{{TWO}}"
+        }
+
+        "a value equal to its own placeholder is emitted literally, not looped" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "{{FOO}}"
+                    SmallEnum.BAR -> "bar"
+                }
+            }
+
+            filled("{{FOO}} {{BAR}}") shouldBe "{{FOO}} bar"
+        }
+
+        "overlapping placeholder names resolve to the intended (longest) pattern" {
+            data class V(val n: String)
+
+            val placeholders = Placeholders.DoubleCurly(setOf(V("a"), V("ab"))) { it.n }
+            val filled = placeholders.fill { it.n.uppercase() }
+
+            filled("{{a}}-{{ab}}") shouldBe "A-AB"
+        }
+
+        "an empty placeholder set leaves the text untouched" {
+            data class V(val n: String)
+
+            val placeholders = Placeholders.DoubleCurly(emptySet<V>()) { it.n }
+            val filled = placeholders.fill { it.n }
+
+            filled("plain {{x}} text") shouldBe "plain {{x}} text"
+        }
+
+        "an unknown placeholder in the text is left untouched" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill { it.name.lowercase() }
+
+            filled("{{FOO}} and {{UNKNOWN}}") shouldBe "foo and {{UNKNOWN}}"
+        }
+
+        "adjacent placeholders are each substituted exactly once" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill { it.name.lowercase() }
+
+            filled("{{FOO}}{{BAR}}{{FOO}}") shouldBe "foobarfoo"
+        }
+
+        "a value mapping to empty string removes the placeholder" {
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill { if (it == SmallEnum.FOO) "" else "bar" }
+
+            filled("[{{FOO}}][{{BAR}}]") shouldBe "[][bar]"
+        }
+
+        "SECURITY: TripleHash substitution is also single-pass" {
+            val placeholders = Placeholders.TripleHash<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "###BAR###"
+                    SmallEnum.BAR -> "SECRET"
+                }
+            }
+
+            filled("name=###FOO### token=###BAR###") shouldBe "name=###BAR### token=SECRET"
+        }
+
+        "TripleHash overlapping names resolve to the intended (longest) pattern" {
+            data class V(val n: String)
+
+            val placeholders = Placeholders.TripleHash(setOf(V("a"), V("ab"))) { it.n }
+            val filled = placeholders.fill { it.n.uppercase() }
+
+            filled("###a###-###ab###") shouldBe "A-AB"
+        }
+
+        "a placeholder NAME containing a regex metachar is matched literally" {
+            data class V(val n: String)
+
+            // '|' is the alternation separator; it must be escaped, not treated as regex syntax.
+            val placeholders = Placeholders.DoubleCurly(setOf(V("a|b"), V("a"))) { it.n }
+            val filled = placeholders.fill { it.n.uppercase() }
+
+            filled("{{a|b}} {{a}}") shouldBe "A|B A"
+        }
+
+        "SECURITY: a value concatenating with following text to form a pattern is not expanded" {
+            // template `{{FOO}}AR}}` + FOO->`{{B` would concatenate to `{{BAR}}`; single-pass must
+            // NOT re-scan it. (Old multi-pass code produced "SECRET" here.)
+            val placeholders = Placeholders.DoubleCurly<SmallEnum>()
+            val filled = placeholders.fill {
+                when (it) {
+                    SmallEnum.FOO -> "{{B"
+                    SmallEnum.BAR -> "SECRET"
+                }
+            }
+
+            filled("{{FOO}}AR}}") shouldBe "{{BAR}}"
+        }
+
+        // Malformed shapes ////////////////////////////////////////////////////////////////////////////
+
+        "findErrorsIn reports a malformed placeholder, not just an unknown one" {
+            val subject = Placeholders.DoubleCurly(setOf("Name")) { it }
+
+            // unknown but well-formed — was already reported
+            subject.findErrorsIn("Hi {{Nmae}}") shouldBe setOf("{{Nmae}}")
+
+            // malformed — used to be invisible, so validate() said the template was fine
+            subject.findErrorsIn("Hi {{Name}, welcome") shouldBe setOf("{{Name}")
+            subject.findErrorsIn("Hi {{ Name }}") shouldBe setOf("{{ Name }}")
+            subject.findErrorsIn("Hi {{Name") shouldBe setOf("{{Name")
+        }
+
+        "validate rejects a template whose placeholder is malformed" {
+            val subject = Placeholders.DoubleCurly(setOf("Name")) { it }
+
+            subject.validate("Hi {{Name}}") shouldBe true
+            subject.validate("Hi there") shouldBe true
+
+            subject.validate("Hi {{Name}, welcome") shouldBe false
+            subject.validate("Hi {{ Name }}") shouldBe false
+        }
+
+        "TripleHash reports malformed shapes too" {
+            val subject = Placeholders.TripleHash(setOf("Name")) { it }
+
+            subject.validate("Hi ###Name###") shouldBe true
+            subject.validate("Hi ###Name#") shouldBe false
+            subject.validate("Hi ### Name ###") shouldBe false
+        }
+
+        "a placeholder name outside the old character class is recognised" {
+            val subject = Placeholders.DoubleCurly(setOf("user.name")) { it }
+
+            // the scan used to require [a-zA-Z0-9_-], so a dotted name was invisible in both directions
+            subject.validate("Hi {{user.name}}") shouldBe true
+            subject.findErrorsIn("Hi {{user.nam}}") shouldBe setOf("{{user.nam}}")
+        }
+
+        // Colliding patterns //////////////////////////////////////////////////////////////////////////
+
+        "fill rejects values that render the same pattern" {
+            // toStr is not injective here, so one of the two values could never be substituted
+            val subject = Placeholders.DoubleCurly(setOf("a", "A")) { it.lowercase() }
+
+            val ex = shouldThrow<IllegalArgumentException> { subject.fill { it } }
+
+            ex.message!! shouldContain "{{a}}"
+        }
+
+        "fill accepts values that render distinct patterns" {
+            val subject = Placeholders.DoubleCurly(setOf("a", "b")) { it }
+
+            subject.fill { it.uppercase() }("{{a}} and {{b}}") shouldBe "A and B"
         }
     }
 }

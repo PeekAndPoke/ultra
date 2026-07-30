@@ -29,7 +29,7 @@ suspend fun main() {
 
     val mongoConfig = MongoDbConfig(
         connectionString = "mongodb://root:root@localhost:27017",
-        database = "funktor-dev",
+        database = "funktor-demo-dev",
     )
 
     val blueprint = kontainer {

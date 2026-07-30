@@ -1,8 +1,6 @@
 package io.peekandpoke.ultra.vault
 
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.ConcurrentHashMap
+import io.peekandpoke.ultra.cache.NullableCache
 import kotlin.reflect.KClass
 
 /**
@@ -39,91 +37,62 @@ object NullEntityCache : EntityCache {
 }
 
 /**
- * A default implementation for [EntityCache].
+ * A default implementation for [EntityCache], backed by a [NullableCache].
  *
- * Uses [ConcurrentHashMap] for thread-safe map access. The sync [getOrPut] uses `synchronized`
- * to prevent double provider calls. The suspend [getOrPutAsync] uses a [Mutex] for the same purpose.
- * Both locking mechanisms are safe because the underlying map is concurrent.
+ * Ids that resolve to nothing are remembered too, so a reference to a missing document costs one
+ * lookup per cache rather than one per resolution.
+ *
+ * Nothing is ever evicted — the cache is registered per request (see [Ultra_Vault]) and dropped with
+ * it, so it is only bounded by how much one request reads.
  */
 class DefaultEntityCache : EntityCache {
 
-    private val syncLock = Any()
-    private val asyncMutex = Mutex()
-    private val entries = ConcurrentHashMap<String, Any>()
+    private val entries = NullableCache<String, Any>()
 
     override fun clear() {
         entries.clear()
     }
 
     override fun <T> put(id: String, value: T): T {
-        if (value != null) entries[id] = value as Any
+        entries.put(id, value)
+
         return value
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T> getOrPut(id: String, provider: () -> T?): T? {
-        @Suppress("UNCHECKED_CAST")
-        (entries[id] as? T)?.let { return it }
-
-        return synchronized(syncLock) {
-            @Suppress("UNCHECKED_CAST")
-            (entries[id] as? T)?.let { return@synchronized it }
-
-            val value = provider()
-            if (value != null) entries[id] = value as Any
-            value
-        }
+        return entries.getOrPut(id) { provider() } as T?
     }
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun <T> getOrPutAsync(id: String, provider: suspend () -> T?): T? {
-        @Suppress("UNCHECKED_CAST")
-        (entries[id] as? T)?.let { return it }
-
-        return asyncMutex.withLock {
-            @Suppress("UNCHECKED_CAST")
-            (entries[id] as? T)?.let { return@withLock it }
-
-            val value = provider()
-            if (value != null) entries[id] = value as Any
-            value
-        }
+        return entries.getOrPutAsync(id) { provider() } as T?
     }
 }
 
+/**
+ * Caches which [Repository] class stores a given entity type, or answers to a given repository name.
+ *
+ * Registered as a kontainer singleton while [Database] is dynamic (see [Ultra_Vault]), so a
+ * resolution outlives the per-request [Database] that triggered it. Only [KClass] values are cached,
+ * never repository instances — that is what makes sharing across requests safe; each caller turns
+ * the class back into an instance through its own [Database].
+ *
+ * Misses are cached as well, through a `MISSING` sentinel ([ConcurrentHashMap] forbids null values),
+ * so a type or name that resolved to nothing keeps resolving to nothing for the lifetime of this
+ * instance. The two overloads of [getOrPut] use independent maps.
+ */
 class SharedRepoClassLookup {
 
-    private val typeLookup = ConcurrentHashMap<KClass<*>, Any>()
+    private val typeLookup = NullableCache<KClass<*>, KClass<out Repository<*>>>()
 
-    private val nameLookup = ConcurrentHashMap<String, Any>()
+    private val nameLookup = NullableCache<String, KClass<out Repository<*>>>()
 
+    /** Gets or computes the class of the repository storing the entity [type]. */
     fun getOrPut(type: KClass<*>, defaultValue: () -> KClass<out Repository<*>>?): KClass<out Repository<*>>? =
-        lookupOrPut(typeLookup, type, defaultValue)
+        typeLookup.getOrPut(type, defaultValue)
 
+    /** Gets or computes the class of the repository with the given [Repository.name]. */
     fun getOrPut(name: String, defaultValue: () -> KClass<out Repository<*>>?): KClass<out Repository<*>>? =
-        lookupOrPut(nameLookup, name, defaultValue)
-
-    private fun <K : Any> lookupOrPut(
-        map: ConcurrentHashMap<K, Any>,
-        key: K,
-        defaultValue: () -> KClass<out Repository<*>>?,
-    ): KClass<out Repository<*>>? {
-        // Sentinel pattern: ConcurrentHashMap forbids null values, so we store MISSING to cache
-        // negative lookups and avoid re-walking the repository list on every miss.
-        map[key]?.let { return it.decode() }
-
-        val computed = defaultValue()
-        // putIfAbsent so the first caller wins; decode whatever is actually stored.
-        return (map.putIfAbsent(key, computed ?: MISSING) ?: (computed ?: MISSING)).decode()
-    }
-
-    private fun Any.decode(): KClass<out Repository<*>>? {
-        if (this === MISSING) {
-            return null
-        }
-        @Suppress("UNCHECKED_CAST")
-        return this as KClass<out Repository<*>>
-    }
-
-    private companion object {
-        private val MISSING = Any()
-    }
+        nameLookup.getOrPut(name, defaultValue)
 }

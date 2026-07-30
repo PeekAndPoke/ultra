@@ -1,0 +1,102 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {i18nSidebar} from '../../../data/i18n-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Kraft Integration" sidebar={i18nSidebar}
+            description="Reactive translations in Kraft — I18nController, the Translations delegate, form validation">
+
+    <h1>Kraft Integration</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Switch language, and every subscribed component re-renders.
+    </p>
+
+    <h2>Register a controller</h2>
+
+    <p><code>I18nController</code> is a <code>Stream&lt;I18n&gt;</code>. Register it on the app and the whole
+        component tree can reach it.</p>
+
+    <Code code={`val kraft = kraftApp {
+    semanticUI()
+    i18n(
+        I18nController.create(
+            locale = Locale("en"),
+            fallback = Locale("en"),
+        ) {
+            install(AppI18nCatalog)
+        }
+    )
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>create</code> persists the chosen language in localStorage (key
+        <code>kraft.i18n.lang</code> by default). Boot precedence is: the stored value, else
+        <code>initialLang</code>, which itself defaults to the browser's language. Use
+        <code>I18nController.inMemory(...)</code> for tests and anywhere you do not want persistence.</p>
+
+    <p>Kraft's own form catalog is <strong>always installed first</strong>, at the lowest precedence, so
+        validation messages translate even if an app forgets to provide anything. App catalogs install
+        afterwards and win on shared keys.</p>
+
+    <h2>Using translations in a component</h2>
+
+    <Code code={`class GreetingComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
+
+    private val t by Translations
+
+    override fun VDom.render() {
+        h1 { +t.checkout.greeting(name = props.name) }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The <code>by Translations</code> delegate subscribes to the controller's translation stream, so the
+        component re-renders when the language changes and unsubscribes when it unmounts. There is a matching
+        <code>by Formatting</code> delegate for the formatting surface.</p>
+
+    <p><code>kraftApp { }</code> always installs a default controller, so <code>by Translations</code> works
+        in an app that has not configured i18n &mdash; unresolved keys come back as the key itself. It is not
+        a fallback inside the delegate: looking up a missing attribute throws, and the default registration
+        is what stops that happening.</p>
+
+    <h2>Switching language</h2>
+
+    <Code code={`i18nController.setLang(Locale("de"))`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The controller maps the chosen tag through <code>Locale.parse</code> onto a fresh <code>I18n</code>
+        snapshot and emits it. Every subscribed component re-renders in the new language, and the choice is
+        persisted.</p>
+
+    <h2>Form validation</h2>
+
+    <p>Kraft's form rules resolve their messages through the same surface, so validation errors follow the
+        selected language with no extra wiring:</p>
+
+    <Code code={`UiInputField(value, onChange = { value = it }) {
+    label("Email")
+    accepts(notBlank(), isEmail())
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Rules produce their message via the i18n surface rather than a hardcoded string, and an app overrides
+        any of them by defining the same key in its own catalog &mdash; app catalogs install last and win.</p>
+
+    <Aside>Form rules were the first thing wired up, deliberately. They are the highest-volume user-facing
+        strings in an app and the ones most likely to be seen in anger, so if the mechanism were awkward it
+        would have shown up immediately.
+    </Aside>
+
+    <h2>Async rules</h2>
+
+    <p>Validation rules may be suspending &mdash; a uniqueness check against the server, for example. The
+        form controller exposes a status so the UI can disable submit while checks are in flight, and a guard
+        so a form cannot be submitted while validation is still running.</p>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/kraft/"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Kraft documentation &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

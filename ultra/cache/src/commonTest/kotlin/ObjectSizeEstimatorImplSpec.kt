@@ -93,5 +93,68 @@ class ObjectSizeEstimatorImplSpec : StringSpec() {
 
             estimator.estimate(str) shouldBe expected
         }
+
+        // Per-call visited set ////////////////////////////////////////////////////////////////////////
+
+        "repeating an estimate on the same object gives the same answer" {
+            val subject = ObjectSizeEstimator()
+            val value = listOf(EstProbe(1, 2), EstProbe(3, 4))
+
+            val first = subject.estimate(value)
+
+            // the visited set used to survive between calls, so the second answer was 0
+            subject.estimate(value) shouldBe first
+            subject.estimate(value) shouldBe first
+        }
+
+        "one estimate does not shrink the next" {
+            val subject = ObjectSizeEstimator()
+
+            subject.estimate(listOf(EstProbe(1, 2), EstProbe(3, 4)))
+
+            // a structurally equal but freshly built graph must be measured from scratch
+            val fresh = subject.estimate(listOf(EstProbe(1, 2), EstProbe(3, 4)))
+            val reference = ObjectSizeEstimator().estimate(listOf(EstProbe(1, 2), EstProbe(3, 4)))
+
+            fresh shouldBe reference
+        }
+
+        // Identity, not equality //////////////////////////////////////////////////////////////////////
+
+        "two equal but distinct objects are both counted" {
+            val subject = ObjectSizeEstimator()
+
+            val twoDistinct = subject.estimate(listOf(EstProbe(1, 2), EstProbe(1, 2)))
+            val twoDifferent = ObjectSizeEstimator().estimate(listOf(EstProbe(1, 2), EstProbe(3, 4)))
+
+            // both lists hold two real objects, so both cost the same - structural matching used to
+            // charge the second equal one zero bytes
+            twoDistinct shouldBe twoDifferent
+        }
+
+        "the same object referenced twice is counted once" {
+            val shared = EstProbe(1, 2)
+
+            val once = ObjectSizeEstimator().estimate(listOf(shared, shared))
+            val twice = ObjectSizeEstimator().estimate(listOf(EstProbe(1, 2), EstProbe(3, 4)))
+
+            // one object plus a second pointer must be cheaper than two objects
+            (once < twice) shouldBe true
+        }
+
+        "a cyclic graph still terminates" {
+            val a = EstCycle("a")
+            val b = EstCycle("b")
+            a.other = b
+            b.other = a
+
+            ObjectSizeEstimator().estimate(a) shouldBeGreaterThan 0L
+        }
     }
+}
+
+private data class EstProbe(val x: Int, val y: Int)
+
+private class EstCycle(val name: String) {
+    var other: EstCycle? = null
 }

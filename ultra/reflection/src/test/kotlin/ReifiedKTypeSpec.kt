@@ -159,4 +159,48 @@ class ReifiedKTypeSpec : StringSpec({
         subject.ctor shouldBe null
         subject.ctorParams2Types shouldHaveSize 0
     }
+
+    "Star projections are passed through instead of being filled" {
+
+        // Giving a star projection a type violates KTypeProjection's own contract, so these used
+        // to throw "Star projection must have no type specified" and made the class unserializable.
+        data class StarList(val values: List<*>)
+        data class StarMap(val values: Map<String, *>)
+        data class StarKClass(val cls: kotlin.reflect.KClass<*>)
+
+        assertSoftly {
+            ReifiedKType(kType<StarList>().type).ctorParams2Types[0].second shouldBe typeOf<List<*>>()
+            ReifiedKType(kType<StarMap>().type).ctorParams2Types[0].second shouldBe typeOf<Map<String, *>>()
+            ReifiedKType(kType<StarKClass>().type).ctorParams2Types[0].second shouldBe
+                    typeOf<kotlin.reflect.KClass<*>>()
+        }
+    }
+
+    "A nullable type parameter stays nullable after reification" {
+
+        data class NullableHolder<T>(val value: T?)
+
+        assertSoftly {
+            ReifiedKType(kType<NullableHolder<Int>>().type).ctorParams2Types[0].second shouldBe
+                    typeOf<Int?>()
+            ReifiedKType(kType<NullableHolder<String>>().type).ctorParams2Types[0].second shouldBe
+                    typeOf<String?>()
+        }
+    }
+
+    "A nullable type parameter nested in a collection stays nullable" {
+
+        data class NestedNullable<T>(val values: List<T?>)
+
+        ReifiedKType(kType<NestedNullable<Int>>().type).ctorParams2Types[0].second shouldBe
+                typeOf<List<Int?>>()
+    }
+
+    "A non-null type parameter is not made nullable" {
+
+        data class NonNullHolder<T>(val value: T)
+
+        ReifiedKType(kType<NonNullHolder<Int>>().type).ctorParams2Types[0].second shouldBe
+                typeOf<Int>()
+    }
 })

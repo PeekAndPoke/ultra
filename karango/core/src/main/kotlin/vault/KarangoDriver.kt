@@ -19,6 +19,7 @@ import io.peekandpoke.karango.utils.ArangoDbRequestUtils
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.reflection.kMapType
+import io.peekandpoke.ultra.vault.VaultHookScope
 import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,7 @@ class KarangoDriver(
     private val lazyArangoDb: Lazy<ArangoDatabaseAsync>,
     private val lazyProfiler: Lazy<QueryProfiler> = lazy { NullQueryProfiler },
     val log: Log = NullLog,
+    val hookScope: VaultHookScope = VaultHookScope.Inline(),
 ) {
     val codec: KarangoCodec by lazyCodec
     val arangoDb: ArangoDatabaseAsync by lazyArangoDb
@@ -50,6 +52,7 @@ class KarangoDriver(
         lazyArangoDb = lazyArangoDb,
         lazyProfiler = lazyProfiler,
         log = newLog,
+        hookScope = hookScope,
     )
 
     fun withProfiler(newProfiler: QueryProfiler) = KarangoDriver(
@@ -57,6 +60,7 @@ class KarangoDriver(
         lazyArangoDb = lazyArangoDb,
         lazyProfiler = lazy { newProfiler },
         log = log,
+        hookScope = hookScope,
     )
 
     private val version: ArangoDBVersion by lazy {
@@ -74,7 +78,10 @@ class KarangoDriver(
         val arangoColl = arangoDb.collection(name)
 
         if (!arangoColl.exists().await()) {
-            arangoDb.createCollection(name, options)
+            // IMPORTANT: await the creation future — otherwise ensureIndexes() runs before the
+            // collection exists on the server and fails with 404 (collection or view not found) on
+            // the first run of a brand-new collection.
+            arangoDb.createCollection(name, options).await()
         }
     }
 

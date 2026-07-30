@@ -244,7 +244,7 @@ All range types (except MpLocalTimeSlot) have a **Partial** variant with optiona
 ```kotlin
 // Open-ended range
 val partial = MpLocalDateRange.Partial(from = someDate, to = null)
-val concrete = partial.asValidRange()  // fills Doomsday as end
+val concrete = partial.asValidRange()  // null unless BOTH boundaries are set
 
 // Also available: MpClosedLocalDateRange.Partial, MpInstantRange.Partial, MpZonedDateTimeRange.Partial
 // MpInstantRange.Partial also has: asDateRange(timezone) -> MpClosedLocalDateRange.Partial

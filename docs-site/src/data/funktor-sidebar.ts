@@ -6,6 +6,7 @@ export const funktorSidebar = [
     {href: '/ultra/funktor/auth', label: 'Auth', section: 'Modules'},
     {href: '/ultra/funktor/cluster', label: 'Cluster', section: 'Modules'},
     {href: '/ultra/funktor/messaging', label: 'Messaging', section: 'Modules'},
+    {href: '/ultra/funktor/saas', label: 'SaaS', section: 'Modules'},
     {href: '/ultra/funktor/insights', label: 'Insights', section: 'Modules'},
     {href: '/ultra/funktor/logging', label: 'Logging', section: 'Modules'},
     {href: '/ultra/funktor/staticweb', label: 'Static Web', section: 'Modules'},

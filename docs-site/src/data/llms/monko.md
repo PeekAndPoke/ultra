@@ -145,7 +145,7 @@ val stored = repo.insert("person-1", Person(name = "Alice", age = 30, email = "a
 val found = repo.findById("persons/person-1")
 
 // Update
-val updated = found!!.modify { copy(age = 31) }
+val updated = found!!.modify { it.copy(age = 31) }
 repo.save(updated)
 
 // Atomic read-modify-write
@@ -216,7 +216,7 @@ stored._key     // "key-1"
 stored()        // Person(name="Alice", age=30, ...)
 
 // Modify (creates new Stored with same metadata)
-val updated = stored.modify { copy(age = 31) }
+val updated = stored.modify { it.copy(age = 31) }
 repo.save(updated)
 
 // Transform to a different type
@@ -312,7 +312,7 @@ filter(
 
 ```kotlin
 // Element match
-filter(r.tags.elemMatch(Filters.eq("kotlin")))
+filter(r.tags.elemMatch(Filters.eq("name", "kotlin")))
 
 // Array size
 filter(r.tags.size(3))
@@ -407,7 +407,7 @@ val person = repo.findById("persons/alice-1")  // returns Stored<Person>?
 val everyone = repo.findAll()  // returns MonkoCursor<Stored<Person>>
 
 // Save (update)
-val modified = person!!.modify { copy(age = 31) }
+val modified = person!!.modify { it.copy(age = 31) }
 repo.save(modified)
 
 // Atomic read-modify-write
@@ -468,14 +468,14 @@ val people = listOf(
     Person("Charlie", 35, "charlie@example.com"),
 )
 
-repo.batchInsertValues(people)
+people.forEach { repo.insert(it) }  // Monko has NO batch insert (Karango does)
 ```
 
 ## Collection stats
 
 ```kotlin
 val stats = repo.getStats()
-// stats.documentCount, stats.indexes, etc.
+// stats.storage.count, stats.indexes, etc.
 ```
 
 ---
@@ -522,8 +522,9 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
         }
 
         // Sparse index -- only index documents where the field exists
-        sparseIndex {
+        uniqueIndex {          // sparseness is a FLAG, not an index type
             field { it.middleName }
+            sparse()
         }
     }
 }
@@ -536,7 +537,6 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
 | `persistentIndex` | Standard index | Query optimization         |
 | `uniqueIndex`     | Unique index   | Enforce uniqueness         |
 | `ttlIndex`        | TTL index      | Auto-expire documents      |
-| `sparseIndex`     | Sparse index   | Index only non-null fields |
 
 ## Index management
 
@@ -583,10 +583,10 @@ class ArticlesRepo(driver: MonkoDriver) : MonkoRepository<Article>(
     name = "articles",
     storedType = kType(),
     driver = driver,
-    hooks = Hooks.of(
-        onBeforeSave = listOf(TimestampedOnBeforeSaveHook()),
-        onAfterSave = listOf(MyAfterSaveHook()),
-        onAfterDelete = listOf(MyAfterDeleteHook()),
+    hooks = Hooks.of(          // takes hooks directly; sorted by type internally
+        TimestampedOnBeforeSaveHook(),
+        MyAfterSaveHook(),
+        MyAfterDeleteHook(),
     ),
 )
 ```

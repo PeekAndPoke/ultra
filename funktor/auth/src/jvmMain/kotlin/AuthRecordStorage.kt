@@ -1,16 +1,15 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 
-class AuthRecordStorage(
-    adapter: Lazy<Adapter>,
-    kronos: Lazy<Kronos>,
-) {
+class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
     interface OnAfterSave : Repository.Hooks.OnAfterSave<AuthRecord>
 
     interface Adapter {
@@ -28,20 +27,20 @@ class AuthRecordStorage(
                 return RemoveResult.empty
             }
 
-            override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
+            override suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>? {
                 return null
             }
 
-            override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+            override suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>? {
                 return null
             }
 
-            override suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>> {
+            override suspend fun findAllByOwner(realm: RealmId, type: String, owner: UserId): List<Stored<AuthRecord>> {
                 return emptyList()
             }
 
             override suspend fun removeAllByOwner(
-                realm: String, type: String, owner: String, exceptId: String?,
+                realm: RealmId, type: String, owner: UserId, exceptId: String?,
             ): RemoveResult {
                 return RemoveResult.empty
             }
@@ -50,14 +49,14 @@ class AuthRecordStorage(
         class Vault(val inner: Repo) : Adapter {
             interface Repo : Repository<AuthRecord> {
 
-                suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>?
+                suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>?
 
-                suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>?
+                suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>?
 
-                suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>>
+                suspend fun findAllByOwner(realm: RealmId, type: String, owner: UserId): List<Stored<AuthRecord>>
 
                 suspend fun removeAllByOwner(
-                    realm: String, type: String, owner: String, exceptId: String?,
+                    realm: RealmId, type: String, owner: UserId, exceptId: String?,
                 ): RemoveResult
             }
 
@@ -73,20 +72,20 @@ class AuthRecordStorage(
                 return inner.insert(new)
             }
 
-            override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
+            override suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>? {
                 return inner.findLatest(realm, type, owner)
             }
 
-            override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+            override suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>? {
                 return inner.findByToken(realm, type, token)
             }
 
-            override suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>> {
+            override suspend fun findAllByOwner(realm: RealmId, type: String, owner: UserId): List<Stored<AuthRecord>> {
                 return inner.findAllByOwner(realm, type, owner)
             }
 
             override suspend fun removeAllByOwner(
-                realm: String, type: String, owner: String, exceptId: String?,
+                realm: RealmId, type: String, owner: UserId, exceptId: String?,
             ): RemoveResult {
                 return inner.removeAllByOwner(realm, type, owner, exceptId)
             }
@@ -98,16 +97,16 @@ class AuthRecordStorage(
 
         suspend fun removeAll(): RemoveResult
 
-        suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>?
+        suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>?
 
-        suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>?
+        suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>?
 
         /** Returns all records of [type] in [realm] owned by [owner], unsorted. */
-        suspend fun findAllByOwner(realm: String, type: String, owner: String): List<Stored<AuthRecord>>
+        suspend fun findAllByOwner(realm: RealmId, type: String, owner: UserId): List<Stored<AuthRecord>>
 
         /** Removes all records of [type] in [realm] owned by [owner], optionally excluding [exceptId]. */
         suspend fun removeAllByOwner(
-            realm: String, type: String, owner: String, exceptId: String? = null,
+            realm: RealmId, type: String, owner: UserId, exceptId: String? = null,
         ): RemoveResult
     }
 
@@ -131,7 +130,7 @@ class AuthRecordStorage(
 
     /** Find the latest auth record of type [type], [realm] and [owner] */
     suspend inline fun <reified T : AuthRecord> findLatestRecordBy(
-        type: Polymorphic.TypedChild<T>, realm: String, owner: String,
+        type: Polymorphic.TypedChild<T>, realm: RealmId, owner: UserId,
     ): Stored<T>? {
         return adapter.findLatest(type = type.identifier, realm = realm, owner = owner)
             ?.takeIf { it.hasNotExpired() }
@@ -140,7 +139,7 @@ class AuthRecordStorage(
 
     /** Find the latest auth record of type [type], [realm] and [token] */
     suspend inline fun <reified T : AuthRecord> findByToken(
-        type: Polymorphic.TypedChild<T>, realm: String, token: String,
+        type: Polymorphic.TypedChild<T>, realm: RealmId, token: String,
     ): Stored<T>? {
         return adapter
             .findByToken(type = type.identifier, realm = realm, token = token)
@@ -150,7 +149,7 @@ class AuthRecordStorage(
 
     /** List all non-expired records of [type] for [realm] / [owner]. */
     suspend inline fun <reified T : AuthRecord> findAllByOwner(
-        type: Polymorphic.TypedChild<T>, realm: String, owner: String,
+        type: Polymorphic.TypedChild<T>, realm: RealmId, owner: UserId,
     ): List<Stored<T>> {
         return adapter.findAllByOwner(type = type.identifier, realm = realm, owner = owner)
             .filter { it.hasNotExpired() }
@@ -159,7 +158,7 @@ class AuthRecordStorage(
 
     /** Remove all records of [type] for [realm] / [owner], optionally keeping [exceptId]. */
     suspend inline fun <reified T : AuthRecord> removeAllByOwner(
-        type: Polymorphic.TypedChild<T>, realm: String, owner: String, exceptId: String? = null,
+        type: Polymorphic.TypedChild<T>, realm: RealmId, owner: UserId, exceptId: String? = null,
     ): RemoveResult {
         return adapter.removeAllByOwner(
             type = type.identifier, realm = realm, owner = owner, exceptId = exceptId,

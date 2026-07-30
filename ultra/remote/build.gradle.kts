@@ -53,9 +53,24 @@ kotlin {
             }
         }
 
+        jsMain {
+            dependencies {
+                // Provides the Ktor Js engine so `HttpClient {}` resolves on the browser.
+                implementation(Deps.Ktor.Client.js)
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                // Provides a default Ktor engine so `HttpClient {}` resolves on the JVM.
+                implementation(Deps.Ktor.Client.cio)
+            }
+        }
+
         commonTest {
             dependencies {
                 commonTestDeps()
+                implementation(Deps.Ktor.Client.mock)
             }
         }
 

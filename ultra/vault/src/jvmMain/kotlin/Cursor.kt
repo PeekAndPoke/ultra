@@ -11,20 +11,28 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 
+/**
+ * Cursor, returned by database queries
+ */
 interface Cursor<T> {
 
     companion object {
+        /** Creates a cursor with no results. */
         inline fun <reified T> empty() = empty(kType<T>())
 
+        /** Creates a cursor with no results for the given [type]. */
         fun <T> empty(type: TypeRef<T>): Cursor<T> = EmptyCursor(type)
 
+        /** Creates a cursor over an in-memory list, e.g. for tests or stubbed repositories. */
         inline fun <reified T> of(items: List<T>) =
             of(type = kType(), items = items)
 
+        /** Creates a cursor over an in-memory list of the given [type]. */
         fun <T> of(type: TypeRef<T>, items: List<T>): Cursor<T> =
             Simple(items = items, query = TypedQuery.of(returns = type))
     }
 
+    /** Cursor backed by an in-memory list. No database was involved, so there is no entity cache. */
     private class Simple<T>(
         val items: List<T>,
         override val query: TypedQuery<T>,
@@ -34,9 +42,10 @@ interface Cursor<T> {
         override val entityCache: EntityCache = NullEntityCache
         override val count: Long get() = items.size.toLong()
         override val fullCount: Long? get() = null
-        override val timeMs: Double get() = 1.0
+        override val timeMs: Double get() = 0.0
     }
 
+    /** Cursor without any results. Its [query] is a placeholder that was never executed. */
     private class EmptyCursor<T>(type: TypeRef<T>) : Cursor<T> {
         override fun asFlow(): Flow<T> = emptyFlow()
 
@@ -44,7 +53,7 @@ interface Cursor<T> {
         override val query: TypedQuery<T> = TypedQuery.of(returns = type)
         override val count: Long = 0
         override val fullCount: Long = 0
-        override val timeMs: Double = 1.0
+        override val timeMs: Double = 0.0
     }
 
     /** The Entity Cache */
@@ -53,7 +62,7 @@ interface Cursor<T> {
     /** The executed query */
     val query: TypedQuery<T>
 
-    /** The number of results that where returned */
+    /** The number of results that were returned */
     val count: Long
 
     /** The total number of results that would match the query */
@@ -62,7 +71,13 @@ interface Cursor<T> {
     /** The time the query took */
     val timeMs: Double
 
-    /** Async iteration via Flow. For KarangoCursor, fetches chunks lazily on demand. */
+    /**
+     * Async iteration via Flow. May be collected more than once.
+     *
+     * KarangoCursor buffers the server-side cursor on the first collection — that is what makes
+     * re-iteration safe, but it also means short-circuiting operators like [first] still fetch
+     * every result.
+     */
     fun asFlow(): Flow<T>
 
     /** Collect all items. Convenience for asFlow().toList(). */
@@ -71,7 +86,8 @@ interface Cursor<T> {
 
 // Convenience extensions — suspend equivalents of stdlib collection operations /////////////////////
 //
-// These make Cursor feel like a regular collection. All are suspend-safe.
+// These make Cursor feel like a regular collection. Each one collects via asFlow() and returns a
+// materialised result, never a Flow — use asFlow() directly to stay lazy.
 
 // Transform ///////////////////////////////////////////////////////////////////////////////////////////
 

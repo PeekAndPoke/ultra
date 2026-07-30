@@ -12,15 +12,14 @@ private val uriToParamsCache = mutableMapOf<String, Map<String, UriParamBuilder.
 private val placeholderRegex = "\\{([^}]*)\\}".toRegex()
 
 /**
- * Creates a remote request
+ * Creates a remote request backed by the Ktor client configured in [config].
  */
 fun createRequest(
     config: ApiClient.Config,
-) = createRequest(
+): RemoteRequest = RemoteRequestImpl(
     baseUrl = config.baseUrl,
-    requestInterceptors = config.requestInterceptors,
-    responseInterceptors = config.responseInterceptors,
     client = config.client,
+    onResponse = config.onResponse,
 )
 
 /**

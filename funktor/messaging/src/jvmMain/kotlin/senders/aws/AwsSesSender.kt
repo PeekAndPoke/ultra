@@ -4,7 +4,7 @@ import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.EmailSender
 import io.peekandpoke.funktor.messaging.api.EmailBody
 import io.peekandpoke.funktor.messaging.api.EmailResult
-import io.peekandpoke.ultra.common.fromBase64
+import io.peekandpoke.ultra.common.fromBase64OrNull
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.core.SdkBytes
@@ -19,15 +19,15 @@ import software.amazon.awssdk.services.ses.model.SendRawEmailResponse
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.*
-import javax.activation.DataHandler
-import javax.activation.DataSource
-import javax.mail.Message
-import javax.mail.Session
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeBodyPart
-import javax.mail.internet.MimeMessage
-import javax.mail.internet.MimeMultipart
-import javax.mail.util.ByteArrayDataSource
+import jakarta.activation.DataHandler
+import jakarta.activation.DataSource
+import jakarta.mail.Message
+import jakarta.mail.Session
+import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeBodyPart
+import jakarta.mail.internet.MimeMessage
+import jakarta.mail.internet.MimeMultipart
+import jakarta.mail.util.ByteArrayDataSource
 
 /** Sends emails via AWS SES, supporting HTML/text bodies and attachments (via raw email). */
 class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
@@ -126,7 +126,8 @@ class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
         }
     }
 
-    private fun prepareWithAttachments(email: Email): MimeMessage {
+    /** Builds the multipart MIME message. Internal so the jakarta.mail wiring can be tested. */
+    internal fun prepareWithAttachments(email: Email): MimeMessage {
         // see https://docs.aws.amazon.com/code-samples/latest/catalog/javav2-ses-src-main-java-com-example-ses-SendMessageAttachment.java.html
 
         val session: Session = Session.getDefaultInstance(Properties())
@@ -174,9 +175,14 @@ class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
 
         // define the attachment
         email.attachments.forEach { attachment ->
+            // still fails the send — a broken attachment must not go out silently — but names
+            // which one, instead of an opaque "Illegal base64 character"
+            val data = attachment.dataBase64.fromBase64OrNull()
+                ?: error("Attachment '${attachment.filename}' does not hold valid base64 data")
+
             val att = MimeBodyPart().apply {
                 val fds: DataSource = ByteArrayDataSource(
-                    attachment.dataBase64.fromBase64(),
+                    data,
                     attachment.mimeType
                 )
                 dataHandler = DataHandler(fds)

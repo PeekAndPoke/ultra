@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.security.csrf
 
-import io.peekandpoke.ultra.common.fromBase64
-import io.peekandpoke.ultra.common.sha384
+import io.peekandpoke.ultra.common.fromBase64OrNull
+import io.peekandpoke.ultra.common.hmacSha384
 import io.peekandpoke.ultra.common.toBase64
 import io.peekandpoke.ultra.security.user.UserProvider
 import java.security.MessageDigest
@@ -33,7 +33,9 @@ class StatelessCsrfProtection(
 
     @Suppress("Detekt:ReturnCount")
     override fun validateToken(salt: String, token: String): Boolean {
-        val decoded = String(token.fromBase64())
+        // a token that is not even base64 is simply an invalid token, like every other
+        // malformed shape handled below
+        val decoded = token.fromBase64OrNull()?.let { String(it) } ?: return false
         val parts = decoded.split(glue)
 
         if (parts.size != 2) {
@@ -58,7 +60,16 @@ class StatelessCsrfProtection(
         )
     }
 
-    // Use null byte delimiters between fields to prevent field-boundary collisions
+    /**
+     * Signs the fields with HMAC-SHA-384, keyed by the secret.
+     *
+     * The secret is the KEY, not the last field of the message: `H(fields || secret)` is a
+     * hand-rolled construction whose strength rests on the hash being collision resistant,
+     * where HMAC is built for exactly this and does not.
+     *
+     * Fields stay separated by null bytes so that moving a boundary — a user id ending where
+     * the ip begins — cannot produce the same message.
+     */
     private fun sign(salt: String, ttl: Long) =
-        "$salt\u0000$userId\u0000$clientIp\u0000$ttl\u0000$csrfSecret".sha384().toBase64()
+        "$salt\u0000$userId\u0000$clientIp\u0000$ttl".hmacSha384(csrfSecret).toBase64()
 }

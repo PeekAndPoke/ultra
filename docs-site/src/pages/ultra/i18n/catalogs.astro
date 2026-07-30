@@ -1,0 +1,139 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import {i18nSidebar} from '../../../data/i18n-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Catalogs & Codegen" sidebar={i18nSidebar}
+            description="YAML catalogs, the Gradle plugin, generated accessors and the build-time checker">
+
+    <h1>Catalogs &amp; Codegen</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        YAML in, typed Kotlin out &mdash; and a checker that fails the build before your users find the gap.
+    </p>
+
+    <h2>Where catalogs live</h2>
+
+    <p>One YAML file per locale, under the source set that owns them:</p>
+
+    <Code code={`src/commonMain/i18n/messages.en.yaml
+src/commonMain/i18n/messages.de.yaml
+src/commonMain/i18n/messages.de-CH.yaml`} lang="text" theme="vitesse-dark"/>
+
+    <p>Keys nest freely; nesting becomes a dotted key. Reserved Kotlin words and hyphenated keys are handled
+        by the emitter, so you can name things naturally.</p>
+
+    <Code code={`checkout:
+  greeting: "Hello {{name}}!"
+  is: "reserved words are fine"
+  greet-user: "Hi {{first-name}}"
+  items_one: "{{count}} item"
+  items_other: "{{count}} items"
+  nested:
+    deep: "Deep {{value}}"`} lang="yaml" theme="vitesse-dark"/>
+
+    <h2>Wiring the plugin</h2>
+
+    <Code code={`apply<I18nPlugin>()
+
+configure<I18nExtension> {
+    packageName.set("com.example.app.i18n")
+    moduleName.set("App")          // prefix for generated names; defaults to the project name
+    fallbackLang.set("en")         // defines the generated API surface
+    requiredLangs("de")            // must be at full key parity with the fallback
+    // sourceSet.set("main")       // for a plain kotlin("jvm") module; default is commonMain
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Generated code lands in <code>build/generated/i18n/&lt;sourceSet&gt;/kotlin</code> and is registered
+        on the source set through the task provider, so every compilation depends on generation
+        automatically. There is no manual wiring and no committed generated code.</p>
+
+    <h2>What gets generated</h2>
+
+    <p>Two things: a baked catalog object holding every locale's strings, and typed accessors hanging off
+        the open translation surface.</p>
+
+    <Code code={`// Generated — accessors named after your namespaces
+val I18nTranslate.checkout: CheckoutI18n get() = CheckoutI18n(i18n)
+
+// Usage — placeholders are named parameters
+i18n.translate.checkout.greeting(name = "Alice")
+i18n.translate.checkout.items(count = 3)
+i18n.translate.checkout.nested.deep(value = "x")`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><strong>The fallback catalog alone defines the API.</strong> Other languages may omit keys &mdash;
+        they fall through the chain &mdash; but they can never introduce one the fallback does not have. That
+        is what keeps the generated surface stable and makes a removed key a compile error at every call
+        site.</p>
+
+    <h2>The checker</h2>
+
+    <p><code>checkI18n</code> is wired into <code>check</code>, so it runs with your tests. It compares every
+        non-fallback catalog against the fallback:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 pr-4 text-white font-semibold">Finding</th>
+                <th class="py-2 pr-4 text-white font-semibold">Severity</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">A <code>requiredLangs</code> language is missing a key, or absent entirely</td>
+                <td class="py-2 pr-4">Error &mdash; fails the build</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">A locale <strong>introduces</strong> a placeholder the fallback lacks</td>
+                <td class="py-2 pr-4">Error &mdash; fails the build</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">A locale defines a key the fallback does not have</td>
+                <td class="py-2 pr-4">Warning &mdash; error under <code>-Pi18n.strict</code></td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">An optional language is incomplete</td>
+                <td class="py-2 pr-4">Warning &mdash; error under <code>-Pi18n.strict</code></td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">A locale <strong>omits</strong> a placeholder the fallback has</td>
+                <td class="py-2 pr-4">Info &mdash; logged only, never fails</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>A report is written to <code>build/reports/i18n/check.txt</code>. Note that
+        <code>requiredLangs</code> takes base languages only &mdash; a region inherits from its base, so
+        requiring <code>de-CH</code> is rejected outright rather than silently doing nothing.</p>
+
+    <Aside>Note the asymmetry, which is easy to get backwards: <em>introducing</em> an unknown placeholder
+        is an error, because it can never be filled. <em>Omitting</em> one is only INFO &mdash; a translator
+        dropping <code>{'{{count}}'}</code> still produces a grammatical sentence, just one missing a number,
+        and there are languages where leaving it out is the correct translation.
+    </Aside>
+
+    <h2>One catalog per module</h2>
+
+    <p>Each module generates and ships its own catalog. An application installs them in order, and
+        <strong>later installs win</strong> on shared keys:</p>
+
+    <Code code={`val i18n = I18n(locale, fallback) {
+    install(KraftFormsI18nCatalog)   // framework first
+    install(AppI18nCatalog)          // app last — overrides on conflict
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>So an app can restate a framework string without forking the framework, and a library can ship
+        sensible defaults without dictating them.</p>
+
+    <div class="not-prose mt-8">
+        <a href="/ultra/i18n/locales"
+           class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+            Locales &amp; resolution &rarr;
+        </a>
+    </div>
+
+</DocsLayout>

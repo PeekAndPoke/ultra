@@ -88,7 +88,7 @@ class ListsSpec : StringSpec({
     ).forEachIndexed { testIdx, (source, element, expected) ->
 
         "List.remove $testIdx: '$source', element: '$element' shouldBe '$expected'" {
-            source.remove(element) shouldBe expected
+            source.without(element) shouldBe expected
         }
     }
 
@@ -103,7 +103,7 @@ class ListsSpec : StringSpec({
     ).forEachIndexed { testIdx, (source, element, expected) ->
 
         "List.removeStrict #$testIdx: '$source', element: '$element' shouldBe '$expected'" {
-            source.removeStrict(element) shouldBe expected
+            source.withoutStrict(element) shouldBe expected
         }
     }
 
@@ -116,19 +116,19 @@ class ListsSpec : StringSpec({
     ).forEachIndexed { testIdx, (source, idx, expected) ->
 
         "List.removeAt #$testIdx: '$source', idx: '$idx' should be '$expected'" {
-            source.removeAt(idx) shouldBe expected
+            source.withoutAt(idx) shouldBe expected
         }
     }
 
     "List.removeAt with idx -1 should throw" {
         shouldThrow<IndexOutOfBoundsException> {
-            listOf("a").removeAt(-1)
+            listOf("a").withoutAt(-1)
         }
     }
 
     "List.removeAt with idx >= size should throw" {
         shouldThrow<IndexOutOfBoundsException> {
-            listOf("a").removeAt(1)
+            listOf("a").withoutAt(1)
         }
     }
 
@@ -211,5 +211,15 @@ class ListsSpec : StringSpec({
             Data(id = "2", n = 2),
             Data(id = "3", n = 3),
         )
+    }
+    "prepend puts the element at the front and leaves the receiver untouched" {
+        val source = listOf("b", "c")
+
+        source.prepend("a") shouldBe listOf("a", "b", "c")
+        source shouldBe listOf("b", "c")
+    }
+
+    "prepend works on an empty list" {
+        emptyList<String>().prepend("a") shouldBe listOf("a")
     }
 })

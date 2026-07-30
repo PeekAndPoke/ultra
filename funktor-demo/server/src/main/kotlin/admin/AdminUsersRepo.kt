@@ -12,6 +12,8 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
@@ -32,7 +34,7 @@ class AdminUsersRepo(
     companion object {
         suspend fun Storable<AdminUser>.asApiModel() = with(resolve()) {
             AdminUserModel(
-                id = _id,
+                id = UserId(_id),
                 name = name,
                 email = email,
                 isSuperUser = isSuperUser,
@@ -55,7 +57,7 @@ class AdminUsersRepo(
             authRecordStorage.create {
                 AuthRecord.Password(
                     realm = AdminUserRealm.REALM,
-                    ownerId = _id,
+                    ownerId = UserId(_id),
                     token = passwordHasher.hashAsString(password)
                 )
             }
@@ -65,7 +67,7 @@ class AdminUsersRepo(
             repo.insert(
                 "karsten", AdminUser(
                     name = "Karsten",
-                    email = "karsten.john.gerber@googlemail.com",
+                    email = EmailAddress("karsten.john.gerber@googlemail.com"),
                     isSuperUser = true,
                 )
             ).also { user -> user.createPassword() }
@@ -82,7 +84,7 @@ class AdminUsersRepo(
         }
     }
 
-    suspend fun findByEmail(email: String) = findFirst {
+    suspend fun findByEmail(email: EmailAddress) = findFirst {
         FOR(repo) { user ->
             FILTER(user.email EQ email)
 

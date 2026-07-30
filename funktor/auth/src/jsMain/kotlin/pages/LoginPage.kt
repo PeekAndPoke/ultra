@@ -1,16 +1,17 @@
 package io.peekandpoke.funktor.auth.pages
 
 import io.peekandpoke.funktor.auth.AuthState
-import io.peekandpoke.funktor.auth.pages.LoginController.DisplayState
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.vdom.VDom
-import io.peekandpoke.ultra.html.onClick
-import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
+/**
+ * Batteries-included default login page: the fullscreen-background chrome + optional branding from
+ * [AuthFrontendConfig], wrapping the shared [AuthLogin] widget. Apps that want full control over the
+ * chrome should embed [AuthLogin] in their own layout instead of mounting this.
+ */
 @Suppress("FunctionName")
 fun <USER> Tag.LoginPage(
     state: AuthState<USER>,
@@ -22,55 +23,18 @@ fun <USER> Tag.LoginPage(
 
 class LoginPage<USER>(ctx: Ctx<Props<USER>>) : Component<LoginPage.Props<USER>>(ctx) {
 
-    //  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
-
     data class Props<USER>(
         val state: AuthState<USER>,
     )
 
-    //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private val ctrl = LoginController(this, props.state)
-    private val authState get() = props.state
-
-    //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-    init {
-        ctrl.realmLoader.value {
-            ctrl.handleAuthCallback()
-        }
-    }
+    private val config get() = props.state.frontend.config
 
     override fun VDom.render() {
         AuthPageLayouts {
-            renderFullscreenBackgroundLayout(authState.frontend.config) {
-                renderContent()
-            }
-        }
-    }
+            renderFullscreenBackgroundLayout(config) {
+                renderBranding(config)
 
-    private fun FlowContent.renderContent() {
-        ctrl.realmLoader(this) {
-            loading {
-                ui.basic.loading.segment {
-                }
-            }
-
-            error {
-                ui.basic.segment {
-                    onClick { ctrl.realmLoader.reload() }
-                    +"Login not possible. Please try again later."
-                }
-            }
-
-            loaded {
-                ctrl.renderer {
-                    when (val s = ctrl.displayState) {
-                        is DisplayState.Login -> renderLoginState(s)
-                        is DisplayState.RecoverPassword -> renderRecoverPasswordState(s)
-                        is DisplayState.SignUp -> renderSignUpState(s)
-                    }
-                }
+                AuthLogin(props.state)
             }
         }
     }

@@ -17,6 +17,8 @@ import io.peekandpoke.funktor.messaging.FunktorMessagingBuilder
 import io.peekandpoke.funktor.messaging.funktorMessaging
 import io.peekandpoke.funktor.rest.FunktorRestBuilder
 import io.peekandpoke.funktor.rest.funktorRest
+import io.peekandpoke.funktor.saas.FunktorSaasBuilder
+import io.peekandpoke.funktor.saas.funktorSaas
 import io.peekandpoke.funktor.staticweb.funktorStaticWeb
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
@@ -30,7 +32,8 @@ val Funktor = module { params: FunktorParams ->
     funktorCluster(params.cluster)
     funktorLogging(params.logging)
     funktorStaticWeb()
-    funktorMessaging(params.messaging)
+    funktorMessaging(params.config, params.messaging)
+    funktorSaas(params.saas)
     funktorInsights()
     funktorIntrospection()
 }
@@ -43,6 +46,7 @@ fun KontainerBuilder.funktor(
     logging: FunktorLoggingBuilder.() -> Unit = {},
     cluster: FunktorClusterBuilder.() -> Unit = {},
     messaging: FunktorMessagingBuilder.() -> Unit = {},
+    saas: FunktorSaasBuilder.() -> Unit = {},
     auth: FunktorAuthBuilder.() -> Unit = {},
 ) = module(
     Funktor,
@@ -53,6 +57,7 @@ fun KontainerBuilder.funktor(
         logging = logging,
         cluster = cluster,
         messaging = messaging,
+        saas = saas,
         auth = auth,
     )
 )
@@ -66,5 +71,6 @@ data class FunktorParams internal constructor(
     val logging: FunktorLoggingBuilder.() -> Unit,
     val cluster: FunktorClusterBuilder.() -> Unit,
     val messaging: FunktorMessagingBuilder.() -> Unit,
+    val saas: FunktorSaasBuilder.() -> Unit,
     val auth: FunktorAuthBuilder.() -> Unit,
 )

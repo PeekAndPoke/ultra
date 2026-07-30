@@ -63,6 +63,20 @@ fun Application.module() = app.module(this) { app, config, init ->
         allowHost("localhost:36589", schemes = listOf("http", "https"))
         allowHost("127.0.0.1:36589", schemes = listOf("http", "https"))
         allowHost("www.funktor-demo.localhost:36589", schemes = listOf("http", "https"))
+        // Dev ops-app:
+        allowHost("localhost:36590", schemes = listOf("http", "https"))
+        allowHost("127.0.0.1:36590", schemes = listOf("http", "https"))
+        allowHost("ops.funktor-demo.localhost:36590", schemes = listOf("http", "https"))
+
+        // Dev b2b-app:
+        allowHost("localhost:36591", schemes = listOf("http", "https"))
+        allowHost("127.0.0.1:36591", schemes = listOf("http", "https"))
+        allowHost("b2b.funktor-demo.localhost:36591", schemes = listOf("http", "https"))
+
+        // Dev b2b2c-app:
+        allowHost("localhost:36592", schemes = listOf("http", "https"))
+        allowHost("127.0.0.1:36592", schemes = listOf("http", "https"))
+        allowHost("b2b2c.funktor-demo.localhost:36592", schemes = listOf("http", "https"))
     }
 
     install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {

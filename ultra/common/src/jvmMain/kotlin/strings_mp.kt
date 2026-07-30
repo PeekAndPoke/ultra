@@ -2,8 +2,10 @@ package io.peekandpoke.ultra.common
 
 import java.nio.charset.StandardCharsets
 
+/** Byte-to-output-fragment cache, at most 256 entries. Not synchronised. */
 private val charMap = mutableMapOf<Int, String>()
 
+/** Unreserved punctuation that `encodeURIComponent` leaves untouched. */
 private val specialChars = listOf(
     '!',
     '\'',
@@ -18,7 +20,10 @@ private val specialChars = listOf(
     '~',
 ).map { it.code }.toSet()
 
-/** Encodes this string as a URI component, percent-encoding special characters. */
+/**
+ * An unpaired surrogate is encoded as `%3F` (the UTF-8 encoder's `?` substitute) rather than
+ * throwing as on JS or yielding `%EF%BF%BD` as on native.
+ */
 actual fun String.encodeUriComponent(): String {
     return this.toByteArray(StandardCharsets.UTF_8).joinToString("") { byte ->
         val unsignedByte = byte.toInt() and 0xFF
@@ -38,7 +43,10 @@ actual fun String.encodeUriComponent(): String {
     }
 }
 
-/** Decodes a percent-encoded URI component string back to its original form. */
+/**
+ * Malformed escapes are passed through as literal text and undecodable bytes become U+FFFD;
+ * JS throws `URIError` for the same input.
+ */
 actual fun String.decodeUriComponent(): String {
     val result = StringBuilder()
     var i = 0

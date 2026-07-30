@@ -1,8 +1,7 @@
 package io.peekandpoke.funktor.rest.security
 
 import io.peekandpoke.funktor.rest.ApiRoute
-import io.peekandpoke.funktor.rest.RestDslMarkerConfig
-import io.peekandpoke.funktor.rest.RestSecurityRuleMarker
+import io.peekandpoke.funktor.rest.RestDsl
 import io.peekandpoke.ultra.common.TypedKey
 
 data class EndpointSecurity(
@@ -14,10 +13,10 @@ data class EndpointSecurity(
         )
     }
 
+    @RestDsl
     class Builder {
         private var allowsSensitiveData: Boolean = false
 
-        @RestSecurityRuleMarker()
         fun allowsSensitiveData() {
             allowsSensitiveData = true
         }
@@ -32,28 +31,24 @@ val EndpointSecurityKey = TypedKey<EndpointSecurity>("EndpointSecurity")
 
 val ApiRoute<*>.security get() = attributes[EndpointSecurityKey] ?: EndpointSecurity.default
 
-@RestDslMarkerConfig
 fun <RESPONSE> ApiRoute.Plain<RESPONSE>.security(
     block: EndpointSecurity.Builder.(ApiRoute.Plain<RESPONSE>) -> Unit,
 ): ApiRoute.Plain<RESPONSE> {
     return withAttribute(EndpointSecurityKey, EndpointSecurity.Builder().also { it.block(this) }.build())
 }
 
-@RestDslMarkerConfig
 fun <PARAMS, RESPONSE> ApiRoute.WithParams<PARAMS, RESPONSE>.security(
     block: EndpointSecurity.Builder.(ApiRoute.WithParams<PARAMS, RESPONSE>) -> Unit,
 ): ApiRoute.WithParams<PARAMS, RESPONSE> {
     return withAttribute(EndpointSecurityKey, EndpointSecurity.Builder().also { it.block(this) }.build())
 }
 
-@RestDslMarkerConfig
 fun <BODY, RESPONSE> ApiRoute.WithBody<BODY, RESPONSE>.security(
     block: EndpointSecurity.Builder.(ApiRoute.WithBody<BODY, RESPONSE>) -> Unit,
 ): ApiRoute.WithBody<BODY, RESPONSE> {
     return withAttribute(EndpointSecurityKey, EndpointSecurity.Builder().also { it.block(this) }.build())
 }
 
-@RestDslMarkerConfig
 fun <PARAMS, BODY, RESPONSE> ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE>.security(
     block: EndpointSecurity.Builder.(ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE>) -> Unit,
 ): ApiRoute.WithBodyAndParams<PARAMS, BODY, RESPONSE> {

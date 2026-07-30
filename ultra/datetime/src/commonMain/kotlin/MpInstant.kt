@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.datetime
 
+import io.peekandpoke.ultra.common.ComparableTo
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant

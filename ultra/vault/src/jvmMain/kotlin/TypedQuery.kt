@@ -9,12 +9,19 @@ import io.peekandpoke.ultra.vault.lang.Expression
  * Encapsulates the query string, its bind variables, and the root [Expression] that
  * carries the return type information needed for deserializing results.
  *
+ * Each database driver supplies its own implementation (`AqlTypedQuery`, `MongoTypedQuery`); the
+ * one created by [of] is a type-carrying placeholder only.
+ *
  * @param T the element type returned by this query.
  */
 interface TypedQuery<T> {
     companion object {
         /**
          * Creates an empty [TypedQuery] that returns a list of [T] based on the given [TypeRef].
+         *
+         * The result carries type information only — [TypedQuery.query] is empty and there are no
+         * [TypedQuery.vars] — so it must never be handed to a driver for execution. [Cursor] uses it
+         * for its in-memory variants.
          */
         fun <T> of(returns: TypeRef<T>): TypedQuery<T> =
             TypedQueryImpl(

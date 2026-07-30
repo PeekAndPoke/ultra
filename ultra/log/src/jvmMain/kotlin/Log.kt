@@ -29,6 +29,16 @@ interface Log {
     }
 
     /**
+     * Logs a [message] at [LogLevel.ERROR].
+     *
+     * @param message the error text to log.
+     * @param e       the error to log.
+     */
+    fun error(message: String, e: Throwable) {
+        log(LogLevel.ERROR, message + "\n" + e.stackTraceToString())
+    }
+
+    /**
      * Logs a [message] at [LogLevel.WARNING].
      *
      * @param message the warning text to log.

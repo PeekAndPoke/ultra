@@ -8,14 +8,19 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
+import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
@@ -159,7 +164,7 @@ class GithubSsoAuth(
     /**
      * @{inheritDoc}
      */
-    override suspend fun <USER> signIn(
+    override suspend fun <USER : AuthUser> signIn(
         realm: AuthRealm<USER>, request: AuthSignInRequest,
     ): Stored<USER> {
         val typed = (request as? AuthSignInRequest.OAuth)
@@ -171,17 +176,19 @@ class GithubSsoAuth(
         val ghUser = remoteClient.getUser(ghAccessToken)
             ?: throw AuthError.invalidCredentials()
 
-        val email = ghUser["email"]?.jsonPrimitive?.content
+        // GAP CLOSED: the provider's email is third-party input and was used raw against a
+        // case-sensitive lookup, so a mixed-case address failed to match an existing account.
+        val email = EmailAddress.parseOrNull((ghUser["email"] as? JsonPrimitive)?.contentOrNull)
             ?: throw AuthError.invalidCredentials()
 
-        return realm.loadUserByEmail(email)
+        return realm.users.loadByEmail(email)
             ?: throw AuthError.invalidCredentials()
     }
 
     /**
      * @{inheritDoc}
      */
-    override suspend fun <USER> signUp(
+    override suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,
     ): AuthProvider.SignUpResult<USER> {
 
@@ -194,14 +201,21 @@ class GithubSsoAuth(
         val ghUser = remoteClient.getUser(ghAccessToken)
             ?: throw AuthError.invalidCredentials()
 
-        val email = ghUser["email"]?.jsonPrimitive?.content
+        // GAP CLOSED: raw here meant the existence check below could MISS and create a duplicate
+        // user, because creation canonicalizes but the lookup did not.
+        val email = EmailAddress.parseOrNull((ghUser["email"] as? JsonPrimitive)?.contentOrNull)
             ?: throw AuthError.invalidCredentials()
 
         val name = ghUser["name"]?.jsonPrimitive?.content
 
-        val existing = realm.loadUserByEmail(email)
-        val user = existing ?: realm.createUserForSignup(
-            AuthRealm.CreateUserForSignupParams.of(
+        // The lookup is deliberately lax about format — an address stored before validation
+        // existed must stay matchable, or its owner can never sign in again.
+        val existing = realm.users.loadByEmail(email)
+        // Creating, however, requires a well-formed address.
+        if (existing == null && !email.isValidFormat) throw AuthError.invalidCredentials()
+
+        val user = existing ?: realm.users.createForSignup(
+            AuthUserAdapter.CreateUserForSignupParams.of(
                 email = email,
                 displayName = name,
             )

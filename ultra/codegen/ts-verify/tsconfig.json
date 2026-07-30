@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    // Rejects TypeScript that cannot be compiled away by simply deleting types — parameter
+    // properties, `enum`, `namespace`. A generated SDK is consumed by bundlers and by Node's own
+    // type stripping, both of which refuse those. Without this the failure surfaces at run time.
+    "erasableSyntaxOnly": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["verify.ts", "verifyRuntime.ts", "generated/**/*.ts"]
+}

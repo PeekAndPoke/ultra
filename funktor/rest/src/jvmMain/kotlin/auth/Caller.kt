@@ -1,6 +1,8 @@
 package io.peekandpoke.funktor.rest.auth
 
 import com.auth0.jwt.interfaces.Payload
+import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 /**
@@ -37,8 +39,8 @@ sealed interface Caller {
     data class ApiKeyCaller(
         val keyId: String,
         val keyName: String? = null,
-        val userId: String,
-        val email: String? = null,
+        val userId: UserId,
+        val email: EmailAddress? = null,
         val desc: String? = null,
         val type: String? = null,
         val permissions: UserPermissions = UserPermissions.anonymous,

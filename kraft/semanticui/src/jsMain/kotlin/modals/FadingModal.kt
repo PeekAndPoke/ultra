@@ -108,6 +108,11 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
     }
 
     private fun doClose(onClose: (suspend () -> Unit)? = null) {
+        // Idempotent: once the modal is fading out, ignore repeat close() calls. The button stays
+        // clickable for the whole fade-out window, so without this a fast double-click would schedule
+        // [onClose] twice — double-firing whatever side effect (e.g. a mutation) it carries.
+        if (fadingOut) return
+
         navTrap.deactivate()
 
         fadeOut()

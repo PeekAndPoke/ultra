@@ -15,8 +15,10 @@ class FunktorConfApiFeature(
     """.trimIndent()
 
     val conf = FunktorConfApi(services)
+    val confAdmin = FunktorConfAdminApi(services)
 
     override fun getRouteGroups(): List<ApiRoutes> = listOf(
         conf,
+        confAdmin,
     )
 }

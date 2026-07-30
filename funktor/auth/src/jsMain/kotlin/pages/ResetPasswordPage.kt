@@ -13,7 +13,6 @@ import io.peekandpoke.kraft.routing.href
 import io.peekandpoke.kraft.semanticui.forms.UiPasswordField
 import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.doubleClickProtection
-import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.html.onSubmit
@@ -116,6 +115,8 @@ class ResetPasswordPage<USER>(ctx: Ctx<Props<USER>>) : Component<ResetPasswordPa
     override fun VDom.render() {
         AuthPageLayouts {
             renderFullscreenBackgroundLayout(authState.frontend.config) {
+                renderBranding(authState.frontend.config)
+
                 ui.header { +"Reset Password" }
 
                 loader(this) {
@@ -181,10 +182,8 @@ class ResetPasswordPage<USER>(ctx: Ctx<Props<USER>>) : Component<ResetPasswordPa
                     .givenNot(formCtrl.isValid) { disabled }
                     .button Submit {
                     onClick {
-                        if (formCtrl.validate()) {
-                            launch {
-                                resetPassword(s)
-                            }
+                        formCtrl.validate {
+                            resetPassword(s)
                         }
                     }
                     +"Reset Password"

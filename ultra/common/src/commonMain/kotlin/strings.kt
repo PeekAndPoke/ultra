@@ -17,6 +17,9 @@ fun String.surround(prefix: String, suffix: String) = "$prefix${this}$suffix"
 
 /**
  * Converts the first letter of the String to uppercase
+ *
+ * An empty string is returned as is. Full case mapping is applied, so the result may be longer than
+ * the input (`"ßa"` becomes `"SSa"`).
  */
 fun String.ucFirst(): String = when {
     isEmpty() -> this
@@ -25,6 +28,9 @@ fun String.ucFirst(): String = when {
 
 /**
  * Converts the first letter of the String to lowercase
+ *
+ * An empty string is returned as is. Full case mapping is applied, so the result may be longer than
+ * the input (`"İx"` gains a combining dot).
  */
 fun String.lcFirst(): String = when {
     isEmpty() -> this
@@ -33,6 +39,8 @@ fun String.lcFirst(): String = when {
 
 /**
  * Returns 'true' when the string starts with any of the given prefixes
+ *
+ * Without any prefix the answer is 'false' (and [startsWithNone] is correspondingly 'true').
  */
 fun String.startsWithAny(vararg prefixes: String) = startsWithAny(prefixes)
 
@@ -68,21 +76,43 @@ fun String.startsWithNone(prefixes: Collection<String>) = !startsWithAny(prefixe
 /**
  * Returns the maximal line length of a multiline string.
  *
- * The string is first split by the [separator] and then the max length is computed
+ * The string is split by the [separator] and the longest part wins. An empty string has length 0.
+ *
+ * A carriage return left over from CRLF text is not counted, so the same content measures the same
+ * whether it uses `\n` or `\r\n`. Lengths are UTF-16 code units, not glyphs, so an astral
+ * character counts as two.
  */
 fun String.maxLineLength(separator: String = "\n"): Int =
-    split(separator).map { it.length }.maxOrNull() ?: 0
+    split(separator).maxOfOrNull { it.removeSuffix("\r").length } ?: 0
 
 /**
- * Takes [maxLength] of the string and adds the [suffix] if the length is bigger than [maxLength]
+ * Takes [maxLength] characters of the string and adds the [suffix] when anything was cut.
+ *
+ * [maxLength] bounds the KEPT TEXT, not the result: a truncated result is `maxLength + suffix.length`
+ * long. That is the long-standing contract — do not read the name as a budget for the whole string.
+ *
+ * Cuts on a code-point boundary, so a surrogate pair is never split in half, and a negative
+ * [maxLength] is treated as zero rather than throwing.
  */
-fun String.ellipsis(maxLength: Int = 50, suffix: String = "...") = when (length > maxLength) {
-    true -> "${this.take(maxLength)}$suffix"
-    else -> this
+fun String.ellipsis(maxLength: Int = 50, suffix: String = "..."): String {
+    if (length <= maxLength) {
+        return this
+    }
+
+    val wanted = maxLength.coerceAtLeast(0)
+
+    // if the cut would land between the halves of a surrogate pair, drop the whole pair
+    val keep = if (wanted > 0 && this[wanted - 1].isHighSurrogate()) wanted - 1 else wanted
+
+    return "${take(keep)}$suffix"
 }
 
 /**
  * Splits a camel cased word into single words
+ *
+ * A new word starts at every ASCII `A`..`Z`, so acronyms fall apart (`"XMLParser"` gives
+ * `["X", "M", "L", "Parser"]`) and non-ASCII capitals are not word boundaries at all. The input and
+ * every part are trimmed; a blank input gives an empty list.
  */
 fun String.camelCaseSplit(): List<String> {
 
@@ -125,6 +155,9 @@ fun String.camelCaseDivide(divider: String = " "): String = camelCaseSplit().joi
 
 /**
  * Checks if the string is a url with a protocol, e.g. https://...
+ *
+ * Only `http` and `https` qualify, and [UrlWithProtocolRegex] must match the WHOLE string — a
+ * surrounding sentence or stray whitespace makes this 'false'.
  */
 fun String.isUrlWithProtocol(): Boolean {
     return UrlWithProtocolRegex.matches(this)
@@ -132,13 +165,51 @@ fun String.isUrlWithProtocol(): Boolean {
 
 /**
  * Checks if the string is a valid email
+ *
+ * [EmailRegex] must match the WHOLE string, so leading or trailing whitespace makes this 'false'.
+ *
+ * Anything longer than [MAX_EMAIL_LENGTH] is rejected without matching. That is the correct answer —
+ * RFC 5321 caps a forward-path there — and it also keeps [EmailRegex] away from the input lengths
+ * where its nested repetitions exhaust the stack.
  */
 fun String.isEmail(): Boolean {
+    if (length > MAX_EMAIL_LENGTH) {
+        return false
+    }
+
     return EmailRegex.matches(this)
 }
 
 /**
+ * Checks if the string is a valid slug / DNS label: lowercase letters/digits and hyphens (only
+ * between alphanumerics), length 1..63. Useful for tenant slugs that double as subdomains.
+ */
+fun String.isSlug(): Boolean {
+    return SlugRegex.matches(this)
+}
+
+/**
+ * Characters that no identifier may contain: C0 controls, DEL, C1 controls, and the Unicode
+ * line/paragraph separators.
+ *
+ * Shared deliberately by every id type (`UserId`, `OrgId`, …). Those ids get composed into
+ * NUL-delimited composite keys (the CSRF signing string, the auth session cache key) and written into
+ * log lines, so banning the whole set makes a forged key boundary or a forged log line impossible BY
+ * CONSTRUCTION rather than by convention. One predicate, so a later id type cannot quietly ship a
+ * weaker rule.
+ *
+ * Lives here rather than next to the id classes because it is the same kind of thing as [isEmail] and
+ * [isSlug] — a format predicate — and because `ultra:common` is the one module every id-defining
+ * module already depends on.
+ */
+fun Char.isForbiddenInId(): Boolean =
+    code < 0x20 || code == 0x7F || code in 0x80..0x9F || this == '\u2028' || this == '\u2029'
+
+/**
  * Splits the string, trims all and creates a set of the elements.
+ *
+ * Blank parts are dropped, so an empty or all-blank string gives an empty set. Duplicates collapse;
+ * the set keeps first-occurrence order.
  */
 fun String.splitAndTrimToSet(delimiter: String = ",") =
     split(delimiter)

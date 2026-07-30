@@ -22,6 +22,19 @@ class TestBed<C : AppConfig>(
             val rawConfig = AppConfig.loadEnv(env = env)
             val typedConfig = rawConfig.typed(configType)
 
+            // The harness picks `application.<env>.conf` by FILENAME, while everything that decides
+            // "is this a test run?" reads `ktor.deployment.environment` — a field INSIDE that file.
+            // Nothing made the two agree, and a whole class of guarantees rests on them agreeing:
+            // funktor:messaging only captures mail instead of sending it when `isTest` is true. A
+            // config copied from `application.dev.conf`, or a pipeline standardising on "ci", would
+            // silently give the test suite a live mail provider.
+            require(env != "test" || typedConfig.ktor.isTest) {
+                "The config loaded for env='$env' declares " +
+                        "ktor.deployment.environment = '${typedConfig.ktor.deployment.environment}'. " +
+                        "FIX: set it to 'test', otherwise the app does not know it is under test — " +
+                        "mail would be sent for real instead of captured."
+            }
+
             val app = App(
                 args = AppArgs(emptyList()),
                 config = typedConfig,

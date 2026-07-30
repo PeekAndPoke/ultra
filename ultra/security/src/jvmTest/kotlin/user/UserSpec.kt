@@ -13,13 +13,14 @@ class UserSpec : FreeSpec() {
 
                 val subject = User.anonymous
 
-                subject.record.userId shouldBe "anonymous"
+                subject.record.userId shouldBe UserId("anonymous")
                 subject.record.clientIp shouldBe null
                 subject.record.desc shouldBe null
                 subject.record.type shouldBe null
 
                 subject.permissions.isSuperUser shouldBe false
-                subject.permissions.organisations shouldBe emptySet()
+                subject.permissions.org shouldBe null
+                subject.permissions.accessibleOrgs shouldBe emptySet()
                 subject.permissions.branches shouldBe emptySet()
                 subject.permissions.groups shouldBe emptySet()
                 subject.permissions.roles shouldBe emptySet()

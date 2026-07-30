@@ -10,7 +10,6 @@ import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.forms.formController
 import io.peekandpoke.kraft.semanticui.forms.UiPasswordField
 import io.peekandpoke.kraft.utils.doubleClickProtection
-import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onSubmit
 import io.peekandpoke.ultra.semanticui.ui
@@ -67,10 +66,16 @@ class ChangePasswordWidget<USER>(ctx: Ctx<Props<USER>>) : Component<ChangePasswo
     private val noDblClick = doubleClickProtection()
 
     private suspend fun updatePassword() = noDblClick.runBlocking {
+        // No usable user id in the session token — nothing to change a password for.
+        val currentUserId = userId ?: run {
+            state = State.Error
+            return@runBlocking
+        }
+
         val result = auth.requestSetPassword(
             AuthSetPasswordRequest(
                 provider = provider?.id ?: "",
-                userId = userId ?: "",
+                userId = currentUserId,
                 currentPassword = currentPassword,
                 newPassword = newPassword,
             )
@@ -110,10 +115,8 @@ class ChangePasswordWidget<USER>(ctx: Ctx<Props<USER>>) : Component<ChangePasswo
             onSubmit { evt ->
                 evt.preventDefault()
 
-                if (formCtrl.validate()) {
-                    launch {
-                        updatePassword()
-                    }
+                formCtrl.validate {
+                    updatePassword()
                 }
             }
 

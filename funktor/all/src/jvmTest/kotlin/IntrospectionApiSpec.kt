@@ -5,6 +5,8 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.ktor.http.*
+import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldContain
 import io.peekandpoke.funktor.inspect.introspection.api.ApiAccessMatrixModel
 import io.peekandpoke.funktor.inspect.introspection.api.AppLifecycleInfo
 import io.peekandpoke.funktor.inspect.introspection.api.AuthRealmInfo
@@ -210,7 +212,7 @@ class IntrospectionApiSpec : FunktorApiSpec() {
                             val realms = apiResponseData<List<AuthRealmInfo>>()
                             realms.shouldNotBeNull()
                             realms.shouldNotBeEmpty()
-                            realms.any { it.id == TestUserRealm.REALM } shouldBe true
+                            realms.any { it.id == TestUserRealm.REALM.value } shouldBe true
                         }
                     }
                 }
@@ -309,6 +311,31 @@ class IntrospectionApiSpec : FunktorApiSpec() {
                             val matrix = apiResponseData<ApiAccessMatrixModel>()
                             matrix.shouldNotBeNull()
                             matrix.features.shouldNotBeEmpty()
+
+                            // Each known role must appear EXACTLY ONCE per endpoint.
+                            //
+                            // It used to appear once PER REALM: `getKnownRoles()` defaulted to
+                            // [SuperUser, Anonymous], nothing overrode it, and the descriptor
+                            // flat-mapped over realms without deduping — so the matrix carried one
+                            // duplicate column per registered realm. The default is now empty and the
+                            // universal roles are appended once.
+                            val endpoint = matrix.features
+                                .flatMap { it.groups }
+                                .flatMap { it.endpoints }
+                                .firstOrNull()
+
+                            endpoint.shouldNotBeNull()
+
+                            val roleNames = endpoint.roles.map { it.role }
+
+                            withClue("roles must not be duplicated: $roleNames") {
+                                roleNames shouldBe roleNames.distinct()
+                            }
+
+                            withClue("the two universal roles are always present") {
+                                roleNames shouldContain "SuperUser"
+                                roleNames shouldContain "Anonymous"
+                            }
                         }
                     }
                 }

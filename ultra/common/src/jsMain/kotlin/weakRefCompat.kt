@@ -8,6 +8,9 @@ package io.peekandpoke.ultra.common
  * with "Invalid value used in weak set / weak map".
  *
  * This function returns `true` for objects and functions, `false` for everything else.
+ *
+ * It only classifies the value. It says nothing about whether the runtime provides `WeakRef` —
+ * that global is ES2021 and is not polyfilled here.
  */
 internal fun isWeakRefCompatible(value: Any?): Boolean {
     if (value == null) return false

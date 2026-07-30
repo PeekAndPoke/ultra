@@ -1,9 +1,15 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.api.AuthApiClient
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
+import io.peekandpoke.funktor.auth.model.AuthSelectOrgRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
@@ -16,6 +22,8 @@ import io.peekandpoke.kraft.routing.routerMiddleware
 import io.peekandpoke.kraft.utils.clearInterval
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.utils.setInterval
+import io.peekandpoke.ultra.security.user.OrgId
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonObject
 import io.peekandpoke.ultra.streams.Stream
@@ -37,7 +45,7 @@ inline fun <reified USER> authState(
     frontend: AuthFrontend,
     api: AuthApiClient,
     noinline router: () -> Router,
-    noinline jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
+    noinline jwtDecoder: (String) -> Map<String, Any?> = ::decodeJwtClaims,
     sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) = AuthState<USER>(
     userSerializer = serializer(),
@@ -53,37 +61,65 @@ class AuthState<USER>(
     val frontend: AuthFrontend,
     val api: AuthApiClient,
     val router: () -> Router,
-    val jwtDecoder: (String) -> Map<String, Any?> = { emptyMap() },
+    val jwtDecoder: (String) -> Map<String, Any?> = ::decodeJwtClaims,
     val sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) : Stream<AuthState.Data<USER>> {
 
     @Serializable
     data class Data<USER>(
-        val token: AuthSignInResponse.Token?,
-        val realm: AuthRealmModel?,
-        val tokenUserId: String?,
-        val tokenExpires: String?,
-        val claims: JsonObject?,
-        val user: USER?,
-        val permissions: UserPermissions,
+        val session: Session<USER>? = null,
     ) {
+        /**
+         * An authenticated session. Every field is present together, or there is no [session] at
+         * all — so a half-logged-in state (a token without a user, etc.) is unrepresentable.
+         */
+        @Serializable
+        data class Session<USER>(
+            val token: AuthSignInResponse.Token,
+            val realm: AuthRealmModel,
+            /**
+             * The organisation selected for this session, or null on an org-less realm.
+             *
+             * Comes from the sign-in / select-org / refresh response, NOT from the JWT: the token
+             * carries only the org's id, and a display NAME is what a UI actually needs. Defaulted so
+             * a session persisted before this field existed still decodes instead of logging the user
+             * out.
+             */
+            val org: AuthOrgRef? = null,
+            val tokenUserId: UserId?,
+            val tokenExpires: String?,
+            val claims: JsonObject,
+            val user: USER,
+            val permissions: UserPermissions,
+        )
+
         companion object {
-            fun <USER> empty() = Data<USER>(
-                token = null,
-                realm = null,
-                tokenUserId = null,
-                tokenExpires = null,
-                claims = null,
-                user = null,
-                permissions = UserPermissions()
-            )
+            fun <USER> empty() = Data<USER>(session = null)
         }
 
-        val isLoggedIn get() = token != null && user != null
+        val isLoggedIn get() = session != null
 
         val isNotLoggedIn get() = !isLoggedIn
 
-        val loggedInUser get() = user.takeIf { isLoggedIn }
+        // Nullable pass-throughs: callers keep reading the same names; all null when logged out.
+        val token get() = session?.token
+        val realm get() = session?.realm
+        val org get() = session?.org
+        val tokenUserId get() = session?.tokenUserId
+        val tokenExpires get() = session?.tokenExpires
+        val claims get() = session?.claims
+        val user get() = session?.user
+
+        /**
+         * The token's permissions, DISPLAY-ONLY.
+         *
+         * Decoded client-side WITHOUT signature verification, and the whole session is persisted in
+         * user-editable localStorage — a user can hand-write `isSuperUser = true` here. Use it to
+         * decide what the UI SHOWS, never what it is allowed to do; `isSuperUser` in particular
+         * short-circuits every `has*` helper on [UserPermissions]. Every real decision is re-derived
+         * server-side from the verified token.
+         */
+        val permissions get() = session?.permissions ?: UserPermissions()
     }
 
     private val streamSource = StreamSource<Data<USER>>(Data.empty())
@@ -103,8 +139,11 @@ class AuthState<USER>(
                 val expiresMs = data.tokenExpires?.let { Date(it).getTime() }
                 val nowMs = Date.now()
 
-                if (expiresMs != null && nowMs >= expiresMs) {
-                    // Persisted token is expired — clear it immediately
+                if (expiresMs == null || nowMs >= expiresMs) {
+                    // Expired, OR persisted before the claim decoder existed (no expiry recorded).
+                    // The latter can never self-heal — `checkAndRefreshToken` returns early without an
+                    // expiry, so it would never refresh and never repopulate permissions/org — so
+                    // treat "unknown expiry" as stale and make the user re-authenticate once.
                     streamSource(Data.empty())
                 } else {
                     // Token still valid — start lifecycle
@@ -147,22 +186,121 @@ class AuthState<USER>(
         redirectAfterLoginUri = null
     }
 
+    /**
+     * When a sign-in resolves to multiple organisations, this holds the pending selection (the
+     * selection token + the choices) until [selectOrg] is called. Null otherwise.
+     */
+    var pendingOrgSelection: AuthSignInResponse.OrgSelectionRequired? = null
+        private set
+
+    /** Cancels a pending multi-org selection (e.g. the user backs out of the picker). */
+    fun clearPendingOrgSelection() {
+        pendingOrgSelection = null
+    }
+
+    /**
+     * What the activation page needs after a sign-in was refused for a not-yet-activated account.
+     *
+     * Carried in MEMORY rather than in the URL: the address would otherwise sit in the address bar,
+     * the browser history and any outgoing `Referer`.
+     */
+    data class PendingActivation(
+        val provider: String,
+        val email: String,
+        /** Single-use authorization for [resendActivation]. */
+        val resendToken: String,
+    )
+
+    /**
+     * Set when a sign-in resolved to [AuthSignInResponse.ActivationRequired] — the password was right
+     * but the address is unproven. Null otherwise.
+     */
+    var pendingActivation: PendingActivation? = null
+        private set
+
+    /** Forgets a pending activation (e.g. the user navigates back to the login form). */
+    fun clearPendingActivation() {
+        pendingActivation = null
+    }
+
     suspend fun login(request: AuthSignInRequest): Data<USER> {
+        // Clear any selection left over from a previous attempt BEFORE this one runs. Otherwise a
+        // failed login would leave the earlier attempt's still-valid selection token in place, and
+        // the UI (which branches on pendingOrgSelection) would resurface that user's org picker —
+        // letting a bystander whose own login just failed complete a sign-in as the earlier user.
+        pendingOrgSelection = null
+        // Same reasoning for the activation carrier: a stale one would send the NEXT person who fails
+        // to sign in to an activation page prefilled with the previous user's address.
+        pendingActivation = null
+
         val response = api
             .signIn(request)
             .map { it.data }
             .catch { streamSource(Data.empty()) }
             .firstOrNull()
 
-        response?.let {
-            val user = it.getTypedUser(userSerializer)
-            val data = readJwt(response = it, user = user)
+        when (response) {
+            is AuthSignInResponse.Success -> applySuccess(response)
+            is AuthSignInResponse.OrgSelectionRequired -> pendingOrgSelection = response
 
-            streamSource(data)
-            startSessionLifecycle()
+            is AuthSignInResponse.ActivationRequired -> {
+                // The address comes from what the user just typed, not from the response — the server
+                // has no reason to echo it back.
+                pendingActivation = PendingActivation(
+                    provider = request.provider,
+                    email = (request as? AuthSignInRequest.EmailAndPassword)?.email ?: "",
+                    resendToken = response.resendToken,
+                )
+            }
+
+            null -> { /* sign-in failed */ }
         }
 
         return streamSource()
+    }
+
+    suspend fun activateAccount(request: AuthActivateAccountRequest): AuthActivateAccountResponse? {
+        return api
+            .activateAccount(request)
+            .map { it.data!! }
+            .catch { /* noop */ }
+            .firstOrNull()
+    }
+
+    suspend fun resendActivation(request: AuthResendActivationRequest): AuthResendActivationResponse? {
+        return api
+            .resendActivation(request)
+            .map { it.data!! }
+            .catch { /* noop */ }
+            .firstOrNull()
+    }
+
+    /**
+     * Completes a multi-org sign-in by choosing [orgId] against the [pendingOrgSelection] token.
+     */
+    suspend fun selectOrg(orgId: OrgId): Data<USER> {
+        val pending = pendingOrgSelection ?: return streamSource()
+
+        val response = api
+            .selectOrg(AuthSelectOrgRequest(selectionToken = pending.selectionToken, orgId = orgId))
+            .map { it.data }
+            .catch { streamSource(Data.empty()) }
+            .firstOrNull()
+
+        if (response is AuthSignInResponse.Success) {
+            applySuccess(response)
+        }
+
+        return streamSource()
+    }
+
+    private fun applySuccess(response: AuthSignInResponse.Success) {
+        pendingOrgSelection = null
+        val user = response.getTypedUser(userSerializer)
+        val data = readJwt(response = response, user = user)
+
+        streamSource(data)
+        startSessionLifecycle()
     }
 
     suspend fun recoverAccountInitPasswordReset(
@@ -212,8 +350,8 @@ class AuthState<USER>(
         if (auth.isNotLoggedIn) return false
 
         val result = api.setPassword(request)
-            .catch { /* noop */ }
             .map { it.data!! }
+            .catch { /* noop */ }
             .firstOrNull()
 
         return result?.success == true
@@ -264,13 +402,18 @@ class AuthState<USER>(
                     .catch { emit(null) }
                     .firstOrNull()
 
-                if (response != null) {
+                if (response is AuthSignInResponse.Success) {
                     val user = response.getTypedUser(userSerializer)
                     val newData = readJwt(response = response, user = user)
                     streamSource(newData)
                     sessionConfig.onTokenRefreshed?.invoke()
                 } else {
-                    handleSessionExpired()
+                    // A refresh runs `refreshBeforeExpiryMs` BEFORE the token expires, so a failure
+                    // here is usually transient — a network blip or a 502. Expiring the session
+                    // immediately would log the user out while their token is still perfectly valid.
+                    // Leave the session alone; the next tick retries, and `checkAndRefreshToken`
+                    // expires it for real once `nowMs >= expiresMs`.
+                    console.warn("[AuthState] token refresh failed; will retry on the next check")
                 }
             } finally {
                 isRefreshing = false
@@ -299,14 +442,21 @@ class AuthState<USER>(
 
     // JWT parsing ////////////////////////////////////////////////////////////////////////////////
 
-    private fun readJwt(response: AuthSignInResponse, user: USER): Data<USER> {
+    private fun readJwt(response: AuthSignInResponse.Success, user: USER): Data<USER> {
         val claims = jwtDecoder(response.token.token)
 
         // extract the permission from the token
         val permissions = response.token.permissionsNs.let { ns ->
             @Suppress("UNCHECKED_CAST")
             UserPermissions(
-                organisations = (claims["$ns/organisations"] as? List<String> ?: emptyList()).toSet(),
+                // The server only writes this claim when true (see `encodePermissions`), so an
+                // absent claim legitimately means false.
+                isSuperUser = claims["$ns/superuser"] as? Boolean ?: false,
+                // Parsed defensively — the token is decoded client-side and must not throw on a
+                // claim that does not carry a well-formed `collection/key` org id.
+                org = OrgId.parseOrNull(claims["$ns/org"] as? String),
+                accessibleOrgs = (claims["$ns/accessibleOrgs"] as? List<String> ?: emptyList())
+                    .mapNotNull { OrgId.parseOrNull(it) }.toSet(),
                 branches = (claims["$ns/branches"] as? List<String> ?: emptyList()).toSet(),
                 groups = (claims["$ns/groups"] as? List<String> ?: emptyList()).toSet(),
                 roles = (claims["$ns/roles"] as? List<String> ?: emptyList()).toSet(),
@@ -314,18 +464,25 @@ class AuthState<USER>(
             )
         }
 
-        val expDate = (claims["exp"] as? Int)?.let { Date(it.toLong() * 1000) }
+        // `Number`, not `Int`: JSON.parse yields a JS number, and an `as? Int` cast is both
+        // representation-dependent and breaks for values beyond Int32 (i.e. after 2038).
+        val expDate = (claims["exp"] as? Number)?.let { Date(it.toDouble() * 1000) }
 
-        val userId = claims["sub"] as? String ?: ""
+        // A `sub` that is missing or not a structurally valid UserId yields no user id rather than
+        // throwing — the token comes off the wire, so parsing must degrade instead of blowing up.
+        val userId = UserId.parseOrNull(claims["sub"] as? String)
 
         return Data(
-            token = response.token,
-            realm = response.realm,
-            tokenUserId = userId,
-            tokenExpires = expDate?.toISOString(),
-            claims = claims.toJsonObject(),
-            permissions = permissions,
-            user = user
+            session = Data.Session(
+                token = response.token,
+                realm = response.realm,
+                org = response.org,
+                tokenUserId = userId,
+                tokenExpires = expDate?.toISOString(),
+                claims = claims.toJsonObject(),
+                permissions = permissions,
+                user = user,
+            )
         )
     }
 }

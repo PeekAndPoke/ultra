@@ -54,26 +54,47 @@ interface AuthRule<PARAMS, BODY> {
             CallCheck(description = description, checkFn = checkFn, estimateFn = estimateFn)
 
         /**
+         * Creates a Rule that grants access to everyone. See [PublicRule] — only meaningful as the
+         * SOLE rule of a route (the builders enforce that).
+         */
+        fun <P, B> public(): AuthRule<P, B> = PublicRule()
+
+        /**
+         * Creates a Rule that denies access to everyone. See [ForbiddenRule] — only meaningful as
+         * the SOLE rule of a route (the builders enforce that).
+         */
+        fun <P, B> forbidden(): AuthRule<P, B> = ForbiddenRule()
+
+        /**
+         * Creates a Rule that returns true for any authenticated (non-anonymous) user
+         */
+        fun <P, B> authenticated(): AuthRule<P, B> =
+            AccessLevelCheck("Any authenticated user") {
+                if (isAuthenticated) ApiAccessLevel.Granted else ApiAccessLevel.Denied
+            }
+
+        /**
          * Creates a Rule that returns true when the current user is a SuperUser
          */
         fun <P, B> isSuperUser(): AuthRule<P, B> =
             PermissionsCheck("Is SuperUser") { permissions.isSuperUser }
 
         /**
-         * Creates a Rule that returns true when the current user has given [organisation]
+         * Creates a Rule that returns true when the current user's [UserRecord.type] equals [type].
+         *
+         * This is the realm-boundary primitive: all realms sign JWTs with the same key, so
+         * permission-based rules alone are realm-agnostic — e.g. an `isSuperUser=true` token minted
+         * by ANY realm passes an [isSuperUser] gate. Scope a realm-specific surface by combining
+         * both as statements:
+         * ```
+         * authorize {
+         *     isSuperUser()
+         *     forUserType(OperatorUserModel.USER_TYPE)
+         * }
+         * ```
          */
-        fun <P, B> forOrganisation(organisation: String): AuthRule<P, B> =
-            PermissionsCheck("Is part of organisation $organisation") {
-                permissions.hasOrganisation(organisation)
-            }
-
-        /**
-         * Creates a Rule that returns true when the current user has any of the given [organisations]
-         */
-        fun <P, B> forAnyOrganisation(organisations: Collection<String>): AuthRule<P, B> =
-            PermissionsCheck("Is part of any organisation $organisations") {
-                permissions.hasAnyOrganisation(organisations)
-            }
+        fun <P, B> forUserType(type: String): AuthRule<P, B> =
+            PermissionsCheck("Is user of type '$type'") { user.record.type == type }
 
         /**
          * Creates a Rule that returns true when the current user has given [group]
@@ -183,25 +204,23 @@ interface AuthRule<PARAMS, BODY> {
 }
 
 /**
- * Helper for creating a logic OR combination of two auth rules
+ * Constant rule: grants everyone. Typed (not a generic [CallCheck]) so the builders can enforce
+ * that a constant is only ever the SOLE rule of a route chain — as an AND-member it is a silent
+ * no-op, as an OR-disjunct it allows everyone.
  */
-infix fun <PARAMS, BODY> AuthRule<in PARAMS, in BODY>.or(other: AuthRule<in PARAMS, in BODY>): AuthRule<PARAMS, BODY> {
-
-    val rules = listOf(this, other)
-
-    @Suppress("UNCHECKED_CAST")
-    return OrAuthRule(rules as List<AuthRule<PARAMS, BODY>>)
+class PublicRule<PARAMS, BODY> : AuthRule<PARAMS, BODY> {
+    override val description: String = "Public to everyone"
+    override fun check(ctx: AuthRule.CheckCtx<PARAMS, BODY>): Boolean = true
+    override fun estimate(ctx: AuthRule.EstimateCtx): ApiAccessLevel = ApiAccessLevel.Granted
 }
 
 /**
- * Helper for creating a logic AND combination of two auth rules
+ * Constant rule: denies everyone. Typed for the same soleness enforcement as [PublicRule].
  */
-infix fun <PARAMS, BODY> AuthRule<in PARAMS, in BODY>.and(other: AuthRule<in PARAMS, in BODY>): AuthRule<PARAMS, BODY> {
-
-    val rules = listOf(this, other)
-
-    @Suppress("UNCHECKED_CAST")
-    return AndAuthRule(rules as List<AuthRule<PARAMS, BODY>>)
+class ForbiddenRule<PARAMS, BODY> : AuthRule<PARAMS, BODY> {
+    override val description: String = "Forbidden to everyone"
+    override fun check(ctx: AuthRule.CheckCtx<PARAMS, BODY>): Boolean = false
+    override fun estimate(ctx: AuthRule.EstimateCtx): ApiAccessLevel = ApiAccessLevel.Denied
 }
 
 class CallCheck<PARAMS, BODY>(
@@ -268,8 +287,6 @@ class OrAuthRule<PARAMS, BODY>(internal val rules: List<AuthRule<PARAMS, BODY>>)
             level or next.estimate(ctx)
         }
     }
-
-    infix fun or(other: AuthRule<PARAMS, BODY>): AuthRule<PARAMS, BODY> = OrAuthRule(rules.plus(other))
 }
 
 /**
@@ -288,6 +305,4 @@ class AndAuthRule<PARAMS, BODY>(internal val rules: List<AuthRule<PARAMS, BODY>>
             level and next.estimate(ctx)
         }
     }
-
-    infix fun and(other: AuthRule<PARAMS, BODY>): AuthRule<PARAMS, BODY> = AndAuthRule(rules.plus(other))
 }

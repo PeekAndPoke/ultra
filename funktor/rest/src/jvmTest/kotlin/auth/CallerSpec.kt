@@ -4,6 +4,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 class CallerSpec : StringSpec({
@@ -12,7 +14,7 @@ class CallerSpec : StringSpec({
         val anon: Caller = Caller.AnonymousCaller
         anon.shouldBeInstanceOf<Caller>()
 
-        val apiKey: Caller = Caller.ApiKeyCaller(keyId = "k1", userId = "u1")
+        val apiKey: Caller = Caller.ApiKeyCaller(keyId = "k1", userId = UserId("u1"))
         apiKey.shouldBeInstanceOf<Caller>()
     }
 
@@ -25,8 +27,8 @@ class CallerSpec : StringSpec({
         val subject = Caller.ApiKeyCaller(
             keyId = "k1",
             keyName = "ci-deploy",
-            userId = "alice",
-            email = "alice@example.com",
+            userId = UserId("alice"),
+            email = EmailAddress("alice@example.com"),
             desc = "Alice",
             type = "user",
             permissions = perms,
@@ -34,15 +36,15 @@ class CallerSpec : StringSpec({
 
         subject.keyId shouldBe "k1"
         subject.keyName shouldBe "ci-deploy"
-        subject.userId shouldBe "alice"
-        subject.email shouldBe "alice@example.com"
+        subject.userId shouldBe UserId("alice")
+        subject.email shouldBe EmailAddress("alice@example.com")
         subject.desc shouldBe "Alice"
         subject.type shouldBe "user"
         subject.permissions shouldBe perms
     }
 
     "ApiKeyCaller has sensible defaults" {
-        val subject = Caller.ApiKeyCaller(keyId = "k1", userId = "u1")
+        val subject = Caller.ApiKeyCaller(keyId = "k1", userId = UserId("u1"))
 
         subject.keyName shouldBe null
         subject.email shouldBe null
@@ -54,7 +56,7 @@ class CallerSpec : StringSpec({
     "Caller variants are exhaustively pattern-matchable" {
         val callers: List<Caller> = listOf(
             Caller.AnonymousCaller,
-            Caller.ApiKeyCaller(keyId = "k", userId = "u"),
+            Caller.ApiKeyCaller(keyId = "k", userId = UserId("u")),
         )
 
         val labels = callers.map { c ->

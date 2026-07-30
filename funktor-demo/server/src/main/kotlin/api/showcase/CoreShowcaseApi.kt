@@ -9,15 +9,13 @@ import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import kotlinx.coroutines.delay
 
-class CoreShowcaseApi : ApiRoutes("showcase-core") {
+class CoreShowcaseApi : ApiRoutes("showcase-core", authFloor = { public() }) {
 
     val postRetryDemo = ShowcaseApiClient.PostRetryDemo.mount {
         docs {
             name = "Run retry demo"
         }.codeGen {
             funcName = "postRetryDemo"
-        }.authorize {
-            public()
         }.handle { body ->
             val attempts = mutableListOf<RetryAttemptLog>()
             var finalSuccess = false

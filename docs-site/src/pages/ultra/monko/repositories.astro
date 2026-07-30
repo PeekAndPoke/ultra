@@ -40,7 +40,7 @@ val person = repo.findById("persons/alice-1")  // returns Stored<Person>?
 val everyone = repo.findAll()  // returns MonkoCursor<Stored<Person>>
 
 // Save (update)
-val modified = person!!.modify { copy(age = 31) }
+val modified = person!!.modify { it.copy(age = 31) }
 repo.save(modified)
 
 // Atomic read-modify-write
@@ -85,19 +85,21 @@ cursor.entries     // List<Stored<Person>>`} lang="kotlin" theme="vitesse-dark"/
 
     <h2>Batch operations</h2>
 
-    <Code code={`// Insert multiple
+    <Code code={`// Monko has no batch insert — loop and insert.
 val people = listOf(
     Person("Alice", 30, "alice@example.com"),
     Person("Bob", 25, "bob@example.com"),
-    Person("Charlie", 35, "charlie@example.com"),
 )
 
-repo.batchInsertValues(people)`} lang="kotlin" theme="vitesse-dark"/>
+people.forEach { repo.insert(it) }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>batchInsertValues</code> is a Karango capability (<code>BatchInsertRepository</code>) that
+        Monko does not implement.</p>
 
     <h2>Collection stats</h2>
 
     <Code code={`val stats = repo.getStats()
-// stats.documentCount, stats.indexes, etc.`} lang="kotlin" theme="vitesse-dark"/>
+// stats.storage.count, stats.indexes, stats.custom`} lang="kotlin" theme="vitesse-dark"/>
 
     <Aside>Repositories are the access layer. Domain logic stays in services.
         A repository handles persistence &mdash; queries, indexes, and hooks. Nothing more.

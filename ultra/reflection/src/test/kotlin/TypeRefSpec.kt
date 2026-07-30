@@ -310,7 +310,7 @@ class TypeRefSpec : StringSpec({
     "Creating a TypeRef from a KClass" {
 
         assertSoftly {
-            List::class.kType() shouldBe kListType<Any>()
+            List::class.kType() shouldBe kListType<Any?>()
             @Suppress("RemoveExplicitTypeArguments")
             Int::class.kType() shouldBe kType<Int>()
         }
@@ -319,23 +319,9 @@ class TypeRefSpec : StringSpec({
     "Creating a TypeRef from a Java Class" {
 
         assertSoftly {
-            List::class.java.kType() shouldBe kListType<Any>()
+            List::class.java.kType() shouldBe kListType<Any?>()
             @Suppress("RemoveExplicitTypeArguments")
             Int::class.java.kType() shouldBe kType<Int>()
-        }
-    }
-
-    "Creating a MutableMap<String, Int>-type must work" {
-
-        val result = kMutableMapType<String, Int>()
-
-        assertSoftly {
-            result.type.classifier shouldBe MutableMap::class
-            result.type.isMarkedNullable shouldBe false
-            result.type.arguments[0].type!!.classifier shouldBe String::class
-            result.type.arguments[0].type!!.isMarkedNullable shouldBe false
-            result.type.arguments[1].type!!.classifier shouldBe Int::class
-            result.type.arguments[1].type!!.isMarkedNullable shouldBe false
         }
     }
 

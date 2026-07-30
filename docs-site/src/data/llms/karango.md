@@ -1113,7 +1113,7 @@ FOR(repo) { person ->
 
     // Type casting
     val ageStr = TO_STRING(person.age)
-    val count = TO_NUMBER(person.tags.LENGTH())
+    val count = TO_NUMBER(LENGTH(person.tags))
     RETURN(person)
 }
 ```

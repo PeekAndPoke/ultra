@@ -9,7 +9,7 @@ data class KtorConfig(
     val security: Security? = null,
 ) {
     data class Deployment(
-        val environment: String = "live",
+        val environment: String = "prod",
         val host: String = "0.0.0.0",
         val port: Int = 80,
         val sslPort: Int = 8443,
@@ -39,7 +39,7 @@ data class KtorConfig(
 
     val isDevelopment: Boolean get() = isLocalDev || isTest || isQa
 
-    val isProduction: Boolean get() = deployment.environment.lowercase() in listOf("live", "production")
+    val isProduction: Boolean get() = deployment.environment.lowercase() in listOf("live", "prod", "production")
 
     val isNotProduction: Boolean get() = !isProduction
 }

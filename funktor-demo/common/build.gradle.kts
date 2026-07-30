@@ -36,6 +36,9 @@ kotlin {
                 implementation(Deps.Ktor.Client.core)
 
                 implementation(project(":ultra:remote"))
+                // `api` (not `implementation`): UserId appears in public DTO signatures
+                // (OrgMemberModel.userId), so consumers must see the type.
+                api(project(":ultra:security"))
             }
         }
     }

@@ -27,7 +27,7 @@ class UserCollector(
                 ui.item {
                     title = "Current user"
                     icon.user()
-                    +user.userId
+                    +user.userId.value
                 }
             }
         }

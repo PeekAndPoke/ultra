@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.auth.domain.expiresAt
 import io.peekandpoke.funktor.auth.domain.ownerId
 import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.karango.aql.DESC
 import io.peekandpoke.karango.aql.EQ
@@ -21,6 +22,7 @@ import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.karango.vault._id
 import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
@@ -53,7 +55,7 @@ class KarangoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
+    override suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>? {
         return findFirst {
             FOR(repo) { r ->
                 FILTER(r._type EQ type)
@@ -69,7 +71,7 @@ class KarangoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+    override suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>? {
         return findFirst {
             FOR(repo) { r ->
                 FILTER(r._type EQ type)
@@ -84,7 +86,7 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun findAllByOwner(
-        realm: String, type: String, owner: String,
+        realm: RealmId, type: String, owner: UserId,
     ): List<Stored<AuthRecord>> {
         val cursor = find {
             FOR(repo) { r ->
@@ -99,7 +101,7 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun removeAllByOwner(
-        realm: String, type: String, owner: String, exceptId: String?,
+        realm: RealmId, type: String, owner: UserId, exceptId: String?,
     ): RemoveResult {
         val result = query {
             FOR(repo) { r ->

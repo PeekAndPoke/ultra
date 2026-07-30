@@ -53,7 +53,6 @@ kotlin {
                 api(Deps.KotlinX.serialization_json)
 
                 api(Deps.KotlinLibs.clikt)
-                api(Deps.KotlinLibs.uuid)
 
                 api(project(":ultra:common"))
                 api(project(":ultra:datetime"))

@@ -74,6 +74,36 @@ class EntityCacheSpec : StringSpec({
         providerCalled shouldBe true
     }
 
+    // Negative caching ///////////////////////////////////////////////////////////////////////////
+
+    "DefaultEntityCache remembers that an id resolved to nothing" {
+        val cache = DefaultEntityCache()
+        var callCount = 0
+
+        // 200 refs to the same deleted document must cost one lookup, not 200
+        repeat(3) { cache.getOrPut<String>("gone") { callCount++; null } shouldBe null }
+
+        callCount shouldBe 1
+    }
+
+    "DefaultEntityCache remembers a negative result across the async path" {
+        val cache = DefaultEntityCache()
+        var callCount = 0
+
+        repeat(3) { cache.getOrPutAsync<String>("gone") { callCount++; null } shouldBe null }
+
+        callCount shouldBe 1
+    }
+
+    "a cached negative is replaced once the entity is put" {
+        val cache = DefaultEntityCache()
+
+        cache.getOrPut<String>("id1") { null } shouldBe null
+        cache.put("id1", "now-here")
+
+        cache.getOrPut<String>("id1") { "from-provider" } shouldBe "now-here"
+    }
+
     "DefaultEntityCache.getOrPut with different keys stores independently" {
         val cache = DefaultEntityCache()
 

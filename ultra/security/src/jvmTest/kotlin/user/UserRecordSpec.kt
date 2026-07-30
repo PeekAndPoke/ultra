@@ -14,7 +14,7 @@ class UserRecordSpec : FreeSpec() {
                 val subject = UserRecord.anonymous
 
                 subject.shouldBeInstanceOf<UserRecord.Anonymous>()
-                subject.userId shouldBe "anonymous"
+                subject.userId shouldBe UserId("anonymous")
                 subject.clientIp shouldBe null
                 subject.email shouldBe null
                 subject.desc shouldBe null
@@ -35,7 +35,7 @@ class UserRecordSpec : FreeSpec() {
                 val subject = UserRecord.system("IP")
 
                 subject.shouldBeInstanceOf<UserRecord.System>()
-                subject.userId shouldBe "system"
+                subject.userId shouldBe UserId("system")
                 subject.clientIp shouldBe "IP"
                 subject.email shouldBe null
                 subject.desc shouldBe null
@@ -56,27 +56,27 @@ class UserRecordSpec : FreeSpec() {
                 UserRecord.system(null).isSystem() shouldBe true
                 UserRecord.system(null).isAnonymous() shouldBe false
 
-                UserRecord.LoggedIn(userId = "alice").isAnonymous() shouldBe false
-                UserRecord.LoggedIn(userId = "alice").isSystem() shouldBe false
+                UserRecord.LoggedIn(userId = UserId("alice")).isAnonymous() shouldBe false
+                UserRecord.LoggedIn(userId = UserId("alice")).isSystem() shouldBe false
 
-                UserRecord.ApiKey(userId = "alice", keyId = "k").isAnonymous() shouldBe false
-                UserRecord.ApiKey(userId = "alice", keyId = "k").isSystem() shouldBe false
+                UserRecord.ApiKey(userId = UserId("alice"), keyId = "k").isAnonymous() shouldBe false
+                UserRecord.ApiKey(userId = UserId("alice"), keyId = "k").isSystem() shouldBe false
             }
         }
 
         "UserRecord.LoggedIn" - {
             "exposes all fields" {
                 val subject = UserRecord.LoggedIn(
-                    userId = "alice",
+                    userId = UserId("alice"),
                     clientIp = "1.2.3.4",
-                    email = "alice@example.com",
+                    email = EmailAddress("alice@example.com"),
                     desc = "Alice",
                     type = "user",
                 )
 
-                subject.userId shouldBe "alice"
+                subject.userId shouldBe UserId("alice")
                 subject.clientIp shouldBe "1.2.3.4"
-                subject.email shouldBe "alice@example.com"
+                subject.email shouldBe EmailAddress("alice@example.com")
                 subject.desc shouldBe "Alice"
                 subject.type shouldBe "user"
             }
@@ -85,20 +85,20 @@ class UserRecordSpec : FreeSpec() {
         "UserRecord.ApiKey" - {
             "exposes key metadata alongside user identity" {
                 val subject = UserRecord.ApiKey(
-                    userId = "alice",
+                    userId = UserId("alice"),
                     clientIp = "1.2.3.4",
                     keyId = "key-1",
                     keyName = "ci-deploy",
-                    email = "alice@example.com",
+                    email = EmailAddress("alice@example.com"),
                     desc = "Alice",
                     type = "user",
                 )
 
-                subject.userId shouldBe "alice"
+                subject.userId shouldBe UserId("alice")
                 subject.clientIp shouldBe "1.2.3.4"
                 subject.keyId shouldBe "key-1"
                 subject.keyName shouldBe "ci-deploy"
-                subject.email shouldBe "alice@example.com"
+                subject.email shouldBe EmailAddress("alice@example.com")
                 subject.desc shouldBe "Alice"
                 subject.type shouldBe "user"
             }

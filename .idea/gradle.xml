@@ -16,6 +16,7 @@
           </compositeBuild>
         </compositeConfiguration>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="graalvm-ce-21" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
@@ -23,7 +24,10 @@
             <option value="$PROJECT_DIR$/funktor" />
             <option value="$PROJECT_DIR$/funktor-demo" />
             <option value="$PROJECT_DIR$/funktor-demo/adminapp" />
+            <option value="$PROJECT_DIR$/funktor-demo/b2b-app" />
+            <option value="$PROJECT_DIR$/funktor-demo/b2b2c-app" />
             <option value="$PROJECT_DIR$/funktor-demo/common" />
+            <option value="$PROJECT_DIR$/funktor-demo/ops-app" />
             <option value="$PROJECT_DIR$/funktor-demo/server" />
             <option value="$PROJECT_DIR$/funktor/all" />
             <option value="$PROJECT_DIR$/funktor/auth" />
@@ -34,6 +38,7 @@
             <option value="$PROJECT_DIR$/funktor/logging" />
             <option value="$PROJECT_DIR$/funktor/messaging" />
             <option value="$PROJECT_DIR$/funktor/rest" />
+            <option value="$PROJECT_DIR$/funktor/saas" />
             <option value="$PROJECT_DIR$/funktor/staticweb" />
             <option value="$PROJECT_DIR$/funktor/testing" />
             <option value="$PROJECT_DIR$/karango" />
@@ -69,12 +74,15 @@
             <option value="$PROJECT_DIR$/mutator/core" />
             <option value="$PROJECT_DIR$/mutator/ksp" />
             <option value="$PROJECT_DIR$/tooling" />
+            <option value="$PROJECT_DIR$/tooling/i18n-fixture" />
             <option value="$PROJECT_DIR$/ultra" />
             <option value="$PROJECT_DIR$/ultra/cache" />
+            <option value="$PROJECT_DIR$/ultra/codegen" />
             <option value="$PROJECT_DIR$/ultra/common" />
             <option value="$PROJECT_DIR$/ultra/datetime" />
             <option value="$PROJECT_DIR$/ultra/fixture" />
             <option value="$PROJECT_DIR$/ultra/html" />
+            <option value="$PROJECT_DIR$/ultra/i18n" />
             <option value="$PROJECT_DIR$/ultra/kontainer" />
             <option value="$PROJECT_DIR$/ultra/log" />
             <option value="$PROJECT_DIR$/ultra/maths" />

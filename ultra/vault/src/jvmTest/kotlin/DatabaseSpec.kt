@@ -147,6 +147,47 @@ class DatabaseSpec : StringSpec() {
             db.getRepositoryStoringOrNull(Int::class) shouldBe null
         }
 
+        // index operations ////////////////////////////////////////////////////////////////////////
+
+        "validateIndexes returns one info per repository and changes nothing" {
+            val log = mutableListOf<String>()
+            val db = Database.of { listOf(RecordingRepoA(log), RecordingRepoB(log)) }
+
+            db.validateIndexes().map { it.healthyIndexes.single().name } shouldBe listOf("a", "b")
+            log shouldBe listOf("a:validate", "b:validate")
+        }
+
+        "ensureIndexes ensures every repo, then reports the state afterwards" {
+            val log = mutableListOf<String>()
+            val db = Database.of { listOf(RecordingRepoA(log), RecordingRepoB(log)) }
+
+            val result = db.ensureIndexes()
+
+            result.map { it.healthyIndexes.single().name } shouldBe listOf("a", "b")
+            // all repos are ensured before anything is validated
+            log shouldBe listOf("a:ensure", "b:ensure", "a:validate", "b:validate")
+        }
+
+        "recreateIndexes recreates every repo, then reports the state afterwards" {
+            val log = mutableListOf<String>()
+            val db = Database.of { listOf(RecordingRepoA(log), RecordingRepoB(log)) }
+
+            val result = db.recreateIndexes()
+
+            result.map { it.healthyIndexes.single().name } shouldBe listOf("a", "b")
+            log shouldBe listOf("a:recreate", "b:recreate", "a:validate", "b:validate")
+        }
+
+        "ensureIndexes reports indexes that are still missing" {
+            val log = mutableListOf<String>()
+            val db = Database.of { listOf(RecordingRepoA(log, missing = true)) }
+
+            val result = db.ensureIndexes().single()
+
+            result.missingIndexes.single().name shouldBe "a"
+            result.healthyIndexes.shouldBeEmpty()
+        }
+
         // ensureId ////////////////////////////////////////////////////////////////////////////////
 
         "Repository.ensureId returns idOrKey unchanged if it contains a slash" {
@@ -159,6 +200,13 @@ class DatabaseSpec : StringSpec() {
             val repo = TestStringRepo()
 
             repo.ensureId("key123") shouldBe "test_strings/key123"
+        }
+
+        "Repository.ensureId round-trips with ensureKey" {
+            val repo = TestStringRepo()
+
+            repo.ensureId("key123") shouldBe "test_strings/key123"
+            repo.ensureId("key123").ensureKey shouldBe "key123"
         }
     }
 }
@@ -176,6 +224,53 @@ private class TestStringRepo : Repository<String> {
     override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
     override suspend fun removeAll(): RemoveResult = RemoveResult.empty
 }
+
+/**
+ * Records index operations into a shared [log] so their order across repositories is observable.
+ *
+ * Subclassed per repository because `SimpleLookup` keys repositories by their runtime class — two
+ * instances of the same class would collapse into one.
+ */
+private open class RecordingRepo(
+    override val name: String,
+    private val log: MutableList<String>,
+    private val missing: Boolean,
+) : Repository<String> {
+    override val connection: String = "default"
+    override val storedType: TypeRef<String> = kType()
+
+    override suspend fun ensureIndexes() {
+        log.add("$name:ensure")
+    }
+
+    override suspend fun recreateIndexes() {
+        log.add("$name:recreate")
+    }
+
+    override suspend fun validateIndexes(): VaultModels.IndexesInfo {
+        log.add("$name:validate")
+
+        val index = VaultModels.IndexInfo(name = name, type = "persistent", fields = listOf("field"))
+
+        return VaultModels.IndexesInfo(
+            healthyIndexes = if (missing) emptyList() else listOf(index),
+            missingIndexes = if (missing) listOf(index) else emptyList(),
+            excessIndexes = emptyList(),
+        )
+    }
+
+    override suspend fun findById(id: String?): Stored<String>? = null
+    override suspend fun <X : String> insert(new: New<X>): Stored<X> = error("not implemented")
+    override suspend fun <X : String> save(stored: Stored<X>): Stored<X> = error("not implemented")
+    override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
+    override suspend fun removeAll(): RemoveResult = RemoveResult.empty
+}
+
+private class RecordingRepoA(log: MutableList<String>, missing: Boolean = false) :
+    RecordingRepo(name = "a", log = log, missing = missing)
+
+private class RecordingRepoB(log: MutableList<String>, missing: Boolean = false) :
+    RecordingRepo(name = "b", log = log, missing = missing)
 
 private class TestIntRepo : Repository<Int> {
     override val name: String = "test_ints"

@@ -61,7 +61,7 @@ class ProfilePage(ctx: NoProps) : PureComponent(ctx) {
                         }
                         noui.item {
                             noui.header { +"Email" }
-                            noui.description { +user.email }
+                            noui.description { +user.email.value }
                         }
                     }
                 }

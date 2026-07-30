@@ -1,20 +1,26 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.messaging.MessagingServices
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.password.PasswordHasher
+import io.peekandpoke.ultra.security.user.OrgId
+import io.peekandpoke.ultra.security.user.UserId
 
 /**
  * AuthSystem manages and provides access to multiple authentication realms.
@@ -23,7 +29,7 @@ import io.peekandpoke.ultra.security.password.PasswordHasher
  *                  Realms must have unique identifiers to avoid duplication.
  */
 class AuthSystem(
-    realms: Lazy<List<AuthRealm<Any>>>,
+    realms: Lazy<List<AuthRealm<*>>>,
     deps: Lazy<Deps>,
 ) {
     interface Deps {
@@ -33,6 +39,7 @@ class AuthSystem(
         val jwtGenerator: JwtGenerator
         val storage: Storage
         val passwordHasher: PasswordHasher
+        val log: Log
         val random: AuthRandom
     }
 
@@ -43,6 +50,7 @@ class AuthSystem(
         jwtGenerator: Lazy<JwtGenerator>,
         storage: Lazy<Storage>,
         passwordHasher: Lazy<PasswordHasher>,
+        log: Lazy<Log>,
         random: Lazy<AuthRandom>,
     ) : Deps {
         override val kronos by kronos
@@ -50,6 +58,7 @@ class AuthSystem(
         override val jwtGenerator by jwtGenerator
         override val storage by storage
         override val passwordHasher by passwordHasher
+        override val log by log
         override val random by random
     }
 
@@ -78,59 +87,69 @@ class AuthSystem(
     }
 
     /** Get realm by [realm] or null if not present */
-    fun getRealmOrNull(realm: String): AuthRealm<*>? {
+    fun getRealmOrNull(realm: RealmId): AuthRealm<*>? {
         return realms.firstOrNull { it.id == realm }
     }
 
     /** Get realm by [realm] or throw [AuthError] if not present */
-    fun getRealm(realm: String): AuthRealm<*> {
+    fun getRealm(realm: RealmId): AuthRealm<*> {
         return getRealmOrNull(realm) ?: throw AuthError("Realm not found: $realm")
     }
 
     /** Sign up a new user by [realm] and [request] */
-    suspend fun signUp(realm: String, request: AuthSignUpRequest): AuthSignUpResponse {
+    suspend fun signUp(realm: RealmId, request: AuthSignUpRequest): AuthSignUpResponse {
         return getRealm(realm).signUp(request)
     }
 
     /** Activate a user account by [realm] and [request] */
-    suspend fun activate(realm: String, request: AuthActivateAccountRequest): AuthActivateActivateResponse {
-        // Activation not yet implemented
-        // TODO: implement me
-        return AuthActivateActivateResponse(success = false)
+    suspend fun activate(realm: RealmId, request: AuthActivateAccountRequest): AuthActivateAccountResponse {
+        return getRealm(realm).activate(request)
+    }
+
+    /** Send a fresh activation mail for [realm] and [request] */
+    suspend fun resendActivation(realm: RealmId, request: AuthResendActivationRequest): AuthResendActivationResponse {
+        return getRealm(realm).resendActivation(request)
     }
 
     /** Sign in a user by [realm] and [request] */
-    suspend fun signIn(realm: String, request: AuthSignInRequest): AuthSignInResponse {
+    suspend fun signIn(realm: RealmId, request: AuthSignInRequest): AuthSignInResponse {
         return getRealm(realm).signIn(request)
     }
 
+    /** Completes an org-selection sign-in for [realm] using the selection token and chosen org. */
+    suspend fun selectOrg(realm: RealmId, selectionToken: String, orgId: OrgId): AuthSignInResponse {
+        return getRealm(realm).selectOrg(selectionToken, orgId)
+    }
+
     /** Refresh the token for the user with the given [userId] in the given [realm] */
-    suspend fun refreshToken(realm: String, userId: String, expectedUserType: String?): AuthSignInResponse {
-        return getRealm(realm).refreshToken(userId, expectedUserType)
+    suspend fun refreshToken(
+        realm: RealmId, userId: UserId, expectedUserType: String?, currentOrgId: OrgId?,
+    ): AuthSignInResponse {
+        return getRealm(realm).refreshToken(userId, expectedUserType, currentOrgId)
     }
 
     /** Set the password of a user by [realm] and [request] */
-    suspend fun setPassword(realm: String, request: AuthSetPasswordRequest): AuthSetPasswordResponse {
+    suspend fun setPassword(realm: RealmId, request: AuthSetPasswordRequest): AuthSetPasswordResponse {
         return getRealm(realm).setPassword(request)
     }
 
     /** Initialise password recovery by [realm] and [request] */
     suspend fun recoverAccountInitPasswordReset(
-        realm: String, request: AuthRecoverAccountRequest.InitPasswordReset,
+        realm: RealmId, request: AuthRecoverAccountRequest.InitPasswordReset,
     ): AuthRecoverAccountResponse.InitPasswordReset {
         return getRealm(realm).recoverAccountInitPasswordReset(request)
     }
 
     /** Validate password reset token by [realm] and [request] */
     suspend fun recoverAccountValidatePasswordResetToken(
-        realm: String, request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
+        realm: RealmId, request: AuthRecoverAccountRequest.ValidatePasswordResetToken,
     ): AuthRecoverAccountResponse.ValidatePasswordResetToken {
         return getRealm(realm).recoverAccountValidatePasswordResetToken(request)
     }
 
     /** Reset password with token by [realm] and [request] */
     suspend fun recoverAccountSetPasswordWithToken(
-        realm: String, request: AuthRecoverAccountRequest.SetPasswordWithToken,
+        realm: RealmId, request: AuthRecoverAccountRequest.SetPasswordWithToken,
     ): AuthRecoverAccountResponse.SetPasswordWithToken {
         return getRealm(realm).recoverAccountSetPasswordWithToken(request)
     }

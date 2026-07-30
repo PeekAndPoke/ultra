@@ -3,10 +3,12 @@ rootProject.name = 'ultra'
 include(
         // tooling for building this repo
         ":tooling",
+        ":tooling:i18n-fixture",
 
         // ULTRA ////////////////////////////////////////////////////////////////////////////////
         ":ultra:common",
         ":ultra:cache",
+        ":ultra:codegen",
         ":ultra:datetime",
         ":ultra:fixture",
         ":ultra:maths",
@@ -14,6 +16,7 @@ include(
         ":ultra:reflection",
         ":ultra:remote",
         ":ultra:html",
+        ":ultra:i18n",
         ":ultra:kontainer",
         ":ultra:log",
         ":ultra:meta",
@@ -57,6 +60,7 @@ include(
         ":funktor:insights",
         ":funktor:logging",
         ":funktor:rest",
+        ":funktor:saas",
         ":funktor:staticweb",
         ":funktor:messaging",
         ":funktor:testing",
@@ -64,6 +68,9 @@ include(
         // FUNKTOR-DEMO /////////////////////////////////////////////////////////////////////////
         ":funktor-demo:server",
         ":funktor-demo:adminapp",
+        ":funktor-demo:ops-app",
+        ":funktor-demo:b2b-app",
+        ":funktor-demo:b2b2c-app",
         ":funktor-demo:common",
 
         // KARANGO //////////////////////////////////////////////////////////////////////////////

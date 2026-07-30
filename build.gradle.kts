@@ -10,7 +10,7 @@ buildscript {
 
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization") version Deps.kotlinVersion apply false
+    kotlin("plugin.serialization") version providers.gradleProperty("kotlinVersion").get() apply false
     id("io.kotest") version Deps.Test.kotest_plugin_version apply false
     id("com.google.devtools.ksp") version Deps.Ksp.version apply false
     id("org.jetbrains.dokka") version Deps.dokkaVersion apply false

@@ -6,7 +6,8 @@ import Deps.createVersionFile
 
 plugins {
     kotlin("jvm")
-    kotlin("plugin.serialization") version Deps.kotlinVersion
+    // version comes from the root build, which declares it with `apply false`
+    kotlin("plugin.serialization")
     id("com.google.devtools.ksp") version Deps.Ksp.version
     idea
     application

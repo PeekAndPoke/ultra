@@ -23,15 +23,12 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
             val styleKey = TypedKey<SemanticFn>("style")
         }
 
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         val style get() = access(styleKey)
 
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun toggle() {
             style { toggle }
         }
 
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun slider() {
             style { slider }
         }
@@ -45,13 +42,11 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
         }
 
         @JsName("rightIcon")
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun rightIcon(iconFn: SemanticIconFn) {
             rightIcon(iconFn = iconFn, block = {})
         }
 
         @JsName("rightIconWithBlock")
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun rightIcon(iconFn: SemanticIconFn, block: I.(UiInputFieldComponent<T, *>) -> Unit) {
             attributes[wrapFieldWithKey] = semantic { right.icon.input }
 
@@ -65,7 +60,6 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
         }
 
         @JsName("clearingRightIcon")
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun rightClearingIcon(iconFn: SemanticIconFn = { grey.times }) {
             attributes[wrapFieldWithKey] = semantic { right.icon.input }
 
@@ -82,7 +76,6 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
         }
 
         @JsName("revealRevealPasswordIcon")
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun revealPasswordIcon(
             hiddenIcon: SemanticIconFn = { eye_outline },
             visibleIcon: SemanticIconFn = { eye_slash_outline },
@@ -112,7 +105,6 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
         }
 
         @JsName("leftIcon")
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun leftIcon(iconFn: SemanticIconFn) {
             attributes[wrapFieldWithKey] = semantic { left.icon.input }
 
@@ -121,7 +113,6 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
         }
 
         @JsName("rightLabel")
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun rightLabel(labelFn: DIV.(UiInputFieldComponent<T, *>) -> Unit) {
             wrapFieldWith { right.labeled.input }
 
@@ -130,7 +121,6 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
         }
 
         @JsName("leftLabel")
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun leftLabel(labelFn: DIV.(UiInputFieldComponent<T, *>) -> Unit) {
             wrapFieldWith { left.labeled.input }
 
@@ -138,10 +128,8 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
             attributes[beforeFieldKey] = labelFn as DIV.(UiInputFieldComponent<*, *>) -> Unit
         }
 
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun wrapFieldWith(): (SemanticTag.() -> SemanticTag)? = attributes[wrapFieldWithKey]
 
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun wrapFieldWith(wrap: (SemanticTag.() -> SemanticTag)) {
             val current = wrapFieldWith()
 
@@ -151,13 +139,10 @@ interface SemanticOptions<T> : io.peekandpoke.kraft.forms.FieldOptions<T> {
             }
         }
 
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun renderBeforeField(): (DIV.(UiInputFieldComponent<*, *>) -> Unit)? = attributes[beforeFieldKey]
 
-        @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
         fun renderAfterField(): (DIV.(UiInputFieldComponent<*, *>) -> Unit)? = attributes[afterFieldKey]
     }
 
-    @io.peekandpoke.kraft.forms.KraftFormsSettingDsl
     val appear get() = access(appearKey)
 }

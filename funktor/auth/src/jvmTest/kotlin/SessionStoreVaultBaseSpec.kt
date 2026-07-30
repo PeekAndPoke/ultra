@@ -6,9 +6,11 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.security.user.UserId
 import kotlin.time.Duration.Companion.days
 
 abstract class SessionStoreVaultBaseSpec : FreeSpec() {
@@ -39,8 +41,8 @@ abstract class SessionStoreVaultBaseSpec : FreeSpec() {
             val store = createKontainer().newStore()
 
             val created = store.create(
-                realm = "r",
-                ownerId = "u1",
+                realm = RealmId("r"),
+                ownerId = UserId("u1"),
                 deviceFingerprint = "fp1",
                 userAgent = "ua",
                 ipAddress = "127.0.0.1",
@@ -49,9 +51,9 @@ abstract class SessionStoreVaultBaseSpec : FreeSpec() {
 
             val token = created.resolve().token
 
-            val found = store.getById("r", token)
+            val found = store.getById(RealmId("r"), token)
             found.shouldNotBeNull()
-            found.resolve().ownerId shouldBe "u1"
+            found.resolve().ownerId shouldBe UserId("u1")
             found.resolve().deviceFingerprint shouldBe "fp1"
         }
 
@@ -59,35 +61,35 @@ abstract class SessionStoreVaultBaseSpec : FreeSpec() {
             val store = createKontainer().newStore()
 
             val created = store.create(
-                realm = "r1", ownerId = "u1", deviceFingerprint = "fp",
+                realm = RealmId("r1"), ownerId = UserId("u1"), deviceFingerprint = "fp",
                 userAgent = null, ipAddress = null, ttl = 30.days,
             )
             val token = created.resolve().token
 
-            store.getById("r1", token).shouldNotBeNull()
-            store.getById("r2", token).shouldBeNull()
+            store.getById(RealmId("r1"), token).shouldNotBeNull()
+            store.getById(RealmId("r2"), token).shouldBeNull()
         }
 
         "listForUser returns every session owned by the user" {
             val store = createKontainer().newStore()
 
             store.create(
-                realm = "r", ownerId = "u1", deviceFingerprint = "a",
+                realm = RealmId("r"), ownerId = UserId("u1"), deviceFingerprint = "a",
                 userAgent = null, ipAddress = null, ttl = 30.days,
             )
             store.create(
-                realm = "r", ownerId = "u1", deviceFingerprint = "b",
+                realm = RealmId("r"), ownerId = UserId("u1"), deviceFingerprint = "b",
                 userAgent = null, ipAddress = null, ttl = 30.days,
             )
             store.create(
-                realm = "r", ownerId = "u2", deviceFingerprint = "c",
+                realm = RealmId("r"), ownerId = UserId("u2"), deviceFingerprint = "c",
                 userAgent = null, ipAddress = null, ttl = 30.days,
             )
 
-            val u1Sessions = store.listForUser("r", "u1")
+            val u1Sessions = store.listForUser(RealmId("r"), UserId("u1"))
             u1Sessions shouldHaveSize 2
 
-            val u2Sessions = store.listForUser("r", "u2")
+            val u2Sessions = store.listForUser(RealmId("r"), UserId("u2"))
             u2Sessions shouldHaveSize 1
         }
 
@@ -95,46 +97,46 @@ abstract class SessionStoreVaultBaseSpec : FreeSpec() {
             val store = createKontainer().newStore()
 
             val created = store.create(
-                realm = "r", ownerId = "u1", deviceFingerprint = "fp",
+                realm = RealmId("r"), ownerId = UserId("u1"), deviceFingerprint = "fp",
                 userAgent = null, ipAddress = null, ttl = 30.days,
             )
             val token = created.resolve().token
 
-            store.getById("r", token).shouldNotBeNull()
+            store.getById(RealmId("r"), token).shouldNotBeNull()
 
-            store.revoke("r", token)
+            store.revoke(RealmId("r"), token)
 
-            store.getById("r", token).shouldBeNull()
+            store.getById(RealmId("r"), token).shouldBeNull()
         }
 
         "revokeAllForUser removes every session for the user" {
             val store = createKontainer().newStore()
 
-            store.create("r", "u1", "a", null, null, 30.days)
-            store.create("r", "u1", "b", null, null, 30.days)
-            store.create("r", "u2", "c", null, null, 30.days)
+            store.create(RealmId("r"), UserId("u1"), "a", null, null, 30.days)
+            store.create(RealmId("r"), UserId("u1"), "b", null, null, 30.days)
+            store.create(RealmId("r"), UserId("u2"), "c", null, null, 30.days)
 
-            store.revokeAllForUser("r", "u1")
+            store.revokeAllForUser(RealmId("r"), UserId("u1"))
 
-            store.listForUser("r", "u1") shouldHaveSize 0
+            store.listForUser(RealmId("r"), UserId("u1")) shouldHaveSize 0
 
             withClue("Other users' sessions survive") {
-                store.listForUser("r", "u2") shouldHaveSize 1
+                store.listForUser(RealmId("r"), UserId("u2")) shouldHaveSize 1
             }
         }
 
         "revokeAllForUser with except keeps the excepted session alive" {
             val store = createKontainer().newStore()
 
-            val keep = store.create("r", "u1", "keep", null, null, 30.days)
-            store.create("r", "u1", "drop1", null, null, 30.days)
-            store.create("r", "u1", "drop2", null, null, 30.days)
+            val keep = store.create(RealmId("r"), UserId("u1"), "keep", null, null, 30.days)
+            store.create(RealmId("r"), UserId("u1"), "drop1", null, null, 30.days)
+            store.create(RealmId("r"), UserId("u1"), "drop2", null, null, 30.days)
 
             val keepToken = keep.resolve().token
 
-            store.revokeAllForUser("r", "u1", except = keepToken)
+            store.revokeAllForUser(RealmId("r"), UserId("u1"), except = keepToken)
 
-            val remaining = store.listForUser("r", "u1")
+            val remaining = store.listForUser(RealmId("r"), UserId("u1"))
             remaining shouldHaveSize 1
             remaining.first().resolve().token shouldBe keepToken
         }

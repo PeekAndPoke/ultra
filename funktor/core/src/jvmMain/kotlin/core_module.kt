@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.core.cli.funktorCli
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.fixtures.funktorFixtures
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
+import io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder
 import io.peekandpoke.funktor.core.model.AppInfo
 import io.peekandpoke.funktor.core.model.CacheBuster
 import io.peekandpoke.funktor.core.repair.funktorRepair
@@ -134,6 +135,8 @@ val Funktor_Core = module { config: AppConfig, info: AppInfo ->
 
     ////  LifeCycle  ////////////////////////////////////////////////////////////////////////
     singleton(AppLifeCycleHooks::class)
+    // Roots vault's after-save / after-delete hooks in the Application's scope
+    dynamic(VaultHookScopeBinder::class)
 
     ////  Modules  //////////////////////////////////////////////////////////////////////////
     ultraLogging()

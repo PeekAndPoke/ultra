@@ -22,8 +22,25 @@ data class RealmTokenConfig(
     val sessionLifetime: Duration = 30.days,
     /** Lifetime of email-verification tokens issued at sign-up. */
     val emailVerificationTokenLifetime: Duration = 24.hours,
+    /**
+     * How long a user must wait before another activation mail is sent.
+     *
+     * THE throttle on activation resend, and the reason resend needs no messaging-level suppression
+     * hook: it targets an account that already exists, so that account's newest verification token is
+     * the rate limit. Sign-up has no equivalent — every aliased address is a new user — which is what
+     * `.claude/tasks/20260727-signup-mail-throttle.md` is about.
+     */
+    val activationResendCooldown: Duration = 5.minutes,
+    /**
+     * Lifetime of the single-use token handed out when a sign-in is refused for a pending account.
+     *
+     * Short on purpose: it exists only to carry the user from the login page to the activation page.
+     */
+    val activationResendTokenLifetime: Duration = 15.minutes,
     /** Lifetime of password-recovery tokens. */
     val passwordRecoveryTokenLifetime: Duration = 1.hours,
+    /** Lifetime of the short-lived org-selection token issued between credential-check and org pick. */
+    val orgSelectionTokenLifetime: Duration = 5.minutes,
     /** Lifetime of email-change confirmation tokens sent to the *new* address. */
     val emailChangeTokenLifetime: Duration = 24.hours,
     /**

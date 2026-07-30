@@ -4,11 +4,12 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthActivateActivateResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
@@ -16,16 +17,20 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
+import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.security.user.UserId
 
 class AuthApiSpec : FunktorApiSpec() {
 
     private val api by service(AuthApiFeature::class)
 
     private val existingRealm = RealmParam(realm = TestUserRealm.REALM)
-    private val nonExistentRealm = RealmParam(realm = "non-existent")
+    private val nonExistentRealm = RealmParam(realm = RealmId("non-existent"))
     private val provider = EmailAndPasswordAuth.ID
     private val signupEmail = "signup-${System.currentTimeMillis()}@test.com"
 
@@ -125,6 +130,12 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignUpResponse>()
                             response.shouldNotBeNull()
+
+                            // Succeeded, but deliberately WITHOUT a session: the address is unproven
+                            // until the activation link is followed.
+                            response.success shouldBe true
+                            response.requiresActivation shouldBe true
+                            response.signIn shouldBe null
                         }
                     }
                 }
@@ -132,7 +143,7 @@ class AuthApiSpec : FunktorApiSpec() {
         }
 
         api.auth.signIn { route ->
-            "Sign in after sign up must return a token" {
+            "Sign in before activation must be refused, even with the correct password" {
                 apiApp {
                     anonymous {
                         route(
@@ -143,8 +154,47 @@ class AuthApiSpec : FunktorApiSpec() {
                                 password = "Test1234!",
                             ),
                         ) {
+                            // NOT a failure status: the credential check passed, so the answer is a
+                            // response CASE. An unknown user or a wrong password still gets a 403, so
+                            // this cannot go vacuously green if the sign-up above is renamed or
+                            // reordered — which a bare "shouldBe Forbidden" assertion would.
                             status shouldBe HttpStatusCode.OK
-                            val response = apiResponseData<AuthSignInResponse>()
+
+                            apiResponseData<AuthSignInResponse>()
+                                .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
+                        }
+                    }
+                }
+            }
+
+            "Sign in after activation must return a token" {
+                apiApp {
+                    anonymous {
+                        // The activation token is only ever delivered by mail — there is no other way
+                        // to get one, which is the point of the whole flow.
+                        val token = capturedEmails.lastTo(signupEmail).shouldNotBeNull()
+                            .hrefs().single()
+                            .substringAfterLast("/activate/")
+                            .decodeUriComponent()
+
+                        api.auth.activateAccount(
+                            existingRealm,
+                            body = AuthActivateAccountRequest(provider = provider, token = token),
+                        ) {
+                            status shouldBe HttpStatusCode.OK
+                            apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
+                        }
+
+                        route(
+                            existingRealm,
+                            body = AuthSignInRequest.EmailAndPassword(
+                                provider = provider,
+                                email = signupEmail,
+                                password = "Test1234!",
+                            ),
+                        ) {
+                            status shouldBe HttpStatusCode.OK
+                            val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
                             response.token.token.shouldNotBeBlank()
                         }
@@ -153,7 +203,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.setPassword { route ->
+        api.authUser.setPassword { route ->
             "Anonymous set password must be unauthorized" {
                 apiApp {
                     anonymous {
@@ -161,7 +211,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             nonExistentRealm,
                             body = AuthSetPasswordRequest(
                                 provider = provider,
-                                userId = "non-existent",
+                                userId = UserId("non-existent"),
                                 currentPassword = "old",
                                 newPassword = "new",
                             ),
@@ -178,13 +228,28 @@ class AuthApiSpec : FunktorApiSpec() {
                 apiApp {
                     anonymous {
                         route(
-                            nonExistentRealm,
-                            body = AuthActivateAccountRequest(token = "invalid-token"),
+                            existingRealm,
+                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token"),
                         ) {
+                            // OK, not an error: the endpoint is anonymous, so answering differently
+                            // for a token that exists would let an attacker probe for live tokens.
                             status shouldBe HttpStatusCode.OK
-                            val result = apiResponseData<AuthActivateActivateResponse>()
+                            val result = apiResponseData<AuthActivateAccountResponse>()
                             result.shouldNotBeNull()
                             result.success shouldBe false
+                        }
+                    }
+                }
+            }
+
+            "Activate account in a non-existent realm must return bad request" {
+                apiApp {
+                    anonymous {
+                        route(
+                            nonExistentRealm,
+                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token"),
+                        ) {
+                            status shouldBe HttpStatusCode.BadRequest
                         }
                     }
                 }
@@ -246,7 +311,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.refreshToken { route ->
+        api.authUser.refreshToken { route ->
             "Anonymous request must be unauthorized" {
                 apiApp {
                     anonymous {
@@ -300,7 +365,7 @@ class AuthApiSpec : FunktorApiSpec() {
                     authenticate(regularUserToken) {
                         route(existingRealm) {
                             status shouldBe HttpStatusCode.OK
-                            val response = apiResponseData<AuthSignInResponse>()
+                            val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
                             response.token.token.shouldNotBeBlank()
                             response.token.permissionsNs.shouldNotBeBlank()
@@ -316,7 +381,7 @@ class AuthApiSpec : FunktorApiSpec() {
                     authenticate(superUserToken) {
                         route(existingRealm) {
                             status shouldBe HttpStatusCode.OK
-                            val response = apiResponseData<AuthSignInResponse>()
+                            val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
                             response.token.token.shouldNotBeBlank()
                             response.token.permissionsNs.shouldNotBeBlank()
@@ -328,7 +393,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.getMyApiAccess { route ->
+        api.authUser.getMyApiAccess { route ->
             "Anonymous request must be unauthorized" {
                 apiApp {
                     anonymous {

@@ -1,0 +1,274 @@
+# Plan: Mutator Library — Quality & Completeness Improvements
+
+
+
+## Commits & files changed
+
+<!-- Generated 2026-07-28 from `git log --follow --name-status` over this task file.
+     Commits that merely renamed the doc into the archive (R100) are excluded, since
+     their code belongs to whatever task shipped alongside the move. -->
+
+| Commit | Date | Files | Subject |
+|---|---|---:|---|
+| `f02ddb7b` | 2026-03-25 | 41 | docs, docs site |
+
+Archived by `d71db9f8` (rename only — that commit's code belongs to another task).
+
+Excluded as unrelated bulk work: `ce139fc0` (package renaming to: io.peekandpoke everywher).
+
+### Files changed (41)
+
+**docs-site/src**
+- `docs-site/src/components/Nav.astro`
+- `docs-site/src/data/mutator-sidebar.ts`
+- `docs-site/src/data/site.ts`
+- `docs-site/src/layouts/DocsLayout.astro`
+- `docs-site/src/pages/index.astro`
+- `docs-site/src/pages/ultra/index.astro`
+- `docs-site/src/pages/ultra/mutator/collections.astro`
+- `docs-site/src/pages/ultra/mutator/core-concepts.astro`
+- `docs-site/src/pages/ultra/mutator/examples.astro`
+- `docs-site/src/pages/ultra/mutator/getting-started.astro`
+- `docs-site/src/pages/ultra/mutator/index.astro`
+- `docs-site/src/pages/ultra/mutator/sealed-classes.astro`
+
+**karango/README.MD**
+- `karango/README.MD`
+
+**karango/core**
+- `karango/core/src/main/kotlin/aql/operator_boolean.kt`
+- `karango/core/src/test/kotlin/aql/CollectSpec.kt`
+- `karango/core/src/test/kotlin/aql/LimitSpec.kt`
+- `karango/core/src/test/kotlin/aql/OperationBooleanSpec.kt`
+- `karango/core/src/test/kotlin/aql/SortSpec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-BatchInsert-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-Count-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-FindByIds-Spec.kt`
+- `karango/core/src/test/kotlin/e2e/crud/E2E-Crud-ModifyById-Spec.kt`
+
+**kraft/README.MD**
+- `kraft/README.MD`
+
+**mutator/core**
+- `mutator/core/docs/mutator::docs/index.md`
+- `mutator/core/src/commonMain/kotlin/ListMutator.kt`
+- `mutator/core/src/commonMain/kotlin/MapMutator.kt`
+- `mutator/core/src/commonMain/kotlin/SetMutator.kt`
+- `mutator/core/src/commonTest/kotlin/domain/PersonWithNullableAddress.kt`
+- `mutator/core/src/commonTest/kotlin/domain/WithCollections.kt`
+- `mutator/core/src/jvmTest/kotlin/ListMutatorHelpersSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/ListMutatorSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/MutatorBaseSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/NullableMutatorSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/SetMutatorSpec.kt`
+- `mutator/core/src/jvmTest/kotlin/e2e/CollectionPropertiesSpec.kt`
+
+**mutator/ksp**
+- `mutator/ksp/src/main/kotlin/MutatorCodeBlocks.kt`
+- `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt`
+- `mutator/ksp/src/main/kotlin/builtin/BuiltInMutableObjectsPlugin.kt`
+
+**ultra/kontainer**
+- `ultra/kontainer/README.MD`
+
+**ultra/slumber**
+- `ultra/slumber/README.MD`
+
+**ultra/streams**
+- `ultra/streams/README.MD`
+
+## Context
+
+The Mutator library generates mutation utilities for immutable Kotlin data classes via KSP.
+A multi-perspective review (dev advocate, senior engineer, QA) identified issues that undermine
+trust and adoption: compiler warnings in generated code, untested code paths, and MutableCollection
+contract violations. This plan addresses them in priority order.
+
+## Phase 1 — Trust (eliminate blockers)
+
+### 1.1 Stop generating `filterMutatorsOf()` for final classes
+
+**Problem:** Every final `@Mutable` class produces 2 compiler warnings ("Type is final, so the
+value of the type parameter is predetermined"). A project with 50 classes gets 100 warnings.
+Teams with `-Werror` cannot use the library at all.
+
+**Fix:** In `BuiltInMutableObjectsPlugin.generateMutatorFor()`, wrap the `filterMutatorsOf()`
+generation in a check: only emit it when the class is sealed or abstract.
+
+**File:** `mutator/ksp/src/main/kotlin/builtin/BuiltInMutableObjectsPlugin.kt`
+
+### 1.2 Implement or fix `ListMutator.subList()`
+
+**Problem:** `subList()` throws `TODO("Not yet implemented")` at runtime. This violates the
+`MutableList` contract and can be triggered by standard library functions like `chunked()`.
+
+**Fix:** Throw `UnsupportedOperationException("ListMutator does not support subList()")` with
+a clear message instead of a bare TODO. Full implementation is complex (needs to propagate
+mutations back to the parent list) and can be deferred.
+
+**File:** `mutator/core/src/commonMain/kotlin/ListMutator.kt` (line ~259)
+
+### 1.3 Fix `MapMutator.keys` exposing unguarded live set
+
+**Problem:** `MapMutator.keys` returns the internal mutable map's key set directly. Removing a
+key via `.keys.remove()` modifies the map but does NOT trigger observer notifications, silently
+breaking the change propagation chain.
+
+**Fix:** Return a read-only view (`keys` as `Set<K>`, not `MutableSet<K>`) or wrap in a
+delegating set that intercepts `remove()`/`clear()` and calls the proper `MapMutator.remove()`.
+The simplest correct fix is returning an unmodifiable view.
+
+**File:** `mutator/core/src/commonMain/kotlin/MapMutator.kt` (line ~38)
+
+Also fix `values` (line ~40-41) which returns a disconnected `MutableList` — return a read-only
+view instead.
+
+## Phase 2 — Polish (generated code quality)
+
+### 2.1 Remove unnecessary backtick wrapping
+
+**Problem:** All identifiers get backticks (`` `firstName` ``) even though only Kotlin reserved
+words need them. This makes generated code look unprofessional and requires a blanket
+`@file:Suppress("RemoveRedundantBackticks")`.
+
+**Fix:** In `MutatorCodeBlocks.wrapWithBackticks()`, check if the identifier is a Kotlin
+reserved word before wrapping. Use a hardcoded set of ~40 soft/hard keywords.
+
+**Files:**
+
+- `mutator/ksp/src/main/kotlin/MutatorCodeBlocks.kt` — `wrapWithBackticks()` method
+- `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt` — remove `RemoveRedundantBackticks`
+  from the `@file:Suppress` list
+
+### 2.2 Replace wildcard import with explicit imports
+
+**Problem:** Every generated file uses `import io.peekandpoke.mutator.*` which conflicts
+with common linting rules.
+
+**Fix:** Generate explicit imports for only the types actually used: `ObjectMutator`,
+`ListMutator`, `SetMutator`, `MapMutator`, `Mutator`, `MutatorDsl`, and conditionally
+`mutator` (the extension function).
+
+**File:** `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt` (line ~105)
+
+### 2.3 Narrow `@file:Suppress` annotations
+
+**Problem:** Blanket `@file:Suppress("unused", "NOTHING_TO_INLINE")` hides real issues.
+
+**Fix:** After fixing backticks (2.1), remove `RemoveRedundantBackticks`. Keep `NOTHING_TO_INLINE`
+(generated inline functions genuinely trigger this). Remove `unused` — if generated functions
+are truly unused, that's a signal the generator is producing unnecessary code.
+
+**File:** `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt` (line ~101)
+
+## Phase 3 — Test coverage (critical gaps)
+
+### 3.1 Add nullable `@Mutable` property tests
+
+**Problem:** Generated code has nullable-specific paths (`?.mutator()?.onChange`) that are
+completely untested.
+
+**Fix:** Add to the test domain:
+
+```kotlin
+data class PersonWithNullableAddress(
+    val name: String,
+    val address: Address?,
+)
+```
+
+Write tests for: mutating null→non-null, non-null→null, non-null→different, null→null.
+
+**Files:**
+
+- `mutator/core/src/commonTest/kotlin/domain/domain.kt` — add domain type
+- New test file: `mutator/core/src/jvmTest/kotlin/NullableMutatorSpec.kt`
+
+### 3.2 Add Set and Map property tests
+
+**Problem:** Only `List<Address>` properties are tested via `AddressBook`. No data class with
+`Set<T>` or `Map<K, V>` properties exists in the test domain.
+
+**Fix:** Add to the test domain:
+
+```kotlin
+data class WithCollections(
+    val tags: Set<Address>,
+    val lookup: Map<String, Address>,
+)
+```
+
+Write tests for mutation through parent mutator.
+
+**Files:**
+
+- `mutator/core/src/commonTest/kotlin/domain/domain.kt` — add domain type
+- New test file: `mutator/core/src/jvmTest/kotlin/e2e/CollectionPropertiesSpec.kt`
+
+### 3.3 Test `commit()`, `set()`, `getInitialValue()`
+
+**Problem:** Core `Mutator` API methods with zero test coverage.
+
+**Fix:** Write tests verifying:
+
+- `commit()` resets `isModified()` to false
+- `getInitialValue()` returns initial value, then committed value after `commit()`
+- `set(value)` / `invoke(value)` replaces the value and notifies
+
+**File:** New test file: `mutator/core/src/jvmTest/kotlin/MutatorBaseSpec.kt`
+
+### 3.4 Test `subList()` throws
+
+**Fix:** Assert that `subList()` throws `UnsupportedOperationException` (after Phase 1 fix).
+
+**File:** `mutator/core/src/jvmTest/kotlin/ListMutatorSpec.kt` — add test case
+
+## Phase 4 — Correctness fixes (collection contracts)
+
+### 4.1 Fix `SetMutator.replace()` iteration order
+
+**Problem:** `remove(old)` + `add(new)` moves the element to the end in `LinkedHashSet`,
+silently changing iteration order.
+
+**Fix:** Rebuild the set with the replacement in the original position:
+
+```kotlin
+fun replace(old: V, new: V) {
+    val set = doGet()
+    val rebuilt = set.mapTo(mutableSetOf()) { if (it == old) new else it }
+    // ... assign rebuilt
+}
+```
+
+**File:** `mutator/core/src/commonMain/kotlin/SetMutator.kt` (line ~158-164)
+
+### ~~4.2 `MapMutator.entries` snapshot semantics~~ — Won't fix
+
+Each `entries` access creates fresh wrappers, so `entries === entries` is false. Caching would
+save allocations but introduces stale-reference risks for minimal practical benefit. The current
+behavior is always correct.
+
+## Verification
+
+After each phase:
+
+1. `./gradlew :mutator:core:jvmTest` — all tests pass
+2. `./gradlew :mutator:core:compileTestKotlinJvm --rerun-tasks 2>&1 | grep "^w:"` — zero warnings
+   after Phase 1
+3. Inspect a generated file to verify clean output after Phase 2
+
+## Files Summary
+
+| File                                                                   | Phases   |
+|------------------------------------------------------------------------|----------|
+| `mutator/ksp/src/main/kotlin/builtin/BuiltInMutableObjectsPlugin.kt`   | 1.1      |
+| `mutator/ksp/src/main/kotlin/MutatorCodeBlocks.kt`                     | 2.1      |
+| `mutator/ksp/src/main/kotlin/MutatorKspProcessor.kt`                   | 2.2, 2.3 |
+| `mutator/core/src/commonMain/kotlin/ListMutator.kt`                    | 1.2      |
+| `mutator/core/src/commonMain/kotlin/MapMutator.kt`                     | 1.3      |
+| `mutator/core/src/commonMain/kotlin/SetMutator.kt`                     | 4.1      |
+| `mutator/core/src/commonTest/kotlin/domain/domain.kt`                  | 3.1, 3.2 |
+| New: `mutator/core/src/jvmTest/kotlin/NullableMutatorSpec.kt`          | 3.1      |
+| New: `mutator/core/src/jvmTest/kotlin/e2e/CollectionPropertiesSpec.kt` | 3.2      |
+| New: `mutator/core/src/jvmTest/kotlin/MutatorBaseSpec.kt`              | 3.3      |
+| `mutator/core/src/jvmTest/kotlin/ListMutatorSpec.kt`                   | 3.4      |

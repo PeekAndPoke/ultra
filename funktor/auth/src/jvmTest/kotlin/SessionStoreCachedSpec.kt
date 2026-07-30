@@ -5,7 +5,9 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -20,22 +22,22 @@ class SessionStoreCachedSpec : StringSpec({
 
         val cached = SessionStore.Cached(inner = inner, ttlMs = ttlMs, nowMs = { clock.get() })
 
-        inner.setSessionFor(realm = "r", sessionId = "sid-1", ownerId = "u1")
+        inner.setSessionFor(realm = RealmId("r"), sessionId = "sid-1", ownerId = UserId("u1"))
 
         // Miss → inner hit, result cached
-        val first = cached.getById("r", "sid-1")
+        val first = cached.getById(RealmId("r"), "sid-1")
         first.shouldNotBeNull()
         inner.getByIdCalls.get() shouldBe 1
 
         // Inside TTL → cache hit, inner not touched
         clock.set(clock.get() + 15_000)
-        cached.getById("r", "sid-1")
-        cached.getById("r", "sid-1")
+        cached.getById(RealmId("r"), "sid-1")
+        cached.getById(RealmId("r"), "sid-1")
         inner.getByIdCalls.get() shouldBe 1
 
         // After TTL → re-fetch from inner
         clock.set(clock.get() + ttlMs + 1)
-        cached.getById("r", "sid-1")
+        cached.getById(RealmId("r"), "sid-1")
         inner.getByIdCalls.get() shouldBe 2
     }
 
@@ -44,9 +46,9 @@ class SessionStoreCachedSpec : StringSpec({
         val cached = SessionStore.Cached(inner = inner, ttlMs = 30_000)
 
         // No session configured → inner returns null
-        cached.getById("r", "ghost").shouldBeNull()
-        cached.getById("r", "ghost").shouldBeNull()
-        cached.getById("r", "ghost").shouldBeNull()
+        cached.getById(RealmId("r"), "ghost").shouldBeNull()
+        cached.getById(RealmId("r"), "ghost").shouldBeNull()
+        cached.getById(RealmId("r"), "ghost").shouldBeNull()
 
         inner.getByIdCalls.get() shouldBe 1
     }
@@ -55,17 +57,17 @@ class SessionStoreCachedSpec : StringSpec({
         val inner = CountingInnerStore()
         val cached = SessionStore.Cached(inner = inner, ttlMs = 30_000)
 
-        inner.setSessionFor(realm = "r", sessionId = "sid-1", ownerId = "u1")
+        inner.setSessionFor(realm = RealmId("r"), sessionId = "sid-1", ownerId = UserId("u1"))
 
-        cached.getById("r", "sid-1").shouldNotBeNull()
+        cached.getById(RealmId("r"), "sid-1").shouldNotBeNull()
         inner.getByIdCalls.get() shouldBe 1
 
         // Simulate server-side removal then a client revoke() call
-        inner.clearSession("r", "sid-1")
-        cached.revoke("r", "sid-1")
+        inner.clearSession(RealmId("r"), "sid-1")
+        cached.revoke(RealmId("r"), "sid-1")
 
         // After revoke the cache entry is dropped; next lookup re-queries inner and gets null
-        cached.getById("r", "sid-1").shouldBeNull()
+        cached.getById(RealmId("r"), "sid-1").shouldBeNull()
         inner.revokeCalls.get() shouldBe 1
         inner.getByIdCalls.get() shouldBe 2
     }
@@ -74,18 +76,18 @@ class SessionStoreCachedSpec : StringSpec({
         val inner = CountingInnerStore()
         val cached = SessionStore.Cached(inner = inner, ttlMs = 30_000)
 
-        inner.setSessionFor(realm = "r", sessionId = "a", ownerId = "u1")
-        inner.setSessionFor(realm = "r", sessionId = "b", ownerId = "u1")
-        inner.setSessionFor(realm = "r", sessionId = "c", ownerId = "u2")
+        inner.setSessionFor(realm = RealmId("r"), sessionId = "a", ownerId = UserId("u1"))
+        inner.setSessionFor(realm = RealmId("r"), sessionId = "b", ownerId = UserId("u1"))
+        inner.setSessionFor(realm = RealmId("r"), sessionId = "c", ownerId = UserId("u2"))
 
-        cached.getById("r", "a").shouldNotBeNull()
-        cached.getById("r", "b").shouldNotBeNull()
-        cached.getById("r", "c").shouldNotBeNull()
+        cached.getById(RealmId("r"), "a").shouldNotBeNull()
+        cached.getById(RealmId("r"), "b").shouldNotBeNull()
+        cached.getById(RealmId("r"), "c").shouldNotBeNull()
         cached.cacheSize() shouldBe 3
 
-        inner.clearSession("r", "a")
-        inner.clearSession("r", "b")
-        cached.revokeAllForUser("r", "u1")
+        inner.clearSession(RealmId("r"), "a")
+        inner.clearSession(RealmId("r"), "b")
+        cached.revokeAllForUser(RealmId("r"), UserId("u1"))
 
         cached.cacheSize() shouldBe 0
         inner.revokeAllCalls.get() shouldBe 1
@@ -95,11 +97,11 @@ class SessionStoreCachedSpec : StringSpec({
         val inner = CountingInnerStore()
         val cached = SessionStore.Cached(inner = inner, ttlMs = 30_000)
 
-        inner.setSessionFor(realm = "r1", sessionId = "same", ownerId = "u1")
-        inner.setSessionFor(realm = "r2", sessionId = "same", ownerId = "u2")
+        inner.setSessionFor(realm = RealmId("r1"), sessionId = "same", ownerId = UserId("u1"))
+        inner.setSessionFor(realm = RealmId("r2"), sessionId = "same", ownerId = UserId("u2"))
 
-        cached.getById("r1", "same")?.resolve()?.ownerId shouldBe "u1"
-        cached.getById("r2", "same")?.resolve()?.ownerId shouldBe "u2"
+        cached.getById(RealmId("r1"), "same")?.resolve()?.ownerId shouldBe UserId("u1")
+        cached.getById(RealmId("r2"), "same")?.resolve()?.ownerId shouldBe UserId("u2")
     }
 
     "a session that expires while cached is dropped on the next lookup instead of being served" {
@@ -108,14 +110,14 @@ class SessionStoreCachedSpec : StringSpec({
         val cached = SessionStore.Cached(inner = inner, ttlMs = 60_000, nowMs = { clock.get() })
 
         // Session expires at clock=2 sec, so it's valid while we prime the cache.
-        inner.setSessionFor(realm = "r", sessionId = "sid", ownerId = "u1", expiresAtSec = 2)
-        cached.getById("r", "sid").shouldNotBeNull()
+        inner.setSessionFor(realm = RealmId("r"), sessionId = "sid", ownerId = UserId("u1"), expiresAtSec = 2)
+        cached.getById(RealmId("r"), "sid").shouldNotBeNull()
 
         // Advance past the session's expiresAt but stay within the cache TTL window.
         clock.set(5_000L) // 5 seconds; session expired at 2 sec.
 
         // The Cached layer must detect the expired row and refetch — not serve a stale session.
-        cached.getById("r", "sid").shouldBeNull()
+        cached.getById(RealmId("r"), "sid").shouldBeNull()
     }
 
     "negative lookups use a shorter TTL than positive lookups" {
@@ -129,12 +131,12 @@ class SessionStoreCachedSpec : StringSpec({
         )
 
         // Negative lookup caches briefly.
-        cached.getById("r", "ghost").shouldBeNull()
+        cached.getById(RealmId("r"), "ghost").shouldBeNull()
         inner.getByIdCalls.get() shouldBe 1
 
         // Just past negative TTL — should refetch.
         clock.set(clock.get() + negTtl + 1)
-        cached.getById("r", "ghost").shouldBeNull()
+        cached.getById(RealmId("r"), "ghost").shouldBeNull()
         inner.getByIdCalls.get() shouldBe 2
 
         // Still well before the positive TTL boundary.
@@ -149,12 +151,12 @@ private class CountingInnerStore : SessionStore {
     val revokeCalls = AtomicInteger(0)
     val revokeAllCalls = AtomicInteger(0)
 
-    private data class Key(val realm: String, val sessionId: String)
+    private data class Key(val realm: RealmId, val sessionId: String)
 
     private val sessions = mutableMapOf<Key, Stored<AuthRecord.Session>>()
 
     fun setSessionFor(
-        realm: String, sessionId: String, ownerId: String, expiresAtSec: Long = Long.MAX_VALUE,
+        realm: RealmId, sessionId: String, ownerId: UserId, expiresAtSec: Long = Long.MAX_VALUE,
     ) {
         sessions[Key(realm, sessionId)] = Stored(
             _id = "sessions/$sessionId",
@@ -173,29 +175,29 @@ private class CountingInnerStore : SessionStore {
         )
     }
 
-    fun clearSession(realm: String, sessionId: String) {
+    fun clearSession(realm: RealmId, sessionId: String) {
         sessions.remove(Key(realm, sessionId))
     }
 
     override suspend fun create(
-        realm: String, ownerId: String, deviceFingerprint: String,
+        realm: RealmId, ownerId: UserId, deviceFingerprint: String,
         userAgent: String?, ipAddress: String?, ttl: Duration,
     ): Stored<AuthRecord.Session> = error("not used in these tests")
 
-    override suspend fun getById(realm: String, sessionId: String): Stored<AuthRecord.Session>? {
+    override suspend fun getById(realm: RealmId, sessionId: String): Stored<AuthRecord.Session>? {
         getByIdCalls.incrementAndGet()
         return sessions[Key(realm, sessionId)]
     }
 
-    override suspend fun touch(realm: String, sessionId: String, now: MpInstant) = Unit
+    override suspend fun touch(realm: RealmId, sessionId: String, now: MpInstant) = Unit
 
-    override suspend fun listForUser(realm: String, ownerId: String) = emptyList<Stored<AuthRecord.Session>>()
+    override suspend fun listForUser(realm: RealmId, ownerId: UserId) = emptyList<Stored<AuthRecord.Session>>()
 
-    override suspend fun revoke(realm: String, sessionId: String) {
+    override suspend fun revoke(realm: RealmId, sessionId: String) {
         revokeCalls.incrementAndGet()
     }
 
-    override suspend fun revokeAllForUser(realm: String, ownerId: String, except: String?) {
+    override suspend fun revokeAllForUser(realm: RealmId, ownerId: UserId, except: String?) {
         revokeAllCalls.incrementAndGet()
     }
 }

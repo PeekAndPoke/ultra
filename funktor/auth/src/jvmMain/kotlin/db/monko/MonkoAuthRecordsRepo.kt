@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.auth.domain.expiresAt
 import io.peekandpoke.funktor.auth.domain.ownerId
 import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.monko.MonkoIndexBuilder
@@ -19,6 +20,7 @@ import io.peekandpoke.monko.lang.dsl.eq
 import io.peekandpoke.monko.lang.dsl.toFieldPath
 import io.peekandpoke.monko.lang.ts
 import io.peekandpoke.ultra.reflection.kType
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
@@ -58,7 +60,7 @@ class MonkoAuthRecordsRepo(
         }
     }
 
-    override suspend fun findLatest(realm: String, type: String, owner: String): Stored<AuthRecord>? {
+    override suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>? {
         val found = find { r ->
             filter(
                 and(
@@ -74,7 +76,7 @@ class MonkoAuthRecordsRepo(
         return found.firstOrNull()
     }
 
-    override suspend fun findByToken(realm: String, type: String, token: String): Stored<AuthRecord>? {
+    override suspend fun findByToken(realm: RealmId, type: String, token: String): Stored<AuthRecord>? {
         val found = find { r ->
             filter(
                 and(
@@ -90,7 +92,7 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun findAllByOwner(
-        realm: String, type: String, owner: String,
+        realm: RealmId, type: String, owner: UserId,
     ): List<Stored<AuthRecord>> {
         val cursor = find { r ->
             filter(
@@ -106,14 +108,14 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun removeAllByOwner(
-        realm: String, type: String, owner: String, exceptId: String?,
+        realm: RealmId, type: String, owner: UserId, exceptId: String?,
     ): RemoveResult {
         val coll = driver.database.getCollection<Map<String, Any?>>(name)
 
         val filters = mutableListOf(
             Filters.eq(repoExpr._type.toFieldPath(), type),
-            Filters.eq(repoExpr.realm.toFieldPath(), realm),
-            Filters.eq(repoExpr.ownerId.toFieldPath(), owner),
+            Filters.eq(repoExpr.realm.toFieldPath(), realm.value),
+            Filters.eq(repoExpr.ownerId.toFieldPath(), owner.value),
         )
         if (exceptId != null) {
             // Stored._id is formatted "$collection/$stringKey"; the Mongo document's _id is

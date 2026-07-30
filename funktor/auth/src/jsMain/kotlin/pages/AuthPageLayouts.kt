@@ -30,9 +30,31 @@ import kotlinx.css.width
 import kotlinx.html.DIV
 import kotlinx.html.FlowContent
 import kotlinx.html.div
+import kotlinx.html.img
 
 object AuthPageLayouts {
     operator fun <T> invoke(block: AuthPageLayouts.() -> T) = block(this)
+
+    /**
+     * Renders the app branding (logo / title, or a custom [AuthFrontendConfig.header] slot) above
+     * an auth card. Shared by the default [LoginPage] and [ResetPasswordPage] so the zero-config
+     * chrome is consistent across both.
+     */
+    fun FlowContent.renderBranding(config: AuthFrontendConfig) {
+        // A custom header slot fully replaces the default logo + title.
+        config.header?.let { slot ->
+            slot()
+            return
+        }
+
+        config.logoUrl?.let { url ->
+            img(src = url, classes = "ui centered image") {}
+        }
+
+        config.title?.let { title ->
+            ui.header { +title }
+        }
+    }
 
     fun FlowContent.renderFullscreenBackgroundLayout(config: AuthFrontendConfig, block: DIV.() -> Unit) {
         div {

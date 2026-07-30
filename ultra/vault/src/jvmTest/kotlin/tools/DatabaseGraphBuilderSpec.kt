@@ -67,6 +67,38 @@ class DatabaseGraphBuilderSpec : StringSpec({
         ref.fqn shouldBe Person::class.java.name
         ref.repo shouldBe null
     }
+
+    // Refs nested in stdlib containers /////////////////////////////////////////////////////////////
+
+    "getGraph finds a Ref nested in a List" {
+        val db = Database.of { listOf(PersonRepo(), BasketRepo()) }
+
+        val basket = DatabaseGraphBuilder(db, NullLog).getGraph().repos.single { it.id.name == "baskets" }
+        val references = basket.storedClasses.single().references
+
+        references.map { it.fqn } shouldBe listOf(Person::class.java.name)
+        references.single().repo?.name shouldBe "persons"
+    }
+
+    "getGraph finds a Ref nested in a Map value" {
+        val db = Database.of { listOf(PersonRepo(), LedgerRepo()) }
+
+        val ledger = DatabaseGraphBuilder(db, NullLog).getGraph().repos.single { it.id.name == "ledgers" }
+
+        ledger.storedClasses.single().references.map { it.fqn } shouldBe listOf(Person::class.java.name)
+    }
+
+    // Array fields ////////////////////////////////////////////////////////////////////////////////
+
+    "getGraph survives an entity with a primitive array field" {
+        // ByteArray is not java-primitive and has a null package — this used to NPE and take the
+        // whole graph down, not just this node.
+        val db = Database.of { listOf(PersonRepo(), AttachmentRepo()) }
+
+        val attachments = DatabaseGraphBuilder(db, NullLog).getGraph().repos.single { it.id.name == "attachments" }
+
+        attachments.storedClasses.single().references.map { it.fqn } shouldBe listOf(Person::class.java.name)
+    }
 })
 
 // Test fixtures ///////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +127,48 @@ private class OrderRepo : Repository<Order> {
     override suspend fun findById(id: String?): Stored<Order>? = null
     override suspend fun <X : Order> insert(new: New<X>): Stored<X> = error("not implemented")
     override suspend fun <X : Order> save(stored: Stored<X>): Stored<X> = error("not implemented")
+    override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
+    override suspend fun removeAll(): RemoveResult = RemoveResult.empty
+}
+
+internal data class Basket(val buyers: List<Ref<Person>>, val label: String)
+
+private class BasketRepo : Repository<Basket> {
+    override val name: String = "baskets"
+    override val connection: String = "default"
+    override val storedType: TypeRef<Basket> = kType()
+
+    override suspend fun findById(id: String?): Stored<Basket>? = null
+    override suspend fun <X : Basket> insert(new: New<X>): Stored<X> = error("not implemented")
+    override suspend fun <X : Basket> save(stored: Stored<X>): Stored<X> = error("not implemented")
+    override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
+    override suspend fun removeAll(): RemoveResult = RemoveResult.empty
+}
+
+internal data class Ledger(val entries: Map<String, Ref<Person>>)
+
+private class LedgerRepo : Repository<Ledger> {
+    override val name: String = "ledgers"
+    override val connection: String = "default"
+    override val storedType: TypeRef<Ledger> = kType()
+
+    override suspend fun findById(id: String?): Stored<Ledger>? = null
+    override suspend fun <X : Ledger> insert(new: New<X>): Stored<X> = error("not implemented")
+    override suspend fun <X : Ledger> save(stored: Stored<X>): Stored<X> = error("not implemented")
+    override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
+    override suspend fun removeAll(): RemoveResult = RemoveResult.empty
+}
+
+internal data class Attachment(val data: ByteArray, val owner: Ref<Person>)
+
+private class AttachmentRepo : Repository<Attachment> {
+    override val name: String = "attachments"
+    override val connection: String = "default"
+    override val storedType: TypeRef<Attachment> = kType()
+
+    override suspend fun findById(id: String?): Stored<Attachment>? = null
+    override suspend fun <X : Attachment> insert(new: New<X>): Stored<X> = error("not implemented")
+    override suspend fun <X : Attachment> save(stored: Stored<X>): Stored<X> = error("not implemented")
     override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
     override suspend fun removeAll(): RemoveResult = RemoveResult.empty
 }

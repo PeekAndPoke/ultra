@@ -92,18 +92,18 @@ val cache = fastCache<String, String> {
 
 // Use the cache...
 cache.put("a", "1")
-cache.getOrPut("b") { "2" }
-cache.get("a")        // hit
-cache.get("missing")  // miss
+cache.getOrPut("b") { "2" }   // records a MISS and a PUT — it calls get() first
+cache.get("a")                // hit
+cache.get("missing")          // miss
 
 // Take a snapshot
 val snapshot = stats.snapshot()
 println(snapshot.hitCount)       // 1
-println(snapshot.missCount)      // 1
+println(snapshot.missCount)      // 2
 println(snapshot.putCount)       // 2
 println(snapshot.evictionCount)  // 0
-println(snapshot.requestCount)   // 2 (hits + misses)
-println(snapshot.hitRate)        // 0.5`} lang="kotlin" theme="vitesse-dark"/>
+println(snapshot.requestCount)   // 3 (hits + misses)
+println(snapshot.hitRate)        // 0.333…`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>CacheStats data class</h3>
 

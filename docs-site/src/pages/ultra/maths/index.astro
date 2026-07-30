@@ -34,6 +34,9 @@ import {Code} from 'astro:components';
         and returns the eased value.</p>
 
     <Code code={`import io.peekandpoke.ultra.maths.Ease
+import io.peekandpoke.ultra.maths.Ease.bindFromTo
+import io.peekandpoke.ultra.maths.Ease.timed
+import kotlin.time.Duration.Companion.milliseconds
 
 // Simple easing
 val progress = 0.5
@@ -98,9 +101,9 @@ val skewed = normal.blend(
                 <code>blend()</code> let you reshape distributions without rebuilding from scratch.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-            <h3 class="text-white font-semibold mb-1">Serializable</h3>
-            <p class="text-sm text-gray-400">Distributions are <code>kotlinx.serialization</code>-friendly.
-                Store and transmit distribution configs.</p>
+            <h3 class="text-white font-semibold mb-1">Pure &amp; allocation-light</h3>
+            <p class="text-sm text-gray-400">No dependencies, no global state. Distributions are plain
+                data classes you can hold, pass around and blend.</p>
         </div>
     </div>
 

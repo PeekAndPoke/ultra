@@ -59,6 +59,9 @@ codec.slumber(Event.UserCreated("alice"))
 <Code code={`sealed class Vehicle {
     companion object : Polymorphic.Parent {
         override val discriminator = "kind"
+
+        // childTypes has no default — supply it, usually via indexedSubClasses()
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
     data class Car(val seats: Int) : Vehicle() {
@@ -84,6 +87,8 @@ codec.slumber(Vehicle.Car(5))
 <Code code={`sealed class Message {
     companion object : Polymorphic.Parent {
         override val defaultType = Text::class
+
+        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
     }
 
     data class Text(val body: String) : Message()

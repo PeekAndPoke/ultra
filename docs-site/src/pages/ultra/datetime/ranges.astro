@@ -18,7 +18,7 @@ import {Code} from 'astro:components';
     <p>All range types (except MpLocalTimeSlot) have a <strong>Partial</strong> variant for when only one boundary is
         known.
         This is common in search filters, open-ended subscriptions, and "from now on" queries.
-        Convert to a concrete range via <code>asValidRange()</code>, which fills in Genesis or Doomsday for the missing
+        Convert to a concrete range via <code>asValidRange()</code>, which returns <code>null</code> unless BOTH boundaries are present &mdash; it does not fill in a default for the missing
         boundary.</p>
 
     <h2>MpLocalDateRange</h2>
@@ -111,9 +111,9 @@ val untilJune = MpLocalDateRange.Partial(
 // Both null — represents "any time"
 val anytime = MpLocalDateRange.Partial(from = null, to = null)
 
-// Convert to a concrete range (fills in Genesis/Doomsday)
+// asValidRange() needs BOTH boundaries — an open end yields null
 val concrete = fromMarch.asValidRange()
-// MpLocalDateRange(2025-03-01, +10000-01-01)`} lang="kotlin" theme="vitesse-dark"/>
+// null`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>MpClosedLocalDateRange</h2>
 
@@ -166,7 +166,7 @@ closed.cutAway(otherClosed)`} lang="kotlin" theme="vitesse-dark"/>
 )
 
 val concrete = partial.asValidRange()
-// MpClosedLocalDateRange(2025-03-10, +10000-01-01)`} lang="kotlin" theme="vitesse-dark"/>
+// null — the 'to' boundary is missing`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>MpInstantRange</h2>
 
@@ -251,7 +251,7 @@ val lastWeek = workday.minus(7, DateTimeUnit.DAY, MpTimezone.of("Europe/Berlin")
 )
 
 val concrete = partial.asValidRange()
-// MpInstantRange(2025-03-15T08:00:00Z, +10000-01-01T00:00:00Z)
+// null — the 'to' boundary is missing
 
 // Convert partial to a date range in a specific timezone
 val dateRange = partial.asDateRange(MpTimezone.of("Europe/Berlin"))
