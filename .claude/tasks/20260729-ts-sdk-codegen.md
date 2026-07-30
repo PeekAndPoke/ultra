@@ -1252,8 +1252,15 @@ Full analysis in the design doc's "i18n in the SDK" section. What it means for `
   jar resource by the Gradle plugin. Reason: the builder then sees every key, so the cross-module
   namespace collision check and the "every accessor has a fallback entry" check are real rather than
   derived claims that can drift; and the TS shape evolves with the generator instead of being frozen at
-  each module's build time. Needs `ultra/codegen` to depend on the key-tree model, which currently lives
-  in the **unpublished** `:tooling` and must move to `ultra/i18n` (published, zero commonMain deps).
+  each module's build time. **The Kotlin pass is lossless** — the model is a pure function of the flat
+  catalog entries, which the generated object bakes verbatim, so re-deriving the tree at SDK-build time
+  reproduces it exactly. Only `fallbackLang` and `moduleName` are dropped; bake both onto the generated
+  object.
+- **`ultra/codegen` needs the key-tree model, which lives in the unpublished `:tooling`.** Move
+  `I18nModelBuilder` + the node types + `LocaleCatalog` into `ultra/i18n` (published, zero commonMain
+  deps); the YAML parser, Kotlin emitter and checker stay in `:tooling`. **Do not unify `:tooling` into
+  `ultra/codegen`** — that would ship a YAML parser and a Kotlin source emitter to every SDK consumer and
+  inverts the dependency sense. Full split table and the buildSrc consequence in the design doc.
 - **A 6th registry target:** the i18n catalog set + merged accessor root.
 - **A registry entry MUST carry a declared layer** (`Framework` < `App`), and emission order derives from
   it. This is the one place where the "contributor order is structurally irrelevant" property is not

@@ -1,9 +1,10 @@
+import io.peekandpoke.ultra.i18n.model.LocaleCatalog
+import io.peekandpoke.ultra.i18n.model.normalizeLocaleTag
 import io.peekandpoke.ultra.tooling.i18n.CheckFinding
 import io.peekandpoke.ultra.tooling.i18n.CheckSeverity
 import io.peekandpoke.ultra.tooling.i18n.I18nChecker
 import io.peekandpoke.ultra.tooling.i18n.I18nGenConfig
 import io.peekandpoke.ultra.tooling.i18n.KotlinEmitter
-import io.peekandpoke.ultra.tooling.i18n.LocaleCatalog
 import io.peekandpoke.ultra.tooling.i18n.YamlCatalogParser
 import io.peekandpoke.ultra.tooling.i18n.checkOutcome
 import io.peekandpoke.ultra.tooling.i18n.kotlinClassPart
@@ -119,7 +120,7 @@ abstract class CheckI18nTask : DefaultTask() {
 
     @TaskAction
     fun run() {
-        val required = requiredLangs.get().map { YamlCatalogParser.normalizeLocaleTag(it) }.toSet()
+        val required = requiredLangs.get().map { normalizeLocaleTag(it) }.toSet()
         val regionalRequired = required.filter { it.contains('-') }
         if (regionalRequired.isNotEmpty()) {
             throw GradleException(
@@ -184,7 +185,7 @@ private fun parseCatalogs(files: Set<File>): List<LocaleCatalog> {
 }
 
 private fun findFallback(catalogs: List<LocaleCatalog>, fallbackLang: String): LocaleCatalog {
-    val tag = YamlCatalogParser.normalizeLocaleTag(fallbackLang)
+    val tag = normalizeLocaleTag(fallbackLang)
     return catalogs.find { it.localeTag == tag } ?: throw GradleException(
         "i18n: no catalog for the fallback language '$tag' " +
                 "(expected a messages.$tag.yaml; found: ${catalogs.map { it.localeTag }})"

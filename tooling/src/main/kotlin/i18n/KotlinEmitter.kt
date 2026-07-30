@@ -1,5 +1,11 @@
 package io.peekandpoke.ultra.tooling.i18n
 
+import io.peekandpoke.ultra.i18n.model.I18nMessage
+import io.peekandpoke.ultra.i18n.model.I18nModelBuilder
+import io.peekandpoke.ultra.i18n.model.I18nNamespace
+import io.peekandpoke.ultra.i18n.model.I18nNode
+import io.peekandpoke.ultra.i18n.model.LocaleCatalog
+
 /**
  * Emits Kotlin source from parsed catalogs (D5/D6 split):
  *  - a baked `<Module>Catalog : I18nCatalog` object holding every locale's data, and

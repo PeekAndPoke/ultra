@@ -409,27 +409,82 @@ and the same checks, which matters for a framework whose point is that apps exte
       Add a narrow second interface — `EnumerableI18nCatalog { fun all(): Map<String, Map<String, String>> }` —
       implemented by generated catalogs and `MapI18nCatalog`. Not on `I18nCatalog` itself: a hand-written
       or remote catalog need not be enumerable.
-- [ ] **Move the key-tree model into `ultra/i18n`.** `I18nModelBuilder` (`tooling/src/main/kotlin/i18n/I18nModelBuilder.kt`)
-      and the `I18nNode`/`I18nNamespace`/`I18nMessage` types (`tooling/src/main/kotlin/i18n/model.kt:30-50`)
-      are pure structure: flat dotted map in, namespace tree with placeholders and plural flags out. No
-      YAML, no deps beyond stdlib. `:tooling` is **unpublished** (`tooling/build.gradle.kts` — plain
-      `kotlin("jvm")`, no publish plugin), so a published `ultra:codegen` cannot depend on it.
-      `ultra/i18n` is published and has **zero commonMain deps**, and this model is i18n domain rather
-      than build tooling. Put it in its own subdirectory (e.g. `commonMain/kotlin/keys/`) so buildSrc can
-      keep source-including exactly what it needs — buildSrc already does this for `:tooling`
-      (`buildSrc/build.gradle.kts`, `srcDir("../tooling/src/main/kotlin/i18n")`) and must not pull the
-      whole runtime in.
+- [ ] **Move the key-tree model into `ultra/i18n`** — see "Where the shared classes live" below.
 - [ ] **Frontend-facing catalogs must be JVM-visible.** The SDK builder runs on the JVM and reads a
       classpath. `kraft/core` generates into `jsMain` (`kraft/core/build.gradle.kts:40`,
       `sourceSet.set("jsMain")`), which no JVM artifact carries. Move it to `commonMain` when those
       strings are needed — kraft/core has a `jvm()` target so this is a one-line change. This is a hard
       requirement, not a preference, and it applies to option A equally.
+- [ ] **The generated catalog must carry two pieces of metadata:** its `moduleName` and its
+      `fallbackTag`. These are the ONLY things the Kotlin pass drops (see "The first pass is lossless"
+      below), and the TS emitter needs both — the fallback catalog is the sole source of the API surface
+      (D8), and the runtime object cannot currently tell which of its locales that is.
 - [ ] **`TsRuntime.Module.I18n`** — a hand-written `ts/runtime/i18n.ts` mirroring `MessageResolver`
       (`ultra/i18n/src/commonMain/kotlin/MessageResolver.kt`): the locale chain
       (`locale → base → fallback → fallback.base`, distinct, `:26`), catalog precedence inner
       (`:53-60`), single-pass `{{name}}` substitution (`:63`), plural suffix lookup with `_other`
       fallback and base-key-as-miss-marker (`:45-51`), plus `Locale.parse`/`base`/`tag`. ~60 lines,
       same shape as the four existing modules in `ultra/codegen/src/main/resources/ts/runtime/`.
+
+### The first pass is lossless — the Kotlin pipeline can feed the TS one
+
+Raised by the maintainer 2026-07-30: *"if we process the catalog on the Kotlin side like we currently do
+and can then convert this into a ts contributor, this would be nice. But the first pass drops information
+so probably not possible."* Checked — **it does not drop what matters.**
+
+`I18nModelBuilder.build()` is a pure function of the fallback catalog's flat entries: the namespace tree
+comes from splitting dotted keys, the placeholder lists from regexing the templates, the plural flags from
+the `_one`/`_other` suffixes. Every one of those inputs survives verbatim in the generated object —
+`KotlinEmitter.kt:42` bakes `data: Map<String, Map<String, String>>` with **all** locales and **all**
+templates, in YAML order (`mapOf` returns a `LinkedHashMap`, so emitted TS is deterministic), and the
+Kotlin string escaping (`KotlinEmitter.kt:139`) is a lossless encoding. Re-running the model builder over
+the enumerated data reproduces the identical tree.
+
+What IS dropped is build **config**, not content: `fallbackLang` and `moduleName` from `I18nGenConfig`.
+Hence the metadata prerequisite above — two members on the generated object. `requiredLocales` and the
+checker's findings are also dropped and are correctly irrelevant, being build-time diagnostics.
+
+### Where the shared classes live
+
+Two options were considered for the `:tooling` inaccessibility problem — `:tooling` is **unpublished**
+(`tooling/build.gradle.kts`: plain `kotlin("jvm")`, no publish plugin), so a published `ultra:codegen`
+cannot depend on it.
+
+**Unifying `:tooling` into `ultra/codegen` is rejected.** `ultra/codegen` is published and depends on
+slumber + kotlin-reflect; moving a YAML parser and a *Kotlin* source emitter into it ships build tooling
+to every consumer who wanted a TS SDK, and inverts the dependency sense — the i18n Kotlin emitter has
+nothing to do with the TS generator.
+
+**Move the model into `ultra/i18n`, and only the model.** DONE 2026-07-30 —
+`.claude/tasks/20260730-i18n-model-to-ultra-i18n.md`. The dividing line is *is this a fact about i18n, or
+a fact about generating code from it*:
+
+| Moved to `ultra/i18n/…/model/` | Stayed in `:tooling` |
+|---|---|
+| `I18nNode` / `I18nNamespace` / `I18nMessage` | `YamlCatalogParser` (needs snakeyaml) |
+| `I18nModelBuilder` | `KotlinEmitter`, `CodeWriter`, `KotlinNames` |
+| `LocaleCatalog` | `I18nChecker` — build-time diagnostics |
+| the `{{name}}` pattern, the plural suffixes, the locale-tag grammar | `I18nGenConfig`, `GeneratedFile` — build config |
+
+**A language-level constraint shaped the first attempt, and has since been removed.** buildSrc
+source-includes these files and was compiled by the Kotlin embedded in **Gradle** — 8.10 → 1.9.24, with
+`kotlin-dsl` pinning the language version to **1.8**. `Locale` uses `@ConsistentCopyVisibility` (Kotlin
+2.0), so it could not be compiled into buildSrc at all. That is *why* `normalizeLocaleTag` existed and why
+`LocaleCatalog` carries a `String` tag — neither was an oversight. My first attempt "improved"
+`LocaleCatalog` to hold a `Locale` and failed to compile.
+
+**Then buildSrc was taken off `kotlin-dsl`** (same day, at the maintainer's request) and Gradle bumped
+8.10 → 9.5.0 — the highest KGP 2.4.10 fully supports, deliberately not the newest 9.6.1. buildSrc now
+compiles at 2.4.10 and the island is gone, verified by compiling `Locale.kt` inside it. Details and the
+non-obvious part of the swap — `kotlin-dsl` also configures the `sam-with-receiver` compiler plugin, and
+without it every `Action<T>` lambda in buildSrc loses its receiver — are in the move's task file.
+
+So the `String` tag is now legacy rather than necessary; changing it is a recorded follow-up, not a
+constraint. The surviving rule is narrower: **`model/` references nothing outside its own directory**,
+enforced by the buildSrc compile and documented at the top of `model/I18nCatalogModel.kt`.
+
+The duplication is removed regardless: `model/` owns `splitLocaleTag`, and both `Locale.parse` and
+`normalizeLocaleTag` go through it. One grammar, two callers, pinned by `PluralSuffixParitySpec`.
 
 ### Emitted shape
 
@@ -549,18 +604,21 @@ second corpus:
 
 ### Consolidation the TS mirror forces
 
-Two facts are already declared three times each, and the TS runtime would make it four:
+DONE 2026-07-30 as part of the model move. Three facts were each declared two or three times, and the TS
+runtime would have made it four:
 
-- The placeholder pattern `\{\{([a-zA-Z0-9_-]+)\}\}` — `MessageResolver.kt:22`, `I18nChecker.kt:40`,
-  `I18nModelBuilder.kt:9`. Widen it in one place only and the checker stops seeing placeholders the
-  resolver substitutes: the ERROR it exists to raise ("introduces placeholder not in the fallback")
-  silently stops firing.
-- The plural suffix set — `I18nModelBuilder.kt:7`, `I18nChecker.kt:41`, and `PluralCategory`'s enum
-  values (`ultra/i18n/src/commonMain/kotlin/PluralCategory.kt:8-15`). `:tooling` cannot see the enum
-  because it does not depend on `:ultra:i18n`; adding a CLDR category would leave both tooling sets stale.
+- The placeholder pattern `\{\{([a-zA-Z0-9_-]+)\}\}` — was in `MessageResolver`, `I18nChecker` and
+  `I18nModelBuilder`. Widen it in one place only and the checker stops seeing placeholders the resolver
+  substitutes: the ERROR it exists to raise ("introduces placeholder not in the fallback") silently stops
+  firing. Now `I18nPlaceholders`.
+- The plural suffix set — was in `I18nModelBuilder`, `I18nChecker` and `PluralCategory`'s enum values.
+  Now `pluralSuffixes`, which still cannot be *derived* from the enum (the enum is outside `model/`), so
+  `PluralSuffixParitySpec` pins them equal — a mutation dropping one suffix fails two of its assertions.
+- The locale-tag grammar — was in `Locale.parse` and `YamlCatalogParser.normalizeLocaleTag`, the latter
+  admitting the duplication in its KDoc. Now `splitLocaleTag`, with both going through it and the spec
+  asserting `normalizeLocaleTag(x) == Locale.parse(x).tag` across eight tag shapes.
 
-Moving the key-tree model into `ultra/i18n` (prerequisite 2) makes both derivable from one declaration.
-Worth doing as part of that move, not as a separate cleanup.
+The TS resolver will consume the same three declarations rather than adding a fourth copy of each.
 
 ## Ordering
 

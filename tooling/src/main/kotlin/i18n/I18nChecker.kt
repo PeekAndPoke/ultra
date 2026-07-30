@@ -1,5 +1,10 @@
 package io.peekandpoke.ultra.tooling.i18n
 
+import io.peekandpoke.ultra.i18n.model.I18nPlaceholders
+import io.peekandpoke.ultra.i18n.model.LocaleCatalog
+import io.peekandpoke.ultra.i18n.model.basePluralKey
+import io.peekandpoke.ultra.i18n.model.normalizeLocaleTag
+
 /** Severity of a catalog check finding. */
 enum class CheckSeverity { ERROR, WARNING, INFO }
 
@@ -37,9 +42,6 @@ fun checkOutcome(findings: List<CheckFinding>, strict: Boolean): CheckOutcome {
  */
 object I18nChecker {
 
-    private val PLACEHOLDER = Regex("""\{\{([a-zA-Z0-9_-]+)\}\}""")
-    private val PLURAL_SUFFIXES = setOf("zero", "one", "two", "few", "many", "other")
-
     fun check(
         fallback: LocaleCatalog,
         others: List<LocaleCatalog>,
@@ -48,7 +50,7 @@ object I18nChecker {
         val findings = mutableListOf<CheckFinding>()
         val apiKeys = fallback.entries.keys
         val byTag = others.associateBy { it.localeTag }
-        val requiredTags = required.map { YamlCatalogParser.normalizeLocaleTag(it) }.toSet()
+        val requiredTags = required.map { normalizeLocaleTag(it) }.toSet()
         val fallbackUnion = placeholderUnionByBase(fallback)
 
         // A required locale with no catalog at all is the important one to catch — nothing else would.
@@ -58,47 +60,47 @@ object I18nChecker {
             }
         }
 
-        others.forEach { loc ->
-            if (loc.localeTag.contains('-')) {
-                checkRegional(loc, apiKeys, base = byTag[loc.localeTag.substringBefore('-')], findings)
+        others.forEach { cat ->
+            if (cat.localeTag.contains('-')) {
+                checkRegional(cat, apiKeys, base = byTag[cat.localeTag.substringBefore('-')], findings)
             } else {
-                checkBase(loc, apiKeys, required = loc.localeTag in requiredTags, findings)
+                checkBase(cat, apiKeys, required = cat.localeTag in requiredTags, findings)
             }
-            checkPlaceholders(loc, fallbackUnion, findings)
+            checkPlaceholders(cat, fallbackUnion, findings)
         }
         return findings
     }
 
     private fun checkBase(
-        loc: LocaleCatalog,
+        cat: LocaleCatalog,
         apiKeys: Set<String>,
         required: Boolean,
         findings: MutableList<CheckFinding>,
     ) {
         val missing = if (required) CheckSeverity.ERROR else CheckSeverity.WARNING
         val suffix = if (required) " (required language)" else ""
-        (apiKeys - loc.entries.keys).forEach {
-            findings += CheckFinding(missing, loc.localeTag, it, "missing translation$suffix")
+        (apiKeys - cat.entries.keys).forEach {
+            findings += CheckFinding(missing, cat.localeTag, it, "missing translation$suffix")
         }
-        (loc.entries.keys - apiKeys).forEach {
-            findings += CheckFinding(CheckSeverity.WARNING, loc.localeTag, it, "superfluous key (not in the fallback)")
+        (cat.entries.keys - apiKeys).forEach {
+            findings += CheckFinding(CheckSeverity.WARNING, cat.localeTag, it, "superfluous key (not in the fallback)")
         }
     }
 
     private fun checkRegional(
-        loc: LocaleCatalog,
+        cat: LocaleCatalog,
         apiKeys: Set<String>,
         base: LocaleCatalog?,
         findings: MutableList<CheckFinding>,
     ) {
-        (loc.entries.keys - apiKeys).forEach {
-            findings += CheckFinding(CheckSeverity.WARNING, loc.localeTag, it, "superfluous key (not in the fallback API surface)")
+        (cat.entries.keys - apiKeys).forEach {
+            findings += CheckFinding(CheckSeverity.WARNING, cat.localeTag, it, "superfluous key (not in the fallback API surface)")
         }
         if (base != null) {
-            loc.entries.forEach { (key, value) ->
+            cat.entries.forEach { (key, value) ->
                 if (base.entries[key] == value) {
                     findings += CheckFinding(
-                        CheckSeverity.INFO, loc.localeTag, key,
+                        CheckSeverity.INFO, cat.localeTag, key,
                         "value is identical to base '${base.localeTag}' — redundant override",
                     )
                 }
@@ -108,21 +110,21 @@ object I18nChecker {
     }
 
     private fun checkPlaceholders(
-        loc: LocaleCatalog,
+        cat: LocaleCatalog,
         fallbackUnion: Map<String, Set<String>>,
         findings: MutableList<CheckFinding>,
     ) {
-        loc.entries.forEach { (key, template) ->
+        cat.entries.forEach { (key, template) ->
             // Compare against the fallback's UNION across the message's plural forms (D8), minus the
             // implicit plural driver `count`, whose presence varies per form by design.
-            val reference = (fallbackUnion[baseKeyOf(key)] ?: return@forEach) - "count"
+            val reference = (fallbackUnion[basePluralKey(key)] ?: return@forEach) - "count"
             val local = placeholders(template) - "count"
 
             (local - reference).forEach {
-                findings += CheckFinding(CheckSeverity.ERROR, loc.localeTag, key, "introduces placeholder {{$it}} not in the fallback")
+                findings += CheckFinding(CheckSeverity.ERROR, cat.localeTag, key, "introduces placeholder {{$it}} not in the fallback")
             }
             (reference - local).forEach {
-                findings += CheckFinding(CheckSeverity.INFO, loc.localeTag, key, "omits placeholder {{$it}} present in the fallback")
+                findings += CheckFinding(CheckSeverity.INFO, cat.localeTag, key, "omits placeholder {{$it}} present in the fallback")
             }
         }
     }
@@ -130,18 +132,11 @@ object I18nChecker {
     private fun placeholderUnionByBase(cat: LocaleCatalog): Map<String, Set<String>> {
         val out = LinkedHashMap<String, MutableSet<String>>()
         cat.entries.forEach { (key, template) ->
-            out.getOrPut(baseKeyOf(key)) { mutableSetOf() }.addAll(placeholders(template))
+            out.getOrPut(basePluralKey(key)) { mutableSetOf() }.addAll(placeholders(template))
         }
         return out
     }
 
-    /** Strips a trailing plural suffix so plural forms map to one base key. */
-    private fun baseKeyOf(key: String): String {
-        val i = key.lastIndexOf('_')
-        if (i <= 0) return key
-        return if (key.substring(i + 1) in PLURAL_SUFFIXES) key.substring(0, i) else key
-    }
-
     private fun placeholders(template: String): Set<String> =
-        PLACEHOLDER.findAll(template).map { it.groupValues[1] }.toSet()
+        I18nPlaceholders.namesIn(template).toSet()
 }

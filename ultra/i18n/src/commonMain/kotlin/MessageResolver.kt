@@ -1,5 +1,7 @@
 package io.peekandpoke.ultra.i18n
 
+import io.peekandpoke.ultra.i18n.model.I18nPlaceholders
+
 /**
  * Resolves a message [key] to text by walking two axes (see the i18n plan, D11):
  *  - the **locale chain** outer, most-specific first: `locale -> locale.base -> fallback -> fallback.base`
@@ -17,11 +19,6 @@ class MessageResolver(
     /** Highest precedence first (app before framework). */
     private val catalogs: List<I18nCatalog>,
 ) {
-    companion object {
-        /** `{{name}}` placeholders — a single bounded character class, linear (no ReDoS). */
-        private val PLACEHOLDER = Regex("""\{\{([a-zA-Z0-9_-]+)\}\}""")
-    }
-
     /** The locale fallback chain, most-specific first, de-duplicated. */
     val chain: List<Locale> = listOf(locale, locale.base, fallback, fallback.base).distinct()
 
@@ -62,7 +59,7 @@ class MessageResolver(
     /** Single-pass substitution: scans [template] once, never re-scanning substituted values. */
     private fun substitute(template: String, args: Map<String, Any?>): String {
         if (args.isEmpty()) return template
-        return PLACEHOLDER.replace(template) { match ->
+        return I18nPlaceholders.pattern.replace(template) { match ->
             val name = match.groupValues[1]
             when {
                 args.containsKey(name) -> args[name]?.toString() ?: ""
