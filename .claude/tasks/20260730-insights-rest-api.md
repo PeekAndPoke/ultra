@@ -308,14 +308,89 @@ Diff reviewed: `b62ab6cd^..HEAD` restricted to this task's 38 files. Every findi
 **re-verified against the code by the coordinator** before being recorded; nothing is forwarded on a
 reviewer's word alone.
 
-**GATE: FAIL** — two HIGH findings open. Nothing was auto-fixed: the loop protocol forbids unattended
-security fixes, and both HIGHs need a design decision.
+**GATE: FAIL** — one CRITICAL and four HIGH open. **Nothing was auto-fixed.** The protocol forbids
+unattended security fixes, and every remaining finding needs a design decision or interacts with another.
 
 | Reviewer | Verdict | Confirmed |
 |---|---|---|
 | 1. Implementation & code style | FAIL | 2 HIGH, 4 MEDIUM, 4 LOW |
-| 2. Domain expert | *pending* | |
+| 2. Domain expert | FAIL | 1 CRITICAL, 3 HIGH, 8 MEDIUM, 5 LOW |
 | 3. Security | FAIL (no CRITICAL) | 1 MEDIUM, 5 LOW/latent |
+
+Reviewers 1 and 2 independently found the `limit`/codegen defect, and 1, 2 and 3 all landed on the
+query-string gap from different directions. Convergence, not duplication.
+
+### CRITICAL-1 — every pre-existing record loads as `200 OK` with an empty envelope
+
+`InsightsDataLoader.kt:105`. `slices()` requires `obj["key"]` and `mapNotNull`s the entry away when it
+is absent. Records written before this change carry `cls` — the JVM class name — and never `key`.
+
+**Verified against real data, not inferred:** `funktor-demo/server/tmp/depot/insights` holds **2,116
+records, 536 MB, going back to 2025-11**, and every collector entry has exactly `['cls', 'data']`.
+
+So a superuser opening the list against any existing depot gets one blank row per record — `method`,
+`url`, `status` all null — and `load()` answers `200 OK` with `collectors: []`. No 404, no error, no log
+line. **Silent total data loss presented as success**, and it is indistinguishable from a record that
+genuinely contains nothing.
+
+I changed `CollectorData(cls)` to `CollectorData(key)` (`impl/InsightsFull.kt:76`) without a read path
+for the old shape, and no test caught it because every fixture I wrote uses the new format.
+
+**Options:** map `cls` → key through the known-collector registry (`RequestCollector$Data` → `request`
+is lossless for all ten built-ins); or refuse the record explicitly — `null` → 404, or a sentinel
+`{key: "__unreadable"}` slice. Anything beats success-with-nothing. Interacts with HIGH-5.
+
+### HIGH-3 — "newest first" and prev/next are computed from mtime, which is not request order
+
+`InsightsDataLoader.kt:49,82`. Records are written asynchronously —
+`supervisorScope { launch(Dispatchers.IO) { delay(1) … } }` (`impl/InsightsFull.kt:66-83`) — so mtime is
+*write* time, and under concurrency it reorders.
+
+**Measured on real data** (`records-2026-03-30`): five records whose filenames run
+`…872, …875, …895, …905, …945` have mtimes `.278, .260, .210, .518, .250`, so sorting by mtime yields
+`905, 872, 875, 945, 895`. Nothing like request order. In the same folder, 89 files share 77 distinct
+mtimes — 12 exact ties, where order falls back to arbitrary directory order, so prev/next between tied
+records is undefined.
+
+The record's own timestamp is already in its filename, and lexicographic order of
+`LocalDateTime.toString()` **is** chronological. One-line fix in both places: sort by `name`.
+`recordedAt` is likewise the write time presented under a name that reads as the request time.
+
+### HIGH-5 — the stored format has no version, and CRITICAL-1 is what that costs
+
+`domain.kt:5`. `InsightsData` carries no `formatVersion`. CRITICAL-1 *is* an unversioned format
+migration, silently unhandled — and it recurs per collector: once a tab's zod schema is generated from
+today's `KontainerCollector.Data`, a record from three months ago has the old shape under the same key
+and the tab's `.parse()` fails, with nothing in the envelope to branch on.
+
+Add `formatVersion: Int` now, while the only consumer is still unwritten. One field.
+
+### Additional domain findings
+
+| # | Sev | Where | Claim |
+|---|---|---|---|
+| D-M1 | MEDIUM | `InsightsModels.kt:16,45` vs `InsightsApiFeature.kt:17` | **The record id is returned as one string and consumed as two.** Summaries expose `path = "records-…/x.json"` but `getRecord` takes `RecordParam(bucket, file)`, so every generated call site must `path.split('/')` — depot layout re-implemented in the frontend, wrong the day a repository nests differently |
+| D-M2 | MEDIUM | `InsightsDataLoader.kt:49` | **prev/next never cross a day folder**, but the KDoc says "null at either end". 16 day folders in the demo depot = 16 pairs of false ends |
+| D-M3 | MEDIUM | `InsightsApi.kt:46` | **`MAX_LIMIT = 500` against 236 KB mean record size** — measured. `limit=50` parses 8.3 MB to read five scalars; `limit=500` parses ~83 MB, on a handler thread, since `FsFileContent.getContentBytes()` calls `readBytes()` with no `withContext(Dispatchers.IO)` |
+| D-M4 | MEDIUM | `InsightsCollectorData.kt:21` | **`key` is serialized INTO the payload as well as onto the envelope**, because `override val key = KEY` is a getter and `mapper.convertValue(it)` emits it. **Confirmed on real data:** old records carry `templateKey` inside `data` by exactly this mechanism. This is the same shape-skew I removed `fullUrl` to avoid. Fix: move `key` onto `InsightsCollector`, not its `Data` |
+| D-M5 | MEDIUM | `InsightsDataLoader.kt:126` | **Duplicate collector keys are silently last-wins.** Nothing validates uniqueness at registration, write or read; an app naming its collector `"request"` shadows the framework's. With `key` on the collector (D-M4) a boot check is three lines |
+| D-M6 | MEDIUM | `InsightsModels.kt:44` | **The open envelope has no discovery and no fallback**, so extensibility is half-delivered: an app-defined collector gets a key nobody renders and no way to be enumerated. Decide before the tab registry is built — a generic JSON-tree fallback tab closes it cheaply |
+| D-M8 | MEDIUM | `InsightsApiFeature.kt:22` | **Feature name `"Insights"` is not namespaced** — siblings are `"Funktor Introspection"`, `"Funktor Cluster"`, `"Funktor Logging"`. `TsClientNames.clientFile("Insights")` → `insightsClient.ts`, which an app's own `Insights` feature collides with. Free to fix now, breaking once Vue tabs import from it |
+| D-L2 | LOW | `InsightsModels.kt:29,42` | `durationMs` is `Double?` on the summary and `Double` on the record for the same value, and the loader returns `0.0` for missing timing — "unknown" is indistinguishable from "instant" |
+| D-L5 | LOW | `FileSystemRepository.kt:103` | Outside the diff: `listItems(path, limit)` **ignores `path`** (`listItems().take(limit)` — root, not `path`). My loader avoids it, but it is the obvious optimisation for D-M3 and would silently read the wrong folder |
+
+### Domain questions answered clean
+
+- **The open envelope holds.** The reasoning survives scrutiny; its costs are real but acceptable.
+- **No hand-written `ApiClient` is safe** — verified, not assumed. Mounting is `ApiFeature`-driven, the
+  e2e harness drives `ApiRoute` directly, introspection enumerates features not clients, and the access
+  matrix works off `estimateAccess`. Nothing in funktor requires a client to exist.
+- **Codegen will walk these routes.** `MpInstant` and `JsonElement` are both claimed; path params are
+  bare-identifier strings filling declared placeholders; responses are `ApiResponse<…>` envelopes.
+  Nothing hard-fails the walker.
+- **Back-compat sweep clean** — no live reference to any removed symbol survives outside `reference/`.
+- **Kontainer scoping correct** — `InsightsApiFeature` has zero constructor dependencies and reaches the
+  `dynamic` loader through `call.kontainer`, per the SemiDynamic rule.
 
 ### HIGH-1 — the generated TypeScript client can never send `limit`
 
