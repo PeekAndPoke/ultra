@@ -150,9 +150,56 @@ parameter names are unique within a declaration, whereas lower-casing would coll
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation | 10 raised | 10 confirmed |
+| 2. Domain expert | 5 raised | 5 confirmed |
+| 3. Adversarial | 6 raised + 7 independently reproduced | 6 confirmed |
+
+Run 2026-07-30 over `git diff 8eccd823..HEAD -- ultra/codegen`. **All three reviewers COMPILED and RAN
+the emitted TypeScript** rather than reasoning about it, and reviewers 1 and 2 independently
+constructed the same top three findings. Fixed in `72937b71` and `caa4cd01`.
+
+### Fixed
+
+| Finding | Why it mattered |
+|---|---|
+| Star projection on a user generic silently dropped | `mapIndexedNotNull` discarded the position, emitting the bare FACTORY where a schema belongs. tsc accepts it (`z.object`'s shape is loose) and every parse then throws. The `List<*>`/`Map<String,*>` branches already handled this |
+| Recursive generic UNION and ALIAS never got `z.lazy` | both generic branches returned before the `isRecursive` branch. tsc clean, first parse blows the stack. The uncovered cell was exactly "recursive × generic × (alias\|union)" |
+| Variant type parameters bound positionally | `Left<R, L> : Either<L, R>` inverts under a pass-through, and type and schema agree WITH EACH OTHER — so `satisfies` holds, tsc is clean, and the client rejects every real payload. Now resolved via the child's own supertype entry |
+| A duplicate binding (`Both<A> : Same<A, A>`) slipped through | coverage check passed it last-wins; the KDoc already promised a bijection |
+| Claimed generic dropped its arguments | a payload reachable only through one vanished from the model entirely |
+| Declaration and type-parameter names never validated | escaping covers literals and property keys — these are different positions. A class named `Record` captures the global every generic `Map` emits; a parameter named `infer` is a SYNTAX error that makes tsc skip semantic checking for the whole file |
+
+### Confirmed but NOT fixed — tracked
+
+- [ ] **`TypeId.of` can never match a generic declaration** (`model/TypeId.kt:26` vs `:42`). Declarations
+      are keyed `com.acme.PageOf`; `TypeId.of(typeOf<PageOf<Talk>>())` yields `com.acme.PageOf<…>`, so
+      the lookup always misses. `TsFixtureGenerator:188` already does exactly this and `error()`s on a
+      miss — it survives only because no fixture uses a generic ROOT. **Phase 2 hits this on its first
+      paged endpoint.** Fix: a `TypeModel.declFor(type: KType)` helper. Do this BEFORE Phase 2.
+- [ ] **Claim imports are always value imports** (`ts/TsModelEmitter.kt:54`). If a claimed `tsName`
+      resolves to an `interface`/`type`, `verbatimModuleSyntax` gives TS1484. Latent only because every
+      shipped claim points at a `const` — and `runtime/apiResponse.ts` is exactly the shape that breaks
+      it (`export interface ApiResponse<T>` beside `export function apiResponse`).
+- [ ] **`TsSdkOutput` does not confine paths** (`sdk/TsSdkOutput.kt:57,71,87`). `out.file("../../etc/x")`
+      escapes the SDK root. A contributor is already arbitrary JVM code so this is not a privilege
+      boundary; the realistic harm is an accidental write outside the target tree, and `--check` reading
+      outside it. One `canonicalPath.startsWith` in `add()`.
+- [ ] **A phantom type parameter yields an unusable factory signature** — `Keyed<K, V>(val m: Map<K, V>)`
+      never puts `K` on the wire (JSON keys are strings) yet the factory demands `KSchema`. Compiles;
+      the caller must invent a schema for something never validated.
+
+### Probed and CLEAN — do not re-tread
+
+- `selfType` + `ReifiedKType` with inherited generic supertype properties is SOUND, both when the
+  subclass binds concretely and when it forwards, including inherited `@Slumber.Field` properties.
+- ONE codec-parity representative is sufficient: `BuiltInModule` dispatches purely on the classifier.
+- Polymorphic recursion (`Rec<T>` containing `Rec<Rec<T>>`) terminates and emits correctly —
+  monomorphization could not express it at all.
+- Generic value classes correct for every underlying tried; optionality unaffected by generic emission.
+- Output size is now linear in the source rather than in instantiation count.
+- ts-verify toolchain pinning: no finding. `ultra:codegen` reaches no production classpath.
+- A type parameter named `z` is safe (qualified-name resolution skips the type-parameter namespace);
+  a local `Array` is safe (`T[]` does not resolve `Array` lexically). Only `Record` bites.
 
 ## Follow-ups
 
