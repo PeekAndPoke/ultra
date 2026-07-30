@@ -18,7 +18,10 @@ interface Slumberer {
      */
     interface Context {
 
+        /** The codec this context belongs to; used for all recursive slumber calls. */
         val codec: Codec
+
+        /** Attributes of the owning [Codec]; how modules such as Vault reach per-codec services. */
         val attributes: TypedAttributes
 
         /** The current serialization path, e.g. "root.user.address.zip". */
@@ -27,17 +30,26 @@ interface Slumberer {
         /** Returns a new context scoped one level deeper in the data structure. */
         fun stepInto(step: String): Context
 
-        /** Recursively slumbers a value using the codec. */
+        /** Recursively slumbers a value, picking the slumberer from the RUNTIME class of [data]. */
         fun slumber(data: Any?): Any? = codec.slumber(data, this)
 
-        /** Throws a [SlumbererException] indicating a non-nullable value was null. */
+        /**
+         * Throws a [SlumbererException] indicating a non-nullable value was null.
+         *
+         * The path comes from THIS context, so on a [Fast] context the message carries `<unknown>` —
+         * that pass is expected to be retried by [Codec].
+         */
         @Throws(SlumbererException::class)
         fun reportNullError(input: Any?): Nothing = throw SlumbererException(
             message = "Value at path '$path' must not be null",
             input = input,
         )
 
-        /** Lightweight context with no path tracking. Used for the first (fast) serialization pass. */
+        /**
+         * Lightweight context with no path tracking. Used for the first (fast) serialization pass.
+         *
+         * Immutable and stateless: [stepInto] returns `this`, so one instance is shared by the whole graph.
+         */
         class Fast internal constructor(
             override val codec: Codec,
             override val attributes: TypedAttributes,
@@ -47,7 +59,11 @@ interface Slumberer {
             override fun stepInto(step: String): Fast = this
         }
 
-        /** Full-featured context with path tracking. Used on error for diagnostics. */
+        /**
+         * Full-featured context with path tracking. Used on error for diagnostics.
+         *
+         * [stepInto] appends to an immutable path string, so siblings cannot corrupt each other's path.
+         */
         class Tracking internal constructor(
             override val codec: Codec,
             override val attributes: TypedAttributes,

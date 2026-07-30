@@ -4,7 +4,7 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import java.time.LocalTime
 
-/** Awaker for [java.time.LocalTime] values. */
+/** Awaker for [LocalTime] values. Reads a seconds-of-day [Int] (`0..86399`); anything outside that range awakes to null. */
 object LocalTimeAwaker : Awaker {
 
     private val validRange = (0L..86399L)
@@ -22,7 +22,7 @@ object LocalTimeAwaker : Awaker {
     }
 }
 
-/** Slumberer for [java.time.LocalTime] values. */
+/** Slumberer for [LocalTime] values. Writes the seconds-of-day as an [Int] (`0..86399`), no wrapper map. */
 object LocalTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Int? {

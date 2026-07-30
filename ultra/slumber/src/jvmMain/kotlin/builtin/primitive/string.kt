@@ -13,6 +13,10 @@ object StringSlumberer : Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context) = map(data)
 }
 
+/**
+ * Best-effort conversion to [String]: an existing [String] is returned as-is, and [Number], [Char],
+ * or [Boolean] are converted via `toString()`; anything else maps to `null`.
+ */
 private fun map(data: Any?): String? = when (data) {
 
     is String -> data

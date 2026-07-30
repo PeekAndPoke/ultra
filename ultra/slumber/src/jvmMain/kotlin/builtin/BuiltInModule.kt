@@ -70,6 +70,15 @@ private fun KClass<*>.isUserValueClass(): Boolean =
  */
 object BuiltInModule : SlumberModule {
 
+    /**
+     * Resolves an [Awaker] for the DECLARED [type] — the type written in the source, not the runtime
+     * class of any value.
+     *
+     * Branch order is load-bearing: [KotlinXJsonNullCodec] must stay ahead of
+     * [KotlinXJsonPrimitiveCodec] (`JsonNull` IS a `JsonPrimitive`), and every KotlinX branch ahead of
+     * the polymorphic-parent branch (`JsonElement` and `JsonPrimitive` are sealed classes). Only the
+     * [NullCodec] branch skips `wrapIfNonNull`; everything else is wrapped when the type is non-nullable.
+     */
     @Suppress("Detekt:ComplexMethod")
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
 
@@ -77,6 +86,9 @@ object BuiltInModule : SlumberModule {
 
         if (cls is KClass<*>) {
 
+            // TODO(scan): computed for EVERY class although only the last branch reads it. Kotlin
+            //  reflection throws KotlinReflectionInternalError (an Error, not an Exception) for
+            //  synthetic classes such as lambdas, so this masks the clean "no known way to ..." error.
             val primaryCtor = cls.primaryConstructor
 
             return when {
@@ -106,6 +118,10 @@ object BuiltInModule : SlumberModule {
                     // @JvmInline value classes — awake the underlying scalar + construct via ctor.
                     cls.isUserValueClass() -> ValueClassAwaker(type)
                     // Lists
+                    // TODO(scan): exact-class match, unlike the slumberer's isAssignableFrom -- a field
+                    //  declared `Collection<T>`, `ArrayList<T>` or `LinkedHashSet<T>` slumbers fine but
+                    //  has no awaker. Also `MutableList::class` IS `List::class` on the JVM (same for
+                    //  Set/Map below), so those operands never fire.
                     cls == Iterable::class || cls == List::class || cls == MutableList::class ->
                         CollectionAwaker.forList(type)
                     // Sets
@@ -136,6 +152,16 @@ object BuiltInModule : SlumberModule {
         return null
     }
 
+    /**
+     * Resolves a [Slumberer] for [type].
+     *
+     * Unlike the awaker side this is usually asked about a RUNTIME class: `Codec.slumber(data, context)`
+     * derives the type from `data::class`, so the declared type of a field is not consulted.
+     * Consequently the collection and map branches test assignability rather than class identity.
+     *
+     * Branch order is load-bearing in the same way as in [getAwaker]; additionally the KotlinX branches
+     * must precede the `Iterable`/`Map` ones, because `JsonArray` is a `List` and `JsonObject` is a `Map`.
+     */
     @Suppress("Detekt:ComplexMethod")
     override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? {
 
@@ -143,6 +169,7 @@ object BuiltInModule : SlumberModule {
 
         if (cls is KClass<*>) {
 
+            // TODO(scan): see getAwaker -- eagerly computed for every class, only the last branch uses it.
             val primaryCtor = cls.primaryConstructor
 
             return when {
@@ -157,6 +184,10 @@ object BuiltInModule : SlumberModule {
                 // Box(null) (a non-null box), which must slumber to null, not throw a non-null error.
                 // (Trade-off: a root-level slumber of a non-null value-class type with a null value
                 // returns null instead of reporting a non-null error — a degenerate, no-round-trip case.)
+                // TODO(scan): sits ABOVE the polymorphic-child branch, so a `@JvmInline value class`
+                //  implementing a sealed interface is emitted as a bare scalar with no discriminator and
+                //  can no longer be awoken through its parent. Before value-class support it went through
+                //  PolymorphicChildSlumberer + DataClassSlumberer and carried the discriminator.
                 cls.isUserValueClass() -> ValueClassSlumberer(type)
 
                 else -> when {
@@ -179,6 +210,9 @@ object BuiltInModule : SlumberModule {
                     KotlinXJsonPrimitiveCodec.appliesTo(cls) -> KotlinXJsonPrimitiveCodec as Slumberer
                     KotlinXJsonElementCodec.appliesTo(cls) -> KotlinXJsonElementCodec as Slumberer
                     // Iterables
+                    // TODO(scan): assignability, and ahead of the data-class and polymorphic-child
+                    //  branches -- a `data class Page<T>(...) : Iterable<T>` is emitted as a bare list,
+                    //  dropping its other fields, while its awaker (exact-class match) expects a map.
                     Iterable::class.java.isAssignableFrom(cls.java) -> CollectionSlumberer
                     // Arrays — an Array is not an Iterable, so it needs its own branch. Handled by the
                     // same slumberer, which reads any array shape element-wise.
@@ -186,6 +220,9 @@ object BuiltInModule : SlumberModule {
                     // Maps
                     Map::class.java.isAssignableFrom(cls.java) -> MapSlumberer
                     // Enum
+                    // TODO(scan): `Class.isEnum()` is FALSE for a specialized enum constant (an entry
+                    //  with a body compiles to a subclass of the enum), and this side dispatches on
+                    //  `data::class` -- so `enum class E { A { ... } }` never reaches this branch.
                     cls.java.isEnum -> EnumCodec(type) as Slumberer
                     // Polymorphic classes
                     PolymorphicParentUtil.isPolymorphicParent(cls) ->

@@ -4,7 +4,12 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import java.time.ZoneId
 
-/** Awaker for [java.time.ZoneId] values. */
+/**
+ * Awaker for [ZoneId] values.
+ *
+ * Reads a zone id [String], validated against [ZoneId.getAvailableZoneIds]. Note that set excludes
+ * offset-style ids such as `"Z"` or `"+02:00"`, even though [ZoneId.of] itself accepts them.
+ */
 object ZoneIdAwaker : Awaker {
 
     private val ids = ZoneId.getAvailableZoneIds()
@@ -22,7 +27,7 @@ object ZoneIdAwaker : Awaker {
     }
 }
 
-/** Slumberer for [java.time.ZoneId] values. */
+/** Slumberer for [ZoneId] values. Writes the zone id as a plain [String], no wrapper map. */
 object ZoneIdSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): String? {

@@ -33,7 +33,6 @@ fun <T : Any> PolymorphicModuleBuilder<T>.addChildren(items: PolymorphicChildren
  *
  * Implements [Set] over the child [KClass] types for easy membership checks.
  */
-// TODO: Test me
 data class PolymorphicChildrenToSerializers<T : Any>(
     val base: KClass<T>,
     val entries: List<TypeAndSerializer<T>>,
@@ -49,10 +48,12 @@ data class PolymorphicChildrenToSerializers<T : Any>(
         @PublishedApi
         internal fun build() = PolymorphicChildrenToSerializers(base, entries.toList())
 
+        /** Adds child type [X], resolving its [KSerializer] via reified lookup. */
         inline fun <reified X : T> add() {
             entries.add(X::class with serializer())
         }
 
+        /** Merges the entries of [nested] into this builder. */
         fun addAll(nested: PolymorphicChildrenToSerializers<out T>) {
             entries.addAll(nested.entries)
         }
@@ -68,6 +69,7 @@ data class PolymorphicChildrenToSerializers<T : Any>(
         val serializer: KSerializer<out T>,
     )
 
+    /** Lookup set derived from [entries], backing this class's [Set] implementation. */
     val typeSet: Set<KClass<out T>> = entries.map { it.type }.toSet()
 
     override val size: Int = typeSet.size

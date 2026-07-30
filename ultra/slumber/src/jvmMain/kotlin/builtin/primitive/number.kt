@@ -13,6 +13,11 @@ object NumberSlumberer : Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context) = map(data)
 }
 
+/**
+ * Best-effort conversion to [Number]: an existing [Number] is returned unchanged (its concrete
+ * subtype is preserved), a [String] is always parsed as a [Double] (never [Int] or [Long]), and
+ * anything else maps to `null`.
+ */
 private fun map(data: Any?): Number? = when (data) {
 
     is Number -> data

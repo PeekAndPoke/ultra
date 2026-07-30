@@ -17,15 +17,23 @@ import kotlin.reflect.jvm.javaConstructor
 import kotlin.reflect.jvm.javaMethod
 
 /**
- * Serializes data class instances into Maps by iterating over constructor and annotated properties.
+ * Serializes data class instances into Maps by iterating over constructor properties plus any
+ * property carrying [Slumber.Field].
  *
- * Supports optional caching of serialization results via [SlumberCache] for performance.
+ * `null` input slumbers to `null`; a surrounding `NonNullSlumberer` turns that into a
+ * `SlumbererException` for a non-nullable declared type.
+ *
+ * A [SlumberCache] put into the [SlumberConfig] attributes (see `withSlumberCache`) makes the
+ * results memoizable — see the TODOs on `Cached` for what that currently costs.
  */
 interface DataClassSlumberer : Slumberer {
 
     companion object {
         private val slumberCacheKey = TypedKey<SlumberCache>("DataClassSlumber.ValueCache")
 
+        // TODO(scan): the cache is read once, when the slumberer is built, and SlumberConfig.Lookup
+        //   memoizes that slumberer per KType across copy() - so whichever config resolved a type
+        //   FIRST decides, for every config sharing the Lookup, whether it caches at all.
         /** Creates a [DataClassSlumberer] for the given [type], optionally backed by a [SlumberCache]. */
         operator fun invoke(type: KType, attributes: TypedAttributes): DataClassSlumberer {
             val default = Default(type)
@@ -36,10 +44,17 @@ interface DataClassSlumberer : Slumberer {
             }
         }
 
+        /** Installs a [SlumberCache] built by [builder], excluding no classes. */
         fun SlumberConfig.withSlumberCache(
             builder: FastCache.Builder<Any?, Any?>.() -> Unit,
         ): SlumberConfig = withSlumberCache(excludedClasses = emptySet(), builder)
 
+        /**
+         * Installs a [SlumberCache] built by [builder] that never caches instances of [excludedClasses].
+         *
+         * An empty [builder] yields a cache with no eviction behaviour at all, i.e. one that grows
+         * without bound — pass at least `maxEntries` or `maxMemoryUsage`.
+         */
         fun SlumberConfig.withSlumberCache(
             excludedClasses: Set<KClass<*>>,
             builder: FastCache.Builder<Any?, Any?>.() -> Unit,
@@ -54,16 +69,25 @@ interface DataClassSlumberer : Slumberer {
             )
         }
 
+        // TODO(scan): appendModules/prependModules do not carry attributes over, so calling either
+        //   AFTER this silently drops the cache again.
+        /** Installs the given [cache] into the config's attributes. */
         fun SlumberConfig.withSlumberCache(cache: SlumberCache): SlumberConfig {
             return copy(
                 attributes = attributes.plus(slumberCacheKey, cache)
             )
         }
 
+        /** Returns the [SlumberCache] installed by `withSlumberCache`, or `null` when there is none. */
         fun TypedAttributes.getSlumberCache(): Cache<Any?, Any?>? = this[slumberCacheKey]
     }
 
-    /** Cache wrapper that delegates to an inner [Cache] and skips entries for [excludedClasses]. */
+    /**
+     * Cache wrapper that delegates to [wrapped] and refuses to cache instances of [excludedClasses].
+     *
+     * Exclusion matches the key's EXACT runtime class, not subtypes: excluding a sealed parent does
+     * not exclude its children.
+     */
     class SlumberCache(
         val wrapped: Cache<Any?, Any?>,
         val excludedClasses: Set<KClass<*>> = emptySet(),
@@ -109,6 +133,7 @@ interface DataClassSlumberer : Slumberer {
             return wrapped.getOrPut(key, producer)
         }
 
+        // TODO(scan): the only override that skips the null / excludedClasses guard the other four honour.
         override fun remove(key: Any?): Any? {
             return wrapped.remove(key)
         }
@@ -119,6 +144,10 @@ interface DataClassSlumberer : Slumberer {
         private val cache: Cache<Any?, Any?>,
     ) : DataClassSlumberer {
 
+        // TODO(scan): keyed on `data` alone. Three consequences: (1) `context` is ignored, so one cache
+        //   instance shared by two configs serves each other's shapes; (2) equality is the key, so two
+        //   data-class instances that are equals() but differ in a @Slumber.Field non-ctor property get
+        //   the same map; (3) keys are held strongly and hashed deeply on every call.
         override fun slumber(data: Any?, context: Slumberer.Context): Any? {
             return cache.getOrPut(data) {
                 wrapped.slumber(data, context)
@@ -133,7 +162,7 @@ interface DataClassSlumberer : Slumberer {
         /** Gets the primary Ctor */
         val primaryCtor = reified.ctor
 
-        /** All fields that need to be slumbered */
+        /** Ctor-backed properties plus every property annotated with [Slumber.Field], de-duplicated. */
         val allSlumberFields = reified.ctorFields2Types
             .plus(
                 reified.allPropertiesToTypes.filter { (prop, _) ->
@@ -160,6 +189,10 @@ interface DataClassSlumberer : Slumberer {
             }
         }
 
+        // TODO(scan): no context.stepInto(prop.name) here, unlike the collection and map slumberers, so
+        //   a SlumbererException from a nested field always reports the path as 'root'.
+        // TODO(scan): returns a live MutableMap; once Cached hands the same instance out repeatedly, a
+        //   caller that mutates the result corrupts the cache entry.
         override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any?>? {
             if (data == null) {
                 return null
@@ -168,6 +201,7 @@ interface DataClassSlumberer : Slumberer {
             val result = mutableMapOf<String, Any?>()
 
             allSlumberFields.forEach { (prop, _) ->
+                // The declared type is dropped here: context.slumber dispatches on the RUNTIME class.
                 result[prop.name] = context.slumber(prop.get(data))
             }
 

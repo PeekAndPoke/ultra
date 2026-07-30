@@ -31,7 +31,11 @@ object JsonUtil {
             isString -> content
             booleanOrNull != null -> boolean
             longOrNull != null -> long
+            // TODO(scan): numbers beyond Long.MAX_VALUE (e.g. Json.parseToJsonElement("99999999999999999999"))
+            //  fall through to here and silently lose precision as a Double instead of erroring.
             doubleOrNull != null -> double
+            // TODO(scan): content that is not string/boolean/long/double-parseable (reachable via the
+            //  experimental JsonUnquotedLiteral API) is silently dropped to null instead of erroring.
             else -> null
         }
     }
@@ -45,12 +49,18 @@ object JsonUtil {
         }
     }
 
-    /** Converts any nullable value to its [JsonElement] representation. */
+    /**
+     * Converts any nullable value to its [JsonElement] representation.
+     *
+     * An unrecognised type falls back to its `toString()` as a [JsonPrimitive] string.
+     */
     fun Any?.toJsonElement(): JsonElement {
         @Suppress("UNCHECKED_CAST")
         return when (this) {
             null -> JsonNull
             is JsonElement -> this
+            // TODO(scan): unchecked cast — a Map with non-String keys throws a raw ClassCastException here
+            //  instead of the library's structured Awaker/SlumbererException.
             is Map<*, *> -> (this as Map<String, Any?>).toJsonObject()
             is List<*> -> JsonArray(map { it.toJsonElement() })
             is Boolean -> JsonPrimitive(this)

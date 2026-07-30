@@ -9,7 +9,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/** Awaker for [java.time.LocalDate] values. */
+/**
+ * Awaker for [LocalDate] values.
+ *
+ * Reads the `ts` map entry as epoch milliseconds and always interprets it in UTC - any `timezone`
+ * entry in the map is ignored.
+ */
 object LocalDateAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): LocalDate? {
@@ -28,7 +33,7 @@ object LocalDateAwaker : Awaker {
     }
 }
 
-/** Slumberer for [java.time.LocalDate] values. */
+/** Slumberer for [LocalDate] values. Writes `{ts: epoch millis at start-of-day UTC, timezone: "UTC", human}`. */
 object LocalDateSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

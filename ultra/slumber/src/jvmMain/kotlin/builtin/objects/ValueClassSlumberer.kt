@@ -24,6 +24,9 @@ interface ValueClassSlumberer : Slumberer {
         /** A value class has exactly one underlying property (made accessible by [ReifiedKType]). */
         private val field = reified.ctorFields2Types.first().first
 
+        // TODO(scan): dispatches on the RUNTIME class of the unwrapped value, while ValueClassAwaker
+        //   awakes against the DECLARED inner type - the two disagree wherever a declared inner type
+        //   would pick a different codec than the runtime class does.
         override fun slumber(data: Any?, context: Slumberer.Context): Any? {
             if (data == null) {
                 return null

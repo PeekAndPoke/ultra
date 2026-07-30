@@ -19,6 +19,8 @@ object KotlinXJsonObjectCodec : Awaker, Slumberer {
         @Suppress("UNCHECKED_CAST")
         return when (data) {
             is JsonObject -> data
+            // TODO(scan): unchecked cast — a Map with non-String keys throws a raw ClassCastException here
+            //  instead of an AwakerException, bypassing Codec's two-pass diagnostic retry.
             is Map<*, *> -> (data as Map<String, Any?>).toJsonObject()
             else -> null
         }

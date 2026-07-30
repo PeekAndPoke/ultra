@@ -21,18 +21,25 @@ interface Awaker {
      */
     interface Context {
 
+        /** The codec this context belongs to; used for all recursive awake calls. */
         val codec: Codec
+
+        /** The type the whole operation started from, or null when it is not tracked ([Fast]). */
         val rootType: KType?
+
+        /** Attributes of the owning [Codec]; how modules such as Vault reach per-codec services. */
         val attributes: TypedAttributes
 
         /** The current deserialization path, e.g. "root.user.address.zip". */
         val path: String
+
+        /** Diagnostics collected so far. Always empty on [Fast]. */
         val logs: List<String>
 
         /** Returns a new context scoped one level deeper in the data structure. */
         fun stepInto(step: String): Context
 
-        /** Recursively awakens a value using the codec. */
+        /** Recursively awakens a value; the type arguments of [type] are approximated. */
         fun <T : Any> awake(type: KClass<T>, data: Any?): T? = codec.awake(type, data, this)
 
         /** Recursively awakens a value using the codec. */
@@ -43,7 +50,13 @@ interface Awaker {
             // default does nothing
         }
 
-        /** Throws an [AwakerException] with full path and diagnostic information. */
+        /**
+         * Throws an [AwakerException] describing a null where a non-null value was required.
+         *
+         * Path, root type and logs come from THIS context, so on a [Fast] context the message carries
+         * `<unknown>`, a null root type and no logs — that pass is expected to be retried by [Codec].
+         */
+        // TODO(scan): the `context` parameter is never read; the body uses the receiver throughout.
         @Throws(AwakerException::class)
         fun reportNullError(input: Any?, context: Context): Nothing = throw AwakerException(
             message = listOf("Value at path '$path' must not be null")
@@ -57,7 +70,11 @@ interface Awaker {
             input = input,
         )
 
-        /** Lightweight context with no path tracking. Used for the first (fast) deserialization pass. */
+        /**
+         * Lightweight context with no path tracking. Used for the first (fast) deserialization pass.
+         *
+         * Immutable and stateless: [stepInto] returns `this`, so one instance is shared by the whole graph.
+         */
         class Fast internal constructor(
             override val codec: Codec,
             override val attributes: TypedAttributes,
@@ -72,7 +89,13 @@ interface Awaker {
             override fun stepInto(step: String): Fast = this
         }
 
-        /** Full-featured context with path tracking and log collection. Used on error for diagnostics. */
+        /**
+         * Full-featured context with path tracking and log collection. Used on error for diagnostics.
+         *
+         * [stepInto] appends to an immutable path string, so siblings cannot corrupt each other's path.
+         * The [logs] buffer, in contrast, is SHARED down the whole tree: an error report also contains
+         * diagnostics written while awaking siblings that ultimately succeeded.
+         */
         class Tracking internal constructor(
             override val codec: Codec,
             override val rootType: KType,
@@ -95,6 +118,6 @@ interface Awaker {
         }
     }
 
-    /** Deserializes [data] into a typed object using the given [context]. Returns null if the data cannot be handled. */
+    /** Deserializes [data] using [context]. Returns null when the data cannot be handled. */
     fun awake(data: Any?, context: Context): Any?
 }

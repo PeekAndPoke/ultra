@@ -8,7 +8,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.reflect.KType
 
-/** SlumberModule for Kotlinx DateTime types. */
+/**
+ * SlumberModule for kotlinx-datetime types.
+ *
+ * Only covers [LocalDate] and [LocalDateTime] - unlike the `javatime` and `mp` modules, there is no
+ * codec here for `Instant`, `ZonedDateTime`, `LocalTime`, or `TimeZone`.
+ */
 object KotlinxTimeModule : SlumberModule {
 
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {

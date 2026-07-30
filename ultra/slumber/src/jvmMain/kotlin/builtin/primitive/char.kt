@@ -13,6 +13,10 @@ object CharSlumberer : Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context) = map(data)
 }
 
+/**
+ * Best-effort conversion to [Char]: an existing [Char] is returned as-is, and a non-empty [String]
+ * yields its first character (silently discarding the rest); anything else maps to `null`.
+ */
 private fun map(data: Any?): Char? = when {
 
     data is Char -> data

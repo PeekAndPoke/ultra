@@ -4,7 +4,11 @@ import io.peekandpoke.ultra.slumber.Polymorphic.Companion.defaultDiscriminator
 import kotlin.reflect.KClass
 
 /**
- * Used to apply custom polymorphic settings
+ * Namespace for the polymorphism opt-ins: [Parent], [Child] and [TypedChild].
+ *
+ * Nothing implements `Polymorphic` itself — a type opts in by letting its companion object implement
+ * one of the nested interfaces. Sealed hierarchies already work without any opt-in; these interfaces
+ * only customise the discriminator field, the type identifiers and the child set.
  */
 interface Polymorphic {
 
@@ -18,20 +22,23 @@ interface Polymorphic {
     /**
      * Applies custom settings to a polymorphic parent class.
      *
-     * In order to use, you need to make the companion object of the polymorphic parent implements this interface.
+     * To use it, let the companion object of the polymorphic parent implement this interface.
      *
-     * Example:
-     *
-     * <code>
-     *     class MyParent {
-     *         companion object : Polymorphic.Parent {
-     *             override val discriminator = "_field"
-     *         }
+     * ```
+     * open class MyParent {
+     *     companion object : Polymorphic.Parent {
+     *         override val discriminator = "_field"
+     *         override val childTypes = setOf(MyChild::class)
      *     }
-     * </code>
+     * }
+     * ```
      */
     interface Parent {
         companion object {
+            /**
+             * Builds a [PolymorphicChildrenToSerializers] for [T] — usable both as [Parent.childTypes]
+             * and as a kotlinx-serialization module registration.
+             */
             @Suppress("UnusedReceiverParameter")
             inline fun <reified T : Any> Parent.children(
                 builder: PolymorphicChildrenToSerializers.Builder<T>.() -> Unit,
@@ -48,19 +55,21 @@ interface Polymorphic {
         val discriminator get(): String = defaultDiscriminator
 
         /**
-         * The default type for deserialization or null.
+         * The default type for deserialization, or null.
          *
-         * When the discriminator field is missing and the defaultType is set, then an object of the
-         * defaultType will be created on de-serialization.
+         * When set, an object of this type is created whenever the discriminator field is missing
+         * from the data OR holds an identifier that maps to no known child.
          */
         val defaultType get(): KClass<*>? = null
 
         /**
-         * A set of child types.
+         * Extra child types, for hierarchies that are not (only) sealed.
          *
-         * The identifiers are taken from the child types directly.
+         * Sealed subclasses are picked up automatically and need not be listed here. Entries are
+         * expanded transitively, and entries that are not subclasses of the parent are dropped.
+         * Identifiers are taken from the child types themselves.
          *
-         * @see [Child]
+         * @see Child
          */
         val childTypes: Set<KClass<*>>
     }
@@ -68,23 +77,22 @@ interface Polymorphic {
     /**
      * Applies custom settings to a polymorphic child class.
      *
-     * In order to use, you need to make the companion object of the polymorphic parent implements this interface.
+     * To use it, let the companion object of the polymorphic CHILD implement this interface.
      *
-     * Example:
-     *
-     * <code>
-     *     class MyChild : MyParent() {
-     *         companion object : Polymorphic.Child {
-     *             override val identifier = "Child"
-     *         }
+     * ```
+     * class MyChild : MyParent() {
+     *     companion object : Polymorphic.Child {
+     *         override val identifier = "Child"
      *     }
-     * </code>
+     * }
+     * ```
      */
     interface Child {
         /**
          * The identifier is used to decide, which child class is to be de-serialized.
          *
-         * It will be written into or read from the [Parent.discriminator] field.
+         * It will be written into or read from the [Parent.discriminator] field, and it takes
+         * precedence over a `@SerialName` annotation on the same class.
          */
         val identifier: String
     }
@@ -95,28 +103,29 @@ interface Polymorphic {
      * Carries additional type information about the owning type.
      * This is useful for polymorphic queries where the type and the serialName are needed.
      *
-     * Example:
-     *
-     * <code>
-     *     class MyChild : MyParent() {
-     *         companion object : Polymorphic.TypedChild<MyChild> {
-     *             override val identifier = "Child"
-     *         }
+     * ```
+     * class MyChild : MyParent() {
+     *     companion object : Polymorphic.TypedChild<MyChild> {
+     *         override val identifier = "Child"
      *     }
-     * </code>
+     * }
+     * ```
      *
      * This can then be used to query a repo:
      *
-     * <code>
-     *     suspend inline fun <reified T : MyParent> MyRepo.findFirst(type: TypedChild<T>): Stored<T>? {
-     *         return findFirst {
-     *             FOR(repo) { item ->
-     *                 FILTER(item._type EQ type.identifier)
-     *                 RETURN(item)
-     *             }
-     *         }?.castTyped()
-     *     }
-     * </code>
+     * ```
+     * suspend inline fun <reified T : MyParent> MyRepo.findFirst(type: TypedChild<T>): Stored<T>? {
+     *     return findFirst {
+     *         FOR(repo) { item ->
+     *             FILTER(item._type EQ type.identifier)
+     *             RETURN(item)
+     *         }
+     *     }?.castTyped()
+     * }
+     * ```
+     *
+     * [T] is a phantom parameter: it carries the owning type for call-site inference and is not used
+     * by the serialization machinery.
      */
     interface TypedChild<T> : Child
 }
