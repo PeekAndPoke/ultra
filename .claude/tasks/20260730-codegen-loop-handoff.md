@@ -154,12 +154,10 @@ In order:
       so the stream's payload type is **not on the route at all**. What an SSE member returns
       (`AsyncGenerator<T>`? a typed `sseStream` wrapper? how is `T` even declared?) has to be settled
       by the maintainer before anything is written. `runtime/sse.ts` exists and is verified.
-- [ ] **`TsSdkGenerateCliCommand`** — clikt, `sdk:ts:generate`, `--out --dry-run --check --verbose`.
-      `--check` is not optional. Template:
-      `funktor/auth/src/jvmMain/kotlin/cli/AuthGenerateJwtSigningSecretCliCommand.kt`.
-- [ ] **`funktorCodegen()` kontainer module** — `dynamic(TsSdkBuilder::class)` deliberately; do NOT add
-      it to the all-in-one `Funktor` module.
-- [ ] **`instance(codecConfig)` in `Funktor_Rest`** — the ONE authorized change to that module.
+- [x] **DONE `51f2bd7e`** — `TsSdkGenerateCliCommand`, `funktorCodegen()`, and the one authorized
+      `instance(codecConfig)` line in `Funktor_Rest`. `FunktorCodegenWiringSpec` proves the
+      registrations RESOLVE, not merely compile — a module definition type-checks whether or not its
+      dependencies can be satisfied.
 
 **Rules specific to this phase:**
 
@@ -188,6 +186,27 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 ---
 
 ## Note to next loop
+
+## ITERATION 5 DONE 2026-07-30 — CLI + kontainer module landed (`51f2bd7e`)
+
+**Phase 2 is COMPLETE except `Sse`.** Everything in §3 is checked off but that one box, and it is a
+DECISION, not work — see the box for what has to be settled. The maintainer has the question.
+
+**Baseline:** `:ultra:codegen:check` 220, `:funktor:codegen:check` 30, `:funktor:rest:jvmTest` 102,
+0 failures, 10 ts-verify fixtures, compile sweep clean, at `51f2bd7e`.
+
+**What this iteration found:** a module definition TYPE-CHECKS whether or not its dependencies can be
+satisfied. A missing `SlumberConfig`, an unmatched constructor parameter or a wrong scope surfaces
+only when something asks the container — for a CLI command that is the moment an operator runs it.
+`FunktorCodegenWiringSpec` resolves the graph and drives generation end to end through it.
+
+**AND I WALKED INTO A DOCUMENTED TRAP.** My mutation-test script backed files up by `basename`, and
+BOTH modules have an `index_jvm.kt` — so restoring one wrote the other's content, and three mutants
+"died" from a broken `funktor/rest` file rather than from their own mutation. This is verbatim the
+collision in CLAUDE.md's verification traps. **Mirror the path in backup names
+(`codegen__main__index_jvm.kt`), or back up one file at a time.** Redone; all four then died correctly.
+
+---
 
 ## ITERATION 4 DONE 2026-07-30 — request bodies landed (`22014604`)
 
