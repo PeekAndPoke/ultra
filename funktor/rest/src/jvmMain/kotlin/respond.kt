@@ -81,8 +81,6 @@ fun <T : Any?> ApplicationCall.enrichApiResponseWithInsights(response: ApiRespon
             server = server,
             status = response.status,
             durationMs = metrics?.getRequestDurationInMs(),
-            detailsUri = metrics?.getRequestDetailsUri()?.encodeUriComponent(),
-            detailsUrl = metrics?.getRequestDetailsUrl(),
         )
     )
 }

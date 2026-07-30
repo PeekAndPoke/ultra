@@ -4,17 +4,9 @@ import io.ktor.server.application.*
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
-import io.peekandpoke.funktor.insights.gui.InsightsBarTemplate
-import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
 import io.peekandpoke.ultra.log.LogAppender
 import io.peekandpoke.ultra.log.LogEvent
 import io.peekandpoke.ultra.log.LogLevel
-import io.peekandpoke.ultra.semanticui.SemanticFn
-import io.peekandpoke.ultra.semanticui.icon
-import io.peekandpoke.ultra.semanticui.semantic
-import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.pre
-import kotlinx.html.title
 
 class LogCollector : InsightsCollector {
 
@@ -41,6 +33,7 @@ class LogCollector : InsightsCollector {
         }
     }
 
+    /** VUE-REF: `reference/collectors/LogCollector.kt` */
     data class Data(
         val entries: List<Entry>,
     ) : InsightsCollectorData {
@@ -49,53 +42,13 @@ class LogCollector : InsightsCollector {
             val level: LogLevel,
             val text: String,
         )
+        override val key = KEY
 
-        override fun renderBar(template: InsightsBarTemplate) = with(template) {
-            left {
-                ui.item {
-                    title = "Logs"
-
-                    icon.list()
-
-                    +"${entries.size}"
-                }
-            }
-        }
-
-        override fun renderDetails(template: InsightsGuiTemplate) = with(template) {
-
-            menu {
-                icon.list()
-                +"Logs"
-            }
-
-            content {
-
-                if (entries.isEmpty()) {
-                    ui.message {
-                        +"No log entries"
-                    }
-                } else {
-                    entries.forEach { entry ->
-
-                        val bgColor: SemanticFn = when (entry.level) {
-                            LogLevel.ALL, LogLevel.TRACE -> semantic { this }
-                            LogLevel.DEBUG -> semantic { this }
-                            LogLevel.INFO -> semantic { positive }
-                            LogLevel.WARNING -> semantic { warning }
-                            LogLevel.ERROR, LogLevel.OFF -> semantic { error }
-                        }
-
-                        ui.bgColor().message {
-                            pre {
-                                +entry.text
-                            }
-                        }
-                    }
-                }
-            }
+        companion object {
+            const val KEY = "log"
         }
     }
+
 
     override fun finish(call: ApplicationCall): InsightsCollectorData {
 

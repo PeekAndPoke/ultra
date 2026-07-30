@@ -55,8 +55,6 @@ export const Insights = z.object({
     server: z.string(),
     status: HttpStatusCode,
     durationMs: z.number().nullable(),
-    detailsUri: z.string().nullable(),
-    detailsUrl: z.string().nullable(),
 })
 export type Insights = z.infer<typeof Insights>
 

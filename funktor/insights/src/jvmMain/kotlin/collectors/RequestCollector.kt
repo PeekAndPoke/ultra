@@ -1,17 +1,22 @@
 package io.peekandpoke.funktor.insights.collectors
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.plugins.*
-import io.ktor.server.request.*
-import io.ktor.util.*
+import io.ktor.http.HttpMethod
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.plugins.origin
+import io.ktor.server.request.host
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.port
+import io.ktor.server.request.uri
+import io.ktor.util.toMap
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
-import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import io.peekandpoke.ultra.semanticui.icon
+import io.peekandpoke.funktor.insights.HeaderLogging
 
-class RequestCollector : InsightsCollector {
+class RequestCollector(
+    private val headerLogging: HeaderLogging,
+) : InsightsCollector {
 
+    /** VUE-REF: `reference/collectors/RequestCollector.kt` */
     data class Data(
         val method: HttpMethod,
         val scheme: String,
@@ -21,36 +26,20 @@ class RequestCollector : InsightsCollector {
         val headers: Map<String, List<String>>,
         val queryParams: Map<String, List<String>>,
     ) : InsightsCollectorData {
+        override val key = KEY
 
-        val fullUrl = "$scheme://$host:$port$uri"
-
-        override fun renderDetails(template: InsightsGuiTemplate) = with(template) {
-
-            menu {
-                icon.cloud_upload_alternate()
-                +"Request"
-            }
-
-            content {
-                json(this@Data)
-            }
+        companion object {
+            const val KEY = "request"
         }
     }
 
     override fun finish(call: ApplicationCall) = Data(
-        call.request.httpMethod,
-        call.request.origin.scheme,
-        call.request.host(),
-        call.request.port(),
-        call.request.uri,
-        call.request.headers.toMap().map { (k, v) ->
-            // we prevent login the full auth token
-            if (k.lowercase() == "authorization") {
-                k to v.map { it.substring(0, 20) + "..." }
-            } else {
-                k to v
-            }
-        }.toMap(),
-        call.request.queryParameters.toMap()
+        method = call.request.httpMethod,
+        scheme = call.request.origin.scheme,
+        host = call.request.host(),
+        port = call.request.port(),
+        uri = call.request.uri,
+        headers = headerLogging.applyTo(call.request.headers.toMap()),
+        queryParams = call.request.queryParameters.toMap(),
     )
 }

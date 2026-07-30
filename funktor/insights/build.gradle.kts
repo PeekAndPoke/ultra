@@ -66,14 +66,11 @@ kotlin {
             dependencies {
                 implementation(kotlin("reflect"))
 
-                api(Deps.Ktor.Server.html_builder)
-                api(Deps.KotlinX.wrappers_css)
 
-                api(project(":ultra:semanticui"))
 
                 api(project(":funktor:core"))
                 api(project(":funktor:cluster"))
-                api(project(":funktor:staticweb"))
+                api(project(":funktor:rest"))
             }
         }
 

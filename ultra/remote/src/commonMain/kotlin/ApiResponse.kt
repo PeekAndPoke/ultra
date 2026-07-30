@@ -25,8 +25,6 @@ data class ApiResponse<out T>(
         val server: String,
         val status: HttpStatusCode,
         val durationMs: Double?,
-        val detailsUri: String?,
-        val detailsUrl: String?,
     )
 
     @Suppress("NOTHING_TO_INLINE", "Detekt.TooManyFunctions")

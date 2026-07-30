@@ -32,15 +32,12 @@ internal class InsightsFull(
     // TODO: make injectable
     private val filter = listOf<(ApplicationCall) -> Boolean>(
         { it.request.uri.contains("favicon.ico") },
-        { it.request.uri.contains("/insights/bar") },
-        { it.request.uri.contains("/insights/details") }
+        // The insights API must not observe itself: recording a call to it writes a record whose
+        // own request/response headers describe the superuser reading insights.
+        { it.request.uri.contains("/insights") }
     )
 
     private val filename: String = "records-$date/$dateTime.json"
-
-    override fun getRequestDetailsUri(): String = filename
-
-    override fun getRequestDetailsUrl(): String = config.baseUrl.trimEnd('/') + "/" + filename
 
     override fun <T : InsightsCollector> getOrNull(cls: KClass<T>): T? = collectors.getOrNull(cls)
 
@@ -65,7 +62,7 @@ internal class InsightsFull(
                     startedNs = startedNs,
                     endedNs = endedNs,
                     collectors = entries.map {
-                        CollectorData(it::class.jvmName, mapper.convertValue(it))
+                        CollectorData(it.key, mapper.convertValue(it))
                     }
                 )
 

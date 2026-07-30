@@ -16,12 +16,6 @@ import io.peekandpoke.funktor.insights.collectors.RuntimeCollector
 import io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
 import io.peekandpoke.funktor.insights.collectors.UserCollector
 import io.peekandpoke.funktor.insights.collectors.VaultCollector
-import io.peekandpoke.funktor.insights.gui.InsightsBarWebResources
-import io.peekandpoke.funktor.insights.gui.InsightsGui
-import io.peekandpoke.funktor.insights.gui.InsightsGuiRoutes
-import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import io.peekandpoke.funktor.insights.gui.InsightsGuiWebResources
-import io.peekandpoke.funktor.insights.gui.InsightsRenderer
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
@@ -60,6 +54,9 @@ val Funktor_Insights = module {
     }
 
     dynamic(InsightsDataLoader::class)
+    // Shared by the request and response collectors. An app carrying credentials in its own header
+    // replaces this instance with one that lists it.
+    instance(HeaderLogging.defaults)
     instance(InsightsMapper())
     dynamic(InsightsRepository::class) { InsightsFileRepository() }
 
@@ -75,14 +72,4 @@ val Funktor_Insights = module {
     dynamic(LogCollector.Appender::class)
     dynamic(VaultCollector::class)
     dynamic(TemplateInsightsCollector::class)
-
-    // Insights Bar
-    dynamic(InsightsRenderer::class)
-    singleton(InsightsBarWebResources::class)
-
-    // Insights Gui
-    singleton(InsightsGuiWebResources::class)
-    singleton(InsightsGuiRoutes::class)
-    singleton(InsightsGui::class)
-    prototype(InsightsGuiTemplate::class)
 }

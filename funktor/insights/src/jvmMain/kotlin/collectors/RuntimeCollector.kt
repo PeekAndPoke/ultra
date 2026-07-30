@@ -4,18 +4,12 @@ import com.sun.management.UnixOperatingSystemMXBean
 import io.ktor.server.application.*
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
-import io.peekandpoke.funktor.insights.gui.InsightsBarTemplate
-import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import io.peekandpoke.ultra.semanticui.icon
-import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.FlowContent
-import kotlinx.html.div
-import kotlinx.html.title
 import java.lang.management.ManagementFactory
 import java.lang.management.OperatingSystemMXBean
 
 class RuntimeCollector : InsightsCollector {
 
+    /** VUE-REF: `reference/collectors/RuntimeCollector.kt` */
     data class Data(
         val jvmVersion: String,
         val maxMem: Long,
@@ -27,96 +21,13 @@ class RuntimeCollector : InsightsCollector {
         val maxFileDescriptors: Long,
         val systemProperties: Map<String, String>,
     ) : InsightsCollectorData {
+        override val key = KEY
 
-        override fun renderBar(template: InsightsBarTemplate) = with(template) {
-
-            val maxGb = "%.2f".format(maxMem / 1_000_000_000.0)
-            val reservedGb = "%.2f".format(reservedMem / 1_000_000_000.0)
-            val freeGb = "%.2f".format(freeMem / 1_000_000_000.0)
-
-            val memory = "$freeGb / $reservedGb / $maxGb GB"
-
-            left {
-
-                ui.item {
-                    title = "Number of available processors"
-                    icon.microchip()
-                    +"$cpus CPUs"
-                }
-
-                ui.item {
-                    title = "Memory usage: free / reserved / max"
-                    +memory
-                }
-            }
-        }
-
-        override fun renderDetails(template: InsightsGuiTemplate) = with(template) {
-
-            menu {
-                icon.microchip()
-                +"Runtime"
-            }
-
-            content {
-
-                stats()
-
-                ui.segment {
-                    ui.header { +"System properties" }
-
-                    ui.list {
-                        systemProperties.forEach { (k, v) ->
-                            ui.item {
-                                +"$k: $v"
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        fun FlowContent.stats() {
-            ui.horizontal.segments {
-
-                ui.center.aligned.segment {
-                    ui.header { +"JVM" }
-                    +jvmVersion
-                }
-
-                ui.center.aligned.segment {
-                    ui.header { +"Kotlin" }
-                    +kotlinVersion
-                }
-
-                ui.center.aligned.segment {
-                    ui.header { +"CPUs" }
-                    +cpus.toString()
-                }
-
-                ui.center.aligned.segment {
-                    ui.header { +"Free Heap" }
-                    +"%d MB".format(freeMem / (1024 * 1024))
-                }
-
-                ui.center.aligned.segment {
-                    ui.header { +"Reserved Heap" }
-                    +"%d MB".format(reservedMem / (1024 * 1024))
-                }
-
-                ui.center.aligned.segment {
-                    ui.header { +"Max Heap" }
-                    +"%d MB".format(maxMem / (1024 * 1024))
-                }
-
-                ui.center.aligned.segment {
-                    ui.header { +"File descriptors" }
-                    div { +"open: $openFileDescriptors" }
-                    div { +"max: $maxFileDescriptors" }
-                }
-            }
+        companion object {
+            const val KEY = "runtime"
         }
     }
+
 
     override fun finish(call: ApplicationCall): InsightsCollectorData {
 

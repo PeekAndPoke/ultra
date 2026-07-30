@@ -13,7 +13,6 @@ import io.ktor.server.webjars.*
 import io.peekandpoke.funktor.cluster.workers.launchWorkers
 import io.peekandpoke.funktor.core.lifecycle.lifeCycle
 import io.peekandpoke.funktor.demo.server.api.ApiApp
-import io.peekandpoke.funktor.insights.gui.InsightsGui
 import io.peekandpoke.funktor.logging.karango.addKarangoAppender
 import kotlinx.serialization.json.Json
 
@@ -105,11 +104,6 @@ fun Application.module() = app.module(this) { app, config, init ->
             installWwwKontainer(app, config.api.insights)
 
             staticResources(remotePath = "assets", basePackage = "assets")
-
-            // mount the insights gui when present
-            init.use(InsightsGui::class) {
-                mount()
-            }
 
             get("/") {
                 call.respondText("Hello, world!")

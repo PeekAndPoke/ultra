@@ -10,4 +10,11 @@ data class InsightsData(
     val collectors: List<CollectorData>,
 )
 
-data class CollectorData(val cls: String, val data: Map<*, *>)
+/**
+ * One collector's slice as stored on disk: its declared [key] plus the raw Jackson tree.
+ *
+ * [key] used to be the collector's JVM class name, which the loader fed to `Class.forName` — that ran
+ * static initializers of whatever a stored file named, before any type check. A declared key is looked
+ * up, never loaded.
+ */
+data class CollectorData(val key: String, val data: Map<*, *>)

@@ -6,10 +6,8 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.common.roundWithPrecision
-import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.browser.window
 import kotlinx.html.tbody
 import kotlinx.html.td
 import kotlinx.html.th
@@ -59,15 +57,11 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
                         .reversed()
                         .forEachIndexed { idx, it ->
 
-                            val insightUrl = it.detailsUrl
-
                             tr {
-                                insightUrl?.let {
-                                    onClick {
-                                        window.open(insightUrl, "_blank")?.focus()
-                                    }
-                                }
-
+                                // The row used to link to the insights details page via
+                                // ApiResponse.Insights.detailsUrl. That page was a staticweb route on the
+                                // admin host and is gone; the link returns when the Vue insights page can
+                                // be addressed by path.
                                 td { +"${idx + 1}." }
                                 td { +Date(it.ts * 1000).toISOString() }
                                 td {
@@ -83,16 +77,8 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
                                 td { +it.url }
                                 td { +(it.durationMs?.roundWithPrecision(2)?.toString() ?: "n/a") }
                                 td { +it.server }
-                                td {
-                                    insightUrl?.let {
-                                        ui.icon.button A {
-                                            target = "_blank"
-                                            href = insightUrl
-
-                                            icon.search()
-                                        }
-                                    }
-                                }
+                                // The details-link column went with ApiResponse.Insights.detailsUrl.
+                                td { }
                             }
                         }
                 }

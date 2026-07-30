@@ -1,61 +1,44 @@
 package io.peekandpoke.funktor.insights
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.peekandpoke.funktor.insights.gui.InsightsGuiData
-import io.peekandpoke.ultra.log.Log
-import kotlin.reflect.full.allSuperclasses
 
-/** Loads serialized insights data from the depot and reconstitutes collector data objects. */
+/**
+ * Reads stored insights records from the depot.
+ *
+ * Collector slices come back as the raw tree keyed by [CollectorData.key] — deliberately not
+ * reconstituted into typed objects. The previous implementation called `Class.forName(it.cls)` and only
+ * then checked the result was an [InsightsCollectorData], so reading a record ran static initializers of
+ * any class it named. Serving the raw tree removes that step rather than reordering it, and it is what
+ * the API needs anyway: the frontend parses each slice against its own generated schema.
+ */
 class InsightsDataLoader(
     private val repository: InsightsRepository,
     private val mapper: InsightsMapper,
-    private val log: Log,
 ) {
-    /**
-     * Load the gui data stored in the given [path]
-     */
-    suspend fun loadGuiData(path: String): InsightsGuiData? {
-        // get the actual file
+    /** One stored record, with its neighbours for prev/next navigation. */
+    data class Record(
+        val path: String,
+        val data: InsightsData,
+        val nextPath: String?,
+        val previousPath: String?,
+    )
+
+    /** Loads the record at [path], or null when there is no such file. */
+    suspend fun load(path: String): Record? {
         val content = repository.getContent(path) ?: return null
         val file = repository.getFile(path) ?: return null
 
-        // get all newest files
         val siblings = repository.listItems(file.parentPath).sortedByDescending { it.lastModifiedAt }
+        val idx = siblings.indexOfFirst { it.path == path }
 
-        val fileIdx = siblings.indexOfFirst { it.path == path }
-        // get the previous and next file
-        val nextFile = if (fileIdx > 0) siblings[fileIdx - 1] else null
-        val previousFile = if (fileIdx < siblings.size - 1) siblings[fileIdx + 1] else null
+        val recordString = content.getContentBytes()?.let { String(it) } ?: return null
 
-        // read file contents
-        val recordString = content.getContentBytes()?.let { String(it) } ?: ""
-        val insightsData = mapper.readValue<InsightsData>(recordString)
-
-        val collectors = insightsData.collectors
-            .mapNotNull {
-                try {
-                    val cls = Class.forName(it.cls).kotlin
-
-                    if (!cls.allSuperclasses.contains(InsightsCollectorData::class)) {
-                        return@mapNotNull null
-                    }
-
-                    return@mapNotNull mapper.convertValue(it.data, cls.java) as InsightsCollectorData
-                } catch (e: Throwable) {
-                    log.warning("Could not deserialize collector ${it.cls} in ${file.path} - ${e.message}")
-
-                    return@mapNotNull null
-                }
-            }
-
-        return InsightsGuiData(
-            ts = insightsData.ts,
-            date = insightsData.date,
-            startedNs = insightsData.startedNs,
-            endedNs = insightsData.endedNs,
-            collectors = collectors,
-            nextFile = nextFile,
-            previousFile = previousFile,
+        return Record(
+            path = path,
+            data = mapper.readValue<InsightsData>(recordString),
+            // siblings are newest-first, so the NEXT record in time is the PREVIOUS index
+            nextPath = if (idx > 0) siblings[idx - 1].path else null,
+            previousPath = if (idx in 0 until siblings.size - 1) siblings[idx + 1].path else null,
         )
     }
 }
