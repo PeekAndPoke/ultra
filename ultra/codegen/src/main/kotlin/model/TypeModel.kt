@@ -15,7 +15,24 @@ data class TypeModel(
     val unresolved: List<Unresolved>,
     /** Types reachable as a Kotlin `Long`, which loses precision above 2^53 once JSON-parsed. */
     val longValued: List<Reached>,
+    /**
+     * Positions where no type could be determined, so `unknown` would be emitted.
+     *
+     * Separate from [unresolved] because there is no [TypeId] to report — the failure is that a
+     * container's element type, or a property's type, is not knowable at all. A non-empty list fails
+     * validation: an `unknown` that nobody asked for is the Dart generator's silent `dynamic`, which is
+     * the defect this module exists to remove. The deliberate way to get `unknown` is `claims.opaque`,
+     * which is reported in the run summary.
+     */
+    val undetermined: List<Undetermined>,
 ) {
+    /** A position whose type could not be determined at all. */
+    data class Undetermined(
+        /** How the position was reached, e.g. `InsightsApi.get -> Report.rows -> *`. */
+        val path: List<String>,
+        val reason: String,
+    )
+
     /** A type the walker reached but could not turn into a declaration. */
     data class Unresolved(
         val id: TypeId,

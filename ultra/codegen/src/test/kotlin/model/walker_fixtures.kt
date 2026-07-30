@@ -77,6 +77,25 @@ sealed class FxEvent {
     data class Deleted(val at: String) : FxEvent()
 }
 
+//  Positions whose type cannot be determined  //////////////////////////////////////////////////////
+
+/** A star projection: the element type is genuinely absent, not merely unresolved. */
+data class FxStarList(val rows: List<*>)
+
+/** The same for a map value. */
+data class FxStarMap(val meta: Map<String, *>)
+
+/**
+ * `Any` carries no static shape at all — Slumber serializes whatever the runtime value is, so nothing
+ * about the wire follows from the declaration.
+ */
+data class FxHoldsAny(val payload: Any)
+
+/** A subclass that FIXES its type arguments, so the property type carries none of its own. */
+class FxRawHeaders : HashMap<String, String>()
+
+data class FxHoldsRawHeaders(val headers: FxRawHeaders)
+
 //  A RECURSIVE polymorphic hierarchy  //////////////////////////////////////////////////////////////
 
 /**
@@ -285,4 +304,11 @@ data class FxGenericHolder(
 data class FxTwoInstantiations(
     val a: FxBox<FxSpeaker>,
     val b: FxBox<FxStatus>,
+)
+
+/** Three undeterminable positions in one type, to pin that the walk reports all of them. */
+data class FxManyUndetermined(
+    val a: List<*>,
+    val b: Map<String, *>,
+    val c: Any,
 )

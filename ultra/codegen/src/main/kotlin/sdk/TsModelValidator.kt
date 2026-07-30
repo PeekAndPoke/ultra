@@ -77,6 +77,7 @@ class TsModelValidator(
     fun validate(model: TypeModel): Report {
         val problems = buildList {
             addAll(unresolvedProblems(model))
+            addAll(undeterminedProblems(model))
             addAll(nameCollisionProblems(model))
             addAll(danglingReferenceProblems(model))
             addAll(missingSchemaProblems(model))
@@ -89,6 +90,24 @@ class TsModelValidator(
         }
 
         return Report(problems = problems, advisories = advisories)
+    }
+
+    /**
+     * Positions where no type could be determined, so `unknown` would be emitted silently.
+     *
+     * A blocking problem, not an advisory. `unknown` accepts anything, so a schema carrying one has
+     * quietly stopped validating that field — which is precisely the Dart generator's `dynamic`
+     * fallback, the defect this module was built to remove. `claims.opaque` remains the deliberate,
+     * reported way to ask for `unknown`.
+     */
+    private fun undeterminedProblems(model: TypeModel): List<Problem> = model.undetermined.map {
+        Problem(
+            subject = it.path.lastOrNull() ?: "<root>",
+            detail = it.reason,
+            path = it.path,
+            fix = "use a concrete type here, or claim it explicitly — claims.opaque<T>(reason = ...) " +
+                    "if 'unknown' really is the intent",
+        )
     }
 
     /** Types the walker could not classify at all. */

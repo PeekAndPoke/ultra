@@ -33,6 +33,7 @@ class TypeWalker(
     private val usedClaims = LinkedHashMap<String, TsTypeClaim>()
     private val unresolved = mutableListOf<TypeModel.Unresolved>()
     private val longValued = mutableListOf<TypeModel.Reached>()
+    private val undetermined = mutableListOf<TypeModel.Undetermined>()
     private val seen = mutableSetOf<TypeId>()
     private val queue = ArrayDeque<Pending>()
 
@@ -54,7 +55,20 @@ class TypeWalker(
             usedClaims = usedClaims.toMap(),
             unresolved = unresolved.toList(),
             longValued = longValued.toList(),
+            undetermined = undetermined.toList(),
         )
+    }
+
+    /**
+     * Records a position whose type could not be determined and returns `unknown` for it.
+     *
+     * Returning rather than throwing keeps the walk going, so one run reports EVERY such position
+     * instead of the first — the same reason validation collects problems rather than failing fast.
+     */
+    private fun undeterminable(path: List<String>, reason: String): TsTypeRef {
+        undetermined.add(TypeModel.Undetermined(path = path, reason = reason))
+
+        return TsTypeRef.TsUnknown
     }
 
     /** Enqueues [id] for declaration unless it is already known. */
@@ -72,7 +86,10 @@ class TypeWalker(
      */
     private fun resolveRef(type: KType, path: List<String>): TsTypeRef {
         val cls = type.classifier as? KClass<*>
-            ?: return TsTypeRef.TsUnknown
+            ?: return undeterminable(
+                path = path,
+                reason = "type parameter '$type' was never reified, so its shape is not knowable",
+            )
 
         val nullable = type.isMarkedNullable
 
@@ -109,7 +126,12 @@ class TypeWalker(
         }
 
         when (cls) {
-            Any::class -> return TsTypeRef.TsUnknown
+            // Slumber writes whatever the RUNTIME value happens to be, so nothing about the wire
+            // shape follows from the declared type. Loud, with `claims.opaque<Any>()` as the opt-in.
+            Any::class -> return undeterminable(
+                path = path,
+                reason = "'Any' carries no static shape — Slumber serializes the runtime value",
+            )
 
             String::class, Char::class -> return TsTypeRef.TsString
 
@@ -130,7 +152,12 @@ class TypeWalker(
         if (cls.isMapLike()) {
             val value = type.arguments.getOrNull(1)?.type
             return TsTypeRef.RecordOf(
-                value = value?.let { resolveRef(it, path + "*") } ?: TsTypeRef.TsUnknown
+                value = value?.let { resolveRef(it, path + "*") }
+                    ?: undeterminable(
+                        path = path + "*",
+                        reason = "map value type is not knowable — a star projection, or a subclass " +
+                                "that fixes its type arguments",
+                    )
             )
         }
 
@@ -140,7 +167,12 @@ class TypeWalker(
             val item = cls.primitiveArrayElementType() ?: type.arguments.getOrNull(0)?.type
 
             return TsTypeRef.ArrayOf(
-                item = item?.let { resolveRef(it, path + "*") } ?: TsTypeRef.TsUnknown
+                item = item?.let { resolveRef(it, path + "*") }
+                    ?: undeterminable(
+                        path = path + "*",
+                        reason = "element type is not knowable — a star projection, or a subclass " +
+                                "that fixes its type arguments",
+                    )
             )
         }
 
@@ -222,7 +254,10 @@ class TypeWalker(
             name = TsNames.of(id),
             target = underlying
                 ?.let { resolveRef(it, path + "value") }
-                ?: TsTypeRef.TsUnknown,
+                ?: undeterminable(
+                    path = path + "value",
+                    reason = "value class has no readable constructor property to alias",
+                ),
         )
     }
 

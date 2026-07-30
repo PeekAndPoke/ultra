@@ -4,8 +4,10 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.peekandpoke.ultra.codegen.model.FxHoldsAny
 import io.peekandpoke.ultra.codegen.model.FxHoldsInterface
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
+import io.peekandpoke.ultra.codegen.model.FxStarList
 import io.peekandpoke.ultra.codegen.model.FxTalk
 import io.peekandpoke.ultra.codegen.model.FxTalkId
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
@@ -25,6 +27,41 @@ class TsModelValidatorSpec : FreeSpec() {
         TypeWalker(claims).walk(listOf(TypeWalker.Root(type, "root")))
 
     init {
+        "an undeterminable position is a BLOCKING problem, not an advisory" - {
+
+            "a star projection fails validation with an actionable message" {
+                val report = TsModelValidator(SlumberConfig.default).validate(walk(typeOf<FxStarList>()))
+
+                report.ok shouldBe false
+
+                withClue("`unknown` accepts anything, so the field silently stops being validated") {
+                    report.format() shouldContain "not knowable"
+                    report.format() shouldContain "claims.opaque"
+                }
+
+                withClue("the trail is what makes it actionable") {
+                    report.format() shouldContain "root -> rows -> *"
+                }
+            }
+
+            "claims.opaque remains the deliberate way to ask for unknown" {
+                val claims = TsTypeClaims().apply {
+                    scopeFor("t").opaque<FxHoldsAny>(reason = "genuinely dynamic")
+                }
+
+                val report = TsModelValidator(SlumberConfig.default)
+                    .validate(walk(typeOf<FxHoldsAny>(), claims))
+
+                withClue("an escape hatch that cannot be reached is not an escape hatch") {
+                    report.ok shouldBe true
+                }
+
+                withClue("and it is still reported, unlike the silent degradation it replaces") {
+                    report.advisories.map { it.detail }.first() shouldContain "opaque"
+                }
+            }
+        }
+
         "the custom-codec check — the reason this phase exists" - {
 
             "an UNCLAIMED type with a custom Slumber codec fails validation" {

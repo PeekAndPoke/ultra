@@ -5,8 +5,10 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -215,6 +217,55 @@ class TypeWalkerSpec : FreeSpec() {
                 model.declFor(FxEvent.Deleted::class.createBareType())
                     .shouldBeInstanceOf<TsTypeDecl.Obj>()
                     .discriminator.shouldNotBeNull().literal shouldBe "deleted"
+            }
+        }
+
+        "undeterminable positions" - {
+
+            // These used to emit `unknown` in silence. `unknown` accepts anything, so the field simply
+            // stopped being validated — the Dart generator's `dynamic` fallback, which is the defect
+            // this module exists to remove.
+
+            "a star-projected list element is recorded, not silently unknown" {
+                val model = walkOf(typeOf<FxStarList>())
+
+                model.undetermined.map { it.reason }.first() shouldContain "not knowable"
+
+                withClue("the trail must point at the position, not just the owning type") {
+                    model.undetermined.first().path shouldContainExactly listOf("root", "rows", "*")
+                }
+            }
+
+            "a star-projected map value is recorded" {
+                walkOf(typeOf<FxStarMap>()).undetermined.first().path shouldContainExactly
+                        listOf("root", "meta", "*")
+            }
+
+            "an Any-typed property is recorded" {
+                val model = walkOf(typeOf<FxHoldsAny>())
+
+                model.undetermined.first().reason shouldContain "carries no static shape"
+                model.undetermined.first().path shouldContainExactly listOf("root", "payload")
+            }
+
+            "a subclass that fixes its type arguments is recorded" {
+                withClue("the property type carries no arguments of its own, so the value type is lost") {
+                    walkOf(typeOf<FxHoldsRawHeaders>()).undetermined.shouldNotBeEmpty()
+                }
+            }
+
+            "an ordinary model records nothing" {
+                withClue("this must not fire for well-typed code, or it is just noise") {
+                    walkOf(typeOf<FxTalk>()).undetermined shouldContainExactly emptyList()
+                }
+            }
+
+            "the walk continues, so ONE run reports every bad position" {
+                val model = walkOf(typeOf<FxManyUndetermined>())
+
+                withClue("failing at the first would make this an N-run game of whack-a-mole") {
+                    model.undetermined.size shouldBe 3
+                }
             }
         }
 
