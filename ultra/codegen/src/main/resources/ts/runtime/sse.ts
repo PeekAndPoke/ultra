@@ -47,15 +47,31 @@ export interface SseEvent {
 export class SseError extends Error {
     readonly status: number
     readonly statusText: string
-    readonly body: string
+    /** Size of the response body in characters. */
+    readonly bodyLength: number
+    /**
+     * The raw body — **only when `SdkConfig.debug` is set**, otherwise `undefined`.
+     *
+     * Same rule as `ApiProtocolError`: errors escape the application into Sentry and console logs,
+     * and Sentry serialises an Error's own enumerable properties. A failed stream response is
+     * commonly a proxy error page naming internal hosts, or an auth error echoing a token.
+     */
+    readonly body?: string
 
-    constructor(status: number, statusText: string, body: string) {
-        super(`SSE request failed: ${status} ${statusText}`)
+    constructor(status: number, statusText: string, bodyLength: number, body?: string) {
+        super(
+            `SSE request failed: ${status} ${statusText} (${bodyLength} characters). ` +
+                `Body withheld; set debug: true on SdkConfig to include it.`,
+        )
 
         this.name = 'SseError'
         this.status = status
         this.statusText = statusText
-        this.body = body
+        this.bodyLength = bodyLength
+
+        if (body !== undefined) {
+            this.body = body
+        }
     }
 }
 
@@ -192,7 +208,9 @@ export function stream(
 ): AsyncGenerator<SseEvent> {
     return sseStream(
         buildUrl(config.baseUrl, pattern, params.path ?? {}, params.query ?? {}),
-        options,
+        // The config's flag governs both paths, so a caller does not have to remember it twice; an
+        // explicit per-call `debug` still wins.
+        { debug: config.debug, ...options },
     )
 }
 
@@ -204,6 +222,8 @@ export interface SseOptions {
     signal?: AbortSignal
     /** The `fetch` to use — inject one to test. */
     fetchImpl?: typeof fetch
+    /** Attach the raw body to a thrown [SseError]. Off by default; see `SdkConfig.debug`. */
+    debug?: boolean
 }
 
 /**
@@ -232,7 +252,9 @@ export async function* sseStream(url: string, options: SseOptions = {}): AsyncGe
     })
 
     if (!response.ok || response.body === null) {
-        throw new SseError(response.status, response.statusText, await response.text())
+        const text = await response.text()
+
+        throw new SseError(response.status, response.statusText, text.length, options.debug ? text : undefined)
     }
 
     const reader = response.body.getReader()

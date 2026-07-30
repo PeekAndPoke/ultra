@@ -250,6 +250,76 @@ async function checkRequest(report: Report): Promise<void> {
         report(failed === 'ApiProtocolError', 'request: throws ApiProtocolError when the payload is stale')
     }
 
+    // 5b. DATA PROTECTION. An error escapes the application — a global handler passes it to Sentry or
+    //     console.error, and Sentry serialises an Error's own enumerable properties. The stale-SDK
+    //     path fires on an ordinary successful response, so a retained body is real user data leaving
+    //     the origin. These checks assert the payload is NOT reachable, by any of the routes a
+    //     reporter would take.
+    {
+        const secret = 'ada.lovelace@example.com'
+
+        const { transport } = stub(200, envelope(`{"name":"Ada","bio":{"email":"${secret}"}}`))
+
+        let caught: ApiProtocolError | undefined
+
+        try {
+            await request({ baseUrl: 'http://x', transport }, 'GET', '/api/x', FxSpeaker)
+        } catch (e) {
+            caught = e as ApiProtocolError
+        }
+
+        report(caught?.name === 'ApiProtocolError', 'privacy: a stale payload still throws')
+
+        report(caught?.body === undefined, 'privacy: the raw body is NOT retained by default')
+
+        report(
+            caught !== undefined && !caught.message.includes(secret),
+            'privacy: the message does not quote the payload',
+        )
+
+        // The route a reporter actually takes. JSON.stringify over an Error walks own enumerable
+        // properties, which is exactly what Sentry does.
+        report(
+            caught !== undefined && !JSON.stringify({ ...caught }).includes(secret),
+            'privacy: serialising the error for a reporter does not carry the payload',
+        )
+
+        // ...while still saying enough to identify the drift.
+        report(
+            caught?.issues.some((issue) => issue.includes('bio')) === true,
+            'privacy: the drifted FIELD is still named, which is what diagnoses a stale SDK',
+            caught?.issues.join(' | '),
+        )
+
+        report(caught?.bodyLength !== undefined && caught.bodyLength > 0, 'privacy: the body size is kept')
+    }
+
+    // 5c. ...and the opt-out works, so a developer can still reproduce locally.
+    {
+        const secret = 'grace.hopper@example.com'
+
+        const { transport } = stub(200, envelope(`{"name":"Grace","bio":{"email":"${secret}"}}`))
+
+        const failed = await rejectedAsync(() =>
+            request({ baseUrl: 'http://x', transport, debug: true }, 'GET', '/api/x', FxSpeaker),
+        )
+
+        report(failed === 'ApiProtocolError', 'privacy: debug mode still throws the same error')
+
+        let caught: ApiProtocolError | undefined
+
+        try {
+            await request({ baseUrl: 'http://x', transport, debug: true }, 'GET', '/api/x', FxSpeaker)
+        } catch (e) {
+            caught = e as ApiProtocolError
+        }
+
+        report(
+            caught?.body?.includes(secret) === true,
+            'privacy: debug: true DOES attach the body, so the flag is not decorative',
+        )
+    }
+
     // 6. unwrap: throws on non-2xx, and keeps the envelope reachable on the error.
     {
         const notFound = { status: { value: 404, description: 'Not Found' }, data: null }

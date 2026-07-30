@@ -24,6 +24,19 @@ export interface SdkConfig {
     readonly baseUrl: string
     /** Where requests are sent. */
     readonly transport: HttpTransport
+    /**
+     * Attach raw response bodies to thrown errors. **Off by default, and never turn it on in
+     * production.**
+     *
+     * Errors escape the application: a global handler hands them to Sentry or `console.error`, and
+     * Sentry serialises an Error's own enumerable properties. A response body is real user data — the
+     * error that reports a stale SDK fires on an ordinary successful response — so carrying it would
+     * export that data to a third party without anyone writing code to send it.
+     *
+     * The default diagnostics name the FIELDS that drifted without their values, which is what
+     * identifies a stale SDK. This flag is for reproducing a problem locally.
+     */
+    readonly debug?: boolean
 }
 
 /** Builds an [SdkConfig] with the `fetch` transport. */
@@ -54,14 +67,37 @@ export interface RequestOptions {
 export class ApiProtocolError extends Error {
     /** HTTP status of the offending response. */
     readonly status: number
-    /** The raw body, truncated for the message but kept whole here. */
-    readonly body: string
+    /** Size of the response body in characters. Enough to tell "empty" from "an HTML error page". */
+    readonly bodyLength: number
+    /**
+     * Where the payload failed the generated schema — field paths and issue codes, never values.
+     *
+     * This is what identifies a stale SDK: `data.members.0.email` tells you exactly which field
+     * moved. Empty when the body was not JSON at all.
+     */
+    readonly issues: readonly string[]
+    /**
+     * The raw body — **only when `SdkConfig.debug` is set**, otherwise `undefined`.
+     *
+     * Withheld by default because errors leave the application. A global handler passes them to
+     * Sentry or `console.error`, and Sentry serialises an Error's own enumerable properties, so a
+     * retained body is exported to a third party. This error's most common cause is a stale SDK,
+     * which fires on a perfectly ordinary response full of real user data.
+     */
+    readonly body?: string
 
-    constructor(message: string, status: number, body: string) {
+    constructor(message: string, status: number, bodyLength: number, issues: readonly string[], body?: string) {
         super(message)
         this.name = 'ApiProtocolError'
         this.status = status
-        this.body = body
+        this.bodyLength = bodyLength
+        this.issues = issues
+
+        // Assigned CONDITIONALLY, not set to undefined: an own property named `body` would still be
+        // serialised by some reporters, and `undefined` round-trips as `null` through JSON.
+        if (body !== undefined) {
+            this.body = body
+        }
     }
 }
 
@@ -115,23 +151,41 @@ export async function request<T>(
         parsed = JSON.parse(response.body)
     } catch {
         throw new ApiProtocolError(
-            `${method} ${pattern} answered ${response.status} with a body that is not JSON: ` +
-                `${excerpt(response.body)}`,
+            `${method} ${pattern} answered ${response.status} with a body that is not JSON ` +
+                `(${response.body.length} characters). A proxy error page is the usual cause; its ` +
+                `text is withheld because it commonly names internal hosts. Set debug: true on ` +
+                `SdkConfig to include it.`,
             response.status,
-            response.body,
+            response.body.length,
+            [],
+            config.debug ? response.body : undefined,
         )
     }
 
     const result = apiResponse(data).safeParse(parsed)
 
     if (!result.success) {
+        // Paths and CODES, not `issue.message`.
+        //
+        // MEASURED, not assumed (zod 4.4.3, 2026-07-31): zod messages describe the EXPECTATION and
+        // never quote the received value — literal, enum, invalid_type, discriminator and size issues
+        // were all checked and none leaked. So using `issue.message` would be safe TODAY. Path plus
+        // code is preferred anyway for two reasons that do not depend on that: it is structural
+        // rather than human prose, so it survives a zod upgrade changing the wording, and it keeps
+        // the guarantee independent of a library decision this code does not control.
+        const issues = result.error.issues.map(
+            (issue) => `${issue.path.join('.') || '(root)'} (${issue.code})`,
+        )
+
         throw new ApiProtocolError(
             `${method} ${pattern} answered ${response.status} with a payload that does not match the ` +
-                `generated schema — the SDK is probably stale. ${result.error.issues
-                    .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-                    .join('; ')}`,
+                `generated schema — the SDK is probably stale. Fields: ${issues.join('; ')}. ` +
+                `Response body withheld (${response.body.length} characters); set debug: true on ` +
+                `SdkConfig to include it.`,
             response.status,
-            response.body,
+            response.body.length,
+            issues,
+            config.debug ? response.body : undefined,
         )
     }
 
@@ -151,11 +205,4 @@ export function unwrap<T>(response: ApiResponse<T>): T | null {
     }
 
     return response.data
-}
-
-/** First 200 characters of [body], for an error message that stays readable. */
-function excerpt(body: string): string {
-    const trimmed = body.trim()
-
-    return trimmed.length > 200 ? `${trimmed.slice(0, 200)}…` : trimmed
 }
