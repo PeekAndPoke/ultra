@@ -70,6 +70,29 @@ ts-verify can **execute** generated clients rather than only type-check them. Th
 `allowImportingTsExtensions: true` in the consuming app's tsconfig — which requires `noEmit`, which a
 Vite app sets anyway, and which is exactly what the planned `requires(...)` check reports.
 
+### 4. URL parameters are typed precisely where provable, refused otherwise (2026-07-30)
+
+Path and query parameters go through funktor's `OutgoingConverter`, which turns **every** value into a
+String (`funktor/core/src/jvmMain/kotlin/broker/OutgoingConverter.kt:29`). So the TypeScript type of a
+parameter is its **wire** type, not its Kotlin type — `EventParam(val id: Stored<Event>)` is
+`{ id: string }` on the wire, because the converter writes the entity's id.
+
+Decision: map the types whose wire form is provable — `String`, the numeric types, `Boolean`, enums,
+and value classes over those — and **refuse anything else, naming the parameter and its type**. Chosen
+over emitting `string` for whatever `OutgoingConverter.canHandle` accepts, and over typing everything
+as `UrlParam`. Consistent with the rest of the module: wrong-and-loud, never wrong-and-quiet.
+
+**Consequence, and it is not optional: entity-binding params do not work until a param-claim
+mechanism exists.** `Stored<T>` is the common case and the demo uses it on nearly every detail route.
+Sketch, to be designed properly rather than assumed:
+
+- A URL-parameter type is a DIFFERENT axis from a body-shape claim. `MpInstant` claims an object shape
+  for JSON, but as a URL parameter it is a string. So this is either a new optional field on
+  `TsTypeClaim` (`urlParam: "string" | "number" | "boolean"`) or its own registry.
+- One registry is preferable — one conflict-detection path, one "claimed twice" message.
+- `Stored<T>` is claimed by class, so one claim covers every instantiation.
+- Who claims it is a funktor-side question (`funktor:rest`, or a vault contributor).
+
 ## Spec
 
 - [x] **DONE `e924ac53`** — emitted relative imports carry `.ts`; the `dated` fixture imports a runtime

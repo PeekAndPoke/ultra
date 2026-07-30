@@ -121,11 +121,46 @@ Suggested order:
 - [ ] `readArrayElements` duplicated verbatim in `ultra/slumber`. Cosmetic, but it is battle-tested
       code; same rule as above.
 
-### 3. Then: Phase 2 / the codegen additions
+### 3. Phase 2 — `funktor/codegen`. IN PROGRESS, first slice landed 2026-07-30
 
-Pick whichever is more streamlined at the time. Phase 2 = `funktor/codegen`
-(`RestApiTsContributor` + `sdk:ts:generate` CLI), built **profile-shaped** from day one (see §2.1).
-Its prerequisite is the codec-config work, now authorized.
+Task file: `.claude/tasks/20260730-funktor-codegen-rest-contributor.md`. **Read its "Decisions taken
+with the maintainer" section before touching any of this** — four decisions are settled there and each
+one touches every emitted file.
+
+Landed (`57a749b5`, `b9669ae8`, `e924ac53`): the module, `TsClientEmitter`/`TsClientSpec` on the ultra
+side, `RestApiTsContributor` (profile-shaped), `runtime/client.ts`, `TypeModel.rootRefs`, and a
+ts-verify fixture that **executes** a generated client.
+
+In order:
+
+- [ ] **`WithParams` routes.** Params are typed by their WIRE form, precisely where provable
+      (`String`, numerics, `Boolean`, enums, value classes over those) and **refused by name
+      otherwise** — maintainer decision, see §4 of the task file. Path vs query split comes from
+      `TypedRoute.parsedUriParams`; URL building must match `TypedRouteRenderer`
+      (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`). `runtime/http.ts`'s
+      `buildUrl` is already written against it — **do not reinvent, and there is no `UriParamBuilder`.**
+- [ ] **Param-claim mechanism.** Blocks the demo: `Stored<T>` entity params are refused without it.
+      A URL-param type is a different axis from a body-shape claim — design it, do not assume the
+      sketch in the task file is right.
+- [ ] **`WithBody` / `WithBodyAndParams`.** Root `bodyType` as well; the body reaches `request` via
+      `options.body`, already implemented and verified in `runtime/client.ts`.
+- [ ] **`Sse`.** `responseType` is `TypeRef<Unit>`, so the stream payload is NOT on the route — decide
+      what an SSE member should even return before writing it. `runtime/sse.ts` exists.
+- [ ] **`TsSdkGenerateCliCommand`** — clikt, `sdk:ts:generate`, `--out --dry-run --check --verbose`.
+      `--check` is not optional. Template:
+      `funktor/auth/src/jvmMain/kotlin/cli/AuthGenerateJwtSigningSecretCliCommand.kt`.
+- [ ] **`funktorCodegen()` kontainer module** — `dynamic(TsSdkBuilder::class)` deliberately; do NOT add
+      it to the all-in-one `Funktor` module.
+- [ ] **`instance(codecConfig)` in `Funktor_Rest`** — the ONE authorized change to that module.
+
+**Rules specific to this phase:**
+
+- Every change to emitted text needs a **ts-verify fixture**, and the mutant must be run against the
+  reverted code. Emitting prototype methods instead of arrow class fields produces NO tsc error and
+  dies only on execution — that is the standard to hold.
+- Root labels must stay qualified (`funktor:rest:<feature>:<group>:<member>`), or two contributors
+  silently swap types.
+- A route's `responseType` is the **ENVELOPE**. Unwrap it. This was a real bug, found by a fixture.
 
 ## STOP conditions — end the loop when any is true
 
@@ -141,7 +176,31 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-## LOOP STOPPED 2026-07-30 ~03:50 — stop condition met
+## READY TO RESUME 2026-07-30 — Phase 2 slice 1 landed, decisions settled
+
+**Start at §3.** All four cross-cutting decisions are settled with the maintainer and written down in
+`.claude/tasks/20260730-funktor-codegen-rest-contributor.md`; read that section first, then take the
+next unchecked §3 item.
+
+**Baseline:** `:ultra:codegen:check` 215 tests, `:funktor:codegen:check` 11 tests, 0 failures,
+10 ts-verify fixtures, compile sweep clean, at `57a749b5`.
+
+**Two bugs this slice found, both by fixtures and neither by reading the code twice:**
+
+- A route's `responseType` is the ENVELOPE (`ApiResponse<List<Talk>>`). Rooting it walks the
+  hand-written envelope into `models.ts` and makes `request` wrap it twice — every parse would fail.
+- The new duplicate-root-label check fired on real code the moment it existed: both helpers in
+  `TsSdkBuilderSpec` labelled their root `"root"`.
+
+**A shared tree is not a private one.** Another agent works in `ultra/log`, `ultra/i18n`, `tooling/`
+and `buildSrc`. Their in-flight i18n move broke `buildSrc` for a while, which fails EVERY gradle task —
+if the build is red in a module this task never touched, check `git status` before debugging. And
+**never stage a file just because it is "yours"**: an uncommitted change in this task's own plan doc
+turned out to be theirs and got committed by mistake in `47ece09c`.
+
+---
+
+## Previous run: LOOP STOPPED 2026-07-30 ~03:50 — stop condition met
 
 **Every remaining backlog item needs a maintainer decision** (see §2, each one annotated with the
 specific question). That is the first stop condition. The loop ended deliberately, not because it ran
