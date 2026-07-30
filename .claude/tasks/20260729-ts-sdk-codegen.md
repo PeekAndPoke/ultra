@@ -1026,9 +1026,25 @@ was written down, not because anyone checked it. A cited line number is not a ve
 | `resource()` used ultra:codegen's classloader | `sdk/TsSdkOutput.kt`, `sdk/TsSdkBuilder.kt` | scope now carries the contributor's loader |
 | Unresolved KDoc ref, 12 FQN sites | `model/TypeModel.kt` + 4 test files | repo style rules |
 
-**These fixes have NO regression tests yet** — the suite (120 green) proves nothing broke, not that any
-fix works. Writing a failing-before/passing-after test per fix, then mutation-testing each, is the
-first task of the next session. Until then treat every row above as unverified.
+**All of the above are now regression-tested and mutation-tested** (2026-07-30, commits `ef5eba72`,
+`2623a08d`, `3339e2ca`, `a5182d35`, `b44b7549`, `ceef31b0`). 136 tests green, 7 ts-verify fixtures,
+compile sweep green.
+
+**Two of the six fixes turned out to be wrong or incomplete, and writing the tests is what found it:**
+
+- **`TypeId` nullability was half-done.** `canonicalKey` was fixed but `TsNames.of` was not, so the two
+  now-distinct declarations competed for one const named `FxBoxString`. Found by asserting the three
+  properties SEPARATELY — only the name assertion was red.
+- **The root-parent hop was over-applied.** Copying `createParentSlumberer` literally moved BOTH the
+  discriminator and the children to the root. The discriminator belongs there (it is what the server
+  writes); the children do not, because a field typed as an intermediate sealed class cannot hold the
+  root's other children, and widening emitted declarations for unreachable types. Found by a mutant
+  that SURVIVED — which meant the fix was wrong, not that a test was missing.
+
+Method note worth keeping: for anything that changes emitted TEXT, add a ts-verify fixture and run
+`:ultra:codegen:tsVerify` against the REVERTED code. That turned two "the string looks right" claims
+into "a real compiler rejects the alternative" — an unterminated string literal for the escaping, and
+TS2448 for the recursive alias.
 
 ### Confirmed, NOT yet fixed — tracked
 

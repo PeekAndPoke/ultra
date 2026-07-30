@@ -32,9 +32,10 @@ grep the section you need. The Vue follow-on is `20260730-frontend-sdk-vue-contr
 
 ## Backlog — in order
 
-### 1. Regression tests for fixes already applied (NOTHING ELSE UNTIL THIS IS DONE)
+### 1. Regression tests for fixes already applied — ✅ COMPLETE 2026-07-30
 
-These landed in the review round with **no tests**. Each needs a test that fails without the fix.
+All six done and mutation-tested. **Two of the six review fixes were wrong or incomplete** (items 2
+and 4); writing the tests is what found that.
 
 - [x] **DONE `ef5eba72`** — `tsStringLiteral` / `tsPropertyName`. `TsLiteralsSpec` (round-trip property
       through a strict JS decoder), `FxQuoted` fixture, and the fixture wired into ts-verify so `tsc`
@@ -64,9 +65,11 @@ These landed in the review round with **no tests**. Each needs a test that fails
       the general "no const referenced before declaration" invariant extended with this shape (it kills
       the mutant on its own), and an `idHolder` ts-verify fixture. Confirmed by execution that the
       eager form is TS2448 in real `tsc`, not just a different emitted string.
-- [ ] `resource()` contributor classloader — fixture must be loader-observable, else it passes either
-      way. Load the contributor via a child `URLClassLoader` whose resources ultra:codegen cannot see.
-      This also fixes the false clue at `sdk/ThirdPartyContributorSpec.kt:128`.
+- [x] **DONE `ceef31b0`** — `resource()` contributor classloader. Needed a custom `ClassLoader` that
+      both serves resources from a temp dir off the suite's classpath AND redefines the contributor
+      class from its bytes, so `contributor::class.java.classLoader` really is it. The test asserts its
+      own precondition (the suite's loader must NOT see the resource), else the isolation could rot and
+      the test would silently go back to proving nothing. Mutation-tested 2/2.
 
 ### 2. Confirmed findings not yet fixed — by severity
 
@@ -124,25 +127,25 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 5 (2026-07-30, ~02:30).** Backlog §1 items 1–5 done (`ef5eba72`, `2623a08d`, `3339e2ca`,
-`a5182d35`, `b44b7549`). 135 tests green (was 120 at review end), 7 ts-verify fixtures. Tree clean for
-`ultra/codegen`.
+**Iteration 6 (2026-07-30, ~02:40). BACKLOG §1 IS COMPLETE.** All six review-round fixes now carry
+regression tests, every one mutation-verified (`ef5eba72`, `2623a08d`, `3339e2ca`, `a5182d35`,
+`b44b7549`, `ceef31b0`). 136 tests green (was 120 at review end), 7 ts-verify fixtures. Compile sweep
+green. Tree clean for `ultra/codegen`.
 
-**Two of the five review-round fixes verified so far were wrong or incomplete** (items 2 and 4). That
-is the expectation, not the surprise. Assert each property separately, and when a mutant survives,
-first ask whether the FIX is wrong before adding an assertion to kill it.
+**Two of the six review fixes were wrong or incomplete**, both found by writing the test rather than by
+re-reading the code. Carry these habits into §2:
 
-**ONE §1 ITEM LEFT — and it is the one most likely to be wrong**, because its current test passes
-BECAUSE of the old bug. Do not accept a green run as evidence there; the fixture has to be genuinely
-loader-isolated or the test proves nothing either way.
+- Assert each property SEPARATELY. A combined assertion passes on the strongest one and hides the rest.
+- When a mutant SURVIVES, first ask whether the FIX is wrong. It is not automatically a missing test.
+- For anything that changes emitted TEXT, add a ts-verify fixture and run `:ultra:codegen:tsVerify`
+  against the REVERTED code. Twice this turned "the string looks right" into "a real compiler rejects
+  the alternative" — an unterminated literal for escaping, TS2448 for the recursive alias.
+- A test that cannot fail is worse than no test. Assert the PRECONDITION that makes it discriminating
+  (the classloader test now checks the suite's loader genuinely cannot see the resource).
 
-Two findings from iterations 3 and 4 are logged at the top of §2, both marked with their evidence
-level. Neither has been reproduced. Reproduce before fixing.
-
-**Pattern worth repeating:** for anything that changes emitted TEXT, add a ts-verify fixture and then
-run `:ultra:codegen:tsVerify` alone against the REVERTED code. Twice now that turned "the string looks
-right" into "a real compiler rejects the alternative" — escaping (unterminated literal) and alias
-recursion (TS2448).
+Two findings from iterations 3 and 4 sit at the top of §2, both labelled with their evidence level.
+Neither has been reproduced. **Reproduce before fixing** — one is in `ultra/slumber`, battle-tested
+code that needs its own task and review rather than a drive-by change.
 
 Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding; see the Review record.
 
@@ -150,20 +153,19 @@ Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding
 `.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
 `.idea/compiler.xml` is modified in the tree and is NOT ours to commit — leave it.
 
-**Next action:** backlog §1 item 6 — `resource()` contributor classloader, the LAST §1 item.
+**Next action:** start backlog §2, first item — the two NEW findings at the top, in order.
 
-The trap: `ThirdPartyContributorSpec` currently loads `money.ts` from
-`ultra/codegen/src/test/resources/`, i.e. from ultra:codegen's OWN loader — the very loader the old
-buggy code used. So it passes with or without the fix and proves nothing. A green run is not evidence.
+1. **Reproduce the `appendUnion` schema-vs-type finding** (iteration 3). Try a claim whose `tsName`
+   differs from its `schema` on a polymorphic VARIANT. If it cannot be constructed, say so and delete
+   the entry rather than leaving a speculative item. If it can, fix with `schemaNameOf` in schema
+   position.
+2. **Reproduce the `ultra/slumber` round-trip finding** (iteration 4) with an actual
+   slumber-then-awake of a value typed as an intermediate sealed class. If it reproduces, STOP and
+   write a separate task file — that is battle-tested code, out of scope here, and it needs its own
+   review round.
 
-To make it observable, the contributor class must be loaded through a classloader whose resources
-ultra:codegen's loader cannot see. Sketch: write a `.ts` to a temp dir, build a
-`URLClassLoader(arrayOf(tempDir.toURI().toURL()), null)` — note the **null parent**, so it does not
-delegate — load a contributor class through it, and assert `resource()` finds the file. Verify the
-test FAILS with `scopeFor(name)` (no loader argument) before believing it.
-
-If that proves impractical inside one Gradle test JVM, say so in the note and move to §2 rather than
-leaving a test that cannot fail — the current one is worse than none, because it claims coverage.
+Then continue down §2 by severity, starting with `slumberConfig` (authorized: parity check on by
+default plus a named test entry point).
 
 ### Working notes that paid off (keep using)
 
