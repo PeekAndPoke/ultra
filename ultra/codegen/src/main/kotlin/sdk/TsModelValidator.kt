@@ -122,19 +122,35 @@ class TsModelValidator(
     }
 
     /** Two distinct Kotlin types that would generate the same TypeScript name. */
-    private fun nameCollisionProblems(model: TypeModel): List<Problem> =
-        model.decls.values
-            .groupBy { it.name }
+    private fun nameCollisionProblems(model: TypeModel): List<Problem> {
+        val declared: List<Pair<String, String>> =
+            model.decls.values.map { it.name to it.id.key }
+
+        // Claims land in the SAME module scope: `models.ts` emits `import { tsName, schema } from ...`
+        // beside its own `export const`. So a declaration named `MpInstant` alongside the datetime
+        // claim is TS2440, "import declaration conflicts with local declaration" — reported by nothing
+        // until this check knew about claims. Only claims with an `importFrom` bring a name into scope;
+        // the rest are inline expressions. Mirrors `TsModelEmitter.appendImports`.
+        val imported: List<Pair<String, String>> = model.usedClaims.values
+            .filter { !it.opaque && it.importFrom != null }
+            .flatMap { claim ->
+                listOfNotNull(claim.tsName, claim.schema)
+                    .distinct()
+                    .map { name -> name to "claimed by '${claim.claimedBy}' (${claim.qualifiedName})" }
+            }
+
+        return (declared + imported)
+            .groupBy({ it.first }, { it.second })
             .filterValues { it.size > 1 }
-            .map { (name, colliding) ->
+            .map { (name, sources) ->
                 Problem(
                     subject = name,
-                    detail = "TypeScript name collision between: " +
-                            colliding.joinToString(", ") { it.id.key },
+                    detail = "TypeScript name collision between: " + sources.joinToString(", "),
                     path = emptyList(),
                     fix = "claim one of them with an explicit distinct tsName",
                 )
             }
+    }
 
     /** A reference pointing at a type that is neither declared nor claimed. */
     private fun danglingReferenceProblems(model: TypeModel): List<Problem> {

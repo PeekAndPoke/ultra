@@ -10,9 +10,15 @@ import io.peekandpoke.ultra.codegen.model.FxSpeaker
 import io.peekandpoke.ultra.codegen.model.FxStarList
 import io.peekandpoke.ultra.codegen.model.FxTalk
 import io.peekandpoke.ultra.codegen.model.FxTalkId
+import io.peekandpoke.ultra.codegen.model.TsProp
+import io.peekandpoke.ultra.codegen.model.TsTypeClaim
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
+import io.peekandpoke.ultra.codegen.model.TsTypeDecl
+import io.peekandpoke.ultra.codegen.model.TsTypeRef
+import io.peekandpoke.ultra.codegen.model.TypeId
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
+import io.peekandpoke.ultra.codegen.model.other.FxHoldsBothSpeakers
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import kotlin.reflect.KType
@@ -27,6 +33,116 @@ class TsModelValidatorSpec : FreeSpec() {
         TypeWalker(claims).walk(listOf(TypeWalker.Root(type, "root")))
 
     init {
+        "dangling references" - {
+
+            // Not reachable through the walker by design — it is an internal invariant. Constructing
+            // the model by hand is the only way to pin the guard, and the guard is worth having because
+            // an unnoticed dangling ref renders as the literal string `unknown` in the output.
+
+            fun modelReferencing(missing: TypeId): TypeModel {
+                val owner = TypeId.of(typeOf<FxTalk>())
+
+                return TypeModel(
+                    decls = mapOf(
+                        owner to TsTypeDecl.Obj(
+                            id = owner,
+                            name = "FxTalk",
+                            props = listOf(TsProp(name = "orphan", type = TsTypeRef.Named(missing))),
+                        )
+                    ),
+                    usedClaims = emptyMap(),
+                    unresolved = emptyList(),
+                    longValued = emptyList(),
+                    undetermined = emptyList(),
+                )
+            }
+
+            "a reference to something neither declared nor claimed is a problem" {
+                val report = TsModelValidator(SlumberConfig.default)
+                    .validate(modelReferencing(TypeId.of(typeOf<FxSpeaker>())))
+
+                report.ok shouldBe false
+
+                withClue("it is a generator bug, and the message should say so rather than blame the user") {
+                    report.format() shouldContain "walker invariant"
+                }
+            }
+
+            "the same reference is fine once a claim covers it" {
+                val missing = TypeId.of(typeOf<FxSpeaker>())
+
+                val claimed = modelReferencing(missing).copy(
+                    usedClaims = mapOf(
+                        FxSpeaker::class.qualifiedName!! to TsTypeClaim(
+                            qualifiedName = FxSpeaker::class.qualifiedName!!,
+                            tsName = "Speaker",
+                            importFrom = "./runtime/speaker",
+                            schema = "Speaker",
+                            opaque = false,
+                            reason = "",
+                            claimedBy = "acme",
+                        )
+                    )
+                )
+
+                TsModelValidator(SlumberConfig.default).validate(claimed).ok shouldBe true
+            }
+        }
+
+        "name collisions" - {
+
+            // Both of these checks had ZERO tests before 2026-07-30, so the behaviour being extended
+            // here was entirely unpinned.
+
+            "two same-named classes from different packages collide" {
+                val report = TsModelValidator(SlumberConfig.default)
+                    .validate(walk(typeOf<FxHoldsBothSpeakers>()))
+
+                withClue("TS names are built from simple names, so the packages do not disambiguate") {
+                    report.ok shouldBe false
+                    report.format() shouldContain "FxSpeaker"
+                    report.format() shouldContain "collision"
+                }
+            }
+
+            "a declaration colliding with a CLAIMED name is caught" {
+                // The claim is imported into the same module scope models.ts declares into, so this is
+                // TS2440 in the generated file. Nothing reported it before the check knew about claims.
+                val claims = TsTypeClaims().apply {
+                    scopeFor("acme").map<FxTalkId>(
+                        tsName = "FxSpeaker",
+                        importFrom = "./runtime/acme",
+                        schema = "FxSpeaker",
+                    )
+                }
+
+                val report = TsModelValidator(SlumberConfig.default)
+                    .validate(walk(typeOf<FxTalk>(), claims))
+
+                report.ok shouldBe false
+
+                withClue("the message must name the contributor, or nobody knows who to blame") {
+                    report.format() shouldContain "acme"
+                }
+            }
+
+            "an ordinary model has no collisions" {
+                withClue("this must not fire for well-formed input, or it is just noise") {
+                    TsModelValidator(SlumberConfig.default).validate(walk(typeOf<FxTalk>())).ok shouldBe true
+                }
+            }
+
+            "a claim WITHOUT an importFrom brings no name into scope, so it cannot collide" {
+                // An inline expression such as `z.unknown()` is not a module-scope binding.
+                val claims = TsTypeClaims().apply {
+                    scopeFor("acme").map<FxTalkId>(tsName = "FxSpeaker", schema = "z.string()")
+                }
+
+                TsModelValidator(SlumberConfig.default)
+                    .validate(walk(typeOf<FxTalk>(), claims)).ok shouldBe true
+            }
+        }
+
         "an undeterminable position is a BLOCKING problem, not an advisory" - {
 
             "a star projection fails validation with an actionable message" {
