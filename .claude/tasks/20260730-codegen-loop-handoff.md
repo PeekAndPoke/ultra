@@ -90,8 +90,10 @@ Suggested order:
       channel, all five sites recorded, promoted to a BLOCKING problem. `Any` included deliberately.
       `undeterminable()` returns rather than throws so one run reports every bad position.
       `claims.opaque` stays the loud escape hatch. Mutation-tested 2/2.
-- [ ] Name-collision check must include claimed `tsName`s (and `nameCollisionProblems` /
-      `danglingReferenceProblems` have ZERO tests — add them)
+- [x] **DONE `d605b996`** — collision check now counts claimed names (only those with an `importFrom`,
+      mirroring `appendImports`). Both previously-untested validator checks are now pinned, including
+      `danglingReferenceProblems` via a hand-built `TypeModel`. New `model/other` fixture package for
+      the cross-package name clash. Mutation-tested 4/4.
 - [ ] `KotlinxJsonTsContributor` drift test — 5 claims, standing rule, currently unprotected
 - [ ] Tautological assertion `ts/TsModelEmitterSpec.kt:62` + neighbours that pass when absent
 - [ ] `MpDateTimeFieldParitySpec:108` compares the contributor against a copy of itself
@@ -122,16 +124,12 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 9 (2026-07-30, ~03:10).** §1 complete; §2 four items done. 147 tests green, 7 ts-verify
-fixtures. Tree clean for `ultra/codegen`.
+**Iteration 10 (2026-07-30, ~03:20).** §1 complete; §2 five items done, seven left. 153 tests green,
+7 ts-verify fixtures. Tree clean for `ultra/codegen`.
 
 §2 so far: `appendUnion` type-vs-schema (`56292476`), the `ultra/slumber` round-trip finding reproduced
-and handed off to its own task, `slumberConfig` now mandatory (`53b68126`), and the walker's silent
-`unknown` degradation now a hard failure (`efe2b6ad`).
-
-The design call in iteration 9 was taken as pre-committed: **fail, do not advise.** It broke nothing —
-no existing fixture reached any of the five positions — so the decision cost nothing and matches the
-locked "hard error on unmapped types". Reversible if a real app trips over it.
+and handed to its own task, `slumberConfig` mandatory (`53b68126`), walker `unknown` degradation now a
+hard failure (`efe2b6ad`), collision check counts claimed names (`d605b996`).
 
 Running tally: **three fixes were wrong, incomplete or over-applied, and three assertions passed for
 the WRONG reason** — all six caught by mutation, none by review or re-reading.
@@ -146,15 +144,16 @@ the WRONG reason** — all six caught by mutation, none by review or re-reading.
 - **FAILING REPEATEDLY: read the test count from `TEST-*.xml` BEFORE writing the commit message.** Two
   amends so far for a wrong number.
 
-**Next action:** §2, the name-collision check must include claimed `tsName`s. An app type named
-`MpInstant` reachable alongside `MpDateTimeTsContributor` emits BOTH
-`import { MpInstant } from './runtime/datetime'` AND `export const MpInstant = z.object({...})` in one
-file — TS2440, reported by nothing.
+**Next action:** §2, `KotlinxJsonTsContributor` drift test — five claims with NO parity test, which
+violates this plan's own standing rule ("claims are trusted, never verified; the only defence is a test
+that slumbers a real value"). `MpDateTimeFieldParitySpec` is the template.
 
-Note `nameCollisionProblems` and `danglingReferenceProblems` currently have **ZERO tests** (grep
-`collision|dangling` under `src/test` — no hits), so write those first: the existing behaviour is
-unpinned, and a change to it would go unnoticed. Add a ts-verify fixture too if the collision is
-reproducible end to end — `tsc` reports TS2440 directly, which is stronger than asserting the message.
+Slumber a real `JsonObject`, `JsonArray`, `JsonPrimitive` (string, number, bool), `JsonNull` and a
+nested `JsonElement` through `Codec.default`, and assert the result matches what each claim asserts.
+The one most likely to be WRONG is `JsonObject` → `Record<string, unknown>`: its shape is whatever
+`JsonUtil.unwrap` produces, and nothing pins that it flattens NESTED elements rather than leaving
+`JsonElement`s in the map. Check that specifically — a claim being wrong is exactly the failure this
+rule exists for, and two of six datetime claims were wrong when first written.
 
 ### Working notes that paid off (keep using)
 
