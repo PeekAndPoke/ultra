@@ -10,6 +10,7 @@ import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxHoldsClaimed
 import io.peekandpoke.ultra.codegen.model.FxMutualA
 import io.peekandpoke.ultra.codegen.model.FxNode
+import io.peekandpoke.ultra.codegen.model.FxPartlyClaimed
 import io.peekandpoke.ultra.codegen.model.FxQuoted
 import io.peekandpoke.ultra.codegen.model.FxResult
 import io.peekandpoke.ultra.codegen.model.FxShape
@@ -70,6 +71,33 @@ class TsModelEmitterSpec : FreeSpec() {
                 // A raw `'` inside a literal is what breaks the file; the delimiters are the only
                 // apostrophes allowed to stand alone.
                 out shouldNotContain """literal('O'Brien"""
+            }
+        }
+
+        "a claimed polymorphic child is imported and referenced by its claimed name" {
+            val claims = TsTypeClaims().apply {
+                scopeFor("test").map<FxPartlyClaimed.Custom>(
+                    tsName = "CustomVariant",
+                    importFrom = "./runtime/custom",
+                    schema = "CustomVariant",
+                )
+            }
+
+            val out = emit(typeOf<FxPartlyClaimed>(), claims)
+
+            withClue("union variants are enqueued directly, so the claim is recorded while DECLARING") {
+                out shouldContain "import { CustomVariant } from './runtime/custom'"
+            }
+
+            withClue("an unrecorded claim renders as the literal string 'unknown'") {
+                // TsRenderer.nameOf falls through decls, then usedClaims, then returns "unknown" —
+                // so a missing usedClaims entry produces a union over a type that does not exist.
+                out shouldNotContain "unknown"
+                out shouldContain "CustomVariant"
+            }
+
+            withClue("the unclaimed sibling is still declared normally") {
+                out shouldContain "export const FxPartlyClaimedPlain = z.object({"
             }
         }
 

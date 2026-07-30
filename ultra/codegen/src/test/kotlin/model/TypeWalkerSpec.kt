@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.codegen.model
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -254,6 +255,13 @@ class TypeWalkerSpec : FreeSpec() {
 
                 withClue("the unclaimed sibling must still be declared") {
                     model.declFor(FxPartlyClaimed.Plain::class.createBareType()).shouldNotBeNull()
+                }
+
+                withClue("...but it must still be RECORDED as used, or nothing imports it") {
+                    // The bug this pins: `declare` returned early for a claimed type without the
+                    // bookkeeping `resolveNonNullRef` does, and union variants never pass through
+                    // `resolveNonNullRef`. So the claim was used and yet absent from usedClaims.
+                    model.usedClaims.keys shouldContain FxPartlyClaimed.Custom::class.qualifiedName
                 }
 
                 withClue("the variant stays listed on the union — it is referenced, just not declared") {
