@@ -146,10 +146,14 @@ In order:
       **The claim list mirrors funktor's converter registry and must not outgrow it** — a claim says
       "the server can parse this back", so `FunktorUrlParamsParitySpec` derives its expectation from
       `OutgoingMpDateTimeConverter.canHandle`, never from a second list.
-- [ ] **`WithBody` / `WithBodyAndParams`.** Root `bodyType` as well; the body reaches `request` via
-      `options.body`, already implemented and verified in `runtime/client.ts`.
-- [ ] **`Sse`.** `responseType` is `TypeRef<Unit>`, so the stream payload is NOT on the route — decide
-      what an SSE member should even return before writing it. `runtime/sse.ts` exists.
+- [x] **DONE `22014604` — `WithBody` / `WithBodyAndParams`.** Signature is `(params, body)`, mirroring
+      the Kotlin argument order; `params` stays required whenever the route has any. The body is used
+      in TYPE position and is ROOTED, so a request type reachable from nowhere else still gets
+      declared.
+- [ ] **`Sse` — A DECISION, NOT WORK. STOP AND ASK.** `ApiRoute.Sse.responseType` is `TypeRef<Unit>`,
+      so the stream's payload type is **not on the route at all**. What an SSE member returns
+      (`AsyncGenerator<T>`? a typed `sseStream` wrapper? how is `T` even declared?) has to be settled
+      by the maintainer before anything is written. `runtime/sse.ts` exists and is verified.
 - [ ] **`TsSdkGenerateCliCommand`** — clikt, `sdk:ts:generate`, `--out --dry-run --check --verbose`.
       `--check` is not optional. Template:
       `funktor/auth/src/jvmMain/kotlin/cli/AuthGenerateJwtSigningSecretCliCommand.kt`.
@@ -185,27 +189,33 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-## ITERATION 3 DONE 2026-07-30 — URL-param claims landed (`60a96c19`)
+## ITERATION 4 DONE 2026-07-30 — request bodies landed (`22014604`)
 
-**Next item: `WithBody` / `WithBodyAndParams`** (§3, third box). Mechanical — root `bodyType` as well,
-and pass it through `options.body`, which `runtime/client.ts` already implements and verifies. No
-maintainer decision is pending on it.
+**THE LOOP IS PAUSED HERE ON PURPOSE.** The next §3 item is `Sse`, and it is a DECISION rather than
+work: `ApiRoute.Sse.responseType` is `TypeRef<Unit>`, so the stream's payload type is not on the route
+at all. Do not invent one. Everything after it (CLI, kontainer module, the `funktor/rest` codec-config
+line) is unblocked, so **if the maintainer would rather keep moving, skip `Sse` and take the CLI.**
 
-**Then `Sse`, which IS a decision, not work.** `ApiRoute.Sse.responseType` is `TypeRef<Unit>` — the
-stream's payload type is not on the route at all, so what an SSE member should return has to be
-settled before anything is written. **Stop and ask rather than inventing one.**
+**Baseline:** `:ultra:codegen:check` 220 tests, `:funktor:codegen:check` 25 tests, 0 failures,
+10 ts-verify fixtures, compile sweep clean, at `22014604`.
 
-**Baseline:** `:ultra:codegen:check` 220 tests, `:funktor:codegen:check` 21 tests, 0 failures,
-10 ts-verify fixtures, compile sweep clean, at `60a96c19`.
+**What this iteration found — the sharpest lesson of the run so far.** Two mutants survived, and
+NEITHER meant a missing test: both meant a **fixture too weak to distinguish the mutation**.
 
-**What this iteration found:** the duplicate-claim guard on the new registry SURVIVED its mutant. The
-guard itself was copied from `TsTypeClaims` — but its TEST was not, so last-wins passed everything.
-**When you copy a pattern, copy its spec in the same breath**; the pattern is the part that looks
-done.
+- The body type was also a response type, so "don't import body types" changed nothing.
+- For a plain object, `renderer.type` and `renderer.schema` return the SAME string, so
+  "emit the schema instead of the type" was a literal no-op.
 
-**From iteration 2, still the sharpest rule here:** a green positive check proves less than it looks.
-Every ts-verify check passed while the emitter marked every parameter optional, because the harness
-only ever CALLED members correctly. `@ts-expect-error` is the negative side.
+One fixture change killed both: a body that is a LIST of a type reachable ONLY as a body. **When a
+mutant survives, ask whether the fixture can even express the difference before writing a new test.**
+
+**Standing rules from earlier iterations, still the two that pay:**
+
+- A green POSITIVE check proves less than it looks — every ts-verify check passed while the emitter
+  marked every parameter optional, because the harness only ever CALLED members correctly.
+  `@ts-expect-error` is the negative side (6 sites now; tsc reports TS2578 when one stops erroring).
+- When you copy a pattern, copy its SPEC in the same breath. The duplicate-claim guard was copied
+  from `TsTypeClaims` without its test, so last-wins passed everything.
 
 **Two bugs this slice found, both by fixtures and neither by reading the code twice:**
 
