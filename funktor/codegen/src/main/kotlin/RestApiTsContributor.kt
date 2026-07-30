@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.docs
+import io.peekandpoke.ultra.codegen.model.TsUrlParamClaims
 import io.peekandpoke.ultra.codegen.sdk.TsSdkContributor
 import io.peekandpoke.ultra.codegen.sdk.TsSdkEmitContext
 import io.peekandpoke.ultra.codegen.sdk.TsSdkRoots
@@ -69,16 +70,28 @@ class RestApiTsContributor(
     )
 
     /**
-     * The selection, computed once and shared by both phases.
-     *
      * `contribute` and `emit` MUST agree on the route set — a root that no member renders is dead
      * weight in `models.ts`, and a member whose root was never contributed renders against a type the
-     * walk never validated. Deriving both from one lazy value makes disagreement impossible, rather
-     * than relying on two traversals staying in step.
+     * walk never validated. Computing it once and reading it twice makes disagreement impossible,
+     * rather than relying on two traversals staying in step.
      */
-    private val selection: List<SelectedClient> by lazy { select() }
+    private var selected: List<SelectedClient>? = null
+
+    /**
+     * The selection, computed in [contribute] and reused by [emit].
+     *
+     * Not a plain `lazy` because it needs the URL-parameter claims, which only arrive with the
+     * contribute phase. `TsSdkBuilder` always runs [contribute] before [emit], so this is set by then.
+     */
+    private val selection: List<SelectedClient>
+        get() = selected ?: error(
+            "RestApiTsContributor.emit ran without contribute. The phases are ordered by TsSdkBuilder, " +
+                    "so this means the contributor was driven by something else."
+        )
 
     override fun contribute(roots: TsSdkRoots) {
+        selected = select(roots.urlParamClaims)
+
         selection.forEach { client ->
             client.groups.forEach { group ->
                 group.endpoints.forEach { endpoint ->
@@ -128,9 +141,9 @@ class RestApiTsContributor(
     )
 
     /** Walks the features, applying [include] and rejecting anything not yet supported. */
-    private fun select(): List<SelectedClient> = features.value.mapNotNull { feature ->
+    private fun select(urlParams: TsUrlParamClaims): List<SelectedClient> = features.value.mapNotNull { feature ->
         val groups = feature.getRouteGroups().mapNotNull { group ->
-            val endpoints = group.all.filter(include).map { route -> selectedOf(feature, group, route) }
+            val endpoints = group.all.filter(include).map { route -> selectedOf(feature, group, route, urlParams) }
 
             val duplicates = endpoints.groupBy { it.member }.filterValues { it.size > 1 }.keys
 
@@ -162,7 +175,12 @@ class RestApiTsContributor(
         }
     }
 
-    private fun selectedOf(feature: ApiFeature, group: ApiRoutes, route: ApiRoute<*>): Selected {
+    private fun selectedOf(
+        feature: ApiFeature,
+        group: ApiRoutes,
+        route: ApiRoute<*>,
+        urlParams: TsUrlParamClaims,
+    ): Selected {
         val member = TsClientNames.endpointMember(route)
 
         // `WithBody`, `WithBodyAndParams` and `Sse` are not implemented yet. They are REJECTED rather
@@ -176,7 +194,7 @@ class RestApiTsContributor(
                     "are implemented. See .claude/tasks/20260730-funktor-codegen-rest-contributor.md."
         }
 
-        val (pathParams, queryParams) = paramsOf(route, feature, group, member)
+        val (pathParams, queryParams) = paramsOf(route, feature, group, member, urlParams)
 
         return Selected(
             member = member,
@@ -205,6 +223,7 @@ class RestApiTsContributor(
         feature: ApiFeature,
         group: ApiRoutes,
         member: String,
+        urlParams: TsUrlParamClaims,
     ): Pair<List<TsClientSpec.Param>, List<TsClientSpec.Param>> {
         val typed = route.typedRoute
         val placeholders = typed.parsedUriParams.toSet()
@@ -216,7 +235,7 @@ class RestApiTsContributor(
                         "signature can be built for it."
             )
 
-            val tsType = UrlParamTypes.of(type) ?: error(
+            val mapped = UrlParamTypes.of(type, urlParams) ?: error(
                 "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
                         "${group.name} / $member) parameter '$name' has type '$type', which the " +
                         "generator cannot map to a URL parameter type. URL parameters travel as text, " +
@@ -228,7 +247,12 @@ class RestApiTsContributor(
 
             // Optional in TypeScript iff the Kotlin constructor parameter has a default — the same
             // rule the model emitter applies to object properties.
-            TsClientSpec.Param(name = name, tsType = tsType, optional = parameter.isOptional)
+            TsClientSpec.Param(
+                name = name,
+                tsType = mapped.tsType,
+                optional = parameter.isOptional,
+                format = mapped.format,
+            )
         }
 
         val unfilled = placeholders - params.map { it.name }.toSet()

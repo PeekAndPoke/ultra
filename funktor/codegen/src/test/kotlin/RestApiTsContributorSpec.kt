@@ -11,6 +11,7 @@ import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
+import io.peekandpoke.ultra.datetime.MpInstant
 
 class RestApiTsContributorSpec : FreeSpec() {
 
@@ -167,6 +168,53 @@ class RestApiTsContributorSpec : FreeSpec() {
 
                 withClue("an enum is the union of its constant names, needing no import") {
                     out shouldContain "'ASC' | 'DESC'"
+                }
+            }
+
+            "a CLAIMED parameter type is mapped, and its format reaches the caller's TSDoc" {
+                val result = TsSdkBuilder
+                    .forTesting(
+                        listOf(
+                            RestApiTsContributor(
+                                lazyOf(listOf(FxDemoApiFeature(listOf(FxClaimedParamApiRoutes()))))
+                            ),
+                            FunktorUrlParamsTsContributor(),
+                        )
+                    )
+                    .build()
+
+                val out = clientOf(result)
+
+                withClue("MpInstant is `string` in a URL, not the object it is in a body") {
+                    out shouldContain "readonly eventsSince = (params: { at: string; until?: string | null }) =>"
+                }
+
+                withClue("`string` says nothing about what the server can parse back") {
+                    out shouldContain "@param params.at ISO-8601 instant"
+                    out shouldContain "@param params.until ISO-8601 date, yyyy-MM-dd"
+                }
+            }
+
+            "the same type is an object in a body and a string in a URL" {
+                // The two claim registries are independent on purpose; this is the case that proves
+                // deriving one from the other would be wrong.
+                val result = TsSdkBuilder
+                    .forTesting(
+                        listOf(
+                            RestApiTsContributor(
+                                lazyOf(listOf(FxDemoApiFeature(listOf(FxClaimedParamApiRoutes()))))
+                            ),
+                            FunktorUrlParamsTsContributor(),
+                        )
+                    )
+                    .build()
+
+                val claim = claimsOf(FunktorUrlParamsTsContributor()).find(MpInstant::class)
+
+                claim?.tsType shouldBe "string"
+
+                withClue("as a URL param it is a bare string, with no import of the object type") {
+                    clientOf(result) shouldNotContain "MpInstant"
                 }
             }
 

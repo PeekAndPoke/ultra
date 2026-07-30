@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.codegen.sdk
 
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
+import io.peekandpoke.ultra.codegen.model.TsUrlParamClaims
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
 import io.peekandpoke.ultra.codegen.ts.TsModelEmitter
@@ -8,7 +9,17 @@ import io.peekandpoke.ultra.slumber.SlumberConfig
 import kotlin.reflect.KType
 
 /** Roots contributed in phase 2, to be walked into the type model. */
-class TsSdkRoots internal constructor(private val contributor: String) {
+class TsSdkRoots internal constructor(
+    private val contributor: String,
+    /**
+     * Every URL-parameter claim, from every contributor.
+     *
+     * Complete by this phase, because all of phase 1 runs first — so a contributor may consult claims
+     * it did not make itself, which is the point: the REST contributor types its parameters from
+     * claims the datetime and vault contributors registered.
+     */
+    val urlParamClaims: TsUrlParamClaims = TsUrlParamClaims(),
+) {
 
     private val roots = mutableListOf<TypeWalker.Root>()
 
@@ -93,9 +104,18 @@ class TsSdkBuilder(
 
         contributors.forEach { it.claimTypes(claims.scopeFor(it.name)) }
 
-        // Phase 2 — roots.
+        // Phase 1b — URL-parameter claims. A separate registry, because the two memberships are
+        // independent rather than two renderings of one set; see TsUrlParamClaims.
+        val urlParamClaims = TsUrlParamClaims()
+
+        contributors.forEach { it.claimUrlParams(urlParamClaims.scopeFor(it.name)) }
+
+        // Phase 2 — roots. Both claim registries are complete by now, so a contributor may consult
+        // claims another one made.
         val rootsByContributor = contributors.map { contributor ->
-            contributor.name to TsSdkRoots(contributor.name).also { contributor.contribute(it) }.collected()
+            contributor.name to TsSdkRoots(contributor.name, urlParamClaims)
+                .also { contributor.contribute(it) }
+                .collected()
         }
 
         // A label is how a contributor asks for its root's resolved reference at emit time

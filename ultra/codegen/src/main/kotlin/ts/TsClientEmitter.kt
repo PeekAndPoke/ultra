@@ -69,6 +69,14 @@ data class TsClientSpec(
         val tsType: String,
         /** True when the Kotlin constructor parameter has a default, so the caller may omit it. */
         val optional: Boolean,
+        /**
+         * How the value must be formatted, e.g. `ISO-8601 instant`.
+         *
+         * Emitted as `@param`. [tsType] is usually `string`, which says nothing about what the server
+         * can parse back — a caller passing the wrong format gets a 400, and this is the only place
+         * to warn them before they do.
+         */
+        val format: String? = null,
     )
 }
 
@@ -157,12 +165,36 @@ class TsClientEmitter(private val model: TypeModel) {
 
             group.endpoints.forEach { endpoint ->
                 nl()
-                endpoint.doc?.let { appendLine("/** ${it.oneLine()} */") }
+                appendEndpointDoc(endpoint)
                 appendEndpoint(endpoint, schemas.getValue(endpoint.member))
             }
         }
 
         appendLine("}")
+    }
+
+    /**
+     * The member's TSDoc: its description, plus a `@param` line for every parameter that declares a
+     * format.
+     *
+     * `@param` rather than a doc comment on the object-type member, so the signature stays on one
+     * line — and IDEs surface both the same way in the call tooltip.
+     */
+    private fun CodePrinter.appendEndpointDoc(endpoint: TsClientSpec.Endpoint) {
+        val formatted = endpoint.allParams.filter { it.format != null }
+
+        when {
+            endpoint.doc == null && formatted.isEmpty() -> return
+
+            formatted.isEmpty() -> appendLine("/** ${endpoint.doc!!.oneLine()} */")
+
+            else -> {
+                appendLine("/**")
+                endpoint.doc?.let { appendLine(" * ${it.oneLine()}"); appendLine(" *") }
+                formatted.forEach { appendLine(" * @param params.${it.name} ${it.format!!.oneLine()}") }
+                appendLine(" */")
+            }
+        }
     }
 
     /**

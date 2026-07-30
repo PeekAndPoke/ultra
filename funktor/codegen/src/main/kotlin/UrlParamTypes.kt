@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.codegen
 
+import io.peekandpoke.ultra.codegen.model.TsUrlParamClaims
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
@@ -23,14 +24,39 @@ import kotlin.reflect.full.withNullability
  */
 internal object UrlParamTypes {
 
-    /** The TypeScript type for a parameter of type [type], or `null` when it is not mappable. */
-    fun of(type: KType): String? {
-        val base = baseOf(type.withNullability(false)) ?: return null
+    /** A mapped parameter type, and how its text must be formatted. */
+    data class Mapped(val tsType: String, val format: String?)
 
-        return if (type.isMarkedNullable) "$base | null" else base
+    /**
+     * The TypeScript type for a parameter of type [type], or `null` when it is not mappable.
+     *
+     * [claims] covers what reflection cannot decide: `MpInstant` is `string` in a URL only because
+     * funktor registers a converter pair for it, and `Stored<T>` is the entity's id for the same
+     * reason. Neither fact is visible in the Kotlin type.
+     */
+    fun of(type: KType, claims: TsUrlParamClaims): Mapped? {
+        val notNull = type.withNullability(false)
+
+        val mapped = claimed(notNull, claims) ?: baseOf(notNull, claims)?.let { Mapped(it, null) }
+
+        return mapped?.let {
+            if (type.isMarkedNullable) it.copy(tsType = "${it.tsType} | null") else it
+        }
     }
 
-    private fun baseOf(type: KType): String? {
+    /**
+     * A claim for [type]'s class, matched by CLASS so one claim covers every instantiation.
+     *
+     * Claims are consulted BEFORE the built-in mapping, so a contributor can describe a type
+     * reflection would otherwise get wrong — a value class whose converter does not simply unwrap it,
+     * for instance.
+     */
+    private fun claimed(type: KType, claims: TsUrlParamClaims): Mapped? =
+        (type.classifier as? KClass<*>)
+            ?.let { claims.find(it) }
+            ?.let { Mapped(tsType = it.tsType, format = it.format) }
+
+    private fun baseOf(type: KType, claims: TsUrlParamClaims): String? {
         val cls = type.classifier as? KClass<*> ?: return null
 
         return when {
@@ -57,7 +83,7 @@ internal object UrlParamTypes {
                 ?.parameters
                 ?.singleOrNull()
                 ?.type
-                ?.let { of(it) }
+                ?.let { of(it, claims)?.tsType }
 
             else -> null
         }

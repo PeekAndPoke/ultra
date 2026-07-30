@@ -4,6 +4,10 @@ import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
+import io.peekandpoke.ultra.codegen.model.TsUrlParamClaims
+import io.peekandpoke.ultra.codegen.sdk.TsSdkContributor
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
 import io.peekandpoke.ultra.remote.api
@@ -130,4 +134,25 @@ class FxDemoApiFeature(private val groups: List<ApiRoutes>) : ApiFeature {
     override val name: String = "FxDemo"
     override val description: String = "A demo feature for the TypeScript generator."
     override fun getRouteGroups(): List<ApiRoutes> = groups
+}
+
+/** Runs a contributor's claim phase in isolation, returning the registry it filled. */
+fun claimsOf(contributor: TsSdkContributor): TsUrlParamClaims =
+    TsUrlParamClaims().also { contributor.claimUrlParams(it.scopeFor(contributor.name)) }
+
+/** Parameters whose wire form comes from a CLAIM rather than from reflection. */
+class FxClaimedParamApiRoutes : ApiRoutes("fx-claimed", authFloor = { public() }) {
+
+    data class Params(
+        val at: MpInstant,
+        val until: MpLocalDate? = null,
+    )
+
+    val eventsSince = TypedApiEndpoint
+        .Get(uri = "/api/fx/events/{at}", response = FxTalkModel.serializer().apiList())
+        .mount(Params::class) {
+            docs { name = "Events since a point in time" }
+                .codeGen { funcName = "eventsSince" }
+                .handle { ApiResponse.ok(emptyList()) }
+        }
 }
