@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.peekandpoke.funktor.core.kontainerOrNull
 import io.peekandpoke.funktor.core.model.InsightsConfig
+import io.peekandpoke.funktor.insights.api.InsightsApiFeature
 import io.peekandpoke.funktor.insights.collectors.AppConfigCollector
 import io.peekandpoke.funktor.insights.collectors.KontainerCollector
 import io.peekandpoke.funktor.insights.collectors.LogCollector
@@ -72,4 +73,7 @@ val Funktor_Insights = module {
     dynamic(LogCollector.Appender::class)
     dynamic(VaultCollector::class)
     dynamic(TemplateInsightsCollector::class)
+
+    // The API — superuser-gated, and the only way to reach the recorded data
+    singleton(InsightsApiFeature::class)
 }
