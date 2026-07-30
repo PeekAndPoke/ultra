@@ -219,7 +219,47 @@ Ordered by value. All of it is genuinely useful and none of it needs the maintai
 
 ### Blockers collected
 
-None yet. Append here rather than stopping.
+**B1 — the list endpoint's shape and cost.** *Parked; provisional implementation in place.*
+
+The old GUI had **no list view at all** — `siblings` existed only to compute prev/next — so this is a
+new surface with no precedent to follow. The cost problem is real: summary columns (method, url, status)
+live inside each record, so a list of N rows means opening N files. `listItems` alone gives only path,
+name, size and `lastModifiedAt`.
+
+Provisional: `InsightsDataLoader.list(limit)` walks day folders newest-first and stops once `limit`
+records are read. Bounded rather than paged, and marked provisional in the KDoc.
+
+Options:
+1. **Keep bounded-limit** (current). Simple, no cursor, no total count. Fine while records are small.
+2. **Cursor paging** on the depot path, which sorts chronologically. Needs a page-size decision and a
+   "has more" signal.
+3. **Cheap list, lazy detail** — return only path + `lastModifiedAt` and let the frontend fetch each row.
+   Fastest endpoint, but a request list without method/url/status is not usable as a table.
+4. **A summary index** written alongside each record, so listing never opens a record. Fastest to read,
+   but adds a second write path and a rebuild story for existing records.
+
+Recommendation: 1 now, 2 when the Vue table exists and its page size is known. Nothing here blocks the
+rest of the queue.
+
+### Findings that REMOVE an anticipated blocker
+
+**`AppConfigCollector.Data(val info: Any, val config: Any)` does not block this task.** The open envelope
+serves every collector slice as a raw `JsonElement`, so the collector `Data` classes never enter the
+API's type graph — Slumber is never asked to describe them, and nor is the walker. The `Any` becomes a
+problem only when someone writes that tab's **codegen contributor** and roots `AppConfigCollector.Data`
+to get a generated schema, i.e. plan steps 6–7.
+
+Two consequences worth carrying forward:
+
+- One of this task's three anticipated walls is not a wall. Do not stop for it.
+- The plan's Slumber-compat blocker table describes the *contributor* stage, not the API stage. The same
+  is true of `HttpMethod`/`HttpStatusCode` and `UserRecord`: they are inside slices, so they are opaque
+  to the API and only matter per-tab later.
+
+**`@Serializable` already enforces "no `Any`, no star projections"** — at compile time. Adding
+`val probe: Any?` to a DTO fails the build, because kotlinx has no serializer for `Any` (verified by
+mutation). The DTO criterion therefore needs no runtime test; `InsightsModelsSlumberSpec` exists to pin
+the complementary property, that the shape Slumber emits is the one a client parses back.
 
 ### Guardrails — three agents share this worktree
 
