@@ -48,8 +48,10 @@ These landed in the review round with **no tests**. Each needs a test that fails
       nullability). Mutation-tested 2/2.
       **Lesson worth carrying:** asserting the three properties SEPARATELY is what exposed this — only
       the name assertion was red. A single "two declarations exist" test would have passed and hidden it.
-- [ ] Claimed polymorphic child lands in `usedClaims` — assert the import IS emitted and the variant
-      does not render as the literal `unknown`. Run it through `TsSdkBuilder`, not `TypeWalker` alone.
+- [x] **DONE `3339e2ca`** — claimed polymorphic child in `usedClaims`. Asserted at two levels: the
+      registry entry (`TypeWalkerSpec`) and its observable consequence, the emitted import plus the
+      variant rendering by its claimed name (`TsModelEmitterSpec`). Mutation-tested; restoring the early
+      return kills both.
 - [ ] `declareUnion` root-parent hop — needs an intermediate sealed class whose companion is on the
       ROOT (`Base` has the `Polymorphic.Parent` companion, `Mid : Base()`, `A : Mid()`).
 - [ ] `appendAlias` recursion — value class on a cycle (`FxIds(val items: List<FxHolder>)` +
@@ -63,6 +65,15 @@ These landed in the review round with **no tests**. Each needs a test that fails
 See the **Review record** table in `20260729-ts-sdk-codegen.md` for the full list with file:line.
 Suggested order:
 
+- [ ] **NEW, found in iteration 3 (not from the review).** `TsModelEmitter.appendUnion` builds
+      `variants` once via `renderer.nameOf(it)` and uses that list in BOTH type position
+      (`export type X = A | B`) and schema position (`z.union([A, B])`). For a declaration those
+      coincide — the zod pattern exports a const and a type under one name — but for a CLAIM whose
+      `tsName` differs from its `schema` they do not. `JsonPrimitive` is claimed as tsName
+      `string | number | boolean | null` with a separate schema expression, so a polymorphic variant
+      claimed that way would emit `z.union([string | number | boolean | null])`, which is not valid.
+      Verified by reading; NOT yet reproduced with a test — do that first, it may be unreachable if a
+      claimed union variant cannot occur. Fix is to use `schemaNameOf` in schema position.
 - [ ] `slumberConfig` — parity check on by default + named test entry point (authorized above)
 - [ ] Walker `unknown` degradation in 5 positions → a `TypeModel` channel + advisory, fail by default
 - [ ] Name-collision check must include claimed `tsName`s (and `nameCollisionProblems` /
@@ -97,13 +108,16 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 2 (2026-07-30, ~02:05).** Backlog §1 items 1 and 2 done (`ef5eba72`, `2623a08d`).
-130 tests green (was 120 at review end), 6 ts-verify fixtures. Working tree clean for `ultra/codegen`.
+**Iteration 3 (2026-07-30, ~02:10).** Backlog §1 items 1–3 done (`ef5eba72`, `2623a08d`, `3339e2ca`).
+131 tests green (was 120 at review end), 6 ts-verify fixtures. Working tree clean for `ultra/codegen`.
 
-**Item 2 found that a review-round fix was incomplete.** Treat the other applied fixes the same way —
-assume nothing, assert each property separately. Two of the six remaining §1 items are the most likely
-to hide the same problem: the classloader one (its current test passes BECAUSE of the old bug) and the
-`usedClaims` one (the review changed `declare` but nothing checks the emitted import).
+**Item 2 found that a review-round fix was incomplete**, so keep assuming nothing about the remaining
+applied fixes and assert each property separately. Of the three §1 items left, the classloader one is
+the likeliest to hide the same problem — its current test passes BECAUSE of the old bug, so it cannot
+regression-cover the fix without a genuinely loader-isolated fixture.
+
+A new latent bug turned up in iteration 3 while writing an unrelated test; it is logged at the top of
+§2. Reproduce it before fixing — it may be unreachable.
 
 Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding; see the Review record.
 
@@ -111,10 +125,12 @@ Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding
 `.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
 `.idea/compiler.xml` is modified in the tree and is NOT ours to commit — leave it.
 
-**Next action:** backlog §1 item 3 — claimed polymorphic child lands in `usedClaims`. Run it through
-`TsSdkBuilder` (NOT `TypeWalker` alone — that is why the original defect survived). The `FxPartlyClaimed`
-fixture already exists. Assert the `import { … } from './runtime/…'` IS emitted and that the union
-variant does not render as the literal `unknown`. Expect this to need a claim with a real `importFrom`.
+**Next action:** backlog §1 item 4 — `declareUnion` root-parent hop. Needs a NEW fixture: a three-level
+sealed hierarchy where the `Polymorphic.Parent` companion sits on the ROOT (`Base`), with `Mid : Base()`
+and a concrete `A : Mid()`. Walk `typeOf<Mid>()` — walking `Base` would not discriminate, since for
+`Base` the declared class already IS the companion holder. Assert the union's `discriminatorField`
+matches the literal the child carries; before the fix the union said `_type` while the child said the
+root's override.
 
 Still nothing from §2 until §1 is fully done.
 
