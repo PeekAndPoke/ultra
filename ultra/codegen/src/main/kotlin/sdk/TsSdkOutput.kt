@@ -40,7 +40,35 @@ class TsSdkOutput {
         loader: ClassLoader = TsSdkOutput::class.java.classLoader,
     ): Scope = Scope(contributor, loader)
 
+    /**
+     * Rejects a path that is absolute or escapes the SDK root.
+     *
+     * `File(baseDir, "../../etc/x")` resolves OUTSIDE `baseDir` — verified — so without this a
+     * contributor could have `writeTo` overwrite an arbitrary file, and `--check` read one. Paths
+     * come from contributors, which are an open extension point, so this is a boundary rather than a
+     * sanity check.
+     */
+    private fun validatePath(path: String, contributor: String) {
+        val normalized = path.replace('\\', '/')
+
+        check(normalized.isNotBlank()) {
+            "Contributor '$contributor' planned a file with a blank path."
+        }
+
+        check(!normalized.startsWith("/") && !Regex("^[A-Za-z]:").containsMatchIn(normalized)) {
+            "Contributor '$contributor' planned the ABSOLUTE path '$path'. Every emitted path is " +
+                    "relative to the SDK root, which the generator owns outright."
+        }
+
+        check(normalized.split('/').none { it == ".." }) {
+            "Contributor '$contributor' planned the path '$path', which escapes the SDK root via " +
+                    "'..'. The generator writes only inside the directory it owns."
+        }
+    }
+
     private fun add(entry: Entry) {
+        validatePath(entry.path, entry.writtenBy)
+
         val existing = entries[entry.path]
 
         check(existing == null) {

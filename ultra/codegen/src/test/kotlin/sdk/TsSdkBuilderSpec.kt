@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.beInstanceOf
 import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
@@ -218,6 +219,40 @@ class TsSdkBuilderSpec : FreeSpec() {
                 thrown!!.message!! shouldContain "'shared'"
                 thrown.message!! shouldContain "alpha"
                 thrown.message!! shouldContain "beta"
+            }
+        }
+
+        "emitted paths are confined to the SDK root" - {
+
+            // `File(baseDir, "../../etc/x")` resolves OUTSIDE baseDir, so without this a contributor
+            // could have writeTo overwrite an arbitrary file and --check read one. Contributors are an
+            // open extension point, so this is a boundary rather than a sanity check.
+            listOf(
+                "../../../etc/passwd" to "..",
+                "a/../../b.ts" to "..",
+                "/etc/passwd" to "ABSOLUTE",
+                "C:/windows/x.ts" to "ABSOLUTE",
+                "..\\..\\windows\\x.ts" to "..",
+            ).forEach { (path, expected) ->
+                "rejects '$path'" {
+                    val thrown = runCatching {
+                        TsSdkOutput().scopeFor("evil").file(path, "x")
+                    }.exceptionOrNull()
+
+                    withClue("planning '$path' must fail rather than escape the root") {
+                        thrown shouldNotBe null
+                    }
+
+                    thrown!!.message!! shouldContain "evil"
+                }
+            }
+
+            "a nested path inside the root is still allowed" {
+                val out = TsSdkOutput()
+
+                out.scopeFor("ok").file("clients/nested/deep.ts", "x")
+
+                out.entries().single().path shouldBe "clients/nested/deep.ts"
             }
         }
 

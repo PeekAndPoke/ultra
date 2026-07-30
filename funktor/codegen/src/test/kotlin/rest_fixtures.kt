@@ -139,7 +139,7 @@ class FxBodyApiRoutes : ApiRoutes("fx-body", authFloor = { public() }) {
 @Serializable
 data class FxSaveTalkRequest(val title: String, val durationMinutes: Int)
 
-/** Server-sent events — the one variant still unsupported, pending a design decision. */
+/** Server-sent events. Emitted UNTYPED: the stream's payload type is not on the route. */
 class FxSseApiRoutes : ApiRoutes("fx-sse", authFloor = { public() }) {
 
     data class Params(val room: String)
@@ -157,13 +157,13 @@ class FxClashApiRoutes : ApiRoutes("fx-clash", authFloor = { public() }) {
     val a = TypedApiEndpoint
         .Get(uri = "/api/fx/a", response = FxTalkModel.serializer().api())
         .mount {
-            codeGen { funcName = "same" }.handle { ApiResponse.ok(FxTalkModel("a", "A")) }
+            codeGen { funcName = "clashingMemberXyz" }.handle { ApiResponse.ok(FxTalkModel("a", "A")) }
         }
 
     val b = TypedApiEndpoint
         .Get(uri = "/api/fx/b", response = FxTalkModel.serializer().api())
         .mount {
-            codeGen { funcName = "same" }.handle { ApiResponse.ok(FxTalkModel("b", "B")) }
+            codeGen { funcName = "clashingMemberXyz" }.handle { ApiResponse.ok(FxTalkModel("b", "B")) }
         }
 }
 
@@ -199,4 +199,60 @@ class FxWiringApiFeature : ApiFeature {
     override val name: String = "FxWiring"
     override val description: String = "Wiring check feature."
     override fun getRouteGroups(): List<ApiRoutes> = listOf(FxTalksApiRoutes())
+}
+
+/**
+ * Two GROUPS of one feature declaring the same member name, with DIFFERENT response types.
+ *
+ * Legal and real: `FunktorClusterApiFeature` returns seven groups, three of which declare
+ * `funcName = "list"`. The duplicate guard only fires within a group, so this must still emit
+ * correctly rather than give one group the other's schema.
+ */
+class FxSharedNameTalksRoutes : ApiRoutes("fx-shared-talks", authFloor = { public() }) {
+    val list = TypedApiEndpoint
+        .Get(uri = "/api/fx/shared/talks", response = FxTalkModel.serializer().apiList())
+        .mount { codeGen { funcName = "list" }.handle { ApiResponse.ok(emptyList()) } }
+}
+
+class FxSharedNameSpeakersRoutes : ApiRoutes("fx-shared-speakers", authFloor = { public() }) {
+    val list = TypedApiEndpoint
+        .Get(uri = "/api/fx/shared/speakers", response = FxSpeakerModel.serializer().api())
+        .mount { codeGen { funcName = "list" }.handle { ApiResponse.ok(FxSpeakerModel("a", null)) } }
+}
+
+/** A `funcName` that is not a TypeScript identifier — it lands in identifier position. */
+class FxHostileFuncNameRoutes : ApiRoutes("fx-hostile", authFloor = { public() }) {
+    val evil = TypedApiEndpoint
+        .Get(uri = "/api/fx/evil", response = FxTalkModel.serializer().api())
+        .mount {
+            codeGen {
+                funcName = "pwn = fetch('https://evil.test')\n    readonly listTalks"
+            }.handle { ApiResponse.ok(FxTalkModel("t", "T")) }
+        }
+}
+
+/** A parameter whose Kotlin name is not a TypeScript identifier. */
+class FxHostileParamRoutes : ApiRoutes("fx-hostile-param", authFloor = { public() }) {
+
+    data class Params(val `a b`: String)
+
+    val weird = TypedApiEndpoint
+        .Get(uri = "/api/fx/weird/{a b}", response = FxTalkModel.serializer().api())
+        .mount(Params::class) {
+            codeGen { funcName = "weird" }.handle { ApiResponse.ok(FxTalkModel("t", "T")) }
+        }
+}
+
+/** An enum whose constant names are not identifier-shaped. */
+enum class FxHostileOrder { `a' | string, x: any, z: 'b`, SANE }
+
+class FxHostileEnumRoutes : ApiRoutes("fx-hostile-enum", authFloor = { public() }) {
+
+    data class Params(val id: String, val order: FxHostileOrder = FxHostileOrder.SANE)
+
+    val listing = TypedApiEndpoint
+        .Get(uri = "/api/fx/listing/{id}", response = FxTalkModel.serializer().api())
+        .mount(Params::class) {
+            codeGen { funcName = "listing" }.handle { ApiResponse.ok(FxTalkModel("t", "T")) }
+        }
 }

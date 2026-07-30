@@ -130,10 +130,6 @@ class TsClientEmitter(private val model: TypeModel) {
     fun emit(spec: TsClientSpec): String {
         val endpoints = spec.groups.flatMap { it.endpoints }
 
-        val schemas = endpoints
-            .filter { !it.stream }
-            .associate { it.member to renderer.schema(it.responseRef!!) }
-
         // Bodies count too: their type names are referenced in the member signature, so a client with
         // a body type it never imports does not compile.
         val referenced = endpoints
@@ -164,11 +160,19 @@ class TsClientEmitter(private val model: TypeModel) {
 
             // `z.` only appears for containers (arrays, records, nullables), so a client returning
             // only declared objects must not carry an unused zod import.
-            if (schemas.values.any { it.contains("z.") }) {
+            if (endpoints.any { it.responseRef != null && renderer.schema(it.responseRef).contains("z.") }) {
                 appendLine("import { z } from 'zod'")
             }
 
-            appendLine("import { type SdkConfig, request } from ${tsStringLiteral(CLIENT_MODULE)}")
+            // `request` only when a non-stream endpoint exists: a stream-only client would otherwise
+            // carry a dead import, which fails a consuming app compiled with `noUnusedLocals` — and
+            // that app cannot edit the file.
+            val clientImports = buildList {
+                add("type SdkConfig")
+                if (endpoints.any { !it.stream }) add("request")
+            }
+
+            appendLine("import { ${clientImports.joinToString(", ")} } from ${tsStringLiteral(CLIENT_MODULE)}")
 
             // Only when a stream endpoint exists: an SDK without SSE must not carry the event-stream
             // parser, which the runtime dependency closure would otherwise pull in.
@@ -190,7 +194,7 @@ class TsClientEmitter(private val model: TypeModel) {
 
             spec.groups.forEach { group ->
                 nl()
-                appendGroup(group, schemas)
+                appendGroup(group)
             }
 
             nl()
@@ -198,7 +202,7 @@ class TsClientEmitter(private val model: TypeModel) {
         }
     }
 
-    private fun CodePrinter.appendGroup(group: TsClientSpec.Group, schemas: Map<String, String>) {
+    private fun CodePrinter.appendGroup(group: TsClientSpec.Group) {
         group.doc?.let { appendLine("/** ${it.oneLine()} */") }
 
         appendLine("export class ${group.className} {")
@@ -213,7 +217,7 @@ class TsClientEmitter(private val model: TypeModel) {
             group.endpoints.forEach { endpoint ->
                 nl()
                 appendEndpointDoc(endpoint)
-                appendEndpoint(endpoint, schemas[endpoint.member])
+                appendEndpoint(endpoint)
             }
         }
 
@@ -252,7 +256,14 @@ class TsClientEmitter(private val model: TypeModel) {
      * caller's — and split back apart in the call. Their names cannot collide: they are properties of
      * a single class.
      */
-    private fun CodePrinter.appendEndpoint(endpoint: TsClientSpec.Endpoint, schema: String?) {
+    private fun CodePrinter.appendEndpoint(endpoint: TsClientSpec.Endpoint) {
+        // Rendered HERE from the endpoint's own reference, never looked up by name. Keying schemas by
+        // member name silently gave one group another's schema whenever two groups of the same
+        // feature shared a member — `FunktorClusterApiFeature` has three groups declaring
+        // `funcName = "list"`. `z.array(X)` type-checks for any X, so tsc stayed silent and every
+        // call threw ApiProtocolError against a perfectly fresh SDK.
+        val schema = endpoint.responseRef?.let { renderer.schema(it) }
+
         val params = endpoint.allParams
 
         // `(params, body)`, mirroring the Kotlin endpoint's own argument order. `params` stays

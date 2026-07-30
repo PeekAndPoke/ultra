@@ -84,8 +84,10 @@ export type UrlParam = string | number | boolean | null | undefined
 /**
  * Builds a request URL from a route pattern.
  *
- * Mirrors `TypedRouteRenderer` (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`)
- * so this client and the Kotlin one produce the same URL for the same route:
+ * Mirrors the KOTLIN API CLIENT's URL builder — `buildUri`
+ * (`ultra/remote/src/commonMain/kotlin/helpers.kt:87`) with `UriParamBuilder`
+ * (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt:46`) — so this client and the Kotlin one
+ * produce the same URL for the same route:
  *
  * - `{name}` placeholders in [pattern] are replaced from [pathParams], percent-encoded.
  * - A query parameter whose value is `null`, `undefined` or the empty string is **omitted**, not sent
@@ -94,9 +96,17 @@ export type UrlParam = string | number | boolean | null | undefined
  * - Each query key appears at most once: funktor converts every route parameter to a single string
  *   (`OutgoingConverter.convert`), so repeated keys are not part of the protocol.
  *
- * Encoding uses `encodeURIComponent`. It leaves a handful of sub-delimiters unescaped that Kotlin's
- * `encodeURLQueryComponent(encodeFull = true)` escapes, but both decode to the same string server
- * side, so the two clients remain interchangeable.
+ * Encoding uses `encodeURIComponent`, matching `encodeUriComponent`
+ * (`ultra/common/src/commonMain/kotlin/strings_mp.kt`) character for character.
+ *
+ * **NOT `TypedRouteRenderer`**, despite what this KDoc claimed until 2026-07-30. That class is the
+ * SERVER-SIDE link renderer, and it double-encodes query values: it calls
+ * `encodeURLQueryComponent(encodeFull = true)` (`TypedRouteRenderer.kt:43`) and then hands the
+ * already-encoded string to `toUri`, which runs `URLEncoder.encode` over it again
+ * (`ultra/common/src/jvmMain/kotlin/strings.kt:33`). So `?at=2026-07-30T10:15:30Z` renders as
+ * `at=2026%252D07%252D30T10%253A15%253A30Z` there and `at=2026-07-30T10%3A15%3A30Z` here. Path
+ * parameters ARE equivalent on both sides; only the query diverges. Do not "fix" this file to match
+ * — the double-encode is the defect, tracked separately.
  *
  * @throws if [pattern] still contains an unfilled `{placeholder}` — otherwise the literal braces would
  *   be sent and surface as a puzzling 404.

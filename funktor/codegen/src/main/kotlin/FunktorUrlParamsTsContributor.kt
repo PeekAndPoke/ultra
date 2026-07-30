@@ -6,6 +6,14 @@ import io.peekandpoke.ultra.datetime.MpAbsoluteDateTime
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.vault.Storable
+import java.math.BigDecimal
+import java.math.BigInteger
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import io.peekandpoke.ultra.vault.Stored
 import kotlin.reflect.KClass
 
@@ -37,6 +45,21 @@ class FunktorUrlParamsTsContributor : TsSdkContributor {
             MpAbsoluteDateTime::class to ("string" to "ISO-8601 instant, e.g. 2026-07-30T10:15:30Z"),
             // Same file: formatted and parsed as yyyy-MM-dd.
             MpLocalDate::class to ("string" to "ISO-8601 date, yyyy-MM-dd"),
+
+            // java.time, via Incoming/OutgoingJavaTimeConverter (broker/vault/javatime.kt:19-26).
+            // Without these a perfectly legal route — `val from: LocalDate = LocalDate.MIN` — aborts
+            // the WHOLE run with "change the parameter type", for a route that is not broken.
+            ZoneId::class to ("string" to "IANA zone id, e.g. Europe/Berlin"),
+            LocalTime::class to ("string" to "ISO-8601 time, HH:mm[:ss]"),
+            Instant::class to ("string" to "ISO-8601 instant, e.g. 2026-07-30T10:15:30Z"),
+            LocalDate::class to ("string" to "ISO-8601 date, yyyy-MM-dd"),
+            LocalDateTime::class to ("string" to "ISO-8601 local date-time, yyyy-MM-ddTHH:mm[:ss]"),
+            ZonedDateTime::class to ("string" to "ISO-8601 zoned date-time"),
+
+            // BigDecimal / BigInteger, via Incoming/OutgoingPrimitiveConverter (primitive.kt:19-23).
+            // `string`, NOT `number`: a JS number cannot hold them, which is the reason they exist.
+            BigDecimal::class to ("string" to "a decimal number as text, e.g. 12.34"),
+            BigInteger::class to ("string" to "an integer as text, of any magnitude"),
         )
     }
 
@@ -54,7 +77,7 @@ class FunktorUrlParamsTsContributor : TsSdkContributor {
         //
         // NOTE the asymmetry with the datetime entries: the incoming side 404s when no repository
         // stores the entity, so a claim here promises the SHAPE is right, not that the id resolves.
-        claims.map(cls = Stored::class, tsType = "string", format = "the entity's id")
-        claims.map(cls = Storable::class, tsType = "string", format = "the entity's id")
+        claims.map(cls = Stored::class, tsType = "string", format = "the entity's _key or _id")
+        claims.map(cls = Storable::class, tsType = "string", format = "the entity's _key or _id")
     }
 }

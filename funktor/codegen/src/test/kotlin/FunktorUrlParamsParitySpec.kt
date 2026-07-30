@@ -5,6 +5,9 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter
+import io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter
+import io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter
+import io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter
 import io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter
 import io.peekandpoke.ultra.datetime.MpAbsoluteDateTime
 import io.peekandpoke.ultra.datetime.MpInstant
@@ -13,8 +16,10 @@ import io.peekandpoke.ultra.datetime.MpLocalDateTime
 import io.peekandpoke.ultra.datetime.MpLocalTime
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
+import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.Stored
 import kotlin.reflect.KClass
+import kotlin.reflect.full.createType
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -51,9 +56,16 @@ class FunktorUrlParamsParitySpec : FreeSpec() {
                 handled.isNotEmpty() shouldBe true
             }
 
+            // Driven from the claims the contributor ACTUALLY makes, not from its CLAIMED constant:
+            // `Stored` and `Storable` are claimed outside that map, so a third claim added the same
+            // way would have bypassed this guard entirely (found in review, 2026-07-30).
+            val claimedDateTime = claimsOf(FunktorUrlParamsTsContributor())
+                .all()
+                .mapNotNull { claim -> allDateTimeTypes.keys.firstOrNull { it.qualifiedName == claim.qualifiedName } }
+
             // Both directions at once. Claiming more than the converter handles ships an SDK that
             // 400s; claiming less silently refuses a parameter the server would have accepted.
-            FunktorUrlParamsTsContributor.CLAIMED.keys shouldContainExactlyInAnyOrder handled
+            claimedDateTime shouldContainExactlyInAnyOrder handled
         }
 
         "the types NOT claimed are genuinely unsupported, not merely forgotten" {
@@ -78,6 +90,32 @@ class FunktorUrlParamsParitySpec : FreeSpec() {
             val claims = claimsOf(FunktorUrlParamsTsContributor())
 
             claims.find(Stored::class)?.tsType shouldBe "string"
+        }
+
+        "every claimed type is handled by SOME registered outgoing converter" {
+            // The contributor's promise is "the server can parse this back". Checking only the Mp
+            // converter left the java.time and BigDecimal claims unguarded.
+            val converters = listOf(
+                OutgoingMpDateTimeConverter(),
+                OutgoingJavaTimeConverter(),
+                OutgoingPrimitiveConverter(),
+                OutgoingValueClassConverter(),
+                OutgoingVaultConverter(),
+            )
+
+            val vaultClaims = setOf(Stored::class.qualifiedName, Storable::class.qualifiedName)
+
+            claimsOf(FunktorUrlParamsTsContributor()).all()
+                // Vault types are generic; canHandle needs a concrete argument, covered separately.
+                .filter { it.qualifiedName !in vaultClaims }
+                .forEach { claim ->
+                    val cls = Class.forName(claim.qualifiedName).kotlin
+                    val type = cls.createType()
+
+                    withClue("${claim.qualifiedName} is claimed but no converter handles it") {
+                        converters.any { it.canHandle(type) } shouldBe true
+                    }
+                }
         }
 
         "every claim declares a format, because the TypeScript type alone says nothing" {

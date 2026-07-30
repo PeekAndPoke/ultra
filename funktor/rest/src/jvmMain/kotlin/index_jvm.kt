@@ -54,7 +54,12 @@ val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() ->
     //
     // Deliberately the config BEFORE the per-request attributes are added: those carry a Database and
     // an EntityCache, which are request-scoped and meaningless to a code generator.
-    instance(codecConfig)
+    // A COPY with a fresh Lookup, not `codecConfig` itself. `SlumberConfig.copy` retains the same
+    // `Lookup` instance, whose maps are plain `mutableMapOf` and are written by `getSlumberer` — and
+    // `TsModelValidator` calls that for every declaration in the model. Sharing it would let a
+    // generator run install uncached slumberers for every model type (disabling the response cache
+    // funktor sizes at 10% of heap, just below) and race the request threads writing the same maps.
+    instance(codecConfig.copy(lookup = SlumberConfig.Lookup()))
 
     val cacheMemory = Runtime.getRuntime().maxMemory() / 10
 

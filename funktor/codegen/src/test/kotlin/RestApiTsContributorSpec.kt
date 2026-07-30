@@ -121,6 +121,53 @@ class RestApiTsContributorSpec : FreeSpec() {
             thrown!!.message!! shouldContain "supplied any root type"
         }
 
+        "emitted identifiers and literals" - {
+
+            "two GROUPS sharing a member name each keep their own schema" {
+                // CRITICAL, review 2026-07-30. Schemas were keyed by member name across the whole
+                // client, so `associate` (last-wins) gave one group the other's schema. Real in this
+                // repo: FunktorClusterApiFeature has three groups declaring funcName = "list".
+                // `z.array(X)` type-checks for any X, so tsc stayed silent and every call threw
+                // ApiProtocolError against a fresh SDK.
+                val out = clientOf(build(listOf(FxSharedNameTalksRoutes(), FxSharedNameSpeakersRoutes())))
+
+                out shouldContain
+                        "request(this.config, 'GET', '/api/fx/shared/talks', z.array(FxTalkModel))"
+                out shouldContain
+                        "request(this.config, 'GET', '/api/fx/shared/speakers', FxSpeakerModel)"
+            }
+
+            "a funcName that is not a TypeScript identifier is refused, naming the route" {
+                // Verified against the pinned compiler: the emitted form below is a well-formed EXTRA
+                // class field that runs on construction, and tsc exits 0 — arbitrary JavaScript in a
+                // file that ships to every user's browser.
+                val thrown = runCatching { build(listOf(FxHostileFuncNameRoutes())) }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "/api/fx/evil"
+                thrown.message!! shouldContain "not a valid TypeScript identifier"
+            }
+
+            "a parameter name that is not a TypeScript identifier is refused" {
+                // Kotlin permits backticked property names, which would emit `params.a b`.
+                val thrown = runCatching { build(listOf(FxHostileParamRoutes())) }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "'a b'"
+                thrown.message!! shouldContain "identifier position"
+            }
+
+            "enum constant names are ESCAPED, so a hostile one cannot widen the union" {
+                val out = clientOf(build(listOf(FxHostileEnumRoutes())))
+
+                withClue("the quote must be escaped rather than closing the literal early") {
+                    out shouldContain "\\'"
+                }
+
+                withClue("the union must not degrade to `string`, which would accept anything") {
+                    out shouldNotContain "order?: 'a' | string"
+                }
+            }
+        }
+
         "server-sent events" - {
 
             "a stream member returns an AsyncGenerator and takes SseOptions" {
@@ -206,8 +253,8 @@ class RestApiTsContributorSpec : FreeSpec() {
 
                 models shouldContain "export const FxSaveTalkRequest"
 
-                withClue("and the client must import it, or it references an unknown name") {
-                    clientOf(result) shouldContain "FxSaveTalkRequest"
+                withClue("and the client must IMPORT it — the bare name also appears in the signature") {
+                    clientOf(result) shouldContain "import { FxSaveTalkRequest, FxTalkModel } from './models.ts'"
                 }
 
                 result.model.decls.values.map { it.name } shouldContainExactlyInAnyOrder listOf(
@@ -328,8 +375,9 @@ class RestApiTsContributorSpec : FreeSpec() {
         "two routes in one group that produce the same member are refused, naming it" {
             val thrown = runCatching { build(listOf(FxClashApiRoutes())) }.exceptionOrNull()
 
-            thrown!!.message!! shouldContain "same"
-            thrown.message!! shouldContain "funcName"
+            // The token must be ABSENT from the message template, or the assertion passes on static
+            // text: "produces the same TypeScript member name twice" already contains "same".
+            thrown!!.message!! shouldContain "clashingMemberXyz"
         }
 
         "root labels are qualified, so two features cannot collide" {

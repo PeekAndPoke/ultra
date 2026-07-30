@@ -335,7 +335,9 @@ class RestApiTsContributor(private val features: Lazy<List<ApiFeature>>) : TsSdk
   (`funktor/core/src/jvmMain/kotlin/broker/TypedRoute.kt:30`); the remaining PARAMS ctor params are query params.
 - [ ] **Match `TypedRouteRenderer` exactly** (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`)
   — null/empty omission, one value per key. Do not reinvent. (Earlier drafts of this plan named
-  `UriParamBuilder`; **no such class exists**. `runtime/http.ts`'s `buildUrl` is already written against
+  `UriParamBuilder`; **it DOES exist** (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt`) and is,
+  with `buildUri` (`ultra/remote/.../helpers.kt:87`), the correct counterpart. `runtime/http.ts`'s
+  `buildUrl` is written against
   the renderer and checked in `ts-verify/verifyRuntime.ts`.)
 - [ ] **Build it profile-shaped from day one**, even though profiles land later (see the incoming
   requirements below). `contribute` is exactly where a root predicate belongs, so take one as a
@@ -985,7 +987,8 @@ One item worth a conscious decision rather than a default:
       — `MpDateTimeFieldParitySpec` (8); envelope equivalent is `ApiResponseParitySpec` (8)
 - [x] Cross-check: query-param encoding vs `TypedRouteRenderer` — `buildUrl` in `runtime/http.ts`,
       checked in `ts-verify/verifyRuntime.ts` (omits null/empty, single key per param, encodes both
-      path and query). Note the reference is `TypedRouteRenderer`, not `UriParamBuilder` — no such
+      path and query). **CORRECTED 2026-07-30:** the reference is `UriParamBuilder` + `buildUri`, NOT
+      `TypedRouteRenderer` — the latter is a server-side link renderer that double-encodes query values. Old
       class exists.
 - [x] `tsc --noEmit` on generated output — automated as `:ultra:codegen:tsVerify`, wired into `check`
 - [x] Compile sweep after Phase 0:

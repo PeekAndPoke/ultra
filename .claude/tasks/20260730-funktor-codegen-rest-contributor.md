@@ -107,14 +107,20 @@ Sketch, to be designed properly rather than assumed:
       walks and names. See "the split" below.
 - [x] **DONE** — `RestApiTsContributor`, **profile-shaped from day one**: `include: (ApiRoute<*>) -> Boolean`
       defaulting to all routes, and a test drives it off `CodeGenHints.tags`.
-- [ ] All five `ApiRoute` variants. **Only `Plain` is implemented**; the other four are REJECTED with a
-      message naming the route, rather than silently emitting a half client.
-- [ ] Path vs query split from `TypedRoute.parsedUriParams`; URL building **matches
-      `TypedRouteRenderer`** (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`).
-      There is no `UriParamBuilder` — earlier plan drafts named one that does not exist.
-- [ ] `TsSdkGenerateCliCommand` — clikt, `sdk:ts:generate`, `--out --dry-run --check --verbose`.
-- [ ] `funktorCodegen()` kontainer module; `dynamic(TsSdkBuilder::class)` deliberately.
-- [ ] `instance(codecConfig)` added to `Funktor_Rest` — the one authorized change to that module.
+- [x] **DONE** — all five `ApiRoute` variants emit: `Plain`, `WithParams` (`d579099c`), `WithBody` /
+      `WithBodyAndParams` (`22014604`), `Sse` untyped (`2a3df280`).
+- [x] **DONE** — path vs query split from `TypedRoute.parsedUriParams`. URL building mirrors the
+      KOTLIN API CLIENT's builder.
+      **CORRECTED 2026-07-30 (review):** `UriParamBuilder` DOES exist
+      (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt`), and together with `buildUri`
+      (`ultra/remote/.../helpers.kt:87`) it is the real counterpart of `buildUrl` — the KOTLIN API
+      CLIENT's builder, not the server-side `TypedRouteRenderer`, which double-encodes query values.
+      The earlier "it does not exist" note was propagated from the plan without being checked.
+- [x] **DONE `51f2bd7e`** — `TsSdkGenerateCliCommand`, clikt, `--out --dry-run --check --verbose`.
+- [x] **DONE `51f2bd7e`** — `funktorCodegen()`; `dynamic(TsSdkBuilder::class)` deliberately.
+- [x] **DONE `51f2bd7e`** — `instance(codecConfig)` in `Funktor_Rest`, the one authorized change.
+      Hardened in review to register a COPY with a fresh `Lookup`, so a generator run cannot install
+      uncached slumberers into the request path or race its maps.
 
 ## Implementation notes
 

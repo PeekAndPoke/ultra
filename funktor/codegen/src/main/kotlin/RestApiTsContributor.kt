@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.codegen.sdk.TsSdkRoots
 import io.peekandpoke.ultra.codegen.ts.TsClientEmitter
 import io.peekandpoke.ultra.codegen.ts.TsClientSpec
 import io.peekandpoke.ultra.codegen.ts.TsRuntime
+import io.peekandpoke.ultra.codegen.ts.isBareIdentifier
 import io.peekandpoke.ultra.remote.ApiResponse
 import kotlin.reflect.KType
 
@@ -207,10 +208,6 @@ class RestApiTsContributor(
     ): Selected {
         val member = TsClientNames.endpointMember(route)
 
-        // `WithBody`, `WithBodyAndParams` and `Sse` are not implemented yet. They are REJECTED rather
-        // than skipped: silently emitting a client that is missing half its endpoints is the
-        // wrong-and-quiet failure this whole module exists to remove, and a frontend would only
-        // notice at the call site.
         val stream = route is ApiRoute.Sse<*>
 
         val (pathParams, queryParams) = paramsOf(route, feature, group, member, urlParams)
@@ -266,6 +263,16 @@ class RestApiTsContributor(
                         "signature can be built for it."
             )
 
+            // A parameter name is emitted both as an object-type member and as `params.<name>`, so
+            // it must be a bare identifier. Kotlin permits backticked property names — `val \`a b\`` —
+            // which would emit `params.a b` and fail to parse.
+            check(isBareIdentifier(name)) {
+                "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
+                        "${group.name} / $member) has parameter '$name', which is not a valid " +
+                        "TypeScript identifier. Parameter names are emitted in identifier position, " +
+                        "where nothing can be escaped."
+            }
+
             val mapped = UrlParamTypes.of(type, urlParams) ?: error(
                 "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
                         "${group.name} / $member) parameter '$name' has type '$type', which the " +
@@ -278,15 +285,43 @@ class RestApiTsContributor(
 
             // Optional in TypeScript iff the Kotlin constructor parameter has a default — the same
             // rule the model emitter applies to object properties.
+            // A PATH parameter is never optional, whatever its Kotlin default: omitting it makes
+            // `buildUrl` substitute the empty string, which REPLACES the placeholder, so the
+            // unfilled-placeholder guard never fires and the client silently requests `/api/x/`.
+            // The Kotlin default is unreachable from TypeScript anyway — it only applies server-side.
             TsClientSpec.Param(
                 name = name,
                 tsType = mapped.tsType,
-                optional = parameter.isOptional,
+                optional = parameter.isOptional && name !in placeholders,
                 format = mapped.format,
             )
         }
 
+        // A ktor tailcard renders as `{name...}` in the pattern, but `parsedUriParams` strips the
+        // suffix — so the name matches, the check below passes, and `buildUrl` then fails to replace
+        // `{name...}` and throws on EVERY call. Refuse at generation time instead.
+        val tailcards = typed.pattern.pattern
+            .let { Regex("\\{([^}]*)\\.\\.\\.}").findAll(it).map { m -> m.groupValues[1] }.toList() }
+
+        check(tailcards.isEmpty()) {
+            "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
+                    "${group.name} / $member) uses ktor tailcard placeholders " +
+                    "${tailcards.joinToString { name -> "{$name...}" }}, which the generator does not " +
+                    "support: `buildUrl` fills simple `{name}` placeholders only, so the emitted " +
+                    "client would throw on every call."
+        }
+
         val unfilled = placeholders - params.map { it.name }.toSet()
+
+        // `{csrf}` is a funktor placeholder filled from CsrfProtection by the server-side renderer,
+        // not by a PARAMS property — so it always lands in `unfilled` and the generic message below
+        // would blame a missing parameter. Name it for what it is.
+        check(!unfilled.contains("csrf")) {
+            "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
+                    "${group.name} / $member) has a {csrf} placeholder. CSRF tokens are issued by the " +
+                    "server (`CsrfProtection`), and the generated client has no way to obtain one, so " +
+                    "this route cannot be part of the SDK yet."
+        }
 
         check(unfilled.isEmpty()) {
             "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +

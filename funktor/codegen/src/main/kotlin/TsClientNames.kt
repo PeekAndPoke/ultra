@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.codegen
 
 import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.funktor.rest.docs.codeGen
+import io.peekandpoke.ultra.codegen.ts.isBareIdentifier
 
 /**
  * Derives TypeScript identifiers from the names a route graph already carries.
@@ -43,7 +44,22 @@ internal object TsClientNames {
      * quietly wrong instead.
      */
     fun endpointMember(route: ApiRoute<*>): String {
-        route.codeGen.funcName?.let { return it }
+        route.codeGen.funcName?.let { declared ->
+            // `funcName` is an unconstrained String that lands in IDENTIFIER position, where no
+            // escaping exists. Verified 2026-07-30 against the pinned compiler: a value containing a
+            // newline emits a well-formed EXTRA class field that runs on construction, and `tsc`
+            // exits 0 — so a route definition could inject arbitrary JavaScript into a file that
+            // ships to every user's browser. Refuse, the same way an unmappable parameter type is
+            // refused.
+            check(isBareIdentifier(declared)) {
+                "Route '${route.method.value} ${route.pattern.pattern}' declares " +
+                        "codeGen { funcName = \"$declared\" }, which is not a valid TypeScript " +
+                        "identifier. It is emitted in identifier position, where nothing can be " +
+                        "escaped, so it must match [A-Za-z_$][A-Za-z0-9_$]* exactly."
+            }
+
+            return declared
+        }
 
         val segments = route.pattern.pattern
             .split('/')
