@@ -3,8 +3,10 @@ package io.peekandpoke.ultra.codegen.contributors
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
@@ -12,7 +14,11 @@ import io.peekandpoke.ultra.datetime.MpLocalTime
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.builtin.datetime.mp.MpDateTimeModule
+import java.io.File
+import java.util.zip.ZipFile
 import kotlin.reflect.KType
+import kotlin.reflect.full.createType
 import kotlin.reflect.typeOf
 
 /**
@@ -27,6 +33,30 @@ import kotlin.reflect.typeOf
  * `{milliSeconds}` (it is a bare number) and omitted `MpTimezone` (a bare string) entirely.
  */
 class MpDateTimeFieldParitySpec : FreeSpec() {
+
+    /**
+     * Every top-level class name in the `ultra/datetime` artifact.
+     *
+     * Read from the artifact the tests actually run against, so a type added there shows up here
+     * without anyone editing a list.
+     */
+    private fun datetimeClassNames(): List<String> {
+        val source = File(MpInstant::class.java.protectionDomain.codeSource.location.toURI())
+
+        val entries = when {
+            source.isDirectory -> source.walkTopDown()
+                .filter { it.extension == "class" }
+                .map { it.relativeTo(source).path.replace(File.separatorChar, '/') }
+                .toList()
+
+            else -> ZipFile(source).use { zip -> zip.entries().toList().map { it.name } }
+        }
+
+        return entries
+            .filter { it.startsWith("io/peekandpoke/ultra/datetime/") && it.endsWith(".class") }
+            .filter { !it.contains('$') }
+            .map { it.removeSuffix(".class").replace('/', '.') }
+    }
 
     private val codec = Codec.default
 
@@ -105,12 +135,34 @@ class MpDateTimeFieldParitySpec : FreeSpec() {
             }
         }
 
-        "the contributor claims every Mp type that has a codec" {
+        "the contributor claims exactly the Mp types MpDateTimeModule has a codec for" {
             // If ultra/datetime gains a type with a codec and nobody claims it, generation fails with
-            // an unresolved-type error. Better to notice here.
-            MpDateTimeTsContributor.CLAIMED.keys.map { it.simpleName } shouldContainExactlyInAnyOrder listOf(
-                "MpInstant", "MpLocalDate", "MpLocalDateTime", "MpZonedDateTime", "MpLocalTime", "MpTimezone",
-            )
+            // an unresolved-type error, and this is where that should be noticed.
+            //
+            // The previous version of this test compared CLAIMED.keys against a hand-written list of
+            // the same six names, with no reference to Slumber at all — so it could not detect the
+            // thing it names. Both sides here come from reality: the candidate set is enumerated from
+            // the ultra/datetime artifact, and codec-existence is asked of the module itself.
+            //
+            // Scoped to MpDateTimeModule deliberately: that is the module this contributor mirrors.
+            val candidates = datetimeClassNames()
+                .filter { it.substringAfterLast('.').startsWith("Mp") }
+                .mapNotNull { name -> runCatching { Class.forName(name).kotlin }.getOrNull() }
+                .filter { !it.isAbstract && it.objectInstance == null }
+
+            withClue("enumeration must actually find something, or this test is vacuous") {
+                candidates.size shouldBeGreaterThan 6
+            }
+
+            val withCodec = candidates
+                .filter { cls ->
+                    runCatching {
+                        MpDateTimeModule.getSlumberer(cls.createType(nullable = true), TypedAttributes.empty)
+                    }.getOrNull() != null
+                }
+                .map { it.simpleName }
+
+            withCodec shouldContainExactlyInAnyOrder MpDateTimeTsContributor.CLAIMED.keys.map { it.simpleName }
         }
     }
 }

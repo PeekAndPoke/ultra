@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.codegen.ts
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -165,10 +166,19 @@ class TsModelEmitterSpec : FreeSpec() {
         "a sealed hierarchy emits a discriminated union after its variants" {
             val out = emit(typeOf<FxShape>())
 
+            // Presence FIRST. `indexOf` returns -1 when absent, and -1 is less than any real index, so
+            // the ordering comparisons below pass just as happily when a variant was never emitted at
+            // all. The original first line here compared a value with itself and could never fail.
+            withClue("both variants must actually be emitted") {
+                out shouldContain "export const FxShapeCircle"
+                out shouldContain "export const FxShapeSquare"
+            }
+
             withClue("variants must precede the union — a zod schema is a const, not a hoisted type") {
-                out.indexOf("export const FxShapeCircle") shouldBe out.indexOf("export const FxShapeCircle")
-                (out.indexOf("export const FxShapeCircle") < out.indexOf("export const FxShape =")) shouldBe true
-                (out.indexOf("export const FxShapeSquare") < out.indexOf("export const FxShape =")) shouldBe true
+                val union = out.indexOf("export const FxShape =")
+
+                union shouldBeGreaterThan out.indexOf("export const FxShapeCircle")
+                union shouldBeGreaterThan out.indexOf("export const FxShapeSquare")
             }
 
             out shouldContain "z.discriminatedUnion('_type', ["
