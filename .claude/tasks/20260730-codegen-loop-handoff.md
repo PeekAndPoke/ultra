@@ -60,8 +60,10 @@ These landed in the review round with **no tests**. Each needs a test that fails
       the discriminator field. Mutation-tested 2/2.
       **Lesson:** a mutant that survives is not always a missing test — here it meant the FIX was
       wrong. Check which before adding an assertion to make the mutant die.
-- [ ] `appendAlias` recursion — value class on a cycle (`FxIds(val items: List<FxHolder>)` +
-      `FxHolder(val ids: FxIds)`). Assert `z.lazy` is emitted.
+- [x] **DONE `b44b7549`** — `appendAlias` recursion. `FxIds`/`FxIdHolder` fixture; targeted assertion,
+      the general "no const referenced before declaration" invariant extended with this shape (it kills
+      the mutant on its own), and an `idHolder` ts-verify fixture. Confirmed by execution that the
+      eager form is TS2448 in real `tsc`, not just a different emitted string.
 - [ ] `resource()` contributor classloader — fixture must be loader-observable, else it passes either
       way. Load the contributor via a child `URLClassLoader` whose resources ultra:codegen cannot see.
       This also fixes the false clue at `sdk/ThirdPartyContributorSpec.kt:128`.
@@ -122,20 +124,25 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 4 (2026-07-30, ~02:20).** Backlog §1 items 1–4 done (`ef5eba72`, `2623a08d`, `3339e2ca`,
-`a5182d35`). 134 tests green (was 120 at review end), 6 ts-verify fixtures. Tree clean for
+**Iteration 5 (2026-07-30, ~02:30).** Backlog §1 items 1–5 done (`ef5eba72`, `2623a08d`, `3339e2ca`,
+`a5182d35`, `b44b7549`). 135 tests green (was 120 at review end), 7 ts-verify fixtures. Tree clean for
 `ultra/codegen`.
 
-**Two of the four review-round fixes verified so far were wrong or incomplete** (items 2 and 4). That
-is now the expectation, not the surprise. Assert each property separately, and when a mutant survives,
+**Two of the five review-round fixes verified so far were wrong or incomplete** (items 2 and 4). That
+is the expectation, not the surprise. Assert each property separately, and when a mutant survives,
 first ask whether the FIX is wrong before adding an assertion to kill it.
 
-Of the two §1 items left, the classloader one is the likeliest to hide the same problem — its current
-test passes BECAUSE of the old bug, so it cannot regression-cover the fix without a genuinely
-loader-isolated fixture.
+**ONE §1 ITEM LEFT — and it is the one most likely to be wrong**, because its current test passes
+BECAUSE of the old bug. Do not accept a green run as evidence there; the fixture has to be genuinely
+loader-isolated or the test proves nothing either way.
 
 Two findings from iterations 3 and 4 are logged at the top of §2, both marked with their evidence
 level. Neither has been reproduced. Reproduce before fixing.
+
+**Pattern worth repeating:** for anything that changes emitted TEXT, add a ts-verify fixture and then
+run `:ultra:codegen:tsVerify` alone against the REVERTED code. Twice now that turned "the string looks
+right" into "a real compiler rejects the alternative" — escaping (unterminated literal) and alias
+recursion (TS2448).
 
 Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding; see the Review record.
 
@@ -143,14 +150,20 @@ Do NOT re-fix the `.bufferedReader()` charset non-bug — it was a wrong finding
 `.claude/tasks/20260729-log-scan-findings.md`, `.claude/tasks/20260729-redteam-log-forging.md`.
 `.idea/compiler.xml` is modified in the tree and is NOT ours to commit — leave it.
 
-**Next action:** backlog §1 item 5 — `appendAlias` recursion. Needs a value class on a cycle:
-`FxIds(val items: List<FxHolder>)` + `FxHolder(val ids: FxIds)`. Assert `z.lazy` IS emitted for the
-alias. Note `TsDeclOrder` seeds from sorted keys, so which of the pair becomes lazy depends on name
-ordering — assert the PROPERTY (nothing references a const declared later unless lazy), which the
-existing "no schema references a const declared later" test already expresses; extend its root list
-rather than writing a positional assertion that name changes would break.
+**Next action:** backlog §1 item 6 — `resource()` contributor classloader, the LAST §1 item.
 
-Still nothing from §2 until §1 is fully done.
+The trap: `ThirdPartyContributorSpec` currently loads `money.ts` from
+`ultra/codegen/src/test/resources/`, i.e. from ultra:codegen's OWN loader — the very loader the old
+buggy code used. So it passes with or without the fix and proves nothing. A green run is not evidence.
+
+To make it observable, the contributor class must be loaded through a classloader whose resources
+ultra:codegen's loader cannot see. Sketch: write a `.ts` to a temp dir, build a
+`URLClassLoader(arrayOf(tempDir.toURI().toURL()), null)` — note the **null parent**, so it does not
+delegate — load a contributor class through it, and assert `resource()` finds the file. Verify the
+test FAILS with `scopeFor(name)` (no loader argument) before believing it.
+
+If that proves impractical inside one Gradle test JVM, say so in the note and move to §2 rather than
+leaving a test that cannot fail — the current one is worse than none, because it claims coverage.
 
 ### Working notes that paid off (keep using)
 
