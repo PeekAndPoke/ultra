@@ -86,7 +86,10 @@ Suggested order:
 - [x] **DONE `53b68126`** — `slumberConfig` is now required; `TsSdkBuilder.forTesting(...)` is the
       named test entry point and the check still RUNS there. No way to disable it at all. Enabling it
       everywhere changed no existing result. Mutation-tested (4 tests die when the check is stubbed).
-- [ ] Walker `unknown` degradation in 5 positions → a `TypeModel` channel + advisory, fail by default
+- [x] **DONE `efe2b6ad`** — walker `unknown` degradation. New `TypeModel.Undetermined(path, reason)`
+      channel, all five sites recorded, promoted to a BLOCKING problem. `Any` included deliberately.
+      `undeterminable()` returns rather than throws so one run reports every bad position.
+      `claims.opaque` stays the loud escape hatch. Mutation-tested 2/2.
 - [ ] Name-collision check must include claimed `tsName`s (and `nameCollisionProblems` /
       `danglingReferenceProblems` have ZERO tests — add them)
 - [ ] `KotlinxJsonTsContributor` drift test — 5 claims, standing rule, currently unprotected
@@ -119,11 +122,16 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
-**Iteration 8 (2026-07-30, ~03:00).** §1 complete; §2 three items done. 139 tests green, 7 ts-verify
+**Iteration 9 (2026-07-30, ~03:10).** §1 complete; §2 four items done. 147 tests green, 7 ts-verify
 fixtures. Tree clean for `ultra/codegen`.
 
-Done in §2 so far: `appendUnion` type-vs-schema (`56292476`), the `ultra/slumber` round-trip finding
-reproduced and handed to its own task file, and `slumberConfig` now mandatory (`53b68126`).
+§2 so far: `appendUnion` type-vs-schema (`56292476`), the `ultra/slumber` round-trip finding reproduced
+and handed off to its own task, `slumberConfig` now mandatory (`53b68126`), and the walker's silent
+`unknown` degradation now a hard failure (`efe2b6ad`).
+
+The design call in iteration 9 was taken as pre-committed: **fail, do not advise.** It broke nothing —
+no existing fixture reached any of the five positions — so the decision cost nothing and matches the
+locked "hard error on unmapped types". Reversible if a real app trips over it.
 
 Running tally: **three fixes were wrong, incomplete or over-applied, and three assertions passed for
 the WRONG reason** — all six caught by mutation, none by review or re-reading.
@@ -138,15 +146,15 @@ the WRONG reason** — all six caught by mutation, none by review or re-reading.
 - **FAILING REPEATEDLY: read the test count from `TEST-*.xml` BEFORE writing the commit message.** Two
   amends so far for a wrong number.
 
-**Next action:** §2, walker `unknown` degradation in 5 positions (`model/TypeWalker.kt` — record value,
-array item, alias target, non-`KClass` classifier). This is the Dart `dynamic` defect returning:
-`data class Report(val rows: List<*>)` emits `unknown[]` with NO entry in `unresolved` and no advisory.
+**Next action:** §2, the name-collision check must include claimed `tsName`s. An app type named
+`MpInstant` reachable alongside `MpDateTimeTsContributor` emits BOTH
+`import { MpInstant } from './runtime/datetime'` AND `export const MpInstant = z.object({...})` in one
+file — TS2440, reported by nothing.
 
-Needs a design call the maintainer has NOT pre-authorized: fail by default, or advise by default?
-Failing is consistent with "hard error on unmapped types" and with wrong-and-loud; but `List<*>` also
-NPEs on Slumber's own awake path, so such a type is already broken server-side and a hard error may be
-the honest answer. **Take the failing default, and say so in the note** — it is reversible and matches
-the locked decision. If it turns out to break existing fixtures, downgrade to an advisory and flag it.
+Note `nameCollisionProblems` and `danglingReferenceProblems` currently have **ZERO tests** (grep
+`collision|dangling` under `src/test` — no hits), so write those first: the existing behaviour is
+unpinned, and a change to it would go unnoticed. Add a ts-verify fixture too if the collision is
+reproducible end to end — `tsc` reports TS2440 directly, which is stronger than asserting the message.
 
 ### Working notes that paid off (keep using)
 
