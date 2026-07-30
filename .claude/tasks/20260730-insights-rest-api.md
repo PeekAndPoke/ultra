@@ -161,6 +161,37 @@ risk. `FileSystemRepository.getContent` calls `validateName()`, which rejects an
 Its comment claims it checks "any slashes and dot-dots" but only checks dot-dots — a comment/code
 mismatch worth one line, not a hole.
 
+## Loop protocol (added 2026-07-31)
+
+Running unattended. Work the queue top-down; each step is done only when its criterion holds.
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | `HeaderLogging` unit tests | exact + regex rules, last-match-wins, case-insensitivity, `DROP` removes the name, `REDACT` keeps it, the sensitive-name regex catches `x-amz-security-token`, an explicit later `LOG` beats it. **Mutation: flip a default rule to `LOG` and confirm a test fails** |
+| 2 | API DTOs | Slumber can describe every field; no `Any`, no star projections, no computed properties |
+| 3 | `InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() })` + `InsightsApiFeature`, registered in `insights_module.kt` | both endpoints answer; boot-time `AuthChainBootCheck` passes |
+| 4 | E2E via `AppSpec`/`AppUnderTest` | anonymous denied, non-superuser denied, superuser 200. **Mutation: set `authFloor = { public() }` and confirm the denial tests fail** — a gate test that survives the gate's removal is worthless |
+| 5 | E2E: open envelope | a record with an unknown collector key round-trips instead of failing the response |
+| 6 | E2E: no self-observation | calling the API produces no insights record of itself |
+| 7 | Compile sweep + full module tests | `^e:`-free; counts confirmed from `build/test-results/**/TEST-*.xml`, not from console alone |
+| 8 | `/feature-review` | **run it, record findings, then STOP.** Do not auto-fix security findings unattended — leave them for the maintainer |
+
+### Stop and wake the maintainer
+
+- **`AppConfigCollector.Data(val info: Any, val config: Any)`** — `Any` cannot be typed for Slumber or codegen. Typed DTO, `JsonElement`, or drop the collector from the API? Not a call to make alone.
+- **Does the list endpoint page?** It feeds a Vue table that does not exist yet.
+- **No superuser fixture** in the e2e harness that can be reused — do not invent an auth shape.
+- Any step-8 finding rated security-relevant.
+- Anything that would touch a file outside `funktor/insights` **except** the ones already in flight here.
+
+### Guardrails — three agents share this worktree
+
+- **Do not run `:ultra:codegen:check`.** The codegen agent has uncommitted work in `ts/runtime/client.ts`, `sse.ts` and `ts-verify/verifyRuntime.ts`; its result would be about their tree, not this change.
+- **Stage only `funktor/insights` and this task file.** Never `git add -A` at the root — `ultra/slumber`, `ultra/log`, `ultra/vault` and `ultra/codegen` all have other owners.
+- **If a build looks impossibly stale** — a signature error against code that was just fixed, or an `AbstractMethodError` surfacing as an assertion failure — suspect a concurrent build, not the logic. Recovery:
+  `rm -rf funktor/insights/build/classes/kotlin/**/test` and re-run. This is the failure mode recorded in CLAUDE.md's verification traps, and its cause was two builds interleaving in one worktree.
+- Commit per completed step, so a killed loop leaves reviewable work rather than a half-edited tree.
+
 ## Test evidence
 
 - [ ] E2E via `AppSpec`/`AppUnderTest`: anonymous → denied; authenticated non-superuser → denied;
