@@ -11,6 +11,9 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.slumber.SlumberModule
 import io.peekandpoke.ultra.slumber.Slumberer
+import java.io.File
+import java.io.InputStream
+import java.nio.file.Files
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -63,6 +66,51 @@ private class MoneyTsContributor : TsSdkContributor {
     override fun emit(context: TsSdkEmitContext) {
         context.out.resource("ts/runtime/money.ts", to = "runtime/money.ts")
     }
+}
+
+//  A contributor whose resources ONLY its own classloader can see  /////////////////////////////////
+
+/** Rooted by [IsolatedResourceContributor]; deliberately plain, so no claim is needed. */
+data class IsolatedPayload(val a: String)
+
+/**
+ * Loaded through [IsolatedLoader] in the test below, so `this::class.java.classLoader` is that loader
+ * rather than the one running the suite. Public and top-level so its bytes can be read back and
+ * redefined.
+ */
+class IsolatedResourceContributor : TsSdkContributor {
+    override val name: String = "acme:isolated"
+
+    override fun contribute(roots: TsSdkRoots) {
+        roots.root(typeOf<IsolatedPayload>(), "IsolatedApi.get")
+    }
+
+    override fun emit(context: TsSdkEmitContext) {
+        context.out.resource("ts/runtime/isolated.ts", to = "runtime/isolated.ts")
+    }
+}
+
+/**
+ * Serves resources from [resourceDir] and can redefine a class so it belongs to THIS loader.
+ *
+ * Both halves are needed for the test to be able to fail. Serving the resource from a directory that
+ * is not on the suite's classpath means only this loader can find it; redefining the contributor means
+ * `contributor::class.java.classLoader` is this loader rather than the suite's. Without either, the
+ * test passes whichever loader `resource()` happens to use — which is exactly the flaw it replaces.
+ */
+private class IsolatedLoader(private val resourceDir: File) :
+    ClassLoader(IsolatedLoader::class.java.classLoader) {
+
+    fun redefine(cls: Class<*>): Class<*> {
+        val bytes = parent.getResourceAsStream(cls.name.replace('.', '/') + ".class")!!.readBytes()
+
+        // Supertypes still resolve through the parent, so the redefined class implements the SAME
+        // TsSdkContributor interface and stays castable.
+        return defineClass(cls.name, bytes, 0, bytes.size)
+    }
+
+    override fun getResourceAsStream(name: String): InputStream? =
+        File(resourceDir, name).takeIf { it.isFile }?.inputStream() ?: super.getResourceAsStream(name)
 }
 
 /**
@@ -125,9 +173,42 @@ class ThirdPartyContributorSpec : FreeSpec() {
 
             val emitted = result.output.entries().first { it.path == "runtime/money.ts" }
 
-            withClue("resources resolve from the contributor's own classpath, not a privileged location") {
+            withClue("the emitted resource is stamped with its contributor") {
                 emitted.content shouldContain "export const Money = z.object({"
                 emitted.writtenBy shouldBe "acme:money"
+            }
+        }
+
+        "a resource is read through the CONTRIBUTOR's classloader, not this module's" {
+            // The previous version of this test loaded its fixture from ultra:codegen's own test
+            // resources — the very loader the bug used — so it passed either way and could not
+            // regression-cover anything. Here the resource exists ONLY on the contributor's loader.
+            val dir = Files.createTempDirectory("isolated-contributor").toFile()
+
+            try {
+                File(dir, "ts/runtime").mkdirs()
+                File(dir, "ts/runtime/isolated.ts").writeText("export const Isolated = 'only-here'\n")
+
+                val loader = IsolatedLoader(dir)
+
+                withClue("precondition: the suite's own loader must NOT see it, or nothing is proven") {
+                    javaClass.classLoader.getResourceAsStream("ts/runtime/isolated.ts") shouldBe null
+                }
+
+                val contributor = loader.redefine(IsolatedResourceContributor::class.java)
+                    .getDeclaredConstructor()
+                    .newInstance() as TsSdkContributor
+
+                withClue("the redefined class must really belong to the isolated loader") {
+                    contributor::class.java.classLoader shouldBe loader
+                }
+
+                val result = TsSdkBuilder(contributors = listOf(contributor)).build()
+
+                result.output.entries().first { it.path == "runtime/isolated.ts" }
+                    .content shouldContain "only-here"
+            } finally {
+                dir.deleteRecursively()
             }
         }
     }
