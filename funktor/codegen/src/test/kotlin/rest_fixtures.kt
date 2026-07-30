@@ -193,3 +193,10 @@ class FxClaimedParamApiRoutes : ApiRoutes("fx-claimed", authFloor = { public() }
                 .handle { ApiResponse.ok(emptyList()) }
         }
 }
+
+/** A feature used by the kontainer wiring spec, kept separate so its file name is distinctive. */
+class FxWiringApiFeature : ApiFeature {
+    override val name: String = "FxWiring"
+    override val description: String = "Wiring check feature."
+    override fun getRouteGroups(): List<ApiRoutes> = listOf(FxTalksApiRoutes())
+}

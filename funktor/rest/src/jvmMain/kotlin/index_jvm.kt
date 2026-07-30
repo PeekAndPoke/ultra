@@ -47,6 +47,15 @@ val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() ->
 
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
+    // The LIVE serialization config, injectable in its own right. The TypeScript SDK generator needs
+    // it to detect types whose JSON shape a custom codec reshapes — without it, a generated schema can
+    // silently stop describing what the server writes. Reachable by downcasting the injected
+    // `RestCodec`, but that couples every consumer to `SlumberRestCodec`; this is one line instead.
+    //
+    // Deliberately the config BEFORE the per-request attributes are added: those carry a Database and
+    // an EntityCache, which are request-scoped and meaningless to a code generator.
+    instance(codecConfig)
+
     val cacheMemory = Runtime.getRuntime().maxMemory() / 10
 
     val rawCache = FastCache.Builder<Any?, Any?>()
