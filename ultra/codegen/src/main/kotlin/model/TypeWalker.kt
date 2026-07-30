@@ -10,6 +10,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.KTypeProjection
+import kotlin.reflect.full.allSupertypes
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.withNullability
 
@@ -74,11 +75,62 @@ class TypeWalker(
 
         enqueue(id, path)
 
-        val args = type.arguments.mapIndexedNotNull { index, arg ->
+        // mapIndexed, NOT mapIndexedNotNull: a star projection has a null type, and DROPPING it would
+        // leave the reference with fewer arguments than the declaration has parameters. For a
+        // one-parameter generic that emits the bare factory where a schema belongs, which tsc happily
+        // accepts (`z.object`'s shape is loose) and which then throws on the first parse. The container
+        // branches already record this; the user-generic path did not.
+        val args = type.arguments.mapIndexed { index, arg ->
             arg.type?.let { resolveRef(it, path + "<$index>") }
+                ?: undeterminable(
+                    path = path + "<$index>",
+                    reason = "type argument ${index + 1} of '${cls.simpleName}' is a star projection, " +
+                            "so the argument type is not knowable",
+                )
         }
 
         return TsTypeRef.Named(id, args)
+    }
+
+    /**
+     * The arguments to pass to [child] when it is referenced as a variant of [parent].
+     *
+     * Resolved through the child's own supertype entry for the parent, which is the only place the
+     * real mapping exists. `Left<R, L> : Either<L, R>` binds the parent's first parameter to the
+     * child's `L`, so the reference must be `Left<R, L>` — passing `[L, R]` positionally silently
+     * swaps them.
+     *
+     * Returns null when the mapping is not a bijection over bare parameters — a child that rebinds
+     * (`Batched<U> : Feed<List<U>>`), drops or duplicates one. Those are expressible in Kotlin and not
+     * in this model, so the caller reports them rather than guessing.
+     */
+    private fun variantArgs(
+        child: KClass<*>,
+        parent: KClass<*>,
+        parentParams: List<String>,
+    ): List<TsTypeRef>? {
+        if (child.typeParameters.isEmpty() && parentParams.isEmpty()) return emptyList()
+
+        val asParent = child.allSupertypes.firstOrNull { it.classifier == parent }
+            ?: return null
+
+        if (asParent.arguments.size != parentParams.size) return null
+
+        // childParamName -> the parent parameter it stands for
+        val binding = mutableMapOf<String, String>()
+
+        asParent.arguments.forEachIndexed { index, arg ->
+            val classifier = arg.type?.classifier
+
+            if (classifier is KTypeParameter) {
+                binding[classifier.name] = parentParams[index]
+            }
+        }
+
+        // Every one of the child's parameters must be accounted for, or the reference is incomplete.
+        return child.typeParameters
+            .map { binding[it.name] ?: return null }
+            .map { TsTypeRef.TypeParam(it) }
     }
 
     /**
@@ -151,11 +203,29 @@ class TypeWalker(
         // declared structure is irrelevant.
         claims.find(cls)?.let { claim ->
             usedClaims[claim.qualifiedName] = claim
-            return if (claim.opaque) {
-                TsTypeRef.TsUnknown
-            } else {
-                TsTypeRef.Named(TypeId.declOf(cls, type))
+
+            // Resolve the arguments even though the claim swallows the type: a payload reachable ONLY
+            // through a claimed generic would otherwise never be declared and would vanish from the SDK.
+            type.arguments.forEachIndexed { index, arg ->
+                arg.type?.let { resolveRef(it, path + "<$index>") }
             }
+
+            if (claim.opaque) {
+                return TsTypeRef.TsUnknown
+            }
+
+            // `TsTypeClaim` has no way to express a PARAMETERISED claim, so a claimed generic would
+            // render as a bare name where the claimed TypeScript type needs arguments. Loud rather
+            // than wrong: nothing ships a generic claim today, and guessing here would be silent.
+            if (cls.typeParameters.isNotEmpty()) {
+                return undeterminable(
+                    path = path,
+                    reason = "'${cls.simpleName}' is claimed by '${claim.claimedBy}' but has type " +
+                            "parameters, and a claim cannot carry type arguments",
+                )
+            }
+
+            return TsTypeRef.Named(TypeId.declOf(cls, type))
         }
 
         // Nothing / Unit -> NullCodec
@@ -329,24 +399,20 @@ class TypeWalker(
 
             enqueue(childId, path + "<${child.simpleName}>")
 
-            // Pass this parent's parameters down when the child re-declares the same ones, which is
-            // the ordinary shape of a generic sealed hierarchy (`Storable<T>` -> `Stored<T>`). This is
-            // what stops `Storable<Organisation>` and `Storable<Talk>` collapsing onto one type
-            // carrying `unknown`. A child that changes arity is not expressible this way; it lands in
-            // `undetermined` rather than being silently bound to Any.
-            val args = when (child.typeParameters.size) {
-                ownParams.size -> ownParams.map { TsTypeRef.TypeParam(it) }
-
-                else -> {
+            // Bind the child's parameters to the parent's through the child's OWN supertype entry,
+            // not positionally. `Left<R, L> : Either<L, R>` is legal Kotlin, and passing the parent's
+            // parameters straight through inverts it — emitting a type and schema that agree with each
+            // other, satisfy `satisfies`, pass tsc, and then reject every real payload. Arity is
+            // neither a necessary nor a sufficient test for that.
+            val args = variantArgs(child, cls, ownParams)
+                ?: run {
                     undeterminable(
                         path = path + "<${child.simpleName}>",
-                        reason = "variant '${child.simpleName}' declares ${child.typeParameters.size} " +
-                                "type parameters but its parent declares ${ownParams.size}, so the " +
-                                "parent's arguments cannot be passed down",
+                        reason = "variant '${child.simpleName}' does not bind its parent's type " +
+                                "parameters one-to-one, so the parent's arguments cannot be passed down",
                     )
                     emptyList()
                 }
-            }
 
             TsTypeRef.Named(childId, args)
         }

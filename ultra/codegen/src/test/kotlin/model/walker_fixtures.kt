@@ -372,3 +372,54 @@ data class FxGenericMatrix(
     val storable: FxStorable<FxSpeaker>,
     val storableOther: FxStorable<FxTalkId>,
 )
+
+//  Generics — the recursive and star-projected edges  ///////////////////////////////////////////////
+
+/**
+ * A RECURSIVE generic union whose variants sort BEFORE the parent, so `TsDeclOrder` marks the UNION
+ * itself as the forward reference — the only arrangement that needs `z.lazy` on the union.
+ *
+ * The non-generic twin is [FxZeta]. Nesting the variants would take a different, working path.
+ */
+sealed class FxGZeta<T>
+
+data class FxGAlphaBranch<T>(val kids: List<FxGZeta<T>>) : FxGZeta<T>()
+
+data class FxGAlphaLeaf<T>(val v: T) : FxGZeta<T>()
+
+/** A RECURSIVE generic ALIAS: the generic twin of [FxIds] / [FxIdHolder]. */
+@JvmInline
+value class FxGRefs<T>(val items: List<FxGHolder<T>>)
+
+data class FxGHolder<T>(val refs: FxGRefs<T>)
+
+data class FxGenericEdges(
+    val union: FxGZeta<FxSpeaker>,
+    val alias: FxGHolder<FxTalkId>,
+)
+
+/** A STAR-projected argument on a user generic — the element type is genuinely absent. */
+data class FxStarGeneric(val boxed: FxBox<*>)
+
+/** Partially star-projected: some arguments known, some not. */
+data class FxPartialStarGeneric(val triple: FxTriple<String, *, *>)
+
+//  Generic sealed children that REBIND their parent's parameters  ///////////////////////////////////
+
+/** A child that REORDERS its parent's parameters. Legal Kotlin; positional binding inverts it. */
+sealed class FxEither<L, R>
+
+data class FxLeft<R, L>(val left: L) : FxEither<L, R>()
+
+data class FxRight<R, L>(val right: R) : FxEither<L, R>()
+
+data class FxHoldsEither(val either: FxEither<Int, String>)
+
+/** A child that TRANSFORMS its parent's argument. Same arity, not expressible as a pass-through. */
+sealed class FxFeed<T>
+
+data class FxSingle<T>(val item: T) : FxFeed<T>()
+
+data class FxBatched<U>(val items: List<U>) : FxFeed<List<U>>()
+
+data class FxHoldsFeed(val feed: FxFeed<List<String>>)

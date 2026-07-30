@@ -2,6 +2,11 @@ package io.peekandpoke.ultra.codegen.ts
 
 import io.peekandpoke.ultra.codegen.model.FxBox
 import io.peekandpoke.ultra.codegen.model.FxEvent
+import io.peekandpoke.ultra.codegen.model.FxGAlphaBranch
+import io.peekandpoke.ultra.codegen.model.FxGAlphaLeaf
+import io.peekandpoke.ultra.codegen.model.FxGHolder
+import io.peekandpoke.ultra.codegen.model.FxGRefs
+import io.peekandpoke.ultra.codegen.model.FxGenericEdges
 import io.peekandpoke.ultra.codegen.model.FxGenericMatrix
 import io.peekandpoke.ultra.codegen.model.FxIdHolder
 import io.peekandpoke.ultra.codegen.model.FxIds
@@ -121,6 +126,16 @@ object TsFixtureGenerator {
                 treeOfBoxes = FxTreeOf(FxBox(FxTalkId("t4"), "n"), emptyList()),
                 storable = FxStorable.Stored(FxSpeaker("K", null), "id-1"),
                 storableOther = FxStorable.New(FxTalkId("t5")),
+            ),
+        ),
+        // Recursive generic UNION and recursive generic ALIAS. Both emitted without `z.lazy` until
+        // 2026-07-30: tsc was clean and the first parse blew the stack, so only running it catches them.
+        Fixture(
+            name = "genericEdges",
+            root = typeOf<FxGenericEdges>(),
+            instance = FxGenericEdges(
+                union = FxGAlphaBranch(listOf(FxGAlphaLeaf(FxSpeaker("A", null)))),
+                alias = FxGHolder(FxGRefs(emptyList())),
             ),
         ),
         // A value class ON a cycle. `tsc` is what proves the deferral is needed: emitted eagerly this

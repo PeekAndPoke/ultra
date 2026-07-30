@@ -87,7 +87,14 @@ class TsModelEmitter(
                 "export const ${decl.name} = <$params>($schemaArgs)" +
                         ": z.ZodType<${decl.name}<$params>> =>"
             )
-            indentedRaw { append(renderer.schema(decl.target)) }
+
+            // A generic alias on a cycle needs deferring exactly as a plain one does. Without it the
+            // factory re-enters on every call: tsc stays clean and the first parse blows the stack.
+            val body = renderer.schema(decl.target)
+
+            indentedRaw {
+                append(if (order.isRecursive(decl.id)) "z.lazy(() => $body)" else body)
+            }
             return
         }
 
@@ -254,7 +261,13 @@ class TsModelEmitter(
                 "export const ${decl.name} = <$params>($schemaArgs)" +
                         ": z.ZodType<${decl.name}<$params>> =>"
             )
-            indentedRaw { append(schema) }
+
+            // Same as the generic alias: a union that is itself the forward reference must defer, or
+            // the factory recurses forever on first use. `anyLazy` above only chooses union vs
+            // discriminatedUnion — it does not break the cycle.
+            indentedRaw {
+                append(if (order.isRecursive(decl.id)) "z.lazy(() => $schema)" else schema)
+            }
             return
         }
 

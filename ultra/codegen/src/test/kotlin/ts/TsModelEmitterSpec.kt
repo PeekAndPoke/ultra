@@ -9,6 +9,8 @@ import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.ultra.codegen.model.FxAlphaLeaf
 import io.peekandpoke.ultra.codegen.model.FxCustomCodecType
 import io.peekandpoke.ultra.codegen.model.FxEvent
+import io.peekandpoke.ultra.codegen.model.FxGenericEdges
+import io.peekandpoke.ultra.codegen.model.FxGenericMatrix
 import io.peekandpoke.ultra.codegen.model.FxHoldsClaimed
 import io.peekandpoke.ultra.codegen.model.FxIdHolder
 import io.peekandpoke.ultra.codegen.model.FxMutualA
@@ -195,6 +197,60 @@ class TsModelEmitterSpec : FreeSpec() {
 
         "a plain sealed object variant emits an empty object with only its discriminator" {
             emit(typeOf<FxResult>()) shouldContain "export const FxResultPending = z.object({\n    _type: z.literal("
+        }
+
+        "generics" - {
+
+            // Until 2026-07-30 nothing at this level asserted emitted generic TypeScript at all — the
+            // only coverage was one ts-verify fixture, which is a separate, skippable Gradle task and
+            // exercised only the NON-recursive shapes. The recursive ones were broken.
+
+            "a generic object emits an interface and a factory, using satisfies" {
+                val out = emit(typeOf<FxGenericMatrix>())
+
+                out shouldContain "export interface FxBox<T> {"
+                out shouldContain "export const FxBox = <T>(TSchema: z.ZodType<T>) =>"
+
+                withClue("annotating the return erases object-ness, which z.discriminatedUnion rejects") {
+                    out shouldContain "}) satisfies z.ZodType<FxBox<T>>"
+                }
+            }
+
+            "a generic sealed hierarchy passes its parameter to every variant" {
+                val out = emit(typeOf<FxGenericMatrix>())
+
+                out shouldContain "export type FxStorable<T> = FxStorableNew<T> | FxStorableStored<T>"
+                out shouldContain "z.discriminatedUnion('_type', [FxStorableNew(TSchema), FxStorableStored(TSchema)])"
+            }
+
+            "a recursive generic OBJECT defers" {
+                val out = emit(typeOf<FxGenericMatrix>())
+
+                withClue("z.lazy cannot infer, so this one must be annotated rather than satisfied") {
+                    out shouldContain "export const FxTreeOf = <T>(TSchema: z.ZodType<T>): z.ZodType<FxTreeOf<T>> =>"
+                    out shouldContain "z.lazy(() => z.object({"
+                }
+            }
+
+            "a recursive generic UNION defers" {
+                // Without z.lazy the factory re-enters on every call: tsc is clean and the first
+                // parse blows the stack.
+                val out = emit(typeOf<FxGenericEdges>())
+
+                withClue("emitted:\n$out") {
+                    out shouldContain "export const FxGZeta = <T>(TSchema: z.ZodType<T>): z.ZodType<FxGZeta<T>> =>"
+                    out shouldContain "z.lazy(() => z.union("
+                }
+            }
+
+            "a recursive generic ALIAS defers" {
+                val out = emit(typeOf<FxGenericEdges>())
+
+                withClue("emitted:\n$out") {
+                    out shouldContain "export const FxGRefs = <T>(TSchema: z.ZodType<T>): z.ZodType<FxGRefs<T>> =>"
+                    out shouldContain "z.lazy(() => z.array(FxGHolder(TSchema)))"
+                }
+            }
         }
 
         "recursion" - {

@@ -1,9 +1,10 @@
 /**
  * TypeScript mirror of the `ApiResponse<T>` envelope every funktor endpoint answers with.
  *
- * HAND-WRITTEN AND CHECKED IN — not generated. The envelope is generic, and TypeScript has real
- * generics, so monomorphizing it the way the model emitter monomorphizes `PageOf<Talk>` would produce
- * one `ApiResponseTalk` per payload type for no gain. Only the payload is generated; this stays.
+ * HAND-WRITTEN AND CHECKED IN — not generated. It stays hand-written because it is a fixed shape that
+ * mirrors a Kotlin class no walk ever reaches: the REST contributor roots the PAYLOAD, not the
+ * envelope. (Until 2026-07-30 the stated reason was that the model emitter monomorphized generics and
+ * this one should not be — the emitter now emits real generics too, so that reason is gone.)
  *
  * Mirrors `ultra/remote/src/commonMain/kotlin/ApiResponse.kt`. `ApiResponseParitySpec` slumbers a real
  * envelope and fails if the two drift.
