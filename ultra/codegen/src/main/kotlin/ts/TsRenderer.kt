@@ -24,9 +24,20 @@ class TsRenderer(private val model: TypeModel) {
             ?: model.usedClaims[id.cls.qualifiedName]?.schema
             ?: "z.unknown()"
 
+    /**
+     * The identifier a generic declaration takes its schema argument under.
+     *
+     * Suffixed rather than case-mangled so it is injective: parameter names are unique within a
+     * declaration, so appending a fixed suffix cannot make two of them collide. Lower-casing would —
+     * `T` and `t` both become `t`.
+     */
+    fun schemaParamOf(typeParam: String): String = "${typeParam}Schema"
+
     /** Renders [ref] as a TypeScript type expression. */
     fun type(ref: TsTypeRef): String = when (ref) {
-        is TsTypeRef.Named -> nameOf(ref.id)
+        is TsTypeRef.Named -> nameOf(ref.id) + ref.args.render { type(it) }
+
+        is TsTypeRef.TypeParam -> ref.name
 
         // A union member needs parentheses before `[]` binds: `(A | null)[]`, not `A | null[]`,
         // which would parse as `A | (null[])` — a different type entirely.
@@ -47,7 +58,11 @@ class TsRenderer(private val model: TypeModel) {
 
     /** Renders [ref] as a zod schema expression. */
     fun schema(ref: TsTypeRef): String = when (ref) {
-        is TsTypeRef.Named -> schemaNameOf(ref.id)
+        // A generic schema is a FACTORY, so an instantiation is a call rather than a name. Type
+        // position stays a plain reference — see `type` above.
+        is TsTypeRef.Named -> schemaNameOf(ref.id) + ref.args.renderCall { schema(it) }
+
+        is TsTypeRef.TypeParam -> schemaParamOf(ref.name)
 
         is TsTypeRef.ArrayOf -> "z.array(${schema(ref.item)})"
 
@@ -71,4 +86,12 @@ class TsRenderer(private val model: TypeModel) {
      * safe; under-parenthesising silently changes the type.
      */
     private fun String.isUnion(): Boolean = contains(" | ")
+
+    /** `<A, B>`, or empty when there are no arguments. */
+    private fun List<TsTypeRef>.render(each: (TsTypeRef) -> String): String =
+        if (isEmpty()) "" else joinToString(", ", "<", ">") { each(it) }
+
+    /** `(a, b)`, or empty when there are no arguments. */
+    private fun List<TsTypeRef>.renderCall(each: (TsTypeRef) -> String): String =
+        if (isEmpty()) "" else joinToString(", ", "(", ")") { each(it) }
 }

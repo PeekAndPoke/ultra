@@ -19,24 +19,7 @@ object TsNames {
      * Nested classes keep their outer names (`Foo.Bar` -> `FooBar`) so two nested classes with the
      * same simple name in one package do not collide.
      */
-    fun of(id: TypeId): String {
-        val base = baseName(id.cls)
-
-        // Read the arguments off the KType rather than via `TypeId`, because a nullable argument is a
-        // separate instantiation — `FxBox<String>` and `FxBox<String?>` have different props — and a
-        // TypeId deliberately carries no nullability. Without the suffix the two declarations exist
-        // (their keys differ) but compete for one TypeScript const.
-        val args = id.type.arguments.mapNotNull { arg ->
-            arg.type?.let { argType ->
-                of(TypeId.of(argType)) + if (argType.isMarkedNullable) "OrNull" else ""
-            }
-        }
-
-        return when {
-            args.isEmpty() -> base
-            else -> base + args.joinToString("")
-        }
-    }
+    fun of(id: TypeId): String = baseName(id.cls)
 
     /**
      * The unqualified name of [cls], with outer-class prefixes retained.

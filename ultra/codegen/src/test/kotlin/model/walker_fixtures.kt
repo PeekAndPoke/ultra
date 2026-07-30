@@ -316,3 +316,59 @@ data class FxManyUndetermined(
 
 /** Reaches a kotlinx `JsonElement`, whose claim is deliberately opaque. */
 data class FxHoldsJsonElement(val payload: JsonElement)
+
+//  Generics — the full shape matrix  ////////////////////////////////////////////////////////////////
+
+/** Three parameters, to prove arity is not special-cased at two. */
+data class FxTriple<A, B, C>(val a: A, val b: B, val c: C)
+
+/** A parameter in NULLABLE position inside the declaration: `value: T | null`. */
+data class FxMaybe<T>(val value: T?)
+
+/** A generic value class — aliases to its parameter rather than to a concrete scalar. */
+@JvmInline
+value class FxWrapped<T>(val unwrap: T)
+
+/** A RECURSIVE generic: the factory must defer, exactly as a recursive concrete type does. */
+data class FxTreeOf<T>(
+    val value: T,
+    val children: List<FxTreeOf<T>>,
+)
+
+/** A generic sealed hierarchy — the case monomorphization silently collapsed to `unknown`. */
+sealed class FxStorable<T> {
+    abstract val value: T
+
+    data class New<T>(override val value: T) : FxStorable<T>()
+    data class Stored<T>(override val value: T, val id: String) : FxStorable<T>()
+}
+
+/** Every generic shape reachable from one root, so one walk exercises the matrix. */
+data class FxGenericMatrix(
+    // parameter kinds
+    val nullableArg: FxBox<String?>,
+    val nonNullArg: FxBox<String>,
+    val nullableProp: FxMaybe<FxSpeaker>,
+    val enumArg: FxBox<FxStatus>,
+    val valueClassArg: FxBox<FxTalkId>,
+    val threeParams: FxTriple<FxSpeaker, FxStatus, FxTalkId>,
+    // nesting
+    val twoDeep: FxPageOf<FxBox<FxSpeaker>>,
+    val threeDeep: FxPageOf<FxBox<FxPageOf<FxSpeaker>>>,
+    val genericInList: List<FxBox<FxSpeaker>>,
+    val genericInSet: Set<FxBox<FxStatus>>,
+    val genericInMap: Map<String, FxBox<FxTalkId>>,
+    val listInsideGeneric: FxBox<List<FxSpeaker>>,
+    val mapInsideGeneric: FxBox<Map<String, FxSpeaker>>,
+    val listOfListInsideGeneric: FxBox<List<List<FxSpeaker>>>,
+    val nullableGeneric: FxBox<FxSpeaker>?,
+    val listOfNullableGeneric: List<FxBox<FxSpeaker>?>,
+    // value class and recursion
+    val wrapped: FxWrapped<FxSpeaker>,
+    val wrappedScalar: FxWrapped<String>,
+    val tree: FxTreeOf<FxSpeaker>,
+    val treeOfBoxes: FxTreeOf<FxBox<FxTalkId>>,
+    // polymorphism
+    val storable: FxStorable<FxSpeaker>,
+    val storableOther: FxStorable<FxTalkId>,
+)

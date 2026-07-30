@@ -10,8 +10,21 @@ package io.peekandpoke.ultra.codegen.model
  */
 sealed interface TsTypeRef {
 
-    /** A reference to a declared or claimed type. */
-    data class Named(val id: TypeId) : TsTypeRef
+    /**
+     * A reference to a declared or claimed type, with its type arguments.
+     *
+     * [args] is empty for a non-generic type. A generic type is declared ONCE and referenced with
+     * arguments — `PageOf<Talk>` in type position, `PageOf(Talk)` in schema position — rather than
+     * monomorphized into a separate `PageOfTalk` declaration per instantiation.
+     */
+    data class Named(val id: TypeId, val args: List<TsTypeRef> = emptyList()) : TsTypeRef
+
+    /**
+     * A reference to a type parameter of the declaration this reference sits in.
+     *
+     * Only ever appears inside a generic declaration's own body: `items: T[]` in `PageOf<T>`.
+     */
+    data class TypeParam(val name: String) : TsTypeRef
 
     /**
      * A JSON array.
@@ -59,7 +72,7 @@ sealed interface TsTypeRef {
 
     /** Every [Named] id reachable from this reference, including nested ones. */
     fun referencedIds(): List<TypeId> = when (this) {
-        is Named -> listOf(id)
+        is Named -> listOf(id) + args.flatMap { it.referencedIds() }
         is ArrayOf -> item.referencedIds()
         is RecordOf -> value.referencedIds()
         is Nullable -> inner.referencedIds()

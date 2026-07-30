@@ -128,7 +128,7 @@ class TypeWalkerSpec : FreeSpec() {
                 val union = model.declFor(typeOf<FxShape>()).shouldBeInstanceOf<TsTypeDecl.Union>()
 
                 union.discriminatorField shouldBe "_type"
-                union.variants shouldContainExactlyInAnyOrder listOf(
+                union.variants.map { it.id } shouldContainExactlyInAnyOrder listOf(
                     TypeId.of(FxShape.Circle::class.createBareType()),
                     TypeId.of(FxShape.Square::class.createBareType()),
                 )
@@ -172,7 +172,7 @@ class TypeWalkerSpec : FreeSpec() {
                     .shouldBeInstanceOf<TsTypeDecl.Union>()
 
                 withClue("a Middle-typed field cannot hold Direct, so the SDK must not declare it") {
-                    union.variants shouldContainExactly listOf(
+                    union.variants.map { it.id } shouldContainExactly listOf(
                         TypeId.of(FxDeepRoot.Leaf::class.createBareType()),
                     )
                 }
@@ -197,7 +197,7 @@ class TypeWalkerSpec : FreeSpec() {
 
                     model.decls.values.filterIsInstance<TsTypeDecl.Union>().forEach { union ->
                         union.variants.forEach { variant ->
-                            val decl = model.decls[variant].shouldBeInstanceOf<TsTypeDecl.Obj>()
+                            val decl = model.decls[variant.id].shouldBeInstanceOf<TsTypeDecl.Obj>()
 
                             withClue("$root: variant ${decl.name} of union ${union.name}") {
                                 decl.discriminator.shouldNotBeNull().field shouldBe union.discriminatorField
@@ -292,7 +292,7 @@ class TypeWalkerSpec : FreeSpec() {
 
         "generics" - {
 
-            "monomorphize per instantiation" {
+            "two instantiations share ONE declaration, parameterised" {
                 val model = TypeWalker(TsTypeClaims()).walk(
                     listOf(
                         TypeWalker.Root(typeOf<FxPageOf<FxTalk>>(), "a"),
@@ -300,15 +300,25 @@ class TypeWalkerSpec : FreeSpec() {
                     )
                 )
 
-                val talkPage = model.declFor(typeOf<FxPageOf<FxTalk>>()).shouldBeInstanceOf<TsTypeDecl.Obj>()
-                val speakerPage = model.declFor(typeOf<FxPageOf<FxSpeaker>>()).shouldBeInstanceOf<TsTypeDecl.Obj>()
+                val pages = model.decls.entries.filter { it.key.key == FxPageOf::class.qualifiedName }
 
-                talkPage.name shouldBe "FxPageOfFxTalk"
-                speakerPage.name shouldBe "FxPageOfFxSpeaker"
+                withClue("monomorphization emitted FxPageOfFxTalk and FxPageOfFxSpeaker separately") {
+                    pages.size shouldBe 1
+                }
 
-                withClue("the type parameter must be substituted, not left abstract") {
-                    talkPage.props.first { it.name == "items" }.type shouldBe
-                            TsTypeRef.ArrayOf(TsTypeRef.Named(TypeId.of(typeOf<FxTalk>())))
+                val page = pages.single().value.shouldBeInstanceOf<TsTypeDecl.Obj>()
+
+                page.name shouldBe "FxPageOf"
+                page.typeParams shouldContainExactly listOf("T")
+
+                withClue("the body keeps the PARAMETER; arguments belong to the reference") {
+                    page.props.first { it.name == "items" }.type shouldBe
+                            TsTypeRef.ArrayOf(TsTypeRef.TypeParam("T"))
+                }
+
+                withClue("both roots must still have been walked into, so both payloads are declared") {
+                    model.decls.keys.map { it.key } shouldContain FxTalk::class.qualifiedName
+                    model.decls.keys.map { it.key } shouldContain FxSpeaker::class.qualifiedName
                 }
             }
         }
@@ -371,7 +381,7 @@ class TypeWalkerSpec : FreeSpec() {
                 withClue("the variant stays listed on the union — it is referenced, just not declared") {
                     model.declFor(typeOf<FxPartlyClaimed>())
                         .shouldBeInstanceOf<TsTypeDecl.Union>()
-                        .variants shouldContainExactlyInAnyOrder listOf(
+                        .variants.map { it.id } shouldContainExactlyInAnyOrder listOf(
                         TypeId.of(FxPartlyClaimed.Plain::class.createBareType()),
                         TypeId.of(FxPartlyClaimed.Custom::class.createBareType()),
                     )

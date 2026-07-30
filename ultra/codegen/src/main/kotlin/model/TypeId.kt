@@ -28,6 +28,20 @@ class TypeId private constructor(
         /** Creates the id for a raw [cls] with no type arguments. */
         fun of(cls: KClass<*>): TypeId = of(cls.createBareType())
 
+        /**
+         * The identity of a DECLARATION: the class alone, ignoring its type arguments.
+         *
+         * `PageOf<Talk>` and `PageOf<Speaker>` share one declaration, so they must share one id. The
+         * arguments live on the [TsTypeRef.Named] that points here, not on the declaration.
+         *
+         * [representative] is a real reified instantiation, kept as [type] purely so validation can
+         * still probe a concrete `KType` — `SlumberConfig.getSlumberer` needs one, and Slumber
+         * dispatches custom codecs on the classifier, so any instantiation answers the question. Ids
+         * compare by [key], so whichever instantiation is seen first wins and equality is unaffected.
+         */
+        fun declOf(cls: KClass<*>, representative: KType): TypeId =
+            TypeId(type = representative, key = cls.qualifiedName ?: cls.jvmName)
+
         private fun canonicalKey(type: KType): String {
             val cls = type.classifier as? KClass<*>
                 ?: return type.toString()

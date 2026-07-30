@@ -27,6 +27,13 @@ sealed interface TsTypeDecl {
     /** The generated TypeScript name. Unique across the model — enforced during validation. */
     val name: String
 
+    /**
+     * Declared type parameters, in order; empty for a non-generic type.
+     *
+     * An enum cannot be generic, so [EnumDecl] always reports none.
+     */
+    val typeParams: List<String>
+
     /** An object type: a Kotlin data class, or one variant of a polymorphic hierarchy. */
     data class Obj(
         override val id: TypeId,
@@ -34,6 +41,7 @@ sealed interface TsTypeDecl {
         val props: List<TsProp>,
         /** Set when this object is a polymorphic child, so the emitter adds the literal field. */
         val discriminator: TsDiscriminator? = null,
+        override val typeParams: List<String> = emptyList(),
     ) : TsTypeDecl
 
     /** A polymorphic parent: emitted as a discriminated union over [variants]. */
@@ -41,7 +49,9 @@ sealed interface TsTypeDecl {
         override val id: TypeId,
         override val name: String,
         val discriminatorField: String,
-        val variants: List<TypeId>,
+        /** Variants as references, so a generic parent can pass its parameters down to each child. */
+        val variants: List<TsTypeRef.Named>,
+        override val typeParams: List<String> = emptyList(),
     ) : TsTypeDecl
 
     /** An enum: emitted as a union of string literals over the constant names. */
@@ -49,7 +59,9 @@ sealed interface TsTypeDecl {
         override val id: TypeId,
         override val name: String,
         val values: List<String>,
-    ) : TsTypeDecl
+    ) : TsTypeDecl {
+        override val typeParams: List<String> get() = emptyList()
+    }
 
     /**
      * A `@JvmInline value class`: emitted as an alias to its underlying type.
@@ -60,12 +72,13 @@ sealed interface TsTypeDecl {
         override val id: TypeId,
         override val name: String,
         val target: TsTypeRef,
+        override val typeParams: List<String> = emptyList(),
     ) : TsTypeDecl
 
     /** Every type id this declaration references. */
     fun referencedIds(): List<TypeId> = when (this) {
         is Obj -> props.flatMap { it.type.referencedIds() }
-        is Union -> variants
+        is Union -> variants.flatMap { it.referencedIds() }
         is EnumDecl -> emptyList()
         is Alias -> target.referencedIds()
     }

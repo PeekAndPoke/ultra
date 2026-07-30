@@ -8,6 +8,9 @@ import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.KTypeParameter
+import kotlin.reflect.KTypeProjection
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.withNullability
 
 /**
@@ -60,6 +63,37 @@ class TypeWalker(
     }
 
     /**
+     * A reference to [cls] as declared, carrying [type]'s arguments.
+     *
+     * The declaration is enqueued under a class-keyed id so that `PageOf<Talk>` and `PageOf<Speaker>`
+     * produce ONE declaration; the arguments are resolved here and travel on the reference. Resolving
+     * them also keeps them reachable — `PageOf<Talk>` must still discover `Talk`.
+     */
+    private fun namedRef(type: KType, cls: KClass<*>, path: List<String>): TsTypeRef {
+        val id = TypeId.declOf(cls, type)
+
+        enqueue(id, path)
+
+        val args = type.arguments.mapIndexedNotNull { index, arg ->
+            arg.type?.let { resolveRef(it, path + "<$index>") }
+        }
+
+        return TsTypeRef.Named(id, args)
+    }
+
+    /**
+     * The class viewed through its OWN type parameters, e.g. `PageOf<T>` rather than `PageOf<Talk>`.
+     *
+     * Reifying against this leaves every parameter as itself, which is exactly what a generic
+     * declaration's body needs — `ReifiedKType` substitutes arguments for parameters, so handing it the
+     * parameters as the arguments makes that substitution the identity.
+     */
+    private fun selfType(cls: KClass<*>): KType = cls.createType(
+        arguments = cls.typeParameters.map { KTypeProjection.invariant(it.createType()) },
+        nullable = false,
+    )
+
+    /**
      * Records a position whose type could not be determined and returns `unknown` for it.
      *
      * Returning rather than throwing keeps the walk going, so one run reports EVERY such position
@@ -85,6 +119,13 @@ class TypeWalker(
      * JSON, so the declared structure is irrelevant), then primitives, then collections.
      */
     private fun resolveRef(type: KType, path: List<String>): TsTypeRef {
+        // Inside a generic declaration's own body, a parameter stays a parameter: `items: T[]`.
+        (type.classifier as? KTypeParameter)?.let { param ->
+            val ref: TsTypeRef = TsTypeRef.TypeParam(param.name)
+
+            return if (type.isMarkedNullable) ref.asNullable() else ref
+        }
+
         val cls = type.classifier as? KClass<*>
             ?: return undeterminable(
                 path = path,
@@ -110,7 +151,11 @@ class TypeWalker(
         // declared structure is irrelevant.
         claims.find(cls)?.let { claim ->
             usedClaims[claim.qualifiedName] = claim
-            return if (claim.opaque) TsTypeRef.TsUnknown else TsTypeRef.Named(TypeId.of(type))
+            return if (claim.opaque) {
+                TsTypeRef.TsUnknown
+            } else {
+                TsTypeRef.Named(TypeId.declOf(cls, type))
+            }
         }
 
         // Nothing / Unit -> NullCodec
@@ -120,9 +165,7 @@ class TypeWalker(
 
         // A user value class is checked BEFORE primitives and collections, exactly as Slumber does.
         if (cls.isUserValueClass()) {
-            val id = TypeId.of(type)
-            enqueue(id, path)
-            return TsTypeRef.Named(id)
+            return namedRef(type, cls, path)
         }
 
         when (cls) {
@@ -176,10 +219,9 @@ class TypeWalker(
             )
         }
 
-        // Anything else becomes a named reference and gets declared.
-        val id = TypeId.of(type)
-        enqueue(id, path)
-        return TsTypeRef.Named(id)
+        // Anything else becomes a named reference and gets declared. The declaration is keyed by the
+        // CLASS, so every instantiation shares it; the arguments ride on the reference instead.
+        return namedRef(type, cls, path)
     }
 
     /** Classifies [pending] and records the resulting declaration (or an unresolved entry). */
@@ -245,13 +287,14 @@ class TypeWalker(
 
     /** A value class aliases its single underlying property — `ValueClassSlumberer` writes the bare value. */
     private fun declareAlias(id: TypeId, cls: KClass<*>, path: List<String>): TsTypeDecl.Alias {
-        val reified = ReifiedKType(id.type)
+        val reified = ReifiedKType(selfType(cls))
 
         val underlying = reified.ctorFields2Types.firstOrNull()?.second
 
         return TsTypeDecl.Alias(
             id = id,
             name = TsNames.of(id),
+            typeParams = cls.typeParameters.map { it.name },
             target = underlying
                 ?.let { resolveRef(it, path + "value") }
                 ?: undeterminable(
@@ -279,10 +322,33 @@ class TypeWalker(
 
         val children = PolymorphicParentUtil.getChildren(cls)
 
+        val ownParams = cls.typeParameters.map { it.name }
+
         val variants = children.map { child ->
-            val childId = TypeId.of(child.createBareType())
+            val childId = TypeId.declOf(child, child.createBareType())
+
             enqueue(childId, path + "<${child.simpleName}>")
-            childId
+
+            // Pass this parent's parameters down when the child re-declares the same ones, which is
+            // the ordinary shape of a generic sealed hierarchy (`Storable<T>` -> `Stored<T>`). This is
+            // what stops `Storable<Organisation>` and `Storable<Talk>` collapsing onto one type
+            // carrying `unknown`. A child that changes arity is not expressible this way; it lands in
+            // `undetermined` rather than being silently bound to Any.
+            val args = when (child.typeParameters.size) {
+                ownParams.size -> ownParams.map { TsTypeRef.TypeParam(it) }
+
+                else -> {
+                    undeterminable(
+                        path = path + "<${child.simpleName}>",
+                        reason = "variant '${child.simpleName}' declares ${child.typeParameters.size} " +
+                                "type parameters but its parent declares ${ownParams.size}, so the " +
+                                "parent's arguments cannot be passed down",
+                    )
+                    emptyList()
+                }
+            }
+
+            TsTypeRef.Named(childId, args)
         }
 
         return TsTypeDecl.Union(
@@ -290,6 +356,7 @@ class TypeWalker(
             name = TsNames.of(id),
             discriminatorField = PolymorphicParentUtil.getDiscriminator(parent),
             variants = variants,
+            typeParams = ownParams,
         )
     }
 
@@ -300,7 +367,10 @@ class TypeWalker(
      * carrying `@Slumber.Field` directly or inherited. The wire name is the property name, unmodified.
      */
     private fun declareObj(id: TypeId, cls: KClass<*>, path: List<String>): TsTypeDecl.Obj {
-        val reified = ReifiedKType(id.type)
+        // Reify against the class's OWN parameters, so the body keeps `T` instead of substituting an
+        // instantiation's argument. This is the whole difference between generic emission and
+        // monomorphization.
+        val reified = ReifiedKType(selfType(cls))
 
         val fields = reified.ctorFields2Types
             .plus(
@@ -333,6 +403,7 @@ class TypeWalker(
             name = TsNames.of(id),
             props = props,
             discriminator = discriminatorFor(cls),
+            typeParams = cls.typeParameters.map { it.name },
         )
     }
 

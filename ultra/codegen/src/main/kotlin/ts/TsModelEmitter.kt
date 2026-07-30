@@ -75,6 +75,22 @@ class TsModelEmitter(
     }
 
     private fun CodePrinter.appendAlias(decl: TsTypeDecl.Alias) {
+        if (decl.typeParams.isNotEmpty()) {
+            val params = decl.typeParams.joinToString(", ")
+
+            val schemaArgs = decl.typeParams.joinToString(", ") {
+                "${renderer.schemaParamOf(it)}: z.ZodType<$it>"
+            }
+
+            appendLine("export type ${decl.name}<$params> = ${renderer.type(decl.target)}")
+            appendLine(
+                "export const ${decl.name} = <$params>($schemaArgs)" +
+                        ": z.ZodType<${decl.name}<$params>> =>"
+            )
+            indentedRaw { append(renderer.schema(decl.target)) }
+            return
+        }
+
         // An alias can sit on a cycle — `value class FxIds(val items: List<FxHolder>)` where
         // `FxHolder.ids: FxIds` — and a zod schema is a const, so an eager forward reference is a
         // temporal-dead-zone error at module evaluation, not merely a compile warning.
@@ -92,6 +108,11 @@ class TsModelEmitter(
     }
 
     private fun CodePrinter.appendObj(decl: TsTypeDecl.Obj) {
+        if (decl.typeParams.isNotEmpty()) {
+            appendGenericObj(decl)
+            return
+        }
+
         val recursive = order.isRecursive(decl.id)
 
         if (recursive) {
@@ -116,6 +137,66 @@ class TsModelEmitter(
         if (!recursive) {
             nl()
             append("export type ${decl.name} = z.infer<typeof ${decl.name}>")
+        }
+    }
+
+    /**
+     * A generic object: an interface plus a schema FACTORY.
+     *
+     * The two share one identifier — TypeScript keeps types and values in separate namespaces, so
+     * `interface PageOf<T>` and `const PageOf` coexist, exactly as the non-generic form's
+     * `export const X` and `export type X` do.
+     *
+     * `z.infer` is not used here. It CAN see through a factory via an instantiation expression
+     * (measured — see the generics spike), but spelling the interface out keeps the emitted type
+     * readable and gives the factory's return type something to name.
+     */
+    private fun CodePrinter.appendGenericObj(decl: TsTypeDecl.Obj) {
+        val params = decl.typeParams.joinToString(", ")
+
+        val schemaArgs = decl.typeParams.joinToString(", ") {
+            "${renderer.schemaParamOf(it)}: z.ZodType<$it>"
+        }
+
+        val self = "${decl.name}<$params>"
+
+        appendLine("export interface ${decl.name}<$params> {").indentedRaw {
+            appendObjTypeBody(decl)
+        }
+        appendLine("}")
+
+        // A generic declaration on a cycle still needs deferring, for the same reason a plain one does:
+        // the factory body would otherwise reference a const that is not initialised yet.
+        val lazy = order.isRecursive(decl.id)
+
+        // ANNOTATING the return type erases the schema's object-ness, and `z.discriminatedUnion`
+        // requires concrete object options — so an annotated variant factory fails to type-check as a
+        // union option (measured: TS2322). `satisfies` checks the schema against the interface while
+        // keeping the narrower inferred type, which is what the union needs.
+        //
+        // A recursive one has no choice: `z.lazy` cannot infer its own result, so it must be annotated.
+        // That is the same trade the non-generic path already makes, and a lazy variant already forces
+        // its union onto `z.union` regardless.
+        if (lazy) {
+            appendLine("export const ${decl.name} = <$params>($schemaArgs): z.ZodType<$self> =>")
+
+            indentedRaw {
+                appendLine("z.lazy(() => z.object({").indentedRaw {
+                    appendObjSchemaBody(decl)
+                }
+                append("}))")
+            }
+
+            return
+        }
+
+        appendLine("export const ${decl.name} = <$params>($schemaArgs) =>")
+
+        indentedRaw {
+            appendLine("z.object({").indentedRaw {
+                appendObjSchemaBody(decl)
+            }
+            append("}) satisfies z.ZodType<$self>")
         }
     }
 
@@ -146,19 +227,35 @@ class TsModelEmitter(
         // pattern, `export const X` beside `export type X`. For a CLAIM they need not: `JsonElement` is
         // claimed as the type `unknown` with the schema `z.unknown()`. Using the type name inside
         // z.union/z.discriminatedUnion emits a type where a value is required.
-        val typeNames = decl.variants.map { renderer.nameOf(it) }
-        val schemaNames = decl.variants.map { renderer.schemaNameOf(it) }
+        val typeNames = decl.variants.map { renderer.type(it) }
+        val schemaNames = decl.variants.map { renderer.schema(it) }
 
         // z.discriminatedUnion needs its options to be concrete object schemas at construction, so a
         // lazily-emitted variant rules it out. z.union still works and stays correct — it just reports
         // worse errors, because it has no discriminator to narrow on.
-        val anyLazy = decl.variants.any { order.isRecursive(it) } || order.isRecursive(decl.id)
+        val anyLazy = decl.variants.any { order.isRecursive(it.id) } || order.isRecursive(decl.id)
 
         val schema = when {
             anyLazy -> "z.union([${schemaNames.joinToString(", ")}])"
             else ->
                 "z.discriminatedUnion(${tsStringLiteral(decl.discriminatorField)}, " +
                         "[${schemaNames.joinToString(", ")}])"
+        }
+
+        if (decl.typeParams.isNotEmpty()) {
+            val params = decl.typeParams.joinToString(", ")
+
+            val schemaArgs = decl.typeParams.joinToString(", ") {
+                "${renderer.schemaParamOf(it)}: z.ZodType<$it>"
+            }
+
+            appendLine("export type ${decl.name}<$params> = ${typeNames.joinToString(" | ")}")
+            appendLine(
+                "export const ${decl.name} = <$params>($schemaArgs)" +
+                        ": z.ZodType<${decl.name}<$params>> =>"
+            )
+            indentedRaw { append(schema) }
+            return
         }
 
         if (order.isRecursive(decl.id)) {

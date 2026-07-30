@@ -1,17 +1,25 @@
 package io.peekandpoke.ultra.codegen.ts
 
+import io.peekandpoke.ultra.codegen.model.FxBox
 import io.peekandpoke.ultra.codegen.model.FxEvent
+import io.peekandpoke.ultra.codegen.model.FxGenericMatrix
 import io.peekandpoke.ultra.codegen.model.FxIdHolder
 import io.peekandpoke.ultra.codegen.model.FxIds
+import io.peekandpoke.ultra.codegen.model.FxMaybe
 import io.peekandpoke.ultra.codegen.model.FxNode
+import io.peekandpoke.ultra.codegen.model.FxPageOf
 import io.peekandpoke.ultra.codegen.model.FxQuoted
 import io.peekandpoke.ultra.codegen.model.FxResult
 import io.peekandpoke.ultra.codegen.model.FxSeatCount
 import io.peekandpoke.ultra.codegen.model.FxShape
 import io.peekandpoke.ultra.codegen.model.FxSpeaker
 import io.peekandpoke.ultra.codegen.model.FxStatus
+import io.peekandpoke.ultra.codegen.model.FxStorable
 import io.peekandpoke.ultra.codegen.model.FxTalk
 import io.peekandpoke.ultra.codegen.model.FxTalkId
+import io.peekandpoke.ultra.codegen.model.FxTreeOf
+import io.peekandpoke.ultra.codegen.model.FxTriple
+import io.peekandpoke.ultra.codegen.model.FxWrapped
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
 import io.peekandpoke.ultra.codegen.model.TsTypeDecl
 import io.peekandpoke.ultra.codegen.model.TypeId
@@ -82,6 +90,38 @@ object TsFixtureGenerator {
             root = typeOf<FxResult>(),
             instance = FxResult.Done("done"),
             schemaType = typeOf<FxResult.Done>(),
+        ),
+        // The generic shape matrix: nesting, nullable arguments, three parameters, a generic value
+        // class, a recursive generic and a generic sealed hierarchy. `tsc` is the only thing that can
+        // confirm the emitted factories actually compose — in particular that a factory CALL is still
+        // accepted as a z.discriminatedUnion option.
+        Fixture(
+            name = "genericMatrix",
+            root = typeOf<FxGenericMatrix>(),
+            instance = FxGenericMatrix(
+                nullableArg = FxBox(null, "a"),
+                nonNullArg = FxBox("v", "b"),
+                nullableProp = FxMaybe(null),
+                enumArg = FxBox(FxStatus.ACTIVE, "c"),
+                valueClassArg = FxBox(FxTalkId("t"), "d"),
+                threeParams = FxTriple(FxSpeaker("Ada", null), FxStatus.ARCHIVED, FxTalkId("t2")),
+                twoDeep = FxPageOf(listOf(FxBox(FxSpeaker("A", null), "e")), 1),
+                threeDeep = FxPageOf(listOf(FxBox(FxPageOf(listOf(FxSpeaker("B", null)), 1), "f")), 1),
+                genericInList = listOf(FxBox(FxSpeaker("C", null), "g")),
+                genericInSet = setOf(FxBox(FxStatus.ACTIVE, "h")),
+                genericInMap = mapOf("k" to FxBox(FxTalkId("t3"), "i")),
+                listInsideGeneric = FxBox(listOf(FxSpeaker("D", null)), "j"),
+                mapInsideGeneric = FxBox(mapOf("m" to FxSpeaker("E", null)), "k"),
+                listOfListInsideGeneric = FxBox(listOf(listOf(FxSpeaker("F", null))), "l"),
+                nullableGeneric = null,
+                listOfNullableGeneric = listOf(null, FxBox(FxSpeaker("G", null), "m")),
+                wrapped = FxWrapped(FxSpeaker("H", null)),
+                wrappedScalar = FxWrapped("plain"),
+                tree = FxTreeOf(FxSpeaker("I", null), listOf(FxTreeOf(FxSpeaker("J", null), emptyList()))),
+                treeOfBoxes = FxTreeOf(FxBox(FxTalkId("t4"), "n"), emptyList()),
+                storable = FxStorable.Stored(FxSpeaker("K", null), "id-1"),
+                storableOther = FxStorable.New(FxTalkId("t5")),
+            ),
         ),
         // A value class ON a cycle. `tsc` is what proves the deferral is needed: emitted eagerly this
         // is TS2448, "block-scoped variable used before its declaration", which no Kotlin assertion
