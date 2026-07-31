@@ -1,6 +1,6 @@
 # Phase 2 — `funktor/codegen`: the REST contributor and the generate CLI
 
-**Status:** IN PROGRESS
+**Status:** DONE (archived 2026-07-31)
 **Plan:** `.claude/tasks/20260729-ts-sdk-codegen.md` → Phase 2 (§2.1–2.4)
 **Security-critical:** no — dev-time code generation, never on a production server's classpath.
 
@@ -131,6 +131,13 @@ Sketch, to be designed properly rather than assumed:
 | 3. Security | findings | 9 raised, 8 confirmed |
 
 **Gate: PASS.** No open CRITICAL/HIGH. Fixed in `3eff7c41`; see that commit for the full list.
+
+**No DOCS follow-up**, per the rule added 2026-07-31: this is research on a prototype whose public
+surface is still moving, and documenting a shape that changes next week costs a rewrite plus a reader
+who trusted the stale version. Revisit when it settles.
+
+**Defect handed off:** `.claude/tasks/20260731-typedrouterenderer-double-encodes-query.md` — found via
+this review, lives in `funktor/core`, not fixed here.
 
 ### The two that mattered
 
