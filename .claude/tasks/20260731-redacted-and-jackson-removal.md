@@ -1,6 +1,6 @@
 # `Redacted<T>` and the removal of Jackson
 
-**Status:** STAGES 1, 2 AND 3 DONE (2026-07-31); stage 4 partially. Remaining Jackson: `SlumberRestCodec`, one import in `ultra/vault`, and four `api()` exports in `funktor/core`
+**Status:** ALL STAGES DONE (2026-07-31). **Zero Jackson in Kotlin source; no module declares it.** It remains on the classpath only transitively, via `com.auth0:java-jwt` — see below
 **Security-critical:** yes — this is what finally closes
 `.claude/tasks/20260731-config-secrets-in-insights.md`
 **Supersedes:** the `@JsonIgnore` constraint recorded in `.claude/tasks/20260731-depot-findings.md`
@@ -313,7 +313,42 @@ multi-line. Everything else in 1898 karango+monko tests matched byte for byte.
 inside a one-line query read worse than Jackson's `[ 1 ]`. Non-pretty would give `[1]` — arguably better
 here, and a smaller diff than what landed. Say if that is preferred.
 
-#### remaining
+**Also done, completing stage 4:**
+
+- `funktor/rest/codec/SlumberRestCodec.kt` — the last real user. Jackson did two jobs and a helper
+  existed for each: `JsonUtil.toJsonElement()` for writing, `JsonUtil.unwrap()` for reading. Two Jackson
+  settings did **not** need carrying over, which is worth recording so nobody re-adds them:
+  `FAIL_ON_UNKNOWN_PROPERTIES = false` was moot (the body was read into a `Map<String, Any?>`, which
+  accepts anything — tolerance for unknown fields comes from Slumber's awakers), and
+  `maxStringLength(50_000_000)`, raised to clear Jackson's 20 MB default, has no kotlinx counterpart
+  because kotlinx imposes no such limit. One behaviour improved: `readValue<Map<String, Any?>>` assumed
+  the body was a JSON **object** and threw for a top-level array or scalar; unwrapping any element is
+  strictly more permissive, and Slumber's awaker still decides what is acceptable.
+- `ultra/vault/domain.kt` — three `@get:JsonIgnore` on `collection`, `asRef`, `asStored`. Dead: they are
+  computed properties with no `@Slumber.Field`, and `DataClassSlumberer` emits constructor params only,
+  so Slumber never touched them; with Jackson gone from insights and rest, nothing serialised them
+  reflectively either. Removed with the `jackson-databind` dependency.
+- `funktor/core` — four `api(Deps.JavaLibs.Jackson.*)` exports that nothing in the module imported.
+
+## Where Jackson still is, and why that is the end of it
+
+**Zero Jackson in Kotlin source. No module declares a Jackson dependency.** `Deps.kt` keeps the
+coordinate constants; nothing references them.
+
+It is still on the runtime classpath transitively:
+
+| Source | Note |
+|---|---|
+| `com.auth0:java-jwt` → `jackson-core`, `jackson-databind` | The JWT library's own internal JSON. Cannot be removed without replacing the library — see `.claude/tasks/20260718-jwt-lib-consolidation-options.md` |
+| AWS SDK → `third-party-jackson-core` | **Shaded/relocated**, so not the same classes. Not a concern |
+
+The distinction matters for the security framing that started this: Jackson is no longer *our*
+serializer, so nothing of ours hands it an object to reflect over. A Jackson CVE would still land on the
+classpath, but no code path of ours reaches it. Removing it outright means replacing `java-jwt`.
+
+**Full regression: 5513 tests across 16 modules, 0 failures.** Compile sweep clean.
+
+#### remaining (all cleared)
 
 - `funktor/rest/codec/SlumberRestCodec.kt` — the JSON **text** layer beneath Slumber, on every API
   request and response. The largest remaining user; treat most carefully.

@@ -84,10 +84,6 @@ kotlin {
                 api(Deps.Ktor.Server.netty)
 
                 // Jackson used for serializing and pretty printing
-                api(Deps.JavaLibs.Jackson.annotations)
-                api(Deps.JavaLibs.Jackson.datatype_jdk8)
-                api(Deps.JavaLibs.Jackson.datatype_jsr310)
-                api(Deps.JavaLibs.Jackson.module_kotlin)
 
                 // ultra
                 api(project(":ultra:kontainer"))

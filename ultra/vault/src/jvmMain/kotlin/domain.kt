@@ -2,7 +2,6 @@
 
 package io.peekandpoke.ultra.vault
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
@@ -40,16 +39,13 @@ sealed class Storable<out T> {
     suspend fun value(): T = resolve()
 
     /** The name of the collection the document is stored in */
-    @get:JsonIgnore
     val collection get() = _id.split("/").first()
 
     /** Converts to a [Ref] wrapping the already-resolved value. */
-    @get:JsonIgnore
     val asRef: Ref<T>
         get() = Ref.eager(valueInternal, _id, _key, _rev)
 
     /** Converts to a [Stored] */
-    @get:JsonIgnore
     val asStored: Stored<T>
         get() = Stored(valueInternal, _id, _key, _rev)
 

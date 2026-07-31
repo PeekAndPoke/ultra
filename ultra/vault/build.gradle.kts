@@ -76,7 +76,6 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation(Deps.JavaLibs.Jackson.databind)
                 implementation(Deps.KotlinLibs.clikt)
 
                 api(project(":ultra:log"))

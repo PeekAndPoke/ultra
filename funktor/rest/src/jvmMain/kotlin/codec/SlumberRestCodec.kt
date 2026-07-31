@@ -1,15 +1,13 @@
 package io.peekandpoke.funktor.rest.codec
 
-import com.fasterxml.jackson.core.StreamReadConstraints
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.ObjectWriter
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.peekandpoke.funktor.core.broker.CouldNotConvertException
 import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import io.peekandpoke.ultra.slumber.JsonUtil.unwrap
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.slumber.slumber
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -19,50 +17,38 @@ import kotlin.reflect.typeOf
  */
 class SlumberRestCodec(
     config: SlumberConfig,
-    private val jacksonMapper: ObjectMapper = defaultJacksonMapper,
 ) : RestCodec, Codec(config) {
 
     companion object {
-        val defaultJacksonMapper: ObjectMapper = ObjectMapper()
-            .registerKotlinModule()
-            .apply {
-                factory.setStreamReadConstraints(
-                    StreamReadConstraints.builder()
-                        .maxStringLength(50_000_000)
-                        .build()
-                )
-            }
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        /**
+         * Text layer only. Slumber does every bit of the mapping; this turns its plain tree into JSON
+         * and back, which is all the Jackson `ObjectMapper` here ever did.
+         *
+         * Two Jackson settings did not need carrying over. `FAIL_ON_UNKNOWN_PROPERTIES = false` was
+         * moot because the body was always read into a `Map<String, Any?>`, which accepts anything —
+         * tolerance for unknown fields comes from Slumber's awakers, not from the parser. And
+         * `maxStringLength(50_000_000)`, raised to get past Jackson's 20 MB default, has no kotlinx
+         * counterpart: kotlinx imposes no such limit, so the ceiling that needed lifting is gone.
+         */
+        private val json = Json
 
-        val prettyPrinter: ObjectWriter = defaultJacksonMapper.writerWithDefaultPrettyPrinter()
+        private val prettyJson = Json { prettyPrint = true }
     }
 
     private val stringKType: KType = typeOf<String>()
     private val stringKTypeNullable: KType = typeOf<String?>()
 
-    override fun serialize(content: Any?): String? {
-        val slumbered = slumber(content)
+    override fun serialize(content: Any?): String? = render(json, slumber(content))
 
-        return jacksonMapper.writeValueAsString(slumbered)
-    }
+    override fun serializePretty(content: Any?): String? = render(prettyJson, slumber(content))
 
-    override fun serializePretty(content: Any?): String? {
-        val slumbered = slumber(content)
+    override fun serialize(asType: KType, content: Any?): String? = render(json, slumber(asType, content))
 
-        return prettyPrinter.writeValueAsString(slumbered)
-    }
+    override fun serializePretty(asType: KType, content: Any?): String? =
+        render(prettyJson, slumber(asType, content))
 
-    override fun serialize(asType: KType, content: Any?): String? {
-        val slumbered = slumber(asType, content)
-
-        return jacksonMapper.writeValueAsString(slumbered)
-    }
-
-    override fun serializePretty(asType: KType, content: Any?): String? {
-        val slumbered = slumber(asType, content)
-
-        return prettyPrinter.writeValueAsString(slumbered)
-    }
+    private fun render(with: Json, slumbered: Any?): String =
+        with.encodeToString(JsonElement.serializer(), slumbered.toJsonElement())
 
     override fun deserialize(asType: KType, content: Any?): Any? {
         return when (content) {
@@ -71,9 +57,10 @@ class SlumberRestCodec(
                 asType == stringKType || asType == stringKTypeNullable -> content
 
                 else -> {
-                    val json = jacksonMapper.readValue<Map<String, Any?>>(content)
-
-                    awakeBody(asType, json)
+                    // Was `readValue<Map<String, Any?>>`, which assumed the body is a JSON OBJECT and
+                    // threw for a top-level array or scalar. Unwrapping any element is strictly more
+                    // permissive: Slumber's awaker for `asType` still decides what is acceptable.
+                    awakeBody(asType, json.parseToJsonElement(content).unwrap())
                 }
             }
 
