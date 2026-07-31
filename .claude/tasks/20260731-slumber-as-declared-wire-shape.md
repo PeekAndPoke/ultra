@@ -1,6 +1,6 @@
 # `@Slumber.As` — declare a custom-coded type's wire shape once
 
-**Status:** IDEA — maintainer's, 2026-07-31. Descriptive-only is settled (§4); §5 still open.
+**Status:** IDEA — maintainer's, 2026-07-31. §4 and §5 settled; ready to be specced.
 **Plan:** none yet. Touches `ultra/slumber`, `karango`, `monko`, `ultra/codegen`.
 **Security-critical:** no.
 
@@ -85,10 +85,27 @@ N, in the place that can actually perform it.**
 So `As(SomeDataClass::class)` covers **four of six**. The two scalars are exactly the ones the codegen
 parity spec records as having been got wrong first time — i.e. the cases most worth declaring.
 
-The annotation must therefore express scalars too, or those types keep a hand-written claim and the
-idea only half-lands. Options: allow `As(Long::class)` / `As(String::class)`; or a separate
-`@Slumber.AsScalar`; or lean on the value-class precedent, since `ValueClassSlumberer` already emits
-the bare underlying value and nothing has to declare that.
+**SETTLED (maintainer, 2026-07-31): scalars are expressed as `As(Long::class)` / `As(String::class)`,
+with shorthands.** So:
+
+```kotlin
+@Slumber.As(MpDateTimeRawData::class)  data class MpInstant(...)
+@Slumber.AsLong                        data class MpLocalTime(...)
+@Slumber.AsString                      data class MpTimezone(...)
+```
+
+Note on shape: `AsLong` cannot be a function delegating to `As` — annotations do not compose that way.
+They are SIBLING annotations. Slightly more code in `ultra/slumber`, identical at the use site, and
+`@Slumber.AsLong` reads better than `@Slumber.As(Long::class)`. A reader must therefore handle all
+three forms, not just `As`.
+
+### `As` is a usable name — verified, not assumed
+
+Kotlin keywords are case-sensitive: `as` is hard-reserved, `As` is an ordinary identifier. Confirmed
+by compiling and running a probe (2026-07-31): a nested `annotation class As(val shape: KClass<*>)`
+declares, applies at a use site, and reads back through runtime reflection — which is how
+`ultra/codegen` would consume it — with no backticks needed anywhere. Java interop is unaffected;
+`as` is not a Java keyword.
 
 ## 6. Open questions
 
@@ -112,7 +129,8 @@ the bare underlying value and nothing has to declare that.
 - [ ] Enumerate every custom-coded type across the codebase, not just ultra/datetime —
       `SlumberConfig.default`'s module list is the honest starting point, plus `JavaTimeModule` and
       the kotlinx-json codecs. That count decides whether this pays for itself.
-- [ ] Decide §5 (how scalars are expressed) with the maintainer. §4 is settled: descriptive only.
-- [ ] Write the generic parity check FIRST, before any consumer reads the annotation. A descriptive
-      annotation that nothing verifies is a `TsTypeClaim` with better syntax — same failure mode,
-      wider blast radius, because now three code generators trust it instead of one.
+- [ ] Confirm every currently-claimed type can be expressed, using the three forms in §5.
+- [ ] The generic parity check is OPTIONAL, not a precondition — maintainer, 2026-07-31: the
+      annotation ships with the type, so keeping it correct is the type author's obligation, the same
+      way the codec is. Worth adding as cheap insurance because a wrong declaration fails silently and
+      downstream, but it does not gate the work.
