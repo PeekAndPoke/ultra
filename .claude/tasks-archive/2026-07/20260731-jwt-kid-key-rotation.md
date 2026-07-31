@@ -1,7 +1,8 @@
 # JWT `kid`-based key rotation
 
-**Status:** GATE PASSED — implemented (`9fe2a21a`), review findings fixed (`493423b8`), 2026-07-31
-**Plan:** `.claude/tasks/20260718-jwt-lib-consolidation-options.md` → the AMENDED section
+**Status:** DONE and ARCHIVED (2026-08-01) — implemented (`9fe2a21a`), review findings fixed
+(`493423b8`), signing key moved out of the tree (`2397c0a6`)
+**Plan:** `.claude/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md` → the AMENDED section
 **Security-critical:** yes → red-team scenarios collected in
 `.claude/tasks/20260731-redteam-jwt-own-verifier.md` section F
 
@@ -265,5 +266,21 @@ would, however, overturn a policy decision taken deliberately in the previous se
 ### 5. Rotation is not yet operable
 
 Nothing generates a key, nothing warns that one is old, and nothing logs which key is signing — so a
-mis-ordered rotation is invisible until someone decodes a fresh token. `issued` is the hook. Worth
-its own task when someone actually has to rotate.
+mis-ordered rotation is invisible until someone decodes a fresh token. `issued` is the hook.
+**Carried forward:** `.claude/tasks/20260801-jwt-rotation-operability.md`, together with items 2 and 4
+above, which are the other two loose ends.
+
+Its priority dropped once 2b landed: rotation is hygiene on a schedule, not incident response, so
+`.claude/tasks/20260728-session-revocation-wiring.md` outranks it.
+
+## Follow-ups created on archiving
+
+- `.claude/tasks/20260801-docs-jwt-key-rotation.md` — DOCS. Public API changed breakingly
+  (`JwtConfig.signingKey` → `keys`, plus `JwtSigningKey` and `JwtAlgorithm`) and the config shape is
+  what every app has to edit. Settled: it survived a three-agent gate, two rounds of fixes and the
+  maintainer's own review. Unlike the `Redacted` docs task it needs no scoping decision — the config
+  is consumed through funktor, which already has `docs-site/src/pages/ultra/funktor/auth.astro` and a
+  `funktor.md` mirror section.
+- `.claude/tasks/20260801-jwt-rotation-operability.md` — the actionable residue of items 2, 4 and 5.
+- `.claude/tasks/20260731-redteam-jwt-own-verifier.md` — already open; section F and scenarios 26–27
+  were added for this work. Stays open for a dedicated pen-test session.

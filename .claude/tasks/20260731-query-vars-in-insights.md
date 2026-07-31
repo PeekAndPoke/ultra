@@ -51,5 +51,5 @@ mode the other three share.
 ## Related
 
 - `.claude/tasks-archive/2026-07/20260730-insights-rest-api.md` — the API that made this remotely readable
-- `.claude/tasks/20260731-config-secrets-in-insights.md` — the config half of the same problem
+- `.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md` — the config half of the same problem
 - `funktor/insights/reference/TAB-SPECS.md` — the vault tab that will render it

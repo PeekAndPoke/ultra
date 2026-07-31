@@ -1,6 +1,8 @@
 # Config secrets are written verbatim into every insights record
 
-**Status:** FOUND, NOT FIXED — needs a decision, and it crosses three modules with other owners
+**Status:** FIXED and ARCHIVED (2026-08-01) — closed by `Redacted<T>`, which took fix option 4
+(a type, not an annotation). See "How it was actually fixed" at the bottom; the analysis above is
+kept as written because it is what led to that choice.
 **Security-critical:** yes
 **Found:** 2026-07-31, while distilling the reference renderers into a Vue tab spec
 **Related:** `.claude/tasks/20260731-depot-findings.md` (the `@JsonIgnore` constraint — now shown incomplete)
@@ -102,3 +104,43 @@ have caught this on day one.
 
 - Rotating the demo's committed test signing key. It is a test fixture in
   `funktor/all/src/jvmTest/resources/config/application.test.conf`, already public in the repo.
+
+---
+
+## How it was actually fixed (2026-08-01)
+
+None of the four options above shipped as stated. The maintainer's position — *"Jackson is a repeat
+security offender and the goal is to remove it entirely"* — turned this into
+`.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`, which replaced the
+annotation approach with a **type**: `Redacted<T>`, carried by the compiler and stated at the
+declaration site, plus codecs for kotlinx and Slumber. Jackson was then removed outright, so the
+"Jackson never calls toString()" trap at the heart of this file no longer has a Jackson to spring it.
+
+Every field in the leak table above is now `Redacted`, verified against the code on closing:
+
+| Field | Now |
+|---|---|
+| the JWT signing key | `JwtSigningKey.secret: Redacted<String>` — the field moved too: `JwtConfig.signingKey` became `keys: List<JwtSigningKey>` in the `kid` rotation work (`9fe2a21a`) |
+| `UltraSecurityConfig.csrfSecret` | `Redacted<String>` (`ultra/security/src/jvmMain/kotlin/UltraSecurityConfig.kt:6`) |
+| `ArangoDbConfig.password` | `Redacted<String>` (`karango/core/src/main/kotlin/config/ArangoDbConfig.kt:13`) |
+| `MongoDbConfig.connectionString` | `Redacted<String>` (`monko/core/src/main/kotlin/MongoDbConfig.kt:7`) |
+| `AppConfig.keys` | `Map<String, Redacted<String>>` (`funktor/core/src/jvmMain/kotlin/config/AppConfig.kt:184`) — secret-by-default, since the bag exists precisely for things with no declaration site to annotate |
+
+Two findings from the review gate on that work are worth keeping here, because both are exactly the
+failure mode this file describes:
+
+- Deleting the old `ConfigRedaction` regex silently **un-redacted** `SendgridConfig.apiKey` — a live
+  credential — because converting only the `@JsonIgnore` fields was a net loss of coverage. The regex
+  had been matching `.*(key|...)` across the whole tree.
+- Reading the placeholder back used to yield `Redacted("***redacted***")` rather than throwing, so a
+  config rebuilt from an insights record would have booted and signed JWTs with a publicly known
+  constant. Both codecs now reject it (`166adaa7`).
+
+**Proof it is reached, not merely correct:** `funktor/all/src/jvmTest/kotlin/InsightsRecordingSpec.kt`
+reads the running app's own signing key out of its config and asserts it never appears in a record
+served by `getRecord` — the same "policy never invoked" trap that made the first redaction spec
+vacuous.
+
+**The related depot finding** (`20260731-depot-findings.md`) recorded a `@JsonIgnore` table as "the
+only thing keeping secrets out of records". That table is superseded: the mechanism is now a type,
+and there is no Jackson.

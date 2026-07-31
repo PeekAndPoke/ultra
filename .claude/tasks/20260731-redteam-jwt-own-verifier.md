@@ -2,7 +2,7 @@
 
 **Status:** COLLECTED — do not execute here. For a dedicated penetration-test session.
 **Created:** 2026-07-31
-**Plan:** `.claude/tasks/20260718-jwt-lib-consolidation-options.md` (RESOLVED section)
+**Plan:** `.claude/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md` (RESOLVED section)
 **Why:** `com.auth0:java-jwt` was removed on 2026-07-31 and this codebase now owns JWT signing,
 signature verification and registered-claim validation outright. Every request bearing an
 `Authorization: Bearer` header hits this code, unauthenticated.
@@ -151,7 +151,7 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
     should close — verify.)
 27. **Committed key material.** The demo's dev/test profiles ship a working superuser signing key
     inside `src/main/resources` (pre-existing, commit `6c55d3db`, tracked as OPEN item 1 in
-    `.claude/tasks/20260731-jwt-kid-key-rotation.md`). Establish exactly which deployment shapes can
+    `.claude/tasks-archive/2026-07/20260731-jwt-kid-key-rotation.md`). Establish exactly which deployment shapes can
     end up on that profile — `AppConfig` tries `File(filename)` before the classpath — including CI
     entrypoints and container images that bake a default `-config=`.
 22. **Downgrade between configured keys.** With several keys configured, can a token be made to

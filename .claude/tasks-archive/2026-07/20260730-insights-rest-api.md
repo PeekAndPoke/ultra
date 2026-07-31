@@ -581,7 +581,7 @@ All five are now **decided** (2026-07-31):
 | Boot check instantiates every collector | **Accepted.** `AppConfigCollector.static` is lazy now, which was the only real cost; a collector must be boot-constructible |
 
 Plus the config-secrets finding, which was the largest: `Redacted<T>` replaces `@JsonIgnore` wholesale and
-Jackson is to be removed entirely — `.claude/tasks/20260731-redacted-and-jackson-removal.md`. An interim
+Jackson is to be removed entirely — `.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`. An interim
 name-based redaction (`ConfigRedaction`) closes the leak meanwhile and is marked for deletion.
 
 ## Why round 2 happened (kept for the record)
@@ -640,7 +640,7 @@ Three defects surfaced only because a mutation refused to fail, and none were vi
 
 - [x] **I4 — the test app never enables insights** — **fixed 2026-07-31**, see "I4: the e2e now runs
       against a populated depot" below.
-- [ ] **Config secrets are in every record** — `.claude/tasks/20260731-config-secrets-in-insights.md`.
+- [ ] **Config secrets are in every record** — `.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md`.
       The JWT signing key, CSRF secret and DB passwords are serialised verbatim into the `app-config`
       slice. Found 2026-07-31 by reading a real record. **Blocks the `app-config` Vue tab**, and it is
       the reason `reference/TAB-SPECS.md` marks that one STOP.

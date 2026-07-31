@@ -1,6 +1,7 @@
 # JWT library consolidation — options (backlog / not scheduled)
 
-**Status:** RESOLVED 2026-07-31 — `com.auth0:java-jwt` fully removed; verify-then-parse implemented in-house. See "RESOLVED" at the bottom, then "AMENDED" below it (`kid` rotation, commit `9fe2a21a`, changed two of the claims made there). Only the client-side `jwt-decode` option (original option 1) remains open.
+**Status:** DONE and ARCHIVED (2026-08-01). The whole arc shipped: parser hardening, library removal, and `kid` rotation. The one item that was never in scope here — the client-side `jwt-decode` npm dependency, original option 1 — is unchanged and still open.
+**Was:** RESOLVED 2026-07-31 — `com.auth0:java-jwt` fully removed; verify-then-parse implemented in-house. See "RESOLVED" at the bottom, then "AMENDED" below it (`kid` rotation, commit `9fe2a21a`, changed two of the claims made there). Only the client-side `jwt-decode` option (original option 1) remains open.
 **Type:** reference / backlog
 
 ## Current state (keep for now)

@@ -86,7 +86,7 @@ annotations are the only thing standing between the app's signing keys and a sto
 **This table is NOT the full inventory — it is the list of fields that are protected.** Several config
 secrets have no `@JsonIgnore` at all and are written into every record verbatim, including the JWT
 signing key. Verified against a real record on 2026-07-31; see
-`.claude/tasks/20260731-config-secrets-in-insights.md`. Read that before relying on anything here.
+`.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md`. Read that before relying on anything here.
 
 **Slumber and kotlinx.serialization do not honour `@JsonIgnore`.** The insights *read* path moved to
 kotlinx on 2026-07-31, which makes moving the *write* path look like tidy-up. It is not: doing so would

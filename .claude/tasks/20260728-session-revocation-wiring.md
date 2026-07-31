@@ -19,7 +19,7 @@ Built, tested, and unused:
 
 ## Why this is now the highest-value auth item (added 2026-08-01)
 
-Key rotation shipped (`.claude/tasks/20260731-jwt-kid-key-rotation.md`) and, in the course of it, the
+Key rotation shipped (`.claude/tasks-archive/2026-07/20260731-jwt-kid-key-rotation.md`) and, in the course of it, the
 maintainer pointed out what it does NOT buy: **rotation cannot contain a compromised key, because
 refresh launders a token onto the new one.** An attacker holding a forged token calls `refreshToken`
 during the grace window and gets a replacement signed with the *new* key; dropping the old key then
