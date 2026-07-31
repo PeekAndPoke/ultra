@@ -119,6 +119,34 @@ class ExtractUserSpec : StringSpec({
         degraded.permissions shouldBe UserPermissions.anonymous
     }
 
+    "the builder CANNOT smuggle permission claims past the vetted UserPermissions" {
+        // `createJwt` applies the caller's builder block BEFORE encodePermissions, and every write in
+        // encodePermissions is conditional — so before `clearNamespace`, a builder-set claim survived
+        // whenever the corresponding permission was absent. That is a privilege-escalation shape:
+        // `createJwt(user, permissions = vetted) { withClaim("permissions/superuser", true) }` with an
+        // unprivileged `vetted` produced a token that satisfied every permission-only auth rule.
+        val token = generator.createJwt(
+            user = JwtUserData(id = UserId("b2b_users/u1"), desc = "d", type = "t"),
+            permissions = UserPermissions(),
+            builder = {
+                withClaim("permissions/superuser", true)
+                withClaim("permissions/org", "organisation/attacker")
+                withArrayClaim("permissions/roles", arrayOf("admin"))
+                withClaim("user/id", "b2b_users/somebody-else")
+            },
+        )
+
+        val permissions = generator.extractPermissions(generator.verify(token))
+
+        permissions.isSuperUser shouldBe false
+        permissions.org shouldBe null
+        permissions.roles shouldBe emptySet()
+        permissions shouldBe UserPermissions()
+
+        // the user namespace is authoritative too
+        generator.extractUserData(generator.verify(token)).id shouldBe UserId("b2b_users/u1")
+    }
+
     "a LEGACY bare-_key org claim degrades to no selected org — fail-closed, not a 500" {
         // Every JWT minted before the org id became a collection-qualified `_id` carries `org: "acme"`.
         // Those tokens MUST NOT throw (a 500 on every request) and MUST NOT be honoured (that would be

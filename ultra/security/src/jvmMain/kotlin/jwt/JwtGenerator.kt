@@ -36,6 +36,9 @@ class JwtGenerator(
 
         private fun base64Url(bytes: ByteArray): String =
             Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+
+        /** Default token lifetime, applied by [createJwt] unless the builder overrides `exp`. */
+        const val DEFAULT_EXPIRY_MINUTES: Long = 60
     }
 
     /** The namespace for permissions claims */
@@ -105,8 +108,18 @@ class JwtGenerator(
      * - `nbf` and `iat`: absent or null means no check; otherwise valid from that second on
      *   (`== now` is valid).
      * - `iss`: must be a JSON string equal to the configured issuer.
-     * - `aud`: a single string equal to the configured audience, or an array containing it —
-     *   non-string array members are ignored, as the library ignored them.
+     * - `aud`: a single string equal to the configured audience, or an array containing it.
+     *
+     * **`aud` array members are the one deliberate divergence, and the earlier claim here that the
+     * library "ignored" non-string members was wrong** — corrected 2026-07-31 after measuring the cases
+     * the original probe had not covered. `java-jwt` ran every member through Jackson's
+     * `treeToValue(..., String.class)`, so it *coerced* numbers and booleans to their text (`aud: [42]`
+     * genuinely matched a configured audience of `"42"`) and *threw* on an object or array member,
+     * rejecting the whole token. This implementation instead ignores any non-string member.
+     *
+     * Kept as a divergence rather than reproduced, because type coercion inside an authorization
+     * decision is a defect worth losing: `42` is not the audience `"42"`. Both differences are
+     * unreachable anyway — the MAC runs first, and this issuer only ever writes a single string `aud`.
      */
     private fun validateClaims(claims: JsonObject) {
         val now = clock.instant().epochSecond
@@ -165,10 +178,17 @@ class JwtGenerator(
         permissions: UserPermissions = UserPermissions(),
         builder: JwtBuilder.() -> Unit = {},
     ): String = JwtBuilder()
-        // overridable properties
-        .expiresInMinutes(60)
+        // Overridable. The default expiry is derived from THIS generator's [clock], not from
+        // `expiresInMinutes`' `Date()`: otherwise the clock seam is half-wired — `verify` honours the
+        // injected clock while issuance ignores it, so a generator built with a fixed clock mints
+        // tokens it immediately considers expired. Identical in production, where both are system time.
+        .withExpiresAt(clock.instant().plusSeconds(DEFAULT_EXPIRY_MINUTES * 60))
         .apply(builder)
-        // properties that cannot be overridden by the builder
+        // Properties that cannot be overridden by the builder. `encodeUser` and `encodePermissions`
+        // CLEAR their namespace first — without that, their writes are conditional, so a claim the
+        // builder set survived whenever the corresponding permission was absent. That is the direction
+        // that matters: a builder-set `permissions/superuser` would outlive an unprivileged
+        // UserPermissions and satisfy every permission-only auth rule.
         .withIssuer(config.issuer)
         .withAudience(config.audience)
         .withSubject(user.id.value)

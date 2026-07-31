@@ -126,8 +126,12 @@ class JwtSignatureGateSpec : StringSpec({
         val at = lastDot + 1 + (real.length - lastDot - 1) / 2
         val flipped = real.replaceRange(at, at + 1, if (real[at] == 'A') "B" else "A")
 
+        // Guard on the DECODED BYTES, not on the strings. `flipped != real` is true by construction and
+        // would still pass if `at` were moved back onto the final character — the exact bug the comment
+        // above records — leaving only the real assertion to fail, with a misleading message.
         withClue("flipping a middle signature character must change the decoded bytes") {
-            (flipped != real) shouldBe true
+            val decode = { t: String -> Base64.getUrlDecoder().decode(t.substringAfterLast('.')) }
+            decode(flipped).contentEquals(decode(real)) shouldBe false
         }
 
         shouldThrow<JwtSignatureGate.Rejected> { gate.check(flipped) }

@@ -2,8 +2,10 @@ package io.peekandpoke.ultra.security.jwt
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldNotBeInstanceOf
 import io.peekandpoke.ultra.common.model.Redacted
@@ -14,6 +16,7 @@ import io.peekandpoke.ultra.security.user.UserPermissions
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.Base64
 
 /**
  * WIRE COMPATIBILITY with tokens issued by `java-jwt` 4.5.2 — the property that decides whether
@@ -137,5 +140,28 @@ class JwtWireCompatSpec : StringSpec({
             .split(".")[0]
 
         ours shouldBe fixtureProductionShape.split(".")[0]
+    }
+
+    "OUR minted payload keeps the library's wire shape for aud and exp" {
+        // The fixtures above pin what the LIBRARY emitted; nothing pinned what WE emit. Every other
+        // assertion reads through JwtPayload.audience, which normalises a string and an array to the
+        // same list — so switching `withAudience` to always emit an array would keep the whole suite
+        // green while silently changing `"aud":"x"` to `"aud":["x"]` for every external reader,
+        // including the JS client. Assert on the raw payload segment instead.
+        val payload = String(
+            Base64.getUrlDecoder().decode(
+                generator.createJwt(user = JwtUserData(id = UserId("b2b_users/u1"), desc = "d", type = "t"))
+                    .split(".")[1]
+            )
+        )
+
+        assertSoftly {
+            withClue("a single audience is a plain string, never an array") {
+                payload shouldContain """"aud":"wire-aud""""
+            }
+            withClue("exp is a bare number of epoch SECONDS, not millis and not a string") {
+                payload shouldContain """"exp":${now + 3600}"""
+            }
+        }
     }
 })

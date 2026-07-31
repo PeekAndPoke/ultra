@@ -48,6 +48,28 @@ class JwtGeneratorSpec : StringSpec() {
             str shouldContain "testAudience"
         }
 
+        "JwtPayload.toString must not disclose the claims" {
+            // Regression guard. JwtPayload is a data class, so the GENERATED toString rendered every
+            // claim — email, org, roles, permissions. The vendor type it replaced
+            // (com.auth0.jwt.impl.PayloadImpl) has no toString override, so this was a NEW disclosure
+            // channel, not an inherited one. Nothing logs a payload today; the KDoc's "do not log it"
+            // is precisely what an `error("... $caller")` violates later.
+            val token = jwtGenerator.createJwt(
+                user = JwtUserData(id = UserId("u9"), desc = "d", type = "t", email = EmailAddress("leak@example.com")),
+                permissions = UserPermissions(isSuperUser = true, roles = setOf("admin")),
+            )
+
+            val rendered = jwtGenerator.verify(token).toString()
+
+            assertSoftly {
+                rendered shouldNotContain "leak@example.com"
+                rendered shouldNotContain "admin"
+                rendered shouldNotContain "superuser"
+                // the subject is deliberately kept — it is the useful part of a log line
+                rendered shouldContain "u9"
+            }
+        }
+
         "verify() should work as shorthand for verifier.verify()" {
             val userData = JwtUserData(id = UserId("v1"), desc = "Verify Test", type = "Test")
             val token = jwtGenerator.createJwt(user = userData)

@@ -67,6 +67,18 @@ data class JwtPayload(
      * safe call, and a nullable return would push `?.` into a dozen places for no gain.
      */
     fun getClaim(name: String): JwtClaim = JwtClaim(claims[name])
+
+    /**
+     * Deliberately does NOT render the claims — they are credential contents.
+     *
+     * The generated `data class` version printed every claim: email, org ids, roles, permissions, and
+     * whatever an application adds. The type this replaced (`com.auth0.jwt.impl.PayloadImpl`) had no
+     * `toString()` override at all, so the data-class default was a NEW disclosure channel rather than
+     * an inherited one — verified against the 4.5.2 jar. Nothing logged a payload at the time, which is
+     * exactly why this is worth closing now: the KDoc's "do not log it" is the kind of instruction an
+     * `error("... $caller")` violates later.
+     */
+    override fun toString(): String = "JwtPayload(sub=$subject, claims=${claims.size})"
 }
 
 /**

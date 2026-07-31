@@ -35,13 +35,29 @@ import javax.crypto.spec.SecretKeySpec
  *
  * Since `java-jwt` was removed (2026-07-31) this gate IS the signature validation. [JwtGenerator.verify]
  * then parses the authenticated payload and validates the registered claims (`exp`, `nbf`, `iat`, `iss`,
- * `aud`) against the contract measured from the library before it went — so every RFC 7519 step still
- * runs, just in our own code.
+ * `aud`) against the contract measured from the library before it went.
  *
- * One measured divergence, accepted deliberately: the library also rejected a token whose HEADER names
- * a different algorithm even when the MAC was valid (`AlgorithmMismatchException`). This gate never
- * reads the header, so such a token verifies. Only the signing-key holder can produce one, and the key
- * holder can mint arbitrary valid tokens anyway — there is nothing there to defend.
+ * ### What is deliberately NOT performed
+ *
+ * The header is never decoded, so **RFC 7515 §5.2 steps 2, 3 and 5 do not run** — no header parse, no
+ * "is it valid UTF-8 JSON", no rejection of unsupported `crit` parameters (§4.1.11); nor does RFC 7519
+ * §7.2's `cty`/nested-JWT branch. These are skipped, not relocated. That is safe here for one reason
+ * only: **the header is inside the signing input**, so nobody but the signing-key holder can put
+ * anything in it, and a `crit` or `cty` header would fail closed at [JwtGenerator]'s decode step
+ * regardless. An earlier version of this KDoc claimed "every RFC 7519 step still runs" — it does not,
+ * and that sentence is exactly what a future reader would have leaned on when extending this gate.
+ *
+ * Two consequences of never reading the header, both accepted deliberately:
+ *
+ * - The library rejected a valid-MAC token whose header names a different algorithm
+ *   (`AlgorithmMismatchException`); here it verifies. Only the key holder can produce one, and the key
+ *   holder can mint arbitrary valid tokens anyway.
+ * - `typ` is not checked either (RFC 8725 §3.11, explicit typing). **This rests on an invariant that is
+ *   true today and is not enforced: this signing key signs exactly ONE kind of JWT.** Org-selection,
+ *   activation and password-reset tokens are `SecureRandom` database rows, not JWTs. The day a second
+ *   kind of JWT is minted under this key, `iss` and `aud` are the only separators — and `createJwt`
+ *   hard-codes both identically for every token — so that second kind would be accepted as a session
+ *   bearer token. Introducing one means adding a `typ` check at the same time.
  *
  * ### PRECONDITION — read before reusing this
  *
@@ -53,7 +69,8 @@ import javax.crypto.spec.SecretKeySpec
  * Such a verifier should still not parse the **payload** before verifying. The rule that generalises is:
  * *parse only the header, hard-capped, then verify, then parse the payload.* A header is a few hundred
  * bytes of `{"alg":…,"typ":…,"kid":…}`; the payload is where an oversized or deeply nested document
- * would live. [MAX_HEADER_LENGTH] is here for that case.
+ * would live. That cap belongs to whoever writes such a verifier — a published constant no code reads
+ * would advertise a protection this class does not perform.
  */
 class JwtSignatureGate(
     signingKey: String,
@@ -69,15 +86,6 @@ class JwtSignatureGate(
          * unauthenticated caller can make the server hash. The replaced library offered no such control.
          */
         const val MAX_TOKEN_LENGTH: Int = 64 * 1024
-
-        /**
-         * Upper bound on the encoded header segment.
-         *
-         * Unused by the HMAC path, which never reads the header. Provided for the external-IdP case
-         * described in the class KDoc, where the header must be parsed to select a key — bounding it is
-         * what keeps that parse from becoming the surface this gate exists to remove.
-         */
-        const val MAX_HEADER_LENGTH: Int = 10_000
     }
 
     /**
