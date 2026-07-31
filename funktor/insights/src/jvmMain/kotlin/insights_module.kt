@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.insights
 
 import impl.InsightsFull
-import impl.InsightsSlim
+import impl.InsightsDisabled
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.peekandpoke.funktor.core.kontainerOrNull
@@ -33,16 +33,16 @@ val Funktor_Insights = module {
 
     dynamic(Insights::class) { config: InsightsConfig, kontainer: Kontainer ->
         when (config.enabled) {
-            false -> InsightsSlim(config)
+            false -> InsightsDisabled(config)
 
             true -> {
                 val collectors = kontainer.getLookup(InsightsCollector::class)
 
                 val repository = kontainer.getOrNull(InsightsRepository::class)
-                    ?: return@dynamic InsightsSlim(config)
+                    ?: return@dynamic InsightsDisabled(config)
 
                 val mapper = kontainer.getOrNull(InsightsMapper::class)
-                    ?: return@dynamic InsightsSlim(config)
+                    ?: return@dynamic InsightsDisabled(config)
 
                 InsightsFull(
                     config = config,

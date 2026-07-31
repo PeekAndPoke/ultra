@@ -7,7 +7,7 @@ import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.CollectorData
 import io.peekandpoke.funktor.insights.Insights
 import io.peekandpoke.funktor.insights.InsightsCollector
-import io.peekandpoke.funktor.insights.api.InsightsApi
+import io.peekandpoke.funktor.rest.InsightsLevel
 import io.peekandpoke.funktor.insights.InsightsData
 import io.peekandpoke.funktor.insights.InsightsMapper
 import io.peekandpoke.funktor.insights.InsightsRepository
@@ -27,24 +27,6 @@ internal class InsightsFull(
     private val repository: InsightsRepository,
     private val mapper: InsightsMapper,
 ) : Insights.Base() {
-    companion object {
-        /**
-         * Uris that are never recorded.
-         *
-         * The insights entries matter: recording a call to the insights API would write a record whose
-         * request and response headers describe the superuser who was *reading* insights — and every
-         * such read would append another record, so a browsing session inflates the depot with
-         * observations of itself. Extracted from the instance so it can be tested without booting an
-         * application.
-         *
-         * Matched against [InsightsApi.base] rather than a loose `"/insights"`, which would also have
-         * swallowed an application's own routes — `/api/insights-dashboard` contains it.
-         */
-        // TODO: make injectable
-        fun isExcluded(uri: String): Boolean =
-            uri.contains("favicon.ico") || uri.contains(InsightsApi.base)
-    }
-
     private val date = LocalDate.now()
     private val dateTime = LocalDateTime.now()
 
@@ -52,16 +34,23 @@ internal class InsightsFull(
 
     override fun <T : InsightsCollector> getOrNull(cls: KClass<T>): T? = collectors.getOrNull(cls)
 
-    override suspend fun finish(call: ApplicationCall) {
+    override suspend fun finish(call: ApplicationCall, level: InsightsLevel) {
         val endedNs = System.nanoTime()
 
-        // do not record if the uri is excluded
-        if (isExcluded(call.request.uri)) {
+        if (level == InsightsLevel.OFF) {
             return
         }
 
-        // finish all collectors
-        val entries = collectors.all().map { it.finish(call) }
+        // Read off the call NOW: the write below happens on another dispatcher after the response
+        val method = call.request.httpMethod.value
+        val uri = call.request.uri
+        val status = call.response.status()?.value
+
+        // BRIEF records the headline only, so the collectors are never even run
+        val entries = when (level) {
+            InsightsLevel.FULL -> collectors.all().map { it.finish(call) }
+            else -> emptyList()
+        }
 
         supervisorScope {
             launch(Dispatchers.IO) {
@@ -72,6 +61,9 @@ internal class InsightsFull(
                     date = dateTime.toString(),
                     startedNs = startedNs,
                     endedNs = endedNs,
+                    method = method,
+                    uri = uri,
+                    status = status,
                     collectors = entries.map {
                         CollectorData(it.key, mapper.convertValue(it))
                     }

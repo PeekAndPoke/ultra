@@ -6,6 +6,9 @@ import io.ktor.server.routing.*
 import io.ktor.util.*
 import io.peekandpoke.funktor.core.fullUrl
 import io.peekandpoke.funktor.core.model.InsightsConfig
+import io.peekandpoke.funktor.rest.FunktorRouteAttributes
+import io.peekandpoke.funktor.rest.InsightsLevel
+import io.peekandpoke.funktor.rest.RecordInsights
 import io.peekandpoke.funktor.insights.collectors.RoutingCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -46,11 +49,15 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
                     application.log.trace("${call.request.fullUrl()} took ${ns / 1_000_000.0} ms")
                 }
 
-                // Record the collected insights
-                insights.let { insights ->
+                // Ask the RESOLVED ROUTE how much to record — never the request uri, which the client
+                // controls. Resolving here rather than inside finish() also avoids launching a
+                // coroutine for a request that is about to be discarded.
+                val level = call.insightsLevel()
+
+                if (level != InsightsLevel.OFF) {
                     call.launch(Dispatchers.IO) {
                         delay(1.microseconds)
-                        insights.finish(call)
+                        insights.finish(call, level)
                     }
                 }
             }
@@ -59,6 +66,19 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
 
     install(plugin)
 }
+
+/**
+ * The [InsightsLevel] of the route this call resolved to; [InsightsLevel.FULL] when there is none.
+ *
+ * A call handled by a funktor route is a `RoutingPipelineCall`, whose `route` is the resolved leaf
+ * node — and the mounting code copied that route's attributes onto it (`FunktorRouteAttributes`).
+ * Anything else (static resources, unmatched paths) has no route attributes and so records in full.
+ */
+fun ApplicationCall.insightsLevel(): InsightsLevel =
+    (this as? RoutingPipelineCall)
+        ?.route?.attributes?.getOrNull(FunktorRouteAttributes)
+        ?.get(RecordInsights)
+        ?: InsightsLevel.FULL
 
 object RoutingInstrumentation {
     /**

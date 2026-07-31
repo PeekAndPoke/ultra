@@ -4,8 +4,6 @@ import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import io.peekandpoke.funktor.insights.api.InsightsCollectorSlice
 import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
-import io.peekandpoke.funktor.insights.collectors.RequestCollector
-import io.peekandpoke.funktor.insights.collectors.ResponseCollector
 import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -116,32 +114,20 @@ class InsightsDataLoader(
     }
 
     /**
-     * Derives the list columns from the request and response slices.
+     * Reads the list columns straight off the record.
      *
-     * `RequestCollector.Data` no longer carries a computed `fullUrl`: Jackson emitted it but Slumber
-     * (constructor parameters only) would not have, so the stored file and the API would have disagreed
-     * silently. The url is rebuilt from its parts here instead.
+     * The headline is stored at the top level, so this never touches `collectors` — which is what makes
+     * listing cheap (the kontainer slice alone averages 137 KB) and what makes a BRIEF record, which
+     * has no collectors at all, listable.
      */
-    private fun JsonObject.summary(path: String, recordedAt: MpInstant?): InsightsRecordSummary {
-        val slices = slices().associate { it.key to it.data }
-        val request = slices[RequestCollector.Data.KEY]?.obj()
-        val response = slices[ResponseCollector.Data.KEY]?.obj()
-
-        val scheme = request?.get("scheme")?.str()
-        val host = request?.get("host")?.str()
-        val port = request?.get("port")?.num()?.toInt()
-        val uri = request?.get("uri")?.str()
-
-        return InsightsRecordSummary(
-            path = path,
-            recordedAt = recordedAt,
-            // ktor's HttpMethod and HttpStatusCode are data classes, so Jackson nests the scalar
-            method = request?.get("method")?.unwrap("value")?.str(),
-            url = if (scheme != null && host != null && uri != null) "$scheme://$host:$port$uri" else null,
-            status = response?.get("status")?.unwrap("value")?.num()?.toInt(),
-            durationMs = durationMs(),
-        )
-    }
+    private fun JsonObject.summary(path: String, recordedAt: MpInstant?) = InsightsRecordSummary(
+        path = path,
+        recordedAt = recordedAt,
+        method = this["method"]?.str(),
+        url = this["uri"]?.str(),
+        status = this["status"]?.num()?.toInt(),
+        durationMs = durationMs(),
+    )
 
     private fun JsonElement.obj(): JsonObject? = runCatching { jsonObject }.getOrNull()
 
@@ -149,7 +135,4 @@ class InsightsDataLoader(
 
     private fun JsonElement.num(): Double? =
         (this as? JsonPrimitive)?.let { it.longOrNull?.toDouble() ?: it.doubleOrNull }
-
-    /** Reads [field] out of an object, or returns the element unchanged when it is already a scalar. */
-    private fun JsonElement.unwrap(field: String): JsonElement? = obj()?.get(field) ?: this
 }

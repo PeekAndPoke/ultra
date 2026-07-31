@@ -24,12 +24,21 @@ class InsightsDataLoaderSpec : StringSpec({
         return InsightsDataLoader(repo) to repo
     }
 
-    fun record(vararg collectors: String) = """
+    fun record(
+        vararg collectors: String,
+        method: String? = "GET",
+        uri: String? = "/api/things",
+        status: Int? = 200,
+    ) = """
         {
+          "formatVersion": 1,
           "ts": "2026-07-31T12:00:00",
           "date": "2026-07-31T12:00:00",
           "startedNs": 1000000,
           "endedNs": 4000000,
+          ${method?.let { """"method": "$it",""" } ?: ""}
+          ${uri?.let { """"uri": "$it",""" } ?: ""}
+          ${status?.let { """"status": $it,""" } ?: ""}
           "collectors": [ ${collectors.joinToString(",")} ]
         }
     """.trimIndent()
@@ -66,7 +75,7 @@ class InsightsDataLoaderSpec : StringSpec({
         }
     }
 
-    "the summary is derived from the request and response slices" {
+    "the summary is read from the stored headline" {
         val dir = tempdir()
         val (loader, repo) = loaderOver(dir)
 
@@ -76,25 +85,46 @@ class InsightsDataLoaderSpec : StringSpec({
             val summary = loader.list(limit = 10).single()
 
             summary.method shouldBe "GET"
-            // fullUrl no longer exists on the DTO, so this proves the API layer rebuilds it
-            summary.url shouldBe "https://example.com:443/api/things"
+            summary.url shouldBe "/api/things"
             summary.status shouldBe 200
             summary.durationMs shouldBe 3.0
         }
     }
 
-    "a record missing the request slice still lists, with null columns" {
+    "a BRIEF record — headline, no collectors — lists like any other" {
         val dir = tempdir()
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-31/a.json", record(responseSlice))
+            // This is what InsightsLevel.BRIEF writes. The summary must not need a single slice; that
+            // is the whole point of storing the headline rather than digging it out of `request`.
+            repo.putFile("records-2026-07-31/brief.json", record(method = "POST", uri = "/api/x", status = 201))
+
+            val summary = loader.list(limit = 10).single()
+
+            summary.method shouldBe "POST"
+            summary.url shouldBe "/api/x"
+            summary.status shouldBe 201
+
+            loader.load("records-2026-07-31/brief.json").shouldNotBeNull().collectors shouldBe emptyList()
+        }
+    }
+
+    "a record with no headline lists with null columns rather than failing" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            repo.putFile(
+                "records-2026-07-31/a.json",
+                record(responseSlice, method = null, uri = null, status = null),
+            )
 
             val summary = loader.list(limit = 10).single()
 
             summary.method shouldBe null
             summary.url shouldBe null
-            summary.status shouldBe 200
+            summary.status shouldBe null
         }
     }
 

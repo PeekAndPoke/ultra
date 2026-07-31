@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.insights.InsightsDataLoader
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
+import io.peekandpoke.funktor.rest.noInsights
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
 import io.peekandpoke.ultra.remote.api
@@ -51,7 +52,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
             name = "List insights records"
         }.codeGen {
             funcName = "listRecords"
-        }.handle {
+        }.noInsights().handle {
             val limit = call.request.queryParameters["limit"]
                 ?.toIntOrNull()
                 ?.coerceIn(1, MAX_LIMIT)
@@ -68,7 +69,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
             name = "Get one insights record"
         }.codeGen {
             funcName = "getRecord"
-        }.handle { params ->
+        }.noInsights().handle { params ->
             ApiResponse.okOrNotFound(
                 call.kontainer.get(InsightsDataLoader::class)
                     .load(path = "${params.bucket}/${params.file}")

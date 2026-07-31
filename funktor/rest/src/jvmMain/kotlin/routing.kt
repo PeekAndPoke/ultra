@@ -8,11 +8,14 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.ktor.util.AttributeKey
 import io.peekandpoke.funktor.core.broker.convertIncomingParameters
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.rest.auth.AuthRule
 import io.peekandpoke.funktor.rest.auth.HideFailureAsNotFound
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 /**
@@ -31,15 +34,31 @@ import io.peekandpoke.ultra.security.user.UserPermissions
  *    throws the SAME `NotFoundException` a missing entity throws — a byte-identical 404.
  */
 
+/**
+ * Carries an [ApiRoute]'s [TypedAttributes] onto the ktor route it was mounted as.
+ *
+ * `ApiRoute` is a build-time object captured in a handler closure — nothing about it is reachable from
+ * an [ApplicationCall]. ktor's own `Route.attributes` is public and lives for the application's
+ * lifetime, so one entry there makes the whole bag readable at request time via
+ * `(call as? RoutingPipelineCall)?.route?.attributes`.
+ *
+ * The bag is carried WHOLE under a single key rather than translated entry by entry: funktor's
+ * [TypedKey] and ktor's [AttributeKey] are unrelated types with no shared registry, so a per-key
+ * mapping would need a translation table. This way every future request-time attribute is free.
+ */
+val FunktorRouteAttributes = AttributeKey<TypedAttributes>("funktor.route.attributes")
+
 /** Dispatches to the correct handler based on the [ApiRoute] variant (plain, params, body, SSE). */
 fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>) {
-    when (route) {
+    val mounted = when (route) {
         is ApiRoute.Plain<*> -> handlePlain(route)
         is ApiRoute.WithParams<*, *> -> handleWithParams(route)
         is ApiRoute.WithBody<*, *> -> handleWithBody(route)
         is ApiRoute.WithBodyAndParams<*, *, *> -> handleWithBodyAndParams(route)
         is ApiRoute.Sse<*> -> handleSse(route)
     }
+
+    mounted.attributes.put(FunktorRouteAttributes, route.attributes)
 }
 
 /**
