@@ -18,6 +18,7 @@ import org.w3c.dom.events.MouseEvent
 /**
  * The Router
  */
+@RouterDsl
 class Router(
     private val mountedRoutes: List<MountedRoute>,
     strategyProvider: (Router) -> RouterStrategy,
@@ -28,11 +29,9 @@ class Router(
         val key = TypedKey<Router>("router")
 
         /** Gets the [Router] from a [KraftApp]. */
-        @RouterDsl
         val KraftApp.router: Router get() = appAttributes[key]!!
 
         /** Gets the [Router] by looking up the component tree. */
-        @RouterDsl
         val Component<*>.router get() = getAttributeRecursive(key)
 
         /** Returns true if the mouse event indicates the link should open in a new tab. */

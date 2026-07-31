@@ -4,27 +4,22 @@ package io.peekandpoke.karango.aql
 
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
-import io.peekandpoke.ultra.vault.lang.VaultDslMarker
 
-@VaultDslMarker
 fun <T> AqlStatementBuilder.LET(
     name: String,
     expression: AqlExpression<T>,
 ): AqlExpression<T> = AqlLetExpr(name, expression).addStmt().toExpression()
 
-@VaultDslMarker
 fun AqlStatementBuilder.LET(
     name: String,
     @Suppress("UNUSED_PARAMETER") value: Nothing?,
 ): AqlExpression<Any?> = LET(name = name, expression = AqlValueExpr.Null())
 
-@VaultDslMarker
 inline fun <reified T> AqlStatementBuilder.LET(
     name: String,
     value: T,
 ): AqlExpression<T> = AqlLetStmt(name, value, kType()).addStmt().toExpression()
 
-@VaultDslMarker
 inline fun <reified T> AqlStatementBuilder.LET(
     name: String,
     builder: () -> T,

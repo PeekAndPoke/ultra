@@ -7,7 +7,6 @@ import kotlinx.html.FlowContent
 annotation class RouterDsl
 
 /** Creates and configures a [Router] using the DSL [builder]. */
-@RouterDsl
 fun router(builder: RootRouterBuilder.() -> Unit): Router = RootRouterBuilder().apply(builder).build()
 
 /** Type alias for a layout function that wraps route content. */

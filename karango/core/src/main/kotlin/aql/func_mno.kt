@@ -3,16 +3,15 @@
 package io.peekandpoke.karango.aql
 
 import io.peekandpoke.ultra.reflection.kType
-import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
  * Return the greatest element of anyArray. The array is not limited to numbers. Also see type and value order.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#min
  */
-@VaultFunctionMarker val MAX = aqlFunc<Number?>("MAX")
+val MAX = aqlFunc<Number?>("MAX")
 
-@VaultFunctionMarker
+
 fun <T : Any> MAX(array: AqlExpression<List<T>>): AqlExpression<Number?> = MAX.call(array)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22,10 +21,10 @@ fun <T : Any> MAX(array: AqlExpression<List<T>>): AqlExpression<Number?> = MAX.c
  *
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#md5
  */
-@VaultFunctionMarker val MD5 = aqlFunc<String>("MD5")
+val MD5 = aqlFunc<String>("MD5")
 
 /** Calculate the MD5 checksum for text and return it in a hexadecimal string representation. */
-@VaultFunctionMarker
+
 fun MD5(value: AqlExpression<String>): AqlExpression<String> = MD5.call(value)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,10 +34,10 @@ fun MD5(value: AqlExpression<String>): AqlExpression<String> = MD5.call(value)
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#median
  */
-@VaultFunctionMarker val MEDIAN = aqlFunc<Number?>("MEDIAN")
+val MEDIAN = aqlFunc<Number?>("MEDIAN")
 
 /** Return the median value of the values in array. */
-@VaultFunctionMarker
+
 fun <T : Number> MEDIAN(numArray: AqlExpression<List<T>>): AqlExpression<Number?> = MEDIAN.call(numArray)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,17 +51,17 @@ fun <T : Number> MEDIAN(numArray: AqlExpression<List<T>>): AqlExpression<Number?
  * See https://www.arangodb.com/docs/stable/aql/functions-document.html
  */
 // TODO: write e3e tests
-@VaultFunctionMarker val MERGE = aqlFunc<Any?>("MERGE")
+val MERGE = aqlFunc<Any?>("MERGE")
 
 /** Merge the documents document1 to documentN into a single document. */
-@VaultFunctionMarker
+
 inline fun <reified T> MERGE(
     document1: AqlExpression<out T>,
     document2: AqlExpression<out T>,
 ): AqlExpression<T> = MERGE.call(type = kType(), document1, document2)
 
 /** Merge the documents document1 to documentN into a single document. */
-@VaultFunctionMarker
+
 inline fun <reified T> MERGE(
     document1: AqlExpression<out T>,
     document2: AqlExpression<out T>,
@@ -77,9 +76,9 @@ inline fun <reified T> MERGE(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#min
  */
-@VaultFunctionMarker val MIN = aqlFunc<Number?>("MIN")
+val MIN = aqlFunc<Number?>("MIN")
 
-@VaultFunctionMarker
+
 fun <T : Number> MIN(numArray: AqlExpression<List<T>>): AqlExpression<Number?> = MIN.call(numArray)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,10 +88,10 @@ fun <T : Number> MIN(numArray: AqlExpression<List<T>>): AqlExpression<Number?> =
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#minus
  */
-@VaultFunctionMarker val MINUS = aqlFunc<List<Any?>>("MINUS")
+val MINUS = aqlFunc<List<Any?>>("MINUS")
 
 /** Return the difference of all arrays specified. */
-@VaultFunctionMarker
+
 inline fun <reified T : Any> MINUS(
     array1: AqlExpression<out Collection<T>>,
     array2: AqlExpression<out Collection<T>>,
@@ -109,10 +108,10 @@ inline fun <reified T : Any> MINUS(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#nth
  */
-@VaultFunctionMarker val NTH = aqlFunc<Any?>("NTH")
+val NTH = aqlFunc<Any?>("NTH")
 
 /** Get the element of an array at a given position. */
-@VaultFunctionMarker
+
 inline fun <reified T, N : Number> NTH(
     anyArray: AqlExpression<List<T>>,
     position: AqlExpression<N>,
@@ -125,14 +124,14 @@ inline fun <reified T, N : Number> NTH(
  * Returns the boolean negation of value.
  */
 // TODO: tests
-@VaultFunctionMarker val NOT = aqlFunc<Boolean>("NOT")
+val NOT = aqlFunc<Boolean>("NOT")
 
 /** Returns the boolean negation of value. */
-@VaultFunctionMarker @JvmName("NOT_2")
+@JvmName("NOT_2")
 fun NOT(expr: AqlExpression<Boolean>): AqlExpression<Boolean> = NOT.call(expr)
 
 /** Returns the boolean negation of value. */
-@VaultFunctionMarker @JvmName("NOT_1")
+@JvmName("NOT_1")
 fun AqlExpression<Boolean>.NOT(): AqlExpression<Boolean> = NOT(expr = this)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,10 +141,10 @@ fun AqlExpression<Boolean>.NOT(): AqlExpression<Boolean> = NOT(expr = this)
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#outersection
  */
-@VaultFunctionMarker val OUTERSECTION = aqlFunc<List<Any?>>("OUTERSECTION")
+val OUTERSECTION = aqlFunc<List<Any?>>("OUTERSECTION")
 
 /** Return the values that occur only once across all arrays specified. */
-@VaultFunctionMarker
+
 inline fun <reified T : Any> OUTERSECTION(
     array1: AqlExpression<out List<T>>,
     array2: AqlExpression<out List<T>>,

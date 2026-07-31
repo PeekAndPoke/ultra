@@ -88,40 +88,32 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
             """
                 // Mutator creators ////////////////////////////////////////////////////////////////////////////////////
 
-                @MutatorDsl
                 inline fun $typeParams$clsName.mutator() = $ObjectMutatorName(this)
 
-                @MutatorDsl
                 inline fun $typeParams$clsName.mutate(
                     mutation: $boundObjectMutatorName.() -> Unit,
                 ): $clsName = mutator().apply(mutation).get()
 
                 // List Mutators ///////////////////////////////////////////////////////////////////////////////////////
 
-                @MutatorDsl
                 inline fun ${typeParams}List<$clsName>.mutator() = mutator(child = { mutator() })
 
-                @MutatorDsl
                 inline fun ${typeParams}List<$clsName>.mutate(
                     mutation: $ListMutatorName<$clsName>.() -> Unit,
                 ): List<$clsName> = mutator().apply(mutation).get()
 
                 // Set Mutators ////////////////////////////////////////////////////////////////////////////////////////
 
-                @MutatorDsl
                 inline fun ${typeParams}Set<$clsName>.mutator() = mutator(child = { mutator() })
 
-                @MutatorDsl
                 inline fun ${typeParams}Set<$clsName>.mutate(
                     mutation: $SetMutatorName<$clsName>.() -> Unit,
                 ): Set<$clsName> = mutator().apply(mutation).get()
 
                 // Map Mutators ////////////////////////////////////////////////////////////////////////////////////////
 
-                @MutatorDsl
                 inline fun ${mapTypeParams}Map<K, $clsName>.mutator() = mutator(child = { mutator() })
 
-                @MutatorDsl
                 inline fun ${mapTypeParams}Map<K, $clsName>.mutate(
                     mutation: $MapMutatorName<K, $clsName>.() -> Unit,
                 ): Map<K, $clsName> = mutator().apply(mutation).get()
@@ -138,7 +130,6 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
                 /**
                  * Returns a list containing only the mutators whose underlying value is an instance of specified type parameter [X].
                  */
-                @MutatorDsl
                 inline fun <reified X : $clsNameStar> ListMutator<$clsNameStar>.filterMutatorsOf(): List<Mutator<X>> {
                     return mapNotNull { mutator ->
                         if (mutator.get() is X) {
@@ -153,7 +144,6 @@ class BuiltInMutableObjectsPlugin : MutatorKspPlugin {
                 /**
                  * Returns a list containing only the mutators whose underlying value is an instance of specified type parameter [X].
                  */
-                @MutatorDsl
                 inline fun <reified X : $clsNameStar> SetMutator<$clsNameStar>.filterMutatorsOf(): List<Mutator<X>> {
                     return mapNotNull { mutator ->
                         if (mutator.get() is X) {

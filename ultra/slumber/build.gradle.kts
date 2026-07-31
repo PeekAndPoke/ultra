@@ -26,6 +26,7 @@ kotlin {
 
         browser {
             testTask {
+                failOnNoDiscoveredTests = false
             }
         }
     }

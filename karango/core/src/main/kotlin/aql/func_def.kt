@@ -3,16 +3,15 @@
 package io.peekandpoke.karango.aql
 
 import io.peekandpoke.ultra.reflection.kType
-import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
  * Return the angle converted from radians to degrees.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#degrees
  */
-@VaultFunctionMarker val DEGREES = aqlFunc<Number>("DEGREES")
+val DEGREES = aqlFunc<Number>("DEGREES")
 
-@VaultFunctionMarker
+
 fun <T : Number> DEGREES(value: AqlExpression<T>): AqlExpression<Number> = DEGREES.call(value)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22,10 +21,10 @@ fun <T : Number> DEGREES(value: AqlExpression<T>): AqlExpression<Number> = DEGRE
  *
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#encodeuricomponent
  */
-@VaultFunctionMarker val ENCODE_URI_COMPONENT = aqlFunc<String>("ENCODE_URI_COMPONENT")
+val ENCODE_URI_COMPONENT = aqlFunc<String>("ENCODE_URI_COMPONENT")
 
 /** Return the encoded uri component of value. */
-@VaultFunctionMarker
+
 fun ENCODE_URI_COMPONENT(value: AqlExpression<String>): AqlExpression<String> =
     ENCODE_URI_COMPONENT.call(value)
 
@@ -36,10 +35,10 @@ fun ENCODE_URI_COMPONENT(value: AqlExpression<String>): AqlExpression<String> =
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#exp
  */
-@VaultFunctionMarker val EXP = aqlFunc<Number>("EXP")
+val EXP = aqlFunc<Number>("EXP")
 
 /** Return Euler's constant (2.71828...) raised to the power of value. */
-@VaultFunctionMarker
+
 fun <T : Number> EXP(value: AqlExpression<T>): AqlExpression<Number> = EXP.call(value)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,10 +48,10 @@ fun <T : Number> EXP(value: AqlExpression<T>): AqlExpression<Number> = EXP.call(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#exp2
  */
-@VaultFunctionMarker val EXP2 = aqlFunc<Number>("EXP2")
+val EXP2 = aqlFunc<Number>("EXP2")
 
 /** Return 2 raised to the power of value. */
-@VaultFunctionMarker
+
 fun <T : Number> EXP2(value: AqlExpression<T>): AqlExpression<Number> = EXP2.call(value)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,9 +61,9 @@ fun <T : Number> EXP2(value: AqlExpression<T>): AqlExpression<Number> = EXP2.cal
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#first
  */
-@VaultFunctionMarker val FIRST = aqlFunc<Any?>("FIRST")
+val FIRST = aqlFunc<Any?>("FIRST")
 
-@VaultFunctionMarker inline fun <reified T> FIRST(anyArray: AqlExpression<List<T>>): AqlExpression<T?> =
+inline fun <reified T> FIRST(anyArray: AqlExpression<List<T>>): AqlExpression<T?> =
     FIRST.call(type = kType(), anyArray)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,18 +75,18 @@ fun <T : Number> EXP2(value: AqlExpression<T>): AqlExpression<Number> = EXP2.cal
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#flatten
  */
-@VaultFunctionMarker val FLATTEN = aqlFunc<List<Any?>>("FLATTEN")
+val FLATTEN = aqlFunc<List<Any?>>("FLATTEN")
 
 /**
  * Turn an array of arrays into a flat array. All array elements in array will be expanded in the result array.
  */
-@VaultFunctionMarker inline fun <reified T> FLATTEN(anyArray: AqlExpression<List<T>>): AqlExpression<List<Any?>> =
+inline fun <reified T> FLATTEN(anyArray: AqlExpression<List<T>>): AqlExpression<List<Any?>> =
     FLATTEN.call(anyArray)
 
 /**
  * Turn an array of arrays into a flat array. All array elements in array will be expanded in the result array.
  */
-@VaultFunctionMarker inline fun <reified T, N : Number> FLATTEN(
+inline fun <reified T, N : Number> FLATTEN(
     anyArray: AqlExpression<List<T>>, depth: AqlExpression<N>,
 ): AqlExpression<List<Any?>> =
     FLATTEN.call(anyArray, depth)
@@ -104,10 +103,10 @@ fun <T : Number> EXP2(value: AqlExpression<T>): AqlExpression<Number> = EXP2.cal
  *
  * https://docs.arangodb.com/current/AQL/Functions/String.html#findfirst
  */
-@VaultFunctionMarker val FIND_FIRST = aqlFunc<Number>("FIND_FIRST")
+val FIND_FIRST = aqlFunc<Number>("FIND_FIRST")
 
 /** Return the position of the first occurrence of the string search inside the string text or -1 if not found. */
-@VaultFunctionMarker
+
 fun FIND_FIRST(haystack: AqlExpression<String>, needle: AqlExpression<String>): AqlExpression<Number> =
     FIND_FIRST.call(haystack, needle)
 
@@ -116,7 +115,7 @@ fun FIND_FIRST(haystack: AqlExpression<String>, needle: AqlExpression<String>): 
  *
  * Starts search at the given [start] position.
  */
-@VaultFunctionMarker
+
 fun <T : Number> FIND_FIRST(
     haystack: AqlExpression<String>,
     needle: AqlExpression<String>,
@@ -129,7 +128,7 @@ fun <T : Number> FIND_FIRST(
  *
  * Search between [start] and [end] positions (both inclusive).
  */
-@VaultFunctionMarker
+
 fun <T1 : Number, T2 : Number> FIND_FIRST(
     haystack: AqlExpression<String>,
     needle: AqlExpression<String>,
@@ -150,10 +149,10 @@ fun <T1 : Number, T2 : Number> FIND_FIRST(
  *
  * https://docs.arangodb.com/current/AQL/Functions/String.html#findlast
  */
-@VaultFunctionMarker val FIND_LAST = aqlFunc<Number>("FIND_LAST")
+val FIND_LAST = aqlFunc<Number>("FIND_LAST")
 
 /** Return the position of the last occurrence of the string search inside the string text or -1 if not found. */
-@VaultFunctionMarker
+
 fun FIND_LAST(haystack: AqlExpression<String>, needle: AqlExpression<String>): AqlExpression<Number> =
     FIND_LAST.call(haystack, needle)
 
@@ -162,7 +161,7 @@ fun FIND_LAST(haystack: AqlExpression<String>, needle: AqlExpression<String>): A
  *
  * Starts search at the given [start] position.
  */
-@VaultFunctionMarker
+
 fun <T : Number> FIND_LAST(
     haystack: AqlExpression<String>,
     needle: AqlExpression<String>,
@@ -175,7 +174,7 @@ fun <T : Number> FIND_LAST(
  *
  * Search between [start] and [end] positions (both inclusive).
  */
-@VaultFunctionMarker
+
 fun <T1 : Number, T2 : Number> FIND_LAST(
     haystack: AqlExpression<String>,
     needle: AqlExpression<String>,
@@ -191,8 +190,8 @@ fun <T1 : Number, T2 : Number> FIND_LAST(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#floor
  */
-@VaultFunctionMarker val FLOOR = aqlFunc<Number>("FLOOR")
+val FLOOR = aqlFunc<Number>("FLOOR")
 
 /** Return the integer closest but not greater than value. */
-@VaultFunctionMarker
+
 fun <T : Number> FLOOR(value: AqlExpression<T>): AqlExpression<Number> = FLOOR.call(value)

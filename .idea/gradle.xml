@@ -32,6 +32,7 @@
             <option value="$PROJECT_DIR$/funktor/all" />
             <option value="$PROJECT_DIR$/funktor/auth" />
             <option value="$PROJECT_DIR$/funktor/cluster" />
+            <option value="$PROJECT_DIR$/funktor/codegen" />
             <option value="$PROJECT_DIR$/funktor/core" />
             <option value="$PROJECT_DIR$/funktor/insights" />
             <option value="$PROJECT_DIR$/funktor/inspect" />

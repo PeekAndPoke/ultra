@@ -7,28 +7,22 @@ import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.ensureKey
 import io.peekandpoke.ultra.vault.lang.VaultDslMarker
-import io.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 @Suppress("unused")
-@VaultTerminalExpressionMarker
 fun REMOVE(what: String): AqlRemovePreStage<String> = REMOVE(what.aql)
 
 @Suppress("unused")
-@VaultTerminalExpressionMarker
 fun <E> REMOVE(what: AqlExpression<E>): AqlRemovePreStage<E> = AqlRemovePreStage(what)
 
 @Suppress("unused")
-@VaultTerminalExpressionMarker
 fun <T> REMOVE(entity: Stored<T>): AqlRemovePreStage<String> = AqlRemovePreStage(entity._id.ensureKey.aql)
 
 @VaultDslMarker
 class AqlRemovePreStage<E> internal constructor(private val what: AqlExpression<E>) {
 
-    @VaultTerminalExpressionMarker
     infix fun <T : Any> IN(repo: KarangoRepository<T>): AqlTerminalExpr<T> =
         IN(repo = repo, options = {})
 
-    @VaultTerminalExpressionMarker
     fun <T : Any> IN(repo: KarangoRepository<T>, options: AqlRemoveOptions.() -> Unit): AqlTerminalExpr<T> =
         AqlRemoveIn(repo = repo, expression = what, options = AqlRemoveOptions().apply(options))
 }

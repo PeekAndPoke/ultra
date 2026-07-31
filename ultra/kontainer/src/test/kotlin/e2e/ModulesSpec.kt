@@ -3,7 +3,6 @@ package io.peekandpoke.ultra.kontainer.e2e
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.peekandpoke.ultra.kontainer.KontainerDslModule
 import io.peekandpoke.ultra.kontainer.KontainerModule
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.kontainer.module
@@ -48,7 +47,6 @@ class ModulesSpec : StringSpec({
 
         data class MyService(val value: Int)
 
-        @KontainerDslModule
         val mod = module { config: Int ->
             instance(MyService(config))
         }

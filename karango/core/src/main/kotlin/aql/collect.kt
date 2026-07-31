@@ -3,7 +3,6 @@
 package io.peekandpoke.karango.aql
 
 import io.peekandpoke.ultra.vault.lang.VaultDslMarker
-import io.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 /**
  * Creates a COLLECT WITH expression like
@@ -19,7 +18,6 @@ import io.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
  * ```
  */
 @Suppress("unused")
-@VaultTerminalExpressionMarker
 fun <T> AqlStatementBuilder.COLLECT_WITH(with: AqlFunctionDefinition<T>, into: String): AqlExpression<T> {
 
     AqlCollectWithExpressionStmt(with, into).addStmt()
@@ -28,7 +26,6 @@ fun <T> AqlStatementBuilder.COLLECT_WITH(with: AqlFunctionDefinition<T>, into: S
 }
 
 @Suppress("unused")
-@VaultDslMarker
 fun <T> AqlStatementBuilder.COLLECT(
     assignee: String,
     expr: AqlExpression<T>,
@@ -37,7 +34,6 @@ fun <T> AqlStatementBuilder.COLLECT(
 }
 
 @Suppress("unused")
-@VaultDslMarker
 fun <T> AqlStatementBuilder.COLLECT_INTO(
     assignee: String,
     expr: AqlExpression<T>,
@@ -47,7 +43,6 @@ fun <T> AqlStatementBuilder.COLLECT_INTO(
 }
 
 @Suppress("unused")
-@VaultDslMarker
 fun <T, A> AqlStatementBuilder.COLLECT_AGGREGATE(
     group: String,
     groupBy: AqlExpression<T>,
