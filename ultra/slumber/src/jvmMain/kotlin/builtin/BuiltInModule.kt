@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.slumber.builtin
 
 import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.SlumberModule
 import io.peekandpoke.ultra.slumber.Slumberer
@@ -13,6 +14,8 @@ import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonElementCodec
 import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonNullCodec
 import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonObjectCodec
 import io.peekandpoke.ultra.slumber.builtin.kotlinx.KotlinXJsonPrimitiveCodec
+import io.peekandpoke.ultra.slumber.builtin.model.RedactedAwaker
+import io.peekandpoke.ultra.slumber.builtin.model.RedactedSlumberer
 import io.peekandpoke.ultra.slumber.builtin.objects.AnyAwaker
 import io.peekandpoke.ultra.slumber.builtin.objects.AnySlumberer
 import io.peekandpoke.ultra.slumber.builtin.objects.DataClassAwaker
@@ -95,6 +98,13 @@ object BuiltInModule : SlumberModule {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
+                // Redacted<T> — FIRST, so nothing can shadow it. Takes the raw node and awakens T from
+                // it, which is what lets a config file keep `signingKey = "abc"` instead of nesting.
+                cls == Redacted::class ->
+                    type.arguments.firstOrNull()?.type?.let { RedactedAwaker(it) }?.let {
+                        return type.wrapIfNonNull(it)
+                    }
+
                 else -> when {
                     // Any type
                     cls in listOf(Any::class, Serializable::class) -> AnyAwaker
@@ -175,6 +185,10 @@ object BuiltInModule : SlumberModule {
             return when {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
+
+                // Redacted<T> — FIRST, ahead of every other codec, so a secret cannot be un-redacted by
+                // some later branch claiming the type. The whole subtree becomes one placeholder.
+                cls == Redacted::class -> type.wrapIfNonNull(RedactedSlumberer)
 
                 // we do not wrap JsonNull with wrapIfNonNull
                 KotlinXJsonNullCodec.appliesTo(cls) -> KotlinXJsonNullCodec as Slumberer

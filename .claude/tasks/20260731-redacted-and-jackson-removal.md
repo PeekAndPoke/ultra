@@ -1,6 +1,6 @@
 # `Redacted<T>` and the removal of Jackson
 
-**Status:** PLANNED — decided 2026-07-31, not started
+**Status:** STAGE 1 DONE (2026-07-31) — the type and both codecs exist and are green. Stages 2–4 not started
 **Security-critical:** yes — this is what finally closes
 `.claude/tasks/20260731-config-secrets-in-insights.md`
 **Supersedes:** the `@JsonIgnore` constraint recorded in `.claude/tasks/20260731-depot-findings.md`
@@ -156,7 +156,31 @@ assert both come back with their real values.** If that passes, no config file a
 
 Ordered so the security-critical part lands first and nothing is blocked on hygiene.
 
-### Stage 1 — the type and its codecs
+### Stage 1 — the type and its codecs — **DONE 2026-07-31**
+
+`ultra/common/src/commonMain/kotlin/model/Redacted.kt` (+ `RedactedSerializer`),
+`ultra/slumber/src/jvmMain/kotlin/builtin/model/RedactedCodec.kt`, registered as the **first** branch of
+both `getAwaker` and `getSlumberer`. 7 specs in `ultra:common`, 5 in `ultra:slumber`.
+
+Two things worth carrying forward:
+
+- **`ultra:common` needed the serialization COMPILER PLUGIN, not just the dependency.** `.serializer()`
+  does not resolve without `kotlin("plugin.serialization")`. The runtime artifact alone compiles the
+  class and fails the tests.
+- **Re-reading the type's own output differs by `T`.** `Redacted<String>` comes back holding the
+  placeholder; `Redacted<SomeObject>` **throws**, because a string is not that object's shape. Throwing
+  is the better outcome and is pinned by a test — the alternative is silently handing back an object
+  whose fields were invented.
+
+Mutations, each killing the right test: dropping the Slumberer branch, dropping the Awaker branch,
+leaking the inner value from the Slumberer, writing the real value from the kotlinx serializer, and a
+leaking `toString()`. Full compile sweep clean; `ultra:vault` (285), `funktor:all` (152) and every other
+slumber-dependent suite unaffected.
+
+Deferred deliberately: `@Slumber.As(String::class)` and the annotation-nest move, since the annotation
+does not exist yet. The type works without it; codegen has the explicit rule meanwhile.
+
+#### original scope
 
 - **Prerequisite:** move the `Slumber` annotation nest to `ultra:common`, package
   `io.peekandpoke.ultra.common.slumber`. Tracked in
