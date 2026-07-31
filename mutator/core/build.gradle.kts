@@ -26,6 +26,10 @@ kotlin {
 
         browser {
             testTask {
+                // The specs are JVM-only (src/jvmTest); this compilation exists so the KSP-generated
+                // mutators for the commonTest domain classes are proven to compile for JS. Gradle 9
+                // fails a test task that discovers zero tests unless told not to.
+                failOnNoDiscoveredTests = false
             }
         }
     }
