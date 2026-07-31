@@ -345,6 +345,32 @@ all five JS/CSS assets under `resources/assets/funktor/insights/`.
 - [ ] `InsightsFull`'s hardcoded URI filter (`impl/InsightsFull.kt:33`) excludes `/insights/bar` and
       `/insights/details`; it must exclude the new API route instead.
 
+## Auth is the FIRST contributor of this kind — build it first (2026-07-31)
+
+Full write-up: `.claude/tasks/20260731-sdk-auth-integration.md`. Why it belongs at the head of this
+document's queue rather than somewhere in it:
+
+**Auth is the first contributor that ships STATE AND BEHAVIOUR, not just an API client.** Every
+mechanism this doc proposes — shared runtime modules, aggregation registries, components shipped from
+a jar, `requires(...)` — is exercised by it. Building it first gives those designs a real user;
+building it later means retrofitting them around whatever the earlier contributors happened to need.
+
+What is already free: the auth API client is **generated today** (`authClient.ts`, all twelve
+endpoints, from the demo run), and JWT injection is already the documented transport-wrapper idiom
+(`runtime/http.ts:50-58`) — the same shape the Kotlin side uses via a Ktor `defaultRequest` closure.
+The gap is the session state machine, i.e. the TypeScript counterpart of `AuthState` (488 lines,
+`funktor/auth/src/jsMain/kotlin/AuthState.kt`).
+
+**One finding that changes the design: do NOT port `AuthState`'s persistence.** It writes the whole
+session — JWT included — to `localStorage`, which is a filed, security-critical gap
+(`.claude/tasks/20260719-token-storage-hardening.md`): any JS on the origin can exfiltrate the token
+and replay it off-machine. A faithful port would re-create a known defect in new code. Storage must be
+an injected strategy defaulting to in-memory.
+
+**And it collides with the SSE gap.** `.claude/tasks/20260731-sdk-sse-auth.md` — streams bypass the
+transport, so a transport-wrapper token never reaches them. Deciding auth here without deciding that
+is how the asymmetry becomes permanent.
+
 ## WITHDRAWN: `expects<T>(tsName)`
 
 Proposed and deferred 2026-07-30, then made unnecessary the same day: **real TypeScript generics are
