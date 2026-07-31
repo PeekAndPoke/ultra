@@ -1,6 +1,6 @@
 # `Redacted<T>` and the removal of Jackson
 
-**Status:** STAGES 1 AND 2 DONE (2026-07-31). Stage 3 (insights off Jackson) and stage 4 (the rest of Jackson) not started
+**Status:** STAGES 1, 2 AND 3 DONE (2026-07-31); stage 4 partially. Remaining Jackson: `SlumberRestCodec`, one import in `ultra/vault`, and four `api()` exports in `funktor/core`
 **Security-critical:** yes — this is what finally closes
 `.claude/tasks/20260731-config-secrets-in-insights.md`
 **Supersedes:** the `@JsonIgnore` constraint recorded in `.claude/tasks/20260731-depot-findings.md`
@@ -249,7 +249,32 @@ where an app puts its own secrets. Not yet decided.
 Jackson normally suppresses **deserialization** too — `keyStorePassword` may never have loaded from
 config at all. Verify rather than port the bug.
 
-### Stage 3 — the insights write path off Jackson
+### Stage 3 — the insights write path off Jackson — **DONE 2026-07-31**
+
+**The six Slumber-compat blockers were not blockers for this direction.** Probed before committing to
+the work: `getSlumberer` dispatches on the **runtime** class, so `AppConfigCollector.Data(info: Any,
+config: Any)` slumbers fine — the declared `Any` only obstructs *awaking*, and insights reads with
+kotlinx, never with Slumber. Every collector `Data` slumbered on the first try, and `HttpMethod` /
+`HttpStatusCode` produce byte-identical shapes to Jackson's.
+
+The only wire change is `ts`: Jackson wrote a `LocalDateTime` as `[2026,7,31,…]`, Slumber writes
+`{ts, timezone, human}`. Harmless — `InsightsDataLoader` never reads `ts`; `recordedAt` comes from the
+depot file.
+
+- `InsightsMapper` (Jackson) → `InsightsCodec : Codec(SlumberConfig.default)`. A distinct type rather
+  than a bare `Codec` binding, for the reason `InsightsMapper` was a distinct `ObjectMapper` subclass:
+  registering `Codec` would claim a very general type in every app's kontainer for one module's benefit.
+- Record text is now kotlinx over `JsonUtil.toJsonElement()`, as with the printers.
+- **`ConfigRedaction` and its spec are DELETED.** Slumber honours `Redacted<T>`, so the signing key, the
+  CSRF secret and the database password leave as `***redacted***` from the type, not from a name list.
+
+**Mutation — removing the `RedactedSlumberer` branch fails all six recording e2e tests**, with
+`IllegalStateException: There is no known way to slumber the type 'Redacted<Any?>'`. So the failure mode
+without the codec is *no record written*, not *secret written*: it fails **closed**. That is a second
+reason `Redacted` is a plain class — not being a data class, `DataClassSlumberer` does not claim it
+either, so there is no silent `{"value": …}` fallback.
+
+#### original scope
 
 `InsightsMapper.kt` and `InsightsFull`'s `convertValue`. Gated on Slumber being able to describe every
 collector `Data` class: `AppConfigCollector`'s two `Any` fields, `HttpMethod`, `HttpStatusCode`,

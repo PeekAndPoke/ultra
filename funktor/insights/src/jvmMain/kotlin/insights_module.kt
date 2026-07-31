@@ -41,24 +41,25 @@ val Funktor_Insights = module {
                 val repository = kontainer.getOrNull(InsightsRepository::class)
                     ?: return@dynamic InsightsDisabled(config)
 
-                val mapper = kontainer.getOrNull(InsightsMapper::class)
+                val codec = kontainer.getOrNull(InsightsCodec::class)
                     ?: return@dynamic InsightsDisabled(config)
 
                 InsightsFull(
                     config = config,
                     collectors = collectors,
                     repository = repository,
-                    mapper = mapper,
+                    codec = codec,
                 )
             }
         }
     }
 
+    instance(InsightsCodec())
+
     dynamic(InsightsDataLoader::class)
     // Shared by the request and response collectors. An app carrying credentials in its own header
     // replaces this instance with one that lists it.
     instance(HeaderLogging.defaults)
-    instance(InsightsMapper())
     dynamic(InsightsRepository::class) { InsightsFileRepository() }
 
     // Default collectors

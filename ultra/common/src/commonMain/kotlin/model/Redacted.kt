@@ -43,6 +43,10 @@ import kotlinx.serialization.encoding.Encoder
  * same reason this is not a `data class`: the generated `toString()`, `copy()` and `component1()` would
  * each be a way to leak the value by accident.
  *
+ * A second reason, found by mutation: because it is **not** a data class, `DataClassSlumberer` does not
+ * claim it either. Remove the Slumber codec and Slumber throws *"There is no known way to slumber the
+ * type Redacted"* rather than quietly emitting `{"value": …}`. It fails **closed**.
+ *
  * ### It is only as good as its codecs
  *
  * The type alone protects nothing. Each serializer must be taught about it, or it falls through to the

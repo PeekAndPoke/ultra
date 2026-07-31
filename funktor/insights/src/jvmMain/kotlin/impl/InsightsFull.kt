@@ -1,6 +1,5 @@
 package impl
 
-import com.fasterxml.jackson.module.kotlin.convertValue
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.peekandpoke.funktor.core.model.InsightsConfig
@@ -11,8 +10,12 @@ import io.peekandpoke.funktor.insights.InsightsCollectorData
 import io.peekandpoke.funktor.rest.InsightsLevel
 import io.peekandpoke.funktor.rest.InsightsOptions
 import io.peekandpoke.funktor.insights.InsightsData
-import io.peekandpoke.funktor.insights.InsightsMapper
 import io.peekandpoke.funktor.insights.InsightsRepository
+import io.peekandpoke.funktor.insights.InsightsCodec
+import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import io.peekandpoke.ultra.slumber.slumber
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import io.peekandpoke.ultra.common.Lookup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -26,8 +29,10 @@ internal class InsightsFull(
     override val config: InsightsConfig,
     private val collectors: Lookup<InsightsCollector>,
     private val repository: InsightsRepository,
-    private val mapper: InsightsMapper,
+    private val codec: InsightsCodec,
 ) : Insights.Base() {
+    private val json = Json { prettyPrint = true }
+
     private val date = LocalDate.now()
     private val dateTime = LocalDateTime.now()
 
@@ -67,11 +72,17 @@ internal class InsightsFull(
                     uri = uri,
                     status = status,
                     collectors = entries.map { (key, slice) ->
-                        CollectorData(key, mapper.convertValue(slice))
+                        // Slumber, not Jackson. Slumbering dispatches on the RUNTIME class, so the
+                        // collectors' declared `Any` fields are not a blocker here even though they are
+                        // one for awaking — and insights reads with kotlinx, never with Slumber.
+                        CollectorData(key, codec.slumber(slice) as? Map<*, *> ?: emptyMap<String, Any?>())
                     }
                 )
 
-                val content = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(data)
+                val content = json.encodeToString(
+                    JsonElement.serializer(),
+                    codec.slumber(data).toJsonElement(),
+                )
 
                 repository.putFile(path = filename, content = content)
             }
