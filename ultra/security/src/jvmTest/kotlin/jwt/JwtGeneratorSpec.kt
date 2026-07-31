@@ -1,9 +1,6 @@
 package io.peekandpoke.ultra.security.jwt
 
 import io.peekandpoke.ultra.common.model.Redacted
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.exceptions.JWTVerificationException
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -58,12 +55,12 @@ class JwtGeneratorSpec : StringSpec() {
             payload.subject shouldBe "v1"
         }
 
-        "verify() should throw JWTVerificationException for invalid token" {
-            val invalidToken = JWT.create()
-                .withIssuer("invalidIssuer")
-                .sign(Algorithm.HMAC512("invalidKey"))
+        "verify() should throw JwtVerificationException for invalid token" {
+            val invalidToken = JwtGenerator(
+                config = mockConfig.copy(signingKey = Redacted("invalidKey"), issuer = "invalidIssuer"),
+            ).createJwt(user = JwtUserData(id = UserId("i1"), desc = "d", type = "t"))
 
-            shouldThrow<JWTVerificationException> {
+            shouldThrow<JwtVerificationException> {
                 jwtGenerator.verify(invalidToken)
             }
         }
@@ -134,16 +131,12 @@ class JwtGeneratorSpec : StringSpec() {
             }
         }
 
-        "createJwt should throw JWTVerificationException for invalid token" {
-            // Arrange
-            val invalidToken = JWT.create()
-                .withIssuer("invalidIssuer")
-                .sign(Algorithm.HMAC512("invalidKey"))
+        "tryVerify should return null for a token signed with a foreign key" {
+            val invalidToken = JwtGenerator(
+                config = mockConfig.copy(signingKey = Redacted("invalidKey"), issuer = "invalidIssuer"),
+            ).createJwt(user = JwtUserData(id = UserId("i2"), desc = "d", type = "t"))
 
-            // Act & Assert
-            shouldThrow<JWTVerificationException> {
-                jwtGenerator.verify(invalidToken)
-            }
+            jwtGenerator.tryVerify(invalidToken) shouldBe null
         }
 
         "createJwt should encode permissions correctly" {

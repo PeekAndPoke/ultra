@@ -54,6 +54,9 @@ data class JwtPayload(
         const val SUBJECT = "sub"
         const val ISSUER = "iss"
         const val AUDIENCE = "aud"
+        const val EXPIRES_AT = "exp"
+        const val NOT_BEFORE = "nbf"
+        const val ISSUED_AT = "iat"
     }
 
     /**

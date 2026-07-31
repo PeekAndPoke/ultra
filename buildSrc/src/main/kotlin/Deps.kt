@@ -150,7 +150,6 @@ object Deps {
             }
 
             const val auth = "io.ktor:ktor-server-auth:$ktor_version"
-            const val auth_jwt = "io.ktor:ktor-server-auth-jwt:$ktor_version"
             const val auto_head = "io.ktor:ktor-server-auto-head-response:$ktor_version"
             const val caching_headers = "io.ktor:ktor-server-caching-headers:$ktor_version"
             const val content_negotiation = "io.ktor:ktor-server-content-negotiation:$ktor_version"
@@ -173,7 +172,6 @@ object Deps {
 
             fun full(scope: DependencyHandlerScope) = with(scope) {
                 implementation(auth)
-                implementation(auth_jwt)
                 implementation(auto_head)
                 implementation(caching_headers)
                 implementation(content_negotiation)
@@ -199,7 +197,6 @@ object Deps {
 
             fun full(scope: KotlinDependencyHandler) = with(scope) {
                 implementation(auth)
-                implementation(auth_jwt)
                 implementation(auto_head)
                 implementation(caching_headers)
                 implementation(content_negotiation)
@@ -248,7 +245,6 @@ object Deps {
         }
 
         object Common {
-            const val serialization_jackson = "io.ktor:ktor-serialization-jackson:$ktor_version"
             const val serialization_kotlinx_json = "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
         }
     }
@@ -310,37 +306,10 @@ object Deps {
             const val firebase_admin = "com.google.firebase:firebase-admin:$firebase_admin_version"
         }
 
-        object Jackson {
-            // OLD: https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
-            // NEW: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind
-            // checked 2026-07-29: latest 2.22.1
-            private const val jackson_version = "2.22.1"
-
-            // checked 2026-07-29: latest 2.22
-
-            private const val jackson_annotations_version = "2.22"
-
-            // OLD: https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
-            // NEW: https://mvnrepository.com/artifact/tools.jackson.module/jackson-module-kotlin
-            // checked 2026-07-29: latest 2.22.1
-            private const val jackson_kotlin_module_version = "2.22.1"
-
-            const val databind = "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-            const val annotations = "com.fasterxml.jackson.core:jackson-annotations:$jackson_annotations_version"
-            const val datatype_jdk8 = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version"
-            const val datatype_jsr310 = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version"
-
-            const val module_kotlin =
-                "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_kotlin_module_version"
-
-            fun fullImpl(scope: DependencyHandlerScope) = with(scope) {
-                implementation(databind)
-                implementation(annotations)
-                implementation(datatype_jdk8)
-                implementation(datatype_jsr310)
-                implementation(module_kotlin)
-            }
-        }
+        // The former Jackson block was removed on purpose: no first-party code declares or uses
+        // Jackson anymore. It remains on the runtime classpath only inside third-party libraries
+        // that use it for their own wire formats (sendgrid-java, the ArangoDB driver's serde).
+        // Do not re-add it for first-party serialization — kotlinx.serialization is the standard here.
 
         object Pdf {
             // TODO: test update to 10.1.0
@@ -369,10 +338,6 @@ object Deps {
             private const val sendgrid_version = "5.0.0-rc.1"
             const val sendgrid_java = "com.sendgrid:sendgrid-java:$sendgrid_version"
         }
-
-        // https://mvnrepository.com/artifact/com.auth0/java-jwt
-        private const val auth0_java_jwt_version = "4.5.1"
-        const val auth0_java_jwt = "com.auth0:java-jwt:$auth0_java_jwt_version"
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
         // checked 2026-07-29: latest 1.6.1

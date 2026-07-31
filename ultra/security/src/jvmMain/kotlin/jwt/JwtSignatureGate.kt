@@ -33,8 +33,15 @@ import javax.crypto.spec.SecretKeySpec
  * that endorses, and it is the standard defence against algorithm confusion — `alg: none` and
  * `alg: HS256` are not rejected by a check, they are **unreachable**, because the field is never read.
  *
- * This gate **replaces nothing**. The library still performs its full validation afterwards, so every
- * RFC step still runs and the set of accepted tokens is unchanged.
+ * Since `java-jwt` was removed (2026-07-31) this gate IS the signature validation. [JwtGenerator.verify]
+ * then parses the authenticated payload and validates the registered claims (`exp`, `nbf`, `iat`, `iss`,
+ * `aud`) against the contract measured from the library before it went — so every RFC 7519 step still
+ * runs, just in our own code.
+ *
+ * One measured divergence, accepted deliberately: the library also rejected a token whose HEADER names
+ * a different algorithm even when the MAC was valid (`AlgorithmMismatchException`). This gate never
+ * reads the header, so such a token verifies. Only the signing-key holder can produce one, and the key
+ * holder can mint arbitrary valid tokens anyway — there is nothing there to defend.
  *
  * ### PRECONDITION — read before reusing this
  *
@@ -52,14 +59,14 @@ class JwtSignatureGate(
     signingKey: String,
 ) {
     companion object {
-        /** JCA name for HMAC-SHA512, matching `Algorithm.HMAC512`. */
+        /** JCA name for HMAC-SHA512 — the algorithm this issuer is fixed to (formerly `Algorithm.HMAC512`). */
         private const val HMAC_SHA512 = "HmacSHA512"
 
         /**
          * Upper bound on a whole token, checked before any work.
          *
          * Generous — a token carrying org lists and permission sets is a few kB — but it caps what an
-         * unauthenticated caller can make the server hash. The library offers no equivalent control.
+         * unauthenticated caller can make the server hash. The replaced library offered no such control.
          */
         const val MAX_TOKEN_LENGTH: Int = 64 * 1024
 
@@ -76,18 +83,10 @@ class JwtSignatureGate(
     /**
      * Failure to authenticate a token at the gate.
      *
-     * Extends the library's exception type deliberately: `tryVerify` catches `JWTVerificationException`
-     * and callers rely on a null rather than a throw, so a gate rejection must be indistinguishable
-     * from any other verification failure.
-     *
-     * **Known residual.** This is the last vendor type in a public signature — the library is otherwise
-     * `implementation`-scoped and invisible to consumers. Left as it is because nothing outside this
-     * module catches it (checked), and the one external caller of `verify` re-verifies a token it just
-     * issued, where a throw is the correct outcome. Introducing a `JwtVerificationException` of our own
-     * would be churn on the authentication path for a consumer that does not exist. Revisit if one does
-     * — they cannot currently catch this type by name, since auth0 is not on their compile classpath.
+     * A subtype of [JwtVerificationException] so `tryVerify` treats a gate rejection like any other
+     * verification failure — callers rely on a null rather than a throw.
      */
-    class Rejected(message: String) : com.auth0.jwt.exceptions.JWTVerificationException(message)
+    class Rejected(message: String) : JwtVerificationException(message)
 
     private val keySpec = SecretKeySpec(signingKey.toByteArray(StandardCharsets.UTF_8), HMAC_SHA512)
 
@@ -130,13 +129,16 @@ class JwtSignatureGate(
     }
 
     /**
-     * HMAC-SHA512 over [signingInput], keyed as `Algorithm.HMAC512` keys it.
+     * HMAC-SHA512 over [signingInput], keyed exactly as `Algorithm.HMAC512` keyed it.
+     *
+     * Internal because it is ALSO the signing primitive: [JwtGenerator.sign] MACs with this same
+     * method, so issuer and verifier cannot drift apart on key bytes or charset.
      *
      * A fresh [Mac] per call because [Mac] is not thread-safe and this runs on every request. The JCA
      * lookup is on the order of a microsecond, against an HMAC over a few kB — not worth caching
      * incorrectly.
      */
-    private fun mac(signingInput: String): ByteArray = Mac.getInstance(HMAC_SHA512).run {
+    internal fun mac(signingInput: String): ByteArray = Mac.getInstance(HMAC_SHA512).run {
         init(keySpec)
         doFinal(signingInput.toByteArray(StandardCharsets.UTF_8))
     }

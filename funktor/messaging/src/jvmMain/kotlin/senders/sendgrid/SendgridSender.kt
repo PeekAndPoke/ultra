@@ -7,11 +7,9 @@ import com.sendgrid.helpers.mail.objects.Email
 import com.sendgrid.helpers.mail.objects.Personalization
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
 import io.peekandpoke.funktor.messaging.EmailSender
 import io.peekandpoke.funktor.messaging.api.EmailBody
 import io.peekandpoke.funktor.messaging.api.EmailResult
@@ -37,10 +35,6 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
         private val baseUrl: String,
     ) {
         private val http = HttpClient(CIO) {
-            install(ContentNegotiation) {
-                jackson {
-                }
-            }
             expectSuccess = false // we'll handle status codes ourselves
         }
 
@@ -52,11 +46,12 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
 
             val response: HttpResponse = http.post(url) {
                 header(HttpHeaders.Authorization, "Bearer $apiKey")
-                header(HttpHeaders.ContentType, ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
                 idempotencyKey?.let {
                     header("Idempotency-Key", idempotencyKey)
                 }
-                setBody(mail)
+                // sendgrid-java serializes its own Mail — no content-negotiation plugin needed.
+                setBody(mail.build())
             }
 
             @Suppress("UastIncorrectHttpHeaderInspection")

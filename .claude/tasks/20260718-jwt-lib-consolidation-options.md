@@ -1,6 +1,6 @@
 # JWT library consolidation — options (backlog / not scheduled)
 
-**Status:** REOPENED 2026-07-31 on new evidence — the 2026-07-18 "keep java-jwt" recommendation was made before the Jackson removal and does not account for pre-verification parsing. See the new section at the bottom.
+**Status:** RESOLVED 2026-07-31 — `com.auth0:java-jwt` fully removed; verify-then-parse implemented in-house. See "RESOLVED" at the bottom. Only the client-side `jwt-decode` option (original option 1) remains open.
 **Type:** reference / backlog
 
 ## Current state (keep for now)
@@ -125,3 +125,59 @@ Either way the client-side `jwt-decode` npm dependency should go (option 1 in th
 that is unchanged and independent.
 
 **Not scheduled. Security-critical: yes — this is the pre-authentication path.**
+
+---
+
+# RESOLVED 2026-07-31 — java-jwt removed, verify-then-parse shipped
+
+The maintainer chose verify-then-parse ("we fix the algo here, and we are the authority that hands out
+the jwt tokens"). Shipped in three steps, each measured against the real library before it went:
+
+1. **`JwtSignatureGate`** (`3fba3b4c`) — MACs the raw segments BEFORE anything parses. The parser
+   never sees an unauthenticated byte.
+2. **`JwtPayload`/`JwtClaim`/`JwtBuilder`** (`3df63af1`) — vendor types out of every public
+   signature; claims read with kotlinx from post-verification bytes.
+3. **Own signing + claim validation, dependency deleted** (this branch, 2026-07-31):
+   - `JwtGenerator.sign` signs with `JwtSignatureGate.mac` — the same primitive `verify` checks
+     with, so issuer and verifier cannot drift. Header byte-identical to java-jwt's.
+   - `validateClaims` preserves the contract **measured** from java-jwt 4.5.2 under a fixed clock
+     (probe on file, pinned by `JwtClaimValidationSpec`): `exp` absent/null → no expiry check,
+     valid strictly before `exp`, leeway 0, fractional floors, non-numeric REJECTS; `nbf`/`iat`
+     valid from that second on (`iat` IS validated — probed, not assumed); `iss` string-equal;
+     `aud` string-or-array-contains, non-string members ignored.
+   - `JwtVerificationException` replaces the vendor exception; `tryVerify` semantics unchanged.
+   - Injectable `java.time.Clock` (constructor default `systemUTC`) makes expiry testable.
+
+**Wire compatibility evidence:** live cross-verification ran green in BOTH directions while the
+library was still present (it verified our tokens, we verified its — including fresh mints), then
+six java-jwt-minted token STRINGS were baked into `JwtWireCompatSpec` as permanent fixtures:
+production claim shape, no-exp, aud-array, expired, wrong-issuer, HS256. Tokens issued before the
+swap keep verifying; nobody is logged out on deploy.
+
+**One accepted divergence** (measured, documented in `JwtSignatureGate` KDoc, pinned by a test):
+java-jwt rejected a valid-MAC token whose header names a different alg; we never read the header, so
+such a token verifies. Only the key holder can mint one — nothing is defended by rejecting it.
+
+**Mutation evidence:** five mutations, each killed by its intended tests — exp/iss/nbf+iat+aud checks
+removed, parse-before-MAC reorder, numericDate fail-open. Not test-observable (rest on review):
+`MessageDigest.isEqual`→`==`, and decode-degrade-to-empty (equivalent: empty claims fail `iss`).
+
+**Classpath end state** (`:funktor:all` jvmRuntimeClasspath audit):
+- `com.auth0:*` — GONE. Also removed `io.ktor:ktor-server-auth-jwt` (funktor only ever used
+  `bearer()`; the plugin API had zero imports) which was hauling java-jwt + jwks-rsa in via
+  `funktor:rest`'s `api` scope, and `ktor-serialization-jackson` (SendgridSender now posts
+  `Mail.build()`'s own JSON). Deps.kt's unused first-party Jackson block deleted.
+- Jackson remains ONLY inside third-party wire serdes talking to their own services:
+  `com.arangodb:jackson-serde-json` (driver-internal), `sendgrid-java` (its `Mail.build()`),
+  `software.amazon.awssdk:third-party-jackson-core` (shaded). None parse attacker-facing input on
+  the auth path.
+
+**Follow-ups:**
+- Red-team task collected per CLAUDE.md: `.claude/tasks/20260731-redteam-jwt-own-verifier.md`.
+- Client `jwt-decode` npm dep (original option 1) — still the one to do eventually. Unchanged.
+- Optional: replace sendgrid-java's helper POJOs with kotlinx DTOs for `/v3/mail/send` to evict
+  Jackson from `funktor:messaging` entirely. Small, but it re-specifies an external wire format —
+  needs its own task and contract tests.
+- Google SSO still parses unauthenticated JSON with Gson via `google-api-client` (`AuthApi`
+  `public()` floor); verify-then-parse cannot apply there (RS256 needs `kid`). Maintainer decision
+  still pending.

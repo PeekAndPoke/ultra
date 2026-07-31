@@ -87,11 +87,10 @@ kotlin {
                 // (funktor:auth and any app supplying its own templates) must see the type.
                 api(project(":ultra:i18n"))
 
-                // For senders that use apis directly, like SendGrid
+                // For senders that use apis directly, like SendGrid. No ContentNegotiation/Jackson:
+                // SendgridSender posts the JSON that sendgrid-java's own Mail.build() produces.
                 implementation(Deps.Ktor.Client.core)
                 implementation(Deps.Ktor.Client.cio)
-                implementation(Deps.Ktor.Client.content_negotiation)
-                implementation(Deps.Ktor.Common.serialization_jackson)
 
                 implementation(project(":karango:core"))
                 implementation(project(":monko:core"))

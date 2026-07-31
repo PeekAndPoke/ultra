@@ -1,0 +1,141 @@
+package io.peekandpoke.ultra.security.jwt
+
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldNotBeInstanceOf
+import io.peekandpoke.ultra.common.model.Redacted
+import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.OrgId
+import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.security.user.UserPermissions
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+
+/**
+ * WIRE COMPATIBILITY with tokens issued by `java-jwt` 4.5.2 — the property that decides whether
+ * every logged-in user survives the library swap.
+ *
+ * The fixture tokens below are hard-coded strings MINTED BY THE REMOVED LIBRARY (2026-07-31, with
+ * this spec's exact config), so the property stays pinned long after the library is gone: if our
+ * verifier ever stops accepting them, tokens issued before the swap stop working on deploy.
+ *
+ * Before the dependency was removed, this spec additionally cross-verified LIVE in both directions
+ * — the library accepted what we sign, and we accepted what the library signs, freshly minted — and
+ * both directions were green. Those two tests went with the dependency; the fixtures pin the
+ * property permanently.
+ *
+ * The clock is fixed at epoch 1_800_000_000 so the expiry-related fixtures behave deterministically.
+ */
+class JwtWireCompatSpec : StringSpec({
+
+    val secret = "wire-compat-signing-key"
+    val now = 1_800_000_000L
+
+    val config = JwtConfig(
+        signingKey = Redacted(secret),
+        issuer = "wire-iss",
+        audience = "wire-aud",
+        permissionsNs = "permissions",
+        userNs = "user",
+    )
+
+    fun generatorAt(epochSecond: Long) = JwtGenerator(
+        config = config,
+        clock = Clock.fixed(Instant.ofEpochSecond(epochSecond), ZoneOffset.UTC),
+    )
+
+    val generator = generatorAt(now)
+
+    // Minted with the full production claim shape: registered claims + user ns + permissions ns.
+    val fixtureProductionShape = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
+        "eyJleHAiOjE4MzQwMDAwMDAsImN1c3RvbS1jbGFpbSI6ImN1c3RvbS12YWx1ZSIsImlzcyI6IndpcmUtaXNzIiwiYXVkIjoid2lyZS1hdWQiLCJzdWIiOiJiMmJfdXNlcnMvdTEiLCJ1c2VyL2lkIjoiYjJiX3VzZXJzL3UxIiwidXNlci9kZXNjIjoiV2lyZSBVc2VyIiwidXNlci90eXBlIjoiaHVtYW4iLCJ1c2VyL2VtYWlsIjoid2lyZUBleGFtcGxlLmNvbSIsInBlcm1pc3Npb25zL3N1cGVydXNlciI6dHJ1ZSwicGVybWlzc2lvbnMvb3JnIjoib3JnYW5pc2F0aW9uL2FjbWUiLCJwZXJtaXNzaW9ucy9hY2Nlc3NpYmxlT3JncyI6WyJvcmdhbmlzYXRpb24vYWNtZSIsIm9yZ2FuaXNhdGlvbi9nbG9iZXgiXSwicGVybWlzc2lvbnMvYnJhbmNoZXMiOlsiYjEiXSwicGVybWlzc2lvbnMvZ3JvdXBzIjpbImcxIl0sInBlcm1pc3Npb25zL3JvbGVzIjpbImFkbWluIl0sInBlcm1pc3Npb25zL3Blcm1pc3Npb25zIjpbInJlYWQiLCJ3cml0ZSJdfQ." +
+        "RlD8-trjBgTLHFcpNdPiJYRq0HQCAHfKLAq2YASzrz80SgyWYLib41YJu_gsHDpLgJEy8Lcr7ONZ1d__qqyFpA"
+
+    val fixtureNoExp = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
+        "eyJpc3MiOiJ3aXJlLWlzcyIsImF1ZCI6IndpcmUtYXVkIiwic3ViIjoiYjJiX3VzZXJzL3UxIn0." +
+        "3klZ5Y1uIGdvyjQoFdmWLk_D1rP353bLhHOqwa_RMNy7oFytzg-W0o-FeyxkS-cozymFCaPDdOPcs9IS3VTPiA"
+
+    val fixtureAudArray = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
+        "eyJleHAiOjE4MzQwMDAwMDAsImlzcyI6IndpcmUtaXNzIiwiYXVkIjpbIndpcmUtYXVkIiwib3RoZXItYXVkIl0sInN1YiI6ImIyYl91c2Vycy91MSJ9." +
+        "YbEbcDvijBnSOG_4EuMiI8EarEXIEmjy0jTfzhP-CuEPENH7mynjPHuJPHnK5kkbsPLSsVcW7T16z62jKDwM1A"
+
+    val fixtureExpired = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
+        "eyJleHAiOjEwMDAwMDAwMDAsImlzcyI6IndpcmUtaXNzIiwiYXVkIjoid2lyZS1hdWQiLCJzdWIiOiJiMmJfdXNlcnMvdTEifQ." +
+        "EAizKsJAzvscBMNN1uwPEw2G3GGe47hKmhnwsxhWaC2XjWAwJ7yuPYbL0Bd_tIZFm2NKspBatBTR6OCesF3VSA"
+
+    val fixtureWrongIssuer = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
+        "eyJleHAiOjE4MzQwMDAwMDAsImlzcyI6InNvbWVib2R5LWVsc2UiLCJhdWQiOiJ3aXJlLWF1ZCIsInN1YiI6ImIyYl91c2Vycy91MSJ9." +
+        "Q40wEu5S4Ka35RfR3L6BflWe3yHh3079E9wBrpIbRtGGmzB12kDFbiKVq_puZLZHqPPjz25wQyh7Riv4uwCn-Q"
+
+    val fixtureHs256 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+        "eyJleHAiOjE4MzQwMDAwMDAsImlzcyI6IndpcmUtaXNzIiwiYXVkIjoid2lyZS1hdWQiLCJzdWIiOiJiMmJfdXNlcnMvdTEifQ." +
+        "vhuugUFVv6GfMdIbMg9BS20PEECsSLO8V-O69AozQIY"
+
+    "an already-issued production-shape token verifies and extracts identically" {
+        val payload = generator.verify(fixtureProductionShape)
+
+        assertSoftly {
+            payload.subject shouldBe "b2b_users/u1"
+            payload.issuer shouldBe "wire-iss"
+            payload.audience shouldBe listOf("wire-aud")
+            payload.getClaim("custom-claim").asString() shouldBe "custom-value"
+
+            generator.extractUserData(payload) shouldBe JwtUserData(
+                id = UserId("b2b_users/u1"),
+                desc = "Wire User",
+                type = "human",
+                email = EmailAddress("wire@example.com"),
+            )
+
+            generator.extractPermissions(payload) shouldBe UserPermissions(
+                isSuperUser = true,
+                org = OrgId("organisation/acme"),
+                accessibleOrgs = setOf(OrgId("organisation/acme"), OrgId("organisation/globex")),
+                branches = setOf("b1"),
+                groups = setOf("g1"),
+                roles = setOf("admin"),
+                permissions = setOf("read", "write"),
+            )
+        }
+    }
+
+    "a token issued without exp verifies at any time — missing exp means no expiry check" {
+        generator.verify(fixtureNoExp).subject shouldBe "b2b_users/u1"
+
+        // Still valid a century later. Tightening this would be a policy change, not a refactor.
+        generatorAt(now + 100L * 365 * 24 * 3600).verify(fixtureNoExp).subject shouldBe "b2b_users/u1"
+    }
+
+    "an audience issued as an array still verifies" {
+        generator.verify(fixtureAudArray).subject shouldBe "b2b_users/u1"
+    }
+
+    "an expired issued token is rejected — and accepted before its expiry, so the rejection is time-driven" {
+        shouldThrow<JwtVerificationException> { generator.verify(fixtureExpired) }
+            .shouldNotBeInstanceOf<JwtSignatureGate.Rejected>()
+
+        generatorAt(999_999_000L).verify(fixtureExpired).subject shouldBe "b2b_users/u1"
+    }
+
+    "an issued token from a different issuer is rejected by claim validation, not the MAC" {
+        shouldThrow<JwtVerificationException> { generator.verify(fixtureWrongIssuer) }
+            .shouldNotBeInstanceOf<JwtSignatureGate.Rejected>()
+    }
+
+    "an HS256-signed issued token is rejected on the MAC" {
+        shouldThrow<JwtVerificationException> { generator.verify(fixtureHs256) }
+            .shouldBeInstanceOf<JwtSignatureGate.Rejected>()
+    }
+
+    "our header is byte-identical to the library's" {
+        val ours = generator
+            .createJwt(user = JwtUserData(id = UserId("b2b_users/u1"), desc = "d", type = "t"))
+            .split(".")[0]
+
+        ours shouldBe fixtureProductionShape.split(".")[0]
+    }
+})

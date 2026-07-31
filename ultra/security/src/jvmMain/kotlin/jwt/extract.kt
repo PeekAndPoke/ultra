@@ -26,12 +26,12 @@ fun JwtPayload.extractUser(namespace: String = "user"): JwtUserData = JwtUserDat
         ?: "",
     // Parsed defensively: a malformed email claim degrades to "no email" rather than
     // throwing and turning an attacker-supplied token into a 500.
-    email = EmailAddress.parseOrNull(getClaim("$namespace/email")?.asString()),
+    email = EmailAddress.parseOrNull(getClaim("$namespace/email").asString()),
 )
 
 /** Extracts [UserPermissions] from this payload using claims under the given [namespace]. */
 fun JwtPayload.extractPermissions(namespace: String = "permissions"): UserPermissions = UserPermissions(
-    isSuperUser = getClaim("$namespace/superuser")?.asBoolean() ?: false,
+    isSuperUser = getClaim("$namespace/superuser").asBoolean() ?: false,
     // Parsed defensively: a malformed claim degrades to "no selected org" / drops that entry,
     // rather than throwing and turning an attacker-supplied token into a 500.
     org = OrgId.parseOrNull(getClaim("$namespace/org").asString()),
