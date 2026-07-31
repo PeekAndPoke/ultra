@@ -497,6 +497,79 @@ async function checkGeneratedClient(report: Report): Promise<void> {
         )
     }
 
+    // 3d. CANCELLATION. `client.ts` documents `signal` as the way to cancel on unmount, and until
+    //     2026-07-31 no generated member could pass one — the option existed and was unreachable.
+    {
+        const controller = new AbortController()
+
+        let seenSignal: AbortSignal | undefined
+
+        const transport: HttpTransport = {
+            send: (req) => {
+                seenSignal = req.signal
+
+                // Per-route payload, or the schema rejects it and the failure reads as a client bug.
+                const data = req.url.includes('/talks/')
+                    ? '{"id":"t-1","title":"Hello","status":"ACTIVE","speakers":[],"tags":[],' +
+                      '"meta":{},"seats":42,"durationMs":1234,"rating":null,"featured":true}'
+                    : '[]'
+
+                return Promise.resolve({
+                    status: 200,
+                    statusText: 'OK',
+                    body: `{"status":{"value":200,"description":"OK"},"data":${data}}`,
+                })
+            },
+        }
+
+        const cancellable = new FxDemoClient({ baseUrl: 'http://x', transport })
+
+        await cancellable.talks.listSpeakers({ signal: controller.signal })
+
+        report(
+            seenSignal === controller.signal,
+            "client: a caller's AbortSignal reaches the transport (no-params member)",
+        )
+
+        // A member WITH params takes a different emit branch — the options spread lands inside the
+        // built object rather than being the whole object. Both branches must forward the signal.
+        seenSignal = undefined
+
+        await cancellable.talks.getTalk({ id: 't-1' }, { signal: controller.signal })
+
+        report(
+            seenSignal === controller.signal,
+            "client: a caller's AbortSignal reaches the transport (member with params)",
+        )
+
+        // ...and the generated path/query still arrive when options are also passed. The spread is
+        // last, so this is the check that a caller cannot clobber the route the generator derived.
+        let seenUrl: string | undefined
+
+        const recording: HttpTransport = {
+            send: (req) => {
+                seenUrl = req.url
+                return Promise.resolve({
+                    status: 200,
+                    statusText: 'OK',
+                    body:
+                        '{"status":{"value":200,"description":"OK"},"data":' +
+                        '{"id":"t-1","title":"Hello","status":"ACTIVE","speakers":[],"tags":[],' +
+                        '"meta":{},"seats":42,"durationMs":1234,"rating":null,"featured":true}}',
+                })
+            },
+        }
+
+        await new FxDemoClient({ baseUrl: 'http://x', transport: recording })
+            .talks.getTalk({ id: 't-1', page: 3 }, { signal: controller.signal })
+
+        report(
+            seenUrl === 'http://x/api/fx/talks/t-1?page=3',
+            'client: passing options does not displace the generated path and query',
+            seenUrl,
+        )
+    }
+
     // 4. NEGATIVE TYPE CHECKS. Calling a member correctly proves the signature EXISTS; it does not
     //    prove the signature is ENFORCED — emitting every parameter as optional passes every check
     //    above. `@ts-expect-error` inverts that: tsc fails when the line STOPS erroring, so these

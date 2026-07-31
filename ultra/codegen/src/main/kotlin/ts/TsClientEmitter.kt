@@ -169,7 +169,10 @@ class TsClientEmitter(private val model: TypeModel) {
             // that app cannot edit the file.
             val clientImports = buildList {
                 add("type SdkConfig")
-                if (endpoints.any { !it.stream }) add("request")
+                if (endpoints.any { !it.stream }) {
+                    add("type CallOptions")
+                    add("request")
+                }
             }
 
             appendLine("import { ${clientImports.joinToString(", ")} } from ${tsStringLiteral(CLIENT_MODULE)}")
@@ -280,9 +283,12 @@ class TsClientEmitter(private val model: TypeModel) {
 
             endpoint.bodyRef?.let { add("body: ${renderer.type(it)}") }
 
-            // Trailing and optional: headers and an AbortSignal are the caller's business, and an SSE
-            // stream does not go through the transport, so auth cannot be inherited from a wrapper.
-            if (endpoint.stream) add("options?: SseOptions")
+            // Trailing and optional on BOTH kinds. For a stream these are headers/signal/fetchImpl,
+            // and auth cannot be inherited from a transport wrapper because the stream does not use
+            // one. For a request it is the AbortSignal — `client.ts` documents `signal` as the way to
+            // cancel on unmount, and until this was added no generated member could actually pass one,
+            // so a Vue component had no way to abort.
+            add(if (endpoint.stream) "options?: SseOptions" else "options?: CallOptions")
         }
 
         val returns = if (endpoint.stream) ": AsyncGenerator<SseEvent>" else ""
@@ -302,7 +308,7 @@ class TsClientEmitter(private val model: TypeModel) {
             }
 
             if (params.isEmpty() && endpoint.bodyRef == null) {
-                appendLine(if (endpoint.stream) "$call, {}, options)" else "$call)")
+                appendLine(if (endpoint.stream) "$call, {}, options)" else "$call, { ...options })")
                 return@indentedRaw
             }
 
@@ -319,6 +325,14 @@ class TsClientEmitter(private val model: TypeModel) {
 
                 if (endpoint.bodyRef != null) {
                     appendLine("body,")
+                }
+
+                // Spread last. This is DEFENCE IN DEPTH, not a current guarantee: `CallOptions`
+                // carries only `signal` today, so the order is unobservable and a mutant that moves
+                // it survives — correctly. It matters the moment `CallOptions` gains a key the
+                // generated object also sets, and putting it last now is free.
+                if (!endpoint.stream) {
+                    appendLine("...options,")
                 }
             }
 

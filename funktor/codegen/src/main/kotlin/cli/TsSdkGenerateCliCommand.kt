@@ -24,7 +24,10 @@ class TsSdkGenerateCliCommand(
 
     private val builder by builder
 
-    private val out by option("--out", help = "Directory to write the SDK into").required()
+    private val out by option(
+        "--out",
+        help = "Directory to write the SDK into. Must be ABSOLUTE — see the error for why.",
+    ).required()
 
     private val dryRun by option("--dry-run", help = "Print the planned files; write nothing").flag()
 
@@ -40,6 +43,19 @@ class TsSdkGenerateCliCommand(
 
     override fun run() {
         val target = File(out)
+
+        // A relative --out resolves against the JVM's working directory, which for
+        // `gradlew :funktor-demo:server:run` is the SERVER MODULE, not the repo root. Passing
+        // `funktor-demo/sdkgen-app/src/funktorsdk` therefore wrote a whole SDK to
+        // `funktor-demo/server/funktor-demo/sdkgen-app/src/funktorsdk` — silently, because that path
+        // is perfectly valid. Refusing is better than guessing which root was meant.
+        require(target.isAbsolute) {
+            "--out must be an absolute path, but was '$out'. A relative path resolves against this " +
+                    "process's working directory — '${File("").absolutePath}' — which for a Gradle " +
+                    "`run` task is the module directory, not the repository root. That silently " +
+                    "writes the SDK somewhere plausible and wrong. Pass an absolute path, e.g. " +
+                    "--out \"\$PWD/frontend/src/funktorsdk\"."
+        }
 
         // Validation happens inside build(); a failure throws before anything is planned, so the
         // target directory is never touched by a run that was going to fail.

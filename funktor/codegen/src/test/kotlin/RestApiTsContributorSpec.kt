@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoute
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
+import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
 import io.peekandpoke.ultra.datetime.MpInstant
 
@@ -56,7 +57,8 @@ class RestApiTsContributorSpec : FreeSpec() {
         }
 
         "an endpoint member uses codeGen funcName when it is set" {
-            clientOf(build(listOf(FxSpeakersApiRoutes()))) shouldContain "readonly listSpeakers = () =>"
+            clientOf(build(listOf(FxSpeakersApiRoutes()))) shouldContain
+                "readonly listSpeakers = (options?: CallOptions) =>"
         }
 
         "an endpoint with no funcName gets a derived member naming its method and path" {
@@ -64,13 +66,13 @@ class RestApiTsContributorSpec : FreeSpec() {
 
             // Deliberately verbose: unambiguous, collision-resistant, and obvious in review so that
             // `funcName` gets set. A pretty guess would be quietly wrong instead.
-            out shouldContain "readonly getApiFxTalksLatest = () =>"
+            out shouldContain "readonly getApiFxTalksLatest = (options?: CallOptions) =>"
         }
 
         "the request carries the route's method and pattern verbatim" {
             val out = clientOf(build(listOf(FxTalksApiRoutes())))
 
-            out shouldContain "request(this.config, 'GET', '/api/fx/talks', z.array(FxTalkModel))"
+            out shouldContain "request(this.config, 'GET', '/api/fx/talks', z.array(FxTalkModel), { ...options })"
         }
 
         "the ENVELOPE is unwrapped — the payload schema is passed, never ApiResponse" {
@@ -100,7 +102,7 @@ class RestApiTsContributorSpec : FreeSpec() {
 
             val out = clientOf(result)
 
-            out shouldContain "readonly listSpeakers = () =>"
+            out shouldContain "readonly listSpeakers = (options?: CallOptions) =>"
 
             withClue("a filtered-out route contributes neither a member nor a group") {
                 out shouldNotContain "listTalks"
@@ -129,8 +131,8 @@ class RestApiTsContributorSpec : FreeSpec() {
 
             withClue("exactly one class, carrying both halves' members") {
                 Regex("export class FxSplitApi \\{").findAll(out).count() shouldBe 1
-                out shouldContain "readonly openPart = () =>"
-                out shouldContain "readonly securedPart = () =>"
+                out shouldContain "readonly openPart = (options?: CallOptions) =>"
+                out shouldContain "readonly securedPart = (options?: CallOptions) =>"
             }
 
             withClue("and one aggregate member, not two") {
@@ -157,9 +159,11 @@ class RestApiTsContributorSpec : FreeSpec() {
                 val out = clientOf(build(listOf(FxSharedNameTalksRoutes(), FxSharedNameSpeakersRoutes())))
 
                 out shouldContain
-                        "request(this.config, 'GET', '/api/fx/shared/talks', z.array(FxTalkModel))"
+                        "request(this.config, 'GET', '/api/fx/shared/talks', z.array(FxTalkModel), " +
+                        "{ ...options })"
                 out shouldContain
-                        "request(this.config, 'GET', '/api/fx/shared/speakers', FxSpeakerModel)"
+                        "request(this.config, 'GET', '/api/fx/shared/speakers', FxSpeakerModel, " +
+                        "{ ...options })"
             }
 
             "a funcName that is not a TypeScript identifier is refused, naming the route" {
@@ -251,7 +255,7 @@ class RestApiTsContributorSpec : FreeSpec() {
             "a body-only route takes the body as its single argument" {
                 val out = clientOf(build(listOf(FxBodyApiRoutes())))
 
-                out shouldContain "readonly createTalk = (body: FxSaveTalkRequest) =>"
+                out shouldContain "readonly createTalk = (body: FxSaveTalkRequest, options?: CallOptions) =>"
 
                 withClue("the body reaches `request` through its options, not the URL") {
                     out shouldContain "request(this.config, 'POST', '/api/fx/talks', FxTalkModel, {"
@@ -263,7 +267,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                 val out = clientOf(build(listOf(FxBodyApiRoutes())))
 
                 out shouldContain
-                        "readonly updateTalk = (params: { id: string }, body: FxSaveTalkRequest) =>"
+                        "readonly updateTalk = (params: { id: string }, body: FxSaveTalkRequest, options?: CallOptions) =>"
 
                 out shouldContain "path: { id: params.id },"
             }
@@ -305,7 +309,8 @@ class RestApiTsContributorSpec : FreeSpec() {
                 withClue("the caller passes ONE object, mirroring the Kotlin PARAMS class") {
                     out shouldContain
                             "readonly getTalk = (params: { id: string; page?: number; " +
-                            "search?: string | null; order?: 'ASC' | 'DESC'; exact?: boolean }) =>"
+                            "search?: string | null; order?: 'ASC' | 'DESC'; exact?: boolean }, " +
+                            "options?: CallOptions) =>"
                 }
 
                 withClue("`id` is in the pattern so it fills the path; the rest go to the query") {
@@ -313,6 +318,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                     out shouldContain
                             "query: { page: params.page, search: params.search, " +
                             "order: params.order, exact: params.exact },"
+                    out shouldContain "...options,"
                 }
             }
 
@@ -346,6 +352,9 @@ class RestApiTsContributorSpec : FreeSpec() {
                                 lazyOf(listOf(FxDemoApiFeature(listOf(FxClaimedParamApiRoutes()))))
                             ),
                             FunktorUrlParamsTsContributor(),
+                            // Both registries at once: the URL claim makes `at` a string in the
+                            // signature, the JSON claim makes it an object in models.ts.
+                            MpDateTimeTsContributor(),
                         )
                     )
                     .build()
@@ -353,7 +362,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                 val out = clientOf(result)
 
                 withClue("MpInstant is `string` in a URL, not the object it is in a body") {
-                    out shouldContain "readonly eventsSince = (params: { at: string; until?: string | null }) =>"
+                    out shouldContain "readonly eventsSince = (params: { at: string; until?: string | null }, options?: CallOptions) =>"
                 }
 
                 withClue("`string` says nothing about what the server can parse back") {
@@ -372,17 +381,29 @@ class RestApiTsContributorSpec : FreeSpec() {
                                 lazyOf(listOf(FxDemoApiFeature(listOf(FxClaimedParamApiRoutes()))))
                             ),
                             FunktorUrlParamsTsContributor(),
+                            // Both registries at once: the URL claim makes `at` a string in the
+                            // signature, the JSON claim makes it an object in models.ts.
+                            MpDateTimeTsContributor(),
                         )
                     )
                     .build()
 
-                val claim = claimsOf(FunktorUrlParamsTsContributor()).find(MpInstant::class)
+                val out = clientOf(result)
 
-                claim?.tsType shouldBe "string"
-
-                withClue("as a URL param it is a bare string, with no import of the object type") {
-                    clientOf(result) shouldNotContain "MpInstant"
+                withClue("as a URL PARAMETER the same type is a bare string") {
+                    out shouldContain "at: string"
                 }
+
+                // The response body carries an MpInstant too, so models.ts must declare it as the
+                // OBJECT form — proving the two registries really are independent rather than the
+                // assertion above being true because no body mentions the type at all.
+                val models = result.output.entries().first { it.path == "models.ts" }.content
+
+                withClue("in a BODY the same type is the object the datetime contributor claims") {
+                    models shouldContain "MpInstant"
+                }
+
+                claimsOf(FunktorUrlParamsTsContributor()).find(MpInstant::class)?.tsType shouldBe "string"
             }
 
             "a parameter whose wire form is not provable is refused, naming it and its type" {

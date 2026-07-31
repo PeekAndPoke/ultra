@@ -359,8 +359,11 @@ class RestApiTsContributor(
         check(declared.classifier == ApiResponse::class) {
             "Route '${route.method.value} ${route.pattern.pattern}' (${feature.codeGenName} / " +
                     "${group.name} / $member) declares the response type '$declared', which is not an " +
-                    "ApiResponse envelope. Every funktor endpoint answers with one, so this is either a " +
-                    "route built outside the normal `mount` path or a generator bug."
+                    "ApiResponse envelope. The generated client wraps every response in one, so it " +
+                    "cannot describe this route. This is legal on the server — `RouteBuilder.get<T>()` " +
+                    "takes any RESPONSE, and `apiRespond` falls through to a plain ktor respond() for " +
+                    "a non-envelope. Fix: return an ApiResponse (`.api()` / `.apiList()` on the " +
+                    "endpoint's serializer), or exclude the route from the SDK via the include predicate."
         }
 
         return declared.arguments.firstOrNull()?.type ?: error(

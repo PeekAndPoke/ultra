@@ -44,6 +44,18 @@ export function sdkConfig(baseUrl: string, transport: HttpTransport = fetchTrans
     return { baseUrl, transport }
 }
 
+/**
+ * What a CALLER may pass to a generated endpoint member.
+ *
+ * Deliberately narrower than [RequestOptions]: path, query and body are the generator's business —
+ * it derives them from the route — while cancellation is the caller's. Exposing the full
+ * [RequestOptions] on a generated member would let a caller override the URL the route defines.
+ */
+export interface CallOptions {
+    /** Aborts the request. Pass one from a Vue `onScopeDispose` to cancel on unmount. */
+    readonly signal?: AbortSignal
+}
+
 /** The per-call inputs a generated member passes through. */
 export interface RequestOptions {
     /** Values for `{name}` placeholders in the route pattern. */

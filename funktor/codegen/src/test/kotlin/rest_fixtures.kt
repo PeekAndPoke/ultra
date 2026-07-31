@@ -12,6 +12,7 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
 import io.peekandpoke.ultra.remote.api
 import io.peekandpoke.ultra.remote.apiList
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -186,13 +187,26 @@ class FxClaimedParamApiRoutes : ApiRoutes("fx-claimed", authFloor = { public() }
     )
 
     val eventsSince = TypedApiEndpoint
-        .Get(uri = "/api/fx/events/{at}", response = FxTalkModel.serializer().apiList())
+        .Get(uri = "/api/fx/events/{at}", response = FxStampedModel.serializer().apiList())
         .mount(Params::class) {
             docs { name = "Events since a point in time" }
                 .codeGen { funcName = "eventsSince" }
                 .handle { ApiResponse.ok(emptyList()) }
         }
 }
+
+/**
+ * Carries an `MpInstant` in its BODY, while [FxClaimedParamApiRoutes] carries one as a URL parameter.
+ *
+ * That pairing is the point: the same Kotlin type is an OBJECT in JSON and a STRING in a URL, which is
+ * why the two claim registries are independent. Without a body occurrence the test asserting this was
+ * true by construction and would have survived merging them.
+ */
+@Serializable
+data class FxStampedModel(
+    val id: String,
+    @Contextual val at: MpInstant,
+)
 
 /** A feature used by the kontainer wiring spec, kept separate so its file name is distinctive. */
 class FxWiringApiFeature : ApiFeature {
