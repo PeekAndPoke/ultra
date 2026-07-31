@@ -14,6 +14,7 @@ import io.peekandpoke.ultra.kontainer.module
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.jwt.JwtConfig
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
+import io.peekandpoke.ultra.security.jwt.JwtSignatureGate
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
 import io.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer.Companion.withSlumberCache
@@ -107,6 +108,13 @@ class FunktorRestBuilder internal constructor(
 
     fun jwt(config: JwtConfig?) {
         config ?: error("JwtConfig must not be null")
+
+        // Validate the key HERE, at boot, not inside the singleton factory. The kontainer binding below
+        // is lazy, so a too-short or empty key would otherwise surface as a 500 on the first request
+        // carrying a bearer token — on a running server, long after deploy. `JwtSignatureGate`'s own
+        // `require` still guards every other construction path; this makes a misconfigured deployment
+        // fail to start instead.
+        JwtSignatureGate.requireUsableSigningKey(config.signingKey.value)
 
         with(kontainer) {
             singleton(JwtGenerator::class) { JwtGenerator(config) }

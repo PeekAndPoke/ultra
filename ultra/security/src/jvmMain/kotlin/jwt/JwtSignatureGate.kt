@@ -86,6 +86,42 @@ class JwtSignatureGate(
          * unauthenticated caller can make the server hash. The replaced library offered no such control.
          */
         const val MAX_TOKEN_LENGTH: Int = 64 * 1024
+
+        /**
+         * Minimum signing-key size in bytes — RFC 7518 §3.2 makes this a MUST for HMAC.
+         *
+         * *"A key of the same size as the hash output (for instance, 256 bits for HS256) or larger MUST
+         * be used with this algorithm."* SHA-512 outputs 64 bytes, so that is the floor.
+         *
+         * It matters because there is **no key-derivation function** between the configured string and
+         * the MAC: the bytes are used as key material directly, so guessing costs one HMAC per attempt
+         * with no work factor to hide behind. A single captured token is then an offline oracle, and
+         * recovering the key is a total compromise of the issuer.
+         *
+         * **Length is a proxy for entropy, not a guarantee.** A 64-character English passphrase clears
+         * this bar with perhaps 40 bytes of real entropy. This catches `changeme`, not a long weak
+         * secret. Generate keys with a CSPRNG.
+         */
+        const val MIN_SIGNING_KEY_BYTES: Int = 64
+
+        /**
+         * Throws unless [signingKey] is usable, with a message that says how to fix it.
+         *
+         * Exposed so a host can check at BOOT. `JwtGenerator` is bound lazily in the kontainer, so
+         * without an eager call the first failure is a 500 on a live server rather than a refusal to
+         * start — see `FunktorRestBuilder.jwt`.
+         */
+        fun requireUsableSigningKey(signingKey: String) {
+            val size = signingKey.toByteArray(StandardCharsets.UTF_8).size
+
+            require(size >= MIN_SIGNING_KEY_BYTES) {
+                "The JWT signing key is $size bytes; HMAC-SHA512 requires at least " +
+                        "$MIN_SIGNING_KEY_BYTES (RFC 7518 §3.2). A shorter key is brute-forceable " +
+                        "offline from a single captured token, because the key is used directly as MAC " +
+                        "key material with no KDF to slow guessing down. Generate one with " +
+                        "`openssl rand -base64 64` and set it as the JWT signingKey."
+            }
+        }
     }
 
     /**
@@ -96,7 +132,16 @@ class JwtSignatureGate(
      */
     class Rejected(message: String) : JwtVerificationException(message)
 
-    private val keySpec = SecretKeySpec(signingKey.toByteArray(StandardCharsets.UTF_8), HMAC_SHA512)
+    private val keySpec: SecretKeySpec
+
+    init {
+        // Fails at construction rather than at first use. `SecretKeySpec` already rejected a zero-length
+        // key with "Empty key", but that surfaced as a 500 on the first request carrying a bearer token,
+        // because the kontainer singleton is lazy. `funktorRest { jwt() }` calls the same check at boot.
+        requireUsableSigningKey(signingKey)
+
+        keySpec = SecretKeySpec(signingKey.toByteArray(StandardCharsets.UTF_8), HMAC_SHA512)
+    }
 
     /**
      * Throws [Rejected] unless [token] carries a valid MAC.

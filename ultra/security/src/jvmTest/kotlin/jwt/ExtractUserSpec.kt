@@ -27,7 +27,7 @@ class ExtractUserSpec : StringSpec({
     val config = JwtConfig(
         issuer = "testIssuer",
         audience = "testAudience",
-        signingKey = Redacted("testSigningKey"),
+        signingKey = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
         permissionsNs = "permissions",
         userNs = ns,
     )

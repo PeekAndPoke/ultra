@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.ultra.security.user.UserId
@@ -20,7 +21,7 @@ import java.util.Date
  */
 class JwtSignatureGateSpec : StringSpec({
 
-    val secret = "test-signing-key-for-the-gate-spec"
+    val secret = "test-signing-key-for-the-gate-spec-rfc7518-sixty-four-bytes!!!!!!"
 
     val config = JwtConfig(
         signingKey = Redacted(secret),
@@ -40,6 +41,40 @@ class JwtSignatureGateSpec : StringSpec({
 
     /** A genuine token, produced by the very code path that signs in production. */
     fun realToken(): String = generator.createJwt(user = JwtUserData(id = UserId("u1"), desc = "d", type = "t"))
+
+    // ── the signing key must be usable at all ───────────────────────────────────────────────────────
+
+    "a signing key shorter than 64 bytes is refused, with an actionable message" {
+        // RFC 7518 §3.2 makes >= hash-output size a MUST for HMAC. It matters because there is no KDF
+        // between the configured string and the MAC key material, so guessing costs one HMAC per
+        // attempt and a captured token is an offline oracle.
+        listOf(
+            "" to "empty",
+            "short" to "obviously too short",
+            "a".repeat(63) to "one byte under the limit",
+        ).forEach { (key, why) ->
+            withClue(why) {
+                val thrown = shouldThrow<IllegalArgumentException> { JwtSignatureGate(key) }
+
+                thrown.message!! shouldContain "RFC 7518"
+                withClue("the message must say HOW to fix it, not just that it is wrong") {
+                    thrown.message!! shouldContain "openssl rand -base64 64"
+                }
+            }
+        }
+
+        withClue("exactly 64 bytes is accepted — the boundary is inclusive") {
+            JwtSignatureGate("a".repeat(64))
+        }
+    }
+
+    "the boot check and the constructor agree" {
+        // FunktorRestBuilder.jwt() calls requireUsableSigningKey eagerly, because the kontainer binding
+        // is lazy and would otherwise defer the failure to the first bearer request on a live server.
+        shouldThrow<IllegalArgumentException> { JwtSignatureGate.requireUsableSigningKey("too-short") }
+
+        JwtSignatureGate.requireUsableSigningKey(secret)
+    }
 
     // ── the property this exists for ────────────────────────────────────────────────────────────────
 
@@ -97,7 +132,7 @@ class JwtSignatureGateSpec : StringSpec({
         // the swap must keep verifying after it.
         val libraryMinted = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
             "eyJpc3MiOiJ0ZXN0LWlzc3VlciIsImF1ZCI6InRlc3QtYXVkaWVuY2UiLCJzdWIiOiJ1MiJ9." +
-            "WAEiEHk-XsqCQMEkzJKxyexaBVQLzIGQRoH9BQQFr0FbIzpKZ4k0k3Vfa27HBfZ2dU5Agd3fgCZHHGddX3EE5w"
+            "dZTd1_5WKZgegotHuv3WqjCawZW3YG-ljHkyixQW0WXNOAwhuH7IpsN-SS0V-PL_VF4Fzct_X4K9GeGQaJO5uQ"
 
         gate.check(libraryMinted)
 
@@ -138,7 +173,7 @@ class JwtSignatureGateSpec : StringSpec({
     }
 
     "the wrong key is rejected" {
-        shouldThrow<JwtSignatureGate.Rejected> { JwtSignatureGate("a-different-key").check(realToken()) }
+        shouldThrow<JwtSignatureGate.Rejected> { JwtSignatureGate("a-different-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!!").check(realToken()) }
     }
 
     "structurally broken tokens are rejected, not crashed on" {
@@ -175,7 +210,7 @@ class JwtSignatureGateSpec : StringSpec({
         // gate: rejected on the MAC.
         val hs256 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
             "eyJzdWIiOiJhZG1pbiJ9." +
-            "l7BEL8MzylhbmbAVtDyLfm2M5jmjCJXzlgHrvXBpvgc"
+            "GzRXAsztVKxbX9gy27NKmrab9u1H72jiRS_J9Il97Ow"
 
         shouldThrow<JwtSignatureGate.Rejected> { gate.check(hs256) }
     }

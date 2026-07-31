@@ -28,7 +28,7 @@ class JwtClaimValidationSpec : StringSpec({
     val now = 1_800_000_000L
 
     val config = JwtConfig(
-        signingKey = Redacted("claim-validation-key"),
+        signingKey = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
         issuer = "iss",
         audience = "aud",
         permissionsNs = "permissions",

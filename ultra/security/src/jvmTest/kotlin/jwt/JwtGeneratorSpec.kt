@@ -22,7 +22,7 @@ class JwtGeneratorSpec : StringSpec() {
     private val mockConfig = JwtConfig(
         issuer = "testIssuer",
         audience = "testAudience",
-        signingKey = Redacted("testSigningKey"),
+        signingKey = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
         permissionsNs = permissionsNs,
         userNs = userNs,
     )
@@ -79,7 +79,7 @@ class JwtGeneratorSpec : StringSpec() {
 
         "verify() should throw JwtVerificationException for invalid token" {
             val invalidToken = JwtGenerator(
-                config = mockConfig.copy(signingKey = Redacted("invalidKey"), issuer = "invalidIssuer"),
+                config = mockConfig.copy(signingKey = Redacted("a-different-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!!"), issuer = "invalidIssuer"),
             ).createJwt(user = JwtUserData(id = UserId("i1"), desc = "d", type = "t"))
 
             shouldThrow<JwtVerificationException> {
@@ -155,7 +155,7 @@ class JwtGeneratorSpec : StringSpec() {
 
         "tryVerify should return null for a token signed with a foreign key" {
             val invalidToken = JwtGenerator(
-                config = mockConfig.copy(signingKey = Redacted("invalidKey"), issuer = "invalidIssuer"),
+                config = mockConfig.copy(signingKey = Redacted("a-different-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!!"), issuer = "invalidIssuer"),
             ).createJwt(user = JwtUserData(id = UserId("i2"), desc = "d", type = "t"))
 
             jwtGenerator.tryVerify(invalidToken) shouldBe null

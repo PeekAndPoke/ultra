@@ -6,6 +6,7 @@ import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
 import io.peekandpoke.ultra.slumber.JsonUtil.unwrap
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.slumber.slumber
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import java.lang.reflect.InvocationTargetException
@@ -29,6 +30,14 @@ class SlumberRestCodec(
          * tolerance for unknown fields comes from Slumber's awakers, not from the parser. And
          * `maxStringLength(50_000_000)`, raised to get past Jackson's 20 MB default, has no kotlinx
          * counterpart: kotlinx imposes no such limit, so the ceiling that needed lifting is gone.
+         *
+         * **One behaviour DID change, deliberately: non-finite doubles now fail.** kotlinx defaults
+         * `allowSpecialFloatingPointValues = false`, so a `NaN` or `Infinity` in a response raises
+         * rather than being written out. Jackson emitted a bare `NaN`, which is not valid JSON — the
+         * browser's `JSON.parse` rejected it, so the old behaviour was also broken, just at the
+         * consumer. Failing here is the better half of a bad pair: it happens at the source, names the
+         * field, and produces a server-side stack trace instead of an opaque client-side parse error.
+         * A `NaN` reaching a response is a division by zero upstream; fix that rather than this.
          */
         private val json = Json
 
@@ -47,8 +56,34 @@ class SlumberRestCodec(
     override fun serializePretty(asType: KType, content: Any?): String? =
         render(prettyJson, slumber(asType, content))
 
-    private fun render(with: Json, slumbered: Any?): String =
+    private fun render(with: Json, slumbered: Any?): String = try {
         with.encodeToString(JsonElement.serializer(), slumbered.toJsonElement())
+    } catch (e: SerializationException) {
+        // kotlinx's own message for this is "Unexpected special floating-point value NaN", which names
+        // neither the field nor the fix. Point at both. The offending paths are listed rather than the
+        // whole tree so the message stays bounded, and only non-finite doubles are echoed — never
+        // arbitrary values, which could be secrets.
+        val offenders = findNonFinite(slumbered).take(10)
+
+        if (offenders.isEmpty()) throw e
+
+        throw SerializationException(
+            "Response contains non-finite number(s) at: ${offenders.joinToString()}. " +
+                    "JSON has no NaN or Infinity, so these cannot be sent. This is a division by zero " +
+                    "or an empty-collection average upstream — fix the computation, or map it to null " +
+                    "before returning.",
+            e,
+        )
+    }
+
+    /** Paths of every non-finite double in a slumbered tree; empty when there are none. */
+    private fun findNonFinite(node: Any?, path: String = "$"): List<String> = when (node) {
+        is Double -> if (node.isFinite()) emptyList() else listOf("$path=$node")
+        is Float -> if (node.isFinite()) emptyList() else listOf("$path=$node")
+        is Map<*, *> -> node.entries.flatMap { (k, v) -> findNonFinite(v, "$path.$k") }
+        is Iterable<*> -> node.flatMapIndexed { i, v -> findNonFinite(v, "$path[$i]") }
+        else -> emptyList()
+    }
 
     override fun deserialize(asType: KType, content: Any?): Any? {
         return when (content) {

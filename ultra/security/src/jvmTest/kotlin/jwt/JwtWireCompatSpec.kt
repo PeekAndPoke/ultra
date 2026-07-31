@@ -35,7 +35,7 @@ import java.util.Base64
  */
 class JwtWireCompatSpec : StringSpec({
 
-    val secret = "wire-compat-signing-key"
+    val secret = "wire-compat-signing-key-rfc7518-needs-sixty-four-bytes-min!!!!!!!"
     val now = 1_800_000_000L
 
     val config = JwtConfig(
@@ -56,27 +56,27 @@ class JwtWireCompatSpec : StringSpec({
     // Minted with the full production claim shape: registered claims + user ns + permissions ns.
     val fixtureProductionShape = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
         "eyJleHAiOjE4MzQwMDAwMDAsImN1c3RvbS1jbGFpbSI6ImN1c3RvbS12YWx1ZSIsImlzcyI6IndpcmUtaXNzIiwiYXVkIjoid2lyZS1hdWQiLCJzdWIiOiJiMmJfdXNlcnMvdTEiLCJ1c2VyL2lkIjoiYjJiX3VzZXJzL3UxIiwidXNlci9kZXNjIjoiV2lyZSBVc2VyIiwidXNlci90eXBlIjoiaHVtYW4iLCJ1c2VyL2VtYWlsIjoid2lyZUBleGFtcGxlLmNvbSIsInBlcm1pc3Npb25zL3N1cGVydXNlciI6dHJ1ZSwicGVybWlzc2lvbnMvb3JnIjoib3JnYW5pc2F0aW9uL2FjbWUiLCJwZXJtaXNzaW9ucy9hY2Nlc3NpYmxlT3JncyI6WyJvcmdhbmlzYXRpb24vYWNtZSIsIm9yZ2FuaXNhdGlvbi9nbG9iZXgiXSwicGVybWlzc2lvbnMvYnJhbmNoZXMiOlsiYjEiXSwicGVybWlzc2lvbnMvZ3JvdXBzIjpbImcxIl0sInBlcm1pc3Npb25zL3JvbGVzIjpbImFkbWluIl0sInBlcm1pc3Npb25zL3Blcm1pc3Npb25zIjpbInJlYWQiLCJ3cml0ZSJdfQ." +
-        "RlD8-trjBgTLHFcpNdPiJYRq0HQCAHfKLAq2YASzrz80SgyWYLib41YJu_gsHDpLgJEy8Lcr7ONZ1d__qqyFpA"
+        "YPmZRUdAMOat5OB4rPdP7xCDnCBtyaGooxyiH26Y8jW_8uLi1qnLhfqf2ee7xMC91qW6qlebZZu_sBlk7sM-3A"
 
     val fixtureNoExp = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
         "eyJpc3MiOiJ3aXJlLWlzcyIsImF1ZCI6IndpcmUtYXVkIiwic3ViIjoiYjJiX3VzZXJzL3UxIn0." +
-        "3klZ5Y1uIGdvyjQoFdmWLk_D1rP353bLhHOqwa_RMNy7oFytzg-W0o-FeyxkS-cozymFCaPDdOPcs9IS3VTPiA"
+        "Jwar_tzV5znJTu-Or4YucjXrqiHBTi9S4GyUQAoXt-26YnT4DndQFaf86tKKnCkuB9eXbXlH6TkVhxcwAVDOWg"
 
     val fixtureAudArray = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
         "eyJleHAiOjE4MzQwMDAwMDAsImlzcyI6IndpcmUtaXNzIiwiYXVkIjpbIndpcmUtYXVkIiwib3RoZXItYXVkIl0sInN1YiI6ImIyYl91c2Vycy91MSJ9." +
-        "YbEbcDvijBnSOG_4EuMiI8EarEXIEmjy0jTfzhP-CuEPENH7mynjPHuJPHnK5kkbsPLSsVcW7T16z62jKDwM1A"
+        "hKa4gSQbZUTzZZZBE9CqV_w3HXDYEysmat15REQOhxI0be4y3hiraJTJLqpFs1wqFmTJhrmc6EuHPYJymDMoZw"
 
     val fixtureExpired = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
         "eyJleHAiOjEwMDAwMDAwMDAsImlzcyI6IndpcmUtaXNzIiwiYXVkIjoid2lyZS1hdWQiLCJzdWIiOiJiMmJfdXNlcnMvdTEifQ." +
-        "EAizKsJAzvscBMNN1uwPEw2G3GGe47hKmhnwsxhWaC2XjWAwJ7yuPYbL0Bd_tIZFm2NKspBatBTR6OCesF3VSA"
+        "HlhjFChx1ggvo5Et7QKKoIjvw78vDKLLc9debQF8_Hcq5VH7NYKJNLqjYQWLdSX2-Nurkl1FN8cjjJIlyOdeuQ"
 
     val fixtureWrongIssuer = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
         "eyJleHAiOjE4MzQwMDAwMDAsImlzcyI6InNvbWVib2R5LWVsc2UiLCJhdWQiOiJ3aXJlLWF1ZCIsInN1YiI6ImIyYl91c2Vycy91MSJ9." +
-        "Q40wEu5S4Ka35RfR3L6BflWe3yHh3079E9wBrpIbRtGGmzB12kDFbiKVq_puZLZHqPPjz25wQyh7Riv4uwCn-Q"
+        "QBWaQ-OdyyK1hk0jDm633Um02flZ8rCxk_Zj5QjTU1gIe1NfqE_avtGhA8_pd73zDXxovmexd6z_Hu9oarMXIg"
 
     val fixtureHs256 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
         "eyJleHAiOjE4MzQwMDAwMDAsImlzcyI6IndpcmUtaXNzIiwiYXVkIjoid2lyZS1hdWQiLCJzdWIiOiJiMmJfdXNlcnMvdTEifQ." +
-        "vhuugUFVv6GfMdIbMg9BS20PEECsSLO8V-O69AozQIY"
+        "QdyoPHNKWE-2AfYpJPgXeL_tIbmXdDFwGTraLhbq_xI"
 
     "an already-issued production-shape token verifies and extracts identically" {
         val payload = generator.verify(fixtureProductionShape)

@@ -1,8 +1,11 @@
 package io.peekandpoke.monko.lang
 
+import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import io.peekandpoke.ultra.slumber.slumber
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.math.max
 
 /**
@@ -12,13 +15,27 @@ class MongoPrinter {
 
     companion object {
         /**
-         * Renders a parameter value as pretty JSON.
-         *
-         * **These values are RAW, not slumbered** — see the matching note on `AqlPrinter`, which has the
-         * same shape and the same consequence: a structured bind value renders as a JSON string rather
-         * than an object. Tracked in `.claude/tasks/20260731-printer-raw-bind-values.md`.
+         * Bind values reach this printer RAW, not slumbered — see the matching note on `AqlPrinter`.
+         * [render] slumbers first so a structured value renders as an object rather than as the JSON
+         * string of its `toString()`.
          */
         private val jsonPrinter = Json { prettyPrint = true }
+
+        private val codec = Codec.default
+
+        /**
+         * Renders one bind value as pretty JSON, degrading rather than throwing.
+         *
+         * A debug printer must never be the thing that breaks a query, so this falls back to the raw
+         * tree and finally to `toString()` — which is also what keeps a bound [Redacted] rendering as
+         * its placeholder.
+         */
+        internal fun render(value: Any?): String = jsonPrinter.encodeToString(
+            JsonElement.serializer(),
+            runCatching { codec.slumber(value).toJsonElement() }
+                .recoverCatching { value.toJsonElement() }
+                .getOrElse { JsonPrimitive(value.toString()) },
+        )
 
         /** Prints the raw query, with all parameter value included */
         fun <T> MongoExpression<T>.printRawQuery(): String = printRawQuery(this)
@@ -52,7 +69,7 @@ class MongoPrinter {
         val raw: String by lazy(LazyThreadSafetyMode.NONE) {
 
             vars.entries.fold(query) { acc, (key, value) ->
-                acc.replace("@$key", jsonPrinter.encodeToString(JsonElement.serializer(), value.toJsonElement()))
+                acc.replace("@$key", render(value))
             }
         }
     }

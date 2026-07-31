@@ -1,8 +1,11 @@
 package io.peekandpoke.karango.aql
 
+import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import io.peekandpoke.ultra.slumber.slumber
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import io.peekandpoke.ultra.vault.lang.Aliased
 import kotlin.math.max
 
@@ -10,19 +13,30 @@ import kotlin.math.max
 class AqlPrinter {
 
     companion object {
-        /**
-         * Renders a parameter value as pretty JSON.
-         *
-         * **These values are RAW, not slumbered** — `queryVars` holds what the caller bound
-         * (`base_expr.kt`'s `p.value(name, value)`); slumbering happens later, in `KarangoDriver`. So
-         * `JsonUtil.toJsonElement`'s `else -> JsonPrimitive(toString())` fallback applies: a structured
-         * bind value renders as the JSON *string* `"Person(name=x, age=3)"` where Jackson rendered an
-         * object, and a `Map` with non-String keys throws a raw `ClassCastException`.
-         *
-         * Debug-only (`printRawQuery`), and untested because every printer spec binds scalars and lists,
-         * which are unaffected. Tracked in `.claude/tasks/20260731-printer-raw-bind-values.md`.
-         */
         private val jsonPrinter = Json { prettyPrint = true }
+
+        /**
+         * Bind values reach this printer RAW — `queryVars` holds what the caller bound
+         * (`base_expr.kt`'s `p.value(name, value)`), and slumbering happens later, in `KarangoDriver`.
+         * So this has to slumber before rendering; otherwise `JsonUtil.toJsonElement`'s
+         * `else -> JsonPrimitive(toString())` fallback turns a bound data class into the JSON *string*
+         * `"Person(name=x, age=3)"`, and a `Map` with non-String keys throws `ClassCastException`.
+         */
+        private val codec = Codec.default
+
+        /**
+         * Renders one bind value as pretty JSON, degrading rather than throwing.
+         *
+         * A debug printer must never be the thing that breaks a query. Slumbering can fail for a type
+         * Slumber cannot describe, so this falls back to the raw tree and finally to `toString()` —
+         * which is also what keeps a bound [Redacted] rendering as its placeholder.
+         */
+        internal fun render(value: Any?): String = jsonPrinter.encodeToString(
+            JsonElement.serializer(),
+            runCatching { codec.slumber(value).toJsonElement() }
+                .recoverCatching { value.toJsonElement() }
+                .getOrElse { JsonPrimitive(value.toString()) },
+        )
 
         /** Prints the raw query, with all parameter value included */
         fun <T> AqlExpression<T>.printRawQuery(): String = printRawQuery(this)
@@ -56,7 +70,7 @@ class AqlPrinter {
         val raw: String by lazy(LazyThreadSafetyMode.NONE) {
 
             vars.entries.fold(query) { acc, (key, value) ->
-                acc.replace("@$key", jsonPrinter.encodeToString(JsonElement.serializer(), value.toJsonElement()))
+                acc.replace("@$key", render(value))
             }
         }
     }
