@@ -2,6 +2,9 @@ package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import java.util.Base64
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
@@ -26,11 +29,16 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
                 permissions = setOf("p1", "p2"),
             )
 
-            val jwt = JWT.create()
+            val jwt = JwtBuilder(JWT.create())
                 .encodePermissions("testns", permissions)
+                .delegate
                 .sign(Algorithm.none())
 
-            val decoded = JWT.decode(jwt)
+            val decoded = JwtPayload(
+                claims = Json.parseToJsonElement(
+                    String(Base64.getUrlDecoder().decode(jwt.substringAfter('.').substringBefore('.')))
+                ).jsonObject
+            )
 
             val extracted = decoded.extractPermissions(namespace)
 
@@ -53,11 +61,16 @@ class JwtPermissionsRoundTripSpec : FreeSpec() {
                 permissions = setOf("p1", "p2"),
             )
 
-            val jwt = JWT.create()
+            val jwt = JwtBuilder(JWT.create())
                 .encodePermissions("testns", permissions)
+                .delegate
                 .sign(Algorithm.none())
 
-            val decoded = JWT.decode(jwt)
+            val decoded = JwtPayload(
+                claims = Json.parseToJsonElement(
+                    String(Base64.getUrlDecoder().decode(jwt.substringAfter('.').substringBefore('.')))
+                ).jsonObject
+            )
 
             val extracted = decoded.extractPermissions(namespace)
 

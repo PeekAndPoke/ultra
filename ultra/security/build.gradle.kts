@@ -41,6 +41,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(Deps.KotlinX.serialization_core)
+                // JwtPayload/JwtClaim are typed access over a JsonObject
+                implementation(Deps.KotlinX.serialization_json)
 
                 api(project(":ultra:common"))
                 implementation(project(":ultra:slumber"))
@@ -68,7 +70,11 @@ kotlin {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(project(":ultra:kontainer"))
-                api(Deps.JavaLibs.auth0_java_jwt)
+                // `implementation`, not `api`: the library's Payload and JWTCreator.Builder used to reach every
+                // consumer through `Caller.JwtCaller`, putting a third-party type in this framework's
+                // published surface. JwtPayload/JwtBuilder replace it, so the library is now an internal
+                // detail and swapping it is contained to this module.
+                implementation(Deps.JavaLibs.auth0_java_jwt)
                 api(Deps.JavaLibs.password4j)
             }
         }

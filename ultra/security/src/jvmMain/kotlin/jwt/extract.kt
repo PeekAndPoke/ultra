@@ -1,15 +1,10 @@
 package io.peekandpoke.ultra.security.jwt
 
-import com.auth0.jwt.interfaces.Claim
-import com.auth0.jwt.interfaces.Payload
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
-
-/** Converts this claim to a [Set] of strings, or an empty set if null. */
-fun Claim.asStringSet(): Set<String> = asList(String::class.java)?.toSet() ?: emptySet()
 
 /**
  * Extracts [JwtUserData] from this payload using claims under the given [namespace].
@@ -19,7 +14,7 @@ fun Claim.asStringSet(): Set<String> = asList(String::class.java)?.toSet() ?: em
  * must degrade to "no identity" instead of turning a malformed token into a 500. Note this is
  * strictly safer than the previous behaviour, which produced a nameless yet *authenticated* user.
  */
-fun Payload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
+fun JwtPayload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
     id = listOfNotNull(getClaim("$namespace/id").asString(), subject)
         .firstNotNullOfOrNull { UserId.parseOrNull(it) }
         ?: UserRecord.ANONYMOUS_ID,
@@ -35,7 +30,7 @@ fun Payload.extractUser(namespace: String = "user"): JwtUserData = JwtUserData(
 )
 
 /** Extracts [UserPermissions] from this payload using claims under the given [namespace]. */
-fun Payload.extractPermissions(namespace: String = "permissions"): UserPermissions = UserPermissions(
+fun JwtPayload.extractPermissions(namespace: String = "permissions"): UserPermissions = UserPermissions(
     isSuperUser = getClaim("$namespace/superuser")?.asBoolean() ?: false,
     // Parsed defensively: a malformed claim degrades to "no selected org" / drops that entry,
     // rather than throwing and turning an attacker-supplied token into a 500.

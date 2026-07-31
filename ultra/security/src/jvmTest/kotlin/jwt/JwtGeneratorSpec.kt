@@ -82,7 +82,7 @@ class JwtGeneratorSpec : StringSpec() {
             val token = jwtGenerator.createJwt(user = userData, permissions = expectedPermissions)
 
             // Assert
-            val decodedToken = jwtGenerator.verifier.verify(token)
+            val decodedToken = jwtGenerator.verify(token)
             val extractedUser = jwtGenerator.extractUserData(decodedToken)
 
             assertSoftly {
@@ -117,7 +117,7 @@ class JwtGeneratorSpec : StringSpec() {
             }
 
             // Assert
-            val decodedToken = jwtGenerator.verifier.verify(token)
+            val decodedToken = jwtGenerator.verify(token)
             val extractedUser = jwtGenerator.extractUserData(decodedToken)
 
             assertSoftly {
@@ -142,7 +142,7 @@ class JwtGeneratorSpec : StringSpec() {
 
             // Act & Assert
             shouldThrow<JWTVerificationException> {
-                jwtGenerator.verifier.verify(invalidToken)
+                jwtGenerator.verify(invalidToken)
             }
         }
 
@@ -189,7 +189,7 @@ class JwtGeneratorSpec : StringSpec() {
                     val token = jwtGenerator.createJwt(user = userData, permissions = permissions)
 
                     // Assert
-                    val decodedToken = jwtGenerator.verifier.verify(token)
+                    val decodedToken = jwtGenerator.verify(token)
                     val extractedPermissions = jwtGenerator.extractPermissions(decodedToken)
 
                     withClue("token should contain the expected permissions") {
@@ -217,7 +217,7 @@ class JwtGeneratorSpec : StringSpec() {
             val token = jwtGenerator.createJwt(user = userData)
 
             // Assert
-            val decodedToken = jwtGenerator.verifier.verify(token)
+            val decodedToken = jwtGenerator.verify(token)
             val extractedPermissions = decodedToken.extractPermissions(permissionsNs)
 
             extractedPermissions.isSuperUser shouldBe false

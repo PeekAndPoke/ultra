@@ -79,6 +79,13 @@ class JwtSignatureGate(
      * Extends the library's exception type deliberately: `tryVerify` catches `JWTVerificationException`
      * and callers rely on a null rather than a throw, so a gate rejection must be indistinguishable
      * from any other verification failure.
+     *
+     * **Known residual.** This is the last vendor type in a public signature — the library is otherwise
+     * `implementation`-scoped and invisible to consumers. Left as it is because nothing outside this
+     * module catches it (checked), and the one external caller of `verify` re-verifies a token it just
+     * issued, where a throw is the correct outcome. Introducing a `JwtVerificationException` of our own
+     * would be churn on the authentication path for a consumer that does not exist. Revisit if one does
+     * — they cannot currently catch this type by name, since auth0 is not on their compile classpath.
      */
     class Rejected(message: String) : com.auth0.jwt.exceptions.JWTVerificationException(message)
 

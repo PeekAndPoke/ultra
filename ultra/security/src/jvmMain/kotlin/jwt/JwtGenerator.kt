@@ -1,11 +1,13 @@
 package io.peekandpoke.ultra.security.jwt
 
 import com.auth0.jwt.JWT
-import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import java.util.Base64
 import com.auth0.jwt.interfaces.JWTVerifier
-import com.auth0.jwt.interfaces.Payload
 import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
@@ -23,8 +25,14 @@ class JwtGenerator(
     /** The namespace for user data claims */
     val userNs: String get() = config.userNs
 
-    /** Verifier configured with the issuer and audience from [config]. */
-    val verifier: JWTVerifier = JWT
+    /**
+     * Verifier configured with the issuer and audience from [config].
+     *
+     * Private: `JWTVerifier` is a vendor type, and exposing it would put the library back into this
+     * module's published surface — the very thing [JwtPayload] exists to prevent. Only tests reached
+     * for it, and [verify] gives them the same coverage.
+     */
+    private val verifier: JWTVerifier = JWT
         .require(signingAlgorithm)
         .withIssuer(config.issuer)
         .withAudience(config.audience)
@@ -36,46 +44,67 @@ class JwtGenerator(
      */
     private val gate = JwtSignatureGate(config.signingKey.value)
 
-    /** Verifies the given [token] and returns the decoded payload. */
-    fun verify(token: String): Payload {
+    /** Verifies the given [token] and returns its claims. */
+    fun verify(token: String): JwtPayload {
         // Authenticate the raw bytes first. A token that fails here is rejected having parsed nothing;
-        // only afterwards does the library decode the header and payload JSON.
+        // only afterwards does anything decode the header and payload JSON.
         gate.check(token)
 
-        return verifier.verify(token)
+        // The library still performs the full RFC validation — signature, issuer, audience, expiry.
+        verifier.verify(token)
+
+        // Claims are then read with kotlinx from the segment we have just authenticated, so the vendor's
+        // payload type never escapes this class. Parsing twice costs nothing measurable on a token of a
+        // few kB, and it is what keeps `JwtPayload` free of any library or platform.
+        return JwtPayload(claims = decodeClaims(token))
     }
 
-    /** Verifies the given [token]; returns the decoded payload, or null if verification fails. */
-    fun tryVerify(token: String): Payload? = try {
+    /** Verifies the given [token]; returns its claims, or null if verification fails. */
+    fun tryVerify(token: String): JwtPayload? = try {
         verify(token)
     } catch (_: JWTVerificationException) {
         null
     }
 
+    /**
+     * Reads the claim set out of an already-VERIFIED token.
+     *
+     * Only ever called after [verify] has authenticated the bytes, so this is not parsing hostile input.
+     * A failure here would mean the library accepted something that is not a JSON object, which cannot
+     * happen — but it degrades to an empty claim set rather than throwing, because a 500 on the auth
+     * path is worse than an anonymous request.
+     */
+    private fun decodeClaims(token: String): JsonObject = runCatching {
+        val payloadSegment = token.substringAfter('.').substringBefore('.')
+
+        Json.parseToJsonElement(String(Base64.getUrlDecoder().decode(payloadSegment))).jsonObject
+    }.getOrElse { JsonObject(emptyMap()) }
+
     /** Creates a signed JWT string for the given [user] and [permissions]. */
     fun createJwt(
         user: JwtUserData,
         permissions: UserPermissions = UserPermissions(),
-        builder: JWTCreator.Builder.() -> Unit = {},
-    ): String = JWT.create()
+        builder: JwtBuilder.() -> Unit = {},
+    ): String = JwtBuilder(JWT.create())
         // overridable properties
         .expiresInMinutes(60)
         .apply(builder)
-        // properties that cannot be overridden but the builder
+        // properties that cannot be overridden by the builder
         .withIssuer(config.issuer)
         .withAudience(config.audience)
         .withSubject(user.id.value)
         .encodeUser(config.userNs, user)
         .encodePermissions(config.permissionsNs, permissions)
+        .delegate
         .sign(signingAlgorithm)
 
     /** Extracts [JwtUserData] from the given JWT [payload]. */
-    fun extractUserData(payload: Payload): JwtUserData {
+    fun extractUserData(payload: JwtPayload): JwtUserData {
         return payload.extractUser(config.userNs)
     }
 
     /** Extracts [UserPermissions] from the given JWT [payload]. */
-    fun extractPermissions(payload: Payload): UserPermissions {
+    fun extractPermissions(payload: JwtPayload): UserPermissions {
         return payload.extractPermissions(config.permissionsNs)
     }
 
@@ -90,7 +119,7 @@ class JwtGenerator(
      * [UserRecord.Anonymous] rather than a [UserRecord.LoggedIn] that merely reports
      * `isAnonymous() == true`.
      */
-    fun extractUser(clientIp: String, jwt: Payload): User {
+    fun extractUser(clientIp: String, jwt: JwtPayload): User {
         val data = extractUserData(jwt)
 
         if (data.id == UserRecord.ANONYMOUS_ID) {

@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.auth
 
-import com.auth0.jwt.JWTCreator
-import com.auth0.jwt.interfaces.Payload
+import io.peekandpoke.ultra.security.jwt.JwtBuilder
+import io.peekandpoke.ultra.security.jwt.JwtPayload
 
 /**
  * Claim key for a DB-backed session id in a JWT issued by funktor/auth.
@@ -21,8 +21,8 @@ import com.auth0.jwt.interfaces.Payload
 const val SESSION_ID_CLAIM: String = "funktor:sid"
 
 /** Attach a funktor session id to the JWT being built. */
-fun JWTCreator.Builder.withSessionId(sessionId: String): JWTCreator.Builder =
+fun JwtBuilder.withSessionId(sessionId: String): JwtBuilder =
     withClaim(SESSION_ID_CLAIM, sessionId)
 
 /** Reads the funktor session id from a verified JWT payload, or null if the claim is absent. */
-fun Payload.sessionIdClaim(): String? = getClaim(SESSION_ID_CLAIM).asString()
+fun JwtPayload.sessionIdClaim(): String? = getClaim(SESSION_ID_CLAIM).asString()

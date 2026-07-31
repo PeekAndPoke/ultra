@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.rest.auth
 
-import com.auth0.jwt.interfaces.Payload
+import io.peekandpoke.ultra.security.jwt.JwtPayload
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -19,13 +19,13 @@ import io.peekandpoke.ultra.security.user.UserPermissions
 sealed interface Caller {
 
     /**
-     * End-user authenticated via a JWT (the auth0 [Payload] is kept request-scoped only).
+     * End-user authenticated via a JWT; the [JwtPayload] is kept request-scoped only.
      *
      * The payload may carry sensitive claims; do not log it or persist it. Identity for storage
      * goes through [io.peekandpoke.ultra.security.user.UserRecord.LoggedIn] via
      * [currentUserProvider].
      */
-    data class JwtCaller(val payload: Payload) : Caller
+    data class JwtCaller(val payload: JwtPayload) : Caller
 
     /**
      * Caller authenticated via an API key.

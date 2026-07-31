@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.security.jwt
 
-import com.auth0.jwt.JWTCreator
 import io.peekandpoke.ultra.common.plusMinutes
 import io.peekandpoke.ultra.security.user.UserPermissions
 import java.util.*
@@ -8,12 +7,12 @@ import java.util.*
 /**
  * Set the expiration to [minutes] from now on
  */
-fun JWTCreator.Builder.expiresInMinutes(minutes: Long) = apply {
+fun JwtBuilder.expiresInMinutes(minutes: Long) = apply {
     withExpiresAt(Date().plusMinutes(minutes))
 }
 
 /** Encodes [user] data as claims under the given [namespace]. */
-fun JWTCreator.Builder.encodeUser(namespace: String = "user", user: JwtUserData) = apply {
+fun JwtBuilder.encodeUser(namespace: String = "user", user: JwtUserData) = apply {
     withClaim("$namespace/id", user.id.value)
     withClaim("$namespace/desc", user.desc)
     withClaim("$namespace/type", user.type)
@@ -22,7 +21,7 @@ fun JWTCreator.Builder.encodeUser(namespace: String = "user", user: JwtUserData)
 }
 
 /** Encodes [permissions] as claims under the given [namespace]. */
-fun JWTCreator.Builder.encodePermissions(namespace: String = "permissions", permissions: UserPermissions) = apply {
+fun JwtBuilder.encodePermissions(namespace: String = "permissions", permissions: UserPermissions) = apply {
 
     if (permissions.isSuperUser) {
         withClaim("$namespace/superuser", permissions.isSuperUser)

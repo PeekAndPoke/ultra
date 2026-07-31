@@ -2,13 +2,14 @@ package io.peekandpoke.ultra.security.jwt
 
 import io.peekandpoke.ultra.common.model.Redacted
 import com.auth0.jwt.JWT
-import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.interfaces.Payload
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import java.util.Base64
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
 
@@ -36,9 +37,20 @@ class ExtractUserSpec : StringSpec({
     )
     val generator = JwtGenerator(config = config)
 
-    /** A decoded (signature-irrelevant) payload — extraction runs after verification. */
-    fun payloadOf(builder: JWTCreator.Builder.() -> Unit): Payload =
-        JWT.decode(JWT.create().apply(builder).sign(Algorithm.HMAC512(config.signingKey.value)))
+    /**
+     * A decoded payload — extraction runs AFTER verification, so the signature is irrelevant here.
+     *
+     * Built by decoding the token's payload segment rather than through the verifier, because several
+     * cases below deliberately carry claims a verifier would reject.
+     */
+    fun payloadOf(builder: JwtBuilder.() -> Unit): JwtPayload {
+        val token = JwtBuilder(JWT.create()).apply(builder).delegate.sign(Algorithm.HMAC512(config.signingKey.value))
+        val segment = token.substringAfter('.').substringBefore('.')
+
+        return JwtPayload(
+            claims = Json.parseToJsonElement(String(Base64.getUrlDecoder().decode(segment))).jsonObject
+        )
+    }
 
     "a valid id claim yields that UserId" {
         val payload = payloadOf { withClaim("$ns/id", "b2b_users/u1") }
@@ -101,10 +113,11 @@ class ExtractUserSpec : StringSpec({
         // Identity and permissions come from INDEPENDENT claim sets. A token carrying permission
         // claims but no usable id must not satisfy permission-only auth rules (isSuperUser(),
         // forRole(), ...), so the degradation has to be total.
-        val idLess = JWT.create()
+        val idLess = JwtBuilder(JWT.create())
             .withIssuer(config.issuer)
             .withAudience(config.audience)
             .encodePermissions(config.permissionsNs, UserPermissions(isSuperUser = true, roles = setOf("admin")))
+            .delegate
             .sign(Algorithm.HMAC512(config.signingKey.value))
 
         val degraded = generator.extractUser(clientIp = "1.2.3.4", jwt = generator.verify(idLess))
