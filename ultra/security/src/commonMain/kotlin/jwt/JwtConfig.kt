@@ -33,15 +33,30 @@ data class JwtConfig(
      * 1. Append the new key — `[old, new]`. Every node can now VERIFY it; `old` still signs.
      * 2. Once the whole fleet is on phase 1, reorder to `[new, old]` to promote it.
      *
-     * ### COMPROMISED key — different procedure
+     * ### COMPROMISED key — rotation does NOT contain it. Everyone gets logged out.
      *
-     * **Remove it immediately and accept that its tokens die.** Retaining a leaked key so sessions
-     * survive keeps the attacker's forged tokens verifying for the whole grace window: the gate MACs
-     * under whatever key the `kid` names, and it has no notion of a key being retired. The more
-     * generous the grace period, the longer the attacker keeps whatever those tokens claim.
+     * **Remove the key immediately.** A grace period does not merely delay containment, it gives it
+     * away completely, because **refresh launders a token onto the new key**:
+     *
+     * 1. The attacker holds a token forged with the leaked key.
+     * 2. You prepend a new key. The leaked one stays, so existing sessions survive — and so does the
+     *    attacker's token, because the gate MACs under whatever key the `kid` names and has no
+     *    notion of a key being retired.
+     * 3. The attacker calls `refreshToken`. It authenticates on the token alone, reloads the user,
+     *    and mints a replacement **signed with the new key**.
+     * 4. You drop the leaked key. Every honest session is fine. So is the attacker's, now indefinitely
+     *    renewable, and no longer distinguishable from a legitimate one.
+     *
+     * So there is no version of a graceful rotation that contains a compromise. Removing the key at
+     * once is the only option, and it logs everyone out — which is the honest cost, not a failure.
      *
      * A `verifyOnly` flag would NOT help, and is worth not adding for that reason: the attacker's
      * problem is minting tokens *we accept*, and a verify-only key still verifies them.
+     *
+     * **The real fix is session revocation, not key rotation** — a per-session id in the token,
+     * checked against a store, so individual sessions die without touching the keys. The storage half
+     * already exists and is unwired; see `.claude/tasks/20260728-session-revocation-wiring.md`. Until
+     * it lands, key removal is the only revocation this system has, and its granularity is "everyone".
      *
      * Validated at boot by `JwtGenerator.requireUsableConfig` — non-empty, unique ids, no blank id,
      * each secret long enough for its algorithm.

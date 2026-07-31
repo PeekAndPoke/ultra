@@ -171,7 +171,32 @@ keys, pre-auth header-parser abuse, boot-validation gaps).
 
 ## OPEN — needs a maintainer decision, not fixed here
 
-### 1. A working superuser signing key is committed  *(reviewer 3 F1, HIGH)*
+### 1. ~~A working superuser signing key is committed~~ — FIXED 2026-08-01  *(reviewer 3 F1, HIGH)*
+
+**Resolved on the maintainer's instruction:** the key now lives in the gitignored `keys.env.conf`
+and the committed configs use HOCON substitution, exactly like every other secret in that directory.
+
+- `keys.env.conf.tpl` (tracked) gained `JWT_SIGNING_KEY=""` with the `openssl rand -base64 64`
+  instruction and the RFC 7518 floor spelled out.
+- `application.{dev,test}.conf` now read `secret = ${JWT_SIGNING_KEY}`.
+- A **fresh** key was generated for the local `keys.env.conf`. The old one is public forever and is
+  gone from the tree.
+- `funktor/all/src/jvmTest/resources/config/application.test.conf` keeps a committed key — it is a
+  jvmTest resource that never ships and hermetic tests need a fixed one — but it is now a
+  self-describing string (`funktor-all-test-only-signing-key-do-not-use-anywhere-else-…`) instead of
+  a random-looking blob anyone might mistake for a credential.
+
+Verified: `:funktor:all:jvmTest` and `:funktor-demo:server:test` both green, which is what proves the
+substitution resolves.
+
+**Reviewer 3's second F6 claim was REFUTED.** It said `application.common.conf:1`'s
+`include "keys.env"` silently no-ops because the file does not exist. Measured against
+Typesafe Config 1.4.5: an extension-less include appends `.conf`, so it loads `keys.env.conf` **at
+the root**, which is precisely what makes `${AWS_SES_SECRET_KEY}` — and now `${JWT_SIGNING_KEY}` —
+resolve. My own first probe reproduced the reviewer's claim and was wrong: a relative `File` with no
+parent directory changes how includes resolve. The line is load-bearing; do not delete it.
+
+<details><summary>Original finding, kept for the record</summary>
 
 `funktor-demo/server/src/main/resources/config/application.{dev,test}.conf` and
 `funktor/all/src/jvmTest/resources/config/application.test.conf` all carry the same 172-byte secret.
@@ -198,15 +223,28 @@ Options, none free:
 
 Not changed unilaterally because it trades against local-dev ergonomics, which is the maintainer's
 call.
+</details>
 
-### 2. Two smaller config observations *(reviewer 3 F6, LOW, both pre-existing)*
+### 2. A committed AWS Access Key ID *(reviewer 3 F6, LOW, pre-existing)*
 
-- `application.common.conf:37` commits an AWS Access Key ID (`AKIA…`). Not a secret alone, but it
-  names the account and principal, and it is what credential scanners key on. Its matching secret is
-  correctly gitignored — the asymmetry is how the two eventually get reunited by a `git add -f`.
-- `application.common.conf:1` is `include "keys.env"` — no `.conf`, not `required`, and no such file
-  exists, so it silently no-ops. The working include is at line 31. Dead line, or a typo that has
-  been quietly doing nothing.
+`application.common.conf:37` commits `AKIA…`. Not a secret alone, but it names the account and
+principal, and it is what credential scanners key on. Its matching secret is correctly gitignored —
+the asymmetry is how the two eventually get reunited by a `git add -f`. Same fix as item 1 if wanted:
+`accessKeyId = ${AWS_SES_ACCESS_KEY}`, which the template already declares.
+
+### 2b. Rotation cannot contain a compromised key — refresh launders it *(maintainer, 2026-08-01)*
+
+Found by the maintainer, not by any of the three reviewers, and it is the sharpest thing in this
+document. An attacker holding a token forged with a leaked key calls `refreshToken` during the grace
+window and receives a replacement **signed with the new key**; dropping the leaked key afterwards
+achieves nothing. `AuthUserApi` has `authFloor = { authenticated() }`, and `AuthRealm.refreshToken`
+(`funktor/auth/src/jvmMain/kotlin/AuthRealm.kt:389`) authenticates on the token alone — it reloads
+the user and re-derives permissions from the DB, but never asks whether this session may still exist.
+
+So **a compromise always means logging everyone out.** There is no graceful variant. Documented in
+`JwtConfig.keys`, added to the red-team doc as scenario 26, and recorded in
+`.claude/tasks/20260728-session-revocation-wiring.md` — which is the actual fix, and now the
+highest-value item in this area. Rotation is hygiene on a schedule, not incident response.
 
 ### 3. The unknown-kid timing oracle *(reviewer 3 F5, LOW)*
 

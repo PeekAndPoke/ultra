@@ -139,7 +139,17 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
     dates say the rotation happened, and that fresh tokens still carry the OLD `kid`. Then find the
     fastest way an operator could have noticed — that is the missing tooling, not a missing check
     (a check cannot distinguish this from phase 1 of a rolling rotation).
-26. **Committed key material.** The demo's dev/test profiles ship a working superuser signing key
+26. **Refresh laundering — the one that defeats graceful rotation.** Confirmed by reading, not yet
+    executed. Forge a token with key A, prepend key B (A retained), call `POST` refreshToken, and
+    check that the returned token is signed with B. Then drop A and confirm the laundered token still
+    works. `AuthUserApi` has `authFloor = { authenticated() }` and `AuthRealm.refreshToken`
+    (`funktor/auth/src/jvmMain/kotlin/AuthRealm.kt:389`) re-derives everything from the DB *except*
+    the right to be here — there is no session id and no revocation check. Measure the real window:
+    it is not the grace period, it is one refresh interval.
+    Then the variants: does the laundered token survive a password change? A role downgrade? Removal
+    from the org? Deletion of the user? (`users.loadById` throws on a missing user, so that last one
+    should close — verify.)
+27. **Committed key material.** The demo's dev/test profiles ship a working superuser signing key
     inside `src/main/resources` (pre-existing, commit `6c55d3db`, tracked as OPEN item 1 in
     `.claude/tasks/20260731-jwt-kid-key-rotation.md`). Establish exactly which deployment shapes can
     end up on that profile — `AppConfig` tries `File(filename)` before the classpath — including CI
