@@ -23,6 +23,13 @@ Per collector, as its Vue tab ships: when `KontainerTab.vue` exists, delete
 The live collectors carry a `// VUE-REF:` pointer to their counterpart here, so `grep -rn "VUE-REF"`
 lists what is still outstanding.
 
+## Start with TAB-SPECS.md
+
+[`TAB-SPECS.md`](TAB-SPECS.md) distils all ten collectors into one document: the **wire shape the API
+actually serves** (read out of a real record, not inferred from the Kotlin types — several differ), what
+each old tab displayed, the thresholds and colours it used, and what it relied on that the record no
+longer carries. That is the file the Vue work needs; the sources below are the evidence behind it.
+
 ## Layout
 
 | Path | Was |

@@ -75,13 +75,18 @@ Secrets are kept out of insights records and logs by **`@JsonIgnore`**:
 
 | Where | What it hides |
 |---|---|
-| `funktor/core/src/jvmMain/kotlin/config/ktor/KtorConfig.kt:28,30` | two signing keys |
+| `funktor/core/src/jvmMain/kotlin/config/ktor/KtorConfig.kt:28,30` | two keystore passwords |
 | `funktor/messaging/src/jvmMain/kotlin/senders/aws/AwsSesConfig.kt:9` | AWS credentials |
 | `funktor/cluster/src/jvmMain/kotlin/depot/repos/aws/AwsS3Config.kt:8` | AWS credentials |
 | `ultra/vault/src/jvmMain/kotlin/domain.kt:43,47,52` | internal vault fields |
 
 `AppConfigCollector` serialises the **entire `AppConfig`** through `InsightsMapper` (Jackson), so those
 annotations are the only thing standing between the app's signing keys and a stored insights record.
+
+**This table is NOT the full inventory — it is the list of fields that are protected.** Several config
+secrets have no `@JsonIgnore` at all and are written into every record verbatim, including the JWT
+signing key. Verified against a real record on 2026-07-31; see
+`.claude/tasks/20260731-config-secrets-in-insights.md`. Read that before relying on anything here.
 
 **Slumber and kotlinx.serialization do not honour `@JsonIgnore`.** The insights *read* path moved to
 kotlinx on 2026-07-31, which makes moving the *write* path look like tidy-up. It is not: doing so would

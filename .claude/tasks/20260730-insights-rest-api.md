@@ -563,6 +563,10 @@ Three defects surfaced only because a mutation refused to fail, and none were vi
 
 - [x] **I4 — the test app never enables insights** — **fixed 2026-07-31**, see "I4: the e2e now runs
       against a populated depot" below.
+- [ ] **Config secrets are in every record** — `.claude/tasks/20260731-config-secrets-in-insights.md`.
+      The JWT signing key, CSRF secret and DB passwords are serialised verbatim into the `app-config`
+      slice. Found 2026-07-31 by reading a real record. **Blocks the `app-config` Vue tab**, and it is
+      the reason `reference/TAB-SPECS.md` marks that one STOP.
 - [ ] **D-M6 — no discovery or fallback for unknown collector keys.** An app-defined collector gets a
       key nobody renders. Decide with the Vue tab registry (plan steps 6–7), not before.
 - [ ] **No DOCS task yet, deliberately.** This adds public API (`InsightsApi`, `InsightsRecordRef`,
