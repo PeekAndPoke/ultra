@@ -1,0 +1,22 @@
+{
+  "name": "funktor-demo-sdkgen-app",
+  "private": true,
+  "type": "module",
+  "description": "Vue + Vite demo that consumes the generated TypeScript SDK. Proves the SDK is usable from a real frontend toolchain, which no Kotlin test and no isolated tsc run can show.",
+  "packageManager": "pnpm@10.26.2",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "3.5.40",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.8",
+    "typescript": "5.9.3",
+    "vite": "8.2.0",
+    "vue-tsc": "3.3.9"
+  }
+}

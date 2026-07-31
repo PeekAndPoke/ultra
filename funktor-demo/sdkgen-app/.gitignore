@@ -1,0 +1,7 @@
+node_modules/
+dist/
+
+# The generated SDK is NOT checked in here. It is regenerated from the server with
+#   ./gradlew :funktor-demo:server:run --args="--cli sdk:ts:generate --out funktor-demo/sdkgen-app/src/funktorsdk"
+# and the generator owns that directory outright — every run replaces it wholesale.
+src/funktorsdk/
