@@ -1,6 +1,6 @@
 # `Redacted<T>` and the removal of Jackson
 
-**Status:** STAGE 1 DONE (2026-07-31) — the type and both codecs exist and are green. Stages 2–4 not started
+**Status:** STAGES 1 AND 2 DONE (2026-07-31). Stage 3 (insights off Jackson) and stage 4 (the rest of Jackson) not started
 **Security-critical:** yes — this is what finally closes
 `.claude/tasks/20260731-config-secrets-in-insights.md`
 **Supersedes:** the `@JsonIgnore` constraint recorded in `.claude/tasks/20260731-depot-findings.md`
@@ -196,11 +196,51 @@ does not exist yet. The type works without it; codegen has the explicit rule mea
 - Tests: both serializers emit the identical placeholder; the inner value awakes correctly for a scalar
   AND a subtree; `toString()` redacts; a known secret does not survive a slumber.
 
-### Stage 2 — adopt it, deleting the annotations
+### Stage 2 — adopt it, deleting the annotations — **DONE 2026-07-31**
+
+Converted: `JwtConfig.signingKey`, `UltraSecurityConfig.csrfSecret`, `ArangoDbConfig.password`,
+`MongoDbConfig.connectionString`, `KtorConfig.Security`'s two passwords, `AwsSesConfig.secretAccessKey`,
+`AwsS3Config.secretAccessKey`, and `AppConfig.keys` → `Map<String, Redacted<String>>`. Every
+`@JsonIgnore` on a secret is gone, and both hand-written redacting `toString()` implementations with it
+— `Redacted` redacts itself, so the *generated* `toString` is safe.
+
+The compiler enumerated the call sites, which is the point of using a type: ~20 across
+`ultra/security`, `karango`, `monko`, `funktor/auth`, `funktor/messaging`, `funktor/cluster`,
+`funktor-demo` and the **root project's own `src/jvmMain`** — the source set CLAUDE.md warns no module
+test task ever compiles.
+
+**⚠ THE INTERIM `ConfigRedaction` IS STILL LOAD-BEARING. Do not delete it here.** Measured by removing
+it after the conversion: a real record then contains
+`"signingKey": { "value": "ka2fEBWhmjPFpaPhg5Iir6tAX1COT0lG…" }`. `Redacted<T>` teaches Slumber and
+kotlinx; **Jackson knows nothing about it** and serialises the wrapper as an ordinary object, so the
+secret survives one level deeper. `AppConfigCollector` writes through Jackson, so the name-based
+redaction is what keeps the key out of records until stage 3. The insights e2e catches this — it failed
+exactly as it should when the interim was removed.
+
+Two defects found in existing tests while converting:
+
+- `UltraSecurityConfigSpec` had `config.csrfSecret.isNotBlank()` — a **dangling expression asserting
+  nothing**, which passed whatever the value was.
+- `MongoDbConfigSpec`/`MonkoModuleSpec` compared `connectionString shouldBe "literal"`. `shouldBe` is
+  untyped, the CLAUDE.md trap — these failed loudly here rather than rotting silently, but they are the
+  same shape.
+
+#### original scope
 
 `JwtConfig.signingKey`, `UltraSecurityConfig.csrfSecret`, `ArangoDbConfig.password`,
-`MongoDbConfig.connectionString`, `KtorConfig.Security`'s two passwords, `AwsSesConfig`, `AwsS3Config`,
-`ultra/vault/domain.kt`. Call sites unwrap with `.value`.
+`MongoDbConfig.connectionString`, `KtorConfig.Security`'s two passwords, `AwsSesConfig.secretAccessKey`,
+`AwsS3Config.secretKey`. Call sites unwrap with `.value`.
+
+**NOT `ultra/vault/domain.kt`** — corrected 2026-07-31. Its three `@get:JsonIgnore` hide `collection`,
+`asRef` and `asStored`, which are *derived* properties excluded to stop recursion and duplication, not
+secrets. `Redacted<T>` would be wrong for them and would emit a placeholder where the field is currently
+absent. Both this plan and the depot-findings table listed them, from reading the annotation rather than
+the fields.
+
+**`AppConfig.keys` becomes `Map<String, Redacted<String>>`** (decided 2026-07-31). Three call sites, two
+files: `GoogleSsoAuth.kt:79`, `GithubSsoAuth.kt:69,70`. Secret-by-default is right for a bag whose
+purpose is app-supplied keys; the OAuth client IDs it also holds stay redacted, which is already true
+under the interim.
 
 Also decide `AppConfig.keys: Map<String, String>` — the bag reached by `getKeyOrNull(name)`, i.e. exactly
 where an app puts its own secrets. Not yet decided.

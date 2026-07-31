@@ -37,7 +37,7 @@ class MonkoModuleSpec : FreeSpec() {
             "forUnitTests should produce a valid config" {
                 val config = MongoDbConfig.forUnitTests
 
-                config.connectionString shouldNotBe ""
+                config.connectionString.value shouldNotBe ""
                 config.database shouldNotBe ""
             }
 
@@ -46,7 +46,7 @@ class MonkoModuleSpec : FreeSpec() {
                 // It requires a real MongoDB connection, so we just verify the config is valid
                 val config = MongoDbConfig.forUnitTests
 
-                config.connectionString shouldBe "mongodb://root:root@localhost:27017"
+                config.connectionString.value shouldBe "mongodb://root:root@localhost:27017"
                 config.database shouldBe "test"
             }
         }

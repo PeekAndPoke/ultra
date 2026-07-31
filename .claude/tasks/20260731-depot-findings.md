@@ -78,7 +78,7 @@ Secrets are kept out of insights records and logs by **`@JsonIgnore`**:
 | `funktor/core/src/jvmMain/kotlin/config/ktor/KtorConfig.kt:28,30` | two keystore passwords |
 | `funktor/messaging/src/jvmMain/kotlin/senders/aws/AwsSesConfig.kt:9` | AWS credentials |
 | `funktor/cluster/src/jvmMain/kotlin/depot/repos/aws/AwsS3Config.kt:8` | AWS credentials |
-| `ultra/vault/src/jvmMain/kotlin/domain.kt:43,47,52` | internal vault fields |
+| ~~`ultra/vault/src/jvmMain/kotlin/domain.kt:43,47,52`~~ | **NOT secrets** — `collection`, `asRef`, `asStored` are derived properties excluded to stop recursion, not credentials. Listed here in error; corrected 2026-07-31 |
 
 `AppConfigCollector` serialises the **entire `AppConfig`** through `InsightsMapper` (Jackson), so those
 annotations are the only thing standing between the app's signing keys and a stored insights record.

@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.security.jwt
 
+import io.peekandpoke.ultra.common.model.Redacted
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.algorithms.Algorithm
@@ -29,7 +30,7 @@ class ExtractUserSpec : StringSpec({
     val config = JwtConfig(
         issuer = "testIssuer",
         audience = "testAudience",
-        signingKey = "testSigningKey",
+        signingKey = Redacted("testSigningKey"),
         permissionsNs = "permissions",
         userNs = ns,
     )
@@ -37,7 +38,7 @@ class ExtractUserSpec : StringSpec({
 
     /** A decoded (signature-irrelevant) payload — extraction runs after verification. */
     fun payloadOf(builder: JWTCreator.Builder.() -> Unit): Payload =
-        JWT.decode(JWT.create().apply(builder).sign(Algorithm.HMAC512(config.signingKey)))
+        JWT.decode(JWT.create().apply(builder).sign(Algorithm.HMAC512(config.signingKey.value)))
 
     "a valid id claim yields that UserId" {
         val payload = payloadOf { withClaim("$ns/id", "b2b_users/u1") }
@@ -104,7 +105,7 @@ class ExtractUserSpec : StringSpec({
             .withIssuer(config.issuer)
             .withAudience(config.audience)
             .encodePermissions(config.permissionsNs, UserPermissions(isSuperUser = true, roles = setOf("admin")))
-            .sign(Algorithm.HMAC512(config.signingKey))
+            .sign(Algorithm.HMAC512(config.signingKey.value))
 
         val degraded = generator.extractUser(clientIp = "1.2.3.4", jwt = generator.verify(idLess))
 

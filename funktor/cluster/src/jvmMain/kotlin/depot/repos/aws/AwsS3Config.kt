@@ -1,10 +1,10 @@
 package io.peekandpoke.funktor.cluster.depot.repos.aws
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import io.peekandpoke.ultra.common.model.Redacted
+
 
 data class AwsS3Config(
     val region: String,
     val accessKeyId: String,
-    @JsonIgnore // Ignored so it will now show up in the logs or insights panel
-    val secretAccessKey: String,
+    val secretAccessKey: Redacted<String>,
 )

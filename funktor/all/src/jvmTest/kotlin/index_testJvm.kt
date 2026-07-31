@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor
 
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.funktor.core.AppKontainers
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
@@ -17,7 +18,7 @@ import kotlin.io.path.createTempDirectory
 data class FunktorAllTestConfig(
     override val ktor: KtorConfig,
     override val funktor: FunktorConfig = FunktorConfig(),
-    override val keys: Map<String, String> = emptyMap(),
+    override val keys: Map<String, Redacted<String>> = emptyMap(),
 ) : AppConfig
 
 fun createBlueprint(config: FunktorAllTestConfig) = kontainer {

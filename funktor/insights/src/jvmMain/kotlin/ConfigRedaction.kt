@@ -1,11 +1,22 @@
 package io.peekandpoke.funktor.insights
 
 /**
- * **INTERIM — delete when `Redacted<T>` lands.**
+ * **INTERIM — but NOT deletable when `Redacted<T>` is adopted. Only when JACKSON is gone.**
  *
- * Tracked in `.claude/tasks/20260731-redacted-and-jackson-removal.md`, stage 3. Leaving both mechanisms
- * in place would mean nobody can tell which one is load-bearing, so this must go when the type-driven
- * fix arrives, not merely be allowed to.
+ * `Redacted<T>` landed on the config classes on 2026-07-31 and this object is still load-bearing.
+ * Measured, not assumed: with this redaction removed, a real record contains
+ *
+ * ```json
+ * "signingKey": { "value": "ka2fEBWhmjPFpaPhg5Iir6tAX1COT0lG…" }
+ * ```
+ *
+ * `Redacted<T>` teaches Slumber and kotlinx; **Jackson knows nothing about it** and serialises the
+ * wrapper as an ordinary object, so the secret survives one level deeper. `AppConfigCollector` writes
+ * through Jackson (`InsightsMapper`), so this is what keeps the key out of records today.
+ *
+ * Delete it at **stage 3** — when the insights write path leaves Jackson — and not before.
+ *
+ * Tracked in `.claude/tasks/20260731-redacted-and-jackson-removal.md`, stage 3.
  *
  * Why it exists: `AppConfigCollector` serialises the entire `AppConfig`, and the JWT signing key, the
  * CSRF secret and (in the demo) the database password are written into every record verbatim. Confirmed

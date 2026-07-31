@@ -54,7 +54,7 @@ fun MongoDbConfig.toMongoClient(): MongoClient = synchronized(lock) {
 }
 
 fun MongoDbConfig.toMongoClientWithoutCache(): MongoClient {
-    val client = MongoClient.create(connectionString)
+    val client = MongoClient.create(connectionString.value)
 
     return client
 }

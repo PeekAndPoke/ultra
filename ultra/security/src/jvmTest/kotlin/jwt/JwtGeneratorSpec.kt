@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.security.jwt
 
+import io.peekandpoke.ultra.common.model.Redacted
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
@@ -24,7 +25,7 @@ class JwtGeneratorSpec : StringSpec() {
     private val mockConfig = JwtConfig(
         issuer = "testIssuer",
         audience = "testAudience",
-        signingKey = "testSigningKey",
+        signingKey = Redacted("testSigningKey"),
         permissionsNs = permissionsNs,
         userNs = userNs,
     )
@@ -37,9 +38,14 @@ class JwtGeneratorSpec : StringSpec() {
             jwtGenerator.config shouldBe mockConfig
         }
 
-        "JwtConfig.toString must redact signingKey" {
+        "JwtConfig.toString must not disclose the signing key" {
             val str = mockConfig.toString()
-            str shouldContain "REDACTED"
+
+            // JwtConfig's hand-written redacting toString is gone — `Redacted` redacts itself, so the
+            // GENERATED toString is safe. The hand-written one is exactly what made this field look
+            // protected while every serializer wrote it in full, which is how the signing key reached
+            // every insights record.
+            str shouldContain Redacted.PLACEHOLDER
             str shouldNotContain "testSigningKey"
             str shouldContain "testIssuer"
             str shouldContain "testAudience"

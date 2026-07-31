@@ -217,7 +217,7 @@ class InsightsRecordingSpec : FunktorApiSpec() {
             // The key is read from the running app's own config rather than pasted here, so the test
             // cannot rot into asserting against a string nothing uses.
             val signingKey = kontainer.get(FunktorAllTestConfig::class)
-                .funktor.auth.jwt?.signingKey
+                .funktor.auth.jwt?.signingKey?.value
                 ?: error("the test app has no JWT signing key configured — this test would be vacuous")
 
             val summary = recordOneRequest().first()

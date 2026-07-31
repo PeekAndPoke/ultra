@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.auth
 
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.funktor.auth.KarangoTestAppUsersRepo.Companion.asApiModel
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
@@ -63,7 +64,7 @@ val testAppConfig = AppConfig.of(
     funktor = FunktorConfig(
         auth = FunktorConfig.AuthConfig(
             jwt = JwtConfig(
-                signingKey = "secret",
+                signingKey = Redacted("secret"),
                 issuer = "issuer",
                 audience = "audience",
                 permissionsNs = "permissions",

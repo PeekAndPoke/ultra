@@ -67,7 +67,7 @@ fun ArangoDbConfig.toArangoDb(): ArangoDatabaseAsync = synchronized(lock) {
 fun ArangoDbConfig.toArangoDbWithoutCache(): ArangoDatabaseAsync {
     val db = ArangoDB.Builder().apply {
         user(user)
-        password(password)
+        password(password.value)
         host(host, port)
 
         // Trying new settings

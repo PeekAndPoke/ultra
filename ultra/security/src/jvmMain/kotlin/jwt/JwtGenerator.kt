@@ -15,7 +15,7 @@ class JwtGenerator(
     /** The configuration */
     internal val config: JwtConfig,
     /** Signing algorithm to be used */
-    private val signingAlgorithm: Algorithm = Algorithm.HMAC512(config.signingKey),
+    private val signingAlgorithm: Algorithm = Algorithm.HMAC512(config.signingKey.value),
 ) {
     /** The namespace for permissions claims */
     val permissionsNs: String get() = config.permissionsNs

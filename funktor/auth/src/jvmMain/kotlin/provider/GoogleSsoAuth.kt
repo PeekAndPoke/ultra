@@ -86,7 +86,7 @@ class GoogleSsoAuth(
                 return null
             }
 
-            return invoke(clientId = clientId, capabilities = capabilities)
+            return invoke(clientId = clientId.value, capabilities = capabilities)
         }
     }
 

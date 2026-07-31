@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.core.config
 
+import io.peekandpoke.ultra.common.model.Redacted
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
@@ -28,7 +29,7 @@ interface AppConfig {
         fun of(
             ktor: KtorConfig = KtorConfig(),
             funktor: FunktorConfig = FunktorConfig(),
-            keys: Map<String, String> = emptyMap(),
+            keys: Map<String, Redacted<String>> = emptyMap(),
         ): AppConfig {
             return AppConfigImpl(ktor, funktor, keys)
         }
@@ -145,13 +146,13 @@ interface AppConfig {
     private object NullAppConfig : AppConfig {
         override val ktor = KtorConfig()
         override val funktor = FunktorConfig()
-        override val keys: Map<String, String> = emptyMap()
+        override val keys: Map<String, Redacted<String>> = emptyMap()
     }
 
     private class AppConfigImpl(
         override val ktor: KtorConfig,
         override val funktor: FunktorConfig,
-        override val keys: Map<String, String>,
+        override val keys: Map<String, Redacted<String>>,
     ) : AppConfig
 
     /**
@@ -165,9 +166,13 @@ interface AppConfig {
     val funktor: FunktorConfig
 
     /**
-     * A map of key-value pairs user fr
+     * App-supplied keys, reached by name.
+     *
+     * Every value is [Redacted]: the bag exists to hold what an application does not want to declare a
+     * config class for, which in practice means credentials. There is no per-entry declaration site to
+     * mark one as sensitive, so it is secret-by-default.
      */
-    val keys: Map<String, String>
+    val keys: Map<String, Redacted<String>>
 
     /**
      * Get the [key] or throw an [IllegalStateException] when the key is not found.

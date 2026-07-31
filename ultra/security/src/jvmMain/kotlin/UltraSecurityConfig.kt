@@ -1,19 +1,18 @@
 package io.peekandpoke.ultra.security
+import io.peekandpoke.ultra.common.model.Redacted
 
 /** Configuration for the ultra-security module, holding CSRF secret and TTL settings. */
 data class UltraSecurityConfig(
-    val csrfSecret: String,
+    val csrfSecret: Redacted<String>,
     val csrfTtlMillis: Long,
 ) {
     companion object {
         /** Test-only configuration with a placeholder CSRF secret and a default 5-minute TTL. */
         val testOnly = UltraSecurityConfig(
-            csrfSecret = "test-only-csrf-secret",
+            csrfSecret = Redacted("test-only-csrf-secret"),
             csrfTtlMillis = 300_000L,
         )
     }
 
-    /** Redacts [csrfSecret] to prevent accidental exposure in logs or error messages. */
-    override fun toString(): String =
-        "UltraSecurityConfig(csrfSecret=REDACTED, csrfTtlMillis=$csrfTtlMillis)"
+    // See JwtConfig: [Redacted] redacts itself, so no hand-written toString is needed.
 }

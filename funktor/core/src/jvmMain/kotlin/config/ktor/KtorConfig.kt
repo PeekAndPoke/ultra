@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.core.config.ktor
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import io.peekandpoke.ultra.common.model.Redacted
+
 
 /** Typed representation of the ktor configuration block (deployment, application, security). */
 data class KtorConfig(
@@ -25,10 +26,8 @@ data class KtorConfig(
     data class Security(
         val keyStore: String? = null,
         val keyAlias: String? = null,
-        @get:JsonIgnore // prevent this key from being logged
-        val keyStorePassword: String? = null,
-        @get:JsonIgnore // prevent this key from being logged
-        val privateKeyPassword: String? = null,
+        val keyStorePassword: Redacted<String>? = null,
+        val privateKeyPassword: Redacted<String>? = null,
     )
 
     val isLocalDev: Boolean get() = deployment.environment.lowercase() == "dev"
