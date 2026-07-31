@@ -19,8 +19,7 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.symbol.NonExistLocation
-import io.peekandpoke.ultra.slumber.Slumber
-
+import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Storable

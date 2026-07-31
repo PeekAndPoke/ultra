@@ -1,6 +1,6 @@
 package io.peekandpoke.ultra.vault
 
-import io.peekandpoke.ultra.slumber.Slumber
+import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlin.annotation.AnnotationTarget.CLASS
 import kotlin.annotation.AnnotationTarget.FIELD
 import kotlin.annotation.AnnotationTarget.FUNCTION

@@ -172,9 +172,8 @@ declares, applies at a use site, and reads back through runtime reflection — w
 - [ ] Confirm no annotation like this exists already under another name.
 - [x] ~~Confirm karango/monko KSP can see a `commonMain` annotation from `ultra/slumber`.~~ Moot — the
       nest moves to `ultra:common`, which both already depend on. See §6.
-- [ ] Enumerate every custom-coded type across the codebase, not just ultra/datetime —
-      `SlumberConfig.default`'s module list is the honest starting point, plus `JavaTimeModule` and
-      the kotlinx-json codecs. That count decides whether this pays for itself.
+- [x] ~~Enumerate every custom-coded type across the codebase~~ **Done 2026-08-01 — see §10.**
+      7 annotatable, 9 third-party, 5 not declarable at all.
 - [ ] Confirm every currently-claimed type can be expressed by `As(KClass)` — §5.
 - [ ] The generic check is OPTIONAL, not a precondition — maintainer, 2026-07-31: the annotation
       ships with the type, so keeping it correct is the type author's obligation, the same way the
@@ -244,3 +243,42 @@ exact trap being hit twice. The raw call sites then come from a literal search f
 
 Do the migration in that order: generate → rename old helper → fix every compile error → delete.
 Never delete first; a missing extension and a wrong extension look identical at the call site.
+
+## 10. Enumeration result (2026-08-01) — 7 annotatable, and one asymmetric
+
+Every custom-coded type reachable from `SlumberConfig.default`
+(`ultra/slumber/src/jvmMain/kotlin/SlumberConfig.kt:26-33`), i.e. the four modules it lists.
+
+| Module | Types | Wire shape | Annotatable |
+|---|---|---|---|
+| `MpDateTimeModule` | `MpInstant`, `MpZonedDateTime`, `MpLocalDateTime`, `MpLocalDate` | `{ts: Long, timezone: String, human: String}` — all four via one shared `toMap` (`builtin/datetime/common.kt:24,31`) | **yes** |
+| `MpDateTimeModule` | `MpLocalTime` | `Long` (`MpLocalTimeCodec.kt:34`) | **yes** |
+| `MpDateTimeModule` | `MpTimezone` | `String` (`MpTimezoneCodec.kt:32`) | **yes** |
+| `BuiltInModule` | `Redacted<T>` | `String` — always `Redacted.PLACEHOLDER` (`RedactedCodec.kt:53`) | **yes**, with a caveat below |
+| `JavaTimeModule` | `java.util.Date`, `java.time.{LocalDate, LocalDateTime, LocalTime, Instant, ZonedDateTime, ZoneId}` | various | no — not ours |
+| `KotlinxTimeModule` | `kotlinx.datetime.{LocalDate, LocalDateTime}` | various | no — not ours |
+| `BuiltInModule` | `JsonElement`, `JsonObject`, `JsonArray`, `JsonPrimitive`, `JsonNull` | passthrough, arbitrary JSON | no — **and not declarable at all**, there is no fixed shape to state |
+
+**7 annotatable, 9 third-party-but-declarable, 5 with no declarable shape.** Value-class types are not
+in scope: `ValueClassSlumberer` derives the shape from the backing field, so nothing is hand-mirrored.
+
+**Does it pay for itself?** Yes, but the count that matters is not 7 — it is 7 types × 3 consumers
+(karango, monko, `ultra:codegen`) = **21 hand-written mirrorings** the annotation replaces with one
+declaration each, in a repo where the parity spec's own KDoc records the first draft getting two of six
+claims wrong. The third-party rows are what §6 defers; they are also why the registry escape hatch
+survives.
+
+### `Redacted<T>` is asymmetric — and it is the reason to say "slumber direction" out loud
+
+`RedactedSlumberer` emits the placeholder `String` whatever `T` is, but `RedactedAwaker` takes **`T`'s
+own raw shape** — deliberately, so a config file can write `secret = "abc"` rather than nesting
+(`RedactedCodec.kt:9-20`). So `@Slumber.As(String::class)` is true of its output and says nothing about
+its input.
+
+That is not a defect in the annotation, but it must be stated in its KDoc, because a consumer
+generating a *write* model from it would be wrong. karango and monko generate query paths over stored
+data — the slumber direction — so they are unaffected. Recorded on `Slumber.As`
+(`ultra/common/src/commonMain/kotlin/slumber/Slumber.kt`).
+
+Annotating `Redacted` is NOT part of this task — it is `ultra:common`'s own type and the round-trip
+check needs a decision about the fail-loud placeholder path first. The six `Mp*` types are the scope.

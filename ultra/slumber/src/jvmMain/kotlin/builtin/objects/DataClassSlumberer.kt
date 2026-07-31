@@ -4,10 +4,10 @@ import io.peekandpoke.ultra.cache.Cache
 import io.peekandpoke.ultra.cache.FastCache
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.reflection.ReifiedKType
 import io.peekandpoke.ultra.reflection.hasAnyAnnotationOnPropertyDefinedOnSuperTypes
 import io.peekandpoke.ultra.reflection.hasAnyAnnotationRecursive
-import io.peekandpoke.ultra.slumber.Slumber
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KClass

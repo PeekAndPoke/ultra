@@ -1,9 +1,9 @@
 package io.peekandpoke.ultra.codegen.model
 
+import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.reflection.ReifiedKType
 import io.peekandpoke.ultra.reflection.hasAnyAnnotationOnPropertyDefinedOnSuperTypes
 import io.peekandpoke.ultra.reflection.hasAnyAnnotationRecursive
-import io.peekandpoke.ultra.slumber.Slumber
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import kotlin.reflect.KClass

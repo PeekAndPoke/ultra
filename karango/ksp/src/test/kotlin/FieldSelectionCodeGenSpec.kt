@@ -4,9 +4,9 @@ package io.peekandpoke.karango.ksp
 
 import io.kotest.common.ExperimentalKotest
 import io.kotest.core.spec.style.StringSpec
+import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.meta.testing.expectFileToMatch
 import io.peekandpoke.ultra.meta.testing.kspCompileTest
-import io.peekandpoke.ultra.slumber.Slumber
 import io.peekandpoke.ultra.vault.Ref
 import io.peekandpoke.ultra.vault.Vault
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -249,7 +249,7 @@ class FieldSelectionCodeGenSpec : StringSpec() {
                         inline val AqlPropertyPath<SlumberFieldAnnotated, L5<SlumberFieldAnnotated>>.id @JvmName("id_5") inline get() = append<kotlin.String, L5<kotlin.String>>("id")
 
                         // extra ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        // annotations: io.peekandpoke.ultra.slumber.Slumber.Field
+                        // annotations: io.peekandpoke.ultra.common.slumber.Slumber.Field
                         // defined as:   Property
                         // defined by:   Class karango.compile.SlumberFieldAnnotated
                         // defined at:   Line 9

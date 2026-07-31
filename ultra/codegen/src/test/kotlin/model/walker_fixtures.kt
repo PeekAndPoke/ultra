@@ -1,10 +1,10 @@
 package io.peekandpoke.ultra.codegen.model
 
+import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.slumber.Polymorphic
-import io.peekandpoke.ultra.slumber.Slumber
 import kotlin.reflect.KClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.json.JsonElement
