@@ -1,5 +1,13 @@
 # Loop handoff — ts-sdk-codegen autonomous run
 
+> ## ⛔ BEFORE ANY GRADLE COMMAND OR COMMIT: read `.claude/BUILD-LOCK.md`
+>
+> Another agent shares this worktree. If that file says `STATE: LOCKED` and you are not the holder,
+> **do not run gradle, do not commit, do not stage.** Poll it, and start when it says `STATE: FREE`.
+> Reading, grepping and planning are always fine. Two interleaved gradle builds corrupt Kotlin's
+> incremental state here — it has already happened once and it reads like a logic bug, not a build
+> bug. Check it every iteration; the holder changes underneath you.
+
 **Read this file FIRST each iteration. Do the next unchecked item. Update this file LAST, before
 finishing the iteration.** Keep it short — it is read every loop, so it must stay cheap.
 
