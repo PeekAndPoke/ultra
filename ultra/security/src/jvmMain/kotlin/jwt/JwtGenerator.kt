@@ -30,8 +30,20 @@ class JwtGenerator(
         .withAudience(config.audience)
         .build()
 
+    /**
+     * Authenticates [token] BEFORE any of it is parsed — see [JwtSignatureGate] for why that matters
+     * and why RFC 7515 permits it.
+     */
+    private val gate = JwtSignatureGate(config.signingKey.value)
+
     /** Verifies the given [token] and returns the decoded payload. */
-    fun verify(token: String): Payload = verifier.verify(token)
+    fun verify(token: String): Payload {
+        // Authenticate the raw bytes first. A token that fails here is rejected having parsed nothing;
+        // only afterwards does the library decode the header and payload JSON.
+        gate.check(token)
+
+        return verifier.verify(token)
+    }
 
     /** Verifies the given [token]; returns the decoded payload, or null if verification fails. */
     fun tryVerify(token: String): Payload? = try {
