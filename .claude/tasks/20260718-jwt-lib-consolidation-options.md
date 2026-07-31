@@ -1,6 +1,6 @@
 # JWT library consolidation — options (backlog / not scheduled)
 
-**Status:** RESOLVED 2026-07-31 — `com.auth0:java-jwt` fully removed; verify-then-parse implemented in-house. See "RESOLVED" at the bottom. Only the client-side `jwt-decode` option (original option 1) remains open.
+**Status:** RESOLVED 2026-07-31 — `com.auth0:java-jwt` fully removed; verify-then-parse implemented in-house. See "RESOLVED" at the bottom, then "AMENDED" below it (`kid` rotation, commit `9fe2a21a`, changed two of the claims made there). Only the client-side `jwt-decode` option (original option 1) remains open.
 **Type:** reference / backlog
 
 ## Current state (keep for now)
@@ -152,11 +152,13 @@ the jwt tokens"). Shipped in three steps, each measured against the real library
 library was still present (it verified our tokens, we verified its — including fresh mints), then
 six java-jwt-minted token STRINGS were baked into `JwtWireCompatSpec` as permanent fixtures:
 production claim shape, no-exp, aud-array, expired, wrong-issuer, HS256. Tokens issued before the
-swap keep verifying; nobody is logged out on deploy.
+swap kept verifying; nobody was logged out on THIS deploy. *(Superseded by `9fe2a21a` — see
+AMENDED. The fixtures survive with a different justification.)*
 
 **One accepted divergence** (measured, documented in `JwtSignatureGate` KDoc, pinned by a test):
 java-jwt rejected a valid-MAC token whose header names a different alg; we never read the header, so
-such a token verifies. Only the key holder can mint one — nothing is defended by rejecting it.
+such a token verified. Only the key holder could mint one — nothing was defended by rejecting it.
+*(CLOSED by `9fe2a21a`, which has to read the header anyway — see AMENDED.)*
 
 **Mutation evidence:** five mutations, each killed by its intended tests — exp/iss/nbf+iat+aud checks
 removed, parse-before-MAC reorder, numericDate fail-open. Not test-observable (rest on review):
@@ -181,3 +183,78 @@ removed, parse-before-MAC reorder, numericDate fail-open. Not test-observable (r
 - Google SSO still parses unauthenticated JSON with Gson via `google-api-client` (`AuthApi`
   `public()` floor); verify-then-parse cannot apply there (RS256 needs `kid`). Maintainer decision
   still pending.
+
+
+---
+
+# AMENDED 2026-07-31 — `kid`-based key rotation (commit `9fe2a21a`)
+
+The RESOLVED section above describes a single signing key. It is now a `kid`-selected LIST, and two
+claims made above no longer hold. Recorded here rather than edited away, because the reasoning that
+led to them is still the reasoning that constrains the design.
+
+**What changed.** `JwtConfig.signingKey` → `JwtConfig.keys: List<JwtSigningKey>`. Each key is an
+object carrying `id` (the `kid`), `secret: Redacted<String>`, `alg: JwtAlgorithm` and `issued`
+(metadata). **The FIRST key signs; all of them verify.** List order is the contract, deliberately not
+`issued` — editing a date must not silently change the signer.
+
+**Claim 1, now false: "nobody is logged out on deploy."** `kid` is REQUIRED and there is no
+fallback, so every token issued before `9fe2a21a` stops verifying. That was the maintainer's explicit
+choice (*"no backward compat needed so we do not need to care about floating tokens"*), and it is
+what removes the whole class of legacy-fallback bugs. It is a one-time logout, and it is deliberate.
+
+**Claim 2, now closed: the algorithm-mismatch divergence.** Selecting a key requires reading the
+header, so the header is read — and once it is read, comparing its `alg` against the key's costs
+nothing. The KEY's algorithm is authoritative; the header's is only compared, and a mismatch rejects.
+That is strictly better than the old position and restores parity with java-jwt on the one point
+where we had diverged.
+
+**Claim 3, now narrower: "the parser never sees an unauthenticated byte."** The PAYLOAD still does
+not — that was always the part that mattered, being unbounded in shape and size. The HEADER now does.
+It is capped at `MAX_HEADER_LENGTH` (1024, on the ENCODED segment, *before* base64-decoding) and
+parsed into a fixed three-field `JwtHeader`, not a `JsonObject`. `MAX_HEADER_LENGTH` was deleted in
+`bed37cc7` for advertising a protection no code performed; code performs it now. `JwtSignatureGate`'s
+class KDoc was rewritten rather than patched, because its central claim changed.
+
+**Why not trial verification.** The obvious alternative — try every configured key until one fits —
+was rejected by the maintainer (*"Checking all key in the list for a forged / broken token sounds
+wrong"*) and the reasoning holds: it makes a forged token cost one HMAC **per configured key** on an
+unauthenticated path, and it loses the record of which key actually authenticated a request. An
+unknown or absent `kid` therefore rejects outright.
+
+**Why `JwtAlgorithm` has exactly one entry.** HS512. A weaker option in the enum is a weaker option
+in production, since every value is selectable from a config file. The enum exists so that adding one
+*with a reason* is a line plus a fixture, not a refactor.
+
+**Evidence.**
+- java-jwt 4.5.2 emits `{"kid":..,"alg":..,"typ":..}` (measured with `withKeyId`); our header matches
+  that order. That buys a byte-identity assertion — our tokens are now byte-for-byte what that
+  library produced for the same inputs, which covers the ENCODER as well as the MAC. The fixtures'
+  justification therefore changed from back-compat to independent cryptographic cross-check, and
+  `JwtWireCompatSpec`'s KDoc says so.
+- Slumber awakes the HOCON list-of-objects shape (enum + `Redacted<String>` leaf) correctly —
+  confirmed by a real `funktor:all` app boot, not a unit probe.
+- Mutation-tested: 12 of 13 guards killed individually, including the funktor-side eager boot check
+  (removing it failed 3 tests in the new `JwtBootValidationSpec`). The survivor is
+  `MessageDigest.isEqual`→`contentEquals`, which no test can observe — identical accept/reject sets,
+  only timing differs. Same known limitation as before.
+- 3488 tests green across nine modules; full JVM+JS compile sweep clean.
+
+**Config shape** (`funktor-demo` dev/test, `funktor:all` test):
+
+```hocon
+keys = [
+  { id = "dev-1", secret = "<openssl rand -base64 64>", alg = "HS512", issued = "2026-07-31" }
+]
+```
+
+`application.common.conf` carries `keys = []` on purpose — an environment overlay must supply one,
+and an empty list makes the server refuse to start rather than boot unauthenticated. Boot validation
+lives in `FunktorRestBuilder.jwt()` and is eager, because the kontainer binding is lazy: at least one
+key, unique ids, no blank id, each secret at or above its algorithm's RFC 7518 floor.
+
+**Follow-ups from this amendment:**
+- `.claude/tasks/20260731-redteam-jwt-own-verifier.md` gained section F (kid injection, key
+  enumeration by timing, rotation races, downgrade between keys, header-parser abuse, boot gaps).
+- Rotation is not yet *operable*: nothing generates a key, and nothing warns that a key is old.
+  `issued` is the hook. Worth a task when someone actually has to rotate.

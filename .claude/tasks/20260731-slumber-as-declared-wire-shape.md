@@ -118,7 +118,7 @@ declares, applies at a use site, and reads back through runtime reflection — w
   annotation nest to `ultra:common`'s `commonMain`.**
 
   `ultra/slumber` looked like the natural home until `Redacted<T>` needed the annotation and forced the
-  question (`.claude/tasks/20260731-redacted-and-jackson-removal.md`). The conflict: a type must be able
+  question (`.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`). The conflict: a type must be able
   to CARRY `@Slumber.As`, and `ultra:slumber` must be able to SEE that type to register its codec. With
   the annotation in `ultra:slumber`, any annotated type sits downstream of slumber — and
   `slumber → thatModule` is then a cycle, because `slumber` already declares

@@ -1,9 +1,20 @@
 # AqlPrinter / MongoPrinter render RAW bind values, not slumbered ones
 
-**Status:** TODO — found by the review gate on the Jackson removal, 2026-07-31. Comment corrected in
-place; the behaviour is unchanged and untested.
-**Plan:** `.claude/tasks/20260731-redacted-and-jackson-removal.md`
+**Status:** FIX LANDED, TESTS STILL MISSING (updated 2026-07-31)
+**Plan:** `.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`
 **Security-critical:** no — debug-only surface. But see "Why it is not zero-risk".
+
+The code fix from "Fix direction" below shipped in commit `1bb495c8`, in BOTH printers —
+`karango/core/src/main/kotlin/aql/printer.kt:34` and `monko/core/src/main/kotlin/lang/printer.kt:33`
+now slumber before rendering, with the two-stage fallback so a debug helper cannot throw. The full
+karango and monko suites stayed green, confirming the "scalars and lists slumber to themselves"
+assumption that the fix rested on.
+
+**What did NOT land: the three tests in "Tests to add".** `1bb495c8` touched no karango or monko test
+file. So the new behaviour is real but unpinned — a regression would be silent, and the `Redacted`
+row in particular is pinning a property that holds only by accident today. That is the remaining
+work; it is small, and the blocker recorded in "Why it was not fixed when found" is gone (karango is
+quiet again).
 
 ## What is wrong
 
@@ -51,13 +62,17 @@ runCatching { codec.slumber(value).toJsonElement() }
 Scalars and lists slumber to themselves, so existing expectations should not move — but that must be
 confirmed against the full karango and monko suites, not assumed.
 
-## Why it was not fixed when found
+## Why it was not fixed when found — RESOLVED
 
 Another agent had ~24 uncommitted files under `karango/core/src/main/kotlin/aql/` at the time. Touching
 the module would have meant compiling their in-flight work, so a green or red result would have proved
-nothing about this change. Do this when karango is quiet.
+nothing about this change. That work has since been committed and the module is quiet, which is how
+`1bb495c8` was able to land the fix.
 
-## Tests to add
+## Tests to add — THE REMAINING WORK
+
+Still outstanding. Monko has `monko/core/src/test/kotlin/io/peekandpoke/monko/lang/MongoPrinterSpec.kt`
+to extend; karango has no printer spec at all, so that one needs creating.
 
 - A structured bind value renders as a JSON object, not a string.
 - A `Map` with non-String keys does not throw.

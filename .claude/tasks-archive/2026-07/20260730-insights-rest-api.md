@@ -1,6 +1,14 @@
 # Insights: split data from rendering, expose it through a superuser REST API
 
-**Status:** REVIEWED — rounds 1 and 2 complete, gate PASS. All follow-up decisions taken 2026-07-31 and implemented, except the `Redacted<T>` project which has its own task file
+**Status:** DONE and ARCHIVED (2026-07-31). Rounds 1 and 2 complete, gate PASS, all follow-up
+decisions taken and implemented. The `Redacted<T>` project that came out of it has its own task file,
+now also archived (`.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`).
+
+**No DOCS follow-up — deliberately.** Per CLAUDE.md a public-API change gets a docs task only once
+the surface is SETTLED, and this one is not: the Vue tabs are unbuilt, and D-M6 below is explicitly
+*"decide before the tab registry is built"* — the open-envelope discovery/fallback question can still
+change the shape apps see. Documenting it now would buy a rewrite and a reader who trusted the stale
+version. Revisit when the tab registry lands.
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
 **Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
 

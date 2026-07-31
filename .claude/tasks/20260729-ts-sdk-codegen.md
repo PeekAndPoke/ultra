@@ -1202,7 +1202,7 @@ wrong.**
 
 A new type is landing: `Redacted<T>` in `ultra/common/src/commonMain/kotlin/model/`, package
 `io.peekandpoke.ultra.common.model`. Plan and rationale:
-`.claude/tasks/20260731-redacted-and-jackson-removal.md`.
+`.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`.
 
 It wraps a value that **deserialises normally but always serialises to a placeholder string**. The round
 trip is broken on purpose — it is how config secrets (JWT signing key, CSRF secret, DB passwords) are

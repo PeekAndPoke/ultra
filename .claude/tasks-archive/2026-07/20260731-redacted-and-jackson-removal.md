@@ -1,6 +1,6 @@
 # `Redacted<T>` and the removal of Jackson
 
-**Status:** ALL STAGES DONE (2026-07-31). **Zero Jackson in Kotlin source; no module declares it.** It remains on the classpath only transitively, via `com.auth0:java-jwt` — see below
+**Status:** DONE and ARCHIVED (2026-07-31). All stages complete, review gate PASSED. **Zero Jackson in Kotlin source, and no first-party module declares it — the coordinates are gone from `Deps.kt` entirely.** What remains on the classpath is internal to third-party libraries; see "Where Jackson still is" below.
 **Security-critical:** yes — this is what finally closes
 `.claude/tasks/20260731-config-secrets-in-insights.md`
 **Supersedes:** the `@JsonIgnore` constraint recorded in `.claude/tasks/20260731-depot-findings.md`
@@ -20,6 +20,10 @@ safety depends on someone remembering an annotation on every new field, forever.
 it, and no serializer can be talked out of it.
 
 ## The design
+
+> **Note (2026-07-31, after `9fe2a21a`):** the `JwtConfig` snippet below is how it looked when this
+> work landed. `signingKey` has since become `keys: List<JwtSigningKey>`, each key holding its own
+> `secret: Redacted<String>`. The `Redacted` design is unchanged — only its host moved one level down.
 
 ```kotlin
 data class JwtConfig(
@@ -332,19 +336,34 @@ here, and a smaller diff than what landed. Say if that is preferred.
 
 ## Where Jackson still is, and why that is the end of it
 
-**Zero Jackson in Kotlin source. No module declares a Jackson dependency.** `Deps.kt` keeps the
-coordinate constants; nothing references them.
+**Zero Jackson in Kotlin source. No first-party module declares it, and the coordinate constants were
+deleted from `Deps.kt`** — so re-adding it is now a deliberate act, not a one-line import.
 
-It is still on the runtime classpath transitively:
+When this section was first written, `com.auth0:java-jwt` was listed here as an irreducible transitive
+source, "cannot be removed without replacing the library". It was then replaced: see
+`.claude/tasks/20260718-jwt-lib-consolidation-options.md` (RESOLVED 2026-07-31) and commit `004a97fe`.
+Removing it also took out two ktor artifacts that were carrying Jackson for no first-party user:
+`ktor-server-auth-jwt` (funktor authenticates via `bearer()`; the plugin API had zero imports) and
+`ktor-serialization-jackson` (`SendgridSender` now posts the JSON `sendgrid-java`'s own `Mail.build()`
+produces — verified byte-identical to what the plugin sent).
+
+What is left on the runtime classpath, all of it internal to a third-party library talking to its own
+service:
 
 | Source | Note |
 |---|---|
-| `com.auth0:java-jwt` → `jackson-core`, `jackson-databind` | The JWT library's own internal JSON. Cannot be removed without replacing the library — see `.claude/tasks/20260718-jwt-lib-consolidation-options.md` |
-| AWS SDK → `third-party-jackson-core` | **Shaded/relocated**, so not the same classes. Not a concern |
+| ArangoDB driver → `jackson-serde-json` | The driver's own wire format. Not reachable from our code |
+| `sendgrid-java` → `jackson-databind` | Used inside `Mail.build()`. Not reachable from our code |
+| AWS SDK → `third-party-jackson-core` | **Shaded/relocated**, so not the same classes |
 
-The distinction matters for the security framing that started this: Jackson is no longer *our*
-serializer, so nothing of ours hands it an object to reflect over. A Jackson CVE would still land on the
-classpath, but no code path of ours reaches it. Removing it outright means replacing `java-jwt`.
+The distinction is the security framing that started this: Jackson is no longer *our* serializer, so
+nothing of ours hands it an object to reflect over, and nothing parses attacker-facing input with it on
+the auth path. A Jackson CVE would still land on the classpath through the three rows above, but no code
+path of ours reaches it.
+
+**Evicting the sendgrid row** would mean replacing `sendgrid-java`'s helper POJOs with kotlinx DTOs for
+`/v3/mail/send`. Small, but it re-specifies an external wire format and that path has no tests — it
+needs its own task and contract tests, not a drive-by.
 
 **Full regression: 5513 tests across 16 modules, 0 failures.** Compile sweep clean.
 
@@ -369,22 +388,25 @@ classpath, but no code path of ours reaches it. Removing it outright means repla
 - Then drop the dependency. Note only `funktor/messaging/build.gradle.kts` declares Jackson directly;
   everywhere else it arrives transitively, so removal must check the transitive source too.
 
-## Interim, until stage 3 lands — MUST BE DELETED
+## Interim redaction — DELETED as planned (2026-07-31)
 
-Insights is enabled in the demo dev config and writes the signing key today, and stages 1–3 are a
-multi-module project. So: **name-based redaction inside `AppConfigCollector`**, reusing the
-`HeaderLogging` sensitive-name policy over the serialised config tree. ~20 lines, entirely inside
-`funktor/insights`.
+Stage 3 shipped the interim and then removed it, which is what this section existed to guarantee.
 
-**This is throwaway. Stage 3 must delete it**, or the repo ends up with two redaction mechanisms and
-nobody knows which is load-bearing. It is listed here rather than only in the code so that removal is
-tracked rather than remembered.
+While stages 1–3 were in flight, insights was enabled in the demo dev config and writing the signing
+key, so `AppConfigCollector` carried **name-based redaction** reusing the `HeaderLogging` sensitive-name
+policy — explicitly throwaway, tracked here so its removal could not depend on anyone remembering.
 
-## Not decided
+`funktor/insights/.../ConfigRedaction.kt` and `ConfigRedactionSpec.kt` are gone; `Redacted<T>` is the
+single mechanism. Confirmed by measurement at the time: while insights still went through Jackson, the
+interim was genuinely load-bearing — Jackson wrote `"signingKey": { "value": "<secret>" }`, wrapping
+rather than redacting — so it could only be deleted once insights left Jackson. That ordering is the
+reason the two were one project rather than two.
 
-- `AppConfig.keys` — redact the whole map, or type it `Map<String, Redacted<String>>` and change
-  `getKeyOrNull`?
-(Nothing outstanding here beyond the `AppConfig.keys` question above.)
+## Decided
+
+- `AppConfig.keys` — **`Map<String, Redacted<String>>`** (maintainer, 2026-07-31), rather than redacting
+  the map wholesale. Types the secret at the leaf, so `getKeyOrNull` hands back a `Redacted<String>` and
+  the protection travels with the value instead of depending on the container it happens to sit in.
 
 ## Handed to the codegen agent (2026-07-31)
 
@@ -394,3 +416,23 @@ into the type argument, and this is the case where the declared argument is deli
 on the wire — descending would generate a zod schema expecting an object where `"REDACTED"` arrives, i.e.
 a browser-side parse failure on the one field guaranteed never to arrive intact. Same precedence rule as
 Slumber: check before any generic-descent logic, not after.
+
+
+## Review record
+
+| Reviewer | Charter | Outcome |
+|---|---|---|
+| 1 (opus, high) | Implementation & code style | Findings confirmed and fixed in `5c4bc615`. One claim (L10, "value-based `hashCode` is load-bearing for the karango/monko connection caches") was REFUTED against the code: that argues against *identity* hashing, which breaks the equals/hashCode contract; a *constant* preserves it — equal configs still hash equally, so caches still hit. |
+| 2 (opus, high) | Domain expert | H1 confirmed: `AppConfigImpl` was a private plain class that Slumber cannot describe, so any app using `AppConfig.of(...)` with insights at FULL would throw on every request. Fixed by making it a `data class`; `AppConfigSlumberSpec` pins it. |
+| 3 (opus, high) | Security | F1 confirmed and it was the important one: deleting `ConfigRedaction` silently UN-redacted `SendgridConfig.apiKey` — a live credential going verbatim into every FULL insights record. The deleted regex matched `.*(key|...)` across the whole tree, so converting only `@JsonIgnore` fields was a net loss of coverage. Fixed by making `apiKey`, `AwsSesConfig.accessKeyId` and `AwsS3Config.accessKeyId` `Redacted<String>`. |
+
+Follow-up fixes landed in `5c4bc615` and `166adaa7` (reading the redaction placeholder back now
+throws, on both the Slumber and kotlinx paths — D1). Mutation-tested; the guards were killed
+individually, including confirming `ultra:slumber`'s guard independently of `ultra:common`'s.
+
+**Follow-ups created:**
+- `.claude/tasks/20260731-redteam-redacted.md` — red-team scenarios (collected, not executed).
+- `.claude/tasks/20260731-docs-redacted.md` — DOCS task. `Redacted<T>` is public API with a genuinely
+  sharp edge (the deliberately broken round trip), so it needs a docs page and an LLM-mirror entry.
+  The type is settled: it survived a three-agent gate and two rounds of fixes, and the only change
+  since was moving where it is *used*, not what it is.
