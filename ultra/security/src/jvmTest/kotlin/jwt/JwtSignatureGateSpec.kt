@@ -113,6 +113,27 @@ class JwtSignatureGateSpec : StringSpec({
             .message!! shouldContain "blank id"
     }
 
+    "overlapping claim namespaces are refused at CONSTRUCTION, not only at boot" {
+        // `JwtBootValidationSpec` covers `funktorRest { jwt() }`. This covers the other construction
+        // path: without it, deleting the check from JwtGenerator's `init` fails nothing, and any
+        // caller building a generator directly gets tokens that silently lose their user claims.
+        listOf(
+            ("a" to "a") to "identical",
+            ("a/b" to "a") to "permissionsNs is a prefix of userNs",
+            ("a" to "a/b") to "userNs is a prefix of permissionsNs",
+        ).forEach { (ns, why) ->
+            withClue(why) {
+                shouldThrow<IllegalArgumentException> {
+                    JwtGenerator(config.copy(userNs = ns.first, permissionsNs = ns.second))
+                }.message!! shouldContain "overlap"
+            }
+        }
+
+        withClue("a shared prefix that is not '/'-separated is fine — `user` vs `userx`") {
+            JwtGenerator(config.copy(userNs = "user", permissionsNs = "userx"))
+        }
+    }
+
     "the boot check and the constructor agree" {
         // FunktorRestBuilder.jwt() calls requireUsableKeys eagerly, because the kontainer binding is
         // lazy and would otherwise defer the failure to the first bearer request on a live server.
@@ -211,7 +232,95 @@ class JwtSignatureGateSpec : StringSpec({
     }
 
     "unknown header members are ignored — only a key holder can add any" {
-        gate.check(signedToken("""{"kid":"gate-1","alg":"HS512","typ":"JWT","crit":["x"],"x":1}""", """{"sub":"x"}"""))
+        gate.check(signedToken("""{"kid":"gate-1","alg":"HS512","typ":"JWT","x":1,"cty":"JWT"}""", """{"sub":"x"}"""))
+    }
+
+    "crit is REJECTED, not ignored — RFC 7515 §4.1.11 is a MUST" {
+        // An earlier version of this spec asserted the opposite: it signed a crit-bearing token and
+        // asserted it verified, baking a MUST violation into a test. The recipient must reject a JWS
+        // whose `crit` names an extension it does not understand, and this verifier understands none.
+        // Only a key holder can set it — but "unreachable by an attacker" is an argument, and
+        // rejecting is a construction.
+        listOf(
+            """{"kid":"gate-1","alg":"HS512","typ":"JWT","crit":["b64"]}""" to "a real extension we do not implement",
+            """{"kid":"gate-1","alg":"HS512","typ":"JWT","crit":["x"]}""" to "an unknown extension",
+            """{"kid":"gate-1","alg":"HS512","typ":"JWT","crit":[]}""" to "even an empty list",
+        ).forEach { (header, why) ->
+            withClue(why) {
+                shouldThrow<JwtSignatureGate.Rejected> { gate.check(signedToken(header, """{"sub":"x"}""")) }
+                    .message shouldBe "Token header is not valid"
+            }
+        }
+    }
+
+    "typ must be JWT — explicit typing, RFC 8725 §3.11" {
+        listOf(
+            """{"kid":"gate-1","alg":"HS512","typ":"at+jwt"}""" to "an OIDC access token from a system sharing our secret",
+            """{"kid":"gate-1","alg":"HS512","typ":"secevent+jwt"}""" to "some other typed JWT",
+            """{"kid":"gate-1","alg":"HS512"}""" to "no typ at all",
+            """{"kid":"gate-1","alg":"HS512","typ":null}""" to "an explicit null typ",
+            """{"kid":"gate-1","alg":"HS512","typ":"JW"}""" to "a near miss",
+        ).forEach { (header, why) ->
+            withClue(why) {
+                shouldThrow<JwtSignatureGate.Rejected> { gate.check(signedToken(header, """{"sub":"x"}""")) }
+                    .message shouldBe "Token header is not valid"
+            }
+        }
+
+        withClue("case-insensitive — typ is a MEDIA TYPE (RFC 7519 §5.1), unlike alg") {
+            gate.check(signedToken("""{"kid":"gate-1","alg":"HS512","typ":"jwt"}""", """{"sub":"x"}"""))
+            gate.check(signedToken("""{"kid":"gate-1","alg":"HS512","typ":"Jwt"}""", """{"sub":"x"}"""))
+        }
+    }
+
+    "the signature must be CANONICAL base64url, not merely decode to the right bytes" {
+        // `Base64.getUrlDecoder()` accepts padding and non-zero trailing bits, so a 64-byte HMAC-SHA512
+        // (86 chars, the final one carrying 4 unused bits) has 32 encodings that decode identically —
+        // 16 final characters, each with and without padding. MEASURED, not reasoned.
+        //
+        // Comparing the ENCODED forms rejects all but the canonical one. Nothing today keys on the raw
+        // token string, but a denylist, cache key, rate limiter or audit dedup that did would be
+        // bypassable by re-encoding — including the session revocation that is already planned.
+        val real = realToken()
+        val head = real.substringBeforeLast('.')
+        val sig = real.substringAfterLast('.')
+
+        withClue("the canonical form verifies, so the rows below fail on canonicality alone") {
+            gate.check(real)
+        }
+
+        val alternates = ('A'..'z')
+            .map { head + "." + sig.dropLast(1) + it }
+            .filter { alt ->
+                alt != real && runCatching {
+                    Base64.getUrlDecoder().decode(alt.substringAfterLast('.'))
+                        .contentEquals(Base64.getUrlDecoder().decode(sig))
+                }.getOrDefault(false)
+            }
+
+        withClue("there must really be alternate encodings, or this test proves nothing") {
+            (alternates.size >= 8) shouldBe true
+        }
+
+        alternates.forEach { alt ->
+            withClue("re-encoded signature $alt") { shouldThrow<JwtSignatureGate.Rejected> { gate.check(alt) } }
+        }
+
+        withClue("the padded form is rejected too — RFC 7515 mandates unpadded base64url") {
+            shouldThrow<JwtSignatureGate.Rejected> { gate.check("$head.$sig==") }
+        }
+    }
+
+    "a signature that is not base64url at all is rejected, not crashed on" {
+        // This row used to be `"a.b.!!!not-base64!!!"`, which never reached the signature at all — its
+        // header segment `"a"` is a single base64 character, so it died in `decodeHeader` one step
+        // earlier. The guard it claimed to cover was therefore untested, and survived mutation.
+        // Reaching the signature needs a valid header, a known kid and a matching alg.
+        val thrown = shouldThrow<JwtSignatureGate.Rejected> {
+            gate.check(handMadeToken("""{"kid":"gate-1","alg":"HS512","typ":"JWT"}""", """{"sub":"x"}""", "!!!"))
+        }
+
+        thrown.message shouldBe "Token signature is invalid"
     }
 
     // ── kid selection ───────────────────────────────────────────────────────────────────────────────
@@ -382,17 +491,17 @@ class JwtSignatureGateSpec : StringSpec({
         val real = realToken()
         val lastDot = real.lastIndexOf('.')
 
-        // Flip a character in the MIDDLE of the signature, not the last one. A 64-byte HMAC-SHA512
-        // encodes to 86 base64url characters = 516 bits, so the FINAL character carries 4 unused bits:
-        // changing it can leave the decoded signature bytes identical, and the token still verifies —
-        // correctly, since the bytes are what authenticate. An earlier version of this test flipped the
-        // last character and failed for exactly that reason.
+        // Flip a character in the MIDDLE of the signature, so this test is about the MAC and not about
+        // canonicality. A 64-byte HMAC-SHA512 encodes to 86 base64url characters = 516 bits, so the
+        // FINAL character carries 4 unused bits: changing it leaves the decoded bytes identical. Since
+        // the gate compares encoded forms, such a token is now rejected too — but as a canonicality
+        // failure, which the row above owns. Keeping this one in the middle keeps the two distinct.
         val at = lastDot + 1 + (real.length - lastDot - 1) / 2
         val flipped = real.replaceRange(at, at + 1, if (real[at] == 'A') "B" else "A")
 
         // Guard on the DECODED BYTES, not on the strings. `flipped != real` is true by construction and
-        // would still pass if `at` were moved back onto the final character — the exact bug the comment
-        // above records — leaving only the real assertion to fail, with a misleading message.
+        // would still pass if `at` were moved onto the final character, leaving this test silently
+        // duplicating the canonicality row instead of testing the MAC.
         withClue("flipping a middle signature character must change the decoded bytes") {
             val decode = { t: String -> Base64.getUrlDecoder().decode(t.substringAfterLast('.')) }
             decode(flipped).contentEquals(decode(real)) shouldBe false
@@ -420,7 +529,6 @@ class JwtSignatureGateSpec : StringSpec({
             ".payload.signature" to "empty header",
             "header..signature" to "empty payload",
             "a.b.c.d" to "four segments",
-            "a.b.!!!not-base64!!!" to "signature is not base64url",
         ).forEach { (token, why) ->
             withClue(why) { shouldThrow<JwtSignatureGate.Rejected> { gate.check(token) } }
         }

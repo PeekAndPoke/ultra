@@ -19,8 +19,8 @@ import kotlinx.serialization.Serializable
  * ]
  * ```
  *
- * **The FIRST key in [JwtConfig.keys] signs; every key verifies.** Rotation is therefore: prepend a
- * new key, deploy, and drop the oldest once no token signed under it can still be within its expiry.
+ * **The FIRST key in [JwtConfig.keys] signs; every key verifies.** See [JwtConfig.keys] for the
+ * rotation procedures — including the one for a COMPROMISED key, which is not the graceful one.
  */
 @Serializable
 data class JwtSigningKey(
@@ -42,9 +42,15 @@ data class JwtSigningKey(
      */
     val alg: JwtAlgorithm = JwtAlgorithm.HS512,
     /**
-     * When this key was generated, ISO-8601. Metadata only: nothing reads it, and in particular it
-     * does **not** decide which key signs — list order does, so that editing a date cannot silently
+     * When this key was generated, ISO-8601. **Metadata only — nothing reads it.**
+     *
+     * It does not decide which key signs; list order does, so that editing a date cannot silently
      * change the signer. It is the hook for a future "refuse keys older than N days" policy.
+     *
+     * **Do not read it as evidence that a rotation took effect.** A config whose newest-dated key is
+     * not first still boots, and still signs with whatever is first — see [JwtConfig.keys]. Nor can
+     * this field be validated into that guarantee: phase 1 of a rolling rotation deliberately keeps
+     * the OLDER key first while the newer one is only being distributed for verification.
      */
     val issued: String? = null,
 )

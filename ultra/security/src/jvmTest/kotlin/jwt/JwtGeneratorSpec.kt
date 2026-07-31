@@ -48,7 +48,11 @@ class JwtGeneratorSpec : StringSpec() {
             // protected while every serializer wrote it in full, which is how the signing key reached
             // every insights record.
             str shouldContain Redacted.PLACEHOLDER
-            str shouldNotContain "testSigningKey"
+            // Asserted against the REAL secret, read from the config. The previous version checked a
+            // literal `"testSigningKey"` — the secret's value before the RFC 7518 floor forced it to
+            // 64+ bytes. It had silently stopped matching anything, so a `toString()` of
+            // `"$PLACEHOLDER ($value)"` would have leaked the key with both assertions still green.
+            str shouldNotContain mockConfig.keys.first().secret.value
             str shouldContain "testIssuer"
             str shouldContain "testAudience"
         }

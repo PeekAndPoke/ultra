@@ -14,7 +14,6 @@ import io.peekandpoke.ultra.kontainer.module
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.jwt.JwtConfig
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
-import io.peekandpoke.ultra.security.jwt.JwtSignatureGate
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import io.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer
 import io.peekandpoke.ultra.slumber.builtin.objects.DataClassSlumberer.Companion.withSlumberCache
@@ -109,12 +108,13 @@ class FunktorRestBuilder internal constructor(
     fun jwt(config: JwtConfig?) {
         config ?: error("JwtConfig must not be null")
 
-        // Validate the keys HERE, at boot, not inside the singleton factory. The kontainer binding
-        // below is lazy, so an empty key list, duplicate `kid`s or a too-short secret would otherwise
-        // surface as a 500 on the first request carrying a bearer token — on a running server, long
-        // after deploy. `JwtSignatureGate`'s own `require` still guards every other construction path;
-        // this makes a misconfigured deployment fail to start instead.
-        JwtSignatureGate.requireUsableKeys(config.keys)
+        // Validate HERE, at boot, not inside the singleton factory. The kontainer binding below is
+        // lazy, so an empty key list, duplicate `kid`s, a too-short secret or overlapping claim
+        // namespaces would otherwise surface as a 500 on the first request carrying a bearer token —
+        // on a running server, long after deploy. `JwtGenerator` and `JwtSignatureGate` run the same
+        // checks on every other construction path; this makes a misconfigured deployment fail to
+        // start instead.
+        JwtGenerator.requireUsableConfig(config)
 
         with(kontainer) {
             singleton(JwtGenerator::class) { JwtGenerator(config) }

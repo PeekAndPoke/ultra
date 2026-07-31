@@ -63,22 +63,39 @@ import javax.crypto.spec.SecretKeySpec
  * authenticated a request. `kid` is attacker-controlled and is used for exactly one thing: a lookup
  * in the fixed map built from configuration.
  *
- * A caller can tell "unknown kid" from "bad signature" by timing. That is accepted: `kid` values are
- * public — they ride in every issued token — so enumerating them reveals nothing a captured token
- * would not.
+ * A caller can tell "unknown kid" from "bad signature" by timing: an unknown one returns before the
+ * MAC, a known one after it, and the gap is an HMAC over a signing input the caller sizes. The
+ * messages are identical (asserted by a spec), the timing is not.
+ *
+ * **Accepted, but not for the obvious reason.** "kid values are public, they ride in every issued
+ * token" only covers the confidentiality of the id itself. What the oracle actually leaks is *which
+ * keys are still in the verify list* — the reconnaissance step before trying a leaked retired key,
+ * and a reason to remove a compromised key rather than retire it gracefully (see [JwtConfig.keys]).
+ * Closing it would mean MACing against a dummy key on the unknown-`kid` path; that is a real option,
+ * deliberately not taken, because it makes every forged token cost an HMAC and the leak is only
+ * useful to an attacker who already holds a key's secret.
+ *
+ * ### Explicit typing, and the invariant it does NOT enforce
+ *
+ * `typ` must be `JWT` (RFC 8725 §3.11). Be precise about what that buys: it rejects a token minted by
+ * some *other* system that shares this secret and types its tokens differently — an `at+jwt` access
+ * token, say. It does **not** separate two kinds of JWT minted by this issuer, because [createJwt]
+ * writes `JWT` for all of them.
+ *
+ * So the real invariant stands, unenforced: **these signing keys sign exactly ONE kind of JWT.**
+ * Org-selection, activation and password-reset tokens are `SecureRandom` database rows, not JWTs
+ * (verified repo-wide: [createJwt] is the only mint path). The day a second kind is minted under
+ * these keys, `iss` and `aud` are the only separators — and `createJwt` hard-codes both identically
+ * for every token — so that second kind would be accepted as a session bearer token. Introducing one
+ * means giving it a DISTINCT `typ` and making the expected value a parameter here, not merely
+ * "adding a typ check".
  *
  * ### What is deliberately NOT performed
  *
- * `crit` (RFC 7515 §4.1.11) is not honoured and RFC 7519 §7.2's `cty`/nested-JWT branch is not taken;
- * unknown header members are ignored. Safe here for one reason only: **the header is inside the
- * signing input**, so nobody but a key holder can put anything in it.
- *
- * `typ` is not checked either (RFC 8725 §3.11, explicit typing). **This rests on an invariant that is
- * true today and is not enforced: these signing keys sign exactly ONE kind of JWT.** Org-selection,
- * activation and password-reset tokens are `SecureRandom` database rows, not JWTs. The day a second
- * kind of JWT is minted under these keys, `iss` and `aud` are the only separators — and `createJwt`
- * hard-codes both identically for every token — so that second kind would be accepted as a session
- * bearer token. Introducing one means adding a `typ` check at the same time.
+ * RFC 7519 §7.2's `cty`/nested-JWT branch is not taken, and unknown header members are ignored. Safe
+ * here for one reason only: **the header is inside the signing input**, so nobody but a key holder
+ * can put anything in it. `crit` (RFC 7515 §4.1.11) used to fall in this bucket and no longer does —
+ * it is now rejected outright, because that is what the RFC's MUST requires and it costs one field.
  *
  * ### PRECONDITION — read before reusing this
  *
@@ -247,6 +264,19 @@ class JwtSignatureGate(
 
         val header = decodeHeader(token.substring(0, firstDot))
 
+        // Explicit typing, RFC 8725 §3.11. Case-insensitive because `typ` is a MEDIA TYPE (RFC 7519
+        // §5.1) — deliberately unlike `alg` below, whose values are exact strings from the JWA
+        // registry and are compared case-sensitively.
+        if (!header.typ.equals("JWT", ignoreCase = true)) {
+            throw Rejected("Token header is not valid")
+        }
+
+        // RFC 7515 §4.1.11 is a MUST: reject a JWS whose `crit` names an extension we do not
+        // understand. We understand none, so any `crit` at all rejects.
+        if (header.crit != null) {
+            throw Rejected("Token header is not valid")
+        }
+
         // An absent kid is an unknown kid: both mean there is no key to verify against. Never fall
         // back to trying them all — see the class KDoc.
         val entry = header.kid?.let { prepared[it] }
@@ -263,18 +293,27 @@ class JwtSignatureGate(
         val signingInput = token.substring(0, lastDot)
         val presented = token.substring(lastDot + 1)
 
-        val expectedMac = mac(signingInput, entry)
-
-        val presentedMac = try {
-            Base64.getUrlDecoder().decode(presented)
-        } catch (_: IllegalArgumentException) {
-            // Not base64url. Fail closed rather than let a decode error surface as a 500.
-            throw Rejected("Token signature is not valid base64url")
-        }
+        // Compare the ENCODED signatures, not the decoded bytes.
+        //
+        // Both authenticate equally — the encoding is a bijection on canonical input — but comparing
+        // the encoded form additionally requires the token to be in CANONICAL base64url, and that is
+        // worth having. `Base64.getUrlDecoder()` accepts padding and non-zero trailing bits, and an
+        // HS512 signature is 86 characters carrying 4 unused bits, so decoding-then-comparing admits
+        // 32 distinct token STRINGS per logical token (16 final characters x padded/unpadded —
+        // measured, not reasoned). Any denylist, cache key, rate limiter or audit dedup keyed on the
+        // raw token string would be bypassable by re-encoding. RFC 7515 mandates unpadded base64url,
+        // so nothing standards-compliant is lost; our issuer and `java-jwt` both emit canonical form,
+        // which the wire-compat fixtures prove.
+        //
+        // It also removes the decode step entirely, and with it an `IllegalArgumentException` path
+        // that `tryVerify` does NOT catch — it catches only JwtVerificationException — so a
+        // non-base64url signature would have surfaced as a 500 on the unauthenticated path had the
+        // guard around it ever been removed. No guard is safer than a guarded hazard.
+        val expected = base64Url(mac(signingInput, entry))
 
         // Constant-time. A length-then-content comparison leaks the position of the first differing
         // byte, which is enough to forge a signature one byte at a time.
-        if (!MessageDigest.isEqual(expectedMac, presentedMac)) {
+        if (!MessageDigest.isEqual(expected.toByteArray(StandardCharsets.UTF_8), presented.toByteArray(StandardCharsets.UTF_8))) {
             throw Rejected("Token signature is invalid")
         }
     }
@@ -306,12 +345,14 @@ class JwtSignatureGate(
      * lookup is on the order of a microsecond, against an HMAC over a few kB — not worth caching
      * incorrectly.
      */
-    internal fun mac(signingInput: String, key: JwtSigningKey = signingKey): ByteArray =
-        mac(signingInput, requireNotNull(prepared[key.id]) { "Unknown signing key '${key.id}'" })
+    internal fun mac(signingInput: String): ByteArray = mac(signingInput, prepared.getValue(signingKey.id))
 
     private fun mac(signingInput: String, entry: Prepared): ByteArray =
         Mac.getInstance(entry.key.alg.jcaName).run {
             init(entry.spec)
             doFinal(signingInput.toByteArray(StandardCharsets.UTF_8))
         }
+
+    private fun base64Url(bytes: ByteArray): String =
+        Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 }

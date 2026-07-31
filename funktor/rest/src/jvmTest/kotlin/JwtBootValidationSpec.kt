@@ -68,6 +68,35 @@ class JwtBootValidationSpec : StringSpec({
             .message!! shouldContain "[dup]"
     }
 
+    "claim namespaces that overlap refuse to boot" {
+        // Each encoder CLEARS its namespace before writing, so if one is a `/`-prefix of the other the
+        // second deletes the first's claims and every token silently loses its user data. It fails
+        // closed (identity survives via the `sub` fallback) but silently, which is the expensive kind.
+        listOf(
+            ("a" to "a") to "identical",
+            ("a/b" to "a") to "permissionsNs is a prefix of userNs",
+            ("a" to "a/b") to "userNs is a prefix of permissionsNs",
+        ).forEach { (ns, why) ->
+            withClue(why) {
+                shouldThrow<IllegalArgumentException> {
+                    kontainer {
+                        funktorRest(AppConfig.empty) {
+                            jwt(jwtConfig(listOf(key("current"))).copy(userNs = ns.first, permissionsNs = ns.second))
+                        }
+                    }
+                }.message!! shouldContain "overlap"
+            }
+        }
+
+        withClue("a shared prefix that is not a '/'-separated one is fine — `user` vs `userx`") {
+            kontainer {
+                funktorRest(AppConfig.empty) {
+                    jwt(jwtConfig(listOf(key("current"))).copy(userNs = "user", permissionsNs = "userx"))
+                }
+            }
+        }
+    }
+
     "a null JwtConfig refuses to boot" {
         shouldThrow<IllegalStateException> {
             kontainer { funktorRest(AppConfig.empty) { jwt(null) } }

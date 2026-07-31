@@ -33,6 +33,42 @@ class JwtGenerator(
 
         /** Default token lifetime, applied by [createJwt] unless the builder overrides `exp`. */
         const val DEFAULT_EXPIRY_MINUTES: Long = 60
+
+        /**
+         * Throws unless [config] can be used to issue and verify, with messages that say how to fix it.
+         *
+         * The single boot entry point — `FunktorRestBuilder.jwt` calls this eagerly, because the
+         * kontainer binding is lazy and would otherwise defer every one of these failures to the
+         * first request carrying a bearer token, on a running server.
+         */
+        fun requireUsableConfig(config: JwtConfig) {
+            JwtSignatureGate.requireUsableKeys(config.keys)
+            requireDistinctNamespaces(config)
+        }
+
+        /**
+         * Throws if either claim namespace is a `/`-prefix of the other.
+         *
+         * `encodeUser` and `encodePermissions` each CLEAR their namespace before writing, by dropping
+         * every claim starting with `"$namespace/"`. With `userNs = "a/b"` and `permissionsNs = "a"`,
+         * the permissions encoder — which runs second — would delete the user claims the user encoder
+         * just wrote, so every token would silently lose `desc`, `type` and `email`.
+         *
+         * It fails closed (identity survives via the `sub` fallback in [extractUser]) but it fails
+         * *silently*, which is the expensive kind. A pathological configuration, so a boot error
+         * rather than a runtime one.
+         */
+        private fun requireDistinctNamespaces(config: JwtConfig) {
+            val user = config.userNs
+            val permissions = config.permissionsNs
+
+            require(!"$user/".startsWith("$permissions/") && !"$permissions/".startsWith("$user/")) {
+                "The JWT claim namespaces userNs='$user' and permissionsNs='$permissions' overlap: " +
+                        "one is a '/'-separated prefix of the other. Each encoder clears its own " +
+                        "namespace before writing, so the second would delete the first's claims and " +
+                        "every token would silently lose its user data. Choose two unrelated names."
+            }
+        }
     }
 
     /** The namespace for permissions claims */
@@ -47,6 +83,12 @@ class JwtGenerator(
      * charset. It also owns the key map, so `kid` selection has a single implementation.
      */
     private val gate = JwtSignatureGate(config.keys)
+
+    init {
+        // The gate's own `init` covers the keys; this covers the rest of the config, on every
+        // construction path. `funktorRest { jwt() }` calls requireUsableConfig eagerly at boot.
+        requireDistinctNamespaces(config)
+    }
 
     /** The key this generator signs with: the first in [JwtConfig.keys]. Internal — it holds the secret. */
     internal val signingKey: JwtSigningKey get() = gate.signingKey
