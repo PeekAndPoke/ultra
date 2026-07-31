@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.microseconds
 
@@ -74,8 +75,6 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
         return this
     }
 
-    // CoroutineDispatcher.Key is built on AbstractCoroutineContextKey, which is experimental
-    @OptIn(ExperimentalStdlibApi::class)
     fun getCpuProfile(): CpuProfile {
         val totalMs = (System.nanoTime() - start) / 1e6
         val cpuMs = activeNs.get() / 1e6
@@ -83,8 +82,8 @@ class TimingInterceptor : CopyableThreadContextElement<TimingInterceptor.State>,
         // get coroutine name
         val coroutineName = capturedContext?.get(CoroutineName)?.name ?: "unknown"
 
-        // get the dispatcher name
-        val dispatcherName = capturedContext?.get(CoroutineDispatcher)?.toString()
+        // get the dispatcher name - a dispatcher sits in the context under the ContinuationInterceptor key
+        val dispatcherName = (capturedContext?.get(ContinuationInterceptor) as? CoroutineDispatcher)?.toString()
 
         val timing = CpuProfile(
             names = listOfNotNull(coroutineName, dispatcherName),
