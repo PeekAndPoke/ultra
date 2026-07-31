@@ -5,7 +5,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpMethod
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.RoutingNode
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.peekandpoke.funktor.core.broker.TypedRoute
@@ -17,6 +16,7 @@ import io.peekandpoke.funktor.rest.InsightsOptionsKey
 import io.peekandpoke.funktor.rest.handle
 import io.peekandpoke.funktor.rest.insights
 import io.peekandpoke.funktor.rest.noInsights
+import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.reflection.kType
 
 /**
@@ -41,28 +41,28 @@ class RouteAttributeBridgeSpec : StringSpec({
         responseType = kType<Unit>(),
     )
 
-    /** Mounts [route] and returns the attribute bag the ktor route ended up carrying. */
-    fun bagOn(route: ApiRoute.Plain<Unit>) = run {
-        var found: io.peekandpoke.ultra.common.TypedAttributes? = null
+    /**
+     * Mounts [route] and returns the bag carried by **the node `handle` returned** — which is the node
+     * `insightsOptions()` reads at request time (`RoutingPipelineCall.route`, the resolved leaf).
+     *
+     * Deliberately NOT a walk of the whole subtree. The first version of this spec did walk, and so it
+     * stayed green under the mutation that matters most: putting the bag on the PARENT instead of the
+     * mounted node. The walk still found it, all three tests passed, and `insightsOptions()` fell back
+     * to FULL at request time — the exact regression this file exists to catch.
+     */
+    fun bagOn(route: ApiRoute.Plain<Unit>): TypedAttributes? {
+        var mounted: Route? = null
 
         testApplication {
             routing {
-                handle(route)
-
-                // walk the tree the mount just built and read what it carries
-                fun walk(node: Route) {
-                    node.attributes.getOrNull(FunktorRouteAttributes)?.let { found = it }
-                    (node as? RoutingNode)?.children?.forEach { walk(it) }
-                }
-
-                walk(this)
+                mounted = handle(route)
             }
 
             // testApplication is lazy — touch the app so `routing { }` actually runs
             client.config { }
         }
 
-        found
+        return mounted?.attributes?.getOrNull(FunktorRouteAttributes)
     }
 
     "the attribute bag crosses onto the mounted ktor route" {

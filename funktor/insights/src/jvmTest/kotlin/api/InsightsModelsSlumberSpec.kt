@@ -30,6 +30,9 @@ class InsightsModelsSlumberSpec : StringSpec({
     val record = InsightsRecord(
         ref = InsightsRecordRef("records-2026-07-31", "12-00-00.json"),
         recordedAt = MpInstant.fromEpochMillis(1_700_000_000_000),
+        method = "GET",
+        path = "/api/things",
+        status = 200,
         durationMs = 12.5,
         collectors = listOf(
             InsightsCollectorSlice(
@@ -63,7 +66,8 @@ class InsightsModelsSlumberSpec : StringSpec({
             ref = InsightsRecordRef("records-2026-07-31", "12-00-00.json"),
             recordedAt = MpInstant.fromEpochMillis(1_700_000_000_000),
             method = "GET",
-            url = "https://example.com:443/api/things",
+            // a PATH, not a URL — the writer stores request.path() so no `?token=` reaches the record
+            path = "/api/things",
             status = 200,
             durationMs = 12.5,
         )
@@ -71,7 +75,7 @@ class InsightsModelsSlumberSpec : StringSpec({
         codec.awake<InsightsRecordSummary>(codec.slumber(summary)) shouldBe summary
 
         val empty = InsightsRecordSummary(
-            ref = InsightsRecordRef("b", "f"), recordedAt = null, method = null, url = null,
+            ref = InsightsRecordRef("b", "f"), recordedAt = null, method = null, path = null,
             status = null, durationMs = null,
         )
 

@@ -20,7 +20,14 @@ class AppConfigCollector(
         const val KEY = "app-config"
     }
 
-    val static = Data(
+    /**
+     * Lazy, not eager: constructing this collector used to Jackson-serialise the entire [AppConfig]
+     * there and then. `CollectorKeyUniquenessCheck` instantiates every collector at boot, so an app that
+     * had insights DISABLED still materialised its whole config — signing key included — in memory at
+     * start-up. Now that only happens when a record is actually written.
+     */
+    val static: Data by lazy {
+        Data(
         info = when {
             appInfo != null -> mapper.convertValue<Map<*, *>>(appInfo)
             else -> "not available"
@@ -29,11 +36,11 @@ class AppConfigCollector(
             appConfig != null -> mapper.convertValue<Map<*, *>>(appConfig)
             else -> "not available"
         }
-    )
+        )
+    }
 
     /** VUE-REF: `reference/collectors/AppConfigCollector.kt` */
-    data class Data(val info: Any, val config: Any) : InsightsCollectorData {
-    }
+    data class Data(val info: Any, val config: Any) : InsightsCollectorData
 
     override fun finish(call: ApplicationCall): Data = static
 }

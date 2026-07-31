@@ -37,6 +37,15 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
 
         /** Upper bound on `epp`, so one request cannot walk the entire depot. */
         const val MAX_EPP = 200
+
+        /**
+         * Upper bound on `page`.
+         *
+         * Not cosmetic: the loader computes `(page - 1) * epp`, which used to overflow `Int` and wrap
+         * NEGATIVE, so `?page=2147483647` answered with page 1 rather than an empty page. The skip is a
+         * `Long` now; this keeps a nonsense page from being accepted at all.
+         */
+        const val MAX_PAGE = 1_000_000
     }
 
     val listRecords = ListRecords.mount(InsightsApiFeature.PagingParam::class) {
@@ -47,7 +56,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }.noInsights().handle { params ->
             ApiResponse.ok(
                 call.kontainer.get(InsightsDataLoader::class).list(
-                    page = params.page.coerceAtLeast(1),
+                    page = params.page.coerceIn(1, MAX_PAGE),
                     epp = params.epp.coerceIn(1, MAX_EPP),
                 )
             )

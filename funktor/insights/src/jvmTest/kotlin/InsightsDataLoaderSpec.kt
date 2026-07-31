@@ -87,7 +87,7 @@ class InsightsDataLoaderSpec : StringSpec({
             val summary = loader.list(page = 1, epp = 10).single()
 
             summary.method shouldBe "GET"
-            summary.url shouldBe "/api/things"
+            summary.path shouldBe "/api/things"
             summary.status shouldBe 200
             summary.durationMs shouldBe 3.0
         }
@@ -105,7 +105,7 @@ class InsightsDataLoaderSpec : StringSpec({
             val summary = loader.list(page = 1, epp = 10).single()
 
             summary.method shouldBe "POST"
-            summary.url shouldBe "/api/x"
+            summary.path shouldBe "/api/x"
             summary.status shouldBe 201
 
             loader.load(InsightsRecordRef("records-2026-07-31", "brief.json")).shouldNotBeNull().collectors shouldBe emptyList()
@@ -125,7 +125,7 @@ class InsightsDataLoaderSpec : StringSpec({
             val summary = loader.list(page = 1, epp = 10).single()
 
             summary.method shouldBe null
-            summary.url shouldBe null
+            summary.path shouldBe null
             summary.status shouldBe null
         }
     }
@@ -185,6 +185,84 @@ class InsightsDataLoaderSpec : StringSpec({
                 "records-2026-07-31/new.json",
                 "records-2026-07-29/old.json",
             )
+        }
+    }
+
+    "an unreadable record in the middle of a page does not make pages overlap" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            // e,d,c,b,a newest-first; `c` is a truncated write. `putFile` is a bare non-atomic
+            // writeBytes and records are written after the response, so this is the ordinary case for a
+            // listing taken against live traffic, not a contrived one.
+            repo.putFile("records-2026-07-31/e.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/d.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/c.json", "{ truncated write")
+            repo.putFile("records-2026-07-31/b.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/a.json", record(requestSlice))
+
+            val p1 = loader.list(page = 1, epp = 2).map { it.ref.file }
+            val p2 = loader.list(page = 2, epp = 2).map { it.ref.file }
+            val p3 = loader.list(page = 3, epp = 2).map { it.ref.file }
+
+            // A page consumes epp SLOTS. The broken record costs its own row and nothing else — pages
+            // must not repeat a record. Counting rows instead of slots returned `a` on BOTH page 2 and
+            // page 3, and every later page slid by the wrong amount.
+            p1 shouldContainExactly listOf("e.json", "d.json")
+            p2 shouldContainExactly listOf("b.json")          // `c` is the lost slot
+            p3 shouldContainExactly listOf("a.json")
+
+            (p1 + p2 + p3).let { all -> all.distinct().size shouldBe all.size }
+        }
+    }
+
+    "a huge page number yields an empty page, not page one" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            repo.putFile("records-2026-07-31/a.json", record(requestSlice))
+
+            // `(page - 1) * epp` in Int wrapped NEGATIVE here, so the skip was never reached and the
+            // endpoint answered with the first page — a client walking pages until one came back short
+            // would loop forever.
+            loader.list(page = Int.MAX_VALUE, epp = 200) shouldBe emptyList()
+            loader.list(page = 20_000_000, epp = 200) shouldBe emptyList()
+        }
+    }
+
+    "a record with no timing reports null duration, not zero" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            repo.putFile(
+                "records-2026-07-31/a.json",
+                """{ "formatVersion": 1, "method": "GET", "uri": "/x", "status": 200, "collectors": [] }"""
+            )
+
+            // "unknown" must stay distinguishable from "instant"
+            loader.list(page = 1, epp = 10).single().durationMs shouldBe null
+            loader.load(InsightsRecordRef("records-2026-07-31", "a.json"))
+                .shouldNotBeNull().durationMs shouldBe null
+        }
+    }
+
+    "the detail endpoint carries the headline, so a BRIEF record is not an empty envelope" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            // exactly what InsightsLevel.BRIEF writes: a headline and no collectors at all
+            repo.putFile("records-2026-07-31/brief.json", record())
+
+            val loaded = loader.load(InsightsRecordRef("records-2026-07-31", "brief.json")).shouldNotBeNull()
+
+            loaded.collectors shouldBe emptyList()
+            loaded.method shouldBe "GET"
+            loaded.path shouldBe "/api/things"
+            loaded.status shouldBe 200
         }
     }
 

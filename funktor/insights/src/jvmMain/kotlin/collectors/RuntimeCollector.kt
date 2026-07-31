@@ -26,8 +26,7 @@ class RuntimeCollector : InsightsCollector {
         val openFileDescriptors: Long,
         val maxFileDescriptors: Long,
         val systemProperties: Map<String, String>,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
 
     override fun finish(call: ApplicationCall): InsightsCollectorData {

@@ -10,8 +10,16 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
+import io.ktor.http.HttpMethod
+import io.peekandpoke.funktor.core.broker.TypedRoute
+import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.insights.HeaderAction
 import io.peekandpoke.funktor.insights.HeaderLogging
+import io.peekandpoke.funktor.rest.ApiRoute
+import io.peekandpoke.funktor.rest.FunktorRouteAttributes
+import io.peekandpoke.funktor.rest.insights
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.reflection.kType
 
 /**
  * Drives the collectors through a **real `ApplicationCall`**.
@@ -116,6 +124,52 @@ class CollectorRedactionSpec : StringSpec({
         }
 
         data.headers shouldNotContainKey "X-Noise"
+    }
+
+    "dropQueryParams on the route empties the query map at the collector" {
+        // The escalation hammer built for S1 — and until now, unreachable in every test. This spec drove
+        // PLAIN ktor routes, which carry no FunktorRouteAttributes, so `call.insightsOptions()` always
+        // returned the default and the `emptyMap()` branch never ran: deleting the whole `when` and
+        // always redacting by name left the suite green.
+        //
+        // The bag is put on the ktor route directly rather than by mounting the ApiRoute, because
+        // driving a funktor handler needs the kontainer and a UserProvider for phase-1 auth. That the
+        // bag reaches the route in production is `RouteAttributeBridgeSpec`'s job; this is the other
+        // half — that RequestCollector reads it.
+        fun collectWith(options: TypedAttributes?): RequestCollector.Data {
+            var captured: RequestCollector.Data? = null
+
+            testApplication {
+                routing {
+                    val node = get("/probe") {
+                        captured = RequestCollector(HeaderLogging.defaults).finish(call)
+                        call.respondText("ok")
+                    }
+
+                    options?.let { node.attributes.put(FunktorRouteAttributes, it) }
+                }
+
+                client.get("/probe?code=SECRET-GRANT&page=2")
+            }
+
+            return captured ?: error("the probe route never ran — the request did not reach the handler")
+        }
+
+        val apiRoute = ApiRoute.Plain<Unit>(
+            method = HttpMethod.Get,
+            route = TypedRoute.Plain(pattern = UriPattern("/probe")),
+            responseType = kType<Unit>(),
+        )
+
+        // `code` matches no default rule, so without dropQueryParams it is stored VERBATIM — which is
+        // exactly why the per-route hammer exists.
+        val kept = collectWith(null)
+        kept.queryParams["code"] shouldBe listOf("SECRET-GRANT")
+        kept.queryParams["page"] shouldBe listOf("2")
+
+        val dropped = collectWith(apiRoute.insights { dropQueryParams() }.attributes)
+        dropped.queryParams shouldBe emptyMap()
+        dropped.toString().contains("SECRET-GRANT") shouldBe false
     }
 
     "ResponseCollector redacts Set-Cookie — a login record must not carry a session" {

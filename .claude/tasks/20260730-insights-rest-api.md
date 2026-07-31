@@ -1,6 +1,6 @@
 # Insights: split data from rendering, expose it through a superuser REST API
 
-**Status:** IN REVIEW (round 2) — round 1 findings fixed, but the fixes are substantial new code and have not themselves been reviewed
+**Status:** REVIEWED — rounds 1 and 2 complete, gate PASS with follow-ups. Not archived: five decisions are open, listed under "Open — decisions, not defects"
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
 **Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
 
@@ -508,10 +508,72 @@ until the asynchronous write lands, and asserts on what comes back:
 Counts from `build/test-results/**/TEST-*.xml`: **funktor:all 149**, **funktor:insights 59**,
 **funktor:rest 102** — 0 failures, 0 errors. Compile sweep clean.
 
-## Round 2 is required before this is DONE
+## Review record — round 2 (/feature-review, 2026-07-31)
+
+Diff reviewed: `a012b14d^..HEAD` restricted to this task's 51 files. Every finding was re-verified
+against the code before being acted on.
+
+**GATE: PASS with follow-ups.** No open CRITICAL/HIGH. Counts from `build/test-results/**/TEST-*.xml`:
+**funktor:insights 69**, **funktor:rest 102**, **funktor:all 150** — 0 failures. Compile sweep clean.
+
+### Two round-1 dispositions were WRONG
+
+Recorded prominently because the disposition table is what a future session will trust.
+
+1. **`CollectorKeyUniquenessCheck` never failed a boot.** All three reviewers found it independently.
+   `error()` throws `IllegalStateException`; `AppLifeCycleBuilder.register` runs `OnAppStarting` with
+   `rethrow = { it is AppStartException }` and logs everything else (`AppLifeCycleBuilder.kt:39,91-97`),
+   a behaviour `AppLifeCycleSpec` already pinned. A duplicate key produced one ERROR line and the app
+   served. The class had **zero tests**. Now throws `AppStartException`, with a spec that asserts the
+   exception TYPE — `shouldThrow<Exception>` would have passed against the broken version.
+2. **`formatVersion` prevents nothing.** Written, documented, never read. The KDoc claimed the loader
+   would otherwise "have to guess a record's format from which fields happen to be present" — which is
+   exactly what it still does. KDoc corrected to say so; making it load-bearing is a follow-up.
+
+### Fixed in this round
+
+| Finding | Fix |
+|---|---|
+| Paging **overlapped** on any unreadable record — `seen++` counted files, `result` counted parsed rows, so page 1 walked past `epp` files while page 2 skipped only `page*epp` | A page consumes `epp` **slots**. Regression test with a truncated record mid-page |
+| `insightsOptions()` matched only `RoutingPipelineCall`; inside a handler the call is a **`RoutingCall`**, a different class — so `dropQueryParams` failed open there | Both types handled. **Found by probing the runtime type**, not by review |
+| `dropQueryParams` had no test reaching the branch — deleting the whole `when` left the suite green | `CollectorRedactionSpec` puts the bag on the route and asserts both directions |
+| `Location` / `Content-Location` stored verbatim — `Referer` only *echoes* a token, `Location` is where an OAuth or magic-link grant is **minted** | `STRIP_QUERY`, pinned |
+| `api-?key` matched neither `api_key` nor the example in its own KDoc; the pattern is reused for snake_case query parameters | `api[-_]?key` |
+| `InsightsRecord` dropped the headline, so a `BRIEF` record's detail page was an empty envelope | `method`/`path`/`status` on the record |
+| `durationMs` was nullable in type but never null in fact (round-1 D-L2, half-fixed) | Producer returns null |
+| `page` unclamped and `(page-1)*epp` overflowed to a negative skip → returned page 1 | `MAX_PAGE` + `Long` skip. **Mutation showed the `Long` is not load-bearing** — the slot-based break already neutralises it; kept as intent, and the comment says so |
+| `RouteAttributeBridgeSpec` walked the whole subtree, so putting the bag on the **parent** kept it green while `insightsOptions()` fell back to FULL | Asserts the node `handle` returns; `handle` now returns it |
+| `InsightsRecordingSpec` polled until the depot was non-empty, so later tests raced against an earlier test's pending write | Polls until the count **increases** |
+| Round-1 I3's replacement test was the same shape (constants vs literals) | Real clamp test + an e2e sending `?epp=99999`, `epp=0`, `page=MAX_VALUE` |
+| `AppConfigCollector.static` was an eager `val`, so the boot check's `collectors.all()` serialised the whole `AppConfig` at start-up **even with insights disabled** | `by lazy` |
+| `Route.handle(route, body)` (raw-response overload) did not bridge attributes | Bridged |
+| `url` held a path | Renamed `path`, documented, with the XSS obligation extended to it |
+| Style: FQCN in a new spec, wildcard import, dead import, nine empty `{ }` bodies, empty test dir, temp depot never deleted | All fixed |
+| My own comment claimed the second test host isolates the recording cost | Corrected — `registerTracer()` is application-global |
+
+**Mutations — six of seven kill exactly one test each**, including the two that previously survived
+(`AppStartException`→`error()`, and bag-on-parent). The seventh (Int overflow) is documented above as
+deliberately non-load-bearing.
+
+### Open — decisions, not defects
+
+- **`insightsOptions()` fails OPEN.** No bag → `FULL`. The demo's `fallback { }` catch-all and its
+  `staticResources`/`/ping` under `admin.*` are instrumented, so `POST /_/funktor/insights/records`
+  from an unauthenticated caller writes a full ~270 KB record — which the deleted `isExcluded`
+  suppressed. Options: default `BRIEF` when no bag; keep a cheap URI-prefix layer; add a ktor-level
+  `Route.noInsights()`. **Coverage narrowed versus the code this replaced.**
+- **No group-level `insights`** — only per-route, unlike `authFloor`, which `ApiRoutes` makes mandatory
+  for exactly this reason.
+- **List returns a bare `List`, not `Paged`** — no total, no has-more. `BackgroundJobsApi`, whose
+  `PagingParam` this copies, returns `Paged`.
+- **`formatVersion` needs a reader** or it stays decoration.
+- **The boot check instantiates every collector**, so a collector needing per-request context cannot be
+  registered at all.
+
+## Why round 2 happened (kept for the record)
 
 Round 1 reviewed `b62ab6cd^..HEAD`. Fixing its findings produced **three further commits** — `a012b14d`,
-`6a208e4d`, `04e85767` — which are new implementation, not patches, and no reviewer has seen them:
+`6a208e4d`, `04e85767` — which were new implementation, not patches, and no reviewer had seen them:
 
 - **New public API in `funktor/rest`** that round 1 could not have looked at: `insights { }`, `attr()`,
   `InsightsOptions`, `InsightsLevel`, `FunktorRouteAttributes`, and the first route attribute ever read
@@ -521,7 +583,8 @@ Round 1 reviewed `b62ab6cd^..HEAD`. Fixing its findings produced **three further
 - **New logic with untested boundaries**: the paging skip loop, `CollectorKeyUniquenessCheck`, the
   `cls`→`ref` addressing change.
 
-Round 2 should be scoped to `a012b14d^..HEAD`, not the whole feature again.
+It was scoped to `a012b14d^..HEAD` and found two of round 1's dispositions to be wrong — see the round-2
+record above. That is the argument for reviewing fixes, not just features.
 
 ## Disposition of round 1 (2026-07-31)
 

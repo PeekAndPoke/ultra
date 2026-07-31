@@ -57,7 +57,10 @@ fun createBlueprint(config: FunktorAllTestConfig) = kontainer {
 
 /** Throw-away depot root for the insights records this suite records. One per JVM run. */
 val insightsDepotDir: String by lazy {
-    createTempDirectory("funktor-all-insights").toAbsolutePath().toString()
+    createTempDirectory("funktor-all-insights").toFile()
+        // FULL records are ~270 KB; without this every run leaves them in /tmp forever
+        .also { it.deleteOnExit(); Runtime.getRuntime().addShutdownHook(Thread { it.deleteRecursively() }) }
+        .absolutePath
 }
 
 val testApp = funktorApp<FunktorAllTestConfig>(
@@ -76,8 +79,13 @@ inline fun <C : AppConfig> AppSpecAware<C>.apiApp(block: AppUnderTest<C>.() -> U
  *
  * Insights is not on the `api.*` host because recording is expensive — a FULL record serialises the
  * whole kontainer and app config, ~270 KB per request measured on real data — and every spec in this
- * module would pay it for coverage only one spec wants. A separate host keeps the cost with the spec
- * that asked for it, while the routes, auth chain and handlers are the very same ones.
+ * module would pay it for coverage only one spec wants. The routes, auth chain and handlers are the
+ * very same ones.
+ *
+ * **The record-writing half is what this isolates, not all of the cost.** `instrumentWithInsights`
+ * calls `registerTracer()`, which walks to the application's root `Routing` and installs a `trace { }`
+ * there — so every request on `api.*` builds a resolve trace too. That is application-global by
+ * construction and a second host cannot contain it.
  */
 inline fun <C : AppConfig> AppSpecAware<C>.insightsApp(block: AppUnderTest<C>.() -> Unit) =
     testApp(host = "insights.funktor.local").block()

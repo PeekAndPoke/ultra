@@ -1,6 +1,6 @@
 package impl
 
-import io.ktor.server.application.*
+import io.ktor.server.application.ApplicationCall
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.Insights
 import io.peekandpoke.funktor.rest.InsightsLevel

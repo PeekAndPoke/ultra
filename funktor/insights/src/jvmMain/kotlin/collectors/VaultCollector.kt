@@ -16,8 +16,7 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
     /** VUE-REF: `reference/collectors/VaultCollector.kt` */
     data class Data(
         val entries: List<QueryProfiler.Entry.Impl>,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
 
     override fun finish(call: ApplicationCall): Data {

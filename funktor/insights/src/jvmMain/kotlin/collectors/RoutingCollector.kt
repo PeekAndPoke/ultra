@@ -16,8 +16,7 @@ class RoutingCollector : InsightsCollector {
     /** VUE-REF: `reference/collectors/RoutingCollector.kt` */
     data class Data(
         val trace: String? = null,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
     private var data: Data = Data()
 

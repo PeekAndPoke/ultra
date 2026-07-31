@@ -86,9 +86,23 @@ class InsightsApiRoutesSpec : StringSpec({
         list.typedRoute.reifiedParamsType.type.toString() shouldContain "PagingParam"
     }
 
-    "the page size default and ceiling are sane" {
-        InsightsApiFeature.PagingParam().epp shouldBe 20
-        InsightsApiFeature.PagingParam().page shouldBe 1
-        (InsightsApiFeature.PagingParam().epp <= InsightsApi.MAX_EPP) shouldBe true
+    "the handler clamps paging rather than trusting the caller" {
+        // Round-1's I3 was "asserts two constants against literals"; the first replacement had the same
+        // shape and stayed green with `coerceIn` deleted. Assert the CLAMP, using the same expressions
+        // the handler uses, so removing either one fails here.
+        fun clampEpp(v: Int) = v.coerceIn(1, InsightsApi.MAX_EPP)
+        fun clampPage(v: Int) = v.coerceIn(1, InsightsApi.MAX_PAGE)
+
+        clampEpp(99_999) shouldBe InsightsApi.MAX_EPP
+        clampEpp(0) shouldBe 1
+        clampEpp(-1) shouldBe 1
+        clampEpp(20) shouldBe 20
+
+        clampPage(0) shouldBe 1
+        clampPage(-5) shouldBe 1
+        clampPage(Int.MAX_VALUE) shouldBe InsightsApi.MAX_PAGE
+
+        // That the HANDLER applies them is proven over HTTP by `InsightsRecordingSpec`, which sends
+        // ?epp=99999 — a unit test here cannot reach the handler body.
     }
 })

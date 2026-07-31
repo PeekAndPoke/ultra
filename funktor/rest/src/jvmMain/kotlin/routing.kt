@@ -48,8 +48,14 @@ import io.peekandpoke.ultra.security.user.UserPermissions
  */
 val FunktorRouteAttributes = AttributeKey<TypedAttributes>("funktor.route.attributes")
 
-/** Dispatches to the correct handler based on the [ApiRoute] variant (plain, params, body, SSE). */
-fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>) {
+/**
+ * Dispatches to the correct handler based on the [ApiRoute] variant (plain, params, body, SSE).
+ *
+ * Returns the mounted ktor route — the method-selector node that request resolution lands on, and the
+ * one carrying [FunktorRouteAttributes]. Returned so a caller (and a test) can assert against the exact
+ * node `insightsOptions()` reads, rather than against the subtree it sits in.
+ */
+fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>): Route {
     val mounted = when (route) {
         is ApiRoute.Plain<*> -> handlePlain(route)
         is ApiRoute.WithParams<*, *> -> handleWithParams(route)
@@ -59,6 +65,8 @@ fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>) {
     }
 
     mounted.attributes.put(FunktorRouteAttributes, route.attributes)
+
+    return mounted
 }
 
 /**
@@ -139,6 +147,10 @@ inline fun <reified RESULT : Any> Route.handle(
     val uri = route.route.pattern.pattern
 
     return route(uri, route.method) {
+        // Same bridge as the dispatching `handle` above — without it a route mounted through this
+        // overload silently ignores `noInsights()` and records in full.
+        attributes.put(FunktorRouteAttributes, route.attributes)
+
         handle {
             // Phase 1 — caller-only rules
             if (!passesPhase1(route, uri)) return@handle

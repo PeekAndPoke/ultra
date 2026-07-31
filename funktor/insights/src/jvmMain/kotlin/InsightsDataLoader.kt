@@ -58,6 +58,12 @@ class InsightsDataLoader(
         return InsightsRecord(
             ref = ref,
             recordedAt = file.lastModifiedAt,
+            // The headline is read here too, not only in the list. A BRIEF record has no collectors at
+            // all, so without this a detail page opened by deep link showed an empty envelope and no way
+            // to tell "recorded briefly" from "recorded nothing".
+            method = root["method"]?.str(),
+            path = root["uri"]?.str(),
+            status = root["status"]?.num()?.toInt(),
             durationMs = root.durationMs(),
             collectors = root.slices(),
             // siblings are newest-first, so the NEXT record in time sits at the LOWER index
@@ -74,27 +80,43 @@ class InsightsDataLoader(
      * files on the requested page are opened; the rest are never read.
      */
     suspend fun list(page: Int, epp: Int): List<InsightsRecordSummary> {
-        val skip = (page - 1) * epp
+        // Long because `page` is caller-supplied and `(page - 1) * epp` wraps NEGATIVE in Int —
+        // ?page=2147483647&epp=200 gave skip = -400.
+        //
+        // Belt and braces, not the load-bearing part: reverting this to Int does NOT change any result,
+        // because the slot-based break below sees `seen - skip` already exceeding `epp` for any
+        // large-magnitude negative skip and returns an empty page. Verified by mutation — the Int
+        // version fails no test. Kept because it states the intent, and because the protection would
+        // vanish if the break condition were ever changed back to counting rows.
+        val skip = (page.toLong() - 1) * epp
 
         val dayFolders = repository.listItems("")
             .filter { it is DepotItem.Folder && it.name.startsWith(DAY_FOLDER_PREFIX) }
             .sortedByDescending { it.name }
 
         val result = mutableListOf<InsightsRecordSummary>()
-        var seen = 0
+        var seen = 0L
 
         for (folder in dayFolders) {
-            if (result.size >= epp) break
+            if (seen - skip >= epp) break
 
             val files = repository.listItems(folder.path)
                 .filterIsInstance<DepotItem.File>()
                 .sortedByDescending { it.name }
 
             for (file in files) {
-                if (result.size >= epp) break
+                // A page consumes exactly `epp` SLOTS, not `epp` rows. Breaking on `result.size` instead
+                // made an unreadable record consume a slot on this page and get skipped again on the
+                // next, so the two pages OVERLAPPED — page 1 walked further than `epp` files while page 2
+                // still skipped only `page * epp`. Truncated records are routine here: `putFile` is a
+                // bare non-atomic `writeBytes` and records are written after the response, so a listing
+                // against live traffic reads half-written files.
+                if (seen - skip >= epp) break
+
+                val slot = seen++
 
                 // skip cheaply — the file is never opened
-                if (seen++ < skip) continue
+                if (slot < skip) continue
 
                 val root = parse(repository.getContent(file.path)?.getContentBytes()) ?: continue
 
@@ -122,9 +144,10 @@ class InsightsDataLoader(
             }
             ?: emptyList()
 
-    private fun JsonObject.durationMs(): Double {
-        val started = this["startedNs"]?.num()?.toLong() ?: return 0.0
-        val ended = this["endedNs"]?.num()?.toLong() ?: return 0.0
+    /** Null when the record carries no timing — which must stay distinct from a genuine `0.0`. */
+    private fun JsonObject.durationMs(): Double? {
+        val started = this["startedNs"]?.num()?.toLong() ?: return null
+        val ended = this["endedNs"]?.num()?.toLong() ?: return null
 
         return (ended - started) / 1_000_000.0
     }
@@ -140,7 +163,7 @@ class InsightsDataLoader(
         ref = ref,
         recordedAt = recordedAt,
         method = this["method"]?.str(),
-        url = this["uri"]?.str(),
+        path = this["uri"]?.str(),
         status = this["status"]?.num()?.toInt(),
         durationMs = durationMs(),
     )

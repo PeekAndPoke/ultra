@@ -1,9 +1,19 @@
 package io.peekandpoke.funktor.insights
 
-import io.ktor.server.application.*
-import io.ktor.server.application.hooks.*
-import io.ktor.server.routing.*
-import io.ktor.util.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.application.hooks.CallSetup
+import io.ktor.server.application.hooks.ResponseSent
+import io.ktor.server.application.install
+import io.ktor.server.application.log
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingCall
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.RoutingPipelineCall
+import io.ktor.server.routing.RoutingResolveTrace
+import io.ktor.server.routing.Routing
+import io.ktor.util.AttributeKey
 import io.peekandpoke.funktor.core.fullUrl
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.rest.FunktorRouteAttributes
@@ -71,15 +81,27 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
 /**
  * The [InsightsOptions] of the route this call resolved to; [InsightsOptions.default] when there is none.
  *
- * A call handled by a funktor route is a `RoutingPipelineCall`, whose `route` is the resolved leaf
- * node — and the mounting code copied that route's attributes onto it (`FunktorRouteAttributes`).
- * Anything else (static resources, unmatched paths) has no route attributes and so records in full.
+ * The mounting code copies the route's attributes onto the resolved ktor node
+ * (`FunktorRouteAttributes`), so the options are readable from the call.
+ *
+ * **ktor has two routing call types and both must be handled.** At the `ResponseSent` hook the call is a
+ * `RoutingPipelineCall`; *inside a route handler* it is a [RoutingCall], which is a different class and
+ * not a subtype. Matching only the first made this silently return the default whenever a collector was
+ * driven from a handler — `dropQueryParams` failed open there, and no test noticed because none reached
+ * the branch. Found by probing the actual runtime type, 2026-07-31.
+ *
+ * Anything else (static resources, unmatched paths) carries no route attributes and so records in full.
  */
-fun ApplicationCall.insightsOptions(): InsightsOptions =
-    (this as? RoutingPipelineCall)
-        ?.route?.attributes?.getOrNull(FunktorRouteAttributes)
-        ?.get(InsightsOptionsKey)
+fun ApplicationCall.insightsOptions(): InsightsOptions {
+    val node = when (this) {
+        is RoutingPipelineCall -> route
+        is RoutingCall -> route
+        else -> null
+    }
+
+    return node?.attributes?.getOrNull(FunktorRouteAttributes)?.get(InsightsOptionsKey)
         ?: InsightsOptions.default
+}
 
 object RoutingInstrumentation {
     /**

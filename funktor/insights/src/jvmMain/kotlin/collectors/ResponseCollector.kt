@@ -22,8 +22,7 @@ class ResponseCollector(
     data class Data(
         val status: HttpStatusCode?,
         val headers: Map<String, List<String>>,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
     override fun finish(call: ApplicationCall) = Data(
         status = call.response.status(),

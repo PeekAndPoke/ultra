@@ -7,7 +7,6 @@ import io.ktor.server.request.host
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.request.port
-import io.ktor.server.request.uri
 import io.ktor.util.toMap
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
@@ -33,8 +32,7 @@ class RequestCollector(
         val uri: String,
         val headers: Map<String, List<String>>,
         val queryParams: Map<String, List<String>>,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
     override fun finish(call: ApplicationCall) = Data(
         method = call.request.httpMethod,

@@ -27,8 +27,7 @@ class KontainerCollector(
         val numOld: Int,
         val numTotal: Int,
         val info: DebugInfo,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
 
     override fun finish(call: ApplicationCall): Data {

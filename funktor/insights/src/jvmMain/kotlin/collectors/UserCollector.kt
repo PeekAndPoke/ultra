@@ -21,8 +21,7 @@ class UserCollector(
     data class Data(
         val user: UserRecord,
         val permissions: UserPermissions,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
     override fun finish(call: ApplicationCall): Data = Data(
         user = user().record,

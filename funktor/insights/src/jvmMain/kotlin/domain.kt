@@ -16,8 +16,9 @@ data class InsightsData(
     /**
      * Version of this stored shape.
      *
-     * Legacy records have no `formatVersion` at all and use a different collector-entry shape. Without
-     * this the loader would have to guess a record's format from which fields happen to be present.
+     * Written for CONSUMERS to branch on. **No reader consults it today** — `InsightsDataLoader` still
+     * infers a record's shape from which fields are present, and the API does not surface this field.
+     * Until one of those changes, bumping it protects nothing; see the task file's follow-ups.
      */
     val formatVersion: Int = CURRENT_FORMAT_VERSION,
     val ts: LocalDateTime,
@@ -26,7 +27,13 @@ data class InsightsData(
     val endedNs: Long,
     /** Headline: the request method, e.g. `GET`. */
     val method: String? = null,
-    /** Headline: the request uri, query string included. */
+    /**
+     * Headline: the request **path**, query string excluded.
+     *
+     * The writer stores `request.path()` deliberately — `request.uri` carries the query string, and
+     * storing it verbatim put every `?token=` into the record and into the list. The parameters live
+     * in the `request` slice, redacted by name.
+     */
     val uri: String? = null,
     /** Headline: the response status code. */
     val status: Int? = null,

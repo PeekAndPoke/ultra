@@ -33,7 +33,8 @@ fun Application.module() = testApp.module(this) { app, _, init ->
 
         // The identical API surface with insights recording ON — see `insightsApp`. Two mounts rather
         // than one flag because `instrumentWithInsights` decides at INSTALL time, so a single mount
-        // would either record for every spec in this module or for none.
+        // would either record for every spec in this module or for none. Note this isolates the
+        // record WRITING; the routing tracer it installs is application-global either way.
         host("insights.*".toRegex()) {
             mountApi(app, init, insights = InsightsConfig(enabled = true))
         }

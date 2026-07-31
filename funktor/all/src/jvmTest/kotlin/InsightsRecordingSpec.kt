@@ -40,7 +40,6 @@ class InsightsRecordingSpec : FunktorApiSpec() {
     private val introspectionApi by service(IntrospectionApiFeature::class)
 
     init {
-        val firstPage = InsightsApiFeature.PagingParam()
         val wholeDepot = InsightsApiFeature.PagingParam(page = 1, epp = InsightsApi.MAX_EPP)
 
         /**
@@ -51,7 +50,28 @@ class InsightsRecordingSpec : FunktorApiSpec() {
          * on disk. Polling the list endpoint is also the honest way to wait: it asks exactly the
          * question the assertions go on to ask.
          */
+        suspend fun countRecords(): Int {
+            var count = 0
+
+            insightsApp {
+                authenticate(superUserToken) {
+                    request(insightsApi.insights.listRecords, wholeDepot) {
+                        status shouldBe HttpStatusCode.OK
+                        count = apiResponseData<List<InsightsRecordSummary>>()?.size ?: 0
+                    }
+                }
+            }
+
+            return count
+        }
+
         suspend fun recordOneRequest(): List<InsightsRecordSummary> {
+            // Wait for THIS call's record, not merely for a non-empty depot. Polling `isEmpty()` returned
+            // immediately once an earlier test had recorded anything, so the assertions ran against a
+            // stale record and the pending write landed later — during the next test, where it read as
+            // "the insights endpoints recorded themselves".
+            val before = countRecords()
+
             insightsApp {
                 authenticate(superUserToken) {
                     request(introspectionApi.introspection.getLifecycleHooks) {
@@ -63,22 +83,22 @@ class InsightsRecordingSpec : FunktorApiSpec() {
             var found: List<InsightsRecordSummary> = emptyList()
 
             withTimeoutOrNull(10.seconds) {
-                while (found.isEmpty()) {
+                while (found.size <= before) {
                     insightsApp {
                         authenticate(superUserToken) {
-                            request(insightsApi.insights.listRecords, firstPage) {
+                            request(insightsApi.insights.listRecords, wholeDepot) {
                                 status shouldBe HttpStatusCode.OK
                                 found = apiResponseData<List<InsightsRecordSummary>>() ?: emptyList()
                             }
                         }
                     }
 
-                    if (found.isEmpty()) delay(25.milliseconds)
+                    if (found.size <= before) delay(25.milliseconds)
                 }
             }
 
-            withClue("no insights record appeared within 10s — was the request recorded at all?") {
-                found.isEmpty() shouldBe false
+            withClue("no NEW insights record appeared within 10s (had $before) — was it recorded?") {
+                (found.size > before) shouldBe true
             }
 
             return found
@@ -91,7 +111,7 @@ class InsightsRecordingSpec : FunktorApiSpec() {
             // of the record rather than dug out of the request slice. The old 200-path assertion was
             // `shouldNotBe null` against an empty depot; nothing here can pass on an empty list.
             summary.method shouldBe "GET"
-            summary.url.shouldNotBeNull()
+            summary.path.shouldNotBeNull()
             summary.status shouldBe HttpStatusCode.OK.value
             summary.durationMs.shouldNotBeNull()
         }
@@ -136,29 +156,47 @@ class InsightsRecordingSpec : FunktorApiSpec() {
             }
         }
 
+        "an oversized epp is clamped by the handler, not honoured" {
+            recordOneRequest()
+
+            insightsApp {
+                authenticate(superUserToken) {
+                    // Without `coerceIn(1, MAX_EPP)` this asks the loader to open 99 999 records — mean
+                    // size 236 KB — on a handler thread. Unit tests cannot reach the handler body, so
+                    // this is the only place the clamp is actually exercised.
+                    request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = 1, epp = 99_999)) {
+                        status shouldBe HttpStatusCode.OK
+                        val rows = apiResponseData<List<InsightsRecordSummary>>().shouldNotBeNull()
+                        (rows.size <= InsightsApi.MAX_EPP) shouldBe true
+                    }
+
+                    // epp=0 must not mean "an empty page forever"
+                    request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = 1, epp = 0)) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<List<InsightsRecordSummary>>().shouldNotBeNull().size shouldBe 1
+                    }
+
+                    // and a nonsense page is an empty page, not page one
+                    request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = Int.MAX_VALUE, epp = 20)) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<List<InsightsRecordSummary>>().shouldNotBeNull() shouldBe emptyList()
+                    }
+                }
+            }
+        }
+
         "the insights endpoints do not record themselves" {
             // `.noInsights()` on both routes. Without it a superuser opening the panel fills the depot
             // with records of themselves reading it — each one carrying their own Authorization header,
             // and each one making the next page of the list longer.
             recordOneRequest()
 
-            var before = 0
-            var after = 0
+            val before = countRecords()
 
-            insightsApp {
-                authenticate(superUserToken) {
-                    request(insightsApi.insights.listRecords, wholeDepot) {
-                        before = apiResponseData<List<InsightsRecordSummary>>()?.size ?: 0
-                    }
+            // give an errant record the same chance to land that a real one gets
+            delay(500.milliseconds)
 
-                    // give an errant record the same chance to land that a real one gets
-                    delay(500.milliseconds)
-
-                    request(insightsApi.insights.listRecords, wholeDepot) {
-                        after = apiResponseData<List<InsightsRecordSummary>>()?.size ?: 0
-                    }
-                }
-            }
+            val after = countRecords()
 
             withClue("a saturated page cannot show growth, so the comparison below would be vacuous") {
                 (before < wholeDepot.epp) shouldBe true

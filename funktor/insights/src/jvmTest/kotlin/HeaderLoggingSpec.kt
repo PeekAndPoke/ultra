@@ -146,6 +146,35 @@ class HeaderLoggingSpec : StringSpec({
         HeaderLogging.defaults.actionFor("x-signature") shouldBe HeaderAction.REDACT
     }
 
+    "Location loses its query string — a redirect is where a grant is MINTED" {
+        // Referer only echoes a token back; Location is where the authorization server hands one over.
+        // Neither name matches the sensitive-name alternation, so both used to be stored verbatim.
+        val result = HeaderLogging.defaults.applyTo(
+            mapOf(
+                "Location" to listOf("https://app.example.com/cb?code=SECRET-GRANT&state=xyz"),
+                "Content-Location" to listOf("/download?sig=SECRET-SIG"),
+            )
+        )
+
+        result["Location"] shouldBe listOf("https://app.example.com/cb")
+        result["Content-Location"] shouldBe listOf("/download")
+        result.toString().contains("SECRET-GRANT") shouldBe false
+        result.toString().contains("SECRET-SIG") shouldBe false
+    }
+
+    "api_key is matched, not only api-key and apikey" {
+        // The pattern is reused for QUERY PARAMETER names, which are snake_case by convention while
+        // header names are kebab-case. `api-?key` matched neither `api_key` nor the example in its own
+        // KDoc; `?api_key=` was therefore stored verbatim.
+        HeaderLogging.defaults.actionFor("api_key") shouldBe HeaderAction.REDACT
+        HeaderLogging.defaults.actionFor("api-key") shouldBe HeaderAction.REDACT
+        HeaderLogging.defaults.actionFor("apikey") shouldBe HeaderAction.REDACT
+
+        HeaderLogging.defaults.applyToQueryParams(
+            mapOf("api_key" to listOf("SECRET-VALUE"))
+        )["api_key"] shouldBe redacted
+    }
+
     "referer keeps its path but loses its query string" {
         // The referer is the page the user came FROM — which is exactly where a magic-link or
         // password-reset token sits. Dropping the header loses real debugging value; keeping it whole

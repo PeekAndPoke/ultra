@@ -14,9 +14,13 @@ enum class HeaderAction {
     /**
      * Keep the value up to the `?`, discard the query string.
      *
-     * For URL-bearing headers — `Referer` above all, which carries the page the user came FROM, and so
-     * carries magic-link, password-reset and OAuth tokens whenever one of those pages links onward.
-     * Dropping the header outright would lose real debugging value; keeping it whole leaks the token.
+     * For URL-bearing headers — `Referer`, which carries the page the user came FROM, and `Location`,
+     * which is where a redirect-borne grant is minted. Dropping them outright would lose real debugging
+     * value; keeping them whole leaks the token.
+     *
+     * **Only the query string.** A secret in the PATH (`/reset/<jwt>` — the commonest magic-link shape),
+     * in the fragment, or in userinfo (`https://user:pass@host/`) survives untouched. Use
+     * [HeaderAction.REDACT] for a header whose URLs carry secrets outside the query.
      */
     STRIP_QUERY,
 }
@@ -96,9 +100,13 @@ class HeaderLogging private constructor(
          * `cookie2` / `set-cookie2` (RFC 2965) or any other variant — without it those fail open.
          * `signature` covers `x-signature`, `stripe-signature`, `x-hub-signature-256` and friends, which
          * are request HMACs.
+         *
+         * `api[-_]?key` and not `api-?key` because this pattern is reused for QUERY PARAMETER names by
+         * [applyToQueryParams]. Header names are kebab-case; query parameters are conventionally
+         * snake_case, so `?api_key=` — the very example that KDoc gives — was not matched.
          */
         private val sensitiveByName = Regex(
-            ".*(token|secret|password|passwd|credential|session|auth|api-?key|cookie|signature).*"
+            ".*(token|secret|password|passwd|credential|session|auth|api[-_]?key|cookie|signature).*"
         )
 
         /**
@@ -116,8 +124,16 @@ class HeaderLogging private constructor(
                 // pattern also matches via `.*auth.*`. Caught by mutation-testing this file.
                 rules = listOf(Rule.Pattern(sensitiveByName, HeaderAction.REDACT)) +
                         knownSensitive.map { Rule.Exact(it, HeaderAction.REDACT) } +
-                        // after the deny-list, so it wins for this one header
-                        Rule.Exact("referer", HeaderAction.STRIP_QUERY),
+                        // after the deny-list, so STRIP_QUERY wins for these
+                        // `referer` is where a token is echoed BACK; `location` is where one is MINTED —
+                        // an OAuth or magic-link flow answers `302 Location: /cb?code=<grant>`, and the
+                        // record of that redirect would otherwise BE the credential. Neither name matches
+                        // the alternation above, so both were stored verbatim.
+                        listOf(
+                            Rule.Exact("referer", HeaderAction.STRIP_QUERY),
+                            Rule.Exact("location", HeaderAction.STRIP_QUERY),
+                            Rule.Exact("content-location", HeaderAction.STRIP_QUERY),
+                        ),
                 default = HeaderAction.LOG,
             )
 

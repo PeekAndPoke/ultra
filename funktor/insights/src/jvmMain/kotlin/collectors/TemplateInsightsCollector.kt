@@ -15,8 +15,7 @@ class TemplateInsightsCollector : InsightsCollector {
     /** VUE-REF: `reference/collectors/TemplateInsightsCollector.kt` */
     data class Data(
         val timeNs: Long? = null,
-    ) : InsightsCollectorData {
-    }
+    ) : InsightsCollectorData
 
     var data = Data()
 

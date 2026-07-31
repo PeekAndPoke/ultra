@@ -40,7 +40,18 @@ data class InsightsRecordSummary(
      */
     val recordedAt: MpInstant?,
     val method: String?,
-    val url: String?,
+    /**
+     * The request **path**, without scheme, host or query string.
+     *
+     * Named `path` and not `url` because that is what it holds: the writer stores `request.path()`
+     * deliberately, so a `?token=` never reaches the record or this list. Scheme and host are not stored
+     * at all — an app serving several hosts from one process cannot tell them apart here. See the
+     * follow-ups in the task file.
+     *
+     * **Attacker-controlled**, like everything else recorded from a request — see
+     * [InsightsCollectorSlice] for the rendering rules that apply to it.
+     */
+    val path: String?,
     val status: Int?,
     val durationMs: Double?,
 )
@@ -56,6 +67,17 @@ data class InsightsRecordSummary(
 data class InsightsRecord(
     val ref: InsightsRecordRef,
     val recordedAt: MpInstant?,
+    /**
+     * The headline, repeated from the list.
+     *
+     * Present here because a `BRIEF` record has **no collectors at all**, so a detail page reached by
+     * deep link rather than from the list would otherwise show an empty envelope with no way to tell it
+     * from a record that genuinely collected nothing.
+     */
+    val method: String?,
+    /** See [InsightsRecordSummary.path] — a path, not a URL, and attacker-controlled. */
+    val path: String?,
+    val status: Int?,
     /** Null when the record carries no timing — distinct from a genuine 0.0. */
     val durationMs: Double?,
     val collectors: List<InsightsCollectorSlice>,
