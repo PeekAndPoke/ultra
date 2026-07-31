@@ -5,8 +5,13 @@ import type { EventModel } from './funktorsdk/models.ts'
 import { isSuccess } from './funktorsdk/runtime/apiResponse.ts'
 import { fetchTransport } from './funktorsdk/runtime/http.ts'
 
-// baseUrl is '' because vite.config.ts proxies /api to the demo server — same-origin, no CORS.
-const client = new FunktorConfClient({ baseUrl: '', transport: fetchTransport() })
+// The API is mounted behind a HOST matcher — `host("api.*".toRegex())` in the demo's server.kt — so
+// it is not served on plain localhost. This is the same base the Kraft frontends use
+// (`AdminAppConfig.apiBaseUrl`), and the server's CORS list allows this app's origin.
+const client = new FunktorConfClient({
+    baseUrl: 'http://api.funktor-demo.localhost:36587',
+    transport: fetchTransport(),
+})
 
 // `listEvents` is one of the group classes, destructured off the client. This is the Vue-composable
 // idiom, and it is exactly why members are emitted as arrow class fields rather than prototype

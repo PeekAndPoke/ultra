@@ -54,6 +54,11 @@ fun Application.module() = app.module(this) { app, config, init ->
 
         allowCredentials = true
 
+        // Dev sdkgen-app (Vue, consumes the generated TypeScript SDK):
+        allowHost("localhost:36591", schemes = listOf("http", "https"))
+        allowHost("127.0.0.1:36591", schemes = listOf("http", "https"))
+        allowHost("sdkgen.funktor-demo.localhost:36591", schemes = listOf("http", "https"))
+
         // Dev adminapp:
         allowHost("localhost:36588", schemes = listOf("http", "https"))
         allowHost("127.0.0.1:36588", schemes = listOf("http", "https"))
