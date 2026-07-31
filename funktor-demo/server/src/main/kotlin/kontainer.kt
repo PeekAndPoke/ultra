@@ -18,6 +18,7 @@ import io.peekandpoke.funktor.rest.auth.currentUserProvider
 import io.peekandpoke.karango.karango
 import io.peekandpoke.monko.monko
 import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.funktor.codegen.funktorCodegen
 
 fun Route.installWwwKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) {
     installKontainer {
@@ -70,6 +71,10 @@ fun createBlueprint(config: FunktorDemoConfig) = kontainer {
             useKarango()
         }
     )
+
+    // The TypeScript SDK generator. Dev-time only — it adds a CLI command (`sdk:ts:generate`) and
+    // contributes nothing to request handling.
+    funktorCodegen()
 
     // Mount ArangoDb
     karango(config = config.arangodb)

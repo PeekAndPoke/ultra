@@ -167,26 +167,37 @@ class RestApiTsContributor(
 
     /** Walks the features, applying [include] and rejecting anything not yet supported. */
     private fun select(urlParams: TsUrlParamClaims): List<SelectedClient> = features.value.mapNotNull { feature ->
-        val groups = feature.getRouteGroups().mapNotNull { group ->
-            val endpoints = group.all.filter(include).map { route -> selectedOf(feature, group, route, urlParams) }
+        // MERGED BY GROUP NAME, not one class per ApiRoutes instance. Two groups may legitimately
+        // share a name — `funktor:auth` declares `ApiRoutes("login")` twice, once `public()` and once
+        // `authenticated()` — and they are one logical group to a client. Emitting a class per
+        // instance produced two `LoginApi` classes and two `login` members in one file, which only
+        // `tsc` caught (TS2300, found by generating the demo's real API).
+        val groups = feature.getRouteGroups()
+            .groupBy { it.name }
+            .mapNotNull { (groupName, instances) ->
+                val endpoints = instances.flatMap { group ->
+                    group.all.filter(include).map { route -> selectedOf(feature, group, route, urlParams) }
+                }
 
-            val duplicates = endpoints.groupBy { it.member }.filterValues { it.size > 1 }.keys
+                // Runs across the MERGED set, so a collision between the two halves is caught too.
+                val duplicates = endpoints.groupBy { it.member }.filterValues { it.size > 1 }.keys
 
-            check(duplicates.isEmpty()) {
-                "Route group '${group.name}' of feature '${feature.codeGenName}' produces the same " +
-                        "TypeScript member name twice: ${duplicates.joinToString()}. Two routes cannot " +
-                        "share a member. Fix: give one of them a distinct `codeGen { funcName = ... }`."
+                check(duplicates.isEmpty()) {
+                    "Route group '$groupName' of feature '${feature.codeGenName}' produces the same " +
+                            "TypeScript member name twice: ${duplicates.joinToString()}. Two routes " +
+                            "cannot share a member. Fix: give one of them a distinct " +
+                            "`codeGen { funcName = ... }`."
+                }
+
+                endpoints.takeIf { it.isNotEmpty() }?.let {
+                    SelectedGroup(
+                        className = TsClientNames.groupClass(groupName),
+                        member = TsClientNames.groupMember(groupName),
+                        doc = "Routes of the `$groupName` group.",
+                        endpoints = it,
+                    )
+                }
             }
-
-            endpoints.takeIf { it.isNotEmpty() }?.let {
-                SelectedGroup(
-                    className = TsClientNames.groupClass(group.name),
-                    member = TsClientNames.groupMember(group.name),
-                    doc = "Routes of the `${group.name}` group.",
-                    endpoints = it,
-                )
-            }
-        }
 
         // A feature all of whose routes were filtered out emits no file at all, rather than an empty
         // class — the profile seam is meant to remove things completely.

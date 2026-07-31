@@ -256,3 +256,29 @@ class FxHostileEnumRoutes : ApiRoutes("fx-hostile-enum", authFloor = { public() 
             codeGen { funcName = "listing" }.handle { ApiResponse.ok(FxTalkModel("t", "T")) }
         }
 }
+
+/**
+ * Two `ApiRoutes` instances sharing ONE group name — legal, and real.
+ *
+ * `funktor:auth` declares `ApiRoutes("login")` twice (`AuthApi.kt:34` public, `:216` authenticated).
+ * They are one logical group to a client, so they must merge into one class rather than emit two
+ * classes with the same name.
+ */
+class FxSplitPublicRoutes : ApiRoutes("fx-split", authFloor = { public() }) {
+    val open = TypedApiEndpoint
+        .Get(uri = "/api/fx/split/open", response = FxTalkModel.serializer().api())
+        .mount { codeGen { funcName = "openPart" }.handle { ApiResponse.ok(FxTalkModel("a", "A")) } }
+}
+
+class FxSplitSecuredRoutes : ApiRoutes("fx-split", authFloor = { public() }) {
+    val secured = TypedApiEndpoint
+        .Get(uri = "/api/fx/split/secured", response = FxSpeakerModel.serializer().api())
+        .mount { codeGen { funcName = "securedPart" }.handle { ApiResponse.ok(FxSpeakerModel("a", null)) } }
+}
+
+/** Same-named groups whose MEMBERS also collide — the merge must still catch that. */
+class FxSplitClashRoutes : ApiRoutes("fx-split", authFloor = { public() }) {
+    val clash = TypedApiEndpoint
+        .Get(uri = "/api/fx/split/clash", response = FxTalkModel.serializer().api())
+        .mount { codeGen { funcName = "openPart" }.handle { ApiResponse.ok(FxTalkModel("b", "B")) } }
+}

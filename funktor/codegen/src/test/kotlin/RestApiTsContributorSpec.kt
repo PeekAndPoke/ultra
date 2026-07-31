@@ -121,6 +121,31 @@ class RestApiTsContributorSpec : FreeSpec() {
             thrown!!.message!! shouldContain "supplied any root type"
         }
 
+        "two ApiRoutes sharing a group name merge into ONE class" {
+            // Found by generating the demo's real API: funktor:auth declares ApiRoutes("login")
+            // twice, and emitting a class per instance produced two `LoginApi` classes and two
+            // `login` members in one file. Only tsc caught it (TS2300) — no Kotlin assertion did.
+            val out = clientOf(build(listOf(FxSplitPublicRoutes(), FxSplitSecuredRoutes())))
+
+            withClue("exactly one class, carrying both halves' members") {
+                Regex("export class FxSplitApi \\{").findAll(out).count() shouldBe 1
+                out shouldContain "readonly openPart = () =>"
+                out shouldContain "readonly securedPart = () =>"
+            }
+
+            withClue("and one aggregate member, not two") {
+                Regex("readonly fxSplit: FxSplitApi").findAll(out).count() shouldBe 1
+            }
+        }
+
+        "merged groups still catch a member collision between the two halves" {
+            val thrown = runCatching {
+                build(listOf(FxSplitPublicRoutes(), FxSplitClashRoutes()))
+            }.exceptionOrNull()
+
+            thrown!!.message!! shouldContain "openPart"
+        }
+
         "emitted identifiers and literals" - {
 
             "two GROUPS sharing a member name each keep their own schema" {
