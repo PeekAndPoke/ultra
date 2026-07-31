@@ -96,6 +96,18 @@ class RedactedSpec : StringSpec({
     "equality is by value, so tests can assert on what was loaded" {
         Redacted("a") shouldBe Redacted("a")
         (Redacted("a") == Redacted("b")) shouldBe false
-        Redacted("a").hashCode() shouldBe "a".hashCode()
+    }
+
+    "hashCode is CONSTANT — it must not be a digest of the secret" {
+        // String.hashCode() is cheap, well known and non-cryptographic, so returning it would hand out
+        // a 32-bit oracle over the secret, offline-invertible for anything short or low-entropy. The
+        // reachable sink found in review was BackgroundJobQueued.calcHash, whose fallback branch hashes
+        // the raw object and persists the result as an admin-readable dedupeKey.
+        Redacted("a").hashCode() shouldBe 0
+        Redacted("a").hashCode() shouldBe Redacted("b").hashCode()
+
+        // the equals/hashCode contract still holds in the direction that matters
+        (Redacted("a") == Redacted("a")) shouldBe true
+        Redacted("a").hashCode() shouldBe Redacted("a").hashCode()
     }
 })

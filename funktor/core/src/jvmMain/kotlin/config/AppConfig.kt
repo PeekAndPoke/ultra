@@ -149,7 +149,16 @@ interface AppConfig {
         override val keys: Map<String, Redacted<String>> = emptyMap()
     }
 
-    private class AppConfigImpl(
+    /**
+     * A `data class` because Slumber only describes data classes.
+     *
+     * `AppConfigCollector` slumbers the whole config tree, and a plain class matches no branch in
+     * `BuiltInModule`, so `SlumberConfig` raises "There is no known way to slumber the type". That would
+     * throw on EVERY request for any app that builds its config through [of] and runs insights at FULL.
+     * Jackson reflected over any POJO and so never needed this. Not caught by the in-repo suites, whose
+     * config classes happen to be data classes already — see `AppConfigSlumberSpec`.
+     */
+    private data class AppConfigImpl(
         override val ktor: KtorConfig,
         override val funktor: FunktorConfig,
         override val keys: Map<String, Redacted<String>>,

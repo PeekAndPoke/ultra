@@ -28,6 +28,10 @@ object JsonPrinter {
     fun prettyPrint(obj: Any?): String = try {
         json.encodeToString(JsonElement.serializer(), codec.slumber(obj).toJsonElement())
     } catch (e: Throwable) {
-        "Could not pretty print: $obj \n" + e.stackTraceToString()
+        // The CLASS, never the value. This branch runs precisely when slumbering failed — i.e. when the
+        // redacting codecs did NOT run — so interpolating `$obj` here would dump in the clear whatever
+        // the successful path exists to protect. Reachable from `app:config` and the admin APIs.
+        "Could not pretty print an instance of: ${obj?.let { it::class.qualifiedName } ?: "null"} \n" +
+                e.stackTraceToString()
     }
 }

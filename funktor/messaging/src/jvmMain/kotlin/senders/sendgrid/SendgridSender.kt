@@ -28,7 +28,7 @@ class SendgridSender(private val client: SendGridClientV3) : EmailSender {
         fun of(config: SendgridConfig): SendgridSender {
 
             val client = SendGridClientV3(
-                apiKey = config.apiKey,
+                apiKey = config.apiKey.value,
                 baseUrl = config.baseUrl
             )
 

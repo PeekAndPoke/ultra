@@ -98,8 +98,11 @@ object BuiltInModule : SlumberModule {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
-                // Redacted<T> — FIRST, so nothing can shadow it. Takes the raw node and awakens T from
-                // it, which is what lets a config file keep `signingKey = "abc"` instead of nesting.
+                // Redacted<T> — FIRST within this module, ahead of the value-class, data-class and Any
+                // branches that would otherwise claim it. NOT un-shadowable: `SlumberConfig` queries
+                // modules in order and `prependModules` puts a user module ahead of this one entirely,
+                // which both DB codecs already do. Takes the raw node and awakens T from it, which is
+                // what lets a config file keep `signingKey = "abc"` instead of nesting.
                 cls == Redacted::class ->
                     type.arguments.firstOrNull()?.type?.let { RedactedAwaker(it) }?.let {
                         return type.wrapIfNonNull(it)
@@ -186,8 +189,9 @@ object BuiltInModule : SlumberModule {
                 // Null or Nothing
                 cls in listOf(Nothing::class, Unit::class) -> NullCodec
 
-                // Redacted<T> — FIRST, ahead of every other codec, so a secret cannot be un-redacted by
-                // some later branch claiming the type. The whole subtree becomes one placeholder.
+                // Redacted<T> — FIRST within this module, so no later branch here can un-redact a secret.
+                // A module prepended via `prependModules` still takes precedence over this one; see the
+                // matching note on the awaker side. The whole subtree becomes one placeholder.
                 cls == Redacted::class -> type.wrapIfNonNull(RedactedSlumberer)
 
                 // we do not wrap JsonNull with wrapIfNonNull

@@ -40,7 +40,7 @@ class AwsSesSender(private val client: SesAsyncClient) : EmailSender {
                     Region.of(config.region)
                 )
                 .credentialsProvider {
-                    AwsBasicCredentials.create(config.accessKeyId, config.secretAccessKey.value)
+                    AwsBasicCredentials.create(config.accessKeyId.value, config.secretAccessKey.value)
                 }
                 .build()
 

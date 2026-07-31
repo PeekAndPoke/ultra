@@ -10,8 +10,18 @@ import kotlin.math.max
 class AqlPrinter {
 
     companion object {
-        /** Renders a parameter value as pretty JSON. Slumber already produced a plain tree; this
-         * only turns it into text, which is all the Jackson mapper here ever did. */
+        /**
+         * Renders a parameter value as pretty JSON.
+         *
+         * **These values are RAW, not slumbered** — `queryVars` holds what the caller bound
+         * (`base_expr.kt`'s `p.value(name, value)`); slumbering happens later, in `KarangoDriver`. So
+         * `JsonUtil.toJsonElement`'s `else -> JsonPrimitive(toString())` fallback applies: a structured
+         * bind value renders as the JSON *string* `"Person(name=x, age=3)"` where Jackson rendered an
+         * object, and a `Map` with non-String keys throws a raw `ClassCastException`.
+         *
+         * Debug-only (`printRawQuery`), and untested because every printer spec binds scalars and lists,
+         * which are unaffected. Tracked in `.claude/tasks/20260731-printer-raw-bind-values.md`.
+         */
         private val jsonPrinter = Json { prettyPrint = true }
 
         /** Prints the raw query, with all parameter value included */

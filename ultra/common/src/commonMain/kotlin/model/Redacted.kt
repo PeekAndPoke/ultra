@@ -70,7 +70,18 @@ class Redacted<T>(
     override fun equals(other: Any?): Boolean =
         this === other || (other is Redacted<*> && other.value == value)
 
-    override fun hashCode(): Int = value?.hashCode() ?: 0
+    /**
+     * Constant — deliberately NOT the inner value's hash.
+     *
+     * `String.hashCode()` is a cheap, well-known, non-cryptographic digest, so returning it would hand
+     * out a 32-bit oracle over the secret that is offline-invertible for anything short or low-entropy.
+     * The one reachable sink found in review was `BackgroundJobQueued.calcHash`, whose fallback branch
+     * hashes the raw object and persists the result as an admin-readable `dedupeKey`.
+     *
+     * The equals/hashCode contract still holds — equal values still hash equally — at the cost of
+     * collisions if `Redacted` is ever used as a hash key, which nothing does.
+     */
+    override fun hashCode(): Int = 0
 }
 
 /**

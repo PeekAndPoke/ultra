@@ -11,8 +11,13 @@ import kotlin.math.max
 class MongoPrinter {
 
     companion object {
-        /** Renders a parameter value as pretty JSON. Slumber already produced a plain tree; this
-         * only turns it into text, which is all the Jackson mapper here ever did. */
+        /**
+         * Renders a parameter value as pretty JSON.
+         *
+         * **These values are RAW, not slumbered** — see the matching note on `AqlPrinter`, which has the
+         * same shape and the same consequence: a structured bind value renders as a JSON string rather
+         * than an object. Tracked in `.claude/tasks/20260731-printer-raw-bind-values.md`.
+         */
         private val jsonPrinter = Json { prettyPrint = true }
 
         /** Prints the raw query, with all parameter value included */

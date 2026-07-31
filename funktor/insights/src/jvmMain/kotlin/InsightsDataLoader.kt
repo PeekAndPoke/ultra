@@ -32,7 +32,9 @@ class InsightsDataLoader(
     private val repository: InsightsRepository,
 ) {
     companion object {
-        /** Lenient: stored records are written by Jackson, whose output we read but do not control. */
+        /** Lenient: stored records were written by an EARLIER version of this app, so their shape is
+         * read but not controlled. (They were written by Jackson until 2026-07-31; by Slumber and
+         * kotlinx since. Records from before the switch are still on disk, which is the point.) */
         private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
         /** Records are written to `records-<date>/<datetime>.json`. */
