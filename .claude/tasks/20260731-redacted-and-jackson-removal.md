@@ -116,6 +116,42 @@ Verified against `ultra/slumber/src/jvmMain/kotlin/builtin/BuiltInModule.kt`:
 
 The asymmetry `Redacted<T>` needs is the asymmetry Slumber already has.
 
+## Config loading is pure Slumber — and the Awaker is what keeps HOCON unchanged
+
+Raised by the maintainer (2026-07-31): *can a server app actually load a config containing
+`Redacted<T>`, given it comes in through ktor and HOCON?* Answered by probing, not reading.
+
+**The path has no Jackson and no ktor typing in it:**
+
+```
+application.<env>.conf  →  HOCON Config  →  config.root().unwrapped()  →  Map<String, Any?>
+                        →  Codec.default.awake(type, data)              ← Slumber, and only Slumber
+```
+
+`funktor/core/src/jvmMain/kotlin/config/AppConfig.kt:94-108`. HOCON produces an untyped map; every bit
+of the typing is Slumber's.
+
+**So it works — but ONLY because of the Awaker, and that is a bigger deal than it sounds.** Measured
+with a plain generic wrapper and no custom codec registered:
+
+| HOCON shape | Result |
+|---|---|
+| `signingKey = "abc"` — what every config file has today | **`AwakerException: Value at path 'root.secret' must not be null`** |
+| `signingKey { value = "abc" }` — the wrapper's constructor shape | awakes fine |
+
+Without the custom Awaker, Slumber falls through to `DataClassAwaker`, which wants the wrapper's own
+constructor shape. Adopting `Redacted<T>` would then mean **rewriting every config file in every app**
+to nest its secrets one level deeper — including apps outside this repo.
+
+**Consequence for the Awaker's contract, worth stating precisely because a naive implementation gets it
+wrong:** it must take the RAW node — whatever the inner type would accept — awake `T` from it by the
+normal machinery, and wrap the result. It must NOT delegate to the data-class awaker or expect a
+`value` key. The declared type is available (`getAwaker` receives it), so `T` is known.
+
+Stage 1 therefore has a concrete acceptance test beyond round-tripping: **load a config from
+natural-shaped HOCON where a field is `Redacted<String>` and another is `Redacted<SomeObject>`, and
+assert both come back with their real values.** If that passes, no config file anywhere has to change.
+
 ## Staging
 
 Ordered so the security-critical part lands first and nothing is blocked on hygiene.
