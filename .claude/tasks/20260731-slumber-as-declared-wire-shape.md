@@ -155,12 +155,12 @@ declares, applies at a use site, and reads back through runtime reflection — w
   type whose wire shape is independent of its argument is evidence FOR the settled simple form (§5),
   not against it.
 
-- **Where does the annotation live?** *(superseded above)*
 - **Does it apply to types you do not own?** `java.time.*` and `kotlinx.datetime.*` are custom-coded
-  too and cannot be annotated. A registry-style escape hatch is needed regardless, which is what
-  `TsTypeClaims` already is on the codegen side. Do not let the annotation's existence delete the
-  escape hatch.
-- **Generic custom-coded types** — does anything need `As` with type arguments?
+  too and cannot be annotated. **DEFERRED (maintainer, 2026-08-01) — not solved in this task.** The
+  registry-style escape hatch therefore stays, and `TsTypeClaims` is already exactly that on the
+  codegen side. The constraint this puts on the implementation: **no consumer may treat the
+  annotation as the only source of a wire shape.** Read it where present, fall back to the registry
+  where absent. Revisit once the annotation carries real weight.
 - **KSP vs reflection.** karango/monko read it at build time via KSP; ultra/codegen reads it at run
   time via reflection. The annotation must be visible to both (`@Retention(RUNTIME)`).
 - **Migration order.** codegen can consume it first and cheaply (its claims are already a registry
@@ -213,3 +213,34 @@ assert raw1 == raw2
 One subtlety that makes it work: the comparison must be type-sensitive. In the wrong-type row above
 both maps PRINT identically — `{ts=1785492930000, …}` — and differ only because `"1785492930000"` is
 not `1785492930000L`. Map equality gives that for free; comparing rendered strings would not.
+
+## 9. Removing the hand-written `.ts` helpers — the call sites are real
+
+**SETTLED (maintainer, 2026-08-01): migrate the call sites, do not leave the helpers behind as
+deprecated aliases.** Both forms in use get replaced by whatever KSP generates.
+
+Two forms exist, and a grep for one misses the other:
+
+1. **The helper** — `AqlPathExpr<MpInstant>.ts` / `MongoPathExpr<MpInstant>.ts`
+   (`karango/core/src/main/kotlin/aql/base_slumber.kt:23-37`,
+   `monko/core/src/main/kotlin/lang/base_slumber.kt:23-37`). Four overloads each, distinguished by
+   `@JvmName`, and there is no `.timezone` or `.human` — see §2.
+   Roughly 20 uses across `funktor/auth`, `funktor/messaging` and `funktor/cluster`, each with an
+   explicit `import io.peekandpoke.karango.aql.ts` / `io.peekandpoke.monko.lang.ts` — those imports
+   are the reliable way to enumerate them, not the `.ts` text itself, which also matches unrelated
+   receivers (`funktor/insights/reference/gui/InsightsGuiTemplate.kt:141`,
+   `funktor/inspect/src/jsMain/kotlin/cluster/devtools/DevtoolsRequestHistoryPage.kt:54`).
+2. **The raw property call**, bypassing the helper entirely —
+   `funktor/cluster/src/jvmMain/kotlin/backgroundjobs/karango/KarangoBackgroundJobsArchiveRepo.kt:36,46`
+   uses `archivedAt.property<Long>("ts")` while its Monko twin
+   (`MonkoBackgroundJobsArchiveRepo.kt:38,43`) uses `.ts`. Same repo, same field, two spellings —
+   which is the duplication argument in §2 showing up in application code.
+
+**Method: rename, then compile.** A grep for `.ts` cannot find receiver-less or inlined uses, and
+`property<Long>("ts")` is a string literal no refactoring tool tracks. Renaming the helper and letting
+the compiler enumerate the callers is the only enumeration that is complete — `CLAUDE.md` records this
+exact trap being hit twice. The raw call sites then come from a literal search for
+`property<Long>("ts")`, which is exhaustive because it is one string.
+
+Do the migration in that order: generate → rename old helper → fix every compile error → delete.
+Never delete first; a missing extension and a wrong extension look identical at the call site.
