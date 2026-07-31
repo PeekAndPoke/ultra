@@ -12,19 +12,24 @@ import java.util.Base64
 import java.util.Date
 
 /**
- * The gate that authenticates a token before anything parses it.
+ * The gate that authenticates a token before its payload is parsed, and selects the key by `kid`.
  *
- * The tests that matter most are the first two: they are the exact probes that showed the removed
- * `java-jwt` parsing unauthenticated JSON, and they must fail on the MAC instead. The rest exist so
- * that the gate cannot reject anything the old issuer would have accepted — a gate that is subtly
- * stricter than the issuer breaks every login, and one that is looser is pointless.
+ * Two properties are load-bearing here and are tested separately:
+ *
+ * 1. **The payload is never parsed before the MAC.** The malformed-payload and 20 MB probes are the
+ *    exact ones that showed the removed `java-jwt` parsing unauthenticated JSON.
+ * 2. **The header selects a KEY, never an ALGORITHM.** `alg` is compared against the configured key
+ *    and a mismatch rejects, so algorithm confusion cannot start.
  */
 class JwtSignatureGateSpec : StringSpec({
 
     val secret = "test-signing-key-for-the-gate-spec-rfc7518-sixty-four-bytes!!!!!!"
+    val otherSecret = "a-different-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!!"
+
+    fun key(id: String, s: String = secret) = JwtSigningKey(id = id, secret = Redacted(s))
 
     val config = JwtConfig(
-        signingKey = Redacted(secret),
+        keys = listOf(key("gate-1")),
         issuer = "test-issuer",
         audience = "test-audience",
         permissionsNs = "permissions",
@@ -32,19 +37,36 @@ class JwtSignatureGateSpec : StringSpec({
     )
 
     val generator = JwtGenerator(config)
-    val gate = JwtSignatureGate(secret)
+    val gate = JwtSignatureGate(config.keys)
 
     val b64 = Base64.getUrlEncoder().withoutPadding()
 
-    fun handMadeToken(header: String, payload: String, signature: String = "not-a-valid-signature") =
-        "${b64.encodeToString(header.toByteArray())}.${b64.encodeToString(payload.toByteArray())}.$signature"
+    fun encode(s: String) = b64.encodeToString(s.toByteArray())
+
+    /**
+     * A wrong signature that is nevertheless well-formed: 64 zero bytes, the right size for
+     * HMAC-SHA512. Using a literal like `"not-a-valid-signature"` instead made these tokens die in
+     * the base64url decoder, one step BEFORE the MAC comparison — so every row using it silently
+     * stopped testing what it named. Caught by asserting on the rejection message.
+     */
+    val wrongSignature = b64.encodeToString(ByteArray(64))
+
+    fun handMadeToken(header: String, payload: String, signature: String = wrongSignature) =
+        "${encode(header)}.${encode(payload)}.$signature"
+
+    /** A hand-made token carrying a genuine MAC — only reachable by a key holder. */
+    fun signedToken(header: String, payload: String, signWith: JwtSigningKey = config.keys.first()): String {
+        val signingInput = "${encode(header)}.${encode(payload)}"
+
+        return "$signingInput.${b64.encodeToString(JwtSignatureGate(listOf(signWith)).mac(signingInput))}"
+    }
 
     /** A genuine token, produced by the very code path that signs in production. */
     fun realToken(): String = generator.createJwt(user = JwtUserData(id = UserId("u1"), desc = "d", type = "t"))
 
-    // ── the signing key must be usable at all ───────────────────────────────────────────────────────
+    // ── the key set must be usable at all ───────────────────────────────────────────────────────────
 
-    "a signing key shorter than 64 bytes is refused, with an actionable message" {
+    "a secret shorter than its algorithm's floor is refused, with an actionable message" {
         // RFC 7518 §3.2 makes >= hash-output size a MUST for HMAC. It matters because there is no KDF
         // between the configured string and the MAC key material, so guessing costs one HMAC per
         // attempt and a captured token is an offline oracle.
@@ -52,11 +74,14 @@ class JwtSignatureGateSpec : StringSpec({
             "" to "empty",
             "short" to "obviously too short",
             "a".repeat(63) to "one byte under the limit",
-        ).forEach { (key, why) ->
+        ).forEach { (s, why) ->
             withClue(why) {
-                val thrown = shouldThrow<IllegalArgumentException> { JwtSignatureGate(key) }
+                val thrown = shouldThrow<IllegalArgumentException> { JwtSignatureGate(listOf(key("k", s))) }
 
                 thrown.message!! shouldContain "RFC 7518"
+                withClue("the message must name the offending key, since there can be several") {
+                    thrown.message!! shouldContain "'k'"
+                }
                 withClue("the message must say HOW to fix it, not just that it is wrong") {
                     thrown.message!! shouldContain "openssl rand -base64 64"
                 }
@@ -64,52 +89,255 @@ class JwtSignatureGateSpec : StringSpec({
         }
 
         withClue("exactly 64 bytes is accepted — the boundary is inclusive") {
-            JwtSignatureGate("a".repeat(64))
+            JwtSignatureGate(listOf(key("k", "a".repeat(64))))
         }
     }
 
-    "the boot check and the constructor agree" {
-        // FunktorRestBuilder.jwt() calls requireUsableSigningKey eagerly, because the kontainer binding
-        // is lazy and would otherwise defer the failure to the first bearer request on a live server.
-        shouldThrow<IllegalArgumentException> { JwtSignatureGate.requireUsableSigningKey("too-short") }
+    "an empty key list is refused" {
+        shouldThrow<IllegalArgumentException> { JwtSignatureGate(emptyList()) }
+            .message!! shouldContain "no signing keys"
+    }
 
-        JwtSignatureGate.requireUsableSigningKey(secret)
+    "duplicate key ids are refused" {
+        // A `kid` selects exactly one key. With duplicates the map would silently keep the last one,
+        // so a token signed under the FIRST key of that id would stop verifying.
+        val thrown = shouldThrow<IllegalArgumentException> {
+            JwtSignatureGate(listOf(key("dup"), key("other"), key("dup", otherSecret)))
+        }
+
+        thrown.message!! shouldContain "[dup]"
+    }
+
+    "a blank key id is refused" {
+        shouldThrow<IllegalArgumentException> { JwtSignatureGate(listOf(key(" "))) }
+            .message!! shouldContain "blank id"
+    }
+
+    "the boot check and the constructor agree" {
+        // FunktorRestBuilder.jwt() calls requireUsableKeys eagerly, because the kontainer binding is
+        // lazy and would otherwise defer the failure to the first bearer request on a live server.
+        shouldThrow<IllegalArgumentException> { JwtSignatureGate.requireUsableKeys(emptyList()) }
+        shouldThrow<IllegalArgumentException> { JwtSignatureGate.requireUsableKeys(listOf(key("k", "too-short"))) }
+        shouldThrow<IllegalArgumentException> { JwtSignatureGate.requireUsableKeys(listOf(key("a"), key("a"))) }
+
+        JwtSignatureGate.requireUsableKeys(config.keys)
     }
 
     // ── the property this exists for ────────────────────────────────────────────────────────────────
 
     "a malformed payload is rejected WITHOUT being parsed" {
         val thrown = shouldThrow<JwtVerificationException> {
-            generator.verify(handMadeToken("""{"alg":"HS512","typ":"JWT"}""", """{"sub": {{{ """))
+            generator.verify(handMadeToken("""{"kid":"gate-1","alg":"HS512","typ":"JWT"}""", """{"sub": {{{ """))
         }
 
-        // If anything parsed before the MAC, this malformed payload would surface as the decode
+        // If the payload parsed before the MAC, this malformed one would surface as the decode
         // rejection ("payload is not a JSON object") instead of a gate rejection. The TYPE is what
         // pins the order of the two steps.
         thrown.shouldBeInstanceOf<JwtSignatureGate.Rejected>()
-    }
-
-    "a malformed header is rejected WITHOUT being parsed" {
-        val thrown = shouldThrow<JwtVerificationException> {
-            generator.verify(handMadeToken("""{"alg": [[[ """, """{"sub":"x"}"""))
-        }
-
-        thrown.shouldBeInstanceOf<JwtSignatureGate.Rejected>()
+        thrown.message shouldBe "Token signature is invalid"
     }
 
     "an oversized token is rejected before it is hashed, let alone parsed" {
         // Under java-jwt this 20 MB string was fully parsed and allocated, and only THEN failed the
         // signature check. It does not even reach the MAC.
-        val huge = handMadeToken("""{"alg":"HS512","typ":"JWT"}""", """{"s":"""" + "A".repeat(20_000_000) + """"}""")
+        val huge = handMadeToken(
+            """{"kid":"gate-1","alg":"HS512","typ":"JWT"}""",
+            """{"s":"""" + "A".repeat(20_000_000) + """"}""",
+        )
 
         shouldThrow<JwtSignatureGate.Rejected> { generator.verify(huge) }
             .message shouldBe "Token exceeds the maximum accepted length"
     }
 
     "a deeply nested payload never reaches a parser" {
-        val nested = handMadeToken("""{"alg":"HS512","typ":"JWT"}""", "[".repeat(10_000) + "]".repeat(10_000))
+        val nested = handMadeToken(
+            """{"kid":"gate-1","alg":"HS512","typ":"JWT"}""",
+            "[".repeat(10_000) + "]".repeat(10_000),
+        )
 
         shouldThrow<JwtSignatureGate.Rejected> { generator.verify(nested) }
+    }
+
+    // ── the header IS parsed, and is bounded before it is ───────────────────────────────────────────
+
+    "an oversized header is rejected BEFORE it is decoded" {
+        // The cap is on the ENCODED segment, which is the only length available before the work it
+        // bounds. Padded out with an unknown member so the header would otherwise be perfectly valid:
+        // the rejection is about size, not shape.
+        val fat = """{"kid":"gate-1","alg":"HS512","typ":"JWT","x":"${"A".repeat(4096)}"}"""
+
+        withClue("the encoded segment must really exceed the cap, or this proves nothing") {
+            (encode(fat).length > JwtSignatureGate.MAX_HEADER_LENGTH) shouldBe true
+        }
+
+        shouldThrow<JwtSignatureGate.Rejected> { gate.check(handMadeToken(fat, """{"sub":"x"}""")) }
+            .message shouldBe "Token header exceeds the maximum accepted length"
+    }
+
+    "a header just under the cap is still parsed and evaluated on its merits" {
+        // The complement of the row above: proves the cap is a cap and not a blanket rejection of
+        // anything with an unknown member.
+        val padding = "A".repeat(600)
+        val header = """{"kid":"gate-1","alg":"HS512","typ":"JWT","x":"$padding"}"""
+
+        withClue("this header must fit under the cap") {
+            (encode(header).length <= JwtSignatureGate.MAX_HEADER_LENGTH) shouldBe true
+        }
+
+        // Reaches the MAC — the failure is the signature, not the size. And with a real MAC it passes.
+        shouldThrow<JwtSignatureGate.Rejected> { gate.check(handMadeToken(header, """{"sub":"x"}""")) }
+            .message shouldBe "Token signature is invalid"
+
+        gate.check(signedToken(header, """{"sub":"x"}"""))
+    }
+
+    "a malformed or non-JSON header is rejected as such" {
+        listOf(
+            """{"alg": [[[ """ to "not JSON at all",
+            """[1,2,3]""" to "JSON, but not an object",
+            """{"kid":42,"alg":"HS512"}""" to "kid is a number, not a string",
+            """{"kid":"gate-1","alg":["HS512"]}""" to "alg is an array",
+        ).forEach { (header, why) ->
+            withClue(why) {
+                shouldThrow<JwtSignatureGate.Rejected> { gate.check(handMadeToken(header, """{"sub":"x"}""")) }
+                    .message shouldBe "Token header is not valid"
+            }
+        }
+
+        withClue("a header segment that is not base64url at all") {
+            shouldThrow<JwtSignatureGate.Rejected> { gate.check("!!!.${encode("""{"sub":"x"}""")}.sig") }
+                .message shouldBe "Token header is not valid"
+        }
+    }
+
+    "unknown header members are ignored — only a key holder can add any" {
+        gate.check(signedToken("""{"kid":"gate-1","alg":"HS512","typ":"JWT","crit":["x"],"x":1}""", """{"sub":"x"}"""))
+    }
+
+    // ── kid selection ───────────────────────────────────────────────────────────────────────────────
+
+    "the kid selects which key verifies" {
+        val a = key("a")
+        val b = key("b", otherSecret)
+        val both = JwtSignatureGate(listOf(a, b))
+
+        // Each token verifies only under the key its kid names, even though both keys are configured.
+        both.check(signedToken("""{"kid":"a","alg":"HS512","typ":"JWT"}""", """{"sub":"x"}""", signWith = a))
+        both.check(signedToken("""{"kid":"b","alg":"HS512","typ":"JWT"}""", """{"sub":"x"}""", signWith = b))
+
+        withClue("a token signed with key b but claiming kid a must fail — the kid is not a hint") {
+            shouldThrow<JwtSignatureGate.Rejected> {
+                both.check(signedToken("""{"kid":"a","alg":"HS512","typ":"JWT"}""", """{"sub":"x"}""", signWith = b))
+            }
+        }
+    }
+
+    "the FIRST configured key signs — not the last, and not the newest by `issued`" {
+        // List order is the contract, deliberately not derived from `issued`: editing a date must not
+        // silently change who signs. Both other keys here carry a LATER `issued` than the first, so a
+        // date-driven implementation would pick one of them and fail this.
+        val keys = listOf(
+            key("current").copy(issued = "2026-01-01"),
+            key("previous", otherSecret).copy(issued = "2026-09-09"),
+            key("older", otherSecret).copy(issued = "2026-12-31"),
+        )
+
+        val rotating = JwtGenerator(config.copy(keys = keys))
+
+        rotating.signingKey.id shouldBe "current"
+
+        val header = String(Base64.getUrlDecoder().decode(rotating.createJwt(user = JwtUserData(id = UserId("u"), desc = "d", type = "t")).split(".")[0]))
+
+        header shouldContain """"kid":"current""""
+    }
+
+    "rotation: a token survives the deploy that adds a key, and dies with the deploy that drops it" {
+        val old = key("old")
+        val new = key("new", otherSecret)
+
+        // Issued before the rotation, under the only key there was.
+        val issuedUnderOld = JwtGenerator(config.copy(keys = listOf(old)))
+            .createJwt(user = JwtUserData(id = UserId("u1"), desc = "d", type = "t"))
+
+        withClue("deploy 1 — the new key is prepended, the old one still verifies") {
+            val during = JwtGenerator(config.copy(keys = listOf(new, old)))
+
+            during.verify(issuedUnderOld).subject shouldBe "u1"
+            withClue("and new tokens are already signed under the new key") {
+                during.signingKey.id shouldBe "new"
+            }
+        }
+
+        withClue("deploy 2 — the old key is dropped and its tokens stop verifying") {
+            shouldThrow<JwtSignatureGate.Rejected> {
+                JwtGenerator(config.copy(keys = listOf(new))).verify(issuedUnderOld)
+            }
+        }
+    }
+
+    "an unknown kid is rejected outright — every configured key is NOT tried" {
+        // The whole point of kid selection: a forged token costs ONE lookup, not one HMAC per key.
+        // A valid MAC under a configured key still dies, because the kid names something else.
+        val both = JwtSignatureGate(listOf(key("a"), key("b", otherSecret)))
+
+        shouldThrow<JwtSignatureGate.Rejected> {
+            both.check(signedToken("""{"kid":"nope","alg":"HS512","typ":"JWT"}""", """{"sub":"x"}"""))
+        }
+    }
+
+    "an absent kid is rejected — there is no default key" {
+        // No backward compatibility with pre-rotation tokens is wanted, so a header without a kid is
+        // simply a header that names no key.
+        shouldThrow<JwtSignatureGate.Rejected> {
+            gate.check(signedToken("""{"alg":"HS512","typ":"JWT"}""", """{"sub":"x"}"""))
+        }
+
+        shouldThrow<JwtSignatureGate.Rejected> {
+            gate.check(signedToken("""{"kid":null,"alg":"HS512","typ":"JWT"}""", """{"sub":"x"}"""))
+        }
+    }
+
+    "an unknown kid and a bad signature are indistinguishable in the message" {
+        // The caller is unauthenticated. Telling them WHICH half failed tells them which to keep
+        // trying. (Timing still separates the two; kid values are public, so that is accepted — see
+        // the class KDoc.)
+        val unknownKid = shouldThrow<JwtSignatureGate.Rejected> {
+            gate.check(signedToken("""{"kid":"nope","alg":"HS512","typ":"JWT"}""", """{"sub":"x"}"""))
+        }
+        val badMac = shouldThrow<JwtSignatureGate.Rejected> {
+            gate.check(handMadeToken("""{"kid":"gate-1","alg":"HS512","typ":"JWT"}""", """{"sub":"x"}"""))
+        }
+
+        unknownKid.message shouldBe badMac.message
+        badMac.message shouldBe "Token signature is invalid"
+    }
+
+    // ── algorithm confusion cannot start ────────────────────────────────────────────────────────────
+
+    "the header's alg must AGREE with the key's — it never selects" {
+        // The inverse of algorithm confusion. Every one of these carries a genuine HMAC-SHA512 under
+        // the configured key, so only the alg comparison can reject them.
+        listOf(
+            """{"kid":"gate-1","alg":"none","typ":"JWT"}""" to "the classic alg:none",
+            """{"kid":"gate-1","alg":"HS256","typ":"JWT"}""" to "a weaker HMAC",
+            """{"kid":"gate-1","alg":"RS256","typ":"JWT"}""" to "an asymmetric algorithm",
+            """{"kid":"gate-1","alg":"hs512","typ":"JWT"}""" to "the right algorithm, wrong case",
+            """{"kid":"gate-1","typ":"JWT"}""" to "no alg at all",
+        ).forEach { (header, why) ->
+            withClue(why) {
+                shouldThrow<JwtSignatureGate.Rejected> { gate.check(signedToken(header, """{"sub":"admin"}""")) }
+            }
+        }
+
+        withClue("the matching alg passes, so the rows above fail on the comparison and nothing else") {
+            gate.check(signedToken("""{"kid":"gate-1","alg":"HS512","typ":"JWT"}""", """{"sub":"admin"}"""))
+        }
+    }
+
+    "alg:none with no signature at all buys nothing either" {
+        shouldThrow<JwtSignatureGate.Rejected> {
+            generator.verify(handMadeToken("""{"kid":"gate-1","alg":"none","typ":"JWT"}""", """{"sub":"admin"}""", ""))
+        }
     }
 
     // ── the gate must not be stricter than the issuer ───────────────────────────────────────────────
@@ -126,13 +354,14 @@ class JwtSignatureGateSpec : StringSpec({
         generator.tryVerify(token)?.subject shouldBe "u1"
     }
 
-    "a token minted by java-jwt 4.5.2 still passes — wire compatibility" {
-        // Hard-coded fixture generated by the removed library (2026-07-31) with this spec's config,
-        // pinned so the gate can never drift from what the old issuer signed: tokens issued before
-        // the swap must keep verifying after it.
-        val libraryMinted = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
+    "a token minted by java-jwt 4.5.2 with a kid still passes — cryptographic cross-check" {
+        // Hard-coded fixture generated by the removed library (2026-07-31) with this spec's config and
+        // `withKeyId("gate-1")`. Back-compat is no longer the reason to keep it: it is independent
+        // evidence that our HMAC, our base64url and our signing-input assembly agree with a known-good
+        // implementation. A bug in any of the three would have to be present in both to hide here.
+        val libraryMinted = "eyJraWQiOiJnYXRlLTEiLCJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9." +
             "eyJpc3MiOiJ0ZXN0LWlzc3VlciIsImF1ZCI6InRlc3QtYXVkaWVuY2UiLCJzdWIiOiJ1MiJ9." +
-            "dZTd1_5WKZgegotHuv3WqjCawZW3YG-ljHkyixQW0WXNOAwhuH7IpsN-SS0V-PL_VF4Fzct_X4K9GeGQaJO5uQ"
+            "rzvIJQflC4fnSgNgJJqHl3jvQI3hVWExWvJjFNXe6iPqCtEOm1J9KRApqKCVZCEo7jj3Yb3j69npDrYBHdIUEg"
 
         gate.check(libraryMinted)
 
@@ -144,7 +373,7 @@ class JwtSignatureGateSpec : StringSpec({
     "a tampered payload is rejected" {
         val real = realToken()
         val parts = real.split(".")
-        val tampered = "${parts[0]}.${b64.encodeToString("""{"sub":"admin"}""".toByteArray())}.${parts[2]}"
+        val tampered = "${parts[0]}.${encode("""{"sub":"admin"}""")}.${parts[2]}"
 
         shouldThrow<JwtSignatureGate.Rejected> { gate.check(tampered) }
     }
@@ -172,8 +401,11 @@ class JwtSignatureGateSpec : StringSpec({
         shouldThrow<JwtSignatureGate.Rejected> { gate.check(flipped) }
     }
 
-    "the wrong key is rejected" {
-        shouldThrow<JwtSignatureGate.Rejected> { JwtSignatureGate("a-different-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!!").check(realToken()) }
+    "the wrong key is rejected — same kid, different secret" {
+        // The id matching is not what authenticates; the MAC is.
+        shouldThrow<JwtSignatureGate.Rejected> {
+            JwtSignatureGate(listOf(key("gate-1", otherSecret))).check(realToken())
+        }
     }
 
     "structurally broken tokens are rejected, not crashed on" {
@@ -181,50 +413,35 @@ class JwtSignatureGateSpec : StringSpec({
         listOf(
             "" to "empty",
             "." to "just a dot",
+            ".." to "two dots, nothing else",
             "onlyonesegment" to "no dots",
+            "header.payload" to "only one dot",
             "header.payload." to "empty signature",
             ".payload.signature" to "empty header",
+            "header..signature" to "empty payload",
+            "a.b.c.d" to "four segments",
             "a.b.!!!not-base64!!!" to "signature is not base64url",
         ).forEach { (token, why) ->
             withClue(why) { shouldThrow<JwtSignatureGate.Rejected> { gate.check(token) } }
         }
     }
 
-    // ── algorithm confusion is unreachable, not merely blocked ──────────────────────────────────────
+    "a valid MAC over the wrong number of segments is still rejected — by shape, before the MAC" {
+        // Only a key holder can reach this, but the shape check must run first regardless: it is what
+        // lets `decodeClaims` index segment 1 without a bounds check becoming a 500.
+        val header = encode("""{"kid":"gate-1","alg":"HS512","typ":"JWT"}""")
 
-    "alg:none in the header buys nothing, because the header is never read" {
-        // The classic attack: claim `none` and send no signature. The gate does not consult `alg` at
-        // all — the token dies because it carries no valid HMAC512, which is a stronger property than
-        // rejecting the algorithm by name.
-        shouldThrow<JwtSignatureGate.Rejected> {
-            generator.verify(handMadeToken("""{"alg":"none","typ":"JWT"}""", """{"sub":"admin"}""", ""))
+        fun craft(signingInput: String) = "$signingInput.${b64.encodeToString(gate.mac(signingInput))}"
+
+        listOf(
+            craft(header) to "2 segments",
+            craft("$header.a.b") to "4 segments",
+        ).forEach { (token, why) ->
+            withClue(why) {
+                shouldThrow<JwtSignatureGate.Rejected> { gate.check(token) }
+                    .message shouldBe "Token is not a well-formed JWS compact serialization"
+            }
         }
-
-        shouldThrow<JwtSignatureGate.Rejected> {
-            gate.check("""${b64.encodeToString("""{"alg":"none"}""".toByteArray())}.${b64.encodeToString("""{"sub":"admin"}""".toByteArray())}.x""")
-        }
-    }
-
-    "claiming a weaker algorithm in the header buys nothing either" {
-        // HS256-signed token (minted by java-jwt with this spec's secret) presented to the HS512
-        // gate: rejected on the MAC.
-        val hs256 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-            "eyJzdWIiOiJhZG1pbiJ9." +
-            "GzRXAsztVKxbX9gy27NKmrab9u1H72jiRS_J9Il97Ow"
-
-        shouldThrow<JwtSignatureGate.Rejected> { gate.check(hs256) }
-    }
-
-    "a valid MAC with a foreign header is accepted — the header is never read" {
-        // The one measured divergence from java-jwt, taken deliberately: the library ALSO rejected a
-        // valid-MAC token whose header names a different algorithm (AlgorithmMismatchException). Only
-        // the signing-key holder can craft this shape, and the key holder can mint arbitrary valid
-        // tokens anyway — so nothing is defended by rejecting it, and the header stays unparsed.
-        val payload = """{"iss":"${config.issuer}","aud":"${config.audience}","sub":"u5"}"""
-        val signingInput = "${b64.encodeToString("""{"alg":"none"}""".toByteArray())}.${b64.encodeToString(payload.toByteArray())}"
-        val token = "$signingInput.${b64.encodeToString(gate.mac(signingInput))}"
-
-        generator.verify(token).subject shouldBe "u5"
     }
 
     // ── claim validation still does its job afterwards ──────────────────────────────────────────────
@@ -252,7 +469,7 @@ class JwtSignatureGateSpec : StringSpec({
 
     "tryVerify still returns null rather than throwing, for gate rejections too" {
         // Rejected extends JwtVerificationException precisely so this keeps working.
-        generator.tryVerify(handMadeToken("""{"alg":"HS512"}""", """{"sub": {{{ """)) shouldBe null
+        generator.tryVerify(handMadeToken("""{"kid":"gate-1","alg":"HS512"}""", """{"sub": {{{ """)) shouldBe null
         generator.tryVerify("garbage") shouldBe null
     }
 })

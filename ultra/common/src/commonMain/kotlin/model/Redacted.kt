@@ -13,10 +13,10 @@ import kotlinx.serialization.encoding.Encoder
  * A value that can be READ IN but never written out — serializing always yields [PLACEHOLDER].
  *
  * ```kotlin
- * data class JwtConfig(val signingKey: Redacted<String>, val issuer: String)
+ * data class SigningKey(val id: String, val secret: Redacted<String>)
  * data class DemoConfig(val aws: Redacted<AwsConfig>)   // a whole SUBTREE
  *
- * JwtGenerator(config.signingKey.value)
+ * Mac.getInstance("HmacSHA512").init(SecretKeySpec(key.secret.value.toByteArray(), …))
  * ```
  *
  * **The round trip is broken on purpose.** Deserializing yields the real value; serializing yields the

@@ -28,7 +28,12 @@ class JwtClaimValidationSpec : StringSpec({
     val now = 1_800_000_000L
 
     val config = JwtConfig(
-        signingKey = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
+        keys = listOf(
+            JwtSigningKey(
+                id = "claims-1",
+                secret = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
+            )
+        ),
         issuer = "iss",
         audience = "aud",
         permissionsNs = "permissions",
@@ -209,19 +214,21 @@ class JwtClaimValidationSpec : StringSpec({
 
     // ── structure of correctly signed tokens ────────────────────────────────────────────────────────
 
-    "structurally broken tokens that nevertheless carry a valid MAC are rejected at the decode step" {
+    "payloads that are valid JSON but not an object are rejected at the decode step" {
         // Only the key holder can even reach this branch — the MAC runs first — but java-jwt rejected
         // these shapes (measured) and degrading them to an empty claim set would be less legible.
-        val gate = JwtSignatureGate(config.signingKey.value)
+        //
+        // Wrong SEGMENT COUNT is no longer tested here: `JwtSignatureGate` now pins the token at
+        // exactly three segments before the MAC, so those cases never reach the decoder. They moved to
+        // `JwtSignatureGateSpec`.
         val b64 = Base64.getUrlEncoder().withoutPadding()
 
-        fun craft(signingInput: String): String = "$signingInput.${b64.encodeToString(gate.mac(signingInput))}"
+        fun craft(signingInput: String): String =
+            "$signingInput.${b64.encodeToString(generator.mac(signingInput))}"
 
-        val header = b64.encodeToString("""{"alg":"HS512","typ":"JWT"}""".toByteArray())
+        val header = generator.encodedHeader
 
         listOf(
-            craft(header) to "2 segments",
-            craft("$header.a.b") to "4 segments",
             craft("$header.${b64.encodeToString("[1,2]".toByteArray())}") to "payload is a JSON array",
             craft("$header.${b64.encodeToString("42".toByteArray())}") to "payload is a JSON number",
             craft("$header.!!!") to "payload segment is not base64url",

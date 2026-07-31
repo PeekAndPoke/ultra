@@ -10,9 +10,11 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.put
 import java.nio.charset.StandardCharsets
 import java.time.Clock
 import java.util.Base64
@@ -26,14 +28,6 @@ class JwtGenerator(
     private val clock: Clock = Clock.systemUTC(),
 ) {
     companion object {
-        /**
-         * The only header this issuer writes, pre-encoded. Byte-identical to the header `java-jwt`
-         * 4.5.2 emitted for HMAC512 (measured 2026-07-31), so nothing reading our tokens can see the
-         * library swap.
-         */
-        private val ENCODED_HEADER: String =
-            base64Url("""{"alg":"HS512","typ":"JWT"}""".toByteArray(StandardCharsets.UTF_8))
-
         private fun base64Url(bytes: ByteArray): String =
             Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 
@@ -49,14 +43,43 @@ class JwtGenerator(
 
     /**
      * Authenticates and signs tokens — one object on purpose: [JwtSignatureGate.mac] is both the
-     * verify-side and the sign-side primitive, so the two cannot disagree on key bytes or charset.
+     * verify-side and the sign-side primitive, so the two cannot disagree on key bytes, algorithm or
+     * charset. It also owns the key map, so `kid` selection has a single implementation.
      */
-    private val gate = JwtSignatureGate(config.signingKey.value)
+    private val gate = JwtSignatureGate(config.keys)
+
+    /** The key this generator signs with: the first in [JwtConfig.keys]. Internal — it holds the secret. */
+    internal val signingKey: JwtSigningKey get() = gate.signingKey
+
+    /**
+     * The header every token from this generator carries, pre-encoded.
+     *
+     * Built with kotlinx rather than string concatenation so that [JwtSigningKey.id] — a configured
+     * value, but one that lands verbatim in signed output — cannot break out of the JSON.
+     *
+     * Member order is `kid, alg, typ` because that is what `java-jwt` 4.5.2 emitted (measured
+     * 2026-07-31, with `withKeyId`). JSON object order carries no meaning, and nothing depends on
+     * this — it buys one thing: `JwtWireCompatSpec` can assert our tokens are **byte-identical** to
+     * that library's for the same inputs, which checks the encoder as well as the MAC.
+     *
+     * Internal so specs can craft tokens whose header this issuer would never write.
+     */
+    internal val encodedHeader: String = base64Url(
+        Json.encodeToString(
+            JsonObject.serializer(),
+            buildJsonObject {
+                put("kid", JsonPrimitive(gate.signingKey.id))
+                put("alg", JsonPrimitive(gate.signingKey.alg.headerValue))
+                put("typ", JsonPrimitive("JWT"))
+            },
+        ).toByteArray(StandardCharsets.UTF_8)
+    )
 
     /** Verifies the given [token] and returns its claims, or throws [JwtVerificationException]. */
     fun verify(token: String): JwtPayload {
-        // Authenticate the raw bytes first. A token that fails here is rejected having parsed
-        // nothing — see JwtSignatureGate for why that matters and why RFC 7515 permits it.
+        // Authenticate first. A token that fails here is rejected with its PAYLOAD unparsed — the gate
+        // reads only a length-capped header, to select the key. See JwtSignatureGate for the detail and
+        // for why RFC 7515 permits the reordering.
         gate.check(token)
 
         // Everything below runs on authenticated bytes only.
@@ -80,6 +103,11 @@ class JwtGenerator(
      * Failures here are only producible by the signing-key holder — the MAC ran first — but they
      * still reject rather than degrade: `java-jwt` also rejected structurally broken tokens, and an
      * empty claim set would merely fail issuer validation less legibly.
+     *
+     * The segment-count guard is now unreachable: [JwtSignatureGate.check] pins the token at exactly
+     * three non-empty segments before this runs. Kept as a local invariant, so that indexing
+     * `segments[1]` cannot become an `IndexOutOfBoundsException` — i.e. a 500 — if the gate's shape
+     * check is ever loosened.
      */
     private fun decodeClaims(token: String): JsonObject {
         val segments = token.split('.')
@@ -205,10 +233,13 @@ class JwtGenerator(
      */
     internal fun sign(claims: Map<String, JsonElement>): String {
         val payload = Json.encodeToString(JsonObject.serializer(), JsonObject(claims))
-        val signingInput = "$ENCODED_HEADER.${base64Url(payload.toByteArray(StandardCharsets.UTF_8))}"
+        val signingInput = "$encodedHeader.${base64Url(payload.toByteArray(StandardCharsets.UTF_8))}"
 
         return "$signingInput.${base64Url(gate.mac(signingInput))}"
     }
+
+    /** The MAC under this generator's signing key. Internal: specs craft tokens the issuer would not. */
+    internal fun mac(signingInput: String): ByteArray = gate.mac(signingInput)
 
     /** Extracts [JwtUserData] from the given JWT [payload]. */
     fun extractUserData(payload: JwtPayload): JwtUserData {

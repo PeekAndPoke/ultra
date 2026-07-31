@@ -1,12 +1,21 @@
 package io.peekandpoke.ultra.security.jwt
 
-import io.peekandpoke.ultra.common.model.Redacted
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class JwtConfig(
-    /** The secret signing key for the JWT token */
-    val signingKey: Redacted<String>,
+    /**
+     * The signing keys, newest first — **the first one signs, all of them verify**.
+     *
+     * A list rather than a single key so keys can be rotated without invalidating tokens that are
+     * still within their expiry: prepend the new key, deploy, drop the old one a lifetime later.
+     * Order is authoritative and deliberately not derived from [JwtSigningKey.issued], so that
+     * editing a date cannot silently change which key signs.
+     *
+     * Validated at boot by `JwtSignatureGate.requireUsableKeys` — non-empty, unique ids, each secret
+     * long enough for its algorithm.
+     */
+    val keys: List<JwtSigningKey>,
     /** The issuer to be applied to the tokens */
     val issuer: String,
     /** The audience to be applied to the tokens */
