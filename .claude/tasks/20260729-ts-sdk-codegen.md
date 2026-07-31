@@ -1143,23 +1143,38 @@ red. This is now the strongest evidence in the repo for the mutation-testing rul
 A defect in `ultra/slumber` was also found and reproduced but deliberately NOT fixed — battle-tested
 code gets its own task and review round. See `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`.
 
-### Confirmed, NOT yet fixed — tracked
+### Review findings — AUDITED 2026-07-31
 
-| Finding | Where | Why deferred |
+Every row below was re-checked against the code on 2026-07-31, not carried forward on trust. The
+table had drifted badly: nine of thirteen were already fixed and still listed as outstanding, which
+is exactly the "stale plans cause wrong priorities" failure CLAUDE.md warns about. Two of the stale
+rows concerned `@Slumber.As` territory, so a fresh agent would have started on work already done.
+
+**FIXED — verified, do not re-open**
+
+| Finding | Fixed by | Verified how |
 |---|---|---|
-| `slumberConfig` defaults to `null`, silently disabling the codec-parity check | `sdk/TsSdkBuilder.kt:46`, `sdk/TsModelValidator.kt:166` | raised independently by TWO reviewers; the module's headline check is off by default. Needs an API decision (required param vs named test factory) |
-| Walker degrades to `unknown` in 5 positions with no advisory | `model/TypeWalker.kt` (record value, array item, alias target, non-KClass classifier) | this is the Dart `dynamic` defect returning. `List<*>` emits `unknown[]` silently. Needs a third `TypeModel` channel |
-| Generic sealed hierarchy loses its payload type | `model/TypeWalker.kt` (`createBareType()` for variants) | `Storable<Organisation>` and `Storable<Talk>` become the same TS type carrying `unknown`. Needs type-argument substitution design |
-| Name-collision check ignores claimed `tsName`s | `sdk/TsModelValidator.kt` | app type named `MpInstant` + the datetime claim → TS2440 inside generated code. Also: `nameCollisionProblems`/`danglingReferenceProblems` have ZERO test coverage |
-| `KotlinxJsonTsContributor`'s 5 claims have no drift test | `contributors/KotlinxJsonTsContributor.kt` | violates this doc's own standing rule. `JsonObject`'s shape is whatever `JsonUtil.unwrap` does, and nothing pins it |
-| Tautological test assertion | `ts/TsModelEmitterSpec.kt:62` | `x shouldBe x`; the two neighbours pass when the variant is ABSENT (`indexOf` → -1) |
-| Mp claim-coverage test compares the contributor against a copy of itself | `contributors/MpDateTimeFieldParitySpec.kt:108` | cannot detect the thing it says it detects |
-| `@Slumber.Field` non-ctor props emitted required | `model/TypeWalker.kt` | `DataClassAwaker` never reads them. Ties into request-vs-response shapes, a Phase 2 design question |
-| `@Slumber.Field` selection re-derived from `DataClassSlumberer` | `model/TypeWalker.kt:250-257` | verbatim copy; violates "defer to the slumber-side utility". Needs a slumber-side API |
-| `JsonElement` → `z.unknown()` never reaches the advisory list | `contributors/KotlinxJsonTsContributor.kt:27` | `map()` hardcodes `opaque = false` |
-| No scalar refinement (`Char` → bare `z.string()`) | `model/TypeWalker.kt:114` | `CharAwaker` maps `""` to null, so the client passes input the server rejects |
-| `readArrayElements` duplicated verbatim | `ultra/slumber` collections | production code; cosmetic |
-| `ThirdPartyContributorSpec` clue asserts what it cannot observe | `sdk/ThirdPartyContributorSpec.kt:128` | passes BECAUSE of the classloader bug; needs a child-loader fixture now that the bug is fixed |
+| `slumberConfig` defaulted to `null`, disabling the codec-parity check | `53b68126` | `TsSdkBuilder.kt` — `slumberConfig: SlumberConfig`, no default; `forTesting(...)` is the named test path and the check still runs |
+| Walker degraded to `unknown` in 5 positions with no advisory | `efe2b6ad` | `TypeModel.Undetermined` channel exists and is a BLOCKING problem |
+| Generic sealed hierarchy lost its payload type | `63f9f186` | generic emission replaced monomorphization; `FxStorableNew<T>` carries its parameter in the emitted fixture |
+| Name-collision check ignored claimed `tsName`s | `d605b996` | `TsModelValidator` counts `usedClaims`; `nameCollisionProblems` and `danglingReferenceProblems` both have tests now |
+| `KotlinxJsonTsContributor`'s claims had no drift test | `3bc64c41` | `KotlinxJsonClaimParitySpec` derives each expected combinator FROM the observed codec shape |
+| Tautological assertion in `TsModelEmitterSpec` | `ef5eba72` | replaced by real assertions on escaped literals (`z.literal('O\'Brien\\Co')`) |
+| Mp claim-coverage compared the contributor against a copy of itself | `ccab61d4` | now driven from the ultra/datetime artifact + `MpDateTimeModule`; the test asserts its enumeration found something |
+| `JsonElement` → `z.unknown()` never reached the advisory list | `29a1015d` | goes through `claims.opaque`, which sets the flag `opaqueAdvisories` filters on |
+| `ThirdPartyContributorSpec` clue asserted what it could not observe | `ceef31b0` | now uses a child `ClassLoader` and asserts its own precondition — "the suite's own loader must NOT see it, or nothing is proven" |
+
+**STILL OPEN — 4 of 13**
+
+| Finding | Where | Status |
+|---|---|---|
+| `@Slumber.Field` non-ctor props emitted required | `model/TypeWalker.kt` | **maintainer decision.** `DataClassAwaker` never reads them. Ties to request-vs-response shapes: one declaration cannot describe both directions |
+| No scalar refinement (`Char` → bare `z.string()`) | `model/TypeWalker.kt:259` | **maintainer decision.** Confirmed still `String::class, Char::class -> TsString`. A behaviour change for every existing consumer |
+| `@Slumber.Field` selection re-derived from `DataClassSlumberer` | `model/TypeWalker.kt:454` | **now `@Slumber.As` territory.** Needs a slumber-side API to expose the field selection; see `.claude/tasks/20260731-slumber-as-declared-wire-shape.md` |
+| `readArrayElements` duplicated verbatim | `ultra/slumber` collections | **not this module's** — cosmetic, in battle-tested code |
+
+So the codegen-side backlog from the review rounds is **empty**: the two remaining codegen items are
+decisions, not work, and the other two belong to `ultra/slumber`.
 
 ### Probed and CLEAN — do not re-tread
 
