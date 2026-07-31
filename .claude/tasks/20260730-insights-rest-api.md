@@ -1,6 +1,6 @@
 # Insights: split data from rendering, expose it through a superuser REST API
 
-**Status:** REVIEW FAILED — steps 1-8 run; 1 CRITICAL + 4 HIGH open, awaiting maintainer decisions
+**Status:** IN REVIEW (round 2) — round 1 findings fixed, but the fixes are substantial new code and have not themselves been reviewed
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
 **Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
 
@@ -470,3 +470,72 @@ plus one with a non-default policy proving the override takes effect.
 - **No new wildcard imports**; all KDoc `[Reference]` links resolve; `RecordParam` placement and `call.kontainer.get()` in handlers both match existing funktor patterns.
 
 **Red-team follow-up** (required, security-critical): `.claude/tasks/20260730-redteam-insights-api.md`
+
+## Round 2 is required before this is DONE
+
+Round 1 reviewed `b62ab6cd^..HEAD`. Fixing its findings produced **three further commits** — `a012b14d`,
+`6a208e4d`, `04e85767` — which are new implementation, not patches, and no reviewer has seen them:
+
+- **New public API in `funktor/rest`** that round 1 could not have looked at: `insights { }`, `attr()`,
+  `InsightsOptions`, `InsightsLevel`, `FunktorRouteAttributes`, and the first route attribute ever read
+  at request time.
+- **New security-relevant behaviour**: query-parameter redaction, the `STRIP_QUERY` action, path-only
+  `uri` storage. A security reviewer has seen none of it.
+- **New logic with untested boundaries**: the paging skip loop, `CollectorKeyUniquenessCheck`, the
+  `cls`→`ref` addressing change.
+
+Round 2 should be scoped to `a012b14d^..HEAD`, not the whole feature again.
+
+## Disposition of round 1 (2026-07-31)
+
+The gate first came back **FAIL** with 1 CRITICAL, 4 HIGH and ~19 others. All were verified against the
+code before being acted on. Resolution, per finding:
+
+| Finding | Outcome |
+|---|---|
+| **CRITICAL-1** legacy records read back empty | **Closed by the maintainer deleting all 2,116 records** — throw-away data, no back-compat wanted. `formatVersion` now exists so the next format change cannot repeat it silently |
+| **HIGH-1** `limit` invisible to codegen | Fixed — `PagingParam(page, epp)`, with real paging, matching `BackgroundJobsApi` |
+| **HIGH-2** collectors' redaction untested | Fixed — `CollectorRedactionSpec` drives real calls. **Its first version was vacuous** (assertions inside a ktor handler are swallowed into a 500); only mutation exposed that |
+| **HIGH-3** ordering from mtime | Fixed — ordering comes from the filename, which encodes the timestamp. Also retired the `Thread.sleep(10)` (I9) |
+| **HIGH-5** no format version | Fixed |
+| **S1** query strings stored unredacted | Fixed — query parameters go through the same name-based policy as headers, and the stored `uri` is path-only. `dropQueryParams()` is the per-route escalation |
+| **S2** deny-list gaps | Fixed — `cookie` and `signature` joined the alternation; `referer` gets the new `STRIP_QUERY` action |
+| **S3** `isExcluded` bypasses | Fixed — replaced by a route attribute; neither bypass has anywhere to act |
+| **S5** XSS obligation | Documented on `InsightsCollectorSlice`: render with Vue text interpolation, never `v-html` |
+| **S6** `MAX_LIMIT` semantics | Fixed with paging — skipped pages are never opened |
+| **D-M1** id shape | Fixed — `InsightsRecordRef(bucket, file)` in both directions |
+| **D-M2** prev/next KDoc | Corrected; crossing day folders remains unimplemented and is now stated as such |
+| **D-M4** `key` in the payload | Fixed — moved to `InsightsCollector` |
+| **D-M5** duplicate keys | Fixed — `CollectorKeyUniquenessCheck` fails the boot |
+| **D-M8**, **D-L2**, **I3**, **I5**, **I6**, **I7**, **I8**, **L4** | All fixed |
+| **S4**, **D-L5** | Moved to `.claude/tasks/20260731-depot-findings.md` — they are `funktor/cluster`, not insights |
+| **I4**, **D-M6** | **Deferred — see Follow-ups.** The only genuinely open items |
+
+### What the mutations caught that reading did not
+
+Three defects surfaced only because a mutation refused to fail, and none were visible by inspection:
+
+1. The redaction heuristic **shadowed the explicit deny-list** (`.*auth.*` matched `authorization`), so
+   changing the pattern's action would silently have un-redacted a credential header.
+2. `CollectorRedactionSpec` was **vacuous** — ktor swallows a handler exception into a 500, so it passed
+   with redaction removed entirely.
+3. The route-attribute **bridge was untested**; deleting it broke nothing while the recorder fell back
+   to `FULL`, which would have put the insights API's own responses back into the depot.
+
+## Follow-ups
+
+- [ ] **I4 — the test app never enables insights**, so the two 200-path assertions in
+      `funktor/all/src/jvmTest/kotlin/InsightsApiSpec.kt` are vacuous: the depot is empty, so
+      `shouldNotContain superUserToken` passes because there is no data, and no e2e ever serialises a
+      populated record over HTTP. Needs insights enabled with a temp-dir `InsightsRepository` —
+      `InsightsFileRepository` is rooted at the relative `./tmp/depot/insights`, so tests otherwise read
+      whatever the demo left behind. **The one real gap left in this task.**
+- [ ] **D-M6 — no discovery or fallback for unknown collector keys.** An app-defined collector gets a
+      key nobody renders. Decide with the Vue tab registry (plan steps 6–7), not before.
+- [ ] **No DOCS task yet, deliberately.** This adds public API (`InsightsApi`, `InsightsRecordRef`,
+      `insights { }`, `HeaderLogging`), but the Vue phase is likely to reshape the response DTOs, and
+      `CLAUDE.md` is explicit that code still in flux gets no docs task. Revisit when the first Vue tab
+      has consumed this API and the shape has held.
+- [ ] `.claude/tasks/20260731-depot-findings.md` carries S4, D-L5 and the **`@JsonIgnore` constraint** —
+      that annotation is the only thing keeping signing keys and AWS credentials out of records, and
+      neither Slumber nor kotlinx honours it. Read it before touching the write path.
