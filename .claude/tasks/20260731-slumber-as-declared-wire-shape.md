@@ -85,19 +85,24 @@ N, in the place that can actually perform it.**
 So `As(SomeDataClass::class)` covers **four of six**. The two scalars are exactly the ones the codegen
 parity spec records as having been got wrong first time — i.e. the cases most worth declaring.
 
-**SETTLED (maintainer, 2026-07-31): scalars are expressed as `As(Long::class)` / `As(String::class)`,
-with shorthands.** So:
+**SETTLED (maintainer, 2026-07-31): ONE annotation form, `As(KClass)`. Scalars use it too.**
 
 ```kotlin
 @Slumber.As(MpDateTimeRawData::class)  data class MpInstant(...)
-@Slumber.AsLong                        data class MpLocalTime(...)
-@Slumber.AsString                      data class MpTimezone(...)
+@Slumber.As(Long::class)               data class MpLocalTime(...)
+@Slumber.As(String::class)             data class MpTimezone(...)
 ```
 
-Note on shape: `AsLong` cannot be a function delegating to `As` — annotations do not compose that way.
-They are SIBLING annotations. Slightly more code in `ultra/slumber`, identical at the use site, and
-`@Slumber.AsLong` reads better than `@Slumber.As(Long::class)`. A reader must therefore handle all
-three forms, not just `As`.
+`AsLong` / `AsString` shorthands were considered and **rejected**, for consumers rather than for
+authors:
+
+- A consumer checks for ONE annotation and gets a `KClass`, then proceeds with its own machinery.
+  That is exactly the shape karango KSP, monko KSP and `ultra/codegen` already want.
+- With a family of annotations every consumer must look for all of them, and every new shorthand is a
+  change in three code generators.
+- **It makes an invalid state unrepresentable.** `@AsLong` and `@AsString` on the same type is a
+  conflict each consumer would have to detect and report; with one annotation there is nothing to
+  detect.
 
 ### `As` is a usable name — verified, not assumed
 
@@ -129,8 +134,41 @@ declares, applies at a use site, and reads back through runtime reflection — w
 - [ ] Enumerate every custom-coded type across the codebase, not just ultra/datetime —
       `SlumberConfig.default`'s module list is the honest starting point, plus `JavaTimeModule` and
       the kotlinx-json codecs. That count decides whether this pays for itself.
-- [ ] Confirm every currently-claimed type can be expressed, using the three forms in §5.
-- [ ] The generic parity check is OPTIONAL, not a precondition — maintainer, 2026-07-31: the
-      annotation ships with the type, so keeping it correct is the type author's obligation, the same
-      way the codec is. Worth adding as cheap insurance because a wrong declaration fails silently and
-      downstream, but it does not gate the work.
+- [ ] Confirm every currently-claimed type can be expressed by `As(KClass)` — §5.
+- [ ] The generic check is OPTIONAL, not a precondition — maintainer, 2026-07-31: the annotation
+      ships with the type, so keeping it correct is the type author's obligation, the same way the
+      codec is. Worth adding as cheap insurance because a wrong declaration fails silently and
+      downstream. **If it is written, it must be the FULL round trip — see §8.**
+
+## 8. How to check a declaration, if you check it at all
+
+Maintainer's proposal (2026-07-31): slumber a real value of `T`, then awake the result **into the
+declared `As` class**. If that fails, something is off.
+
+The idea is right — it uses Slumber itself as the checker instead of hand-comparing field lists, which
+is what makes it generic. But **awaking alone is not sufficient**. Measured against the real
+`MpInstant` codec (2026-07-31):
+
+| declared shape | `awake` succeeds | re-slumber `==` raw |
+|---|---|---|
+| **too small** — `(ts)` only | **YES** — passes wrongly | no |
+| exact — `(ts, timezone, human)` | yes | **yes** |
+| too big — an extra non-null field | no | — |
+| **wrong type** — `ts: String` | **YES** — passes wrongly | no |
+
+Awaking catches only the too-big case. A declaration that omits a field awakes fine, because extra
+keys in the data are ignored; and one that types `ts` as `String` awakes fine too, because the value
+converts.
+
+**The full round trip catches all three**: slumber `T` → awake into the declared class → slumber that
+→ compare with the first result.
+
+```
+raw1 = slumber(T, value)
+raw2 = slumber(As, awake(As, raw1))
+assert raw1 == raw2
+```
+
+One subtlety that makes it work: the comparison must be type-sensitive. In the wrong-type row above
+both maps PRINT identically — `{ts=1785492930000, …}` — and differ only because `"1785492930000"` is
+not `1785492930000L`. Map equality gives that for free; comparing rendered strings would not.
