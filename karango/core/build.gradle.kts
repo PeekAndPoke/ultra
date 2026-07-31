@@ -26,7 +26,7 @@ kotlin {
         implementation(kotlin("reflect"))
         implementation(Deps.KotlinX.coroutines_core)
 
-        implementation(Deps.JavaLibs.Jackson.annotations)
+        implementation(Deps.KotlinX.serialization_json)
 
         api(Deps.JavaLibs.ArangoDb.java_driver)
 

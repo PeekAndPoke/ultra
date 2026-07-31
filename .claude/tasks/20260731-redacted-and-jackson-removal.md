@@ -258,7 +258,49 @@ collector `Data` class: `AppConfigCollector`'s two `Any` fields, `HttpMethod`, `
 
 **Delete the interim redaction here** — see below.
 
-### Stage 4 — the rest of Jackson
+### Stage 4 — the rest of Jackson — **PARTIALLY DONE 2026-07-31**
+
+**Done: all three JSON printers.** The maintainer's observation was the key one — a `JsonObject` can be
+built from any `Map`, so a Jackson mapper used only to *render* a tree is pure incidental coupling. In
+each case Slumber had already produced a plain tree and Jackson only turned it into text, which
+`JsonUtil.toJsonElement()` in `ultra/slumber/commonMain` already covers. This was a deletion, not a
+rewrite.
+
+| Converted | Was |
+|---|---|
+| `funktor/core/JsonPrinter.kt` | `writerWithDefaultPrettyPrinter().writeValueAsString(codec.slumber(obj))` |
+| `karango/core/aql/printer.kt` | same, inlining a query parameter value |
+| `monko/core/lang/printer.kt` | same |
+
+**`JsonPrinter`'s Jackson fallback was also a hole**, not merely coupling. It read
+`writeValueAsString(try { codec.slumber(obj) } catch { obj })`, so a value Slumber could not describe
+was handed RAW to Jackson, which reflects over anything — bypassing every Slumber codec including
+`Redacted`. `AppConfigCliCommand` prints the whole `AppConfig` through this. It now reports an error
+instead of dumping the object.
+
+Cost: `karango:core` swapped `jackson-annotations` for `kotlinx-serialization-json`; `monko:core` gained
+kotlinx-json and **lost its Jackson dependency entirely**. Eight assertions in
+`karango` `OperationBooleanSpec` moved — Jackson renders a single-element array as `[ 1 ]`, kotlinx
+multi-line. Everything else in 1898 karango+monko tests matched byte for byte.
+
+**Open question for the maintainer:** those printers inline a value into a query string, and
+`prettyPrint = true` was kept to stay faithful to `writerWithDefaultPrettyPrinter`. Multi-line arrays
+inside a one-line query read worse than Jackson's `[ 1 ]`. Non-pretty would give `[1]` — arguably better
+here, and a smaller diff than what landed. Say if that is preferred.
+
+#### remaining
+
+- `funktor/rest/codec/SlumberRestCodec.kt` — the JSON **text** layer beneath Slumber, on every API
+  request and response. The largest remaining user; treat most carefully.
+- `funktor/insights` — `InsightsMapper`, `InsightsFull` and `AppConfigCollector`. This is **stage 3**
+  and is what finally allows `ConfigRedaction` to be deleted.
+- `ultra/vault/domain.kt` — one `@JsonIgnore` import, on the derived properties that are NOT secrets.
+  Needs a Slumber-side equivalent (or nothing, since Slumber emits constructor params only) before the
+  `jackson-databind` dependency can go.
+- `funktor/core/build.gradle.kts` exports four Jackson artifacts via `api(...)` although nothing in
+  `funktor/core` imports Jackson any more — they exist for downstream modules. Drop them last.
+
+#### original stage 4 scope
 
 - `funktor/rest/codec/SlumberRestCodec.kt` — Jackson is the JSON *text* layer beneath Slumber here, on
   every API request and response. The largest remaining user and the one to treat most carefully.

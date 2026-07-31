@@ -1,6 +1,8 @@
 package io.peekandpoke.karango.aql
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import io.peekandpoke.ultra.vault.lang.Aliased
 import kotlin.math.max
 
@@ -8,8 +10,9 @@ import kotlin.math.max
 class AqlPrinter {
 
     companion object {
-        /** Shared json printer */
-        private val jsonPrinter = ObjectMapper().writerWithDefaultPrettyPrinter()
+        /** Renders a parameter value as pretty JSON. Slumber already produced a plain tree; this
+         * only turns it into text, which is all the Jackson mapper here ever did. */
+        private val jsonPrinter = Json { prettyPrint = true }
 
         /** Prints the raw query, with all parameter value included */
         fun <T> AqlExpression<T>.printRawQuery(): String = printRawQuery(this)
@@ -43,7 +46,7 @@ class AqlPrinter {
         val raw: String by lazy(LazyThreadSafetyMode.NONE) {
 
             vars.entries.fold(query) { acc, (key, value) ->
-                acc.replace("@$key", jsonPrinter.writeValueAsString(value))
+                acc.replace("@$key", jsonPrinter.encodeToString(JsonElement.serializer(), value.toJsonElement()))
             }
         }
     }
