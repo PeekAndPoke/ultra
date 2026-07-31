@@ -501,13 +501,42 @@ conceptually aligned. Auth becomes a one-line transport wrapper, not a generated
 
 ---
 
-## Phase 4 — Wiring and demo
+## Phase 4 — Wiring and demo — DONE 2026-07-31
 
-- [ ] Add `:ultra:codegen` and `:funktor:codegen` to `settings.gradle`.
-- [ ] Register `funktorCodegen()` in the demo server's kontainer.
-- [ ] Generate an SDK for at least `FunktorConfApiFeature` end to end, into a scratch dir.
-- [ ] Type-check the generated output with `tsc --noEmit` as part of the test evidence — generated TS that does not
-  compile is the failure mode a Kotlin-side test cannot catch.
+- [x] `:ultra:codegen` and `:funktor:codegen` in `settings.gradle`.
+- [x] `funktorCodegen()` registered in the demo server's kontainer (`7664e8fd`).
+- [x] SDK generated for the demo's WHOLE API — 16 files, 11 clients (auth, cluster, logging, saas,
+      insights, introspection, operators, b2b, showcase, funktorconf), not just FunktorConf.
+- [x] Type-checked twice, under two different TypeScript majors: `tsc --noEmit` (7.0.2) over the raw
+      output, and `vue-tsc --noEmit` (5.9.3) inside the consuming app.
+- [x] **Consumed for real** — `funktor-demo/sdkgen-app` (`036369b6`, `1619f0ce`), a Vue 3 + Vite app
+      rendering live events from the running server.
+
+**Verified end to end 2026-07-31:** with `fixtures:install` loaded, the app lists the seeded events
+and the requests appear in the browser's network tab. Maintainer confirmed.
+
+### What generating a REAL API found that fixtures never did
+
+- **Two `ApiRoutes` may share a name.** `funktor:auth` declares `ApiRoutes("login")` twice, public and
+  authenticated. Emitting a class per INSTANCE produced two `LoginApi` classes in one file — TS2300.
+  Fixtures all had distinct group names, because that is what one writes when inventing them.
+- **The review's CRITICAL, confirmed on real code.** `FunktorClusterApiFeature`'s three `list` members
+  now carry their own schemas.
+- **`vue-tsc` cannot run on TypeScript 7** (no `typescript/lib/tsc` export). `vue-tsc@3.3.9` is the
+  newest release and its `>=5.0.0` peer range is stale. The app pins 5.9.3 deliberately.
+- **The SDK caught a wrong assumption about the API before any request was sent** — hand-written
+  `event.title` / `event.startsAt` rejected against the real `name` / `startDate`.
+
+### Deviations from this section as originally written
+
+- **Layout is FLAT** — `models.ts` and `*Client.ts` at the SDK root, no `models/`, `clients/` or
+  `index.ts`. Per-feature model files need a rule for a type two features both reach, and a
+  subdirectory needs relative-specifier support (runtime specifiers are root-relative). Deferred
+  deliberately so the decision could be made against real output.
+- **Not "into an existing frontend folder".** Superseded by the owned-directory decision: the
+  generator wipes its target, so it gets `src/funktorsdk/`, git-ignored.
+- The Vite/HMR rationale is unproven — `pnpm run dev` works, but nobody has edited a route and
+  watched it propagate.
 
 **Output shape (decided 2026-07-29):** bare `.ts` sources into an existing frontend folder. Frontend owns tsconfig,
 build and deps; Vite HMR picks up changes with no extra wiring.
