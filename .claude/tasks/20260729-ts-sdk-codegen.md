@@ -1423,6 +1423,18 @@ review rounds, which have not run yet.
 
 ## Follow-ups
 
+- [ ] **REVISIT the Mp* claims once `@Slumber.As` lands** (maintainer, 2026-07-31).
+      `.claude/tasks/20260731-slumber-as-declared-wire-shape.md`. Once the datetime types declare
+      their wire shape, a good deal of what `ultra/codegen` does by hand should simply go:
+      - `MpDateTimeTsContributor.CLAIMED` — six hand-written claims that become derivable.
+      - Most of `runtime/datetime.ts` — hand-written TypeScript restating the same six shapes.
+      - `MpDateTimeFieldParitySpec` — its whole reason for existing is that a claim is trusted and
+        never verified. With a declared shape verified at the source, this becomes redundant rather
+        than merely passing.
+      **Keep `TsTypeClaims` itself.** `java.time.*` and `kotlinx.datetime.*` are custom-coded and not
+      ours to annotate, so the registry stays as the escape hatch for types we do not own. The
+      annotation shrinks the claim LIST, not the mechanism.
+
 - [ ] **DOCS task** — required on archive. This adds two public modules (`ultra/codegen`,
   `funktor/codegen`) with a public extension point (`TsSdkContributor`). Needs a docs-site page plus the LLM mirror
   (`docs-site/src/data/llms/*.md`).
