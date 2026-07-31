@@ -22,10 +22,12 @@ class InsightsApiSpec : FunktorApiSpec() {
     init {
         api.insights.listRecords { route ->
 
+            val firstPage = InsightsApiFeature.PagingParam()
+
             "anonymous list request is unauthorized" {
                 apiApp {
                     anonymous {
-                        request(route) {
+                        route(firstPage) {
                             status shouldBe HttpStatusCode.Unauthorized
                         }
                     }
@@ -35,7 +37,7 @@ class InsightsApiSpec : FunktorApiSpec() {
             "authenticated non-super-user list request is unauthorized" {
                 apiApp {
                     authenticate(regularUserToken) {
-                        request(route) {
+                        route(firstPage) {
                             status shouldBe HttpStatusCode.Unauthorized
                         }
                     }
@@ -45,7 +47,7 @@ class InsightsApiSpec : FunktorApiSpec() {
             "super-user may list records" {
                 apiApp {
                     authenticate(superUserToken) {
-                        request(route) {
+                        route(firstPage) {
                             status shouldBe HttpStatusCode.OK
                             // The depot may legitimately be empty in a fresh test app; what matters is
                             // that the call is answered rather than refused.
@@ -58,7 +60,7 @@ class InsightsApiSpec : FunktorApiSpec() {
             "the response carries no credential material" {
                 apiApp {
                     authenticate(superUserToken) {
-                        request(route) {
+                        route(firstPage) {
                             status shouldBe HttpStatusCode.OK
                             // A summary must never echo the token that fetched it, nor any Set-Cookie.
                             bodyAsText() shouldNotContain superUserToken

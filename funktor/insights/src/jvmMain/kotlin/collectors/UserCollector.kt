@@ -11,16 +11,17 @@ class UserCollector(
     private val user: UserProvider,
 ) : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "user"
+    }
+
     /** VUE-REF: `reference/collectors/UserCollector.kt` */
     data class Data(
         val user: UserRecord,
         val permissions: UserPermissions,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "user"
-        }
     }
 
     override fun finish(call: ApplicationCall): Data = Data(

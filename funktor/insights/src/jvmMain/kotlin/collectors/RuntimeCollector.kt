@@ -9,6 +9,12 @@ import java.lang.management.OperatingSystemMXBean
 
 class RuntimeCollector : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "runtime"
+    }
+
     /** VUE-REF: `reference/collectors/RuntimeCollector.kt` */
     data class Data(
         val jvmVersion: String,
@@ -21,11 +27,6 @@ class RuntimeCollector : InsightsCollector {
         val maxFileDescriptors: Long,
         val systemProperties: Map<String, String>,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "runtime"
-        }
     }
 
 

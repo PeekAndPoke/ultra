@@ -5,16 +5,24 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.host
 import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
 import io.ktor.server.request.port
 import io.ktor.server.request.uri
 import io.ktor.util.toMap
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
+import io.peekandpoke.funktor.insights.insightsOptions
 import io.peekandpoke.funktor.insights.HeaderLogging
 
 class RequestCollector(
     private val headerLogging: HeaderLogging,
 ) : InsightsCollector {
+
+    override val key = KEY
+
+    companion object {
+        const val KEY = "request"
+    }
 
     /** VUE-REF: `reference/collectors/RequestCollector.kt` */
     data class Data(
@@ -26,11 +34,6 @@ class RequestCollector(
         val headers: Map<String, List<String>>,
         val queryParams: Map<String, List<String>>,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "request"
-        }
     }
 
     override fun finish(call: ApplicationCall) = Data(
@@ -38,8 +41,14 @@ class RequestCollector(
         scheme = call.request.origin.scheme,
         host = call.request.host(),
         port = call.request.port(),
-        uri = call.request.uri,
+        // PATH ONLY. `request.uri` carries the query string, so storing it verbatim put every
+        // `?token=` straight into the record — and into the summary url the list endpoint renders.
+        // The parameters live in `queryParams`, redacted by name.
+        uri = call.request.path(),
         headers = headerLogging.applyTo(call.request.headers.toMap()),
-        queryParams = call.request.queryParameters.toMap(),
+        queryParams = when {
+            call.insightsOptions().dropQueryParams -> emptyMap()
+            else -> headerLogging.applyToQueryParams(call.request.queryParameters.toMap())
+        },
     )
 }

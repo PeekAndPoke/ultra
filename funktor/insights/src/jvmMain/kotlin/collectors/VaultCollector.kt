@@ -7,15 +7,16 @@ import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 
 class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "vault"
+    }
+
     /** VUE-REF: `reference/collectors/VaultCollector.kt` */
     data class Data(
         val entries: List<QueryProfiler.Entry.Impl>,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "vault"
-        }
     }
 
 

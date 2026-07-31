@@ -4,11 +4,9 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.rest.InsightsLevel
-import io.peekandpoke.funktor.rest.RecordInsights
 import io.peekandpoke.funktor.rest.ApiRoute
-import io.peekandpoke.funktor.rest.attr
 import io.peekandpoke.funktor.rest.docs.docs
-import io.peekandpoke.funktor.rest.insightsLevel
+import io.peekandpoke.funktor.rest.insights
 import io.peekandpoke.funktor.rest.noInsights
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
@@ -39,23 +37,35 @@ class InsightsLevelSpec : StringSpec({
 
         api.all.forEach { route ->
             withClue(route.pattern.pattern) {
-                route.insightsLevel shouldBe InsightsLevel.OFF
+                route.insights.level shouldBe InsightsLevel.OFF
             }
         }
     }
 
-    "a route with no attribute records in FULL" {
+    "a route with no attribute records in FULL and keeps its query params" {
         // The default has to be FULL, not OFF: every route in every other module carries no attribute
         // at all, and they must keep being recorded.
-        plainRoute().insightsLevel shouldBe InsightsLevel.FULL
+        plainRoute().insights.level shouldBe InsightsLevel.FULL
+        plainRoute().insights.dropQueryParams shouldBe false
     }
 
-    "noInsights() and attr() both set the level, and it survives further chaining" {
-        plainRoute().noInsights().insightsLevel shouldBe InsightsLevel.OFF
-        plainRoute().attr(RecordInsights, InsightsLevel.BRIEF).insightsLevel shouldBe InsightsLevel.BRIEF
+    "the builder sets each level, and the options survive further chaining" {
+        plainRoute().noInsights().insights.level shouldBe InsightsLevel.OFF
+        plainRoute().insights { brief() }.insights.level shouldBe InsightsLevel.BRIEF
+        plainRoute().insights { full() }.insights.level shouldBe InsightsLevel.FULL
 
         // a builder applied AFTER must not drop the bag — `docs {}` copies attributes forward
-        plainRoute().noInsights().docs { name = "x" }.insightsLevel shouldBe InsightsLevel.OFF
-        plainRoute().docs { name = "x" }.noInsights().insightsLevel shouldBe InsightsLevel.OFF
+        plainRoute().noInsights().docs { name = "x" }.insights.level shouldBe InsightsLevel.OFF
+        plainRoute().docs { name = "x" }.noInsights().insights.level shouldBe InsightsLevel.OFF
+    }
+
+    "dropQueryParams is independent of the level" {
+        val route = plainRoute().insights { brief(); dropQueryParams() }
+
+        route.insights.level shouldBe InsightsLevel.BRIEF
+        route.insights.dropQueryParams shouldBe true
+
+        // and it is off unless asked for — redaction by name is the default, dropping is the escalation
+        plainRoute().insights { brief() }.insights.dropQueryParams shouldBe false
     }
 })

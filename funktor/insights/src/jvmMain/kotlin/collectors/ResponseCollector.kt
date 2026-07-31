@@ -12,16 +12,17 @@ class ResponseCollector(
     private val headerLogging: HeaderLogging,
 ) : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "response"
+    }
+
     /** VUE-REF: `reference/collectors/ResponseCollector.kt` */
     data class Data(
         val status: HttpStatusCode?,
         val headers: Map<String, List<String>>,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "response"
-        }
     }
 
     override fun finish(call: ApplicationCall) = Data(

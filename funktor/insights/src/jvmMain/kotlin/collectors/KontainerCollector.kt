@@ -16,17 +16,18 @@ class KontainerCollector(
     private val blueprint: KontainerBlueprint,
 ) : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "kontainer"
+    }
+
     /** VUE-REF: `reference/collectors/KontainerCollector.kt` */
     data class Data(
         val numOld: Int,
         val numTotal: Int,
         val info: DebugInfo,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "kontainer"
-        }
     }
 
 

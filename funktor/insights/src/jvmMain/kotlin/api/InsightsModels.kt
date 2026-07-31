@@ -40,9 +40,16 @@ data class InsightsRecordSummary(
 data class InsightsRecord(
     val path: String,
     val recordedAt: MpInstant?,
-    val durationMs: Double,
+    /** Null when the record carries no timing — distinct from a genuine 0.0. */
+    val durationMs: Double?,
     val collectors: List<InsightsCollectorSlice>,
-    /** Neighbouring records in time, for prev/next navigation. Null at either end. */
+    /**
+     * Neighbouring records **within the same day folder**, for prev/next navigation.
+     *
+     * Null at the edges of that folder — which is not the same as the edges of the depot: the oldest
+     * record of a day reports no previous even when yesterday's records exist. Crossing day folders is
+     * not implemented.
+     */
     val nextPath: String?,
     val previousPath: String?,
 )
@@ -53,6 +60,12 @@ data class InsightsRecord(
  * [data] stays a [JsonElement] so the envelope never has to name every collector — a sealed hierarchy
  * here would make an app-defined collector impossible. Type safety comes back per tab: each collector's
  * `Data` class is a codegen root, so the frontend gets a generated schema for exactly its own slice.
+ *
+ * **Every string inside [data] is attacker-controlled.** Headers, query parameters, paths and user
+ * agents are all recorded verbatim from unauthenticated requests, so a payload may contain
+ * `<img src=x onerror=…>` or anything else. The kotlinx.html GUI this replaced escaped on output; a
+ * JSON API cannot, so escaping is now the consumer's obligation. **Render with Vue's normal text
+ * interpolation — `{{ }}` or `v-text`, both of which escape — and NEVER with `v-html`.**
  */
 @Serializable
 data class InsightsCollectorSlice(

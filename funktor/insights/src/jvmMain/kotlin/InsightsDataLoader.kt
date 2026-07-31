@@ -44,7 +44,12 @@ class InsightsDataLoader(
 
         val root = parse(content.getContentBytes()) ?: return null
 
-        val siblings = repository.listItems(file.parentPath).sortedByDescending { it.lastModifiedAt }
+        // Sorted by NAME, not lastModifiedAt: records are written asynchronously
+        // (`launch(Dispatchers.IO) { delay(1) }`), so mtime is WRITE time and reorders under load —
+        // measured on real data, five records whose filenames run 872,875,895,905,945 had mtimes that
+        // sorted 905,872,875,945,895. The filename is `<LocalDateTime>.json`, which sorts
+        // chronologically, needs no stat, and cannot tie.
+        val siblings = repository.listItems(file.parentPath).sortedByDescending { it.name }
         val idx = siblings.indexOfFirst { it.path == path }
 
         return InsightsRecord(
@@ -59,28 +64,34 @@ class InsightsDataLoader(
     }
 
     /**
-     * The [limit] most recent records, newest first.
+     * One page of records, newest first.
      *
-     * **Provisional shape — see "Blockers collected" in the task file.** Building a summary means
-     * opening each record, so the result is bounded rather than paged: day folders are walked
-     * newest-first and reading stops as soon as [limit] is reached.
+     * Day folders and the files inside them are ordered by NAME — both encode their timestamp, so the
+     * order is chronological without a single `stat` and without depending on write time. Only the
+     * files on the requested page are opened; the rest are never read.
      */
-    suspend fun list(limit: Int): List<InsightsRecordSummary> {
+    suspend fun list(page: Int, epp: Int): List<InsightsRecordSummary> {
+        val skip = (page - 1) * epp
+
         val dayFolders = repository.listItems("")
             .filter { it is DepotItem.Folder && it.name.startsWith(DAY_FOLDER_PREFIX) }
             .sortedByDescending { it.name }
 
         val result = mutableListOf<InsightsRecordSummary>()
+        var seen = 0
 
         for (folder in dayFolders) {
-            if (result.size >= limit) break
+            if (result.size >= epp) break
 
             val files = repository.listItems(folder.path)
                 .filterIsInstance<DepotItem.File>()
-                .sortedByDescending { it.lastModifiedAt }
+                .sortedByDescending { it.name }
 
             for (file in files) {
-                if (result.size >= limit) break
+                if (result.size >= epp) break
+
+                // skip cheaply — the file is never opened
+                if (seen++ < skip) continue
 
                 val root = parse(repository.getContent(file.path)?.getContentBytes()) ?: continue
 

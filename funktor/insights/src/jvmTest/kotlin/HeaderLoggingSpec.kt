@@ -132,6 +132,62 @@ class HeaderLoggingSpec : StringSpec({
         result["Set-Cookie"] shouldBe redacted
     }
 
+    "cookie variants cannot fail open" {
+        // `cookie` is on the exact list, but that list can never cover every variant. The alternation
+        // is what catches these — without it, cookie2/set-cookie2 (RFC 2965) default to LOG.
+        HeaderLogging.defaults.actionFor("cookie2") shouldBe HeaderAction.REDACT
+        HeaderLogging.defaults.actionFor("set-cookie2") shouldBe HeaderAction.REDACT
+        HeaderLogging.defaults.actionFor("x-my-cookie-jar") shouldBe HeaderAction.REDACT
+    }
+
+    "request signatures are redacted" {
+        HeaderLogging.defaults.actionFor("stripe-signature") shouldBe HeaderAction.REDACT
+        HeaderLogging.defaults.actionFor("x-hub-signature-256") shouldBe HeaderAction.REDACT
+        HeaderLogging.defaults.actionFor("x-signature") shouldBe HeaderAction.REDACT
+    }
+
+    "referer keeps its path but loses its query string" {
+        // The referer is the page the user came FROM — which is exactly where a magic-link or
+        // password-reset token sits. Dropping the header loses real debugging value; keeping it whole
+        // leaks the token.
+        val result = HeaderLogging.defaults.applyTo(
+            mapOf("Referer" to listOf("https://app.example.com/reset?token=SECRET-VALUE"))
+        )
+
+        result["Referer"] shouldBe listOf("https://app.example.com/reset")
+        result.toString().contains("SECRET-VALUE") shouldBe false
+    }
+
+    "a referer with no query is untouched" {
+        HeaderLogging.defaults.applyTo(mapOf("referer" to listOf("https://app.example.com/page")))
+            .get("referer") shouldBe listOf("https://app.example.com/page")
+    }
+
+    "query parameters are redacted by the same rules as headers" {
+        // Headers were never the only place a credential travels. Before this, `?token=` was stored
+        // verbatim AND reflected into the summary url.
+        val result = HeaderLogging.defaults.applyToQueryParams(
+            mapOf(
+                "token" to listOf("SECRET-VALUE"),
+                "code" to listOf("oauth-code"),
+                "access_token" to listOf("SECRET-VALUE"),
+                "page" to listOf("2"),
+            )
+        )
+
+        result["token"] shouldBe redacted
+        result["access_token"] shouldBe redacted
+        result["page"] shouldBe listOf("2")
+        result.toString().contains("SECRET-VALUE") shouldBe false
+    }
+
+    "an app can extend the policy to its own query parameter" {
+        // `code` is not sensitive by name, but an OAuth callback's is.
+        val policy = HeaderLogging.defaults.with("code", HeaderAction.REDACT)
+
+        policy.applyToQueryParams(mapOf("code" to listOf("oauth-code")))["code"] shouldBe redacted
+    }
+
     "strict redacts everything unmatched, defaults do not" {
         HeaderLogging.strict.actionFor("user-agent") shouldBe HeaderAction.REDACT
         HeaderLogging.defaults.actionFor("user-agent") shouldBe HeaderAction.LOG

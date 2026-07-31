@@ -76,6 +76,10 @@ kotlin {
 
         jvmTest {
             dependencies {
+                // Drives the collectors through a real ApplicationCall — the redaction call sites are
+                // otherwise untested, and a policy that is never invoked redacts nothing.
+                implementation(Deps.Ktor.Server.Test.host)
+
                 Deps.Test {
                     jvmTestDeps()
                 }

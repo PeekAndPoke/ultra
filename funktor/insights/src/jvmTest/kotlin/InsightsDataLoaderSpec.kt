@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.cluster.depot.repos.fs.FileSystemRepository
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -18,7 +19,7 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 class InsightsDataLoaderSpec : StringSpec({
 
-    fun loaderOver(dir: java.io.File): Pair<InsightsDataLoader, FileSystemRepository> {
+    fun loaderOver(dir: File): Pair<InsightsDataLoader, FileSystemRepository> {
         val repo = object : FileSystemRepository("insights", dir.absolutePath), InsightsRepository {}
 
         return InsightsDataLoader(repo) to repo
@@ -82,7 +83,7 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             repo.putFile("records-2026-07-31/a.json", record(requestSlice, responseSlice))
 
-            val summary = loader.list(limit = 10).single()
+            val summary = loader.list(page = 1, epp = 10).single()
 
             summary.method shouldBe "GET"
             summary.url shouldBe "/api/things"
@@ -100,7 +101,7 @@ class InsightsDataLoaderSpec : StringSpec({
             // is the whole point of storing the headline rather than digging it out of `request`.
             repo.putFile("records-2026-07-31/brief.json", record(method = "POST", uri = "/api/x", status = 201))
 
-            val summary = loader.list(limit = 10).single()
+            val summary = loader.list(page = 1, epp = 10).single()
 
             summary.method shouldBe "POST"
             summary.url shouldBe "/api/x"
@@ -120,7 +121,7 @@ class InsightsDataLoaderSpec : StringSpec({
                 record(responseSlice, method = null, uri = null, status = null),
             )
 
-            val summary = loader.list(limit = 10).single()
+            val summary = loader.list(page = 1, epp = 10).single()
 
             summary.method shouldBe null
             summary.url shouldBe null
@@ -128,15 +129,46 @@ class InsightsDataLoaderSpec : StringSpec({
         }
     }
 
-    "list respects its limit" {
+    "list pages through the records" {
         val dir = tempdir()
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
+            // names sort chronologically, so rec-4 is newest
             repeat(5) { i -> repo.putFile("records-2026-07-31/rec-$i.json", record(requestSlice)) }
 
-            loader.list(limit = 3).size shouldBe 3
-            loader.list(limit = 100).size shouldBe 5
+            loader.list(page = 1, epp = 2).map { it.path } shouldContainExactly listOf(
+                "records-2026-07-31/rec-4.json",
+                "records-2026-07-31/rec-3.json",
+            )
+            loader.list(page = 2, epp = 2).map { it.path } shouldContainExactly listOf(
+                "records-2026-07-31/rec-2.json",
+                "records-2026-07-31/rec-1.json",
+            )
+            loader.list(page = 3, epp = 2).map { it.path } shouldContainExactly listOf(
+                "records-2026-07-31/rec-0.json",
+            )
+            // past the end is empty, not an error
+            loader.list(page = 4, epp = 2) shouldBe emptyList()
+        }
+    }
+
+    "paging crosses day folders in chronological order" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            repo.putFile("records-2026-07-29/a.json", record(requestSlice))
+            repo.putFile("records-2026-07-30/b.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/c.json", record(requestSlice))
+
+            loader.list(page = 1, epp = 2).map { it.path } shouldContainExactly listOf(
+                "records-2026-07-31/c.json",
+                "records-2026-07-30/b.json",
+            )
+            loader.list(page = 2, epp = 2).map { it.path } shouldContainExactly listOf(
+                "records-2026-07-29/a.json",
+            )
         }
     }
 
@@ -148,7 +180,7 @@ class InsightsDataLoaderSpec : StringSpec({
             repo.putFile("records-2026-07-29/old.json", record(requestSlice))
             repo.putFile("records-2026-07-31/new.json", record(requestSlice))
 
-            loader.list(limit = 10).map { it.path } shouldContainExactly listOf(
+            loader.list(page = 1, epp = 10).map { it.path } shouldContainExactly listOf(
                 "records-2026-07-31/new.json",
                 "records-2026-07-29/old.json",
             )
@@ -173,7 +205,7 @@ class InsightsDataLoaderSpec : StringSpec({
 
             loader.load("records-2026-07-31/broken.json") shouldBe null
             // and it must not take the whole listing down with it
-            loader.list(limit = 10) shouldBe emptyList()
+            loader.list(page = 1, epp = 10) shouldBe emptyList()
         }
     }
 
@@ -182,10 +214,10 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            // written oldest to newest; listItems sorts by lastModifiedAt descending
+            // Ordering comes from the FILENAME, not mtime, so no sleep is needed to separate them —
+            // and the result cannot depend on filesystem timestamp granularity or on the async write.
             listOf("a", "b", "c").forEach { name ->
                 repo.putFile("records-2026-07-31/$name.json", record(requestSlice))
-                Thread.sleep(10)
             }
 
             val newest = loader.load("records-2026-07-31/c.json").shouldNotBeNull()
@@ -208,7 +240,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, _) = loaderOver(dir)
 
         runBlocking {
-            loader.list(limit = 10) shouldBe emptyList()
+            loader.list(page = 1, epp = 10) shouldBe emptyList()
         }
     }
 

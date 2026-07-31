@@ -6,7 +6,6 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.routing.JoinedPageTitle
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.common.roundWithPrecision
-import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.tbody
 import kotlinx.html.td
@@ -37,7 +36,7 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
         }
 
         ui.basic.segment {
-            ui.celled.striped.selectable.table Table {
+            ui.celled.striped.table Table {
                 thead {
                     tr {
                         th { }
@@ -47,7 +46,6 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
                         th { +"Request" }
                         th { +"Time ms" }
                         th { +"Responding Server" }
-                        th { }
                     }
                 }
 
@@ -77,8 +75,6 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
                                 td { +it.url }
                                 td { +(it.durationMs?.roundWithPrecision(2)?.toString() ?: "n/a") }
                                 td { +it.server }
-                                // The details-link column went with ApiResponse.Insights.detailsUrl.
-                                td { }
                             }
                         }
                 }

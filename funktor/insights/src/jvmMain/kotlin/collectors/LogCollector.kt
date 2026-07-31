@@ -10,6 +10,12 @@ import io.peekandpoke.ultra.log.LogLevel
 
 class LogCollector : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "log"
+    }
+
     class Appender : LogAppender {
 
         private val lock = Any()
@@ -42,11 +48,6 @@ class LogCollector : InsightsCollector {
             val level: LogLevel,
             val text: String,
         )
-        override val key = KEY
-
-        companion object {
-            const val KEY = "log"
-        }
     }
 
 

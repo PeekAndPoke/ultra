@@ -4,6 +4,7 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.rest.AuthChainBootCheck
 import io.peekandpoke.ultra.remote.ApiAccessLevel
 import io.peekandpoke.ultra.security.user.User
@@ -76,8 +77,18 @@ class InsightsApiRoutesSpec : StringSpec({
         }
     }
 
-    "the list limit is bounded, so one call cannot walk the whole depot" {
-        InsightsApi.DEFAULT_LIMIT shouldBe 50
-        (InsightsApi.DEFAULT_LIMIT <= InsightsApi.MAX_LIMIT) shouldBe true
+    "paging is declared as PARAMS, so the generated client can actually send it" {
+        // Codegen derives query parameters exclusively from the route's params type. Read off
+        // `queryParameters` instead and the emitted TS client takes no arguments at all — the endpoint
+        // would be pinned to its default page size forever.
+        val list = api.all.single { it.pattern.pattern == "${InsightsApi.base}/records" }
+
+        list.typedRoute.reifiedParamsType.type.toString() shouldContain "PagingParam"
+    }
+
+    "the page size default and ceiling are sane" {
+        InsightsApiFeature.PagingParam().epp shouldBe 20
+        InsightsApiFeature.PagingParam().page shouldBe 1
+        (InsightsApiFeature.PagingParam().epp <= InsightsApi.MAX_EPP) shouldBe true
     }
 })

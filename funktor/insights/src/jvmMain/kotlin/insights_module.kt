@@ -74,6 +74,9 @@ val Funktor_Insights = module {
     dynamic(VaultCollector::class)
     dynamic(TemplateInsightsCollector::class)
 
+    // Fails the boot on duplicate collector keys — see the class for why it cannot wait
+    singleton(CollectorKeyUniquenessCheck::class)
+
     // The API — superuser-gated, and the only way to reach the recorded data
     singleton(InsightsApiFeature::class)
 }

@@ -14,6 +14,12 @@ class AppConfigCollector(
     appInfo: AppInfo? = null,
 ) : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "app-config"
+    }
+
     val static = Data(
         info = when {
             appInfo != null -> mapper.convertValue<Map<*, *>>(appInfo)
@@ -27,11 +33,6 @@ class AppConfigCollector(
 
     /** VUE-REF: `reference/collectors/AppConfigCollector.kt` */
     data class Data(val info: Any, val config: Any) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "app-config"
-        }
     }
 
     override fun finish(call: ApplicationCall): Data = static

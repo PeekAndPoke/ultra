@@ -7,7 +7,9 @@ import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.CollectorData
 import io.peekandpoke.funktor.insights.Insights
 import io.peekandpoke.funktor.insights.InsightsCollector
+import io.peekandpoke.funktor.insights.InsightsCollectorData
 import io.peekandpoke.funktor.rest.InsightsLevel
+import io.peekandpoke.funktor.rest.InsightsOptions
 import io.peekandpoke.funktor.insights.InsightsData
 import io.peekandpoke.funktor.insights.InsightsMapper
 import io.peekandpoke.funktor.insights.InsightsRepository
@@ -19,7 +21,6 @@ import kotlinx.coroutines.supervisorScope
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.reflect.KClass
-import kotlin.reflect.jvm.jvmName
 
 internal class InsightsFull(
     override val config: InsightsConfig,
@@ -34,21 +35,22 @@ internal class InsightsFull(
 
     override fun <T : InsightsCollector> getOrNull(cls: KClass<T>): T? = collectors.getOrNull(cls)
 
-    override suspend fun finish(call: ApplicationCall, level: InsightsLevel) {
+    override suspend fun finish(call: ApplicationCall, options: InsightsOptions) {
         val endedNs = System.nanoTime()
 
-        if (level == InsightsLevel.OFF) {
+        if (options.level == InsightsLevel.OFF) {
             return
         }
 
         // Read off the call NOW: the write below happens on another dispatcher after the response
         val method = call.request.httpMethod.value
-        val uri = call.request.uri
+        val uri = call.request.path()
         val status = call.response.status()?.value
 
         // BRIEF records the headline only, so the collectors are never even run
-        val entries = when (level) {
-            InsightsLevel.FULL -> collectors.all().map { it.finish(call) }
+        // The key comes from the COLLECTOR, so pair each with its slice rather than asking the data
+        val entries: List<Pair<String, InsightsCollectorData>> = when (options.level) {
+            InsightsLevel.FULL -> collectors.all().map { it.key to it.finish(call) }
             else -> emptyList()
         }
 
@@ -64,8 +66,8 @@ internal class InsightsFull(
                     method = method,
                     uri = uri,
                     status = status,
-                    collectors = entries.map {
-                        CollectorData(it.key, mapper.convertValue(it))
+                    collectors = entries.map { (key, slice) ->
+                        CollectorData(key, mapper.convertValue(slice))
                     }
                 )
 

@@ -7,15 +7,16 @@ import io.peekandpoke.funktor.insights.RoutingInstrumentation
 
 class RoutingCollector : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "routing"
+    }
+
     /** VUE-REF: `reference/collectors/RoutingCollector.kt` */
     data class Data(
         val trace: String? = null,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "routing"
-        }
     }
 
     private var data: Data = Data()

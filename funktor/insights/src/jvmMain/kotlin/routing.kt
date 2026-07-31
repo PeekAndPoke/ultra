@@ -8,7 +8,8 @@ import io.peekandpoke.funktor.core.fullUrl
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.rest.FunktorRouteAttributes
 import io.peekandpoke.funktor.rest.InsightsLevel
-import io.peekandpoke.funktor.rest.RecordInsights
+import io.peekandpoke.funktor.rest.InsightsOptions
+import io.peekandpoke.funktor.rest.InsightsOptionsKey
 import io.peekandpoke.funktor.insights.collectors.RoutingCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -52,12 +53,12 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
                 // Ask the RESOLVED ROUTE how much to record — never the request uri, which the client
                 // controls. Resolving here rather than inside finish() also avoids launching a
                 // coroutine for a request that is about to be discarded.
-                val level = call.insightsLevel()
+                val options = call.insightsOptions()
 
-                if (level != InsightsLevel.OFF) {
+                if (options.level != InsightsLevel.OFF) {
                     call.launch(Dispatchers.IO) {
                         delay(1.microseconds)
-                        insights.finish(call, level)
+                        insights.finish(call, options)
                     }
                 }
             }
@@ -68,17 +69,17 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
 }
 
 /**
- * The [InsightsLevel] of the route this call resolved to; [InsightsLevel.FULL] when there is none.
+ * The [InsightsOptions] of the route this call resolved to; [InsightsOptions.default] when there is none.
  *
  * A call handled by a funktor route is a `RoutingPipelineCall`, whose `route` is the resolved leaf
  * node — and the mounting code copied that route's attributes onto it (`FunktorRouteAttributes`).
  * Anything else (static resources, unmatched paths) has no route attributes and so records in full.
  */
-fun ApplicationCall.insightsLevel(): InsightsLevel =
+fun ApplicationCall.insightsOptions(): InsightsOptions =
     (this as? RoutingPipelineCall)
         ?.route?.attributes?.getOrNull(FunktorRouteAttributes)
-        ?.get(RecordInsights)
-        ?: InsightsLevel.FULL
+        ?.get(InsightsOptionsKey)
+        ?: InsightsOptions.default
 
 object RoutingInstrumentation {
     /**

@@ -10,6 +10,15 @@ enum class HeaderAction {
 
     /** Omit the header entirely; not even its name is recorded. */
     DROP,
+
+    /**
+     * Keep the value up to the `?`, discard the query string.
+     *
+     * For URL-bearing headers — `Referer` above all, which carries the page the user came FROM, and so
+     * carries magic-link, password-reset and OAuth tokens whenever one of those pages links onward.
+     * Dropping the header outright would lose real debugging value; keeping it whole leaks the token.
+     */
+    STRIP_QUERY,
 }
 
 /**
@@ -82,9 +91,14 @@ class HeaderLogging private constructor(
          * service token.
          *
          * It can only ever redact MORE than intended, never less, and any rule added afterwards wins.
+         *
+         * `cookie` is in the alternation as well as the exact list because the exact list cannot cover
+         * `cookie2` / `set-cookie2` (RFC 2965) or any other variant — without it those fail open.
+         * `signature` covers `x-signature`, `stripe-signature`, `x-hub-signature-256` and friends, which
+         * are request HMACs.
          */
         private val sensitiveByName = Regex(
-            ".*(token|secret|password|passwd|credential|session|auth|api-?key).*"
+            ".*(token|secret|password|passwd|credential|session|auth|api-?key|cookie|signature).*"
         )
 
         /**
@@ -101,7 +115,9 @@ class HeaderLogging private constructor(
                 // which point the wrong order would silently un-redact `authorization`, which the
                 // pattern also matches via `.*auth.*`. Caught by mutation-testing this file.
                 rules = listOf(Rule.Pattern(sensitiveByName, HeaderAction.REDACT)) +
-                        knownSensitive.map { Rule.Exact(it, HeaderAction.REDACT) },
+                        knownSensitive.map { Rule.Exact(it, HeaderAction.REDACT) } +
+                        // after the deny-list, so it wins for this one header
+                        Rule.Exact("referer", HeaderAction.STRIP_QUERY),
                 default = HeaderAction.LOG,
             )
 
@@ -133,7 +149,27 @@ class HeaderLogging private constructor(
             when (actionFor(name)) {
                 HeaderAction.LOG -> name to values
                 HeaderAction.REDACT -> name to values.map { REDACTED }
+                HeaderAction.STRIP_QUERY -> name to values.map { it.substringBefore('?') }
                 HeaderAction.DROP -> null
+            }
+        }.toMap()
+
+    /**
+     * Applies the same name-based policy to query PARAMETERS.
+     *
+     * Headers were never the only place a credential travels: `?token=`, `?code=`, `?api_key=` and
+     * presigned-URL signatures all ride the query string, and before this they were stored verbatim.
+     * The parameter name is matched by exactly the rules that match a header name, so a policy
+     * extension covers both at once.
+     *
+     * [HeaderAction.STRIP_QUERY] has no meaning for a bare value and is treated as [HeaderAction.REDACT].
+     */
+    fun applyToQueryParams(params: Map<String, List<String>>): Map<String, List<String>> =
+        params.mapNotNull { (name, values) ->
+            when (actionFor(name)) {
+                HeaderAction.LOG -> name to values
+                HeaderAction.DROP -> null
+                else -> name to values.map { REDACTED }
             }
         }.toMap()
 }

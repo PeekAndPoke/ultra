@@ -23,12 +23,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
     companion object {
         const val base = "/_/funktor/insights"
 
-        /**
-         * The most recent records, newest first.
-         *
-         * `limit` rather than a cursor for now — building a summary means opening each record. See
-         * blocker B1 in `.claude/tasks/20260730-insights-rest-api.md`.
-         */
+        /** The most recent records, newest first, paged. */
         val ListRecords = Get(
             uri = "$base/records",
             response = InsightsRecordSummary.serializer().apiList(),
@@ -40,26 +35,21 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
             response = InsightsRecord.serializer().api(),
         )
 
-        /** How many records the list returns when the caller does not say. */
-        const val DEFAULT_LIMIT = 50
-
-        /** Upper bound on `limit`, so one request cannot walk the entire depot. */
-        const val MAX_LIMIT = 500
+        /** Upper bound on `epp`, so one request cannot walk the entire depot. */
+        const val MAX_EPP = 200
     }
 
-    val listRecords = ListRecords.mount {
+    val listRecords = ListRecords.mount(InsightsApiFeature.PagingParam::class) {
         docs {
             name = "List insights records"
         }.codeGen {
             funcName = "listRecords"
-        }.noInsights().handle {
-            val limit = call.request.queryParameters["limit"]
-                ?.toIntOrNull()
-                ?.coerceIn(1, MAX_LIMIT)
-                ?: DEFAULT_LIMIT
-
+        }.noInsights().handle { params ->
             ApiResponse.ok(
-                call.kontainer.get(InsightsDataLoader::class).list(limit = limit)
+                call.kontainer.get(InsightsDataLoader::class).list(
+                    page = params.page.coerceAtLeast(1),
+                    epp = params.epp.coerceIn(1, MAX_EPP),
+                )
             )
         }
     }

@@ -6,15 +6,16 @@ import io.peekandpoke.funktor.insights.InsightsCollectorData
 
 class TemplateInsightsCollector : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "template"
+    }
+
     /** VUE-REF: `reference/collectors/TemplateInsightsCollector.kt` */
     data class Data(
         val timeNs: Long? = null,
     ) : InsightsCollectorData {
-        override val key = KEY
-
-        companion object {
-            const val KEY = "template"
-        }
     }
 
     var data = Data()
