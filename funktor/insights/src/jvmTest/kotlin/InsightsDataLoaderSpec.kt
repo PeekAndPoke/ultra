@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.cluster.depot.repos.fs.FileSystemRepository
+import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -66,7 +67,7 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             repo.putFile("records-2026-07-31/a.json", record(requestSlice, responseSlice, exotic))
 
-            val loaded = loader.load("records-2026-07-31/a.json").shouldNotBeNull()
+            val loaded = loader.load(InsightsRecordRef("records-2026-07-31", "a.json")).shouldNotBeNull()
 
             loaded.collectors.map { it.key } shouldContainExactly listOf("request", "response", "acme-billing")
 
@@ -107,7 +108,7 @@ class InsightsDataLoaderSpec : StringSpec({
             summary.url shouldBe "/api/x"
             summary.status shouldBe 201
 
-            loader.load("records-2026-07-31/brief.json").shouldNotBeNull().collectors shouldBe emptyList()
+            loader.load(InsightsRecordRef("records-2026-07-31", "brief.json")).shouldNotBeNull().collectors shouldBe emptyList()
         }
     }
 
@@ -137,15 +138,15 @@ class InsightsDataLoaderSpec : StringSpec({
             // names sort chronologically, so rec-4 is newest
             repeat(5) { i -> repo.putFile("records-2026-07-31/rec-$i.json", record(requestSlice)) }
 
-            loader.list(page = 1, epp = 2).map { it.path } shouldContainExactly listOf(
+            loader.list(page = 1, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/rec-4.json",
                 "records-2026-07-31/rec-3.json",
             )
-            loader.list(page = 2, epp = 2).map { it.path } shouldContainExactly listOf(
+            loader.list(page = 2, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/rec-2.json",
                 "records-2026-07-31/rec-1.json",
             )
-            loader.list(page = 3, epp = 2).map { it.path } shouldContainExactly listOf(
+            loader.list(page = 3, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/rec-0.json",
             )
             // past the end is empty, not an error
@@ -162,11 +163,11 @@ class InsightsDataLoaderSpec : StringSpec({
             repo.putFile("records-2026-07-30/b.json", record(requestSlice))
             repo.putFile("records-2026-07-31/c.json", record(requestSlice))
 
-            loader.list(page = 1, epp = 2).map { it.path } shouldContainExactly listOf(
+            loader.list(page = 1, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/c.json",
                 "records-2026-07-30/b.json",
             )
-            loader.list(page = 2, epp = 2).map { it.path } shouldContainExactly listOf(
+            loader.list(page = 2, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-29/a.json",
             )
         }
@@ -180,7 +181,7 @@ class InsightsDataLoaderSpec : StringSpec({
             repo.putFile("records-2026-07-29/old.json", record(requestSlice))
             repo.putFile("records-2026-07-31/new.json", record(requestSlice))
 
-            loader.list(page = 1, epp = 10).map { it.path } shouldContainExactly listOf(
+            loader.list(page = 1, epp = 10).map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/new.json",
                 "records-2026-07-29/old.json",
             )
@@ -192,7 +193,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, _) = loaderOver(dir)
 
         runBlocking {
-            loader.load("records-2026-07-31/nope.json") shouldBe null
+            loader.load(InsightsRecordRef("records-2026-07-31", "nope.json")) shouldBe null
         }
     }
 
@@ -203,7 +204,7 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             repo.putFile("records-2026-07-31/broken.json", "{ this is not json")
 
-            loader.load("records-2026-07-31/broken.json") shouldBe null
+            loader.load(InsightsRecordRef("records-2026-07-31", "broken.json")) shouldBe null
             // and it must not take the whole listing down with it
             loader.list(page = 1, epp = 10) shouldBe emptyList()
         }
@@ -220,18 +221,18 @@ class InsightsDataLoaderSpec : StringSpec({
                 repo.putFile("records-2026-07-31/$name.json", record(requestSlice))
             }
 
-            val newest = loader.load("records-2026-07-31/c.json").shouldNotBeNull()
-            val middle = loader.load("records-2026-07-31/b.json").shouldNotBeNull()
-            val oldest = loader.load("records-2026-07-31/a.json").shouldNotBeNull()
+            val newest = loader.load(InsightsRecordRef("records-2026-07-31", "c.json")).shouldNotBeNull()
+            val middle = loader.load(InsightsRecordRef("records-2026-07-31", "b.json")).shouldNotBeNull()
+            val oldest = loader.load(InsightsRecordRef("records-2026-07-31", "a.json")).shouldNotBeNull()
 
-            newest.nextPath shouldBe null
-            newest.previousPath shouldBe "records-2026-07-31/b.json"
+            newest.next shouldBe null
+            newest.previous?.toPath() shouldBe "records-2026-07-31/b.json"
 
-            middle.nextPath shouldBe "records-2026-07-31/c.json"
-            middle.previousPath shouldBe "records-2026-07-31/a.json"
+            middle.next?.toPath() shouldBe "records-2026-07-31/c.json"
+            middle.previous?.toPath() shouldBe "records-2026-07-31/a.json"
 
-            oldest.nextPath shouldBe "records-2026-07-31/b.json"
-            oldest.previousPath shouldBe null
+            oldest.next?.toPath() shouldBe "records-2026-07-31/b.json"
+            oldest.previous shouldBe null
         }
     }
 
@@ -251,7 +252,7 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             repo.putFile("records-2026-07-31/a.json", record("""{ "key": "bare" }"""))
 
-            val loaded = loader.load("records-2026-07-31/a.json").shouldNotBeNull()
+            val loaded = loader.load(InsightsRecordRef("records-2026-07-31", "a.json")).shouldNotBeNull()
 
             loaded.collectors.single().key shouldBe "bare"
             (loaded.collectors.single().data as? JsonObject) shouldBe null

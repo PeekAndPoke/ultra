@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.insights
 import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import io.peekandpoke.funktor.insights.api.InsightsCollectorSlice
 import io.peekandpoke.funktor.insights.api.InsightsRecord
+import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
 import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.json.Json
@@ -37,8 +38,10 @@ class InsightsDataLoader(
         private const val DAY_FOLDER_PREFIX = "records-"
     }
 
-    /** Loads the record at [path], or null when there is no such file. */
-    suspend fun load(path: String): InsightsRecord? {
+    /** Loads the record [ref] addresses, or null when there is no such file. */
+    suspend fun load(ref: InsightsRecordRef): InsightsRecord? {
+        val path = ref.toPath()
+
         val content = repository.getContent(path) ?: return null
         val file = repository.getFile(path) ?: return null
 
@@ -53,13 +56,13 @@ class InsightsDataLoader(
         val idx = siblings.indexOfFirst { it.path == path }
 
         return InsightsRecord(
-            path = path,
+            ref = ref,
             recordedAt = file.lastModifiedAt,
             durationMs = root.durationMs(),
             collectors = root.slices(),
             // siblings are newest-first, so the NEXT record in time sits at the LOWER index
-            nextPath = if (idx > 0) siblings.getOrNull(idx - 1)?.path else null,
-            previousPath = if (idx >= 0) siblings.getOrNull(idx + 1)?.path else null,
+            next = if (idx > 0) siblings.getOrNull(idx - 1)?.path?.toRef() else null,
+            previous = if (idx >= 0) siblings.getOrNull(idx + 1)?.path?.toRef() else null,
         )
     }
 
@@ -95,7 +98,9 @@ class InsightsDataLoader(
 
                 val root = parse(repository.getContent(file.path)?.getContentBytes()) ?: continue
 
-                result.add(root.summary(path = file.path, recordedAt = file.lastModifiedAt))
+                val ref = file.path.toRef() ?: continue
+
+                result.add(root.summary(ref = ref, recordedAt = file.lastModifiedAt))
             }
         }
 
@@ -131,14 +136,25 @@ class InsightsDataLoader(
      * listing cheap (the kontainer slice alone averages 137 KB) and what makes a BRIEF record, which
      * has no collectors at all, listable.
      */
-    private fun JsonObject.summary(path: String, recordedAt: MpInstant?) = InsightsRecordSummary(
-        path = path,
+    private fun JsonObject.summary(ref: InsightsRecordRef, recordedAt: MpInstant?) = InsightsRecordSummary(
+        ref = ref,
         recordedAt = recordedAt,
         method = this["method"]?.str(),
         url = this["uri"]?.str(),
         status = this["status"]?.num()?.toInt(),
         durationMs = durationMs(),
     )
+
+    /** `records-2026-07-31/a.json` -> `(records-2026-07-31, a.json)`; null when it is not two segments. */
+    private fun String.toRef(): InsightsRecordRef? {
+        val bucket = substringBeforeLast('/', missingDelimiterValue = "")
+        val file = substringAfterLast('/', missingDelimiterValue = "")
+
+        return when {
+            bucket.isBlank() || file.isBlank() -> null
+            else -> InsightsRecordRef(bucket = bucket, file = file)
+        }
+    }
 
     private fun JsonElement.obj(): JsonObject? = runCatching { jsonObject }.getOrNull()
 

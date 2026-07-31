@@ -28,7 +28,7 @@ class InsightsModelsSlumberSpec : StringSpec({
     val codec = Codec.default
 
     val record = InsightsRecord(
-        path = "records-2026-07-31/12-00-00.json",
+        ref = InsightsRecordRef("records-2026-07-31", "12-00-00.json"),
         recordedAt = MpInstant.fromEpochMillis(1_700_000_000_000),
         durationMs = 12.5,
         collectors = listOf(
@@ -41,8 +41,8 @@ class InsightsModelsSlumberSpec : StringSpec({
             ),
             InsightsCollectorSlice(key = "empty", data = JsonNull),
         ),
-        nextPath = "records-2026-07-31/12-00-01.json",
-        previousPath = null,
+        next = InsightsRecordRef("records-2026-07-31", "12-00-01.json"),
+        previous = null,
     )
 
     "InsightsRecord round-trips, and really is serialized on the way" {
@@ -51,7 +51,7 @@ class InsightsModelsSlumberSpec : StringSpec({
         // Pin that slumbering did actual work rather than handing the object back: without this the
         // round-trip would pass even if `slumber` were the identity function.
         slumbered.shouldBeInstanceOf<Map<*, *>>()
-        slumbered["path"] shouldBe record.path
+        (slumbered["ref"] as Map<*, *>)["bucket"] shouldBe record.ref.bucket
         (slumbered["collectors"] as List<*>).size shouldBe 2
 
         codec.awake<InsightsRecord>(slumbered) shouldBe record
@@ -60,7 +60,7 @@ class InsightsModelsSlumberSpec : StringSpec({
 
     "InsightsRecordSummary round-trips, nulls included" {
         val summary = InsightsRecordSummary(
-            path = "records-2026-07-31/12-00-00.json",
+            ref = InsightsRecordRef("records-2026-07-31", "12-00-00.json"),
             recordedAt = MpInstant.fromEpochMillis(1_700_000_000_000),
             method = "GET",
             url = "https://example.com:443/api/things",
@@ -71,7 +71,8 @@ class InsightsModelsSlumberSpec : StringSpec({
         codec.awake<InsightsRecordSummary>(codec.slumber(summary)) shouldBe summary
 
         val empty = InsightsRecordSummary(
-            path = "p", recordedAt = null, method = null, url = null, status = null, durationMs = null,
+            ref = InsightsRecordRef("b", "f"), recordedAt = null, method = null, url = null,
+            status = null, durationMs = null,
         )
 
         codec.awake<InsightsRecordSummary>(codec.slumber(empty)) shouldBe empty

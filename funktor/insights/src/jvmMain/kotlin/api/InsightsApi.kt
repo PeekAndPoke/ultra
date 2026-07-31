@@ -61,8 +61,9 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
             funcName = "getRecord"
         }.noInsights().handle { params ->
             ApiResponse.okOrNotFound(
-                call.kontainer.get(InsightsDataLoader::class)
-                    .load(path = "${params.bucket}/${params.file}")
+                call.kontainer.get(InsightsDataLoader::class).load(
+                    InsightsRecordRef(bucket = params.bucket, file = params.file)
+                )
             )
         }
     }

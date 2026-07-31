@@ -5,16 +5,32 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 /**
+ * Addresses one record, in exactly the shape the detail endpoint takes.
+ *
+ * Deliberately NOT a single `"records-<date>/<file>.json"` string. The endpoint is
+ * `/records/{bucket}/{file}`, so a flat path would force every generated call site to do
+ * `path.split('/')` — re-implementing the depot's layout in the frontend, and silently wrong the day a
+ * repository nests differently or a name contains a slash.
+ */
+@Serializable
+data class InsightsRecordRef(
+    val bucket: String,
+    val file: String,
+) {
+    /** The depot path this addresses. A function, not a property — Slumber emits constructor params only. */
+    fun toPath(): String = "$bucket/$file"
+}
+
+/**
  * One record in the list view.
  *
- * The summary fields are derived from the `request` and `response` slices — the same derivations the
- * deleted `InsightsGuiData` did for its header — because a list of requests without method, url and
- * status is not usable.
+ * The headline is read straight off the stored record — see `InsightsData` for why it is stored rather
+ * than derived from the request/response slices.
  */
 @Serializable
 data class InsightsRecordSummary(
-    /** Depot path, and the id used to fetch the full record. */
-    val path: String,
+    /** Pass straight to the detail endpoint; no string splitting required. */
+    val ref: InsightsRecordRef,
     /**
      * When the record was written.
      *
@@ -38,7 +54,7 @@ data class InsightsRecordSummary(
  */
 @Serializable
 data class InsightsRecord(
-    val path: String,
+    val ref: InsightsRecordRef,
     val recordedAt: MpInstant?,
     /** Null when the record carries no timing — distinct from a genuine 0.0. */
     val durationMs: Double?,
@@ -50,8 +66,8 @@ data class InsightsRecord(
      * record of a day reports no previous even when yesterday's records exist. Crossing day folders is
      * not implemented.
      */
-    val nextPath: String?,
-    val previousPath: String?,
+    val next: InsightsRecordRef?,
+    val previous: InsightsRecordRef?,
 )
 
 /**
