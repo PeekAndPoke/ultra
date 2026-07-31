@@ -283,65 +283,38 @@ data — the slumber direction — so they are unaffected. Recorded on `Slumber.
 Annotating `Redacted` is NOT part of this task — it is `ultra:common`'s own type and the round-trip
 check needs a decision about the fail-loud placeholder path first. The six `Mp*` types are the scope.
 
-## 11. OPEN DECISION (maintainer, 2026-08-01): annotation, or ask the Slumberer?
+## 11. DECIDED (maintainer, 2026-08-01): annotation only. Do NOT build the alternatives.
 
-Two alternatives were raised while §1–§10 were being implemented. Both are better than the annotation
-for one consumer and useless to two others, and that split is the whole decision.
+Two alternatives were raised mid-implementation and **rejected**: a module-supplied annotation map
+(`SlumberModule.getCustomAnnotations()`), and asking the codec — `Codec.getSlumberer(T).getWireType()`,
+defaulting to the type the slumberer implements. Stick to §1–§5.
 
-**(a) A module-supplied annotation map** — `SlumberModule.getCustomAnnotations(): Map<KClass<*>, List<Annotation>>`,
-consumers ask the codec instead of the class, codec merges declaration-site with module-supplied.
+Kept because it is a real argument someone will re-derive: `getWireType()` is the better **runtime**
+mechanism on three counts — it sits in the same class as the `slumber()` that builds the map; it erases
+the owned/not-owned split, so `java.time.Instant` is handled like `MpInstant` and §6's escape hatch
+disappears; and it composes with `prependModules`, which the annotation cannot. A user who prepends a
+module to replace a codec has no way to change an annotation on a class they do not own, so the
+declaration silently lies for that application.
 
-**(b) Ask the slumberer** — `Codec.getSlumberer(MpInstant::class).getWireType()`, defaulting to the type
-the slumberer implements; the datetime slumberers override.
+It was rejected because it delivers **nothing to KSP**. karango and monko generate at build time from
+symbols; `getSlumberer()` is a runtime call needing a configured `SlumberConfig`. Deleting the `.ts`
+helpers (§9) is a KSP deliverable, so the runtime-only mechanism cannot carry this task.
 
-### Why (b) is the better RUNTIME mechanism — three reasons, not one
-
-- **Proximity.** `getWireType()` sits in the same class as the `slumber()` that builds the map. The
-  annotation sits on `MpInstant` in `ultra:datetime`, a different module from the codec in
-  `ultra:slumber`. You cannot edit `MpInstantSlumberer.slumber` without seeing `getWireType` next to it.
-- **No owned/not-owned split.** `java.time.Instant`'s slumberer overrides it exactly like `MpInstant`'s.
-  §6's deferred question disappears, and so does the annotation-plus-registry duality — **one**
-  mechanism, no escape hatch. That is strictly better than two.
-- **It composes with `prependModules`, and the annotation does not.** A user who prepends a module to
-  replace a codec cannot change an annotation on a class they do not own — so the declaration would
-  then LIE for that application, silently. With (b) the shape travels with the codec that won.
-
-### Why it cannot replace the annotation: KSP
-
-karango and monko generate their path accessors at **build time**. They hold KSP symbols, not a
-configured `SlumberConfig`, and `getSlumberer()` is a runtime call. So (b) delivers:
-
-| Consumer | Reads how | (b) `getWireType()` | annotation |
-|---|---|---|---|
-| `ultra:codegen` | runtime reflection | **works, and better** | works |
-| karango KSP | build-time symbols | **nothing** | works |
-| monko KSP | build-time symbols | **nothing** | works |
-
-And the headline deliverable of this task — deleting the hand-written `.ts` helpers (§9) — is a KSP
-deliverable. Dropping the annotation sinks it.
-
-**One loophole, and it is a trap.** `karango/ksp` has `:ultra:slumber` on its own classpath, so the
-processor *could* `Class.forName` a type and call `getSlumberer(...).getWireType()` reflectively. That
-works for `MpInstant`, which the processor depends on — and silently does nothing for a user's own
+There is a loophole, and it is a trap worth naming: `karango/ksp` has `:ultra:slumber` on its own
+classpath, so the processor *could* `Class.forName` a type and call `getWireType()` reflectively. That
+works for `MpInstant`, which the processor depends on, and silently does nothing for a user's own
 custom-coded type, which it does not. A mechanism that works for our types and not the user's is worse
 than one that works for neither.
 
-### Where this lands, unless overruled
+## 12. PRECONDITION, still unverified: can KSP read the annotation at all?
 
-Keep both, with one of them derived-and-checked rather than independently maintained:
+Independent of §11 — this is a precondition of the plan itself, not of the rejected alternatives.
 
-- `Slumberer.getWireType()` is the runtime source of truth — default implementation returns nothing, so
-  no existing codec changes.
-- `@Slumber.As` stays as the **build-time projection** of the same fact, for KSP only.
-- `SlumberAsRoundTripSpec` grows to a three-way check: annotation == `getWireType()` == what `slumber()`
-  actually emits. The duplication then cannot drift silently, which is the only thing that makes
-  carrying two declarations acceptable.
+**Can a KSP processor read a RUNTIME-retained annotation off a CLASSPATH symbol**, i.e. one not in the
+compilation being processed? `MpInstant` is a classpath type for every consumer of karango. If the
+answer is no, §3's karango/monko half needs a different delivery route (a resource generated by
+`ultra:slumber` at build time) and §9's deletions wait on it.
 
-### The claim that must be verified before any of this is built
-
-**Can KSP read a RUNTIME-retained annotation off a CLASSPATH symbol** (not a symbol in the compilation
-being processed)? `MpInstant` is a classpath type for every consumer of karango. If the answer is no,
-the annotation is useless to KSP too and the decision collapses to (b) plus a generated resource.
-
-`resolver.getClassDeclarationByName(...)` returning a usable `.annotations` is the specific thing to
-probe, not `getSymbolsWithAnnotation`, which only covers the current round's sources. NOT YET RUN.
+`resolver.getClassDeclarationByName(...)` returning usable `.annotations` is the thing to probe.
+NOT `getSymbolsWithAnnotation`, which only covers the current round's sources — that distinction is the
+whole question. NOT YET RUN.
