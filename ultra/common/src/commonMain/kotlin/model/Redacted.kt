@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.common.model
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -19,14 +20,29 @@ import kotlinx.serialization.encoding.Encoder
  * ```
  *
  * **The round trip is broken on purpose.** Deserializing yields the real value; serializing yields the
- * placeholder, so a value that goes out and comes back has been destroyed. That is the point: it is how
- * a signing key can be loaded from configuration and still never reach a log line, an insights record or
- * an HTTP response.
+ * placeholder, so a value that goes out cannot come back. That is the point: it is how a signing key can
+ * be loaded from configuration and still never reach a log line, an insights record or an HTTP response.
  *
- * Concretely, re-reading this type's own output differs by [T]: a `Redacted<String>` comes back holding
- * [PLACEHOLDER], while a `Redacted<SomeObject>` **throws**, because a string is not that object's shape.
- * Throwing is the better of the two and is pinned by a test — the alternative would be quietly handing
- * back an object whose fields were invented.
+ * ### THE SHARP EDGE — read this before using the type
+ *
+ * A value that is serialized and then read back is **gone**, and both codecs now say so **loudly**:
+ * reading [PLACEHOLDER] throws, on the Slumber side and the kotlinx side alike. Earlier it threw only
+ * for a structured [T] and silently produced `Redacted("***redacted***")` for a `Redacted<String>` —
+ * a real object holding a publicly known constant where a secret belongs. An application that rebuilt
+ * its configuration from an insights record or an `app:config` dump would have booted happily and
+ * signed every JWT with a value anyone can read off this file.
+ *
+ * **The obligation this puts on the caller:** do not put a [Redacted] where something will read it back.
+ *
+ * - **Configuration — yes.** Loaded once from HOCON, never written back. This is what the type is for.
+ * - **A persisted entity — no.** Insert writes the placeholder; the next read throws, and the stored
+ *   secret is already lost.
+ * - **A request/response DTO — no.** A UI that GETs an object, edits an unrelated field and PUTs it back
+ *   sends the placeholder, and the write fails. Split the type instead: return a redacted view, accept
+ *   the secret on a dedicated endpoint that only ever receives it.
+ *
+ * Failing loudly does not make those shapes work — it makes them fail at the first read instead of
+ * destroying a credential quietly. Choosing where the type goes is still the caller's job.
  *
  * ### Why a type instead of an annotation
  *
@@ -85,10 +101,18 @@ class Redacted<T>(
 }
 
 /**
- * Writes [Redacted.PLACEHOLDER]; reads the inner value with its own serializer.
+ * Writes [Redacted.PLACEHOLDER]; reads the inner value with its own serializer, but REJECTS the
+ * placeholder itself.
  *
  * The descriptor claims a string because that is what this ever *writes*. Reading delegates to [inner],
  * so a payload carrying the real shape still awakens — the asymmetry is the contract, not a defect.
+ *
+ * **Kotlinx-json only.** A format that drives decoding from the outer descriptor — protobuf, cbor,
+ * properties — would encode and decode against a `STRING` shape and break on a structured `T`. JSON
+ * reads whatever token is present, which is why the mismatch is safe here and nowhere else.
+ *
+ * Deliberately equivalent to Slumber's `RedactedAwaker`: both reject [Redacted.PLACEHOLDER] on read.
+ * A divergence between the two would mean a secret survives one path and is destroyed on the other.
  */
 class RedactedSerializer<T>(private val inner: KSerializer<T>) : KSerializer<Redacted<T>> {
 
@@ -99,5 +123,18 @@ class RedactedSerializer<T>(private val inner: KSerializer<T>) : KSerializer<Red
         encoder.encodeString(Redacted.PLACEHOLDER)
     }
 
-    override fun deserialize(decoder: Decoder): Redacted<T> = Redacted(inner.deserialize(decoder))
+    override fun deserialize(decoder: Decoder): Redacted<T> {
+        val value = inner.deserialize(decoder)
+
+        // See RedactedAwaker for the reasoning. Reading our own output back would hand out a Redacted
+        // holding a publicly known constant where a secret belongs.
+        if (value == Redacted.PLACEHOLDER) {
+            throw SerializationException(
+                "The redaction placeholder was read back as a value. The original is gone and must be " +
+                        "supplied again — a redacted value cannot be round-tripped."
+            )
+        }
+
+        return Redacted(value)
+    }
 }

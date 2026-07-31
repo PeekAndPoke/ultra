@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.slumber.builtin.model
 
 import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.ultra.slumber.Awaker
+import io.peekandpoke.ultra.slumber.AwakerException
 import io.peekandpoke.ultra.slumber.Slumberer
 import kotlin.reflect.KType
 
@@ -23,6 +24,25 @@ class RedactedAwaker(private val innerType: KType) : Awaker {
         // A missing value is a missing value; the wrapper does not invent one.
         if (data == null) {
             return null
+        }
+
+        // FAIL LOUD on our own output. Reading the placeholder back would produce a Redacted holding
+        // the literal "***redacted***" — a real object carrying a publicly known constant where a
+        // secret belongs. Silent, and catastrophic where it lands: a config rebuilt from an insights
+        // record or an `app:config` dump would boot and sign JWTs under a value anyone can read off
+        // this source file. Throwing turns that into a startup failure.
+        //
+        // This also covers the read-modify-write shape in general — a REST DTO or a stored entity
+        // holding a Redacted, fetched and PUT back — which is why the check lives here, at the single
+        // point every awake path goes through, rather than in a per-secret boot guard.
+        if (data == Redacted.PLACEHOLDER) {
+            throw AwakerException(
+                message = "Value at path '${context.path}' is the redaction placeholder, not a secret. " +
+                        "A redacted value was read back in: the original is gone and must be supplied again.",
+                logs = emptyList(),
+                rootType = null,
+                input = null, // deliberately not echoed
+            )
         }
 
         return Redacted(context.awake(innerType, data))

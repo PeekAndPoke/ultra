@@ -1,12 +1,19 @@
 package io.peekandpoke.ultra.slumber.builtin.model
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.ultra.common.model.Redacted
+import io.peekandpoke.ultra.common.model.RedactedSerializer
+import io.peekandpoke.ultra.slumber.AwakerException
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.awake
 import io.peekandpoke.ultra.slumber.slumber
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonPrimitive
 
 private data class Aws(val region: String, val account: String)
 
@@ -60,13 +67,51 @@ class RedactedCodecSpec : StringSpec({
         out.toString() shouldNotContain "eu-central-1"
     }
 
-    "the placeholder is byte-identical to the kotlinx one" {
-        // Both serializers must agree, or a value redacted by one is distinguishable from the other's.
-        // Asserting against the shared constant is what keeps them in step.
-        val out = codec.slumber(Conf("a", Redacted(secret), Redacted(Aws("r", "a")))) as Map<*, *>
+    "Slumber's output matches kotlinx's, observed rather than assumed" {
+        // The previous version asserted `out["signingKey"] shouldBe Redacted.PLACEHOLDER` and
+        // `Redacted.PLACEHOLDER shouldBe "***redacted***"` — neither statement observes the kotlinx
+        // serializer at all, so mutating RedactedSerializer.serialize to emit "REDACTED" left it green.
+        // Compare the two ACTUAL outputs. RedactedSerializer is built by hand rather than via
+        // @Serializable because ultra:slumber carries the kotlinx runtime but not its compiler plugin.
+        val slumbered = codec.slumber(Conf("a", Redacted(secret), Redacted(Aws("r", "a")))) as Map<*, *>
 
-        out["signingKey"] shouldBe Redacted.PLACEHOLDER
-        Redacted.PLACEHOLDER shouldBe "***redacted***"
+        val viaKotlinx = Json.parseToJsonElement(
+            Json.encodeToString(RedactedSerializer(String.serializer()), Redacted(secret))
+        ).jsonPrimitive.content
+
+        slumbered["signingKey"] shouldBe viaKotlinx
+        slumbered["signingKey"] shouldNotBe secret
+    }
+
+    "reading the placeholder back THROWS — equivalently to kotlinx" {
+        // The sharp edge, made loud on both sides. Previously the scalar case silently produced a
+        // Redacted holding "***redacted***": a real object carrying a publicly known constant where a
+        // secret belongs. A config rebuilt from an insights record would have booted and signed JWTs
+        // with it.
+        shouldThrow<AwakerException> {
+            codec.awake<Conf>(
+                mapOf(
+                    "issuer" to "a",
+                    "signingKey" to Redacted.PLACEHOLDER,
+                    "aws" to mapOf("region" to "r", "account" to "a"),
+                )
+            )
+        }
+    }
+
+    "a value that merely CONTAINS the placeholder text still awakes" {
+        // Equality, not containment — a passphrase embedding the marker must stay usable.
+        val awkward = "prefix-${Redacted.PLACEHOLDER}-suffix"
+
+        val out = codec.awake<Conf>(
+            mapOf(
+                "issuer" to "a",
+                "signingKey" to awkward,
+                "aws" to mapOf("region" to "r", "account" to "a"),
+            )
+        )
+
+        out!!.signingKey.value shouldBe awkward
     }
 
     "a null stays null rather than becoming a wrapper around nothing" {

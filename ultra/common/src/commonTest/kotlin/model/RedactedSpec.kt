@@ -60,16 +60,42 @@ class RedactedSpec : StringSpec({
         back.aws.value shouldBe Inner(region = "eu", account = "acct")
     }
 
-    "a scalar round trip DESTROYS the value — on purpose" {
-        // Stated as a test so nobody 'fixes' it.
+    "a scalar round trip THROWS — loud beats silent" {
+        // This used to assert the opposite ("DESTROYS the value — on purpose"). The reasoning behind
+        // that was about config, which is loaded from HOCON and never written back. It did not cover a
+        // Redacted in a stored entity or a request DTO, where a read-modify-write silently replaced a
+        // live secret with the placeholder. Worse, the value that came back was a REAL Redacted holding
+        // a publicly known constant — an app rebuilt from a dump would sign JWTs with it.
+        //
+        // The subtree case below always threw. This makes the scalar case agree, and Slumber's
+        // RedactedAwaker rejects the placeholder identically — the two codecs must not disagree about
+        // whether a secret survives.
         @Serializable
         data class Scalar(val signingKey: Redacted<String>)
 
         val once = Json.encodeToString(Scalar.serializer(), Scalar(Redacted(secret)))
-        val back = Json.decodeFromString(Scalar.serializer(), once)
 
-        back.signingKey.value shouldBe Redacted.PLACEHOLDER
-        back.signingKey.value shouldNotContain secret
+        once shouldNotContain secret
+
+        shouldThrow<SerializationException> {
+            Json.decodeFromString(Scalar.serializer(), once)
+        }
+    }
+
+    "a legitimate value that merely CONTAINS the placeholder text still round-trips" {
+        // The check is equality, not containment — otherwise a passphrase that happens to embed the
+        // marker would be unusable.
+        @Serializable
+        data class Scalar(val signingKey: Redacted<String>)
+
+        val awkward = "prefix-${Redacted.PLACEHOLDER}-suffix"
+
+        val back = Json.decodeFromString(
+            Scalar.serializer(),
+            """{"signingKey":"$awkward"}""",
+        )
+
+        back.signingKey.value shouldBe awkward
     }
 
     "a SUBTREE round trip throws rather than yielding a broken object" {
