@@ -7,6 +7,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.insights.api.InsightsApiFeature
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
+import io.peekandpoke.ultra.model.Paged
 
 /**
  * End-to-end proof that insights data is reachable only by a superuser.
@@ -49,9 +50,10 @@ class InsightsApiSpec : FunktorApiSpec() {
                     authenticate(superUserToken) {
                         route(firstPage) {
                             status shouldBe HttpStatusCode.OK
-                            // The depot may legitimately be empty in a fresh test app; what matters is
-                            // that the call is answered rather than refused.
-                            apiResponseData<List<InsightsRecordSummary>>() shouldNotBe null
+                            // This spec is about WHO may call the endpoint; that it returns real records
+                            // is `InsightsRecordingSpec`'s job, on the recording host. Here the depot is
+                            // legitimately empty, so assert only that a well-formed envelope came back.
+                            apiResponseData<Paged<InsightsRecordSummary>>() shouldNotBe null
                         }
                     }
                 }

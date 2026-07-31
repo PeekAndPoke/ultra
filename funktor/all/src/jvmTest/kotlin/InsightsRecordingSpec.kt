@@ -14,6 +14,7 @@ import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
 import io.peekandpoke.funktor.insights.collectors.RequestCollector
 import io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature
+import io.peekandpoke.ultra.model.Paged
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.jsonArray
@@ -57,7 +58,7 @@ class InsightsRecordingSpec : FunktorApiSpec() {
                 authenticate(superUserToken) {
                     request(insightsApi.insights.listRecords, wholeDepot) {
                         status shouldBe HttpStatusCode.OK
-                        count = apiResponseData<List<InsightsRecordSummary>>()?.size ?: 0
+                        count = apiResponseData<Paged<InsightsRecordSummary>>()?.items?.size ?: 0
                     }
                 }
             }
@@ -88,7 +89,7 @@ class InsightsRecordingSpec : FunktorApiSpec() {
                         authenticate(superUserToken) {
                             request(insightsApi.insights.listRecords, wholeDepot) {
                                 status shouldBe HttpStatusCode.OK
-                                found = apiResponseData<List<InsightsRecordSummary>>() ?: emptyList()
+                                found = apiResponseData<Paged<InsightsRecordSummary>>()?.items ?: emptyList()
                             }
                         }
                     }
@@ -156,6 +157,29 @@ class InsightsRecordingSpec : FunktorApiSpec() {
             }
         }
 
+        "the list endpoint returns a Paged envelope over the wire, with a usable total" {
+            recordOneRequest()
+
+            insightsApp {
+                authenticate(superUserToken) {
+                    request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = 1, epp = 1)) {
+                        status shouldBe HttpStatusCode.OK
+
+                        val paged = apiResponseData<Paged<InsightsRecordSummary>>().shouldNotBeNull()
+
+                        // epp=1, so a bare List could not tell a table whether more exist. This is what
+                        // Paged buys, and it must survive Slumber to the client rather than only exist
+                        // server-side.
+                        paged.items.size shouldBe 1
+                        paged.page shouldBe 1
+                        paged.epp shouldBe 1
+                        (paged.fullItemCount!! >= 1L) shouldBe true
+                        paged.fullPageCount shouldBe paged.fullItemCount
+                    }
+                }
+            }
+        }
+
         "an oversized epp is clamped by the handler, not honoured" {
             recordOneRequest()
 
@@ -166,20 +190,20 @@ class InsightsRecordingSpec : FunktorApiSpec() {
                     // this is the only place the clamp is actually exercised.
                     request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = 1, epp = 99_999)) {
                         status shouldBe HttpStatusCode.OK
-                        val rows = apiResponseData<List<InsightsRecordSummary>>().shouldNotBeNull()
+                        val rows = apiResponseData<Paged<InsightsRecordSummary>>().shouldNotBeNull().items
                         (rows.size <= InsightsApi.MAX_EPP) shouldBe true
                     }
 
                     // epp=0 must not mean "an empty page forever"
                     request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = 1, epp = 0)) {
                         status shouldBe HttpStatusCode.OK
-                        apiResponseData<List<InsightsRecordSummary>>().shouldNotBeNull().size shouldBe 1
+                        apiResponseData<Paged<InsightsRecordSummary>>().shouldNotBeNull().items.size shouldBe 1
                     }
 
                     // and a nonsense page is an empty page, not page one
                     request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = Int.MAX_VALUE, epp = 20)) {
                         status shouldBe HttpStatusCode.OK
-                        apiResponseData<List<InsightsRecordSummary>>().shouldNotBeNull() shouldBe emptyList()
+                        apiResponseData<Paged<InsightsRecordSummary>>().shouldNotBeNull().items shouldBe emptyList()
                     }
                 }
             }

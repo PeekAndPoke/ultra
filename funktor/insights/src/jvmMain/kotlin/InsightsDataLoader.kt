@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.model.Paged
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -73,21 +74,26 @@ class InsightsDataLoader(
     }
 
     /**
-     * One page of records, newest first.
+     * One page of records, newest first, with the full count.
      *
      * Day folders and the files inside them are ordered by NAME — both encode their timestamp, so the
-     * order is chronological without a single `stat` and without depending on write time. Only the
-     * files on the requested page are opened; the rest are never read.
+     * order is chronological without a single `stat` and without depending on write time. **Only the
+     * files inside the requested page's slot window are opened**; every other record is counted from its
+     * directory entry alone.
+     *
+     * `fullItemCount` is what makes this walk every day folder rather than stopping once the page is
+     * full. That is one `readdir` per folder and no file reads — the cost the table's page count is
+     * worth. It is exact, not an estimate.
      */
-    suspend fun list(page: Int, epp: Int): List<InsightsRecordSummary> {
+    suspend fun list(page: Int, epp: Int): Paged<InsightsRecordSummary> {
         // Long because `page` is caller-supplied and `(page - 1) * epp` wraps NEGATIVE in Int —
         // ?page=2147483647&epp=200 gave skip = -400.
         //
         // Belt and braces, not the load-bearing part: reverting this to Int does NOT change any result,
-        // because the slot-based break below sees `seen - skip` already exceeding `epp` for any
-        // large-magnitude negative skip and returns an empty page. Verified by mutation — the Int
-        // version fails no test. Kept because it states the intent, and because the protection would
-        // vanish if the break condition were ever changed back to counting rows.
+        // because a large-magnitude negative skip puts the window `[skip, skip + epp)` entirely below
+        // slot 0, so nothing is collected. Verified by mutation — the Int version fails no test. Kept
+        // because it states the intent, and because the protection would vanish if the window
+        // arithmetic were ever changed.
         val skip = (page.toLong() - 1) * epp
 
         val dayFolders = repository.listItems("")
@@ -98,25 +104,20 @@ class InsightsDataLoader(
         var seen = 0L
 
         for (folder in dayFolders) {
-            if (seen - skip >= epp) break
-
             val files = repository.listItems(folder.path)
                 .filterIsInstance<DepotItem.File>()
                 .sortedByDescending { it.name }
 
             for (file in files) {
-                // A page consumes exactly `epp` SLOTS, not `epp` rows. Breaking on `result.size` instead
-                // made an unreadable record consume a slot on this page and get skipped again on the
-                // next, so the two pages OVERLAPPED — page 1 walked further than `epp` files while page 2
-                // still skipped only `page * epp`. Truncated records are routine here: `putFile` is a
-                // bare non-atomic `writeBytes` and records are written after the response, so a listing
-                // against live traffic reads half-written files.
-                if (seen - skip >= epp) break
-
+                // A page owns exactly the SLOTS [skip, skip + epp) — not the first `epp` READABLE rows.
+                // Counting rows instead let an unreadable record consume a slot on this page and be
+                // skipped again on the next, so consecutive pages OVERLAPPED. Truncated records are
+                // routine here: `putFile` is a bare non-atomic `writeBytes` and records are written
+                // after the response, so a listing taken against live traffic reads half-written files.
                 val slot = seen++
 
-                // skip cheaply — the file is never opened
-                if (slot < skip) continue
+                // outside the window the file is never opened — only its directory entry is counted
+                if (slot < skip || slot >= skip + epp) continue
 
                 val root = parse(repository.getContent(file.path)?.getContentBytes()) ?: continue
 
@@ -126,7 +127,7 @@ class InsightsDataLoader(
             }
         }
 
-        return result
+        return Paged(items = result, page = page, epp = epp, fullItemCount = seen)
     }
 
     private fun parse(bytes: ByteArray?): JsonObject? = runCatching {

@@ -83,7 +83,7 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             repo.putFile("records-2026-07-31/a.json", record(requestSlice, responseSlice))
 
-            val summary = loader.list(page = 1, epp = 10).single()
+            val summary = loader.list(page = 1, epp = 10).items.single()
 
             summary.method shouldBe "GET"
             summary.path shouldBe "/api/things"
@@ -101,7 +101,7 @@ class InsightsDataLoaderSpec : StringSpec({
             // is the whole point of storing the headline rather than digging it out of `request`.
             repo.putFile("records-2026-07-31/brief.json", record(method = "POST", uri = "/api/x", status = 201))
 
-            val summary = loader.list(page = 1, epp = 10).single()
+            val summary = loader.list(page = 1, epp = 10).items.single()
 
             summary.method shouldBe "POST"
             summary.path shouldBe "/api/x"
@@ -121,7 +121,7 @@ class InsightsDataLoaderSpec : StringSpec({
                 record(responseSlice, method = null, uri = null, status = null),
             )
 
-            val summary = loader.list(page = 1, epp = 10).single()
+            val summary = loader.list(page = 1, epp = 10).items.single()
 
             summary.method shouldBe null
             summary.path shouldBe null
@@ -137,19 +137,19 @@ class InsightsDataLoaderSpec : StringSpec({
             // names sort chronologically, so rec-4 is newest
             repeat(5) { i -> repo.putFile("records-2026-07-31/rec-$i.json", record(requestSlice)) }
 
-            loader.list(page = 1, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
+            loader.list(page = 1, epp = 2).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/rec-4.json",
                 "records-2026-07-31/rec-3.json",
             )
-            loader.list(page = 2, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
+            loader.list(page = 2, epp = 2).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/rec-2.json",
                 "records-2026-07-31/rec-1.json",
             )
-            loader.list(page = 3, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
+            loader.list(page = 3, epp = 2).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/rec-0.json",
             )
             // past the end is empty, not an error
-            loader.list(page = 4, epp = 2) shouldBe emptyList()
+            loader.list(page = 4, epp = 2).items shouldBe emptyList()
         }
     }
 
@@ -162,11 +162,11 @@ class InsightsDataLoaderSpec : StringSpec({
             repo.putFile("records-2026-07-30/b.json", record(requestSlice))
             repo.putFile("records-2026-07-31/c.json", record(requestSlice))
 
-            loader.list(page = 1, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
+            loader.list(page = 1, epp = 2).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/c.json",
                 "records-2026-07-30/b.json",
             )
-            loader.list(page = 2, epp = 2).map { it.ref.toPath() } shouldContainExactly listOf(
+            loader.list(page = 2, epp = 2).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-29/a.json",
             )
         }
@@ -180,7 +180,7 @@ class InsightsDataLoaderSpec : StringSpec({
             repo.putFile("records-2026-07-29/old.json", record(requestSlice))
             repo.putFile("records-2026-07-31/new.json", record(requestSlice))
 
-            loader.list(page = 1, epp = 10).map { it.ref.toPath() } shouldContainExactly listOf(
+            loader.list(page = 1, epp = 10).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/new.json",
                 "records-2026-07-29/old.json",
             )
@@ -201,9 +201,9 @@ class InsightsDataLoaderSpec : StringSpec({
             repo.putFile("records-2026-07-31/b.json", record(requestSlice))
             repo.putFile("records-2026-07-31/a.json", record(requestSlice))
 
-            val p1 = loader.list(page = 1, epp = 2).map { it.ref.file }
-            val p2 = loader.list(page = 2, epp = 2).map { it.ref.file }
-            val p3 = loader.list(page = 3, epp = 2).map { it.ref.file }
+            val p1 = loader.list(page = 1, epp = 2).items.map { it.ref.file }
+            val p2 = loader.list(page = 2, epp = 2).items.map { it.ref.file }
+            val p3 = loader.list(page = 3, epp = 2).items.map { it.ref.file }
 
             // A page consumes epp SLOTS. The broken record costs its own row and nothing else — pages
             // must not repeat a record. Counting rows instead of slots returned `a` on BOTH page 2 and
@@ -213,6 +213,57 @@ class InsightsDataLoaderSpec : StringSpec({
             p3 shouldContainExactly listOf("a.json")
 
             (p1 + p2 + p3).let { all -> all.distinct().size shouldBe all.size }
+        }
+    }
+
+    "the page carries the full count, across day folders and beyond the page itself" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            repo.putFile("records-2026-07-29/a.json", record(requestSlice))
+            repo.putFile("records-2026-07-30/b.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/c.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/d.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/e.json", record(requestSlice))
+
+            val first = loader.list(page = 1, epp = 2)
+
+            // The point of Paged: a table can say "page 1 of 3" instead of guessing from items.size.
+            first.items.size shouldBe 2
+            first.fullItemCount shouldBe 5
+            first.fullPageCount shouldBe 3
+            first.page shouldBe 1
+            first.epp shouldBe 2
+
+            // the count is the DEPOT, not the page — it must not collapse to items.size
+            loader.list(page = 3, epp = 2).let {
+                it.items.size shouldBe 1
+                it.fullItemCount shouldBe 5
+            }
+
+            // and a page past the end still reports the true total
+            loader.list(page = 9, epp = 2).let {
+                it.items shouldBe emptyList()
+                it.fullItemCount shouldBe 5
+            }
+        }
+    }
+
+    "an unreadable record is still counted, so the total does not drift" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            repo.putFile("records-2026-07-31/a.json", record(requestSlice))
+            repo.putFile("records-2026-07-31/b.json", "{ truncated write")
+
+            val page = loader.list(page = 1, epp = 10)
+
+            // The record exists on disk; it is what a client would page through. Counting only readable
+            // ones would make fullItemCount disagree with the slot arithmetic the pages use.
+            page.items.size shouldBe 1
+            page.fullItemCount shouldBe 2
         }
     }
 
@@ -226,8 +277,8 @@ class InsightsDataLoaderSpec : StringSpec({
             // `(page - 1) * epp` in Int wrapped NEGATIVE here, so the skip was never reached and the
             // endpoint answered with the first page — a client walking pages until one came back short
             // would loop forever.
-            loader.list(page = Int.MAX_VALUE, epp = 200) shouldBe emptyList()
-            loader.list(page = 20_000_000, epp = 200) shouldBe emptyList()
+            loader.list(page = Int.MAX_VALUE, epp = 200).items shouldBe emptyList()
+            loader.list(page = 20_000_000, epp = 200).items shouldBe emptyList()
         }
     }
 
@@ -242,7 +293,7 @@ class InsightsDataLoaderSpec : StringSpec({
             )
 
             // "unknown" must stay distinguishable from "instant"
-            loader.list(page = 1, epp = 10).single().durationMs shouldBe null
+            loader.list(page = 1, epp = 10).items.single().durationMs shouldBe null
             loader.load(InsightsRecordRef("records-2026-07-31", "a.json"))
                 .shouldNotBeNull().durationMs shouldBe null
         }
@@ -283,7 +334,7 @@ class InsightsDataLoaderSpec : StringSpec({
 
             loader.load(InsightsRecordRef("records-2026-07-31", "broken.json")) shouldBe null
             // and it must not take the whole listing down with it
-            loader.list(page = 1, epp = 10) shouldBe emptyList()
+            loader.list(page = 1, epp = 10).items shouldBe emptyList()
         }
     }
 
@@ -318,7 +369,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, _) = loaderOver(dir)
 
         runBlocking {
-            loader.list(page = 1, epp = 10) shouldBe emptyList()
+            loader.list(page = 1, epp = 10).items shouldBe emptyList()
         }
     }
 

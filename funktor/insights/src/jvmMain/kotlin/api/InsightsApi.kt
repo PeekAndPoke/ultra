@@ -9,7 +9,7 @@ import io.peekandpoke.funktor.rest.noInsights
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
 import io.peekandpoke.ultra.remote.api
-import io.peekandpoke.ultra.remote.apiList
+import io.peekandpoke.ultra.remote.apiPaged
 
 /**
  * Recorded request insights, superuser only.
@@ -26,7 +26,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         /** The most recent records, newest first, paged. */
         val ListRecords = Get(
             uri = "$base/records",
-            response = InsightsRecordSummary.serializer().apiList(),
+            response = InsightsRecordSummary.serializer().apiPaged(),
         )
 
         /** One full record, with its neighbours for prev/next navigation. */

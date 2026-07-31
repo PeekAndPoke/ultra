@@ -1,6 +1,6 @@
 # Insights: split data from rendering, expose it through a superuser REST API
 
-**Status:** REVIEWED — rounds 1 and 2 complete, gate PASS with follow-ups. Not archived: five decisions are open, listed under "Open — decisions, not defects"
+**Status:** REVIEWED — rounds 1 and 2 complete, gate PASS. All follow-up decisions taken 2026-07-31 and implemented, except the `Redacted<T>` project which has its own task file
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
 **Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
 
@@ -562,13 +562,19 @@ deliberately non-load-bearing.
   from an unauthenticated caller writes a full ~270 KB record — which the deleted `isExcluded`
   suppressed. Options: default `BRIEF` when no bag; keep a cheap URI-prefix layer; add a ktor-level
   `Route.noInsights()`. **Coverage narrowed versus the code this replaced.**
-- **No group-level `insights`** — only per-route, unlike `authFloor`, which `ApiRoutes` makes mandatory
-  for exactly this reason.
-- **List returns a bare `List`, not `Paged`** — no total, no has-more. `BackgroundJobsApi`, whose
-  `PagingParam` this copies, returns `Paged`.
-- **`formatVersion` needs a reader** or it stays decoration.
-- **The boot check instantiates every collector**, so a collector needing per-request context cannot be
-  registered at all.
+All five are now **decided** (2026-07-31):
+
+| Was open | Decision |
+|---|---|
+| `insightsOptions()` fails open | **Keep FULL, restore a URI-prefix suppression for `InsightsApi.base`** as a second layer. Matched on the decoded path only, so neither bypass that killed `isExcluded` applies |
+| No group-level `insights` | **Skipped — YAGNI.** No current caller needs it; build it if one appears. `addRoute` is the hook when that day comes |
+| Bare `List`, not `Paged` | **`Paged<InsightsRecordSummary>`**, matching `BackgroundJobsApi`. `fullItemCount` is exact and costs one `readdir` per day folder with no file reads |
+| `formatVersion` needs a reader | **Deleted.** No back-compat is wanted, so a version nothing consults was decoration |
+| Boot check instantiates every collector | **Accepted.** `AppConfigCollector.static` is lazy now, which was the only real cost; a collector must be boot-constructible |
+
+Plus the config-secrets finding, which was the largest: `Redacted<T>` replaces `@JsonIgnore` wholesale and
+Jackson is to be removed entirely — `.claude/tasks/20260731-redacted-and-jackson-removal.md`. An interim
+name-based redaction (`ConfigRedaction`) closes the leak meanwhile and is marked for deletion.
 
 ## Why round 2 happened (kept for the record)
 
