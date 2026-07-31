@@ -1,6 +1,6 @@
-# `@Slumber.As` — declare a custom-coded type's wire shape once, generate from it
+# `@Slumber.As` — declare a custom-coded type's wire shape once
 
-**Status:** IDEA — maintainer's, 2026-07-31. Needs design work before a spec; §4 is the fork.
+**Status:** IDEA — maintainer's, 2026-07-31. Descriptive-only is settled (§4); §5 still open.
 **Plan:** none yet. Touches `ultra/slumber`, `karango`, `monko`, `ultra/codegen`.
 **Security-critical:** no.
 
@@ -36,8 +36,9 @@ that; it is what happens when a shape is copied by hand three times.
 
 And the codegen parity spec says outright why it must exist: *"a claimed type is never declared by the
 walker … a wrong claim produces confidently wrong TypeScript and the generator stays silent"*. Its
-KDoc records that the first draft got two of six types wrong. **A declaration removes the class of
-error that test defends against.**
+KDoc records that the first draft got two of six types wrong. **A declaration gives all three
+consumers one thing to read instead of three things to keep in step** — see §4 for what that does and
+does not remove.
 
 ## 3. What it would generate
 
