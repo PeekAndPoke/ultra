@@ -1219,6 +1219,20 @@ needs the same precedence — check for `Redacted<T>` before any generic-descent
 Worth a test that pins it: a root containing `Redacted<SomeObject>` emits `string`, and mutating the
 contributor to descend into the argument fails that test.
 
+### This special case is TEMPORARY — `@Slumber.As` supersedes it
+
+`Redacted<T>` will carry **`@Slumber.As(String::class)`**
+(`.claude/tasks/20260731-slumber-as-declared-wire-shape.md`), so once codegen consumes that annotation
+this stops being a hand-written rule and becomes derivable like any other declared wire shape. The
+annotation nest moves to `ultra:common`, package `io.peekandpoke.ultra.common.slumber`, precisely so
+that every generator can read it.
+
+`Redacted<T>` is in fact the annotation's cleanest case, and it answers one of that doc's open
+questions: it is a **generic** custom-coded type whose wire shape does not depend on its type argument,
+so `As(KClass)` with no type-argument machinery is exactly sufficient. If you are building
+`@Slumber.As` consumption anyway, do that first and skip the special case entirely — it is the same
+work, done once, for six-plus types instead of one.
+
 ## Incoming requirements from the frontend-SDK design (2026-07-30)
 
 The maintainer settled the frontend direction: **Vue + Tailwind, nothing published to npm, the framework

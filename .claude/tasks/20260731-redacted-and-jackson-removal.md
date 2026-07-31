@@ -42,7 +42,8 @@ JwtGenerator(config.signingKey.value)    // accessor is `value`, as on every oth
 | Not a value class | **plain class** | A `@JvmInline value class` is *inlined*, and both Slumber's `ValueClassSlumberer` and Jackson unwrap straight past any custom codec — **measured, see below**. A plain class has a real runtime type for a codec to match on |
 | Generic | **yes, `<T>`** | Subtree redaction is the point; a `String` wrapper cannot express `Redacted<AwsConfig>` |
 | Round trip | **deliberately broken** | Deserialises the real value, serialises `"REDACTED"`. One-way by design |
-| Home | **`ultra/common`, `commonMain`, package `io.peekandpoke.ultra.common.model`** | See below — zero new dependency edges, and it is where `ultra:model` is eventually headed |
+| Home | **`ultra/common`, `commonMain`, package `io.peekandpoke.ultra.common.model`** | See below — zero new dependency edges, it is where `ultra:model` is eventually headed, and it is the ONLY home that allows both the declaration-site annotation and a built-in codec |
+| Wire shape | **`@Slumber.As(String::class)`** | Declares the shape once instead of every code generator special-casing it. Requires the annotation nest to move to `ultra:common` — see below |
 | `toString()` | **redacts** | Not optional. This is the `JwtConfig` lesson inverted — safe by construction, so nobody hand-writes it |
 
 ## Measured, not assumed (2026-07-31)
@@ -85,6 +86,23 @@ It is also required anyway the day `ultra:model` merges in.
 
 `ultra:slumber` reaching `ultra:common` creates no cycle — `common` has no project dependencies at all.
 
+### `ultra:model` was considered and does NOT work — the reason is worth keeping
+
+The maintainer's first instinct was `ultra:model`, on the grounds that `Redacted<T>` should carry
+`@Slumber.As(String::class)` and `ultra:common` cannot depend on `ultra:slumber` (correct — `slumber`
+declares `api(project(":ultra:common"))`, so the reverse is a cycle).
+
+But that trades one cycle for another. `ultra:slumber` must **see** `Redacted<T>` to register its codec
+as the first branch in `BuiltInModule`. If `Redacted<T>` sits in `ultra:model` and `model → slumber` for
+the annotation, then `slumber → model` closes the loop. **You get the declaration-site annotation or the
+built-in codec, never both** — and an opt-in codec is the wrong failure mode for a security default,
+because an app that forgets to register it writes secrets in the clear and says nothing.
+
+Resolved by moving the annotation instead: the `Slumber` nest goes to `ultra:common`, package
+`io.peekandpoke.ultra.common.slumber` (see `.claude/tasks/20260731-slumber-as-declared-wire-shape.md`
+§6). It is annotations only, with no machinery and no slumber dependency, so nothing is dragged along.
+Then `Redacted<T>` lives in `ultra:common` **with** its annotation, and `ultra:slumber` sees both.
+
 ## Slumber fits this better than expected
 
 Verified against `ultra/slumber/src/jvmMain/kotlin/builtin/BuiltInModule.kt`:
@@ -104,7 +122,12 @@ Ordered so the security-critical part lands first and nothing is blocked on hygi
 
 ### Stage 1 — the type and its codecs
 
-- `Redacted<T>` in `ultra/common/src/commonMain/kotlin/model/`, with a redacting `toString()`.
+- **Prerequisite:** move the `Slumber` annotation nest to `ultra:common`, package
+  `io.peekandpoke.ultra.common.slumber`. Tracked in
+  `.claude/tasks/20260731-slumber-as-declared-wire-shape.md` §6.
+- `Redacted<T>` in `ultra/common/src/commonMain/kotlin/model/`, package
+  `io.peekandpoke.ultra.common.model`, carrying `@Slumber.As(String::class)` and a redacting
+  `toString()`.
 - Add `Deps.KotlinX.serialization_core` to `ultra/common`'s `commonMain`.
 - Slumber `Awaker` + `Slumberer`, mounted as the **first** branch in `BuiltInModule` so it is available
   out of the box and cannot be shadowed.

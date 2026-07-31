@@ -114,8 +114,48 @@ declares, applies at a use site, and reads back through runtime reflection — w
 
 ## 6. Open questions
 
-- **Where does the annotation live?** `ultra/slumber`'s `commonMain` is the natural home, but karango
-  and monko KSP would then depend on it — check they already do, transitively or otherwise.
+- ~~**Where does the annotation live?**~~ **SETTLED (maintainer, 2026-07-31): move the whole `Slumber`
+  annotation nest to `ultra:common`'s `commonMain`.**
+
+  `ultra/slumber` looked like the natural home until `Redacted<T>` needed the annotation and forced the
+  question (`.claude/tasks/20260731-redacted-and-jackson-removal.md`). The conflict: a type must be able
+  to CARRY `@Slumber.As`, and `ultra:slumber` must be able to SEE that type to register its codec. With
+  the annotation in `ultra:slumber`, any annotated type sits downstream of slumber — and
+  `slumber → thatModule` is then a cycle, because `slumber` already declares
+  `api(project(":ultra:common"))`. So you get the declaration-site annotation OR the built-in codec, not
+  both.
+
+  `ultra:common` dissolves it, and costs nothing:
+
+  | | outcome |
+  |---|---|
+  | New dependency edges | **none** — `slumber`, `vault`, `security`, `karango`, `monko`, `model` and `codegen` all already depend on `ultra:common` |
+  | Cycle | none — `ultra:common` has no project dependencies at all |
+  | karango/monko KSP visibility | yes, via a dependency they already have (answers the check in §7) |
+
+  The nest is **annotations only** — `Slumber.Field` and nothing else, no machinery, no slumber
+  dependency — so nothing moves with it. Its two external users, `ultra/vault/src/commonMain/kotlin/
+  annotations.kt` and `ultra/security/src/commonMain/kotlin/user/UserRecord.kt`, both already depend on
+  `ultra:common`.
+
+  **Package: `io.peekandpoke.ultra.common.slumber`** (maintainer, 2026-07-31), i.e.
+  `ultra/common/src/commonMain/kotlin/slumber/Slumber.kt`. That name settles the one oddity the move
+  would otherwise leave — annotations called `Slumber.*` sitting outside `ultra:slumber` — by saying what
+  they are: the slumber-facing contract, held low enough in the tree for every consumer to read. A
+  descriptive annotation consumed by slumber, two KSP processors and a code generator is a **contract**,
+  not an implementation.
+
+  Import sites change from `io.peekandpoke.ultra.slumber.Slumber` to
+  `io.peekandpoke.ultra.common.slumber.Slumber` — `ultra/vault`, `ultra/security`, four files inside
+  `ultra/slumber` itself, and three codegen test fixtures.
+
+- ~~**Generic custom-coded types** — does anything need `As` with type arguments?~~ **Answered by the
+  first real consumer: no.** `Redacted<T>` slumbers to a `String` regardless of `T` — that IS the type's
+  purpose — so it wants exactly `@Slumber.As(String::class)` and no type-argument machinery. A generic
+  type whose wire shape is independent of its argument is evidence FOR the settled simple form (§5),
+  not against it.
+
+- **Where does the annotation live?** *(superseded above)*
 - **Does it apply to types you do not own?** `java.time.*` and `kotlinx.datetime.*` are custom-coded
   too and cannot be annotated. A registry-style escape hatch is needed regardless, which is what
   `TsTypeClaims` already is on the codegen side. Do not let the annotation's existence delete the
@@ -130,7 +170,8 @@ declares, applies at a use site, and reads back through runtime reflection — w
 ## 7. What I would check first
 
 - [ ] Confirm no annotation like this exists already under another name.
-- [ ] Confirm karango/monko KSP can see a `commonMain` annotation from `ultra/slumber`.
+- [x] ~~Confirm karango/monko KSP can see a `commonMain` annotation from `ultra/slumber`.~~ Moot — the
+      nest moves to `ultra:common`, which both already depend on. See §6.
 - [ ] Enumerate every custom-coded type across the codebase, not just ultra/datetime —
       `SlumberConfig.default`'s module list is the honest starting point, plus `JavaTimeModule` and
       the kotlinx-json codecs. That count decides whether this pays for itself.
