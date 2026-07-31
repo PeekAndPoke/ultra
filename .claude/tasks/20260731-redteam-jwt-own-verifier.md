@@ -115,18 +115,35 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
     later records a rejection), `%00`, and a kid that is valid JSON-escaped but decodes to something
     else. **Also check what `kid` reaches on the SUCCESS path** — a verified request's key id is
     exactly the sort of thing that gets added to an insights record or an access log later.
-20. **Key-enumeration oracle.** An unknown `kid` rejects before the MAC; a known `kid` with a bad
-    signature rejects after it. The messages are identical (asserted by a spec) but the TIMING is
-    not, by roughly one HMAC. Measure whether that is distinguishable over a network, and decide
-    whether learning the set of configured `kid`s is worth anything — the current judgement is that
-    it is not, since every issued token carries one in the clear. **Overturn that if you can**: a
-    deployment where kid names leak rotation cadence, environment, or a key's age is the interesting
-    case.
-21. **Rotation races.** A token minted under key A, verified while A is still configured, replayed
-    after A is dropped, and again after a NEW key is added under the id `A` with different material.
-    The last is the sharp one: reusing a retired `kid` for fresh material silently makes old tokens
-    fail closed — confirm it is *closed* and not merely different, and that nothing caches a
-    previously successful verification by `kid`.
+20. **Key-enumeration oracle — the sharpest item in this section.** An unknown `kid` rejects before
+    the MAC; a known one with a bad signature rejects after it. Messages are identical (asserted by a
+    spec); timing is not, by one HMAC over a signing input **the attacker sizes**, up to
+    `MAX_TOKEN_LENGTH`. So: one request per guess, with the cost gap deliberately inflated.
+    - Measure it end to end — through a load balancer, at realistic concurrency — and establish
+      whether the engine's own header cap (Netty defaults to 8 KB) makes the 64 KB constant dead. If
+      it does, that constant is misleading documentation and should shrink.
+    - The thing worth stealing is **not** the kid values (they ride in every issued token) but the
+      knowledge of **which retired keys are still in the verify list** — the reconnaissance step
+      before using a leaked old key, per scenario 21.
+    - Also quantify it as a plain amplifier: cheapest request that makes the server do the most work.
+21. **Rotation races, and the compromise window.** A token minted under key A, verified while A is
+    still configured, replayed after A is dropped, and again after a NEW key is added under the id
+    `A` with different material. The last is the sharp one: reusing a retired `kid` for fresh
+    material silently makes old tokens fail closed — confirm it is *closed* and not merely different,
+    and that nothing caches a previously successful verification by `kid`.
+    **Then the operational version:** simulate a leaked key retained for a graceful grace period and
+    confirm the attacker keeps forging for its whole duration. The KDoc now says a compromise needs
+    immediate removal; test that the documented graceful procedure really is unsafe for that case, so
+    nobody re-reasons their way back to it.
+25. **Mis-rotation.** Append a key instead of prepending it. Confirm it boots clean, that `issued`
+    dates say the rotation happened, and that fresh tokens still carry the OLD `kid`. Then find the
+    fastest way an operator could have noticed — that is the missing tooling, not a missing check
+    (a check cannot distinguish this from phase 1 of a rolling rotation).
+26. **Committed key material.** The demo's dev/test profiles ship a working superuser signing key
+    inside `src/main/resources` (pre-existing, commit `6c55d3db`, tracked as OPEN item 1 in
+    `.claude/tasks/20260731-jwt-kid-key-rotation.md`). Establish exactly which deployment shapes can
+    end up on that profile — `AppConfig` tries `File(filename)` before the classpath — including CI
+    entrypoints and container images that bake a default `-config=`.
 22. **Downgrade between configured keys.** With several keys configured, can a token be made to
     verify under a WEAKER one than the issuer intended — a key with a shorter secret that still
     clears its algorithm's floor, or (once a second `JwtAlgorithm` entry exists) a weaker algorithm?
@@ -146,9 +163,13 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
 
 ## Known-and-accepted (do not report as new)
 
-- **CLOSED, do not report:** a valid-MAC token whose header named a different algorithm used to
-  verify, because the header was never read. Since `9fe2a21a` the header's `alg` is compared against
-  the key's and a mismatch rejects. The old divergence from java-jwt is gone.
+- **CLOSED by `9fe2a21a`, do not report:** a valid-MAC token whose header named a different algorithm
+  used to verify, because the header was never read. The header's `alg` is now compared against the
+  key's and a mismatch rejects.
+- **CLOSED by `493423b8`, do not report:** `crit` is now rejected outright (RFC 7515 §4.1.11); `typ`
+  must be `JWT`, case-insensitively; the signature must be CANONICAL base64url, so the 32-strings-per-
+  token malleability is gone; overlapping `userNs`/`permissionsNs` is refused at boot and at
+  construction.
 - `MessageDigest.isEqual`→`==` is not test-observable; constant-time rests on review. This is the one
   guard that survived mutation testing, knowingly.
 - An unknown `kid` and a bad MAC are distinguishable by TIMING (see 20). Accepted deliberately: `kid`
