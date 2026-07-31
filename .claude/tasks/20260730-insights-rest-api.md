@@ -471,6 +471,43 @@ plus one with a non-default policy proving the override takes effect.
 
 **Red-team follow-up** (required, security-critical): `.claude/tasks/20260730-redteam-insights-api.md`
 
+## I4: the e2e now runs against a populated depot (2026-07-31)
+
+The finding was that the two 200-path assertions passed on an **empty** depot. It went deeper than
+"insights was not enabled": the funktor:all test server never called `instrumentWithInsights` at all, so
+no config change alone could have produced a record.
+
+| Change | Where | Why this shape |
+|---|---|---|
+| `InsightsFileRepository(dir = DEFAULT_DIR)` | `funktor/insights/.../InsightsFileRepository.kt` | The root was hardcoded to the **relative** `./tmp/depot/insights`, so a suite run on a machine where the demo had run read the demo's leftovers |
+| Depot rooted in a fresh temp dir | `index_testJvm.kt` — `insightsDepotDir` | Makes "the depot holds exactly what this run recorded" a fact the tests may assert on |
+| The API mounted a **second time** under `host("insights.*")`, with recording on | `jvmTest/server.kt` — `mountApi(app, init, insights)` | `instrumentWithInsights` decides at INSTALL time, so one mount would record for **every** spec in the module or for none. A FULL record is ~270 KB — the other ten specs should not pay for records nobody reads |
+| `insightsApp { }` beside `apiApp { }` | `index_testJvm.kt` | Same routes, same auth chain, same handlers; only the host header differs |
+
+`InsightsRecordingSpec` (3 tests) then drives a real request through the app, polls the list endpoint
+until the asynchronous write lands, and asserts on what comes back:
+
+1. **the headline is populated** — `method`/`status`/`url`/`durationMs` off the top level of a real
+   record, so the list endpoint is proven against data rather than against `[]`
+2. **the record loads in full and its credential header is redacted** — `getRecord`'s 200 branch had
+   never run; this walks into the `request` slice and pins `Authorization` to `***redacted***`, then
+   checks no fragment of the token appears anywhere in the body. The first end-to-end proof of
+   redaction: `HeaderLoggingSpec` tests the policy, `CollectorRedactionSpec` tests the collector, and
+   neither proves what a superuser actually receives over HTTP
+3. **the endpoints do not record themselves** — `.noInsights()`, observed as "listing twice does not
+   grow the depot", with a guard that the page is not saturated so the comparison cannot go vacuous
+
+**Mutations — each kills exactly one test, and the right one:**
+
+| Mutation | Fails |
+|---|---|
+| drop `.noInsights()` from `listRecords` | "the insights endpoints do not record themselves" |
+| restore `headers = call.request.headers.toMap()` | "…its credential header is redacted" |
+| write `method = null` into the stored headline | "…is listed with its headline populated" |
+
+Counts from `build/test-results/**/TEST-*.xml`: **funktor:all 149**, **funktor:insights 59**,
+**funktor:rest 102** — 0 failures, 0 errors. Compile sweep clean.
+
 ## Round 2 is required before this is DONE
 
 Round 1 reviewed `b62ab6cd^..HEAD`. Fixing its findings produced **three further commits** — `a012b14d`,
@@ -524,12 +561,8 @@ Three defects surfaced only because a mutation refused to fail, and none were vi
 
 ## Follow-ups
 
-- [ ] **I4 — the test app never enables insights**, so the two 200-path assertions in
-      `funktor/all/src/jvmTest/kotlin/InsightsApiSpec.kt` are vacuous: the depot is empty, so
-      `shouldNotContain superUserToken` passes because there is no data, and no e2e ever serialises a
-      populated record over HTTP. Needs insights enabled with a temp-dir `InsightsRepository` —
-      `InsightsFileRepository` is rooted at the relative `./tmp/depot/insights`, so tests otherwise read
-      whatever the demo left behind. **The one real gap left in this task.**
+- [x] **I4 — the test app never enables insights** — **fixed 2026-07-31**, see "I4: the e2e now runs
+      against a populated depot" below.
 - [ ] **D-M6 — no discovery or fallback for unknown collector keys.** An app-defined collector gets a
       key nobody renders. Decide with the Vue tab registry (plan steps 6–7), not before.
 - [ ] **No DOCS task yet, deliberately.** This adds public API (`InsightsApi`, `InsightsRecordRef`,
