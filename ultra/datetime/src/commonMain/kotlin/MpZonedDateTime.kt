@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
+import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
@@ -10,6 +11,7 @@ import kotlin.time.Duration
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpZonedDateTimeSerializer::class)
+@Slumber.As(MpDateTimeRawData::class)
 data class MpZonedDateTime(
     val datetime: MpLocalDateTime,
     val timezone: MpTimezone,

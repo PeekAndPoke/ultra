@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
+import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -12,6 +13,7 @@ import kotlin.time.Duration
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpInstantSerializer::class)
+@Slumber.As(MpDateTimeRawData::class)
 data class MpInstant(
     internal val value: Instant,
 ) : MpAbsoluteDateTime, ComparableTo<MpInstant> {
