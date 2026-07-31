@@ -185,6 +185,33 @@ class InsightsRecordingSpec : FunktorApiSpec() {
             }
         }
 
+        "a recorded record does not contain the application's signing key" {
+            // The proof that the redaction is REACHED, not merely correct. ConfigRedaction has its own
+            // unit spec, but removing the call from AppConfigCollector left every suite green — the same
+            // "policy never invoked" trap that made the first CollectorRedactionSpec vacuous.
+            //
+            // The key is read from the running app's own config rather than pasted here, so the test
+            // cannot rot into asserting against a string nothing uses.
+            val signingKey = kontainer.get(FunktorAllTestConfig::class)
+                .funktor.auth.jwt?.signingKey
+                ?: error("the test app has no JWT signing key configured — this test would be vacuous")
+
+            val summary = recordOneRequest().first()
+
+            insightsApp {
+                authenticate(superUserToken) {
+                    val param = InsightsApiFeature.RecordParam(summary.ref.bucket, summary.ref.file)
+
+                    request(insightsApi.insights.getRecord, param) {
+                        status shouldBe HttpStatusCode.OK
+
+                        // the whole record, app-config slice included, as a superuser receives it
+                        bodyAsText() shouldNotContain signingKey
+                    }
+                }
+            }
+        }
+
         "the insights endpoints do not record themselves" {
             // `.noInsights()` on both routes. Without it a superuser opening the panel fills the depot
             // with records of themselves reading it — each one carrying their own Authorization header,

@@ -1180,6 +1180,45 @@ code gets its own task and review round. See `.claude/tasks/20260730-slumber-int
   `IntArray::class`, which would break `forArray`; on the pinned 2.4.10 it is `Array::class`, and
   `ArrayCodecSpec`'s boxed-array case fails loudly if that regresses.
 
+## INCOMING — `Redacted<T>` must emit a string, not a subtree (2026-07-31)
+
+**For the codegen agent. This is a hard requirement, not a suggestion, and it is easy to get silently
+wrong.**
+
+A new type is landing: `Redacted<T>` in `ultra/common/src/commonMain/kotlin/model/`, package
+`io.peekandpoke.ultra.common.model`. Plan and rationale:
+`.claude/tasks/20260731-redacted-and-jackson-removal.md`.
+
+It wraps a value that **deserialises normally but always serialises to a placeholder string**. The round
+trip is broken on purpose — it is how config secrets (JWT signing key, CSRF secret, DB passwords) are
+kept out of insights records, logs and any other output. It is generic so a whole **subtree** can be
+redacted: `Redacted<AwsConfig>`, not merely `Redacted<String>`.
+
+**What codegen must do:** for a field of type `Redacted<T>`, emit **`string`** — never the shape of `T`.
+
+```kotlin
+data class DemoConfig(val aws: Redacted<AwsConfig>)
+```
+```typescript
+// CORRECT                          // WRONG — the wire never carries this
+type DemoConfig = {                 type DemoConfig = {
+    aws: string                         aws: { accessKey: string, region: string }
+}                                   }
+```
+
+**Why the naive walk gets it wrong.** The generator walks the same `SlumberConfig` the runtime uses, and
+resolves a generic by descending into its type argument. `Redacted<T>` is the case where the declared type
+argument is deliberately *not* what appears on the wire. Descending into `T` produces a zod schema that
+expects an object and receives `"REDACTED"` — a runtime `.parse()` failure in the browser, on a field whose
+whole purpose is that it never reaches the browser intact.
+
+**The equivalent Slumber rule, for symmetry:** the Slumberer for `Redacted<T>` is registered as the FIRST
+branch in `BuiltInModule.getSlumberer`, ahead of every other codec, so it cannot be shadowed. Codegen
+needs the same precedence — check for `Redacted<T>` before any generic-descent logic, not after.
+
+Worth a test that pins it: a root containing `Redacted<SomeObject>` emits `string`, and mutating the
+contributor to descend into the argument fails that test.
+
 ## Incoming requirements from the frontend-SDK design (2026-07-30)
 
 The maintainer settled the frontend direction: **Vue + Tailwind, nothing published to npm, the framework

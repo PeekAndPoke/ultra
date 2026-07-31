@@ -14,12 +14,14 @@ import io.ktor.server.routing.RoutingPipelineCall
 import io.ktor.server.routing.RoutingResolveTrace
 import io.ktor.server.routing.Routing
 import io.ktor.util.AttributeKey
+import io.ktor.server.request.path
 import io.peekandpoke.funktor.core.fullUrl
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.rest.FunktorRouteAttributes
 import io.peekandpoke.funktor.rest.InsightsLevel
 import io.peekandpoke.funktor.rest.InsightsOptions
 import io.peekandpoke.funktor.rest.InsightsOptionsKey
+import io.peekandpoke.funktor.insights.api.InsightsApi
 import io.peekandpoke.funktor.insights.collectors.RoutingCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -63,7 +65,21 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
                 // Ask the RESOLVED ROUTE how much to record — never the request uri, which the client
                 // controls. Resolving here rather than inside finish() also avoids launching a
                 // coroutine for a request that is about to be discarded.
-                val options = call.insightsOptions()
+                val options = when {
+                    // Second layer, restored 2026-07-31. The route attribute is the primary mechanism
+                    // and covers every funktor ApiRoute — but a request that resolves to something else
+                    // (a `fallback { }` catch-all, a wrong method, an unmatched sub-path) carries NO
+                    // attribute bag and therefore defaults to FULL. That let an unauthenticated
+                    // `POST /_/funktor/insights/records` write a ~270 KB record of the insights API,
+                    // which the deleted `isExcluded` used to suppress.
+                    //
+                    // Narrower than what it replaces on purpose: matched against the DECODED path only,
+                    // never the query string, so neither of the two bypasses that killed `isExcluded`
+                    // (percent-encoding, and `?next=/_/funktor/insights`) has anywhere to act.
+                    call.request.path().startsWith(InsightsApi.base) -> InsightsOptions.off
+
+                    else -> call.insightsOptions()
+                }
 
                 if (options.level != InsightsLevel.OFF) {
                     call.launch(Dispatchers.IO) {

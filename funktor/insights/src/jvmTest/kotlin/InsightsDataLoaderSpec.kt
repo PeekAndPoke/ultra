@@ -33,7 +33,6 @@ class InsightsDataLoaderSpec : StringSpec({
         status: Int? = 200,
     ) = """
         {
-          "formatVersion": 1,
           "ts": "2026-07-31T12:00:00",
           "date": "2026-07-31T12:00:00",
           "startedNs": 1000000,
@@ -239,7 +238,7 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             repo.putFile(
                 "records-2026-07-31/a.json",
-                """{ "formatVersion": 1, "method": "GET", "uri": "/x", "status": 200, "collectors": [] }"""
+                """{ "method": "GET", "uri": "/x", "status": 200, "collectors": [] }"""
             )
 
             // "unknown" must stay distinguishable from "instant"

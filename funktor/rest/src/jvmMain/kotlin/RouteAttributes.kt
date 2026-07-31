@@ -50,6 +50,9 @@ data class InsightsOptions(
     companion object {
         /** Record everything; redact query parameters by name rather than dropping them. */
         val default = InsightsOptions(level = InsightsLevel.FULL, dropQueryParams = false)
+
+        /** Record nothing — what a route or a subtree opts into with `noInsights()`. */
+        val off = InsightsOptions(level = InsightsLevel.OFF, dropQueryParams = true)
     }
 
     @RestDsl
