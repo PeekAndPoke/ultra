@@ -99,19 +99,19 @@ done together. Doing this one first without deciding that is how the asymmetry b
 - [ ] ts-verify: login → token attached → refresh-before-expiry → logout, against a stub transport.
 - [ ] Red-team task on completion (`YYYYMMDD-redteam-sdk-auth.md`).
 
-## 6. The other side — what the auth MODULE needs to provide
+## 6. The other side — `.claude/tasks/20260731-auth-module-for-sdk.md`
 
-A separate plan, to be written. Open questions to seed it:
+Seeded for whoever owns `funktor/auth`. Two of the four questions above answered themselves while
+writing it, so they are recorded there as **already done** rather than left as work:
 
-- **Is `AuthApiFeature` sufficient to drive every flow from a generated client?** The endpoint list
-  looks complete, but `AuthState.getPasswordPolicy()` reads from somewhere — confirm it is on
-  `AuthRealmModel` and therefore already on the wire.
-- **Do `UserPermissions` / `AuthRealmModel` need TS claims**, or does the walk derive them correctly?
-- **Does the refresh flow work without a cookie today**, and does the token-storage hardening change
-  the contract the client codes against? If that work is coming, this client should be written against
-  the *intended* contract, not the current one.
-- **Realm selection**: `AuthApiClient` takes a `RealmId` at construction; the generated client does
-  not. Decide whether realm is a client-construction concern or a per-call parameter.
+- **`AuthApiFeature` IS sufficient.** All twelve endpoints generate, one-for-one with the Kotlin
+  `AuthApiClient`. No new endpoint is needed for any flow `AuthState` implements.
+- **The models already reach TypeScript.** `PasswordPolicy` is on `AuthRealmModel`, so
+  `getPasswordPolicy()` has everything it needs; nothing needs claiming.
+
+What genuinely blocks this task: **the token-storage contract** (§4.1) — whether the refresh-cookie
+design is happening, because the client should be written against the intended contract rather than
+the current one. Realm ergonomics and the SSE mechanism want deciding at the same time.
 
 ## Test evidence
 
