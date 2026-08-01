@@ -110,6 +110,7 @@ val Funktor_Codegen = module { builder: FunktorCodegenBuilder.() -> Unit ->
 
     // Built-in contributors. Each is opt-out by not registering it — see the claims registry, which
     // rejects a second claim for a type rather than letting one silently shadow another.
+    singleton(AuthTsContributor::class)
     singleton(FunktorUrlParamsTsContributor::class)
     singleton(MpDateTimeTsContributor::class)
     singleton(KotlinxJsonTsContributor::class)

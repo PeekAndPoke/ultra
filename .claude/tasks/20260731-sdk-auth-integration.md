@@ -1,6 +1,6 @@
 # Ship auth through the SDK builder — the TypeScript counterpart of `AuthState`
 
-**Status:** PLANNED — not started. Needs the decisions in §4 before code.
+**Status:** IN PROGRESS — the session runtime landed 2026-08-02. Login page + routing remain.
 **Plan:** `.claude/tasks/20260729-ts-sdk-codegen.md` (the generator) and
 `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` (where contributors ship more than clients).
 **Security-critical:** yes — sessions, tokens, JWT claims. Red-team follow-up required on completion.
@@ -47,17 +47,26 @@ summary, not a substitute.
 
 ## 4. Decisions needed before code
 
-### 4.1 Storage — do NOT port what is there
+### 4.1 Storage — DECIDED 2026-08-02 (maintainer): localStorage, mirroring Kotlin
 
-`AuthState` persists the **whole** `Data<USER>` to `localStorage` under `"auth"`, and that is a
-**known, filed security gap**: `.claude/tasks/20260719-token-storage-hardening.md` (status: DESIGN GAP,
-security-critical). Any JS on the origin can read it, so an XSS exfiltrates the JWT and replays it
-off-machine until expiry.
+**Use `localStorage`, the same as `AuthState` does today.** This is a deliberate, eyes-open choice,
+not an oversight, and the reasoning is worth keeping:
 
-**Porting `AuthState` faithfully would re-create that defect in new code.** The TypeScript version must
-take storage as an injected strategy, defaulting to **in-memory**, with localStorage available as an
-explicit opt-in that names the trade-off. Whether the refresh-cookie design from that task lands first
-is a sequencing question for the maintainer.
+- The gap is real and filed — `.claude/tasks/20260719-token-storage-hardening.md`. Any script on the
+  origin can read the JWT and replay it off-machine.
+- But **two clients diverging makes the eventual fix harder, not safer.** A TypeScript SDK that is
+  in-memory while Kotlin stays on `localStorage` gives a false sense of having solved something,
+  splits the threat model, and means the real fix has to be designed twice.
+- So: match the Kotlin behaviour now, and fix BOTH together once the strategy is decided.
+
+**Implement it as an injected strategy anyway.** Not a hedge against the decision — the decision is
+`localStorage` as the DEFAULT. Injecting costs nothing here and makes the agreed future fix a
+one-line change per app instead of a rewrite, which is the whole point of fixing both at once.
+
+    localStorageTokens()   // the default; mirrors AuthState
+    inMemoryTokens()       // available, and what tests use
+
+When the hardening task lands, it changes the default in two places and nothing else.
 
 ### 4.2 Framework-neutral core, thin Vue layer
 
@@ -128,3 +137,49 @@ the current one. Realm ergonomics and the SSE mechanism want deciding at the sam
 | 3. Security | | |
 
 **Red-team follow-up** (required — auth): `.claude/tasks/YYYYMMDD-redteam-sdk-auth.md`
+
+## Progress — 2026-08-02
+
+**Landed: `runtime/auth.ts`** — `TokenStorage` (`localStorageTokens` default, `inMemoryTokens`),
+`decodeJwtClaims` / `expiryOf`, `AuthSession` (restore, subscribe, signedIn, signOut, isExpiring), and
+`authTransport`. Shipped by `AuthTsContributor` in `funktor:codegen`.
+
+**It lives in `ultra:codegen`, not beside the auth feature — a REVERSAL, and worth the reason.** The
+plan said auth's TypeScript would ship from its own module's resources, which `out.resource` supports
+for any contributor. But `ts-verify` lives in `ultra:codegen` and cannot see another module's
+resources, so that placement would have shipped a session runtime that nothing type-checks or
+executes. Nothing in the file is funktor-specific anyway — a bearer token, a storage strategy, a
+transport wrapper; the funktor-specific part of login is the realm/provider flow, and that is
+GENERATED. `AuthTsContributor` still owns the decision of WHEN it ships, and is the seam the login
+page and its route registration attach to.
+
+**`TsRuntime.emit` now plans with `out.shared`, not `out.file`.** Two contributors legitimately need
+`runtime/http.ts` — the REST client and the auth session — and `file` is exclusive, so the second to
+ask was a hard error. Content comes from one resource per module, so it is identical by construction
+and dedupes. `out.sharedResource` is the new counterpart of `out.resource`; sharing stays opt-in.
+
+**Verified:** 29 ts-verify checks, EXECUTED not just compiled — JWT decoding including multi-byte
+UTF-8 and five malformed inputs, session lifecycle, restore-from-storage, expiry semantics, and the
+transport wrapper. Mutation-tested 7/7: token captured at wrap time instead of per request; an
+explicit `Authorization` header overwritten; `subscribe` not firing immediately; `signOut` not
+clearing storage; `exp` unit wrong; a no-`exp` token treated as expiring; the UTF-8 round-trip
+dropped.
+
+One fixture bug found and fixed en route: the test's `fakeJwt` used `btoa(json)`, which encodes `ö`
+as one latin1 byte rather than the UTF-8 pair a real JWT carries. The UTF-8 check failed against a
+CORRECT decoder — a fixture bug wearing the costume of a code bug.
+
+### Known limitation, deliberately deferred
+
+`authTransport` attaches the token to **every** request, public ones included. The transport sees a
+built URL, not a route pattern, so it cannot tell them apart — `RouteRef.isPublic` lives one layer up.
+This mirrors the Kotlin client, and a `public()` rule grants regardless of who is asking. If a stale
+token ever turns out to make a public endpoint fail, this is the place that changes, and it needs
+route information plumbed into the transport.
+
+### Next
+
+- Login page component + the aggregation registry (page routes, nav, `mountAll`).
+- Refresh-before-expiry scheduling. `isExpiring` exists; nothing calls it yet. `AuthState` hooks
+  window focus (`AuthState.kt:133`).
+- Nothing yet runs against the real server. That is the natural next check.

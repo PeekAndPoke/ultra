@@ -16,6 +16,14 @@ import type { HttpRequest, HttpTransport } from './generated/runtime/http.ts'
 import { SseParser } from './generated/runtime/sse.ts'
 import { ApiAcl } from './generated/runtime/acl.ts'
 import { route } from './generated/runtime/route.ts'
+import {
+    AuthSession,
+    authTransport,
+    decodeJwtClaims,
+    expiryOf,
+    inMemoryTokens,
+    localStorageTokens,
+} from './generated/runtime/auth.ts'
 // THROUGH THE BARREL on purpose — this is what makes `tsc` compile index.ts, and `export *`
 // is only safe if no two emitted modules export the same name. A collision is a compile error
 // here rather than a silent hole in a consumer's build.
@@ -796,6 +804,142 @@ async function checkRouteAndAcl(report: Report): Promise<void> {
     report(true, 'route/acl: the emitted types reject wrong use (4 @ts-expect-error sites)')
 }
 
+/**
+ * Builds a JWT-shaped token whose payload is [claims]. Unsigned — nothing here verifies.
+ *
+ * Encodes UTF-8 BYTES before base64, which is what a real JWT does. A plain `btoa(json)` does not:
+ * it treats each code unit as one latin1 byte, so `ö` (U+00F6) comes out as the single byte 0xF6
+ * instead of the pair 0xC3 0xB6. That produced a token no real server would emit, and the UTF-8 check
+ * below failed against a correct decoder — a fixture bug wearing the costume of a code bug.
+ */
+function fakeJwt(claims: Record<string, unknown>): string {
+    const b64 = (s: string) => {
+        const bytes = new TextEncoder().encode(s)
+        let binary = ''
+        for (const byte of bytes) binary += String.fromCharCode(byte)
+
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    }
+
+    return `${b64('{"alg":"none"}')}.${b64(JSON.stringify(claims))}.sig`
+}
+
+/**
+ * The auth session runtime.
+ *
+ * Executed, not merely type-checked: every interesting property here is runtime behaviour — what
+ * `atob` does with base64url padding, whether a listener sees the first frame, whether the header is
+ * actually on the wire. A tsc-only check would prove none of it.
+ */
+async function checkAuthSession(report: Report): Promise<void> {
+    // 1. JWT decoding. Unverified by design, so the only question is whether it reads correctly.
+    const claims = decodeJwtClaims(fakeJwt({ sub: 'u-1', exp: 1_800_000_000 }))
+
+    report(claims?.['sub'] === 'u-1', 'auth: decodes a JWT payload')
+    report(expiryOf(claims) === 1_800_000_000_000, 'auth: exp is seconds, exposed as milliseconds')
+
+    // Multi-byte UTF-8 — the case a naive `atob` mangles into latin1.
+    const unicode = decodeJwtClaims(fakeJwt({ name: 'Klang Audio Motör' }))
+    report(unicode?.['name'] === 'Klang Audio Motör', 'auth: survives multi-byte UTF-8 in a claim')
+
+    // Malformed input is an ORDINARY state — a truncated storage value, a token from an older
+    // server. Throwing here would take down a page render.
+    for (const junk of ['', 'not-a-jwt', 'a.b', 'a.!!!.c', 'a..c']) {
+        report(decodeJwtClaims(junk) === null, `auth: '${junk}' decodes to null, does not throw`)
+    }
+    report(expiryOf(null) === null, 'auth: no claims means no expiry')
+    report(expiryOf({ exp: 'soon' }) === null, 'auth: a non-numeric exp is ignored')
+
+    // 2. Session lifecycle over an injected store.
+    const store = inMemoryTokens()
+    const session = new AuthSession(store)
+
+    report(!session.state().isLoggedIn, 'auth: a fresh session is logged out')
+
+    const seen: Array<boolean> = []
+    const stop = session.subscribe((s) => seen.push(s.isLoggedIn))
+
+    // Called immediately, so a subscriber never renders a stale first frame.
+    report(equal(seen, [false]), 'auth: subscribe fires at once with the current state')
+
+    session.signedIn(fakeJwt({ sub: 'u-1', exp: 1_800_000_000 }))
+
+    report(session.state().isLoggedIn, 'auth: signedIn logs in')
+    report(store.read() !== null, 'auth: signedIn writes the injected storage')
+    report(equal(seen, [false, true]), 'auth: subscribers are notified')
+
+    // 3. A NEW session over the same store restores — this is what makes a reload keep the user in.
+    report(new AuthSession(store).state().isLoggedIn, 'auth: a new session restores from storage')
+
+    // 4. Expiry.
+    report(session.isExpiring(0, 1_700_000_000_000) === false, 'auth: not expiring long before exp')
+    report(session.isExpiring(0, 1_900_000_000_000) === true, 'auth: expiring after exp')
+    report(
+        new AuthSession(inMemoryTokens()).isExpiring(60_000) === false,
+        'auth: a logged-out session is never "expiring"',
+    )
+
+    const noExp = new AuthSession(inMemoryTokens())
+    noExp.signedIn(fakeJwt({ sub: 'u-1' }))
+    report(
+        noExp.isExpiring(Number.MAX_SAFE_INTEGER) === false,
+        'auth: a token with no readable exp is never "expiring" — otherwise it refreshes forever',
+    )
+
+    stop()
+    session.signedIn(fakeJwt({ sub: 'u-2' }))
+    report(equal(seen, [false, true]), 'auth: unsubscribe stops notifications')
+
+    session.signOut()
+    report(!session.state().isLoggedIn, 'auth: signOut logs out')
+    report(store.read() === null, 'auth: signOut clears storage')
+
+    // 5. The transport wrapper — the whole point of the module.
+    let sent: HttpRequest | undefined
+    const inner: HttpTransport = {
+        send: (req) => {
+            sent = req
+            return Promise.resolve({ status: 200, statusText: 'OK', body: '{}' })
+        },
+    }
+
+    const live = new AuthSession(inMemoryTokens())
+    const wrapped = authTransport(inner, live)
+
+    await wrapped.send({ method: 'GET', url: 'http://x/a', headers: {} })
+    report(sent?.headers['Authorization'] === undefined, 'auth: no token means no header')
+
+    live.signedIn('tok-123')
+    await wrapped.send({ method: 'GET', url: 'http://x/a', headers: {} })
+    report(sent?.headers['Authorization'] === 'Bearer tok-123', 'auth: the token is attached as Bearer')
+
+    // Read at SEND time, not at wrap time — a transport built before login must still authenticate.
+    live.signOut()
+    await wrapped.send({ method: 'GET', url: 'http://x/a', headers: {} })
+    report(
+        sent?.headers['Authorization'] === undefined,
+        'auth: the token is read per request, so signOut takes effect immediately',
+    )
+
+    live.signedIn('tok-123')
+    await wrapped.send({
+        method: 'GET',
+        url: 'http://x/a',
+        headers: { Authorization: 'Bearer explicit' },
+    })
+    report(
+        sent?.headers['Authorization'] === 'Bearer explicit',
+        'auth: an explicit Authorization header is never overwritten',
+    )
+
+    // 6. localStorage is the DEFAULT, and it must not explode where there is none (Node, SSR).
+    const viaLocal = localStorageTokens('funktor.test.token')
+    viaLocal.write('persisted')
+    report(viaLocal.read() === 'persisted', 'auth: localStorage strategy round-trips (or falls back)')
+    viaLocal.clear()
+    report(viaLocal.read() === null, 'auth: and clears')
+}
+
 function checkSseParser(report: Report): void {
     const simple = new SseParser().push('data: hello\n\n')
 
@@ -868,6 +1012,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['generatedClient', checkGeneratedClient],
         ['sse', checkSseParser],
         ['routeAndAcl', checkRouteAndAcl],
+        ['authSession', checkAuthSession],
     ]
 
     for (const [name, check] of groups) {

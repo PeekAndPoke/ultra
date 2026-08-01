@@ -263,5 +263,26 @@ class TsSdkOutput {
 
             file(path = to, content = content)
         }
+
+        /**
+         * As [resource], but planned with [shared] — for a file several contributors may each need.
+         *
+         * The content is one classpath resource, so every writer contributes the same bytes and the
+         * plan dedupes. Splitting this from [resource] keeps the exclusive default: sharing stays
+         * something a caller opts into, rather than something that happens by accident.
+         */
+        fun sharedResource(resourcePath: String, to: String) {
+            shared(path = to, content = readResource(resourcePath))
+        }
+
+        private fun readResource(resourcePath: String): String =
+            // `bufferedReader()` on an InputStream defaults to UTF-8 (not the platform charset).
+            loader.getResourceAsStream(resourcePath)
+                ?.bufferedReader()
+                ?.readText()
+                ?: error(
+                    "Contributor '$contributor' asked for resource '$resourcePath', which is not on the " +
+                            "classpath. Check it is under src/main/resources of the contributor's module."
+                )
     }
 }

@@ -80,3 +80,18 @@ JWT is then useless without the cookie. Still allows local session-riding.
   isolation).
 - `20260717-auth-orgs-foundation.md` (`refreshToken` guard, session lifecycle, Model C re-login).
 - Backlog neighbours: 2FA (opt-in per org + app-wide override), new-device-login email.
+
+## 2026-08-02 — this now has TWO call sites, and they must be fixed together
+
+The TypeScript SDK's `runtime/auth.ts` deliberately mirrors `AuthState`'s `localStorage` behaviour
+(maintainer decision, `.claude/tasks/20260731-sdk-auth-integration.md` §4.1). The reasoning was that
+two clients with different storage strategies would split the threat model and force the fix to be
+designed twice.
+
+So when this task is done, it lands in both:
+
+- `funktor/auth/src/jsMain/kotlin/AuthState.kt` — the Kraft client
+- `ts/auth/session.ts` in `funktor/codegen`'s resources — the generated SDK
+
+Both take storage as an injected strategy, so the change is the DEFAULT in two places. Fixing only
+one is worse than fixing neither: it makes the remaining one look intentional.

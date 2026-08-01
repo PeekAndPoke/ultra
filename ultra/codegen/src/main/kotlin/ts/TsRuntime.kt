@@ -50,7 +50,10 @@ object TsRuntime {
         Route("runtime/route.ts", "ts/runtime/route.ts"),
 
         /** `ApiAcl`, the advisory "may this user call this route?" lookup over a fetched matrix. */
-        Acl("runtime/acl.ts", "ts/runtime/acl.ts");
+        Acl("runtime/acl.ts", "ts/runtime/acl.ts"),
+
+        /** `AuthSession`, the token storage strategies, and the `Authorization`-attaching transport. */
+        Auth("runtime/auth.ts", "ts/runtime/auth.ts");
 
         /**
          * How generated code imports it, relative to the SDK root.
@@ -78,6 +81,9 @@ object TsRuntime {
                 // acl.ts borrows RouteRef and nothing else — deliberately NOT Client, so the access
                 // lookup does not drag the transport in behind it.
                 Acl -> setOf(Route)
+                // auth.ts wraps an HttpTransport. Deliberately NOT Client: the session knows nothing
+                // about the envelope or about generated members.
+                Auth -> setOf(Http)
                 Http, ApiResponse, DateTime, Route -> emptySet()
             }
     }
@@ -90,13 +96,15 @@ object TsRuntime {
      * and the missing file would surface as a module-resolution error inside generated output rather
      * than as anything naming the contributor.
      *
-     * Emitting the same module from two contributors via `out.file` is a hard error from
-     * [TsSdkOutput]. Where several genuinely need the same module, they should use `out.shared`
-     * instead — identical content dedupes, differing content still fails naming both.
+     * Emitted via `out.shared`, not `out.file`: several contributors legitimately need the same
+     * module — the auth session runtime imports `runtime/http.ts`, which the REST contributor also
+     * ships — and `file` is exclusive, so the second one to ask would be a hard error. Content comes
+     * from one resource per module, so it is identical by construction and dedupes; a divergence
+     * would still fail, naming both.
      */
     fun emit(out: TsSdkOutput.Scope, modules: Set<Module>) {
         closureOf(modules).forEach { module ->
-            out.resource(module.resource, to = module.path)
+            out.sharedResource(module.resource, to = module.path)
         }
     }
 
