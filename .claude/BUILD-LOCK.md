@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-01 (released by the codegen agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent (public route metadata)**
+**SINCE: 2026-08-02 (taken for public route metadata)**
+**STATE: LOCKED — do not run gradle, do not commit.**
 
 ---
 
