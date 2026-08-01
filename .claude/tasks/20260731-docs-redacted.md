@@ -36,7 +36,7 @@ So decide before writing:
 3. **Both, one canonical** — full treatment on one page, a cross-reference from the other. Most likely
    the right answer; pick which is canonical rather than duplicating.
 
-Note `.claude/tasks/20260731-slumber-as-declared-wire-shape.md` §6 settles that the whole `Slumber`
+Note `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md` §6 settles that the whole `Slumber`
 annotation nest moves to `ultra:common` (`io.peekandpoke.ultra.common.slumber`). If that lands first,
 option 1 gets stronger — `ultra:common` would then hold the slumber-facing *contract*, which is worth a
 page of its own.

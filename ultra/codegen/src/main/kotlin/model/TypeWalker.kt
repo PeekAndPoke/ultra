@@ -274,7 +274,7 @@ class TypeWalker(
         // direction for a response payload, which is what a generated schema parses. It is NOT
         // necessarily right for a request body, which the server AWAKES — `Redacted<T>` emits a
         // placeholder String but awakes from T's own raw shape. See §10 of
-        // `.claude/tasks/20260731-slumber-as-declared-wire-shape.md`.
+        // `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md`.
         declaredWireShape(cls)?.let { shape ->
             return resolveRef(shape, path)
         }

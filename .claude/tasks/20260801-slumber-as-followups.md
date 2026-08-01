@@ -1,7 +1,7 @@
 # `@Slumber.As` — review residue
 
 **Status:** TODO — created 2026-08-01 from the `/feature-review` gate on
-`.claude/tasks/20260731-slumber-as-declared-wire-shape.md` (§15 is the full record).
+`.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md` (§15 is the full record).
 **Plan:** none. These are the findings that were confirmed but deliberately not fixed in the gate,
 because each is either a separate change or needs a decision.
 **Security-critical:** no. Reviewer 3 passed the feature and probed the sharp edges; see §15.

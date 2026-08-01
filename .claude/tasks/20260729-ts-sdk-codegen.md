@@ -1170,7 +1170,7 @@ rows concerned `@Slumber.As` territory, so a fresh agent would have started on w
 |---|---|---|
 | `@Slumber.Field` non-ctor props emitted required | `model/TypeWalker.kt` | **maintainer decision.** `DataClassAwaker` never reads them. Ties to request-vs-response shapes: one declaration cannot describe both directions |
 | No scalar refinement (`Char` → bare `z.string()`) | `model/TypeWalker.kt:259` | **maintainer decision.** Confirmed still `String::class, Char::class -> TsString`. A behaviour change for every existing consumer |
-| `@Slumber.Field` selection re-derived from `DataClassSlumberer` | `model/TypeWalker.kt:454` | **now `@Slumber.As` territory.** Needs a slumber-side API to expose the field selection; see `.claude/tasks/20260731-slumber-as-declared-wire-shape.md` |
+| `@Slumber.Field` selection re-derived from `DataClassSlumberer` | `model/TypeWalker.kt:454` | **now `@Slumber.As` territory.** Needs a slumber-side API to expose the field selection; see `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md` |
 | `readArrayElements` duplicated verbatim | `ultra/slumber` collections | **not this module's** — cosmetic, in battle-tested code |
 
 So the codegen-side backlog from the review rounds is **empty**: the two remaining codegen items are
@@ -1237,7 +1237,7 @@ contributor to descend into the argument fails that test.
 ### This special case is TEMPORARY — `@Slumber.As` supersedes it
 
 `Redacted<T>` will carry **`@Slumber.As(String::class)`**
-(`.claude/tasks/20260731-slumber-as-declared-wire-shape.md`), so once codegen consumes that annotation
+(`.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md`), so once codegen consumes that annotation
 this stops being a hand-written rule and becomes derivable like any other declared wire shape. The
 annotation nest moves to `ultra:common`, package `io.peekandpoke.ultra.common.slumber`, precisely so
 that every generator can read it.
@@ -1424,7 +1424,7 @@ review rounds, which have not run yet.
 ## Follow-ups
 
 - [ ] **REVISIT the Mp* claims once `@Slumber.As` lands** (maintainer, 2026-07-31).
-      `.claude/tasks/20260731-slumber-as-declared-wire-shape.md`. Once the datetime types declare
+      `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md`. Once the datetime types declare
       their wire shape, a good deal of what `ultra/codegen` does by hand should simply go:
       - `MpDateTimeTsContributor.CLAIMED` — six hand-written claims that become derivable.
       - Most of `runtime/datetime.ts` — hand-written TypeScript restating the same six shapes.
