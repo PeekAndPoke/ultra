@@ -237,6 +237,56 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
+## LOOP STOPPED 2026-08-01 — stop condition met: the next step needs a maintainer decision
+
+**Everything mechanical is done.** Backlog items 1–4, plus the first half of the `@Slumber.As`
+follow-on. `:ultra:codegen:check` **251**, `:funktor:codegen:check` **55**, 0 failures, 10 ts-verify
+fixtures, compile sweep clean. **Build lock RELEASED.**
+
+| | |
+|---|---|
+| 1 barrel | `84775a8e` |
+| 2 root filtering | `460621e9` |
+| 3 `--check` end to end | `2330de75` |
+| 4 `out.shared()` | `ba4e49d0` |
+| follow-on, part 1 | `3d874a83` — the walker reads `@Slumber.As` |
+
+### THE DECISION THAT STOPPED THE LOOP
+
+Part 2 of the follow-on is retiring `MpDateTimeTsContributor.CLAIMED` and most of
+`runtime/datetime.ts`. The walker can now do it — but **deriving the Mp types from their declaration
+collapses four TypeScript types into one**, and that is a trade nobody has agreed to:
+
+| today, hand-written | derived from `@Slumber.As` |
+|---|---|
+| `MpInstant`, `MpZonedDateTime`, `MpLocalDateTime`, `MpLocalDate` — four distinct TS types | all four are `MpDateTimeRawData`, because that is the shape they share |
+
+A frontend field typed `MpInstant` and one typed `MpLocalDate` would become indistinguishable. That is
+*true to the wire* — they really do serialize identically — but it loses a distinction the TypeScript
+currently carries. **Ask before doing it.** Deleting ~70 lines of hand-written runtime is not worth
+silently weakening every datetime field's type.
+
+If the answer is "keep the names": the annotation still pays, because the CLAIMS can be verified
+against it rather than hand-maintained.
+
+### What the annotation work found
+
+- **"Purely additive" was wrong, and three tests said so.** An unclaimed, annotated, custom-coded type
+  used to fail the codec-parity check and now resolves. Intended — but the comment overclaimed.
+- **Replacing those fixtures is harder than it looks.** The parity check needs a type that is BOTH
+  walker-classifiable AND codec-reshaped. `java.time.LocalDate` and `Redacted` both fail earlier as
+  *unresolved*, so neither works. `Money` does.
+- **After annotating the Mp types, `SlumberConfig.default` seems to contain NO type satisfying both.**
+  Every remaining custom-coded type there is annotated or unresolvable. Parity coverage therefore
+  moved to `TsModelValidatorSpec`, which can prepend a module.
+
+### Also still open, unchanged
+
+Two maintainer decisions from the audit: `@Slumber.Field` non-ctor props emitted required, and scalar
+refinement (`Char` → bare `z.string()`). Both are behaviour changes for existing consumers.
+
+---
+
 ## ITERATION 5, 2026-08-01 — BACKLOG EMPTY. All four items done.
 
 | | |
