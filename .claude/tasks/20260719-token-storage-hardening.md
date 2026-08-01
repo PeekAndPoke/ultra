@@ -93,6 +93,20 @@ That also retires the "these claims are user-editable, display-only" caveat carr
 `AuthState.kt:113-121` — permissions now arrive from the server over TLS rather than out of a blob the
 user can rewrite in devtools. Still not an authorization decision; the server remains the only authority.
 
+### Correction found while implementing (2026-08-02)
+
+The plan said "do not change the abstract `generateJwt` signature — that is the whole blast radius".
+Half right. `AuthRealm.generateJwt` **returns** `AuthSignInResponse.Token`, so deleting that type forces
+the signature to change regardless: it becomes `String`. Six implementations, two lines each — four in
+`funktor-demo` (`b2b`, `b2b2c`, `admin`, `operator`) plus two test realms.
+
+What still stands, and is the part that mattered: **do not thread permissions/expiry through it.** Those
+are derived in `successFor` from the freshly minted token, so the response and the token cannot disagree.
+
+Consequence for sequencing: steps 2-4 are **one indivisible unit**. The model, `successFor`, the six
+realms and `AuthState` all cascade from deleting `Token`, so the tree does not compile in between. Do not
+start it without room to finish — see the lock rule about not going idle on a non-compiling module.
+
 ## Increment 2 — the cookie transport
 
 - `FunktorRestBuilder.jwtCookie(...)` alongside the three `jwt()` overloads
