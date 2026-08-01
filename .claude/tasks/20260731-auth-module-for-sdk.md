@@ -38,17 +38,35 @@ exfiltrates the token and replays it off-machine until expiry.
 **The TypeScript client is being written now.** If the hardening lands later, it is written twice; if
 the intended contract is known now, it is written once. So:
 
-- [ ] **Decide whether the refresh-cookie design is happening, and on what timescale.**
-- [ ] If yes: specify the server contract the client codes against — is `refreshToken` called with no
-      body and an `httpOnly` cookie, does it rotate, what does it return, what happens on failure?
-- [ ] Confirm CORS: the demo already sets `allowCredentials = true`
-      (`funktor-demo/server/src/main/kotlin/server.kt`), which a cookie flow needs. Check it holds for
-      the real origins, not just the dev ones.
-- [ ] If no, or not soon: say so explicitly, so the SDK ships in-memory storage and does not pretend.
+**ANSWERED 2026-08-02.** Design settled in `.claude/tasks/20260719-token-storage-hardening.md`; the
+auth-transport agent is building it. Read that file for the whole picture — the short version:
 
-**The SDK side has already committed to one thing**: storage is an injected strategy defaulting to
-in-memory, never localStorage-by-default. A faithful port of the current behaviour would re-create a
-known defect in new code.
+- [x] **Is the cookie design happening?** Yes. And it is **not** the refresh-cookie design this section
+      assumed: the **session JWT itself** goes in an `httpOnly` cookie. The two-token variant
+      (access-in-memory + long-lived refresh cookie, with rotation and reuse-detection) was considered
+      and **dropped** — storage never stops session-riding, so its short-exposure-window benefit was
+      weaker than it read, and it bought two lifetimes plus rotation machinery against a threat it does
+      not address.
+- [x] **The server contract.** Sign-in and refresh return the same `AuthSignInResponse` as now, but
+      `Success.token: Token` becomes `Success.session: Session`, a sealed `Bearer(token) | Cookie`.
+      In cookie mode the response carries **no token at all**; `refreshToken` is called with no body and
+      the browser attaches the cookie, and the server re-issues a `Set-Cookie`. Failure is unchanged.
+      `Success` also gains `permissions`, `expiresAt` and `userId` — see below, this is the part that
+      matters most to you.
+- [x] **CORS** already correct in the demo — `allowCredentials = true`, explicit allowlist, no wildcard
+      (`funktor-demo/server/src/main/kotlin/server.kt:38-84`). Still to confirm for real origins.
+- [x] Not applicable — the answer was yes.
+
+**What this changes for the SDK, concretely.** `Success` now carries `permissions`, `expiresAt` and
+`userId` in **both** modes, so **no client needs to decode the JWT any more**. The Kotlin side is
+deleting `jwtClaims.kt` and its spec outright (175 lines, verified zero consumers). The same applies to
+`runtime/auth.ts`'s `decodeJwtClaims` / `expiryOf` — your file, your call, but it is the same deletion
+and it is what makes the SDK transport-agnostic.
+
+Note the earlier commitment recorded here — "storage is an injected strategy defaulting to in-memory,
+never localStorage-by-default" — was **reversed** on 2026-08-02 in favour of matching Kotlin's
+`localStorage` (see `20260731-sdk-auth-integration.md` §4.1). Keep it injected; the default stops being
+the security boundary once the cookie lands.
 
 ## 2. Realm: bound at construction, or per call?
 

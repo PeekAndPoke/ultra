@@ -68,6 +68,23 @@ one-line change per app instead of a rewrite, which is the whole point of fixing
 
 When the hardening task lands, it changes the default in two places and nothing else.
 
+**UPDATE 2026-08-02 — the hardening design is now settled, and it is better than "change the default".**
+`.claude/tasks/20260719-token-storage-hardening.md`: the session JWT moves into an `httpOnly` cookie, so
+in cookie mode there is **no token for any storage strategy to hold**. `localStorage` stays the default
+for bearer mode; it simply stops being the security boundary.
+
+The part that lands on this file first: `AuthSignInResponse.Success` gains `permissions`, `expiresAt` and
+`userId`, and `Success.token: Token` becomes a sealed `Success.session: Session` (`Bearer(token)` |
+`Cookie`). Two consequences here —
+
+- `AuthSession.signedIn`'s KDoc says "Pass `AuthSignInResponseToken.token`". That type is being deleted;
+  it becomes the `Bearer` variant of the new `Session` union.
+- `decodeJwtClaims` / `expiryOf` become unnecessary — `expiresAt` arrives in the response. The Kotlin
+  client is deleting its equivalent outright.
+
+So §4.1's premise still holds — both clients move together — but the move is "stop reading the token",
+not "swap the storage".
+
 ### 4.2 Framework-neutral core, thin Vue layer
 
 `AuthState` is Kraft-coupled — it implements `Stream`, takes a `() -> Router`, and mounts routes. The

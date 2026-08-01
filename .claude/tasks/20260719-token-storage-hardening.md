@@ -1,7 +1,8 @@
-# Frontend token storage hardening (localStorage → memory + httpOnly refresh cookie)
+# Frontend token storage hardening (localStorage → httpOnly session cookie)
 
-**Status:** DESIGN GAP flagged, TO REVISIT (2026-07-19). Security-critical. Collected — not executed.
-**Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c) once the auth flows are wired.
+**Status:** DESIGN SETTLED 2026-08-02. Increment 1 (the response contract) IN PROGRESS.
+Security-critical.
+**Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c).
 
 ## The gap (current behaviour)
 
@@ -11,87 +12,141 @@
 - localStorage is readable by **any** JS on the origin ⇒ an XSS can exfiltrate the JWT and replay it
   from the attacker's machine, indefinitely until expiry.
 - Refresh infra already exists: `startSessionLifecycle` + `api.refreshToken()` on a timer /
-  window-focus (`AuthState.kt:258–305`). The bearer token is now sent via Ktor `defaultRequest`
-  (see `20260719-ktor-client-unification.md`).
+  window-focus (`AuthState.kt:258–305`).
 
-## Framing (keep straight when we revisit)
+## Framing (keep straight)
 
 - Storage hardening stops **exfiltration / offline replay**, NOT **session-riding** — an XSS still
   runs on the page and can call the API as the user regardless of where the token lives.
 - Root cause is XSS. Storage choice only bounds the blast radius. **CSP + Trusted Types is the actual
-  XSS mitigation** and must happen regardless of the storage decision.
+  XSS mitigation** and must happen regardless of the storage decision. Out of scope here.
 
 ## Architecture constraint that drives the design
 
-The API is a **separate subdomain** (`api.funktor-demo.localhost`) from the three frontends
-(`ops.` / `b2b.` / `b2b2c.`). Subdomains of `funktor-demo.localhost` are the **same site**, so a
-`SameSite=Lax/Strict` cookie scoped to `.funktor-demo.localhost` IS sent on `ops.*→api.*` XHR and IS
-CSRF-resistant against third-party sites (no `SameSite=None` needed). Catches: needs CORS
-`Access-Control-Allow-Credentials: true` + `credentials: 'include'`; a parent-domain cookie is
-auto-attached to ALL subdomains, muddying realm isolation (mitigate with per-realm cookie
-names/paths, or host-only cookies set by each API host). A BFF sidesteps all of this by making auth
-same-origin per app.
+The API is a **separate subdomain** from the frontends — `api.funktor-demo.localhost` in the test bed,
+`api.klang.art` in production. Subdomains of one registrable domain are the **same site**, so a
+`SameSite=Lax` cookie IS sent on `app.* → api.*` XHR and IS CSRF-resistant against third-party sites
+(no `SameSite=None` needed). Catches: needs CORS `Access-Control-Allow-Credentials: true` +
+`credentials: 'include'`; a parent-domain cookie is auto-attached to ALL subdomains, muddying realm
+isolation.
 
-## Recommended phased approach
+**Resolution:** host-only cookies set by the API host, via the `__Host-` prefix — the browser *enforces*
+`Secure`, `Path=/` and no `Domain`, which closes cookie-tossing from a sibling subdomain for free. The
+SPA never needs to read it: cookies attach based on the *request target*, not the page origin.
 
-1. **Now-ish (highest value/effort): access token in memory + refresh token in httpOnly cookie.**
-   - Long-lived refresh token → `HttpOnly; Secure; SameSite=Lax` cookie set by the API (unreadable
-     by JS). Access token → memory only, NOT persisted. New tab silently bootstraps via the refresh
-     endpoint ⇒ **multi-tab UX preserved**. XSS can read only the short-lived access token.
-   - Pair with: short access-token TTL (5–15 min), refresh **rotation + reuse-detection**,
-     server-side **revocation** so logout / "log out all devices" truly invalidate.
-2. **In parallel, regardless of storage:** strict **CSP** (nonce/hash, no `unsafe-inline`),
-   **Trusted Types**, SRI on external scripts, dependency hygiene — across all three SPAs.
-3. **North star (later phase): BFF (Backend-for-Frontend).** SPA never holds a token; a same-origin
-   backend keeps it server-side and attaches it. Strongest, and dissolves the cross-subdomain cookie
-   friction. Cost: an extra proxy tier per frontend.
+CORS is already correct in the test bed — `allowCredentials = true` with an explicit origin allowlist and
+no wildcard (`funktor-demo/server/src/main/kotlin/server.kt:38-84`). Confirm it holds for real origins.
 
-Alternative if we choose to keep localStorage: OWASP **token sidejacking** mitigation (random
-fingerprint in an httpOnly cookie, its SHA-256 embedded in the JWT, verified server-side) — a stolen
-JWT is then useless without the cookie. Still allows local session-riding.
+## SETTLED (maintainer, 2026-08-02)
 
-## Decisions to make when we revisit
+**The session JWT itself goes in the httpOnly cookie.** Cookie mode's sign-in response carries no token
+at all. One credential, one lifetime, no rotation machinery; multi-tab works because the cookie is simply
+present.
 
-- Refresh-cookie scope: parent `.funktor-demo.localhost` (one cookie, all subdomains) vs host-only
-  per API host vs per-realm name/path — trade convenience against realm isolation.
-- Access-token TTL + refresh rotation policy + reuse-detection response (revoke the whole family?).
-- Where revocation state lives (server-side session store / refresh-token table) so logout is real.
-- Do we commit to BFF as the end state now (shapes the three-app architecture) or keep #1 long-term?
+**The earlier two-token design is DROPPED** — access token in memory + long-lived *refresh* token in the
+cookie, with rotation and reuse-detection. It is recorded here only so it is not re-proposed: its headline
+benefit was a short exposure window, and the Framing section above is why that was weaker than it read.
+An XSS on the page can call refresh to mint fresh access tokens either way, so the two-token design bought
+complexity — two lifetimes, rotation, family revocation — against a threat that storage does not address.
 
-## Security-test / verification matrix (write when built)
+Three further decisions, same day:
 
-- [ ] Access token is NOT in localStorage/sessionStorage; only in memory (assert nothing sensitive
-      persists across a hard reload except via the refresh cookie).
-- [ ] Refresh cookie is `HttpOnly; Secure; SameSite` and not readable via `document.cookie`.
-- [ ] New tab bootstraps a session from the refresh cookie without re-login (multi-tab preserved).
-- [ ] Logout + "log out all devices" invalidates the refresh token server-side (subsequent refresh
-      ⇒ 401).
-- [ ] Refresh rotation: an old (already-used) refresh token ⇒ rejected + family revoked
-      (reuse-detection).
+| Decision | Choice |
+|---|---|
+| CSRF defence for cookie mode | **A required custom header.** A cross-origin page cannot set one without a preflight the server refuses. With `SameSite=Lax` and same-site deployment this is sufficient, needs no state and no second cookie |
+| Sequencing | **Contract first, transport second.** See increments below |
+| Logout | **Clears the cookie only** (`Max-Age=0`). The JWT stays valid until `exp`, exactly as today. Real revocation stays tracked in `.claude/tasks/20260728-session-revocation-wiring.md` |
+
+## Increment 1 — the response contract (IN PROGRESS)
+
+Ships **bearer-only**; nothing changes at runtime. It exists as its own step because the SDK work is
+blocked on the contract (`.claude/tasks/20260731-sdk-auth-integration.md:121-123`).
+
+`AuthState.readJwt` (`AuthState.kt:445-487`) currently decodes **four** things out of the JWT, and
+`httpOnly` kills all four: permissions (via `permissionsNs`), `exp` → the auto-refresh timer, `sub` →
+`tokenUserId`, and the raw claim map. Losing `exp` is the sharp one — the session lifecycle stops
+scheduling refreshes and it presents as "randomly logged out", not as an error.
+
+So the response carries the first three, **in both modes**:
+
+```kotlin
+data class Success(
+    val session: Session,              // sealed: Bearer(token) | Cookie
+    val permissions: UserPermissions,
+    val expiresAt: MpInstant,
+    val userId: UserId?,
+    val realm: AuthRealmModel,
+    val user: JsonObject,
+    val org: AuthOrgRef? = null,
+)
+```
+
+`permissionsNs` and `userNs` leave the wire; the nested `Token` class is deleted.
+
+**The outcome the original design did not anticipate:** once the response carries these for *both*
+transports, the fourth item turns out to have no consumers, and **the client-side JWT decoder can be
+deleted outright** rather than kept alive for bearer mode. `funktor/auth/src/jsMain/kotlin/jwtClaims.kt`
+and its spec (175 lines) go, and the client stops caring which transport is in use. Today it parses an
+unverified token to learn things the server already knew and could simply have said.
+
+That also retires the "these claims are user-editable, display-only" caveat carried at
+`AuthState.kt:113-121` — permissions now arrive from the server over TLS rather than out of a blob the
+user can rewrite in devtools. Still not an authorization decision; the server remains the only authority.
+
+## Increment 2 — the cookie transport
+
+- `FunktorRestBuilder.jwtCookie(...)` alongside the three `jwt()` overloads
+  (`funktor/rest/src/jvmMain/kotlin/index_jvm.kt:96-121`), with the cookie's attributes configurable.
+- A cookie `AuthenticationProvider` following the `AnonymousAuthenticationProvider` pattern
+  (`funktor/rest/src/jvmMain/kotlin/auth/anonymous.kt:16`) — no Ktor `session()` machinery needed.
+- A **transport field on `Caller.JwtCaller`** (`auth/Caller.kt:28`) so the CSRF header check fires only
+  for cookie-authenticated requests. A Bearer header is inherently CSRF-safe; gating on the source keeps
+  the check off routes that never use a cookie.
+- `POST /logout` sending `Max-Age=0` — there is no logout endpoint today at all
+  (`AuthState.logout()` just drops local state).
+- SDK: a `credentials` field on `HttpRequest` (`runtime/http.ts:13-19`). Cookie mode **cannot** be a
+  transport decorator the way bearer is, because `fetchTransport` passes only
+  `method/headers/body/signal`. Same for `sseStream` (`runtime/sse.ts:242-255`).
+
+## Verification matrix
+
+- [ ] Token is NOT in localStorage/sessionStorage in cookie mode; assert nothing sensitive survives a
+      hard reload except via the cookie.
+- [ ] The cookie is `__Host-`-prefixed, `HttpOnly; Secure; SameSite=Lax`, and not readable via
+      `document.cookie`.
+- [ ] A new tab bootstraps a session from the cookie without re-login (multi-tab preserved).
+- [ ] Logout clears the cookie; a subsequent authenticated call is anonymous.
+- [ ] A cookie-authenticated request WITHOUT the required custom header is rejected; the same request
+      with it succeeds. Both directions, or the check proves nothing.
+- [ ] A **bearer**-authenticated request without the custom header still succeeds — the CSRF check must
+      be gated on transport, not applied globally.
 - [ ] Cross-origin credentialed request works only for allowed origins (CORS allow-credentials +
       explicit origin, never `*`).
-- [ ] CSP blocks inline script execution (Trusted Types enforced) — smoke test on each SPA.
+- [ ] CSP blocks inline script execution (Trusted Types enforced) — smoke test on each SPA. Independent
+      of storage, still required.
 
 ## Cross-references
 
-- `20260719-ktor-client-unification.md` (bearer now via Ktor `defaultRequest`; the transport this
-  builds on).
-- `20260719-cross-realm-authz-and-tests.md` (realm boundary — cookie scope interacts with realm
-  isolation).
-- `20260717-auth-orgs-foundation.md` (`refreshToken` guard, session lifecycle, Model C re-login).
-- Backlog neighbours: 2FA (opt-in per org + app-wide override), new-device-login email.
+- `.claude/tasks/20260731-sdk-auth-integration.md` §4.1 — the provisional localStorage decision this
+  supersedes.
+- `.claude/tasks/20260731-auth-module-for-sdk.md` §1 — the four open questions this answers.
+- `.claude/tasks/20260731-sdk-sse-auth.md` — SSE cannot set headers, so cookie mode helps there; it also
+  needs `credentials: 'include'` on the stream fetch.
+- `.claude/tasks/20260728-session-revocation-wiring.md` — real revocation, deliberately not bundled.
+- `20260719-ktor-client-unification.md`, `20260719-cross-realm-authz-and-tests.md`,
+  `20260717-auth-orgs-foundation.md`.
 
-## 2026-08-02 — this now has TWO call sites, and they must be fixed together
+## 2026-08-02 — this has TWO call sites, and they must be fixed together
 
 The TypeScript SDK's `runtime/auth.ts` deliberately mirrors `AuthState`'s `localStorage` behaviour
-(maintainer decision, `.claude/tasks/20260731-sdk-auth-integration.md` §4.1). The reasoning was that
-two clients with different storage strategies would split the threat model and force the fix to be
-designed twice.
+(maintainer decision, `.claude/tasks/20260731-sdk-auth-integration.md` §4.1). The reasoning was that two
+clients with different storage strategies would split the threat model and force the fix to be designed
+twice.
 
-So when this task is done, it lands in both:
+So this lands in both:
 
 - `funktor/auth/src/jsMain/kotlin/AuthState.kt` — the Kraft client
-- `ts/auth/session.ts` in `funktor/codegen`'s resources — the generated SDK
+- `ultra/codegen/src/main/resources/ts/runtime/auth.ts` — the generated SDK
 
-Both take storage as an injected strategy, so the change is the DEFAULT in two places. Fixing only
-one is worse than fixing neither: it makes the remaining one look intentional.
+Both take storage as an injected strategy, so the change is the DEFAULT in two places. Fixing only one is
+worse than fixing neither: it makes the remaining one look intentional.
