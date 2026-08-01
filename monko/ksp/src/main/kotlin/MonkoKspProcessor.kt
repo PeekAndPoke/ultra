@@ -44,6 +44,8 @@ class MonkoKspProcessor(
             Stored::class.qualifiedName!!,
             Storable::class.qualifiedName!!,
         )
+
+        val slumberAsName = Slumber.As::class.qualifiedName!!
     }
 
     private val codeGenerator: CodeGenerator get() = environment.codeGenerator
@@ -116,7 +118,29 @@ class MonkoKspProcessor(
             """.trimIndent()
         )
 
-        val allFields = cls.getDeclaredProperties()
+        // A type carrying @Slumber.As does not store its own Kotlin properties -- its codec writes the
+        // declared shape instead. So the declared shape REPLACES them as the source of paths: accessors
+        // for the type's own properties name keys that do not exist in the database.
+        val declaredShape = cls.getSlumberAsShape()
+
+        declaredShape?.let {
+            val name = it.qualifiedName?.asString()
+            logger.info("  --> @Slumber.As declares the wire shape as $name; generating paths for that instead")
+            codeBlocks.add("//// wire shape declared by @Slumber.As: $name")
+        }
+
+        val allFields = when {
+            declaredShape == null -> cls.getDeclaredProperties()
+            // A bare scalar has no sub-paths at all -- generating any would be a path into a number.
+            //
+            // NOT covered by a test, and deliberately kept anyway: removing this line changes no output,
+            // because KSP reports no declared properties for `kotlin.*` builtins -- not even
+            // `String.length`. Both mutants survived. It encodes the intent rather than depending on
+            // that, since it is KSP-internal behaviour we do not control. `SlumberAsCodeGenSpec` pins
+            // the OUTCOME (no sub-paths for MpLocalTime/MpTimezone), which is the real tripwire.
+            declaredShape.isPrimitiveOrString() -> emptySequence()
+            else -> declaredShape.getDeclaredProperties()
+        }
 
         val ctorFields = allFields.filter { it.isPrimaryCtorParameter() }
 
@@ -253,6 +277,28 @@ class MonkoKspProcessor(
 
             type?.qualifiedName?.asString() == cls.qualifiedName
         }
+    }
+
+    /**
+     * The wire shape declared by `@Slumber.As`, or null when the type does not declare one.
+     *
+     * Readable here because the annotation is `@Retention(RUNTIME)` and the type is resolved from the
+     * property that references it — so this works for types on the CLASSPATH, such as `MpInstant`, and
+     * not only for the sources being compiled. `getSymbolsWithAnnotation` would not; it sees the current
+     * round's sources only.
+     */
+    private fun KSClassDeclaration.getSlumberAsShape(): KSClassDeclaration? {
+
+        val annotation = annotations.firstOrNull { ann ->
+            ann.annotationType.resolve().declaration.qualifiedName?.asString() == slumberAsName
+        } ?: return null
+
+        val shape = annotation.arguments
+            .firstOrNull { it.name?.asString() == "shape" }
+            ?.value as? KSType
+            ?: return null
+
+        return shape.declaration as? KSClassDeclaration
     }
 
     private fun KSClassDeclaration.isData(): Boolean {
