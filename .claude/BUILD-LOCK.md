@@ -32,6 +32,27 @@ So: **whoever holds this lock is the only agent that runs gradle or commits.**
 - The next agent takes the lock by rewriting `HOLDER`, `SINCE` and `STATE` **and committing that
   change first**, before any other work.
 
+## AMENDMENT (2026-08-01): the lock covers BUILDING, not EDITING — and that bit
+
+Observed while holding it: the non-holder kept editing source (`ultra/codegen`, `funktor/codegen`,
+plus two new untracked files), which is not forbidden above and is reasonable use of a locked interval.
+But it left those modules **not compiling**, so the holder's full-tree compile sweep failed on errors
+that were not its own. The sweep is CLAUDE.md's gate for cross-module changes, and it stops being one.
+
+Worse, it is quietly misleading in the other direction too: a module that fails to compile blocks
+everything downstream of it, so a sweep can report "no errors in your modules" simply because those
+modules never got compiled. That happened here — `funktor:auth` looked clean only because
+`funktor:messaging` failed first.
+
+**Rule, both agents:**
+
+- Editing while not holding the lock is fine. **Leaving a shared module non-compiling is not** — finish
+  a file or revert it before going idle.
+- The holder must **scope its verification** to its own modules while the tree is contested, and must
+  check that the modules it cares about actually COMPILED rather than being skipped behind a failure.
+  `--continue` does not save you: a failed dependency still blocks its dependents.
+- A full-tree sweep is only evidence when the tree is quiet. Say which it was.
+
 ## If the lock looks stale
 
 If `SINCE` is more than a day old and nothing has been committed by the holder in that time, the
