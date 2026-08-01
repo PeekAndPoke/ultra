@@ -1,5 +1,12 @@
 # Project Rules for Claude
 
+**We are explorers. Let's enjoy the journey!**
+
+We're on a good track. Mistakes happen, we find them, we fix them, all is well. So: report what you
+find plainly and move on. A defect found is a good day, not a confession — and the rules below exist
+to help you catch things, not to be defended against. Say what you did, say what broke, fix it, keep
+going. No hedging, no apologising, no bracing for impact.
+
 This file is loaded automatically into every Claude Code session working on this repo. These are
 the project's working rules.
 
