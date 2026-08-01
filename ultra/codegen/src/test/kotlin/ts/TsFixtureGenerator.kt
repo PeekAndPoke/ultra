@@ -338,6 +338,16 @@ object TsFixtureGenerator {
                     member = "status",
                     doc = null,
                     endpoints = listOf(
+                        // PUBLIC — stands in for `signIn`, the route an anonymous visitor must be
+                        // able to reach before any matrix can exist.
+                        TsClientSpec.Endpoint(
+                            member = "signIn",
+                            httpMethod = "POST",
+                            pattern = "/api/fx/signin",
+                            responseRef = model.refForRoot("client:serverTime"),
+                            doc = "A public endpoint, callable without a session",
+                            isPublic = true,
+                        ),
                         TsClientSpec.Endpoint(
                             member = "latest",
                             httpMethod = "POST",

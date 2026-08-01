@@ -722,7 +722,41 @@ async function checkRouteAndAcl(report: Report): Promise<void> {
     const { canAccess } = acl
     report(canAccess(client.talks.getTalk), 'acl: a destructured predicate still works')
 
-    // 8. Route metadata is frozen, so `readonly` is STRUCTURAL, not merely type-level. Without the
+    // 8. PUBLICNESS. The reason it exists: the matrix endpoint is itself authenticated, so a
+    //    logged-out visitor has none — and without this the ACL denies `signIn` and the user can
+    //    never reach a state where a matrix could be fetched.
+    report(client.status.signIn.isPublic, 'route: a public endpoint is marked isPublic')
+    report(!client.talks.getTalk.isPublic, 'route: a normal endpoint is not')
+
+    const anon = ApiAcl.empty
+
+    report(
+        anon.canAccess(client.status.signIn),
+        'acl: an ANONYMOUS visitor with no matrix can still reach a public route',
+    )
+    report(
+        !anon.canAccess(client.talks.getTalk),
+        'acl: and is still denied everything else',
+    )
+    report(
+        !anon.canFullyAccess(client.status.signIn),
+        'acl: canFullyAccess does NOT short-circuit — the strict predicate must not be the loose one',
+    )
+    report(
+        anon.getAccessLevel(client.status.signIn) === 'Denied',
+        'acl: getAccessLevel still reports the raw matrix answer, unaffected by isPublic',
+    )
+
+    // A public route the matrix DOES mention keeps the matrix's answer for the strict predicate.
+    const withMatrix = new ApiAcl({
+        entries: [{ method: 'POST', uri: '/api/fx/signin', level: 'Granted' }],
+    })
+    report(
+        withMatrix.canFullyAccess(client.status.signIn),
+        'acl: a public route present in the matrix is fully accessible',
+    )
+
+    // 9. Route metadata is frozen, so `readonly` is STRUCTURAL, not merely type-level. Without the
     //    freeze the assignment below type-errors and then silently succeeds at run time, repointing
     //    a member's identity — and the access lookup keys off exactly that.
     let threw = false
@@ -740,7 +774,7 @@ async function checkRouteAndAcl(report: Report): Promise<void> {
         client.talks.getTalk.uri,
     )
 
-    // 9. NEGATIVE TYPE CHECKS. Only sites that are NOT already covered by `checkGeneratedClient` —
+    // 10. NEGATIVE TYPE CHECKS. Only sites that are NOT already covered by `checkGeneratedClient` —
     //    that block runs against the same wrapped client, so repeating its parameter checks here
     //    would prove nothing and cannot fail independently.
 

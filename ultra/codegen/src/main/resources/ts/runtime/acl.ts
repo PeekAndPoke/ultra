@@ -86,9 +86,13 @@ export class ApiAcl {
      * the right default for visibility: a button that appears and then errors explains itself, while
      * one that silently never appears reads as a bug. For a DESTRUCTIVE action, reach for
      * [canFullyAccess] deliberately.
+     *
+     * A PUBLIC route short-circuits, because the matrix cannot answer for a logged-out visitor: the
+     * endpoint serving it is itself authenticated, so without this an anonymous user is denied
+     * `signIn` and can never reach a state where the matrix exists.
      */
     readonly canAccess = (route: RouteRef): boolean =>
-        this.canFullyAccess(route) || this.canPartiallyAccess(route)
+        route.isPublic || this.canFullyAccess(route) || this.canPartiallyAccess(route)
 
     /**
      * The route's CALLER-LEVEL rule chain passes.
@@ -99,6 +103,11 @@ export class ApiAcl {
      * in `estimateAccess`. `AuthUserApi.setPassword` is the live example — its only rule is the
      * group's `authenticated()` floor, so it reports `Granted` to every logged-in user while the
      * handler enforces `userId == caller`.
+     *
+     * **Deliberately does NOT short-circuit on `isPublic`**, unlike [canAccess]. This answers "is the
+     * caller-level rule chain satisfied for THIS user", and for an anonymous visitor with no matrix
+     * the honest answer is no. Widening it would make the strict predicate — the one the docs send
+     * you to for destructive actions — the more permissive of the two.
      */
     readonly canFullyAccess = (route: RouteRef): boolean => this.getAccessLevel(route) === 'Granted'
 

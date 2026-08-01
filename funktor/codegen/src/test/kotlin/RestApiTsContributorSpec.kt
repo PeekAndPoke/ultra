@@ -61,7 +61,7 @@ class RestApiTsContributorSpec : FreeSpec() {
 
         "an endpoint member uses codeGen funcName when it is set" {
             clientOf(build(listOf(FxSpeakersApiRoutes()))) shouldContain
-                "readonly listSpeakers = route('GET', '/api/fx/speakers', (options?: CallOptions) =>"
+                "readonly listSpeakers = publicRoute('GET', '/api/fx/speakers', (options?: CallOptions) =>"
         }
 
         "an endpoint with no funcName gets a derived member naming its method and path" {
@@ -69,7 +69,7 @@ class RestApiTsContributorSpec : FreeSpec() {
 
             // Deliberately verbose: unambiguous, collision-resistant, and obvious in review so that
             // `funcName` gets set. A pretty guess would be quietly wrong instead.
-            out shouldContain "readonly getApiFxTalksLatest = route('GET', '/api/fx/talks/latest', (options?: CallOptions) =>"
+            out shouldContain "readonly getApiFxTalksLatest = publicRoute('GET', '/api/fx/talks/latest', (options?: CallOptions) =>"
         }
 
         "the request carries the route's method and pattern verbatim" {
@@ -105,7 +105,7 @@ class RestApiTsContributorSpec : FreeSpec() {
 
             val out = clientOf(result)
 
-            out shouldContain "readonly listSpeakers = route('GET', '/api/fx/speakers', (options?: CallOptions) =>"
+            out shouldContain "readonly listSpeakers = publicRoute('GET', '/api/fx/speakers', (options?: CallOptions) =>"
 
             withClue("a filtered-out route contributes neither a member nor a group") {
                 out shouldNotContain "listTalks"
@@ -134,8 +134,16 @@ class RestApiTsContributorSpec : FreeSpec() {
 
             withClue("exactly one class, carrying both halves' members") {
                 Regex("export class FxSplitApi \\{").findAll(out).count() shouldBe 1
-                out shouldContain "readonly openPart = route('GET', '/api/fx/split/open', (options?: CallOptions) =>"
+                out shouldContain "readonly openPart = publicRoute('GET', '/api/fx/split/open', (options?: CallOptions) =>"
                 out shouldContain "readonly securedPart = route('GET', '/api/fx/split/secured', (options?: CallOptions) =>"
+            }
+
+            withClue("merging groups must NOT flatten their differing floors onto one wrapper") {
+                // This mirrors the real case exactly: `funktor:auth` declares ApiRoutes("login")
+                // twice, once public() and once authenticated(), and they merge into one LoginApi.
+                // Publicness is a property of the ROUTE, so it must survive the merge per-member —
+                // otherwise `signIn` and `getMyApiAccess` would get the same answer.
+                out shouldContain "import { publicRoute, route } from './runtime/route.ts'"
             }
 
             withClue("and one aggregate member, not two") {
@@ -206,7 +214,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                 val out = clientOf(build(listOf(FxTalksApiRoutes(), FxSseApiRoutes())))
 
                 out shouldContain
-                        "readonly watch = route('GET', '/api/fx/watch/{room}', " +
+                        "readonly watch = publicRoute('GET', '/api/fx/watch/{room}', " +
                         "(params: { room: string }, options?: SseOptions)" +
                         ": AsyncGenerator<SseEvent> =>"
 
@@ -259,7 +267,7 @@ class RestApiTsContributorSpec : FreeSpec() {
             "a body-only route takes the body as its single argument" {
                 val out = clientOf(build(listOf(FxBodyApiRoutes())))
 
-                out shouldContain "readonly createTalk = route('POST', '/api/fx/talks', (body: FxSaveTalkRequest, options?: CallOptions) =>"
+                out shouldContain "readonly createTalk = publicRoute('POST', '/api/fx/talks', (body: FxSaveTalkRequest, options?: CallOptions) =>"
 
                 withClue("the body reaches `request` through its options, not the URL") {
                     out shouldContain "request(this.config, 'POST', '/api/fx/talks', FxTalkModel, {"
@@ -271,7 +279,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                 val out = clientOf(build(listOf(FxBodyApiRoutes())))
 
                 out shouldContain
-                        "readonly updateTalk = route('PUT', '/api/fx/talks/{id}', " +
+                        "readonly updateTalk = publicRoute('PUT', '/api/fx/talks/{id}', " +
                         "(params: { id: string }, body: FxSaveTalkRequest, options?: CallOptions) =>"
 
                 out shouldContain "path: { id: params.id },"
@@ -313,7 +321,7 @@ class RestApiTsContributorSpec : FreeSpec() {
 
                 withClue("the caller passes ONE object, mirroring the Kotlin PARAMS class") {
                     out shouldContain
-                            "readonly getTalk = route('GET', '/api/fx/talks/{id}', " +
+                            "readonly getTalk = publicRoute('GET', '/api/fx/talks/{id}', " +
                             "(params: { id: string; page?: number; " +
                             "search?: string | null; order?: 'ASC' | 'DESC'; exact?: boolean }, " +
                             "options?: CallOptions) =>"
@@ -368,7 +376,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                 val out = clientOf(result)
 
                 withClue("MpInstant is `string` in a URL, not the object it is in a body") {
-                    out shouldContain "readonly eventsSince = route('GET', '/api/fx/events/{at}', " +
+                    out shouldContain "readonly eventsSince = publicRoute('GET', '/api/fx/events/{at}', " +
                         "(params: { at: string; until?: string | null }, options?: CallOptions) =>"
                 }
 

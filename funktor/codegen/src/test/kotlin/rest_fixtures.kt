@@ -284,7 +284,7 @@ class FxSplitPublicRoutes : ApiRoutes("fx-split", authFloor = { public() }) {
         .mount { codeGen { funcName = "openPart" }.handle { ApiResponse.ok(FxTalkModel("a", "A")) } }
 }
 
-class FxSplitSecuredRoutes : ApiRoutes("fx-split", authFloor = { public() }) {
+class FxSplitSecuredRoutes : ApiRoutes("fx-split", authFloor = { authenticated() }) {
     val secured = TypedApiEndpoint
         .Get(uri = "/api/fx/split/secured", response = FxSpeakerModel.serializer().api())
         .mount { codeGen { funcName = "securedPart" }.handle { ApiResponse.ok(FxSpeakerModel("a", null)) } }
@@ -307,3 +307,56 @@ class FxProfiledApiFeature : ApiFeature {
     override val description: String = "Feature with a mix of tagged and untagged routes."
     override fun getRouteGroups(): List<ApiRoutes> = listOf(FxTalksApiRoutes(), FxSpeakersApiRoutes())
 }
+
+//  Auth-floor fixtures — one group per row of the publicness table  ///////////////////////////////
+
+/** `authenticated()`: the estimate for an anonymous caller is Denied, so NOT public. */
+class FxAuthedApiRoutes : ApiRoutes("fx-authed", authFloor = { authenticated() }) {
+
+    val secret = TypedApiEndpoint
+        .Get(uri = "/api/fx/secret", response = FxTalkModel.serializer().api())
+        .mount {
+            codeGen { funcName = "secret" }.handle { ApiResponse.ok(FxTalkModel("t-1", "Hello")) }
+        }
+}
+
+/**
+ * `forRole(...)`: a PermissionsCheck against `UserPermissions.anonymous`, which is empty.
+ *
+ * The row that matters most — it is the case the maintainer asked about, and it needs no rule-kind
+ * handling in the generator at all.
+ */
+class FxRoleApiRoutes : ApiRoutes("fx-role", authFloor = { forRole("ops-admin") }) {
+
+    val adminOnly = TypedApiEndpoint
+        .Get(uri = "/api/fx/admin", response = FxTalkModel.serializer().api())
+        .mount {
+            codeGen { funcName = "adminOnly" }.handle { ApiResponse.ok(FxTalkModel("t-1", "Hello")) }
+        }
+}
+
+/** Two caller-only rules folded with `and`: still Denied for anonymous. */
+class FxComposedApiRoutes : ApiRoutes("fx-composed", authFloor = { authenticated(); forRole("ops") }) {
+
+    val composed = TypedApiEndpoint
+        .Get(uri = "/api/fx/composed", response = FxTalkModel.serializer().api())
+        .mount {
+            codeGen { funcName = "composed" }.handle { ApiResponse.ok(FxTalkModel("t-1", "Hello")) }
+        }
+}
+
+/*
+ * NOT PRESENT: a fixture for a custom rule kind that ADMITS anonymous.
+ *
+ * It cannot be built through today's DSL, and that is worth writing down rather than rediscovering.
+ * `authFloor` is mandatory and validated non-empty (`ApiRoutes.kt:50,62`); every non-constant leaf
+ * (`authenticated`, `isSuperUser`, `forUserType`, `forGroup`, `forRole`, `forPermission`) denies an
+ * anonymous caller; `forAny`/`forAll` only compose those; a constant must be the SOLE bare rule of
+ * its chain (`AuthRuleBuilder.kt:135-141`); `FloorAuthRuleBuilder` exposes no raw-rule hook; and a
+ * route-level rule ANDs AFTER the floor, so it can only narrow.
+ *
+ * So `isPublic` is currently equivalent to "the floor is a sole bare `public()`". The generator still
+ * DERIVES it by evaluating the chain rather than testing for that shape — see `isPublicToAnonymous`
+ * — because the equivalence is a property of today's DSL, not of the design, and an enumeration
+ * would need updating the moment it stops holding.
+ */

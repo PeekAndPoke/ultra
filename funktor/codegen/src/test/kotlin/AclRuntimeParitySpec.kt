@@ -7,6 +7,7 @@ import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
 import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.security.user.User
 import io.peekandpoke.ultra.slumber.Codec
 import kotlin.reflect.typeOf
 
@@ -25,7 +26,16 @@ class AclRuntimeParitySpec : FreeSpec() {
 
     init {
         "a generated member carries exactly the strings the access matrix is keyed by" {
-            val feature = FxDemoApiFeature(listOf(FxTalksApiRoutes(), FxParamApiRoutes(), FxSseApiRoutes()))
+            val feature = FxDemoApiFeature(
+                listOf(
+                    FxTalksApiRoutes(),      // public()
+                    FxParamApiRoutes(),      // public()
+                    FxSseApiRoutes(),        // public()
+                    FxAuthedApiRoutes(),     // authenticated()
+                    FxRoleApiRoutes(),       // forRole("ops-admin")
+                    FxComposedApiRoutes(),   // authenticated() and forRole("ops")
+                )
+            )
 
             val out = TsSdkBuilder.forTesting(listOf(RestApiTsContributor(lazyOf(listOf(feature)))))
                 .build()
@@ -40,12 +50,23 @@ class AclRuntimeParitySpec : FreeSpec() {
             }
 
             routes.forEach { route ->
+                // The WRAPPER is derived the same way the emitter derives it — by evaluating the
+                // route's real rule chain — so this covers publicness and route identity in one
+                // assertion. Hardcoding either would let the two drift together unnoticed.
+                val isPublic = !route.estimateAccess(User.anonymous).isDenied()
+                val wrapper = if (isPublic) "publicRoute" else "route"
+
                 // Exactly the expressions ApiAccessDescriptor uses, read off the same route object.
-                val expected = "route('${route.method.value}', '${route.pattern.pattern}',"
+                val expected = "$wrapper('${route.method.value}', '${route.pattern.pattern}',"
 
                 withClue("emitted client must carry `$expected`") {
                     out shouldContain expected
                 }
+            }
+
+            withClue("the fixture set must contain BOTH kinds, or the wrapper choice is untested") {
+                routes.any { !it.estimateAccess(User.anonymous).isDenied() } shouldBe true
+                routes.any { it.estimateAccess(User.anonymous).isDenied() } shouldBe true
             }
         }
 

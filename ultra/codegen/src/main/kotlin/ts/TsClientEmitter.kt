@@ -70,6 +70,14 @@ data class TsClientSpec(
          * omission (maintainer, 2026-07-30).
          */
         val stream: Boolean = false,
+        /**
+         * True when the server's auth rules admit an ANONYMOUS caller.
+         *
+         * Whoever builds the spec owns this: it comes from evaluating the route's real rule chain,
+         * which is a funktor concept this module deliberately knows nothing about. Defaults to
+         * `false` — a contributor that cannot determine publicness must not claim it.
+         */
+        val isPublic: Boolean = false,
     ) {
         init {
             require((responseRef == null) == stream) {
@@ -191,8 +199,14 @@ class TsClientEmitter(private val model: TypeModel) {
 
             appendLine("import { ${clientImports.joinToString(", ")} } from ${tsStringLiteral(CLIENT_MODULE)}")
 
-            // Unconditional: every member is wrapped, so there is no client that does not use it.
-            appendLine("import { route } from ${tsStringLiteral(ROUTE_MODULE)}")
+            // Only the wrappers actually used: a consuming app compiled with `noUnusedLocals` cannot
+            // edit this file, so a dead import would break a build nobody can fix.
+            val routeImports = buildList {
+                if (endpoints.any { it.isPublic }) add("publicRoute")
+                if (endpoints.any { !it.isPublic }) add("route")
+            }
+
+            appendLine("import { ${routeImports.joinToString(", ")} } from ${tsStringLiteral(ROUTE_MODULE)}")
 
             // Only when a stream endpoint exists: an SDK without SSE must not carry the event-stream
             // parser, which the runtime dependency closure would otherwise pull in.
@@ -314,8 +328,12 @@ class TsClientEmitter(private val model: TypeModel) {
         // pair is the key `UserApiAccessMatrix` is indexed by, so `acl.canAccess(api.getEvent)` works
         // without the caller repeating a string the generator already knows. Purely additive:
         // `route()` returns `F & RouteRef`, so existing call sites are untouched.
+        // A distinct function rather than a flag argument — the name states the fact at the call
+        // site, where a trailing boolean after a multi-line arrow would be easy to miss.
+        val wrapper = if (endpoint.isPublic) "publicRoute" else "route"
+
         appendLine(
-            "readonly ${endpoint.member} = route(${tsStringLiteral(endpoint.httpMethod)}, " +
+            "readonly ${endpoint.member} = $wrapper(${tsStringLiteral(endpoint.httpMethod)}, " +
                     "${tsStringLiteral(endpoint.pattern)}, (${arguments.joinToString(", ")})$returns =>"
         )
 

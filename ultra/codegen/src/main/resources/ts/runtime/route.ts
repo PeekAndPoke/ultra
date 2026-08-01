@@ -34,6 +34,21 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 
 export interface RouteRef {
     readonly method: HttpMethod
     readonly uri: string
+    /**
+     * True when the server's auth rules admit an ANONYMOUS caller.
+     *
+     * Derived at generation time by evaluating the route's real rule chain against the anonymous
+     * user — not by mirroring the rules, which would put a second permission engine in the client.
+     *
+     * It exists because the access matrix cannot answer for a logged-out visitor: the endpoint that
+     * serves it is itself authenticated, so `ApiAcl` would otherwise deny `signIn` and lock the user
+     * out. Publicness is a property of the ROUTE, so it can be known without a matrix.
+     *
+     * **Baked in at generation time.** Flip a route's rules server-side and this is stale until the
+     * SDK is regenerated — which is what `sdk:ts:generate --check` is for. The failure is an
+     * affordance offered too eagerly; the server still enforces.
+     */
+    readonly isPublic: boolean
 }
 
 /** A callable endpoint that also describes itself. */
@@ -66,5 +81,20 @@ export function route<F extends (...args: never[]) => unknown>(
     uri: string,
     call: F,
 ): Route<F> {
-    return Object.freeze(Object.assign(call, { method, uri }))
+    return Object.freeze(Object.assign(call, { method, uri, isPublic: false }))
+}
+
+/**
+ * As [route], for an endpoint the server's auth rules admit an anonymous caller to.
+ *
+ * A separate function rather than a flag argument: the call body is a multi-line arrow, so a trailing
+ * argument reads badly and would be easy to miss in review — whereas the name states the fact at
+ * every emission site.
+ */
+export function publicRoute<F extends (...args: never[]) => unknown>(
+    method: HttpMethod,
+    uri: string,
+    call: F,
+): Route<F> {
+    return Object.freeze(Object.assign(call, { method, uri, isPublic: true }))
 }

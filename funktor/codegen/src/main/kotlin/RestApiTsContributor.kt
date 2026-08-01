@@ -13,6 +13,7 @@ import io.peekandpoke.ultra.codegen.ts.TsClientSpec
 import io.peekandpoke.ultra.codegen.ts.TsRuntime
 import io.peekandpoke.ultra.codegen.ts.isBareIdentifier
 import io.peekandpoke.ultra.remote.ApiResponse
+import io.peekandpoke.ultra.security.user.User
 import kotlin.reflect.KType
 
 /**
@@ -60,6 +61,8 @@ class RestApiTsContributor(
         /** Root label for [bodyType]; `null` exactly when [bodyType] is. */
         val bodyRootLabel: String?,
         val stream: Boolean,
+        /** True when the route's auth rules admit an anonymous caller. See [isPublicToAnonymous]. */
+        val isPublic: Boolean,
     )
 
     private data class SelectedGroup(
@@ -164,6 +167,7 @@ class RestApiTsContributor(
                         queryParams = endpoint.queryParams,
                         bodyRef = endpoint.bodyRootLabel?.let { context.model.refForRoot(it) },
                         stream = endpoint.stream,
+                        isPublic = endpoint.isPublic,
                     )
                 },
             )
@@ -251,8 +255,30 @@ class RestApiTsContributor(
             bodyType = bodyType,
             bodyRootLabel = bodyType?.let { "$NAME:${feature.codeGenName}:${group.name}:$member:body" },
             stream = stream,
+            isPublic = isPublicToAnonymous(route),
         )
     }
+
+    /**
+     * True when [route]'s auth rules admit an ANONYMOUS caller.
+     *
+     * **An evaluation of the real chain, not an enumeration of rule kinds.** `estimateAccess` folds
+     * every rule with `and`, so composition, floors and nesting are handled by construction — and a
+     * rule kind nobody has written yet is classified correctly without touching this function. That
+     * is the whole reason not to mirror `forRole(...)` and friends into TypeScript: a second
+     * permission engine would need updating for each new rule, and would ship the authorization
+     * model in a public bundle.
+     *
+     * Evaluable at generation time because `AuthRule.EstimateCtx` holds only a `User` — no params, no
+     * body, no live request (`funktor/rest/src/jvmMain/kotlin/auth/AuthRule.kt:144-146`). This is the
+     * same evaluator the per-user matrix is built on, called in-process; it is NOT the
+     * `getMyApiAccess` endpoint, which needs a running server and a session.
+     *
+     * Deliberately NOT `ApiRoute.isSoleConstantChain()`: that matches only a single bare
+     * `public()`/`forbidden()`, so it misreports `public() and something`.
+     */
+    private fun isPublicToAnonymous(route: ApiRoute<*>): Boolean =
+        !route.estimateAccess(User.anonymous).isDenied()
 
     /**
      * Splits [route]'s PARAMS into path and query parameters, refusing any type that cannot be mapped.
