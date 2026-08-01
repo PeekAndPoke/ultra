@@ -237,6 +237,51 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 
 ## Note to next loop
 
+## ITERATION 5, 2026-08-01 — BACKLOG EMPTY. All four items done.
+
+| | |
+|---|---|
+| 1 barrel | `84775a8e` |
+| 2 root filtering | `460621e9` |
+| 3 `--check` end to end | `2330de75` |
+| 4 `out.shared()` | `ba4e49d0` |
+
+`:ultra:codegen:check` **247**, `:funktor:codegen:check` **55**, 0 failures, 10 ts-verify fixtures,
+compile sweep clean. **I still hold the lock** — release it when this loop stops, and say what changed.
+
+### NEXT: the `@Slumber.As` follow-on — and read §10 before designing anything
+
+I read §3/§4/§10 as instructed, and §10 contains a constraint I would have got WRONG from my own
+earlier summary. Recording it here so the next iteration does not have to rediscover it.
+
+**`@Slumber.As` describes the SLUMBER DIRECTION ONLY.** `Redacted<T>` is the proof: its slumberer
+emits a placeholder `String` whatever `T` is, while its awaker takes **`T`'s own raw shape**, so a
+config file can write `secret = "abc"` rather than nesting. `@Slumber.As(String::class)` is true of
+its output and says nothing about its input.
+
+**Why that lands on THIS module specifically.** Response payloads are the slumber direction — a
+generated schema parses what the server WRITES — so deriving those from the annotation is correct.
+**Request bodies are the awake direction.** If a body type were derived from `@Slumber.As`, it would
+describe the wrong direction for any asymmetric type. karango and monko are unaffected because they
+generate query paths over stored data, which is always the slumber side; we are the only consumer
+with both directions in play.
+
+Latent today — `Redacted` is deliberately NOT annotated, and the six `Mp*` types are symmetric. **So
+the rule is: derive RESPONSE types from the annotation; do not assume it holds for bodies.**
+
+**Also from §10, worth not re-deriving:** 7 annotatable types (6 done, `Redacted` deliberately out of
+scope), 9 third-party-but-declarable (`java.time.*`, `kotlinx.datetime.*` — not ours, so
+**`TsTypeClaims` survives as the escape hatch**), and 5 with no declarable shape at all
+(`JsonElement` and friends are passthrough — there is nothing to state). Value classes are not in
+scope: `ValueClassSlumberer` already derives from the backing field.
+
+**What the follow-on should do:** read `@Slumber.As` reflectively in the walker/claims path, fall back
+to `TsTypeClaims` where absent, and retire what becomes derivable —
+`MpDateTimeTsContributor.CLAIMED`, most of `runtime/datetime.ts`, and `MpDateTimeFieldParitySpec`
+(superseded by `ultra/slumber`'s `SlumberAsRoundTripSpec`, which checks the property generically).
+
+---
+
 ## ITERATION 4, 2026-08-01 — LOCK TAKEN. Items 1 and 2 VERIFIED and COMMITTED.
 
 **I HOLD THE LOCK.** `.claude/BUILD-LOCK.md` says `codegen agent`. Release it when this loop stops or
@@ -406,12 +451,12 @@ codegen backlog from the reviews is EMPTY. What follows is new work, in order.
       it through `funktorCodegen { }`, not building it. Narrowing ROOTS is the whole mechanism: an
       unreached claim ships no runtime and `models.ts` shrinks, with no tree-shaking stage anywhere.
 
-- [ ] **3. `--check` in a CI-shaped run.** The one CLI path nothing has exercised end to end.
+- [x] **DONE `2330de75` — 3. `--check` in a CI-shaped run.** The one CLI path nothing has exercised end to end.
       Generate, assert clean; mutate one emitted file, assert non-zero exit and that the message names
       it; delete one, same. `--check` is the entire reason a stale SDK is catchable, and it has never
       been run in anger.
 
-- [ ] **4. `out.shared(path, content)`.** From the frontend-SDK doc's incoming requirements:
+- [x] **DONE `ba4e49d0` — 4. `out.shared(path, content)`.** From the frontend-SDK doc's incoming requirements:
       `TsSdkOutput.add` errors on ANY duplicate path, even byte-identical, so two contributors cannot
       both ask for one shared module. Identical content should dedupe; differing content stays a hard
       error naming both. A prerequisite for the Vue contributors, self-contained here.
