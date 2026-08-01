@@ -12,6 +12,9 @@ import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import java.io.File
+import java.util.jar.JarFile
+import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.findAnnotation
 
@@ -55,9 +58,9 @@ class SlumberAsRoundTripSpec : StringSpec({
             val cls = value::class
 
             withClue("${cls.simpleName} must carry @Slumber.As, readable at RUNTIME") {
-                // Reading it off `annotations` rather than via findAnnotation pins the retention too: a
-                // SOURCE- or BINARY-retained annotation is absent here, and `ultra:codegen` consumes
-                // this reflectively.
+                // Asserts presence before the `!!` below, so a missing annotation reports as this clue
+                // rather than a bare NPE. (It does NOT pin retention independently: `findAnnotation`
+                // reads this same list, so there is no distinction to draw between the two.)
                 cls.annotations.filterIsInstance<Slumber.As>().size shouldBe 1
             }
 
@@ -75,17 +78,57 @@ class SlumberAsRoundTripSpec : StringSpec({
 
     "Every annotated type in ultra:datetime must have a sample above" {
 
-        // Manual, for the reason given on `samples`. It is here so that annotating a seventh type and
-        // forgetting to check it is a failing test rather than silence.
-        val expected = setOf(
-            MpInstant::class,
-            MpZonedDateTime::class,
-            MpLocalDateTime::class,
-            MpLocalDate::class,
-            MpLocalTime::class,
-            MpTimezone::class,
-        )
+        // DISCOVERED, not restated. An earlier version of this compared two hardcoded lists in this
+        // file, which meant a seventh annotated type appeared in neither and the suite stayed green --
+        // the exact silence §4 of the task doc says the single guard exists to remove.
+        //
+        // ClassIndex (already used for @IndexSubclasses in this module) cannot do it: it is kapt-driven
+        // at the ANNOTATED class's compile time, and both `Slumber.As` and the Mp* types live in
+        // multiplatform commonMain. Walking the code source needs no new dependency.
+        val discovered = annotatedTypesAlongside(MpInstant::class)
 
-        samples.map { it::class }.toSet() shouldBe expected
+        withClue("discovered = ${discovered.map { it.simpleName }.sortedBy { it }}") {
+            discovered shouldBe samples.map { it::class }.toSet()
+        }
     }
 })
+
+/**
+ * Every class in [marker]'s package, in the same jar or classes directory, carrying `@Slumber.As`.
+ *
+ * Handles both shapes a Gradle module can take on a test classpath: an exploded classes directory and
+ * a packaged jar.
+ */
+private fun annotatedTypesAlongside(marker: KClass<*>): Set<KClass<*>> {
+
+    val javaClass = marker.java
+    val pkg = javaClass.name.substringBeforeLast('.')
+    val source = File(javaClass.protectionDomain.codeSource.location.toURI())
+
+    val classNames: List<String> = when {
+        source.isDirectory -> File(source, pkg.replace('.', '/'))
+            .listFiles().orEmpty()
+            .filter { it.isFile && it.name.endsWith(".class") }
+            .map { "$pkg.${it.name.removeSuffix(".class")}" }
+
+        else -> JarFile(source).use { jar ->
+            jar.entries().asSequence()
+                .map { it.name }
+                .filter { it.endsWith(".class") }
+                .map { it.removeSuffix(".class").replace('/', '.') }
+                .filter { it.startsWith("$pkg.") && !it.removePrefix("$pkg.").contains('.') }
+                .toList()
+        }
+    }
+
+    check(classNames.isNotEmpty()) {
+        "Found no classes next to ${marker.simpleName} in $source -- the discovery below would " +
+                "vacuously pass. Fix the walk rather than deleting the check."
+    }
+
+    return classNames
+        .mapNotNull { runCatching { Class.forName(it, false, javaClass.classLoader) }.getOrNull() }
+        .filter { cls -> cls.annotations.any { it is Slumber.As } }
+        .map { it.kotlin }
+        .toSet()
+}

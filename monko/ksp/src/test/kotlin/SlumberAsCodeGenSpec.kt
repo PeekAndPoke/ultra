@@ -90,5 +90,45 @@ class SlumberAsCodeGenSpec : StringSpec() {
                 code shouldNotContain "length"
             }
         }
+    
+        "a shape that cannot describe a wire shape fails the build instead of generating sub-paths" {
+
+            // Before the review this fell through to the shape's own properties: `@Slumber.As(Money::class)`
+            // where Money is an enum yielded Money's ctor property as a query path -- a sub-path into what
+            // is a bare string on the wire, i.e. the very defect this feature removes, reintroduced
+            // through it. Only the nine primitives were rejected.
+            val result = kspCompileTest {
+                inheritClassPath(true)
+
+                processor(MonkoKspProcessorProvider())
+
+                kotlin(
+                    file = "BadShape.kt",
+                    contents = """
+                        package monko.compile
+
+                        import ${Vault::class.qualifiedName}
+                        import io.peekandpoke.ultra.common.slumber.Slumber
+
+                        enum class Currency(val code: kotlin.String) { EUR("EUR") }
+
+                        @Slumber.As(Currency::class)
+                        data class Price(val cents: kotlin.Long)
+
+                        @Vault
+                        data class Basket(val price: Price)
+
+                    """.trimIndent()
+                )
+            }
+
+            result.messages shouldContain "which cannot describe a wire shape"
+
+            val generated = result.getGeneratedSources().associate { it.name to it.readText() }
+
+            withClue("no accessor may be generated for the enum's own property") {
+                generated["Price${"$$"}monko.kt"]?.let { it shouldNotContain "code" }
+            }
+        }
     }
 }

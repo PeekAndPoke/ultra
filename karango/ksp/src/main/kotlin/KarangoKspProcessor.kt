@@ -145,6 +145,20 @@ class KarangoKspProcessor(
             // that, since it is KSP-internal behaviour we do not control. `SlumberAsCodeGenSpec` pins
             // the OUTCOME (no sub-paths for MpLocalTime/MpTimezone), which is the real tripwire.
             declaredShape.isPrimitiveOrString() -> emptySequence()
+            // An enum, interface, object or generic shape would otherwise be walked like a data class:
+            // `@Slumber.As(SomeEnum::class)` yields SomeEnum's ctor properties as query paths, i.e. a
+            // sub-path into what is a bare string on the wire. That is exactly the defect this feature
+            // removes, reintroduced through it, so it fails the build instead.
+            declaredShape.isBlackListed() -> {
+                logger.error(
+                    "@Slumber.As on ${cls.qualifiedName?.asString()} declares " +
+                            "${declaredShape.qualifiedName?.asString()}, which cannot describe a wire " +
+                            "shape. Use a data class, or a primitive/String for a bare scalar.",
+                    cls,
+                )
+                emptySequence()
+            }
+
             else -> declaredShape.getDeclaredProperties()
         }
 
@@ -304,12 +318,23 @@ class KarangoKspProcessor(
             ann.annotationType.resolve().declaration.qualifiedName?.asString() == slumberAsName
         } ?: return null
 
-        val shape = annotation.arguments
-            .firstOrNull { it.name?.asString() == "shape" }
+        // Named lookup first, then positional. KSP does back-fill the name for a positional argument in
+        // source -- measured, and `SlumberAsCodeGenSpec` covers that case -- but falling back costs
+        // nothing and this must not degrade silently.
+        val shape = (annotation.arguments.firstOrNull { it.name?.asString() == "shape" }
+            ?: annotation.arguments.firstOrNull())
             ?.value as? KSType
-            ?: return null
 
-        return shape.declaration as? KSClassDeclaration
+        val declaration = shape?.declaration as? KSClassDeclaration
+
+        if (declaration == null) {
+            // Present but unreadable is NOT the same as absent. Falling through to the type's own Kotlin
+            // properties would generate paths naming keys that are not on the wire -- silently, which is
+            // the failure this whole feature exists to remove.
+            logger.error("@Slumber.As on ${qualifiedName?.asString()} is present but unreadable.", this)
+        }
+
+        return declaration
     }
 
     private fun KSClassDeclaration.isData(): Boolean {

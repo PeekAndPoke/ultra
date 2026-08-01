@@ -39,15 +39,22 @@ class SlumberAsCodeGenSpec : StringSpec() {
                         package karango.compile
 
                         import ${Vault::class.qualifiedName}
+                        import io.peekandpoke.ultra.common.slumber.Slumber
                         import io.peekandpoke.ultra.datetime.MpInstant
                         import io.peekandpoke.ultra.datetime.MpLocalTime
                         import io.peekandpoke.ultra.datetime.MpTimezone
+
+                        data class LocalShape(val alpha: kotlin.Long, val beta: kotlin.String)
+
+                        @Slumber.As(LocalShape::class)
+                        data class LocalCustom(val ignoredKotlinProp: kotlin.Int)
 
                         @Vault
                         data class Probe(
                             val createdAt: MpInstant,
                             val time: MpLocalTime,
                             val zone: MpTimezone,
+                            val local: LocalCustom,
                         )
 
                     """.trimIndent()
@@ -81,15 +88,71 @@ class SlumberAsCodeGenSpec : StringSpec() {
                 code shouldNotContain "inline val AqlPropertyPath<MpLocalTime"
             }
 
-            withClue("MpTimezone declares a bare String — and String HAS properties, unlike Long") {
-                // This is the case that actually exercises the scalar guard. Walking `kotlin.Long`
-                // yields nothing either way, so `MpLocalTime` above cannot tell the guard from its
-                // absence; `kotlin.String` has `length`, so this one can. Found by mutation testing.
+            withClue("a type annotated IN THE COMPILED SOURCE, with a positional argument") {
+                // The classpath cases above read the annotation from a descriptor, where argument names
+                // are always present. A user annotating their own type does not go through that path,
+                // and `getSlumberAsShape` looks the argument up BY NAME — so if KSP does not back-fill
+                // the name for a positional argument in source, it silently falls back to the type's own
+                // Kotlin properties, which is the exact defect this feature exists to remove.
+                val code = generated.getValue("LocalCustom${"$$"}karango.kt")
+
+                code shouldContain "//// wire shape declared by @Slumber.As: karango.compile.LocalShape"
+                code shouldContain """inline val AqlExpression<LocalCustom>.alpha inline get() = AqlPropertyPath.start(this).append<kotlin.Long, kotlin.Long>("alpha")"""
+                code shouldContain """inline val AqlExpression<LocalCustom>.beta inline get()"""
+                code shouldNotContain "ignoredKotlinProp"
+            }
+
+            withClue("MpTimezone declares a bare String, so it has no sub-paths either") {
+                // NOTE: this does not independently exercise the scalar guard, despite covering a
+                // different scalar. KSP reports no declared properties for `kotlin.*` builtins at all --
+                // not even `String.length` -- so removing the guard changes nothing here. Both mutants
+                // survived; see the matching comment in KarangoKspProcessor. What this pins is the
+                // OUTCOME, which is the real tripwire.
                 val code = generated.getValue("MpTimezone${"$$"}karango.kt")
 
                 code shouldContain "//// wire shape declared by @Slumber.As: kotlin.String"
                 code shouldNotContain "AqlExpression<MpTimezone>.id"
                 code shouldNotContain "length"
+            }
+        }
+    
+        "a shape that cannot describe a wire shape fails the build instead of generating sub-paths" {
+
+            // Before the review this fell through to the shape's own properties: `@Slumber.As(Money::class)`
+            // where Money is an enum yielded Money's ctor property as a query path -- a sub-path into what
+            // is a bare string on the wire, i.e. the very defect this feature removes, reintroduced
+            // through it. Only the nine primitives were rejected.
+            val result = kspCompileTest {
+                inheritClassPath(true)
+
+                processor(KarangoKspProcessorProvider())
+
+                kotlin(
+                    file = "BadShape.kt",
+                    contents = """
+                        package karango.compile
+
+                        import ${Vault::class.qualifiedName}
+                        import io.peekandpoke.ultra.common.slumber.Slumber
+
+                        enum class Currency(val code: kotlin.String) { EUR("EUR") }
+
+                        @Slumber.As(Currency::class)
+                        data class Price(val cents: kotlin.Long)
+
+                        @Vault
+                        data class Basket(val price: Price)
+
+                    """.trimIndent()
+                )
+            }
+
+            result.messages shouldContain "which cannot describe a wire shape"
+
+            val generated = result.getGeneratedSources().associate { it.name to it.readText() }
+
+            withClue("no accessor may be generated for the enum's own property") {
+                generated["Price${"$$"}karango.kt"]?.let { it shouldNotContain "code" }
             }
         }
     }

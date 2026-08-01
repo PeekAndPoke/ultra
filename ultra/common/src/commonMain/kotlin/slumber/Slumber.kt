@@ -51,11 +51,23 @@ annotation class Slumber {
      * about input. Consumers that generate query paths or read models want exactly the output shape;
      * one generating a write model must not assume this is it.
      *
-     * ### It is never the only source
+     * ### It is never the only source, and consumers disagree about the fallback
      *
      * Types nobody here owns — `java.time.*`, `kotlinx.datetime.*` — are custom-coded too and cannot be
-     * annotated. Every consumer must fall back to its own registry when the annotation is absent;
-     * `TsTypeClaims` in `ultra:codegen` is that registry today.
+     * annotated. What happens then is NOT uniform, so do not assume it:
+     *
+     * - `ultra:codegen` falls back to a registry, `TsTypeClaims`.
+     * - The karango and monko KSP processors have no registry. They SUPPRESS instead: those packages
+     *   are blacklisted, so an unannotated third-party type generates no query paths at all. That is
+     *   silent-but-safe — no accessor rather than a wrong one.
+     *
+     * ### A replaced codec silently invalidates this
+     *
+     * The declaration sits on the type; the shape is produced by whichever codec `SlumberConfig` selects,
+     * and `prependModules` lets an application put its own module ahead of the built-in one. Replace the
+     * codec for an annotated type and every generated query path for it becomes wrong, with nothing to
+     * detect it — the annotation cannot know it was overridden. Nothing in this repo does that today
+     * (the DB drivers prepend only their own `Ref`/`Stored` module), but an application can.
      */
     // RUNTIME is Kotlin's default and is stated anyway because it is load-bearing: `ultra:codegen` reads
     // this reflectively at run time, while the KSP processors read it at build time.

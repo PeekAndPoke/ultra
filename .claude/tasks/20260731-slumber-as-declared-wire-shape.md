@@ -351,9 +351,11 @@ accessor and the hand-written helper is a manual patch sitting next to it. So th
 only additive: when a type carries `@Slumber.As`, the generator must emit accessors for the DECLARED
 shape **instead of**, not in addition to, the type's own Kotlin properties.
 
-Whether the wrong accessors should also be suppressed for third-party custom-coded types with no
-annotation (`java.time.Instant` generates `.seconds`/`.nanos` on the same principle) is the same
-question §6 defers — worth checking, not worth solving here.
+**CORRECTION (review, 2026-08-01):** an earlier version of this section claimed third-party types have
+the same problem — that `java.time.Instant` "generates `.seconds`/`.nanos` on the same principle". That
+is **false**. They are blacklisted twice over in both processors: by package prefix (`java.`, `javax.`,
+`kotlin.`, `kotlinx.`) and by `!isData()`. So an unannotated third-party custom-coded type generates
+**nothing**, which is silent but safe. The defect was only ever about types we own.
 
 ## 14. Status, 2026-08-01
 
@@ -402,3 +404,41 @@ follow-up, deliberately not bundled here.
 - **Third-party types** — §6, deferred by the maintainer.
 - **`/feature-review`** — mandatory per CLAUDE.md before this can be marked DONE and archived. Not run:
   it launches sub-agents, which this session is not authorised to do unprompted.
+
+## 15. Review record — `/feature-review`, 2026-08-01
+
+Three Opus reviewers over commits `4902d6bf`, `3237c91a`, `3bff0916`, `92221f35`, `4c4daf69`.
+Preconditions: compile sweep 0 errors; 5077 tests green across the seven affected modules.
+
+| # | Severity | Finding | Verdict | Action |
+|---|---|---|---|---|
+| 1 | HIGH | `SlumberAsRoundTripSpec`'s coverage guard compared two hardcoded lists — a seventh annotated type appeared in neither, so it passed. Its own comment claimed the opposite. Found independently by reviewers 1 and 2 | **CONFIRMED** | Fixed: discovery by walking `ultra:datetime`'s code source for the annotation. Mutation-killed with a real 7th type |
+| 2 | MEDIUM | `getSlumberAsShape()` returned null for "annotation present but unreadable", identical to "absent" — falling back to the type's own properties, i.e. the defect this feature removes | **CONFIRMED** | Fixed: `logger.error` + positional-argument fallback, both processors |
+| 3 | MEDIUM | Positional-argument concern: `@Slumber.As` is applied positionally, lookup was by name, both specs covered only classpath symbols | **REFUTED as a live bug** — measured: KSP does back-fill the name in source | Coverage added anyway (source-declared type in the karango spec); fallback added as belt-and-braces |
+| 4 | LOW→MEDIUM | An enum/interface/object shape was walked like a data class: `@Slumber.As(SomeEnum::class)` generated a sub-path into a bare string — the §13 defect, reintroduced through its own fix | **CONFIRMED** | Fixed: `isBlackListed()` shapes now fail the build. New test in both specs, mutation-killed |
+| 5 | LOW | Two comments contradicted each other about the same mutation experiment (karango spec said the String case exercises the scalar guard; the processor said both mutants survived) | **CONFIRMED** — my error | Test comment corrected to match the measurement |
+| 6 | LOW | The round-trip spec's retention rationale was false — `findAnnotation` reads the same `annotations` list | **CONFIRMED** — my error | Comment restated as what it actually does |
+| 7 | LOW | §13 claimed `java.time.Instant` generates `.seconds`/`.nanos` | **CONFIRMED** — my error | Corrected in §13 above |
+| 8 | MEDIUM | `Slumber.As` KDoc said every consumer falls back to a registry; karango/monko have none, they suppress | **CONFIRMED** | KDoc rewritten to state both behaviours |
+| 9 | MEDIUM | `timezone` is a literal `"UTC"` for three of four types and `human` is debug-only, yet both are now first-class sortable/indexable paths | **CONFIRMED** | Documented on `MpDateTimeRawData`; not removable without breaking "declare the shape" |
+| 10 | LOW | `prependModules` can silently invalidate every generated path for a type; recorded only in a task doc about to be archived | **CONFIRMED** (reviewer verified no live instance in-repo) | Moved onto the `Slumber.As` KDoc |
+| 11 | MEDIUM | Declaration/codec/generator disagree on `human`'s nullability in both directions | **CONFIRMED** | Documented on `MpDateTimeRawData`, incl. the consequence for `ultra:codegen` |
+| 12 | MEDIUM | No behavioural test through the generated accessor on either driver; monko's four were downgraded to `property<Long>("ts")` | **CONFIRMED** | **NOT fixed here** — needs `kspTest` wiring in `monko/core`. See `.claude/tasks/20260801-slumber-as-followups.md` |
+| 13 | MEDIUM | The referenced-type walker still walks Kotlin properties, so a nested declared shape dead-ends | **CONFIRMED**, zero impact today (flat scalar shapes) | Follow-up task |
+| 14 | MEDIUM | Six copies of the generated `MpInstant$$karango.kt` facade across modules | **CONFIRMED but pre-existing**; reviewer 1 verified the one-source-plus-one-binary case resolves fine | Follow-up task |
+| 15 | HIGH (claimed) | The annotation is public API but the round-trip check is not callable by downstream users | **CONFIRMED as a gap, downgraded** — it is a missing feature, not a defect | Follow-up task; needs a maintainer decision |
+| 16 | LOW | Package move makes `@Slumber.Field` fail silently across mismatched artifact versions | **CONFIRMED** | Release-note item, in the follow-ups task |
+
+**Security: PASS.** Reviewer 3 tested rather than accepted the "not security-critical" claim and verified
+structurally that the generated `.ts` produces a byte-identical DB path to the deleted helper — same
+`previous`, same `Step.Prop`, same `TypeRef`; only the phantom type parameter differs and nothing reads
+it. It also confirmed the exact `_0` overload is strictly more specific than the two new supertype
+overloads, so receiver resolution cannot silently change a path from `createdAt.ts` to `ts`. Probed and
+clean: property-name injection (closed at the identifier position and again by `AqlPrinter.name`),
+redaction (`Redacted<T>` is excluded from generation twice over), the awake path (nothing in
+`ultra:slumber` reads the annotation), and `@Slumber.Field` semantics (import-only changes).
+
+**Verdict: gate PASS** for the code. One condition on the record rather than resolved: e2e coverage is
+asymmetric — the karango half is exercised end-to-end (`ClusterApiSpec` → `BackgroundJobsApi`), the
+monko half is not, because `funktor:all` wires `useKarango()` only and no funktor spec uses
+`MatrixTest2d`. That gap is pre-existing and repo-wide, not introduced here. Maintainer's call.
