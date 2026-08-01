@@ -1,81 +1,80 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: slumber-as agent**
-**SINCE: 2026-08-01**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-01 (released by the slumber-as agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
+## Take it before you build
+
+Rewrite `HOLDER`, `SINCE` and `STATE`, **commit that change first**, then build. Read this file before
+every build and every commit, not once per session — the holder changes underneath you.
+
+## What the last holder changed — codegen agent, read this before your first build
+
+`@Slumber.As` landed. `.claude/tasks/20260731-slumber-as-declared-wire-shape.md`; commits `4902d6bf`,
+`3237c91a`, `3bff0916`, `92221f35`, `4c4daf69`. What your build will pick up:
+
+- **The `Slumber` annotation nest moved** from `io.peekandpoke.ultra.slumber` to
+  `io.peekandpoke.ultra.common.slumber`. **Your import sites are already migrated** — `TypeWalker.kt`
+  and `walker_fixtures.kt` were updated in `4902d6bf`. If your uncommitted edits touch those files,
+  expect a merge nuisance, not a breakage.
+- **The six `Mp*` datetime types now carry `@Slumber.As`**, `@Retention(RUNTIME)`, readable
+  reflectively. This is what your follow-on work was waiting for: `MpDateTimeTsContributor`'s claims and
+  much of `runtime/datetime.ts` become derivable, and `MpDateTimeFieldParitySpec` is superseded by
+  `ultra/slumber`'s `SlumberAsRoundTripSpec`, which checks the same property generically for every
+  annotated type. Read §3, §4 and §10 of the task file before starting — §10 records that `Redacted<T>`
+  is asymmetric, and that the annotation describes the SLUMBER direction only.
+- **`SerializationTuple` became the public `MpDateTimeRawData`** in `ultra:datetime` — same fields, same
+  kotlinx behaviour, renamed and made public because it was already the shape class.
+- **karango and monko KSP now generate from the declared shape.** `MpInstant$$karango.kt` emits
+  `.ts` / `.timezone` / `.human` instead of `.value`, which named a wire key that does not exist. If you
+  see stale accessors, delete `build/generated/ksp` in the affected module.
+- **The hand-written `.ts` helpers are gone** from `karango/core/.../aql/base_slumber.kt` and
+  `monko/core/.../lang/base_slumber.kt`. Call sites now import `io.peekandpoke.ultra.datetime.ts`.
+
+## One thing waiting on you
+
+`funktor/codegen/src/test/kotlin/FunktorCodegenWiringSpec.kt:101` — `Unresolved reference 'codeGen'`,
+from your uncommitted edits. It was the only error in the last full sweep. It blocks only
+`:funktor:codegen:compileTestKotlin`, so it did not affect the work above — but it does mean **nobody
+can use a full-tree sweep as a gate until it compiles.**
+
 ## Why this file exists
 
-Two agents share `/opt/dev/peekandpoke/ultra` on branch `auth-increments`. File-level separation is
-not enough: Kotlin's incremental state under `build/kotlin/` is **not safe against two interleaved
-gradle builds**. On 2026-07-30 that produced a task reporting UP-TO-DATE while its outputs were
-stale, and it surfaced as an `AbstractMethodError` wrapped in an `AssertionFailedError` — i.e. it
-read like a logic bug and cost real debugging time. It is recorded in `CLAUDE.md` under
-"Verification traps".
+Kotlin's incremental state under `build/kotlin/` is **not safe against two interleaved gradle builds**.
+On 2026-07-30 that produced a task reporting UP-TO-DATE while its outputs were stale, surfacing as an
+`AbstractMethodError` wrapped in an `AssertionFailedError` — it read like a logic bug and cost real
+debugging time. Recorded in `CLAUDE.md` under "Verification traps".
 
-The trigger then was an ABI change to `ultra/log` while another agent built. The work now in flight
-is an ABI change to `ultra/common` and `ultra/slumber`, which `ultra/codegen` declares as
-`api(project(":ultra:slumber"))` — the same shape, wider blast radius, and both workstreams run KSP.
+So: **whoever holds this lock is the only agent that runs gradle or commits.** If `STATE: LOCKED` and
+you are not the `HOLDER`: do not run gradle, do not commit, do not stage. Reading, grepping and
+planning are all fine.
 
-So: **whoever holds this lock is the only agent that runs gradle or commits.**
+## The lock covers BUILDING, not EDITING — and that bit
 
-## Protocol
+Observed 2026-08-01 while the lock was held: the non-holder kept editing source (`ultra/codegen`,
+`funktor/codegen`, two new untracked files), which is not forbidden and is reasonable use of a locked
+interval. But it left those modules **not compiling**, so the holder's full-tree sweep failed on errors
+that were not its own. That sweep is CLAUDE.md's gate for cross-module changes, and it stops being one.
 
-- **Read this file before every build and before every commit.** Not once per session — the holder
-  changes underneath you.
-- If `STATE: LOCKED` and you are not the `HOLDER`: do not run gradle, do not commit, do not stage.
-  Reading files, grepping and planning are all fine.
-- The holder rewrites this file to `STATE: FREE` when it stops, and lists what changed so the next
-  agent knows what its build will pick up.
-- The next agent takes the lock by rewriting `HOLDER`, `SINCE` and `STATE` **and committing that
-  change first**, before any other work.
-
-## AMENDMENT (2026-08-01): the lock covers BUILDING, not EDITING — and that bit
-
-Observed while holding it: the non-holder kept editing source (`ultra/codegen`, `funktor/codegen`,
-plus two new untracked files), which is not forbidden above and is reasonable use of a locked interval.
-But it left those modules **not compiling**, so the holder's full-tree compile sweep failed on errors
-that were not its own. The sweep is CLAUDE.md's gate for cross-module changes, and it stops being one.
-
-Worse, it is quietly misleading in the other direction too: a module that fails to compile blocks
-everything downstream of it, so a sweep can report "no errors in your modules" simply because those
-modules never got compiled. That happened here — `funktor:auth` looked clean only because
-`funktor:messaging` failed first.
+Worse, it misleads in the other direction: a module that fails to compile blocks everything downstream
+of it, so a sweep can report "no errors in your modules" simply because those modules never got
+compiled. That happened — `funktor:auth` looked clean only because `funktor:messaging` failed first,
+and four call sites would have been missed by trusting it.
 
 **Rule, both agents:**
 
 - Editing while not holding the lock is fine. **Leaving a shared module non-compiling is not** — finish
   a file or revert it before going idle.
 - The holder must **scope its verification** to its own modules while the tree is contested, and must
-  check that the modules it cares about actually COMPILED rather than being skipped behind a failure.
-  `--continue` does not save you: a failed dependency still blocks its dependents.
+  check that those modules actually COMPILED rather than being skipped behind a failure. `--continue`
+  does not save you: a failed dependency still blocks its dependents.
 - A full-tree sweep is only evidence when the tree is quiet. Say which it was.
 
 ## If the lock looks stale
 
-If `SINCE` is more than a day old and nothing has been committed by the holder in that time, the
-holder probably died. **Do not take the lock silently — ask the maintainer.** A stale lock costs a
-wait; a wrongly-taken lock costs a debugging session that looks like a real bug.
-
-## Current work under the lock
-
-`.claude/tasks/20260731-slumber-as-declared-wire-shape.md` — `@Slumber.As`, the karango/monko KSP
-processors, and removing the hand-written `.ts` path helpers.
-
-Expected to touch:
-
-- `ultra/common/src/commonMain/kotlin/slumber/` — the annotation nest moves here from `ultra:slumber`
-- `ultra/slumber/src/commonMain/kotlin/Slumber.kt` — removed by that move; import sites updated
-- `ultra/datetime/src/commonMain/kotlin/**` — the six Mp types gain `@Slumber.As`
-- `karango/ksp`, `monko/ksp` — read the annotation, generate path accessors
-- `karango/core/src/main/kotlin/aql/base_slumber.kt`, `monko/core/src/main/kotlin/lang/base_slumber.kt`
-  — the hand-written `.ts` helpers come out
-- `ultra/vault`, `ultra/security` — import sites for the moved annotation
-
-**Note for the codegen agent specifically:** the annotation is `@Retention(RUNTIME)` precisely so
-`ultra/codegen` can read it reflectively. Once this lands, `MpDateTimeTsContributor`'s claims and much
-of `runtime/datetime.ts` become derivable, and `MpDateTimeFieldParitySpec` is superseded by a single
-generic round-trip check next to the annotation. That is **your** follow-on work, not this task's —
-see §3 and §4 of the task file.
+If `SINCE` is more than a day old and nothing has been committed by the holder in that time, the holder
+probably died. **Do not take the lock silently — ask the maintainer.** A stale lock costs a wait; a
+wrongly-taken lock costs a debugging session that looks like a real bug.
