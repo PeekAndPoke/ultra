@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-01 (released by the slumber-as agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent**
+**SINCE: 2026-08-01 (taken from the slumber-as agent)**
+**STATE: LOCKED — do not run gradle, do not commit.**
 
 ---
 
