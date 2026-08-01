@@ -15,6 +15,46 @@ Full context lives in `.claude/tasks/20260729-ts-sdk-codegen.md` (design, locked
 **Review record** listing every confirmed finding). Do NOT read that whole file every iteration —
 grep the section you need. The Vue follow-on is `20260730-frontend-sdk-vue-contributors.md`.
 
+## RULE ZERO — the build lock. Read `.claude/BUILD-LOCK.md` BEFORE EVERY GRADLE COMMAND
+
+Not once per iteration — **before every build and every commit.** The holder changes underneath you.
+
+| The file says | You may |
+|---|---|
+| `STATE: LOCKED`, holder is not you | read, grep, plan, DRAFT EDITS. **No gradle. No commit. No stage.** |
+| `STATE: FREE` | take it: rewrite HOLDER/SINCE/STATE, **commit that change alone first**, then build |
+
+**Why, so you do not reason your way around it:** Kotlin's incremental state under `build/kotlin/` is
+not safe against two interleaved gradle builds. A task reports UP-TO-DATE while its outputs are
+stale, and it surfaces as an `AbstractMethodError` wrapped in an `AssertionFailedError` — it reads
+like a logic bug in your own code and costs an iteration. This happened here on 2026-07-30;
+`CLAUDE.md:120-124` records it. `ultra/codegen` declares `api(project(":ultra:slumber"))`, so you are
+directly downstream of the work in flight.
+
+**A locked interval is not dead time.** It is exactly when to read ahead and prepare edits, then
+apply them once you hold the lock. Do not idle-poll it.
+
+**If the lock looks stale** — `SINCE` more than a day old with no commits from the holder — do NOT
+take it silently. Ask the maintainer. A stale lock costs a wait; a wrongly-taken one costs a
+debugging session that looks like a real bug.
+
+## What is landing from the other agent (`@Slumber.As`)
+
+`.claude/tasks/20260731-slumber-as-declared-wire-shape.md`. Two things reach you:
+
+1. **The `Slumber` annotation nest moves** from `io.peekandpoke.ultra.slumber.Slumber` to
+   `io.peekandpoke.ultra.common.slumber.Slumber`. **Two files import it, and one is MAIN source**:
+   `ultra/codegen/src/main/kotlin/model/TypeWalker.kt:6` and
+   `ultra/codegen/src/test/kotlin/model/walker_fixtures.kt:3`. Expect a mechanical import fixup, not
+   a breakage. (The other agent's brief said "three test fixtures"; it is two files and one of them
+   ships.)
+2. **The six ultra/datetime types gain `@Slumber.As`**, RUNTIME retention, readable reflectively.
+
+**Item 2 is a FOLLOW-ON, not this loop's work.** Do not start it until the annotation is actually on
+the types, and do not design from a summary — read §3, §4 and §6 of that task file. One constraint
+that shapes it: `java.time.*` and `kotlinx.datetime.*` cannot be annotated, so `TsTypeClaims` stays.
+Read the annotation where present; fall back to the registry where absent.
+
 ## Standing authorization (maintainer, 2026-07-30)
 
 | Question | Answer |
@@ -196,6 +236,190 @@ To stop: call `ScheduleWakeup(stop: true)` and leave the final note below.
 ---
 
 ## Note to next loop
+
+## ITERATION 4, 2026-08-01 — LOCK TAKEN. Items 1 and 2 VERIFIED and COMMITTED.
+
+**I HOLD THE LOCK.** `.claude/BUILD-LOCK.md` says `codegen agent`. Release it when this loop stops or
+goes idle for long — and say what changed, as the previous holder did for me. That note was genuinely
+useful: it named an error in my own uncommitted edit before I built.
+
+**Baseline after their `@Slumber.As` work:** `:ultra:codegen:check` 241, `:funktor:codegen:check` 50,
+0 failures, 10 ts-verify fixtures, compile sweep clean.
+
+**What three iterations of blind drafting actually cost — worth knowing for next time.** Two real
+compile errors, neither found by proofreading alone:
+
+- `FunktorCodegenWiringSpec` missing `string.shouldContain` — I caught this by proofreading (iter 3).
+- `FunktorCodegenWiringSpec:101` missing the `codeGen` import — **the OTHER AGENT caught this**, in
+  their handover note, from a sweep I could not run. I had proofread that same file and missed it.
+
+Drafting under a lock is worthwhile, but it is not verification, and a careful re-read is not either.
+
+**Four exact-file-list assertions had to learn about `index.ts`.** Kept EXACT rather than loosened to
+`shouldContainAll` — "nothing else ships" is the property that caught the barrel in the first place.
+
+**One mutant survived and needed a better FIXTURE, not a new assertion:** `profileTagged` swapping
+ANY for ALL passed everything, because every test used a single tag, where the two are identical. Two
+tags with the route carrying one is the smallest distinguishing case. **Third time this pattern has
+appeared** (options-spread, body-type-vs-schema, now this): when a mutant survives, ask whether the
+fixture can express the difference before writing another assertion.
+
+**Next: items 3 and 4** — `--check` in a CI-shaped run, then `out.shared()`. Then the `@Slumber.As`
+follow-on, which is now genuinely unblocked: read §3, §4 and §10 of that task file. §10 records that
+`Redacted<T>` is asymmetric and that the annotation describes the SLUMBER direction only —
+`MpDateTimeFieldParitySpec` is superseded by `ultra/slumber`'s `SlumberAsRoundTripSpec`.
+
+---
+
+## ITERATION 3, 2026-08-01 — PROOFREAD instead of drafting. Lock still held.
+
+Third iteration under the lock. Holder still active (`4c4daf69`, `eca57201`, `8fc6d673` — they have
+now deleted the hand-written karango/monko `.ts` helpers). **Not stale. Do not take it.**
+
+**Deliberately did NOT draft item 3.** Iteration 2's own note said a third unverified item would make
+a failure hard to attribute, and that still holds. Instead: proofread the two existing drafts against
+the real APIs, which is the only verification available while locked.
+
+**FOUND ONE REAL BUG — the draft would not have compiled.** `FunktorCodegenWiringSpec` used
+`client shouldContain "listSpeakers"` on a **String** receiver while importing only
+`io.kotest.matchers.collections.shouldContain`. Fixed. All three touched specs now carry both the
+collections and string variants; they disambiguate by receiver type, which is fine.
+
+**Verified by reading the real declarations, not assumed:**
+
+| Assumption | Checked against |
+|---|---|
+| `CodePrinter.print { }` is the emitter idiom | `TsModelEmitter.kt:29` uses exactly it; signature at `CodePrinter.kt:23` |
+| `tsStringLiteral` is reachable from `ts/` | now `fun`, not `internal fun` (`TsLiterals.kt:13`) |
+| `output.entries()` gives `.path` | `TsSdkOutput.kt:29` returns `List<Entry>` |
+| the profiled fixture's file is `fxProfiledClient.ts` | `TsClientNames.clientFile` = camel + `Client.ts` |
+| `Result.model` exists for the walk assertion | `TsSdkBuilder.kt:78` |
+| `profile()` overrides the default registration | module registers first, `FunktorCodegenBuilder(this).apply(builder)` runs last |
+
+**The one thing still unverifiable statically:** that kontainer is last-wins when the same type is
+re-registered. `funktorAuth`'s `useKarango()` relies on exactly this (`Adapter.Null` → `Adapter.Vault`)
+and runs in production, so the pattern is proven even if this instance is not. **If `profile()` turns
+out not to override, that is where to look first** — not at the predicate.
+
+---
+
+## ITERATION 2, 2026-08-01 — items 1 AND 2 drafted, still NOTHING verified. Lock held throughout.
+
+The lock has been `LOCKED / slumber-as agent` for two iterations. It is NOT stale — the holder has
+committed five times (`4902d6bf` … `907ac482`), so they are working. Do not take it.
+
+**Everything from iterations 1 and 2 is written to disk and has NEVER BEEN COMPILED.** Two items'
+worth of drafted code is now stacked up. **Verify item 1 fully before touching item 2's draft** —
+piling a third unverified item on top would make a failure hard to attribute.
+
+**Good news from their commits — read before your first build:**
+
+- The `Slumber` import fixup is **already done for both my files**: `TypeWalker.kt:3` and
+  `walker_fixtures.kt:3` both read `io.peekandpoke.ultra.common.slumber.Slumber`. Expect no work there.
+- `@Slumber.As` has **landed on all six Mp types** (`3237c91a`), exactly as specced:
+  `As(MpDateTimeRawData::class)` ×4, `As(Long::class)` on `MpLocalTime`, `As(String::class)` on
+  `MpTimezone`. **The follow-on is unblocked** — but it stays AFTER backlog items 1–4, and read
+  §3/§4/§6 of the task file rather than this summary.
+
+**What was drafted for item 2 (root filtering):**
+
+- `funktor/codegen/.../index_jvm.kt` — `FunktorCodegenBuilder.profile(include)` and
+  `profileTagged(vararg tags)`. Overrides the default `RestApiTsContributor` registration, which is
+  the established funktor pattern (`funktorAuth`'s `useKarango()` does the same).
+- `profileTagged` matches ANY tag, not all: a tag marks an audience, and a route serving two
+  audiences carries both — requiring all would make a second tag NARROW its reach, the opposite of
+  what adding one reads like. Empty varargs is refused at the call site.
+- `FunktorCodegenWiringSpec` — default admits everything; `profile` and `profileTagged` narrow it;
+  empty `profileTagged` refused. The load-bearing assertion is that a profile narrows **the WALK**:
+  an excluded route's payload type must not appear in `model.decls` either. If the client assertion
+  passes while that one fails, the profile is filtering the wrong thing.
+- `rest_fixtures.kt` — `FxProfiledApiFeature`, mixing one tagged route with untagged ones.
+
+---
+
+## ITERATION 1, 2026-08-01 — item 1 DRAFTED, NOT VERIFIED. Lock held throughout.
+
+`.claude/BUILD-LOCK.md` said `LOCKED / slumber-as agent` for the whole iteration, so: no gradle, no
+commit, no staging. Everything below is **written to disk and unverified** — it has never been
+compiled. Treat it as a draft by someone else.
+
+**FIRST ACTIONS WHEN THE LOCK FREES, in order:**
+
+1. Take the lock (rewrite HOLDER/SINCE/STATE) and commit that alone.
+2. Expect a MECHANICAL IMPORT FIXUP: the `Slumber` annotation nest moved to
+   `io.peekandpoke.ultra.common.slumber.Slumber`. `walker_fixtures.kt:3` has already flipped;
+   `TypeWalker.kt:6` may still need it. Not a breakage.
+3. `./gradlew :ultra:codegen:check :funktor:codegen:check` — establish that the baseline still holds
+   (was 232 + 45) BEFORE trusting anything drafted below.
+4. Then verify the draft, and mutation-test it.
+
+**What was drafted for item 1 (the `index.ts` barrel):**
+
+- `ts/TsBarrelEmitter.kt` — NEW. Renders `export * from './x.ts'` per emitted module. Beside the other
+  emitters rather than inside the builder, because `TsFixtureGenerator` needs the same function and
+  duplicating it would be exactly the drift this module keeps finding.
+- `sdk/TsSdkBuilder.kt` — emits the barrel as **Phase 5, LAST**, because it re-exports what
+  contributors wrote and can only be built once they have all run.
+- `ts/TsBarrelEmitterSpec.kt` — NEW. Sorting/stability, self-exclusion, non-`.ts` filtering, dedupe,
+  empty input.
+- `sdk/TsSdkBuilderSpec.kt` — barrel is emitted, covers contributor files, does not re-export itself,
+  and individual files stay separately importable.
+- `TsFixtureGenerator` + `verifyRuntime.ts` — the fixture emits a barrel over the SDK-shaped subset
+  and `verifyRuntime` imports `FxDemoClient` THROUGH it, so `tsc` compiles the barrel.
+
+**Two findings from this iteration, both worth keeping:**
+
+- **`export *` is only safe if no two emitted modules export the same name**, and a collision is
+  otherwise a silent hole. Checked against the REAL demo SDK: 213 exported names, **zero cross-file
+  collisions**, and `models.ts` only imports the datetime claims rather than re-exporting them. So
+  the approach is viable — but the ts-verify barrel import is what keeps it honest.
+- **My first collision check was wrong and nearly cost an hour.** Grepping `^export (const|type)`
+  and counting occurrences reports every declaration twice, because the zod pattern emits
+  `export const X` AND `export type X` in the same file — which TypeScript merges. It looked like 150
+  collisions. **Count DISTINCT FILES per name, not occurrences.**
+
+**Deliberately NOT done:** a `clients/` subdirectory, and splitting `models.ts`. See the backlog entry
+for why — the split needs an owner rule for shared types and risks cross-file circular value imports.
+
+**Next items after 1 is verified:** 2 root filtering, 3 `--check` in a CI-shaped run, 4 `out.shared()`.
+
+## BACKLOG for this loop — decided 2026-08-01, work top-down
+
+Phases 1–4 are done, the review gate passed, and the findings table is audited (`70109f0f`) — the
+codegen backlog from the reviews is EMPTY. What follows is new work, in order.
+
+- [x] **DONE `84775a8e` — 1. `index.ts` barrel.** Layout decision (maintainer, 2026-08-01): **stay FLAT, add a barrel.**
+      `models.ts` and the client files remain at the SDK root; `index.ts` re-exports them so a caller
+      writes `import { FunktorConfClient } from '@sdk'` instead of knowing filenames.
+      **Individual files must stay importable** — a barrel that becomes the only door defeats
+      tree-shaking in some bundlers. Emitted by the BUILDER, not a contributor: every contributor
+      feeds it, so no single one owns it, exactly as `models.ts` is emitted in `TsSdkBuilder`.
+      *Deliberately NOT doing:* a `clients/` subdirectory, and splitting `models.ts` per feature. The
+      split needs an owner rule for a type two features both reach, and risks cross-file circular
+      VALUE imports — `z.lazy` breaks cycles within a file, but across files a circular import of zod
+      schemas fails at RUNTIME, not compile time. Revisit alongside profiles, since narrowing roots
+      shrinks `models.ts` anyway.
+
+- [x] **DONE `460621e9` — 2. Root filtering / profiles.** Decision: **keep allow-all as the default**, add opt-in
+      filtering by `CodeGenHints.tags`. Nothing changes for existing callers. The seam already exists
+      and is tested — `RestApiTsContributor(features, include = { true })` — so this is about exposing
+      it through `funktorCodegen { }`, not building it. Narrowing ROOTS is the whole mechanism: an
+      unreached claim ships no runtime and `models.ts` shrinks, with no tree-shaking stage anywhere.
+
+- [ ] **3. `--check` in a CI-shaped run.** The one CLI path nothing has exercised end to end.
+      Generate, assert clean; mutate one emitted file, assert non-zero exit and that the message names
+      it; delete one, same. `--check` is the entire reason a stale SDK is catchable, and it has never
+      been run in anger.
+
+- [ ] **4. `out.shared(path, content)`.** From the frontend-SDK doc's incoming requirements:
+      `TsSdkOutput.add` errors on ANY duplicate path, even byte-identical, so two contributors cannot
+      both ask for one shared module. Identical content should dedupe; differing content stays a hard
+      error naming both. A prerequisite for the Vue contributors, self-contained here.
+
+**STOP and ask rather than guessing** if: an item needs a decision not written above; the lock looks
+stale; or the build is red in a module this task never touched.
+
+---
 
 ## PHASE 2 COMPLETE 2026-07-30 (`2a3df280`)
 
