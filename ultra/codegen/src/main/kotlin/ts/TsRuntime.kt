@@ -44,7 +44,13 @@ object TsRuntime {
         DateTime("runtime/datetime.ts", "ts/runtime/datetime.ts"),
 
         /** `SdkConfig`, `request`, `unwrap` and the two error types generated clients are built on. */
-        Client("runtime/client.ts", "ts/runtime/client.ts");
+        Client("runtime/client.ts", "ts/runtime/client.ts"),
+
+        /** `route()` and `RouteRef` — how a generated member carries its own method and uri. */
+        Route("runtime/route.ts", "ts/runtime/route.ts"),
+
+        /** `ApiAcl`, the advisory "may this user call this route?" lookup over a fetched matrix. */
+        Acl("runtime/acl.ts", "ts/runtime/acl.ts");
 
         /**
          * How generated code imports it, relative to the SDK root.
@@ -69,7 +75,10 @@ object TsRuntime {
                 // dependency runs THIS way round on purpose: a client without SSE endpoints must not
                 // drag the event-stream parser into the SDK.
                 Sse -> setOf(Client, Http)
-                Http, ApiResponse, DateTime -> emptySet()
+                // acl.ts borrows RouteRef and nothing else — deliberately NOT Client, so the access
+                // lookup does not drag the transport in behind it.
+                Acl -> setOf(Route)
+                Http, ApiResponse, DateTime, Route -> emptySet()
             }
     }
 

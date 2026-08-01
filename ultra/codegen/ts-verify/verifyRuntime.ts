@@ -14,6 +14,8 @@ import { ApiError, ApiProtocolError, request, unwrap } from './generated/runtime
 import { buildUrl, fetchTransport } from './generated/runtime/http.ts'
 import type { HttpRequest, HttpTransport } from './generated/runtime/http.ts'
 import { SseParser } from './generated/runtime/sse.ts'
+import { ApiAcl } from './generated/runtime/acl.ts'
+import { route } from './generated/runtime/route.ts'
 // THROUGH THE BARREL on purpose — this is what makes `tsc` compile index.ts, and `export *`
 // is only safe if no two emitted modules export the same name. A collision is a compile error
 // here rather than a silent hole in a consumer's build.
@@ -617,6 +619,135 @@ async function checkGeneratedClient(report: Report): Promise<void> {
     }
 }
 
+/**
+ * Route identity and the access lookup.
+ *
+ * The reason this is not covered by `checkGeneratedClient`: a positive call proves a member is
+ * CALLABLE after the wrap, not that its signature survived intact. The negative sites below prove
+ * that, and they fail loudly — tsc reports TS2578 when a `@ts-expect-error` stops erroring.
+ *
+ * Measured while mutation-testing, so nobody re-derives it: widening `route()`'s bound to
+ * `(...args: any[]) => any` changes NOTHING here, because `F` is inferred from the argument either
+ * way. The bound is a strictness choice, not a correctness one.
+ */
+async function checkRouteAndAcl(report: Report): Promise<void> {
+    // A transport answering only what this group's one real call needs.
+    const transport: HttpTransport = {
+        send: () => Promise.resolve({
+            status: 200,
+            statusText: 'OK',
+            body: '{"status":{"value":200,"description":"OK"},"data":[{"name":"Ada","bio":null}]}',
+        }),
+    }
+
+    const client = new FxDemoClient({ baseUrl: 'http://x', transport })
+
+    // 1. A member carries its own identity, and it is the PATTERN, not a filled-in URL — that is
+    //    what the access matrix is keyed by.
+    report(client.talks.getTalk.method === 'GET', 'route: member carries its method')
+    report(
+        client.talks.getTalk.uri === '/api/fx/talks/{id}',
+        'route: member carries its uri PATTERN, placeholders intact',
+        client.talks.getTalk.uri,
+    )
+    report(client.status.latest.method === 'POST', 'route: a non-GET member carries its own method')
+    report(
+        client.status.watch.uri === '/api/fx/watch/{room}',
+        'route: a STREAM member is wrapped too',
+        client.status.watch.uri,
+    )
+
+    // 2. The wrap is transparent: the member still calls, and still returns its validated payload.
+    try {
+        const speakers = await client.talks.listSpeakers()
+
+        report(
+            equal(speakers.data, [{ name: 'Ada', bio: null }]),
+            'route: a wrapped member still performs its call',
+        )
+    } catch (e) {
+        report(false, 'route: a wrapped member still performs its call', (e as Error).message.split('\n')[0])
+    }
+
+    // 3. And it still survives destructuring — `Object.assign` mutates the per-instance arrow field,
+    //    so there is no prototype to lose.
+    const { getTalk } = client.talks
+    report(getTalk.uri === '/api/fx/talks/{id}', 'route: metadata survives destructuring')
+
+    // 4. The ACL, against a matrix using the same keys the generator emits.
+    const acl = new ApiAcl({
+        entries: [
+            { method: 'GET', uri: '/api/fx/talks/{id}', level: 'Granted' },
+            { method: 'GET', uri: '/api/fx/speakers', level: 'Partial' },
+            { method: 'POST', uri: '/api/fx/status', level: 'Denied' },
+        ],
+    })
+
+    const grid: Array<[string, boolean, boolean, boolean, boolean]> = [
+        // label, canAccess, canFullyAccess, canPartiallyAccess, isDenied
+        ['Granted', true, true, false, false],
+        ['Partial', true, false, true, false],
+        ['Denied', false, false, false, true],
+    ]
+    const refs = [client.talks.getTalk, client.talks.listSpeakers, client.status.latest]
+
+    grid.forEach(([label, canAccess, canFully, canPartially, denied], i) => {
+        const r = refs[i]!
+        report(acl.canAccess(r) === canAccess, `acl: ${label} canAccess`)
+        report(acl.canFullyAccess(r) === canFully, `acl: ${label} canFullyAccess`)
+        report(acl.canPartiallyAccess(r) === canPartially, `acl: ${label} canPartiallyAccess`)
+        report(acl.isDenied(r) === denied, `acl: ${label} isDenied`)
+    })
+
+    // 5. Absence is how denial is transmitted — the server OMITS denied rows, so a route the matrix
+    //    never mentions must read Denied. Dropping the `?? 'Denied'` fallback would grant it.
+    report(
+        acl.getAccessLevel(client.talks.importNodes) === 'Denied',
+        'acl: a route absent from the matrix is Denied, not undefined',
+        String(acl.getAccessLevel(client.talks.importNodes)),
+    )
+    report(ApiAcl.empty.isDenied(client.talks.getTalk), 'acl: the empty ACL denies everything')
+
+    // 6. A near-miss must NOT match. Same uri, different method — and a filled-in URL rather than
+    //    the pattern, which is the mistake a caller would make by hand.
+    const nearMiss = new ApiAcl({
+        entries: [
+            { method: 'POST', uri: '/api/fx/talks/{id}', level: 'Granted' },
+            { method: 'GET', uri: '/api/fx/talks/t-1', level: 'Granted' },
+        ],
+    })
+    report(nearMiss.isDenied(client.talks.getTalk), 'acl: method is part of the key')
+
+    // 7. The ACL methods are arrow fields too, so composables can destructure them.
+    const { canAccess } = acl
+    report(canAccess(client.talks.getTalk), 'acl: a destructured predicate still works')
+
+    // 8. NEGATIVE TYPE CHECKS — the wrap must not have widened anything.
+
+    // @ts-expect-error `id` has no default; the wrap must not have made parameters optional.
+    void client.talks.getTalk({ page: 1 })
+
+    // @ts-expect-error the param union survives the wrap.
+    void client.talks.getTalk({ id: 't-1', order: 'SIDEWAYS' })
+
+    // @ts-expect-error the body type survives the wrap.
+    void client.talks.importNodes({ id: 't-9' }, [{ nope: true }])
+
+    // @ts-expect-error route metadata is readonly — nothing may rewrite where a member points.
+    client.talks.getTalk.uri = '/api/fx/somewhere-else'
+
+    // @ts-expect-error HttpMethod is a closed union, so a typo cannot survive.
+    void route('TRACE', '/x', () => undefined)
+
+    // @ts-expect-error a bare function is not a RouteRef.
+    void acl.canAccess(() => undefined)
+
+    // @ts-expect-error the matrix level is a closed union.
+    void new ApiAcl({ entries: [{ method: 'GET', uri: '/x', level: 'Maybe' }] })
+
+    report(true, 'route/acl: the emitted types reject wrong use (7 @ts-expect-error sites)')
+}
+
 function checkSseParser(report: Report): void {
     const simple = new SseParser().push('data: hello\n\n')
 
@@ -688,6 +819,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['request', checkRequest],
         ['generatedClient', checkGeneratedClient],
         ['sse', checkSseParser],
+        ['routeAndAcl', checkRouteAndAcl],
     ]
 
     for (const [name, check] of groups) {

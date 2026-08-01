@@ -124,6 +124,11 @@ class RestApiTsContributor(
         val runtime = buildSet {
             add(TsRuntime.Module.Client)
 
+            // Every emitted member is wrapped in `route()`, and `acl.ts` is the only thing that reads
+            // what the wrap exposes — shipping the metadata without the way to query it would be half
+            // a feature. `Acl` pulls `Route` in through the requirement closure.
+            add(TsRuntime.Module.Acl)
+
             if (selection.any { c -> c.groups.any { g -> g.endpoints.any { it.stream } } }) {
                 add(TsRuntime.Module.Sse)
             }

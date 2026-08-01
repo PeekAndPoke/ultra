@@ -80,10 +80,24 @@ data class TsClientSpec(
             require(!(stream && bodyRef != null)) {
                 "'$member' is a stream with a request body. ApiRoute.Sse routes are GET and carry none."
             }
+
+            // `runtime/route.ts` types HttpMethod as a CLOSED union so `member.method` is worth
+            // reading. Refusing here turns an unlisted method into a named generation error, instead
+            // of TypeScript that fails to compile inside output the consuming app cannot edit.
+            require(httpMethod in KNOWN_HTTP_METHODS) {
+                "Endpoint '$member' uses HTTP method '$httpMethod', which `HttpMethod` in " +
+                        "runtime/route.ts does not list. Widen that union and this check together."
+            }
         }
 
         /** Every parameter, in one object as the caller sees it. */
         val allParams: List<Param> get() = pathParams + queryParams
+
+        companion object {
+            /** Must stay in step with `HttpMethod` in `ts/runtime/route.ts`. */
+            val KNOWN_HTTP_METHODS: Set<String> =
+                setOf("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS")
+        }
     }
 
     /**
@@ -176,6 +190,9 @@ class TsClientEmitter(private val model: TypeModel) {
             }
 
             appendLine("import { ${clientImports.joinToString(", ")} } from ${tsStringLiteral(CLIENT_MODULE)}")
+
+            // Unconditional: every member is wrapped, so there is no client that does not use it.
+            appendLine("import { route } from ${tsStringLiteral(ROUTE_MODULE)}")
 
             // Only when a stream endpoint exists: an SDK without SSE must not carry the event-stream
             // parser, which the runtime dependency closure would otherwise pull in.
@@ -293,7 +310,14 @@ class TsClientEmitter(private val model: TypeModel) {
 
         val returns = if (endpoint.stream) ": AsyncGenerator<SseEvent>" else ""
 
-        appendLine("readonly ${endpoint.member} = (${arguments.joinToString(", ")})$returns =>")
+        // Every member — streams included — is wrapped so it carries its own method and uri. That
+        // pair is the key `UserApiAccessMatrix` is indexed by, so `acl.canAccess(api.getEvent)` works
+        // without the caller repeating a string the generator already knows. Purely additive:
+        // `route()` returns `F & RouteRef`, so existing call sites are untouched.
+        appendLine(
+            "readonly ${endpoint.member} = route(${tsStringLiteral(endpoint.httpMethod)}, " +
+                    "${tsStringLiteral(endpoint.pattern)}, (${arguments.joinToString(", ")})$returns =>"
+        )
 
         indentedRaw {
             // `stream` and `request` deliberately mirror each other: same config, same pattern, same
@@ -307,8 +331,9 @@ class TsClientEmitter(private val model: TypeModel) {
                             "${tsStringLiteral(endpoint.pattern)}, $schema"
             }
 
+            // The trailing `)` closes `route(`, opened above.
             if (params.isEmpty() && endpoint.bodyRef == null) {
-                appendLine(if (endpoint.stream) "$call, {}, options)" else "$call, { ...options })")
+                appendLine(if (endpoint.stream) "$call, {}, options))" else "$call, { ...options }))")
                 return@indentedRaw
             }
 
@@ -336,7 +361,8 @@ class TsClientEmitter(private val model: TypeModel) {
                 }
             }
 
-            appendLine(if (endpoint.stream) "}, options)" else "})")
+            // The trailing `)` closes `route(`, opened above.
+            appendLine(if (endpoint.stream) "}, options))" else "}))")
         }
     }
 
@@ -373,6 +399,8 @@ class TsClientEmitter(private val model: TypeModel) {
         private val CLIENT_MODULE: String = TsRuntime.Module.Client.moduleSpecifier
 
         private val SSE_MODULE: String = TsRuntime.Module.Sse.moduleSpecifier
+
+        private val ROUTE_MODULE: String = TsRuntime.Module.Route.moduleSpecifier
 
         /** Where the type declarations live. Emitted by `TsSdkBuilder`, at the SDK root. */
         private const val MODELS_MODULE: String = "./models.ts"

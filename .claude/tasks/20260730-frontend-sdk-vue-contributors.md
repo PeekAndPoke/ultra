@@ -371,6 +371,25 @@ an injected strategy defaulting to in-memory.
 transport, so a transport-wrapper token never reaches them. Deciding auth here without deciding that
 is how the asymmetry becomes permanent.
 
+## Route access control — pairs with auth (2026-08-01)
+
+`.claude/tasks/20260801-sdk-route-access-control.md`, and its Kotlin counterpart
+`.claude/tasks/20260801-kotlin-apiacl-naming-alignment.md`.
+
+Generated client members become **callable AND self-describing** — `route()` wraps each one so it
+carries its own `method` and `uri`, which is exactly the key `UserApiAccessMatrix` is indexed by. A
+TypeScript `ApiAcl` then answers "may this user call this?" so a frontend can hide a button or render
+read-only. The shape is verified: a prototype compiles under `--strict --erasableSyntaxOnly` with the
+parameter types, the awaited payload type, and destructuring all intact, and the change is purely
+additive so existing call sites are untouched.
+
+**It belongs next to auth, not after it.** The two share a question — *which routes are public?* Auth
+needs it so a transport wrapper does not attach a stale token to `signIn`; the ACL needs it because
+`getMyApiAccess` is itself `authenticated()`, so a logged-out visitor has no matrix and every route,
+including "Sign in", reads as denied. Both currently want route auth metadata that
+`RestApiTsContributor` discards (`funktor/rest` has `public()` / `authenticated()`,
+`auth/AuthRuleBuilder.kt:48,172`). Decide it once, for both.
+
 ## WITHDRAWN: `expects<T>(tsName)`
 
 Proposed and deferred 2026-07-30, then made unnecessary the same day: **real TypeScript generics are
