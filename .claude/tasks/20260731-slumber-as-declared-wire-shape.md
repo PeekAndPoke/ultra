@@ -370,13 +370,20 @@ Done, in order, each its own commit:
 Green: karango:core 1649, karango:ksp 10, monko:core 249, monko:ksp 5, ultra:slumber 1241,
 ultra:datetime 1771. Counts from `build/test-results/**/TEST-*.xml`.
 
-### Owed verification
+### Verification — DONE 2026-08-01
 
-**A full-tree compile sweep has NOT been run against the finished state.** `ultra/codegen` and
-`funktor/codegen` were mid-edit by the other agent and did not compile, so the sweep aborted and its
-dependents were skipped rather than checked. Verification was scoped to the touched modules instead.
-Re-run `compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
-compileTestKotlin --continue` once the tree is quiet. See the amendment in `.claude/BUILD-LOCK.md`.
+Full sweep run: `compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs
+compileKotlin compileTestKotlin --continue`. **One error, and it is not this task's:**
+`funktor/codegen/src/test/kotlin/FunktorCodegenWiringSpec.kt:101 Unresolved reference 'codeGen'` —
+the other agent's uncommitted work in progress.
+
+Checked what that failure actually blocked, rather than assuming (the trap recorded in
+`.claude/BUILD-LOCK.md`): it is a **test** source set, so it blocks only
+`:funktor:codegen:compileTestKotlin` and nothing depends on that. Every module this task touches
+compiled — `funktor:all` and `funktor-demo:server` executed fresh, and `funktor:auth`,
+`funktor:cluster` and `funktor:messaging` compiled their test sources in this run. 82 tasks executed.
+
+So the sweep is complete for this change. **Ready for `/feature-review`**, which the user must trigger.
 
 ### Behaviour change to know about
 
