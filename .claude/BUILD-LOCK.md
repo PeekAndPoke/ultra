@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (public route metadata)**
-**SINCE: 2026-08-02 (taken for public route metadata)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -11,28 +11,23 @@
 Rewrite `HOLDER`, `SINCE` and `STATE`, **commit that change first**, then build. Read this file before
 every build and every commit, not once per session — the holder changes underneath you.
 
-## What the last holder changed — codegen agent, 2026-08-01
+## What the last holder changed — codegen agent, 2026-08-02
 
-Commit `09a59008`, route access control. Touches `ultra/codegen`, `funktor/codegen` and
-`funktor/rest`. What your build will pick up:
+Commits `887f9cd7` (review fixes) and `ceee702a` (public-route metadata). `ultra/codegen`,
+`funktor/codegen`, `funktor/rest`, `docs-site`. What your build will pick up:
 
-- **Every generated client member is now wrapped in `route()`** and carries `.method` / `.uri`. Any
-  test asserting an emitted member's exact text needs `route('METHOD', '/pattern', ` prepended and a
-  closing `)` — ten assertions in `RestApiTsContributorSpec` did.
-- **Two new runtime modules** ship in every SDK with a client: `runtime/route.ts` and
-  `runtime/acl.ts`. Exact-emitted-file-list assertions need both.
-- **`ApiAcl` methods are renamed** in `funktor/rest`: `hasAnyAccessTo` -> `canAccess`,
-  `hasAccessTo` -> `canFullyAccess`, plus new `canPartiallyAccess` and `isDenied`. Note `canAccess`
-  is the PERMISSIVE one — the inverse of what `hasAccessTo` meant. Neither old name had a production
-  caller.
-- **`TsClientSpec.Endpoint` now rejects an HTTP method outside GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS.**
+- **`runtime/acl.ts` exports `AccessLevel`, NOT `ApiAccessLevel`.** The old name collided with what
+  `models.ts` generates for the auth feature and was a hard `TS2308` through the barrel. There is now
+  an `FxAccessProbe` fixture emitting `ApiAccessLevel` so the collision cannot come back unnoticed.
+- **Generated members are wrapped in `route()` OR `publicRoute()`** depending on whether the route's
+  auth rules admit an anonymous caller. Any assertion on emitted member text needs the right one.
+- **`ApiAclSpec` / `AclRuntimeParitySpec` / `AclRuntimeSpec`** — the two closed unions are guarded in
+  `ultra:codegen` (`AclRuntimeSpec`), route identity in `funktor:codegen`.
+- **`FxSplitSecuredRoutes` now floors `authenticated()`**, not `public()`, so the merged-group fixture
+  mirrors the real `funktor:auth` shape.
 
-**I did not touch the in-flight auth work** (`AuthApi.kt` -> `AuthLoginApi.kt`, `AuthUserApi.kt`,
-`letTheBotsWait.kt` and the test edits). Some of it was already staged in the index when I arrived
-and it is staged still — I committed by explicit path, so nothing of it was swept in.
-
-`:ultra:codegen:check` 259, `:funktor:codegen:check` 59, `:funktor:rest:jvmTest` 111, 0 failures,
-compile sweep clean at release time.
+Nothing is owed to you and nothing of mine is half-finished. `:ultra:codegen:check` 266,
+`:funktor:codegen:check` 57, `:funktor:rest:jvmTest` 111, 0 failures, compile sweep clean at release.
 
 ## If the lock looks stale
 
