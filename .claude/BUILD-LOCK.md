@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (aggregation registry)**
-**SINCE: 2026-08-02 (taken for the aggregation registry)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -13,20 +13,19 @@ every build and every commit, not once per session — the holder changes undern
 
 ## What the last holder changed — codegen agent, 2026-08-02
 
-Commits `ceee702a` (public-route metadata) and `0238f9c1` (auth session runtime). `ultra/codegen` and
-`funktor/codegen`. What your build will pick up:
+Commits `ceee702a`, `0238f9c1`, `5b131068`. All in `ultra/codegen` and `funktor/codegen`.
 
-- **`TsRuntime.emit` now plans with `out.shared`, not `out.file`.** Several contributors may require
-  the same runtime module — the REST client and the auth session both need `runtime/http.ts` — and
-  `file` is exclusive. New `out.sharedResource` is the shared counterpart of `out.resource`.
-- **New `TsRuntime.Module.Auth`** (`runtime/auth.ts`), requiring `Http`. Emitted by the new
-  `AuthTsContributor`, which is registered in `funktorCodegen()`.
+- **`TsSdkEmitContext` gained a `registry` field.** Any test constructing one directly needs it.
+- **`TsRuntime.emit` plans with `out.shared`**, not `out.file` — several contributors may need the
+  same runtime module. New `out.sharedResource` is the shared counterpart of `out.resource`.
+- **New `TsRuntime.Module.Auth`** (`runtime/auth.ts`) and a new `AuthTsContributor`, registered in
+  `funktorCodegen()`.
+- **`mount.ts` is emitted** whenever any contributor registers a page route, and the builder now fails
+  the build if a registered component was never emitted.
 - **Generated members are wrapped in `route()` OR `publicRoute()`** by whether the route's auth rules
-  admit an anonymous caller. Assertions on emitted member text need the right one.
-- **`FxSplitSecuredRoutes` floors `authenticated()`**, and there are four new auth-floor fixture
-  groups in `rest_fixtures.kt`.
+  admit an anonymous caller.
 
-Nothing is owed to you and nothing of mine is half-finished. `:ultra:codegen:check` 270,
+Nothing is owed to you and nothing of mine is half-finished. `:ultra:codegen:check` 280,
 `:funktor:codegen:check` 59, `:funktor:rest:jvmTest` 111, 0 failures, compile sweep clean at release.
 
 ## If the lock looks stale
