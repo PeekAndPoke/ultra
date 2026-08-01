@@ -14,7 +14,10 @@ import { ApiError, ApiProtocolError, request, unwrap } from './generated/runtime
 import { buildUrl, fetchTransport } from './generated/runtime/http.ts'
 import type { HttpRequest, HttpTransport } from './generated/runtime/http.ts'
 import { SseParser } from './generated/runtime/sse.ts'
-import { FxDemoClient } from './generated/fxDemoClient.ts'
+// THROUGH THE BARREL on purpose — this is what makes `tsc` compile index.ts, and `export *`
+// is only safe if no two emitted modules export the same name. A collision is a compile error
+// here rather than a silent hole in a consumer's build.
+import { FxDemoClient } from './generated/index.ts'
 import { FxSpeaker } from './generated/talk.ts'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'

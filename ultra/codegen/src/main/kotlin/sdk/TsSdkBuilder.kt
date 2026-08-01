@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.codegen.model.TsTypeClaims
 import io.peekandpoke.ultra.codegen.model.TsUrlParamClaims
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
+import io.peekandpoke.ultra.codegen.ts.TsBarrelEmitter
 import io.peekandpoke.ultra.codegen.ts.TsModelEmitter
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import kotlin.reflect.KType
@@ -165,6 +166,14 @@ class TsSdkBuilder(
                 )
             )
         }
+
+        // Phase 5 — the barrel. LAST, because it re-exports what every contributor wrote, so it can
+        // only be built once they have all run. The builder's own output for the same reason
+        // `models.ts` is: every contributor feeds it, so no single one owns it.
+        output.scopeFor("ultra:codegen").file(
+            path = TsBarrelEmitter.PATH,
+            content = TsBarrelEmitter.emit(output.entries().map { it.path }),
+        )
 
         return Result(model = model, output = output, advisories = report.advisories)
     }

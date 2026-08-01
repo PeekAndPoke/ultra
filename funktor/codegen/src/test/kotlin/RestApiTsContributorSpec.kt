@@ -34,6 +34,7 @@ class RestApiTsContributorSpec : FreeSpec() {
 
             result.output.entries().map { it.path } shouldContainExactlyInAnyOrder listOf(
                 "models.ts",
+                "index.ts",
                 "fxDemoClient.ts",
                 // The client runtime and everything it imports — the closure, not just client.ts.
                 "runtime/client.ts",

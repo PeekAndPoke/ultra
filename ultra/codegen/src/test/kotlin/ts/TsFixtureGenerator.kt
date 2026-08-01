@@ -365,6 +365,21 @@ object TsFixtureGenerator {
         )
 
         File(targetDir, spec.fileName).writeText(TsClientEmitter(model).emit(spec))
+
+        // A barrel over the SDK-SHAPED subset only — `models.ts`, the client, and the runtime.
+        //
+        // NOT over every file in this directory: the per-fixture schema files are standalone
+        // fixtures, not part of an SDK, and several of them declare the same types `models.ts` does
+        // (`talk.ts` and `models.ts` both export `FxTalk`). Barrelling those together would be a
+        // genuine export collision — which is the right error for a real SDK and the wrong one here.
+        //
+        // `verifyRuntime.ts` imports the client THROUGH this file, so `tsc` compiles the barrel. That
+        // is the point: `export *` turns a cross-file name collision into a compile error, and this
+        // is where it must surface rather than in a consumer's build.
+        val sdkFiles = listOf(spec.fileName, "models.ts") +
+                TsRuntime.Module.entries.map { it.path }
+
+        File(targetDir, TsBarrelEmitter.PATH).writeText(TsBarrelEmitter.emit(sdkFiles))
     }
 
     /**

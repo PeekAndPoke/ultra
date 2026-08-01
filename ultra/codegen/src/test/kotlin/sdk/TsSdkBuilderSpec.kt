@@ -3,11 +3,13 @@ package io.peekandpoke.ultra.codegen.sdk
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.engine.spec.tempdir
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.beInstanceOf
 import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
 import io.peekandpoke.ultra.codegen.model.FxNode
@@ -117,7 +119,10 @@ class TsSdkBuilderSpec : FreeSpec() {
                     .forTesting(listOf(RootContributor("roots", typeOf<FxSpeaker>())))
                     .build()
 
-                result.output.entries().map { it.path } shouldContainExactly listOf("models.ts")
+                // `index.ts` is always emitted — the barrel re-exports whatever the run produced,
+                // even when that is only the models file.
+                result.output.entries().map { it.path } shouldContainExactly
+                        listOf("models.ts", "index.ts")
             }
         }
 
@@ -133,7 +138,7 @@ class TsSdkBuilderSpec : FreeSpec() {
                 ).build()
 
                 withDates.output.entries().map { it.path } shouldContainExactly
-                        listOf("models.ts", "runtime/datetime.ts")
+                        listOf("models.ts", "runtime/datetime.ts", "index.ts")
 
                 val withoutDates = TsSdkBuilder(
                     contributors = listOf(
@@ -144,7 +149,8 @@ class TsSdkBuilderSpec : FreeSpec() {
                 ).build()
 
                 withClue("an unreachable claim must not drag dead runtime code into the SDK") {
-                    withoutDates.output.entries().map { it.path } shouldContainExactly listOf("models.ts")
+                    withoutDates.output.entries().map { it.path } shouldContainExactly
+                            listOf("models.ts", "index.ts")
                 }
             }
 
@@ -255,6 +261,59 @@ class TsSdkBuilderSpec : FreeSpec() {
                 out.scopeFor("ok").file("clients/nested/deep.ts", "x")
 
                 out.entries().single().path shouldBe "clients/nested/deep.ts"
+            }
+        }
+
+        "the barrel" - {
+
+            "is emitted, and re-exports every other module" {
+                val result = TsSdkBuilder
+                    .forTesting(listOf(FileContributor("alpha", "clients/alpha.ts")))
+                    .build()
+
+                val paths = result.output.entries().map { it.path }
+
+                paths shouldContain "index.ts"
+
+                val barrel = result.output.entries().first { it.path == "index.ts" }.content
+
+                withClue("everything a contributor wrote must be reachable through the barrel") {
+                    barrel shouldContain "export * from './models.ts'"
+                    barrel shouldContain "export * from './clients/alpha.ts'"
+                }
+
+                withClue("and it must not re-export itself") {
+                    barrel shouldNotContain "'./index.ts'"
+                }
+            }
+
+            "individual files stay importable — the barrel is an addition, not a funnel" {
+                // A barrel that becomes the only door defeats tree-shaking in bundlers that cannot
+                // see through re-exports. The client files must remain separate entries.
+                val result = TsSdkBuilder
+                    .forTesting(listOf(FileContributor("alpha", "clients/alpha.ts")))
+                    .build()
+
+                result.output.entries().map { it.path } shouldContain "clients/alpha.ts"
+            }
+
+            "is emitted LAST, so it covers contributors that ran after models.ts" {
+                // Ordering bug this guards: building the barrel before the contributors emit would
+                // produce one that lists only models.ts, and nothing would fail — the SDK would just
+                // quietly not export its clients.
+                val result = TsSdkBuilder
+                    .forTesting(
+                        listOf(
+                            FileContributor("alpha", "clients/alpha.ts"),
+                            FileContributor("beta", "clients/beta.ts"),
+                        ),
+                    )
+                    .build()
+
+                val barrel = result.output.entries().first { it.path == "index.ts" }.content
+
+                barrel shouldContain "./clients/alpha.ts"
+                barrel shouldContain "./clients/beta.ts"
             }
         }
 

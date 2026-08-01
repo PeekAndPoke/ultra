@@ -150,7 +150,7 @@ class ThirdPartyContributorSpec : FreeSpec() {
 
             withClue("the contributor's own runtime must be emitted alongside the models") {
                 result.output.entries().map { it.path } shouldContainExactly
-                        listOf("models.ts", "runtime/money.ts")
+                        listOf("models.ts", "runtime/money.ts", "index.ts")
             }
 
             val models = result.output.entries().first { it.path == "models.ts" }.content
