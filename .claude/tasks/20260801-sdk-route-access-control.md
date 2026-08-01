@@ -1,6 +1,6 @@
 # Route access control in the generated TypeScript SDK
 
-**Status:** IN REVIEW — implemented 2026-08-01, `/feature-review` gate NOT yet run
+**Status:** IN REVIEW — implemented 2026-08-01; gate run, findings fixed, awaiting maintainer sign-off
 **Plan:** `.claude/tasks/20260729-ts-sdk-codegen.md` → Phase 4 / Vue-contributors family
 **Security-critical:** yes — see the scope note below, it is narrower than it looks
 
@@ -193,15 +193,81 @@ argument, so all of `never[]`, `any[]` and `Function` preserve the signature. Co
 side by side confirmed it. **The `route.ts` KDoc and this file both claimed the opposite and were
 wrong; both are corrected.** No test was added, because there is no observable difference to pin.
 
-## Review record (filled by /feature-review)
+## Review record — /feature-review, 2026-08-01
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | FAIL -> fixed | 1 CRITICAL, 3 MEDIUM, 4 LOW |
+| 2. Domain expert | FAIL -> fixed | 1 HIGH, 3 MEDIUM |
+| 3. Security | PASS (no security defect) | 2 MEDIUM, 2 LOW — all non-security |
 
-Fixes applied: ...
+**The gate earned its keep.** It caught a build break that all of my own testing missed.
+
+### CRITICAL — the barrel did not compile for any SDK that carries the auth models
+
+Found INDEPENDENTLY by reviewers 1 and 3, and reproduced by me before acting. `acl.ts` exported
+`ApiAccessLevel`; an SDK reaching `UserApiAccessMatrix` generates that same name into `models.ts` as
+both a const and a type, and the barrel `export *`s both — `error TS2308`. It landed on exactly the
+SDKs the feature exists for.
+
+**Why my testing missed it, which is the transferable part:** the ts-verify fixture SDK has no auth
+models, so the barrel never had two sources for the name. I had ticked "barrel and name-collision
+handling — `ts-verify` imports through `index.ts`, so a collision is a compile error." The guard was
+real; its fixture had a hole precisely where the feature ships. **A guard is only as good as the
+fixture that exercises it — check the fixture covers the shipping case, not just a case.**
+
+Fixed by renaming the union to `AccessLevel` (the same reason `AccessMatrix`/`AccessMatrixEntry`
+already avoid their Kotlin names), plus a `FxAccessProbe` fixture that emits `ApiAccessLevel` into
+generated output so `tsc` now compiles the barrel with both modules present.
+
+### HIGH — `canFullyAccess` promised something funktor does not deliver
+
+`Partial` is produced by NO framework rule: every DSL leaf yields `Granted` or `Denied`, `and`/`or`
+fold with `maxOf`/`minOf`, `ConsistentParamRule.estimate` returns `Granted` deliberately, and
+`OrgIsolationGuard` is a `RouteParamsGuard` — not an `AuthRule` — so `estimateAccess` cannot see it.
+Verified by enumerating every `estimate()` override in the repo.
+
+So my KDoc's "callable unconditionally, with no argument-dependent check" was false, and its worked
+example was the exact case funktor reports as `Granted`: `AuthUserApi.setPassword` has only the
+group's `authenticated()` floor and enforces ownership inside the handler. A frontend following that
+KDoc renders "Change password" on every row, with the `canPartiallyAccess` branch dead.
+
+Fixed in the KDoc on both sides, and `canPartiallyAccess` now says outright that it reads false for
+every funktor route today. **The deeper fix is a MAINTAINER DECISION, see below.**
+
+### Everything else fixed
+
+| | |
+|---|---|
+| `canAccess` failed OPEN for a level outside the union | predicates reformulated — only the two POSITIVE ones test a literal, `isDenied` is their negation, so the invariants now hold unconditionally and an unknown level denies on all four |
+| `route()` mutates its argument; `readonly` was type-level only | result is `Object.freeze`d, so identity is structurally immutable; ts-verify asserts the runtime throw as well as the type error |
+| the parity spec's 4th test was vacuous (asserted a data class returns what it was given) | replaced with a real codec round-trip asserting the WIRE names `acl.ts` actually reads |
+| `KNOWN_HTTP_METHODS` vs `HttpMethod` had no parity test, and the `require` had no test | both added in `AclRuntimeSpec` |
+| the stream + no-params emitter branch had ZERO coverage — a live production shape | parameterless SSE fixture added; dropping its paren is now a TS1005 |
+| 3 of 7 `@ts-expect-error` sites were byte-identical to pre-existing ones | removed; replaced with the one thing nothing pinned — the awaited PAYLOAD type |
+| the key-format test's rationale was wrong (cross-language separator parity is unobservable) | comment and name corrected to what it really pins |
+| KDoc claimed `ultra:codegen` cannot see `ultra:remote` — false, `build.gradle.kts:44` | the two union tests MOVED to `ultra:codegen`, next to the resources they guard |
+| docs-site + LLM mirror still taught `hasAccessTo`/`hasAnyAccessTo` | both rewritten in lockstep, with the advisory framing they never carried |
+
+Mutation-tested after fixing, 4/4 killed: re-introducing the collision, removing the freeze, dropping
+the stream branch's paren, and drifting the two method unions apart.
+
+### Still open — MAINTAINER DECISIONS, not defects
+
+1. **Should `estimateAccess` degrade `Granted` to `Partial` when the rule chain contains a rule with
+   `isCallerOnly() == false`?** That predicate already means "the decision depends on the arguments",
+   which is exactly what `Partial` is defined as. It would make `Partial` reachable and give
+   `canPartiallyAccess` a purpose — but it changes what every existing client sees, so it is not
+   mine to make. Without it, `Partial` stays vestigial.
+2. **`ApiAcl.empty` collapses four states into `Denied`** — server denied, matrix not loaded yet,
+   fetch failed, route newer than the matrix. A 401 during token refresh is a normal event and makes
+   every control vanish with no error, indistinguishable from an unprivileged account. Options:
+   expose `isLoaded`, or make consumers hold `ApiAcl?` so the type forces the decision.
+3. **The logged-out case** (unchanged from above) — still the one that blocks nothing but matters.
+4. **Kotlin `ApiAcl` keys on `TypedApiEndpoint.uri`, which does NOT carry the group's `mountPoint`;
+   the matrix keys on `pattern.pattern`, which does.** Latent — no production group passes a
+   `mountPoint` today. Pre-existing, not introduced here, but it is the same class of silent
+   deny-everything failure and deserves its own task.
 
 **Red-team follow-up** (required): `.claude/tasks/YYYYMMDD-redteam-sdk-route-access-control.md`
 

@@ -1,6 +1,8 @@
 package io.peekandpoke.ultra.codegen.ts
 
 import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
+import io.peekandpoke.ultra.codegen.model.ApiAccessLevel
+import io.peekandpoke.ultra.codegen.model.FxAccessProbe
 import io.peekandpoke.ultra.codegen.model.FxBox
 import io.peekandpoke.ultra.codegen.model.FxDated
 import io.peekandpoke.ultra.codegen.model.FxEvent
@@ -166,6 +168,11 @@ object TsFixtureGenerator {
         // `moduleResolution: bundler` and Node refuses with ERR_MODULE_NOT_FOUND — so the emitted SDK
         // type-checked and then failed to load. Nothing caught it because nothing ever asked Node to
         // load a generated file that imports one. `verify.ts` importing this fixture is that ask.
+        Fixture(
+            name = "accessProbe",
+            root = typeOf<FxAccessProbe>(),
+            instance = FxAccessProbe(level = ApiAccessLevel.Granted),
+        ),
         Fixture(
             name = "dated",
             root = typeOf<FxDated>(),
@@ -350,6 +357,18 @@ object TsFixtureGenerator {
                             pathParams = listOf(
                                 TsClientSpec.Param(name = "room", tsType = "string", optional = false),
                             ),
+                            stream = true,
+                        ),
+                        // A PARAMETERLESS stream. Not decoration: it is the only thing that
+                        // compiles the emitter's `stream && no params && no body` branch, and
+                        // production has such routes (funktor-demo `/showcase/realtime/sse/clock`).
+                        // Without it, dropping that branch's closing paren stays green everywhere.
+                        TsClientSpec.Endpoint(
+                            member = "heartbeat",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/heartbeat",
+                            responseRef = null,
+                            doc = "A stream with no parameters at all",
                             stream = true,
                         ),
                         TsClientSpec.Endpoint(

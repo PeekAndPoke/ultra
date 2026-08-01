@@ -48,15 +48,23 @@ export type Route<F extends (...args: never[]) => unknown> = F & RouteRef
  * because it is the strict form: it admits any function by contravariance without introducing `any`
  * into a file every generated SDK carries.
  *
- * `Object.assign` mutates [call] rather than wrapping it. That is safe HERE, and only here, because
- * generated members are arrow-function class FIELDS: each instance builds its own function object,
- * so there is no shared prototype to contaminate. It is also what keeps `const { getEvent } = api`
- * working, which is the Vue-composable idiom this SDK is consumed through.
+ * `Object.assign` MUTATES [call] rather than wrapping it. That is safe for generated code because
+ * members are arrow-function class FIELDS: each instance builds its own function object, so there is
+ * no shared prototype to contaminate. It is also what keeps `const { getEvent } = api` working, which
+ * is the Vue-composable idiom this SDK is consumed through.
+ *
+ * **If you call this yourself, pass a freshly created function.** Wrapping the same function twice
+ * repoints the first handle: `route('GET', '/a', f)` then `route('POST', '/b', f)` leaves both
+ * reporting `POST /b`, and an access check on the first then silently answers for the second.
+ *
+ * The result is FROZEN, so [RouteRef]'s `readonly` is structural rather than merely type-level —
+ * nothing can repoint a member's identity after construction, which is what the access lookup keys
+ * off.
  */
 export function route<F extends (...args: never[]) => unknown>(
     method: HttpMethod,
     uri: string,
     call: F,
 ): Route<F> {
-    return Object.assign(call, { method, uri })
+    return Object.freeze(Object.assign(call, { method, uri }))
 }

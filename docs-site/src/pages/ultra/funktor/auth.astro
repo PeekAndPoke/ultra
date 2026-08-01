@@ -234,22 +234,39 @@ val response = api.auth.refreshToken().firstOrNull()
         can access, with their estimated access level (<code>Granted</code> or <code>Partial</code>).
         Denied endpoints are filtered out &mdash; the response only reveals what the user CAN access.</p>
 
+    <p><strong>Advisory only.</strong> <code>ApiAcl</code> decides what to RENDER. The server remains the
+        authority and nothing here enforces anything &mdash; never use it in place of an auth rule.</p>
+
     <Code code={`// Fetch the access matrix once after login
 val matrix = api.auth.getMyApiAccess().first().data!!
 val acl = ApiAcl(matrix)
 
 // Type-safe lookup using the same endpoint objects from your ApiClient
-if (acl.hasAccessTo(MyApiClient.CreateEvent)) {
-    button { +"Create Event" }
+if (acl.canAccess(MyApiClient.GetEvent)) {
+    navLink("/events") { +"Events" }
 }
 
-if (acl.hasAnyAccessTo(MyApiClient.GetEvent)) {
-    // Partial access — some fields may be redacted
-    navLink("/events") { +"Events" }
+// Destructive actions: ask for the strict predicate deliberately
+if (acl.canFullyAccess(MyApiClient.DeleteEvent)) {
+    button { +"Delete" }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p><code>ApiAcl.empty</code> denies everything &mdash; safe default before data is loaded.
-        Unknown endpoints also default to <code>Denied</code> (secure-by-default).</p>
+    <p>Four predicates, sharing their names with the generated TypeScript SDK so both clients read the
+        same way. <code>canAccess</code> is true for anything but <code>Denied</code> &mdash; it
+        <strong>includes <code>Partial</code></strong>, which is the right default for visibility but
+        means a control may appear and then be rejected. <code>canFullyAccess</code> is
+        <code>Granted</code> only, <code>canPartiallyAccess</code> is <code>Partial</code> only, and
+        <code>isDenied</code> is the negation of <code>canAccess</code>. No framework rule currently
+        produces <code>Partial</code>, so do not gate on <code>canPartiallyAccess</code> expecting the
+        branch to run.</p>
+
+    <p><code>canFullyAccess</code> is <strong>not</strong> a promise that the call will succeed. Checks
+        written inside a handler, and <code>RouteParamsGuard</code>s such as the saas
+        <code>OrgIsolationGuard</code>, are not auth rules, so the matrix cannot see them.</p>
+
+    <p><code>ApiAcl.empty</code> denies everything, and unknown endpoints default to
+        <code>Denied</code>. Note that this includes <code>public()</code> routes &mdash; a logged-out
+        visitor has no matrix at all, so do not gate a sign-in control on the ACL.</p>
 
     <h2>Frontend support</h2>
 

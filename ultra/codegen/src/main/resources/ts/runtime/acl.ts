@@ -16,14 +16,21 @@
  */
 import type { RouteRef } from './route.ts'
 
-/** Mirrors `ApiAccessLevel` (`ultra/remote/src/commonMain/kotlin/ApiAccessLevel.kt`). */
-export type ApiAccessLevel = 'Granted' | 'Partial' | 'Denied'
+/**
+ * Mirrors `ApiAccessLevel` (`ultra/remote/src/commonMain/kotlin/ApiAccessLevel.kt`).
+ *
+ * **NOT named `ApiAccessLevel`, deliberately.** An SDK that reaches the auth feature generates that
+ * exact name into `models.ts` — as both a const and a type — and the barrel `export *`s both files,
+ * so sharing the name is a hard `TS2308` in every SDK this module exists to serve. Same reason
+ * [AccessMatrix] and [AccessMatrixEntry] do not carry their Kotlin names.
+ */
+export type AccessLevel = 'Granted' | 'Partial' | 'Denied'
 
 /** One row of the matrix. `uri` is the route pattern, placeholders included. */
 export interface AccessMatrixEntry {
     readonly method: string
     readonly uri: string
-    readonly level: ApiAccessLevel
+    readonly level: AccessLevel
 }
 
 /**
@@ -45,10 +52,15 @@ export interface AccessMatrix {
  * - [canFullyAccess], [canPartiallyAccess] and [isDenied] are mutually exclusive and exhaustive,
  *   and [canAccess] is the union of the first two.
  *
+ * Both hold UNCONDITIONALLY, including for a level outside [AccessLevel] — a newer server, or a
+ * matrix restored from an unvalidated cache. That is why only the two POSITIVE predicates test a
+ * literal and [isDenied] is their negation: an unrecognised level then denies on all four rather
+ * than making one of them the single predicate that fails open.
+ *
  * Methods are arrow-function FIELDS, not prototype methods, so `const { canAccess } = acl` works.
  */
 export class ApiAcl {
-    private readonly lookup: Map<string, ApiAccessLevel>
+    private readonly lookup: Map<string, AccessLevel>
 
     constructor(matrix: AccessMatrix) {
         this.lookup = new Map(matrix.entries.map((e) => [`${e.method}|${e.uri}`, e.level]))
@@ -64,7 +76,7 @@ export class ApiAcl {
      * does not disclose the full API surface (`ApiAccessDescriptor.kt:28-30`), so absence is exactly
      * how denial is transmitted. Removing the fallback would grant everything unknown.
      */
-    readonly getAccessLevel = (route: RouteRef): ApiAccessLevel =>
+    readonly getAccessLevel = (route: RouteRef): AccessLevel =>
         this.lookup.get(`${route.method}|${route.uri}`) ?? 'Denied'
 
     /**
@@ -75,25 +87,39 @@ export class ApiAcl {
      * one that silently never appears reads as a bug. For a DESTRUCTIVE action, reach for
      * [canFullyAccess] deliberately.
      */
-    readonly canAccess = (route: RouteRef): boolean => this.getAccessLevel(route) !== 'Denied'
+    readonly canAccess = (route: RouteRef): boolean =>
+        this.canFullyAccess(route) || this.canPartiallyAccess(route)
 
-    /** Callable unconditionally, with no argument-dependent check. */
+    /**
+     * The route's CALLER-LEVEL rule chain passes.
+     *
+     * **This is not a promise that the call will succeed.** A funktor handler may still reject it on
+     * the arguments, and the matrix cannot see that: checks written inside a handler, and
+     * `RouteParamsGuard`s such as the saas `OrgIsolationGuard`, are not `AuthRule`s and take no part
+     * in `estimateAccess`. `AuthUserApi.setPassword` is the live example — its only rule is the
+     * group's `authenticated()` floor, so it reports `Granted` to every logged-in user while the
+     * handler enforces `userId == caller`.
+     */
     readonly canFullyAccess = (route: RouteRef): boolean => this.getAccessLevel(route) === 'Granted'
 
     /**
      * Callable, but the server applies a further check on the ARGUMENTS — typically that an id in the
      * path is the caller's own, as with `/users/{id}/update`.
      *
-     * The matrix cannot evaluate that; the caller must supply the equivalent rule:
-     *
-     * ```ts
-     * const mayEdit = acl.canFullyAccess(api.updateUser)
-     *     || (acl.canPartiallyAccess(api.updateUser) && user.id === session.userId)
-     * ```
+     * **Reads false for every funktor route today.** No framework rule produces `Partial`: the DSL
+     * leaves all yield `Granted` or `Denied`, and `and`/`or` fold with `maxOf`/`minOf`, so the level
+     * cannot appear unless an app hand-writes `AccessLevelCheck { Partial }`. Kept because it mirrors
+     * the Kotlin enum and because argument-scoped rules are expected to start reporting it — but do
+     * NOT gate on it today expecting the branch to run.
      */
     readonly canPartiallyAccess = (route: RouteRef): boolean =>
         this.getAccessLevel(route) === 'Partial'
 
-    /** Never callable. */
-    readonly isDenied = (route: RouteRef): boolean => this.getAccessLevel(route) === 'Denied'
+    /**
+     * Never callable.
+     *
+     * The negation of [canAccess] rather than a test for `'Denied'`, so anything the two positive
+     * predicates do not recognise lands here.
+     */
+    readonly isDenied = (route: RouteRef): boolean => !this.canAccess(route)
 }

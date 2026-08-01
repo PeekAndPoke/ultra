@@ -722,19 +722,27 @@ async function checkRouteAndAcl(report: Report): Promise<void> {
     const { canAccess } = acl
     report(canAccess(client.talks.getTalk), 'acl: a destructured predicate still works')
 
-    // 8. NEGATIVE TYPE CHECKS — the wrap must not have widened anything.
+    // 8. Route metadata is frozen, so `readonly` is STRUCTURAL, not merely type-level. Without the
+    //    freeze the assignment below type-errors and then silently succeeds at run time, repointing
+    //    a member's identity — and the access lookup keys off exactly that.
+    let threw = false
+    try {
+        // @ts-expect-error readonly at the type level; frozen at run time. Both must hold.
+        client.talks.getTalk.uri = '/api/fx/somewhere-else'
+    } catch {
+        threw = true
+    }
 
-    // @ts-expect-error `id` has no default; the wrap must not have made parameters optional.
-    void client.talks.getTalk({ page: 1 })
+    report(threw, 'route: metadata is frozen, so nothing can repoint a member at run time')
+    report(
+        client.talks.getTalk.uri === '/api/fx/talks/{id}',
+        'route: the uri survived the attempt to rewrite it',
+        client.talks.getTalk.uri,
+    )
 
-    // @ts-expect-error the param union survives the wrap.
-    void client.talks.getTalk({ id: 't-1', order: 'SIDEWAYS' })
-
-    // @ts-expect-error the body type survives the wrap.
-    void client.talks.importNodes({ id: 't-9' }, [{ nope: true }])
-
-    // @ts-expect-error route metadata is readonly — nothing may rewrite where a member points.
-    client.talks.getTalk.uri = '/api/fx/somewhere-else'
+    // 9. NEGATIVE TYPE CHECKS. Only sites that are NOT already covered by `checkGeneratedClient` —
+    //    that block runs against the same wrapped client, so repeating its parameter checks here
+    //    would prove nothing and cannot fail independently.
 
     // @ts-expect-error HttpMethod is a closed union, so a typo cannot survive.
     void route('TRACE', '/x', () => undefined)
@@ -745,7 +753,13 @@ async function checkRouteAndAcl(report: Report): Promise<void> {
     // @ts-expect-error the matrix level is a closed union.
     void new ApiAcl({ entries: [{ method: 'GET', uri: '/x', level: 'Maybe' }] })
 
-    report(true, 'route/acl: the emitted types reject wrong use (7 @ts-expect-error sites)')
+    // The PAYLOAD type through the wrap. The positive check above compares values at run time, which
+    // passes just as well if `data` degraded to `any` — only this fails if it did.
+    const typed = await client.talks.listSpeakers()
+    // @ts-expect-error the awaited payload keeps its element type; `nope` is not on FxSpeaker.
+    void typed.data?.[0]?.nope
+
+    report(true, 'route/acl: the emitted types reject wrong use (4 @ts-expect-error sites)')
 }
 
 function checkSseParser(report: Report): void {

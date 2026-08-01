@@ -2,63 +2,30 @@ package io.peekandpoke.funktor.codegen
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
 import io.peekandpoke.ultra.remote.ApiAccessLevel
+import io.peekandpoke.ultra.slumber.Codec
+import kotlin.reflect.typeOf
 
 /**
- * Guards the hand-written `runtime/acl.ts` against the Kotlin it mirrors.
+ * Guards the one property that makes the generated access lookup work: a client member and the access
+ * matrix must be keyed by the SAME two strings.
  *
- * The generated SDK's access lookup is only correct while THREE things agree, and none of them is
- * checked by a compiler: the level union, the key format, and the strings a generated member carries.
- * All three fail silently and in the same direction — `getAccessLevel` returns `Denied` for
- * everything, so every button disappears and nothing reports an error.
+ * `ApiAccessDescriptor` builds its entries from `route.method.value` / `route.pattern.pattern`; the
+ * emitter must pass the same two through `route(...)`. If they diverge, every lookup misses and —
+ * because absence means denied — the symptom is "every button disappeared", with no error anywhere.
  *
- * Lives here rather than in `ultra:codegen` because that module cannot see `ultra:remote`, where
- * [ApiAccessLevel] is declared. The resource is on the classpath either way.
+ * The two closed unions in `acl.ts` and `route.ts` are guarded by `AclRuntimeSpec` in `ultra:codegen`,
+ * next to the resources themselves.
  */
 class AclRuntimeParitySpec : FreeSpec() {
 
-    private val aclTs: String by lazy {
-        this::class.java.classLoader.getResourceAsStream("ts/runtime/acl.ts")
-            ?.bufferedReader()?.readText()
-            ?: error("ts/runtime/acl.ts is not on the classpath")
-    }
-
-    /** The members of the `ApiAccessLevel` union declared in `acl.ts`. */
-    private fun declaredLevels(): List<String> {
-        val line = aclTs.lineSequence()
-            .firstOrNull { it.startsWith("export type ApiAccessLevel") }
-            ?: error("acl.ts no longer declares `export type ApiAccessLevel` on one line")
-
-        return Regex("'([^']+)'").findAll(line).map { it.groupValues[1] }.toList()
-    }
-
     init {
-        "the TS level union matches the Kotlin enum, name for name" {
-            // A level added on the Kotlin side and missed here does not fail to compile: the server
-            // sends a string the union does not list, zod rejects the whole matrix, and the SDK
-            // silently denies everything.
-            declaredLevels() shouldContainExactlyInAnyOrder ApiAccessLevel.entries.map { it.name }
-        }
-
-        "the lookup key format matches ApiAcl's" {
-            // `ApiAcl.key` is `"$method|$uri"`. A different separator on either side still produces a
-            // Map that works — it just never matches, which reads as "this user may do nothing".
-            withClue("acl.ts must build the same `method|uri` key") {
-                aclTs shouldContain "\${e.method}|\${e.uri}"
-                aclTs shouldContain "\${route.method}|\${route.uri}"
-            }
-        }
-
         "a generated member carries exactly the strings the access matrix is keyed by" {
-            // THE test that protects the whole feature. `ApiAccessDescriptor` builds its entries from
-            // `route.method.value` and `route.pattern.pattern`; the emitter must pass the same two
-            // through `route(...)`, or the keys cannot meet.
-            val feature = FxDemoApiFeature(listOf(FxTalksApiRoutes(), FxParamApiRoutes()))
+            val feature = FxDemoApiFeature(listOf(FxTalksApiRoutes(), FxParamApiRoutes(), FxSseApiRoutes()))
 
             val out = TsSdkBuilder.forTesting(listOf(RestApiTsContributor(lazyOf(listOf(feature)))))
                 .build()
@@ -68,10 +35,12 @@ class AclRuntimeParitySpec : FreeSpec() {
 
             val routes = feature.getRouteGroups().flatMap { it.all }
 
-            routes.isEmpty() shouldBe false
+            withClue("the fixture must actually contain routes, or this passes vacuously") {
+                routes.isEmpty() shouldBe false
+            }
 
             routes.forEach { route ->
-                // Exactly the expressions ApiAccessDescriptor uses, side by side with the emitter's.
+                // Exactly the expressions ApiAccessDescriptor uses, read off the same route object.
                 val expected = "route('${route.method.value}', '${route.pattern.pattern}',"
 
                 withClue("emitted client must carry `$expected`") {
@@ -80,18 +49,33 @@ class AclRuntimeParitySpec : FreeSpec() {
             }
         }
 
-        "the matrix entry the server sends is shaped the way acl.ts reads it" {
-            // Cheap, and it pins the two field names the key is built from. Renaming either on the
-            // Kotlin side compiles fine and breaks every lookup.
-            val entry = UserApiAccessMatrix.Entry(
-                method = "GET",
-                uri = "/x/{id}",
-                level = ApiAccessLevel.Granted,
+        "the matrix entry serializes to the wire names acl.ts reads" {
+            // `acl.ts` consumes WIRE field names, not Kotlin property names, and builds its key from
+            // `e.method` / `e.uri`. Asserting the Kotlin getters would pin nothing — adding
+            // `@SerialName("http_method")` to Entry.method would keep that green while every lookup
+            // in every generated SDK silently missed. So round-trip through the real codec.
+            val slumbered = Codec.default.slumber(
+                typeOf<UserApiAccessMatrix>(),
+                UserApiAccessMatrix(
+                    entries = listOf(
+                        UserApiAccessMatrix.Entry(
+                            method = "GET",
+                            uri = "/x/{id}",
+                            level = ApiAccessLevel.Granted,
+                        )
+                    )
+                )
             )
 
-            entry.method shouldBe "GET"
-            entry.uri shouldBe "/x/{id}"
-            entry.level shouldBe ApiAccessLevel.Granted
+            @Suppress("UNCHECKED_CAST")
+            val entry = ((slumbered as Map<String, Any?>)["entries"] as List<Map<String, Any?>>).single()
+
+            withClue("acl.ts keys on `method` and `uri`, and compares `level` to a string") {
+                entry.keys shouldBe setOf("method", "uri", "level")
+                entry["method"] shouldBe "GET"
+                entry["uri"] shouldBe "/x/{id}"
+                entry["level"] shouldBe "Granted"
+            }
         }
     }
 }

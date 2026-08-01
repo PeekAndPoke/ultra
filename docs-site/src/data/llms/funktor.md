@@ -270,21 +270,43 @@ privilege escalation.
 `GET /auth/my-api-access` returns a flat list of API endpoints the current user can access, with their estimated
 access level (`Granted` or `Partial`). Denied endpoints are filtered out.
 
+**ADVISORY ONLY** — decides what to RENDER. The server is the authority; this enforces nothing.
+
 ```kotlin
 // Fetch once after login
 val matrix = api.auth.getMyApiAccess().first().data!!
 val acl = ApiAcl(matrix)
 
-// Type-safe lookup using endpoint objects
-if (acl.hasAccessTo(MyApiClient.CreateEvent)) { /* show button */ }
-if (acl.hasAnyAccessTo(MyApiClient.GetEvent)) { /* show with partial access */ }
+if (acl.canAccess(MyApiClient.GetEvent)) { /* show it */ }
+if (acl.canFullyAccess(MyApiClient.DeleteEvent)) { /* destructive: require the strict one */ }
 ```
+
+Predicates (same names in the generated TypeScript SDK's `runtime/acl.ts`):
+
+| | true when |
+|---|---|
+| `canAccess` | not `Denied` — the everyday "show this at all". **Includes `Partial`** |
+| `canFullyAccess` | `Granted` — the caller-level rule chain passes |
+| `canPartiallyAccess` | `Partial` |
+| `isDenied` | the negation of `canAccess` |
+
+`canAccess` ≡ `!isDenied`; the three exact predicates are mutually exclusive and exhaustive.
+
+**`canFullyAccess` is not a promise the call will succeed.** Checks written inside a handler, and
+`RouteParamsGuard`s such as the saas `OrgIsolationGuard`, are not `AuthRule`s, so `estimateAccess`
+cannot see them. `AuthUserApi.setPassword` reports `Granted` to every logged-in user while its
+handler enforces `userId == caller`.
+
+**`Partial` is currently produced by no framework rule** — the DSL leaves all yield `Granted` or
+`Denied` and `and`/`or` fold with `maxOf`/`minOf`. Only a hand-written `AccessLevelCheck { Partial }`
+emits it. Do not gate on `canPartiallyAccess` expecting the branch to run.
 
 Key classes:
 
 - `UserApiAccessMatrix` — serializable model (`List<Entry>` with method, uri, level)
-- `ApiAcl` — client-side lookup. `hasAccessTo()` (Granted only), `hasAnyAccessTo()` (not Denied)
-- `ApiAcl.empty` — denies everything (safe default)
+- `ApiAcl` — client-side lookup, keyed on `method|uri` (the uri PATTERN, placeholders included)
+- `ApiAcl.empty` — denies everything, **including `public()` routes**. A logged-out visitor gets this,
+  so do not gate a sign-in control on it
 - `UserApiAccessProvider` — server-side interface, implemented by `ApiAccessDescriptor`
 
 ### Frontend session lifecycle

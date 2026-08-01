@@ -512,3 +512,21 @@ data class FxHoldsSelfDeclared(val s: FxSelfDeclared)
  * (it slumbers to `String` but awakes from `T`'s own shape) and out of that task's scope.
  */
 data class FxHoldsRedacted(val secret: Redacted<String>)
+
+/**
+ * DELIBERATELY named after the production enum in `ultra:remote`, and deliberately not `Fx`-prefixed.
+ *
+ * The point is the name collision. `runtime/acl.ts` originally exported a union called
+ * `ApiAccessLevel`, which is exactly what a real SDK generates into `models.ts` once it reaches
+ * `UserApiAccessMatrix` — and since the barrel `export *`s every module, that was a hard `TS2308` in
+ * every SDK the access lookup exists to serve. It shipped because no ts-verify fixture emitted the
+ * name, so the barrel never had two sources for it. Found in review, 2026-08-01.
+ *
+ * Emitting it here means `tsc` compiles the barrel with both modules present, so re-using ANY
+ * `acl.ts` export name for a generated model turns red instead of reaching a consumer.
+ */
+@Suppress("unused")
+enum class ApiAccessLevel { Granted, Partial, Denied }
+
+/** Root that drags [ApiAccessLevel] into the emitted output. */
+data class FxAccessProbe(val level: ApiAccessLevel)
