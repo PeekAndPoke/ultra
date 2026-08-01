@@ -264,6 +264,95 @@ class TsSdkBuilderSpec : FreeSpec() {
             }
         }
 
+        "shared files" - {
+
+            fun scope(out: TsSdkOutput, name: String) = out.scopeFor(name)
+
+            "two contributors may share one path when the content is identical" {
+                // `TsRuntime`'s KDoc encodes the old workaround — "a generator that needs a shared
+                // module must be the single one asking for it" — which does not survive N Vue
+                // contributors all wanting components/JsonTree.vue.
+                val out = TsSdkOutput()
+
+                scope(out, "alpha").shared("components/JsonTree.vue", "<template/>")
+                scope(out, "beta").shared("components/JsonTree.vue", "<template/>")
+
+                withClue("identical content dedupes to one planned file") {
+                    out.entries().count { it.path == "components/JsonTree.vue" } shouldBe 1
+                }
+            }
+
+            "sharing a path with DIFFERING content is a hard error naming both" {
+                // The one that matters: differing content means the two disagree about what the file
+                // is, and whichever ran last would silently win — making the SDK depend on
+                // contributor order, which is the property this whole module is built to remove.
+                val out = TsSdkOutput()
+
+                scope(out, "alpha").shared("components/JsonTree.vue", "<template>A</template>")
+
+                val thrown = runCatching {
+                    scope(out, "beta").shared("components/JsonTree.vue", "<template>B</template>")
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "alpha"
+                thrown.message!! shouldContain "beta"
+                thrown.message!! shouldContain "DIFFERENT content"
+            }
+
+            "an exclusive file() still refuses a second writer, even with identical content" {
+                // Sharing must be OPTED INTO by both sides. Making file() dedupe silently would let
+                // two contributors each believe they own a path.
+                val out = TsSdkOutput()
+
+                scope(out, "alpha").file("models.ts", "// same")
+
+                val thrown = runCatching { scope(out, "beta").file("models.ts", "// same") }
+                    .exceptionOrNull()
+
+                thrown!!.message!! shouldContain "written twice"
+
+                withClue("the message must point at out.shared as the fix") {
+                    thrown.message!! shouldContain "out.shared"
+                }
+            }
+
+            "MIXING file() and shared() on one path is refused" {
+                // The asymmetric case, and the easiest to get wrong: one contributor believes it owns
+                // the path exclusively while the other is sharing it.
+                val out = TsSdkOutput()
+
+                scope(out, "owner").file("components/Thing.vue", "<template/>")
+
+                val thrown = runCatching {
+                    scope(out, "sharer").shared("components/Thing.vue", "<template/>")
+                }.exceptionOrNull()
+
+                withClue("identical content must NOT make this pass — the intent differs") {
+                    thrown!!.message!! shouldContain "written twice"
+                }
+            }
+
+            "and the other way round" {
+                val out = TsSdkOutput()
+
+                scope(out, "sharer").shared("components/Thing.vue", "<template/>")
+
+                val thrown = runCatching {
+                    scope(out, "owner").file("components/Thing.vue", "<template/>")
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "written twice"
+            }
+
+            "a shared path is still confined to the SDK root" {
+                val thrown = runCatching {
+                    TsSdkOutput().scopeFor("evil").shared("../escape.vue", "x")
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "escapes the SDK root"
+            }
+        }
+
         "the barrel" - {
 
             "is emitted, and re-exports every other module" {

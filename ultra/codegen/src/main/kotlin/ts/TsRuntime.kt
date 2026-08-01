@@ -81,8 +81,9 @@ object TsRuntime {
      * and the missing file would surface as a module-resolution error inside generated output rather
      * than as anything naming the contributor.
      *
-     * Emitting the same module from two contributors is a hard error from [TsSdkOutput], so a
-     * generator that needs a shared module must be the single one asking for it.
+     * Emitting the same module from two contributors via `out.file` is a hard error from
+     * [TsSdkOutput]. Where several genuinely need the same module, they should use `out.shared`
+     * instead — identical content dedupes, differing content still fails naming both.
      */
     fun emit(out: TsSdkOutput.Scope, modules: Set<Module>) {
         closureOf(modules).forEach { module ->

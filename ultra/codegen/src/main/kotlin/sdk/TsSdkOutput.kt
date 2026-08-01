@@ -21,6 +21,13 @@ class TsSdkOutput {
         val content: String,
         /** The contributor that produced it, for conflict reporting. */
         val writtenBy: String,
+        /**
+         * True when written via [Scope.shared], i.e. the contributor expects others to want it too.
+         *
+         * Recorded rather than inferred, because "two contributors wrote this path" and "two
+         * contributors SHARE this path" are different situations and only the second is benign.
+         */
+        val shared: Boolean = false,
     )
 
     private val entries = LinkedHashMap<String, Entry>()
@@ -66,18 +73,36 @@ class TsSdkOutput {
         }
     }
 
-    private fun add(entry: Entry) {
+    private fun add(entry: Entry, shared: Boolean = false) {
         validatePath(entry.path, entry.writtenBy)
 
         val existing = entries[entry.path]
 
-        check(existing == null) {
-            "File '${entry.path}' is written twice: by '${existing!!.writtenBy}' and by " +
-                    "'${entry.writtenBy}'. Emitted paths must be unique — otherwise the SDK depends on " +
-                    "contributor order. Fix: give one of them a different path, or register only one."
+        if (existing == null) {
+            entries[entry.path] = entry
+            return
         }
 
-        entries[entry.path] = entry
+        // Two contributors asking for the SAME path. Whether that is a conflict depends on how both
+        // of them asked — and both must have asked via `shared`, or one of them believes it owns a
+        // path someone else is also writing.
+        check(shared && existing.shared) {
+            "File '${entry.path}' is written twice: by '${existing.writtenBy}' and by " +
+                    "'${entry.writtenBy}'. Emitted paths must be unique — otherwise the SDK depends on " +
+                    "contributor order. Fix: give one of them a different path, register only one, or " +
+                    "— if the file is genuinely shared and both would write identical content — have " +
+                    "BOTH use `out.shared(...)` rather than `out.file(...)`."
+        }
+
+        // Both asked to share, so identical content dedupes and differing content is still a hard
+        // error. The difference matters: identical means "we both need this module", while differing
+        // means the two disagree about what it contains, and whichever ran last would silently win.
+        check(existing.content == entry.content) {
+            "Shared file '${entry.path}' is claimed by '${existing.writtenBy}' and " +
+                    "'${entry.writtenBy}' with DIFFERENT content, so there is no single correct " +
+                    "version and the winner would depend on contributor order. Fix: make the content " +
+                    "identical, or give them separate paths."
+        }
     }
 
     /**
@@ -192,9 +217,31 @@ class TsSdkOutput {
         private val loader: ClassLoader,
     ) {
 
-        /** Plans a file at [path] with [content]. */
+        /** Plans a file at [path] with [content]. Exclusive: a second writer is a hard error. */
         fun file(path: String, content: String) {
             add(Entry(path = path, content = content, writtenBy = contributor))
+        }
+
+        /**
+         * Plans a file that OTHER contributors may also ask for, with identical content.
+         *
+         * For a module several contributors depend on — a shared Vue component, a helper — where
+         * requiring exactly one of them to own it is the wrong shape. `TsRuntime`'s KDoc encodes that
+         * workaround today as *"a generator that needs a shared module must be the single one asking
+         * for it"*, which does not survive N contributors that all want `components/JsonTree.vue`.
+         *
+         * Identical content dedupes. **Differing content is still a hard error naming both** — that is
+         * the whole point: it means the two disagree about what the file contains, and whichever ran
+         * last would silently win, making the SDK depend on contributor order.
+         *
+         * Mixing the two is also an error: if one contributor uses [file] and another [shared], the
+         * first believes it owns a path the second is also writing.
+         */
+        fun shared(path: String, content: String) {
+            add(
+                Entry(path = path, content = content, writtenBy = contributor, shared = true),
+                shared = true,
+            )
         }
 
         /**
