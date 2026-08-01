@@ -1,6 +1,7 @@
 # `@Slumber.As` — declare a custom-coded type's wire shape once
 
-**Status:** IDEA — maintainer's, 2026-07-31. §4 and §5 settled; ready to be specced.
+**Status:** IMPLEMENTED 2026-08-01 — §1–§5, §9 done. NOT yet through `/feature-review`, which
+CLAUDE.md requires before DONE. See §14.
 **Plan:** none yet. Touches `ultra/slumber`, `karango`, `monko`, `ultra/codegen`.
 **Security-critical:** no.
 
@@ -353,3 +354,44 @@ shape **instead of**, not in addition to, the type's own Kotlin properties.
 Whether the wrong accessors should also be suppressed for third-party custom-coded types with no
 annotation (`java.time.Instant` generates `.seconds`/`.nanos` on the same principle) is the same
 question §6 defers — worth checking, not worth solving here.
+
+## 14. Status, 2026-08-01
+
+Done, in order, each its own commit:
+
+| | commit |
+|---|---|
+| Annotation nest moved to `io.peekandpoke.ultra.common.slumber` | `4902d6bf` |
+| Six `Mp*` types annotated; `SerializationTuple` → public `MpDateTimeRawData`; `SlumberAsRoundTripSpec` | `3237c91a` |
+| karango KSP generates from the declared shape | `3bff0916` |
+| monko KSP, likewise | `92221f35` |
+| Hand-written `.ts` helpers deleted, 8 files + 2 raw sites migrated | `4c4daf69` |
+
+Green: karango:core 1649, karango:ksp 10, monko:core 249, monko:ksp 5, ultra:slumber 1241,
+ultra:datetime 1771. Counts from `build/test-results/**/TEST-*.xml`.
+
+### Owed verification
+
+**A full-tree compile sweep has NOT been run against the finished state.** `ultra/codegen` and
+`funktor/codegen` were mid-edit by the other agent and did not compile, so the sweep aborted and its
+dependents were skipped rather than checked. Verification was scoped to the touched modules instead.
+Re-run `compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
+compileTestKotlin --continue` once the tree is quiet. See the amendment in `.claude/BUILD-LOCK.md`.
+
+### Behaviour change to know about
+
+The generated accessors are **per-module** — emitted only where a `@Vault` type references the datetime
+type. The deleted helper was universal. In practice you need such an entity to query the field at all,
+so the gap is narrow, but it is real: `monko/core`'s own tests have no `@Vault` type and, unlike
+`karango/core`, no `kspTest(project(":monko:ksp"))` wiring either. Adding it for parity is a candidate
+follow-up, deliberately not bundled here.
+
+### Not done, and not this task
+
+- **`ultra:codegen` consumption** — `MpDateTimeTsContributor`'s claims and `runtime/datetime.ts` become
+  derivable, and `MpDateTimeFieldParitySpec` is superseded by `SlumberAsRoundTripSpec`. That is the
+  codegen agent's follow-on; the annotation it needs is now on the types.
+- **`Redacted<T>`** — §10 explains why its asymmetry needs a decision first.
+- **Third-party types** — §6, deferred by the maintainer.
+- **`/feature-review`** — mandatory per CLAUDE.md before this can be marked DONE and archived. Not run:
+  it launches sub-agents, which this session is not authorised to do unprompted.
