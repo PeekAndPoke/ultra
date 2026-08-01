@@ -7,6 +7,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.longOrNull
+import kotlin.math.floor
 
 /**
  * The claims of a **verified** JWT.
@@ -49,6 +52,19 @@ data class JwtPayload(
      */
     val audience: List<String>
         get() = getClaim(AUDIENCE).let { it.asStringList() ?: listOfNotNull(it.asString()) }
+
+    /**
+     * The `exp` claim as **epoch seconds**, or null when absent or malformed.
+     *
+     * Seconds rather than a date type on purpose: that is what the token stores
+     * (`JwtBuilder.withExpiresAt` writes `expiresAt.epochSecond`), and `ultra:security` would otherwise
+     * have to expose `ultra:datetime`, which it only has as an implementation dependency. Callers that
+     * want an instant convert.
+     *
+     * **This does not validate anything.** Expiry is enforced by the verifier before a payload exists;
+     * see the note on [JwtClaim.asLong] for why this one degrades where the verifier throws.
+     */
+    val expiresAt: Long? get() = getClaim(EXPIRES_AT).asLong()
 
     companion object {
         const val SUBJECT = "sub"
@@ -114,6 +130,33 @@ data class JwtClaim(
      */
     fun asStringList(): List<String>? = (value as? JsonArray)
         ?.mapNotNull { JwtClaim(it).asString() }
+
+    /**
+     * The value as a `Long`, or null when it is absent, null, or not a JSON number.
+     *
+     * A JSON string is rejected rather than parsed, matching [asBoolean] — a claim of `"123"` is a
+     * string, not a number, and coercing it inside a security type is the kind of leniency worth losing.
+     *
+     * A fractional value is floored, because RFC 7519 §4.1.4 defines `exp`/`nbf`/`iat` as a NumericDate
+     * that is explicitly *not* restricted to integers. `Long`, never `Int`: `exp` in seconds passes
+     * Int32 in 2038.
+     *
+     * ### Why this degrades where the verifier throws
+     *
+     * `JwtGenerator.numericDate` reads the same claims and raises `JwtVerificationException` on a
+     * malformed value — correct there, because a token whose `exp` is unreadable must not be treated as
+     * unexpiring. Here the opposite is correct: a [JwtPayload] only exists *after* verification has
+     * already accepted the token, so anything malformed this reader could still meet is defence in
+     * depth, and turning it into an exception would convert attacker-supplied content into a 500.
+     */
+    fun asLong(): Long? = (value as? JsonPrimitive)
+        ?.takeIf { !it.isString }
+        ?.let { primitive ->
+            primitive.longOrNull
+                ?: primitive.doubleOrNull
+                    ?.takeIf { it.isFinite() && it >= Long.MIN_VALUE.toDouble() && it <= Long.MAX_VALUE.toDouble() }
+                    ?.let { floor(it).toLong() }
+        }
 }
 
 /** This claim as a [Set] of strings; empty when absent or not an array of strings. */

@@ -289,7 +289,15 @@ class JwtSignatureGateSpec : StringSpec({
             gate.check(real)
         }
 
-        val alternates = ('A'..'z')
+        // The ALPHABET, not a char range. `('A'..'z')` was flaky by construction: a 64-byte HMAC-SHA512
+        // signature is 86 base64url chars whose last one carries 2 real bits and 4 unused, so the 16
+        // equivalent final chars are the contiguous alphabet block [realBits*16 .. realBits*16+15]. For
+        // realBits 0..2 that block is all letters and sits inside ('A'..'z'); for realBits == 3 it is
+        // `w x y z 0-9 - _`, of which only five are in that range — so the count dropped to 4 and the
+        // self-check below failed. One run in four, which is why it survived the review gate.
+        val base64Url = ('A'..'Z') + ('a'..'z') + ('0'..'9') + '-' + '_'
+
+        val alternates = base64Url
             .map { head + "." + sig.dropLast(1) + it }
             .filter { alt ->
                 alt != real && runCatching {
@@ -299,7 +307,8 @@ class JwtSignatureGateSpec : StringSpec({
             }
 
         withClue("there must really be alternate encodings, or this test proves nothing") {
-            (alternates.size >= 8) shouldBe true
+            // Exactly 15, deterministically: 16 final chars decode to the same bytes, minus the real one.
+            alternates.size shouldBe 15
         }
 
         alternates.forEach { alt ->
