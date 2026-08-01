@@ -296,3 +296,14 @@ class FxSplitClashRoutes : ApiRoutes("fx-split", authFloor = { public() }) {
         .Get(uri = "/api/fx/split/clash", response = FxTalkModel.serializer().api())
         .mount { codeGen { funcName = "openPart" }.handle { ApiResponse.ok(FxTalkModel("b", "B")) } }
 }
+
+/**
+ * A feature mixing a TAGGED route with untagged ones, for the profile tests.
+ *
+ * `FxSpeakersApiRoutes.listSpeakers` carries `tag("public")`; nothing in `FxTalksApiRoutes` does.
+ */
+class FxProfiledApiFeature : ApiFeature {
+    override val name: String = "FxProfiled"
+    override val description: String = "Feature with a mix of tagged and untagged routes."
+    override fun getRouteGroups(): List<ApiRoutes> = listOf(FxTalksApiRoutes(), FxSpeakersApiRoutes())
+}

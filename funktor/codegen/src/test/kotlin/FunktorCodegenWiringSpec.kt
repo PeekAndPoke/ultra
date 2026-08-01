@@ -3,6 +3,9 @@ package io.peekandpoke.funktor.codegen
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.peekandpoke.funktor.codegen.cli.TsSdkGenerateCliCommand
@@ -12,6 +15,7 @@ import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.funktorCore
 import io.peekandpoke.funktor.core.broker.funktorBroker
 import io.peekandpoke.funktor.rest.ApiFeature
+import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.funktorRest
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
 import io.peekandpoke.ultra.codegen.sdk.TsSdkContributor
@@ -75,6 +79,107 @@ class FunktorCodegenWiringSpec : FreeSpec() {
             paths shouldContain "models.ts"
             paths shouldContain "fxWiringClient.ts"
             paths shouldContain "runtime/client.ts"
+        }
+
+        "profiles" - {
+
+            "the default admits every route" {
+                val paths = container().get(TsSdkBuilder::class).build().output.entries().map { it.path }
+
+                paths shouldContain "fxWiringClient.ts"
+            }
+
+            "profile() narrows the routes a client is generated for" {
+                val filtered = kontainer {
+                    val config = AppConfig.empty
+
+                    funktorCore(config, AppInfo.default())
+                    funktorBroker()
+                    funktorRest(config)
+                    funktorCodegen {
+                        // FxTalksApiRoutes has `listTalks` (no tags) and `undeclared` (no tags);
+                        // FxSpeakersApiRoutes tags `listSpeakers` with "public".
+                        profile { route -> route.codeGen.tags.contains("public") }
+                    }
+
+                    singleton(FxProfiledApiFeature::class)
+                }.create()
+
+                val result = filtered.get(TsSdkBuilder::class).build()
+
+                val client = result.output.entries().first { it.path == "fxProfiledClient.ts" }.content
+
+                client shouldContain "listSpeakers"
+                client shouldNotContain "listTalks"
+
+                // THE POINT of narrowing roots rather than filtering output: an excluded route's
+                // payload type is never walked, so it is not declared either. If this ever fails while
+                // the assertion above passes, the profile is filtering the wrong thing.
+                withClue("a profile narrows the WALK, not just the emitted client") {
+                    result.model.decls.values.map { it.name } shouldContainExactlyInAnyOrder
+                            listOf("FxSpeakerModel")
+                }
+            }
+
+            "profileTagged() is the same thing, spelled for the common case" {
+                val filtered = kontainer {
+                    val config = AppConfig.empty
+
+                    funktorCore(config, AppInfo.default())
+                    funktorBroker()
+                    funktorRest(config)
+                    funktorCodegen { profileTagged("public") }
+
+                    singleton(FxProfiledApiFeature::class)
+                }.create()
+
+                val client = filtered.get(TsSdkBuilder::class).build()
+                    .output.entries().first { it.path == "fxProfiledClient.ts" }.content
+
+                client shouldContain "listSpeakers"
+                client shouldNotContain "listTalks"
+            }
+
+            "profileTagged() matches ANY tag, not all of them" {
+                // With ONE tag, any-vs-all is unobservable — which is why the single-tag test above
+                // could not catch a mutation swapping them. Two tags where the route carries only one
+                // is the smallest case that distinguishes them.
+                //
+                // ANY is the right semantic: a tag marks an audience, and a route serving two
+                // audiences carries both. Requiring all would make a second tag NARROW its reach.
+                val filtered = kontainer {
+                    val config = AppConfig.empty
+
+                    funktorCore(config, AppInfo.default())
+                    funktorBroker()
+                    funktorRest(config)
+                    funktorCodegen { profileTagged("public", "internal") }
+
+                    singleton(FxProfiledApiFeature::class)
+                }.create()
+
+                val client = filtered.get(TsSdkBuilder::class).build()
+                    .output.entries().first { it.path == "fxProfiledClient.ts" }.content
+
+                withClue("listSpeakers carries only 'public', so ANY admits it and ALL would not") {
+                    client shouldContain "listSpeakers"
+                }
+            }
+
+            "profileTagged() with no tags is refused where the mistake is made" {
+                val thrown = runCatching {
+                    kontainer {
+                        val config = AppConfig.empty
+
+                        funktorCore(config, AppInfo.default())
+                        funktorBroker()
+                        funktorRest(config)
+                        funktorCodegen { profileTagged() }
+                    }.create()
+                }.exceptionOrNull()
+
+                thrown!!.message!! shouldContain "at least one tag"
+            }
         }
 
         "the generator is NOT part of the module a production server gets" {
