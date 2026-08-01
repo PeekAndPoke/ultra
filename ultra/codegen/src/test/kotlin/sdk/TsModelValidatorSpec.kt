@@ -224,19 +224,28 @@ class TsModelValidatorSpec : FreeSpec() {
         "the custom-codec check — the reason this phase exists" - {
 
             "an UNCLAIMED type with a custom Slumber codec fails validation" {
-                val model = walk(typeOf<FxHoldsInstant>())
+                // `Money`, NOT `MpInstant`. Since 2026-08-01 the Mp types carry `@Slumber.As`, so the
+                // walker resolves them from the declaration and they never reach this check.
+                //
+                // The replacement has to satisfy BOTH halves, which narrows it a lot: the walker must
+                // be able to CLASSIFY the type (or it fails earlier as unresolved — `java.time.LocalDate`
+                // and `Redacted` both do), and a custom codec must RESHAPE it. `Money` is a data class
+                // whose codec writes `{cents, currency}`, so the inference and the codec genuinely
+                // disagree.
+                val model = walk(typeOf<Invoice>())
 
-                val report = TsModelValidator(SlumberConfig.default).validate(model)
+                val report = TsModelValidator(SlumberConfig.default.prependModules(MoneyModule))
+                    .validate(model)
 
-                withClue("MpInstant slumbers to {ts, timezone, human} — nothing in its KType says so") {
+                withClue("Money slumbers to {cents, currency} — nothing in its KType says so") {
                     report.ok shouldBe false
                 }
 
                 val message = report.format()
 
-                message shouldContain MpInstant::class.qualifiedName!!
+                message shouldContain "Money"
                 message shouldContain "custom Slumber codec"
-                message shouldContain "MpInstantSlumberer"
+                message shouldContain "MoneyCodec"
                 message shouldContain "claims.map"
             }
 

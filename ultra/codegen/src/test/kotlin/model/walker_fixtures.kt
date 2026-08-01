@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.codegen.model
 
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
@@ -468,3 +469,46 @@ data class FxDated(
     val zone: MpTimezone,
     val optional: MpInstant?,
 )
+
+//  @Slumber.As — a type that DECLARES its wire shape  ///////////////////////////////////////////////
+
+/** The shape [FxStamp] claims to write. An ordinary data class, walked like any other. */
+data class FxStampRaw(val at: Long, val label: String)
+
+/**
+ * Declares its wire shape, and is deliberately NOT claimed by any contributor.
+ *
+ * Before the annotation was read, a type like this could only be described by a hand-written claim.
+ */
+@Slumber.As(FxStampRaw::class)
+data class FxStamp(val opaqueInternals: String)
+
+data class FxHoldsStamp(val stamp: FxStamp)
+
+/** Declares a SCALAR shape — the `MpLocalTime` / `MpTimezone` case. */
+@Slumber.As(Long::class)
+data class FxTicks(val whatever: String)
+
+@Slumber.As(String::class)
+data class FxZone(val whatever: String)
+
+data class FxHoldsScalarShapes(val ticks: FxTicks, val zone: FxZone)
+
+/** Declares ITSELF, which cannot terminate. */
+@Slumber.As(FxSelfDeclared::class)
+data class FxSelfDeclared(val v: String)
+
+data class FxHoldsSelfDeclared(val s: FxSelfDeclared)
+
+/**
+ * Reaches a custom-coded type that declares NO wire shape, and that the walker CAN classify.
+ *
+ * Both halves matter for the codec-parity check. `java.time.LocalDate` is custom-coded but the walker
+ * cannot classify it at all, so it fails earlier as *unresolved* and never reaches the parity phase.
+ * `Redacted<T>` is an ordinary class the walker classifies happily, while `RedactedSlumberer` writes a
+ * placeholder `String` — so the walker's inference and the codec genuinely disagree.
+ *
+ * It is deliberately unannotated: §10 of the `@Slumber.As` task records that `Redacted` is asymmetric
+ * (it slumbers to `String` but awakes from `T`'s own shape) and out of that task's scope.
+ */
+data class FxHoldsRedacted(val secret: Redacted<String>)

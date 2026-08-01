@@ -26,7 +26,7 @@ data class Money(val amount: Double, val currencyCode: String)
 data class Invoice(val total: Money, val label: String)
 
 /** Writes `{cents, currency}` — nothing in Money's Kotlin type reveals this. */
-private object MoneyCodec : Awaker, Slumberer {
+internal object MoneyCodec : Awaker, Slumberer {
     override fun slumber(data: Any?, context: Slumberer.Context): Any? = when (data) {
         is Money -> mapOf("cents" to (data.amount * 100).toLong(), "currency" to data.currencyCode)
         else -> null
@@ -42,7 +42,7 @@ private object MoneyCodec : Awaker, Slumberer {
     }
 }
 
-private object MoneyModule : SlumberModule {
+internal object MoneyModule : SlumberModule {
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? =
         MoneyCodec.takeIf { (type.classifier as? KClass<*>) == Money::class }
 

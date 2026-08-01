@@ -19,12 +19,22 @@ import io.peekandpoke.ultra.codegen.model.TsTypeClaims
 import io.peekandpoke.ultra.codegen.model.TsTypeRef
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.slumber.SlumberConfig
+import io.peekandpoke.ultra.common.model.Redacted
 import java.io.File
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /** A type reaching a custom-coded value, so the datetime contributor is actually needed. */
 private data class HoldsInstant(val at: MpInstant)
+
+/**
+ * A type reaching a custom-coded value that declares NO wire shape.
+ *
+ * `Redacted<T>` is classified by the walker but slumbers to a placeholder String, so it is exactly
+ * what the codec-parity check still exists for. `MpInstant` no longer serves here: it carries
+ * `@Slumber.As`, so the walker resolves it from the declaration instead of failing.
+ */
+private data class HoldsRedacted(val secret: Redacted<String>)
 
 /** Contributes a root and nothing else. */
 private class RootContributor(
@@ -104,13 +114,13 @@ class TsSdkBuilderSpec : FreeSpec() {
             "an unclaimed custom-coded type fails before anything is emitted" {
                 val thrown = runCatching {
                     TsSdkBuilder(
-                        contributors = listOf(RootContributor("roots", typeOf<HoldsInstant>())),
+                        contributors = listOf(RootContributor("roots", typeOf<HoldsRedacted>())),
                         slumberConfig = SlumberConfig.default,
                     ).build()
                 }.exceptionOrNull()
 
                 withClue("validation must run before emit, so a failure leaves no partial output") {
-                    thrown!!.message!! shouldContain "MpInstantSlumberer"
+                    thrown!!.message!! shouldContain "Redacted"
                 }
             }
 
@@ -531,18 +541,24 @@ class TsSdkBuilderSpec : FreeSpec() {
                     .exceptionOrNull()!!.message!! shouldContain "supplied any root type"
             }
 
-            "the codec-parity check runs on the path that passes no config explicitly" {
-                // MpInstant goes through a custom codec, so an unclaimed one must fail. The point is
-                // WHICH entry point is used: `slumberConfig` used to default to null, so the module's
-                // headline check — the only thing standing between a custom codec and a schema that
-                // does not describe the wire — was off unless a caller opted in.
-                // Assert the CODEC name, not the type name. "MpInstant" alone also appears in an
-                // unresolved-type message, so it passes whether or not the parity check ran — verified
-                // by mutation, the looser assertion survived. Only this phase names the slumberer.
+            "forTesting() still VALIDATES — it is a config shortcut, not a check switch" {
+                // WHAT THIS PINS: `forTesting` supplies `SlumberConfig.default` and leaves validation
+                // ON. `slumberConfig` once defaulted to null, which silently disabled the module's
+                // headline check, and this guard exists so that cannot come back.
+                //
+                // WHAT IT NO LONGER PINS, and why: it used to drive the CODEC-PARITY phase via
+                // `MpInstant`. Since 2026-08-01 the Mp types carry `@Slumber.As`, so the walker
+                // resolves them from the declaration and they never reach that phase — and after
+                // annotating them, `SlumberConfig.default` appears to contain NO type that is both
+                // walker-classifiable and codec-reshaped. Every remaining custom-coded type there is
+                // either annotated or unresolvable (`java.time.*`, `Redacted`, `JsonElement`).
+                //
+                // So parity-phase coverage moved to `TsModelValidatorSpec`, which can prepend a module.
+                // This one keeps the entry point honest using an unresolvable type instead.
                 runCatching {
-                    TsSdkBuilder.forTesting(listOf(RootContributor("roots", typeOf<HoldsInstant>())))
+                    TsSdkBuilder.forTesting(listOf(RootContributor("roots", typeOf<HoldsRedacted>())))
                         .build()
-                }.exceptionOrNull()!!.message!! shouldContain "MpInstantSlumberer"
+                }.exceptionOrNull()!!.message!! shouldContain "no valid TypeScript mapping"
             }
         }
 
