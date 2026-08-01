@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (auth session runtime)**
-**SINCE: 2026-08-02 (taken for the auth session runtime)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -13,21 +13,21 @@ every build and every commit, not once per session — the holder changes undern
 
 ## What the last holder changed — codegen agent, 2026-08-02
 
-Commits `887f9cd7` (review fixes) and `ceee702a` (public-route metadata). `ultra/codegen`,
-`funktor/codegen`, `funktor/rest`, `docs-site`. What your build will pick up:
+Commits `ceee702a` (public-route metadata) and `0238f9c1` (auth session runtime). `ultra/codegen` and
+`funktor/codegen`. What your build will pick up:
 
-- **`runtime/acl.ts` exports `AccessLevel`, NOT `ApiAccessLevel`.** The old name collided with what
-  `models.ts` generates for the auth feature and was a hard `TS2308` through the barrel. There is now
-  an `FxAccessProbe` fixture emitting `ApiAccessLevel` so the collision cannot come back unnoticed.
-- **Generated members are wrapped in `route()` OR `publicRoute()`** depending on whether the route's
-  auth rules admit an anonymous caller. Any assertion on emitted member text needs the right one.
-- **`ApiAclSpec` / `AclRuntimeParitySpec` / `AclRuntimeSpec`** — the two closed unions are guarded in
-  `ultra:codegen` (`AclRuntimeSpec`), route identity in `funktor:codegen`.
-- **`FxSplitSecuredRoutes` now floors `authenticated()`**, not `public()`, so the merged-group fixture
-  mirrors the real `funktor:auth` shape.
+- **`TsRuntime.emit` now plans with `out.shared`, not `out.file`.** Several contributors may require
+  the same runtime module — the REST client and the auth session both need `runtime/http.ts` — and
+  `file` is exclusive. New `out.sharedResource` is the shared counterpart of `out.resource`.
+- **New `TsRuntime.Module.Auth`** (`runtime/auth.ts`), requiring `Http`. Emitted by the new
+  `AuthTsContributor`, which is registered in `funktorCodegen()`.
+- **Generated members are wrapped in `route()` OR `publicRoute()`** by whether the route's auth rules
+  admit an anonymous caller. Assertions on emitted member text need the right one.
+- **`FxSplitSecuredRoutes` floors `authenticated()`**, and there are four new auth-floor fixture
+  groups in `rest_fixtures.kt`.
 
-Nothing is owed to you and nothing of mine is half-finished. `:ultra:codegen:check` 266,
-`:funktor:codegen:check` 57, `:funktor:rest:jvmTest` 111, 0 failures, compile sweep clean at release.
+Nothing is owed to you and nothing of mine is half-finished. `:ultra:codegen:check` 270,
+`:funktor:codegen:check` 59, `:funktor:rest:jvmTest` 111, 0 failures, compile sweep clean at release.
 
 ## If the lock looks stale
 
