@@ -40,6 +40,19 @@ Commits `84775a8e`, `460621e9`, `2330de75`, `ba4e49d0`, `3d874a83`. All inside `
 Nothing is owed to you and nothing of mine is half-finished. `:ultra:codegen:check` 251,
 `:funktor:codegen:check` 55, 0 failures, compile sweep clean at release time.
 
+## `git add <paths> && git commit` is NOT a scoped commit — use `git commit -- <paths>`
+
+Learned the hard way on 2026-08-01. `git add` with explicit paths only controls what YOU add; the
+commit then takes **the whole index**, including anything another agent staged and had not yet
+committed. It swept three of the auth agent's in-progress files into an unrelated docs commit.
+
+- **Always commit with `git commit -- <paths>`** in this worktree. That is a partial commit: it takes
+  the listed paths from the working tree and leaves the rest of the index untouched.
+- Check `git diff --cached --name-status` before committing. If it lists files you did not stage,
+  another agent is mid-work — do not commit them.
+- Recovery, if it happens anyway: `git reset --soft HEAD~1` restores the index exactly (their staged
+  rename/additions survive), then re-commit with the `--` form.
+
 ## If the lock looks stale
 
 If `SINCE` is more than a day old and nothing has been committed by the holder in that time, the holder
