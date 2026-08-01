@@ -6,24 +6,12 @@ import io.peekandpoke.funktor.auth.funktorAuth
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
-import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
-import io.peekandpoke.funktor.core.kontainer
-import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.rest.ApiRoutes
-import io.peekandpoke.funktor.rest.acl.UserApiAccessProvider
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
-import kotlinx.coroutines.delay
-import kotlin.random.Random
-import kotlin.time.Duration.Companion.milliseconds
-
-/** Slows a request down by a random delay — evens the timing between hit/miss on public auth routes. */
-internal suspend fun letTheBotsWait() {
-    delay(Random.nextLong(250, 500).milliseconds)
-}
 
 /**
  * The PUBLIC auth endpoints — reachable by anonymous callers (sign-in, sign-up, account recovery,
@@ -31,7 +19,7 @@ internal suspend fun letTheBotsWait() {
  * so the whole group floors `public()`. The authenticated self-service endpoints live in the
  * separate [AuthUserApi] group (an append-only floor cannot mix `public()` with `authenticated()`).
  */
-class AuthApi : ApiRoutes("login", authFloor = { public() }) {
+class AuthLoginApi : ApiRoutes("login", authFloor = { public() }) {
 
     val getRealm = AuthApiClient.GetRealm.mount(RealmParam::class) {
         docs {
@@ -208,64 +196,3 @@ class AuthApi : ApiRoutes("login", authFloor = { public() }) {
         }
 }
 
-/**
- * The AUTHENTICATED self-service auth endpoints — any logged-in user managing their OWN session,
- * regardless of realm (the realm is inside the token). The whole group floors `authenticated()`;
- * per-route body checks (e.g. "userId matches the caller") stay in the handlers.
- */
-class AuthUserApi : ApiRoutes("login", authFloor = { authenticated() }) {
-
-    val setPassword = AuthApiClient.SetPassword.mount(RealmParam::class) {
-        docs {
-            name = "Set Password"
-        }.codeGen {
-            funcName = "setPassword"
-        }.handle { params, body ->
-            // Let the bots wait a bit
-            letTheBotsWait()
-
-            // Check if the current user is able to do the update
-            if (user.record.userId != body.userId) {
-                return@handle ApiResponse.forbidden()
-            }
-
-            try {
-                funktorAuth
-                    .setPassword(params.realm, body)
-                    .let { ApiResponse.ok(it) }
-            } catch (e: AuthError) {
-                ApiResponse.badRequest(AuthSetPasswordResponse.failed)
-                    .withInfo(e.message ?: "")
-            }
-        }
-    }
-
-    val refreshToken = AuthApiClient.RefreshToken.mount(RealmParam::class) {
-        docs {
-            name = "Refresh Token"
-        }.codeGen {
-            funcName = "refreshToken"
-        }.handle { params ->
-            try {
-                funktorAuth
-                    .refreshToken(params.realm, user.record.userId, user.record.type, user.permissions.org)
-                    .let { ApiResponse.ok(it) }
-            } catch (e: AuthError) {
-                ApiResponse.forbidden<AuthSignInResponse>()
-                    .withInfo(e.message ?: "")
-            }
-        }
-    }
-
-    val getMyApiAccess = AuthApiClient.GetMyApiAccess.mount {
-        docs {
-            name = "My API Access"
-        }.codeGen {
-            funcName = "getMyApiAccess"
-        }.handle {
-            val provider = call.kontainer.get(UserApiAccessProvider::class)
-
-            ApiResponse.ok(provider.describeForUser(user))
-        }
-    }
-}

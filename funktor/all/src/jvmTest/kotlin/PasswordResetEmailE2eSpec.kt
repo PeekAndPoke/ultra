@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.peekandpoke.funktor.auth.AuthFrontendRoutes
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
@@ -22,7 +22,6 @@ import io.peekandpoke.funktor.messaging.api.SentMessageModel
 import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.common.encodeUriComponent
-import io.peekandpoke.ultra.vault.value
 
 /**
  * Walks the password-reset flow the way a user does: ask for a reset, READ THE EMAIL, follow the link
@@ -66,7 +65,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
         beforeSpec {
             apiApp {
                 anonymous {
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -98,7 +97,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
 
                     //  When the user asks for a reset  //////////////////////////////////////////
 
-                    api.auth.recoverAccountInitPasswordReset(
+                    api.authLogin.recoverAccountInitPasswordReset(
                         realmParam,
                         body = AuthRecoverAccountRequest.InitPasswordReset(
                             provider = provider,
@@ -170,7 +169,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                     storedBody shouldContain "#anonymized"
                     storedBody shouldContain "Click the link below to recover your account"
 
-                    api.auth.recoverAccountValidatePasswordResetToken(
+                    api.authLogin.recoverAccountValidatePasswordResetToken(
                         realmParam,
                         body = AuthRecoverAccountRequest.ValidatePasswordResetToken(
                             provider = provider,
@@ -186,7 +185,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
 
                     //  And the token sets a new password  ///////////////////////////////////////
 
-                    api.auth.recoverAccountSetPasswordWithToken(
+                    api.authLogin.recoverAccountSetPasswordWithToken(
                         realmParam,
                         body = AuthRecoverAccountRequest.SetPasswordWithToken(
                             provider = provider,
@@ -208,7 +207,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                     // because completing a password reset proves the same mailbox and therefore also
                     // activates — see `EmailAndPasswordAuth.recoverAccountSetPasswordWithToken`. If
                     // that rule is ever dropped, this line goes red first.
-                    api.auth.signIn(
+                    api.authLogin.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(
                             provider = provider,
@@ -221,7 +220,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                         response.shouldNotBeNull()
                     }
 
-                    api.auth.signIn(
+                    api.authLogin.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(
                             provider = provider,
@@ -234,7 +233,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
 
                     //  And the token is single-use  /////////////////////////////////////////////
 
-                    api.auth.recoverAccountSetPasswordWithToken(
+                    api.authLogin.recoverAccountSetPasswordWithToken(
                         realmParam,
                         body = AuthRecoverAccountRequest.SetPasswordWithToken(
                             provider = provider,
@@ -253,7 +252,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
         "A reset for an unknown address must send NO email, while answering exactly as it does for a known one" {
             apiApp {
                 anonymous {
-                    api.auth.recoverAccountInitPasswordReset(
+                    api.authLogin.recoverAccountInitPasswordReset(
                         realmParam,
                         body = AuthRecoverAccountRequest.InitPasswordReset(
                             provider = provider,
@@ -280,7 +279,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                 anonymous {
                     emails.clear()
 
-                    api.auth.recoverAccountInitPasswordReset(
+                    api.authLogin.recoverAccountInitPasswordReset(
                         realmParam,
                         body = AuthRecoverAccountRequest.InitPasswordReset(
                             provider = provider,

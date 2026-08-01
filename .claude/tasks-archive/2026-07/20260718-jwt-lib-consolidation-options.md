@@ -181,7 +181,7 @@ removed, parse-before-MAC reorder, numericDate fail-open. Not test-observable (r
 - Optional: replace sendgrid-java's helper POJOs with kotlinx DTOs for `/v3/mail/send` to evict
   Jackson from `funktor:messaging` entirely. Small, but it re-specifies an external wire format —
   needs its own task and contract tests.
-- Google SSO still parses unauthenticated JSON with Gson via `google-api-client` (`AuthApi`
+- Google SSO still parses unauthenticated JSON with Gson via `google-api-client` (`AuthLoginApi`
   `public()` floor); verify-then-parse cannot apply there (RS256 needs `kid`). Maintainer decision
   still pending.
 

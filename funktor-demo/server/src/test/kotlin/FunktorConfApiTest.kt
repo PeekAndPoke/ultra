@@ -2,7 +2,7 @@ package io.peekandpoke.funktor.demo.server
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -151,7 +151,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
         }
 
         api.confAdmin.updateEvent { updateEvent ->
-            val signInRoute = authApi.auth.signIn
+            val signInRoute = authApi.authLogin.signIn
 
             "anonymous updateEvent is unauthorized (floor denies before the entity loads)" {
                 apiApp {
@@ -208,7 +208,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
         }
 
         api.confAdmin.deleteEvent { deleteEvent ->
-            val signInRoute = authApi.auth.signIn
+            val signInRoute = authApi.authLogin.signIn
 
             "anonymous deleteEvent is unauthorized" {
                 apiApp {

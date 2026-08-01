@@ -251,7 +251,61 @@ fixtures, compile sweep clean. **Build lock RELEASED.**
 | 4 `out.shared()` | `ba4e49d0` |
 | follow-on, part 1 | `3d874a83` — the walker reads `@Slumber.As` |
 
-### THE DECISION THAT STOPPED THE LOOP
+### ALL THREE OPEN QUESTIONS ARE DECIDED — 2026-08-01, by the maintainer
+
+**Outcome: no code changes from any of them.** Each was investigated, and in two cases the investigation reversed the
+recommendation the loop had arrived at. The reasoning is recorded because it is counter-intuitive in all three, and a
+future reader who re-derives it will probably get it wrong the same way the loop did.
+
+| Question                                             | Decision                                                           |
+|------------------------------------------------------|--------------------------------------------------------------------|
+| `@Slumber.Field` non-ctor props emitted **required** | **Leave as-is.** Known flaw, accepted. No build-time guard either. |
+| Scalar refinement (`.int()`, `Char` → `.length(1)`)  | **Leave every scalar bare.** No refinements.                       |
+| Collapse the `Mp*` TS types via `@Slumber.As`        | **Keep `datetime.ts`, `CLAIMED` and the parity spec.**             |
+
+**1 — `@Slumber.Field` non-ctor props.** Genuinely wrong for request bodies: `DataClassSlumberer`
+always writes them (`DataClassSlumberer.kt:203-206`) but `DataClassAwaker` only ever reads ctor parameters and ignores
+every other key (`DataClassAwaker.kt:21,75`), so a client is forced to send a value the server discards.
+`UserRecord.Anonymous` is the live example — `userId` is a non-ctor getter, so it emits required and reads as though the
+client picks the user id. Accepted as-is anyway.
+
+**2 — scalars. The criterion is "no narrower than the AWAKERS allow", and that rules out `.int()`.**
+The awakers are aggressive best-effort coercions (`ultra/slumber/.../builtin/primitive/*.kt`):
+`IntAwaker` accepts `1.9` (truncates to `1`) and the string `"42"`; `BooleanAwaker` accepts any non-zero number and
+`"true"`; `CharAwaker` takes any non-empty string and discards the rest. So
+`z.number().int()` would reject payloads the server accepts. Bare `z.number()` / `z.string()` stays. Note the schemas
+validate **responses only** — `request()` JSON-encodes the body unvalidated (`runtime/client.ts:156`) and `safeParse`s
+the response (`:177`).
+
+Also: a client-side version poll + reload is planned for server/client version skew. That argues for LOOSER schemas, not
+tighter — during a short incompatibility window the client should keep working, because the reload is already coming.
+
+**3 — the `Mp*` collapse. The premise the loop stopped on was FALSE.** "Collapsing loses the distinction between
+`MpInstant` and `MpLocalDate`" is wrong: all four timestamped types are
+`z.object(timestamped)` over the identical shape (`runtime/datetime.ts:20-40`) and TypeScript is structurally typed, so
+they are already mutually assignable. Verified by compiling `const a:
+MpInstant = localDate` under `--strict` — exit 0. The four names are documentation, not type safety.
+
+It was kept anyway, for a different reason: **the codec is ground truth and `@Slumber.As` is only a claim about it.**
+`MpDateTimeFieldParitySpec` already slumbers real values through the actual codec and enumerates datetime classes from
+the compiled artifact, so drift is guarded by something STRONGER than the annotation. Deriving from the annotation would
+be a downgrade, and the deletion would cost the only place the frontend is told `ts` is epoch-millis and `human` is
+advisory.
+
+`@Slumber.As` still earns its keep on custom-coded types that have no hand-written mirror and no parity spec. These six
+are the best-covered types in the generator — the worst candidates for it.
+
+### PENDING, once the build lock frees
+
+This doc is COMPLETE and should be archived to `.claude/tasks-archive/2026-07/`. Not done yet: the lock was re-taken by
+the slumber-as agent with uncommitted work in the tree, so no stage and no commit. Whoever archives it must also fix the
+inbound link in
+`.claude/tasks/20260729-ts-sdk-codegen.md`.
+
+**No docs task.** The TS SDK generator's public surface is still moving — auth integration and SSE auth are both open —
+and per `CLAUDE.md` docs are written against SETTLED code only.
+
+### THE DECISION THAT STOPPED THE LOOP (now answered above — kept for the reasoning)
 
 Part 2 of the follow-on is retiring `MpDateTimeTsContributor.CLAIMED` and most of
 `runtime/datetime.ts`. The walker can now do it — but **deriving the Mp types from their declaration

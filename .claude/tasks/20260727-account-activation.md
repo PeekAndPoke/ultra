@@ -119,7 +119,7 @@ cross-cutting infrastructure suppression (global suppression lists), which is a 
   mid-signup leaves an account that cannot be used rather than one that is silently activated.
 - `AuthRealm.activate` gates on `Capability.SignUp` — a provider that cannot sign users up cannot have
   issued an activation token.
-- `AuthApi` answers `ok(success = false)` for an unknown token and `badRequest` only for an unknown
+- `AuthLoginApi` answers `ok(success = false)` for an unknown token and `badRequest` only for an unknown
   realm/provider. The endpoint is anonymous, so a different answer for a token that exists would let
   an attacker probe for live tokens.
 - **`AuthRecordStorage.removeAllByOwner` had no test in either backend** and activation is its first

@@ -130,8 +130,8 @@ currently implicit. Known groups to sweep (complete during implementation with a
     framework, ~8 in demo). Framework: OrgsApi, IntrospectionApi, LoggingApi, 7× cluster APIs →
     `{ isSuperUser() }`. Demo showcase reads → `{ public() }`; OperatorApi →
     `{ isSuperUser(); forUserType(OperatorUser) }`.
-  - **4 mixed groups SPLIT by audience** (user decision 2026-07-22, "honor hard floor"): `AuthApi`
-    → `AuthApi` (`{ public() }`, sign-in/up/recover/select-org) + `AuthUserApi`
+  - **4 mixed groups SPLIT by audience** (user decision 2026-07-22, "honor hard floor"): `AuthLoginApi`
+    → `AuthLoginApi` (`{ public() }`, sign-in/up/recover/select-org) + `AuthUserApi`
     (`{ authenticated() }`, set-password/refresh/my-api-access) — both under `AuthApiFeature`;
     `MessagingShowcaseApi`/`ClusterShowcaseApi`/`FunktorConfApi` each split into a public reads
     group + a super-user `*AdminApi`/`*AdminShowcaseApi` writes group. `authenticated()` is the

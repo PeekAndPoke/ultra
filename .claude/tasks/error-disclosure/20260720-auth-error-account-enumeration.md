@@ -55,7 +55,7 @@ Route gating, read from `AuthApi.kt`:
 
 ### Call sites
 
-Reachability column: which of the nine `AuthApi` catch sites can surface it. "public" means at least
+Reachability column: which of the nine `AuthLoginApi` catch sites can surface it. "public" means at least
 one reaching route is `public()`.
 
 | Site | Message produced | Data in message | Reachable from |
@@ -319,7 +319,7 @@ not.
 - [ ] `AuthError` carries a closed `Code` set and implements `HasClientMessage`; the constructor
       forces every site to pick a code
 - [ ] All 14 construction sites in the §1 table are mapped per the §4 table
-- [ ] The nine `AuthApi` catch sites render `clientMessage`, never `message`
+- [ ] The nine `AuthLoginApi` catch sites render `clientMessage`, never `message`
 - [ ] No caller-supplied `realm` / `provider` string is echoed into any response body
 - [ ] Sign-in: unknown-user path performs a dummy verification with the **configured** hasher
       before throwing `invalidCredentials`
@@ -361,7 +361,7 @@ AuthError.Code.X`). 29 assertions across three specs.
 
 `AuthRealmSpec.kt` contains no `AuthError` assertions (grepped — no matches), so it needs no changes
 for the message rename. There is currently **no API-level auth spec at all**: `funktor/auth/src/jvmTest`
-holds nine files, none exercising `AuthApi` through HTTP (no `AppSpec`, `AppUnderTest`, `withInfo` or
+holds nine files, none exercising `AuthLoginApi` through HTTP (no `AppSpec`, `AppUnderTest`, `withInfo` or
 `MatrixTest2d` reference anywhere under that directory). The response-body assertions below are all
 new tests in a new spec, not edits to existing ones. That is the larger share of the test work.
 

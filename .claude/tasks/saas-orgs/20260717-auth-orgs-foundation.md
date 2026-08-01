@@ -237,7 +237,7 @@ Flow in `AuthRealm.signIn` (`AuthRealm.kt:191-204`), after `provider.signIn` ret
     from new `RealmTokenConfig.orgSelectionTokenLifetime` default 5 min, single-use — same pattern as
     `PasswordRecoveryToken`), return `OrgSelectionRequired`.
 
-New endpoint on `AuthApi`:
+New endpoint on `AuthLoginApi`:
 
 - `POST /auth/{realm}/select-org` — body `{ selectionToken, orgId }` → validates token (single-use,
   consume on success) + membership → `Success`.

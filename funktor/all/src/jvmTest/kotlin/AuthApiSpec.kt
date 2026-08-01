@@ -35,7 +35,7 @@ class AuthApiSpec : FunktorApiSpec() {
     private val signupEmail = "signup-${System.currentTimeMillis()}@test.com"
 
     init {
-        api.auth.getRealm { route ->
+        api.authLogin.getRealm { route ->
             "Getting an existing realm must return realm details" {
                 apiApp {
                     anonymous {
@@ -61,7 +61,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.signIn { route ->
+        api.authLogin.signIn { route ->
             "Sign in with non-existent realm must return forbidden" {
                 apiApp {
                     anonymous {
@@ -97,7 +97,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.signUp { route ->
+        api.authLogin.signUp { route ->
             "Sign up with non-existent realm must return bad request" {
                 apiApp {
                     anonymous {
@@ -142,7 +142,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.signIn { route ->
+        api.authLogin.signIn { route ->
             "Sign in before activation must be refused, even with the correct password" {
                 apiApp {
                     anonymous {
@@ -177,7 +177,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             .substringAfterLast("/activate/")
                             .decodeUriComponent()
 
-                        api.auth.activateAccount(
+                        api.authLogin.activateAccount(
                             existingRealm,
                             body = AuthActivateAccountRequest(provider = provider, token = token),
                         ) {
@@ -223,7 +223,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.activateAccount { route ->
+        api.authLogin.activateAccount { route ->
             "Activate account with invalid token must return ok with success=false" {
                 apiApp {
                     anonymous {
@@ -256,7 +256,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.recoverAccountInitPasswordReset { route ->
+        api.authLogin.recoverAccountInitPasswordReset { route ->
             "Recover account init with non-existent realm must return bad request" {
                 apiApp {
                     anonymous {
@@ -274,7 +274,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.recoverAccountValidatePasswordResetToken { route ->
+        api.authLogin.recoverAccountValidatePasswordResetToken { route ->
             "Validate reset token with non-existent realm must return bad request" {
                 apiApp {
                     anonymous {
@@ -292,7 +292,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.recoverAccountSetPasswordWithToken { route ->
+        api.authLogin.recoverAccountSetPasswordWithToken { route ->
             "Set password with token on non-existent realm must return bad request" {
                 apiApp {
                     anonymous {

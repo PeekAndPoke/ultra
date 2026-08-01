@@ -194,6 +194,6 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
 
 ## Out of scope here
 
-Google SSO's Gson parse of unauthenticated JSON (`google-api-client`, reachable via `AuthApi`'s
+Google SSO's Gson parse of unauthenticated JSON (`google-api-client`, reachable via `AuthLoginApi`'s
 `public()` floor). Verify-then-parse cannot apply — RS256 needs `kid` before key selection. Its own
 task; maintainer decision pending.
