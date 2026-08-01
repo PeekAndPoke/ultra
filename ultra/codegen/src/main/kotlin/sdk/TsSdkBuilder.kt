@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.codegen.model.TsUrlParamClaims
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
 import io.peekandpoke.ultra.codegen.ts.TsBarrelEmitter
+import io.peekandpoke.ultra.codegen.ts.TsMountEmitter
 import io.peekandpoke.ultra.codegen.ts.TsModelEmitter
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import kotlin.reflect.KType
@@ -41,6 +42,8 @@ class TsSdkEmitContext internal constructor(
     val model: TypeModel,
     /** Where to plan files, already scoped to the calling contributor. */
     val out: TsSdkOutput.Scope,
+    /** Where to declare entries the BUILDER renders into a shared aggregate, e.g. page routes. */
+    val registry: TsSdkRegistry.Scope,
 )
 
 /**
@@ -156,6 +159,10 @@ class TsSdkBuilder(
         // feeds it, so no single one owns it.
         output.scopeFor("ultra:codegen").file(path = "models.ts", content = TsModelEmitter(model).emit())
 
+        // Phase 4b — the aggregation registry. Collected during emit, rendered after, because an
+        // aggregate is by definition not any one contributor's to write.
+        val registry = TsSdkRegistry()
+
         contributors.forEach { contributor ->
             contributor.emit(
                 TsSdkEmitContext(
@@ -163,7 +170,32 @@ class TsSdkBuilder(
                     // The contributor's own loader, so `out.resource` finds resources shipped in the
                     // contributor's jar rather than only those on ultra:codegen's classpath.
                     out = output.scopeFor(contributor.name, contributor::class.java.classLoader),
+                    registry = registry.scopeFor(contributor.name),
                 )
+            )
+        }
+
+        val registeredRoutes = registry.allRoutes()
+
+        if (registeredRoutes.isNotEmpty()) {
+            // A registered component that nobody emitted would surface as a module-resolution error
+            // inside generated output — naming a file, not the contributor that asked for it. The
+            // registry cannot see the output plan and the output cannot see the registry, so this is
+            // the one place both are visible.
+            val emitted = output.entries().map { it.path }.toSet()
+
+            val missing = registeredRoutes.filter { it.component !in emitted }
+
+            check(missing.isEmpty()) {
+                "Registered route component(s) were never emitted: " +
+                        missing.joinToString { "'${it.component}' for '${it.path}' by '${it.declaredBy}'" } +
+                        ". A contributor must emit the component it registers, typically with " +
+                        "out.resource(...) in the same emit call."
+            }
+
+            output.scopeFor("ultra:codegen").file(
+                path = TsMountEmitter.PATH,
+                content = TsMountEmitter.emit(registeredRoutes, registry.navRoutes()),
             )
         }
 

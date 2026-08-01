@@ -262,11 +262,12 @@ function stateOf(token: string | null): AuthSessionState {
  * const config = sdkConfig('https://api.example.com', authTransport(fetchTransport(), session))
  * ```
  *
- * **Attaches to every request, including public ones.** The transport sees a built URL, not a route
- * pattern, so it cannot tell them apart — `RouteRef.isPublic` lives one layer up. That mirrors the
- * Kotlin client, and it is harmless for the routes in question: a `public()` rule grants regardless
- * of who is asking. If a stale token ever turns out to make a public endpoint fail, this is the
- * place that has to change, and it needs route information plumbed down to it.
+ * **Attaches to every request, including public ones — and that is safe.** The transport sees a built
+ * URL, not a route pattern, so it cannot tell them apart. It does not need to: funktor DEGRADES an
+ * unverifiable token to an anonymous caller rather than rejecting the request. `tryJwtCaller` returns
+ * null on a failed verify (expiry included), Ktor falls through to the terminal `anonymous` provider,
+ * and a `public()` rule grants anonymous. So a stale token on `signIn` behaves exactly as if none
+ * were sent. The Kotlin client always-attaches for the same reason.
  *
  * An existing `Authorization` header is never overwritten, so a caller can still do something
  * special for one request.

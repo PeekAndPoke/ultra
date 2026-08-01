@@ -28,6 +28,8 @@ import {
 // is only safe if no two emitted modules export the same name. A collision is a compile error
 // here rather than a silent hole in a consumer's build.
 import { FxDemoClient } from './generated/index.ts'
+import { mountAll, navItems, routes } from './generated/mount.ts'
+import type { SdkRoute } from './generated/mount.ts'
 import { FxSpeaker } from './generated/talk.ts'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -940,6 +942,91 @@ async function checkAuthSession(report: Report): Promise<void> {
     report(viaLocal.read() === null, 'auth: and clears')
 }
 
+/**
+ * The aggregation registry's rendered output.
+ *
+ * Executed, not just compiled. The interesting failure is a route table that type-checks and then
+ * fails to LOAD — a lazy `import()` naming a component nobody emitted resolves at compile time
+ * against a path string and blows up at run time, in the consuming app, on navigation.
+ */
+async function checkMount(report: Report): Promise<void> {
+    // 1. Sorted by path, so the file is stable across runs. `--check` compares content, and an
+    //    unstable order would report drift that is not real.
+    report(
+        equal(routes.map((r) => r.path), ['/insights', '/insights/details', '/login']),
+        'mount: routes are path-sorted and stable',
+        routes.map((r) => r.path).join(', '),
+    )
+
+    // 2. requiresAuth is carried per route — the router guard's whole input.
+    const login = routes.find((r) => r.path === '/login')
+    const insights = routes.find((r) => r.path === '/insights')
+
+    report(login?.meta.requiresAuth === false, 'mount: a public page is not gated')
+    report(insights?.meta.requiresAuth === true, 'mount: a protected page is')
+
+    // 3. THE check. Every component must resolve to the RIGHT module.
+    //
+    //    Asserting merely "not undefined" is too weak — it passes for `() => Promise.resolve(null)`,
+    //    i.e. for an emitter that stopped importing anything at all. Measured: that mutant survived
+    //    until this compared identities. The fixture stubs each export their own `name`.
+    const expectedNames: Record<string, string> = {
+        '/login': 'LoginPage',
+        '/insights': 'InsightsPage',
+        '/insights/details': 'InsightsDetails',
+    }
+
+    for (const route of routes) {
+        try {
+            const loaded = (await route.component()) as { name?: string } | null
+            const want = expectedNames[route.path]
+
+            report(
+                loaded?.name === want,
+                `mount: ${route.path} lazily loads ITS OWN component`,
+                `got ${String(loaded?.name)}, want ${String(want)}`,
+            )
+        } catch (e) {
+            report(false, `mount: ${route.path} lazily loads ITS OWN component`, (e as Error).message)
+        }
+    }
+
+    // 4. Nav is a SUBSET, ordered independently of the route table.
+    report(
+        equal(navItems.map((n) => n.label), ['Insights', 'Sign in']),
+        'mount: nav is in declared order, not path order',
+        navItems.map((n) => n.label).join(', '),
+    )
+    report(
+        navItems.every((n) => routes.some((r) => r.path === n.path)),
+        'mount: every nav entry points at a real route',
+    )
+    report(
+        !navItems.some((n) => n.path === '/insights/details'),
+        'mount: a route with no nav entry stays out of the menu',
+    )
+    report(navItems.find((n) => n.label === 'Insights')?.icon === 'gauge', 'mount: nav carries its icon')
+    report(navItems.find((n) => n.label === 'Sign in')?.icon === null, 'mount: and null when it has none')
+
+    // 5. mountAll over a stand-in target. A real vue-router `Router` satisfies MountTarget
+    //    structurally — that is what keeps this module, and this harness, free of Vue.
+    const added: SdkRoute[] = []
+    mountAll({ addRoute: (route) => added.push(route) })
+
+    report(added.length === routes.length, 'mount: mountAll adds every route')
+    report(
+        equal(added.map((r) => r.path), routes.map((r) => r.path)),
+        'mount: and preserves their order',
+    )
+
+    // 6. Selective mounting is possible, i.e. the bulk helper is not a funnel.
+    const some: SdkRoute[] = []
+    const target = { addRoute: (route: SdkRoute) => some.push(route) }
+    for (const route of routes.filter((r) => r.meta.requiresAuth)) target.addRoute(route)
+
+    report(some.length === 2, 'mount: routes can be filtered and mounted individually')
+}
+
 function checkSseParser(report: Report): void {
     const simple = new SseParser().push('data: hello\n\n')
 
@@ -1013,6 +1100,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['sse', checkSseParser],
         ['routeAndAcl', checkRouteAndAcl],
         ['authSession', checkAuthSession],
+        ['mount', checkMount],
     ]
 
     for (const [name, check] of groups) {

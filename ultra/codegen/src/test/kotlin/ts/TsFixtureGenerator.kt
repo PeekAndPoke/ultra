@@ -34,6 +34,7 @@ import io.peekandpoke.ultra.codegen.model.TsTypeDecl
 import io.peekandpoke.ultra.codegen.model.TypeId
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
+import io.peekandpoke.ultra.codegen.sdk.TsSdkRegistry
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpTimezone
@@ -405,7 +406,44 @@ object TsFixtureGenerator {
         // `verifyRuntime.ts` imports the client THROUGH this file, so `tsc` compiles the barrel. That
         // is the point: `export *` turns a cross-file name collision into a compile error, and this
         // is where it must surface rather than in a consumer's build.
-        val sdkFiles = listOf(spec.fileName, "models.ts") +
+        // `mount.ts` over a registry standing in for two contributors. Its components are STUBS
+        // written below: the emitted routes carry `() => import('./pages/...')`, so `tsc` resolves
+        // them for real and the node harness can actually await one. Without a component on disk the
+        // aggregate would type-check and then fail to load, which is the failure this catches.
+        val registry = TsSdkRegistry()
+
+        registry.scopeFor("fx:auth").route(
+            path = "/login",
+            component = "pages/LoginPage.ts",
+            requiresAuth = false,
+            nav = TsSdkRegistry.Nav(label = "Sign in", order = 100),
+        )
+
+        registry.scopeFor("fx:insights").route(
+            path = "/insights",
+            component = "pages/InsightsPage.ts",
+            requiresAuth = true,
+            nav = TsSdkRegistry.Nav(label = "Insights", icon = "gauge", order = 10),
+        )
+
+        // No nav entry — a route that exists but is in no menu.
+        registry.scopeFor("fx:insights").route(
+            path = "/insights/details",
+            component = "pages/InsightsDetails.ts",
+            requiresAuth = true,
+        )
+
+        File(targetDir, "pages").mkdirs()
+
+        listOf("LoginPage", "InsightsPage", "InsightsDetails").forEach { page ->
+            File(targetDir, "pages/$page.ts")
+                .writeText("export const name = '$page'\nexport default { name }\n")
+        }
+
+        File(targetDir, TsMountEmitter.PATH)
+            .writeText(TsMountEmitter.emit(registry.allRoutes(), registry.navRoutes()))
+
+        val sdkFiles = listOf(spec.fileName, "models.ts", TsMountEmitter.PATH) +
                 TsRuntime.Module.entries.map { it.path }
 
         File(targetDir, TsBarrelEmitter.PATH).writeText(TsBarrelEmitter.emit(sdkFiles))

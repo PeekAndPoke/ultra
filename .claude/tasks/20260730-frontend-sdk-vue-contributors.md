@@ -214,11 +214,20 @@ Needed for at least five:
 | `tsconfig.json` / vite alias fragment | path entries |
 | npm requirements manifest | `requiresNpm(name, range)` |
 
-- [ ] A phase-3.5 registry — the emit-phase analogue of `TsTypeClaims`. Contributors declare keyed
-      entries; the builder renders the aggregate. Keyed inserts, so contributor order stays
-      structurally irrelevant.
+- [x] **DONE 2026-08-02** — `TsSdkRegistry`, collected during emit and rendered after, because an
+      aggregate is by definition not any one contributor's to write. Keyed inserts; a duplicate path
+      is a hard error naming both contributors and both components. Routes sort by path and nav sorts
+      by `(order, path)`, so the emitted file is stable — `--check` compares content, and an unstable
+      order would report drift that is not real.
+      `TsMountEmitter` renders `mount.ts`: `routes`, `navItems`, `mountAll(target)`.
+      **`MountTarget` is structural**, so a `vue-router` `Router` satisfies it without the SDK — or
+      `ultra:codegen`'s verification toolchain — depending on Vue. Components are emitted as LAZY
+      `() => import('./pages/...')`, so an unvisited page stays out of the entry chunk.
+      The builder cross-checks that every registered component was actually emitted; it is the only
+      place the registry and the output plan are both visible.
 - [ ] Config is a registry target, **not** a plain file emit, precisely because it is
-      N-contributors-into-one-file.
+      N-contributors-into-one-file. Still open — `TsSdkRegistry` currently carries routes and nav
+      only; adding an aggregate is a data class plus a `Scope` method.
 
 ### 4. `out.vue(...)` — the "raw contributor" action
 

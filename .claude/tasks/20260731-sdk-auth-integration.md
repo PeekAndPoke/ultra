@@ -169,13 +169,27 @@ One fixture bug found and fixed en route: the test's `fakeJwt` used `btoa(json)`
 as one latin1 byte rather than the UTF-8 pair a real JWT carries. The UTF-8 check failed against a
 CORRECT decoder — a fixture bug wearing the costume of a code bug.
 
-### Known limitation, deliberately deferred
+### RESOLVED 2026-08-02 — attaching the token to public routes is harmless
 
-`authTransport` attaches the token to **every** request, public ones included. The transport sees a
-built URL, not a route pattern, so it cannot tell them apart — `RouteRef.isPublic` lives one layer up.
-This mirrors the Kotlin client, and a `public()` rule grants regardless of who is asking. If a stale
-token ever turns out to make a public endpoint fail, this is the place that changes, and it needs
-route information plumbed into the transport.
+`authTransport` attaches to **every** request, public ones included, because the transport sees a
+built URL rather than a route pattern. That was filed as a limitation; it is not one.
+
+**An outdated token degrades to ANONYMOUS, it does not 401.** Verified end to end:
+
+- `tryJwtCaller` returns `null` when verification fails — "signature, issuer, audience, or **expiry**"
+  (`funktor/rest/src/jvmMain/kotlin/auth/jwtCaller.kt`).
+- Ktor's default `FirstSuccessful` strategy then falls through to the next provider.
+- `anonymous(AUTH_ANON)` is registered last and listed last in `authenticate(AUTH_JWT, AUTH_ANON)`
+  (`funktor-demo/server/src/main/kotlin/api/ApiApp.kt:28-30,71`), and
+  `AnonymousAuthenticationProvider` "always succeeds with `Caller.AnonymousCaller`".
+
+So a stale token in `localStorage` makes `signIn` behave exactly as if none were sent: the caller is
+anonymous, and a `public()` rule grants anonymous. **No route information needs plumbing into the
+transport**, and the Kotlin client's always-attach behaviour is right for the same reason.
+
+The one thing this does NOT excuse: a protected route with a stale token returns whatever the rule
+chain decides for an anonymous caller — typically 401/403, not a token-expired signal. Refresh-before-
+expiry is what avoids that, and it is still open below.
 
 ### Next
 
