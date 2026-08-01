@@ -16,11 +16,11 @@ import io.peekandpoke.karango.aql.NE
 import io.peekandpoke.karango.aql.REMOVE
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.aql._type
-import io.peekandpoke.karango.aql.ts
 import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.karango.vault._id
+import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult

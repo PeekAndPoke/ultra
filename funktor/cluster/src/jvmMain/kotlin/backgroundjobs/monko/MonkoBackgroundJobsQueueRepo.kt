@@ -23,8 +23,8 @@ import io.peekandpoke.monko.lang.dsl.lte
 import io.peekandpoke.monko.lang.dsl.setTo
 import io.peekandpoke.monko.lang.dsl.toFieldPath
 import io.peekandpoke.monko.lang.dsl.unset
-import io.peekandpoke.monko.lang.ts
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Stored

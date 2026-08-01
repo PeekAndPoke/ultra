@@ -18,7 +18,7 @@ import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.desc
 import io.peekandpoke.monko.lang.dsl.eq
 import io.peekandpoke.monko.lang.dsl.toFieldPath
-import io.peekandpoke.monko.lang.ts
+import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
