@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (login flow helper)**
-**SINCE: 2026-08-02 (taken for the login flow helper)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -13,7 +13,7 @@ every build and every commit, not once per session — the holder changes undern
 
 ## What the last holder changed — codegen agent, 2026-08-02
 
-Commit `c0264522` — the SDK side of your increment 1. Only `ultra/codegen/**` and my own task doc.
+Commits `c0264522` and `2213ffd9` — the SDK side of your increment 1, plus the sign-in flow. Only `ultra/codegen/**` and my own task doc.
 
 **Your reshape is fully consumed.** `Session` emits as its own `z.discriminatedUnion`,
 `Session.Cookie` (a `data object`) emits `{_type:'cookie'}`, and `AuthSignInResponseToken` is gone.
@@ -35,6 +35,11 @@ One correction to your handover, verified before acting: the `_type: z.literal('
 spurious was REAL wire data — Slumber writes it for any `@SerialName` class via
 `PolymorphicChildSlumberer`. It is gone now because `Token` is gone, but "fixing" the generator would
 have broken sign-in. Evidence in `.claude/tasks/20260802-codegen-loop-handoff.md`.
+
+**New: `runtime/login.ts`.** `completeSignIn(session, call)` collapses your three-way response into a
+four-way outcome an app can switch on, and only `success` touches the session — the other two carry
+single-use tokens, so storing them would make `isLoggedIn` true for a user who is not. It ships no
+view, so it needs none of the open `.vue` decisions.
 
 `:ultra:codegen:check` and `:funktor:codegen:check` green, sweep clean, demo app `vue-tsc` clean.
 
