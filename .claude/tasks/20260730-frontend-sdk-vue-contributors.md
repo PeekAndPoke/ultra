@@ -273,6 +273,38 @@ same fast loop that motivates the whole exercise, so it has to be good.
       generated tree *is* the dev tree, one alias, one layout, live editing. Production and dev generate
       then differ only in copy-vs-link. Windows needs developer mode for symlinks.
 
+## DECIDED 2026-08-02 — `--out` is the APP ROOT; `--sdkDir` defaults to `src/funktorsdk`
+
+This resolves the blocker on `out.scaffold`. The objection was never the semantics, it was that the
+app root had to be INFERRED — and every inference was wrong somewhere (`--out`'s parent is `src/`,
+not the app root). Making the root a first-class argument removes the guess.
+
+```
+--out /abs/path/to/app          # the app root
+--sdkDir src/funktorsdk         # default; the generator owns this outright
+```
+
+The boundary rule restates cleanly, and stays checkable at a glance:
+
+> The generator owns `<out>/<sdkDir>` outright. Outside it, within `<out>`, it may CREATE a file that
+> does not exist, and never modify or delete one.
+
+**It is also SAFER than today.** `prepare()` currently wipes exactly what was typed, so `--out src`
+would empty a source tree once the marker was there. After the change the wipe target always ends in
+a generator-controlled segment, so a mistyped root still lands the destructive operation in a
+directory called `funktorsdk`.
+
+### The one thing that must not be got wrong
+
+**`writeTo` / `diffAgainst` / `prepare` and the `.funktor-sdk` marker ALL move to `<out>/<sdkDir>`.**
+They currently take `target = File(out)`, and `prepare` deletes its contents. Leave that pointed at
+`--out` after the meaning changes and **the generator deletes the app** — a two-character mistake with
+no warning, because `--out` merely stops being the thing it deletes.
+
+Pin it: generate into a temp app root holding a sentinel file at top level, assert the sentinel
+survives. And validate `--sdkDir` the way component paths already are — reject absolute, reject `..`,
+or the wipe walks out of the app.
+
 ## DECIDED 2026-08-02 — the CONSUMING APPS are the verification harness
 
 `ts-verify` pins TypeScript 7 and `vue-tsc` cannot run on it (TS 7 dropped `typescript/lib/tsc`), so a
