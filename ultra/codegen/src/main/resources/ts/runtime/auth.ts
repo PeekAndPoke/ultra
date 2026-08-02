@@ -7,9 +7,9 @@
  * `shallowRef` without this file knowing Vue exists.
  *
  * **Nothing here decodes a JWT.** The response states the permissions, the expiry and the user id
- * outright, so no client has to read a token — which is what makes the same code work when the token
- * is an httpOnly cookie the browser will not let JavaScript see. The Kotlin client dropped its own
- * decoder for the same reason.
+ * outright, so no client has to read a token. The Kotlin client deleted its own decoder for the same
+ * reason — a client that parses a credential it only needs to forward is reading a format it does not
+ * own, and it breaks the moment the server changes claims.
  *
  * HAND-WRITTEN AND CHECKED IN. It lives in `ultra:codegen` rather than beside the auth feature
  * because nothing in it is funktor-specific — a session, a storage strategy, a transport wrapper —
@@ -28,12 +28,13 @@ import type { HttpRequest, HttpResponse, HttpTransport } from './http.ts'
  * runtime must not depend on generated output, which only exists in an SDK that reached the auth
  * feature.
  *
- * Sealed on the server precisely so the token's EXISTENCE is tied to the transport: in cookie mode
- * there is no token in the response, and that must not type-check.
+ * **A one-member union on purpose.** Cookie mode was designed and dropped (2026-08-02: b2b2c
+ * frontends run on customer-controlled domains, a different *site*, which forces `SameSite=None` and
+ * loses the protection that motivated it). The server kept `Session` sealed so the discriminator
+ * stays on the wire, which makes a second transport an ADDITIVE change here rather than a reshape of
+ * every consumer.
  */
-export type SessionCarrier =
-    | { readonly _type: 'bearer'; readonly token: string }
-    | { readonly _type: 'cookie' }
+export type SessionCarrier = { readonly _type: 'bearer'; readonly token: string }
 
 /**
  * The part of a successful sign-in this module needs.
@@ -60,9 +61,10 @@ export interface SignedIn<P = unknown> {
 /**
  * Where the session is kept between page loads.
  *
- * A SESSION store, not a token store. In cookie mode there is no token to keep — the browser holds it
- * and JavaScript cannot read it — so anything shaped around a token string cannot express the state
- * that actually needs persisting.
+ * A SESSION store, not a token store — it persists the whole sign-in payload. Since nothing decodes
+ * the JWT any more, a token-shaped store would lose `permissions`, `expiresAt` and `userId` on every
+ * reload: the session would come back unable to say what the user may do and unable to schedule its
+ * own refresh, and would then die at expiry looking like a random logout.
  */
 export interface SessionStorage {
     read(): string | null
@@ -73,11 +75,15 @@ export interface SessionStorage {
 /**
  * `localStorage`, mirroring what `AuthState` does today.
  *
- * **A known, accepted weakness, not an oversight.** Any script on the origin can read this and replay
- * it — tracked as `.claude/tasks/20260719-token-storage-hardening.md`. It is the default ON PURPOSE:
- * the Kotlin and TypeScript clients deliberately share the same behaviour so the fix is designed once
- * and lands in both, rather than one client looking solved while the other is not. Storage is
- * injected precisely so that fix is a changed default rather than a rewrite.
+ * **A known, accepted weakness — and the settled design, not a placeholder.** Any script on the
+ * origin can read this and replay it. The httpOnly-cookie alternative was designed in full and
+ * dropped (2026-08-02): b2b2c frontends run on customer-controlled domains, which are a different
+ * *site*, so it would have forced `SameSite=None` and lost its own main protection exactly where it
+ * was wanted. Reasoning in `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+ *
+ * So the mitigations are the ones that actually apply to XSS — CSP and Trusted Types, a short token
+ * TTL, session revocation — rather than a different container. Storage stays injected because tests
+ * need [inMemorySession], not because a swap is pending.
  *
  * Degrades to in-memory when `localStorage` throws — Safari private mode and SSR both do — because a
  * login that cannot persist is far better than one that cannot happen.
@@ -130,7 +136,7 @@ export function localStorageSession(key: string = 'funktor.auth.session'): Sessi
     }
 }
 
-/** Keeps the session in a closure. Lost on reload — what tests use, and the eventual hardened default. */
+/** Keeps the session in a closure. Lost on reload — what tests use, and the fallback when storage throws. */
 export function inMemorySession(): SessionStorage {
     let value: string | null = null
 
@@ -150,7 +156,7 @@ export function inMemorySession(): SessionStorage {
 /** What a view needs to render. Immutable — a new object is published on every change. */
 export interface AuthSessionState<P = unknown> {
     readonly carrier: SessionCarrier | null
-    /** The bearer token, or `null` in cookie mode AND when logged out. Never assume it exists. */
+    /** The bearer token, or `null` when logged out. */
     readonly token: string | null
     readonly permissions: P | null
     /** Epoch milliseconds, or `null` when the session states no expiry. */
@@ -178,10 +184,7 @@ function empty<P>(): AuthSessionState<P> {
 /**
  * The current session, and the only thing that writes storage.
  *
- * Restores from storage on construction, so a reload keeps the user logged in. Cookie mode has
- * nothing to restore — the browser holds the credential and JS cannot see it — so an app in that mode
- * must re-establish state on boot by calling the refresh endpoint, which returns the same payload
- * [signedIn] takes.
+ * Restores from storage on construction, so a reload keeps the user logged in.
  */
 export class AuthSession<P = unknown> {
     private readonly storage: SessionStorage
@@ -214,15 +217,23 @@ export class AuthSession<P = unknown> {
     /**
      * Records a successful sign-in — or a refresh, which returns the same payload.
      *
-     * Takes the RESPONSE, not a token: in cookie mode there is no token, and everything worth keeping
-     * is stated by the server rather than dug out of a JWT.
+     * Takes the RESPONSE, not a token: everything worth keeping is stated by the server rather than
+     * dug out of a JWT, so narrowing this to a token string would discard `permissions`, `expiresAt`
+     * and `userId` at the door.
      */
     readonly signedIn = (payload: SignedIn<P>): void => {
         this.storage.write(JSON.stringify(payload))
         this.publish(stateOf<P>(payload))
     }
 
-    /** Drops the session locally. A bearer JWT stays valid until it expires; a cookie needs the server. */
+    /**
+     * Drops the session LOCALLY.
+     *
+     * The token itself stays valid server-side until it expires — there is no revocation endpoint
+     * today. So this ends the session on this device and nowhere else, and a copy taken beforehand
+     * still works. Shortening the TTL is the mitigation; revocation is tracked in
+     * `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+     */
     readonly signOut = (): void => {
         this.storage.clear()
         this.publish(empty<P>())
@@ -252,7 +263,7 @@ export class AuthSession<P = unknown> {
 function stateOf<P>(payload: SignedIn<P>): AuthSessionState<P> {
     return {
         carrier: payload.session,
-        token: payload.session._type === 'bearer' ? payload.session.token : null,
+        token: payload.session.token,
         permissions: payload.permissions ?? null,
         expiresAt: payload.expiresAt?.ts ?? null,
         userId: payload.userId ?? null,
@@ -280,7 +291,14 @@ function restore<P>(serialized: string | null): AuthSessionState<P> {
 
         const kind: unknown = (session as { _type?: unknown })._type
 
-        if (kind !== 'bearer' && kind !== 'cookie') return empty<P>()
+        if (kind !== 'bearer') return empty<P>()
+
+        // The token must be THERE, not merely declared. Storage is the one untrusted input on this
+        // path — a truncated write, or an older SDK's payload — and accepting a carrier without one
+        // would produce `isLoggedIn: true` with nothing to send, so every request would go out
+        // anonymous while the UI showed a signed-in user. That is the worst of both: it does not
+        // fail, it just quietly does not authenticate.
+        if (typeof (session as { token?: unknown }).token !== 'string') return empty<P>()
 
         return stateOf<P>(parsed as SignedIn<P>)
     } catch {
@@ -301,10 +319,8 @@ function restore<P>(serialized: string | null): AuthSessionState<P> {
  * const config = sdkConfig('https://api.example.com', authTransport(fetchTransport(), session))
  * ```
  *
- * Bearer mode attaches `Authorization`. **Cookie mode attaches nothing and permits the cookie to
- * travel instead** — the browser holds the credential, and setting `credentials` is the only thing
- * the client can do. An explicit value on the request always wins either way, so a caller can still
- * do something special for one call.
+ * Attaches `Authorization: Bearer <token>`. **An explicit header on the request always wins**, so a
+ * caller can still do something special for one call.
  *
  * Attaching on PUBLIC routes too is safe and deliberate: funktor degrades an unverifiable token to an
  * anonymous caller rather than rejecting it — `tryJwtCaller` returns null on a failed verify and Ktor
@@ -319,10 +335,6 @@ export function authTransport<P>(inner: HttpTransport, session: AuthSession<P>):
             const { carrier, token } = session.state()
 
             if (carrier === null) return inner.send(request)
-
-            if (carrier._type === 'cookie') {
-                return inner.send({ ...request, credentials: request.credentials ?? 'include' })
-            }
 
             if (token === null || 'Authorization' in request.headers) return inner.send(request)
 

@@ -152,8 +152,10 @@ async function checkTransport(report: Report): Promise<void> {
     report(response.body === '{"ok":true}', 'fetchTransport: reads the body of a non-2xx response')
     report(seen?.method === 'POST' && seen?.body === '{}', 'fetchTransport: passes method and body through')
 
-    // `credentials` — the one thing an auth WRAPPER cannot supply, because it only sees the
-    // HttpRequest and `fetch` reads credentials from its own init. Cookie sessions need it.
+    // `credentials` — general HTTP surface. It was added for the cookie transport that was later
+    // dropped, and kept because it is the only way to reach `RequestInit.credentials` at all: a
+    // caller talking to an API that sets any cookie has nowhere else to put it. The default must
+    // stay UNSET so nothing is sent that the caller did not ask for.
     report(
         !('credentials' in (seen ?? {})),
         'fetchTransport: omits credentials entirely when unset, leaving fetch its own default',
@@ -829,14 +831,6 @@ function bearer(token: string, expiresAtMs?: number): SignedIn<{ roles?: string[
     }
 }
 
-/** A cookie sign-in payload — note there is NO token, deliberately. */
-const cookiePayload: SignedIn<{ roles?: string[] }> = {
-    session: { _type: 'cookie' },
-    permissions: { roles: ['ops'] },
-    expiresAt: { ts: 1_800_000_000_000 },
-    userId: 'u-1',
-}
-
 /**
  * The auth session runtime.
  *
@@ -894,15 +888,30 @@ async function checkAuthSession(report: Report): Promise<void> {
     report(!session.state().isLoggedIn, 'auth: signOut logs out')
     report(store.read() === null, 'auth: signOut clears storage')
 
-    // COOKIE mode: no token, still logged in. A token-shaped API could not express this.
-    const cookieSession = new AuthSession<{ roles?: string[] }>(inMemorySession())
-    cookieSession.signedIn(cookiePayload)
+    const junkPayloads = [
+        '',
+        'not json',
+        '{}',
+        '{"session":null}',
+        '{"session":{"_type":"nope"}}',
+        // A carrier that DECLARES bearer but carries no token. The dangerous one: without the
+        // `typeof token === 'string'` guard this restores to `isLoggedIn: true` with nothing to
+        // send, so the UI shows a signed-in user while every request goes out anonymous.
+        '{"session":{"_type":"bearer"}}',
+        '{"session":{"_type":"bearer","token":null}}',
+        '{"session":{"_type":"bearer","token":42}}',
+        // Cookie mode is gone. A payload naming it must not rehydrate — this client can no longer
+        // speak that transport, whatever the blob claims.
+        //
+        // The token is there ON PURPOSE. Found by mutation: without it, widening the check back to
+        // `kind !== 'bearer' && kind !== 'cookie'` left every case green, because the tokenless blob
+        // was being rejected by the token guard below and the discriminator check was never the
+        // thing under test. This is the one input only the discriminator can refuse — and it is also
+        // the shape an attacker would hand-write, since no SDK ever emitted it.
+        '{"session":{"_type":"cookie","token":"stolen"}}',
+    ]
 
-    report(cookieSession.state().isLoggedIn, 'auth: a cookie session is logged in')
-    report(cookieSession.state().token === null, 'auth: and carries NO token')
-    report(cookieSession.state().carrier?._type === 'cookie', 'auth: the carrier says which mode')
-
-    for (const junk of ['', 'not json', '{}', '{"session":null}', '{"session":{"_type":"nope"}}']) {
+    for (const junk of junkPayloads) {
         const bad = inMemorySession()
         bad.write(junk)
         try {
@@ -935,14 +944,6 @@ async function checkAuthSession(report: Report): Promise<void> {
     live.signOut()
     await wrapped.send({ method: 'GET', url: 'http://x/a', headers: {} })
     report(sent?.headers['Authorization'] === undefined, 'auth: signOut takes effect immediately')
-
-    live.signedIn(cookiePayload)
-    await wrapped.send({ method: 'GET', url: 'http://x/a', headers: {} })
-    report(sent?.credentials === 'include', 'auth: COOKIE mode permits the cookie to travel')
-    report(
-        sent?.headers['Authorization'] === undefined,
-        'auth: and attaches no header — JS cannot read the cookie, so there is nothing to attach',
-    )
 
     live.signedIn(bearer('tok-9'))
     await wrapped.send({
@@ -1054,17 +1055,6 @@ async function checkLoginFlow(report: Report): Promise<void> {
     report(awaited._type === 'signed-in', 'login: completeSignIn awaits the call')
     report(s7.state().isLoggedIn, 'login: and applies it')
 
-    // 5. A COOKIE-mode success carries no token and still logs in.
-    const s8 = new AuthSession<{ roles?: string[] }>(inMemorySession())
-    applySignIn(s8, envelope(200, {
-        _type: 'success' as const,
-        session: { _type: 'cookie' as const },
-        permissions: { roles: ['ops'] },
-        expiresAt: { ts: 1_800_000_000_000 },
-        userId: 'u-1',
-    }))
-
-    report(s8.state().isLoggedIn && s8.state().token === null, 'login: a cookie-mode success logs in with no token')
 }
 
 /**
@@ -1529,8 +1519,8 @@ async function checkMount(report: Report): Promise<void> {
  * The stream path's own `credentials`.
  *
  * Separate from the transport checks because a stream does NOT go through `HttpTransport` — it calls
- * `fetch` directly — so nothing the transport learns applies to it. For a cookie session this is the
- * only way a stream authenticates at all: there is no header a caller could set instead.
+ * `fetch` directly — so nothing the transport learns applies to it, and a caller who needs cookies on
+ * a stream has no other way to ask for them.
  */
 async function checkSseCredentials(report: Report): Promise<void> {
     let seen: RequestInit | undefined

@@ -228,10 +228,9 @@ export interface SseOptions {
      * Whether the browser attaches cookies to the stream request.
      *
      * A stream does NOT go through `HttpTransport` — `sseStream` calls `fetch` itself — so an auth
-     * transport wrapper never sees it. That is a known gap for bearer auth
-     * (`.claude/tasks/20260731-sdk-sse-auth.md`) and a HARDER one for cookies, because there is no
-     * header a caller could set instead. This is the only way a cookie session can authenticate a
-     * stream.
+     * transport wrapper never sees it, and **a stream is therefore unauthenticated unless the caller
+     * passes the header itself**. That gap is tracked in `.claude/tasks/20260731-sdk-sse-auth.md`.
+     * This field is the separate, cookie-shaped case, kept because `fetch` offers no other way in.
      *
      * Omitted leaves `fetch`'s own default in force.
      */

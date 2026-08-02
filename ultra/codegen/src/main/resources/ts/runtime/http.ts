@@ -24,8 +24,10 @@ export interface HttpRequest {
      *
      * A FIELD rather than something an auth wrapper sets on the way past, because a wrapper cannot:
      * it only sees this object, and `fetch` reads `credentials` from its own init — so a decorator has
-     * nowhere to put it. Bearer auth needs no such field, which is why none existed until cookie auth
-     * arrived.
+     * nowhere to put it.
+     *
+     * **This SDK's own auth never sets it** — bearer tokens travel in a header. It exists because it
+     * is otherwise unreachable, for a caller talking to an API that does set a cookie.
      *
      * Omitted leaves `fetch`'s own default (`same-origin`) in force. `'include'` is what a
      * cross-origin cookie session needs, and it requires the server to answer with
