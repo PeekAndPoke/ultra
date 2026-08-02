@@ -105,12 +105,16 @@ are never touched.
 deletion leaves ghosts — a renamed client keeps compiling from its old file, so nothing fails. Blind
 deletion of `<out>/` is worse: it eats a user file that wandered in.
 
-- [ ] Write `<out>/.sdk-manifest.json` listing every path the run produced. The next run deletes
-      exactly the paths its predecessor wrote and no others. A file present on disk but absent from the
-      previous manifest is left alone and reported.
-- [ ] `--check` extends to stale files: output on disk that the current run no longer produces is a
-      difference, same as a changed file. `TsSdkOutput.diffAgainst` (`sdk/TsSdkOutput.kt:61`) currently
-      only walks planned entries, so it cannot see a ghost. Fix that when the manifest lands.
+- [ ] ~~Write `<out>/.sdk-manifest.json`~~ — **probably moot, needs the maintainer.** It was proposed
+      so a run could delete exactly its predecessor's paths and merely REPORT anything else. But the
+      later decision is that the generator owns `<out>/` outright, and `writeTo` wholesale-replaces
+      behind the `.funktor-sdk` marker whose own text says "nothing you add survives". The manifest
+      would only soften a contract that is already explicit and opted into. Do not build it in a loop.
+- [x] **DONE, and this entry was STALE — corrected 2026-08-02.** `--check` already reports a ghost:
+      `TsSdkOutput.diffAgainst` walks the directory and flags "on disk but not generated", tested at
+      `funktor/codegen/src/test/kotlin/TsSdkGenerateCliCommandSpec.kt:83`. It landed with `d760d9aa`,
+      after this line was written. The line survived long enough to be copied into a loop backlog and
+      nearly get the feature built twice.
 
 **Two write modes cover every "app-owned file" case without merging:**
 

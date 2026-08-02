@@ -85,24 +85,33 @@ auth helps.
 - [x] Mutation-tested 5/5: pass-through removed (both files), spread unconditionally so `undefined`
       leaks into the init (both files), and `stream()` no longer forwarding caller options.
 
-### 2. `--check` cannot see a stale file
+### 2. ~~`--check` cannot see a stale file~~ — ALREADY DONE. Item withdrawn 2026-08-02
 
-`TsSdkOutput.diffAgainst` walks PLANNED entries only, so output on disk that the current run no longer
-produces is invisible. A renamed client keeps compiling from its old file and nothing fails. This is
-the gap the vue-contributors plan already records.
+**I wrote this item from a stale line in the vue-contributors plan and did not check the code first.**
+`diffAgainst` already walks the directory and reports "on disk but not generated"; it landed in
+`d760d9aa` and is tested at `TsSdkGenerateCliCommandSpec.kt:83`. Both docs corrected.
 
-- [ ] `<out>/.sdk-manifest.json` listing every path a run produced.
-- [ ] Next run deletes exactly its predecessor's paths — never blind-deletes the directory, which
-      would eat a user file that wandered in. A file on disk but absent from the manifest is left
-      alone and REPORTED.
-- [ ] `--check` treats a ghost as a difference.
+The manifest half is **moot and must not be built in a loop**: it was proposed so a run could delete
+only its predecessor's paths, but the later decision is that the generator owns `<out>/` outright and
+`writeTo` wholesale-replaces behind the `.funktor-sdk` marker, whose text already says "nothing you
+add survives". Building it would soften a contract the maintainer deliberately made explicit.
 
-### 3. `out.scaffold` / `out.requires`
+**The lesson, which is the reusable part:** a backlog item is a CLAIM. Verify it against the code
+before implementing it, exactly as you would a review finding.
 
-The two write modes for app-owned files, from the same plan. `scaffold` writes only when absent and
-never overwrites; `requires` verifies app-side wiring and fails with the exact lines to paste.
-**`scaffold` output is not reproducible from the model, so it must be excluded from `--check` and
-from the manifest** — otherwise the second run reports the user's own edits as drift.
+### 3. `out.scaffold` / `out.requires` — BLOCKED on the maintainer, do not build in a loop
+
+`scaffold` seeds an APP-OWNED file (a starting `vite.config.ts`) — which means writing OUTSIDE
+`<out>/`. That is a change to the single most carefully-reasoned rule in the vue-contributors plan
+("a boundary, not a mechanism": *under `<out>/` own it outright; anywhere else never write*).
+
+The unresolved part is not the semantics, it is the base path: `--out` names the SDK directory, and
+nothing tells the generator where the app root is. Options are a new flag, the parent of `--out`, or
+keeping scaffolded files inside `<out>/` and exempting them from deletion — but the last contradicts
+the marker's own text ("nothing you add survives") and would be confusing rather than safe.
+
+`out.requires` (verify app-side wiring, fail with the lines to paste) has no such problem and could
+be built alone, but it is only useful once the `@sdk` alias work starts.
 
 ### 4. An insights contributor — the registry's SECOND consumer
 
@@ -158,6 +167,32 @@ mechanism rather than assuming it. Page routes are `requiresAuth = true`, DECLAR
 ## Iteration notes
 
 Append one short block per iteration. Newest at the top.
+
+### Iteration 3 — 2026-08-02, the long-outstanding REAL-API check finally done
+
+No new feature. Two backlog items removed by verification rather than implementation, and the
+end-to-end check that had been deferred three times.
+
+**Item 2 withdrawn — it was already done.** See the item. I had written it from a stale line in the
+vue-contributors plan without checking the code. Both docs corrected.
+
+**Item 3 blocked** — `scaffold` writes outside the owned directory, which is a boundary decision, not
+a mechanism. Left for the maintainer rather than guessed.
+
+**REAL-API REGENERATION — the thing "not yet verified" in three previous commit messages.** Local
+DBs were already up, so `./gradlew :funktor-demo:server:run --args="--cli sdk:ts:generate --out <abs>"`
+runs the whole generator against the live demo route graph. 20 files. Results:
+
+- `getRealm` and `signIn` emit as **`publicRoute`**; `setPassword`, `refreshToken` and
+  `getMyApiAccess` as **`route`** — in ONE merged `LoginApi`, importing both wrappers. The
+  publicness derivation works against the real `funktor:auth` rule chains, not just fixtures.
+- **The real SDK compiles through its own barrel** under `--strict --erasableSyntaxOnly`, WITH the
+  real auth models present. That is the exact scenario the `ApiAccessLevel`/`AccessLevel` collision
+  broke, verified against real output rather than a fixture for the first time.
+
+Reusable: the generate CLI needs only `docker start mongodb arangodb` and takes ~4s. It is cheap
+enough to run every iteration that touches the emitter, and it is the only check that sees the real
+route graph. Generate into a scratch dir, not into `funktor-demo/sdkgen-app`.
 
 ### Iteration 2 — 2026-08-02, item 1 DONE and verified
 
