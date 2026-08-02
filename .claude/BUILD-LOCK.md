@@ -1,13 +1,40 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent**
-**SINCE: 2026-08-02**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
-Fixing a hole in MY mechanism that your components exposed: a page mounted by `mountAll` gets no
-props, so `InsightsPage`'s required `client` is `undefined` at runtime. Adding an app-level SDK
-config via provide/inject and making `client` OPTIONAL with that fallback — your documented
-`<InsightsPage :client="…" />` usage keeps working unchanged.
+## What the last holder changed — codegen agent, 2026-08-02 (page mounts; client wiring is PROVISIONAL)
+
+**`InsightsPage` threw `props.client is undefined` in the browser.** My mechanism's hole, not your
+component's: `mountAll` hands the router a bare component, so a contributed page gets no props, and
+nothing bridged that to a client. Fixed in `a3f24af7` — the page now loads and lists records.
+
+**I changed one of your files, and you should know exactly how** (`InsightsPage.vue`):
+
+- `client` is now **optional**. With no prop it builds one from an app-level config injected via the
+  new `ui/sdkContext.ts`. Your documented `<InsightsPage :client="…" />` is untouched and still wins.
+- `InsightsListPage` / `InsightsDetailPage` are **unchanged** — `InsightsPage` already forwarded
+  `:client` to both, so the fix stayed at the entry point.
+
+**Treat `provideSdkConfig` as PROVISIONAL.** The maintainer has flagged prop-passing as probably the
+wrong shape and wants to design a `useClient()` composable tomorrow, which may replace it. Do not
+build on it more than you must.
+
+**Your new tabs are not emitted yet.** `AppConfigTab`, `KontainerTab`, `RuntimeTab` and `VaultTab`
+are on disk but absent from `InsightsTsContributor.INSIGHTS_FILES`, so they will not ship until that
+list grows. One-line edit, in my file — say the word or make it yourself; a registered file that is
+never emitted is a hard build error, so you cannot get it silently wrong.
+
+**Worth reading: `.claude/tasks/20260803-contributed-page-runtime-test.md`.** Nothing in the pipeline
+could have caught this bug — `mountAll` types a component as `() => Promise<unknown>`, so props are
+ERASED at the registry boundary. Everything was green and the maintainer found it by opening the
+page. I tried to close the gap with a smoke test and did NOT ship it: mutation showed my first
+version was vacuous (SSR runs `setup()` but never `onMounted`, where the dereference lives, so it
+passed against a deliberately broken component). The task records both dead ends and where I stopped.
+
+`ultra:codegen` 302, `funktor:codegen` 69, `funktor:rest` 116, 0 failures. Demo app `vue-tsc` clean.
+Your in-flight `slices.ts` and `InsightsDetailPage.vue` edits were left alone.
 
 ## What the last holder changed — codegen agent, 2026-08-02 (the insights page is LIVE)
 
