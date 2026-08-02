@@ -59,7 +59,10 @@ object TsRuntime {
         Login("runtime/login.ts", "ts/runtime/login.ts"),
 
         /** `startAutoRefresh` — refreshes a session before it expires. */
-        Refresh("runtime/refresh.ts", "ts/runtime/refresh.ts");
+        Refresh("runtime/refresh.ts", "ts/runtime/refresh.ts"),
+
+        /** `AclLoader` — fetches the access matrix and exposes absent/loading/ready. */
+        AclLoader("runtime/acl-loader.ts", "ts/runtime/acl-loader.ts");
 
         /**
          * How generated code imports it, relative to the SDK root.
@@ -96,6 +99,8 @@ object TsRuntime {
                 // auth.ts, ApiResponse from apiResponse.ts. Declaring only Login would still emit them
                 // through the closure, but `requires` states DIRECT imports and TsRuntimeSpec checks it.
                 Refresh -> setOf(Login, Auth, ApiResponse)
+                // acl-loader.ts imports ApiAcl/AccessMatrix, AuthSession and the envelope.
+                AclLoader -> setOf(Acl, Auth, ApiResponse)
                 Http, ApiResponse, DateTime, Route -> emptySet()
             }
     }

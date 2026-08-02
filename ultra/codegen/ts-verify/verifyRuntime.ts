@@ -20,6 +20,8 @@ import { AuthSession, authTransport, inMemorySession, localStorageSession } from
 import type { SignedIn } from './generated/runtime/auth.ts'
 import { applySignIn, completeSignIn } from './generated/runtime/login.ts'
 import { startAutoRefresh } from './generated/runtime/refresh.ts'
+import { AclLoader } from './generated/runtime/acl-loader.ts'
+import type { AclState } from './generated/runtime/acl-loader.ts'
 import type { SignInResult } from './generated/runtime/login.ts'
 // THROUGH THE BARREL on purpose — this is what makes `tsc` compile index.ts, and `export *`
 // is only safe if no two emitted modules export the same name. A collision is a compile error
@@ -1304,6 +1306,141 @@ async function checkAutoRefresh(report: Report): Promise<void> {
 }
 
 /**
+ * The ACL loader.
+ *
+ * The subtle part is not the happy path — it is that a failure with a previous matrix must KEEP it
+ * and stay logged in, while a failure with nothing must give up. Those two look identical until you
+ * write a test that has one and a test that has none.
+ */
+async function checkAclLoader(report: Report): Promise<void> {
+    const matrix = { entries: [{ method: 'GET', uri: '/x', level: 'Granted' as const }] }
+    const ok = { status: { value: 200, description: 'OK' }, data: matrix, messages: null }
+    const denied = { status: { value: 401, description: 'no' }, data: null, messages: null }
+    const broken = { status: { value: 500, description: 'boom' }, data: null, messages: null }
+
+    const loggedIn = () => {
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 't' } })
+        return s
+    }
+
+    /** Runs every scheduled retry immediately, so backoff costs no wall-clock. */
+    const nowTimer = (fn: () => void) => { fn(); return 1 }
+
+    // 1. No session — nothing to load, and no request is made.
+    {
+        let calls = 0
+        const l = new AclLoader(new AuthSession(inMemorySession()), () => { calls += 1; return Promise.resolve(ok) })
+        l.load()
+        report(l.state()._type === 'absent' && calls === 0, 'aclLoader: no session means no fetch')
+    }
+
+    // 2. Happy path, and the LOADING state is actually published — a view that skips it renders
+    //    controls as denied while the matrix is in flight.
+    {
+        const seen: AclState['_type'][] = []
+        const l = new AclLoader(loggedIn(), () => Promise.resolve(ok))
+        l.subscribe((s) => seen.push(s._type))
+        l.load()
+        await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
+
+        report(equal(seen, ['absent', 'loading', 'ready']), 'aclLoader: absent -> loading -> ready', seen.join(' '))
+        report(l.acl().canAccess({ method: 'GET', uri: '/x', isPublic: false }), 'aclLoader: the matrix is usable')
+    }
+
+    // 3. 401 gives up WITHOUT retrying — the session is gone, retrying only delays it.
+    {
+        let calls = 0
+        let reason: string | null = null
+        const l = new AclLoader(loggedIn(), () => { calls += 1; return Promise.resolve(denied) }, {
+            setTimer: nowTimer, onUnavailable: (r) => { reason = r },
+        })
+        l.load()
+        await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
+
+        report(calls === 1, 'aclLoader: a 401 is not retried')
+        report(reason === 'rejected', 'aclLoader: and reports rejected')
+        report(l.state()._type === 'absent', 'aclLoader: leaving nothing')
+    }
+
+    // 4. A transport failure IS retried, then gives up with nothing.
+    {
+        let calls = 0
+        let reason: string | null = null
+        const l = new AclLoader(loggedIn(), () => { calls += 1; return Promise.reject(new Error('offline')) }, {
+            attempts: 3, setTimer: nowTimer, onUnavailable: (r) => { reason = r },
+        })
+        l.load()
+        for (let i = 0; i < 20; i++) await Promise.resolve()
+
+        report(calls === 3, 'aclLoader: a transport failure is retried to the attempt limit', String(calls))
+        report(reason === 'exhausted', 'aclLoader: then gives up as exhausted')
+    }
+
+    // 5. THE rule: a failure with a PREVIOUS matrix keeps it and never reports unavailable.
+    {
+        let fail = false
+        let reason: string | null = null
+        const l = new AclLoader(loggedIn(), () => (fail ? Promise.resolve(broken) : Promise.resolve(ok)), {
+            attempts: 2, setTimer: nowTimer, onUnavailable: (r) => { reason = r },
+        })
+
+        l.load()
+        for (let i = 0; i < 10; i++) await Promise.resolve()
+        report(l.state()._type === 'ready', 'aclLoader: first load succeeds')
+
+        fail = true
+        l.load()
+        for (let i = 0; i < 20; i++) await Promise.resolve()
+
+        report(l.state()._type === 'ready', 'aclLoader: a failed RE-load keeps the stale matrix')
+        report(reason === null, 'aclLoader: and never reports unavailable — nothing to sign out for')
+        report(
+            l.acl().canAccess({ method: 'GET', uri: '/x', isPublic: false }),
+            'aclLoader: the stale matrix still answers',
+        )
+    }
+
+    // 6. A 401 on a RE-load also keeps the stale matrix. Same rule; the session's health is the
+    //    next real API call's business, not the ACL fetch's.
+    {
+        let fail = false
+        let reason: string | null = null
+        const l = new AclLoader(loggedIn(), () => (fail ? Promise.resolve(denied) : Promise.resolve(ok)), {
+            setTimer: nowTimer, onUnavailable: (r) => { reason = r },
+        })
+        l.load()
+        for (let i = 0; i < 10; i++) await Promise.resolve()
+        fail = true
+        l.load()
+        for (let i = 0; i < 10; i++) await Promise.resolve()
+
+        report(l.state()._type === 'ready', 'aclLoader: a 401 on re-load keeps the stale matrix')
+        report(reason === null, 'aclLoader: and does not report unavailable')
+    }
+
+    // 7. Concurrent loads do not double-fetch.
+    {
+        let calls = 0
+        const l = new AclLoader(loggedIn(), () => { calls += 1; return Promise.resolve(ok) }, { setTimer: nowTimer })
+        l.load()
+        l.load()
+        await Promise.resolve(); await Promise.resolve()
+        report(calls === 1, 'aclLoader: a second load while in flight is ignored')
+    }
+
+    // 8. clear() drops it — a matrix outliving its session is a stale grant.
+    {
+        const l = new AclLoader(loggedIn(), () => Promise.resolve(ok), { setTimer: nowTimer })
+        l.load()
+        for (let i = 0; i < 10; i++) await Promise.resolve()
+        l.clear()
+        report(l.state()._type === 'absent', 'aclLoader: clear drops the matrix')
+        report(l.acl().isDenied({ method: 'GET', uri: '/x', isPublic: false }), 'aclLoader: and denies afterwards')
+    }
+}
+
+/**
  * The aggregation registry's rendered output.
  *
  * Executed, not just compiled. The interesting failure is a route table that type-checks and then
@@ -1505,6 +1642,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['mount', checkMount],
         ['loginFlow', checkLoginFlow],
         ['autoRefresh', checkAutoRefresh],
+        ['aclLoader', checkAclLoader],
     ]
 
     for (const [name, check] of groups) {
