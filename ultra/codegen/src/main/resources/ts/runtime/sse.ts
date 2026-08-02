@@ -23,7 +23,7 @@
  * applies.
  */
 import { type SdkConfig } from './client.ts'
-import { type UrlParam, buildUrl } from './http.ts'
+import { type RequestCredentials, type UrlParam, buildUrl } from './http.ts'
 
 /** One dispatched event. */
 export interface SseEvent {
@@ -224,6 +224,18 @@ export interface SseOptions {
     fetchImpl?: typeof fetch
     /** Attach the raw body to a thrown [SseError]. Off by default; see `SdkConfig.debug`. */
     debug?: boolean
+    /**
+     * Whether the browser attaches cookies to the stream request.
+     *
+     * A stream does NOT go through `HttpTransport` — `sseStream` calls `fetch` itself — so an auth
+     * transport wrapper never sees it. That is a known gap for bearer auth
+     * (`.claude/tasks/20260731-sdk-sse-auth.md`) and a HARDER one for cookies, because there is no
+     * header a caller could set instead. This is the only way a cookie session can authenticate a
+     * stream.
+     *
+     * Omitted leaves `fetch`'s own default in force.
+     */
+    credentials?: RequestCredentials
 }
 
 /**
@@ -249,6 +261,9 @@ export async function* sseStream(url: string, options: SseOptions = {}): AsyncGe
             ...options.headers,
         },
         signal: options.signal,
+        // Only when SET — see the note in `fetchTransport`; an explicit `undefined` is not the same
+        // as leaving the key out.
+        ...(options.credentials !== undefined ? { credentials: options.credentials } : {}),
     })
 
     if (!response.ok || response.body === null) {

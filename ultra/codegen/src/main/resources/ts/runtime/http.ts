@@ -9,6 +9,9 @@
  * transport is a one-liner.
  */
 
+/** How a request treats credentials — cookies and TLS client certificates. Mirrors `RequestInit`. */
+export type RequestCredentials = 'omit' | 'same-origin' | 'include'
+
 /** A request about to be sent. */
 export interface HttpRequest {
     method: string
@@ -16,6 +19,20 @@ export interface HttpRequest {
     headers: Record<string, string>
     body?: string
     signal?: AbortSignal
+    /**
+     * Whether the browser attaches cookies, and whether it accepts `Set-Cookie` back.
+     *
+     * A FIELD rather than something an auth wrapper sets on the way past, because a wrapper cannot:
+     * it only sees this object, and `fetch` reads `credentials` from its own init — so a decorator has
+     * nowhere to put it. Bearer auth needs no such field, which is why none existed until cookie auth
+     * arrived.
+     *
+     * Omitted leaves `fetch`'s own default (`same-origin`) in force. `'include'` is what a
+     * cross-origin cookie session needs, and it requires the server to answer with
+     * `Access-Control-Allow-Credentials` — a wildcard `Allow-Origin` is refused by the browser in that
+     * mode.
+     */
+    credentials?: RequestCredentials
 }
 
 /**
@@ -67,6 +84,10 @@ export function fetchTransport(fetchImpl: typeof fetch = globalThis.fetch): Http
                 headers: request.headers,
                 body: request.body,
                 signal: request.signal,
+                // Passed through only when SET, so omitting it leaves fetch's own default rather than
+                // pinning one here. Spelling `credentials: undefined` explicitly is not the same as
+                // leaving the key out for every RequestInit consumer.
+                ...(request.credentials !== undefined ? { credentials: request.credentials } : {}),
             })
 
             return {

@@ -10,10 +10,10 @@
  * the value here is proving the runtime's declared types are usable from generated code.
  */
 import { apiResponse, isSuccess } from './generated/runtime/apiResponse.ts'
-import { ApiError, ApiProtocolError, request, unwrap } from './generated/runtime/client.ts'
+import { ApiError, ApiProtocolError, request, sdkConfig, unwrap } from './generated/runtime/client.ts'
 import { buildUrl, fetchTransport } from './generated/runtime/http.ts'
 import type { HttpRequest, HttpTransport } from './generated/runtime/http.ts'
-import { SseParser } from './generated/runtime/sse.ts'
+import { SseParser, sseStream, stream } from './generated/runtime/sse.ts'
 import { ApiAcl } from './generated/runtime/acl.ts'
 import { route } from './generated/runtime/route.ts'
 import {
@@ -152,6 +152,20 @@ async function checkTransport(report: Report): Promise<void> {
     report(response.status === 404, 'fetchTransport: returns non-2xx instead of throwing')
     report(response.body === '{"ok":true}', 'fetchTransport: reads the body of a non-2xx response')
     report(seen?.method === 'POST' && seen?.body === '{}', 'fetchTransport: passes method and body through')
+
+    // `credentials` — the one thing an auth WRAPPER cannot supply, because it only sees the
+    // HttpRequest and `fetch` reads credentials from its own init. Cookie sessions need it.
+    report(
+        !('credentials' in (seen ?? {})),
+        'fetchTransport: omits credentials entirely when unset, leaving fetch its own default',
+        String(seen !== undefined && 'credentials' in seen),
+    )
+
+    await fetchTransport(fake).send({ ...request, credentials: 'include' })
+    report(seen?.credentials === 'include', "fetchTransport: passes credentials through when set")
+
+    await fetchTransport(fake).send({ ...request, credentials: 'omit' })
+    report(seen?.credentials === 'omit', 'fetchTransport: and passes the other values too')
 }
 
 /**
@@ -1027,6 +1041,46 @@ async function checkMount(report: Report): Promise<void> {
     report(some.length === 2, 'mount: routes can be filtered and mounted individually')
 }
 
+/**
+ * The stream path's own `credentials`.
+ *
+ * Separate from the transport checks because a stream does NOT go through `HttpTransport` — it calls
+ * `fetch` directly — so nothing the transport learns applies to it. For a cookie session this is the
+ * only way a stream authenticates at all: there is no header a caller could set instead.
+ */
+async function checkSseCredentials(report: Report): Promise<void> {
+    let seen: RequestInit | undefined
+
+    const fake: typeof fetch = (_url, init) => {
+        seen = init
+        return Promise.resolve(
+            new Response('data: hi\n\n', {
+                status: 200,
+                headers: { 'Content-Type': 'text/event-stream' },
+            }),
+        )
+    }
+
+    const drain = async (options: Record<string, unknown>) => {
+        for await (const _ of sseStream('http://x/stream', { fetchImpl: fake, ...options })) break
+    }
+
+    await drain({})
+    report(
+        !('credentials' in (seen ?? {})),
+        'sse: omits credentials entirely when unset',
+        String(seen !== undefined && 'credentials' in seen),
+    )
+
+    await drain({ credentials: 'include' })
+    report(seen?.credentials === 'include', 'sse: passes credentials through when set')
+
+    // Through `stream(config, ...)`, which is what a generated member calls.
+    const config = sdkConfig('http://x', fetchTransport(fake))
+    for await (const _e of stream(config, '/s', {}, { fetchImpl: fake, credentials: 'include' })) break
+    report(seen?.credentials === 'include', 'sse: and survives the generated `stream()` wrapper')
+}
+
 function checkSseParser(report: Report): void {
     const simple = new SseParser().push('data: hello\n\n')
 
@@ -1098,6 +1152,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['request', checkRequest],
         ['generatedClient', checkGeneratedClient],
         ['sse', checkSseParser],
+        ['sseCredentials', checkSseCredentials],
         ['routeAndAcl', checkRouteAndAcl],
         ['authSession', checkAuthSession],
         ['mount', checkMount],
