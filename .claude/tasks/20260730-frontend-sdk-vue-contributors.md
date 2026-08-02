@@ -432,7 +432,7 @@ The gap is the session state machine, i.e. the TypeScript counterpart of `AuthSt
 
 **One finding that changes the design: do NOT port `AuthState`'s persistence.** It writes the whole
 session — JWT included — to `localStorage`, which is a filed, security-critical gap
-(`.claude/tasks/20260719-token-storage-hardening.md`): any JS on the origin can exfiltrate the token
+(`.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`): any JS on the origin can exfiltrate the token
 and replay it off-machine. A faithful port would re-create a known defect in new code. Storage must be
 an injected strategy defaulting to in-memory.
 
@@ -810,15 +810,42 @@ the rewrite has a deletion payoff.
 - [ ] Mutation-test the gate itself — an always-green gate is worthless
 - [ ] Full test command(s) run + green: `...`
 
-## Review record (filled by /feature-review)
+## Review record — /feature-review, 2026-08-02 (registry, mountAll and the CLI only)
+
+The plan as a whole is still open; this records the gate on the parts that have LANDED — the
+aggregation registry, `mountAll`, and the `--out`/`--sdkDir` CLI change. Reviewed inside the batch
+gate in `.claude/tasks/20260731-sdk-auth-integration.md` (base `887f9cd7` → `fb92a54c`). Fixes in
+`eb609f09`.
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | FAIL -> fixed | 1 MEDIUM, 2 LOW |
+| 2. Domain expert | FAIL -> fixed | 1 MEDIUM |
+| 3. Security | FAIL -> fixed | 1 LOW (+1 LOW deferred) |
 
-Fixes applied: ...
+**The MEDIUM is the one worth remembering: the `--sdkDir` guard checked the SPELLING, not where the
+spelling LANDS.** `""`, `"."` and `"./"` are none of them absolute and none of them contain `..`, and
+all three resolve to the app root — the JDK short-circuits an empty child in `File(parent, child)`.
+So `--sdkDir "$UNSET_VAR"` in a shell script pointed the wipe at the whole application, and the only
+thing left standing was the `.funktor-sdk` marker, which is a backstop rather than the structural
+guarantee the `require` claimed to be. Now compared canonically, with the three spellings pinned.
+
+Two reviewers found it independently; the existing spec covered `/abs/sdk`, `../escape` and
+`src/../../escape`, i.e. every case someone had thought of and none that resolve by collapsing.
+
+Also fixed: an unresolved `[MOUNT_TARGET]` KDoc link in `TsMountEmitter`, and a byte-identical copy
+of `readResource` left behind when `sharedResource` was added.
+
+**Deferred, LOW:** Kotlin's `deleteRecursively` walks via `listFiles()` with no symlink check, so a
+symlink inside the owned SDK directory has its TARGET's contents deleted. Not adversarial — a
+developer symlinking shared assets into the SDK dir loses them. Recorded in
+`.claude/tasks/20260802-redteam-sdk-auth.md` (section F).
+
+**Clean, and recorded so it is not re-probed:** `TsSdkOutput.validatePath` and `TsSdkRegistry.add`
+both reject absolute and `..`-bearing contributor paths; `prepare()` refuses a non-empty directory
+without the marker; the sentinel test proving the app root survives regeneration is real;
+`out.shared`/`sharedResource` dedupe only on identical content and still fail loudly on a conflict;
+`checkMount` compares loaded component IDENTITY rather than mere non-undefined.
 
 ## Follow-ups
 

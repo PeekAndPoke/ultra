@@ -22,13 +22,28 @@ mutation-tested and verified against REAL generated output rather than fixtures:
 
 | | |
 |---|---|
-| `credentials` on `HttpRequest` + SSE | `c7faa088` — unblocks their cookie transport |
-| session, storage, both transport modes | `c0264522` |
+| `credentials` on `HttpRequest` + SSE | `c7faa088` — kept as general HTTP surface |
+| session, storage, transport | `c0264522`, cookie mode stripped in `fb92a54c` |
 | the three-way sign-in flow | `2213ffd9` |
 | refresh-before-expiry | `f8e8eac8` |
+| `AclLoader` | `bc92893e` |
 | public-route metadata, `ApiAcl`, `mount.ts` | earlier the same night |
 
 An app can write a login form against this today. **The only thing missing is markup.**
+
+### The gate ran on 2026-08-02 and it was worth it — `eb609f09`
+
+Three HIGH defects, **all the same shape: a request outliving the session that issued it.** A
+refresh landing after `signOut()` resurrected the session and re-persisted a fresh full-TTL token
+(and, with a second user signed in meanwhile, put user A's token into user B's browser);
+`AclLoader.clear()` left `inFlight` true so the next user's load was dropped while A's matrix
+published as B's; an expired session restored as logged in and could never self-heal. Fixed with
+generation counters on `AuthSession` and `AclLoader`.
+
+**The lesson for the next loop:** every one of these lived in an `await` boundary, and none of the
+existing tests crossed one — they all drained the promise before asserting. `isLoggedIn` is not an
+identity; it is true again for the NEXT user. Full record in
+`.claude/tasks/20260731-sdk-auth-integration.md`.
 
 ### Nothing unblocked remains. What is left, and who owns it:
 
@@ -63,7 +78,7 @@ notes): `20260731-auth-module-for-sdk.md`, `20260731-sdk-auth-integration.md`.
 
 They have committed to touching **no** `ultra/codegen/**` or `funktor/codegen/**`.
 
-## What is landing from them — `.claude/tasks/20260719-token-storage-hardening.md`
+## What is landing from them — `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`
 
 Increment 1, bearer-only, nothing changes at runtime:
 
@@ -78,7 +93,7 @@ data class Success(
 ```
 
 `Token`, `permissionsNs` and `userNs` are deleted. **There is no increment 2 — the httpOnly cookie
-was designed and DROPPED** (2026-08-02); see `.claude/tasks/20260719-token-storage-hardening.md`.
+was designed and DROPPED** (2026-08-02); see `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
 
 ### VERIFIED, and it contradicts their handover — do NOT act on the other reading
 

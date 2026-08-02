@@ -52,7 +52,7 @@ summary, not a substitute.
 **Use `localStorage`, the same as `AuthState` does today.** This is a deliberate, eyes-open choice,
 not an oversight, and the reasoning is worth keeping:
 
-- The gap is real and filed — `.claude/tasks/20260719-token-storage-hardening.md`. Any script on the
+- The gap is real and filed — `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`. Any script on the
   origin can read the JWT and replay it off-machine.
 - But **two clients diverging makes the eventual fix harder, not safer.** A TypeScript SDK that is
   in-memory while Kotlin stays on `localStorage` gives a false sense of having solved something,
@@ -72,7 +72,7 @@ When the hardening task lands, it changes the default in two places and nothing 
 
 b2b2c frontends run on customer-controlled custom domains, which are a different *site*: the cookie would
 have needed `SameSite=None`, losing the strongest protection exactly where it was wanted. Reasoning in
-`.claude/tasks/20260719-token-storage-hardening.md`.
+`.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
 
 So `localStorage` + bearer is the design, not a placeholder. Keep storage injected — it is now the only
 storage decision there is. The honest mitigations are CSP + Trusted Types, a shorter token TTL, and
@@ -144,19 +144,60 @@ the current one. Realm ergonomics and the SSE mechanism want deciding at the sam
 
 ## Test evidence
 
-- [ ] Unit/behaviour tests
-- [ ] ts-verify checks executing the session lifecycle
-- [ ] Full test command(s) run + green: `...`
+- [x] ts-verify checks EXECUTING the session lifecycle (`ultra/codegen/ts-verify/verifyRuntime.ts`) —
+      real `tsc` + node, not fixtures
+- [x] Compile-time parity between the generated types and the hand-written structural contracts
+      (`funktor-demo/sdkgen-app/src/sdkContract.ts`), mutation-tested 4/4
+- [x] `:ultra:codegen:check :funktor:codegen:test :funktor:rest:jvmTest` — 292 / 69 / 116, 0 failures
+- [x] Compile sweep clean; demo app regenerated and `vue-tsc` clean
 
-## Review record (filled by /feature-review)
+## Review record — /feature-review, 2026-08-02
+
+Base `887f9cd7` (the previous gate) → `fb92a54c`. Scope: `ultra/codegen`, `funktor/codegen`,
+`funktor-demo/sdkgen-app`, plus `6c5cba4e`. ~2800 lines.
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | FAIL -> fixed | 2 HIGH, 1 MEDIUM, 4 LOW |
+| 2. Domain expert | FAIL -> fixed | 3 HIGH, 3 MEDIUM, 3 LOW (2 design, deferred) |
+| 3. Security | FAIL -> fixed | 1 HIGH, 2 MEDIUM, 3 LOW |
 
-**Red-team follow-up** (required — auth): `.claude/tasks/YYYYMMDD-redteam-sdk-auth.md`
+Fixes in `eb609f09`. Every fix mutation-tested — 8 mutants, 8 killed.
+
+**Three HIGH, and all three were the same shape: a request outliving the session that issued it.**
+Not a missing check — a missing IDENTITY. `isLoggedIn` cannot answer "is this still the same
+session", because it is true again once the next user signs in. Both fixes are generation counters.
+
+1. A refresh landing after `signOut()` resurrected the session and re-persisted a fresh full-TTL
+   token; with a second user signed in meanwhile, user A's token and permissions landed in user B's
+   browser.
+2. `AclLoader.clear()` left `inFlight` true, so the next user's `load()` was dropped and never
+   re-armed while A's matrix published as B's.
+3. An expired session restored as logged in and could not self-heal, because refreshing needs a live
+   token — a shell rendering stored permissions while every call 401'd, retrying every 30s forever.
+
+**Worth keeping:** all three reviewers independently found (1), and two found (2). Each ran an
+executable PoC rather than reasoning about it — which is why they were not arguable. Reviewer 1
+also caught that `SignedInParity`, added in this same batch to stop exactly this class of drift,
+could not have caught it: `permissions` was optional while the wire has it required.
+
+**Two findings NOT acted on — design decisions for the maintainer**, both LOW and both about
+parity with the Kotlin `AuthState`:
+
+- The TS session drops `realm` and the org display NAME. Both are on the wire; `AuthState` keeps
+  them, and a b2b2c app needs `realm` to call `refreshToken` at all. Adding them widens
+  `AuthSessionState`.
+- No `onRefreshed` hook, although `AclLoader`'s KDoc instructs apps to reload the matrix after every
+  refresh. The only signal today is `subscribe`, which also fires on sign-in and sign-out, so an app
+  must diff states to tell a refresh apart. Kotlin has `AuthSessionConfig.onTokenRefreshed`.
+
+**One finding belongs to the auth module, not here:** `AuthSystem.kt:96` reflects the `{realm}` path
+segment verbatim into a message returned on a PUBLIC route, and `AuthError.userNotFound(user)` /
+`providerNotFound(provider)` do the same with body input. This SDK's doc claim that the message
+"never quotes input" was corrected, but the reflection itself is live and is the standing
+error-disclosure requirement. Raised for the auth agent.
+
+**Red-team follow-up** (required — auth): `.claude/tasks/20260802-redteam-sdk-auth.md`
 
 ## Progress — 2026-08-02
 
@@ -222,7 +263,7 @@ expiry is what avoids that, and it is still open below.
 
 The cookie transport was designed and then dropped — b2b2c frontends run on customer-controlled custom
 domains, which are a different *site*, forcing `SameSite=None` and losing the strongest protection exactly
-where it was wanted. Reasoning in `.claude/tasks/20260719-token-storage-hardening.md`.
+where it was wanted. Reasoning in `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
 
 So **`localStorage` + bearer stays, and §4.1 stands as written.** What still applies from the increment-1
 contract: `Success` states `permissions`, `expiresAt` and `userId`, so nothing needs to decode the token —

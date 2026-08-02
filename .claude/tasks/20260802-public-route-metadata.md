@@ -148,12 +148,35 @@ but is not them. Regenerating the demo SDK is the natural check, and it is exact
 maintainer described (regenerate, then test the app, before a deployment). Expect `signIn` to emit as
 `publicRoute` and `getMyApiAccess` as `route`, in one merged `LoginApi`.
 
-## Review record (filled by /feature-review)
+## Review record — /feature-review, 2026-08-02
+
+Reviewed as part of the batch gate recorded in `.claude/tasks/20260731-sdk-auth-integration.md`
+(base `887f9cd7` → `fb92a54c`). Fixes in `eb609f09`.
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | PASS | none against this feature |
+| 2. Domain expert | PASS on the derivation, 1 MEDIUM on its docs | see below |
+| 3. Security | PASS | derivation cannot over-report today |
 
-**Red-team follow-up** (required — auth-adjacent): `.claude/tasks/YYYYMMDD-redteam-public-route-metadata.md`
+**The derivation itself survived all three reviewers**, which is the part that mattered:
+`isPublicToAnonymous` evaluates `route.estimateAccess(User.anonymous)` and both reviewers who probed
+it reached the same conclusion by different routes. `FloorAuthRuleBuilder.build` throws on an empty
+floor and `validateChain` enforces constant-soleness, so the predicate is true iff the group floor is
+a sole `public()`. `ParamAutoRules.estimate` returns `Granted` and so cannot mask a denial. No
+false-positive path found in either direction.
+
+**Latent hazard recorded, not a finding:** `AuthRule.forCall`'s default
+`estimateFn = { ApiAccessLevel.Granted }` (`AuthRule.kt:49`) means a future app-defined rule that
+omits `estimateFn` estimates `Granted` for anonymous. Harmless only while the mandatory floor stands
+— worth a comment at the definition if that ever becomes optional.
+
+**One MEDIUM, fixed:** `acl.ts` documented `canFullyAccess`/`canPartiallyAccess`/`isDenied` as
+mutually exclusive and exhaustive "UNCONDITIONALLY". `isPublic` breaks it — a public route absent
+from the matrix reads false on all three, because only `canAccess` short-circuits. The natural
+three-way render therefore puts every public route (sign-in, sign-up, recovery) in the
+ownership-limited branch. The behaviour is right; the doc was wrong, and this is the one place the
+vocabulary genuinely diverges from the Kotlin `ApiAcl`, which has no `isPublic`.
+
+**Red-team follow-up:** folded into `.claude/tasks/20260802-redteam-sdk-auth.md` (section B) rather
+than given its own file — the attack surface is the same matrix.
