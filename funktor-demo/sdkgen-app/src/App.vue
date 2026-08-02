@@ -1,104 +1,105 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { FunktorConfClient } from './funktorsdk/funktorConfClient.ts'
-import type { EventModel } from './funktorsdk/models.ts'
-import { isSuccess } from './funktorsdk/runtime/apiResponse.ts'
-import { fetchTransport } from './funktorsdk/runtime/http.ts'
+/**
+ * The shell: navigation, the routed page, and sign-out.
+ *
+ * The navigation is the interesting part. Entries come from `navItems`, which every contributing
+ * Kotlin module feeds — so a module that starts shipping a page appears in this menu without this
+ * file changing.
+ *
+ * **Gated on the ACL, and the `loading` state is handled deliberately.** Rendering a denied menu
+ * while the matrix is in flight makes entries pop in one by one as it lands, which reads as broken;
+ * withholding them until it resolves does not.
+ */
+import { shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
+import type { AclState } from './funktorsdk/runtime/acl-loader.ts'
+import type { AuthSessionState } from './funktorsdk/runtime/auth.ts'
+import { navItems } from './funktorsdk/mount.ts'
+import type { UserPermissions } from './funktorsdk/models.ts'
+import { acl, session, signOut } from './sdk.ts'
 
-// The API is mounted behind a HOST matcher — `host("api.*".toRegex())` in the demo's server.kt — so
-// it is not served on plain localhost. This is the same base the Kraft frontends use
-// (`AdminAppConfig.apiBaseUrl`), and the server's CORS list allows this app's origin.
-const client = new FunktorConfClient({
-    baseUrl: 'http://api.funktor-demo.localhost:36587',
-    transport: fetchTransport(),
-})
+const router = useRouter()
 
-// `listEvents` is one of the group classes, destructured off the client. This is the Vue-composable
-// idiom, and it is exactly why members are emitted as arrow class fields rather than prototype
-// methods — a prototype method type-checks here and throws at run time.
-const { listEvents } = client.funktorConf
+const auth = shallowRef<AuthSessionState<UserPermissions>>(session.state())
+session.subscribe((s) => { auth.value = s })
 
-const events = ref<EventModel[]>([])
-const problem = ref<string | null>(null)
-const loading = ref(true)
+const aclState = shallowRef<AclState>(acl.state())
+acl.subscribe((s) => { aclState.value = s })
 
-onMounted(async () => {
-    try {
-        const response = await listEvents()
+/** Entries to show. Withheld entirely while the matrix loads — see the note above. */
+function visibleNav(): readonly { path: string; label: string }[] {
+    if (!auth.value.isLoggedIn) return navItems.filter((item) => !item.requiresAuth)
+    if (aclState.value._type !== 'ready') return []
 
-        // Non-2xx is a VALUE, not a throw — the contract the Kotlin ApiClient defends and the
-        // generated SDK mirrors. Branch on it; do not wrap this in a try/catch and expect it there.
-        if (!isSuccess(response)) {
-            problem.value = response.messages?.map((m) => m.text).join('; ')
-                ?? `${response.status.value} ${response.status.description}`
-            return
-        }
+    return navItems
+}
 
-        // `data` is nullable even on 2xx — noContent() and okOrNotFound() both send null.
-        events.value = response.data ?? []
-    } catch (e) {
-        // Reaching here means the response was not an ApiResponse envelope at all, or the network
-        // failed. Note the message names the drifted FIELDS but never carries the payload.
-        problem.value = (e as Error).message
-    } finally {
-        loading.value = false
-    }
-})
+async function leave(): Promise<void> {
+    signOut()
+    await router.push({ name: 'login' })
+}
 </script>
 
 <template>
-    <main>
-        <h1>funktor SDK generator</h1>
-        <p class="sub">
-            Generated TypeScript, consumed by Vue. Nothing here is hand-written against the API —
-            the client, the models and the schemas all came out of the Kotlin route graph.
-        </p>
+    <div class="shell">
+        <header>
+            <strong>Funktor Ops</strong>
 
-        <p v-if="loading">Loading events…</p>
+            <nav>
+                <RouterLink to="/">Overview</RouterLink>
+                <RouterLink v-for="item in visibleNav()" :key="item.path" :to="item.path">
+                    {{ item.label }}
+                </RouterLink>
+            </nav>
 
-        <p v-else-if="problem" class="problem">{{ problem }}</p>
+            <span v-if="auth.isLoggedIn" class="who">
+                {{ auth.userId }}
+                <button type="button" @click="leave">Sign out</button>
+            </span>
+        </header>
 
-        <p v-else-if="events.length === 0">
-            No events yet. Start the demo server and add one.
-        </p>
-
-        <ul v-else>
-            <li v-for="event in events" :key="event.id">
-                <strong>{{ event.name }}</strong>
-                <!-- `status` is a Kotlin enum, emitted as a literal union — so a typo here is a
-                     compile error, not a runtime surprise. -->
-                <span class="status">{{ event.status }}</span>
-                <span class="when">{{ event.startDate }} – {{ event.endDate }}</span>
-            </li>
-        </ul>
-    </main>
+        <main>
+            <RouterView />
+        </main>
+    </div>
 </template>
 
 <style scoped>
-main {
+.shell {
     font-family: system-ui, sans-serif;
-    max-width: 40rem;
-    margin: 3rem auto;
+    max-width: 52rem;
+    margin: 0 auto;
     padding: 0 1rem;
 }
 
-.sub {
-    color: #555;
+header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #ddd;
 }
 
-.problem {
-    color: #b00020;
+nav {
+    display: flex;
+    gap: 1rem;
 }
 
-.status {
-    color: #0a7;
-    margin-left: 0.5rem;
-    font-size: 0.85em;
-    text-transform: uppercase;
+.who {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #666;
+    font-size: 0.9rem;
 }
 
-.when {
-    color: #555;
-    margin-left: 0.5rem;
+button {
+    font: inherit;
+    cursor: pointer;
+}
+
+main {
+    padding: 1.5rem 0;
 }
 </style>
