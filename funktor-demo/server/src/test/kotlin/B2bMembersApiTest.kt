@@ -92,7 +92,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -118,7 +118,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -160,7 +160,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -183,7 +183,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -206,7 +206,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -232,7 +232,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -270,7 +270,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -310,7 +310,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -335,7 +335,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -360,7 +360,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("owner@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken!!
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 

@@ -2,6 +2,7 @@ package io.peekandpoke.funktor
 
 import io.kotest.matchers.shouldBe
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.withCharset
@@ -46,6 +47,30 @@ class BodyContentTypeSpec : FunktorApiSpec() {
                 apiApp {
                     anonymous {
                         route(realmParam, body = body, setup = { contentType(ContentType.Text.Plain) }) {
+                            status shouldBe HttpStatusCode.UnsupportedMediaType
+                        }
+                    }
+                }
+            }
+
+            "An ABSENT Content-Type is refused, not waved through" {
+                apiApp {
+                    anonymous {
+                        route(
+                            realmParam,
+                            body = body,
+                            setup = { headers.remove(HttpHeaders.ContentType) },
+                        ) {
+                            status shouldBe HttpStatusCode.UnsupportedMediaType
+                        }
+                    }
+                }
+            }
+
+            "A wildcard */* is refused — this is why the match is explicit, not ContentType.match" {
+                apiApp {
+                    anonymous {
+                        route(realmParam, body = body, setup = { contentType(ContentType.Any) }) {
                             status shouldBe HttpStatusCode.UnsupportedMediaType
                         }
                     }

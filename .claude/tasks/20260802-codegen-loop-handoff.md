@@ -36,8 +36,6 @@ An app can write a login form against this today. **The only thing missing is ma
 |---|---|
 | The `.vue` verification decision — `vue-tsc` cannot run on TS 7, so it is a second toolchain, not a flag. But the CONSUMING app's `vue-tsc` already checks components, which may be enough | maintainer |
 | `out.scaffold` — writes outside the generator-owned directory, which is a boundary change | maintainer |
-| `POST /logout` — JS cannot delete an httpOnly cookie | auth agent, increment 2 |
-| Cookie-mode boot hydration | auth agent, increment 2 |
 
 The auth agent has been idle since their increment 1 (`880a3e2e`).
 
@@ -71,15 +69,16 @@ Increment 1, bearer-only, nothing changes at runtime:
 
 ```kotlin
 data class Success(
-    val session: Session,          // SEALED: Bearer(token) | Cookie
+    val session: Session,          // SEALED -- Bearer(token) ONLY; cookie was dropped
     val permissions: UserPermissions,
-    val expiresAt: MpInstant,
+    val expiresAt: MpInstant? = null,   // NULLABLE -- exp is optional per RFC 7519
     val userId: UserId?,
     val realm: AuthRealmModel, val user: JsonObject, val org: AuthOrgRef? = null,
 )
 ```
 
-`Token`, `permissionsNs` and `userNs` are deleted. Increment 2 is the httpOnly cookie.
+`Token`, `permissionsNs` and `userNs` are deleted. **There is no increment 2 — the httpOnly cookie
+was designed and DROPPED** (2026-08-02); see `.claude/tasks/20260719-token-storage-hardening.md`.
 
 ### VERIFIED, and it contradicts their handover — do NOT act on the other reading
 
@@ -96,7 +95,7 @@ So the generator is faithful. **"Fixing" it to stop emitting `_type` would break
 documented at `Polymorphic.kt:58-61`, which cross-references our mirror.
 
 **The rule to carry:** any standalone class carrying `@SerialName` silently gains `_type` on the wire.
-`Session.Bearer`/`Session.Cookie` under a sealed parent are genuine children, so they are fine.
+`Session.Bearer` under a sealed parent is a genuine child, so it is fine.
 
 ## Backlog — in order
 
@@ -155,9 +154,9 @@ mechanism rather than assuming it. Page routes are `requiresAuth = true`, DECLAR
 
 ```kotlin
 data class Success(
-    val session: Session,          // sealed: Bearer(token) | Cookie   (Cookie is a `data object`)
+    val session: Session,          // sealed -- Bearer(token) ONLY
     val permissions: UserPermissions,
-    val expiresAt: MpInstant,
+    val expiresAt: MpInstant? = null,   // NULLABLE -- exp is optional per RFC 7519
     val userId: UserId? = null,
     val realm: AuthRealmModel, val user: JsonObject, val org: AuthOrgRef? = null,
 )
@@ -165,13 +164,8 @@ data class Success(
 
 **Verify FIRST, before writing any TypeScript** — regenerate and read the output:
 
-- `Session` must emit as its OWN `z.discriminatedUnion('_type', [...])` with `bearer` and `cookie`,
-  not folded into the parent union.
-- `Session.Cookie` is a **`data object`**, which is the unusual one. Slumber reaches it through
-  `isPolymorphicChild` BEFORE the `objectInstance != null` branch (`BuiltInModule.kt:249` vs `:251`),
-  so it slumbers via `DataClassSlumberer` to `{"_type":"cookie"}` — NOT through `ObjectInstanceCodec`,
-  which has a known defect that drops everything. Confirm the walker agrees and emits an object with
-  only the discriminator.
+- `Session` must emit as its OWN `z.discriminatedUnion('_type', [...])` — with **`bearer` only**. A
+  single-option discriminated union is valid zod (`TsModelEmitter.kt:248`).
 - `AuthSignInResponseToken` should be gone; `_type: z.literal('token')` with it.
 - `expiresAt` is an `MpInstant`, so in TypeScript it is the claimed `{ts, timezone, human}` object —
   **`expiresAt.ts` is the epoch-millis number**, not `expiresAt` itself. `isExpiring` compares numbers.
@@ -438,3 +432,14 @@ be wrong — this was written blind. Then mutation-test the two pass-throughs be
 Nothing built yet. Lock held by the auth agent at the time of writing, so this file is uncommitted
 until it frees. Baseline at handoff: `:ultra:codegen:check` 280, `:funktor:codegen:check` 59,
 `:funktor:rest:jvmTest` 111, 0 failures, compile sweep clean, docs-site builds.
+
+## CORRECTION 2026-08-02 — cookie mode was dropped after this doc was written
+
+Everything above about an `httpOnly` cookie, `Session.Cookie`, `POST /logout` and cookie-mode boot
+hydration is **superseded**. b2b2c frontends run on customer-controlled custom domains, which are a
+different *site*, so the cookie would have needed `SameSite=None` — losing the strongest protection
+exactly where it was wanted. `Session` stays sealed with a single `Bearer` variant so a future transport
+is additive.
+
+Also landed since: `funktor/rest` now requires `Content-Type: application/json` on body-bearing routes
+(415 otherwise). Your generated client already complies (`runtime/client.ts:151-154`).

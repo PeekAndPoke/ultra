@@ -60,7 +60,7 @@ import {Code} from 'astro:components';
     <Code code={`override suspend fun generateJwt(
     user: Stored<AdminUser>,
     selectedOrg: SelectedOrg?,
-): AuthSignInResponse.Token {
+): String {
     val gen = deps.jwtGenerator
     val userValue = user.resolve()
 
@@ -76,11 +76,7 @@ import {Code} from 'astro:components';
         withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
     }
 
-    return AuthSignInResponse.Token(
-        token = token,
-        permissionsNs = gen.permissionsNs,
-        userNs = gen.userNs,
-    )
+    return token
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p><code>selectedOrg</code> is <code>null</code> for an org-less realm. <code>JwtUserData.id</code> is a

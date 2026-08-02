@@ -19,6 +19,7 @@ import io.peekandpoke.funktor.rest.auth.AuthRule
 import io.peekandpoke.funktor.rest.auth.HideFailureAsNotFound
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 /**
@@ -105,9 +106,27 @@ internal suspend fun RoutingContext.passesPhase1(route: ApiRoute<*>, uri: String
  *
  * Matched explicitly rather than with `ContentType.match`, which treats `* / *` as a match — an absent
  * or wildcard header must be refused, not waved through. Parameters such as `charset` are fine.
+ *
+ * ### Exactly one header line, and no comma — defence, NOT a demonstrated bypass
+ *
+ * Raised in review: `ContentType.parse` delegates to `parseHeaderValue(...).last()`, so a comma-joined
+ * `text/plain, application/json` would resolve to its LAST entry, while `request.header(...)` returns the
+ * FIRST of duplicated header *lines* — two layers disagreeing about which value is authoritative, which
+ * in a fail-closed control would be a fail-open.
+ *
+ * **Unproven, and honestly so.** It could not be reproduced through the test harness: ktor's CLIENT
+ * normalises such a value before sending, so the server only ever saw a clean `application/json`
+ * (measured). A raw socket or an intermediary that joins duplicate headers might still produce it; that
+ * was not tested. RFC 9110 §8.3 makes `Content-Type` a single media type, so a list is malformed
+ * regardless — rejecting both shapes costs nothing and removes the disagreement rather than picking a
+ * side.
  */
 private suspend fun ApplicationCall.passesBodyContentType(): Boolean {
-    val declared = request.header(HttpHeaders.ContentType)
+
+    val lines = request.headers.getAll(HttpHeaders.ContentType).orEmpty()
+
+    val declared = lines.singleOrNull()
+        ?.takeIf { !it.contains(',') }
         ?.let { runCatching { ContentType.parse(it) }.getOrNull() }
 
     val isJson = declared != null &&
@@ -116,7 +135,7 @@ private suspend fun ApplicationCall.passesBodyContentType(): Boolean {
 
     if (isJson) return true
 
-    respond(HttpStatusCode.UnsupportedMediaType, "Expected Content-Type: application/json")
+    apiRespond(ApiResponse.unsupportedMediaType<Any?>().withError("Expected Content-Type: application/json"))
     return false
 }
 
@@ -269,8 +288,10 @@ fun <PARAMS, BODY, RESPONSE> Route.handleWithBodyAndParams(
             // Phase 1 — caller-only rules, BEFORE param conversion / body receive
             if (!passesPhase1(route, uri)) return@handle
             // Param conversion + body receive — reachable only past the floor
-            val params: PARAMS = call.convertIncomingParameters(route.route)
+            // Before param conversion on purpose: conversion does findById DB reads, and this file's
+            // stated principle is zero entity loads for a request that is going to be refused.
             if (!call.passesBodyContentType()) return@handle
+            val params: PARAMS = call.convertIncomingParameters(route.route)
             val bodyContent = call.receive<ByteArray>()
             // Awake the request body
             @Suppress("UNCHECKED_CAST")

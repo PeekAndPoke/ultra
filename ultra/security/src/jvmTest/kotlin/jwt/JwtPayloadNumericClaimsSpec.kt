@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -19,7 +20,7 @@ import kotlinx.serialization.json.put
  */
 class JwtPayloadNumericClaimsSpec : FreeSpec() {
 
-    private fun payloadOf(build: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit): JwtPayload =
+    private fun payloadOf(build: JsonObjectBuilder.() -> Unit): JwtPayload =
         JwtPayload(buildJsonObject(build))
 
     init {

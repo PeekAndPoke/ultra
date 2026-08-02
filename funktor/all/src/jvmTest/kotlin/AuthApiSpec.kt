@@ -197,7 +197,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.bearerToken!!.shouldNotBeBlank()
+                            response.bearerToken.shouldNotBeBlank()
                         }
                     }
                 }
@@ -368,7 +368,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.bearerToken!!.shouldNotBeBlank()
+                            response.bearerToken.shouldNotBeBlank()
                             // The response STATES the permissions now -- the client no longer decodes
                             // them out of the token, so this is the only thing checking they are right.
                             response.permissions.isSuperUser shouldBe false
@@ -389,7 +389,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.bearerToken!!.shouldNotBeBlank()
+                            response.bearerToken.shouldNotBeBlank()
                             response.permissions.isSuperUser shouldBe true
                             response.expiresAt.shouldNotBeNull()
                             // A refresh must return a token for the SAME user.

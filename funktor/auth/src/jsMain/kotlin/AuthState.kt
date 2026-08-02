@@ -71,7 +71,7 @@ class AuthState<USER>(
          */
         @Serializable
         data class Session<USER>(
-            /** How this session is carried -- a bearer token in hand, or an httpOnly cookie. */
+            /** How this session is carried. One variant today; sealed so a second is additive. */
             val transport: AuthSignInResponse.Session,
             val realm: AuthRealmModel,
             /**
@@ -98,8 +98,13 @@ class AuthState<USER>(
         val isNotLoggedIn get() = !isLoggedIn
 
         // Nullable pass-throughs: callers keep reading the same names; all null when logged out.
-        /** The bearer token, or null -- also null in cookie mode, where the browser holds it. */
-        val bearerToken get() = session?.transport?.let { (it as? AuthSignInResponse.Session.Bearer)?.token }
+        /** The bearer token to attach to requests, or null when logged out. */
+        val bearerToken
+            get() = session?.transport?.let {
+                when (it) {
+                    is AuthSignInResponse.Session.Bearer -> it.token
+                }
+            }
         val realm get() = session?.realm
         val org get() = session?.org
         val tokenUserId get() = session?.tokenUserId
@@ -441,10 +446,10 @@ class AuthState<USER>(
 /**
  * Maps a sign-in / refresh response into session state.
  *
- * **Nothing here reads the token.** Permissions, expiry and the user id are all stated by the server,
- * which is what makes this work identically for a bearer token and an `httpOnly` cookie — in cookie mode
- * there is no token to read. It replaced a client-side JWT decode that pulled the same three values out
- * of unverified claims, plus a raw claim map nothing consumed.
+ * **Nothing here reads the token.** Permissions, expiry and the user id are all stated by the server. It
+ * replaced a client-side JWT decode that pulled the same three values out of unverified claims, plus a
+ * raw claim map nothing consumed — worth not doing regardless of transport, since those claims came from
+ * a blob the user can rewrite in devtools.
  *
  * Top-level and `internal` rather than a private member: it uses no state from [AuthState], and lifting
  * it out is what lets `AuthStateSessionMappingSpec` pin the decoupling directly.

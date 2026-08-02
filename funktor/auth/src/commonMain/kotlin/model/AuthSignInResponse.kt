@@ -113,11 +113,17 @@ sealed interface AuthSignInResponse {
 }
 
 /**
- * The bearer token when the session carries one, else null — cookie mode has no token in the body.
+ * The session's bearer token.
  *
  * An extension rather than a member so it stays out of the serialized shape and out of the generated
- * TypeScript: the whole point of [AuthSignInResponse.Session] being sealed is that a client narrows
- * before reaching a token, and a nullable convenience field on the wire would undo that.
+ * TypeScript: the point of [AuthSignInResponse.Session] being sealed is that a client narrows before
+ * reaching a token, and a nullable convenience field on the wire would undo that.
+ *
+ * Exhaustive `when`, not `as?`. There is one variant today, so this is total — and when a second
+ * transport is added the compiler enumerates every call site, which is what sealing is for. `as?` would
+ * instead start silently returning null.
  */
-val AuthSignInResponse.Success.bearerToken: String?
-    get() = (session as? AuthSignInResponse.Session.Bearer)?.token
+val AuthSignInResponse.Success.bearerToken: String
+    get() = when (val carrier = session) {
+        is AuthSignInResponse.Session.Bearer -> carrier.token
+    }

@@ -174,7 +174,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .bearerToken!!
+                                .bearerToken
                         }
                     }
 
@@ -195,7 +195,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .bearerToken!!
+                                .bearerToken
                         }
                     }
 
@@ -231,7 +231,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .bearerToken!!
+                                .bearerToken
                         }
                     }
 

@@ -36,12 +36,14 @@ import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.i18n.Locale
 import io.peekandpoke.ultra.security.jwt.JwtPayload
+import io.peekandpoke.ultra.security.jwt.JwtVerificationException
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.KnownRole
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.security.user.UserRecord
 import io.peekandpoke.ultra.vault.Stored
 
 /**
@@ -528,13 +530,26 @@ interface AuthRealm<USER : AuthUser> {
         // Verify our own freshly minted token, and read the response's permissions, expiry and user id
         // back out of it. That is the point: the client is told exactly what the token carries, so the
         // two cannot disagree. Threading them out of `generateJwt` instead would create a second source.
-        val payload = deps.jwtGenerator.verify(token)
+        // Wrapped: `verify` raises JwtVerificationException, which is NOT an AuthError, so it would
+        // escape AuthLoginApi's `catch (e: AuthError)` and surface as a 500 -- on the sign-up path that
+        // happens AFTER the account, password record and PendingActivation marker are committed, leaving
+        // an account that can never finish signing up. Same failure shape AuthRealm already defends
+        // against for sendAuthEmail. Reachable via a JwtGenerator clock ahead of the realm's Kronos.
+        val payload = try {
+            deps.jwtGenerator.verify(token)
+        } catch (e: JwtVerificationException) {
+            deps.log.error("The realm minted a token its own verifier rejected", e)
+            throw AuthError("Could not establish a session")
+        }
 
         val success = AuthSignInResponse.Success(
             session = AuthSignInResponse.Session.Bearer(token),
             permissions = deps.jwtGenerator.extractPermissions(payload),
             expiresAt = payload.expiresAt?.let { MpInstant.fromEpochSeconds(it) },
-            userId = UserId.parseOrNull(payload.subject),
+            // extractUserData, not `sub` directly: this is the function the SERVER resolves identity
+            // with (it prefers the userNs id claim and only falls back to `sub`), so the response
+            // states the identity the request path will actually authorize as.
+            userId = deps.jwtGenerator.extractUserData(payload).id.takeIf { it != UserRecord.ANONYMOUS_ID },
             realm = asApiModel(),
             user = users.serialize(user),
             org = org,
