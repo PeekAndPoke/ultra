@@ -65,10 +65,14 @@ depending on `ultra:codegen` would drag the generator into a production artifact
 no bearing on it. The move also deleted two cross-module dependencies that existed only so a contributor
 could read another module's bytes.
 
-**Owed as a direct result:** `slices.ts` encodes wire shapes defined by `funktor/insights`'s collectors
-and now lives in a different module. `runtime/datetime.ts` has the same problem and the repo's answer —
-a parity spec (`MpDateTimeFieldParitySpec`) that fails when the two drift. **Write the equivalent for the
-collector `Data` classes**; without it, a collector field rename is a silent frontend break.
+**No parity spec for the collector `Data` classes** (maintainer, 2026-08-02). Backend and frontend are
+assumed in sync — the SDK is generated per app from the running server, nothing is published, and there
+is no back-compat requirement, so the two cannot be at different versions in practice.
+
+Worth knowing why that is affordable here specifically, since `runtime/datetime.ts` *does* carry a parity
+spec: the readers in `slices.ts` narrow rather than cast, so a renamed collector field degrades to `n/a`
+or a JSON-tree fallback instead of throwing. `datetime.ts` has no such cushion — a codec change there
+silently corrupts a value rather than showing a gap.
 
 ## One blocker remains, in the codegen agent's area
 

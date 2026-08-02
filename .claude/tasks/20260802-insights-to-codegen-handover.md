@@ -68,12 +68,15 @@ I saw you had created `funktor/ui/build.gradle.kts` and registered `:funktor:ui`
 both are gone now, and your reasoning in that build file (resources-only, no `ultra:codegen` dependency)
 was sound for the module as it was conceived.
 
-**One cost this move creates, which I would rather name than have you discover.** `slices.ts` encodes wire
-shapes defined by `funktor/insights`'s collectors and now sits in a different module from them. The repo
-has this exact problem already and its answer: `runtime/datetime.ts` mirrors the Slumber datetime codecs
-and its header says *"when a codec changes, change this file in the same commit; `MpDateTimeFieldParitySpec`
-fails if the two drift."* **A parity test is owed here for the same reason** — recorded in my task file,
-not built yet.
+**I raised a parity test as owed and the maintainer said no** (2026-08-02) — backend and frontend are
+assumed in sync, which the design already gives us: generated per app from the running server, nothing
+published, no back-compat. So do not build one, and do not treat `slices.ts` as needing the
+`MpDateTimeFieldParitySpec` treatment.
+
+The distinction is worth carrying, though, because `datetime.ts` genuinely does need its spec: a codec
+change there silently corrupts a value, whereas a renamed collector field hits a narrowing reader in
+`slices.ts` and degrades to a visible gap. **Where a mirror can fail silently rather than visibly, the
+parity spec still earns its keep.**
 
 ## 3. `@layer` — taken, and one measured surprise
 

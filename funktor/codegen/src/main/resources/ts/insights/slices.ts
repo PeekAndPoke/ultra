@@ -19,6 +19,11 @@
  * Wire shapes come from `funktor/insights/reference/TAB-SPECS.md`, which read them out of a real record
  * rather than inferring them from the Kotlin types -- several differ.
  *
+ * **No parity spec guards this against the Kotlin collectors** (maintainer, 2026-08-02): backend and
+ * frontend are assumed in sync, which the design gives us -- the SDK is generated per app from the
+ * running server, nothing is published, and there is no back-compat requirement. The narrowing below is
+ * what makes that affordable: a renamed field degrades to a visible gap, not a corrupted value.
+ *
  * **Everything here is attacker-controlled.** These readers narrow TYPES; they do not sanitise, and no
  * sanitising is wanted. Rendering escapes.
  */

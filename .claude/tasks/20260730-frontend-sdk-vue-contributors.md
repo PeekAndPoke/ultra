@@ -810,11 +810,15 @@ same day and was right; it is gone.** Recorded because the argument for it sound
 Layout: `funktor/codegen/src/main/resources/ts/ui/` for the shared design system, `…/ts/insights/` and
 one directory per feature after it.
 
-**The cost, named so it is paid rather than discovered.** Cohesion drops: `slices.ts` encodes wire shapes
-defined by `funktor/insights`'s collectors, and now sits in a different module from them. The repo already
-has this exact problem and its answer — `runtime/datetime.ts` mirrors the Slumber datetime codecs from
-inside `ultra:codegen`, and its header says *"when a codec changes, change this file in the same commit;
-`MpDateTimeFieldParitySpec` fails if the two drift."* **A parity test is owed here for the same reason.**
+**The cost, and why it is accepted.** Cohesion drops: a module's TypeScript now sits apart from the Kotlin
+whose shapes it mirrors. **No parity spec is required** (maintainer, 2026-08-02) — backend and frontend
+are assumed in sync, which the design already guarantees: the SDK is generated per app from the running
+server, nothing is published, and there is no back-compat requirement.
+
+That differs from `runtime/datetime.ts`, which *does* carry a parity spec, and the difference is worth
+keeping straight: a datetime codec change silently corrupts a value, whereas a renamed collector field
+hits a narrowing reader and degrades to a visible gap. **Where a mirror can fail silently rather than
+visibly, it still needs a parity spec.**
 
 `out.sharedResource` stays the rule for anything more than one contributor wants — that is about
 exclusive-vs-shared path ownership, which is unrelated to which module holds the file.
