@@ -129,10 +129,18 @@ class TsSdkBuilderSpec : FreeSpec() {
                     .forTesting(listOf(RootContributor("roots", typeOf<FxSpeaker>())))
                     .build()
 
-                // `index.ts` is always emitted — the barrel re-exports whatever the run produced,
-                // even when that is only the models file.
+                // Four files are unconditional. `index.ts` re-exports whatever the run produced, even
+                // when that is only the models file. `mount.ts` and `styles.ts` are the two
+                // AGGREGATES, and they ship even empty — including in an SDK like this one that has
+                // no frontend at all.
+                //
+                // That last part is a deliberate trade (2026-08-02): a pure-model SDK carries two
+                // files it will never use, in exchange for the app-facing contract being constant.
+                // The alternative made `import { mountAll } from './funktorsdk/mount.ts'` — a
+                // hand-written line the generator must never touch — compile or not depending on
+                // whether some contributor elsewhere registered a page.
                 result.output.entries().map { it.path } shouldContainExactly
-                        listOf("models.ts", "index.ts")
+                        listOf("models.ts", "mount.ts", "styles.ts", "css-modules.d.ts", "index.ts")
             }
         }
 
@@ -148,7 +156,7 @@ class TsSdkBuilderSpec : FreeSpec() {
                 ).build()
 
                 withDates.output.entries().map { it.path } shouldContainExactly
-                        listOf("models.ts", "runtime/datetime.ts", "index.ts")
+                        listOf("models.ts", "runtime/datetime.ts", "mount.ts", "styles.ts", "css-modules.d.ts", "index.ts")
 
                 val withoutDates = TsSdkBuilder(
                     contributors = listOf(
@@ -160,7 +168,7 @@ class TsSdkBuilderSpec : FreeSpec() {
 
                 withClue("an unreachable claim must not drag dead runtime code into the SDK") {
                     withoutDates.output.entries().map { it.path } shouldContainExactly
-                            listOf("models.ts", "index.ts")
+                            listOf("models.ts", "mount.ts", "styles.ts", "css-modules.d.ts", "index.ts")
                 }
             }
 

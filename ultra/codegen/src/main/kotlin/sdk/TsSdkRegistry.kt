@@ -51,7 +51,30 @@ class TsSdkRegistry {
         val order: Int = 0,
     )
 
+    /**
+     * A stylesheet the app must load, and where it sits in the cascade.
+     *
+     * Separate from [Route] because the collision rule is the opposite one — see [addStyle].
+     */
+    data class Style(
+        /** The sheet's path relative to the SDK root, e.g. `ui/theme.css`. Unique — it is the key. */
+        val path: String,
+        /**
+         * Cascade position, ascending. Ties break on path, so the emitted order is total and stable.
+         *
+         * **This is semantic, not cosmetic.** A theme defines the custom properties a feature sheet
+         * consumes, so loading them the other way round does not error — it silently drops the
+         * overrides. Contributors arrive from a DI container in no defined order, so the order has to
+         * be declared somewhere, and this is it.
+         *
+         * Convention: base/theme near 0, feature sheets in the hundreds.
+         */
+        val order: Int,
+        val declaredBy: String,
+    )
+
     private val routes = LinkedHashMap<String, Route>()
+    private val styles = LinkedHashMap<String, Style>()
 
     /** Every route, ordered by path so the emitted file is stable across runs. */
     fun allRoutes(): List<Route> = routes.values.sortedBy { it.path }
@@ -60,6 +83,9 @@ class TsSdkRegistry {
     fun navRoutes(): List<Route> = routes.values
         .filter { it.nav != null }
         .sortedWith(compareBy({ it.nav!!.order }, { it.path }))
+
+    /** Every stylesheet, in cascade order. */
+    fun allStyles(): List<Style> = styles.values.sortedWith(compareBy({ it.order }, { it.path }))
 
     /** The API handed to a contributor during the emit phase. */
     fun scopeFor(contributor: String): Scope = Scope(contributor)
@@ -89,6 +115,42 @@ class TsSdkRegistry {
         routes[route.path] = route
     }
 
+    /**
+     * Registers a stylesheet, or accepts an identical re-registration.
+     *
+     * **Deliberately NOT the collision rule [add] uses.** A route is owned by one contributor, so a
+     * second claim on the same path is a bug. A stylesheet is the opposite: `ui/theme.css` is a
+     * shared dependency, and every module shipping components that depend on it should be free to
+     * say so — otherwise the app loads the theme only if the ONE contributor blessed to register it
+     * happens to be in the profile. Identical registration therefore dedupes, exactly as
+     * `TsSdkOutput.shared` dedupes identical content.
+     *
+     * A real disagreement — same sheet, different cascade position — still fails, because there is
+     * no answer that is not arbitrary and the wrong one is silent.
+     */
+    private fun addStyle(style: Style) {
+        require(!style.path.startsWith("/") && !style.path.contains("..")) {
+            "Stylesheet '${style.path}' from '${style.declaredBy}' must be relative to the SDK root " +
+                    "and must not escape it. The generator owns that directory and writes nothing " +
+                    "outside it."
+        }
+
+        val existing = styles[style.path]
+
+        if (existing != null) {
+            check(existing.order == style.order) {
+                "Stylesheet '${style.path}' is registered at conflicting cascade positions: order " +
+                        "${existing.order} by '${existing.declaredBy}' and ${style.order} by " +
+                        "'${style.declaredBy}'. Loading order decides which rules win, so there is no " +
+                        "safe default to pick here. Fix: agree on one order, or split the sheet."
+            }
+
+            return
+        }
+
+        styles[style.path] = style
+    }
+
     inner class Scope internal constructor(private val contributor: String) {
 
         /**
@@ -112,6 +174,20 @@ class TsSdkRegistry {
                     declaredBy = contributor,
                 )
             )
+        }
+
+        /**
+         * Registers a stylesheet the app must load.
+         *
+         * The contributor emits the file itself — typically `out.sharedResource(...)` for anything
+         * another module might also want, `out.resource(...)` for its own.
+         *
+         * Registering the same sheet at the same [order] twice is FINE and deduplicates, so a module
+         * may declare its dependency on a shared theme without coordinating over who owns the
+         * registration.
+         */
+        fun style(path: String, order: Int) {
+            addStyle(Style(path = path, order = order, declaredBy = contributor))
         }
     }
 }

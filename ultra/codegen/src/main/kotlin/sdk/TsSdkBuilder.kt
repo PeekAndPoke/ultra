@@ -7,6 +7,7 @@ import io.peekandpoke.ultra.codegen.model.TypeWalker
 import io.peekandpoke.ultra.codegen.ts.TsBarrelEmitter
 import io.peekandpoke.ultra.codegen.ts.TsMountEmitter
 import io.peekandpoke.ultra.codegen.ts.TsModelEmitter
+import io.peekandpoke.ultra.codegen.ts.TsStylesEmitter
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import kotlin.reflect.KType
 
@@ -176,28 +177,53 @@ class TsSdkBuilder(
         }
 
         val registeredRoutes = registry.allRoutes()
+        val registeredStyles = registry.allStyles()
 
-        if (registeredRoutes.isNotEmpty()) {
-            // A registered component that nobody emitted would surface as a module-resolution error
-            // inside generated output — naming a file, not the contributor that asked for it. The
-            // registry cannot see the output plan and the output cannot see the registry, so this is
-            // the one place both are visible.
-            val emitted = output.entries().map { it.path }.toSet()
+        // A registered component or stylesheet that nobody emitted would surface as a
+        // module-resolution error inside generated output — naming a file, not the contributor that
+        // asked for it. The registry cannot see the output plan and the output cannot see the
+        // registry, so this is the one place both are visible.
+        val emitted = output.entries().map { it.path }.toSet()
 
-            val missing = registeredRoutes.filter { it.component !in emitted }
+        val missingComponents = registeredRoutes.filter { it.component !in emitted }
 
-            check(missing.isEmpty()) {
-                "Registered route component(s) were never emitted: " +
-                        missing.joinToString { "'${it.component}' for '${it.path}' by '${it.declaredBy}'" } +
-                        ". A contributor must emit the component it registers, typically with " +
-                        "out.resource(...) in the same emit call."
-            }
-
-            output.scopeFor("ultra:codegen").file(
-                path = TsMountEmitter.PATH,
-                content = TsMountEmitter.emit(registeredRoutes, registry.navRoutes()),
-            )
+        check(missingComponents.isEmpty()) {
+            "Registered route component(s) were never emitted: " +
+                    missingComponents.joinToString { "'${it.component}' for '${it.path}' by '${it.declaredBy}'" } +
+                    ". A contributor must emit the component it registers, typically with " +
+                    "out.resource(...) in the same emit call."
         }
+
+        val missingStyles = registeredStyles.filter { it.path !in emitted }
+
+        check(missingStyles.isEmpty()) {
+            "Registered stylesheet(s) were never emitted: " +
+                    missingStyles.joinToString { "'${it.path}' by '${it.declaredBy}'" } +
+                    ". A contributor must emit the stylesheet it registers, typically with " +
+                    "out.sharedResource(...) in the same emit call."
+        }
+
+        // BOTH aggregates are emitted unconditionally, empty included. They are the app's stable
+        // surface — `import { mountAll } from './funktorsdk/mount.ts'` and
+        // `import './funktorsdk/styles.ts'` are hand-written lines in a file the generator must never
+        // touch, so a file that appears only when some contributor happened to register something
+        // would break the app's wiring on a profile change rather than on a code change.
+        output.scopeFor("ultra:codegen").file(
+            path = TsMountEmitter.PATH,
+            content = TsMountEmitter.emit(registeredRoutes, registry.navRoutes()),
+        )
+
+        output.scopeFor("ultra:codegen").file(
+            path = TsStylesEmitter.PATH,
+            content = TsStylesEmitter.emit(registeredStyles),
+        )
+
+        // Without this, `styles.ts` does not compile as soon as it has a single import — TypeScript
+        // does not know what a `.css` module is.
+        output.scopeFor("ultra:codegen").file(
+            path = TsStylesEmitter.TYPES_PATH,
+            content = TsStylesEmitter.emitTypes(),
+        )
 
         // Phase 5 — the barrel. LAST, because it re-exports what every contributor wrote, so it can
         // only be built once they have all run. The builder's own output for the same reason

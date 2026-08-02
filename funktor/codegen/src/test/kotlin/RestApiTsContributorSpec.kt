@@ -42,6 +42,12 @@ class RestApiTsContributorSpec : FreeSpec() {
                 "runtime/acl.ts",
                 "runtime/http.ts",
                 "runtime/apiResponse.ts",
+                // The two aggregates and the ambient CSS declaration, all unconditional since
+                // 2026-08-02 — they are the app's stable surface, so they ship even when this
+                // contributor registers no page and no stylesheet. See `TsSdkBuilderSpec`.
+                "mount.ts",
+                "styles.ts",
+                "css-modules.d.ts",
             )
         }
 

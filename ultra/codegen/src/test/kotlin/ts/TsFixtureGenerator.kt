@@ -443,7 +443,25 @@ object TsFixtureGenerator {
         File(targetDir, TsMountEmitter.PATH)
             .writeText(TsMountEmitter.emit(registry.allRoutes(), registry.navRoutes()))
 
-        val sdkFiles = listOf(spec.fileName, "models.ts", TsMountEmitter.PATH) +
+        // `styles.ts` with REAL stylesheets on disk, deliberately out of registration order so the
+        // emitted file has to sort them.
+        //
+        // The whole point of writing actual `.css` files here is that a side-effect import of one is
+        // TS2882 unless something declares the module — so an empty styles fixture would type-check
+        // and prove nothing, and the mechanism would break for the first contributor to use it.
+        registry.scopeFor("fx:insights").style(path = "styles/insights.css", order = 100)
+        registry.scopeFor("fx:ui").style(path = "styles/theme.css", order = 0)
+        // The same sheet a second module also depends on — must dedupe rather than collide.
+        registry.scopeFor("fx:insights").style(path = "styles/theme.css", order = 0)
+
+        File(targetDir, "styles").mkdirs()
+        File(targetDir, "styles/theme.css").writeText(":root { --fx-fg: #111; }\n")
+        File(targetDir, "styles/insights.css").writeText(".fx-insights { color: var(--fx-fg); }\n")
+
+        File(targetDir, TsStylesEmitter.PATH).writeText(TsStylesEmitter.emit(registry.allStyles()))
+        File(targetDir, TsStylesEmitter.TYPES_PATH).writeText(TsStylesEmitter.emitTypes())
+
+        val sdkFiles = listOf(spec.fileName, "models.ts", TsMountEmitter.PATH, TsStylesEmitter.PATH) +
                 TsRuntime.Module.entries.map { it.path }
 
         File(targetDir, TsBarrelEmitter.PATH).writeText(TsBarrelEmitter.emit(sdkFiles))

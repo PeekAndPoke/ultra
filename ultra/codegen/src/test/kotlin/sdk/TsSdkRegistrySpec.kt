@@ -86,5 +86,78 @@ class TsSdkRegistrySpec : FreeSpec() {
                 }
             }
         }
+
+        //  Stylesheets — the SAME aggregate problem with the OPPOSITE collision rule  //////////////
+
+        "stylesheets are ordered by cascade position, not by contributor order" {
+            val forwards = registry().apply {
+                scopeFor("feature").style("feature/f.css", order = 100)
+                scopeFor("ui").style("ui/theme.css", order = 0)
+            }
+
+            val backwards = registry().apply {
+                scopeFor("ui").style("ui/theme.css", order = 0)
+                scopeFor("feature").style("feature/f.css", order = 100)
+            }
+
+            forwards.allStyles().map { it.path } shouldBe listOf("ui/theme.css", "feature/f.css")
+            forwards.allStyles() shouldBe backwards.allStyles()
+        }
+
+        "equal orders break on path, so the emitted order is total" {
+            // Otherwise two sheets at the same layer would emit in arrival order and `--check` would
+            // report drift that is not real.
+            val reg = registry().apply {
+                scopeFor("b").style("z/b.css", order = 50)
+                scopeFor("a").style("a/a.css", order = 50)
+            }
+
+            reg.allStyles().map { it.path } shouldBe listOf("a/a.css", "z/b.css")
+        }
+
+        "the SAME stylesheet registered twice at the same order deduplicates" {
+            // DELIBERATELY not the route rule. `ui/theme.css` is a shared dependency: every module
+            // shipping components that need it should be free to say so, or the app loads the theme
+            // only when the one contributor blessed to register it happens to be in the profile.
+            val reg = registry().apply {
+                scopeFor("funktor:ui").style("ui/theme.css", order = 0)
+                scopeFor("funktor:insights").style("ui/theme.css", order = 0)
+            }
+
+            reg.allStyles().map { it.path } shouldBe listOf("ui/theme.css")
+
+            withClue("the FIRST registrant is recorded, so the message on a later conflict names it") {
+                reg.allStyles().single().declaredBy shouldBe "funktor:ui"
+            }
+        }
+
+        "the same stylesheet at CONFLICTING orders is a hard error naming both" {
+            // There is no answer here that is not arbitrary, and the wrong one is silent — the
+            // overrides simply stop applying.
+            val reg = registry()
+            reg.scopeFor("funktor:ui").style("ui/theme.css", order = 0)
+
+            val thrown = shouldThrow<IllegalStateException> {
+                reg.scopeFor("acme:app").style("ui/theme.css", order = 500)
+            }
+
+            thrown.message!! shouldContain "ui/theme.css"
+            thrown.message!! shouldContain "funktor:ui"
+            thrown.message!! shouldContain "acme:app"
+            thrown.message!! shouldContain "0"
+            thrown.message!! shouldContain "500"
+        }
+
+        "a stylesheet escaping the SDK root is refused" - {
+            listOf("../outside/x.css", "/abs/x.css", "ui/../../x.css").forEach { path ->
+                "rejects '$path'" {
+                    val thrown = shouldThrow<IllegalArgumentException> {
+                        registry().scopeFor("a").style(path, order = 0)
+                    }
+
+                    thrown.message!! shouldContain "relative to the SDK root"
+                }
+            }
+        }
     }
 }
