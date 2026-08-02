@@ -51,6 +51,58 @@ SECOND consumer". Proposed split, to be confirmed with them via `.claude/BUILD-L
 - **Me:** the view layer — the `.vue` files, and the `TsSdkContributor` in `funktor/insights` that ships
   them as classpath resources.
 
+## Where the files live — `funktor/ui` was a mistake, corrected 2026-08-02
+
+All generator inputs are in `funktor/codegen/src/main/resources/ts/` — `ui/` for the design system,
+`insights/` for the tabs and pages. **`funktor/ui` existed for about two hours and is deleted.**
+
+The reasoning that created it — "shared UI deserves a module, views stay with their feature module" —
+applied a *runtime* boundary to files that never run in a JVM. Nothing in Kotlin reads them (verified by
+grep), and `ultra/codegen/…/ts/runtime/auth.ts` already mirrors `funktor:auth` from inside the generator.
+The version-skew argument does not survive either: a view ships iff its CONTRIBUTOR IS REGISTERED, and
+contributors must live in `funktor/codegen` regardless (`AuthTsContributor`'s KDoc — a feature module
+depending on `ultra:codegen` would drag the generator into a production artifact). Resource location has
+no bearing on it. The move also deleted two cross-module dependencies that existed only so a contributor
+could read another module's bytes.
+
+**Owed as a direct result:** `slices.ts` encodes wire shapes defined by `funktor/insights`'s collectors
+and now lives in a different module. `runtime/datetime.ts` has the same problem and the repo's answer —
+a parity spec (`MpDateTimeFieldParitySpec`) that fails when the two drift. **Write the equivalent for the
+collector `Data` classes**; without it, a collector field rename is a silent frontend break.
+
+## One blocker remains, in the codegen agent's area
+
+Written up in `.claude/tasks/20260802-insights-to-codegen-handover.md`.
+
+**The emit path is a depth contract.** The pages import `../models.ts` and `../ui/JsonTree.vue`
+relatively, so `ui/` and `insights/` must both sit at depth 1 under `<out>/`. The codegen agent's
+example used `pages/insights/…`, which would miss every one of those imports. Decided one way or the
+other by one of us, not both — it is baked into nine files, and it stops mattering when `@sdk` lands.
+
+**`@layer` adopted** (the decision they left open). `theme.css` declares `@layer fk.base, fk.features;`
+and wraps its body in `fk.base`; `insights.css` uses `fk.features`. Unlayered CSS beats layered CSS
+regardless of specificity, so an app's own `.fk-*` rule wins with no `!important` and no specificity
+fight — level 3 of the customization ladder stops depending on load order.
+
+**Measured, and counter-intuitive:** esbuild's CSS minifier **deletes** the bare
+`@layer fk.base, fk.features;` statement. Verified present unminified and absent from the production
+bundle. It is safe — the minifier only drops it when the layers are defined later in that same order — but
+**layer order cannot be confirmed by grepping the built CSS.**
+
+## The stylesheets cannot ship yet — and a comment is not a mechanism
+
+`theme.css` and `insights.css` are written but **inert**. The codegen agent is building the mechanism in
+`.claude/tasks/20260802-css-contribution-and-app-scaffold.md`; two of their findings land on this task:
+
+- **Nothing imports a `.css` in the SDK dir.** Emission is not the gap — `validatePath` is
+  extension-agnostic — but Vite bundles only what something imports, so the file is dead weight until a
+  `styles.ts` imports it.
+- **Order is semantic, and I did not guard it.** `insights.css` reads variables `theme.css` defines, and
+  contributors arrive from a DI container with no order. Getting it backwards produces no error, just
+  overrides that silently lose. `insights.css` carries a comment saying "load after `theme.css`" — that
+  is documentation, not enforcement. When their `Scope.style(path, order)` lands, **declare the order
+  rather than relying on that comment.**
+
 ## Security rules for this task, not negotiable
 
 - **Never `v-html`.** Every string in a slice is recorded verbatim from an unauthenticated request —

@@ -14,8 +14,16 @@ Kraft frontends are slow to iterate on — a CSS change costs seconds. The decis
 maintainer) is to move frontends to Vue + Vite, and to have **the framework generate the whole
 frontend SDK on the fly**: API clients *and* prebuilt components and pages. Target is Vue only.
 
-**Nothing is published to npm.** Components ship as classpath resources inside the funktor modules and
-are emitted by the same run that emits the client they call — so the two can never be version-skewed.
+**Nothing is published to npm.** Components ship as classpath resources and are emitted by the same run
+that emits the client they call — so the two can never be version-skewed.
+
+**Amended 2026-08-02 (maintainer): those resources live in `funktor/codegen`, not in the feature
+modules.** They are generator INPUTS — no JVM code reads them, and they never execute in a JVM — so the
+runtime module boundary does not apply to them. `ultra/codegen/src/main/resources/ts/runtime/auth.ts`
+already sets the precedent by mirroring `funktor:auth` from inside the generator. Version-skew is
+unaffected: the control point is whether a contributor is REGISTERED, and contributors must live in
+`funktor/codegen` anyway (see `AuthTsContributor`'s KDoc — a feature module depending on `ultra:codegen`
+would drag the generator into a production artifact).
 
 ## Decisions taken (2026-07-30, maintainer)
 
@@ -25,7 +33,7 @@ are emitted by the same run that emits the client they call — so the two can n
 | No npm publishing | Full SDK generated on the fly, per app |
 | No backward compat | Nothing needs to keep working |
 | No design compat | Free to look however Vue allows |
-| **`funktor/ui` owns the design system** | Settled 2026-08-02. Theme + primitives live there; each module keeps its own views |
+| **All generator inputs live in `funktor/codegen`** | Settled 2026-08-02, after a short-lived `funktor/ui` module was proposed and dropped — see "Styling" below |
 | **Unscoped `fk-`-prefixed classes + CSS variables** | Settled 2026-08-02. Not Tailwind, not `<style scoped>` — both are hostile to restyling a component you do not own |
 | No graph-library compat | Current libs are not sacred |
 | kotlinx.html renderers are DELETED, not ported | Read them as the spec for what each view needed, then delete. Do not keep them compiling |
@@ -781,18 +789,35 @@ the rewrite has a deletion payoff.
 This closes the two items that used to head "Still open": the customization contract and self-contained
 styling. They were one question, because both are answered by *where the styling seam sits*.
 
-### `funktor/ui` owns theme + primitives; views stay in their module
+### Everything lives in `funktor/codegen` — the `funktor/ui` module was proposed and dropped
 
-New module. It holds `theme.css` and the shared components every ops view needs — `JsonTree`,
-`StatStrip`, `KeyValueTable`, `PreBlock`. Consuming modules take a gradle dependency on it and emit the
-files with `out.sharedResource`, which dedupes identical content across contributors and fails loudly on
-a conflict (`sdk/TsSdkOutput.kt:275`).
+`funktor/ui` was created on 2026-08-02 to own the theme and primitives, on the reasoning that shared UI
+deserved its own module and views belonged with their feature module. **The maintainer questioned it the
+same day and was right; it is gone.** Recorded because the argument for it sounded good:
 
-**Views do NOT move there.** A `.vue` file is a resource with no Kotlin dependencies, so `funktor/ui`
-*could* hold every view — the constraint is not compilation. It is that `InsightsDetailPage.vue` imports
-the insights client, and shipping it from `funktor/ui` would let a run emit a page whose client it never
-generated. That is exactly the skew "components ship inside the funktor modules" was written to prevent.
-A view ships if and only if its client does.
+- These files are **generator inputs**. No JVM code reads them — verified, `grep` for `ts/ui` and
+  `ts/insights` in Kotlin returns nothing — and they never execute in a JVM. The runtime module boundary
+  they were being sorted by does not apply.
+- **The precedent already existed.** `ultra/codegen/src/main/resources/ts/runtime/auth.ts` is
+  hand-written TypeScript mirroring `funktor:auth`'s behaviour, and it lives in the generator module.
+- **The skew argument does not survive.** "A view ships iff its client does" is enforced by whether a
+  CONTRIBUTOR IS REGISTERED, and contributors must live in `funktor/codegen` regardless — a feature
+  module depending on `ultra:codegen` would drag the generator into a production artifact
+  (`AuthTsContributor`'s KDoc). Resource location has no bearing on it.
+- It also removed two cross-module dependencies that only ever existed so the contributor could read
+  bytes from another module's classpath.
+
+Layout: `funktor/codegen/src/main/resources/ts/ui/` for the shared design system, `…/ts/insights/` and
+one directory per feature after it.
+
+**The cost, named so it is paid rather than discovered.** Cohesion drops: `slices.ts` encodes wire shapes
+defined by `funktor/insights`'s collectors, and now sits in a different module from them. The repo already
+has this exact problem and its answer — `runtime/datetime.ts` mirrors the Slumber datetime codecs from
+inside `ultra:codegen`, and its header says *"when a codec changes, change this file in the same commit;
+`MpDateTimeFieldParitySpec` fails if the two drift."* **A parity test is owed here for the same reason.**
+
+`out.sharedResource` stays the rule for anything more than one contributor wants — that is about
+exclusive-vs-shared path ownership, which is unrelated to which module holds the file.
 
 ### Unscoped, `fk-`-prefixed class names — not Tailwind, not `<style scoped>`
 
