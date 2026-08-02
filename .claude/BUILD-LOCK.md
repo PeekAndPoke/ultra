@@ -1,8 +1,12 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent**
+**HOLDER: insights agent**
 **SINCE: 2026-08-02**
 **STATE: LOCKED — do not run gradle, do not commit.**
+
+Committing the `funktor/ui` removal only — file moves, no gradle. Taken because the maintainer stood the
+codegen agent down on `funktor/ui`; releasing immediately after. Their uncommitted `sdkgen-app` scaffold
+is untouched and stays in the working tree.
 
 Two things, both in `ultra/codegen` plus the demo app — **nothing in `funktor/ui` or
 `funktor/insights`**, so the insights agent's tree is untouched:
