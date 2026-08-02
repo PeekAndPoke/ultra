@@ -38,35 +38,37 @@ exfiltrates the token and replays it off-machine until expiry.
 **The TypeScript client is being written now.** If the hardening lands later, it is written twice; if
 the intended contract is known now, it is written once. So:
 
-**ANSWERED 2026-08-02.** Design settled in `.claude/tasks/20260719-token-storage-hardening.md`; the
-auth-transport agent is building it. Read that file for the whole picture — the short version:
+**ANSWERED 2026-08-02**, and the answer is *no*. Full reasoning in
+`.claude/tasks/20260719-token-storage-hardening.md`.
 
-- [x] **Is the cookie design happening?** Yes. And it is **not** the refresh-cookie design this section
-      assumed: the **session JWT itself** goes in an `httpOnly` cookie. The two-token variant
-      (access-in-memory + long-lived refresh cookie, with rotation and reuse-detection) was considered
-      and **dropped** — storage never stops session-riding, so its short-exposure-window benefit was
-      weaker than it read, and it bought two lifetimes plus rotation machinery against a threat it does
-      not address.
-- [x] **The server contract.** Sign-in and refresh return the same `AuthSignInResponse` as now, but
-      `Success.token: Token` becomes `Success.session: Session`, a sealed `Bearer(token) | Cookie`.
-      In cookie mode the response carries **no token at all**; `refreshToken` is called with no body and
-      the browser attaches the cookie, and the server re-issues a `Set-Cookie`. Failure is unchanged.
-      `Success` also gains `permissions`, `expiresAt` and `userId` — see below, this is the part that
-      matters most to you.
-- [x] **CORS** already correct in the demo — `allowCredentials = true`, explicit allowlist, no wildcard
-      (`funktor-demo/server/src/main/kotlin/server.kt:38-84`). Still to confirm for real origins.
-- [x] Not applicable — the answer was yes.
+- [x] **Is the cookie design happening?** **No — designed and dropped, same day.** b2b2c frontends run on
+      customer-controlled custom domains, which are a different *site*, so the cookie would need
+      `SameSite=None` — losing the strongest protection precisely where it was wanted. Credentialed CORS
+      also forbids wildcards, so every customer domain would need a dynamic allowlist. Two earlier
+      variants died first: per-realm cookie names (cookies are host-scoped, nothing to select on) and an
+      `X-Funktor-Realm` header (attacker-controlled, so it does not close the escalation it appears to).
+- [x] **The server contract.** Unchanged in transport terms: **`localStorage` + bearer stays.** What DID
+      change is the response shape, and it is the part that matters to you — see below.
+- [x] **CORS.** No longer load-bearing for auth: bearer needs no `allowCredentials`, and a custom-domain
+      frontend needs only an allowlist entry.
+- [x] **Say so explicitly.** Said: no cookie, not soon. Ship `localStorage` and do not pretend otherwise;
+      the honest mitigations are CSP + Trusted Types, a shorter TTL, and session revocation.
 
-**What this changes for the SDK, concretely.** `Success` now carries `permissions`, `expiresAt` and
-`userId` in **both** modes, so **no client needs to decode the JWT any more**. The Kotlin side is
-deleting `jwtClaims.kt` and its spec outright (175 lines, verified zero consumers). The same applies to
-`runtime/auth.ts`'s `decodeJwtClaims` / `expiryOf` — your file, your call, but it is the same deletion
-and it is what makes the SDK transport-agnostic.
+**What this changes for the SDK.** `AuthSignInResponse.Success` now states `permissions`, `expiresAt` and
+`userId`, and `Success.token: Token` became a sealed `Success.session: Session` carrying a single
+`Bearer(token)` variant. So:
 
-Note the earlier commitment recorded here — "storage is an injected strategy defaulting to in-memory,
-never localStorage-by-default" — was **reversed** on 2026-08-02 in favour of matching Kotlin's
-`localStorage` (see `20260731-sdk-auth-integration.md` §4.1). Keep it injected; the default stops being
-the security boundary once the cookie lands.
+- **No client needs to decode the JWT.** The Kotlin side deleted `jwtClaims.kt` and its spec outright
+  (175 lines, zero consumers). `runtime/auth.ts`'s `decodeJwtClaims` / `expiryOf` are unnecessary for the
+  same reason — your file, your call.
+- `AuthSession.signedIn`'s KDoc points at `AuthSignInResponseToken.token`; that type is gone, replaced by
+  the `Bearer` variant of the `Session` union.
+- `Session` stays **sealed with one variant** deliberately, so the discriminator is already in the wire
+  format and adding a transport later is additive rather than another breaking reshape.
+
+The earlier note here — "storage is an injected strategy defaulting to in-memory, never
+localStorage-by-default" — was reversed on 2026-08-02 in favour of matching Kotlin. Keep it injected; it
+is now the *only* storage decision rather than a placeholder for a cookie.
 
 ## 2. Realm: bound at construction, or per call?
 

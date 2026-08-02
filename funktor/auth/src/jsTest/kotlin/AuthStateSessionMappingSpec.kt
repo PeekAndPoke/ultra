@@ -2,7 +2,6 @@ package io.peekandpoke.funktor.auth
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
@@ -19,8 +18,8 @@ import kotlinx.serialization.json.JsonObject
  * The client maps the sign-in response; it never reads the token.
  *
  * This replaced `JwtClaimsSpec`, which tested a client-side JWT decoder that no longer exists. The decode
- * pulled permissions, `exp` and `sub` out of unverified claims — impossible once the token is an
- * `httpOnly` cookie, and never good, because those claims come from a blob the user can rewrite.
+ * pulled permissions, `exp` and `sub` out of unverified claims — which is worth not doing regardless of
+ * transport, because those claims come from a blob the user can rewrite in devtools.
  *
  * The malformed-token rows are the point: if anyone reintroduces a decode, they fail.
  */
@@ -81,17 +80,4 @@ class AuthStateSessionMappingSpec : StringSpec({
         data.tokenUserId shouldBe UserId("users/u1")
     }
 
-    "a cookie session carries no token, and everything else still arrives" {
-
-        val data = readSession(successOf(AuthSignInResponse.Session.Cookie), user = "u")
-
-        withClue("cookie mode has no token in the body — the browser holds it") {
-            data.bearerToken.shouldBeNull()
-        }
-
-        data.isLoggedIn shouldBe true
-        data.permissions shouldBe permissions
-        data.tokenExpires shouldBe expiry
-        data.tokenUserId shouldBe UserId("users/u1")
-    }
 })

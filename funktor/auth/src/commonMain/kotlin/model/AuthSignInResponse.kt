@@ -93,10 +93,14 @@ sealed interface AuthSignInResponse {
     /**
      * How the session is carried back to the client.
      *
-     * Sealed so the token's *existence* is tied to the transport. With a nullable `token` plus a mode
-     * flag, a client could read the token in cookie mode and get null at runtime; here that does not
-     * type-check, and the generated TypeScript is a `z.discriminatedUnion` that narrows before the field
-     * is reachable.
+     * **Only [Bearer] exists.** Sealed with a single variant on purpose: it keeps the discriminator in
+     * the wire format and in the generated TypeScript, so adding a transport later is additive rather
+     * than a breaking reshape of every client.
+     *
+     * An `httpOnly` cookie variant was designed and **dropped** (maintainer, 2026-08-02). The reasoning
+     * is in `.claude/tasks/20260719-token-storage-hardening.md`; the short version is that b2b2c
+     * frontends run on customer-controlled custom domains, which are a different *site*, so the cookie
+     * would need `SameSite=None` — losing the strongest protection precisely where it was wanted.
      */
     @Serializable
     sealed interface Session {
@@ -105,14 +109,6 @@ sealed interface AuthSignInResponse {
         @Serializable
         @SerialName("bearer")
         data class Bearer(val token: String) : Session
-
-        /**
-         * The token travels in an `httpOnly` cookie the browser attaches automatically — **there is no
-         * token in this response**, deliberately, because JS must not be able to read it.
-         */
-        @Serializable
-        @SerialName("cookie")
-        data object Cookie : Session
     }
 }
 

@@ -1,8 +1,8 @@
-# Frontend token storage hardening (localStorage → httpOnly session cookie)
+# Frontend token storage — bearer stays; the cookie route was designed and dropped
 
-**Status:** DESIGN SETTLED 2026-08-02. **Increment 1 COMPLETE** — not yet through `/feature-review`,
-which CLAUDE.md requires before DONE. Increment 2 (the cookie transport) not started, and needs its own
-plan: it moves a security boundary. Security-critical.
+**Status:** **Increment 1 COMPLETE** (the response contract) — not yet through `/feature-review`, which
+CLAUDE.md requires before DONE. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below;
+the reasoning is kept so it is not re-proposed. Security-critical.
 **Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c).
 
 ## The gap (current behaviour)
@@ -38,25 +38,67 @@ SPA never needs to read it: cookies attach based on the *request target*, not th
 CORS is already correct in the test bed — `allowCredentials = true` with an explicit origin allowlist and
 no wildcard (`funktor-demo/server/src/main/kotlin/server.kt:38-84`). Confirm it holds for real origins.
 
-## SETTLED (maintainer, 2026-08-02)
+## DROPPED (maintainer, 2026-08-02): no cookie transport
 
-**The session JWT itself goes in the httpOnly cookie.** Cookie mode's sign-in response carries no token
-at all. One credential, one lifetime, no rotation machinery; multi-tab works because the cookie is simply
-present.
+The `httpOnly` cookie was designed in full and then dropped. **Bearer + `localStorage` stays.** What
+killed it, in the order the objections arrived:
 
-**The earlier two-token design is DROPPED** — access token in memory + long-lived *refresh* token in the
-cookie, with rotation and reuse-detection. It is recorded here only so it is not re-proposed: its headline
-benefit was a short exposure window, and the Framing section above is why that was weaker than it read.
-An XSS on the page can call refresh to mint fresh access tokens either way, so the two-token design bought
-complexity — two lifetimes, rotation, family revocation — against a threat that storage does not address.
+**1. Cookies are host-scoped, not app-scoped.** Three frontends against one API host means every cookie
+is attached to every request from every app. Per-realm cookie *names* do not disambiguate — only the auth
+routes carry `{realm}` in their path, so there is nothing to select on for `InsightsApi` or app routes.
 
-Three further decisions, same day:
+**2. A client-sent realm header does not fix it.** `X-Funktor-Realm` selects correctly but does not close
+the escalation it appears to: an XSS on the b2b frontend sets it to `ops`, the browser attaches the ops
+cookie, the token really is an ops token, header and token agree. Both sides of the comparison are things
+the attacker legitimately obtained.
 
-| Decision | Choice |
-|---|---|
-| CSRF defence for cookie mode | **A required custom header.** A cross-origin page cannot set one without a preflight the server refuses. With `SameSite=Lax` and same-site deployment this is sufficient, needs no state and no second cookie |
-| Sequencing | **Contract first, transport second.** See increments below |
-| Logout | **Clears the cookie only** (`Max-Age=0`). The JWT stays valid until `exp`, exactly as today. Real revocation stays tracked in `.claude/tasks/20260728-session-revocation-wiring.md` |
+**3. An `Origin` check would close that** — `Origin` is a forbidden header name, so JS cannot forge it,
+and scoping the check to cookie-authenticated requests costs machine clients nothing. **But it breaks the
+product.** b2b2c frontends run on customer-controlled custom domains; `shop.customer.com` can never map
+to a realm in any config we own.
+
+**4. And custom domains are the killer anyway.** A custom domain is a different *site*, not just a
+different origin, so `SameSite=Lax` would block the cookie outright and force `SameSite=None` — throwing
+away the strongest layer precisely where it was wanted. Plus credentialed CORS forbids wildcards, so
+every customer domain would need a dynamic allowlist, each becoming a trusted origin.
+
+### What the two designs actually protect against — they are NOT the same
+
+- **`localStorage` + bearer** — exposed to token *exfiltration* via XSS: read it, replay it off-machine
+  until expiry. **Not exposed to CSRF at all**, because there is no ambient credential; an attacker page
+  cannot set `Authorization` cross-origin. A CSRF header here would protect against nothing.
+- **`httpOnly` cookie** — not exposed to exfiltration. Exposed to CSRF, and to session-riding, which
+  nothing fixes.
+
+Both need XSS to start. The delta is narrow: whether the attacker can use the session after leaving the
+page. See the Framing section above — storage bounds the blast radius, **CSP + Trusted Types is the
+actual mitigation**, and that is still owed regardless.
+
+**Obfuscating the token in `localStorage` was considered and rejected** (maintainer): the key ships in
+the bundle, so it is a speed bump measured in minutes.
+
+### What is left open, and where
+
+- **Real logout.** Neither transport gives it. `logout()` drops local state and the JWT stays valid until
+  `exp`; clearing a cookie would not have invalidated it either. The fix is
+  `.claude/tasks/20260728-session-revocation-wiring.md` — storage half built, unwired — and it is
+  transport-independent.
+- **Content-Type enforcement.** Split out as its own task: it is a live hole today, not a cookie concern.
+- **CSP + Trusted Types.** Still the real XSS mitigation, still unowned.
+- **Shorter token TTL.** Narrows the replay window; currently 1h in the demo realms.
+
+### The door is left open, cheaply
+
+`AuthSignInResponse.Session` stays **sealed with a single `Bearer` variant**. That keeps the discriminator
+in the wire format and in the generated TypeScript, so adding a transport later is additive rather than a
+breaking reshape of every client. Cookie mode would still be viable for fixed-origin first-party surfaces
+(ops/admin), where `SameSite=Lax` works properly — transport is a per-session choice, not a server mode.
+
+### Transport is chosen per session, not per deployment (settled, and still true)
+
+Register both providers; the client says which it wants at sign-in. A browser asks for one thing, a
+mobile app, CLI or another server uses bearer or an API key. Relevant now only as the reason a future
+cookie mode would not need a deployment fork.
 
 ## Increment 1 — the response contract (COMPLETE 2026-08-02)
 
@@ -147,111 +189,16 @@ Four mutants, all killed — including one that survived at first: **nothing ass
 `FunktorApiSpec` now exposes the test user ids and `AuthApiSpec` asserts a refresh returns a token for the
 SAME user, which nothing checked before.
 
-## Increment 2 — the cookie transport (DESIGN SETTLED 2026-08-02)
+## Verification matrix — what is still owed
 
-### Deployment: one API host per realm
+The cookie rows are gone with the design. What remains is transport-independent:
 
-`api-ops.klang.art`, `api-b2b.klang.art`, … one per realm, each serving one frontend subdomain.
-
-This is what makes the rest simple, and it replaced two designs that did not survive scrutiny:
-
-- **Per-realm cookie NAMES on one shared API host.** Proposed first, and wrong. Cookies are scoped to a
-  *host*, not an app, so all three would be attached to every request from every frontend, with nothing
-  to select on — only the auth routes carry `{realm}` in their path; `InsightsApi` and app routes do not.
-- **An `X-Funktor-Realm` header to select among them**, with the token's realm compared against it. It
-  selects correctly, but does not close the escalation it appears to: an XSS on the b2b frontend sets the
-  header to `ops`, the browser attaches the ops cookie, the token really is an ops token, header and
-  token agree. Both sides of the comparison are things the attacker legitimately obtained.
-- **An `Origin` check** would close that — `Origin` is a forbidden header name, so JS cannot forge it —
-  but it is a dead end for any non-browser client, which sends none. Rejected on those grounds.
-
-Separate hosts dissolve all of it: isolation, cookie selection, logout scoping, and multi-realm
-sign-in (you can be signed into all three frontends at once, as today).
-
-### The cookie
-
-```
-Set-Cookie: __Host-session=<jwt>; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=<exp - now>
-```
-
-Plain `__Host-session` on every API host — **per-realm names are unnecessary** once the host boundary
-does the isolating.
-
-`__Host-` is not decoration. The browser REJECTS such a cookie if it carries a `Domain`, has a `Path`
-other than `/`, or lacks `Secure`, which makes it host-only by construction and closes cookie tossing: a
-sibling subdomain cannot set `Domain=.klang.art` under this name and have it delivered to the API
-alongside the real one (session fixation).
-
-**Keep the mental model straight:** host-only restricts where the cookie is SENT, not who can CAUSE it to
-be sent. A page on any same-site subdomain can still make a credentialed request to the API host. That is
-what the next two items are for.
-
-### CSRF: three layers, and CORS is not one of them
-
-**CORS does not prevent CSRF.** It governs whether the *response* is readable, not whether the request is
-sent. A "simple request" — POST with `text/plain`, `form-urlencoded` or `multipart` — is delivered and
-executed with no preflight; the attacker simply cannot read the reply. The side effect already happened.
-
-1. **`SameSite=Lax`** — blocks true cross-site entirely. The cookie is not attached at all. Free, and the
-   strongest layer. Does NOT cover same-*site* siblings.
-2. **Enforce `Content-Type: application/json` on REST routes** — the layer that actually closes the
-   same-site gap, by making every request non-simple and therefore preflighted, at which point the CORS
-   allowlist genuinely is the gate. **This is a real hole today, independent of cookies**: `routing.kt:205,234`
-   does `call.receive<ByteArray>()` and parses it as JSON with no Content-Type check anywhere, so a
-   cross-origin `<form enctype="text/plain">` POST reaches a handler right now.
-   - Check for form-encoded / multipart routes first — file upload is the usual exception.
-3. **`X-Funktor-Csrf: 1`, a constant** — defence in depth (maintainer, 2026-08-02). Set automatically by
-   `authTransport` in cookie mode. **The value is not a secret and must never become one**: the protection
-   is that a cross-origin page cannot set a custom header without a preflight the server refuses. Say so
-   in its KDoc, or someone will later "harden" it into a token and add machinery for nothing.
-
-**Send it in both modes, require it only for cookie-authenticated requests.** Mandatory-for-bearer breaks
-every non-browser client — mobile, CLI, server-to-server — that legitimately sends nothing but
-`Authorization: Bearer`, and those have no ambient credential and so no CSRF exposure.
-
-Still open: `SameSite=Lax` attaches the cookie to top-level GET navigations, so a state-changing GET
-remains CSRF-able. REST hygiene says there are none; confirm rather than assume.
-
-### Server pieces
-
-- `FunktorRestBuilder.jwtCookie(...)` alongside the three `jwt()` overloads
-  (`funktor/rest/src/jvmMain/kotlin/index_jvm.kt:96-121`), cookie attributes configurable.
-- A cookie `AuthenticationProvider` following `AnonymousAuthenticationProvider`
-  (`funktor/rest/src/jvmMain/kotlin/auth/anonymous.kt:16`) — no Ktor `session()` machinery needed. Follow
-  the fail-soft convention: an unusable cookie falls through to anonymous, and the 401 comes from the
-  auth floor (`auth/call.kt:20-26`).
-- **A transport field on `Caller.JwtCaller`** (`auth/Caller.kt:28`) so the CSRF check fires only for
-  cookie-authenticated requests.
-- `POST /auth/{realm}/logout` — `public()` floor and idempotent, since clearing an absent cookie must
-  still answer 200. Realm-scoped for consistency with every other auth route; with one API host per realm
-  the realm is implied anyway.
-- An explicit **`realm` claim** on the token. Today `type` (user type) stands in for it — that is what
-  `refreshToken` validates via `expectedUserType` — but they coincide only because each demo realm happens
-  to have one user type. Additive.
-
-### Client — already done by the codegen agent, nothing owed
-
-`HttpRequest.credentials` and `SseOptions.credentials` exist (`c7faa088`), and `authTransport` already
-handles both modes (`c0264522`): `Authorization` for bearer, `credentials: 'include'` and no header for
-cookie. Boot hydration in cookie mode calls `refreshToken`, which behaves identically under cookie auth —
-it sits behind `AuthUserApi`'s `authenticated()` floor and reads whichever provider authenticated.
-
-## Verification matrix
-
-- [ ] Token is NOT in localStorage/sessionStorage in cookie mode; assert nothing sensitive survives a
-      hard reload except via the cookie.
-- [ ] The cookie is `__Host-`-prefixed, `HttpOnly; Secure; SameSite=Lax`, and not readable via
-      `document.cookie`.
-- [ ] A new tab bootstraps a session from the cookie without re-login (multi-tab preserved).
-- [ ] Logout clears the cookie; a subsequent authenticated call is anonymous.
-- [ ] A cookie-authenticated request WITHOUT the required custom header is rejected; the same request
-      with it succeeds. Both directions, or the check proves nothing.
-- [ ] A **bearer**-authenticated request without the custom header still succeeds — the CSRF check must
-      be gated on transport, not applied globally.
-- [ ] Cross-origin credentialed request works only for allowed origins (CORS allow-credentials +
-      explicit origin, never `*`).
-- [ ] CSP blocks inline script execution (Trusted Types enforced) — smoke test on each SPA. Independent
-      of storage, still required.
+- [ ] **CSP with nonces, and Trusted Types enforced** — the actual XSS mitigation, and the root cause for
+      either storage design. Smoke-test that inline script execution is blocked on each SPA.
+- [ ] **Session revocation makes logout real** — `.claude/tasks/20260728-session-revocation-wiring.md`.
+      Until then `logout()` drops local state and the token stays valid until `exp`.
+- [ ] Consider a shorter access-token TTL (currently 1h in the demo realms) to narrow the replay window.
+- [ ] `Content-Type` enforcement on REST routes — split out, see cross-references.
 
 ## Cross-references
 
@@ -260,7 +207,10 @@ it sits behind `AuthUserApi`'s `authenticated()` floor and reads whichever provi
 - `.claude/tasks/20260731-auth-module-for-sdk.md` §1 — the four open questions this answers.
 - `.claude/tasks/20260731-sdk-sse-auth.md` — SSE cannot set headers, so cookie mode helps there; it also
   needs `credentials: 'include'` on the stream fetch.
-- `.claude/tasks/20260728-session-revocation-wiring.md` — real revocation, deliberately not bundled.
+- `.claude/tasks/20260728-session-revocation-wiring.md` — **the only real logout mechanism**, and
+  transport-independent. This task cannot deliver logout; that one can.
+- `.claude/tasks/20260802-rest-content-type-enforcement.md` — split out of the dropped cookie work;
+  a live hole today, not a cookie concern.
 - `20260719-ktor-client-unification.md`, `20260719-cross-realm-authz-and-tests.md`,
   `20260717-auth-orgs-foundation.md`.
 

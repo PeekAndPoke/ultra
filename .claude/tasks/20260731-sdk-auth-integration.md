@@ -68,22 +68,25 @@ one-line change per app instead of a rewrite, which is the whole point of fixing
 
 When the hardening task lands, it changes the default in two places and nothing else.
 
-**UPDATE 2026-08-02 — the hardening design is now settled, and it is better than "change the default".**
-`.claude/tasks/20260719-token-storage-hardening.md`: the session JWT moves into an `httpOnly` cookie, so
-in cookie mode there is **no token for any storage strategy to hold**. `localStorage` stays the default
-for bearer mode; it simply stops being the security boundary.
+**UPDATE 2026-08-02 — the cookie route was designed and DROPPED, so §4.1 stands unchanged.**
 
-The part that lands on this file first: `AuthSignInResponse.Success` gains `permissions`, `expiresAt` and
-`userId`, and `Success.token: Token` becomes a sealed `Success.session: Session` (`Bearer(token)` |
-`Cookie`). Two consequences here —
+b2b2c frontends run on customer-controlled custom domains, which are a different *site*: the cookie would
+have needed `SameSite=None`, losing the strongest protection exactly where it was wanted. Reasoning in
+`.claude/tasks/20260719-token-storage-hardening.md`.
 
-- `AuthSession.signedIn`'s KDoc says "Pass `AuthSignInResponseToken.token`". That type is being deleted;
-  it becomes the `Bearer` variant of the new `Session` union.
-- `decodeJwtClaims` / `expiryOf` become unnecessary — `expiresAt` arrives in the response. The Kotlin
-  client is deleting its equivalent outright.
+So `localStorage` + bearer is the design, not a placeholder. Keep storage injected — it is now the only
+storage decision there is. The honest mitigations are CSP + Trusted Types, a shorter token TTL, and
+session revocation (`.claude/tasks/20260728-session-revocation-wiring.md`), not a different container.
 
-So §4.1's premise still holds — both clients move together — but the move is "stop reading the token",
-not "swap the storage".
+What DID land from increment 1, and it affects this file: `AuthSignInResponse.Success` states
+`permissions`, `expiresAt` and `userId`, and `Success.token: Token` became a sealed `Success.session:
+Session` with a single `Bearer(token)` variant.
+
+- `AuthSession.signedIn`'s KDoc says "Pass `AuthSignInResponseToken.token`" — that type is gone.
+- `decodeJwtClaims` / `expiryOf` are now unnecessary; `expiresAt` arrives in the response. The Kotlin
+  client deleted its equivalent outright.
+- `HttpRequest.credentials` / `SseOptions.credentials` are harmless to keep as general HTTP surface, but
+  the cookie branch in `authTransport` is dead code — yours to remove or keep.
 
 ### 4.2 Framework-neutral core, thin Vue layer
 
@@ -214,3 +217,19 @@ expiry is what avoids that, and it is still open below.
 - Refresh-before-expiry scheduling. `isExpiring` exists; nothing calls it yet. `AuthState` hooks
   window focus (`AuthState.kt:133`).
 - Nothing yet runs against the real server. That is the natural next check.
+
+### 4.1b Cookie mode DROPPED (maintainer, 2026-08-02)
+
+The cookie transport was designed and then dropped — b2b2c frontends run on customer-controlled custom
+domains, which are a different *site*, forcing `SameSite=None` and losing the strongest protection exactly
+where it was wanted. Reasoning in `.claude/tasks/20260719-token-storage-hardening.md`.
+
+So **`localStorage` + bearer stays, and §4.1 stands as written.** What still applies from the increment-1
+contract: `Success` states `permissions`, `expiresAt` and `userId`, so nothing needs to decode the token —
+`decodeJwtClaims` / `expiryOf` in `runtime/auth.ts` are now unnecessary, as the Kotlin client's equivalent
+was deleted outright.
+
+`AuthSignInResponse.Session` remains sealed with a single `Bearer` variant, so the discriminator stays in
+the wire format and a future transport is additive. `HttpRequest.credentials` / `SseOptions.credentials`
+are harmless to keep — they are general HTTP surface — but the cookie branch in `authTransport` is now
+dead code and is yours to remove or keep.
