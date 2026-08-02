@@ -2,45 +2,88 @@
  * The session half of auth — the TypeScript counterpart of `AuthState`
  * (`funktor/auth/src/jsMain/kotlin/AuthState.kt`).
  *
- * Holds the JWT, decodes it for display, and hands the transport something to attach. Deliberately
+ * Holds what the sign-in response said, and hands the transport something to attach. Deliberately
  * framework-neutral: [AuthSession.subscribe] is a plain listener so a Vue layer can wrap it in a
  * `shallowRef` without this file knowing Vue exists.
  *
- * HAND-WRITTEN AND CHECKED IN. It lives in `ultra:codegen` rather than beside the auth feature
- * because NOTHING here is funktor-specific — a bearer token, a storage strategy, a transport wrapper.
- * The funktor-specific part of login is the realm/provider flow, and that is GENERATED.
+ * **Nothing here decodes a JWT.** The response states the permissions, the expiry and the user id
+ * outright, so no client has to read a token — which is what makes the same code work when the token
+ * is an httpOnly cookie the browser will not let JavaScript see. The Kotlin client dropped its own
+ * decoder for the same reason.
  *
- * The decisive reason, though, is verification: `ts-verify` lives in this module and cannot see
- * another module's resources, so shipping it from `funktor:codegen` would mean shipping TypeScript
- * that nothing type-checks or executes. `AuthTsContributor` still decides WHEN it ships.
+ * HAND-WRITTEN AND CHECKED IN. It lives in `ultra:codegen` rather than beside the auth feature
+ * because nothing in it is funktor-specific — a session, a storage strategy, a transport wrapper —
+ * and because `ts-verify` cannot see another module's resources, so shipping it from
+ * `funktor:codegen` would mean shipping TypeScript that nothing type-checks or executes.
+ * `AuthTsContributor` still decides WHEN it ships.
  */
 import type { HttpRequest, HttpResponse, HttpTransport } from './http.ts'
 
+//  What the server said  //////////////////////////////////////////////////////////////////////////
+
+/**
+ * How the session is carried, mirroring `AuthSignInResponse.Session`.
+ *
+ * Structural, so the generated `AuthSignInResponseSession` satisfies it without an import — the
+ * runtime must not depend on generated output, which only exists in an SDK that reached the auth
+ * feature.
+ *
+ * Sealed on the server precisely so the token's EXISTENCE is tied to the transport: in cookie mode
+ * there is no token in the response, and that must not type-check.
+ */
+export type SessionCarrier =
+    | { readonly _type: 'bearer'; readonly token: string }
+    | { readonly _type: 'cookie' }
+
+/**
+ * The part of a successful sign-in this module needs.
+ *
+ * The generated `AuthSignInResponseSuccess` satisfies it. [P] is the permissions type — supply the
+ * generated `UserPermissions` and the session is typed end to end, without this file importing
+ * anything generated.
+ */
+export interface SignedIn<P = unknown> {
+    readonly session: SessionCarrier
+    readonly permissions?: P
+    /**
+     * `MpInstant`, so the epoch-millis number is `expiresAt.ts` — NOT `expiresAt` itself.
+     *
+     * Nullable because `exp` is optional in RFC 7519 and the verifier treats an absent one as "no
+     * expiry check". Null means the session states no expiry.
+     */
+    readonly expiresAt?: { readonly ts: number } | null
+    readonly userId?: string | null
+}
+
 //  Storage  ///////////////////////////////////////////////////////////////////////////////////////
 
-/** Where the token is kept between page loads. */
-export interface TokenStorage {
+/**
+ * Where the session is kept between page loads.
+ *
+ * A SESSION store, not a token store. In cookie mode there is no token to keep — the browser holds it
+ * and JavaScript cannot read it — so anything shaped around a token string cannot express the state
+ * that actually needs persisting.
+ */
+export interface SessionStorage {
     read(): string | null
-    write(token: string): void
+    write(serialized: string): void
     clear(): void
 }
 
 /**
  * `localStorage`, mirroring what `AuthState` does today.
  *
- * **This is a known, accepted weakness, not an oversight.** Any script on the origin can read the
- * token and replay it elsewhere — tracked as `.claude/tasks/20260719-token-storage-hardening.md`.
- * It is the default here ON PURPOSE: the Kotlin and TypeScript clients deliberately share the same
- * behaviour so the fix is designed once and lands in both, rather than one client looking solved
- * while the other is not.
- *
- * Storage is injected precisely so that fix is a changed default rather than a rewrite.
+ * **A known, accepted weakness, not an oversight.** Any script on the origin can read this and replay
+ * it — tracked as `.claude/tasks/20260719-token-storage-hardening.md`. It is the default ON PURPOSE:
+ * the Kotlin and TypeScript clients deliberately share the same behaviour so the fix is designed once
+ * and lands in both, rather than one client looking solved while the other is not. Storage is
+ * injected precisely so that fix is a changed default rather than a rewrite.
  *
  * Degrades to in-memory when `localStorage` throws — Safari private mode and SSR both do — because a
  * login that cannot persist is far better than one that cannot happen.
  */
-export function localStorageTokens(key: string = 'funktor.auth.token'): TokenStorage {
-    const fallback = inMemoryTokens()
+export function localStorageSession(key: string = 'funktor.auth.session'): SessionStorage {
+    const fallback = inMemorySession()
 
     const store = (): Storage | null => {
         try {
@@ -65,13 +108,13 @@ export function localStorageTokens(key: string = 'funktor.auth.token'): TokenSto
                 return fallback.read()
             }
         },
-        write: (token) => {
+        write: (serialized) => {
             const s = store()
-            if (s === null) return fallback.write(token)
+            if (s === null) return fallback.write(serialized)
             try {
-                s.setItem(key, token)
+                s.setItem(key, serialized)
             } catch {
-                fallback.write(token)
+                fallback.write(serialized)
             }
         },
         clear: () => {
@@ -87,118 +130,79 @@ export function localStorageTokens(key: string = 'funktor.auth.token'): TokenSto
     }
 }
 
-/** Keeps the token in a closure. Lost on reload — what tests use, and the eventual hardened default. */
-export function inMemoryTokens(): TokenStorage {
-    let token: string | null = null
+/** Keeps the session in a closure. Lost on reload — what tests use, and the eventual hardened default. */
+export function inMemorySession(): SessionStorage {
+    let value: string | null = null
 
     return {
-        read: () => token,
-        write: (value) => {
-            token = value
+        read: () => value,
+        write: (serialized) => {
+            value = serialized
         },
         clear: () => {
-            token = null
+            value = null
         },
     }
-}
-
-//  Claims  ////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * A JWT's payload, decoded but **NOT VERIFIED**.
- *
- * A client cannot verify a signature — it has no key, and shipping one would be worse than not
- * checking. So treat every field here as **display data only**: render a name, decide when to
- * refresh, grey out a menu. Never make an authorization decision from it. The server re-derives
- * everything from the token it verifies itself, and it is the only authority.
- *
- * Anyone can hand-edit a JWT payload and this function will happily decode it.
- */
-export type JwtClaims = Readonly<Record<string, unknown>>
-
-/**
- * Decodes a JWT's payload segment, or `null` when it is not a readable JWT.
- *
- * Never throws: a malformed token is an ordinary state (a truncated `localStorage` value, a token
- * from an older server), and throwing here would take down a page render.
- */
-export function decodeJwtClaims(token: string): JwtClaims | null {
-    const segments = token.split('.')
-    if (segments.length !== 3) return null
-
-    const payload = segments[1]
-    if (payload === undefined || payload.length === 0) return null
-
-    try {
-        // base64url -> base64, then pad to a multiple of 4. `atob` rejects both otherwise.
-        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
-        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
-
-        // Round-trip through percent-encoding so multi-byte UTF-8 survives; `atob` yields latin1.
-        const json = decodeURIComponent(
-            atob(padded)
-                .split('')
-                .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
-                .join(''),
-        )
-
-        const parsed: unknown = JSON.parse(json)
-
-        return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-            ? (parsed as JwtClaims)
-            : null
-    } catch {
-        return null
-    }
-}
-
-/** The `exp` claim as epoch MILLISECONDS, or `null` when absent or not a number. JWT `exp` is seconds. */
-export function expiryOf(claims: JwtClaims | null): number | null {
-    const exp = claims?.['exp']
-
-    return typeof exp === 'number' && Number.isFinite(exp) ? exp * 1000 : null
 }
 
 //  Session  ///////////////////////////////////////////////////////////////////////////////////////
 
 /** What a view needs to render. Immutable — a new object is published on every change. */
-export interface AuthSessionState {
+export interface AuthSessionState<P = unknown> {
+    readonly carrier: SessionCarrier | null
+    /** The bearer token, or `null` in cookie mode AND when logged out. Never assume it exists. */
     readonly token: string | null
-    /** Decoded, UNVERIFIED. Display only — see [JwtClaims]. */
-    readonly claims: JwtClaims | null
-    /** Epoch milliseconds, or `null` when the token carries no usable `exp`. */
+    readonly permissions: P | null
+    /** Epoch milliseconds, or `null` when the session states no expiry. */
     readonly expiresAt: number | null
+    readonly userId: string | null
     readonly isLoggedIn: boolean
 }
 
 /** Cancels a [AuthSession.subscribe]. */
 export type Unsubscribe = () => void
 
-/**
- * The current session, and the only thing that writes token storage.
- *
- * Restores from storage on construction, so a reload keeps the user logged in.
- */
-export class AuthSession {
-    private readonly storage: TokenStorage
-    private readonly listeners = new Set<(state: AuthSessionState) => void>()
-    private current: AuthSessionState
+const EMPTY: AuthSessionState<never> = {
+    carrier: null,
+    token: null,
+    permissions: null,
+    expiresAt: null,
+    userId: null,
+    isLoggedIn: false,
+}
 
-    constructor(storage: TokenStorage = localStorageTokens()) {
+function empty<P>(): AuthSessionState<P> {
+    return EMPTY as AuthSessionState<P>
+}
+
+/**
+ * The current session, and the only thing that writes storage.
+ *
+ * Restores from storage on construction, so a reload keeps the user logged in. Cookie mode has
+ * nothing to restore — the browser holds the credential and JS cannot see it — so an app in that mode
+ * must re-establish state on boot by calling the refresh endpoint, which returns the same payload
+ * [signedIn] takes.
+ */
+export class AuthSession<P = unknown> {
+    private readonly storage: SessionStorage
+    private readonly listeners = new Set<(state: AuthSessionState<P>) => void>()
+    private current: AuthSessionState<P>
+
+    constructor(storage: SessionStorage = localStorageSession()) {
         this.storage = storage
-        this.current = stateOf(storage.read())
+        this.current = restore<P>(storage.read())
     }
 
-    /** The current state. Cheap — nothing is decoded here, only on change. */
-    readonly state = (): AuthSessionState => this.current
+    /** The current state. */
+    readonly state = (): AuthSessionState<P> => this.current
 
     /**
      * Registers [listener] and returns its canceller.
      *
-     * Called IMMEDIATELY with the current state, so a subscriber never renders a stale first frame
-     * — the single most common bug when wiring a store into a component.
+     * Called IMMEDIATELY with the current state, so a subscriber never renders a stale first frame —
+     * the single most common bug when wiring a store into a component.
      */
-    readonly subscribe = (listener: (state: AuthSessionState) => void): Unsubscribe => {
+    readonly subscribe = (listener: (state: AuthSessionState<P>) => void): Unsubscribe => {
         this.listeners.add(listener)
         listener(this.current)
 
@@ -207,23 +211,29 @@ export class AuthSession {
         }
     }
 
-    /** Records a successful sign-in. Pass `AuthSignInResponseToken.token`. */
-    readonly signedIn = (token: string): void => {
-        this.storage.write(token)
-        this.publish(stateOf(token))
+    /**
+     * Records a successful sign-in — or a refresh, which returns the same payload.
+     *
+     * Takes the RESPONSE, not a token: in cookie mode there is no token, and everything worth keeping
+     * is stated by the server rather than dug out of a JWT.
+     */
+    readonly signedIn = (payload: SignedIn<P>): void => {
+        this.storage.write(JSON.stringify(payload))
+        this.publish(stateOf<P>(payload))
     }
 
-    /** Drops the session locally. The server is not told — a JWT stays valid until it expires. */
+    /** Drops the session locally. A bearer JWT stays valid until it expires; a cookie needs the server. */
     readonly signOut = (): void => {
         this.storage.clear()
-        this.publish(stateOf(null))
+        this.publish(empty<P>())
     }
 
     /**
-     * True when there is a token and it expires within [withinMs].
+     * True when there is a session and it expires within [withinMs].
      *
-     * A token with no readable `exp` returns FALSE: with nothing to compare, "expiring" is unknowable,
-     * and answering true would refresh on every call.
+     * A session with no expiry returns FALSE. That is load-bearing rather than defensive: `exp` is
+     * optional in RFC 7519, so `expiresAt` is genuinely absent sometimes, and answering true would
+     * refresh on every call forever.
      */
     readonly isExpiring = (withinMs: number, now: number = Date.now()): boolean => {
         const { expiresAt, isLoggedIn } = this.current
@@ -231,7 +241,7 @@ export class AuthSession {
         return isLoggedIn && expiresAt !== null && expiresAt - now <= withinMs
     }
 
-    private publish(next: AuthSessionState): void {
+    private publish(next: AuthSessionState<P>): void {
         this.current = next
         // Over a COPY: a listener that unsubscribes itself while being notified would otherwise
         // mutate the set mid-iteration.
@@ -239,47 +249,82 @@ export class AuthSession {
     }
 }
 
-function stateOf(token: string | null): AuthSessionState {
-    if (token === null || token.length === 0) {
-        return { token: null, claims: null, expiresAt: null, isLoggedIn: false }
+function stateOf<P>(payload: SignedIn<P>): AuthSessionState<P> {
+    return {
+        carrier: payload.session,
+        token: payload.session._type === 'bearer' ? payload.session.token : null,
+        permissions: payload.permissions ?? null,
+        expiresAt: payload.expiresAt?.ts ?? null,
+        userId: payload.userId ?? null,
+        isLoggedIn: true,
     }
+}
 
-    const claims = decodeJwtClaims(token)
+/**
+ * Rebuilds the session from what was persisted.
+ *
+ * Anything unreadable restores to logged-out rather than throwing: a truncated `localStorage` value
+ * and a payload from an older SDK are both ordinary, and throwing here would take down a page render.
+ */
+function restore<P>(serialized: string | null): AuthSessionState<P> {
+    if (serialized === null || serialized.length === 0) return empty<P>()
 
-    return { token, claims, expiresAt: expiryOf(claims), isLoggedIn: true }
+    try {
+        const parsed: unknown = JSON.parse(serialized)
+
+        if (typeof parsed !== 'object' || parsed === null) return empty<P>()
+
+        const session: unknown = (parsed as { session?: unknown }).session
+
+        if (typeof session !== 'object' || session === null) return empty<P>()
+
+        const kind: unknown = (session as { _type?: unknown })._type
+
+        if (kind !== 'bearer' && kind !== 'cookie') return empty<P>()
+
+        return stateOf<P>(parsed as SignedIn<P>)
+    } catch {
+        return empty<P>()
+    }
 }
 
 //  Transport  /////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Wraps [inner] so every request carries the session's token.
+ * Wraps [inner] so every request carries the session.
  *
  * **Auth is a transport wrapper, not an `SdkConfig` field** — the idiom `runtime/http.ts` documents,
  * and the same shape the Kotlin client uses via a Ktor `defaultRequest` closure.
  *
  * ```ts
- * const session = new AuthSession()
+ * const session = new AuthSession<UserPermissions>()
  * const config = sdkConfig('https://api.example.com', authTransport(fetchTransport(), session))
  * ```
  *
- * **Attaches to every request, including public ones — and that is safe.** The transport sees a built
- * URL, not a route pattern, so it cannot tell them apart. It does not need to: funktor DEGRADES an
- * unverifiable token to an anonymous caller rather than rejecting the request. `tryJwtCaller` returns
- * null on a failed verify (expiry included), Ktor falls through to the terminal `anonymous` provider,
- * and a `public()` rule grants anonymous. So a stale token on `signIn` behaves exactly as if none
- * were sent. The Kotlin client always-attaches for the same reason.
+ * Bearer mode attaches `Authorization`. **Cookie mode attaches nothing and permits the cookie to
+ * travel instead** — the browser holds the credential, and setting `credentials` is the only thing
+ * the client can do. An explicit value on the request always wins either way, so a caller can still
+ * do something special for one call.
  *
- * An existing `Authorization` header is never overwritten, so a caller can still do something
- * special for one request.
+ * Attaching on PUBLIC routes too is safe and deliberate: funktor degrades an unverifiable token to an
+ * anonymous caller rather than rejecting it — `tryJwtCaller` returns null on a failed verify and Ktor
+ * falls through to the terminal `anonymous` provider — so a stale token on `signIn` behaves exactly
+ * as if none were sent.
  */
-export function authTransport(inner: HttpTransport, session: AuthSession): HttpTransport {
+export function authTransport<P>(inner: HttpTransport, session: AuthSession<P>): HttpTransport {
     return {
         send: (request: HttpRequest): Promise<HttpResponse> => {
-            const { token } = session.state()
+            // Read PER REQUEST, not at wrap time: a transport built before login must still
+            // authenticate afterwards, and a sign-out must take effect immediately.
+            const { carrier, token } = session.state()
 
-            if (token === null || 'Authorization' in request.headers) {
-                return inner.send(request)
+            if (carrier === null) return inner.send(request)
+
+            if (carrier._type === 'cookie') {
+                return inner.send({ ...request, credentials: request.credentials ?? 'include' })
             }
+
+            if (token === null || 'Authorization' in request.headers) return inner.send(request)
 
             return inner.send({
                 ...request,

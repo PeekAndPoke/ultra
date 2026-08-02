@@ -212,6 +212,41 @@ data class Success(
 
 Append one short block per iteration. Newest at the top.
 
+### Iteration 6 — 2026-08-02, `runtime/auth.ts` reshaped around the new response
+
+Item 5's runtime half is DONE for bearer AND cookie. The JWT decoder is gone.
+
+- `AuthSession.signedIn` takes the **response payload**, not a token string. In cookie mode there is
+  no token, so a token-shaped API literally cannot express the state.
+- `TokenStorage` -> `SessionStorage`: it persists the whole payload. **This is what replaces boot
+  hydration for bearer mode** — a reload restores `expiresAt` and `permissions` from storage, so the
+  refresh timer still schedules. Without it, deleting the decoder reintroduces the exact
+  "randomly logged out" failure their plan called the sharp one. Mutation MUT 3 pins it.
+- `authTransport` attaches `Authorization` in bearer mode and sets `credentials: 'include'` in cookie
+  mode, attaching NO header — JS cannot read the cookie, so there is nothing to attach.
+- `AuthSession<P>` is generic over the permissions type, so an app passes the generated
+  `UserPermissions` and gets full typing without this file importing anything generated.
+
+**Verified against REAL generated output, not fixtures:** a probe compiles
+`const x: SignedIn<UserPermissions> = success` where `success: AuthSignInResponseSuccess`, plus the
+whole app wiring including `session.state().permissions?.roles`. If the runtime and the generator ever
+drift, that stops compiling.
+
+36 ts-verify checks, all executed. Mutation-tested 4/4: cookie credentials dropped; `restore()`
+skipping its `_type` check so corrupt storage logs you in; only the token persisted so expiry dies on
+reload; the token captured at wrap time instead of per request.
+
+Demo app regenerated and `vue-tsc --noEmit` clean.
+
+### STILL OPEN for cookie mode (not mine to finish)
+
+- **Boot hydration is still required in COOKIE mode** and is NOT done. Bearer restores from storage;
+  cookie has nothing to restore, because the credential is the browser's. That app must call
+  `refreshToken` on boot — it returns the same payload `signedIn` takes. Left undone deliberately:
+  it needs the endpoint to exist in cookie mode and a decision on realm configuration.
+- `POST /logout` does not exist yet (their increment 2). `signOut()` currently clears local state
+  only, which is right for bearer and INSUFFICIENT for cookie — JS cannot delete an httpOnly cookie.
+
 ### Iteration 5 — 2026-08-02, the new DTOs VERIFIED through the generator
 
 Regenerated against the live API after their `5026e436`. Everything the plan said to check:
