@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (demo SDK regeneration)**
-**SINCE: 2026-08-02 (taken to regenerate the demo SDK)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -24,6 +24,9 @@ Commits `c7faa088` and `67e78a4b`. Only `ultra/codegen/**` and task docs.
 `./gradlew :funktor-demo:server:run --args="--cli sdk:ts:generate --out <ABSOLUTE>"`. When your
 `AuthSignInResponse` change lands, that is the fastest way to see the emitted TypeScript. Generate
 into a scratch dir, not into `funktor-demo/sdkgen-app`.
+
+Also regenerated `funktor-demo/sdkgen-app/src/funktorsdk` (gitignored, marker-owned) and ran
+`vue-tsc --noEmit` over the app: exit 0.
 
 Verified at release: `getRealm`/`signIn` emit as `publicRoute` and the rest of `LoginApi` as `route`,
 and the real SDK compiles through its barrel with the real auth models present.

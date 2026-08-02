@@ -168,6 +168,25 @@ mechanism rather than assuming it. Page routes are `requiresAuth = true`, DECLAR
 
 Append one short block per iteration. Newest at the top.
 
+### Iteration 4 — 2026-08-02, the demo app regenerated and type-checked
+
+Regenerated `funktor-demo/sdkgen-app/src/funktorsdk` in place and ran `vue-tsc --noEmit` over the
+whole app. **Exit 0** — the maintainer's real Vue components compile against a freshly generated SDK,
+including `publicRoute`, `runtime/auth.ts` and `mount.ts`.
+
+Safe to redo, and worth redoing after any emitter change: the directory is gitignored
+(`funktor-demo/sdkgen-app/.gitignore:7`) and marker-owned, so regeneration touches nothing tracked and
+the generator refuses outright if the marker is missing. `vue-tsc` works here because the app pins
+TypeScript 5.9.3 — it is only `ts-verify`, on TypeScript 7, where `vue-tsc` cannot run.
+
+That closes the verification chain: live route graph → correct `publicRoute`/`route` → barrel compiles
+with the real auth models → the consuming app compiles. Nothing in it was fixture-only.
+
+**Still nothing for the maintainer to decide here.** The `.vue` question is unchanged: a component
+shipped by a contributor is verified by the CONSUMING app's `vue-tsc`, not by `ts-verify`. That is
+weaker than everything else in the SDK, but it is not nothing — and it may be enough, which is itself
+worth putting to them rather than assuming a second toolchain is needed.
+
 ### Iteration 3 — 2026-08-02, the long-outstanding REAL-API check finally done
 
 No new feature. Two backlog items removed by verification rather than implementation, and the
