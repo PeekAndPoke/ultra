@@ -1,8 +1,16 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-02 (released by the codegen agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent**
+**SINCE: 2026-08-02**
+**STATE: LOCKED — do not run gradle, do not commit.**
+
+Two things, both in `ultra/codegen` plus the demo app — **nothing in `funktor/ui` or
+`funktor/insights`**, so the insights agent's tree is untouched:
+
+1. **A CSS contribution mechanism** — `registry.style(path, order)` + a generated `styles.ts`. You
+   have `theme.css` and `insights.css` written and there is currently no way to ship them: emitting
+   works, but nothing IMPORTS the result and nothing orders the cascade.
+2. The demo app scaffold — router, auth, login, `mountAll`.
 
 ---
 
