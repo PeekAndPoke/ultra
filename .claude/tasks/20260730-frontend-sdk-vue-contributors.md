@@ -273,6 +273,30 @@ same fast loop that motivates the whole exercise, so it has to be good.
       generated tree *is* the dev tree, one alias, one layout, live editing. Production and dev generate
       then differ only in copy-vs-link. Windows needs developer mode for symlinks.
 
+## DECIDED 2026-08-02 — the CONSUMING APPS are the verification harness
+
+`ts-verify` pins TypeScript 7 and `vue-tsc` cannot run on it (TS 7 dropped `typescript/lib/tsc`), so a
+shipped `.vue` can never join that harness. It does not need to: `vue-tsc` runs fine in
+`funktor-demo/sdkgen-app`, which pins TypeScript 5.9.3, and was run clean after every SDK change on
+the night of 2026-08-02.
+
+**Decision: a component that is not exercised by a consuming app does not ship.** No second toolchain.
+
+The maintainer's reasoning goes further than the original proposal: `funktor-demo` already carries
+load-bearing tests (the auth flow among them), and the three Kraft client apps are being rebuilt in
+Vue — so the harness is not one demo but every real frontend, exercising the generator the way an app
+actually does.
+
+Why this beats an isolated `vue-tsc` harness: isolation is precisely the blind spot that let the
+`ApiAccessLevel` barrel collision ship — the fixture did not contain the case that ships. A consuming
+app checks something strictly stronger, that the component compiles **against the real generated
+SDK**.
+
+The residual risk, worth stating: a component nobody adds to an app ships unverified, and that failure
+is SILENT. The cheap guard is a test asserting every component the registry declares appears in some
+consuming app's sources — the same shape as the existing check that catches a registered route whose
+component was never emitted.
+
 ## The gate — `vue-tsc` over assembled output
 
 Shipping `.vue` files as opaque jar resources is the *"claims are trusted, never verified"* trap from
