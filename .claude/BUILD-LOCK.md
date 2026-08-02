@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (remove ApiRoutes.mountPoint)**
-**SINCE: 2026-08-02 (taken to remove ApiRoutes.mountPoint)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -13,42 +13,25 @@ every build and every commit, not once per session — the holder changes undern
 
 ## What the last holder changed — codegen agent, 2026-08-02
 
-Commits `c0264522`, `2213ffd9`, `f8e8eac8` — the SDK side of your increment 1, the sign-in flow, and refresh scheduling. Only `ultra/codegen/**` and my own task doc.
+Latest: `6c5cba4e` — **`ApiRoutes.mountPoint` is REMOVED.** This touches `funktor/rest` and
+`funktor/core`, so it is the one change of mine that lands in your area.
 
-**Your reshape is fully consumed.** `Session` emits as its own `z.discriminatedUnion`,
-`Session.Cookie` (a `data object`) emits `{_type:'cookie'}`, and `AuthSignInResponseToken` is gone.
-The SDK's `AuthSession` now takes the RESPONSE payload instead of a token string, persists the whole
-thing, and the JWT decoder is deleted — same reasoning as your `jwtClaims.kt` deletion.
+An `ApiRoutes` group is declared by a `TypedApiEndpoint` the CLIENT owns too, but only the server
+applied the prefix while `ApiClient` built its URL from the raw `endpoint.uri` — so any non-empty
+value meant a 404 AND a silently empty access matrix. No value could be correct, because the prefix
+lives in server-only code while the endpoint is shared. Nothing passed one.
 
-`authTransport` already handles **both** modes: `Authorization` for bearer, `credentials: 'include'`
-and no header for cookie. So the SDK is not a blocker for increment 2.
+`Routes.mountPoint` stays — it is sound where there is no client-side counterpart
+(`InsightsGuiRoutes : Routes("/_")`), and its KDoc now says why API routes cannot have one.
 
-**Two things increment 2 still needs from your side, both recorded in my loop doc:**
+If you have an `ApiRoutes` subclass in flight, drop the argument; the compiler will find it.
 
-- **`POST /logout`.** `signOut()` clears local state, which is right for bearer and insufficient for
-  cookie — JavaScript cannot delete an httpOnly cookie.
-- **Boot hydration in cookie mode.** Bearer restores from storage; cookie has nothing to restore
-  because the credential is the browser's. The app must call `refreshToken` on boot — it returns the
-  same payload `signedIn` takes, so one code path covers both modes.
+Earlier the same night: `c7faa088` (`credentials` on `HttpRequest`/SSE — the SDK half your increment 2
+needs), `c0264522` (session reshaped around your new response), `2213ffd9` (`runtime/login.ts`, the
+three-way sign-in flow), `f8e8eac8` (`runtime/refresh.ts`, refresh-before-expiry).
 
-One correction to your handover, verified before acting: the `_type: z.literal('token')` you called
-spurious was REAL wire data — Slumber writes it for any `@SerialName` class via
-`PolymorphicChildSlumberer`. It is gone now because `Token` is gone, but "fixing" the generator would
-have broken sign-in. Evidence in `.claude/tasks/20260802-codegen-loop-handoff.md`.
-
-**New: `runtime/login.ts`.** `completeSignIn(session, call)` collapses your three-way response into a
-four-way outcome an app can switch on, and only `success` touches the session — the other two carry
-single-use tokens, so storing them would make `isLoggedIn` true for a user who is not. It ships no
-view, so it needs none of the open `.vue` decisions.
-
-**New: `runtime/refresh.ts`.** `startAutoRefresh(session, () => client.login.refreshToken({realm}))`
-finally acts on `expiresAt` — nothing was calling `isExpiring`, so sessions silently died. A failed
-refresh reports and does NOT sign the user out; that is app policy. Note it deliberately never
-refreshes a session with no expiry, which is safe now precisely because the response STATES the
-expiry rather than us decoding it — the ambiguity `AuthState.kt:138-144` had to defend against is
-gone.
-
-`:ultra:codegen:check` and `:funktor:codegen:check` green, sweep clean, demo app `vue-tsc` clean.
+`funktor:rest` 116, `ultra:codegen` 288, `funktor:codegen` 59, 0 failures. Full compile sweep clean —
+this was an ABI change to a published constructor.
 
 ## If the lock looks stale
 
