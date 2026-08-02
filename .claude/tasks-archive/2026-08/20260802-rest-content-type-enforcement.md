@@ -1,9 +1,10 @@
 # REST routes accept any Content-Type, so a cross-origin form POST reaches a handler
 
-**Status:** FIXED 2026-08-02 — not yet through `/feature-review`.
-**Security-critical:** yes — it is what makes a JSON API CSRF-resistant, and right now nothing does.
+**Status:** **DONE 2026-08-02** — fixed, and through `/feature-review` (gate **PASS**; the record below
+covers this diff *and* increment 1 of `20260719-token-storage-hardening.md`, which was reviewed with it).
+**Security-critical:** yes — it is what makes a JSON API CSRF-resistant, and until this landed nothing did.
 **Found:** while designing the (since dropped) cookie transport in
-`.claude/tasks/20260719-token-storage-hardening.md`. **It is not a cookie concern** — it is live today.
+`.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`. **It is not a cookie concern** — it is live today.
 
 ## What happens
 
@@ -127,5 +128,5 @@ behaves differently. That distinction is the accurate version and is now what th
   Unreachable today — `TypedApiEndpoint.Post/Put.mount` only ever produce `WithBody`/`WithBodyAndParams`,
   and no `Plain` POST exists in the tree — so the invariant is disciplinary, not structural. Gating on
   METHOD inside `Route.handle` would make it structural.
-- **`.claude/tasks/20260726-client-jwt-claims.md`** describes `jwtClaims.kt` and `Data.claims`, both
+- **`.claude/tasks-archive/2026-07/20260726-client-jwt-claims.md`** describes `jwtClaims.kt` and `Data.claims`, both
   deleted. Should be closed out and archived.

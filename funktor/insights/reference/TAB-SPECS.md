@@ -211,10 +211,18 @@ view is the honest rendering.
 
 Old tab: icon `cog`, title "Config", two `H4` sections "AppInfo" and "Config", each a JSON dump.
 
-> **STOP — this slice currently contains live secrets.** The JWT signing key, CSRF secret and database
-> passwords are written verbatim into every record. Confirmed against a real record on 2026-07-31.
-> **Do not build this tab until `.claude/tasks/20260731-config-secrets-in-insights.md` is resolved** —
-> shipping a UI for it would put the signing key on a screen and in a browser cache.
+> **The STOP is lifted — but read this before building the tab.** The four known leaks (JWT signing key,
+> CSRF secret, Arango password, Mongo connection string) were closed on 2026-08-01 by `Redacted<T>`, which
+> redacts at the *serializer*, not just in `toString()`. Verified 2026-08-02: all four are declared
+> `Redacted<String>` — `JwtSigningKey.secret:36`, `UltraSecurityConfig.csrfSecret:6`,
+> `ArangoDbConfig.password:13`, `MongoDbConfig.connectionString:7`. Task archived at
+> `.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md`.
+>
+> **What is NOT closed:** `Redacted<T>` protects a *declared* field, and this collector serialises the
+> whole `AppConfig` as `Any`. An application config that holds a secret in a plain `String` still writes
+> it into every record, and this tab would put it on a screen. That is a property of the app's own config,
+> which the framework cannot see — so the tab ships, and the docs for it must say plainly that anything
+> not wrapped in `Redacted` is rendered verbatim.
 
 ---
 

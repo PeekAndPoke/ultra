@@ -1,6 +1,9 @@
 # Frontend SDK — Vue components and pages via codegen contributors
 
-**Status:** TODO — design agreed 2026-07-30, refined same day (config ownership + profiles), not started
+**Status:** IN PROGRESS — design agreed 2026-07-30, refined same day (config ownership + profiles),
+amended 2026-08-02 (styling). **Landed and gated 2026-08-02:** the aggregation registry, `mountAll`,
+and the `--out`/`--sdkDir` CLI boundary (review record below). The Vue components themselves — the
+part this doc is actually about — are not started.
 **Plan:** `.claude/tasks/20260729-ts-sdk-codegen.md` (extends its contributor model)
 **Security-critical:** no (dev-time generator). The insights auth floor it unblocks IS security-critical
 and is tracked separately.
@@ -18,10 +21,12 @@ are emitted by the same run that emits the client they call — so the two can n
 
 | Decision | Note |
 |---|---|
-| Vue + Tailwind, Vue only | No second target |
+| Vue only, no second target | **Amended 2026-08-02: Tailwind applies to APP frontends, not to shipped components** — see "Styling" below |
 | No npm publishing | Full SDK generated on the fly, per app |
 | No backward compat | Nothing needs to keep working |
-| No design compat | Free to look however Vue + Tailwind allow |
+| No design compat | Free to look however Vue allows |
+| **`funktor/ui` owns the design system** | Settled 2026-08-02. Theme + primitives live there; each module keeps its own views |
+| **Unscoped `fk-`-prefixed classes + CSS variables** | Settled 2026-08-02. Not Tailwind, not `<style scoped>` — both are hostile to restyling a component you do not own |
 | No graph-library compat | Current libs are not sacred |
 | kotlinx.html renderers are DELETED, not ported | Read them as the spec for what each view needed, then delete. Do not keep them compiling |
 | The insights **bar** goes away entirely | A borrowed Symfony idea that has not aged well and was barely used. A console log covers the need. Removes the insights↔staticweb cross-dependency |
@@ -771,16 +776,75 @@ cluster ops UI is `funktor/inspect/src/jsMain`, mounted by `funktor-demo/adminap
 `mountFunktorInspect(ui)` (`nav.kt:86`). Its `commonMain` clients are exactly what codegen replaces, so
 the rewrite has a deletion payoff.
 
+## Styling and the design system — settled 2026-08-02
+
+This closes the two items that used to head "Still open": the customization contract and self-contained
+styling. They were one question, because both are answered by *where the styling seam sits*.
+
+### `funktor/ui` owns theme + primitives; views stay in their module
+
+New module. It holds `theme.css` and the shared components every ops view needs — `JsonTree`,
+`StatStrip`, `KeyValueTable`, `PreBlock`. Consuming modules take a gradle dependency on it and emit the
+files with `out.sharedResource`, which dedupes identical content across contributors and fails loudly on
+a conflict (`sdk/TsSdkOutput.kt:275`).
+
+**Views do NOT move there.** A `.vue` file is a resource with no Kotlin dependencies, so `funktor/ui`
+*could* hold every view — the constraint is not compilation. It is that `InsightsDetailPage.vue` imports
+the insights client, and shipping it from `funktor/ui` would let a run emit a page whose client it never
+generated. That is exactly the skew "components ship inside the funktor modules" was written to prevent.
+A view ships if and only if its client does.
+
+### Unscoped, `fk-`-prefixed class names — not Tailwind, not `<style scoped>`
+
+Both rejected alternatives fail the same test: *can an app restyle a component it does not own and cannot
+edit, given the file is overwritten on every generate?*
+
+- **Tailwind** bakes `class="rounded-lg bg-neutral-900"` into the template. Restyling means editing a
+  generated file. It also requires the app to add SDK paths to its `content` globs — a file **outside
+  `<out>/`**, which the ownership rule forbids the generator to write, and `out.scaffold`/`out.requires`
+  are blocked. Tailwind remains fine for app frontends; it cannot be assumed by shipped components.
+- **`<style scoped>`** compiles to `.fk-cell[data-v-a1b2]`, which is *designed* to resist outside
+  styling. It suits app-internal components, where isolation is the goal — the opposite of this case.
+
+The cost of going unscoped is name collision, paid for with the `fk-` prefix on every class. That is the
+whole downside, and it is worth it for what it buys:
+
+| Level | What the app does | Effort |
+|---|---|---|
+| 1 | Import `theme.css`, get a working look | none |
+| 2 | Override CSS variables — colour, radius, font, spacing | one line each |
+| 3 | Target `.fk-*` from the app's own CSS. **Works only because nothing is scoped** — no `:deep()`, no specificity fight | a rule per change |
+| 4 | Do not import `theme.css` at all; write your own against the documented class names | a stylesheet |
+
+Level 4 is the point: the styling is **detachable**, not merely tweakable. Neither alternative reaches it.
+
+### Themes are runtime, which is what b2b2c needs
+
+`var()` resolves at computed-value time, not build time, so a theme is just a file of variable
+definitions and nothing rebuilds. Three delivery routes, in increasing robustness:
+
+1. A second `<link>` — must load *after* the base, since equal specificity is decided by order.
+2. `document.documentElement.style.setProperty('--fk-accent', …)` — an inline style on the root, so it
+   wins regardless of load order. Good when branding arrives with an API response.
+3. **Server-inlined in `<head>`.** Each b2b2c tenant is on its own custom domain, so the server knows the
+   tenant from `Host` before it writes a byte. No extra request and no flash of the default theme —
+   which routes 1 and 2 can both show if the theme arrives after first paint.
+
+Variables inherit, so a theme can also scope to a subtree (`.tenant-acme { --fk-accent: … }`) — that is
+how a "preview your branding" screen shows two themes on one page.
+
+**The limit, stated so it is not discovered later:** variables change what we chose to parameterise.
+They cannot change structure. A login page that needs the form on the right with a hero on the left is
+level 3 or a different component, not a theme.
+
+### The default theme is NEUTRAL (maintainer, 2026-08-02)
+
+Greys and near-blacks, with colour reserved for meaning — status, log level, error. Two reasons: an
+unthemed install should look deliberate rather than like someone else's brand, and a neutral base does
+not fight the app's own palette when only some variables are overridden.
+
 ## Still open
 
-- [ ] **The customization contract.** Prebuilt components are overwritten on every generate, so an app
-      cannot restyle by editing them. Slots + props, CSS custom properties for theming, generated thin
-      wrappers the app owns, or an explicit "eject" mode. Needed before component #1 — it shapes how
-      every component is authored. Partly narrowed by the decision that the framework ships only
-      non-customizable views.
-- [ ] **Self-contained styling.** A component injected into an arbitrary app cannot assume a UI
-      framework is installed. With Tailwind chosen, settle whether components assume the app has
-      Tailwind configured (and its content globs cover the SDK dir) or ship fully scoped CSS.
 - [ ] Whether `funktor-demo` eventually becomes a starter template with its own DX story. Further out.
 - [ ] **Does `Message` carry a resolved string or a key + args?** See the i18n section. Recommendation is
       keys with `text` kept as a fallback, but it is a wire-format change and the maintainer's call.

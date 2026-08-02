@@ -1,0 +1,175 @@
+/*
+ * funktor:ui -- the default theme.
+ *
+ * This file is ONE FILE OF VARIABLES plus the base rules that read them. It is the customization entry
+ * point: an app overrides variables and every shipped component follows, because `var()` resolves when
+ * the browser paints rather than when anything is built.
+ *
+ * Four levels of customization, in increasing effort:
+ *
+ *   1. Import this file. Done.
+ *   2. Redefine variables in your own CSS, loaded AFTER this file.
+ *   3. Target `.fk-*` classes directly. Works because nothing here is scoped -- no `:deep()`, no
+ *      specificity fight.
+ *   4. Do not import this file at all. Write your own against the same class names; the components
+ *      keep working, they just look like yours.
+ *
+ * The palette is deliberately NEUTRAL -- greys and near-blacks, with colour reserved for MEANING
+ * (status, log level, error). An unthemed install should look deliberate rather than like someone
+ * else's brand, and a neutral base does not fight an app's own palette when only some variables are
+ * overridden.
+ *
+ * Every class is prefixed `fk-`. That prefix is the entire price of being unscoped, and it is what
+ * makes level 3 and 4 possible.
+ */
+
+:root {
+    /*  Surfaces  --------------------------------------------------------------------------------  */
+
+    --fk-surface: #ffffff;
+    /* Cards, table headers, anything that should sit visually above the page. */
+    --fk-surface-raised: #f6f6f7;
+    /* Code blocks and pre-formatted output, which read better slightly recessed. */
+    --fk-surface-sunken: #f0f0f2;
+    --fk-border: #d8d8dd;
+
+    /*  Text  ------------------------------------------------------------------------------------  */
+
+    --fk-text: #1a1a1e;
+    --fk-text-muted: #6b6b76;
+    /* Labels under numbers, table keys -- quieter still than muted. */
+    --fk-text-faint: #9a9aa4;
+
+    /*  Accent -- the one branded colour, used for links and focus rings.  ------------------------  */
+
+    --fk-accent: #3f6ad8;
+    --fk-accent-contrast: #ffffff;
+
+    /*  Status -- MEANING, not decoration. Override these only to match a palette, never to rebrand.
+     *  Each has a `-bg` companion for filled labels.  ---------------------------------------------  */
+
+    --fk-ok: #1f7a3d;
+    --fk-ok-bg: #e6f4ea;
+    --fk-warn: #8a6100;
+    --fk-warn-bg: #fdf3d8;
+    --fk-error: #b3261e;
+    --fk-error-bg: #fce8e6;
+    --fk-neutral: #55555f;
+    --fk-neutral-bg: #ececef;
+
+    /*  Shape and type  --------------------------------------------------------------------------  */
+
+    --fk-radius: 6px;
+    --fk-border-width: 1px;
+    --fk-gap: 12px;
+
+    --fk-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --fk-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --fk-font-size: 14px;
+    --fk-font-size-sm: 12px;
+    --fk-line-height: 1.5;
+}
+
+/*
+ * Dark by system preference. An app that wants to PIN a mode sets `data-fk-theme` on any ancestor --
+ * variables inherit, so it does not have to be <html>.
+ */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-fk-theme="light"]) {
+        --fk-surface: #16161a;
+        --fk-surface-raised: #1e1e24;
+        --fk-surface-sunken: #101014;
+        --fk-border: #33333d;
+
+        --fk-text: #e8e8ec;
+        --fk-text-muted: #9d9daa;
+        --fk-text-faint: #6e6e7a;
+
+        --fk-accent: #7d9ff0;
+        --fk-accent-contrast: #10131c;
+
+        --fk-ok: #6ede8f;
+        --fk-ok-bg: #16301f;
+        --fk-warn: #e8c56a;
+        --fk-warn-bg: #33280d;
+        --fk-error: #f0837a;
+        --fk-error-bg: #371815;
+        --fk-neutral: #a0a0ac;
+        --fk-neutral-bg: #26262e;
+    }
+}
+
+[data-fk-theme="dark"] {
+    --fk-surface: #16161a;
+    --fk-surface-raised: #1e1e24;
+    --fk-surface-sunken: #101014;
+    --fk-border: #33333d;
+
+    --fk-text: #e8e8ec;
+    --fk-text-muted: #9d9daa;
+    --fk-text-faint: #6e6e7a;
+
+    --fk-accent: #7d9ff0;
+    --fk-accent-contrast: #10131c;
+
+    --fk-ok: #6ede8f;
+    --fk-ok-bg: #16301f;
+    --fk-warn: #e8c56a;
+    --fk-warn-bg: #33280d;
+    --fk-error: #f0837a;
+    --fk-error-bg: #371815;
+    --fk-neutral: #a0a0ac;
+    --fk-neutral-bg: #26262e;
+}
+
+/*  Base  ------------------------------------------------------------------------------------------  */
+
+.fk-root {
+    color: var(--fk-text);
+    background: var(--fk-surface);
+    font-family: var(--fk-font);
+    font-size: var(--fk-font-size);
+    line-height: var(--fk-line-height);
+}
+
+/*  Shared atoms -- used by more than one primitive, so they live here rather than in a component.  --  */
+
+.fk-label {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: calc(var(--fk-radius) - 2px);
+    font-size: var(--fk-font-size-sm);
+    font-weight: 600;
+    color: var(--fk-neutral);
+    background: var(--fk-neutral-bg);
+}
+
+.fk-label--ok {
+    color: var(--fk-ok);
+    background: var(--fk-ok-bg);
+}
+
+.fk-label--warn {
+    color: var(--fk-warn);
+    background: var(--fk-warn-bg);
+}
+
+.fk-label--error {
+    color: var(--fk-error);
+    background: var(--fk-error-bg);
+}
+
+.fk-mono {
+    font-family: var(--fk-font-mono);
+    font-size: var(--fk-font-size-sm);
+}
+
+.fk-muted {
+    color: var(--fk-text-muted);
+}
+
+.fk-empty {
+    padding: var(--fk-gap);
+    color: var(--fk-text-faint);
+    font-style: italic;
+}

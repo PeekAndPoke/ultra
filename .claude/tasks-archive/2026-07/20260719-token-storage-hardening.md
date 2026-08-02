@@ -1,8 +1,11 @@
 # Frontend token storage — bearer stays; the cookie route was designed and dropped
 
-**Status:** **Increment 1 COMPLETE** (the response contract) — not yet through `/feature-review`, which
-CLAUDE.md requires before DONE. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below;
-the reasoning is kept so it is not re-proposed. Security-critical.
+**Status:** **DONE 2026-08-02.** Increment 1 (the response contract) shipped and passed `/feature-review`
+— record in `.claude/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` §"Review record",
+which covers both diffs. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below; the
+reasoning is kept so it is not re-proposed. Security-critical.
+**Residue that outlives this task:** `.claude/tasks/20260802-csp-and-token-ttl.md` (CSP + Trusted Types,
+shorter TTL) and `.claude/tasks/20260728-session-revocation-wiring.md` (the only real logout).
 **Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c).
 
 ## The gap (current behaviour)
@@ -170,10 +173,13 @@ start it without room to finish — see the lock rule about not going idle on a 
 
 | | commit |
 |---|---|
+| Task docs brought in line before any code | `abfd834e` |
 | `JwtPayload.expiresAt` + `JwtClaim.asLong`, and a 1-in-4 flaky test fixed | `a0bef940` |
-| The response reshape, `generateJwt` -> String, the client decoder deleted | see log |
+| The response reshape, `generateJwt` -> String, the client decoder deleted | `5026e436` |
+| Cookie mode rolled back; `Session` stays sealed with `Bearer` only | `b61d6d55` |
+| `/feature-review` fixes | `4aa6b808` |
 
-553 tests green across `funktor:auth` (jvm+js), `funktor:all`, `funktor-demo:server`, `ultra:security`.
+674 tests green across `funktor:auth` (jvm+js), `funktor:all`, `funktor-demo:server`, `ultra:security`.
 Compile sweep clean on jvm and js.
 
 Two things found while building, both recorded so they are not re-derived:
@@ -189,16 +195,17 @@ Four mutants, all killed — including one that survived at first: **nothing ass
 `FunktorApiSpec` now exposes the test user ids and `AuthApiSpec` asserts a refresh returns a token for the
 SAME user, which nothing checked before.
 
-## Verification matrix — what is still owed
+## What is still owed — all of it re-homed, none of it dropped
 
-The cookie rows are gone with the design. What remains is transport-independent:
+The cookie rows are gone with the design. What remains is transport-independent, so it does not belong to
+a task about *which transport*. Re-homed on archiving so nothing depends on anyone re-reading this file:
 
-- [ ] **CSP with nonces, and Trusted Types enforced** — the actual XSS mitigation, and the root cause for
-      either storage design. Smoke-test that inline script execution is blocked on each SPA.
-- [ ] **Session revocation makes logout real** — `.claude/tasks/20260728-session-revocation-wiring.md`.
-      Until then `logout()` drops local state and the token stays valid until `exp`.
-- [ ] Consider a shorter access-token TTL (currently 1h in the demo realms) to narrow the replay window.
-- [ ] `Content-Type` enforcement on REST routes — split out, see cross-references.
+| Owed | Now lives in |
+|---|---|
+| CSP with nonces + Trusted Types enforced — the actual XSS mitigation, and the root cause either storage design only bounds | `.claude/tasks/20260802-csp-and-token-ttl.md` |
+| A shorter access-token TTL (1h in the demo realms) to narrow the replay window | same |
+| Session revocation, i.e. the only real logout | `.claude/tasks/20260728-session-revocation-wiring.md` |
+| `Content-Type` enforcement on REST routes | DONE — `20260802-rest-content-type-enforcement.md` |
 
 ## Cross-references
 
@@ -209,7 +216,7 @@ The cookie rows are gone with the design. What remains is transport-independent:
   needs `credentials: 'include'` on the stream fetch.
 - `.claude/tasks/20260728-session-revocation-wiring.md` — **the only real logout mechanism**, and
   transport-independent. This task cannot deliver logout; that one can.
-- `.claude/tasks/20260802-rest-content-type-enforcement.md` — split out of the dropped cookie work;
+- `.claude/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` — split out of the dropped cookie work;
   a live hole today, not a cookie concern.
 - `20260719-ktor-client-unification.md`, `20260719-cross-realm-authz-and-tests.md`,
   `20260717-auth-orgs-foundation.md`.

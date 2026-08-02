@@ -1,6 +1,9 @@
 # Client-side JWT claim decoding + the selected org in the session
 
-**Status:** IN REVIEW (implemented 2026-07-26)
+**Status:** **SUPERSEDED 2026-08-02, and its implementation deleted** — see §"What happened to this" at
+the bottom. It shipped and was reviewed as described below; six days later the server started stating
+what the client had been decoding, so there was nothing left to decode. Kept because it records *why*
+each claim was needed, which is what made the deletion provably safe.
 **Security-critical:** yes — touches what the client believes about its own permissions, and turns on
 the session-refresh lifecycle. (No authorization decision rests on it; see below.)
 **Why a separate task:** this rode along in the `EmailAddress` review gate, but it is its own framework
@@ -100,3 +103,28 @@ is now stated in KDoc.
 
 Covered by the round-2 gate over the combined uncommitted diff — see the Review record in
 `.claude/tasks/20260726-value-class-emailaddress.md`.
+
+## What happened to this — deleted 2026-08-02 (`5026e436`)
+
+`AuthSignInResponse.Success` now states `permissions`, `expiresAt` and `userId` outright, for exactly the
+three consumers the table in §"The defect" lists. So the client no longer parses the token to learn them,
+and the whole decoding path went:
+
+- `funktor/auth/src/jsMain/kotlin/jwtClaims.kt` and `jsTest/kotlin/JwtClaimsSpec.kt` — 175 lines
+- the `jwtDecoder` constructor seam, which existed only to make the decode testable
+- `Data.claims` / `Data.Session.claims` — the fourth item, which turned out to have no consumer at all
+
+**The two mapping bugs this task fixed are gone with it, not re-introduced:** `isSuperUser` now arrives in
+`permissions` as the server wrote it, and the `exp`-as-`Int` hazard cannot recur client-side. Its JVM
+counterpart survives as `JwtClaim.asLong` (`ultra/security/.../jwt/JwtPayload.kt`), which reads a
+`NumericDate` as a `Long` and is pinned past 2038 by `JwtPayloadNumericClaimsSpec`.
+
+**And the security position inverts, which is the real payoff.** The caveat this task had to write into
+KDoc — "a decoded claim comes from a blob the user can rewrite in devtools" — no longer applies:
+permissions arrive from the server over TLS. Still display-only, since the server re-derives everything
+from the verified token on every request, but no longer trivially forgeable for display purposes.
+
+Full story: `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md` §"Increment 1".
+`funktor/auth/src/jsTest/kotlin/AuthStateSessionMappingSpec.kt` replaces the deleted spec and pins the
+property that keeps this deleted: a malformed or empty bearer token changes nothing, because nothing
+reads it.

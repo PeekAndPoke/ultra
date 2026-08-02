@@ -102,7 +102,7 @@ malformed-but-canonical address still decodes and still matches, deliberately.
 ## Review record (filled by /feature-review)
 
 Two rounds, 2026-07-26, over the combined uncommitted diff (this step + the client JWT work in
-`.claude/tasks/20260726-client-jwt-claims.md`), looped to zero confirmed findings.
+`.claude/tasks-archive/2026-07/20260726-client-jwt-claims.md`), looped to zero confirmed findings.
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
