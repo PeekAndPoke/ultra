@@ -76,7 +76,8 @@ SECOND consumer". Proposed split, to be confirmed with them via `.claude/BUILD-L
 
 Leaves first, because of D-1 — each step is useful even if the import question stays open.
 
-- [ ] **1. `funktor/ui` — `theme.css` and the primitives**, props-only, importing nothing generated:
+- [x] **1. `funktor/ui` — `theme.css` and the primitives** — DONE 2026-08-02, see "Step 1 evidence" below.
+      Props-only, importing nothing generated:
       `JsonTree` (the honest rendering for anything untyped), `StatStrip`, `KeyValueTable` (used by
       `request` and `response`), `PreBlock`. Unscoped `fk-`-prefixed classes, CSS variables as the
       theming seam, neutral default palette — settled 2026-08-02, see the plan's "Styling and the design
@@ -123,6 +124,32 @@ It is also not uniformly achievable: `AppConfigCollector.Data(val info: Any, val
 derivable shape at all, and `ResponseCollector.Data` holds a ktor `HttpStatusCode` that would need a
 claim. So the honest split is per-collector: claim the ones with a real shape, render the rest through
 `JsonTree`. Either make the KDoc say that, or make it true — but it must not stay as it is.
+
+## Step 1 evidence — the primitives, 2026-08-02
+
+`funktor/ui/src/main/resources/ts/ui/`: `theme.css`, `types.ts`, `JsonTree.vue`, `KeyValueTable.vue`,
+`StatStrip.vue`, `PreBlock.vue`. Not yet a gradle module — `settings.gradle` is untouched, so none of
+this is on the build path yet.
+
+**One rule worth stating because it is easy to undo: no `<style>` block in any component.** All CSS lives
+in `theme.css`. A component that injects its own styles cannot be fully restyled by an app that declines
+to import the theme, which would quietly cost level 4 of the customization ladder.
+
+Verified by rendering, not by reading:
+
+- `vue-tsc --noEmit` clean, in an isolated scratch dir against the demo app's toolchain.
+- SSR-rendered every primitive with `<img src=x onerror=alert(1)>` as key, value, label and scalar.
+  **All five payload cases came out escaped; zero reached the DOM as markup.**
+- `JsonTree` at `expandDepth: 0` does not render the child at all — confirmed, since `v-if` on collapsed
+  subtrees is what keeps the 137.8 KB kontainer slice cheap.
+- **Mutation-tested.** Switching `PreBlock`'s interpolation to `v-html` produced `leaked=1` and a
+  non-zero exit. The guard fails when it should, so the green run means something.
+
+**Owed:** that harness lives in a scratch dir, not in the repo — it proves the code is right today and
+guards nothing tomorrow. It needs a permanent home before this task can pass its gate; that is a Vue test
+setup decision (vitest in `sdkgen-app`, or a dedicated harness module) which touches the codegen agent's
+area, so it is not taken unilaterally. A grep-based guard is NOT a substitute but is a cheap stopgap —
+note it must match `v-html=`, not the word, since every one of these files mentions it in KDoc.
 
 ## Test evidence
 

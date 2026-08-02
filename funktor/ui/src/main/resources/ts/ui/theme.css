@@ -173,3 +173,248 @@
     color: var(--fk-text-faint);
     font-style: italic;
 }
+
+/*  PreBlock  --------------------------------------------------------------------------------------  */
+
+.fk-pre {
+    margin: 0;
+    padding: var(--fk-gap);
+    overflow-x: auto;
+    border: var(--fk-border-width) solid var(--fk-border);
+    border-radius: var(--fk-radius);
+    background: var(--fk-surface-sunken);
+    font-family: var(--fk-font-mono);
+    font-size: var(--fk-font-size-sm);
+    line-height: 1.45;
+    /* `pre` keeps runs of spaces, which is the whole point for a routing trace. */
+    white-space: pre;
+    tab-size: 4;
+}
+
+.fk-pre--wrap {
+    overflow-x: visible;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/*  StatStrip  -------------------------------------------------------------------------------------  */
+
+.fk-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--fk-gap);
+}
+
+.fk-strip__cell {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 96px;
+    padding: 10px 14px;
+    border: var(--fk-border-width) solid var(--fk-border);
+    border-radius: var(--fk-radius);
+    background: var(--fk-surface-raised);
+}
+
+.fk-strip__value {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+    /* Figures line up in a column when they are tabular, which is most of what this shows. */
+    font-variant-numeric: tabular-nums;
+}
+
+.fk-strip__label {
+    margin-top: 2px;
+    color: var(--fk-text-muted);
+    font-size: var(--fk-font-size-sm);
+}
+
+.fk-strip__hint {
+    color: var(--fk-text-faint);
+    font-size: var(--fk-font-size-sm);
+}
+
+/*
+ * Tone colours the VALUE and a left edge, never the whole cell: a strip of seven filled blocks is
+ * unreadable, and the point is that the one that matters stands out.
+ */
+.fk-strip__cell--ok {
+    border-left: 3px solid var(--fk-ok);
+}
+
+.fk-strip__cell--ok .fk-strip__value {
+    color: var(--fk-ok);
+}
+
+.fk-strip__cell--warn {
+    border-left: 3px solid var(--fk-warn);
+}
+
+.fk-strip__cell--warn .fk-strip__value {
+    color: var(--fk-warn);
+}
+
+.fk-strip__cell--error {
+    border-left: 3px solid var(--fk-error);
+}
+
+.fk-strip__cell--error .fk-strip__value {
+    color: var(--fk-error);
+}
+
+.fk-strip__cell--neutral {
+    border-left: 3px solid var(--fk-border);
+}
+
+/*  KeyValueTable  ---------------------------------------------------------------------------------  */
+
+.fk-kv {
+    width: 100%;
+    border: var(--fk-border-width) solid var(--fk-border);
+    border-radius: var(--fk-radius);
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.fk-kv th {
+    padding: 8px 12px;
+    border-bottom: var(--fk-border-width) solid var(--fk-border);
+    background: var(--fk-surface-raised);
+    color: var(--fk-text-muted);
+    font-size: var(--fk-font-size-sm);
+    font-weight: 600;
+}
+
+.fk-kv td {
+    padding: 8px 12px;
+    border-bottom: var(--fk-border-width) solid var(--fk-border);
+    vertical-align: top;
+}
+
+.fk-kv tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fk-kv__key-head {
+    width: 30%;
+}
+
+.fk-kv__key {
+    color: var(--fk-text-muted);
+    font-family: var(--fk-font-mono);
+    font-size: var(--fk-font-size-sm);
+    /* A long header name must not push the value column off screen. */
+    word-break: break-all;
+}
+
+.fk-kv__value {
+    font-family: var(--fk-font-mono);
+    font-size: var(--fk-font-size-sm);
+    word-break: break-all;
+}
+
+.fk-kv__value + .fk-kv__value {
+    margin-top: 4px;
+}
+
+/* Marks the server's placeholder as metadata, so nobody reads it as the actual value. */
+.fk-kv__value--redacted {
+    color: var(--fk-text-faint);
+    font-style: italic;
+}
+
+/*  JsonTree  --------------------------------------------------------------------------------------  */
+
+.fk-json {
+    font-family: var(--fk-font-mono);
+    font-size: var(--fk-font-size-sm);
+    line-height: 1.6;
+}
+
+.fk-json__row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.fk-json__toggle {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--fk-text-faint);
+    cursor: pointer;
+}
+
+.fk-json__toggle--leaf {
+    cursor: default;
+}
+
+/*
+ * The caret is drawn with borders rather than a glyph: no font dependency, no icon set, and it cannot
+ * be affected by an app's font stack.
+ */
+.fk-json__caret {
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid currentColor;
+    transition: transform 0.12s ease;
+}
+
+.fk-json__toggle--open .fk-json__caret {
+    transform: rotate(90deg);
+}
+
+.fk-json__key {
+    color: var(--fk-text-muted);
+}
+
+.fk-json__key::after {
+    content: ':';
+    color: var(--fk-text-faint);
+}
+
+.fk-json__summary {
+    color: var(--fk-text-faint);
+}
+
+.fk-json__scalar {
+    word-break: break-all;
+}
+
+.fk-json__scalar--string {
+    color: var(--fk-ok);
+}
+
+.fk-json__scalar--number {
+    color: var(--fk-accent);
+}
+
+.fk-json__scalar--boolean {
+    color: var(--fk-warn);
+}
+
+.fk-json__scalar--null {
+    color: var(--fk-text-faint);
+    font-style: italic;
+}
+
+.fk-json__children {
+    /* The guide line is what makes deep nesting readable; indent alone is not enough. */
+    margin-left: 6px;
+    padding-left: 12px;
+    border-left: var(--fk-border-width) solid var(--fk-border);
+}
+
+.fk-json__empty {
+    color: var(--fk-text-faint);
+    font-style: italic;
+}
