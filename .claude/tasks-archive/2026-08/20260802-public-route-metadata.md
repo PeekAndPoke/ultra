@@ -1,6 +1,14 @@
 # Public-route metadata in the generated TypeScript SDK
 
-**Status:** IN REVIEW — implemented 2026-08-02, `/feature-review` gate NOT yet run
+**Status:** DONE — implemented and gated 2026-08-02 (`ceee702a`, doc fix in `eb609f09`). Archived.
+
+**No DOCS follow-up, deliberately.** The CLAUDE.md rule asks for one when a change touches public API
+*and the code is settled*. The first half holds — `publicRoute` and `RouteRef.isPublic` are visible to
+every SDK consumer. The second does not: the TypeScript SDK has no docs page at all yet, its auth
+runtime still lacks the Vue binding layer, and two design questions about `AuthSessionState` are open.
+Writing a page against a surface whose first real consumer has not been built would buy a rewrite and
+a reader who trusted the stale version. **Revisit when the login screen exists** — one TS-SDK page
+then, not a fragment per feature.
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → the auth/login family
 **Security-critical:** yes — it widens what an anonymous client offers to try. See the scope note.
 

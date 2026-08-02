@@ -1,6 +1,9 @@
 # Ship auth through the SDK builder — the TypeScript counterpart of `AuthState`
 
-**Status:** IN PROGRESS — the session runtime landed 2026-08-02. Login page + routing remain.
+**Status:** IN PROGRESS — the session runtime landed and PASSED `/feature-review` 2026-08-02
+(`eb609f09`). **Outstanding: the Vue binding layer** (§5), and with it the login page and routing.
+Do NOT archive until those land — the runtime is deliberately framework-neutral, so nothing here
+has yet been used from a component.
 **Plan:** `.claude/tasks/20260729-ts-sdk-codegen.md` (the generator) and
 `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` (where contributors ship more than clients).
 **Security-critical:** yes — sessions, tokens, JWT claims. Red-team follow-up required on completion.
@@ -118,15 +121,24 @@ the server's. That warning must survive the port verbatim, at the point of use.
 never reaches them. Whatever auth mechanism lands here must cover streams, or the two tasks must be
 done together. Doing this one first without deciding that is how the asymmetry becomes permanent.
 
-## 5. Spec (draft — do not implement before §4 is settled)
+## 5. Spec — §4 settled, gated 2026-08-02
 
-- [ ] `runtime/auth.ts`: session store, `AuthSessionConfig` equivalent, refresh lifecycle, injected
-      storage strategy defaulting to memory.
-- [ ] Transport wrapper helper, so the documented idiom is one call rather than a snippet to copy.
-- [ ] Vue binding layer.
-- [ ] `AuthTsContributor` shipping the runtime + bindings, conditional on the auth feature being reached.
-- [ ] ts-verify: login → token attached → refresh-before-expiry → logout, against a stub transport.
-- [ ] Red-team task on completion (`YYYYMMDD-redteam-sdk-auth.md`).
+- [x] `runtime/auth.ts`: session store, refresh lifecycle, injected storage strategy.
+      **Defaults to `localStorage`, NOT memory** — the draft above says memory, and the maintainer
+      reversed it (2026-08-02) so the two clients share one behaviour and one eventual fix.
+- [x] Transport wrapper helper — `authTransport(inner, session)`.
+- [ ] **Vue binding layer.** The one piece of this task still outstanding. Everything below it is
+      framework-neutral on purpose; this is where `subscribe` becomes a `shallowRef`.
+- [~] `AuthTsContributor` ships the runtime. **Bindings are not built**, so the "+ bindings" half of
+      this line waits on the row above.
+- [x] ts-verify: sign-in → token attached → refresh-before-expiry → sign-out, EXECUTED against a real
+      transport (the draft said "stub"; a stub was written and rejected in review as not proving
+      anything the real one does not).
+- [x] Red-team task collected: `.claude/tasks/20260802-redteam-sdk-auth.md`.
+
+Beyond the draft, and shipped: the three-way sign-in flow (`login.ts`), `AclLoader`, public-route
+metadata, and `funktor-demo/sdkgen-app/src/sdkContract.ts` pinning the generated types against the
+hand-written contracts.
 
 ## 6. The other side — `.claude/tasks/20260731-auth-module-for-sdk.md`
 
