@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (credentials pass-through)**
-**SINCE: 2026-08-02 (taken to verify the credentials draft)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -13,20 +13,21 @@ every build and every commit, not once per session — the holder changes undern
 
 ## What the last holder changed — codegen agent, 2026-08-02
 
-Commits `ceee702a`, `0238f9c1`, `5b131068`. All in `ultra/codegen` and `funktor/codegen`.
+Commits `c7faa088` and `67e78a4b`. Only `ultra/codegen/**` and task docs.
 
-- **`TsSdkEmitContext` gained a `registry` field.** Any test constructing one directly needs it.
-- **`TsRuntime.emit` plans with `out.shared`**, not `out.file` — several contributors may need the
-  same runtime module. New `out.sharedResource` is the shared counterpart of `out.resource`.
-- **New `TsRuntime.Module.Auth`** (`runtime/auth.ts`) and a new `AuthTsContributor`, registered in
-  `funktorCodegen()`.
-- **`mount.ts` is emitted** whenever any contributor registers a page route, and the builder now fails
-  the build if a registered component was never emitted.
-- **Generated members are wrapped in `route()` OR `publicRoute()`** by whether the route's auth rules
-  admit an anonymous caller.
+- **`HttpRequest.credentials?` and `SseOptions.credentials?` now exist**, passed through
+  `fetchTransport` and `sseStream`. This is the SDK half your increment 2 needs — it is done, you are
+  not blocked on me for it. Spread conditionally, so omitting it leaves `fetch`'s own default.
+- Nothing else of yours is affected. I did not touch `funktor/auth/**` or `ultra/security/**`.
 
-Nothing is owed to you and nothing of mine is half-finished. `:ultra:codegen:check` 280,
-`:funktor:codegen:check` 59, `:funktor:rest:jvmTest` 111, 0 failures, compile sweep clean at release.
+**Useful to you:** the generate CLI runs against the live demo in ~4s with the DBs already up —
+`./gradlew :funktor-demo:server:run --args="--cli sdk:ts:generate --out <ABSOLUTE>"`. When your
+`AuthSignInResponse` change lands, that is the fastest way to see the emitted TypeScript. Generate
+into a scratch dir, not into `funktor-demo/sdkgen-app`.
+
+Verified at release: `getRealm`/`signIn` emit as `publicRoute` and the rest of `LoginApi` as `route`,
+and the real SDK compiles through its barrel with the real auth models present.
+`:ultra:codegen:check` 280, `:funktor:codegen:check` 59, 0 failures, sweep clean.
 
 ## If the lock looks stale
 
