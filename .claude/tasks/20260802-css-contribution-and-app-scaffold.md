@@ -1,6 +1,7 @@
 # CSS contribution + the demo app scaffold
 
-**Status:** IN PROGRESS — started 2026-08-02
+**Status:** DONE — 2026-08-02. Both parts landed; the app signs in and the insights page is
+reachable. `/feature-review` NOT yet run — see the review record below.
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` (the contributor model)
 **Security-critical:** the app scaffold is — it holds a session and gates pages. The CSS mechanism
 is not (dev-time emission).
@@ -74,12 +75,25 @@ Raised, not decided.
       never use, in exchange for the app-facing contract being constant. Reversed an existing test
       that asserted the opposite — its reasoning ("an empty aggregate is noise") weighed a hand-
       written app import against nine wasted lines and got it backwards.
-- [ ] `vue-router` in the app (it has `vue` + `zod` only).
-- [ ] Auth wiring: one `AuthSession`, one `authTransport(fetchTransport(), session)`, one
-      `SdkConfig` shared by every client.
-- [ ] A login view for realm `operators`.
-- [ ] `mountAll(router)` + a nav guard honouring `requiresAuth`, + `AclLoader` for menu gating.
-- [ ] App shell: nav from `navItems`, `<router-view>`, sign-out.
+- [x] `vue-router` 5.2.0, resolved from the registry rather than from memory and pinned exactly.
+- [x] Auth wiring: one `AuthSession`, one `authTransport(fetchTransport(), session)`, one
+      `SdkConfig` shared by every client (`src/sdk.ts`).
+- [x] A login view for realm `operators`.
+- [x] `mountAll(router)` + a nav guard honouring `requiresAuth`, + `AclLoader` for menu gating.
+- [x] App shell: nav from `navItems`, `<router-view>`, sign-out.
+- [x] **`InsightsTsContributor`** (`1fe72501`) — not in the original plan, because the blocker turned
+      out to be mine. The insights agent could not write it: contributors must live in
+      `funktor/codegen`, which they were told not to touch. Conditional on the insights feature,
+      since the pages import a client that only exists when it is registered.
+
+### Verified against the RUNNING API, not just type-checked
+
+- sign-in returns `_type: "bearer"` (matching the SDK literal), `isSuperUser: true`, a real expiry
+- `/auth/my-api-access` → 85 entries, insights routes `Granted`
+- `/_/funktor/insights/records` → rows with the token, **401 without it**
+- CORS preflight from `localhost:36591` passes
+- every emitted page and stylesheet loads through Vite; `InsightsPage.vue` compiles to a real Vue
+  component and the route carries its lazy import
 
 ### Facts checked, so they are not re-derived
 
