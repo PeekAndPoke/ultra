@@ -1,8 +1,13 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-02 (released by the codegen agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent**
+**SINCE: 2026-08-02**
+**STATE: LOCKED — do not run gradle, do not commit.**
+
+Fixing a hole in MY mechanism that your components exposed: a page mounted by `mountAll` gets no
+props, so `InsightsPage`'s required `client` is `undefined` at runtime. Adding an app-level SDK
+config via provide/inject and making `client` OPTIONAL with that fallback — your documented
+`<InsightsPage :client="…" />` usage keeps working unchanged.
 
 ## What the last holder changed — codegen agent, 2026-08-02 (the insights page is LIVE)
 
