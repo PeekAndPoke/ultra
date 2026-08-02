@@ -18,6 +18,8 @@ import { ApiAcl } from './generated/runtime/acl.ts'
 import { route } from './generated/runtime/route.ts'
 import { AuthSession, authTransport, inMemorySession, localStorageSession } from './generated/runtime/auth.ts'
 import type { SignedIn } from './generated/runtime/auth.ts'
+import { applySignIn, completeSignIn } from './generated/runtime/login.ts'
+import type { SignInResult } from './generated/runtime/login.ts'
 // THROUGH THE BARREL on purpose — this is what makes `tsc` compile index.ts, and `export *`
 // is only safe if no two emitted modules export the same name. A collision is a compile error
 // here rather than a silent hole in a consumer's build.
@@ -957,6 +959,111 @@ async function checkAuthSession(report: Report): Promise<void> {
     report(viaLocal.read() === null, 'auth: and clears')
 }
 
+/** An envelope carrying [data] at [status]. */
+function envelope<T>(status: number, data: T | null, message?: string) {
+    return {
+        status: { value: status, description: 'x' },
+        data,
+        messages: message === undefined ? null : [{ type: 'error' as const, text: message, ts: null }],
+    }
+}
+
+/**
+ * The sign-in flow.
+ *
+ * The point of the module: `AuthSignInResponse` has three branches and TWO OF THEM ARE NOT FAILURES.
+ * Treating `activation-required` as a bad password is the obvious bug and it is silent.
+ */
+async function checkLoginFlow(report: Report): Promise<void> {
+    const success: SignInResult<{ roles?: string[] }> = {
+        _type: 'success',
+        session: { _type: 'bearer', token: 'tok-1' },
+        permissions: { roles: ['ops'] },
+        expiresAt: { ts: 1_800_000_000_000 },
+        userId: 'u-1',
+    }
+
+    // 1. Success stores the session and reports it.
+    const s1 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const ok = applySignIn(s1, envelope(200, success))
+
+    report(ok._type === 'signed-in', 'login: success is signed-in')
+    report(s1.state().isLoggedIn, 'login: and the session is stored')
+    report(
+        ok._type === 'signed-in' && ok.session.token === 'tok-1',
+        'login: the outcome carries the resulting session state',
+    )
+
+    // 2. The two NON-FAILURE branches must NOT create a session — their tokens grant one next step.
+    const s2 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const org = applySignIn(s2, envelope(200, {
+        _type: 'org-selection-required' as const,
+        selectionToken: 'sel-1',
+        organisations: [{ id: 'o-1', name: 'Acme' }],
+    }))
+
+    report(org._type === 'org-selection-required', 'login: org selection is NOT a failure')
+    report(
+        org._type === 'org-selection-required' && org.selectionToken === 'sel-1',
+        'login: and carries its single-use token',
+    )
+    report(!s2.state().isLoggedIn, 'login: org selection does NOT log the user in')
+
+    const s3 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const act = applySignIn(s3, envelope(200, { _type: 'activation-required' as const, resendToken: 'r-1' }))
+
+    report(act._type === 'activation-required', 'login: activation required is NOT a failure')
+    report(!s3.state().isLoggedIn, 'login: and does NOT log the user in')
+
+    // 3. Rejection is ordinary control flow, not an exception — matching `request`'s contract.
+    const s4 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const bad = applySignIn(s4, envelope(401, null, 'Wrong credentials'))
+
+    report(bad._type === 'rejected', 'login: a non-2xx is rejected, not thrown')
+    report(bad._type === 'rejected' && bad.message === 'Wrong credentials', 'login: with the server message')
+    report(bad._type === 'rejected' && bad.status === 401, 'login: and the status')
+    report(!s4.state().isLoggedIn, 'login: a rejection leaves the session alone')
+
+    // A non-2xx carrying a SUCCESS-SHAPED body must still be rejected. Found by mutation: every
+    // rejection test above passes `data: null`, so the null guard caught them and the STATUS check
+    // was never exercised on its own. A server answering 401 with a body would have logged the user
+    // in.
+    const s4b = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const liar = applySignIn(s4b, envelope(401, success))
+
+    report(liar._type === 'rejected', 'login: a non-2xx is rejected even when it carries a body')
+    report(!s4b.state().isLoggedIn, 'login: and such a response creates no session')
+
+    // A 2xx with no data is still no session — a proxy or an empty envelope.
+    const s5 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const empty = applySignIn(s5, envelope(200, null))
+    report(empty._type === 'rejected', 'login: a 2xx with null data is rejected, not a crash')
+
+    // A rejection with no messages must not invent one.
+    const s6 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const quiet = applySignIn(s6, envelope(500, null))
+    report(quiet._type === 'rejected' && quiet.message === null, 'login: no message means null, not ""')
+
+    // 4. The async form, which is what an app actually writes.
+    const s7 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const awaited = await completeSignIn(s7, Promise.resolve(envelope(200, success)))
+
+    report(awaited._type === 'signed-in', 'login: completeSignIn awaits the call')
+    report(s7.state().isLoggedIn, 'login: and applies it')
+
+    // 5. A COOKIE-mode success carries no token and still logs in.
+    const s8 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    applySignIn(s8, envelope(200, {
+        _type: 'success' as const,
+        session: { _type: 'cookie' as const },
+        permissions: { roles: ['ops'] },
+        expiresAt: { ts: 1_800_000_000_000 },
+        userId: 'u-1',
+    }))
+
+    report(s8.state().isLoggedIn && s8.state().token === null, 'login: a cookie-mode success logs in with no token')
+}
+
 /**
  * The aggregation registry's rendered output.
  *
@@ -1157,6 +1264,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['routeAndAcl', checkRouteAndAcl],
         ['authSession', checkAuthSession],
         ['mount', checkMount],
+        ['loginFlow', checkLoginFlow],
     ]
 
     for (const [name, check] of groups) {

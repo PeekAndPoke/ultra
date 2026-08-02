@@ -52,8 +52,11 @@ object TsRuntime {
         /** `ApiAcl`, the advisory "may this user call this route?" lookup over a fetched matrix. */
         Acl("runtime/acl.ts", "ts/runtime/acl.ts"),
 
-        /** `AuthSession`, the token storage strategies, and the `Authorization`-attaching transport. */
-        Auth("runtime/auth.ts", "ts/runtime/auth.ts");
+        /** `AuthSession`, the session storage strategies, and the credential-attaching transport. */
+        Auth("runtime/auth.ts", "ts/runtime/auth.ts"),
+
+        /** `completeSignIn` — the three-way sign-in outcome, applied to a session. */
+        Login("runtime/login.ts", "ts/runtime/login.ts");
 
         /**
          * How generated code imports it, relative to the SDK root.
@@ -84,6 +87,8 @@ object TsRuntime {
                 // auth.ts wraps an HttpTransport. Deliberately NOT Client: the session knows nothing
                 // about the envelope or about generated members.
                 Auth -> setOf(Http)
+                // login.ts drives an AuthSession and reads the ApiResponse envelope.
+                Login -> setOf(Auth, ApiResponse)
                 Http, ApiResponse, DateTime, Route -> emptySet()
             }
     }

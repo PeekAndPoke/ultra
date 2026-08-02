@@ -38,6 +38,6 @@ class AuthTsContributor : TsSdkContributor {
         // The closure brings `runtime/http.ts` with it, which the REST contributor also ships —
         // runtime modules are planned with `out.shared`, so two contributors asking for the same one
         // dedupe instead of colliding.
-        TsRuntime.emit(context.out, setOf(TsRuntime.Module.Auth))
+        TsRuntime.emit(context.out, setOf(TsRuntime.Module.Auth, TsRuntime.Module.Login))
     }
 }

@@ -212,6 +212,34 @@ data class Success(
 
 Append one short block per iteration. Newest at the top.
 
+### Iteration 7 — 2026-08-02, `runtime/login.ts` — the sign-in FLOW
+
+Not on the backlog; added because it is the actual remaining gap for a login screen and it needs
+NONE of the blocked decisions. The `.vue` question is about a VIEW; this is the part that must not be
+got wrong, and it is plain TypeScript that `ts-verify` executes.
+
+**Why it exists:** `AuthSignInResponse` has three branches and **two of them are not failures** —
+`org-selection-required` and `activation-required` mean the credentials were right and there is a
+defined next step. Treating either as a bad password is the obvious bug, it is silent, and every app
+would otherwise re-derive it.
+
+`completeSignIn(session, call)` returns a four-way `LoginOutcome`: `signed-in`, the two next-steps,
+and `rejected` (which the server expresses as a non-2xx envelope, not as a variant). **Only `success`
+touches the session** — the other two carry single-use tokens that grant one next step, and storing
+them would make `isLoggedIn` true for a user who is not.
+
+**Deliberately ships no view.** The framework's own rule is that it ships only non-customizable
+things, and a login form's appearance is the first thing anyone changes.
+
+Verified against REAL generated output: a probe compiles
+`const x: SignInResult<UserPermissions> = wire` for the generated `AuthSignInResponse`, plus an
+exhaustive `switch` over the outcome. 19 ts-verify checks. Demo app regenerated, `vue-tsc` clean.
+
+**A mutant survived and found a real hole.** Removing the status check entirely still passed, because
+every rejection test used `data: null` — so the null guard caught them and the STATUS check was never
+exercised alone. A server answering 401 with a success-shaped body would have logged the user in.
+Test added, mutant now dies. 4/4 after the fix.
+
 ### Iteration 6 — 2026-08-02, `runtime/auth.ts` reshaped around the new response
 
 Item 5's runtime half is DONE for bearer AND cookie. The JWT decoder is gone.
