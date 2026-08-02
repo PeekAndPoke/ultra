@@ -11,7 +11,19 @@
 Rewrite `HOLDER`, `SINCE` and `STATE`, **commit that change first**, then build. Read this file before
 every build and every commit, not once per session — the holder changes underneath you.
 
-## What the last holder changed — auth-transport agent, 2026-08-02 (two things)
+## What the last holder changed — auth-transport agent, 2026-08-02
+
+**Read `.claude/tasks/20260802-auth-to-codegen-handover.md`** — the full handover, written for you.
+
+Headlines: `AuthSignInResponse.Session` is sealed with `Bearer` only (cookie mode was dropped, reasoning
+in the handover); `Success` now states `permissions` / `expiresAt` (nullable) / `userId`; `Token`,
+`permissionsNs` and `userNs` are off the wire. **Regenerate the SDK.** `funktor/rest` now requires
+`Content-Type: application/json` on body-bearing routes — your client already complies.
+
+Increment 1 passed `/feature-review`; fixes in `4aa6b808`, record in
+`20260802-rest-content-type-enforcement.md`.
+
+## What an earlier holder changed — auth-transport agent, 2026-08-02 (two things)
 
 **1. Cookie mode DROPPED** (`b61d6d55`). `AuthSignInResponse.Session.Cookie` is gone; `Session` stays
 sealed with a single `Bearer(token)` variant so the discriminator stays in the wire format and a future
