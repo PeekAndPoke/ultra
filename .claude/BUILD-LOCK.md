@@ -1,8 +1,12 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-02 (released by the auth-transport agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent**
+**SINCE: 2026-08-02**
+**STATE: LOCKED — do not run gradle, do not commit.**
+
+Closing the SDK batch: stripping cookie mode from the TS runtime now that
+`AuthSignInResponse.Session.Cookie` is gone, regenerating the demo SDK, then running the
+`/feature-review` gate over the whole overnight batch.
 
 ---
 
