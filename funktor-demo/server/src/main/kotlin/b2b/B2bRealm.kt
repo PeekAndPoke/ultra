@@ -114,7 +114,7 @@ class B2bRealm(
         return orgMembers.sessionMembershipsOf(UserId(user._id))
     }
 
-    override suspend fun generateJwt(user: Stored<B2bUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
+    override suspend fun generateJwt(user: Stored<B2bUser>, selectedOrg: SelectedOrg?): String {
         val gen = deps.jwtGenerator
 
         val userValue = user.resolve()
@@ -134,11 +134,7 @@ class B2bRealm(
             withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
         }
 
-        return AuthSignInResponse.Token(
-            token = token,
-            permissionsNs = gen.permissionsNs,
-            userNs = gen.userNs,
-        )
+        return token
     }
 
 }

@@ -1,5 +1,8 @@
 package io.peekandpoke.funktor.auth.model
 
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.security.user.UserPermissions
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -24,7 +27,29 @@ sealed interface AuthSignInResponse {
     @Serializable
     @SerialName("success")
     data class Success(
-        val token: Token,
+        /** How the session is carried — see [Session]. */
+        val session: Session,
+        /**
+         * The caller's permissions.
+         *
+         * Sent explicitly so **no client has to decode the token**. Before this, the browser read them
+         * out of the JWT's `permissionsNs` claims, which is impossible once the token is an httpOnly
+         * cookie — and was never good, because a decoded claim comes from a blob the user can rewrite.
+         *
+         * Still DISPLAY-ONLY. The server re-derives permissions from the verified token on every
+         * request; nothing here is an authorization decision.
+         */
+        val permissions: UserPermissions,
+        /**
+         * When the session expires — drives the client's refresh scheduling.
+         *
+         * Nullable because `exp` is optional: RFC 7519 makes it so, the verifier treats an absent one as
+         * "no expiry check" (pinned by `JwtWireCompatSpec`), and each realm supplies its own claim
+         * lambda. Null means the token states no expiry, which is what the client should be told.
+         */
+        val expiresAt: MpInstant? = null,
+        /** The signed-in user's id, or null if the token carried no usable `sub`. */
+        val userId: UserId? = null,
         val realm: AuthRealmModel,
         val user: JsonObject,
         /** The organisation selected for this session. Null for org-less (`OrgPolicy.None`) realms. */
@@ -65,11 +90,38 @@ sealed interface AuthSignInResponse {
         val resendToken: String,
     ) : AuthSignInResponse
 
+    /**
+     * How the session is carried back to the client.
+     *
+     * Sealed so the token's *existence* is tied to the transport. With a nullable `token` plus a mode
+     * flag, a client could read the token in cookie mode and get null at runtime; here that does not
+     * type-check, and the generated TypeScript is a `z.discriminatedUnion` that narrows before the field
+     * is reachable.
+     */
     @Serializable
-    @SerialName("token")
-    data class Token(
-        val token: String,
-        val permissionsNs: String,
-        val userNs: String,
-    )
+    sealed interface Session {
+
+        /** The token travels in the response body; the client attaches it as `Authorization: Bearer`. */
+        @Serializable
+        @SerialName("bearer")
+        data class Bearer(val token: String) : Session
+
+        /**
+         * The token travels in an `httpOnly` cookie the browser attaches automatically — **there is no
+         * token in this response**, deliberately, because JS must not be able to read it.
+         */
+        @Serializable
+        @SerialName("cookie")
+        data object Cookie : Session
+    }
 }
+
+/**
+ * The bearer token when the session carries one, else null — cookie mode has no token in the body.
+ *
+ * An extension rather than a member so it stays out of the serialized shape and out of the generated
+ * TypeScript: the whole point of [AuthSignInResponse.Session] being sealed is that a client narrows
+ * before reaching a token, and a nullable convenience field on the wire would undo that.
+ */
+val AuthSignInResponse.Success.bearerToken: String?
+    get() = (session as? AuthSignInResponse.Session.Bearer)?.token

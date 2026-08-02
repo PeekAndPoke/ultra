@@ -18,6 +18,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.model.RealmId
+import io.peekandpoke.funktor.auth.model.bearerToken
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
@@ -196,7 +197,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.token.token.shouldNotBeBlank()
+                            response.bearerToken!!.shouldNotBeBlank()
                         }
                     }
                 }
@@ -367,8 +368,13 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.token.token.shouldNotBeBlank()
-                            response.token.permissionsNs.shouldNotBeBlank()
+                            response.bearerToken!!.shouldNotBeBlank()
+                            // The response STATES the permissions now -- the client no longer decodes
+                            // them out of the token, so this is the only thing checking they are right.
+                            response.permissions.isSuperUser shouldBe false
+                            response.expiresAt.shouldNotBeNull()
+                            // A refresh must return a token for the SAME user.
+                            response.userId shouldBe regularUserId
                             response.realm.shouldNotBeNull()
                             response.user.shouldNotBeNull()
                         }
@@ -383,8 +389,11 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.token.token.shouldNotBeBlank()
-                            response.token.permissionsNs.shouldNotBeBlank()
+                            response.bearerToken!!.shouldNotBeBlank()
+                            response.permissions.isSuperUser shouldBe true
+                            response.expiresAt.shouldNotBeNull()
+                            // A refresh must return a token for the SAME user.
+                            response.userId shouldBe superUserId
                             response.realm.shouldNotBeNull()
                             response.user.shouldNotBeNull()
                         }

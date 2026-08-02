@@ -22,10 +22,10 @@ import io.peekandpoke.kraft.routing.routerMiddleware
 import io.peekandpoke.kraft.utils.clearInterval
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.utils.setInterval
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
-import io.peekandpoke.ultra.slumber.JsonUtil.toJsonObject
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
 import io.peekandpoke.ultra.streams.Unsubscribe
@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
 import org.w3c.dom.events.Event
 import kotlin.js.Date
@@ -45,14 +44,12 @@ inline fun <reified USER> authState(
     frontend: AuthFrontend,
     api: AuthApiClient,
     noinline router: () -> Router,
-    noinline jwtDecoder: (String) -> Map<String, Any?> = ::decodeJwtClaims,
     sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) = AuthState<USER>(
     userSerializer = serializer(),
     frontend = frontend,
     api = api,
     router = router,
-    jwtDecoder = jwtDecoder,
     sessionConfig = sessionConfig,
 )
 
@@ -61,7 +58,6 @@ class AuthState<USER>(
     val frontend: AuthFrontend,
     val api: AuthApiClient,
     val router: () -> Router,
-    val jwtDecoder: (String) -> Map<String, Any?> = ::decodeJwtClaims,
     val sessionConfig: AuthSessionConfig = AuthSessionConfig(),
 ) : Stream<AuthState.Data<USER>> {
 
@@ -75,7 +71,8 @@ class AuthState<USER>(
          */
         @Serializable
         data class Session<USER>(
-            val token: AuthSignInResponse.Token,
+            /** How this session is carried -- a bearer token in hand, or an httpOnly cookie. */
+            val transport: AuthSignInResponse.Session,
             val realm: AuthRealmModel,
             /**
              * The organisation selected for this session, or null on an org-less realm.
@@ -87,8 +84,7 @@ class AuthState<USER>(
              */
             val org: AuthOrgRef? = null,
             val tokenUserId: UserId?,
-            val tokenExpires: String?,
-            val claims: JsonObject,
+            val tokenExpires: MpInstant?,
             val user: USER,
             val permissions: UserPermissions,
         )
@@ -102,22 +98,22 @@ class AuthState<USER>(
         val isNotLoggedIn get() = !isLoggedIn
 
         // Nullable pass-throughs: callers keep reading the same names; all null when logged out.
-        val token get() = session?.token
+        /** The bearer token, or null -- also null in cookie mode, where the browser holds it. */
+        val bearerToken get() = session?.transport?.let { (it as? AuthSignInResponse.Session.Bearer)?.token }
         val realm get() = session?.realm
         val org get() = session?.org
         val tokenUserId get() = session?.tokenUserId
         val tokenExpires get() = session?.tokenExpires
-        val claims get() = session?.claims
         val user get() = session?.user
 
         /**
-         * The token's permissions, DISPLAY-ONLY.
+         * The session's permissions, DISPLAY-ONLY.
          *
-         * Decoded client-side WITHOUT signature verification, and the whole session is persisted in
-         * user-editable localStorage — a user can hand-write `isSuperUser = true` here. Use it to
-         * decide what the UI SHOWS, never what it is allowed to do; `isSuperUser` in particular
-         * short-circuits every `has*` helper on [UserPermissions]. Every real decision is re-derived
-         * server-side from the verified token.
+         * Stated by the server rather than decoded from an unverified token, so they are at least
+         * authentic — but the whole session is still persisted in user-editable localStorage, where a
+         * user can hand-write `isSuperUser = true`. Use it to decide what the UI SHOWS, never what it
+         * is allowed to do; `isSuperUser` in particular short-circuits every `has*` helper on
+         * [UserPermissions]. Every real decision is re-derived server-side from the verified token.
          */
         val permissions get() = session?.permissions ?: UserPermissions()
     }
@@ -136,7 +132,7 @@ class AuthState<USER>(
         if (sessionConfig.enabled) {
             val data = streamSource()
             if (data.isLoggedIn) {
-                val expiresMs = data.tokenExpires?.let { Date(it).getTime() }
+                val expiresMs = data.tokenExpires?.toEpochMillis()
                 val nowMs = Date.now()
 
                 if (expiresMs == null || nowMs >= expiresMs) {
@@ -297,7 +293,7 @@ class AuthState<USER>(
     private fun applySuccess(response: AuthSignInResponse.Success) {
         pendingOrgSelection = null
         val user = response.getTypedUser(userSerializer)
-        val data = readJwt(response = response, user = user)
+        val data = readSession(response = response, user = user)
 
         streamSource(data)
         startSessionLifecycle()
@@ -382,7 +378,7 @@ class AuthState<USER>(
         val data = streamSource()
         if (data.isNotLoggedIn || isRefreshing) return
 
-        val expiresMs = data.tokenExpires?.let { Date(it).getTime() } ?: return
+        val expiresMs = data.tokenExpires?.toEpochMillis() ?: return
         val nowMs = Date.now()
 
         when {
@@ -404,7 +400,7 @@ class AuthState<USER>(
 
                 if (response is AuthSignInResponse.Success) {
                     val user = response.getTypedUser(userSerializer)
-                    val newData = readJwt(response = response, user = user)
+                    val newData = readSession(response = response, user = user)
                     streamSource(newData)
                     sessionConfig.onTokenRefreshed?.invoke()
                 } else {
@@ -440,49 +436,29 @@ class AuthState<USER>(
         router().navToUri(loginUri)
     }
 
-    // JWT parsing ////////////////////////////////////////////////////////////////////////////////
+}
 
-    private fun readJwt(response: AuthSignInResponse.Success, user: USER): Data<USER> {
-        val claims = jwtDecoder(response.token.token)
-
-        // extract the permission from the token
-        val permissions = response.token.permissionsNs.let { ns ->
-            @Suppress("UNCHECKED_CAST")
-            UserPermissions(
-                // The server only writes this claim when true (see `encodePermissions`), so an
-                // absent claim legitimately means false.
-                isSuperUser = claims["$ns/superuser"] as? Boolean ?: false,
-                // Parsed defensively — the token is decoded client-side and must not throw on a
-                // claim that does not carry a well-formed `collection/key` org id.
-                org = OrgId.parseOrNull(claims["$ns/org"] as? String),
-                accessibleOrgs = (claims["$ns/accessibleOrgs"] as? List<String> ?: emptyList())
-                    .mapNotNull { OrgId.parseOrNull(it) }.toSet(),
-                branches = (claims["$ns/branches"] as? List<String> ?: emptyList()).toSet(),
-                groups = (claims["$ns/groups"] as? List<String> ?: emptyList()).toSet(),
-                roles = (claims["$ns/roles"] as? List<String> ?: emptyList()).toSet(),
-                permissions = (claims["$ns/permissions"] as? List<String> ?: emptyList()).toSet(),
-            )
-        }
-
-        // `Number`, not `Int`: JSON.parse yields a JS number, and an `as? Int` cast is both
-        // representation-dependent and breaks for values beyond Int32 (i.e. after 2038).
-        val expDate = (claims["exp"] as? Number)?.let { Date(it.toDouble() * 1000) }
-
-        // A `sub` that is missing or not a structurally valid UserId yields no user id rather than
-        // throwing — the token comes off the wire, so parsing must degrade instead of blowing up.
-        val userId = UserId.parseOrNull(claims["sub"] as? String)
-
-        return Data(
-            session = Data.Session(
-                token = response.token,
-                realm = response.realm,
-                org = response.org,
-                tokenUserId = userId,
-                tokenExpires = expDate?.toISOString(),
-                claims = claims.toJsonObject(),
-                permissions = permissions,
-                user = user,
-            )
+/**
+ * Maps a sign-in / refresh response into session state.
+ *
+ * **Nothing here reads the token.** Permissions, expiry and the user id are all stated by the server,
+ * which is what makes this work identically for a bearer token and an `httpOnly` cookie — in cookie mode
+ * there is no token to read. It replaced a client-side JWT decode that pulled the same three values out
+ * of unverified claims, plus a raw claim map nothing consumed.
+ *
+ * Top-level and `internal` rather than a private member: it uses no state from [AuthState], and lifting
+ * it out is what lets `AuthStateSessionMappingSpec` pin the decoupling directly.
+ */
+internal fun <USER> readSession(response: AuthSignInResponse.Success, user: USER): AuthState.Data<USER> {
+    return AuthState.Data(
+        session = AuthState.Data.Session(
+            transport = response.session,
+            realm = response.realm,
+            org = response.org,
+            tokenUserId = response.userId,
+            tokenExpires = response.expiresAt,
+            permissions = response.permissions,
+            user = user,
         )
-    }
+    )
 }

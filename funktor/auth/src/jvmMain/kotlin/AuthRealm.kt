@@ -33,7 +33,9 @@ import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.i18n.Locale
+import io.peekandpoke.ultra.security.jwt.JwtPayload
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.KnownRole
 import io.peekandpoke.ultra.security.user.OrgId
@@ -230,8 +232,13 @@ interface AuthRealm<USER : AuthUser> {
      */
     suspend fun resolveSelectedOrg(orgId: OrgId, memberships: Set<OrgMembership>): SelectedOrg? = null
 
-    /** Generates a JWT for the given user and the org selected for this session (null for org-less realms). */
-    suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token
+    /**
+     * Generates a JWT for the given user and the org selected for this session (null for org-less realms).
+     *
+     * Returns the token only. Permissions and expiry are NOT returned alongside it: [successFor] reads
+     * them back out of this token, so what the response says and what the token carries cannot drift.
+     */
+    suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): String
 
     /**
      * The application-specific roles this realm declares, for the API access matrix in funktor:inspect.
@@ -408,14 +415,13 @@ interface AuthRealm<USER : AuthUser> {
         }
         val org = currentOrgId?.let { oid -> getAccessibleOrgs(memberships).firstOrNull { it.id == oid } }
 
-        val response = successFor(user, selected, org)
+        val (response, payload) = successWithPayload(user, selected, org)
 
         // Validate that the refreshed token's user type matches the original JWT's user type.
         // This prevents cross-realm escalation when realms share a user store with overlapping IDs.
         if (expectedUserType != null) {
-            val newToken = deps.jwtGenerator.extractUserData(
-                deps.jwtGenerator.verify(response.token.token)
-            )
+            val newToken = deps.jwtGenerator.extractUserData(payload)
+
             if (newToken.type != expectedUserType) {
                 throw AuthError("Token refresh denied")
             }
@@ -504,12 +510,38 @@ interface AuthRealm<USER : AuthUser> {
         user: Stored<USER>,
         selectedOrg: SelectedOrg?,
         org: AuthOrgRef?,
-    ): AuthSignInResponse.Success = AuthSignInResponse.Success(
-        token = generateJwt(user, selectedOrg),
-        realm = asApiModel(),
-        user = users.serialize(user),
-        org = org,
-    )
+    ): AuthSignInResponse.Success = successWithPayload(user, selectedOrg, org).first
+
+    /**
+     * As [successFor], but also returns the minted token's verified payload.
+     *
+     * Exists so [refreshToken] can inspect the new token's claims without verifying it a second time.
+     */
+    private suspend fun successWithPayload(
+        user: Stored<USER>,
+        selectedOrg: SelectedOrg?,
+        org: AuthOrgRef?,
+    ): Pair<AuthSignInResponse.Success, JwtPayload> {
+
+        val token = generateJwt(user, selectedOrg)
+
+        // Verify our own freshly minted token, and read the response's permissions, expiry and user id
+        // back out of it. That is the point: the client is told exactly what the token carries, so the
+        // two cannot disagree. Threading them out of `generateJwt` instead would create a second source.
+        val payload = deps.jwtGenerator.verify(token)
+
+        val success = AuthSignInResponse.Success(
+            session = AuthSignInResponse.Session.Bearer(token),
+            permissions = deps.jwtGenerator.extractPermissions(payload),
+            expiresAt = payload.expiresAt?.let { MpInstant.fromEpochSeconds(it) },
+            userId = UserId.parseOrNull(payload.subject),
+            realm = asApiModel(),
+            user = users.serialize(user),
+            org = org,
+        )
+
+        return success to payload
+    }
 
     /**
      * Converts the realm to an api model.

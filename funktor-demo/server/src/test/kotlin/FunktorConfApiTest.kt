@@ -8,6 +8,7 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.RealmId
+import io.peekandpoke.funktor.auth.model.bearerToken
 import io.peekandpoke.funktor.demo.common.funktorconf.AttendeeModel
 import io.peekandpoke.funktor.demo.common.funktorconf.EventModel
 import io.peekandpoke.funktor.demo.common.funktorconf.EventStatus
@@ -173,7 +174,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .token.token
+                                .bearerToken!!
                         }
                     }
 
@@ -194,7 +195,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .token.token
+                                .bearerToken!!
                         }
                     }
 
@@ -230,7 +231,7 @@ class FunktorConfApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .token.token
+                                .bearerToken!!
                         }
                     }
 

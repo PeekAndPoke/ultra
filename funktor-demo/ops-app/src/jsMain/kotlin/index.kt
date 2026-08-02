@@ -13,7 +13,7 @@ import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 
 val Config = OpsAppConfig()
 
-val Apis: OpsAppApis = OpsAppApis(Config) { State.auth().token?.token }
+val Apis: OpsAppApis = OpsAppApis(Config) { State.auth().bearerToken }
 
 val State: OpsAppState = OpsAppState(
     auth = authState<OperatorUserModel>(

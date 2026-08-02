@@ -92,7 +92,7 @@ class AdminUserRealm(
         }
     }
 
-    override suspend fun generateJwt(user: Stored<AdminUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
+    override suspend fun generateJwt(user: Stored<AdminUser>, selectedOrg: SelectedOrg?): String {
         val gen = deps.jwtGenerator
 
         val userValue = user.resolve()
@@ -113,11 +113,7 @@ class AdminUserRealm(
             withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
         }
 
-        return AuthSignInResponse.Token(
-            token = token,
-            permissionsNs = gen.permissionsNs,
-            userNs = gen.userNs,
-        )
+        return token
     }
 
 }

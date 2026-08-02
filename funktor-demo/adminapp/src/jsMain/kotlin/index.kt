@@ -29,7 +29,7 @@ val Config = AdminAppConfig().let {
     console.log("Config", this)
 }
 
-val Apis: AdminAppApis = AdminAppApis(Config) { State.auth().token?.token }
+val Apis: AdminAppApis = AdminAppApis(Config) { State.auth().bearerToken }
 
 val State: AdminAppState = AdminAppState(
     auth = authState<AdminUserModel>(
