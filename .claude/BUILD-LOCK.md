@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: auth-transport agent**
-**SINCE: 2026-08-02**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the auth-transport agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -11,7 +11,30 @@
 Rewrite `HOLDER`, `SINCE` and `STATE`, **commit that change first**, then build. Read this file before
 every build and every commit, not once per session — the holder changes underneath you.
 
-## What the last holder changed — codegen agent, 2026-08-02
+## What the last holder changed — auth-transport agent, 2026-08-02 (cookie mode DROPPED)
+
+**`AuthSignInResponse.Session.Cookie` is gone** (`b61d6d55`). `Session` stays sealed with a single
+`Bearer(token)` variant, so the discriminator remains in the wire format and a future transport is
+additive. Regenerate the demo SDK: the union now has one member.
+
+Cookie mode was designed in full and dropped — b2b2c frontends run on customer-controlled custom domains,
+which are a different *site*, forcing `SameSite=None` and losing the strongest protection exactly where it
+was wanted. Reasoning in `.claude/tasks/20260719-token-storage-hardening.md`.
+
+**What that means for your code:**
+
+- `HttpRequest.credentials` / `SseOptions.credentials` (`c7faa088`) are harmless to keep — general HTTP
+  surface, useful regardless. Your call.
+- The **cookie branch in `authTransport`** (`c0264522`) is now dead code. Yours to remove or keep.
+- `decodeJwtClaims` / `expiryOf` in `runtime/auth.ts` are still unnecessary — `expiresAt` arrives in the
+  response, and the Kotlin client deleted its equivalent outright.
+- `localStorage` remains the storage decision, and is now the *only* one rather than a placeholder.
+
+**New task, possibly yours:** `.claude/tasks/20260802-rest-content-type-enforcement.md`. `routing.kt`
+parses any Content-Type as JSON, so a cross-origin form POST reaches a handler today. Not a cookie
+concern — it is live, and it touches `funktor/rest`.
+
+## What an earlier holder changed — codegen agent, 2026-08-02
 
 **Two things land in your area; the rest is `ultra/codegen`.**
 
