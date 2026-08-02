@@ -27,12 +27,18 @@ import FactList from '../ui/FactList.vue'
 import JsonTree from '../ui/JsonTree.vue'
 import { toneForStatus } from '../ui/types.ts'
 import type { Fact } from '../ui/types.ts'
+import StatStrip from '../ui/StatStrip.vue'
+import AppConfigTab from './AppConfigTab.vue'
+import KontainerTab from './KontainerTab.vue'
 import LogTab from './LogTab.vue'
 import RequestTab from './RequestTab.vue'
 import ResponseTab from './ResponseTab.vue'
 import RoutingTab from './RoutingTab.vue'
+import RuntimeTab from './RuntimeTab.vue'
 import TemplateTab from './TemplateTab.vue'
 import UserTab from './UserTab.vue'
+import VaultTab from './VaultTab.vue'
+import { readRuntime, readVault, runtimeCells, vaultCells } from './slices.ts'
 
 defineOptions({ name: 'InsightsDetailPage' })
 
@@ -52,6 +58,10 @@ const TABS: Record<string, Component> = {
     routing: RoutingTab,
     template: TemplateTab,
     log: LogTab,
+    runtime: RuntimeTab,
+    vault: VaultTab,
+    kontainer: KontainerTab,
+    'app-config': AppConfigTab,
 }
 
 /** Display names for the keys we know. An unknown key shows its raw key, which is the honest label. */
@@ -117,6 +127,26 @@ const overview = computed<Fact[]>(() => {
 
 const activeSlice = computed(() => record.value?.collectors.find((slice) => slice.key === activeKey.value) ?? null)
 
+function sliceFor(key: string): unknown {
+    return record.value?.collectors.find((slice) => slice.key === key)?.data ?? null
+}
+
+/**
+ * The Database and Runtime strips, inlined into Overview.
+ *
+ * The old GUI showed these two here as well as in their own tabs -- they are the figures worth seeing
+ * without choosing a tab first. Empty when the collector is absent, which is normal for a BRIEF record.
+ */
+const overviewVault = computed(() => {
+    const parsed = readVault(sliceFor('vault'))
+    return parsed === null ? [] : vaultCells(parsed)
+})
+
+const overviewRuntime = computed(() => {
+    const parsed = readRuntime(sliceFor('runtime'))
+    return parsed === null ? [] : runtimeCells(parsed)
+})
+
 function labelFor(key: string): string {
     return TAB_LABELS[key] ?? key
 }
@@ -155,6 +185,16 @@ function labelFor(key: string): string {
                     Neighbours are within the same day folder, so the oldest record of a day reports no
                     previous even when earlier days exist.
                 </p>
+            </section>
+
+            <section v-if="overviewVault.length > 0" class="fk-section">
+                <h4 class="fk-section__title">Database</h4>
+                <StatStrip :cells="overviewVault" />
+            </section>
+
+            <section v-if="overviewRuntime.length > 0" class="fk-section">
+                <h4 class="fk-section__title">Runtime</h4>
+                <StatStrip :cells="overviewRuntime" />
             </section>
 
             <div v-if="record.collectors.length === 0" class="fk-empty">

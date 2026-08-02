@@ -143,14 +143,20 @@ Leaves first, because of D-1 — each step is useful even if the import question
       collapsed by default so a big slice costs nothing. `template` treats `timeNs: null` as the normal
       case. **Every tab degrades to `JsonTree` rather than throwing** when the slice shape is not
       recognised: records outlive the code that wrote them, and one bad record must not take the page.
-- [ ] **3. `runtime`** — the seven-cell strip. Note the old bar and tab deliberately used different units
-      (GB to 2dp vs `%d MB`); the tab's is the one to keep. `openFileDescriptors` is `0` on non-Unix, not
-      unknown.
-- [ ] **4. `vault`** minus `vars` and minus the graph. Vue sums the totals: every one was a private
-      `lazy` and is **not in the record**.
-- [ ] **5. `kontainer`** — the sortable table first, the graph second. It is 73.6% of a record's bytes
-      (137.8 KB average), so this is the one where rendering cost is a real design input.
-- [ ] **6. `app-config`** — `JsonTree` twice, with the caveat above stated in the UI, not just the docs.
+- [x] **3. `runtime`** — DONE 2026-08-02. Seven-cell strip in `%d MB`, then system properties as a table
+      rather than cells (long, unordered, only ever read by searching). Says "not measured" when both
+      descriptor counts are 0, since that is what non-Unix means — not "none open".
+- [x] **4. `vault`** — DONE 2026-08-02, minus `vars` and minus the graph. Totals summed in `slices.ts`;
+      every one was a private `lazy` and is not in the record.
+- [x] **5. `kontainer`** — DONE 2026-08-02. The sortable table, instantiated services first. **Graph not
+      built:** everything it needs IS derivable from the record (unlike vault's), but it needs a graph
+      library, which is an SDK dependency decision rather than this tab's to make.
+- [x] **6. `app-config`** — DONE 2026-08-02. `JsonTree` twice, with the caveat rendered **in the UI**:
+      `Redacted` fields show as `***redacted***`, anything else is verbatim, and an app's own secret in a
+      plain `String` is therefore displayed. A comment would not have reached the person reading it.
+- [x] **Overview** now inlines the Database and Runtime strips, as the old GUI did. The cell builders
+      live in `slices.ts` rather than in the tabs, because `<script setup>` cannot export and two copies
+      would drift the first time a unit or threshold moved.
 - [x] **7. The detail page** — DONE 2026-08-02. Tab shell, prev/next, Overview landing section.
       The Database and Runtime strips are NOT inlined yet; they arrive with steps 3 and 4.
       **The tab registry is open by design:** an unregistered key renders through `JsonTree` rather than
@@ -250,6 +256,28 @@ guards nothing tomorrow. It needs a permanent home before this task can pass its
 setup decision (vitest in `sdkgen-app`, or a dedicated harness module) which touches the codegen agent's
 area, so it is not taken unilaterally. A grep-based guard is NOT a substitute but is a cheap stopgap —
 note it must match `v-html=`, not the word, since every one of these files mentions it in KDoc.
+
+## Steps 3–6 evidence — the four heavy tabs, 2026-08-02
+
+27 render cases, 0 failures; `vue-tsc` clean. Three things worth keeping:
+
+**The `vault` tab has no raw dump and no JSON fallback, and that is deliberate.** I wrote both in, the
+way every other tab has them, and then noticed they render the whole slice — `vars` included. Suppressing
+one field while shipping a viewer for the object that contains it is not a control. An unreadable vault
+slice now shows a notice explaining the suppression instead of falling back to `JsonTree`.
+**Mutation-tested:** reinstating the raw dump makes the harness report the bind value on the page.
+
+**Two of the three initial failures were the TEST being wrong, not the code** — worth recording because
+both would have been easy to "fix" in the wrong direction:
+
+- I asserted `2 / 3` for young/old/total where the code correctly produces `3 / 2 / 5`. My arithmetic.
+- The `app-config` case put its payload in `config`, which renders collapsed at `expandDepth: 1`, so it
+  never appeared — the harness caught this itself as `BLIND` rather than passing quietly.
+
+**A false positive with a real cause:** the leak check `html.includes('vars')` fired on the *garbage*
+case, which has no bind values. **Vue SSR renders template comments into the output**, and my own comment
+explaining the omission contains the word. The check now asserts on the bind VALUE, which is the property
+that matters.
 
 ## Test evidence
 

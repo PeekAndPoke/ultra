@@ -28,6 +28,8 @@
  * sanitising is wanted. Rendering escapes.
  */
 
+import type { StatCell } from '../ui/types.ts'
+
 /*  Primitive narrowing  ------------------------------------------------------------------------------  */
 
 export function asRecord(value: unknown): Record<string, unknown> | null {
@@ -253,4 +255,289 @@ export function toneForLogLevel(level: string | null): 'ok' | 'warn' | 'error' |
 /** Nanoseconds as milliseconds, at the precision the old GUI used. Null stays null. */
 export function nsToMs(ns: number | null): string | null {
     return ns === null ? null : `${(ns / 1_000_000).toFixed(2)} ms`
+}
+
+/*  runtime  ------------------------------------------------------------------------------------------  */
+
+export interface RuntimeSlice {
+    jvmVersion: string | null
+    kotlinVersion: string | null
+    cpus: number | null
+    maxMem: number | null
+    reservedMem: number | null
+    freeMem: number | null
+    openFileDescriptors: number | null
+    maxFileDescriptors: number | null
+    systemProperties: Record<string, string>
+}
+
+export function readRuntime(data: unknown): RuntimeSlice | null {
+    const record = asRecord(data)
+    if (record === null) return null
+
+    const properties = asRecord(record.systemProperties) ?? {}
+    const systemProperties: Record<string, string> = {}
+    for (const [key, value] of Object.entries(properties)) {
+        systemProperties[key] = asString(value) ?? String(value)
+    }
+
+    return {
+        jvmVersion: asString(record.jvmVersion),
+        kotlinVersion: asString(record.kotlinVersion),
+        cpus: asNumber(record.cpus),
+        maxMem: asNumber(record.maxMem),
+        reservedMem: asNumber(record.reservedMem),
+        freeMem: asNumber(record.freeMem),
+        openFileDescriptors: asNumber(record.openFileDescriptors),
+        maxFileDescriptors: asNumber(record.maxFileDescriptors),
+        systemProperties,
+    }
+}
+
+/**
+ * Bytes as whole megabytes, the unit the old TAB used.
+ *
+ * The old insights BAR showed the same three figures in GB to two decimals. That difference was
+ * deliberate, and the tab's unit is the one that survives -- a bar had one line, a tab has a column.
+ */
+export function bytesToMb(bytes: number | null): string | null {
+    return bytes === null ? null : `${Math.round(bytes / (1024 * 1024))} MB`
+}
+
+/*  vault  --------------------------------------------------------------------------------------------  */
+
+/** One of the five sub-measures. Both fields are summed across entries for the header strip. */
+export interface VaultMeasure {
+    totalNs: number
+    count: number
+}
+
+export interface VaultEntry {
+    connection: string | null
+    count: number | null
+    totalCount: number | null
+    query: string | null
+    queryLanguage: string | null
+    queryExplained: string | null
+    totalNs: number
+    serializer: VaultMeasure
+    query_: VaultMeasure
+    iterator: VaultMeasure
+    deserializer: VaultMeasure
+    explain: VaultMeasure
+}
+
+export interface VaultSlice {
+    entries: VaultEntry[]
+    /** Summed here because every total was a private `lazy` and is therefore NOT in the record. */
+    totalNs: number
+    serializer: VaultMeasure
+    query: VaultMeasure
+    iterator: VaultMeasure
+    deserializer: VaultMeasure
+    explain: VaultMeasure
+}
+
+function readMeasure(value: unknown): VaultMeasure {
+    const record = asRecord(value)
+    return { totalNs: asNumber(record?.totalNs) ?? 0, count: asNumber(record?.count) ?? 0 }
+}
+
+function sumMeasures(measures: VaultMeasure[]): VaultMeasure {
+    return measures.reduce(
+        (acc, measure) => ({ totalNs: acc.totalNs + measure.totalNs, count: acc.count + measure.count }),
+        { totalNs: 0, count: 0 },
+    )
+}
+
+export function readVault(data: unknown): VaultSlice | null {
+    const rawEntries = asArray(asRecord(data)?.entries)
+    if (rawEntries === null) return null
+
+    const entries: VaultEntry[] = rawEntries.map((raw) => {
+        const record = asRecord(raw) ?? {}
+        return {
+            connection: asString(record.connection),
+            count: asNumber(record.count),
+            totalCount: asNumber(record.totalCount),
+            query: asString(record.query),
+            queryLanguage: asString(record.queryLanguage),
+            queryExplained: asString(record.queryExplained),
+            totalNs: asNumber(record.totalNs) ?? 0,
+            serializer: readMeasure(record.measureSerializer),
+            query_: readMeasure(record.measureQuery),
+            iterator: readMeasure(record.measureIterator),
+            deserializer: readMeasure(record.measureDeserializer),
+            explain: readMeasure(record.measureExplain),
+        }
+    })
+
+    return {
+        entries,
+        totalNs: entries.reduce((sum, entry) => sum + entry.totalNs, 0),
+        serializer: sumMeasures(entries.map((entry) => entry.serializer)),
+        query: sumMeasures(entries.map((entry) => entry.query_)),
+        iterator: sumMeasures(entries.map((entry) => entry.iterator)),
+        deserializer: sumMeasures(entries.map((entry) => entry.deserializer)),
+        explain: sumMeasures(entries.map((entry) => entry.explain)),
+    }
+}
+
+/*  kontainer  ----------------------------------------------------------------------------------------  */
+
+export interface KontainerInjection {
+    name: string | null
+    classes: string[]
+    provisionType: string | null
+}
+
+export interface KontainerDefinition {
+    creates: string | null
+    injectionType: string | null
+    injects: KontainerInjection[]
+    codeLocation: string | null
+    overwrites: KontainerDefinition | null
+}
+
+export interface KontainerInstance {
+    cls: string | null
+    /** Epoch SECONDS as a double -- not millis. Multiply before handing it to `Date`. */
+    createdAt: number | null
+}
+
+export interface KontainerService {
+    cls: string | null
+    type: string | null
+    definition: KontainerDefinition | null
+    instances: KontainerInstance[]
+}
+
+export interface KontainerSlice {
+    numOld: number | null
+    numTotal: number | null
+    services: KontainerService[]
+}
+
+/** Class references are wrapped: `{"fqn": "..."}`. */
+function readFqn(value: unknown): string | null {
+    return asString(asRecord(value)?.fqn) ?? asString(value)
+}
+
+function readDefinition(value: unknown, depth = 0): KontainerDefinition | null {
+    const record = asRecord(value)
+    if (record === null) return null
+
+    // `overwrites` is a chain. Bounded because a cycle in a malformed record would hang the tab, and
+    // hanging is worse than truncating: nothing here is important enough to lock the browser for.
+    const overwrites = depth < 16 ? readDefinition(record.overwrites, depth + 1) : null
+
+    return {
+        creates: readFqn(record.creates),
+        injectionType: asString(record.injectionType),
+        injects: (asArray(record.injects) ?? []).map((raw) => {
+            const inject = asRecord(raw) ?? {}
+            return {
+                name: asString(inject.name),
+                classes: (asArray(inject.classes) ?? []).map(readFqn).filter((fqn): fqn is string => fqn !== null),
+                provisionType: asString(inject.provisionType),
+            }
+        }),
+        codeLocation: asString(asRecord(record.codeLocation)?.location),
+        overwrites,
+    }
+}
+
+export function readKontainer(data: unknown): KontainerSlice | null {
+    const record = asRecord(data)
+    if (record === null) return null
+
+    const rawServices = asArray(asRecord(record.info)?.services)
+    if (rawServices === null) return null
+
+    const services: KontainerService[] = rawServices.map((raw) => {
+        const service = asRecord(raw) ?? {}
+        return {
+            cls: readFqn(service.cls),
+            type: asString(service.type),
+            definition: readDefinition(service.definition),
+            instances: (asArray(service.instances) ?? []).map((rawInstance) => {
+                const instance = asRecord(rawInstance) ?? {}
+                return { cls: readFqn(instance.cls), createdAt: asNumber(instance.createdAt) }
+            }),
+        }
+    })
+
+    // The old table's order: services WITH instances first, then by FQN. Instantiated services are what
+    // the request actually touched, which is the question the tab is usually open to answer.
+    services.sort((a, b) => {
+        const byInstances = Number(b.instances.length > 0) - Number(a.instances.length > 0)
+        return byInstances !== 0 ? byInstances : (a.cls ?? '').localeCompare(b.cls ?? '')
+    })
+
+    return { numOld: asNumber(record.numOld), numTotal: asNumber(record.numTotal), services }
+}
+
+/** Walks the `overwrites` chain into a flat list; the first entry is the definition in force. */
+export function definitionChain(definition: KontainerDefinition | null): KontainerDefinition[] {
+    const chain: KontainerDefinition[] = []
+    let current = definition
+    while (current !== null) {
+        chain.push(current)
+        current = current.overwrites
+    }
+    return chain
+}
+
+/*  app-config  ---------------------------------------------------------------------------------------  */
+
+export interface AppConfigSlice {
+    info: unknown
+    config: unknown
+}
+
+export function readAppConfig(data: unknown): AppConfigSlice | null {
+    const record = asRecord(data)
+    if (record === null) return null
+    if (record.info === undefined && record.config === undefined) return null
+
+    return { info: record.info, config: record.config }
+}
+
+/*  Stat strips shared with the Overview section  -----------------------------------------------------  */
+
+/**
+ * The seven runtime cells.
+ *
+ * Lives here rather than in `RuntimeTab.vue` because the old GUI showed this same strip inside Overview
+ * as well, and `<script setup>` cannot export. Two copies would drift the first time a threshold moved.
+ */
+export function runtimeCells(slice: RuntimeSlice): StatCell[] {
+    return [
+        { label: 'JVM', value: slice.jvmVersion },
+        { label: 'Kotlin', value: slice.kotlinVersion },
+        { label: 'CPUs', value: slice.cpus },
+        { label: 'Free heap', value: bytesToMb(slice.freeMem) },
+        { label: 'Reserved heap', value: bytesToMb(slice.reservedMem) },
+        { label: 'Max heap', value: bytesToMb(slice.maxMem) },
+        {
+            label: 'File descriptors',
+            value: slice.openFileDescriptors,
+            // Both are 0 on non-Unix, which is "not measured" rather than "none open" -- so the hint
+            // says max rather than implying a ratio that would read as 0/0.
+            hint: `max: ${slice.maxFileDescriptors ?? 'n/a'}`,
+        },
+    ]
+}
+
+/** The seven database cells. Also shown in Overview -- same reason as {@link runtimeCells}. */
+export function vaultCells(slice: VaultSlice): StatCell[] {
+    return [
+        { label: 'Queries', value: slice.entries.length },
+        { label: 'Total', value: nsToMs(slice.totalNs) },
+        { label: 'Serializer', value: nsToMs(slice.serializer.totalNs) },
+        { label: 'Query', value: nsToMs(slice.query.totalNs) },
+        { label: 'Iterator', value: nsToMs(slice.iterator.totalNs) },
+        { label: 'Deserializer', value: nsToMs(slice.deserializer.totalNs) },
+        { label: 'Explain', value: nsToMs(slice.explain.totalNs) },
+    ]
 }

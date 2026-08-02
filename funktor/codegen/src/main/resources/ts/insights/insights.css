@@ -51,4 +51,41 @@
     .fk-log-entry > .fk-label {
         margin-bottom: 4px;
     }
+
+    /*  VaultTab  ---------------------------------------------------------------------------------  */
+
+    /* Each query is a bordered card: a request can run many, and a flat list is unreadable at ten. */
+    .fk-query {
+        padding: var(--fk-gap);
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+    }
+
+    .fk-query .fk-strip {
+        margin-bottom: var(--fk-gap);
+    }
+
+    /*  KontainerTab  -----------------------------------------------------------------------------  */
+
+    /*
+     * The service table has five columns of unbounded text and hundreds of rows. It scrolls in its own
+     * box rather than stretching the page, and the header stays put -- with this many rows, a column
+     * you cannot name is a column you cannot read.
+     */
+    .fk-services {
+        display: block;
+        max-height: 70vh;
+        overflow: auto;
+    }
+
+    .fk-services thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .fk-services td {
+        vertical-align: top;
+    }
 }
+
