@@ -921,6 +921,51 @@ async function checkAuthSession(report: Report): Promise<void> {
         }
     }
 
+    // An ALREADY-EXPIRED stored session restores as logged OUT. A dead token cannot be refreshed —
+    // the refresh endpoint needs a live one — so restoring it left a shell that rendered the stored
+    // permissions while every call 401'd, and startAutoRefresh retried every 30s for as long as the
+    // tab stayed open. Fixed timestamps, so this does not depend on when the suite runs.
+    {
+        const past = inMemorySession()
+        past.write(JSON.stringify(bearer('dead', 1_000_000_000_000))) // 2001
+        report(!new AuthSession(past).state().isLoggedIn, 'auth: an EXPIRED stored session restores logged-out')
+
+        const future = inMemorySession()
+        future.write(JSON.stringify(bearer('live', 4_000_000_000_000))) // 2096
+        report(new AuthSession(future).state().isLoggedIn, 'auth: an unexpired one still restores')
+
+        // `null` expiry means the session states NO expiry, which is not the same as expired.
+        const noExp = inMemorySession()
+        noExp.write(JSON.stringify(bearer('forever')))
+        report(new AuthSession(noExp).state().isLoggedIn, 'auth: and "no expiry" is not treated as expired')
+    }
+
+    // `signedIn` must refuse what `restore` refuses. It used to accept a tokenless carrier straight
+    // off the wire, so the same malformed payload was rejected coming OUT of storage and accepted
+    // going IN — a session that worked until the first reload.
+    {
+        const store = inMemorySession()
+        const s = new AuthSession<{ roles?: string[] }>(store)
+        s.signedIn({ session: { _type: 'bearer' }, permissions: { roles: ['ops'] } } as never)
+
+        report(!s.state().isLoggedIn, 'auth: signedIn REFUSES a carrier with no token')
+        report(store.read() === null, 'auth: and does not persist it')
+    }
+
+    // The generation counter — what lets an async caller tell "still the same session" from
+    // "someone is logged in", which `isLoggedIn` cannot express.
+    {
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        const g0 = s.generation()
+        s.signedIn(bearer('t1'))
+        const g1 = s.generation()
+        s.signOut()
+        const g2 = s.generation()
+        s.signedIn(bearer('t2'))
+
+        report(g1 !== g0 && g2 !== g1 && s.generation() !== g2, 'auth: generation changes on every sign-in and sign-out')
+    }
+
     let sent: HttpRequest | undefined
     const inner: HttpTransport = {
         send: (req) => {
@@ -954,6 +999,21 @@ async function checkAuthSession(report: Report): Promise<void> {
     report(
         sent?.headers['Authorization'] === 'Bearer explicit',
         'auth: an explicit Authorization header is never overwritten',
+    )
+
+    // ...and the same holds for a LOWERCASE one. HTTP header names are case-insensitive, and `fetch`
+    // merges a differently-cased duplicate into one comma-joined value rather than letting the
+    // caller's win — so the override silently became `Bearer explicit, Bearer tok-9`, which is not a
+    // credential any server can parse.
+    await wrapped.send({
+        method: 'GET',
+        url: 'http://x/a',
+        headers: { authorization: 'Bearer lowercase' },
+    })
+    report(
+        Object.keys(sent?.headers ?? {}).length === 1,
+        'auth: a lowercase authorization header is respected, not duplicated',
+        JSON.stringify(sent?.headers),
     )
 
     const viaLocal = localStorageSession('funktor.test.session')
@@ -1055,6 +1115,16 @@ async function checkLoginFlow(report: Report): Promise<void> {
     report(awaited._type === 'signed-in', 'login: completeSignIn awaits the call')
     report(s7.state().isLoggedIn, 'login: and applies it')
 
+    // 5. A variant this SDK does not know — a newer server against a cached bundle, MFA being the
+    //    obvious next one. The switch used to fall through and return `undefined` through a
+    //    signature promising an outcome, so the documented `switch (outcome._type)` threw. Inside
+    //    startAutoRefresh that throw was swallowed by its own error handler, leaving the refresher
+    //    silently dead and the user "randomly logged out" at expiry.
+    const s8 = new AuthSession<{ roles?: string[] }>(inMemorySession())
+    const unknown = applySignIn(s8, envelope(200, { _type: 'mfa-required', challenge: 'x' } as never))
+
+    report(unknown?._type === 'rejected', 'login: an unknown sign-in variant is rejected, not undefined')
+    report(!s8.state().isLoggedIn, 'login: and creates no session')
 }
 
 /**
@@ -1104,7 +1174,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'a' }, expiresAt: { ts: 2_000_000_000_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'a' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 2_000_000_000_000 } })
 
         let calls = 0
         startAutoRefresh(s, () => { calls += 1; return Promise.resolve(success('b')) }, {
@@ -1120,7 +1190,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 1_000_000_060_000 } })
 
         startAutoRefresh(s, () => Promise.resolve(success('new')), {
             leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
@@ -1139,7 +1209,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'a' } })
+        s.signedIn({ session: { _type: 'bearer', token: 'a' }, permissions: { roles: ['ops'] } })
 
         let calls = 0
         startAutoRefresh(s, () => { calls += 1; return Promise.resolve(success('b')) }, {
@@ -1154,7 +1224,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 1_000_000_060_000 } })
 
         let failed = 0
         startAutoRefresh(
@@ -1180,7 +1250,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 1_000_000_060_000 } })
 
         startAutoRefresh(s, () => Promise.reject(new Error('offline')), {
             leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
@@ -1201,7 +1271,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 1_000_000_060_000 } })
 
         let calls = 0
         // A HOLDER, not a `let`: TypeScript narrows a bare local to `null` because it cannot see the
@@ -1235,7 +1305,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 1_000_000_060_000 } })
 
         const box: { release: ((v: ReturnType<typeof success>) => void) | null } = { release: null }
         const stop = startAutoRefresh(s, () =>
@@ -1259,7 +1329,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 1_000_000_060_000 } })
 
         let unhandled = 0
         const onUnhandled = () => { unhandled += 1 }
@@ -1280,7 +1350,7 @@ async function checkAutoRefresh(report: Report): Promise<void> {
     {
         const t = fakeTimers()
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, permissions: { roles: ['ops'] }, expiresAt: { ts: 1_000_000_060_000 } })
 
         let calls = 0
         const stop = startAutoRefresh(s, () => { calls += 1; return Promise.resolve(success('new')) }, {
@@ -1292,6 +1362,69 @@ async function checkAutoRefresh(report: Report): Promise<void> {
 
         t.fire()
         report(calls === 0, 'refresh: and nothing runs afterwards')
+    }
+
+    // 10. signOut() DURING an in-flight refresh. `stop()` is a different event and an app is not
+    //     obliged to call it from its sign-out handler, so `stopped` alone never covered this.
+    //     Before the generation check, the landing response signed the user back in AND wrote a
+    //     fresh full-TTL token to storage on a machine they had just logged out of.
+    {
+        const t = fakeTimers()
+        const store = inMemorySession()
+        const s = new AuthSession<{ roles?: string[] }>(store)
+        s.signedIn({
+            session: { _type: 'bearer', token: 'old' },
+            permissions: { roles: ['ops'] },
+            expiresAt: { ts: 1_000_000_060_000 },
+        })
+
+        let land: (() => void) | null = null
+        startAutoRefresh(s, () => new Promise((resolve) => { land = () => resolve(success('FRESH')) }), {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        s.signOut()
+        report(!s.state().isLoggedIn, 'refresh: signOut during an in-flight refresh logs out')
+
+        land!()
+        await new Promise((r) => setTimeout(r, 0))
+
+        report(!s.state().isLoggedIn, 'refresh: and the landing refresh does NOT resurrect the session')
+        report(store.read() === null, 'refresh: nor write a fresh token back to storage')
+    }
+
+    // 11. The nastier half of the same bug: a DIFFERENT user signs in during the round trip. Here
+    //     `isLoggedIn` is true again, so only a generation check can tell the sessions apart —
+    //     otherwise user A's token, permissions and id land in user B's browser.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({
+            session: { _type: 'bearer', token: 'userA' },
+            permissions: { roles: ['admin'] },
+            expiresAt: { ts: 1_000_000_060_000 },
+            userId: 'userA',
+        })
+
+        let land: (() => void) | null = null
+        startAutoRefresh(s, () => new Promise((resolve) => { land = () => resolve(success('userA-NEW')) }), {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        s.signOut()
+        s.signedIn({
+            session: { _type: 'bearer', token: 'userB' },
+            permissions: { roles: ['viewer'] },
+            userId: 'userB',
+        })
+
+        land!()
+        await new Promise((r) => setTimeout(r, 0))
+
+        report(s.state().userId === 'userB', "refresh: a superseded refresh does not overwrite ANOTHER user's session")
+        report(s.state().token === 'userB', 'refresh: and their token stays theirs')
     }
 }
 
@@ -1310,7 +1443,7 @@ async function checkAclLoader(report: Report): Promise<void> {
 
     const loggedIn = () => {
         const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
-        s.signedIn({ session: { _type: 'bearer', token: 't' } })
+        s.signedIn({ session: { _type: 'bearer', token: 't' }, permissions: { roles: ['ops'] } })
         return s
     }
 
@@ -1427,6 +1560,67 @@ async function checkAclLoader(report: Report): Promise<void> {
         l.clear()
         report(l.state()._type === 'absent', 'aclLoader: clear drops the matrix')
         report(l.acl().isDenied({ method: 'GET', uri: '/x', isPublic: false }), 'aclLoader: and denies afterwards')
+    }
+
+    // 9. clear() while a load is IN FLIGHT — check 8 drains the promise first, so it never covered
+    //    this. Two failures used to follow: the pending fetch republished `ready` after the session
+    //    ended, and `inFlight` stayed true so the next user's load() was dropped and never re-armed.
+    //    The matrix is withheld data (the server omits Denied rows so it does not disclose the API
+    //    surface a caller cannot reach), so publishing A's into B's session is a disclosure.
+    {
+        const usersMatrix = { entries: [{ method: 'DELETE', uri: '/admin/users', level: 'Granted' as const }] }
+        let calls = 0
+        let landA: (() => void) | null = null
+
+        const l = new AclLoader(loggedIn(), () => {
+            calls += 1
+            if (calls === 1) {
+                return new Promise((resolve) => {
+                    landA = () => resolve({ status: { value: 200, description: 'OK' }, data: usersMatrix, messages: null })
+                })
+            }
+            return Promise.resolve(ok)
+        }, { setTimer: nowTimer })
+
+        l.load()                    // user A, in flight
+        l.clear()                   // app clears on sign-out
+        report(l.state()._type === 'absent', 'aclLoader: clear during an in-flight load still drops it')
+
+        l.load()                    // user B signs in
+        report(calls === 2, "aclLoader: and does NOT swallow the next user's load")
+
+        landA!()                    // A's response finally arrives
+        for (let i = 0; i < 10; i++) await Promise.resolve()
+
+        report(
+            l.acl().isDenied({ method: 'DELETE', uri: '/admin/users', isPublic: false }),
+            "aclLoader: a superseded response never becomes the next session's matrix",
+        )
+        report(l.acl().canAccess({ method: 'GET', uri: '/x', isPublic: false }), "aclLoader: user B's own matrix loaded")
+    }
+
+    // 10. A subscriber that THROWS must not look like a failed fetch. With a trailing `.catch`, a
+    //     component whose render handler threw drove the loader through its whole retry schedule
+    //     and into onUnavailable('exhausted') — which apps are told to wire to signOut(). A render
+    //     bug became a forced logout.
+    {
+        let calls = 0
+        let unavailable = 0
+        const l = new AclLoader(loggedIn(), () => { calls += 1; return Promise.resolve(ok) }, {
+            setTimer: nowTimer,
+            onUnavailable: () => { unavailable += 1 },
+        })
+
+        l.subscribe((s) => { if (s._type === 'ready') throw new Error('render blew up') })
+
+        const onUnhandled = () => {}
+        process.on('unhandledRejection', onUnhandled)
+        l.load()
+        for (let i = 0; i < 10; i++) await Promise.resolve()
+        process.off('unhandledRejection', onUnhandled)
+
+        report(calls === 1, 'aclLoader: a throwing subscriber does not trigger a retry storm')
+        report(unavailable === 0, 'aclLoader: nor a forced sign-out')
     }
 }
 

@@ -74,9 +74,19 @@ export function startAutoRefresh<P>(
 
         inFlight = true
 
+        // Captured BEFORE the request goes out, and re-checked when it lands.
+        const generation = session.generation()
+
         void refresh()
             .then((response) => {
-                if (stopped) return
+                // `stopped` is not enough. Signing out does not stop the scheduler — they are
+                // separate lifecycles, and nothing obliges an app to call `stop()` from its sign-out
+                // handler. Without the generation check, a refresh already on the wire when the user
+                // signed out applied anyway: the session came back, and a fresh full-TTL token was
+                // written to `localStorage` on a machine the user had just logged out of. If a
+                // DIFFERENT user signed in during the round trip, they got the first user's token,
+                // permissions and id.
+                if (stopped || session.generation() !== generation) return
 
                 const outcome = applySignIn(session, response)
 

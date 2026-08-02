@@ -83,6 +83,28 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
                 File(dir, "generated/api/models.ts").exists() shouldBe true
             }
 
+            // The empty and dot spellings are the ones the SPELLING check cannot see: none is
+            // absolute, none contains "..", and all three resolve to the app root itself, because
+            // the JDK short-circuits an empty child in `File(parent, child)`. `--sdkDir "$UNSET"`
+            // in a shell script is how you get there by accident, and the wipe then targets the
+            // application. Found by review, 2026-08-02.
+            listOf("", ".", "./", "sub/../").forEach { bad ->
+                "refuses --sdkDir '$bad', which resolves to the app root itself" {
+                    val appRoot = tempdir()
+
+                    withClue("precondition: '$bad' really does land on the app root") {
+                        File(appRoot, bad).canonicalFile shouldBe appRoot.canonicalFile
+                    }
+
+                    val thrown = runCatching {
+                        TsSdkGenerateCliCommand(explodingBuilder())
+                            .parse(arrayOf("--out", appRoot.absolutePath, "--sdkDir", bad))
+                    }.exceptionOrNull()
+
+                    thrown!!.message!! shouldContain "--sdkDir"
+                }
+            }
+
             listOf("/abs/sdk", "../escape", "src/../../escape").forEach { bad ->
                 "refuses --sdkDir '$bad', which would walk the wipe out of the app" {
                     val thrown = runCatching {

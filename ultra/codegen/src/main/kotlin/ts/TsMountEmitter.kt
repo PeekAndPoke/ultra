@@ -15,7 +15,7 @@ import io.peekandpoke.ultra.codegen.sdk.TsSdkRegistry
  * mountAll(router)
  * ```
  *
- * **No `vue-router` import.** [MOUNT_TARGET] is declared structurally, so a real `Router` satisfies
+ * **No `vue-router` import.** `MountTarget` is declared structurally, so a real `Router` satisfies
  * it without this module — or `ultra:codegen`'s verification toolchain — depending on Vue. An app
  * that wants something other than bulk mounting reads `routes` and does its own thing.
  */

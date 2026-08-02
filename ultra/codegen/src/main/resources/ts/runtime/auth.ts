@@ -45,7 +45,16 @@ export type SessionCarrier = { readonly _type: 'bearer'; readonly token: string 
  */
 export interface SignedIn<P = unknown> {
     readonly session: SessionCarrier
-    readonly permissions?: P
+    /**
+     * REQUIRED, because it is required on the wire (`Success.permissions` is non-null).
+     *
+     * The optionality here is what makes the parity assertion in a consuming app bite: with `?`, a
+     * generated type that had lost `permissions` entirely would still satisfy this interface, and
+     * the check that exists to catch exactly that kind of server change would pass. `expiresAt` and
+     * `userId` below are genuinely `nullable().optional()` on the wire, so they stay optional — the
+     * difference between the two is the whole strength of the check.
+     */
+    readonly permissions: P
     /**
      * `MpInstant`, so the epoch-millis number is `expiresAt.ts` — NOT `expiresAt` itself.
      *
@@ -190,6 +199,7 @@ export class AuthSession<P = unknown> {
     private readonly storage: SessionStorage
     private readonly listeners = new Set<(state: AuthSessionState<P>) => void>()
     private current: AuthSessionState<P>
+    private gen = 0
 
     constructor(storage: SessionStorage = localStorageSession()) {
         this.storage = storage
@@ -198,6 +208,27 @@ export class AuthSession<P = unknown> {
 
     /** The current state. */
     readonly state = (): AuthSessionState<P> => this.current
+
+    /**
+     * Bumped by every [signedIn] and [signOut]. Compare it to decide whether an ASYNC result is
+     * still relevant.
+     *
+     * The problem it solves: a request issued against one session can land after that session ended,
+     * and applying it then is not a stale render, it is a security bug. An auto-refresh in flight
+     * when the user signs out used to resurrect the session and write a fresh full-TTL token back to
+     * storage — on a machine the user believed was logged out. Worse, if another user signed in
+     * meanwhile, the first user's token and permissions landed in the second user's session.
+     *
+     * `isLoggedIn` cannot express this: it is true again after the second sign-in, so it says
+     * "someone is logged in" when the question is "is this still the SAME session".
+     *
+     * ```ts
+     * const gen = session.generation()
+     * const result = await call()
+     * if (session.generation() !== gen) return   // superseded — drop it
+     * ```
+     */
+    readonly generation = (): number => this.gen
 
     /**
      * Registers [listener] and returns its canceller.
@@ -220,8 +251,19 @@ export class AuthSession<P = unknown> {
      * Takes the RESPONSE, not a token: everything worth keeping is stated by the server rather than
      * dug out of a JWT, so narrowing this to a token string would discard `permissions`, `expiresAt`
      * and `userId` at the door.
+     *
+     * **A payload without a usable token is REFUSED**, and signs out rather than half-succeeding.
+     * [restore] has always refused one; this did not, so the same malformed carrier was rejected
+     * coming out of storage and accepted coming off the wire. The asymmetry showed up as a session
+     * that worked until the first reload.
      */
     readonly signedIn = (payload: SignedIn<P>): void => {
+        if (!isUsableCarrier(payload.session)) {
+            this.signOut()
+            return
+        }
+
+        this.gen++
         this.storage.write(JSON.stringify(payload))
         this.publish(stateOf<P>(payload))
     }
@@ -235,6 +277,7 @@ export class AuthSession<P = unknown> {
      * `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
      */
     readonly signOut = (): void => {
+        this.gen++
         this.storage.clear()
         this.publish(empty<P>())
     }
@@ -272,12 +315,37 @@ function stateOf<P>(payload: SignedIn<P>): AuthSessionState<P> {
 }
 
 /**
+ * Whether [carrier] names a transport this client speaks AND carries what that transport needs.
+ *
+ * Both halves matter, and the token half is the subtle one: a carrier that declares `bearer` with no
+ * token string produces `isLoggedIn: true` with nothing to send, so every request goes out anonymous
+ * while the UI shows a signed-in user. That does not fail — it just quietly does not authenticate.
+ *
+ * Shared by [AuthSession.signedIn] and [restore] so the wire and storage are held to one standard.
+ */
+function isUsableCarrier(carrier: unknown): boolean {
+    if (typeof carrier !== 'object' || carrier === null) return false
+
+    // Cookie mode was dropped, so a payload naming it is either an older SDK's or hand-written.
+    if ((carrier as { _type?: unknown })._type !== 'bearer') return false
+
+    return typeof (carrier as { token?: unknown }).token === 'string'
+}
+
+/**
  * Rebuilds the session from what was persisted.
  *
  * Anything unreadable restores to logged-out rather than throwing: a truncated `localStorage` value
  * and a payload from an older SDK are both ordinary, and throwing here would take down a page render.
+ *
+ * **An ALREADY-EXPIRED session restores as logged out**, matching the Kotlin `AuthState`
+ * (`funktor/auth/src/jsMain/kotlin/AuthState.kt`). Not defensive tidiness — a dead token cannot be
+ * refreshed, because the refresh endpoint needs a live one. Restoring it would leave a shell that
+ * renders the stored `permissions` as though the user still held them while every call 401s, and
+ * `startAutoRefresh` would retry every 30s for as long as the tab stayed open, forever. The honest
+ * state is logged out, which the app already knows how to render.
  */
-function restore<P>(serialized: string | null): AuthSessionState<P> {
+function restore<P>(serialized: string | null, now: number = Date.now()): AuthSessionState<P> {
     if (serialized === null || serialized.length === 0) return empty<P>()
 
     try {
@@ -285,22 +353,15 @@ function restore<P>(serialized: string | null): AuthSessionState<P> {
 
         if (typeof parsed !== 'object' || parsed === null) return empty<P>()
 
-        const session: unknown = (parsed as { session?: unknown }).session
+        if (!isUsableCarrier((parsed as { session?: unknown }).session)) return empty<P>()
 
-        if (typeof session !== 'object' || session === null) return empty<P>()
+        const state = stateOf<P>(parsed as SignedIn<P>)
 
-        const kind: unknown = (session as { _type?: unknown })._type
+        // `null` means the session states NO expiry, which is not the same as expired — `exp` is
+        // optional in RFC 7519 and the verifier treats an absent one as "no expiry check".
+        if (state.expiresAt !== null && state.expiresAt <= now) return empty<P>()
 
-        if (kind !== 'bearer') return empty<P>()
-
-        // The token must be THERE, not merely declared. Storage is the one untrusted input on this
-        // path — a truncated write, or an older SDK's payload — and accepting a carrier without one
-        // would produce `isLoggedIn: true` with nothing to send, so every request would go out
-        // anonymous while the UI showed a signed-in user. That is the worst of both: it does not
-        // fail, it just quietly does not authenticate.
-        if (typeof (session as { token?: unknown }).token !== 'string') return empty<P>()
-
-        return stateOf<P>(parsed as SignedIn<P>)
+        return state
     } catch {
         return empty<P>()
     }
@@ -336,7 +397,15 @@ export function authTransport<P>(inner: HttpTransport, session: AuthSession<P>):
 
             if (carrier === null) return inner.send(request)
 
-            if (token === null || 'Authorization' in request.headers) return inner.send(request)
+            // Case-INSENSITIVE: HTTP header names are, and `fetch` merges a differently-cased
+            // duplicate into one comma-joined value rather than letting the caller's win. A
+            // decorator that set `authorization` used to get `Bearer explicit, Bearer <session>`,
+            // which is not a credential the server can parse — so the caller's override silently
+            // became a malformed header instead of an override.
+            const hasAuthHeader = Object.keys(request.headers)
+                .some((name) => name.toLowerCase() === 'authorization')
+
+            if (token === null || hasAuthHeader) return inner.send(request)
 
             return inner.send({
                 ...request,

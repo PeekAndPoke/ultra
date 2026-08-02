@@ -45,17 +45,24 @@ export interface AccessMatrix {
 /**
  * Access lookup over a fetched matrix.
  *
- * The predicates relate to each other in exactly two ways, and both are worth knowing before
- * choosing one:
+ * **[canAccess] is the complement of [isDenied].** That is the one relation that always holds, and
+ * it holds even for a level outside [AccessLevel] — a newer server, or a matrix from an unvalidated
+ * cache. It is why only the two POSITIVE predicates test a literal and [isDenied] is their negation:
+ * an unrecognised level denies on all four rather than making one of them fail open.
  *
- * - [canAccess] is the complement of [isDenied] — the only true opposite pair here.
- * - [canFullyAccess], [canPartiallyAccess] and [isDenied] are mutually exclusive and exhaustive,
- *   and [canAccess] is the union of the first two.
+ * **[canFullyAccess], [canPartiallyAccess] and [isDenied] are NOT exhaustive.** A public route that
+ * the matrix has no row for — `signIn` for a logged-out visitor, the case `isPublic` on [RouteRef]
+ * exists for — reads false on all three, because only [canAccess] short-circuits on it. This is the
+ * one place the vocabulary diverges from the Kotlin `ApiAcl`, which has no `isPublic` and where the
+ * three ARE exhaustive. So do not write the three-way render:
  *
- * Both hold UNCONDITIONALLY, including for a level outside [AccessLevel] — a newer server, or a
- * matrix restored from an unvalidated cache. That is why only the two POSITIVE predicates test a
- * literal and [isDenied] is their negation: an unrecognised level then denies on all four rather
- * than making one of them the single predicate that fails open.
+ * ```ts
+ * // WRONG: every public route falls through to the last branch.
+ * acl.isDenied(r) ? 'hidden' : acl.canFullyAccess(r) ? 'full' : 'ownership-limited'
+ * ```
+ *
+ * Branch on [canAccess] first, and reach for [getAccessLevel] when you genuinely need the level —
+ * it is the only total function here.
  *
  * Methods are arrow-function FIELDS, not prototype methods, so `const { canAccess } = acl` works.
  */

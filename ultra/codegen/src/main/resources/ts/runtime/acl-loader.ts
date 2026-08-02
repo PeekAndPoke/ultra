@@ -74,6 +74,13 @@ export class AclLoader<P> {
     private readonly listeners = new Set<(state: AclState) => void>()
     private current: AclState = ABSENT
     private inFlight = false
+    /**
+     * Bumped by [load] and [clear]; captured per attempt and re-checked before publishing.
+     *
+     * A fetch cannot be cancelled, so the only way to stop a superseded one from landing is to
+     * recognise it when it does.
+     */
+    private generation = 0
 
     constructor(
         session: AuthSession<P>,
@@ -104,8 +111,19 @@ export class AclLoader<P> {
         }
     }
 
-    /** Drops the matrix. Call on sign-out — a matrix outliving its session is a stale grant. */
+    /**
+     * Drops the matrix. Call on sign-out — a matrix outliving its session is a stale grant.
+     *
+     * **Also abandons any load in flight.** It used to only publish `absent`, which left two holes
+     * that the next user fell into: the pending fetch republished `ready` with the departed user's
+     * matrix, and `inFlight` stayed true so the next `load()` was silently dropped and never
+     * re-armed. The second user's UI was then gated by the first user's permissions — permanently,
+     * and the matrix itself is withheld data, since the server omits `Denied` rows precisely so it
+     * does not disclose an API surface the caller cannot reach.
+     */
     readonly clear = (): void => {
+        this.generation++
+        this.inFlight = false
         this.publish(ABSENT)
     }
 
@@ -125,12 +143,19 @@ export class AclLoader<P> {
 
         this.inFlight = true
         this.publish({ _type: 'loading', stale: this.readyAcl() })
-        this.attempt(0)
+        this.attempt(0, ++this.generation)
     }
 
-    private attempt(index: number): void {
-        void this.fetchMatrix()
-            .then((response) => {
+    private attempt(index: number, generation: number): void {
+        // TWO-ARGUMENT `then`, not `.then().catch()`. With a trailing `catch`, an exception thrown by
+        // a SUBSCRIBER inside `publish` was caught here and treated as a failed fetch: a component
+        // whose render handler threw sent the loader into its full retry schedule and then into
+        // `onUnavailable('exhausted')`, which apps are told to wire to `signOut()`. A render bug
+        // became three extra requests and a forced logout. This form catches only the fetch.
+        void this.fetchMatrix().then(
+            (response) => {
+                if (generation !== this.generation) return
+
                 const status = response.status.value
 
                 if (status === 401 || status === 403) {
@@ -139,26 +164,33 @@ export class AclLoader<P> {
                 }
 
                 if (status < 200 || status > 299 || response.data === null) {
-                    return this.retryOrGiveUp(index)
+                    return this.retryOrGiveUp(index, generation)
                 }
 
                 this.inFlight = false
                 this.publish({ _type: 'ready', acl: new ApiAcl(response.data) })
-            })
-            .catch(() => {
+            },
+            () => {
                 // A transport error is not a session decision — the network may simply be down.
-                this.retryOrGiveUp(index)
-            })
+                if (generation !== this.generation) return
+
+                this.retryOrGiveUp(index, generation)
+            },
+        )
     }
 
-    private retryOrGiveUp(index: number): void {
+    private retryOrGiveUp(index: number, generation: number): void {
         const next = index + 1
 
         if (next >= this.attempts) return this.giveUp('exhausted')
 
         const delay = this.backoffMs[Math.min(index, this.backoffMs.length - 1)] ?? 0
 
-        this.setTimer(() => this.attempt(next), delay)
+        this.setTimer(() => {
+            if (generation !== this.generation) return
+
+            this.attempt(next, generation)
+        }, delay)
     }
 
     /**

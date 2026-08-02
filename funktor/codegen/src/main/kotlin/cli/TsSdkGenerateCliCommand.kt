@@ -90,6 +90,18 @@ class TsSdkGenerateCliCommand(
                     "'$sdkDir'. It names the directory the generator OWNS and empties on every run."
         }
 
+        // The check above is about the SPELLING; this one is about where the spelling LANDS, and the
+        // two are not the same. `File(appRoot, "")` resolves to appRoot itself — the JDK
+        // short-circuits an empty child — and so do "." and "./", none of which are absolute and none
+        // of which contain "..". So `--sdkDir "$UNSET_VAR"` passed every guard above and pointed the
+        // wipe straight at the application. Comparing canonical paths catches all three spellings at
+        // once, and symlink games with them.
+        require(target.canonicalFile != appRoot.canonicalFile) {
+            "--sdkDir must name a directory INSIDE --out, but '$sdkDir' resolves to the app root " +
+                    "itself (${target.canonicalFile}). That directory is emptied on every run, so " +
+                    "this would delete the application. Use a subdirectory, e.g. '$DEFAULT_SDK_DIR'."
+        }
+
         // Validation happens inside build(); a failure throws before anything is planned, so the
         // target directory is never touched by a run that was going to fail.
         val result = builder.build()

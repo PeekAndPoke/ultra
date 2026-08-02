@@ -251,17 +251,7 @@ class TsSdkOutput {
          * than being generated — it is maintained by humans next to the codec it mirrors.
          */
         fun resource(resourcePath: String, to: String) {
-            // `bufferedReader()` on an InputStream defaults to UTF-8 (not the platform charset), so
-            // the encoding needs no explicit argument here.
-            val content = loader.getResourceAsStream(resourcePath)
-                ?.bufferedReader()
-                ?.readText()
-                ?: error(
-                    "Contributor '$contributor' asked for resource '$resourcePath', which is not on the " +
-                            "classpath. Check it is under src/main/resources of the contributor's module."
-                )
-
-            file(path = to, content = content)
+            file(path = to, content = readResource(resourcePath))
         }
 
         /**

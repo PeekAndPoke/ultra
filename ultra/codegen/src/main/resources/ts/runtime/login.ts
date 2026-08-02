@@ -72,7 +72,19 @@ export type LoginOutcome<P = unknown> =
     | { readonly _type: 'activation-required'; readonly resendToken: string }
     | {
           readonly _type: 'rejected'
-          /** The server's message, or `null` when it sent none. Safe to show; it never quotes input. */
+          /**
+           * The server's message, or `null` when it sent none.
+           *
+           * **Server-authored text — render it as TEXT, never as HTML.** It is not sanitised and it
+           * is not guaranteed to be free of caller input: `AuthSystem.kt` answers an unknown realm
+           * with `"Realm not found: $realm"`, and `{realm}` is a path segment on a public route, so
+           * an attacker can put arbitrary characters in it. Interpolating this into `v-html` or
+           * `dangerouslySetInnerHTML` is reflected XSS on the one page that is about to hold a
+           * session.
+           *
+           * It may also distinguish "no such user" from "wrong password", so treat it as an
+           * account-enumeration channel and prefer your own copy on a login form.
+           */
           readonly message: string | null
           readonly status: number
       }
@@ -128,6 +140,17 @@ export function applySignIn<P>(
 
         case 'activation-required':
             return { _type: 'activation-required', resendToken: result.resendToken }
+
+        default:
+            // A variant this SDK does not know — a newer server against a cached bundle, MFA being
+            // the obvious next one. Without this the function returned `undefined` through a
+            // signature that promises an outcome, so the documented `switch (outcome._type)` threw a
+            // TypeError. In `startAutoRefresh` that throw was swallowed by its own error handler,
+            // leaving the refresher silently dead and the user "randomly logged out" at expiry.
+            //
+            // Rejecting is the safe reading: an outcome we cannot interpret must not create a
+            // session. Regenerating the SDK is what adds the branch.
+            return { _type: 'rejected', message: firstMessage(response), status }
     }
 }
 
