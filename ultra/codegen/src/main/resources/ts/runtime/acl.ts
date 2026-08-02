@@ -82,10 +82,13 @@ export class ApiAcl {
     /**
      * Worth showing at all — anything but `Denied`.
      *
-     * **Includes `Partial`, so the server may still reject the call for specific arguments.** This is
-     * the right default for visibility: a button that appears and then errors explains itself, while
-     * one that silently never appears reads as a bug. For a DESTRUCTIVE action, reach for
-     * [canFullyAccess] deliberately.
+     * **Includes `Partial`, and that is access.** `Partial` means the route is callable and the
+     * server will additionally check the ARGUMENTS — typically "do you own this resource". The user
+     * may use the route and its UI; enforcing the per-resource rule is the backend's job.
+     *
+     * So this is the predicate to reach for, including for DESTRUCTIVE actions. Gating a delete on
+     * [canFullyAccess] would hide it from the user on their OWN resource, which is the silent
+     * disappearance this default exists to avoid.
      *
      * A PUBLIC route short-circuits, because the matrix cannot answer for a logged-out visitor: the
      * endpoint serving it is itself authenticated, so without this an anonymous user is denied
@@ -104,10 +107,14 @@ export class ApiAcl {
      * group's `authenticated()` floor, so it reports `Granted` to every logged-in user while the
      * handler enforces `userId == caller`.
      *
-     * **Deliberately does NOT short-circuit on `isPublic`**, unlike [canAccess]. This answers "is the
-     * caller-level rule chain satisfied for THIS user", and for an anonymous visitor with no matrix
-     * the honest answer is no. Widening it would make the strict predicate — the one the docs send
-     * you to for destructive actions — the more permissive of the two.
+     * Narrow by design, and rarely what a view wants: use [canAccess] for "should this appear",
+     * including for destructive actions. This answers the different question of whether the route
+     * works regardless of WHICH resource it is pointed at — a bulk operation, an admin screen acting
+     * across a set.
+     *
+     * **Deliberately does NOT short-circuit on `isPublic`**, unlike [canAccess]. For an anonymous
+     * visitor with no matrix the honest answer is no, and widening it would leave the strict
+     * predicate more permissive than the loose one.
      */
     readonly canFullyAccess = (route: RouteRef): boolean => this.getAccessLevel(route) === 'Granted'
 

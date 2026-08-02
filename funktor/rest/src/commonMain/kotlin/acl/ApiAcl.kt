@@ -54,16 +54,27 @@ class ApiAcl(matrix: UserApiAccessMatrix) {
     /**
      * Worth showing at all — anything but [ApiAccessLevel.Denied].
      *
-     * **Includes [ApiAccessLevel.Partial], so the server may still reject the call for specific
-     * arguments.** That is the right default for visibility: a control that appears and then errors
-     * explains itself, while one that silently never appears reads as a bug. For a DESTRUCTIVE
-     * action, reach for [canFullyAccess] deliberately.
+     * **Includes [ApiAccessLevel.Partial], and that is access.** `Partial` means the route is
+     * callable and the server will additionally check the ARGUMENTS — typically "do you own this
+     * resource". The user may use the route and its UI; enforcing the per-resource rule is the
+     * backend's job.
+     *
+     * So this is the predicate to reach for, including for DESTRUCTIVE actions. Gating a delete on
+     * [canFullyAccess] would hide it from the user on their OWN resource, which is the silent
+     * disappearance this default exists to avoid.
      */
     fun canAccess(endpoint: TypedApiEndpoint): Boolean {
         return !getAccessLevel(endpoint).isDenied()
     }
 
-    /** Callable unconditionally, with no argument-dependent check. */
+    /**
+     * Callable unconditionally, with no argument-dependent check.
+     *
+     * Narrow by design, and rarely what a view wants: use [canAccess] for "should this appear",
+     * including for destructive actions. This answers the different question of whether the route
+     * works regardless of WHICH resource it is pointed at — a bulk operation, an admin screen acting
+     * across a set.
+     */
     fun canFullyAccess(endpoint: TypedApiEndpoint): Boolean {
         return getAccessLevel(endpoint).isGranted()
     }

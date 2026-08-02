@@ -246,23 +246,27 @@ if (acl.canAccess(MyApiClient.GetEvent)) {
     navLink("/events") { +"Events" }
 }
 
-// Destructive actions: ask for the strict predicate deliberately
-if (acl.canFullyAccess(MyApiClient.DeleteEvent)) {
+// Destructive actions too — Partial IS access; the backend checks ownership
+if (acl.canAccess(MyApiClient.DeleteEvent)) {
     button { +"Delete" }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Four predicates, sharing their names with the generated TypeScript SDK so both clients read the
         same way. <code>canAccess</code> is true for anything but <code>Denied</code> &mdash; it
-        <strong>includes <code>Partial</code></strong>, which is the right default for visibility but
-        means a control may appear and then be rejected. <code>canFullyAccess</code> is
-        <code>Granted</code> only, <code>canPartiallyAccess</code> is <code>Partial</code> only, and
-        <code>isDenied</code> is the negation of <code>canAccess</code>. No framework rule currently
-        produces <code>Partial</code>, so do not gate on <code>canPartiallyAccess</code> expecting the
-        branch to run.</p>
+        <strong>includes <code>Partial</code>, and that is access</strong>: <code>Partial</code> means
+        the route is callable and the server will additionally check the arguments &mdash; typically
+        "do you own this resource". So <code>canAccess</code> is the predicate for visibility,
+        destructive actions included; gating a delete on <code>canFullyAccess</code> would hide it
+        from the user on their own resource. <code>canPartiallyAccess</code> is <code>Partial</code>
+        only and <code>isDenied</code> is the negation of <code>canAccess</code>. No framework rule
+        currently produces <code>Partial</code>, so do not gate on <code>canPartiallyAccess</code>
+        expecting the branch to run.</p>
 
-    <p><code>canFullyAccess</code> is <strong>not</strong> a promise that the call will succeed. Checks
-        written inside a handler, and <code>RouteParamsGuard</code>s such as the saas
-        <code>OrgIsolationGuard</code>, are not auth rules, so the matrix cannot see them.</p>
+    <p>Reach for <code>canFullyAccess</code> only for the different question of whether a route works
+        regardless of WHICH resource it targets &mdash; a bulk operation, an admin screen acting across
+        a set. It is also <strong>not</strong> a promise the call will succeed: checks written inside a
+        handler, and <code>RouteParamsGuard</code>s such as the saas <code>OrgIsolationGuard</code>,
+        are not auth rules, so the matrix cannot see them.</p>
 
     <p><code>ApiAcl.empty</code> denies everything, and unknown endpoints default to
         <code>Denied</code>. Note that this includes <code>public()</code> routes &mdash; a logged-out
