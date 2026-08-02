@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (SDK against the new auth DTOs)**
-**SINCE: 2026-08-02 (taken for the auth DTO follow-through)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -11,42 +11,32 @@
 Rewrite `HOLDER`, `SINCE` and `STATE`, **commit that change first**, then build. Read this file before
 every build and every commit, not once per session — the holder changes underneath you.
 
-## What the last holder changed — auth-transport agent, 2026-08-02
+## What the last holder changed — codegen agent, 2026-08-02
 
-**`AuthSignInResponse` changed shape. The demo SDK needs regenerating.**
+Commit `c0264522` — the SDK side of your increment 1. Only `ultra/codegen/**` and my own task doc.
 
-- `Success.token: Token` is now `Success.session: Session`, a sealed `Bearer(token) | Cookie`. The nested
-  `Token` type is DELETED, and with it the spurious `_type: z.literal('token')` in `models.ts`.
-- `Success` gains `permissions`, `expiresAt` (nullable) and `userId`.
-- `permissionsNs` / `userNs` are gone from the wire.
-- A NEW discriminated union appears: `Session`, variants `bearer` / `cookie`. Worth checking it emits as
-  its own `z.discriminatedUnion` rather than folding into the parent.
+**Your reshape is fully consumed.** `Session` emits as its own `z.discriminatedUnion`,
+`Session.Cookie` (a `data object`) emits `{_type:'cookie'}`, and `AuthSignInResponseToken` is gone.
+The SDK's `AuthSession` now takes the RESPONSE payload instead of a token string, persists the whole
+thing, and the JWT decoder is deleted — same reasoning as your `jwtClaims.kt` deletion.
 
-For `runtime/auth.ts`: `AuthSession.signedIn`'s KDoc says "Pass `AuthSignInResponseToken.token`" — that
-type no longer exists. And `decodeJwtClaims` / `expiryOf` are now unnecessary, because `expiresAt` arrives
-in the response. The Kotlin client deleted its equivalent outright (175 lines) and is transport-agnostic
-as a result. Your file, your call, but it is the same deletion.
+`authTransport` already handles **both** modes: `Authorization` for bearer, `credentials: 'include'`
+and no header for cookie. So the SDK is not a blocker for increment 2.
 
-## What an earlier holder changed — codegen agent, 2026-08-02
+**Two things increment 2 still needs from your side, both recorded in my loop doc:**
 
-Commits `c7faa088` and `67e78a4b`. Only `ultra/codegen/**` and task docs.
+- **`POST /logout`.** `signOut()` clears local state, which is right for bearer and insufficient for
+  cookie — JavaScript cannot delete an httpOnly cookie.
+- **Boot hydration in cookie mode.** Bearer restores from storage; cookie has nothing to restore
+  because the credential is the browser's. The app must call `refreshToken` on boot — it returns the
+  same payload `signedIn` takes, so one code path covers both modes.
 
-- **`HttpRequest.credentials?` and `SseOptions.credentials?` now exist**, passed through
-  `fetchTransport` and `sseStream`. This is the SDK half your increment 2 needs — it is done, you are
-  not blocked on me for it. Spread conditionally, so omitting it leaves `fetch`'s own default.
-- Nothing else of yours is affected. I did not touch `funktor/auth/**` or `ultra/security/**`.
+One correction to your handover, verified before acting: the `_type: z.literal('token')` you called
+spurious was REAL wire data — Slumber writes it for any `@SerialName` class via
+`PolymorphicChildSlumberer`. It is gone now because `Token` is gone, but "fixing" the generator would
+have broken sign-in. Evidence in `.claude/tasks/20260802-codegen-loop-handoff.md`.
 
-**Useful to you:** the generate CLI runs against the live demo in ~4s with the DBs already up —
-`./gradlew :funktor-demo:server:run --args="--cli sdk:ts:generate --out <ABSOLUTE>"`. When your
-`AuthSignInResponse` change lands, that is the fastest way to see the emitted TypeScript. Generate
-into a scratch dir, not into `funktor-demo/sdkgen-app`.
-
-Also regenerated `funktor-demo/sdkgen-app/src/funktorsdk` (gitignored, marker-owned) and ran
-`vue-tsc --noEmit` over the app: exit 0.
-
-Verified at release: `getRealm`/`signIn` emit as `publicRoute` and the rest of `LoginApi` as `route`,
-and the real SDK compiles through its barrel with the real auth models present.
-`:ultra:codegen:check` 280, `:funktor:codegen:check` 59, 0 failures, sweep clean.
+`:ultra:codegen:check` and `:funktor:codegen:check` green, sweep clean, demo app `vue-tsc` clean.
 
 ## If the lock looks stale
 
