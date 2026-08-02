@@ -1,7 +1,8 @@
 # Frontend token storage hardening (localStorage → httpOnly session cookie)
 
-**Status:** DESIGN SETTLED 2026-08-02. Increment 1 (the response contract) IN PROGRESS.
-Security-critical.
+**Status:** DESIGN SETTLED 2026-08-02. **Increment 1 COMPLETE** — not yet through `/feature-review`,
+which CLAUDE.md requires before DONE. Increment 2 (the cookie transport) not started, and needs its own
+plan: it moves a security boundary. Security-critical.
 **Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c).
 
 ## The gap (current behaviour)
@@ -57,7 +58,7 @@ Three further decisions, same day:
 | Sequencing | **Contract first, transport second.** See increments below |
 | Logout | **Clears the cookie only** (`Max-Age=0`). The JWT stays valid until `exp`, exactly as today. Real revocation stays tracked in `.claude/tasks/20260728-session-revocation-wiring.md` |
 
-## Increment 1 — the response contract (IN PROGRESS)
+## Increment 1 — the response contract (COMPLETE 2026-08-02)
 
 Ships **bearer-only**; nothing changes at runtime. It exists as its own step because the SDK work is
 blocked on the contract (`.claude/tasks/20260731-sdk-auth-integration.md:121-123`).
@@ -106,6 +107,29 @@ are derived in `successFor` from the freshly minted token, so the response and t
 Consequence for sequencing: steps 2-4 are **one indivisible unit**. The model, `successFor`, the six
 realms and `AuthState` all cascade from deleting `Token`, so the tree does not compile in between. Do not
 start it without room to finish — see the lock rule about not going idle on a non-compiling module.
+
+### What shipped
+
+| | commit |
+|---|---|
+| `JwtPayload.expiresAt` + `JwtClaim.asLong`, and a 1-in-4 flaky test fixed | `a0bef940` |
+| The response reshape, `generateJwt` -> String, the client decoder deleted | see log |
+
+553 tests green across `funktor:auth` (jvm+js), `funktor:all`, `funktor-demo:server`, `ultra:security`.
+Compile sweep clean on jvm and js.
+
+Two things found while building, both recorded so they are not re-derived:
+
+- **`expiresAt` had to be nullable.** `exp` is optional in RFC 7519, the verifier treats an absent one as
+  "no expiry check" (pinned by `JwtWireCompatSpec`), and each realm supplies its own claim lambda. The
+  plan said non-null; that would have been a lie.
+- **Deleting `JwtClaimsSpec` emptied `funktor:auth`'s only JS test source set.**
+  `AuthStateSessionMappingSpec` replaces it and pins the property that matters: a malformed or empty
+  bearer token changes nothing, because nothing reads it.
+
+Four mutants, all killed — including one that survived at first: **nothing asserted `userId`.**
+`FunktorApiSpec` now exposes the test user ids and `AuthApiSpec` asserts a refresh returns a token for the
+SAME user, which nothing checked before.
 
 ## Increment 2 — the cookie transport
 

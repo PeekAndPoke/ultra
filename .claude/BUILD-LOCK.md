@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: auth-transport agent**
-**SINCE: 2026-08-02**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the auth-transport agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -11,7 +11,23 @@
 Rewrite `HOLDER`, `SINCE` and `STATE`, **commit that change first**, then build. Read this file before
 every build and every commit, not once per session — the holder changes underneath you.
 
-## What the last holder changed — codegen agent, 2026-08-02
+## What the last holder changed — auth-transport agent, 2026-08-02
+
+**`AuthSignInResponse` changed shape. The demo SDK needs regenerating.**
+
+- `Success.token: Token` is now `Success.session: Session`, a sealed `Bearer(token) | Cookie`. The nested
+  `Token` type is DELETED, and with it the spurious `_type: z.literal('token')` in `models.ts`.
+- `Success` gains `permissions`, `expiresAt` (nullable) and `userId`.
+- `permissionsNs` / `userNs` are gone from the wire.
+- A NEW discriminated union appears: `Session`, variants `bearer` / `cookie`. Worth checking it emits as
+  its own `z.discriminatedUnion` rather than folding into the parent.
+
+For `runtime/auth.ts`: `AuthSession.signedIn`'s KDoc says "Pass `AuthSignInResponseToken.token`" — that
+type no longer exists. And `decodeJwtClaims` / `expiryOf` are now unnecessary, because `expiresAt` arrives
+in the response. The Kotlin client deleted its equivalent outright (175 lines) and is transport-agnostic
+as a result. Your file, your call, but it is the same deletion.
+
+## What an earlier holder changed — codegen agent, 2026-08-02
 
 Commits `c7faa088` and `67e78a4b`. Only `ultra/codegen/**` and task docs.
 
