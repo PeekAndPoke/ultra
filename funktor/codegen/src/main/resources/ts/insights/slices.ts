@@ -202,9 +202,18 @@ export function readTemplateTimeNs(data: unknown): number | null {
     return asNumber(asRecord(data)?.timeNs)
 }
 
-/** `level` is the enum NAME: ALL TRACE DEBUG INFO WARNING ERROR OFF. */
-export type LogLevel = 'ALL' | 'TRACE' | 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'OFF'
-
+/**
+ * One log line from the record.
+ *
+ * `level` is the enum NAME — ALL, TRACE, DEBUG, INFO, WARNING, ERROR, OFF — and is deliberately
+ * typed `string`, because it arrives inside an open collector envelope rather than through a
+ * schema. The generated `LogLevel` in `../models.ts` is the authority on the value set; there was a
+ * hand-written copy of that union here and it is gone (2026-08-02): nothing referenced it, and a
+ * copy of a generated enum drifts silently the moment Kotlin gains a level.
+ *
+ * It also collided. `export *` through the SDK barrel turns two modules exporting one name into
+ * TS2308, which is the barrel doing its job.
+ */
 export interface LogEntry {
     level: string | null
     /** Already formatted by `LogAppender.format` -- render as-is, do not re-parse. */
