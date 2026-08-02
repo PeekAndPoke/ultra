@@ -118,7 +118,51 @@ be built alone, but it is only useful once the `@sdk` alias work starts.
 `TsSdkRegistry` has exactly one user today (a fixture). A second real one is what proves the
 mechanism rather than assuming it. Page routes are `requiresAuth = true`, DECLARED not derived.
 
-### 5. WHEN THEIR DTOs LAND — do not start early
+### 5. THE DTOs HAVE LANDED (2026-08-02) — execution plan below
+
+**Shape as shipped** (`funktor/auth/src/commonMain/kotlin/model/AuthSignInResponse.kt`):
+
+```kotlin
+data class Success(
+    val session: Session,          // sealed: Bearer(token) | Cookie   (Cookie is a `data object`)
+    val permissions: UserPermissions,
+    val expiresAt: MpInstant,
+    val userId: UserId? = null,
+    val realm: AuthRealmModel, val user: JsonObject, val org: AuthOrgRef? = null,
+)
+```
+
+**Verify FIRST, before writing any TypeScript** — regenerate and read the output:
+
+- `Session` must emit as its OWN `z.discriminatedUnion('_type', [...])` with `bearer` and `cookie`,
+  not folded into the parent union.
+- `Session.Cookie` is a **`data object`**, which is the unusual one. Slumber reaches it through
+  `isPolymorphicChild` BEFORE the `objectInstance != null` branch (`BuiltInModule.kt:249` vs `:251`),
+  so it slumbers via `DataClassSlumberer` to `{"_type":"cookie"}` — NOT through `ObjectInstanceCodec`,
+  which has a known defect that drops everything. Confirm the walker agrees and emits an object with
+  only the discriminator.
+- `AuthSignInResponseToken` should be gone; `_type: z.literal('token')` with it.
+- `expiresAt` is an `MpInstant`, so in TypeScript it is the claimed `{ts, timezone, human}` object —
+  **`expiresAt.ts` is the epoch-millis number**, not `expiresAt` itself. `isExpiring` compares numbers.
+
+**Then the runtime work:**
+
+- [ ] Delete `decodeJwtClaims` / `expiryOf` from `runtime/auth.ts` and their ts-verify checks. The
+      response now carries what they dug out. Their Kotlin equivalent (`jwtClaims.kt`, 175 lines) is
+      being deleted for the same reason.
+- [ ] `AuthSession.signedIn` currently takes a token STRING and its KDoc names the deleted
+      `AuthSignInResponseToken`. It should take the `Success` payload — in cookie mode there is no
+      token at all, so a token-shaped API cannot express the state.
+- [ ] `TokenStorage` becomes a SESSION store, not a token store. httpOnly has no readable token, so
+      the four questions are: establish / authorize a request / end / where claims come from.
+- [ ] **Boot hydration — the part their plan does not cover.** After a reload, bearer mode has only
+      what was persisted and cookie mode has nothing; `expiresAt` and `permissions` came from the
+      response. Without it the refresh timer never schedules and it presents as "randomly logged out".
+      Call `refreshToken` on boot: it returns the full `AuthSignInResponse` and works in BOTH modes.
+- [ ] `authTransport` must attach nothing in cookie mode, and set `credentials: 'include'` instead —
+      the field for that landed in `c7faa088`.
+
+### (superseded) WHEN THEIR DTOs LAND — do not start early
 
 - [ ] Regenerate and confirm `Session` emits as **its own `z.discriminatedUnion`**, not folded into
       the parent union. Their handover flags this explicitly.
@@ -167,6 +211,29 @@ mechanism rather than assuming it. Page routes are `requiresAuth = true`, DECLAR
 ## Iteration notes
 
 Append one short block per iteration. Newest at the top.
+
+### Iteration 5 — 2026-08-02, the new DTOs VERIFIED through the generator
+
+Regenerated against the live API after their `5026e436`. Everything the plan said to check:
+
+- `Session` emits as **its own** `z.discriminatedUnion('_type', [Bearer, Cookie])`, not folded in.
+- `Session.Cookie`, the `data object`, emits `z.object({ _type: z.literal('cookie') })` — exactly as
+  predicted from the `BuiltInModule.kt:249` vs `:251` dispatch order. It does NOT go through
+  `ObjectInstanceCodec` and its everything-dropping defect.
+- `AuthSignInResponseToken` and its `_type: z.literal('token')` are gone.
+- `Success` carries `session`, `permissions`, `expiresAt`, `userId`.
+
+**One thing differs from their handover, and the generator is right.** `expiresAt` emits as
+`MpInstant.nullable().optional()`. The handover's snippet showed `val expiresAt: MpInstant`, but the
+COMMITTED declaration is `MpInstant? = null` — they changed it before committing because `exp` is
+optional in RFC 7519 and claiming non-null "would have been a lie" (their words). Checked the
+committed source rather than the handover, which is the only reason this did not read as a bug.
+
+**Consequence for us:** the field that exists specifically to drive refresh scheduling can be absent.
+`AuthSession.isExpiring` already returns FALSE for unknown expiry — deliberately, so it does not
+refresh forever — so the semantics were already right. It is now load-bearing rather than defensive.
+
+Also note `expiresAt` is an `MpInstant`, so the number is **`expiresAt.ts`**, not `expiresAt`.
 
 ### Iteration 4 — 2026-08-02, the demo app regenerated and type-checked
 
