@@ -1,0 +1,51 @@
+/*
+ * Insights-specific styling.
+ *
+ * Load AFTER `funktor/ui`'s `theme.css`, which owns the variables this file reads. Splitting it this way
+ * keeps two rules intact at once:
+ *
+ *   - Components carry no `<style>` block, so an app that declines the stylesheets can restyle
+ *     everything against the class names.
+ *   - A module's own classes live with the module, so `theme.css` stays the shared design system rather
+ *     than a dumping ground that grows with every view that ships.
+ *
+ * Everything here reads `--fk-*` variables and declares no colour of its own -- an app that rethemes
+ * gets these for free.
+ */
+
+.fk-insights {
+    padding: calc(var(--fk-gap) * 1.5);
+}
+
+/*  The record list  -------------------------------------------------------------------------------  */
+
+.fk-records__row {
+    cursor: pointer;
+}
+
+.fk-records__row:hover td {
+    background: var(--fk-surface-raised);
+}
+
+/*
+ * The path is the widest and least predictable column, so it takes the slack and wraps. Without this
+ * one long path pushes status and duration off screen -- the two columns most likely to be scanned.
+ */
+.fk-records__path {
+    width: 100%;
+    word-break: break-all;
+}
+
+/*  LogTab  ----------------------------------------------------------------------------------------  */
+
+.fk-log-entry + .fk-log-entry {
+    margin-top: var(--fk-gap);
+}
+
+/*
+ * The level label sits above its message rather than beside it: log text is pre-formatted and often
+ * wide, and a side-by-side layout would either squeeze it or push the label out of view on scroll.
+ */
+.fk-log-entry > .fk-label {
+    margin-bottom: 4px;
+}

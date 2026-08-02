@@ -82,9 +82,11 @@ Leaves first, because of D-1 — each step is useful even if the import question
       `request` and `response`), `PreBlock`. Unscoped `fk-`-prefixed classes, CSS variables as the
       theming seam, neutral default palette — settled 2026-08-02, see the plan's "Styling and the design
       system". These land in a **new module**, not in `funktor/insights`.
-- [ ] **2. The cheap tabs** — `request`, `response`, `user`, `routing`, `template`, `log`. Each is a table
-      or a `<pre>` plus a JSON toggle. `template` must treat `timeNs: null` as the **normal** case: it is
-      null on every API request.
+- [x] **2. The cheap tabs** — DONE 2026-08-02. `request`, `response`, `user`, `routing`, `template`, `log`.
+      Each is a table or a `<pre>`, with the raw slice behind a native `<details>` — no state, no JS, and
+      collapsed by default so a big slice costs nothing. `template` treats `timeNs: null` as the normal
+      case. **Every tab degrades to `JsonTree` rather than throwing** when the slice shape is not
+      recognised: records outlive the code that wrote them, and one bad record must not take the page.
 - [ ] **3. `runtime`** — the seven-cell strip. Note the old bar and tab deliberately used different units
       (GB to 2dp vs `%d MB`); the tab's is the one to keep. `openFileDescriptors` is `0` on non-Unix, not
       unknown.
@@ -93,13 +95,31 @@ Leaves first, because of D-1 — each step is useful even if the import question
 - [ ] **5. `kontainer`** — the sortable table first, the graph second. It is 73.6% of a record's bytes
       (137.8 KB average), so this is the one where rendering cost is a real design input.
 - [ ] **6. `app-config`** — `JsonTree` twice, with the caveat above stated in the UI, not just the docs.
-- [ ] **7. The detail page** — tab shell, prev/next from `next`/`previous`, and the Overview landing
-      section (request line, status colouring, response time, timestamp, then the Database and Runtime
-      strips inlined). **This is the first file that must import the client**, i.e. the first blocked on D-1.
-- [ ] **8. The list page** — paged `listRecords`. The old insights *bar* is deleted, not ported; its job
-      moves here (status colour, duration thresholds: red >300ms, yellow >150, olive >75, green).
-- [ ] **9. The contributor** — `InsightsTsContributor` in `funktor/insights`, emitting the above via
-      `out.resource(...)`. Page routes are `requiresAuth = true`, **declared not derived**.
+- [x] **7. The detail page** — DONE 2026-08-02. Tab shell, prev/next, Overview landing section.
+      The Database and Runtime strips are NOT inlined yet; they arrive with steps 3 and 4.
+      **The tab registry is open by design:** an unregistered key renders through `JsonTree` rather than
+      erroring, which is how an app-defined collector appears and how the four unbuilt tabs appear today.
+      So the page is complete and usable now, and each later tab is an upgrade rather than an unblock.
+- [x] **8. The list page** — DONE 2026-08-02. Paged `listRecords`, and the deleted insights *bar*'s job.
+      Duration bands are three, not the old four: olive ("slightly slow") is dropped, because the theme
+      carries three tones and a fourth colour earns less than explaining it costs.
+- [x] **D-1 turned out not to block these.** The pages import `../models.ts`, `../runtime/*` and
+      `../funktorInsightsClient.ts` — relative, and correct as long as the contributor emits `funktor/ui`
+      at `<out>/ui/` and these at `<out>/insights/`. That is the plan's "freeze the layout" option, taken
+      as an interim. When the `@sdk` alias lands the imports become alias-based and stop depending on
+      depth; until then **the layout is a contract the contributor must honour**.
+- [ ] **9. The contributor** — `InsightsTsContributor` in `funktor/insights`. Page routes are
+      `requiresAuth = true`, **declared not derived**.
+
+      **Use `out.sharedResource` for every `funktor/ui` file, never `out.resource`** — flagged by the
+      codegen agent, verified in the code. `resource` delegates to `file`, which is exclusive: *"a second
+      writer is a hard error"* (`sdk/TsSdkOutput.kt:218`). `shared` dedupes identical content and still
+      fails loudly on a genuine conflict, and its KDoc names `components/JsonTree.vue` as the case it
+      exists for. **Mixing the two on one path is also an error**, which settles a design question:
+      `funktor/ui` must NOT have its own contributor emitting these exclusively while consumers share
+      them. Every module that needs the primitives asks for them via `sharedResource`, so "the ui ships
+      iff something needs it" holds by construction — the same property that keeps views in their module.
+      The tabs and pages themselves stay `resource`: `funktor/insights` genuinely is their sole owner.
 - [ ] **10. Delete as you go** — per `reference/README.md`, a shipped tab deletes its `reference/collectors/*.kt`
       and its TAB-SPECS section. When both are empty, delete `reference/`.
 
@@ -144,6 +164,30 @@ Verified by rendering, not by reading:
   subtrees is what keeps the 137.8 KB kontainer slice cheap.
 - **Mutation-tested.** Switching `PreBlock`'s interpolation to `v-html` produced `leaked=1` and a
   non-zero exit. The guard fails when it should, so the green run means something.
+
+## Step 2 / 7 / 8 evidence — the tabs and pages, 2026-08-02
+
+Six tabs, three pages, `slices.ts` and `insights.css` under
+`funktor/insights/src/jvmMain/resources/ts/insights/`. Still no gradle module, still nothing on the
+build path.
+
+- **`vue-tsc --noEmit` clean against the REAL generated SDK** — the scratch tree mirrors the emitted
+  layout, so this proves the relative imports resolve and the types match what the generator emits, not
+  what I assumed it emits.
+- **18 render cases, 0 failures.** Every tab with the payload in each attacker-reachable position; the
+  URL recomposed from `scheme`/`host`/`port`/`uri`; status and log-level tones; `***redacted***` marked
+  as metadata.
+- **The harness fails a case that supplies a payload but never renders it** (`BLIND`). Without that, a
+  tab that silently dropped a field would pass the escaping check by not showing anything.
+- **Degradation is tested, not assumed:** `[1,2,3]`, `'just-a-string'`, `{entries:'nope'}` and `{}` all
+  fall back to a JSON tree. None throws.
+- All three pages mount, compile and reach their loading state.
+
+**The gap, stated because it is easy to read the green above as more than it is:** SSR renders only the
+synchronous state, so **the pages' LOADED state is unverified** — the table rows, the tab shell driven by
+a real record, prev/next. Testing it needs a DOM (`happy-dom`/`jsdom`), which is not in the demo app's
+`node_modules`, and adding a dependency there is the codegen agent's call. The tabs themselves are fully
+exercised because they are pure props-in.
 
 **Owed:** that harness lives in a scratch dir, not in the repo — it proves the code is right today and
 guards nothing tomorrow. It needs a permanent home before this task can pass its gate; that is a Vue test

@@ -174,6 +174,174 @@
     font-style: italic;
 }
 
+/*
+ *  Sections and disclosures -- the layout atoms every tab uses.
+ *
+ *  The raw-JSON dump each tab keeps sits in a native <details>: no state, no JavaScript, keyboard and
+ *  screen-reader behaviour for free, and it collapses by default so a 137 KB slice costs nothing until
+ *  someone asks for it.
+ */
+
+.fk-section + .fk-section {
+    margin-top: calc(var(--fk-gap) * 2);
+}
+
+.fk-section__title {
+    margin: 0 0 var(--fk-gap);
+    font-size: var(--fk-font-size);
+    font-weight: 600;
+}
+
+.fk-section__note {
+    margin: calc(var(--fk-gap) * -0.5) 0 var(--fk-gap);
+    color: var(--fk-text-muted);
+    font-size: var(--fk-font-size-sm);
+}
+
+.fk-details {
+    margin-top: var(--fk-gap);
+    border: var(--fk-border-width) solid var(--fk-border);
+    border-radius: var(--fk-radius);
+}
+
+.fk-details > summary {
+    padding: 6px 12px;
+    color: var(--fk-text-muted);
+    font-size: var(--fk-font-size-sm);
+    cursor: pointer;
+    user-select: none;
+}
+
+.fk-details[open] > summary {
+    border-bottom: var(--fk-border-width) solid var(--fk-border);
+}
+
+.fk-details__body {
+    padding: var(--fk-gap);
+    overflow-x: auto;
+}
+
+/*  A definition-style list, for the handful of scalar fields at the top of a tab.  ------------------  */
+
+.fk-facts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px var(--fk-gap);
+    margin: 0;
+}
+
+.fk-facts__key {
+    color: var(--fk-text-muted);
+    font-size: var(--fk-font-size-sm);
+}
+
+.fk-facts__value {
+    margin: 0;
+    font-family: var(--fk-font-mono);
+    font-size: var(--fk-font-size-sm);
+    word-break: break-all;
+}
+
+/*  Controls  --------------------------------------------------------------------------------------  */
+
+.fk-button {
+    padding: 5px 12px;
+    border: var(--fk-border-width) solid var(--fk-border);
+    border-radius: var(--fk-radius);
+    background: var(--fk-surface-raised);
+    color: var(--fk-text);
+    font: inherit;
+    font-size: var(--fk-font-size-sm);
+    cursor: pointer;
+}
+
+.fk-button:hover:not(:disabled) {
+    border-color: var(--fk-accent);
+}
+
+.fk-button:disabled {
+    color: var(--fk-text-faint);
+    cursor: default;
+    opacity: 0.6;
+}
+
+/* A visible focus ring is not decoration -- these views are keyboard-navigated during an incident. */
+.fk-button:focus-visible,
+.fk-tabs__tab:focus-visible,
+.fk-json__toggle:focus-visible {
+    outline: 2px solid var(--fk-accent);
+    outline-offset: 2px;
+}
+
+.fk-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--fk-gap);
+}
+
+.fk-toolbar__spacer {
+    flex: 1 1 auto;
+}
+
+.fk-pager {
+    display: flex;
+    align-items: center;
+    gap: var(--fk-gap);
+    margin-top: var(--fk-gap);
+}
+
+/*  Notices  ---------------------------------------------------------------------------------------  */
+
+.fk-notice {
+    padding: 10px 12px;
+    border-radius: var(--fk-radius);
+    background: var(--fk-neutral-bg);
+    color: var(--fk-neutral);
+    font-size: var(--fk-font-size-sm);
+}
+
+.fk-notice--error {
+    background: var(--fk-error-bg);
+    color: var(--fk-error);
+}
+
+/*  Tabs  ------------------------------------------------------------------------------------------  */
+
+.fk-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: calc(var(--fk-gap) * 2);
+    border-bottom: var(--fk-border-width) solid var(--fk-border);
+}
+
+.fk-tabs__tab {
+    padding: 7px 14px;
+    border: none;
+    /* A transparent border reserves the space, so the active tab does not shift the row by 2px. */
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--fk-text-muted);
+    font: inherit;
+    font-size: var(--fk-font-size-sm);
+    cursor: pointer;
+}
+
+.fk-tabs__tab:hover {
+    color: var(--fk-text);
+}
+
+.fk-tabs__tab--active {
+    border-bottom-color: var(--fk-accent);
+    color: var(--fk-text);
+    font-weight: 600;
+}
+
+.fk-tabs__panel {
+    padding-top: calc(var(--fk-gap) * 1.5);
+}
+
 /*  PreBlock  --------------------------------------------------------------------------------------  */
 
 .fk-pre {
