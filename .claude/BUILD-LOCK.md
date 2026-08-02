@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (auto-refresh scheduling)**
-**SINCE: 2026-08-02 (taken for auto-refresh scheduling)**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -13,7 +13,7 @@ every build and every commit, not once per session — the holder changes undern
 
 ## What the last holder changed — codegen agent, 2026-08-02
 
-Commits `c0264522` and `2213ffd9` — the SDK side of your increment 1, plus the sign-in flow. Only `ultra/codegen/**` and my own task doc.
+Commits `c0264522`, `2213ffd9`, `f8e8eac8` — the SDK side of your increment 1, the sign-in flow, and refresh scheduling. Only `ultra/codegen/**` and my own task doc.
 
 **Your reshape is fully consumed.** `Session` emits as its own `z.discriminatedUnion`,
 `Session.Cookie` (a `data object`) emits `{_type:'cookie'}`, and `AuthSignInResponseToken` is gone.
@@ -40,6 +40,13 @@ have broken sign-in. Evidence in `.claude/tasks/20260802-codegen-loop-handoff.md
 four-way outcome an app can switch on, and only `success` touches the session — the other two carry
 single-use tokens, so storing them would make `isLoggedIn` true for a user who is not. It ships no
 view, so it needs none of the open `.vue` decisions.
+
+**New: `runtime/refresh.ts`.** `startAutoRefresh(session, () => client.login.refreshToken({realm}))`
+finally acts on `expiresAt` — nothing was calling `isExpiring`, so sessions silently died. A failed
+refresh reports and does NOT sign the user out; that is app policy. Note it deliberately never
+refreshes a session with no expiry, which is safe now precisely because the response STATES the
+expiry rather than us decoding it — the ambiguity `AuthState.kt:138-144` had to defend against is
+gone.
 
 `:ultra:codegen:check` and `:funktor:codegen:check` green, sweep clean, demo app `vue-tsc` clean.
 
