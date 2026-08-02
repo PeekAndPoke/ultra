@@ -147,20 +147,94 @@ Four mutants, all killed — including one that survived at first: **nothing ass
 `FunktorApiSpec` now exposes the test user ids and `AuthApiSpec` asserts a refresh returns a token for the
 SAME user, which nothing checked before.
 
-## Increment 2 — the cookie transport
+## Increment 2 — the cookie transport (DESIGN SETTLED 2026-08-02)
+
+### Deployment: one API host per realm
+
+`api-ops.klang.art`, `api-b2b.klang.art`, … one per realm, each serving one frontend subdomain.
+
+This is what makes the rest simple, and it replaced two designs that did not survive scrutiny:
+
+- **Per-realm cookie NAMES on one shared API host.** Proposed first, and wrong. Cookies are scoped to a
+  *host*, not an app, so all three would be attached to every request from every frontend, with nothing
+  to select on — only the auth routes carry `{realm}` in their path; `InsightsApi` and app routes do not.
+- **An `X-Funktor-Realm` header to select among them**, with the token's realm compared against it. It
+  selects correctly, but does not close the escalation it appears to: an XSS on the b2b frontend sets the
+  header to `ops`, the browser attaches the ops cookie, the token really is an ops token, header and
+  token agree. Both sides of the comparison are things the attacker legitimately obtained.
+- **An `Origin` check** would close that — `Origin` is a forbidden header name, so JS cannot forge it —
+  but it is a dead end for any non-browser client, which sends none. Rejected on those grounds.
+
+Separate hosts dissolve all of it: isolation, cookie selection, logout scoping, and multi-realm
+sign-in (you can be signed into all three frontends at once, as today).
+
+### The cookie
+
+```
+Set-Cookie: __Host-session=<jwt>; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=<exp - now>
+```
+
+Plain `__Host-session` on every API host — **per-realm names are unnecessary** once the host boundary
+does the isolating.
+
+`__Host-` is not decoration. The browser REJECTS such a cookie if it carries a `Domain`, has a `Path`
+other than `/`, or lacks `Secure`, which makes it host-only by construction and closes cookie tossing: a
+sibling subdomain cannot set `Domain=.klang.art` under this name and have it delivered to the API
+alongside the real one (session fixation).
+
+**Keep the mental model straight:** host-only restricts where the cookie is SENT, not who can CAUSE it to
+be sent. A page on any same-site subdomain can still make a credentialed request to the API host. That is
+what the next two items are for.
+
+### CSRF: three layers, and CORS is not one of them
+
+**CORS does not prevent CSRF.** It governs whether the *response* is readable, not whether the request is
+sent. A "simple request" — POST with `text/plain`, `form-urlencoded` or `multipart` — is delivered and
+executed with no preflight; the attacker simply cannot read the reply. The side effect already happened.
+
+1. **`SameSite=Lax`** — blocks true cross-site entirely. The cookie is not attached at all. Free, and the
+   strongest layer. Does NOT cover same-*site* siblings.
+2. **Enforce `Content-Type: application/json` on REST routes** — the layer that actually closes the
+   same-site gap, by making every request non-simple and therefore preflighted, at which point the CORS
+   allowlist genuinely is the gate. **This is a real hole today, independent of cookies**: `routing.kt:205,234`
+   does `call.receive<ByteArray>()` and parses it as JSON with no Content-Type check anywhere, so a
+   cross-origin `<form enctype="text/plain">` POST reaches a handler right now.
+   - Check for form-encoded / multipart routes first — file upload is the usual exception.
+3. **`X-Funktor-Csrf: 1`, a constant** — defence in depth (maintainer, 2026-08-02). Set automatically by
+   `authTransport` in cookie mode. **The value is not a secret and must never become one**: the protection
+   is that a cross-origin page cannot set a custom header without a preflight the server refuses. Say so
+   in its KDoc, or someone will later "harden" it into a token and add machinery for nothing.
+
+**Send it in both modes, require it only for cookie-authenticated requests.** Mandatory-for-bearer breaks
+every non-browser client — mobile, CLI, server-to-server — that legitimately sends nothing but
+`Authorization: Bearer`, and those have no ambient credential and so no CSRF exposure.
+
+Still open: `SameSite=Lax` attaches the cookie to top-level GET navigations, so a state-changing GET
+remains CSRF-able. REST hygiene says there are none; confirm rather than assume.
+
+### Server pieces
 
 - `FunktorRestBuilder.jwtCookie(...)` alongside the three `jwt()` overloads
-  (`funktor/rest/src/jvmMain/kotlin/index_jvm.kt:96-121`), with the cookie's attributes configurable.
-- A cookie `AuthenticationProvider` following the `AnonymousAuthenticationProvider` pattern
-  (`funktor/rest/src/jvmMain/kotlin/auth/anonymous.kt:16`) — no Ktor `session()` machinery needed.
-- A **transport field on `Caller.JwtCaller`** (`auth/Caller.kt:28`) so the CSRF header check fires only
-  for cookie-authenticated requests. A Bearer header is inherently CSRF-safe; gating on the source keeps
-  the check off routes that never use a cookie.
-- `POST /logout` sending `Max-Age=0` — there is no logout endpoint today at all
-  (`AuthState.logout()` just drops local state).
-- SDK: a `credentials` field on `HttpRequest` (`runtime/http.ts:13-19`). Cookie mode **cannot** be a
-  transport decorator the way bearer is, because `fetchTransport` passes only
-  `method/headers/body/signal`. Same for `sseStream` (`runtime/sse.ts:242-255`).
+  (`funktor/rest/src/jvmMain/kotlin/index_jvm.kt:96-121`), cookie attributes configurable.
+- A cookie `AuthenticationProvider` following `AnonymousAuthenticationProvider`
+  (`funktor/rest/src/jvmMain/kotlin/auth/anonymous.kt:16`) — no Ktor `session()` machinery needed. Follow
+  the fail-soft convention: an unusable cookie falls through to anonymous, and the 401 comes from the
+  auth floor (`auth/call.kt:20-26`).
+- **A transport field on `Caller.JwtCaller`** (`auth/Caller.kt:28`) so the CSRF check fires only for
+  cookie-authenticated requests.
+- `POST /auth/{realm}/logout` — `public()` floor and idempotent, since clearing an absent cookie must
+  still answer 200. Realm-scoped for consistency with every other auth route; with one API host per realm
+  the realm is implied anyway.
+- An explicit **`realm` claim** on the token. Today `type` (user type) stands in for it — that is what
+  `refreshToken` validates via `expectedUserType` — but they coincide only because each demo realm happens
+  to have one user type. Additive.
+
+### Client — already done by the codegen agent, nothing owed
+
+`HttpRequest.credentials` and `SseOptions.credentials` exist (`c7faa088`), and `authTransport` already
+handles both modes (`c0264522`): `Authorization` for bearer, `credentials: 'include'` and no header for
+cookie. Boot hydration in cookie mode calls `refreshToken`, which behaves identically under cookie auth —
+it sits behind `AuthUserApi`'s `authenticated()` floor and reads whichever provider authenticated.
 
 ## Verification matrix
 
