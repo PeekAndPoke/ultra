@@ -74,7 +74,7 @@ So the response carries the first three, **in both modes**:
 data class Success(
     val session: Session,              // sealed: Bearer(token) | Cookie
     val permissions: UserPermissions,
-    val expiresAt: MpInstant,
+    val expiresAt: MpInstant? = null,   // nullable -- see below
     val userId: UserId?,
     val realm: AuthRealmModel,
     val user: JsonObject,
@@ -93,6 +93,22 @@ unverified token to learn things the server already knew and could simply have s
 That also retires the "these claims are user-editable, display-only" caveat carried at
 `AuthState.kt:113-121` — permissions now arrive from the server over TLS rather than out of a blob the
 user can rewrite in devtools. Still not an authorization decision; the server remains the only authority.
+
+### A Slumber trap, corrected by the codegen agent (2026-08-02)
+
+I described the `_type: z.literal('token')` on the old nested `Token` as a **spurious** artifact of the
+generator mirroring `isPolymorphicChild`'s "carries `@SerialName`" branch. **That was wrong, and acting
+on it would have broken sign-in.**
+
+Slumber genuinely writes that key: `createChildSlumberer` falls back to `getParent(cls) ?: cls`
+(`builtin/polymorphism/Polymorphic.kt:36`), takes the default `_type`, and
+`PolymorphicChildSlumberer.slumber` does `result.plus(disc2ident)`
+(`PolymorphicChildSlumberer.kt:30`). The generator was mirroring real behaviour, correctly.
+
+**The rule that carries forward: any standalone class carrying `@SerialName` silently gains a `_type` on
+the wire, and awaking ignores it.** Documented as a `TODO(scan)` at `Polymorphic.kt:55-61`. The new
+`Session.Bearer` / `Session.Cookie` are unaffected — they really do implement a sealed parent, so their
+discriminator is genuine.
 
 ### Correction found while implementing (2026-08-02)
 
