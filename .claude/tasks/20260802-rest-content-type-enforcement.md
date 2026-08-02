@@ -80,3 +80,52 @@ differently from every production client is not testing the production path.
 and JSON-with-charset accepted. Mutation-tested: removing the gate kills both rejection rows.
 
 672 tests green across six modules; compile sweep clean on jvm and js.
+
+## Review record — `/feature-review`, 2026-08-02
+
+Three Opus reviewers over `a0bef940`, `5026e436`, `b61d6d55`, `84d316f9`. Preconditions: sweep clean,
+674 tests green. **Gate PASS.** Confirmed findings fixed in `4aa6b808`.
+
+| Severity | Finding | Verdict |
+|---|---|---|
+| MEDIUM | `verify()` on the sign-in path throws a non-`AuthError` → 500 **after** sign-up has committed the account, password record and activation marker | **CONFIRMED**, fixed — wrapped as `AuthError` |
+| MEDIUM | 415 was the only REST error not in an `ApiResponse` envelope; the generated SDK reports such a body as a proxy error with the text withheld | **CONFIRMED**, fixed |
+| MEDIUM | `bearerToken` used `as?` against a single-variant sealed type — total, yet nullable, and the shape that silently returns null when a second variant lands | **CONFIRMED**, fixed — exhaustive `when`, non-null, ~20 `!!` removed |
+| MEDIUM | docs-site publishes a `generateJwt` example returning the deleted `AuthSignInResponse.Token` | **CONFIRMED**, fixed |
+| MEDIUM | The codegen agent's live handoff still instructed a `cookie` variant, a `POST /logout` from us, and non-null `expiresAt` | **CONFIRMED**, fixed |
+| MEDIUM | Comma-joined `Content-Type` bypasses the gate | **UNPROVEN** — see below |
+| MEDIUM | "The harness was lying" lesson is false | **REFUTED by re-measurement** — see below |
+| LOW | Gate ran after param conversion in `handleWithBodyAndParams`, so a refused request cost `findById` reads | **CONFIRMED**, fixed |
+| LOW | `userId` derived from `sub` rather than `extractUserData` | **CONFIRMED**, fixed |
+| LOW | Missing test rows for absent header and `*/*` — the two cases the KDoc singles out | **CONFIRMED**, added |
+| LOW | Cookie KDocs left behind in `AuthState` / `AuthSignInResponse` | **CONFIRMED**, fixed |
+| LOW | FQCN in `JwtPayloadNumericClaimsSpec` | **CONFIRMED**, fixed |
+
+### The two claims that were wrong, and whose
+
+**Mine.** I reported a comma-joined `Content-Type` as a *confirmed* fail-open, having inferred it from a
+403 instead of a 415. I never checked what the server received. It receives a clean `application/json` —
+ktor's **client** normalises the value before sending, so the harness cannot construct the attack at all.
+The bypass is unproven; a raw socket or a header-joining proxy might still produce it, untested. The
+single-line/no-comma hardening stays because RFC 9110 §8.3 makes a list malformed regardless, but the
+test row asserting 415 was removed: it asserted a scenario that cannot occur.
+
+**A reviewer's.** The "harness was lying" lesson was refuted with a MockEngine probe showing
+`headers { append(...) }` wins. Re-measured inside the real harness by logging what the server receives:
+`/auth/non-existent/signup` gets `text/plain; charset=UTF-8`, and reverting the harness fails 30 tests.
+The lesson holds — but only for ktor's **test** client; the reviewer's bare `HttpClient` genuinely
+behaves differently. That distinction is the accurate version and is now what the doc says.
+
+### Not fixed — recorded, with reasons
+
+- **`RefreshToken` is a `GET` that mints a token** (`AuthApiClient.kt:95`, `AuthUserApi.kt:47`). A GET has
+  no body, so the Content-Type gate can never apply. Harmless under bearer, since it needs an
+  `Authorization` header — but it is exactly the landmine this task exists for. **Make it a POST before
+  any ambient credential ever lands.** Changing it now would break the generated SDK for no present gain.
+- **Bodiless mutating routes bypass the gate.** `ApiRoutes.post(uri): ApiRoute.Plain` exists
+  (`ApiRoutes.kt:307`) and is ungated, because the gate hangs off the two body-reading handlers.
+  Unreachable today — `TypedApiEndpoint.Post/Put.mount` only ever produce `WithBody`/`WithBodyAndParams`,
+  and no `Plain` POST exists in the tree — so the invariant is disciplinary, not structural. Gating on
+  METHOD inside `Route.handle` would make it structural.
+- **`.claude/tasks/20260726-client-jwt-claims.md`** describes `jwtClaims.kt` and `Data.claims`, both
+  deleted. Should be closed out and archived.
