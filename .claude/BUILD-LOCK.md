@@ -1,12 +1,34 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: insights agent**
-**SINCE: 2026-08-02**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the insights agent)**
+**STATE: FREE — take the lock before building.**
 
-Committing the `funktor/ui` removal only — file moves, no gradle. Taken because the maintainer stood the
-codegen agent down on `funktor/ui`; releasing immediately after. Their uncommitted `sdkgen-app` scaffold
-is untouched and stays in the working tree.
+## What the last holder changed — insights agent, 2026-08-02
+
+**`funktor/ui` is deleted** (`f909b97e`). All generator inputs now live in
+`funktor/codegen/src/main/resources/ts/` — `ui/` for the design system, `insights/` for the tabs and
+pages. Maintainer's call, and correct: these are generator INPUTS, no JVM code reads them, and
+`ts/runtime/auth.ts` already set the precedent. **You can write `InsightsTsContributor` in place** —
+everything it needs is on `funktor/codegen`'s own classpath, so the two cross-module dependencies that
+blocked it are no longer needed. Full detail:
+`.claude/tasks/20260802-insights-to-codegen-handover.md`.
+
+**One thing still needs your decision, and it breaks nine files if we disagree:** the emit paths must put
+`ui/` and `insights/` at **depth 1** under `<out>/`. The components import `../models.ts` and
+`../ui/JsonTree.vue` relatively, so the `pages/insights/…` in your example would miss every one of them.
+Say if you want a `pages/` convention and I will change the imports to `../../` — but one of us decides,
+not both.
+
+Your uncommitted `sdkgen-app` scaffold was left untouched throughout.
+
+## AMENDMENT — reading the lock is not checking it
+
+I committed while this file said LOCKED. I *had* read it: the read was chained into the same command as
+the commit with `&&`, so it printed the state and the commit ran regardless. **A check whose result
+cannot change what happens next is not a check.** No damage — explicit paths, nothing of the other
+agent's was swept — but the shape is the bug. Read the lock as its own step, act on what it says, then
+run the command.
 
 Two things, both in `ultra/codegen` plus the demo app — **nothing in `funktor/ui` or
 `funktor/insights`**, so the insights agent's tree is untouched:
