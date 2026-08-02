@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.codegen.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -26,8 +27,13 @@ class TsSdkGenerateCliCommand(
 
     private val out by option(
         "--out",
-        help = "Directory to write the SDK into. Must be ABSOLUTE — see the error for why.",
+        help = "The APP ROOT. Must be ABSOLUTE — see the error for why.",
     ).required()
+
+    private val sdkDir by option(
+        "--sdkDir",
+        help = "Where the SDK goes, RELATIVE to --out. The generator owns this directory outright.",
+    ).default(DEFAULT_SDK_DIR)
 
     private val dryRun by option("--dry-run", help = "Print the planned files; write nothing").flag()
 
@@ -41,20 +47,47 @@ class TsSdkGenerateCliCommand(
     override fun help(context: Context): String =
         "Generate the TypeScript SDK from the server's API features"
 
+    companion object {
+        /**
+         * Where the SDK lands inside the app by default.
+         *
+         * `src/` because the consuming apps are Vue, whose sources live there — a default that is
+         * wrong for the standard layout is a default nobody uses.
+         */
+        const val DEFAULT_SDK_DIR: String = "src/funktorsdk"
+    }
+
     override fun run() {
-        val target = File(out)
+        val appRoot = File(out)
+
+        // THE destructive path — and it is NOT `--out`.
+        //
+        // `--out` is the app root; the generator owns only `<out>/<sdkDir>` and wipes it on every
+        // run. Point this at `appRoot` and the generator deletes the whole application, silently,
+        // the first time someone runs it against a directory that happens to carry the marker.
+        // The distinction is two characters and there is no warning, so it is pinned by a test that
+        // leaves a sentinel file at the app root and asserts it survives.
+        val target = File(appRoot, sdkDir)
 
         // A relative --out resolves against the JVM's working directory, which for
         // `gradlew :funktor-demo:server:run` is the SERVER MODULE, not the repo root. Passing
-        // `funktor-demo/sdkgen-app/src/funktorsdk` therefore wrote a whole SDK to
-        // `funktor-demo/server/funktor-demo/sdkgen-app/src/funktorsdk` — silently, because that path
-        // is perfectly valid. Refusing is better than guessing which root was meant.
-        require(target.isAbsolute) {
+        // `funktor-demo/sdkgen-app` therefore wrote a whole SDK under
+        // `funktor-demo/server/funktor-demo/sdkgen-app/...` — silently, because that path is
+        // perfectly valid. Refusing is better than guessing which root was meant.
+        require(appRoot.isAbsolute) {
             "--out must be an absolute path, but was '$out'. A relative path resolves against this " +
                     "process's working directory — '${File("").absolutePath}' — which for a Gradle " +
                     "`run` task is the module directory, not the repository root. That silently " +
                     "writes the SDK somewhere plausible and wrong. Pass an absolute path, e.g. " +
-                    "--out \"\$PWD/frontend/src/funktorsdk\"."
+                    "--out \"\$PWD/frontend\"."
+        }
+
+        // `--sdkDir` names the ONE directory the generator deletes and rewrites, so it must not be
+        // able to point anywhere but inside the app. An absolute value would ignore --out entirely;
+        // a `..` segment would walk the wipe back out into the app, or above it.
+        require(!File(sdkDir).isAbsolute && !sdkDir.split('/', '\\').contains("..")) {
+            "--sdkDir must be a relative path inside --out and must not contain '..', but was " +
+                    "'$sdkDir'. It names the directory the generator OWNS and empties on every run."
         }
 
         // Validation happens inside build(); a failure throws before anything is planned, so the

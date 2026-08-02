@@ -34,7 +34,67 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
         TsSdkGenerateCliCommand(realBuilder()).parse(arrayOf(*args))
     }.exceptionOrNull()
 
+    private companion object {
+        /** Mirrors the CLI default, so the tests read the way a caller invokes it. */
+        const val SDK = TsSdkGenerateCliCommand.DEFAULT_SDK_DIR
+    }
+
     init {
+        "--out is the APP ROOT, and only <out>/<sdkDir> is ever destroyed" - {
+
+            // The whole reason --out changed meaning. The generator OWNS <out>/<sdkDir> and empties
+            // it every run; --out itself is the application. Point the wipe at --out — a two-
+            // character mistake with no warning — and the generator deletes the app.
+
+            "the SDK lands under the default sdkDir, not at the root" {
+                val dir = tempdir()
+
+                run("--out", dir.absolutePath) shouldBe null
+
+                File(dir, "$SDK/models.ts").exists() shouldBe true
+
+                withClue("nothing is written at the app root itself") {
+                    dir.listFiles().orEmpty().map { it.name } shouldBe listOf("src")
+                }
+            }
+
+            "a sentinel at the app root SURVIVES a regeneration" {
+                val dir = tempdir()
+
+                run("--out", dir.absolutePath) shouldBe null
+
+                val sentinel = File(dir, "package.json")
+                sentinel.writeText("{}")
+                File(dir, "src/main.ts").writeText("// the app")
+
+                run("--out", dir.absolutePath) shouldBe null
+
+                withClue("regeneration must not touch anything outside <out>/<sdkDir>") {
+                    sentinel.readText() shouldBe "{}"
+                    File(dir, "src/main.ts").readText() shouldBe "// the app"
+                }
+            }
+
+            "--sdkDir is honoured" {
+                val dir = tempdir()
+
+                run("--out", dir.absolutePath, "--sdkDir", "generated/api") shouldBe null
+
+                File(dir, "generated/api/models.ts").exists() shouldBe true
+            }
+
+            listOf("/abs/sdk", "../escape", "src/../../escape").forEach { bad ->
+                "refuses --sdkDir '$bad', which would walk the wipe out of the app" {
+                    val thrown = runCatching {
+                        TsSdkGenerateCliCommand(explodingBuilder())
+                            .parse(arrayOf("--out", tempdir().absolutePath, "--sdkDir", bad))
+                    }.exceptionOrNull()
+
+                    thrown!!.message!! shouldContain "--sdkDir"
+                }
+            }
+        }
+
         "--check, the way CI runs it" - {
 
             // `--check` is the entire reason a stale SDK is catchable: without it, a checked-in SDK
@@ -56,7 +116,7 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
 
                 run("--out", dir.absolutePath)
 
-                val client = File(dir, "fxDemoClient.ts")
+                val client = File(dir, "$SDK/fxDemoClient.ts")
                 client.writeText(client.readText() + "\n// someone edited the generated SDK\n")
 
                 val thrown = run("--out", dir.absolutePath, "--check")
@@ -73,7 +133,7 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
 
                 run("--out", dir.absolutePath)
 
-                File(dir, "models.ts").delete() shouldBe true
+                File(dir, "$SDK/models.ts").delete() shouldBe true
 
                 val thrown = run("--out", dir.absolutePath, "--check")
 
@@ -88,7 +148,7 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
 
                 run("--out", dir.absolutePath)
 
-                File(dir, "withdrawnClient.ts").writeText("// an endpoint that no longer exists\n")
+                File(dir, "$SDK/withdrawnClient.ts").writeText("// an endpoint that no longer exists\n")
 
                 val thrown = run("--out", dir.absolutePath, "--check")
 
