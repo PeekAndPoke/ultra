@@ -15,6 +15,37 @@
 >   WHOLE index, including the other agent's staged work. Check `git diff --cached --name-status`
 >   first. Both of us have swept up each other's files doing this.
 
+## WHERE THIS STANDS — 2026-08-02, loop ended
+
+**The SDK side of a login screen is COMPLETE.** Everything below shipped overnight, each piece
+mutation-tested and verified against REAL generated output rather than fixtures:
+
+| | |
+|---|---|
+| `credentials` on `HttpRequest` + SSE | `c7faa088` — unblocks their cookie transport |
+| session, storage, both transport modes | `c0264522` |
+| the three-way sign-in flow | `2213ffd9` |
+| refresh-before-expiry | `f8e8eac8` |
+| public-route metadata, `ApiAcl`, `mount.ts` | earlier the same night |
+
+An app can write a login form against this today. **The only thing missing is markup.**
+
+### Nothing unblocked remains. What is left, and who owns it:
+
+| Item | Owner |
+|---|---|
+| The `.vue` verification decision — `vue-tsc` cannot run on TS 7, so it is a second toolchain, not a flag. But the CONSUMING app's `vue-tsc` already checks components, which may be enough | maintainer |
+| `out.scaffold` — writes outside the generator-owned directory, which is a boundary change | maintainer |
+| `POST /logout` — JS cannot delete an httpOnly cookie | auth agent, increment 2 |
+| Cookie-mode boot hydration | auth agent, increment 2 |
+
+The auth agent has been idle since their increment 1 (`880a3e2e`).
+
+### If you restart this loop
+
+Re-read this section first. If none of the four rows above has moved, there is nothing to do and the
+loop will only burn tokens — that is why it was stopped rather than left spinning.
+
 **Read this file FIRST each iteration. Do the next unchecked item. Update the note at the bottom
 LAST.** Keep it cheap — it is read every loop.
 
@@ -147,37 +178,18 @@ data class Success(
 
 **Then the runtime work:**
 
-- [ ] Delete `decodeJwtClaims` / `expiryOf` from `runtime/auth.ts` and their ts-verify checks. The
-      response now carries what they dug out. Their Kotlin equivalent (`jwtClaims.kt`, 175 lines) is
-      being deleted for the same reason.
-- [ ] `AuthSession.signedIn` currently takes a token STRING and its KDoc names the deleted
-      `AuthSignInResponseToken`. It should take the `Success` payload — in cookie mode there is no
-      token at all, so a token-shaped API cannot express the state.
-- [ ] `TokenStorage` becomes a SESSION store, not a token store. httpOnly has no readable token, so
-      the four questions are: establish / authorize a request / end / where claims come from.
-- [ ] **Boot hydration — the part their plan does not cover.** After a reload, bearer mode has only
-      what was persisted and cookie mode has nothing; `expiresAt` and `permissions` came from the
-      response. Without it the refresh timer never schedules and it presents as "randomly logged out".
-      Call `refreshToken` on boot: it returns the full `AuthSignInResponse` and works in BOTH modes.
-- [ ] `authTransport` must attach nothing in cookie mode, and set `credentials: 'include'` instead —
-      the field for that landed in `c7faa088`.
-
-### (superseded) WHEN THEIR DTOs LAND — do not start early
-
-- [ ] Regenerate and confirm `Session` emits as **its own `z.discriminatedUnion`**, not folded into
-      the parent union. Their handover flags this explicitly.
-- [ ] Delete `decodeJwtClaims` / `expiryOf` from `runtime/auth.ts`.
-- [ ] **Add boot hydration — this is the part their plan does not cover.** Deleting the decoder means
-      that after a page RELOAD, bearer mode has only the token string; `expiresAt` and `permissions`
-      came from the response and are gone. The session then restores with no expiry, the refresh timer
-      never schedules, and it presents as "randomly logged out" — the exact failure their plan calls
-      "the sharp one".
-      The fix is not persisting the payload, it is calling `refreshToken` on boot: it already returns
-      the full `AuthSignInResponse`, and it works in BOTH modes (bearer authenticates with the stored
-      token, cookie with the cookie). One code path, and cookie mode needs it regardless because it
-      boots with no session state at all.
-- [ ] Restructure the storage seam: `TokenStorage` assumes a readable token, which httpOnly does not
-      have. The four questions are establish / authorize a request / end / where claims come from.
+- [x] **DONE `c0264522`** — `decodeJwtClaims` / `expiryOf` deleted, mirroring their `jwtClaims.kt`.
+- [x] **DONE `c0264522`** — `signedIn` takes the `Success` payload. In cookie mode there is no token,
+      so a token-shaped API cannot express the state.
+- [x] **DONE `c0264522`** — `TokenStorage` -> `SessionStorage`, persisting the whole payload.
+- [x] **DONE `c0264522`** — `authTransport` attaches `Authorization` for bearer and
+      `credentials: 'include'` for cookie, attaching no header.
+- [x] **DONE `2213ffd9`** — `runtime/login.ts`, the three-way flow. Only `success` touches the session.
+- [x] **DONE `f8e8eac8`** — `runtime/refresh.ts`, so something finally acts on `expiresAt`.
+- [ ] **Boot hydration for COOKIE MODE ONLY — still open, and NOT mine to finish.** Bearer needs none:
+      persisting the payload restores `expiresAt` and `permissions` across a reload. Cookie mode has
+      nothing to restore, because the credential is the browser's, so that app must call
+      `refreshToken` on boot. Blocked on the cookie transport existing at all (their increment 2).
 
 ## Rules that bite here (do not rediscover)
 
