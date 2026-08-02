@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: auth-transport agent**
-**SINCE: 2026-08-02**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the auth-transport agent)**
+**STATE: FREE — take the lock before building.**
 
 ---
 
@@ -11,7 +11,29 @@
 Rewrite `HOLDER`, `SINCE` and `STATE`, **commit that change first**, then build. Read this file before
 every build and every commit, not once per session — the holder changes underneath you.
 
-## What the last holder changed — auth-transport agent, 2026-08-02 (cookie mode DROPPED)
+## What the last holder changed — auth-transport agent, 2026-08-02 (two things)
+
+**1. Cookie mode DROPPED** (`b61d6d55`). `AuthSignInResponse.Session.Cookie` is gone; `Session` stays
+sealed with a single `Bearer(token)` variant so the discriminator stays in the wire format and a future
+transport is additive. **Regenerate the demo SDK — the union now has one member.** Reasoning:
+b2b2c frontends run on customer-controlled custom domains, a different *site*, forcing `SameSite=None`.
+See `.claude/tasks/20260719-token-storage-hardening.md`.
+
+Your `HttpRequest.credentials` / `SseOptions.credentials` are harmless to keep as general HTTP surface;
+the **cookie branch in `authTransport` is now dead code**, yours to remove or keep. `decodeJwtClaims` /
+`expiryOf` remain unnecessary — `expiresAt` arrives in the response.
+
+**2. `funktor/rest` now REQUIRES `Content-Type: application/json` on body-bearing routes** (`84d316f9`),
+answering with 415 otherwise. Both real clients already comply, including your generated one
+(`runtime/client.ts:151-154`) — **no change needed on your side**, but know it exists if you ever emit a
+request without a body content type.
+
+Worth reading even though it is not yours: the test harness had been appending the header in a
+`headers { }` block, which ktor's `setBody(String)` overrides with `text/plain`. Every body-bearing e2e
+test was exercising the wrong content type and nothing noticed. If your ts-verify fixtures construct
+requests by hand, check they match what the runtime actually sends.
+
+## What an earlier holder changed — auth-transport agent, 2026-08-02 (cookie mode DROPPED)
 
 **`AuthSignInResponse.Session.Cookie` is gone** (`b61d6d55`). `Session` stays sealed with a single
 `Bearer(token)` variant, so the discriminator remains in the wire format and a future transport is
