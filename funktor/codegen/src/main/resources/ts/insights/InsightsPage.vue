@@ -9,6 +9,11 @@
  * <InsightsPage :client="new FunktorInsightsClient({ baseUrl, transport })" />
  * ```
  *
+ * **`client` is OPTIONAL, and that is what makes `mountAll` work.** A page the router constructs gets
+ * no props, so a required client was `undefined` at run time — type-checked, mounted, and broken on
+ * first render. Without a prop it builds one from the app-level config; an app that mounts this
+ * itself can still pass a client and that wins.
+ *
  * An app that wants the record in its URL should use `InsightsListPage` and `InsightsDetailPage`
  * directly and drive `bucket`/`file` from its own router -- both take them as props and emit their
  * navigation rather than performing it, precisely so that is possible.
@@ -17,20 +22,35 @@
  * mounting this component is not what protects it, and hiding it is not either.
  */
 import { ref } from 'vue'
-import type { FunktorInsightsClient } from '../funktorInsightsClient.ts'
+import { FunktorInsightsClient } from '../funktorInsightsClient.ts'
 import type { InsightsRecordRef } from '../models.ts'
+import { useSdkConfigOrNull } from '../ui/sdkContext.ts'
 import InsightsDetailPage from './InsightsDetailPage.vue'
 import InsightsListPage from './InsightsListPage.vue'
 
 defineOptions({ name: 'InsightsPage' })
 
-withDefaults(
+const props = withDefaults(
     defineProps<{
-        client: FunktorInsightsClient
+        client?: FunktorInsightsClient
         epp?: number
     }>(),
     { epp: 20 },
 )
+
+// `inject` must run during setup, so it happens unconditionally and the choice is made after.
+const injectedConfig = useSdkConfigOrNull()
+
+if (props.client === undefined && injectedConfig === null) {
+    throw new Error(
+        "InsightsPage needs an API client: pass `:client`, or call `provideSdkConfig(app, config)` " +
+            'once in your app entry point so pages mounted by `mountAll` can build their own.',
+    )
+}
+
+// Resolved ONCE. The client is a stable singleton over the app's transport, so there is nothing for a
+// computed to react to, and rebuilding one per render would discard nothing but cost allocations.
+const client = props.client ?? new FunktorInsightsClient(injectedConfig!)
 
 const selected = ref<InsightsRecordRef | null>(null)
 </script>

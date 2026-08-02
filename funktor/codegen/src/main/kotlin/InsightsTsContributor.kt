@@ -57,6 +57,9 @@ class InsightsTsContributor(
         private val UI_FILES: List<String> = listOf(
             "theme.css",
             "types.ts",
+            // How a page the ROUTER constructed reaches the app's config. Shared, because every
+            // contributed page has the same problem: `mountAll` passes no props.
+            "sdkContext.ts",
             "FactList.vue",
             "JsonTree.vue",
             "KeyValueTable.vue",

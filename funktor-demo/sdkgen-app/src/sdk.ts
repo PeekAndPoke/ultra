@@ -37,7 +37,14 @@ export const REALM = 'operators'
 
 export const session = new AuthSession<UserPermissions>()
 
-const config = sdkConfig(API_BASE_URL, authTransport(fetchTransport(), session))
+/**
+ * Exported because CONTRIBUTED pages need it.
+ *
+ * A page shipped by a Kotlin module is constructed by the router, so nothing passes it a client — it
+ * builds one from this, which `main.ts` provides to the app. See `runtime`-adjacent
+ * `funktorsdk/ui/sdkContext.ts`.
+ */
+export const config = sdkConfig(API_BASE_URL, authTransport(fetchTransport(), session))
 
 export const auth = new AuthClient(config)
 export const insights = new FunktorInsightsClient(config)
