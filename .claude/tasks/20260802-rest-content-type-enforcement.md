@@ -1,6 +1,6 @@
 # REST routes accept any Content-Type, so a cross-origin form POST reaches a handler
 
-**Status:** FOUND 2026-08-02, NOT FIXED. Small and self-contained.
+**Status:** FIXED 2026-08-02 — not yet through `/feature-review`.
 **Security-critical:** yes — it is what makes a JSON API CSRF-resistant, and right now nothing does.
 **Found:** while designing the (since dropped) cookie transport in
 `.claude/tasks/20260719-token-storage-hardening.md`. **It is not a cookie concern** — it is live today.
@@ -51,3 +51,32 @@ body for GET/DELETE). Two call sites.
 `SameSite` is irrelevant while there is no cookie, but note for whenever one appears: `SameSite=Lax`
 still attaches a cookie to top-level **GET** navigations, so a state-changing GET stays forgeable.
 REST hygiene says there are none; confirm rather than assume.
+
+## Fixed 2026-08-02
+
+`passesBodyContentType()` in `funktor/rest/src/jvmMain/kotlin/routing.kt`, called at both body sites
+before `call.receive`. Matches `application/json` explicitly rather than via `ContentType.match`, which
+treats `*/*` as a match — an absent or wildcard header must be refused, not waved through. Parameters
+such as `charset` are accepted. Responds 415.
+
+**The audit came back clean:** no route takes multipart or form-encoded. The only multipart in the tree is
+outbound email MIME in `AwsSesSender`. Both real clients already send the header — `ultra/remote` defaults
+`contentType = "application/json"`, and the generated TS sets it whenever there is a body
+(`runtime/client.ts:151-154`).
+
+### The test harness was lying, and that is the interesting part
+
+Turning the gate on failed ~20 e2e tests. The harness *looked* correct — it appended
+`Content-Type: application/json` in a `headers { }` block — but Ktor's `setBody(String)` sets
+`text/plain` for a String body, and the appended header does not win. **So every body-bearing e2e test
+had been exercising the exact simple-request shape this gate exists to reject**, and nothing noticed
+because nothing looked.
+
+Fixed to `contentType(ContentType.Application.Json)` in `funktor/testing/.../AppUnderTest.kt`, which is
+what a real client does. Worth remembering as a harness-fidelity trap: a test that constructs its request
+differently from every production client is not testing the production path.
+
+`BodyContentTypeSpec` asserts all four directions — `text/plain` and form-urlencoded refused, plain JSON
+and JSON-with-charset accepted. Mutation-tested: removing the gate kills both rejection rows.
+
+672 tests green across six modules; compile sweep clean on jvm and js.

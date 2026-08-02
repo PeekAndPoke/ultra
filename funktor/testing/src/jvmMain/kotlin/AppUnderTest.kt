@@ -12,6 +12,8 @@ import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.websocket.*
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.typedRouteRenderer
@@ -161,9 +163,7 @@ class AppUnderTest<C : AppConfig>(
             val response: HttpResponse = client.request(route.route().url) {
                 this.method = route.method
                 setBody(restCodec.serialize(body) ?: "")
-                headers {
-                    append(HttpHeaders.ContentType, "application/json")
-                }
+                contentType(ContentType.Application.Json)
                 configureRequest()
                 setup()
             }
@@ -193,9 +193,7 @@ class AppUnderTest<C : AppConfig>(
             val response = client.request(route.route(params).url) {
                 this.method = route.method
                 setBody(restCodec.serialize(body) ?: "")
-                headers {
-                    append(HttpHeaders.ContentType, "application/json")
-                }
+                contentType(ContentType.Application.Json)
                 configureRequest()
                 setup()
             }

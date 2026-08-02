@@ -2,6 +2,9 @@
 
 package io.peekandpoke.funktor.rest
 
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.*
@@ -79,6 +82,41 @@ internal suspend fun RoutingContext.passesPhase1(route: ApiRoute<*>, uri: String
     val denials = route.phase1Denials(AuthRule.EstimateCtx.of(call.user))
     if (denials.isEmpty()) return true
     call.apiRespondUnauthorized<Any?>(route.method, uri, denials)
+    return false
+}
+
+/**
+ * Body gate: a request carrying a body must declare `application/json`, or it gets a 415 and stops.
+ *
+ * ### This is a CSRF control, not a tidiness rule
+ *
+ * A **simple request** — POST with `text/plain`, `application/x-www-form-urlencoded` or `multipart` — is
+ * sent cross-origin by the browser with **no CORS preflight**. CORS then governs only whether the
+ * *response* is readable; the side effect has already happened. A JSON API is normally immune by
+ * accident, because `application/json` is not a simple content type and therefore always preflights.
+ *
+ * This one was not immune: the body was received as bytes and parsed as JSON whatever the header said,
+ * so `<form enctype="text/plain">` reached a handler. Refusing anything but JSON restores the preflight,
+ * which is what makes the CORS allowlist the actual gate.
+ *
+ * Exposure was limited while every credential is a bearer token — an attacker page cannot set
+ * `Authorization`, so such a request arrives anonymous and dies at the floor. It still mattered for
+ * `public()` routes with side effects, and it is a landmine for any future ambient credential.
+ *
+ * Matched explicitly rather than with `ContentType.match`, which treats `* / *` as a match — an absent
+ * or wildcard header must be refused, not waved through. Parameters such as `charset` are fine.
+ */
+private suspend fun ApplicationCall.passesBodyContentType(): Boolean {
+    val declared = request.header(HttpHeaders.ContentType)
+        ?.let { runCatching { ContentType.parse(it) }.getOrNull() }
+
+    val isJson = declared != null &&
+            declared.contentType.equals("application", ignoreCase = true) &&
+            declared.contentSubtype.equals("json", ignoreCase = true)
+
+    if (isJson) return true
+
+    respond(HttpStatusCode.UnsupportedMediaType, "Expected Content-Type: application/json")
     return false
 }
 
@@ -202,6 +240,7 @@ fun <BODY, RESPONSE> Route.handleWithBody(
             // Phase 1 — caller-only rules, BEFORE receiving/deserializing the body
             if (!passesPhase1(route, uri)) return@handle
             // Receive the request body — reachable only past the floor
+            if (!call.passesBodyContentType()) return@handle
             val bodyContent = call.receive<ByteArray>()
             // Awake the request body
             @Suppress("UNCHECKED_CAST")
@@ -231,6 +270,7 @@ fun <PARAMS, BODY, RESPONSE> Route.handleWithBodyAndParams(
             if (!passesPhase1(route, uri)) return@handle
             // Param conversion + body receive — reachable only past the floor
             val params: PARAMS = call.convertIncomingParameters(route.route)
+            if (!call.passesBodyContentType()) return@handle
             val bodyContent = call.receive<ByteArray>()
             // Awake the request body
             @Suppress("UNCHECKED_CAST")
