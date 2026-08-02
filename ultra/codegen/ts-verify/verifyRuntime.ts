@@ -19,6 +19,7 @@ import { route } from './generated/runtime/route.ts'
 import { AuthSession, authTransport, inMemorySession, localStorageSession } from './generated/runtime/auth.ts'
 import type { SignedIn } from './generated/runtime/auth.ts'
 import { applySignIn, completeSignIn } from './generated/runtime/login.ts'
+import { startAutoRefresh } from './generated/runtime/refresh.ts'
 import type { SignInResult } from './generated/runtime/login.ts'
 // THROUGH THE BARREL on purpose — this is what makes `tsc` compile index.ts, and `export *`
 // is only safe if no two emitted modules export the same name. A collision is a compile error
@@ -1065,6 +1066,244 @@ async function checkLoginFlow(report: Report): Promise<void> {
 }
 
 /**
+ * Auto-refresh.
+ *
+ * Driven by an INJECTED clock and timer, so this executes the real scheduling logic without waiting.
+ * A test that slept would either be slow or flaky; this is neither.
+ */
+async function checkAutoRefresh(report: Report): Promise<void> {
+    /** A controllable timer: `fire()` runs whatever is currently scheduled. */
+    function fakeTimers() {
+        let pending: (() => void) | null = null
+        let cleared = 0
+
+        return {
+            setTimer: (fn: () => void) => {
+                pending = fn
+                return 1
+            },
+            clearTimer: () => {
+                cleared += 1
+                pending = null
+            },
+            fire: () => {
+                const fn = pending
+                pending = null
+                fn?.()
+            },
+            cleared: () => cleared,
+            armed: () => pending !== null,
+        }
+    }
+
+    const success = (token: string) => ({
+        status: { value: 200, description: 'OK' },
+        data: {
+            _type: 'success' as const,
+            session: { _type: 'bearer' as const, token },
+            permissions: { roles: ['ops'] },
+            expiresAt: { ts: 2_000_000_000_000 },
+            userId: 'u-1',
+        },
+        messages: null,
+    })
+
+    // 1. Not expiring — no refresh, but still re-armed.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'a' }, expiresAt: { ts: 2_000_000_000_000 } })
+
+        let calls = 0
+        startAutoRefresh(s, () => { calls += 1; return Promise.resolve(success('b')) }, {
+            leadMs: 1_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        report(calls === 0, 'refresh: a session far from expiry is not refreshed')
+        report(t.armed(), 'refresh: and the schedule is re-armed anyway')
+    }
+
+    // 2. Expiring — refreshes, and the new token lands in the session.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+
+        startAutoRefresh(s, () => Promise.resolve(success('new')), {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+
+        report(s.state().token === 'new', 'refresh: an expiring session is refreshed and updated')
+    }
+
+    // 3. A session with NO expiry is never refreshed — `exp` is optional, and such a token does not
+    //    expire server-side either.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'a' } })
+
+        let calls = 0
+        startAutoRefresh(s, () => { calls += 1; return Promise.resolve(success('b')) }, {
+            leadMs: Number.MAX_SAFE_INTEGER, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        report(calls === 0, 'refresh: a session with no expiry is never refreshed')
+    }
+
+    // 4. A rejected refresh reports but does NOT sign the user out — that is app policy.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+
+        let failed = 0
+        startAutoRefresh(
+            s,
+            () => Promise.resolve({ status: { value: 401, description: 'no' }, data: null, messages: null }),
+            {
+                leadMs: 120_000, now: () => 1_000_000_000_000,
+                setTimer: t.setTimer, clearTimer: t.clearTimer,
+                onFailed: () => { failed += 1 },
+            },
+        )
+
+        t.fire()
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+
+        report(failed === 1, 'refresh: a rejected refresh calls onFailed')
+        report(s.state().isLoggedIn, 'refresh: and does NOT sign the user out — that is app policy')
+    }
+
+    // 5. A THROWN refresh (network down) must not kill the session or the schedule.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+
+        startAutoRefresh(s, () => Promise.reject(new Error('offline')), {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+
+        report(s.state().isLoggedIn, 'refresh: a network failure does not log the user out')
+        report(t.armed(), 'refresh: and the schedule survives it')
+    }
+
+    // 6. Refreshes must NOT overlap. Found by mutation: every scenario above fires the timer once,
+    //    so dropping the in-flight guard changed nothing. Two racing refreshes would have one write
+    //    a stale session last.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+
+        let calls = 0
+        // A HOLDER, not a `let`: TypeScript narrows a bare local to `null` because it cannot see the
+        // assignment happening inside the Promise executor, so `release?.(...)` reads as uncallable.
+        const box: { release: ((v: ReturnType<typeof success>) => void) | null } = { release: null }
+
+        startAutoRefresh(s, () => {
+            calls += 1
+            return new Promise<ReturnType<typeof success>>((resolve) => { box.release = resolve })
+        }, {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        await Promise.resolve()
+        t.fire()
+        await Promise.resolve()
+
+        report(calls === 1, 'refresh: a second tick during an in-flight refresh does not start another')
+
+        box.release?.(success('new'))
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+        report(s.state().token === 'new', 'refresh: and the in-flight one still lands')
+    }
+
+    // 7. A refresh that resolves AFTER stop() must not touch the session. Found by mutation: the
+    //    earlier stop test could not see this, because clearing the timer alone already prevented
+    //    any further tick.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+
+        const box: { release: ((v: ReturnType<typeof success>) => void) | null } = { release: null }
+        const stop = startAutoRefresh(s, () =>
+            new Promise<ReturnType<typeof success>>((resolve) => { box.release = resolve }), {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        await Promise.resolve()
+        stop()
+        box.release?.(success('late'))
+        await Promise.resolve()
+        await Promise.resolve()
+        await Promise.resolve()
+
+        report(s.state().token === 'old', 'refresh: a refresh resolving after stop() is discarded')
+    }
+
+    // 8. A thrown refresh must be CAUGHT, not merely survivable. Found by mutation: removing the
+    //    catch left every assertion green, because an unhandled rejection does not fail a check.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+
+        let unhandled = 0
+        const onUnhandled = () => { unhandled += 1 }
+        process.on('unhandledRejection', onUnhandled)
+
+        startAutoRefresh(s, () => Promise.reject(new Error('offline')), {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        t.fire()
+        await new Promise((r) => setTimeout(r, 10))
+        process.off('unhandledRejection', onUnhandled)
+
+        report(unhandled === 0, 'refresh: a thrown refresh is CAUGHT, not left unhandled')
+    }
+
+    // 9. stop() really stops.
+    {
+        const t = fakeTimers()
+        const s = new AuthSession<{ roles?: string[] }>(inMemorySession())
+        s.signedIn({ session: { _type: 'bearer', token: 'old' }, expiresAt: { ts: 1_000_000_060_000 } })
+
+        let calls = 0
+        const stop = startAutoRefresh(s, () => { calls += 1; return Promise.resolve(success('new')) }, {
+            leadMs: 120_000, now: () => 1_000_000_000_000, setTimer: t.setTimer, clearTimer: t.clearTimer,
+        })
+
+        stop()
+        report(t.cleared() === 1, 'refresh: stop clears the pending timer')
+
+        t.fire()
+        report(calls === 0, 'refresh: and nothing runs afterwards')
+    }
+}
+
+/**
  * The aggregation registry's rendered output.
  *
  * Executed, not just compiled. The interesting failure is a route table that type-checks and then
@@ -1265,6 +1504,7 @@ export async function verifyRuntime(report: Report, generatedDir: string): Promi
         ['authSession', checkAuthSession],
         ['mount', checkMount],
         ['loginFlow', checkLoginFlow],
+        ['autoRefresh', checkAutoRefresh],
     ]
 
     for (const [name, check] of groups) {

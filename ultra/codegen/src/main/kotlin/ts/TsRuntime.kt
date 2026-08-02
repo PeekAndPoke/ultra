@@ -56,7 +56,10 @@ object TsRuntime {
         Auth("runtime/auth.ts", "ts/runtime/auth.ts"),
 
         /** `completeSignIn` — the three-way sign-in outcome, applied to a session. */
-        Login("runtime/login.ts", "ts/runtime/login.ts");
+        Login("runtime/login.ts", "ts/runtime/login.ts"),
+
+        /** `startAutoRefresh` — refreshes a session before it expires. */
+        Refresh("runtime/refresh.ts", "ts/runtime/refresh.ts");
 
         /**
          * How generated code imports it, relative to the SDK root.
@@ -89,6 +92,10 @@ object TsRuntime {
                 Auth -> setOf(Http)
                 // login.ts drives an AuthSession and reads the ApiResponse envelope.
                 Login -> setOf(Auth, ApiResponse)
+                // refresh.ts imports all three DIRECTLY — applySignIn from login.ts, AuthSession from
+                // auth.ts, ApiResponse from apiResponse.ts. Declaring only Login would still emit them
+                // through the closure, but `requires` states DIRECT imports and TsRuntimeSpec checks it.
+                Refresh -> setOf(Login, Auth, ApiResponse)
                 Http, ApiResponse, DateTime, Route -> emptySet()
             }
     }

@@ -212,6 +212,43 @@ data class Success(
 
 Append one short block per iteration. Newest at the top.
 
+### Iteration 8 — 2026-08-02, `runtime/refresh.ts` — nothing was calling `isExpiring`
+
+The payoff for the whole `expiresAt` contract. `AuthSession.isExpiring` existed and **nothing called
+it**, so a session simply died: token expires, every later call 401s, user is "randomly logged out"
+with no error naming the cause — the exact failure their plan calls the sharp one.
+
+`startAutoRefresh(session, () => client.login.refreshToken({ realm }))` returns a stop function.
+Timers and clock are INJECTABLE, so the tests execute the real scheduling logic without sleeping.
+
+Decisions worth keeping:
+
+- **A failed refresh does NOT sign the user out.** Whether to drop the session, redirect or show a
+  banner is app policy, and guessing it here takes the decision away at the worst moment. `onFailed`
+  reports; the session is untouched.
+- **A thrown refresh is caught.** A flaky network is not a session decision; the next tick retries.
+- **A session with no expiry is never refreshed**, and that is correct now in a way it was not for
+  Kotlin. `AuthState` treats unknown expiry as STALE and clears the session (`AuthState.kt:138-144`)
+  because it learned expiry by DECODING, so "no expiry" and "could not decode" were the same state and
+  could never self-heal. The response states it now, so the ambiguity is gone.
+
+**Mutation testing earned its keep again — 3 of 5 survived the first pass, all test gaps:**
+
+| mutant | why it survived |
+|---|---|
+| `catch` removed | an unhandled rejection does not fail a check; now asserted via `process.on('unhandledRejection')` |
+| in-flight guard dropped | every scenario fired the timer ONCE, so overlap never happened |
+| `stopped = true` removed | clearing the timer alone already prevented further ticks; the flag only matters for a refresh resolving AFTER stop |
+
+All three now killed, 5/5.
+
+**And an existing spec caught real drift:** `TsRuntimeSpec` verifies that each module's declared
+`requires` matches what it actually imports. I declared `Refresh -> setOf(Login)`; the file imports
+from `login.ts`, `auth.ts` AND `apiResponse.ts`. The closure would have emitted them anyway, so
+nothing would have broken — but `requires` states DIRECT imports and the spec holds it to that.
+
+Demo app regenerated (22 files), `vue-tsc` clean.
+
 ### Iteration 7 — 2026-08-02, `runtime/login.ts` — the sign-in FLOW
 
 Not on the backlog; added because it is the actual remaining gap for a login screen and it needs
