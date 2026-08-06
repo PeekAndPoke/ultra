@@ -56,6 +56,18 @@ const selected = ref<InsightsRecordRef | null>(null)
 </script>
 
 <template>
+    <!--
+      `selected` is nullable, and the `v-if` is what makes `selected.bucket` safe. Two separate
+      guarantees, both verified rather than assumed:
+
+      RUNTIME: `v-if` on an element compiles to a ternary wrapping the whole vnode
+      (`(_ctx.selected !== null) ? _createBlock(...) : ...`), so the props are never evaluated in the
+      null case.
+
+      TYPES: TypeScript narrows through it. Deleting the guard fails the build with TS18047 on exactly
+      these two lines -- so this is enforced by `vue-tsc`, not by anyone remembering. That check lives in
+      the consuming app, which is the only place a generated SDK is compiled by a real toolchain.
+    -->
     <InsightsDetailPage
         v-if="selected !== null"
         :client="client"
