@@ -279,6 +279,45 @@ case, which has no bind values. **Vue SSR renders template comments into the out
 explaining the omission contains the word. The check now asserts on the bind VALUE, which is the property
 that matters.
 
+## IDE diagnostics sweep, 2026-08-02 — and a hole in the verification story
+
+Swept the generated SDK file-by-file with IntelliJ's inspections (`mcp__idea__get_file_problems`).
+30 of ~44 files checked individually; all clean except the two noted below.
+
+**The sweep found the app was BROKEN, and `vue-tsc` could not see it.**
+`InsightsTsContributor.INSIGHTS_FILES` is a manual mirror of a resource directory and had drifted: the
+four newer tabs were imported by `InsightsDetailPage.vue` but never emitted. `vite build` failed with
+`UNRESOLVED_IMPORT`; `vue-tsc` was clean, because the app's `shims-vue.d.ts` declares `module '*.vue'`
+— a wildcard that resolves ANY `.vue` specifier whether the file exists or not.
+
+> **`vue-tsc` cannot catch a missing `.vue` file. Only `vite build` can.** That applies to every
+> contributed component, not just these. Do not treat a green typecheck as proof the SDK is consumable.
+
+`InsightsTsContributorSpec` now fails when a list and its directory disagree, in either direction. It
+reads the SOURCE tree, not the classpath — the classpath copy is a build output, so a stale build would
+let the list agree with it while the source disagreed. Mutation-tested.
+
+### Fixed
+
+| Finding | Fix |
+|---|---|
+| 4 tabs emitted-but-not-listed | added to `INSIGHTS_FILES`, plus the spec above |
+| `defineEmits<{ select: [...] }>` — IntelliJ cannot type the emit and reports every call as *"not assignable to parameter type any"*, including a plain `string` | call-signature form; equally typed, `vue-tsc` accepts both |
+| 3 `{@link}` references to components the file does not import | plain `` `code` `` — the same rule CLAUDE.md sets for Kotlin KDoc |
+
+### Left, with the reason
+
+- `InsightsDetailPage.vue` ×2 and `InsightsPage.vue` ×1 (weak warning). Both are the same IntelliJ
+  limitation: **`ref<T | null>` inside an SFC**. Proven not to be about zod or the generated models — a
+  probe with a hand-written `interface` of the identical shape fails identically. Pending the maintainer
+  checking whether IntelliJ is using the TypeScript service, since `vue-tsc` disagrees with it.
+
+### Methodology note, learned the hard way
+
+**IntelliJ's analyzer is non-deterministic.** Two identical queries on an unchanged file returned
+different results, and that false negative briefly "confirmed" a fix that a later run contradicted.
+Anything verified through it needs repeat runs before it counts.
+
 ## Test evidence
 
 - [ ] `vue-tsc --noEmit` green in `funktor-demo/sdkgen-app` — the only place that proves a generated SDK

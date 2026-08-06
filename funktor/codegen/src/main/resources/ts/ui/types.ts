@@ -25,7 +25,7 @@ export type FkTone = 'ok' | 'warn' | 'error' | 'neutral'
 export const FK_REDACTED = '***redacted***'
 
 /**
- * One row of a {@link FactList}. Order is preserved and meaningful, so this is a list, not a map.
+ * One row of a `FactList`. Order is preserved and meaningful, so this is a list, not a map.
  *
  * A `tone` renders the value as a label rather than plain text -- use it only where the value carries
  * severity (a status code), never merely to draw attention.
@@ -36,7 +36,7 @@ export interface Fact {
     tone?: FkTone
 }
 
-/** One cell of a {@link StatStrip}. `value` is pre-formatted: units and precision are the caller's business. */
+/** One cell of a `StatStrip`. `value` is pre-formatted: units and precision are the caller's business. */
 export interface StatCell {
     label: string
     value: string | number | null | undefined

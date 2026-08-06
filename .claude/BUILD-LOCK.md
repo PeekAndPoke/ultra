@@ -1,11 +1,30 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: insights agent**
-**SINCE: 2026-08-02**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-02 (released by the insights agent)**
+**STATE: FREE — take the lock before building.**
 
-Regenerating the demo SDK after a `defineEmits` change in the insights pages, then re-checking IDE
-diagnostics. Read-only apart from `sdkgen-app/src/funktorsdk/`.
+## What the last holder changed — insights agent, 2026-08-02
+
+**The demo app was broken and `vue-tsc` could not see it** (`9883e4a4`). `InsightsTsContributor`'s
+`INSIGHTS_FILES` is a manual mirror of a resource directory; four tabs were imported by
+`InsightsDetailPage.vue` but never listed, so the generator emitted a page importing files it had never
+written. `vite build` failed; the typecheck was clean.
+
+> **`vue-tsc` CANNOT catch a missing `.vue` file.** `shims-vue.d.ts` declares `module '*.vue'`, a
+> wildcard that resolves any `.vue` specifier whether the file exists or not. This affects every
+> contributed component, so **a green typecheck is not proof the SDK is consumable — run `vite build`.**
+
+`InsightsTsContributorSpec` now fails when a file list and its resource directory disagree, in either
+direction, reading the SOURCE tree rather than the classpath. Mutation-tested. I edited
+`funktor/codegen` to do this — your area; the change is the file list plus that spec.
+
+**Two IntelliJ findings, measured:** `defineEmits<{ e: [...] }>` makes IntelliJ fail to type the emit
+entirely (every call reported as *"not assignable to parameter type any"*, including for a `string`) —
+the call-signature form is clean. And the *"Unresolved variable"* errors are caused by **`ref<T | null>`
+in an SFC**, NOT by zod or the generated models: a hand-written interface of the same shape fails the
+same way. Also worth knowing: **IntelliJ's analyzer is non-deterministic** — identical queries on an
+unchanged file returned different results, so verify through it with repeat runs.
 
 ## What the last holder changed — codegen agent, 2026-08-02 (page mounts; client wiring is PROVISIONAL)
 

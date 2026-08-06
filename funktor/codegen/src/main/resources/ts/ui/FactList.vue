@@ -2,7 +2,7 @@
 /**
  * A small key/value list for the handful of scalar fields at the top of a tab.
  *
- * Distinct from {@link KeyValueTable}, which is for the repeating multi-valued case (headers, query
+ * Distinct from `KeyValueTable`, which is for the repeating multi-valued case (headers, query
  * parameters). This one is a `<dl>`, is not sorted, and keeps the caller's order -- because for facts
  * the order IS the meaning: method before status before duration.
  *
