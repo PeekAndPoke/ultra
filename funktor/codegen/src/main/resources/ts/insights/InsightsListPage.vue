@@ -29,7 +29,16 @@ const props = withDefaults(
     { epp: 20 },
 )
 
-const emit = defineEmits<{ select: [ref: InsightsRecordRef] }>()
+/**
+ * Declared in the call-signature form rather than as `{ select: [ref: InsightsRecordRef] }`.
+ *
+ * Both are valid and equally typed, and `vue-tsc` accepts either. IntelliJ does not: with the
+ * object-map form it fails to type the emit function at all and reports every call as
+ * *"Argument type X is not assignable to parameter type any"* -- including for a plain `string`, which
+ * is how you can tell it is a resolver falling back to `any` rather than a real mismatch. Measured
+ * 2026-08-02 across both forms; this one is clean.
+ */
+const emit = defineEmits<(e: 'select', ref: InsightsRecordRef) => void>()
 
 const page = ref(1)
 const items = ref<InsightsRecordSummary[]>([])

@@ -48,7 +48,8 @@ const props = defineProps<{
     file: string
 }>()
 
-const emit = defineEmits<{ navigate: [ref: InsightsRecordRef]; back: [] }>()
+/** Call-signature form, not the object map -- see the note in `InsightsListPage.vue`. */
+const emit = defineEmits<{ (e: 'navigate', ref: InsightsRecordRef): void; (e: 'back'): void }>()
 
 /** Collector key to component. A key that is absent falls through to `JsonTree`. */
 const TABS: Record<string, Component> = {

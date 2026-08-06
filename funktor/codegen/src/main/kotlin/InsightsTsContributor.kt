@@ -54,7 +54,7 @@ class InsightsTsContributor(
          * an exclusive claim would make the second one a hard error. Sharing also makes "the design
          * system ships iff something needs it" true by construction — nothing emits it on its own.
          */
-        private val UI_FILES: List<String> = listOf(
+        val UI_FILES: List<String> = listOf(
             "theme.css",
             "types.ts",
             // How a page the ROUTER constructed reaches the app's config. Shared, because every
@@ -67,8 +67,18 @@ class InsightsTsContributor(
             "StatStrip.vue",
         )
 
-        /** Insights' own files, emitted at depth 1 as `insights/…`. This module is the sole owner. */
-        private val INSIGHTS_FILES: List<String> = listOf(
+        /**
+         * Insights' own files, emitted at depth 1 as `insights/…`. This module is the sole owner.
+         *
+         * **This list must contain every file under `src/main/resources/ts/insights/`.** It is not a
+         * selection; it is a manual mirror of a directory, and on 2026-08-02 it silently drifted: four
+         * tabs were added as resources, `InsightsDetailPage.vue` imported them, and the generator
+         * emitted a page importing four files that were never written. See [InsightsTsContributorSpec],
+         * which now fails when the two disagree — the drift itself is invisible to `vue-tsc`, because
+         * the consuming app's `shims-vue.d.ts` declares `module '*.vue'` and therefore resolves any
+         * `.vue` import whether the file exists or not. Only `vite build` catches it.
+         */
+        val INSIGHTS_FILES: List<String> = listOf(
             "insights.css",
             "slices.ts",
             "RequestTab.vue",
@@ -77,6 +87,10 @@ class InsightsTsContributor(
             "RoutingTab.vue",
             "TemplateTab.vue",
             "LogTab.vue",
+            "RuntimeTab.vue",
+            "VaultTab.vue",
+            "KontainerTab.vue",
+            "AppConfigTab.vue",
             "InsightsListPage.vue",
             "InsightsDetailPage.vue",
             "InsightsPage.vue",
