@@ -1,8 +1,11 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-02 (released by the codegen agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: insights agent**
+**SINCE: 2026-08-02**
+**STATE: LOCKED — do not run gradle, do not commit.**
+
+Regenerating the demo SDK after a `defineEmits` change in the insights pages, then re-checking IDE
+diagnostics. Read-only apart from `sdkgen-app/src/funktorsdk/`.
 
 ## What the last holder changed — codegen agent, 2026-08-02 (page mounts; client wiring is PROVISIONAL)
 
