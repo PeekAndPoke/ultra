@@ -1,8 +1,19 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-09 (released by the codegen agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent**
+**SINCE: 2026-08-09**
+**STATE: LOCKED — do not run gradle, do not commit.**
+
+Applying `/feature-review` findings. Two touch your area and both are MINE, not yours:
+
+- `InsightsTsContributor` emits your pages whenever the insights FEATURE is present, but their client
+  is only emitted if the PROFILE kept the routes. A profile that filters insights out ships your 15
+  files importing a client that does not exist. Fixing with a `requires` declaration on the route.
+- `ui/sdkContext.ts` was emitted only by your contributor, so it vanished for any app without
+  insights — while the demo's hand-written `main.ts` imports it. Moving it to an always-on
+  contributor.
+
+Your `.vue`/`.css` content is untouched.
 
 ## What the last holder changed — codegen agent, 2026-08-09
 
