@@ -77,7 +77,7 @@ class FunktorCodegenWiringSpec : FreeSpec() {
             val paths = result.output.entries().map { it.path }
 
             paths shouldContain "models.ts"
-            paths shouldContain "fxWiringClient.ts"
+            paths shouldContain "api/fxWiringClient.ts"
             paths shouldContain "runtime/client.ts"
         }
 
@@ -86,7 +86,7 @@ class FunktorCodegenWiringSpec : FreeSpec() {
             "the default admits every route" {
                 val paths = container().get(TsSdkBuilder::class).build().output.entries().map { it.path }
 
-                paths shouldContain "fxWiringClient.ts"
+                paths shouldContain "api/fxWiringClient.ts"
             }
 
             "profile() narrows the routes a client is generated for" {
@@ -107,7 +107,7 @@ class FunktorCodegenWiringSpec : FreeSpec() {
 
                 val result = filtered.get(TsSdkBuilder::class).build()
 
-                val client = result.output.entries().first { it.path == "fxProfiledClient.ts" }.content
+                val client = result.output.entries().first { it.path == "api/fxProfiledClient.ts" }.content
 
                 client shouldContain "listSpeakers"
                 client shouldNotContain "listTalks"
@@ -134,7 +134,7 @@ class FunktorCodegenWiringSpec : FreeSpec() {
                 }.create()
 
                 val client = filtered.get(TsSdkBuilder::class).build()
-                    .output.entries().first { it.path == "fxProfiledClient.ts" }.content
+                    .output.entries().first { it.path == "api/fxProfiledClient.ts" }.content
 
                 client shouldContain "listSpeakers"
                 client shouldNotContain "listTalks"
@@ -159,7 +159,7 @@ class FunktorCodegenWiringSpec : FreeSpec() {
                 }.create()
 
                 val client = filtered.get(TsSdkBuilder::class).build()
-                    .output.entries().first { it.path == "fxProfiledClient.ts" }.content
+                    .output.entries().first { it.path == "api/fxProfiledClient.ts" }.content
 
                 withClue("listSpeakers carries only 'public', so ANY admits it and ALL would not") {
                     client shouldContain "listSpeakers"

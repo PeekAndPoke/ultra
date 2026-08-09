@@ -138,7 +138,7 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
 
                 run("--out", dir.absolutePath)
 
-                val client = File(dir, "$SDK/fxDemoClient.ts")
+                val client = File(dir, "$SDK/api/fxDemoClient.ts")
                 client.writeText(client.readText() + "\n// someone edited the generated SDK\n")
 
                 val thrown = run("--out", dir.absolutePath, "--check")

@@ -44,8 +44,11 @@ class InsightsTsContributor(
          */
         private const val FEATURE_NAME: String = "Funktor Insights"
 
-        /** What `InsightsListPage.vue` and `InsightsDetailPage.vue` import, verbatim. */
-        private const val CLIENT_IMPORT: String = "funktorInsightsClient.ts"
+        /**
+         * What the insights pages import, verbatim — they sit at `insights/`, so it reads
+         * `../api/funktorInsightsClient.ts`.
+         */
+        private const val CLIENT_IMPORT: String = "api/funktorInsightsClient.ts"
 
         /**
          * Shared primitives, emitted at depth 1 as `ui/…`.

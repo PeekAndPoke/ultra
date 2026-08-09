@@ -26,7 +26,7 @@ class RestApiTsContributorSpec : FreeSpec() {
         .build()
 
     private fun clientOf(result: TsSdkBuilder.Result): String =
-        result.output.entries().first { it.path == "fxDemoClient.ts" }.content
+        result.output.entries().first { it.path == TsClientNames.clientFile("Fx Demo") }.content
 
     init {
         "the emitted file set mirrors the feature" {
@@ -35,7 +35,7 @@ class RestApiTsContributorSpec : FreeSpec() {
             result.output.entries().map { it.path } shouldContainExactlyInAnyOrder listOf(
                 "models.ts",
                 "index.ts",
-                "fxDemoClient.ts",
+                "api/fxDemoClient.ts",
                 // The client runtime and everything it imports — the closure, not just client.ts.
                 "runtime/client.ts",
                 "runtime/route.ts",
@@ -149,7 +149,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                 // twice, once public() and once authenticated(), and they merge into one LoginApi.
                 // Publicness is a property of the ROUTE, so it must survive the merge per-member —
                 // otherwise `signIn` and `getMyApiAccess` would get the same answer.
-                out shouldContain "import { publicRoute, route } from './runtime/route.ts'"
+                out shouldContain "import { publicRoute, route } from '../runtime/route.ts'"
             }
 
             withClue("and one aggregate member, not two") {
@@ -263,7 +263,7 @@ class RestApiTsContributorSpec : FreeSpec() {
 
                 withClue("and one WITH a stream must import it, or the emitted call is unresolved") {
                     clientOf(build(listOf(FxTalksApiRoutes(), FxSseApiRoutes()))) shouldContain
-                            "from './runtime/sse.ts'"
+                            "from '../runtime/sse.ts'"
                 }
             }
         }
@@ -302,7 +302,7 @@ class RestApiTsContributorSpec : FreeSpec() {
                 models shouldContain "export const FxSaveTalkRequest"
 
                 withClue("and the client must IMPORT it — the bare name also appears in the signature") {
-                    clientOf(result) shouldContain "import { FxSaveTalkRequest, FxTalkModel } from './models.ts'"
+                    clientOf(result) shouldContain "import { FxSaveTalkRequest, FxTalkModel } from '../models.ts'"
                 }
 
                 result.model.decls.values.map { it.name } shouldContainExactlyInAnyOrder listOf(

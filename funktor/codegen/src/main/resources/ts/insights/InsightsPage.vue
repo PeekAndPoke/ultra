@@ -23,7 +23,7 @@
  */
 import { ref } from 'vue'
 import type { Ref } from 'vue'
-import { FunktorInsightsClient } from '../funktorInsightsClient.ts'
+import { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
 import type { InsightsRecordRef } from '../models.ts'
 import { useSdkConfigOrNull } from '../ui/sdkContext.ts'
 import InsightsDetailPage from './InsightsDetailPage.vue'

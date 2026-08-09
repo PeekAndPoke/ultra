@@ -26,8 +26,22 @@ internal object TsClientNames {
     /** `FunktorConf` -> `FunktorConfClient`, the per-feature aggregate. */
     fun clientClass(featureCodeGenName: String): String = "${pascal(featureCodeGenName)}Client"
 
-    /** `FunktorConf` -> `funktorConfClient.ts`. */
-    fun clientFile(featureCodeGenName: String): String = "${camel(featureCodeGenName)}Client.ts"
+    /**
+     * The directory every generated client is emitted into.
+     *
+     * Grouped rather than sitting at the SDK root (maintainer, 2026-08-09): the root already holds
+     * `runtime/`, `ui/` and each feature's pages, so loose client files are the one thing NOT grouped
+     * by what it is — and an app with a hundred features would bury `models.ts` and `mount.ts` among
+     * them.
+     *
+     * Generated clients import root-relative specifiers, so anything emitted here must go through
+     * `TsModulePaths.rootRelative`.
+     */
+    const val API_DIR: String = "api"
+
+    /** `FunktorConf` -> `api/funktorConfClient.ts`. */
+    fun clientFile(featureCodeGenName: String): String =
+        "$API_DIR/${camel(featureCodeGenName)}Client.ts"
 
     /** `funktor-conf` -> `FunktorConfApi`, the class carrying one route group's endpoints. */
     fun groupClass(groupName: String): String = "${pascal(groupName)}Api"

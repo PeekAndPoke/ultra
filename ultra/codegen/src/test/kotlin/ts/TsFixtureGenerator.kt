@@ -277,7 +277,11 @@ object TsFixtureGenerator {
 
         val spec = TsClientSpec(
             className = "FxDemoClient",
-            fileName = "fxDemoClient.ts",
+            // Emitted at DEPTH 1, mirroring where `TsClientNames.clientFile` puts a real client.
+            // Not cosmetic: a client one level down imports `../models.ts`, and this is the only
+            // place a real `tsc` ever compiles that. With the fixture at the root the whole
+            // depth-rewrite in `TsClientEmitter` would be unexercised and green.
+            fileName = "api/fxDemoClient.ts",
             doc = "A demo feature.\nSecond line, which must not break out of the comment: */",
             groups = listOf(
                 TsClientSpec.Group(
@@ -394,7 +398,8 @@ object TsFixtureGenerator {
             ),
         )
 
-        File(targetDir, spec.fileName).writeText(TsClientEmitter(model).emit(spec))
+        File(targetDir, spec.fileName).apply { parentFile.mkdirs() }
+            .writeText(TsClientEmitter(model).emit(spec))
 
         // A barrel over the SDK-SHAPED subset only — `models.ts`, the client, and the runtime.
         //

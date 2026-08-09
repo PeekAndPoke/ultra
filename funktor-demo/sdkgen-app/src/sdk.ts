@@ -15,8 +15,8 @@ import { AuthSession, authTransport } from './funktorsdk/runtime/auth.ts'
 import { sdkConfig } from './funktorsdk/runtime/client.ts'
 import { fetchTransport } from './funktorsdk/runtime/http.ts'
 import { startAutoRefresh } from './funktorsdk/runtime/refresh.ts'
-import { AuthClient } from './funktorsdk/authClient.ts'
-import { FunktorInsightsClient } from './funktorsdk/funktorInsightsClient.ts'
+import { AuthClient } from './funktorsdk/api/authClient.ts'
+import { FunktorInsightsClient } from './funktorsdk/api/funktorInsightsClient.ts'
 import type { UserPermissions } from './funktorsdk/models.ts'
 
 /**

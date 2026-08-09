@@ -19,7 +19,7 @@
  */
 import { computed, ref, watch } from 'vue'
 import type { Component, Ref } from 'vue'
-import type { FunktorInsightsClient } from '../funktorInsightsClient.ts'
+import type { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
 import type { InsightsCollectorSlice, InsightsRecord, InsightsRecordRef } from '../models.ts'
 import { isSuccess } from '../runtime/apiResponse.ts'
 import { toDate } from '../runtime/datetime.ts'

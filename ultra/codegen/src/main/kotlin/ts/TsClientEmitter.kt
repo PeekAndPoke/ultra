@@ -170,6 +170,11 @@ class TsClientEmitter(private val model: TypeModel) {
 
         val modelNames = declared.map { renderer.nameOf(it) }.distinct().sorted()
 
+        // Every specifier below is written root-relative, but this file is emitted under `api/`. One
+        // rewrite point, applied to ALL of them — including a contributor's `importFrom`, which is
+        // declared root-relative for the same historical reason.
+        fun from(specifier: String): String = TsModulePaths.rootRelative(specifier, spec.fileName)
+
         val claimImports = claimed
             .mapNotNull { model.usedClaims[it.cls.qualifiedName] }
             .filter { !it.opaque && it.importFrom != null }
@@ -197,7 +202,7 @@ class TsClientEmitter(private val model: TypeModel) {
                 }
             }
 
-            appendLine("import { ${clientImports.joinToString(", ")} } from ${tsStringLiteral(CLIENT_MODULE)}")
+            appendLine("import { ${clientImports.joinToString(", ")} } from ${tsStringLiteral(from(CLIENT_MODULE))}")
 
             // Only the wrappers actually used: a consuming app compiled with `noUnusedLocals` cannot
             // edit this file, so a dead import would break a build nobody can fix.
@@ -206,24 +211,24 @@ class TsClientEmitter(private val model: TypeModel) {
                 if (endpoints.any { !it.isPublic }) add("route")
             }
 
-            appendLine("import { ${routeImports.joinToString(", ")} } from ${tsStringLiteral(ROUTE_MODULE)}")
+            appendLine("import { ${routeImports.joinToString(", ")} } from ${tsStringLiteral(from(ROUTE_MODULE))}")
 
             // Only when a stream endpoint exists: an SDK without SSE must not carry the event-stream
             // parser, which the runtime dependency closure would otherwise pull in.
             if (endpoints.any { it.stream }) {
                 appendLine(
                     "import { type SseEvent, type SseOptions, stream } from " +
-                            tsStringLiteral(SSE_MODULE)
+                            tsStringLiteral(from(SSE_MODULE))
                 )
             }
 
             if (modelNames.isNotEmpty()) {
-                appendLine("import { ${modelNames.joinToString(", ")} } from ${tsStringLiteral(MODELS_MODULE)}")
+                appendLine("import { ${modelNames.joinToString(", ")} } from ${tsStringLiteral(from(MODELS_MODULE))}")
             }
 
             claimImports.forEach { (module, claims) ->
                 val names = claims.flatMap { listOfNotNull(it.tsName, it.schema) }.distinct().sorted()
-                appendLine("import { ${names.joinToString(", ")} } from ${tsStringLiteral(module)}")
+                appendLine("import { ${names.joinToString(", ")} } from ${tsStringLiteral(from(module))}")
             }
 
             spec.groups.forEach { group ->

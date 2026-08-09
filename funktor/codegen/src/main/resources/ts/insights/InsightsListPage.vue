@@ -11,7 +11,7 @@
  * Imports assume the emitted layout -- SDK root at `<out>/`, these files at `<out>/insights/`.
  */
 import { computed, ref, watch } from 'vue'
-import type { FunktorInsightsClient } from '../funktorInsightsClient.ts'
+import type { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
 import type { InsightsRecordRef, InsightsRecordSummary } from '../models.ts'
 import { isSuccess } from '../runtime/apiResponse.ts'
 import { toDate } from '../runtime/datetime.ts'
