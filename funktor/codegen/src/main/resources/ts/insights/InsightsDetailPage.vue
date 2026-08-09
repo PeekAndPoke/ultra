@@ -18,9 +18,9 @@
  * Imports assume the emitted layout -- SDK root at `<out>/`, these files at `<out>/insights/`.
  */
 import { computed, ref, watch } from 'vue'
-import type { Component } from 'vue'
+import type { Component, Ref } from 'vue'
 import type { FunktorInsightsClient } from '../funktorInsightsClient.ts'
-import type { InsightsRecord, InsightsRecordRef } from '../models.ts'
+import type { InsightsCollectorSlice, InsightsRecord, InsightsRecordRef } from '../models.ts'
 import { isSuccess } from '../runtime/apiResponse.ts'
 import { toDate } from '../runtime/datetime.ts'
 import FactList from '../ui/FactList.vue'
@@ -79,7 +79,8 @@ const TAB_LABELS: Record<string, string> = {
     'app-config': 'Config',
 }
 
-const record = ref<InsightsRecord | null>(null)
+/** Annotated as `Ref<…>` -- see the note in `InsightsPage.vue`; the generic form breaks IntelliJ. */
+const record: Ref<InsightsRecord | null> = ref(null)
 const loading = ref(false)
 const problem = ref<string | null>(null)
 const activeKey = ref<string | null>(null)
@@ -126,10 +127,25 @@ const overview = computed<Fact[]>(() => {
     ]
 })
 
-const activeSlice = computed(() => record.value?.collectors.find((slice) => slice.key === activeKey.value) ?? null)
+/**
+ * The record's slices, or none.
+ *
+ * The template reads THIS rather than `record.collectors`, and every lookup below goes through an
+ * annotated local with an explicitly typed callback parameter. All three shapes are equivalent to
+ * TypeScript; IntelliJ resolves only this one. Measured -- the direct
+ * `record.value?.collectors.find((s) => …)` form reports *"Argument types do not match parameters"*.
+ */
+const collectors = computed<InsightsCollectorSlice[]>(() => {
+    const rec: InsightsRecord | null = record.value
+    return rec === null ? [] : rec.collectors
+})
+
+const activeSlice = computed<InsightsCollectorSlice | null>(() => {
+    return collectors.value.find((slice: InsightsCollectorSlice) => slice.key === activeKey.value) ?? null
+})
 
 function sliceFor(key: string): unknown {
-    return record.value?.collectors.find((slice) => slice.key === key)?.data ?? null
+    return collectors.value.find((slice: InsightsCollectorSlice) => slice.key === key)?.data ?? null
 }
 
 /**
@@ -198,14 +214,14 @@ function labelFor(key: string): string {
                 <StatStrip :cells="overviewRuntime" />
             </section>
 
-            <div v-if="record.collectors.length === 0" class="fk-empty">
+            <div v-if="collectors.length === 0" class="fk-empty">
                 This record collected nothing -- it was recorded in BRIEF mode.
             </div>
 
             <template v-else>
                 <nav class="fk-tabs">
                     <button
-                        v-for="slice in record.collectors"
+                        v-for="slice in collectors"
                         :key="slice.key"
                         type="button"
                         class="fk-tabs__tab"

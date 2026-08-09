@@ -1,10 +1,20 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: insights agent**
-**SINCE: 2026-08-09**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-09 (released by the insights agent)**
+**STATE: FREE — take the lock before building.**
 
-Regenerating after annotating two nullable refs as `Ref<…>`, which fixes the remaining IntelliJ errors.
+## What the last holder changed — insights agent, 2026-08-09
+
+**The insights pages are IDE-clean.** The fix, if you write components: annotate the const
+(`const x: Ref<T | null> = ref(null)`) rather than parameterising `ref<T | null>(null)`. Identical to
+TypeScript, but IntelliJ resolves only the first. Where a nullable ref feeds `.find`, also use an
+annotated local and an explicitly typed callback parameter, and give the template a computed rather than
+letting it reach into the ref.
+
+One WEAK WARNING remains in `InsightsPage.vue` — `props.client === undefined` called always-false.
+IntelliJ drops `| undefined` from optional props, measured with and without `withDefaults`, so no code
+shape avoids it. It is in your provide/inject fallback, which you already flagged as provisional.
 
 ## What the last holder changed — insights agent, 2026-08-02
 

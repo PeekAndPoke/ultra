@@ -22,6 +22,7 @@
  * mounting this component is not what protects it, and hiding it is not either.
  */
 import { ref } from 'vue'
+import type { Ref } from 'vue'
 import { FunktorInsightsClient } from '../funktorInsightsClient.ts'
 import type { InsightsRecordRef } from '../models.ts'
 import { useSdkConfigOrNull } from '../ui/sdkContext.ts'
@@ -52,7 +53,15 @@ if (props.client === undefined && injectedConfig === null) {
 // computed to react to, and rebuilding one per render would discard nothing but cost allocations.
 const client = props.client ?? new FunktorInsightsClient(injectedConfig!)
 
-const selected = ref<InsightsRecordRef | null>(null)
+/**
+ * Annotated as `Ref<…>` on the const rather than `ref<…>(null)`.
+ *
+ * The two are identical to TypeScript, and `vue-tsc` accepts both. IntelliJ does not: with the generic
+ * form it cannot resolve properties off the unwrapped ref in a template — `selected.bucket` reports
+ * *"Unresolved variable bucket"* — while the annotated form resolves cleanly. Measured both ways,
+ * twice each, because that analyzer returns different answers on identical input.
+ */
+const selected: Ref<InsightsRecordRef | null> = ref(null)
 </script>
 
 <template>

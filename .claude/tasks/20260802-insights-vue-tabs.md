@@ -305,12 +305,32 @@ let the list agree with it while the source disagreed. Mutation-tested.
 | `defineEmits<{ select: [...] }>` — IntelliJ cannot type the emit and reports every call as *"not assignable to parameter type any"*, including a plain `string` | call-signature form; equally typed, `vue-tsc` accepts both |
 | 3 `{@link}` references to components the file does not import | plain `` `code` `` — the same rule CLAUDE.md sets for Kotlin KDoc |
 
-### Left, with the reason
+### Fixed on 2026-08-09 — the maintainer's suggestion was right
 
-- `InsightsDetailPage.vue` ×2 and `InsightsPage.vue` ×1 (weak warning). Both are the same IntelliJ
-  limitation: **`ref<T | null>` inside an SFC**. Proven not to be about zod or the generated models — a
-  probe with a hand-written `interface` of the identical shape fails identically. Pending the maintainer
-  checking whether IntelliJ is using the TypeScript service, since `vue-tsc` disagrees with it.
+**Annotate the const, do not parameterise `ref()`.** `const selected: Ref<T | null> = ref(null)` resolves
+in IntelliJ where `const selected = ref<T | null>(null)` does not. Identical to TypeScript; `vue-tsc`
+accepts both. Applied to `InsightsPage.selected` and `InsightsDetailPage.record`.
+
+That alone made the detail page WORSE — two template errors became four, because resolving the type
+newly exposed `record.value?.collectors.find((s) => …)` as *"Argument types do not match parameters"*.
+Two further changes finished it: a `collectors` computed so the template never reaches into the nullable
+ref, and an annotated local plus an **explicitly typed callback parameter** at each `.find`. Both pages
+are now clean, confirmed twice each.
+
+### The one left, and why no code change fixes it
+
+`InsightsPage.vue` ×1 **weak warning**: `props.client === undefined` reported as always false. IntelliJ
+drops `| undefined` from optional props — measured with AND without `withDefaults`, so there is no code
+shape that avoids it. It also sits in the provide/inject fallback the codegen agent flagged as
+PROVISIONAL pending a `useClient()` composable, so it is not worth contorting.
+
+### A correction worth keeping
+
+I told the maintainer `v-if` makes `selected.bucket` safe and they pushed back, reasoning that props are
+evaluated before being passed. **The measurement is on the `v-if` side:** a component rendered with
+`selected = null` and `:bucket="selected.bucket"` renders fine rather than throwing, because `v-if`
+compiles to a ternary wrapping the whole vnode. So `selected?.bucket` is not needed — and it would break
+the build anyway, since the prop is `string` and optional chaining yields `string | undefined`.
 
 ### Methodology note, learned the hard way
 
