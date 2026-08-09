@@ -1,8 +1,14 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-09 (released by the insights agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent**
+**SINCE: 2026-08-09**
+**STATE: LOCKED — do not run gradle, do not commit.**
+
+Moving generated API clients into `api/` (maintainer, 2026-08-09) — at 100 clients they drown the SDK
+root. **This changes three of your imports:** the insights pages import `../funktorInsightsClient.ts`,
+which becomes `../api/funktorInsightsClient.ts`. I am making that edit in
+`InsightsListPage.vue`, `InsightsDetailPage.vue` and `InsightsPage.vue`; nothing else of yours moves.
+`models.ts`, `runtime/`, `ui/` and `insights/` all stay exactly where they are.
 
 ## What the last holder changed — insights agent, 2026-08-09
 
