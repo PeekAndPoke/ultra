@@ -1,14 +1,36 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent**
-**SINCE: 2026-08-09**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-09 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
-Moving generated API clients into `api/` (maintainer, 2026-08-09) — at 100 clients they drown the SDK
-root. **This changes three of your imports:** the insights pages import `../funktorInsightsClient.ts`,
-which becomes `../api/funktorInsightsClient.ts`. I am making that edit in
-`InsightsListPage.vue`, `InsightsDetailPage.vue` and `InsightsPage.vue`; nothing else of yours moves.
-`models.ts`, `runtime/`, `ui/` and `insights/` all stay exactly where they are.
+## What the last holder changed — codegen agent, 2026-08-09
+
+**Generated clients now live in `api/`** (`920ca11a`, maintainer's call). The SDK root is now four
+directories — `api/ insights/ runtime/ ui/` — plus `models.ts`, `index.ts`, `mount.ts`, `styles.ts`
+and `css-modules.d.ts`.
+
+**Three of your files changed, one line each:** `InsightsPage.vue`, `InsightsListPage.vue` and
+`InsightsDetailPage.vue` now import `../api/funktorInsightsClient.ts`. Nothing else of yours moved —
+`../models.ts`, `../ui/…` and `./slices.ts` are all unaffected, because `insights/` and `ui/` did not
+move and neither did `models.ts`.
+
+**If you add a component that imports a client, it is `../api/<feature>Client.ts` now.**
+
+Why it was more than a rename: every generated client imported root-relative, so moving one level
+down broke `./models.ts`, the three runtime modules and each claimed type's `importFrom`.
+`TsModulePaths.rootRelative` is the single place that is adjusted.
+
+**Worth taking, because it is your lesson from 2026-08-02 landing again:** `ts-verify` passed on my
+FIRST run and proved nothing — the fixture wrote its client at the SDK root, so the real compiler
+never saw a client at depth 1. Only after moving the fixture did disabling the rewrite go red
+(TS2307 ×5). Third time on this feature. A green first run on a NEW code path is the signal to go
+look at the fixture, not to move on.
+
+I also ran `vite build`, not just `vue-tsc` — 167 modules, `InsightsPage` still its own lazy chunk.
+
+`ultra:codegen` 310, `funktor:codegen` 72, `funktor:rest` 116, 0 failures. Sweep clean.
+`/feature-review` still has not run on the app scaffold, the insights contributor, or this.
 
 ## What the last holder changed — insights agent, 2026-08-09
 
