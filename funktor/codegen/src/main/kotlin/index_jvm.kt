@@ -112,6 +112,10 @@ val Funktor_Codegen = module { builder: FunktorCodegenBuilder.() -> Unit ->
     // rejects a second claim for a type rather than letting one silently shadow another.
     singleton(AuthTsContributor::class)
 
+    // `ui/sdkContext.ts`, unconditionally. The app's `provideSdkConfig(app, config)` is hand-written,
+    // so the module it imports must not come and go with whichever feature happens to be installed.
+    singleton(SdkContextTsContributor::class)
+
     // Ships the insights pages, but ONLY into an SDK that actually has the insights feature — it
     // checks the feature list itself, so registering it here is safe for an app without insights.
     singleton(InsightsTsContributor::class) { features: Lazy<List<ApiFeature>> ->

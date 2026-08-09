@@ -4,7 +4,11 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain as shouldContainText
+import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
 import java.io.File
 
 /**
@@ -42,7 +46,13 @@ class InsightsTsContributorSpec : FreeSpec() {
             dir.isDirectory shouldBe true
         }
 
-        val onDisk = dir.listFiles().orEmpty().filter { it.isFile }.map { it.name }.toSet()
+        // RECURSIVE. `listFiles()` does not descend, so a tab added under `ts/insights/tabs/`
+        // would satisfy this spec while the generator never emitted it — the exact 2026-08-02
+        // drift, one directory down, and just as invisible to `vue-tsc`.
+        val onDisk = dir.walkTopDown()
+            .filter { it.isFile }
+            .map { it.relativeTo(dir).invariantSeparatorsPath }
+            .toSet()
 
         withClue(
             "files under ts/$dirName that the contributor never emits. A page importing one of these " +
@@ -71,6 +81,107 @@ class InsightsTsContributorSpec : FreeSpec() {
             // deletes the resources AND the list entries together, which is the shape of a bad rebase.
             listOf("RuntimeTab.vue", "VaultTab.vue", "KontainerTab.vue", "AppConfigTab.vue").forEach {
                 InsightsTsContributor.INSIGHTS_FILES shouldContain it
+            }
+        }
+
+        //  What emit() actually DOES  ///////////////////////////////////////////////////////////////
+        //
+        //  Added by /feature-review 2026-08-09. Nothing had ever RUN emit() with the feature present,
+        //  so every decision inside it was unasserted — three mutations survived: swapping the two
+        //  cascade orders, deleting the client-name check, and deleting the route registration.
+
+        "with the insights feature present" - {
+
+            fun emitted() = TsSdkBuilder
+                .forTesting(
+                    listOf(
+                        RestApiTsContributor(lazyOf(listOf(FxInsightsApiFeature()))),
+                        InsightsTsContributor(lazyOf(listOf(FxInsightsApiFeature()))),
+                    )
+                )
+                .build()
+
+            "the theme is loaded BEFORE the insights sheet" {
+                // THE assertion this whole ordering mechanism exists for, and the one pairing that
+                // actually exists in the repo. `insights.css` consumes custom properties `theme.css`
+                // defines, so the wrong order does not error — the overrides silently stop applying.
+                // Swapping the two order constants used to leave every test green.
+                val styles = emitted().output.entries()
+                    .single { it.path == "styles.ts" }
+                    .content
+
+                styles.indexOf("./ui/theme.css") shouldBeLessThan styles.indexOf("./insights/insights.css")
+            }
+
+            "the page is registered as a route, with a nav entry" {
+                val mount = emitted().output.entries().single { it.path == "mount.ts" }.content
+
+                mount shouldContainText "'/insights'"
+                mount shouldContainText "insights/InsightsPage.vue"
+                mount shouldContainText "'Insights'"
+            }
+
+            "every declared file is actually emitted" {
+                val paths = emitted().output.entries().map { it.path }.toSet()
+
+                InsightsTsContributor.UI_FILES.forEach { paths shouldContain "ui/$it" }
+                InsightsTsContributor.INSIGHTS_FILES.forEach { paths shouldContain "insights/$it" }
+            }
+        }
+
+        "with NO insights feature, nothing insights-shaped is emitted" {
+            val paths = TsSdkBuilder
+                .forTesting(
+                    listOf(
+                        RestApiTsContributor(lazyOf(listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes()))))),
+                        InsightsTsContributor(lazyOf(listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes()))))),
+                    )
+                )
+                .build().output.entries().map { it.path }
+
+            paths.none { it.startsWith("insights/") } shouldBe true
+
+            withClue("and no /insights route is registered either") {
+                paths.single { it == "mount.ts" }
+                TsSdkBuilder.forTesting(
+                    listOf(
+                        RestApiTsContributor(lazyOf(listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes()))))),
+                        InsightsTsContributor(lazyOf(listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes()))))),
+                    )
+                ).build().output.entries()
+                    .single { it.path == "mount.ts" }.content shouldNotContain "/insights"
+            }
+        }
+
+        "a page whose client the PROFILE filtered out fails the build, naming the page" {
+            // The HIGH from /feature-review 2026-08-09. The feature being INSTALLED and its client
+            // being EMITTED are different things: a profile filters routes, and RestApiTsContributor
+            // writes no client for a feature whose routes were all excluded. The pages import that
+            // client, so without the `requires` declaration this shipped an SDK that cannot resolve
+            // its own imports — invisible to `vue-tsc`, and only `vite build` would say so.
+            val thrown = runCatching {
+                val features = listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes())), FxInsightsApiFeature())
+
+                TsSdkBuilder.forTesting(
+                    listOf(
+                        // A profile that keeps the demo feature but admits nothing from insights.
+                        // The second feature matters: filtering EVERY route leaves the SDK with no
+                        // roots at all, and the builder rejects that first — a different error, and
+                        // not the one this test is about.
+                        RestApiTsContributor(
+                            lazyOf(features),
+                            include = { route -> !route.pattern.pattern.startsWith("/_/funktor/insights") },
+                        ),
+                        InsightsTsContributor(lazyOf(features)),
+                    )
+                ).build()
+            }.exceptionOrNull()
+
+            thrown!!.message!! shouldContainText "/insights"
+            thrown.message!! shouldContainText "api/funktorInsightsClient.ts"
+
+            withClue("the message must say what to do about it") {
+                thrown.message!! shouldContainText "profile"
             }
         }
     }

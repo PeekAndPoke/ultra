@@ -73,15 +73,55 @@ export function signOut(): void {
     acl.clear()
 }
 
-/** Loads the matrix if there is a session. Idempotent, so calling it on every route change is fine. */
+/**
+ * Loads the matrix if there is a session and no matrix yet.
+ *
+ * **The `absent` check is the load-bearing half.** `AclLoader.load()` is idempotent only while a
+ * request is IN FLIGHT — once it resolves, a further call starts a fresh fetch and drops the state
+ * back to `loading`. This is called from `router.beforeEach`, so without the guard every single
+ * navigation re-fetched the whole matrix (85 entries on the demo, from a superuser-only endpoint) and
+ * blanked the menu while it did. Found by `/feature-review`, 2026-08-09.
+ *
+ * A RE-load after a token refresh is a different thing and is triggered explicitly below.
+ */
 export function ensureAcl(): void {
-    if (session.state().isLoggedIn) acl.load()
+    if (session.state().isLoggedIn && acl.state()._type === 'absent') acl.load()
 }
 
 // Refresh before expiry. Without this a session simply dies at `exp` and the user is "randomly
 // logged out" with no error naming the cause.
 startAutoRefresh(session, () => auth.login.refreshToken({ realm: REALM }), {
     onFailed: () => signOut(),
+})
+
+/**
+ * Re-load the matrix whenever a NEW session lands.
+ *
+ * `AclLoader`'s contract: "the matrix belongs to the current token" — a refresh mints a new one and
+ * restates `permissions`, so a matrix from before it is a second, disagreeing source of truth. There
+ * is no success hook on `startAutoRefresh`, and `subscribe` fires on sign-in, sign-out AND refresh,
+ * so the user id is what distinguishes them.
+ *
+ * This was previously masked by `ensureAcl` re-fetching on every navigation. Fixing that made the
+ * gap live, which is a fair description of why the two belong in one change.
+ */
+let lastToken: string | null = null
+
+session.subscribe((state) => {
+    if (!state.isLoggedIn) {
+        lastToken = null
+        return
+    }
+
+    // Keyed on the TOKEN, not the user id: a refresh keeps the same user and mints a new token, and
+    // that is exactly the case the matrix must follow. Keying on `userId` would silently skip it.
+    if (state.token === lastToken) return
+
+    lastToken = state.token
+    // `clear()` first, so `ensureAcl`'s `absent` guard lets the reload through — and so the old
+    // matrix cannot be read as current in the window before the new one lands.
+    acl.clear()
+    ensureAcl()
 })
 
 // A reload restores the session from storage but NOT the matrix, so ask for it on boot.

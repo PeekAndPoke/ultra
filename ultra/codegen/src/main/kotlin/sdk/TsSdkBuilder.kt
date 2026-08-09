@@ -194,6 +194,24 @@ class TsSdkBuilder(
                     "out.resource(...) in the same emit call."
         }
 
+        // A page can only ship if what it IMPORTS shipped too. The common case is a generated API
+        // client, which exists only if the profile kept that feature's routes — something the page's
+        // contributor cannot see. Without this, a profile that filters a feature out still emits its
+        // pages, and they import a client that was never written.
+        val unmetRequirements = registeredRoutes
+            .flatMap { route -> route.requires.map { route to it } }
+            .filter { (_, required) -> required !in emitted }
+
+        check(unmetRequirements.isEmpty()) {
+            "Registered page(s) need files this SDK does not contain: " +
+                    unmetRequirements.joinToString { (route, required) ->
+                        "'${route.path}' (by '${route.declaredBy}') needs '$required'"
+                    } +
+                    ". The usual cause is a PROFILE that filtered out the routes whose client the " +
+                    "page imports, while the page's contributor is still registered. Either widen " +
+                    "the profile or do not register that contributor for this SDK."
+        }
+
         val missingStyles = registeredStyles.filter { it.path !in emitted }
 
         check(missingStyles.isEmpty()) {
@@ -220,6 +238,22 @@ class TsSdkBuilder(
 
         // Without this, `styles.ts` does not compile as soon as it has a single import — TypeScript
         // does not know what a `.css` module is.
+        // The ambient CSS declaration only works if its name does not SHADOW an emitted module.
+        // `x.d.ts` is by convention the declaration file FOR `x.ts`, so TypeScript pairs the two and
+        // stops reading it as a global script — the file is then present, correct, and completely
+        // inert, failing with the same TS2882 as if it had never been emitted. That cost a debugging
+        // session when it was named `styles.d.ts`; a contributor emitting `css-modules.ts` would
+        // recreate it silently.
+        val shadowed = TsStylesEmitter.TYPES_PATH.removeSuffix(".d.ts") + ".ts"
+
+        check(output.entries().none { it.path == shadowed }) {
+            "'$shadowed' was emitted, which SHADOWS the ambient declaration " +
+                    "'${TsStylesEmitter.TYPES_PATH}': TypeScript treats an `x.d.ts` as the " +
+                    "declarations for `x.ts` rather than as a global script, so the declaration " +
+                    "becomes inert and every contributed stylesheet import fails with TS2882. " +
+                    "Rename the emitted file, or rename TsStylesEmitter.TYPES_PATH."
+        }
+
         output.scopeFor("ultra:codegen").file(
             path = TsStylesEmitter.TYPES_PATH,
             content = TsStylesEmitter.emitTypes(),

@@ -73,8 +73,27 @@ class TsSdkOutput {
         }
     }
 
-    private fun add(entry: Entry, shared: Boolean = false) {
-        validatePath(entry.path, entry.writtenBy)
+    /**
+     * One spelling per file: `/` separators, no leading `./`, no empty segments.
+     *
+     * Runs AFTER [validatePath], so absolute and `..`-bearing paths are already refused and this only
+     * has to make the survivors agree with each other.
+     */
+    private fun canonicalPath(path: String): String = path
+        .replace('\\', '/')
+        .split('/')
+        .filter { it.isNotEmpty() && it != "." }
+        .joinToString("/")
+
+    private fun add(rawEntry: Entry, shared: Boolean = false) {
+        validatePath(rawEntry.path, rawEntry.writtenBy)
+
+        // CANONICALISED before it becomes a key. `ui/theme.css` and `./ui/theme.css` name one file on
+        // disk, so keying on the raw string made them two entries — the "written twice" check below
+        // never fired and `writeTo` resolved both to the same path, last-in-wins by insertion order.
+        // That silently defeats the exclusivity guarantee `sharedResource` leans on, and the number
+        // of contributor-supplied path strings is growing. Found by /feature-review, 2026-08-09.
+        val entry = rawEntry.copy(path = canonicalPath(rawEntry.path))
 
         val existing = entries[entry.path]
 

@@ -118,10 +118,73 @@ Raised, not decided.
 - [x] `:ultra:codegen:check :funktor:codegen:test :funktor:rest:jvmTest` — 302 / 69 / 116, 0 failures;
       compile sweep clean
 
-## Review record (filled by /feature-review)
+## Review record — /feature-review, 2026-08-09
+
+Base `920bcd9b` -> `08833836`. Scope: `ultra/codegen`, `funktor/codegen` Kotlin + specs,
+`funktor-demo/sdkgen-app`, and `ts/ui/sdkContext.ts`. ~1750 lines over five feature commits. The
+insights agent's `.vue`/`.css` content was excluded — theirs, separately owned. No backend Kotlin.
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | FAIL -> fixed | 5 MEDIUM, 4 LOW |
+| 2. Domain expert | FAIL -> fixed | 2 HIGH, 4 MEDIUM, 3 LOW |
+| 3. Security | FAIL -> fixed | 3 MEDIUM, 3 LOW |
+
+Fixes in `<this commit>`. Every finding was re-verified against the code before acting; two were
+confirmed by mutation and **one did not survive** (below).
+
+### Two HIGH, and both were my own argument turned against me
+
+1. **A page shipped without the client it imports.** `InsightsTsContributor` gated on the insights
+   FEATURE; `RestApiTsContributor` gates the client on the PROFILE, emitting none for a feature whose
+   routes were all filtered. `profileTagged("public")` therefore emitted 15 insights files and the
+   `/insights` route with no client — invisible to `vue-tsc` (the `shims-vue.d.ts` wildcard resolves
+   any `.vue`), surfacing only as a `vite build` failure in someone's frontend. Fixed with
+   `Route.requires`, checked by the builder where the whole plan is visible.
+2. **`ui/sdkContext.ts` was emitted only by the insights contributor**, so it vanished for any app
+   without insights — while `provideSdkConfig(app, config)` is HAND-WRITTEN in the app's entry point.
+   That is exactly the argument for making `mount.ts` and `styles.ts` unconditional, in the same
+   batch. Now owned by an always-on `SdkContextTsContributor`.
+
+### Two mutants survived the review and are now killed
+
+- **Swapping the theme and insights cascade orders left every test green.** The generic ordering
+  machinery was covered from six angles; the ONE real pairing in the repo was unasserted — and the
+  wrong order does not error, the overrides silently stop applying. That is the precise failure the
+  whole mechanism exists to prevent.
+- **Deleting the barrel's `.d.ts` exclusion left every test green**, while every real SDK's `index.ts`
+  gained `export * from './css-modules.d.ts'`. The ts-verify fixture's barrel input omitted the
+  `.d.ts`. Now passed in, and a real `tsc` fails with TS2306/TS2846 without the filter.
+
+Third and fourth time this shape has bitten the feature. The rule is now stated in the `api/` task:
+**a green first run on a new code path is the signal to check the fixture, not to move on.**
+
+### One reviewer finding did NOT survive verification
+
+The claim that a second module must re-emit a byte-identical `ui/theme.css` to depend on it. The
+builder's cross-check runs against the WHOLE output plan (`TsSdkBuilder`: `emitted` is
+`output.entries()`), not per contributor — so a module may `registry.style(...)` and emit nothing,
+which is what the KDoc promises. Dropped.
+
+### Also fixed
+
+App: `ensureAcl` re-fetched the entire matrix on every navigation (`load()` is idempotent only while
+in flight) and blanked the menu each time; the menu ignored `loading.stale`; nothing re-loaded the
+matrix after a token refresh; an INVOLUNTARY sign-out left a privileged page fully rendered because
+`sdk.ts` cannot reach the router; `HomeView` subscribed without unsubscribing on a routed view and
+read the session as a dead snapshot; the login form rendered the server's rejection text, which the
+SDK's own docs call an account-enumeration channel.
+
+Generator: `TsSdkOutput` keyed entries on the raw path string, so `ui/x.css` and `./ui/x.css` were two
+entries resolving to one file — silently defeating the exclusivity check that `sharedResource` leans
+on. Now canonicalised. A builder check now enforces the documented invariant that `css-modules.d.ts`
+must not shadow an emitted `.ts` basename. Dead KDoc citations removed, including a `TsStylesTypesSpec`
+that never existed, and the drift guard in `InsightsTsContributorSpec` made recursive.
+
+### Deferred by the maintainer, with the reasoning recorded
+
+- **ACL-aware navigation** — the menu never reads the matrix and cannot, because `SdkNavItem` carries
+  no route reference. The false claim is corrected; the feature is
+  `.claude/tasks/20260809-acl-aware-navigation.md`.
+- **Barrel scope** — contributed page helpers stay in the barrel, so it can require `vue` and shares
+  an export namespace with generated models. Accepted and documented in `TsBarrelEmitter`.

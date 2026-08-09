@@ -61,9 +61,13 @@ async function submit(): Promise<void> {
                 break
 
             case 'rejected':
-                // Server-authored text. Rendered as TEXT, never v-html: it is not sanitised and it
-                // can quote request input.
-                problem.value = outcome.message ?? `Sign-in failed (${outcome.status}).`
+                // OUR copy, not the server's. `login.ts` warns that `outcome.message` is
+                // server-authored, unsanitised, may quote request input, and distinguishes "no such
+                // user" from "wrong password" — so showing it on a login form is an account
+                // enumeration channel the SDK's own docs tell you to avoid. The detail goes to the
+                // console for a developer; the form says one thing.
+                console.warn('sign-in rejected', outcome.status, outcome.message)
+                problem.value = 'Sign-in failed. Check your email and password.'
                 break
         }
     } catch (e) {

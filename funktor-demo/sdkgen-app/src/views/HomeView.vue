@@ -6,15 +6,25 @@
  * attached and really was accepted. It is also the endpoint the contributed insights pages will use,
  * so this page goes away once they land.
  */
-import { onMounted, ref, shallowRef } from 'vue'
+import { onMounted, onScopeDispose, ref, shallowRef } from 'vue'
 import type { AclState } from '../funktorsdk/runtime/acl-loader.ts'
+import type { AuthSessionState } from '../funktorsdk/runtime/auth.ts'
+import type { UserPermissions } from '../funktorsdk/models.ts'
 import { isSuccess } from '../funktorsdk/runtime/apiResponse.ts'
 import { acl, insights, session } from '../sdk.ts'
 
+// Both subscriptions are CANCELLED on unmount. This is a routed view, so it is created and destroyed
+// on every navigation — an uncancelled listener accumulates one per visit and keeps writing into the
+// refs of a destroyed component. `App.vue` gets away with the same pattern only because it is the
+// root and lives for the app's lifetime. Found by `/feature-review`, 2026-08-09.
 const aclState = shallowRef<AclState>(acl.state())
-acl.subscribe((s) => { aclState.value = s })
+onScopeDispose(acl.subscribe((s) => { aclState.value = s }))
 
-const state = session.state()
+// A LIVE view of the session, not a snapshot. `session.state()` read once never updates, so the panel
+// below would keep showing a token expiry and permissions from whenever this component happened to
+// mount — through a refresh, and through a sign-out that arrives without a navigation.
+const state = shallowRef<AuthSessionState<UserPermissions>>(session.state())
+onScopeDispose(session.subscribe((s) => { state.value = s }))
 
 const records = ref<unknown[]>([])
 const problem = ref<string | null>(null)

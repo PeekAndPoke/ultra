@@ -39,6 +39,22 @@ class TsSdkRegistry {
         val requiresAuth: Boolean,
         /** Optional navigation entry. `null` means the route exists but is not in any menu. */
         val nav: Nav?,
+        /**
+         * Other emitted files [component] imports and cannot work without, relative to the SDK root.
+         *
+         * **For files a DIFFERENT contributor emits.** A contributor already guarantees its own
+         * output; what it cannot guarantee is a generated API client, because whether one exists
+         * depends on a profile it never sees. `RestApiTsContributor` emits no client for a feature
+         * whose routes were all filtered out, so a page importing that client shipped into an SDK
+         * without it — TypeScript that cannot resolve its own imports, invisible to `vue-tsc` (the
+         * app's `shims-vue.d.ts` wildcard resolves any `.vue`) and surfacing only as a `vite build`
+         * failure in someone's frontend. Found by `/feature-review`, 2026-08-09.
+         *
+         * Checked by [TsSdkBuilder] after every contributor has run, which is the only point where
+         * the full plan is visible — contributor order is undefined, so no contributor can check it
+         * itself.
+         */
+        val requires: List<String> = emptyList(),
         val declaredBy: String,
     )
 
@@ -164,6 +180,7 @@ class TsSdkRegistry {
             component: String,
             requiresAuth: Boolean,
             nav: Nav? = null,
+            requires: List<String> = emptyList(),
         ) {
             add(
                 Route(
@@ -171,6 +188,7 @@ class TsSdkRegistry {
                     component = component,
                     requiresAuth = requiresAuth,
                     nav = nav,
+                    requires = requires,
                     declaredBy = contributor,
                 )
             )

@@ -61,10 +61,20 @@ a green first run on a new code path is the signal to check the fixture, not to 
       `InsightsPage` still emitted as its own lazy chunk, CSS bundled. Per the standing rule that a
       green typecheck is not proof an SDK is consumable.
 
-## Review record (filled by /feature-review)
+## Review record — /feature-review, 2026-08-09
 
-| Reviewer | Verdict | Confirmed findings |
+Reviewed inside the batch gate recorded in
+`.claude/tasks/20260802-css-contribution-and-app-scaffold.md` (base `920bcd9b` -> `08833836`).
+
+| Reviewer | Verdict | Confirmed findings against THIS change |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | PASS | none |
+| 2. Domain expert | PASS | none — depth rewriting confirmed complete for every specifier the generator emits |
+| 3. Security | PASS | none |
+
+All three probed `TsModulePaths` independently and reached the same conclusion: the rewrite covers
+all five specifier kinds (`client.ts`, `route.ts`, `sse.ts`, `models.ts`, claimed `importFrom`), bare
+specifiers such as `zod` correctly bypass it, and `TsClientEmitter` is the only emitter producing a
+file below the root. The one adjacent finding — that a contributor's `importFrom` is stored
+unvalidated and could name an escaping relative path — predates this change; recorded in the batch
+record rather than here.

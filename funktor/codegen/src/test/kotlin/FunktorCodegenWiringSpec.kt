@@ -79,6 +79,17 @@ class FunktorCodegenWiringSpec : FreeSpec() {
             paths shouldContain "models.ts"
             paths shouldContain "api/fxWiringClient.ts"
             paths shouldContain "runtime/client.ts"
+
+            withClue(
+                "ui/sdkContext.ts must ship even though this SDK has NO insights and NO pages. " +
+                        "`provideSdkConfig(app, config)` is HAND-WRITTEN in the app's entry point, so " +
+                        "the module it imports cannot come and go with whichever feature happens to " +
+                        "be installed — the same argument that makes mount.ts and styles.ts " +
+                        "unconditional. Found by /feature-review 2026-08-09, when it was emitted only " +
+                        "by the insights contributor."
+            ) {
+                paths shouldContain SdkContextTsContributor.PATH
+            }
         }
 
         "profiles" - {

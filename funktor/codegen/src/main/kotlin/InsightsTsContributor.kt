@@ -76,7 +76,7 @@ class InsightsTsContributor(
          * **This list must contain every file under `src/main/resources/ts/insights/`.** It is not a
          * selection; it is a manual mirror of a directory, and on 2026-08-02 it silently drifted: four
          * tabs were added as resources, `InsightsDetailPage.vue` imported them, and the generator
-         * emitted a page importing four files that were never written. See [InsightsTsContributorSpec],
+         * emitted a page importing four files that were never written. See `InsightsTsContributorSpec`,
          * which now fails when the two disagree — the drift itself is invisible to `vue-tsc`, because
          * the consuming app's `shims-vue.d.ts` declares `module '*.vue'` and therefore resolves any
          * `.vue` import whether the file exists or not. Only `vite build` catches it.
@@ -112,7 +112,7 @@ class InsightsTsContributor(
      * Emits nothing unless the insights feature is actually present.
      *
      * **Conditional, unlike [AuthTsContributor].** Every funktor app has auth; insights is opt-in, and
-     * the pages import `../funktorInsightsClient.ts` — a file that exists only because
+     * the pages import `../api/funktorInsightsClient.ts` — a file that exists only because
      * [RestApiTsContributor] walked this feature. Emitting them into an SDK without it would produce
      * TypeScript that cannot resolve its own imports, and the failure would surface in the consuming
      * app's build rather than here.
@@ -154,6 +154,11 @@ class InsightsTsContributor(
             component = "insights/InsightsPage.vue",
             requiresAuth = true,
             nav = TsSdkRegistry.Nav(label = "Insights", icon = "gauge", order = 10),
+            // The feature being INSTALLED is not the same as its client being EMITTED: a profile
+            // filters routes, and `RestApiTsContributor` writes no client for a feature whose routes
+            // were all excluded. The pages import that client, so declare the dependency and let the
+            // builder fail loudly rather than shipping an unresolvable import.
+            requires = listOf(CLIENT_IMPORT),
         )
     }
 }

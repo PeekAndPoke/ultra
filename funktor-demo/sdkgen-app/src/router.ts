@@ -41,7 +41,8 @@ router.beforeEach((to) => {
 
     if (to.name === 'login' && loggedIn) return { path: '/' }
 
-    // Cheap and idempotent: a no-op unless there is a session and no matrix.
+    // A no-op unless there is a session and NO matrix — see `ensureAcl`, which owns that guard.
+    // Calling `acl.load()` directly here would re-fetch on every navigation.
     ensureAcl()
 
     return true

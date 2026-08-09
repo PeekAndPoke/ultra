@@ -17,6 +17,22 @@ class TsBarrelEmitterSpec : FreeSpec() {
             out shouldContain "export * from './runtime/client.ts'"
         }
 
+        "never re-exports a .d.ts" {
+            // A declaration file exports nothing to re-export, and `export * from './x.d.ts'` is not
+            // a specifier TypeScript accepts. Added by /feature-review 2026-08-09: the filter existed
+            // and NOTHING exercised it, so deleting it left every test green while every real SDK's
+            // barrel gained `export * from './css-modules.d.ts'`.
+            val out = TsBarrelEmitter.emit(
+                listOf("models.ts", TsStylesEmitter.TYPES_PATH, "ui/other.d.ts")
+            )
+
+            out shouldNotContain ".d.ts"
+
+            withClue("and the ordinary modules alongside it still are re-exported") {
+                out shouldContain "export * from './models.ts'"
+            }
+        }
+
         "never re-exports itself" {
             // A module re-exporting itself is a circular import that resolves to nothing useful, and
             // the barrel is in the same entry list as everything else.

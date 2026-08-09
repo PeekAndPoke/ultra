@@ -466,7 +466,17 @@ object TsFixtureGenerator {
         File(targetDir, TsStylesEmitter.PATH).writeText(TsStylesEmitter.emit(registry.allStyles()))
         File(targetDir, TsStylesEmitter.TYPES_PATH).writeText(TsStylesEmitter.emitTypes())
 
-        val sdkFiles = listOf(spec.fileName, "models.ts", TsMountEmitter.PATH, TsStylesEmitter.PATH) +
+        // TYPES_PATH is in this list ON PURPOSE, even though the barrel must exclude it: passing it
+        // in is the only way the exclusion is exercised by a real `tsc`. Without it, deleting the
+        // `.d.ts` filter left every test green while every real SDK's barrel gained
+        // `export * from './css-modules.d.ts'`. Found by /feature-review 2026-08-09.
+        val sdkFiles = listOf(
+            spec.fileName,
+            "models.ts",
+            TsMountEmitter.PATH,
+            TsStylesEmitter.PATH,
+            TsStylesEmitter.TYPES_PATH,
+        ) +
                 TsRuntime.Module.entries.map { it.path }
 
         File(targetDir, TsBarrelEmitter.PATH).writeText(TsBarrelEmitter.emit(sdkFiles))

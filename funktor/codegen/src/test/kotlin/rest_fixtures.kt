@@ -360,3 +360,27 @@ class FxComposedApiRoutes : ApiRoutes("fx-composed", authFloor = { authenticated
  * — because the equivalence is a property of today's DSL, not of the design, and an enumeration
  * would need updating the moment it stops holding.
  */
+
+/**
+ * A feature named exactly as the real insights one, so `TsClientNames.clientFile` yields
+ * `api/funktorInsightsClient.ts` — the path `InsightsTsContributor` declares and its pages import.
+ *
+ * The NAME is the fixture's whole point: the contributor matches by name rather than by type, because
+ * `funktor:codegen` deliberately does not depend on `funktor:insights`.
+ */
+class FxInsightsApiFeature : ApiFeature {
+    override val name: String = "Funktor Insights"
+    override val description: String = "Stands in for funktor:insights, by name."
+    override fun getRouteGroups(): List<ApiRoutes> = listOf(FxInsightsApiRoutes())
+}
+
+/** One route, so the feature yields a client unless a profile excludes it. */
+class FxInsightsApiRoutes : ApiRoutes("insights", authFloor = { public() }) {
+    val listRecords = TypedApiEndpoint
+        .Get(uri = "/_/funktor/insights/records", response = FxTalkModel.serializer().apiList())
+        .mount {
+            docs { name = "List records" }
+                .codeGen { funcName = "listRecords" }
+                .handle { ApiResponse.ok(emptyList()) }
+        }
+}

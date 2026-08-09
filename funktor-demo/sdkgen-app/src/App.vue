@@ -6,9 +6,15 @@
  * Kotlin module feeds — so a module that starts shipping a page appears in this menu without this
  * file changing.
  *
- * **Gated on the ACL, and the `loading` state is handled deliberately.** Rendering a denied menu
- * while the matrix is in flight makes entries pop in one by one as it lands, which reads as broken;
- * withholding them until it resolves does not.
+ * **Gating is `requiresAuth` ONLY — the menu does not consult the access matrix.** It cannot:
+ * `SdkNavItem` carries `path`, `label`, `icon` and `requiresAuth`, and nothing that identifies the
+ * ROUTES a page calls, so there is nothing to look up in `ApiAcl`. The consequence is real and worth
+ * knowing: an ordinary operator sees "Insights" and lands on a page whose every call 403s, because
+ * `InsightsApi` floors at `isSuperUser()`. Making that work needs contributors to declare the routes
+ * their page needs — tracked as `.claude/tasks/20260809-acl-aware-navigation.md`.
+ *
+ * This KDoc used to claim the menu was ACL-gated. It never was; `/feature-review` caught it
+ * (2026-08-09).
  */
 import { shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
@@ -26,18 +32,44 @@ session.subscribe((s) => { auth.value = s })
 const aclState = shallowRef<AclState>(acl.state())
 acl.subscribe((s) => { aclState.value = s })
 
-/** Entries to show. Withheld entirely while the matrix loads — see the note above. */
+/**
+ * Entries to show.
+ *
+ * Withheld only on a FIRST load. A re-load — after a token refresh — carries the previous matrix as
+ * `loading.stale`, which exists precisely so the menu does not blank while a refresh is in flight;
+ * ignoring it made the whole navigation disappear and reappear on every reload.
+ */
 function visibleNav(): readonly { path: string; label: string }[] {
     if (!auth.value.isLoggedIn) return navItems.filter((item) => !item.requiresAuth)
-    if (aclState.value._type !== 'ready') return []
 
-    return navItems
+    const state = aclState.value
+    const settled = state._type === 'ready' || (state._type === 'loading' && state.stale !== null)
+
+    return settled ? navItems : []
 }
 
 async function leave(): Promise<void> {
     signOut()
     await router.push({ name: 'login' })
 }
+
+/**
+ * Leave a protected page when the session ends WITHOUT the user asking.
+ *
+ * A refresh rejected at expiry, or an access-matrix fetch that 403s, calls `signOut()` from inside
+ * `sdk.ts` — which cannot reach the router (`router.ts` imports it, so the dependency only goes one
+ * way). Nothing unmounted the routed component and `beforeEach` only runs on a navigation, so the
+ * page stayed fully rendered on an ended session: for `/insights` that means other users' request
+ * traces, headers and identities left on screen indefinitely. Found by `/feature-review`, 2026-08-09.
+ *
+ * Watched here because this is where both the session and the router are in scope.
+ */
+session.subscribe((state) => {
+    if (state.isLoggedIn) return
+    if (router.currentRoute.value.meta.requiresAuth !== true) return
+
+    void router.replace({ name: 'login' })
+})
 </script>
 
 <template>
