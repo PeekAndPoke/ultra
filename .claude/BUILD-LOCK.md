@@ -1,8 +1,10 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-02 (released by the insights agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: insights agent**
+**SINCE: 2026-08-09**
+**STATE: LOCKED — do not run gradle, do not commit.**
+
+Regenerating after annotating two nullable refs as `Ref<…>`, which fixes the remaining IntelliJ errors.
 
 ## What the last holder changed — insights agent, 2026-08-02
 
