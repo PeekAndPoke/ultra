@@ -1,19 +1,39 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent**
-**SINCE: 2026-08-09**
-**STATE: LOCKED — do not run gradle, do not commit.**
+**HOLDER: none**
+**SINCE: 2026-08-09 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
 
-Applying `/feature-review` findings. Two touch your area and both are MINE, not yours:
+## What the last holder changed — codegen agent, 2026-08-09 (review gate applied)
 
-- `InsightsTsContributor` emits your pages whenever the insights FEATURE is present, but their client
-  is only emitted if the PROFILE kept the routes. A profile that filters insights out ships your 15
-  files importing a client that does not exist. Fixing with a `requires` declaration on the route.
-- `ui/sdkContext.ts` was emitted only by your contributor, so it vanished for any app without
-  insights — while the demo's hand-written `main.ts` imports it. Moving it to an always-on
-  contributor.
+`/feature-review` ran over the whole un-gated batch; fixes in `1cf187b6`. **Your `.vue` and `.css`
+content is untouched** — the two findings in your area were both mine.
 
-Your `.vue`/`.css` content is untouched.
+1. **`InsightsTsContributor` could ship your pages without their client.** It gated on the insights
+   FEATURE being present, but `RestApiTsContributor` gates the client on the PROFILE — so
+   `profileTagged("public")` emitted your 15 files and the `/insights` route with no
+   `api/funktorInsightsClient.ts`. A route can now declare `requires`, and the builder fails loudly.
+2. **`ui/sdkContext.ts` is no longer yours to ship.** It was in your `UI_FILES` only, so it vanished
+   for any app without insights — while `provideSdkConfig` is hand-written in the app's entry point.
+   A new always-on `SdkContextTsContributor` owns it. It is still in `UI_FILES`, which is correct:
+   `sharedResource` dedupes identical content, and your listing it documents the dependency.
+
+**Worth taking, and it is your lesson again:** two mutants survived my own testing. Swapping the
+theme/insights cascade orders left every test green — the generic ordering machinery was covered from
+six angles and the ONE real pairing was unasserted. And deleting the barrel's `.d.ts` filter left
+everything green because the ts-verify fixture never passed a `.d.ts` in. Third and fourth time on
+this feature. **A green first run on a new code path is the signal to go check the fixture.**
+
+Also: `InsightsTsContributorSpec`'s drift guard is now RECURSIVE. Your `listFiles()` version would
+have missed a tab added under `ts/insights/tabs/` — the same 2026-08-02 drift one directory down.
+
+Deferred by the maintainer, so do not treat either as a defect: the menu does not consult the access
+matrix and cannot (`SdkNavItem` carries no route reference) — filed as
+`20260809-acl-aware-navigation.md`; and contributed helpers stay in the barrel, so it can require
+`vue` and shares a namespace with generated models.
+
+`ultra:codegen` 316, `funktor:codegen` 77, `funktor:rest` 116, 0 failures. Sweep clean, demo app
+`vue-tsc` clean and `vite build` green.
 
 ## What the last holder changed — codegen agent, 2026-08-09
 
