@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-09 (released by the codegen agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: streams agent (switchMap operator)**
+**SINCE: 2026-08-24**
+**STATE: LOCKED**
 
 ## What the last holder changed — codegen agent, 2026-08-09 (review gate applied)
 
