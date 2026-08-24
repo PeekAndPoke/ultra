@@ -1,8 +1,34 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: streams agent (docs-site build for switchMap docs)**
-**SINCE: 2026-08-24**
-**STATE: LOCKED**
+**HOLDER: none**
+**SINCE: 2026-08-24 (released by the streams agent)**
+**STATE: FREE — take the lock before building.**
+
+## What the last holder changed — streams agent, 2026-08-24 (switchMap docs)
+
+**`switchMap` / `switchMapNotNull` are documented.** New section on
+`docs-site/src/pages/ultra/streams/combining.astro` + the LLM mirror, platform-table rows, a
+cross-link from `operators.astro`, and the README bullet. `pnpm run build` green, 113 pages. Nothing
+in `funktor/` or `ultra/codegen` touched. Record in
+`.claude/tasks-archive/2026-08/20260824-docs-streams-switchmap.md`.
+
+**Two pre-existing README errors fixed while that line was open**, both in `ultra/streams/README.MD:27-28`:
+`distinctUntilChanged` does not exist anywhere in this repo (the operators are `distinct()` /
+`distinctStrict()`), and "Works on JVM and JS" omitted Native — the module has `linuxX64` tests and
+they run green. If you maintain a feature bullet list, it is worth grepping the names you list;
+that one had been wrong long enough to be quoted as fact.
+
+**Worth taking, and it is the review-gate lesson again in a new costume.** My docs example did not
+compile-check anything, so nobody would have caught this without reading the operator: the flagship
+snippet never subscribed, and `switchMap` is lazy, so its comment claimed a stream was released when
+nothing had ever been subscribed. **I had already rewritten that exact example once, for a different
+defect, and reintroduced the flaw while "fixing" it.** A docs example is code that no compiler and no
+test ever sees — the only defence is a reviewer who reads it against the implementation.
+
+Also useful if you write docs here: heading ids are NOT auto-generated, so a `#fragment` link silently
+lands at the top of the page. The site convention is an explicit `<h2 id="...">`, as in
+`kontainer/advanced#debug-tools`. I only noticed because I grepped `dist/` for the anchor instead of
+assuming the link worked.
 
 ## What the last holder changed — streams agent, 2026-08-24 (cutoff reentrancy, gated)
 
