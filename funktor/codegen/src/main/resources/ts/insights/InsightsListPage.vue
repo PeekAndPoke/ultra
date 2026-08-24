@@ -15,7 +15,7 @@ import type { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
 import type { InsightsRecordRef, InsightsRecordSummary } from '../models.ts'
 import { isSuccess } from '../runtime/apiResponse.ts'
 import { toDate } from '../runtime/datetime.ts'
-import { toneForStatus } from '../ui/types.ts'
+import { toneAbove, toneForStatus } from '../ui/types.ts'
 import type { FkTone } from '../ui/types.ts'
 
 defineOptions({ name: 'InsightsListPage' })
@@ -43,6 +43,7 @@ const emit = defineEmits<(e: 'select', ref: InsightsRecordRef) => void>()
 const page = ref(1)
 const items = ref<InsightsRecordSummary[]>([])
 const fullItemCount = ref<number | null>(null)
+const serverEpp = ref<number>(20)
 const loading = ref(false)
 const problem = ref<string | null>(null)
 
@@ -64,6 +65,9 @@ async function load(): Promise<void> {
 
         items.value = response.data?.items ?? []
         fullItemCount.value = response.data?.fullItemCount ?? null
+        // The server's COERCED page size, not the prop: `epp` is clamped to MAX_EPP (200), so an app
+        // asking for more would otherwise divide by a number no page can ever reach.
+        serverEpp.value = response.data?.epp ?? props.epp
     } catch (error) {
         // Reaching here means no envelope at all -- a network failure, or a 403 page from a proxy.
         problem.value = error instanceof Error ? error.message : String(error)
@@ -80,12 +84,14 @@ watch(() => [page.value, props.epp, props.client], load, { immediate: true })
  *
  * It had olive above 75ms as well as yellow above 150 and red above 300. Three tones is what the theme
  * carries, and a fourth colour that means "slightly slow" earns less than it costs to explain.
+ *
+ * Via `toneAbove` rather than restated by hand: that helper exists precisely because the old GUI applied
+ * this shape to response time, view render time and container age, and getting the boundary conditions
+ * subtly different per tab is the drift nobody notices. This was its one call site that had gone its own
+ * way. Found by the review gate, 2026-08-24.
  */
 function durationTone(durationMs: number | null): FkTone {
-    if (durationMs === null) return 'neutral'
-    if (durationMs > 300) return 'error'
-    if (durationMs > 150) return 'warn'
-    return 'ok'
+    return toneAbove(durationMs, { warn: 150, error: 300 })
 }
 
 function formatDuration(durationMs: number | null): string {
@@ -97,7 +103,20 @@ function formatRecordedAt(summary: InsightsRecordSummary): string {
     return summary.recordedAt === null ? 'n/a' : toDate(summary.recordedAt).toLocaleString()
 }
 
-const hasNextPage = computed(() => items.value.length >= props.epp)
+/**
+ * Whether a next page exists.
+ *
+ * **Not `items.length >= epp`.** `InsightsDataLoader.list` SKIPS a record it cannot parse while still
+ * consuming its slot, and its own comment calls truncated records routine -- records are written after
+ * the response with a non-atomic `writeBytes`, so a listing taken against live traffic reads
+ * half-written files. One such record on page 1 returned 19 of 20 items and disabled "Next" while the
+ * pager beside it read "Page 1 of 25", stranding every older record. Found by the review gate.
+ */
+const hasNextPage = computed(() =>
+    fullItemCount.value === null
+        ? items.value.length >= serverEpp.value
+        : page.value * serverEpp.value < fullItemCount.value,
+)
 </script>
 
 <template>
@@ -147,7 +166,7 @@ const hasNextPage = computed(() => items.value.length >= props.epp)
                 Previous
             </button>
             <span class="fk-muted">
-                Page {{ page }}<template v-if="fullItemCount !== null"> of {{ Math.max(1, Math.ceil(fullItemCount / epp)) }}</template>
+                Page {{ page }}<template v-if="fullItemCount !== null"> of {{ Math.max(1, Math.ceil(fullItemCount / serverEpp)) }}</template>
             </span>
             <button type="button" class="fk-button" :disabled="!hasNextPage || loading" @click="page += 1">
                 Next

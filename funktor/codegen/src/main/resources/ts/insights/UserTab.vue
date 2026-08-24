@@ -39,8 +39,9 @@ const facts = computed<Fact[]>(() => {
         { key: 'Email', value: value.email },
         { key: 'Type', value: value.type },
         { key: 'Client IP', value: value.clientIp },
-        { key: 'Anonymous', value: yesNo(value.isAnonymous) },
-        { key: 'System', value: yesNo(value.isSystem) },
+        // The discriminator, not the two boolean rows this used to show: `isAnonymous`/`isSystem` are
+        // FUNCTIONS on UserRecord, so Slumber never wrote them and both always read n/a.
+        { key: 'Kind', value: value.kind },
         {
             key: 'Superuser',
             value: yesNo(value.isSuperUser),

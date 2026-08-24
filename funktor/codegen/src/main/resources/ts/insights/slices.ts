@@ -81,7 +81,12 @@ export function asStringListMap(value: unknown): Record<string, string[]> | null
     const record = asRecord(value)
     if (record === null) return null
 
-    const out: Record<string, string[]> = {}
+    // `Object.create(null)`, not `{}`. A header or query parameter named `__proto__` hits
+    // `Object.prototype`'s setter on assignment: no own property is created, so the table silently
+    // OMITS it -- while the raw-slice tree beside it shows it, because `JSON.parse` makes it an own
+    // property. Two views of one record disagreeing, in a forensic tool, on a key an attacker picks.
+    // `GET /x?__proto__=1` is the whole attack. Found by the review gate, 2026-08-24.
+    const out: Record<string, string[]> = Object.create(null)
 
     for (const [key, raw] of Object.entries(record)) {
         const list = asArray(raw)
@@ -163,8 +168,15 @@ export interface UserSlice {
     email: string | null
     desc: string | null
     type: string | null
-    isSystem: boolean | null
-    isAnonymous: boolean | null
+    /**
+     * The polymorphic discriminator: `anonymous` | `system` | `logged-in` | `api-key`.
+     *
+     * Replaces the `isSystem` / `isAnonymous` rows this reader used to claim. Those are FUNCTIONS on
+     * `UserRecord`, not properties, so Slumber never emitted them and both rows read `n/a` on every
+     * record ever written. `_type` is what actually distinguishes an api-key caller from a session --
+     * a distinction `type` (an app-supplied string) does not make. Found by the review gate, 2026-08-24.
+     */
+    kind: string | null
     isSuperUser: boolean | null
     /** Left raw: the permission sets are lists whose shape is the app's, not the framework's. */
     permissions: unknown
@@ -183,8 +195,7 @@ export function readUser(data: unknown): UserSlice | null {
         email: asString(user.email),
         desc: asString(user.desc),
         type: asString(user.type),
-        isSystem: asBoolean(user.isSystem),
-        isAnonymous: asBoolean(user.isAnonymous),
+        kind: asString(user._type),
         isSuperUser: asBoolean(permissions.isSuperUser),
         permissions: record.permissions,
     }
@@ -200,8 +211,24 @@ export function readRoutingTrace(data: unknown): string | null {
  * **Null is the NORMAL case, not an error** -- it is null on every API request, which is most of them.
  * A tab that treats it as a failure would report a problem on almost every record.
  */
-export function readTemplateTimeNs(data: unknown): number | null {
-    return asNumber(asRecord(data)?.timeNs)
+export interface TemplateSlice {
+    /** Null is the NORMAL case -- it is null on every request that rendered no view. */
+    timeNs: number | null
+}
+
+/**
+ * Returns null only when the slice is UNRECOGNISABLE, so the tab can tell that apart from
+ * `{timeNs: null}`.
+ *
+ * The two used to collapse into one null, and the tab reported both as "no view was rendered" -- so a
+ * record whose field had been renamed showed a request that took 4.5 ms as one that rendered nothing,
+ * with the data displayed nowhere. Found by the review gate, 2026-08-24.
+ */
+export function readTemplate(data: unknown): TemplateSlice | null {
+    const record = asRecord(data)
+    if (record === null || !('timeNs' in record)) return null
+
+    return { timeNs: asNumber(record.timeNs) }
 }
 
 /**
@@ -276,7 +303,8 @@ export function readRuntime(data: unknown): RuntimeSlice | null {
     if (record === null) return null
 
     const properties = asRecord(record.systemProperties) ?? {}
-    const systemProperties: Record<string, string> = {}
+    // Null-prototype for the same reason as `asStringListMap` -- a property named `__proto__`.
+    const systemProperties: Record<string, string> = Object.create(null)
     for (const [key, value] of Object.entries(properties)) {
         systemProperties[key] = asString(value) ?? String(value)
     }
@@ -316,9 +344,27 @@ export interface VaultEntry {
     connection: string | null
     count: number | null
     totalCount: number | null
+    /**
+     * Placeholder-ised query text, or null when the driver could not provide one safely.
+     *
+     * **Guaranteed by the backend, not checked here.** `VaultCollector.Data.of` drops the text for any
+     * driver that inlines its bind values, so this field never contains a value. The frontend used to
+     * carry a language allowlist to decide that; enforcing it at the one place that turns a driver's
+     * output into a record made every consumer's copy unnecessary.
+     */
     query: string | null
     queryLanguage: string | null
-    queryExplained: string | null
+    /** How many bind variables the query had. The VALUES are deliberately not recorded. */
+    varsCount: number
+    /**
+     * True when the slice predates `VaultCollector.Data` and carries the raw profiler entry.
+     *
+     * Detected by the presence of `vars`, a field only the OLD shape has. It matters because the "query
+     * text contains no bind values" guarantee is enforced by the collector, and a record written before
+     * that collector existed never had it — Jackson serialised the profiler entry whole, values
+     * included. Records outlive the code that wrote them, which is the premise of this entire file.
+     */
+    legacy: boolean
     totalNs: number
     serializer: VaultMeasure
     query_: VaultMeasure
@@ -356,13 +402,17 @@ export function readVault(data: unknown): VaultSlice | null {
 
     const entries: VaultEntry[] = rawEntries.map((raw) => {
         const record = asRecord(raw) ?? {}
+        const legacy = 'vars' in record || 'queryExplained' in record
         return {
             connection: asString(record.connection),
             count: asNumber(record.count),
             totalCount: asNumber(record.totalCount),
-            query: asString(record.query),
+            // A legacy entry's `query` may hold inlined bind values, so it is dropped rather than
+            // trusted. Its `vars` and `queryExplained` are simply never read by this file.
+            query: legacy ? null : asString(record.query),
             queryLanguage: asString(record.queryLanguage),
-            queryExplained: asString(record.queryExplained),
+            varsCount: asNumber(record.varsCount) ?? (legacy ? Object.keys(asRecord(record.vars) ?? {}).length : 0),
+            legacy,
             totalNs: asNumber(record.totalNs) ?? 0,
             serializer: readMeasure(record.measureSerializer),
             query_: readMeasure(record.measureQuery),
@@ -401,8 +451,28 @@ export interface KontainerDefinition {
 
 export interface KontainerInstance {
     cls: string | null
-    /** Epoch SECONDS as a double -- not millis. Multiply before handing it to `Date`. */
-    createdAt: number | null
+    /** Epoch MILLIS, normalised from either shape by {@link readInstantMillis}. */
+    createdAtMillis: number | null
+}
+
+/**
+ * An instant, as epoch MILLIS, from either shape a record can carry.
+ *
+ * `DebugInfo.InstanceDebugInfo.createdAt` is a `java.time.Instant`, which Slumber writes as an OBJECT
+ * (`{ts, timezone, human}`, `ts` in millis) -- not a number. The Jackson-era writer emitted epoch
+ * SECONDS as a double instead, so both shapes exist in a depot.
+ *
+ * Reading only the number was the one place in this file that could silently MISREAD rather than
+ * degrade: a millis value multiplied by 1000 lands in the year 58,000. Found by the review gate,
+ * 2026-08-24.
+ */
+export function readInstantMillis(value: unknown): number | null {
+    const wrapped = asNumber(asRecord(value)?.ts)
+    if (wrapped !== null) return wrapped
+
+    // Legacy: epoch seconds as a double.
+    const seconds = asNumber(value)
+    return seconds === null ? null : seconds * 1000
 }
 
 export interface KontainerService {
@@ -462,7 +532,7 @@ export function readKontainer(data: unknown): KontainerSlice | null {
             definition: readDefinition(service.definition),
             instances: (asArray(service.instances) ?? []).map((rawInstance) => {
                 const instance = asRecord(rawInstance) ?? {}
-                return { cls: readFqn(instance.cls), createdAt: asNumber(instance.createdAt) }
+                return { cls: readFqn(instance.cls), createdAtMillis: readInstantMillis(instance.createdAt) }
             }),
         }
     })

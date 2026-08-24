@@ -1,7 +1,7 @@
 # Query parameter VALUES are recorded into insights, with no way to opt out
 
 **Status:** FOUND, NOT FIXED — **deferred by the maintainer 2026-08-24**, kept as a future task.
-The exposure is contained meanwhile: no frontend renders `vars`. The Vue `VaultTab` omits it and
+**CORRECTED 2026-08-24 — that containment claim was FALSE.** It held for the field NAME, not the data: Mongo records bind values inside `query` (`vars` is empty there), and Arango's EXPLAIN substitutes them into `queryExplained`. Both were being rendered. Now suppressed in `VaultTab` (allowlist on `queryLanguage`; no explain output at all) — a mitigation only, since the values are still written to the depot file. The Vue `VaultTab` omits it and
 therefore also ships **no raw-slice dump and no JSON fallback**, because a viewer for the object would
 defeat suppressing one field of it (`20260802-insights-vue-tabs.md`). The same constraint is written
 into `20260824-insights-kraft-gui.md` so the Kraft port does not reintroduce it.

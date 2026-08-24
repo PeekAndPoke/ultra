@@ -165,7 +165,19 @@ const overviewRuntime = computed(() => {
 })
 
 function labelFor(key: string): string {
-    return TAB_LABELS[key] ?? key
+    return Object.hasOwn(TAB_LABELS, key) ? TAB_LABELS[key] : key
+}
+
+/**
+ * The tab registered for a collector key, or null.
+ *
+ * `Object.hasOwn`, not `TABS[key]`: a plain object literal resolves through `Object.prototype`, so a
+ * collector keyed `constructor`, `toString` or `__proto__` would return a truthy non-component, pass the
+ * `v-if` and break the panel instead of falling through to `JsonTree`. Collector keys are declared by
+ * whoever writes the collector, including an application, so they are not a closed set.
+ */
+function tabFor(key: string): Component | null {
+    return Object.hasOwn(TABS, key) ? TABS[key] : null
 }
 </script>
 
@@ -234,7 +246,7 @@ function labelFor(key: string): string {
                 </nav>
 
                 <section v-if="activeSlice !== null" class="fk-tabs__panel">
-                    <component :is="TABS[activeSlice.key]" v-if="TABS[activeSlice.key]" :data="activeSlice.data" />
+                    <component :is="tabFor(activeSlice.key)" v-if="tabFor(activeSlice.key)" :data="activeSlice.data" />
                     <!-- No tab for this key: an app-defined collector, or one not built yet. -->
                     <JsonTree v-else :value="activeSlice.data" :expand-depth="2" />
                 </section>

@@ -42,9 +42,15 @@ const summary = computed<Fact[]>(() => {
     ]
 })
 
-/** Epoch SECONDS as a double -- the one place in these slices that is not millis. */
+/**
+ * Full date and time, not just the clock.
+ *
+ * The old table printed `Instant.toString()` in full, and the date is what separates "instantiated
+ * during this request" from "alive since boot" -- which is the whole reason the table sorts
+ * instantiated services first. `toLocaleTimeString` dropped it.
+ */
 function createdAt(instance: KontainerInstance): string {
-    return instance.createdAt === null ? 'n/a' : new Date(instance.createdAt * 1000).toLocaleTimeString()
+    return instance.createdAtMillis === null ? 'n/a' : new Date(instance.createdAtMillis).toLocaleString()
 }
 
 function shortName(fqn: string | null): string {

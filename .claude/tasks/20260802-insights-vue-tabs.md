@@ -445,13 +445,65 @@ the `vault` `vars` suppression, which it must carry.
       `v-html` and confirming it goes red.
 - [ ] e2e: the API half is already covered; this task adds no backend behaviour.
 
-## Review record (filled by /feature-review)
+## Review record — /feature-review, 2026-08-24
 
-| Reviewer | Verdict | Confirmed findings |
-|---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+**Gate: FAIL.** All three reviewers reported. Every frontend finding is fixed; the gate fails on two
+BACKEND defects outside this diff, and the first is a precondition for this feature meaning anything.
+
+**The CRITICAL was confirmed twice, independently and empirically.** Reviewer 1 compiled a probe against
+the built jars (`NO SLUMBERER for QueryProfiler$Entry$Impl`) and then scanned **1193 real depot records**:
+`vault.entries` is `[]` in every single one. So the vault tab has never rendered a query, and the
+per-query cards were written against a shape inferred from Kotlin types rather than observed — the one
+thing TAB-SPECS warns against everywhere else, and admits it did in that section.
+
+**Root cause worth keeping:** `TAB-SPECS.md` was distilled from a **Jackson-era** record. The switch to
+Slumber changed three of its stated traps — `createdAt`, the user booleans, and the `_type`
+discriminator. **Re-derive the spec and the task's "what the wire actually looks like" from a CURRENT
+record**; two of the findings below are the same staleness.
+
+### The premise this whole tab rested on was false
+
+I wrote, in three places, that the `vars` exposure was "contained meanwhile: no frontend renders it".
+**That was true of the field name and false of the data**, and the maintainer's 2026-08-24 deferral was
+taken on it. Corrected everywhere.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| S1 | HIGH | **Mongo puts bind values in `query`, not `vars`.** `MonkoDriver` records `builder.print()` — the filter document WITH values — and sets `vars = emptyMap()`. `findByToken` filters on the raw, unhashed session token, so the Database tab rendered a live token. | **CONFIRMED**, fixed |
+| S2 | HIGH | **Arango's EXPLAIN substitutes bind values into the plan**, so `queryExplained` reproduced exactly what `vars` withholds. Reviewer measured it against a real server. Both backends affected. | **CONFIRMED**, fixed |
+| D1 | CRITICAL | **The vault slice cannot be written at all.** `QueryProfiler.Entry.Impl` is a plain class with a 3-arg ctor: `BuiltInModule` has no matching branch (`isData` no, empty-ctor no) so slumbering throws — inside `launch(Dispatchers.IO)` after the response, so **the whole record is silently dropped** whenever a query was profiled. | **CONFIRMED** — backend, NOT fixed here |
+| D2 | HIGH | `kontainer` `createdAt` is a `java.time.Instant`, which Slumber writes as an object, not the epoch-seconds double this read. Every instance timestamp was `n/a`, and a bare-millis value would have been misread as year 58,000 — the one reader that could misread rather than degrade. | **CONFIRMED**, fixed |
+| D3 | HIGH | Paging used `items.length >= epp`, but the loader SKIPS unparseable records while consuming their slot, and truncated records are routine. One on page 1 disabled "Next" beside a pager reading "Page 1 of 25". | **CONFIRMED**, fixed |
+| D4 | MED | `isAnonymous`/`isSystem` are FUNCTIONS on `UserRecord`, so Slumber never emitted them: both rows read `n/a` on every record ever written. | **CONFIRMED**, fixed — replaced by the `_type` discriminator |
+| S3/D7 | MED | `TABS[key]` resolves through `Object.prototype`, so a collector keyed `constructor` skips the `JsonTree` fallback. | **CONFIRMED**, fixed |
+| I2 | MED | **`TemplateTab` had no JSON fallback** and collapsed "no view rendered" with "slice unreadable" into one `null` — so a renamed field showed a 4.5 ms render as nothing, with the data displayed nowhere. | **CONFIRMED**, fixed |
+| I3 | MED | **A header or query parameter named `__proto__` vanished from the table.** `out[key] =` on an object literal hits `Object.prototype`'s setter: no own property is created, so the table omitted it while the raw-slice tree beside it showed it — two views of one record disagreeing, in a forensic tool, on a key an attacker picks (`GET /x?__proto__=1`). | **CONFIRMED**, fixed — null-prototype maps |
+| I4 | MED | The spec guards the file LISTS but not the IMPORTS between them: rename a `ui/` file, update `UI_FILES`, miss one importing tab, and both set comparisons pass while `vite build` fails downstream. | CONFIRMED, **open** |
+| I5 | LOW | `durationTone` restated `toneAbove` by hand — the helper's one call site that had gone its own way, and it exists precisely to stop that. | **CONFIRMED**, fixed |
+| D5 | LOW | The Overview runtime strip loses the "not measured" caveat the tab shows. | CONFIRMED, open |
+| D6 | LOW | Overview status drops the reason phrase the old Overview had. | CONFIRMED, open |
+| I6 | INFO | `bytesToMb` rounds where the old tab truncated (100.7 MB → `101` vs `100`). Recorded so it is not "fixed" backwards; rounding is the better choice. | noted |
+
+### The fix for S1/S2, and why it is an allowlist
+
+`VaultTab` now renders `query` only for languages whose recorded text is known to keep values OUT of it
+(`aql`), and does not render `queryExplained` at all. **Fail-closed**: an unknown driver is suppressed,
+not trusted. Mutation-tested — reinstating the explain block makes the harness report the token.
+
+**This is a mitigation, not the fix.** The token is still written to a depot file on disk; the UI change
+only stops it reaching a screen. The real fix belongs with D1 in the backend.
+
+### Blocking the gate
+
+- [ ] **D1** — reshape `VaultCollector.Data` into a slumberable `data class` with the needed fields as
+      ctor params. That also removes the `lazy`-totals workaround, and it is the same reshape
+      `20260824-insights-graphs-and-static-slices.md` already plans for the kontainer slice.
+- [ ] **S1 at the source** — have Monko record a placeholder-ised query plus separate `vars`, so the
+      omission covers Mongo too and the tab can show the query again.
+- [ ] **I4** — extend the spec to follow relative imports out of each emitted file and assert the target
+      is also emitted. ~10 lines, and it closes the class of defect the drift guard only half covers.
+- [ ] **Re-derive TAB-SPECS from a current record** before trusting any remaining wire claim.
+- [ ] Re-run the suite, regenerate, and re-verify once the tree is quiet.
 
 **Red-team follow-up:** required — `.claude/tasks/20260730-redteam-insights-api.md` already exists for the
 API half; extend it with the rendering scenarios (stored XSS via header/UA, secret disclosure through the

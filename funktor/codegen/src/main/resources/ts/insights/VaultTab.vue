@@ -2,25 +2,40 @@
 /**
  * The `vault` slice: the database queries this request ran.
  *
- * ## The totals are computed here, and that is not an optimisation
+ * ## The header totals are summed here; the per-query ones are not
  *
- * Every total on `QueryProfiler` was a private `lazy` property, so **none of them is in the record.**
- * `slices.ts` sums `totalNs` across entries and once per sub-measure. If a figure here disagrees with
- * one the server logged, this is where to look first.
+ * Each entry now carries its own `totalNs` and a `{totalNs, count}` per sub-measure, because
+ * `VaultCollector.Data` puts them in the DTO. They used to be computed getters on `StopWatch.Impl` that
+ * no codec emitted — the slice would have read `0.00 ms (0x)` everywhere even after it became writable
+ * at all. `slices.ts` still sums ACROSS entries for the header strip; that part is genuinely frontend
+ * arithmetic, and if a header figure disagrees with the per-query rows, it is where to look.
  *
- * ## Two things the old tab had that this one does not
+ * ## Bind values are withheld, and the frontend no longer decides that
  *
- * 1. **Bind values (`vars`) are NOT rendered.** They are in the record, and the old GUI showed them.
- *    They include the values of auth lookups -- the token, session id or activation code *being looked
- *    up* -- and there is no per-query way to opt out yet. Blocked on a maintainer decision:
- *    `.claude/tasks/20260731-query-vars-in-insights.md`. Do not add this back without it.
+ * `VaultCollector` records a placeholder-ised query or none at all, records only the COUNT of bind
+ * variables, and does not record the EXPLAIN plan. So this tab renders whatever it is given.
  *
- *    **This is also why this tab has no "Raw slice" dump and no JSON-tree fallback**, which every other
- *    tab has. Both would render the entire slice, `vars` included, and undo the omission in one click.
- *    Suppressing one field while shipping a viewer for the object containing it is not a control.
- * 2. **No repository graph.** It came from `DatabaseGraphBuilder`, a live kontainer service queried at
- *    render time, and is not in the stored data at all. It describes the schema rather than the request,
- *    so it likely belongs on its own endpoint.
+ * That is a deliberate move of the check. An earlier version kept a language allowlist here, deciding
+ * per driver whether the query text was safe to show — a frontend patch over a backend contract
+ * violation, and a check every future consumer would have had to repeat. The invariant now lives at the
+ * one place that turns a driver's output into a record.
+ *
+ * Two things are still withheld at the source, and they are not this tab's to reinstate:
+ *
+ * - **`vars`** — blocked on `.claude/tasks/20260731-query-vars-in-insights.md`. A query is how a session
+ *   token or an activation code gets looked up.
+ * - **`queryExplained`** — cannot be made safe by placeholder-ising, because the DATABASE substitutes
+ *   the values into the plan it returns. Measured against a real Arango server.
+ *
+ * **This tab still has no raw-slice dump and no JSON-tree fallback.** Less critical now that the record
+ * itself is clean, but the reasoning stands: a viewer for the whole object defeats withholding part of
+ * it, and the slice is the one place a future field could arrive unreviewed.
+ *
+ * ## One thing the old tab had that this one does not
+ *
+ * **No repository graph.** It came from `DatabaseGraphBuilder`, a live kontainer service queried at
+ * render time, and is not in the stored data at all. Tracked in
+ * `.claude/tasks/20260824-insights-graphs-and-static-slices.md`.
  *
  * Queries are shown through `PreBlock` rather than syntax-highlighted: the old tab used Prism, which is
  * a dependency this SDK does not have and cannot assume the consuming app has.
@@ -50,6 +65,7 @@ function results(entry: VaultEntry): string {
     const count = entry.count ?? 0
     return entry.totalCount === null ? `${count} of n/a` : `${count} of ${entry.totalCount}`
 }
+
 </script>
 
 <template>
@@ -69,6 +85,7 @@ function results(entry: VaultEntry): string {
             <StatStrip
                 :cells="[
                     { label: 'Results', value: results(entry) },
+                    { label: 'Bind vars', value: entry.varsCount },
                     { label: 'Serializer', value: measure(entry.serializer) },
                     { label: 'Query', value: measure(entry.query_) },
                     { label: 'Iterator', value: measure(entry.iterator) },
@@ -77,12 +94,29 @@ function results(entry: VaultEntry): string {
                 ]"
             />
 
-            <PreBlock :text="entry.query" empty-text="No query text recorded" wrap />
+            <PreBlock
+                v-if="!entry.legacy"
+                :text="entry.query"
+                :empty-text="`No query text recorded for ${entry.queryLanguage ?? 'this driver'} — it inlines bind values, so the server does not store the text.`"
+                wrap
+            />
+            <!--
+              A record written before `VaultCollector.Data` existed carries the raw profiler entry, whose
+              query text can hold the bind values inlined. That record predates the guarantee, so its
+              text is not shown -- the timings above are still accurate and still useful.
+            -->
+            <div v-else class="fk-notice">
+                Query text is hidden: this record predates the collector that guarantees bind values are
+                kept out of it.
+            </div>
 
-            <details v-if="entry.queryExplained" class="fk-details">
-                <summary>Explained</summary>
-                <div class="fk-details__body"><PreBlock :text="entry.queryExplained" wrap /></div>
-            </details>
+            <!--
+              `queryExplained` is NOT rendered, for either backend. Arango's explain endpoint SUBSTITUTES
+              the bind values into the returned plan -- measured 2026-08-24 against a real server, which
+              answered with `FILTER ((d.token == "<the actual token>") ...)`. Monko's QUERY_PLANNER output
+              carries `parsedQuery` with the same literals. So this field reproduces exactly what `vars`
+              is withheld to protect.
+            -->
         </section>
 
     </div>
