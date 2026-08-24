@@ -87,6 +87,79 @@ class TsSdkRegistrySpec : FreeSpec() {
             }
         }
 
+        //  Nav access requirements  ///////////////////////////////////////////////////////////////
+
+        "nav requirements are carried through registration" {
+            val ref = TsSdkRegistry.ApiRouteRef("GET", "/api/records", isPublic = false)
+
+            val nav = registry()
+                .apply {
+                    scopeFor("a").route(
+                        path = "/records",
+                        component = "pages/R.vue",
+                        requiresAuth = true,
+                        nav = TsSdkRegistry.Nav(label = "Records", requires = listOf(ref)),
+                    )
+                }
+                .navRoutes().single().nav!!
+
+            nav.requires shouldBe listOf(ref)
+        }
+
+        "a route with no nav requirements declares none, rather than null" {
+            // `every` over an empty list is true, which is what makes an ungated page show. A null
+            // would be a runtime error in the consuming app instead.
+            val nav = registry()
+                .apply {
+                    scopeFor("a").route("/plain", "pages/P.vue", requiresAuth = false, nav = TsSdkRegistry.Nav("Plain"))
+                }
+                .navRoutes().single().nav!!
+
+            nav.requires shouldBe emptyList()
+        }
+
+        "a requirement using a method the emitted union does not list is refused" - {
+            // It lands in a CLOSED union literal in `mount.ts`, so this would be TypeScript that
+            // fails to compile inside output the consuming app cannot edit.
+            listOf("get", "TRACE", "", "GET ").forEach { method ->
+                "rejects '$method'" {
+                    val thrown = shouldThrow<IllegalArgumentException> {
+                        registry().scopeFor("a").route(
+                            path = "/x",
+                            component = "pages/X.vue",
+                            requiresAuth = true,
+                            nav = TsSdkRegistry.Nav(
+                                label = "X",
+                                requires = listOf(TsSdkRegistry.ApiRouteRef(method, "/api/x", isPublic = false)),
+                            ),
+                        )
+                    }
+
+                    thrown.message!! shouldContain "runtime/route.ts"
+                    thrown.message!! shouldContain "/x"
+                }
+            }
+        }
+
+        "a requirement whose uri is not a route pattern is refused" {
+            // The matrix is keyed on the pattern as the SERVER writes it. Anything else matches no
+            // row, `ApiAcl` answers Denied — absence is how denial is transmitted — and the entry is
+            // hidden from every user with nothing naming the cause.
+            val thrown = shouldThrow<IllegalArgumentException> {
+                registry().scopeFor("a").route(
+                    path = "/x",
+                    component = "pages/X.vue",
+                    requiresAuth = true,
+                    nav = TsSdkRegistry.Nav(
+                        label = "X",
+                        requires = listOf(TsSdkRegistry.ApiRouteRef("GET", "api/x", isPublic = false)),
+                    ),
+                )
+            }
+
+            thrown.message!! shouldContain "does not start with '/'"
+        }
+
         //  Stylesheets — the SAME aggregate problem with the OPPOSITE collision rule  //////////////
 
         "stylesheets are ordered by cascade position, not by contributor order" {

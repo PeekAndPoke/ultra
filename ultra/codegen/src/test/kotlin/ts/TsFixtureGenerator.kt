@@ -421,14 +421,34 @@ object TsFixtureGenerator {
             path = "/login",
             component = "pages/LoginPage.ts",
             requiresAuth = false,
-            nav = TsSdkRegistry.Nav(label = "Sign in", order = 100),
+            nav = TsSdkRegistry.Nav(
+                label = "Sign in",
+                order = 100,
+                // PUBLIC, so `canAccess` short-circuits and an anonymous visitor — who has no matrix
+                // at all — still sees it. Without that the sign-in link would hide itself from
+                // exactly the people who need it, and there would be no way back.
+                requires = listOf(
+                    TsSdkRegistry.ApiRouteRef("POST", "/api/fx/signin", isPublic = true),
+                ),
+            ),
         )
 
         registry.scopeFor("fx:insights").route(
             path = "/insights",
             component = "pages/InsightsPage.ts",
             requiresAuth = true,
-            nav = TsSdkRegistry.Nav(label = "Insights", icon = "gauge", order = 10),
+            nav = TsSdkRegistry.Nav(
+                label = "Insights",
+                icon = "gauge",
+                order = 10,
+                // TWO refs, and `verifyRuntime.ts` builds a matrix that GRANTS the first and DENIES
+                // the second. That asymmetry is the point: ALL and ANY then give different answers,
+                // so a test asserting the ALL rule cannot pass vacuously.
+                requires = listOf(
+                    TsSdkRegistry.ApiRouteRef("GET", "/api/fx/talks/{id}", isPublic = false),
+                    TsSdkRegistry.ApiRouteRef("POST", "/api/fx/status", isPublic = false),
+                ),
+            ),
         )
 
         // No nav entry — a route that exists but is in no menu.

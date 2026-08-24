@@ -51,6 +51,14 @@ class InsightsTsContributor(
         private const val CLIENT_IMPORT: String = "api/funktorInsightsClient.ts"
 
         /**
+         * The generated member the nav entry gates on — `InsightsApi.listRecords`.
+         *
+         * The member NAME, not a URI: it is what a frontend developer reads in the generated client,
+         * and [TsRouteRefs] turns it into the method/pattern pair the access matrix is keyed on.
+         */
+        private const val MEMBER_LIST_RECORDS: String = "listRecords"
+
+        /**
          * Shared primitives, emitted at depth 1 as `ui/…`.
          *
          * **`sharedResource`, never `resource`.** Any module shipping components will want these, and
@@ -153,7 +161,20 @@ class InsightsTsContributor(
             path = "/insights",
             component = "insights/InsightsPage.vue",
             requiresAuth = true,
-            nav = TsSdkRegistry.Nav(label = "Insights", icon = "gauge", order = 10),
+            nav = TsSdkRegistry.Nav(
+                label = "Insights",
+                icon = "gauge",
+                order = 10,
+                // WITHOUT this the menu offered "Insights" to every signed-in operator and the page
+                // 403'd on every call: `InsightsApi` floors at `isSuperUser()`, and `requiresAuth`
+                // cannot stand in for that — it is declared, coarse, and true for any session.
+                //
+                // Resolved against the LIVE route graph rather than written as a literal, so a
+                // renamed member or a changed pattern fails the build here instead of silently
+                // hiding the entry from everyone. One entry, and it is the one the list page cannot
+                // render without — see `TsSdkRegistry.Nav.requires` on declaring the minimum.
+                requires = listOf(TsRouteRefs.of(feature, MEMBER_LIST_RECORDS)),
+            ),
             // The feature being INSTALLED is not the same as its client being EMITTED: a profile
             // filters routes, and `RestApiTsContributor` writes no client for a feature whose routes
             // were all excluded. The pages import that client, so declare the dependency and let the

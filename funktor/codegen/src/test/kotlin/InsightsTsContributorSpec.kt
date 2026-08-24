@@ -121,6 +121,18 @@ class InsightsTsContributorSpec : FreeSpec() {
                 mount shouldContainText "'Insights'"
             }
 
+            "the nav entry gates on the route the page cannot work without" {
+                // Before this, the menu offered "Insights" to every signed-in operator and the page
+                // 403'd on every call — `InsightsApi` floors at `isSuperUser()` while `requiresAuth`
+                // is true for any session at all.
+                val mount = emitted().output.entries().single { it.path == "mount.ts" }.content
+
+                withClue("method, PATTERN and publicness, all read off the live route graph") {
+                    mount shouldContainText
+                            "{ method: 'GET', uri: '/_/funktor/insights/records', isPublic: false },"
+                }
+            }
+
             "every declared file is actually emitted" {
                 val paths = emitted().output.entries().map { it.path }.toSet()
 
@@ -182,6 +194,27 @@ class InsightsTsContributorSpec : FreeSpec() {
 
             withClue("the message must say what to do about it") {
                 thrown.message!! shouldContainText "profile"
+            }
+        }
+
+        "renaming the gated endpoint fails the build instead of hiding the menu entry" {
+            // THE test that a literal `ApiRouteRef` would not survive. A hand-written method/uri pair
+            // sails past a rename and ships a nav entry gated on a route the server no longer serves
+            // — `ApiAcl` answers Denied for it, because absence IS denial, so the entry vanishes for
+            // every user and nothing anywhere says why.
+            val thrown = runCatching {
+                TsSdkBuilder.forTesting(
+                    listOf(
+                        RestApiTsContributor(lazyOf(listOf(FxInsightsRenamedApiFeature()))),
+                        InsightsTsContributor(lazyOf(listOf(FxInsightsRenamedApiFeature()))),
+                    )
+                ).build()
+            }.exceptionOrNull()
+
+            thrown!!.message!! shouldContainText "listRecords"
+
+            withClue("and must offer the names that DO exist") {
+                thrown.message!! shouldContainText "listRecordsV2"
             }
         }
     }

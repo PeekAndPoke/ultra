@@ -1690,6 +1690,60 @@ async function checkMount(report: Report): Promise<void> {
     report(navItems.find((n) => n.label === 'Insights')?.icon === 'gauge', 'mount: nav carries its icon')
     report(navItems.find((n) => n.label === 'Sign in')?.icon === null, 'mount: and null when it has none')
 
+    // 4b. ACCESS GATING. `requires` is baked in at generation time, and the whole reason it exists
+    //     is that `SdkNavItem` used to carry nothing identifying the routes a page calls — so an
+    //     ordinary operator saw a menu entry whose every call then 403'd.
+    //
+    //     `acl.canAccess` takes runtime/route.ts's `RouteRef`, and `requires` holds mount.ts's
+    //     `SdkApiRouteRef`. NEITHER file imports the other — mount.ts is emitted unconditionally
+    //     while runtime modules ship only when something imports them — so this line compiling at
+    //     all is the only proof the two still describe the same thing. It is a tsc assertion first
+    //     and a runtime one second.
+    const visible = (acl: ApiAcl): string[] =>
+        navItems.filter((n) => n.requires.every((r) => acl.canAccess(r))).map((n) => n.label)
+
+    const mixed = new ApiAcl({
+        entries: [
+            { method: 'GET', uri: '/api/fx/talks/{id}', level: 'Granted' },
+            { method: 'POST', uri: '/api/fx/status', level: 'Denied' },
+        ],
+    })
+
+    report(
+        equal(visible(mixed), ['Sign in']),
+        'mount: one DENIED requirement hides the entry',
+        visible(mixed).join(', '),
+    )
+
+    // The same fixture under ANY shows Insights, which is what makes the assertion above real
+    // rather than a restatement of the fixture. Swap `every` for `some` and this pair disagrees.
+    report(
+        navItems.filter((n) => n.requires.some((r) => mixed.canAccess(r))).length === 2,
+        'mount: ...and ANY would have shown it, so ALL is genuinely what is asserted',
+    )
+
+    // PARTIAL is access: the route is callable and the server checks the arguments. Gating it out
+    // would hide a page from a user who may use it on their own resources.
+    const partial = new ApiAcl({
+        entries: [
+            { method: 'GET', uri: '/api/fx/talks/{id}', level: 'Granted' },
+            { method: 'POST', uri: '/api/fx/status', level: 'Partial' },
+        ],
+    })
+
+    report(
+        equal(visible(partial), ['Insights', 'Sign in']),
+        'mount: every requirement accessible shows the entry, Partial included',
+        visible(partial).join(', '),
+    )
+
+    // An anonymous visitor has NO matrix. The public requirement short-circuits; the rest does not.
+    report(
+        equal(visible(ApiAcl.empty), ['Sign in']),
+        'mount: an anonymous visitor keeps a PUBLIC-gated entry and loses the others',
+        visible(ApiAcl.empty).join(', '),
+    )
+
     // 5. mountAll over a stand-in target. A real vue-router `Router` satisfies MountTarget
     //    structurally — that is what keeps this module, and this harness, free of Vue.
     const added: SdkRoute[] = []

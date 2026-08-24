@@ -10,9 +10,13 @@ module resolution and type checker.
 ## Running it
 
 ```bash
-# 1. generate the SDK (absolute path — --out is relative to the SERVER module's working dir)
+# 1. generate the SDK. `--out` is the APP ROOT, not the SDK directory — `--sdkDir` defaults to
+#    `src/funktorsdk` and is appended to it. Pointing --out at src/funktorsdk writes into
+#    src/funktorsdk/src/funktorsdk and leaves the real one untouched; nothing errors, and the app
+#    then type-checks against a stale SDK. Absolute, because --out resolves against the SERVER
+#    module's working dir.
 ./gradlew :funktor-demo:server:run \
-    --args="--cli sdk:ts:generate --out $PWD/funktor-demo/sdkgen-app/src/funktorsdk"
+    --args="--cli sdk:ts:generate --out $PWD/funktor-demo/sdkgen-app"
 
 # 2. install and check
 cd funktor-demo/sdkgen-app

@@ -6,21 +6,22 @@
  * Kotlin module feeds — so a module that starts shipping a page appears in this menu without this
  * file changing.
  *
- * **Gating is `requiresAuth` ONLY — the menu does not consult the access matrix.** It cannot:
- * `SdkNavItem` carries `path`, `label`, `icon` and `requiresAuth`, and nothing that identifies the
- * ROUTES a page calls, so there is nothing to look up in `ApiAcl`. The consequence is real and worth
- * knowing: an ordinary operator sees "Insights" and lands on a page whose every call 403s, because
- * `InsightsApi` floors at `isSuperUser()`. Making that work needs contributors to declare the routes
- * their page needs — tracked as `.claude/tasks/20260809-acl-aware-navigation.md`.
+ * **Two gates, and they are different mechanisms.** `requiresAuth` is DECLARED by the contributor and
+ * deliberately coarse — it is the only thing a logged-out visitor can be judged by, since the matrix
+ * endpoint is itself authenticated. `requires` is the access matrix: the routes the page cannot work
+ * without, resolved at generation time, ALL of which must be accessible.
  *
- * This KDoc used to claim the menu was ACL-gated. It never was; `/feature-review` caught it
- * (2026-08-09).
+ * Both are ADVISORY. The server is the authority; this decides what to RENDER. The router guard
+ * deliberately does NOT consult the matrix, so a user who types `/insights` still reaches the page
+ * and it 403s honestly — a redirect driven by a matrix that failed to load would be the worse
+ * failure (maintainer, 2026-08-24).
  */
 import { shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import type { AclState } from './funktorsdk/runtime/acl-loader.ts'
+import { ApiAcl } from './funktorsdk/runtime/acl.ts'
 import type { AuthSessionState } from './funktorsdk/runtime/auth.ts'
-import { navItems } from './funktorsdk/mount.ts'
+import { navItems, type SdkNavItem } from './funktorsdk/mount.ts'
 import type { UserPermissions } from './funktorsdk/models.ts'
 import { acl, session, signOut } from './sdk.ts'
 
@@ -33,19 +34,45 @@ const aclState = shallowRef<AclState>(acl.state())
 acl.subscribe((s) => { aclState.value = s })
 
 /**
- * Entries to show.
+ * The matrix to gate on, or `null` while a FIRST load is still in flight.
  *
- * Withheld only on a FIRST load. A re-load — after a token refresh — carries the previous matrix as
- * `loading.stale`, which exists precisely so the menu does not blank while a refresh is in flight;
- * ignoring it made the whole navigation disappear and reappear on every reload.
+ * `null` means "no answer yet" and the menu withholds everything, rather than rendering entries
+ * denied and letting them pop in one by one as the matrix lands. A RE-load — after a token refresh —
+ * carries the previous matrix as `loading.stale`, which exists precisely so the menu does not blank
+ * while a refresh is in flight; ignoring it made the whole navigation disappear and reappear.
+ *
+ * A logged-out visitor gets [ApiAcl.empty], which denies everything it has no row for. That is the
+ * honest answer — the matrix endpoint needs a session — and it is not over-strict, because
+ * `canAccess` short-circuits on a route the generator marked public.
  */
-function visibleNav(): readonly { path: string; label: string }[] {
-    if (!auth.value.isLoggedIn) return navItems.filter((item) => !item.requiresAuth)
+function readableAcl(): ApiAcl | null {
+    if (!auth.value.isLoggedIn) return ApiAcl.empty
 
     const state = aclState.value
-    const settled = state._type === 'ready' || (state._type === 'loading' && state.stale !== null)
 
-    return settled ? navItems : []
+    if (state._type === 'ready') return state.acl
+    if (state._type === 'loading') return state.stale
+
+    return null
+}
+
+/**
+ * Entries to show — both gates, in one predicate.
+ *
+ * `requires` is empty for an ungated page, and `every` over an empty array is true, so a page that
+ * declares nothing is never hidden here.
+ */
+function visibleNav(): readonly SdkNavItem[] {
+    // NOT named `acl` — that is the AclLoader singleton imported from `sdk.ts`, and shadowing it
+    // here would read as the loader while being the matrix.
+    const matrix = readableAcl()
+
+    if (matrix === null) return []
+
+    return navItems.filter((item) =>
+        (!item.requiresAuth || auth.value.isLoggedIn) &&
+        item.requires.every((route) => matrix.canAccess(route))
+    )
 }
 
 async function leave(): Promise<void> {

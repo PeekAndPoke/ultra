@@ -1,5 +1,7 @@
 package io.peekandpoke.ultra.codegen.sdk
 
+import io.peekandpoke.ultra.codegen.ts.TsClientSpec
+
 /**
  * Where contributors declare entries that the BUILDER renders into one shared file.
  *
@@ -65,6 +67,55 @@ class TsSdkRegistry {
         val icon: String? = null,
         /** Ascending. Ties break on path, so the emitted order is total and stable. */
         val order: Int = 0,
+        /**
+         * API routes the page cannot function without. **ALL must be accessible** for the entry to
+         * appear; empty means the entry is never hidden on access grounds.
+         *
+         * **Declare the MINIMUM.** With one entry ALL and ANY coincide, which is the common case and
+         * the one to aim for. A route the page merely DEGRADES without does not belong here — listing
+         * it hides the whole page over a panel the user could have done without.
+         *
+         * **On the nav, not on [Route], deliberately.** This decides what a menu RENDERS and nothing
+         * more: the router guard does not consult it, so a user who types the URL still reaches the
+         * page and it 403s honestly. A redirect driven by a client-side ADVISORY matrix is the worse
+         * failure mode — a matrix that failed to load, or a stale baked [ApiRouteRef.isPublic], would
+         * lock a legitimate user out of a page the server would happily serve (maintainer, 2026-08-24).
+         *
+         * Not derivable, which is why it is declared: nothing in the emitted route table says which
+         * endpoints a `.vue` file calls.
+         */
+        val requires: List<ApiRouteRef> = emptyList(),
+    )
+
+    /**
+     * An API route a page needs, resolved at GENERATION time.
+     *
+     * Structurally the `RouteRef` in `ts/runtime/route.ts`, so `ApiAcl.canAccess` accepts one
+     * unchanged — but `TsMountEmitter` re-declares the shape rather than importing it. Runtime
+     * modules ship only when something imports them, and `mount.ts` is emitted unconditionally, so an
+     * import would break every SDK that reaches no client at all.
+     *
+     * [method] and [uri] must be the pair the ACCESS MATRIX is keyed on. Whoever builds this owns
+     * that; on the funktor side `TsRouteRefs` reads both off the live route graph, so no URI is ever
+     * copied by hand into a contributor.
+     */
+    data class ApiRouteRef(
+        /** Upper-case, and one of the methods `HttpMethod` in `ts/runtime/route.ts` lists. */
+        val method: String,
+        /**
+         * The route PATTERN, placeholders included — `/users/{id}`, never a filled-in URL.
+         *
+         * That is the form the server puts in the matrix, so it is the only form that matches.
+         */
+        val uri: String,
+        /**
+         * True when the server's auth rules admit an ANONYMOUS caller.
+         *
+         * Carried because `ApiAcl.canAccess` SHORT-CIRCUITS on it: the matrix endpoint is itself
+         * authenticated, so a logged-out visitor has no matrix and every requirement would otherwise
+         * read as denied.
+         */
+        val isPublic: Boolean,
     )
 
     /**
@@ -128,7 +179,36 @@ class TsSdkRegistry {
                     "escape it. The generator owns that directory and writes nothing outside it."
         }
 
+        route.nav?.requires?.forEach { ref -> validateNavRequirement(route, ref) }
+
         routes[route.path] = route
+    }
+
+    /**
+     * Rejects a nav requirement that could never match a matrix row.
+     *
+     * **Both checks fail SILENTLY at runtime if skipped**, which is why they are here rather than
+     * left to review. `ApiAcl` keys on `"$method|$uri"` and falls back to `Denied` for anything it
+     * has no row for — the mechanism by which the server transmits denial by OMISSION — so a
+     * requirement that cannot match reads as denied for every user, and the menu entry disappears
+     * for everyone with nothing anywhere naming the cause.
+     */
+    private fun validateNavRequirement(route: Route, ref: ApiRouteRef) {
+        // The method lands in a CLOSED union literal in `mount.ts`. Reusing the client emitter's set
+        // rather than restating it: a second copy is exactly how the union and its guard drift apart.
+        require(ref.method in TsClientSpec.Endpoint.KNOWN_HTTP_METHODS) {
+            "Nav entry for route '${route.path}' (from '${route.declaredBy}') requires HTTP method " +
+                    "'${ref.method}', which `HttpMethod` in runtime/route.ts does not list. It is " +
+                    "emitted as a literal of that union, so it must be one of " +
+                    "${TsClientSpec.Endpoint.KNOWN_HTTP_METHODS.joinToString()}."
+        }
+
+        require(ref.uri.startsWith("/")) {
+            "Nav entry for route '${route.path}' (from '${route.declaredBy}') requires uri " +
+                    "'${ref.uri}', which does not start with '/'. The access matrix is keyed on the " +
+                    "route PATTERN as the server writes it, so a uri in any other form matches no " +
+                    "row and hides the entry from every user."
+        }
     }
 
     /**

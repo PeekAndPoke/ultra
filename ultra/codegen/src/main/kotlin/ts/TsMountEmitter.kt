@@ -24,6 +24,16 @@ object TsMountEmitter {
     /** Where it is emitted, relative to the SDK root. */
     const val PATH: String = "mount.ts"
 
+    /**
+     * The `HttpMethod` union, rendered from the set `TsSdkRegistry` validates against.
+     *
+     * DERIVED rather than written out, so the emitted type and the check that guards it cannot say
+     * different things — the failure would be a nav entry that passes generation and then breaks
+     * `tsc` inside output the consuming app cannot edit.
+     */
+    private val HTTP_METHOD_UNION: String =
+        TsClientSpec.Endpoint.KNOWN_HTTP_METHODS.joinToString(" | ") { tsStringLiteral(it) }
+
     /** Renders the aggregate for [routes]. */
     fun emit(routes: List<TsSdkRegistry.Route>, navRoutes: List<TsSdkRegistry.Route>): String =
         CodePrinter.print {
@@ -62,6 +72,7 @@ object TsMountEmitter {
                         appendLine("label: ${tsStringLiteral(nav.label)},")
                         appendLine("icon: ${nav.icon?.let { tsStringLiteral(it) } ?: "null"},")
                         appendLine("requiresAuth: ${route.requiresAuth},")
+                        appendRequires(nav.requires)
                     }
                     appendLine("},")
                 }
@@ -84,6 +95,28 @@ object TsMountEmitter {
         appendLine("}")
         nl()
 
+        appendLine("/**")
+        appendLine(" * An API route a nav entry's page cannot function without.")
+        appendLine(" *")
+        appendLine(" * Structurally identical to `RouteRef` in `runtime/route.ts`, so `ApiAcl.canAccess`")
+        appendLine(" * takes one unchanged. DECLARED here rather than imported: runtime modules ship only")
+        appendLine(" * when something imports them, and this file is emitted unconditionally — so an")
+        appendLine(" * import would break every SDK that reaches no API client at all.")
+        appendLine(" *")
+        appendLine(" * The name differs from `RouteRef` on purpose. The barrel `export *`s both this file")
+        appendLine(" * and `runtime/route.ts`, and two exports of one name there is a hard TS2308.")
+        appendLine(" */")
+        appendLine("export interface SdkApiRouteRef {")
+        indentedRaw {
+            appendLine("readonly method: $HTTP_METHOD_UNION")
+            appendLine("/** The route PATTERN, placeholders included — the form the access matrix is keyed on. */")
+            appendLine("readonly uri: string")
+            appendLine("/** The server admits an anonymous caller; `ApiAcl.canAccess` short-circuits on it. */")
+            appendLine("readonly isPublic: boolean")
+        }
+        appendLine("}")
+        nl()
+
         appendLine("/** A navigation entry pointing at one of [routes]. */")
         appendLine("export interface SdkNavItem {")
         indentedRaw {
@@ -91,6 +124,19 @@ object TsMountEmitter {
             appendLine("readonly label: string")
             appendLine("readonly icon: string | null")
             appendLine("readonly requiresAuth: boolean")
+            appendLine("/**")
+            appendLine(" * API routes the page needs. **ALL must be accessible** for the entry to show;")
+            appendLine(" * empty means it is never hidden on access grounds.")
+            appendLine(" *")
+            appendLine(" * ```ts")
+            appendLine(" * navItems.filter((i) => i.requires.every((r) => acl.canAccess(r)))")
+            appendLine(" * ```")
+            appendLine(" *")
+            appendLine(" * ADVISORY, like everything built on the matrix: this decides what to RENDER.")
+            appendLine(" * The server is the authority, and the route guard deliberately ignores this —")
+            appendLine(" * a user who types the URL still reaches the page and it 403s honestly.")
+            appendLine(" */")
+            appendLine("readonly requires: readonly SdkApiRouteRef[]")
         }
         appendLine("}")
         nl()
@@ -105,6 +151,31 @@ object TsMountEmitter {
         appendLine("export interface MountTarget {")
         indentedRaw { appendLine("addRoute(route: SdkRoute): unknown") }
         appendLine("}")
+    }
+
+    /**
+     * Renders a nav entry's [TsSdkRegistry.Nav.requires].
+     *
+     * Empty collapses to `[]` on one line — the overwhelmingly common case, and a three-line empty
+     * array in every entry would bury the two that carry one.
+     */
+    private fun CodePrinter.appendRequires(requires: List<TsSdkRegistry.ApiRouteRef>) {
+        if (requires.isEmpty()) {
+            appendLine("requires: [],")
+            return
+        }
+
+        appendLine("requires: [")
+        indentedRaw {
+            requires.forEach { ref ->
+                appendLine(
+                    "{ method: ${tsStringLiteral(ref.method)}, " +
+                            "uri: ${tsStringLiteral(ref.uri)}, " +
+                            "isPublic: ${ref.isPublic} },"
+                )
+            }
+        }
+        appendLine("],")
     }
 
     private fun CodePrinter.appendMountAll() {

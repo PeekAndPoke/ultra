@@ -374,13 +374,42 @@ class FxInsightsApiFeature : ApiFeature {
     override fun getRouteGroups(): List<ApiRoutes> = listOf(FxInsightsApiRoutes())
 }
 
-/** One route, so the feature yields a client unless a profile excludes it. */
-class FxInsightsApiRoutes : ApiRoutes("insights", authFloor = { public() }) {
+/**
+ * One route, so the feature yields a client unless a profile excludes it.
+ *
+ * **`forRole`, not `public()`** — the real `InsightsApi` floors at `isSuperUser()`, and the nav entry
+ * `InsightsTsContributor` registers gates on this route's publicness. A public floor here would make
+ * every access-gating assertion read `isPublic: true` and prove nothing about the shipped behaviour.
+ */
+class FxInsightsApiRoutes : ApiRoutes("insights", authFloor = { forRole("super-user") }) {
     val listRecords = TypedApiEndpoint
         .Get(uri = "/_/funktor/insights/records", response = FxTalkModel.serializer().apiList())
         .mount {
             docs { name = "List records" }
                 .codeGen { funcName = "listRecords" }
+                .handle { ApiResponse.ok(emptyList()) }
+        }
+}
+
+/**
+ * "Funktor Insights" with its gated endpoint RENAMED.
+ *
+ * Exists so the nav gate's lookup can be shown to fail loudly. A contributor holding a literal
+ * `ApiRouteRef` would sail past this and ship a menu entry gated on a route the server no longer
+ * serves — hidden from every user, with nothing naming the cause.
+ */
+class FxInsightsRenamedApiFeature : ApiFeature {
+    override val name: String = "Funktor Insights"
+    override val description: String = "Insights, with listRecords renamed."
+    override fun getRouteGroups(): List<ApiRoutes> = listOf(FxInsightsRenamedApiRoutes())
+}
+
+class FxInsightsRenamedApiRoutes : ApiRoutes("insights", authFloor = { forRole("super-user") }) {
+    val listRecordsV2 = TypedApiEndpoint
+        .Get(uri = "/_/funktor/insights/v2/records", response = FxTalkModel.serializer().apiList())
+        .mount {
+            docs { name = "List records" }
+                .codeGen { funcName = "listRecordsV2" }
                 .handle { ApiResponse.ok(emptyList()) }
         }
 }

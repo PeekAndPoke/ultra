@@ -8,6 +8,7 @@ import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.string.shouldContain as messageShouldContain
 import io.kotest.matchers.string.shouldNotContain as shouldNotContainText
 import io.peekandpoke.ultra.codegen.model.FxTalk
+import io.peekandpoke.ultra.codegen.ts.TsClientSpec
 import io.peekandpoke.ultra.codegen.ts.TsMountEmitter
 import io.peekandpoke.ultra.codegen.ts.TsStylesEmitter
 import kotlin.reflect.typeOf
@@ -144,6 +145,75 @@ class TsSdkMountBuildSpec : FreeSpec() {
             withClue("and the barrel must NOT re-export it — a type-only import would pull in CSS") {
                 result.output.entries().single { it.path == "index.ts" }
                     .content shouldNotContainText "styles.ts"
+            }
+        }
+
+        //  Nav access requirements  ///////////////////////////////////////////////////////////////
+
+        "a nav entry's access requirements are emitted into mount.ts" {
+            val result = TsSdkBuilder.forTesting(
+                listOf(
+                    Fx("fx:pages") { ctx ->
+                        ctx.out.file("pages/Gated.vue", "<template><div/></template>")
+                        ctx.out.file("pages/Open.vue", "<template><div/></template>")
+
+                        ctx.registry.route(
+                            path = "/gated",
+                            component = "pages/Gated.vue",
+                            requiresAuth = true,
+                            nav = TsSdkRegistry.Nav(
+                                label = "Gated",
+                                order = 10,
+                                requires = listOf(
+                                    TsSdkRegistry.ApiRouteRef("GET", "/api/records", isPublic = false),
+                                    TsSdkRegistry.ApiRouteRef("POST", "/api/sign-in", isPublic = true),
+                                ),
+                            ),
+                        )
+
+                        ctx.registry.route(
+                            path = "/open",
+                            component = "pages/Open.vue",
+                            requiresAuth = false,
+                            nav = TsSdkRegistry.Nav(label = "Open", order = 20),
+                        )
+                    }
+                )
+            ).build()
+
+            val mount = result.output.entries().single { it.path == TsMountEmitter.PATH }.content
+
+            withClue("both halves of the key, plus the publicness canAccess short-circuits on") {
+                mount messageShouldContain
+                        "{ method: 'GET', uri: '/api/records', isPublic: false },"
+                mount messageShouldContain
+                        "{ method: 'POST', uri: '/api/sign-in', isPublic: true },"
+            }
+
+            withClue("an entry with no requirements still declares the field, as an empty array") {
+                // `every` over `[]` is true, so an ungated page shows. A missing field would be a
+                // TypeError in the consuming app the first time the menu rendered.
+                mount messageShouldContain "requires: [],"
+            }
+
+            withClue("and the shape is DECLARED here, not imported from a runtime module") {
+                // runtime/route.ts ships only when something imports it; mount.ts is unconditional.
+                mount messageShouldContain "export interface SdkApiRouteRef {"
+                mount shouldNotContainText "from './runtime/route.ts'"
+            }
+        }
+
+        "the emitted method union is the one the registry validates against" {
+            // Two lists would drift, and the drift is invisible until a nav entry using a method one
+            // side allows and the other does not breaks `tsc` inside generated output.
+            val result = TsSdkBuilder.forTesting(listOf(Fx("fx:quiet-mount") { })).build()
+
+            val mount = result.output.entries().single { it.path == TsMountEmitter.PATH }.content
+
+            TsClientSpec.Endpoint.KNOWN_HTTP_METHODS.forEach { method ->
+                withClue("the union must list '$method'") {
+                    mount messageShouldContain "'$method'"
+                }
             }
         }
     }
