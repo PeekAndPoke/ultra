@@ -380,6 +380,45 @@ val pair = a.pairedWith(b)
 println(pair())  // Pair(1, 10)
 ```
 
+## switchMap
+
+Follow a stream that lives inside another stream's value. When the outer value changes, the old inner stream is
+unsubscribed and the new one is subscribed in its place.
+
+```kotlin
+fun <T, R> Stream<T>.switchMap(selector: (T) -> Stream<R>): Stream<R>
+fun <T : Any, R> Stream<T?>.switchMapNotNull(selector: (T) -> Stream<R>): Stream<R?>
+```
+
+```kotlin
+class Player(val diagnostics: Stream<Int>)
+
+val players = StreamSource<Player?>(null)
+
+val fps: Stream<Int?> = players.switchMapNotNull { it.diagnostics }
+
+println(fps())     // null — no player
+
+players(playerA)
+println(fps())     // playerA's current diagnostics value
+
+players(null)
+println(fps())     // null again — the last value is NOT held
+```
+
+- `switchMapNotNull` resets to null while the outer value is null. This differs from `foldNotNull()` and
+  `historyOfNonNull()`, which ignore nulls and keep what they had.
+- For a non-null result, compose: `players.switchMapNotNull { it.diagnostics }.fallbackTo(0)`.
+- Inner streams are compared by identity (`===`). Selecting the same instance again keeps the subscription and
+  publishes nothing; a selector that builds a stream (`switchMap { it.diagnostics.map { … } }`) returns a new
+  instance per call and therefore resubscribes on every outer value. Hoist derived streams into the owning class.
+- Switching releases the old inner stream before subscribing the new one, so an upstream shared by the inner
+  streams is torn down and restarted on each switch. `permanent()` on that upstream prevents it.
+- Switching publishes the new inner's current value even when it equals the last published one. Add `.distinct()`
+  if you only want changes.
+- The selector runs on every value read while nothing is subscribed (like `map`), and never at construction time.
+  Like every operator here it is lazy: nothing upstream is subscribed until the result has a subscriber.
+
 ## fold
 
 Accumulate values over time, like `List.fold()` but reactive:
@@ -698,12 +737,12 @@ unsubscribes automatically.
 
 ## Platform summary
 
-| Operator                                                                         | Platform                          |
-|----------------------------------------------------------------------------------|-----------------------------------|
-| map, filter, combine, fold, distinct, fallback, history, indexed, onEach, cutoff | All platforms                     |
-| ticker, debounce, mapAsync, asFlow                                               | All platforms (coroutine-based)   |
-| `animTicker()`                                                                   | JS only (`requestAnimationFrame`) |
-| `persistInLocalStorage()`                                                        | JS only (`localStorage`)          |
-| `debouncedFunc()`, `debouncedFuncExceptFirst()`                                  | JS only (`setTimeout`)            |
+| Operator                                                                        | Platform                          |
+|---------------------------------------------------------------------------------|-----------------------------------|
+| map, filter, combine, fold, distinct, fallback, history, indexed, onEach, cutoff, switchMap | All platforms          |
+| ticker, debounce, mapAsync, asFlow                                              | All platforms (coroutine-based)   |
+| `animTicker()`                                                                  | JS only (`requestAnimationFrame`) |
+| `persistInLocalStorage()`                                                       | JS only (`localStorage`)          |
+| `debouncedFunc()`, `debouncedFuncExceptFirst()`                                 | JS only (`setTimeout`)            |
 
 ---

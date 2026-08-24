@@ -24,8 +24,8 @@ count.next(5)  // prints "Value: 10"
 ## Key features
 
 - **Always has a value** — No empty states, no initialization race conditions
-- **Kotlin Multiplatform** — Works on JVM and JS
-- **Composable operators** — map, filter, combine, debounce, distinctUntilChanged, and more
+- **Kotlin Multiplatform** — Works on JVM, JS and Native
+- **Composable operators** — map, filter, combine, switchMap, debounce, distinct, and more
 - **Lazy subscriptions** — Operators only compute when someone is listening
 - **Kraft integration** — First-class support as component state in Kraft SPAs
 - **Lightweight** — No heavy framework dependencies

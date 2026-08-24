@@ -2,6 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import { streamsSidebar } from '../../../data/streams-sidebar';
 import { Code } from 'astro:components';
+import Aside from '../../../components/Aside.astro';
 ---
 
 <DocsLayout title="Combining & Accumulating" sidebar={streamsSidebar} description="Combine multiple streams and accumulate values over time">
@@ -34,6 +35,81 @@ println(sum())  // 105`} lang="kotlin" theme="vitesse-dark" />
 
 <Code code={`val pair = a.pairedWith(b)
 println(pair())  // Pair(1, 10)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2 id="switchmap">switchMap</h2>
+
+<p>Follow a stream that lives <em>inside</em> another stream's value. When the outer value changes, the old inner
+  stream is unsubscribed and the new one is subscribed in its place:</p>
+
+<Code code={`class Player(val diagnostics: Stream<Int>)
+
+val playerA = Player(StreamSource(60))
+val playerB = Player(StreamSource(30))
+
+val players = StreamSource(playerA)
+val fps = players.switchMap { it.diagnostics }
+
+fps.subscribeToStream { println(it) }  // 60
+
+players(playerB)                       // 30 — playerA's stream is released`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The selector runs on every value read while nothing is subscribed, and never at construction time — so keep
+  it free of side effects.</p>
+
+<p>Switching releases the old inner stream before subscribing the new one. An upstream shared by all the inner
+  streams — one <code>ticker()</code> feeding every player — therefore sees its last subscriber leave and
+  restarts on each switch.</p>
+
+<Aside>We could have overlapped the two subscriptions instead, and then you would briefly own two live inner
+  streams. Neither choice is free; this one at least never leaves you holding a stream you thought you had
+  dropped. <code>permanent()</code> on the shared source is the escape hatch.
+</Aside>
+
+    <h3>switchMapNotNull</h3>
+
+    <p>When the outer stream is nullable, <code>switchMapNotNull</code> runs the selector only for non-null values
+      and publishes <code>null</code> the rest of the time:</p>
+
+    <Code code={`val players = StreamSource<Player?>(null)
+
+val fps: Stream<Int?> = players.switchMapNotNull { it.diagnostics }
+
+println(fps())  // null — no player
+
+players(playerA)
+println(fps())  // 60
+
+players(null)
+println(fps())  // null again — the last value is NOT held`} lang="kotlin" theme="vitesse-dark" />
+
+    <p>Unlike <code>foldNotNull</code> and <code>historyOfNonNull</code> further down this page, it resets rather
+      than keeping what it had. Compose with <code>fallbackTo(0)</code> when you want a non-null result.</p>
+
+    <h3>Returning the same stream twice</h3>
+
+    <p>Inner streams are compared by identity. Selecting the same instance again keeps the subscription and
+      publishes nothing — but a selector that <em>builds</em> a stream returns a new instance every time it runs,
+      so it resubscribes on every outer value:</p>
+
+    <Code code={`// Resubscribes on every outer value: map() allocates a new stream per call
+players.switchMapNotNull { it.diagnostics.map { d -> d * 2 } }
+
+// Stable instance: hoist the derived stream into the class
+class Player(val diagnostics: Stream<Int>) {
+    val doubled = diagnostics.map { d -> d * 2 }
+}
+
+players.switchMapNotNull { it.doubled }`} lang="kotlin" theme="vitesse-dark" />
+
+    <p>Switching publishes the new inner stream's current value even when it equals the last one published. Add
+      <code>.distinct()</code> if you only want changes.</p>
+
+    <Aside>Switching releases the old inner stream <em>before</em> subscribing the new one. If every inner stream
+      is derived from one shared upstream — say a single <code>ticker()</code> feeding all your players — that
+      upstream sees its last subscriber leave and shuts down, then starts again a moment later. Usually invisible,
+      unless the upstream is a coroutine that loses its rhythm. <code>permanent()</code> on the shared source
+      keeps it alive.
+    </Aside>
 
 <h2>fold</h2>
 
