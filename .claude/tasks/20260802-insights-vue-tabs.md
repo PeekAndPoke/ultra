@@ -12,7 +12,7 @@ More is done than the plan's "TODO — not started" suggests. Verified on disk 2
 | Piece | State |
 |---|---|
 | REST API — `listRecords`, `getRecord` | DONE, `authFloor = { isSuperUser() }` on the group |
-| Generated TS client `funktorInsightsClient.ts` | DONE |
+| Generated TS client `api/funktorInsightsClient.ts` | DONE (moved under `api/` by the codegen agent, `920ca11a`) |
 | Envelope types in `models.ts` — `InsightsRecord`, `…Summary`, `…Ref`, `…CollectorSlice` | DONE |
 | `TAB-SPECS.md` — 224 lines distilling all ten collectors | DONE |
 | `reference/` — old renderers kept verbatim, with `VUE-REF:` breadcrumbs in the live collectors | DONE |
@@ -166,7 +166,7 @@ Leaves first, because of D-1 — each step is useful even if the import question
       Duration bands are three, not the old four: olive ("slightly slow") is dropped, because the theme
       carries three tones and a fourth colour earns less than explaining it costs.
 - [x] **D-1 turned out not to block these.** The pages import `../models.ts`, `../runtime/*` and
-      `../funktorInsightsClient.ts` — relative, and correct as long as the contributor emits `funktor/ui`
+      `../api/funktorInsightsClient.ts` — relative, and correct as long as the contributor emits `funktor/ui`
       at `<out>/ui/` and these at `<out>/insights/`. That is the plan's "freeze the layout" option, taken
       as an interim. When the `@sdk` alias lands the imports become alias-based and stop depending on
       depth; until then **the layout is a contract the contributor must honour**.
@@ -337,6 +337,99 @@ the build anyway, since the prop is `string` and optional chaining yields `strin
 **IntelliJ's analyzer is non-deterministic.** Two identical queries on an unchanged file returned
 different results, and that false negative briefly "confirmed" a fix that a later run contradicted.
 Anything verified through it needs repeat runs before it counts.
+
+## INVENTORY — old kotlinx.html impl vs the Vue port, 2026-08-09
+
+Read from the inert copy in `funktor/insights/reference/`, collector by collector, **not** from
+`TAB-SPECS.md` — the spec is a distillation and omits some of what the renderers actually did.
+
+### Cross-cutting gaps
+
+- [ ] **Icons. Every tab had one; none of the Vue tabs do.** `cloud_upload_alternate` (request),
+      `cloud_download_alternate` (response), `user`, `compass_outline` (routing), `microchip` (runtime),
+      `list` (logs), `tv` (view), `database` (vault), `cubes` (kontainer), `cog` (config). The registry
+      already carries an `icon` for nav entries (`Nav(icon = "gauge")`), so there is a concept to hang
+      this on — but no icon set ships with the SDK, and picking one is a dependency decision.
+- [ ] **Syntax highlighting.** The old GUI ran everything through Prism: `json()` was
+      `prism(Language.Json)`, and the vault tab highlighted the query by its `queryLanguage` plus the
+      explain output as `text`. `JsonTree` replaces the JSON case and is better (collapsible,
+      searchable by eye) — **but query text is now unhighlighted plain `<pre>`.**
+- [ ] **Three vis.js graphs, none ported.** See the two tabs below. This is the single largest gap.
+- [ ] **The bar's git version and environment id have no home.** The bar is deleted by decision, and
+      the list page absorbed status/duration — but `appInfo.version.describeGit()` and
+      `appConfig.ktor.application.id` were bar items and are now shown nowhere. Both are in the
+      `app-config` slice, so this is a placement decision, not a data problem.
+
+### Per tab
+
+| Tab | Old | Vue now | Gap |
+|---|---|---|---|
+| Overview | request line, status label, response time, timestamp, Database + Runtime strips | all of it | **none** |
+| `request` | raw JSON dump only | facts + headers table + query-param table + raw behind `<details>` | icon. Otherwise **better than the old one** |
+| `response` | raw JSON dump only | status fact + headers table + raw | icon. **Better** |
+| `user` | `H4 User` + JSON, `H4 Permissions` + JSON | facts + permissions tree + raw | icon. **Better** |
+| `routing` | `<pre>` of trace, then a JSON dump | `<pre>` of trace | icon. JSON dump dropped on purpose — one field, nothing to add |
+| `runtime` | 7-cell strip, then system properties as a flat `k: v` list | 7-cell strip + a searchable table | icon. **Better** |
+| `log` | "No log entries", else one coloured block per entry with `<pre>` | same, same colour mapping | icon |
+| `template` | raw JSON dump | render time with threshold tone | icon. **Better** |
+| `app-config` | `H4 AppInfo` + JSON, `H4 Config` + JSON | two trees + the secrets caveat rendered in-UI | icon |
+| `vault` | strip, **graph button + vis.js network**, per-query segment, **Prism-highlighted query**, **`vars` JSON**, Explained in `<details>`, **"Database Graph Data" raw dump** | strip, per-query cards, plain-text query, Explained | **4 gaps — see below** |
+| `kontainer` | **2 graph buttons + vis.js**, **click-sortable table**, full FQNs | table, sorted once, shortened FQNs with full in `title` | **3 gaps — see below** |
+
+### `vault` — the four gaps
+
+- [ ] **Query syntax highlighting** — `prism(it.queryLanguage) { it.query }`, and `prism("text")` for the
+      explain output. Needs a highlighter the SDK can ship.
+- [ ] **`vars`** — BLOCKED on `.claude/tasks/20260731-query-vars-in-insights.md`, deliberately omitted,
+      and the reason the tab has no raw dump or JSON fallback either.
+- [ ] **The repository graph** (red "Show Database Graph" button + network). **Not derivable from a
+      record** — it came from `DatabaseGraphBuilder`, a live kontainer service queried at render time.
+      Needs its own endpoint or a stored model.
+- [ ] **"Database Graph Data"** — a `<details>` holding the raw graph JSON. Same blocker as above.
+
+### `kontainer` — the three gaps
+
+- [ ] **"Show instances Graph" (green) and "Show Full Graph" (red)** — two vis.js networks differing only
+      in whether services without instances are included. Node label `simpleName\ntype`, size = injected
+      class count, colour by type (Singleton `#1E90FF`, Prototype `#FFD700`, Dynamic `#8B0000`,
+      SemiDynamic `#9400D3`, DynamicOverride `#DC143C`); edge per injection, arrow at target, **dashed
+      when `provisionType == Lazy`**, weight 2 Direct / 1 Lazy. **All of it IS derivable from the
+      record**, unlike vault's — this one is purely a graph-library decision.
+- [ ] **Click-to-sort.** The old table was `ui.sortable.celled.table` with `semanticui-tablesort.js`
+      loaded by `InsightsGuiWebResources` and `$("table.sortable").tablesort()` in `gui.js`. The Vue
+      table sorts once (instantiated first, then FQN) and cannot be re-sorted.
+- [ ] **Full FQNs.** The old table printed `service.cls.fqn` in full; the Vue one shortens to the simple
+      name with the FQN in a `title` tooltip. Deliberate for width, but it makes the column unsearchable
+      with the browser's own find — worth revisiting alongside sorting.
+
+### Not gaps — deliberate, recorded so they are not "fixed" later
+
+- The **bar** is deleted (maintainer, 2026-07-30); its job moved to the list page.
+- The old **4th duration band** (olive above 75ms) is gone; the theme carries three tones.
+- The **`routing` JSON dump** is gone; that slice has one field.
+
+## SUB-TASK — there is no Kotlin/JS (Kraft) insights frontend, and there never was
+
+Checked 2026-08-09. **The old insights UI was server-rendered kotlinx.html**, not Kraft:
+`funktor/insights/reference/gui/InsightsGuiRoutes.kt` mounted ktor routes that rendered
+`InsightsGuiTemplate` on the server. `funktor/inspect/src/jsMain` — which *is* the Kraft ops UI — covers
+cluster, introspection and logging, and **has no insights pages at all**.
+
+Two loose ends left behind by its removal:
+
+- [ ] `funktor-demo/adminapp/.../AdminAppConfig.kt:11` still carries
+      `insightsDetailsBaseUrl = ".../_/insights/details/"`, pointing at a route that no longer exists.
+- [ ] `funktor/inspect/.../DevtoolsRequestHistoryPage.kt:59-61` has a disabled link with a comment
+      saying it "returns when the Vue insights page can" be linked to. It now can — the route is
+      `/insights` in the generated SDK app.
+
+**Before building a Kraft port, note the tension.** The plan's standing decisions are "Vue only, no
+second target" and "kotlinx.html renderers are DELETED, not ported". A Kraft insights page would be a
+second target for the same view. So this is a decision, not a straightforward task:
+
+- [ ] **Decide:** does the Kraft `adminapp` need insights during the transition, or does it link out to
+      the Vue app? If it links out, the two items above are the whole job and no Kraft UI is written.
+      If it needs its own, that reopens "Vue only" and should be recorded as an amendment.
 
 ## Test evidence
 
