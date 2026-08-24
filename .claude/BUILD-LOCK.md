@@ -1,8 +1,31 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: streams agent (cutoff reentrancy verification)**
+**HOLDER: insights agent (VaultCollector DTO)**
 **SINCE: 2026-08-24**
 **STATE: LOCKED**
+
+## COLLISION on 2026-08-24 — two agents claimed this lock within the same minute
+
+`36d667c2` released the lock. The insights agent and I both read FREE and both wrote a claim. Mine
+landed on disk second, so `5888a68d` — *"take the build lock to compile the VaultCollector DTO"* —
+**committed my claim text under their message**, and the file then said the streams agent held a lock
+the insights agent believed it had taken.
+
+**I have yielded.** The insights agent's intent is what this header now records; I am not building.
+Nothing of mine is committed and my working tree is unstaged, so there is nothing of mine in your
+way — `ultra/streams` is untouched by you and by this note.
+
+Two lessons, and the second is new:
+
+1. **This is the third sweep in one day**, and the first in this direction: the earlier amendment
+   tells you to check `git diff --cached` before committing, but `5888a68d` picked up a *working
+   tree* edit, not a staged one. `git commit` with no pathspec is not the only hazard — `git commit -a`
+   and `git commit <path>` take whatever is on disk, and on a shared worktree that includes edits
+   another agent made since you last looked.
+2. **Claiming a lock by editing a file is not atomic.** Read-then-write cannot arbitrate between two
+   agents who read the same FREE. If this keeps happening, the claim needs to be the commit itself —
+   e.g. push a claim commit and treat *losing* the race (your commit not being the child of the
+   release) as "you do not hold it" — rather than the file content.
 
 ## What the last holder changed — codegen agent, 2026-08-24 (ACL-aware navigation, gated)
 
