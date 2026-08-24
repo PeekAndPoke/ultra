@@ -1,8 +1,49 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: streams agent (cutoff reentrancy verification)**
-**SINCE: 2026-08-24**
-**STATE: LOCKED**
+**HOLDER: none**
+**SINCE: 2026-08-24 (released by the streams agent)**
+**STATE: FREE — take the lock before building.**
+
+## What the last holder changed — streams agent, 2026-08-24 (cutoff reentrancy, gated)
+
+**`CutoffStream` leaked subscriptions under reentrancy — eight defects, all fixed and gated.**
+`ops/cutoff.kt` assigned its unsubscribe handles *after* a `subscribeToStream` call that
+synchronously delivers a value, so anything a subscriber did in that window saw a null handle.
+Worst of them: a predicate handler firing after `stop()` (from an already-taken notify snapshot)
+resubscribed the source onto a dead operator — with a `ticker()` source, a coroutine that never
+stops. Also fixed: a first subscriber arriving while cut off was **never called at all**, violating
+`Stream.kt:15-17`, while the second subscriber got the value.
+
+`:ultra:streams:jvmTest` 69 / 0, `linuxX64Test` green, `jsBrowserTest` green incl. `CutoffTickerSpec`
+3/0, compile sweep clean. `/feature-review` PASSED — record in
+`.claude/tasks-archive/2026-08/20260824-cutoff-reentrancy.md`.
+
+**The changes are UNSTAGED and UNCOMMITTED, deliberately** — `ops/cutoff.kt`, `ops/switchMap.kt`
+and their two specs. The maintainer has not reviewed them and did not ask for a commit. Leaving them
+unstaged is also what stops them being swept a fourth time; please do not `git add` or `git commit -a`
+over `ultra/streams`.
+
+**Worth taking — the trap you will hit next, twice on this run:** `jvmTestClasses UP-TO-DATE` and
+`compileKotlinJs UP-TO-DATE` both appeared on a run whose sources had definitely changed. Neither was
+stale, but *"BUILD SUCCESSFUL" proved nothing either way*. What proved it: the XML held 15/27
+testcases including names that only exist in the new code, and the JS bundle
+(`build/compileSync/js/test/testDevelopmentExecutable/kotlin/ultra-ultra-streams.mjs`) contained the
+new `sourceCount` field. Grep the *output* for a token unique to your change — it is the one check
+that distinguishes "correctly up-to-date" from "stale".
+
+Two more, both cheap and both cost me a cycle:
+
+- **kotest suffixes test names per target** (`...[jvm]`), so an exact-match grep for your test name
+  in the XML silently finds nothing. Match on a prefix.
+- **`ops/switchMap.kt` had the same reentrancy hole** and is fixed the same way — a `starting` flag,
+  because the `outerUnsubscribe == null` guard is blind while that very subscription is being
+  established. If you write an operator here, that guard needs the flag as well as the handle.
+
+Standing invariant confirmed by the gate, worth not re-deriving: `notifyHandlers` iterates a
+`toList()` snapshot without re-checking membership (`streams.kt:22`), so a handler unsubscribed
+mid-notification still runs. That is the root enabler of this whole defect class and it affects every
+operator. The real fix belongs in `notifyHandlers`; each operator currently pays for it with a
+generation counter.
 
 ## What the last holder changed — insights agent, 2026-08-24 (VaultCollector DTO)
 
