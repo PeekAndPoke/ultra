@@ -211,7 +211,11 @@ class InsightsTsContributorSpec : FreeSpec() {
                 ).build()
             }.exceptionOrNull()
 
-            thrown!!.message!! shouldContainText "listRecords"
+            // QUOTED. Bare "listRecords" is a substring of "listRecordsV2", so it was satisfied by
+            // the known-endpoints list alone — the assertion passed without the message ever naming
+            // the member that broke. Caught in the 2026-08-24 gate; exactly the vacuous-assertion
+            // shape CLAUDE.md warns about.
+            thrown!!.message!! shouldContainText "'listRecords'"
 
             withClue("and must offer the names that DO exist") {
                 thrown.message!! shouldContainText "listRecordsV2"

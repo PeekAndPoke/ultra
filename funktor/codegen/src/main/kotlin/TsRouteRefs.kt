@@ -24,9 +24,16 @@ object TsRouteRefs {
     /**
      * The route ref for the endpoint of [feature] whose generated member is [member].
      *
-     * [member] is the name as it appears in the generated client — `codeGen { funcName = … }` when the
-     * route declares one, otherwise the derived form. That is deliberate: it is the name a frontend
-     * developer already reads in `api/…Client.ts`, so the declaration and the call site agree.
+     * [member] is the name the ROUTE GRAPH carries — `codeGen { funcName = … }` when the route
+     * declares one, otherwise the form [TsClientNames.endpointMember] derives. Both sides call that
+     * one function, so the naming rule cannot drift.
+     *
+     * **It is NOT proof the generated client has such a member.** This walks the unfiltered graph
+     * while `RestApiTsContributor` emits from `group.all.filter(include)`, so a PROFILE that drops
+     * this route while keeping others in the feature still resolves here — and the page then calls a
+     * member the client does not carry. `Route.requiresFiles` catches a missing client FILE, not a
+     * missing member. Raised in the 2026-08-24 gate; the cross-check needs the full output plan and
+     * is tracked as `.claude/tasks/20260824-nav-requires-endpoint-crosscheck.md`.
      *
      * @param group narrows the search when two route groups of one feature share a member name. Only
      *   needed when the unqualified lookup reports an ambiguity — it says so, and names the groups.
@@ -50,10 +57,23 @@ object TsRouteRefs {
 
         check(matches.size == 1) {
             val where = matches.joinToString { (g, r) -> "$g (${r.method.value} ${r.pattern.pattern})" }
+            val groupNames = matches.map { it.first }.distinct()
+
+            // `group` filters on the NAME, so it cannot separate two ApiRoutes INSTANCES that share
+            // one — and this repo has that shape (`funktor:auth` declares `ApiRoutes("login")`
+            // twice). Advising it there would send the caller round a loop that reproduces this exact
+            // message. Raised in the 2026-08-24 gate.
+            val advice = if (groupNames.size == 1) {
+                "Both are in a route group named '${groupNames.single()}', so naming the group cannot " +
+                        "separate them — they are two ApiRoutes INSTANCES sharing one name. Gate on a " +
+                        "member unique to one of them, or rename a group."
+            } else {
+                "Two route groups may legitimately share a member name, so pass the group to " +
+                        "disambiguate: TsRouteRefs.of(feature, \"$member\", group = \"…\")."
+            }
 
             "Feature '${feature.codeGenName}' has ${matches.size} endpoints named '$member': $where. " +
-                    "Two route groups may legitimately share a member name, so pass the group to " +
-                    "disambiguate: TsRouteRefs.of(feature, \"$member\", group = \"…\")."
+                    advice
         }
 
         val route = matches.single().second

@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.string.shouldContain as messageShouldContain
 import io.kotest.matchers.string.shouldNotContain as shouldNotContainText
@@ -203,18 +204,24 @@ class TsSdkMountBuildSpec : FreeSpec() {
             }
         }
 
-        "the emitted method union is the one the registry validates against" {
+        "the emitted method union is EXACTLY the set the registry validates against" {
             // Two lists would drift, and the drift is invisible until a nav entry using a method one
             // side allows and the other does not breaks `tsc` inside generated output.
+            //
+            // EXACTLY, not "contains each". Per-method containment cannot see an EXTRA member, so a
+            // hardcoded union with `| 'TRACE'` bolted on stayed green here — it was caught only
+            // downstream by ts-verify, where the widened type stops being assignable to `RouteRef`.
+            // Raised in the 2026-08-24 gate.
             val result = TsSdkBuilder.forTesting(listOf(Fx("fx:quiet-mount") { })).build()
 
             val mount = result.output.entries().single { it.path == TsMountEmitter.PATH }.content
 
-            TsClientSpec.Endpoint.KNOWN_HTTP_METHODS.forEach { method ->
-                withClue("the union must list '$method'") {
-                    mount messageShouldContain "'$method'"
-                }
-            }
+            val declared = mount.lineSequence()
+                .firstOrNull { it.trimStart().startsWith("readonly method:") }
+                ?: error("mount.ts declares no `readonly method:` line")
+
+            Regex("'([^']+)'").findAll(declared).map { it.groupValues[1] }.toList()
+                .shouldContainExactlyInAnyOrder(TsClientSpec.Endpoint.KNOWN_HTTP_METHODS.toList())
         }
     }
 }

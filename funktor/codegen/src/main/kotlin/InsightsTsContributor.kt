@@ -179,7 +179,7 @@ class InsightsTsContributor(
             // filters routes, and `RestApiTsContributor` writes no client for a feature whose routes
             // were all excluded. The pages import that client, so declare the dependency and let the
             // builder fail loudly rather than shipping an unresolvable import.
-            requires = listOf(CLIENT_IMPORT),
+            requiresFiles = listOf(CLIENT_IMPORT),
         )
     }
 }

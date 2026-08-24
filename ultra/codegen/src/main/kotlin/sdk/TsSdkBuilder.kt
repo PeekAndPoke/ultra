@@ -199,7 +199,7 @@ class TsSdkBuilder(
         // contributor cannot see. Without this, a profile that filters a feature out still emits its
         // pages, and they import a client that was never written.
         val unmetRequirements = registeredRoutes
-            .flatMap { route -> route.requires.map { route to it } }
+            .flatMap { route -> route.requiresFiles.map { route to it } }
             .filter { (_, required) -> required !in emitted }
 
         check(unmetRequirements.isEmpty()) {

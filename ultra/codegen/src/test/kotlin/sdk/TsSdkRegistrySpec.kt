@@ -136,7 +136,10 @@ class TsSdkRegistrySpec : FreeSpec() {
                     }
 
                     thrown.message!! shouldContain "runtime/route.ts"
-                    thrown.message!! shouldContain "/x"
+                    // "route '/x'", not "/x": the ref's own uri is '/api/x', which CONTAINS "/x",
+                    // so the bare form passed even with the route path dropped from the message —
+                    // and naming the offending nav entry is the message's whole job.
+                    thrown.message!! shouldContain "route '/x'"
                 }
             }
         }

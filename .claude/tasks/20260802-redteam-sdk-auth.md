@@ -79,6 +79,33 @@ the interesting question is whether any OTHER async path lacks one.
     `listFiles()` and does not check for links, so the target's contents are deleted), a race that
     swaps the directory for a link between the marker check and the wipe.
 
+### G. Nav access gating (added 2026-08-24, from the ACL-navigation gate)
+
+Collected by reviewer 3. The gate is ADVISORY by design, so a finding here must show something worse
+than "a menu item is visible that should not be".
+
+14. **Baked `isPublic` after a server-side tightening.** `canAccess` SHORT-CIRCUITS on it
+    (`ts/runtime/acl.ts:105`), so a stale `true` disables the gate entirely — including for anonymous
+    visitors. Flip a route from `public()` to a role floor WITHOUT regenerating, then enumerate every
+    consumer of `RouteRef.isPublic` in a real app bundle and confirm none is more than advisory: no
+    transport, refresh, or 401-handling path may branch on it. A grep found none on 2026-08-24; the
+    point of the exercise is to find one that grep does not.
+15. **Nav-gate fail-open sweep.** `Nav.requires` defaults to empty and `[].every(...)` is `true`, so
+    an entry that declares nothing is never hidden, and nothing at generation time flags
+    `requiresAuth = true` + `requires: []` — the exact pre-2026-08-24 state of the Insights entry.
+    Across every generation profile, enumerate contributed nav entries in that combination and check
+    whether any fronts a privileged surface.
+16. **Adversarial route metadata reaching generated IDENTIFIERS.** `tsStringLiteral` is sound and
+    `endpointMember` was hardened (`TsClientNames.kt:63-79`), but `TsClientNames.pascal` / `camel` /
+    `clientClass` / `groupClass` build identifiers from `codeGenName` and group names with **no**
+    `isBareIdentifier` gate — an all-non-alphanumeric name collapses to an empty identifier. Nothing
+    in the nav change emits an identifier, so this is not a finding against it; it is the sweep that
+    belongs beside item 13.
+17. **Removing `acl.clear()` from the token-change handler** (`funktor-demo/sdkgen-app/src/sdk.ts`).
+    The stale-matrix window is currently UNREACHABLE because of that call — see the `loading.stale`
+    note in `App.vue`. Probe what it would open: force a token refresh immediately after a privilege
+    revocation and confirm nothing local acts on the pre-refresh matrix. Extends B5.
+
 ## Out of scope — settled, do not re-report
 
 - The session JWT living in `localStorage`. Known, accepted, documented; the httpOnly-cookie

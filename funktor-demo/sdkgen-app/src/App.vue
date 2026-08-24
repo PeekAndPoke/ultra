@@ -34,16 +34,27 @@ const aclState = shallowRef<AclState>(acl.state())
 acl.subscribe((s) => { aclState.value = s })
 
 /**
- * The matrix to gate on, or `null` while a FIRST load is still in flight.
- *
- * `null` means "no answer yet" and the menu withholds everything, rather than rendering entries
- * denied and letting them pop in one by one as the matrix lands. A RE-load — after a token refresh —
- * carries the previous matrix as `loading.stale`, which exists precisely so the menu does not blank
- * while a refresh is in flight; ignoring it made the whole navigation disappear and reappear.
+ * The matrix to gate on, or `null` when there is no answer yet.
  *
  * A logged-out visitor gets [ApiAcl.empty], which denies everything it has no row for. That is the
  * honest answer — the matrix endpoint needs a session — and it is not over-strict, because
  * `canAccess` short-circuits on a route the generator marked public.
+ *
+ * **The `loading.stale` branch is unreachable as THIS app is wired, and the menu therefore does
+ * blank for the length of a matrix fetch on every token refresh.** `AclLoader.load()` sets `stale`
+ * from its own `ready` state, and the only path into it here is `ensureAcl()`, which fires only when
+ * the state is already `absent` — and the refresh handler in `sdk.ts` calls `clear()` first, on
+ * purpose, so the departing token's matrix cannot be read as current.
+ *
+ * That blank is the FAIL-CLOSED direction and it is kept deliberately: the alternative renders
+ * pre-refresh permissions during the reload window, so a revocation would not show until the new
+ * matrix lands. The branch stays because `AclLoader` is shared runtime and another app may drive it
+ * differently.
+ *
+ * Worth stating plainly, because the comment here previously claimed the opposite: honouring
+ * `loading.stale` was itself a `/feature-review` fix (2026-08-09), and the `absent` guard and the
+ * `clear()`-before-reload added in the SAME batch made it dead on arrival. Caught by two reviewers
+ * independently on 2026-08-24.
  */
 function readableAcl(): ApiAcl | null {
     if (!auth.value.isLoggedIn) return ApiAcl.empty
@@ -59,20 +70,25 @@ function readableAcl(): ApiAcl | null {
 /**
  * Entries to show — both gates, in one predicate.
  *
- * `requires` is empty for an ungated page, and `every` over an empty array is true, so a page that
- * declares nothing is never hidden here.
+ * With no matrix yet, only the ACCESS clause is unknown. An entry that declares no requirements is
+ * not waiting on anything, so it still shows — `SdkNavItem.requires` promises "empty means the entry
+ * is never hidden on access grounds", and blanking the whole menu broke that promise for every
+ * contributed page that does not gate. A second module's public "Docs" entry used to vanish for the
+ * length of an unrelated fetch. Raised in the 2026-08-24 review gate.
  */
 function visibleNav(): readonly SdkNavItem[] {
     // NOT named `acl` — that is the AclLoader singleton imported from `sdk.ts`, and shadowing it
     // here would read as the loader while being the matrix.
     const matrix = readableAcl()
 
-    if (matrix === null) return []
+    return navItems.filter((item) => {
+        if (item.requiresAuth && !auth.value.isLoggedIn) return false
 
-    return navItems.filter((item) =>
-        (!item.requiresAuth || auth.value.isLoggedIn) &&
-        item.requires.every((route) => matrix.canAccess(route))
-    )
+        // Withhold rather than render denied: entries must not pop in one by one as the matrix lands.
+        if (matrix === null) return item.requires.length === 0
+
+        return item.requires.every((route) => matrix.canAccess(route))
+    })
 }
 
 async function leave(): Promise<void> {

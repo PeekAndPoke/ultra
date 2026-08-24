@@ -1,6 +1,6 @@
 # ACL-aware navigation for contributed pages
 
-**Status:** DONE — 2026-08-24. `/feature-review` PENDING; see the gate note at the bottom.
+**Status:** DONE — 2026-08-24, gate PASSED. Ready to archive.
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md`
 **Security-critical:** no. The client-side ACL is ADVISORY — the server is the authority — so this is
 about telling the user the truth, not about enforcement. It is still access-shaped, so it was
@@ -112,6 +112,94 @@ would not be caught by anything. That is precisely the gap
 that command writes into `src/funktorsdk/src/funktorsdk`, reports success, and leaves the real SDK
 stale — the app then type-checks against yesterday's output. Hit while doing this work.
 
-## Gate
+## Review record — /feature-review, 2026-08-24
 
-`/feature-review` has NOT run on this change yet. Run it before archiving this file.
+Base `5ab46234` → `62b3f0a2`. Fixes in the follow-up commit.
+
+| Reviewer | Verdict | Confirmed findings |
+|---|---|---|
+| 1. Implementation & code style | FAIL -> fixed | 7 LOW |
+| 2. Domain expert | FAIL -> fixed | 1 MEDIUM, 5 LOW |
+| 3. Security | FAIL -> fixed | 3 LOW |
+
+**Verdict: PASS.** No CRITICAL or HIGH. Every finding was verified against the code before acting;
+none was dropped as unconfirmed, which is itself unusual and worth noting.
+
+### The MEDIUM, found independently by two reviewers — and it was mine from the last batch
+
+**`loading.stale` is structurally unreachable in this app, so the menu blanks on every token
+refresh** — while the KDoc I wrote said the opposite. `AclLoader.load()` computes `stale` from its
+own `ready` state; the only path into it is `ensureAcl()`, which fires only when the state is
+`absent`; and the refresh handler calls `clear()` first, deliberately.
+
+Honouring `loading.stale` was itself a `/feature-review` fix on 2026-08-09 — and the `absent` guard
+and the `clear()`-before-reload added **in the same batch** made it dead on arrival. The fix never
+did anything, and this change restated its justification in new prose. Two comments then contradicted
+each other across two files.
+
+Kept the behaviour, corrected the comment: the blank is the FAIL-CLOSED direction, and the
+alternative renders pre-refresh permissions during the reload window, so a revocation would not show
+until the new matrix lands.
+
+### Fixed
+
+- **Three assertions satisfiable by a substring** — the repo's signature failure mode, and all three
+  were in tests written for this change. `"listRecords"` is a substring of `"listRecordsV2"`, so it
+  was satisfied by the known-endpoints list alone; `"/x"` is a substring of the ref uri `"/api/x"`,
+  so the route path could be dropped from the message; and per-method containment on the emitted
+  `HttpMethod` union cannot see an EXTRA member. Each tightened, then each **proved to fail** under
+  the mutant it was supposed to catch.
+- **`visibleNav` blanked the WHOLE menu while the matrix loaded**, including entries that declare no
+  requirements — breaking the "empty means never hidden on access grounds" promise this change's own
+  KDoc makes. A second module's public page would vanish for the length of an unrelated fetch.
+- **`Route.requires` renamed to `requiresFiles`.** Two unrelated `requires` sat four lines apart in
+  one `route(...)` call meaning emitted FILES and API ROUTES; both reviewers read them as one concept.
+  Renamed on the Route side because it has no emitted counterpart, so `Nav.requires` and
+  `SdkNavItem.requires` stay in step.
+- **`isPublic` is the one field that fails OPEN and is unvalidatable here** — `ultra:codegen` has no
+  route graph. Documented on the field and on the validator, which claimed to reject anything that
+  "could never match a matrix row" while saying nothing about the field that bypasses matching.
+- **The ambiguity message prescribed a fix that cannot work** when two `ApiRoutes` INSTANCES share a
+  name — `group =` filters on the name, so it reproduces the same error. `funktor:auth` declares
+  `ApiRoutes("login")` twice, so the shape is real. Now detected and answered differently.
+- **`.gitignore` carried a second copy of the stale generate command** — the twin of the one the
+  README fix corrected. Replaced with a pointer, so there is one copy.
+- `TsRouteRefs`' KDoc claimed the member name proves the client has it. It does not; see below.
+
+### Recorded, NOT fixed — with the reason
+
+- **The nav gate is opt-in and fails open.** `requiresAuth = true` + `requires: []` gets no signal.
+  Legitimate pages call no gated endpoint, the registry has no advisory channel, and the emitted
+  `mount.ts` shows `requires: []` per entry, which is the visible affordance. Red-team item 15.
+- **Stale `isPublic`, and no CI runs `--check`.** Confirmed: there is no `.github/` and `--check` is
+  wired into no Gradle task. Pre-existing — every generated member has baked the same value from the
+  same function since `route()`/`publicRoute()` shipped. Red-team item 14.
+- **A profile can strip the gated member while the client still emits**, so a page calls a member
+  that is not there. Neither side can see the other, so closing it needs a new registration — filed
+  as `.claude/tasks/20260824-nav-requires-endpoint-crosscheck.md`.
+
+### Clean, recorded so it is not re-trodden
+
+- **`mount.ts` shipping method + uri + publicness is NO disclosure delta.** The generated client in
+  the same bundle already carries the identical triple for every route, publicness included
+  (`route()` sets false, `publicRoute()` true). `ApiAccessDescriptor` omits `Denied` rows to hide
+  *which routes THIS user can reach* — a per-user fact — never *which routes exist*.
+- **No injection path.** `tsStringLiteral` escapes `\`, `'`, LF, CR, U+2028 and U+2029 — the complete
+  set of ECMAScript literal terminators — and the uri reaches string-VALUE position only. Materially
+  unlike the `funcName` precedent, which landed in identifier position with no escaping at all.
+- **No cross-user matrix leak.** `sdk.ts` keys on the TOKEN, `clear()` bumps the generation and drops
+  any in-flight fetch, and the window between `signOut()` and `clear()` is covered by
+  `readableAcl()`'s `!isLoggedIn → ApiAcl.empty` short-circuit.
+- **`isPublicToAnonymous` moved without behaviour change** — body byte-identical, no shadowing member
+  on `ApiRoute`, and `estimateAccess(User.anonymous)` folds the real chain including the group floor.
+- **Nothing became load-bearing for authorization.** `router.beforeEach` still reads only
+  `meta.requiresAuth`. `InsightsApi`'s `isSuperUser()` floor is untouched; the only auth-rule edit in
+  the diff is a test fixture, and it TIGHTENS.
+- **Emitted output is stable**: `navRoutes()` sorts by `(order, path)`, `requires` order is
+  contributor-declared, nothing iterates a hash structure.
+- Style: no wildcard imports, no fully-qualified names, KDoc links resolve.
+
+### Red-team
+
+Four scenarios collected into `.claude/tasks/20260802-redteam-sdk-auth.md` section G (items 14-17).
+COLLECTED, not executed.

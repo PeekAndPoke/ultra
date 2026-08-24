@@ -55,8 +55,14 @@ class TsSdkRegistry {
          * Checked by [TsSdkBuilder] after every contributor has run, which is the only point where
          * the full plan is visible — contributor order is undefined, so no contributor can check it
          * itself.
+         *
+         * **Named `requiresFiles`, not `requires`**, because [Nav.requires] is a different thing four
+         * lines away in the same `route(...)` call: this is emitted FILES, that is API ROUTES. Both
+         * reviewers in the 2026-08-24 gate read the pair as one concept that had moved. Renamed on
+         * this side because it has no counterpart in the emitted TypeScript at all, so `Nav.requires`
+         * and `SdkNavItem.requires` stay in step.
          */
-        val requires: List<String> = emptyList(),
+        val requiresFiles: List<String> = emptyList(),
         val declaredBy: String,
     )
 
@@ -114,6 +120,16 @@ class TsSdkRegistry {
          * Carried because `ApiAcl.canAccess` SHORT-CIRCUITS on it: the matrix endpoint is itself
          * authenticated, so a logged-out visitor has no matrix and every requirement would otherwise
          * read as denied.
+         *
+         * **DERIVE it; never assert it.** This is the one field here that fails OPEN, and it cannot
+         * be validated on this side — `ultra:codegen` has no route graph to check against. A wrong
+         * `true` short-circuits `canAccess` before the matrix is consulted at all, so the entry
+         * renders for every visitor including anonymous ones, and nothing anywhere notices. [method]
+         * and [uri] are the opposite: wrong values match no matrix row, `getAccessLevel` falls back
+         * to `Denied`, and the entry hides.
+         *
+         * On the funktor side `TsRouteRefs` evaluates the route's real rule chain. Anywhere else,
+         * hand-writing `isPublic = true` is a decision to disable the gate.
          */
         val isPublic: Boolean,
     )
@@ -192,6 +208,11 @@ class TsSdkRegistry {
      * has no row for — the mechanism by which the server transmits denial by OMISSION — so a
      * requirement that cannot match reads as denied for every user, and the menu entry disappears
      * for everyone with nothing anywhere naming the cause.
+     *
+     * **[ApiRouteRef.isPublic] is deliberately NOT checked, and it is the field that matters most.**
+     * These two fail closed; that one fails open, and it is unverifiable here — this module has no
+     * route graph. Whoever builds the ref owns it; see [ApiRouteRef.isPublic]. Raised in the
+     * 2026-08-24 review gate.
      */
     private fun validateNavRequirement(route: Route, ref: ApiRouteRef) {
         // The method lands in a CLOSED union literal in `mount.ts`. Reusing the client emitter's set
@@ -260,7 +281,7 @@ class TsSdkRegistry {
             component: String,
             requiresAuth: Boolean,
             nav: Nav? = null,
-            requires: List<String> = emptyList(),
+            requiresFiles: List<String> = emptyList(),
         ) {
             add(
                 Route(
@@ -268,7 +289,7 @@ class TsSdkRegistry {
                     component = component,
                     requiresAuth = requiresAuth,
                     nav = nav,
-                    requires = requires,
+                    requiresFiles = requiresFiles,
                     declaredBy = contributor,
                 )
             )
