@@ -128,36 +128,15 @@ yellow >10ms, green otherwise. Those thresholds are the only content this collec
 
 ## `vault` — database queries
 
-```json
-{ "entries": [ QueryProfiler.Entry.Impl ] }
-```
+**This section is DELETED, and its deletion is the finding.** It described a shape read off the Kotlin
+types because the sample record's `entries` was empty — the one inference this document warns against
+everywhere else. The review gate on 2026-08-24 established why the sample was empty: the slice could
+never be written at all (`QueryProfiler.Entry.Impl` is a plain class with a 3-arg constructor, so Slumber
+has no codec for it, and the failure silently dropped the WHOLE record). Confirmed across 1193 real
+depot records: `vault.entries` is `[]` in every one.
 
-Empty in the sample; the shape comes from `ultra/vault/.../profiling/QueryProfiler.kt`. Each entry has
-`connection`, `count`, `totalCount?`, `query?`, `queryLanguage`, `vars?`, `queryExplained?`, `totalNs`,
-and five sub-measures — `measureSerializer`, `measureQuery`, `measureIterator`, `measureDeserializer`,
-`measureExplain` — each `{ totalNs, count }`.
-
-**Every total was a private `lazy` property and is therefore NOT in the record.** Vue sums them:
-`totalTimeNs = Σ entries.totalNs`, and one per sub-measure.
-
-Old tab: icon `database`, title "Database". A seven-cell stat strip — Queries (count), Total, Serializer,
-Query, Iterator, Deserializer, Explain, each as ms — then one segment per query:
-
-- header `Query #n took X ms - <connection>`
-- a six-cell strip: `Results: count of total totalCount|n/a`, then each sub-measure as
-  `X ms (Nx)`
-- the query itself, syntax-highlighted by `queryLanguage` (Prism)
-- `vars` as JSON when non-empty
-- `queryExplained` inside a collapsed `<details>Explained</details>`
-
-The same stat strip appeared inside Overview.
-
-> **Gap — the database graph cannot be rebuilt from a record.** The old tab also drew a vis.js network of
-> repositories and their references, built from `DatabaseGraphBuilder`, a **live kontainer service**
-> queried at render time. It is not in the stored data. Either the graph moves to its own live endpoint
-> (it describes the schema, not the request — arguably where it belongs), or `VaultCollector` starts
-> storing `DatabaseGraphModel`, which is static per boot and would bloat every record. **Decide before
-> promising this tab.**
+`VaultCollector` now has an explicit DTO, and the wire shape is that DTO. Do not re-derive it from here;
+read `VaultCollector.Data` and a real record.
 
 ## `kontainer`
 
