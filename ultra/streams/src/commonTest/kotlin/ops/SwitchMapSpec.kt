@@ -621,6 +621,46 @@ class SwitchMapSpec : StringSpec({
         secondReceived shouldBe listOf(10)
     }
 
+    "switchMap starts once when subscribing the outer stream reenters the switchMap stream" {
+
+        val inner = StreamSource(10)
+        val outerSource = StreamSource(1)
+
+        var stream: Stream<Int>? = null
+        var reentered = false
+
+        val received = mutableListOf<Int>()
+
+        val outer = object : Stream<Int> {
+            override fun invoke(): Int = outerSource()
+
+            override fun subscribeToStream(sub: (Int) -> Unit): Unsubscribe {
+                val unsubscribe = outerSource.subscribeToStream(sub)
+
+                // Reenters while the operator is still establishing this very subscription
+                if (!reentered) {
+                    reentered = true
+                    stream?.subscribeToStream { received.add(it) }
+                }
+
+                return unsubscribe
+            }
+        }
+
+        val switched = outer.switchMap { inner }
+        stream = switched
+
+        switched.subscribeToStream { }
+
+        // The operator must not start twice and orphan the first outer subscription
+        outerSource.subscriptions.size shouldBe 1
+        inner.subscriptions.size shouldBe 1
+
+        // Accepted cost of reentering: a subscriber added while start() is still running is
+        // already in the set when the first switch publishes, so it sees the value again
+        received shouldBe listOf(10, 10)
+    }
+
     "switchMap subscribes the outer once when the same handler subscribes twice" {
 
         val inner = StreamSource(10)

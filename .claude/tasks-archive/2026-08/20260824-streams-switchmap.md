@@ -120,3 +120,18 @@ All three reviewers independently converged on ONE root cause: an unsubscribe ha
   operators before being classified as inherited.
 
 **Follow-up DOCS task:** `.claude/tasks/20260824-docs-streams-switchmap.md` (public API touched).
+
+## Amendment — 2026-08-24, after the cutoff gate
+
+`switchMap.kt` was changed once more **after** this task was archived. The `/feature-review` gate on
+`.claude/tasks-archive/2026-08/20260824-cutoff-reentrancy.md` found that `SwitchMapStream` had the
+same reentrancy hole it was fixing in `CutoffStream`: `subscribeToStream`'s `outerUnsubscribe == null`
+guard is blind while the outer subscription is itself being established, so an outer stream whose
+`subscribeToStream` runs reentrant code starts the operator twice and orphans the first outer
+subscription. A `starting` flag now closes it (`ops/switchMap.kt`), `start()` wraps its whole body in
+the cleanup `try/catch`, and `SwitchMapSpec` gained a 27th case pinning it. Mutation-tested: removing
+the flag fails exactly that case.
+
+Note this file's own commit history is misleading — the operator and spec were swept into
+`5ab46234` ("take the build lock for ACL-aware navigation") by another agent committing a shared
+index. Nothing was lost; the content is just under the wrong message.

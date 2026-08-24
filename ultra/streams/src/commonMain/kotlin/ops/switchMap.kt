@@ -71,6 +71,9 @@ private class SwitchMapStream<OUTER, INNER, RESULT>(
     private var outerUnsubscribe: Unsubscribe? = null
     private var innerUnsubscribe: Unsubscribe? = null
 
+    /** Set while [start] is establishing the outer subscription */
+    private var starting = false
+
     /** Counts switches, so a subscription left over from an outdated switch can be detected */
     private var switchCount = 0
 
@@ -87,7 +90,7 @@ private class SwitchMapStream<OUTER, INNER, RESULT>(
 
     override fun subscribeToStream(sub: (RESULT) -> Unit): Unsubscribe {
         // Start before adding the subscriber, so that no subscriber runs while we are wiring up
-        if (outerUnsubscribe == null) {
+        if (!starting && outerUnsubscribe == null) {
             start()
         }
 
@@ -103,23 +106,27 @@ private class SwitchMapStream<OUTER, INNER, RESULT>(
     }
 
     private fun start() {
-        var established = false
-
-        outerUnsubscribe = outer.subscribeToStream { next ->
-            if (established) {
-                switchTo(inner = selector(next), force = false)
-            }
-        }
-
-        established = true
+        starting = true
 
         try {
+            var established = false
+
+            outerUnsubscribe = outer.subscribeToStream { next ->
+                if (established) {
+                    switchTo(inner = selector(next), force = false)
+                }
+            }
+
+            established = true
+
             // The initial value is switched to here and not in the handler above: running the
             // selector before the outer subscription is established would orphan it on a throw
             switchTo(inner = selector(outer()), force = true)
         } catch (t: Throwable) {
             stop()
             throw t
+        } finally {
+            starting = false
         }
     }
 
