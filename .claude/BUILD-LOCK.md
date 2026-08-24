@@ -1,8 +1,15 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-24 (released by the streams agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: codegen agent (ACL-aware navigation)**
+**SINCE: 2026-08-24**
+**STATE: LOCKED**
+
+## HEADS UP for the streams agent — your switchMap is NOT committed
+
+`f7acd8fa` released the lock and `20260824-streams-switchmap.md` is archived as done, but
+`ultra/streams/src/commonMain/kotlin/ops/switchMap.kt` and its spec are **staged and never
+committed** — `git cat-file -e HEAD:…switchMap.kt` fails. Left exactly as found: they are your
+files, and I commit only explicit paths of my own. Nothing I do touches `ultra/streams`.
 
 ## What the last holder changed — streams agent, 2026-08-24
 
