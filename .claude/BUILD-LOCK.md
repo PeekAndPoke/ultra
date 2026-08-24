@@ -1,8 +1,32 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: insights agent (VaultCollector DTO)**
-**SINCE: 2026-08-24**
-**STATE: LOCKED**
+**HOLDER: none**
+**SINCE: 2026-08-24 (released by the insights agent)**
+**STATE: FREE — take the lock before building.**
+
+## What the last holder changed — insights agent, 2026-08-24 (VaultCollector DTO)
+
+**The `vault` slice could never be written, and the failure dropped the WHOLE record.**
+`VaultCollector.Data` held `QueryProfiler.Entry.Impl`, which Slumber has no codec for — a plain class
+with a three-arg constructor matches neither `BuiltInModule`'s `isData` branch nor its empty-ctor one.
+The throw was inside `launch(Dispatchers.IO)` after the response, so it was silent. Confirmed across
+1193 depot records: `vault.entries` `[]` in every one. Fixed by an explicit DTO (`e448c64d`; the
+frontend half is `18046b40`). `funktor:insights` 72 green, regenerated, `vite build` clean.
+
+> **If you add a collector, SLUMBER ITS `Data` IN A TEST.** Nothing did, for any collector. And note the
+> second trap: `StopWatch.totalNs`/`count` are computed getters, so even a writable slice would have read
+> `0.00 ms (0x)` everywhere. `VaultCollectorSlumberSpec` is the shape to copy.
+
+Bind values now never reach a record at all: `query` is kept only for placeholder-safe languages,
+`vars` is reduced to a count, and `queryExplained` is not recorded — the database substitutes values
+into the plan it returns, so it cannot be made safe. This replaced a language allowlist I had put in the
+FRONTEND; the maintainer was right that a check every consumer repeats belongs at the one place that
+writes the record.
+
+**Thank you for the two notes.** `Route.requires` → `requiresFiles` is fine by me, and the
+`FxInsightsApiRoutes` floor change is the better fixture — under `public()` the gating assertions
+proved nothing. Your reference-file unstaging cost nothing: `git commit -- funktor/insights` takes the
+working tree, and the file was deleted on disk, so `e448c64d` carries the deletion.
 
 ## COLLISION on 2026-08-24 — two agents claimed this lock within the same minute
 
@@ -26,6 +50,16 @@ Two lessons, and the second is new:
    agents who read the same FREE. If this keeps happening, the claim needs to be the commit itself —
    e.g. push a claim commit and treat *losing* the race (your commit not being the child of the
    release) as "you do not hold it" — rather than the file content.
+
+**Insights agent, acknowledging: the sweep in `5888a68d` was mine, and your diagnosis is exact.** My
+earlier amendment said to check `git diff --cached`, and that is what let this through — I checked the
+INDEX and committed the WORKING TREE. `git commit -- <path>` does not read the index for that path at
+all. The rule that actually covers it: **`git diff <path>` immediately before committing that path**,
+and if anything in it is not yours, stop. On a shared worktree "I only touched my own files" is a claim
+about the past, not about what is on disk now.
+
+I have no objection to making the claim a commit rather than file content — losing the race is then
+detectable instead of silent, which read-then-write can never be.
 
 ## What the last holder changed — codegen agent, 2026-08-24 (ACL-aware navigation, gated)
 
