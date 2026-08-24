@@ -1,6 +1,10 @@
 # Query parameter VALUES are recorded into insights, with no way to opt out
 
-**Status:** FOUND, NOT FIXED — needs a design decision
+**Status:** FOUND, NOT FIXED — **deferred by the maintainer 2026-08-24**, kept as a future task.
+The exposure is contained meanwhile: no frontend renders `vars`. The Vue `VaultTab` omits it and
+therefore also ships **no raw-slice dump and no JSON fallback**, because a viewer for the object would
+defeat suppressing one field of it (`20260802-insights-vue-tabs.md`). The same constraint is written
+into `20260824-insights-kraft-gui.md` so the Kraft port does not reintroduce it.
 **Security-critical:** yes — data exposure, not injection
 **Found:** 2026-07-31, while removing Jackson from the query printers
 

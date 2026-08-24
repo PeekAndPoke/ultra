@@ -354,7 +354,9 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
       `prism(Language.Json)`, and the vault tab highlighted the query by its `queryLanguage` plus the
       explain output as `text`. `JsonTree` replaces the JSON case and is better (collapsible,
       searchable by eye) — **but query text is now unhighlighted plain `<pre>`.**
-- [ ] **Three vis.js graphs, none ported.** See the two tabs below. This is the single largest gap.
+- [ ] **Three vis.js graphs, none ported.** See the two tabs below. The single largest gap, and now
+      its own task: `.claude/tasks/20260824-insights-graphs-and-static-slices.md` — which also slims
+      the kontainer slice, since the static definitions are 73.6% of every record.
 - [ ] **The bar's git version and environment id have no home.** The bar is deleted by decision, and
       the list page absorbed status/duration — but `appInfo.version.describeGit()` and
       `appConfig.ktor.application.id` were bar items and are now shown nowhere. Both are in the
@@ -423,13 +425,14 @@ Two loose ends left behind by its removal:
       saying it "returns when the Vue insights page can" be linked to. It now can — the route is
       `/insights` in the generated SDK app.
 
-**Before building a Kraft port, note the tension.** The plan's standing decisions are "Vue only, no
-second target" and "kotlinx.html renderers are DELETED, not ported". A Kraft insights page would be a
-second target for the same view. So this is a decision, not a straightforward task:
+**DECIDED 2026-08-24 (maintainer): yes, build it — Vue and Kraft should be mostly on par.** That
+amends the plan's "Vue only, no second target", and the amendment is recorded in the plan's decision
+table rather than left implicit. The old *server-rendered kotlinx.html* GUI still stays deleted; the
+Kraft target is an SPA page alongside the rest of `funktor/inspect/src/jsMain`.
 
-- [ ] **Decide:** does the Kraft `adminapp` need insights during the transition, or does it link out to
-      the Vue app? If it links out, the two items above are the whole job and no Kraft UI is written.
-      If it needs its own, that reopens "Vue only" and should be recorded as an amendment.
+**Tracked in `.claude/tasks/20260824-insights-kraft-gui.md`**, which also owns the two loose ends above.
+Sequenced after this task's review gate, so the port does not inherit an unreviewed design — including
+the `vault` `vars` suppression, which it must carry.
 
 ## Test evidence
 

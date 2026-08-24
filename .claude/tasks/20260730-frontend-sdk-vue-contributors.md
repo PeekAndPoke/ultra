@@ -1,9 +1,28 @@
 # Frontend SDK — Vue components and pages via codegen contributors
 
 **Status:** IN PROGRESS — design agreed 2026-07-30, refined same day (config ownership + profiles),
-amended 2026-08-02 (styling). **Landed and gated 2026-08-02:** the aggregation registry, `mountAll`,
-and the `--out`/`--sdkDir` CLI boundary (review record below). The Vue components themselves — the
-part this doc is actually about — are not started.
+amended 2026-08-02 (styling). **The mechanism is built and gated; the port it exists for is not
+finished, and none of the deletion payoff is banked.**
+
+| Piece | State |
+|---|---|
+| Aggregation registry, `mountAll`, the `--out`/`--sdkDir` CLI boundary | DONE, gated 2026-08-02 — review record below |
+| Styles registry, `styles.ts`/`css-modules.d.ts`, `api/` client grouping, route `requires` | DONE, gated 2026-08-09 — records in `20260802-css-contribution-and-app-scaffold.md` and `20260809-group-clients-under-api.md` |
+| Vue contributors — `AuthTsContributor`, `SdkContextTsContributor`, `InsightsTsContributor` | DONE. 23 `.vue`/`.ts`/`.css` resources ship from `funktor/codegen/src/main/resources/ts/` |
+| `funktor-demo/sdkgen-app` — signs in, loads the access matrix, renders the insights page in a browser | DONE 2026-08-02 |
+| The insights tabs | IN PROGRESS — `.claude/tasks/20260802-insights-vue-tabs.md` |
+| Steps 8–9 below — delete `funktor/inspect/src/jsMain` (still 51 `.kt` files) and the staticweb cleanup | NOT STARTED |
+
+**Two things this table is deliberately blunt about.** The `.vue` and `.css` content has never been
+through `/feature-review` — both 2026-08-09 gates covered the generator and the app shell only. And
+the whole justification for this plan is the deletion in step 8; until `funktor/inspect/src/jsMain`
+goes, the repo carries *both* frontends.
+
+**This header read "The Vue components themselves — the part this doc is actually about — are not
+started" until 2026-08-24**, by which point the maintainer had been signing in to the running Vue app
+for three weeks. Exactly the stale-plan failure `CLAUDE.md` warns causes wrong priorities: anyone
+reading the governing plan would have scheduled work that was already done.
+
 **Plan:** `.claude/tasks/20260729-ts-sdk-codegen.md` (extends its contributor model)
 **Security-critical:** no (dev-time generator). The insights auth floor it unblocks IS security-critical
 and is tracked separately.
@@ -29,7 +48,7 @@ would drag the generator into a production artifact).
 
 | Decision | Note |
 |---|---|
-| Vue only, no second target | **Amended 2026-08-02: Tailwind applies to APP frontends, not to shipped components** — see "Styling" below |
+| Vue only, no second target | **Amended twice.** 2026-08-02: Tailwind applies to APP frontends, not to shipped components — see "Styling". 2026-08-24: **the ops views ship for Kraft AND Vue** while Kraft frontends exist — see `20260824-insights-kraft-gui.md`. The old *server-rendered kotlinx.html* GUI stays deleted; the Kraft target is an SPA page alongside the rest of `funktor/inspect/src/jsMain` |
 | No npm publishing | Full SDK generated on the fly, per app |
 | No backward compat | Nothing needs to keep working |
 | No design compat | Free to look however Vue allows |
@@ -769,6 +788,21 @@ This task depends on `20260729-ts-sdk-codegen.md` Phase 2 (`RestApiTsContributor
    `funktor/inspect/src/jsMain` (51 files, 5,165 lines of Kraft) and the 33 hand-written API client and
    model files in `funktor/inspect/src/commonMain`.
 9. **staticweb cleanup**, once nothing renders server-side HTML.
+
+**What actually happened, 2026-08-02 → 08-09.** Steps 1–3, 5 and 6 are done. Step 4 is done for
+insights: `funktor/insights` has no `jsMain` source set at all any more — the old renderers sit
+uncompiled in `funktor/insights/reference/`, with 11 `VUE-REF:` breadcrumbs still open.
+
+**Step 7 was not followed.** The first vertical slice was insights — the one this list singles out as
+the worst possible choice. It was chosen anyway, and that is where the import-resolution problem, the
+styles registry and the route `requires` cross-check were all found, so the cost came back as
+generator design rather than as a wasted throwaway slice. What it did NOT buy is the thing a second
+slice would have: **nothing has yet proved the mechanism fits a second feature module**, and the
+`funktor/inspect` sections in step 8 have had no slice of their own.
+
+**Still genuinely missing from step 6:** the `vue-tsc` gate is NOT wired into Gradle `check` — it is
+run by hand, and `vite build` (the only thing that catches a missing `.vue`, see the gate section
+below) is not wired in either.
 
 **Where i18n slots in.** The TS emission itself is a prerequisite of **step 7** — the first component with
 user-visible text — not of the generator or of the insights API. Two pieces of it belong earlier because
