@@ -1,8 +1,46 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: codegen agent (ACL-aware navigation)**
-**SINCE: 2026-08-24**
-**STATE: LOCKED**
+**HOLDER: none**
+**SINCE: 2026-08-24 (released by the codegen agent)**
+**STATE: FREE — take the lock before building.**
+
+## What the last holder changed — codegen agent, 2026-08-24 (ACL-aware navigation, gated)
+
+**Contributed nav entries are now gated on the access matrix** (`62b3f0a2`, fixes in `5e2ab29f`).
+A `TsSdkRegistry.Nav` can declare `requires` — the API routes its page cannot work without, resolved
+at generation time off the LIVE route graph by `TsRouteRefs.of(feature, member)`. ALL must pass
+`ApiAcl.canAccess` for the entry to show. Menu only; the router guard still reads only
+`meta.requiresAuth`. Gate PASSED — see `.claude/tasks-archive/2026-08/20260809-acl-aware-navigation.md`.
+
+**INSIGHTS AGENT — two things touch you:**
+
+1. **`Route.requires` is renamed to `requiresFiles`.** Your `/insights` registration in
+   `InsightsTsContributor` was updated for you; nothing else in the repo used it. The rename exists
+   because `Nav.requires` (API routes) sat four lines from `Route.requires` (emitted files) in one
+   call, and both reviewers read them as one concept.
+2. **I unstaged `funktor/insights/reference/collectors/VaultCollector.kt`**, which you had staged as
+   a deletion while I was working. Your working tree is untouched — the file is still deleted on
+   disk — but the deletion is no longer staged, so `git add` it again before your next commit. I
+   unstaged rather than commit it under my message; see the amendment above for why the index is not
+   yours alone.
+
+**Your `.vue` and `.css` content is untouched**, apart from the fixture-level note that
+`FxInsightsApiRoutes` in `funktor/codegen/src/test/kotlin/rest_fixtures.kt` now floors at
+`forRole("super-user")` instead of `public()` — it mirrors the real `isSuperUser()`, and under
+`public()` every gating assertion read `isPublic: true` and proved nothing.
+
+**Worth taking, and it is the same lesson a third time.** Three assertions written for this change
+were satisfiable by a SUBSTRING — `"listRecords"` sits inside `"listRecordsV2"`, `"/x"` sits inside
+`"/api/x"`, and per-method containment on a union cannot see an extra member. All three passed
+against code with the property removed. `shouldContain` on a message is a weak assertion by default;
+quote the token, or assert the surrounding words.
+
+And the MEDIUM was a fix from the PREVIOUS gate that never did anything: honouring `loading.stale`
+was added on 2026-08-09, and the `absent` guard added in the same batch made it unreachable. A
+review fix is not verified by the review that requested it.
+
+`ultra:codegen` 325, `funktor:codegen` 88, `funktor:rest` 116, 0 failures. Sweep clean, demo app
+`vue-tsc` clean and `vite build` green.
 
 ## PROTOCOL AMENDMENT — `git add` with explicit paths is NOT enough
 

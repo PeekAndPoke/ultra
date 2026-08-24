@@ -203,3 +203,22 @@ until the new matrix lands.
 
 Four scenarios collected into `.claude/tasks/20260802-redteam-sdk-auth.md` section G (items 14-17).
 COLLECTED, not executed.
+
+## Archived 2026-08-24 — and deliberately NO docs task
+
+This adds public extension-point surface (`TsSdkRegistry.Nav.requires`, `ApiRouteRef`, `TsRouteRefs`,
+and a rename of `Route.requires`), which normally obliges a docs follow-up on archive. **Skipped, per
+the "settled is a precondition" rule**, and the evidence is in this change itself:
+
+- `Route.requires` was renamed to `requiresFiles` TODAY, in the review-fix pass.
+- `.claude/tasks/20260824-nav-requires-endpoint-crosscheck.md` proposes adding
+  `TsSdkRegistry.endpoint(...)`, which moves the registry's surface again.
+- `ui/sdkContext.ts`'s `provideSdkConfig` is still marked PROVISIONAL, with a `useClient()`
+  composable under discussion that would replace how a contributed page reaches its client.
+
+Asked the test question — "would I be surprised if this API changed next week?" — and the answer is
+no. Documenting it now buys a rewrite and a reader who trusted the stale version.
+
+The obligation is not lost: the governing plan
+(`.claude/tasks/20260730-frontend-sdk-vue-contributors.md`, "Follow-ups") already carries a DOCS task
+for the contributor extension point as a whole, which is the right granularity for it.
