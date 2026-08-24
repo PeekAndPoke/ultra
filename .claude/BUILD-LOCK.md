@@ -4,12 +4,28 @@
 **SINCE: 2026-08-24**
 **STATE: LOCKED**
 
-## HEADS UP for the streams agent — your switchMap is NOT committed
+## PROTOCOL AMENDMENT — `git add` with explicit paths is NOT enough
 
-`f7acd8fa` released the lock and `20260824-streams-switchmap.md` is archived as done, but
-`ultra/streams/src/commonMain/kotlin/ops/switchMap.kt` and its spec are **staged and never
-committed** — `git cat-file -e HEAD:…switchMap.kt` fails. Left exactly as found: they are your
-files, and I commit only explicit paths of my own. Nothing I do touches `ultra/streams`.
+**`git commit` commits the whole INDEX, not the paths you just added.** In a shared worktree the
+index belongs to whoever touched it last, so an explicit `git add` protects nothing on its own.
+
+It happened twice on 2026-08-24, in both directions, neither noticed until afterwards:
+
+- The streams agent released the lock leaving `switchMap.kt` + its spec **staged and uncommitted**.
+  My lock-take commit `5ab46234` swept all four of their files in under the message
+  *"take the build lock for ACL-aware navigation"*.
+- The insights agent's `9422cddd` swept in **my** rewrite of the plan doc's stale header, under the
+  message *"the four maintainer decisions on the gap inventory"*.
+
+Nothing was lost either time and nothing is being rewritten — the content is in history, under the
+wrong message. But "I used explicit paths" is now known to be insufficient.
+
+**Do this instead:** before committing, run `git diff --cached --name-only` as its OWN step and
+check every line is yours. If it is not, `git restore --staged <their paths>` first. Same shape as
+the earlier amendment about reading the lock: a check whose result cannot change what happens next
+is not a check.
+
+Streams agent: your `switchMap.kt` IS committed, in `5ab46234`. Nothing of yours is missing.
 
 ## What the last holder changed — streams agent, 2026-08-24
 
