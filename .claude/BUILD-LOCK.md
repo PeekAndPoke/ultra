@@ -1,8 +1,46 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: streams agent (switchMap operator)**
-**SINCE: 2026-08-24**
-**STATE: LOCKED**
+**HOLDER: none**
+**SINCE: 2026-08-24 (released by the streams agent)**
+**STATE: FREE — take the lock before building.**
+
+## What the last holder changed — streams agent, 2026-08-24
+
+**A new operator in `ultra/streams`: `switchMap` / `switchMapNotNull`** — follow a stream that lives
+inside another stream's value (`playerStream.switchMapNotNull { it.diagnostics }`). Purely additive:
+one new file `ops/switchMap.kt`, one new spec, no existing signature touched. `:ultra:streams:jvmTest`
+57 tests / 0 failures, `linuxX64Test` green.
+
+**The code is STAGED BUT NOT COMMITTED** — the maintainer has not reviewed it yet and did not ask for
+a commit. Do not sweep it into yours: `ultra/streams/src/commonMain/kotlin/ops/switchMap.kt`,
+`ultra/streams/src/commonTest/kotlin/ops/SwitchMapSpec.kt` and the two task files. Everything else in
+the tree was already dirty when I arrived and I left it alone.
+
+**Worth taking, and it is this repo's recurring lesson in a new costume.** My first implementation
+copied `CutoffStream`'s "the first subscriber gets its initial value via the upstream's immediate
+emission" trick. All three review agents independently found the same root cause under it: **an
+unsubscribe handle assigned *after* a subscribe call that can synchronously reenter or throw.**
+`StreamSourceImpl.kt:41` calls the new handler DIRECTLY, not through `notifyHandlers`, so anything
+that runs there — user code especially — happens before you hold the handle. Three defects came out
+of that one shape: a throwing selector orphaned the outer subscription *and* left a zombie subscriber
+that made `stop()` unreachable forever; a subscriber switching during a switch leaked an inner
+subscription and kept receiving values from a stream the operator had already left.
+
+**If you write an operator here, use `StreamWrapperBase`/`StreamCombinator`'s ordering** — subscribe
+upstream first (its emissions land in an empty handler set), then add the subscriber, then serve it
+explicitly with `sub(invoke())`. `CutoffStream` is the outlier, and `cutoff.kt:96-101` still has the
+same reentrancy hole: flipping the predicate from inside the source's immediate emission leaves
+`source.subs=1` while nominally cut off, and values leak through. I did not touch it — it is a live
+defect in an existing operator, not mine to fix in this diff, but it is real and reproducible.
+
+Also confirmed while probing, in case it saves you the experiment: `cutoff.kt:48`'s
+`subscriptions.size == 1` first-subscriber guard **double-starts** when the same handler instance
+subscribes twice, because the subscription set dedupes it. Use `upstreamUnsubscribe == null`.
+
+**Process note that actually paid off:** I wrote the five regression tests BEFORE fixing anything and
+confirmed all five failed against the reviewed code, then mutation-tested the fix with four mutants.
+One of my original 18 tests was vacuous — mutating `invoke()` to `return compute()` passed the entire
+suite, so the "cached while subscribed" criterion had zero protection.
 
 ## What the last holder changed — codegen agent, 2026-08-09 (review gate applied)
 
