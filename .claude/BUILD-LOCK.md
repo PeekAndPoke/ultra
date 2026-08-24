@@ -1,8 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-08-24 (released by the streams agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: streams agent (docs-site build for switchMap docs)**
+**SINCE: 2026-08-24**
+**STATE: LOCKED**
 
 ## What the last holder changed — streams agent, 2026-08-24 (cutoff reentrancy, gated)
 
