@@ -71,7 +71,7 @@ experiment settles it, run it. Record what was probed and stayed CLEAN as well a
 stops the next session re-treading the same ground.
 
 Apply confirmed CRITICAL/HIGH and clear MEDIUM findings; park anything needing a design decision for the
-maintainer. Re-run the feature's tests after fixes, and mutation-check anything new.
+maintainer. Re-run the feature's tests after fixes, and mutation-check anything new on a security-critical or persistence path.
 
 ## Security-critical → red-team follow-up
 

@@ -110,14 +110,20 @@ These make a suite look green while the feature is broken. Treat them as precond
   cannot produce that failure, and it disagrees with the gradle console for the same run. Use the XML
   to confirm a spec ran and how many failed; use the console output to see which case broke.
   Confirmed twice on 2026-07-28 (`HelpersSpec`, `MonkoSlashKeyTest`).
-- **Mutation-check every NEW test, not just security-relevant ones** (broadened 2026-08-28 with the
-  review-loop adoption; protocol in `.claude/skills/review-loop/`). A green test proves nothing until it
-  has been RED for the right reason. This repeatedly catches vacuous or right-for-the-wrong-reason
+- **Mutation-test every change that is security-relevant OR touches persistence** — storage,
+  serialization, codecs, migrations, indexes, query building (maintainer, 2026-08-28). Deliberately
+  narrower than the klang standard the review-loop skill was adopted from, which mutation-checks every
+  test. Protocol in `.claude/skills/review-loop/`. A green test proves nothing until it has been RED for
+  the right reason. **Persistence earns the same bar as security because it fails the same way: silently,
+  and the damage is already on disk by the time anyone looks.** This repeatedly catches vacuous or right-for-the-wrong-reason
   tests, including ones written in the same session — a "single-use token" e2e also satisfied by a
-  cooldown; a `validate()` test that constructed the healthy object so it passed whether or not
-  validation ran; and `VaultCollector.Data`, whose type Slumber had no codec for, silently dropping
-  every record for months while the collector and the API both had tests. **If a type is serialized in
-  production, a test must serialize it.**
+  cooldown, and a `validate()` test that constructed the healthy object so it passed whether or not
+  validation ran.
+- **If a type is serialized in production, a test must serialize it.** Not a mutation rule, a coverage
+  one, and it earns its own line: `VaultCollector.Data` held a type Slumber had no codec for, so the
+  slice threw in a post-response coroutine and silently dropped the WHOLE record — `vault.entries` was
+  `[]` across all 1193 depot records. The collector had tests and the API had tests; the one operation
+  the data actually undergoes in production had none.
 - **A surviving mutant is not always a missing test** — it can mean the FIX was wrong, the fixture
   cannot express the difference, or a comment claimed something false. Work out which before adding an
   assertion to make it die.

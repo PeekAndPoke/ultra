@@ -1,6 +1,6 @@
 ---
 name: review-loop
-description: Use when reviewing code changes, running a code review, applying review findings, or checking that a test can actually fail (mutation check). Codifies the project review standard — reviews loop until a clean round, fixes get re-reviewed, and every new test is mutation-checked.
+description: Use when reviewing code changes, running a code review, applying review findings, or checking that a test can actually fail (mutation check). Codifies the project review standard — reviews loop until a clean round without flip-flopping on settled findings, and tests on security-critical or persistence paths are mutation-checked.
 ---
 
 ## What This Skill Does
@@ -27,8 +27,9 @@ is factually wrong with the reason it was settled.** Everything below serves tha
 | **Comment findings only when factually wrong** | Prose churn — the loop's documented failure mode |
 | **Safety valve at 2 rounds** | Fix-churn feeding itself indefinitely |
 
-The second standard, **mutation-checked tests**, is here because a review-loop fix almost always ships
-a test, and a green test proves nothing until it has been RED for the right reason.
+The second standard, **mutation-checked tests on security-critical and persistence paths**, is here because a
+review-loop fix almost always ships a test, and a green test proves nothing until it has been RED for
+the right reason. **Scope is narrower here than in klang** — see Standard 2.
 
 Applies whenever you review changes or write tests, including when `/code-review` or `/simplify`
 produce findings — their output enters this loop at step 3. `/feature-review` is this loop run with
@@ -73,7 +74,8 @@ red-team follow-up, task-file record).
 4. **Verify each finding against the code before acting on it.** Reviewers here have been confidently
    wrong, and so has the coordinator — say so when one does not survive. Where a one-command
    experiment settles it, run it.
-5. **Apply the fixes**, run the affected tests, mutation-check anything new (Standard 2).
+5. **Apply the fixes**, run the affected tests, and mutation-check anything new that touches a
+   security-critical path (Standard 2).
 6. **If a CRITICAL/MAJOR fix was applied → go to 2.** MINOR-only rounds do not loop.
 
 ### Termination — the loop stops ONLY on
@@ -118,9 +120,26 @@ answer; do not pad; do NOT spawn sub-agents.
 
 ---
 
-## Standard 2 — Mutation-check every new test
+## Standard 2 — Mutation-check tests on security-critical and persistence paths
 
 A green test proves nothing until it has been RED for the right reason.
+
+**Scope, and it differs from klang deliberately** (maintainer, 2026-08-28). Klang mutation-checks every
+new test; here it is mandatory for two families:
+
+1. **Security-critical** — auth, sessions, tokens, permissions, tenancy, anything guarding a data
+   boundary.
+2. **Persistence** — storage, serialization and codecs, migrations, indexes, query building. Anything
+   whose output ends up on disk or comes back off it.
+
+Plus regression guards and review-loop fixes on either. Everywhere else it is encouraged, not required.
+Do not quietly widen this back to "every test": the narrower scope is a maintainer decision, not an
+oversight in the adoption.
+
+**Why persistence sits beside security rather than below it:** both fail the same way — silently, with
+the damage already done by the time anyone looks. A wrong authz check leaks data that was already
+readable; a wrong codec loses data that is already gone. Neither announces itself, which is exactly the
+condition under which a green test is worth nothing.
 
 ### Protocol (per new test)
 
@@ -138,10 +157,9 @@ A green test proves nothing until it has been RED for the right reason.
 express the difference, or a comment claimed something false. Work out which before adding an assertion
 to make it die.
 
-### Scope
+### Not a retrofit mandate
 
-Mandatory for new specs, regression guards, and tests written as review-loop fixes. Not a retrofit
-mandate — mutation-check older tests opportunistically when a change touches them.
+Mutation-check older tests opportunistically, when a change touches them.
 
 ### Why this exists
 
@@ -154,11 +172,12 @@ This repo has shipped toothless guards repeatedly:
 - `JwtSignatureGateSpec` was flaky 1-in-4 because it built alternates from a char range instead of the
   base64 alphabet. It passed a three-reviewer gate and most runs.
 
-**And the newest one, which is the sharpest.** `VaultCollector.Data` held a type Slumber had no codec
-for, so the slice threw inside a post-response coroutine and silently dropped the WHOLE record — across
-1193 depot records, `vault.entries` was `[]` in every one. The collector had tests. The API had tests.
-The one operation the data actually undergoes in production had none. **If a type is serialized in
-production, a test must serialize it.**
+**And a related one that mutation checking would NOT have caught**, kept here because it is the
+neighbouring trap: `VaultCollector.Data` held a type Slumber had no codec for, so the slice threw in a
+post-response coroutine and silently dropped the WHOLE record — `vault.entries` was `[]` across all 1193
+depot records. No mutation would have found that, because no test exercised the path at all. The rule it
+produced is a coverage rule and lives in CLAUDE.md: **if a type is serialized in production, a test must
+serialize it.**
 
 ---
 
