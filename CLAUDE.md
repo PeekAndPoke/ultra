@@ -61,9 +61,15 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
   because nobody re-checked whether its core premise was still wanted.
 - **Every feature gets a task file** in `.claude/tasks/`, named `YYYYMMDD-<slug>.md` (copy
   `.claude/tasks/TEMPLATE.md`). Features usually come from plan phases — link the plan in the task.
-- Lifecycle: implement → run `/feature-review` (mandatory multi-agent review: 1. implementation &
-  code style, 2. domain expert, 3. security) → fix confirmed findings → tests green → mark DONE
-  and move the task file to `.claude/tasks-archive/<YYYY-MM>/` (filename is already dated).
+- Lifecycle: implement → run `/feature-review` (mandatory: three charters — implementation & code
+  style, domain expert, security) → fix confirmed findings → tests green → mark DONE and move the task
+  file to `.claude/tasks-archive/<YYYY-MM>/` (filename is already dated).
+- **The gate LOOPS — see `.claude/skills/review-loop/`.** A fix produced by a review is itself an
+  unreviewed change, so rounds repeat until a clean one. The loop is built so it cannot flip-flop: round
+  1 is blind, later rounds review BEFORE seeing the previous findings and then reconcile against them,
+  and **a settled finding can only be reopened by naming what is factually wrong in the reason it was
+  settled** — not by re-asserting it. Only CRITICAL/MAJOR loop; two rounds without a clean one means
+  stop and ask.
 - **When archiving a task, create a follow-up DOCS task if the change touched public API.** Docs are
   written against SETTLED code, not reviewed code — the user's own review comes after the gate, so
   documenting at review time just means rewriting. A tracked follow-up also stops "update the docs"
@@ -104,10 +110,17 @@ These make a suite look green while the feature is broken. Treat them as precond
   cannot produce that failure, and it disagrees with the gradle console for the same run. Use the XML
   to confirm a spec ran and how many failed; use the console output to see which case broke.
   Confirmed twice on 2026-07-28 (`HelpersSpec`, `MonkoSlashKeyTest`).
-- **Mutation-test every security-relevant change** before calling it green. This repeatedly catches
-  vacuous or right-for-the-wrong-reason tests, including ones written in the same session — e.g. a
-  "single-use token" e2e also satisfied by a cooldown, and a `validate()` test that constructed the
-  healthy object so it passed whether or not validation ran.
+- **Mutation-check every NEW test, not just security-relevant ones** (broadened 2026-08-28 with the
+  review-loop adoption; protocol in `.claude/skills/review-loop/`). A green test proves nothing until it
+  has been RED for the right reason. This repeatedly catches vacuous or right-for-the-wrong-reason
+  tests, including ones written in the same session — a "single-use token" e2e also satisfied by a
+  cooldown; a `validate()` test that constructed the healthy object so it passed whether or not
+  validation ran; and `VaultCollector.Data`, whose type Slumber had no codec for, silently dropping
+  every record for months while the collector and the API both had tests. **If a type is serialized in
+  production, a test must serialize it.**
+- **A surviving mutant is not always a missing test** — it can mean the FIX was wrong, the fixture
+  cannot express the difference, or a comment claimed something false. Work out which before adding an
+  assertion to make it die.
 - **Back up with `cp` before mutating a file; never restore with `git checkout`** — the file usually
   carries other uncommitted work. **Keep the source-set path in the backup name.** Backing several
   files into one directory by `basename` silently collides in a multiplatform layout — `commonMain/
