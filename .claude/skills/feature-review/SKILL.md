@@ -70,8 +70,10 @@ survive.** Reviewers here have been confidently wrong; so has the coordinator. W
 experiment settles it, run it. Record what was probed and stayed CLEAN as well as what was found — it
 stops the next session re-treading the same ground.
 
-Apply confirmed CRITICAL/HIGH and clear MEDIUM findings; park anything needing a design decision for the
-maintainer. Re-run the feature's tests after fixes, and mutation-check anything new on a security-critical or persistence path.
+Apply confirmed CRITICAL and MAJOR findings; park anything needing a design decision for the
+maintainer. **The scale is CRITICAL / MAJOR / MINOR** — the same one review-loop loops on. Do not
+introduce HIGH or MEDIUM here: a gate that loops on CRITICAL/MAJOR while a reviewer reports HIGH drops
+it silently, and this repo's most-cited gate did report HIGH, for a live session token on a screen. Re-run the feature's tests after fixes, and mutation-check anything new on a security-critical or persistence path.
 
 ## Security-critical → red-team follow-up
 
@@ -87,19 +89,37 @@ rather than opening a second one for the same surface.
 - Fixes applied, tests re-run, mutations reported.
 - The task file's **Review record** updated — including findings that were REJECTED and why, and any
   claim of yours that did not survive. That record is the ledger the next round reconciles against.
-- A clear verdict: **gate PASS** (no open CRITICAL/HIGH, e2e present and green) or **gate FAIL** with
-  the blocking items named.
+- A clear verdict: **gate PASS** (no open CRITICAL or MAJOR, e2e present and green) or **gate FAIL**
+  with the blocking items named.
+
+## On PASS — finishing the lifecycle
+
+The gate is not done when the verdict is written. CLAUDE.md's lifecycle continues, and these steps are
+skipped often enough to be worth naming here:
+
+- [ ] Mark the task **DONE** and move it to `.claude/tasks-archive/<YYYY-MM>/` (the filename is dated).
+- [ ] **Create the follow-up DOCS task if the change touched public API** — unless the code is still in
+      flux, in which case say so in the archive note. Docs are written against SETTLED code.
+- [ ] Create or extend the red-team task if the feature is security-critical.
 
 ## Notes
 
-- This gate is about *this feature's* change set — not a whole-repo audit. Keep reviewers scoped.
+- **Scoped means START from the change set, then follow it into the code it depends on** — it does not
+  mean stay inside the diff. In the insights gate the CRITICAL and both worst findings were OUTSIDE the
+  diff, in the collector and the drivers the changed files read from; a reviewer who stayed in the `.vue`
+  files would have found none of them. It is still not a whole-repo audit.
+- **A confirmed finding that is real but out of scope to fix here gets its own disposition:**
+  `out-of-scope → follow-up task`. Not "reject", which asserts it is wrong, and not silence. **The gate
+  FAILS until the follow-up task exists**, and the task is linked from the Review record.
 - `/code-review` and `/security-review` are the generic single-pass tools. Prefer this for features;
   their findings enter the same loop.
 
 ## Changelog
 
 - **2026-08-28** — Loop mechanics extracted to `.claude/skills/review-loop/`, adopted from the Klang
-  project. This skill was previously a ONE-SHOT gate, and the insights review of 2026-08-24 showed the
-  cost: it found a real live secret disclosure, but the fix that round produced was itself wrong and was
-  caught by the maintainer rather than by a second round. It also had no ledger, so a rejected finding
-  had nowhere to be recorded as settled.
+  project. This skill was previously a ONE-SHOT gate. The insights review of 2026-08-24 shows the cost:
+  it confirmed a CRITICAL it could not fix and had nowhere to put it, left three findings
+  confirmed-and-open with no re-review path, and a premise the feature rested on had to be retracted
+  mid-session. (An earlier draft of this note claimed the round produced a wrong fix that the maintainer
+  caught — that was a misdescription; the round labelled its own output a mitigation and failed the
+  gate. Corrected by the self-review.)

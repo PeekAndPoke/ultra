@@ -49,9 +49,10 @@ red-team follow-up, task-file record).
    **Round 1 is BLIND**: the task, the change set, the constraints — nothing else.
    **Every later round runs in TWO PHASES with the same fresh agent** — review FIRST, previous
    results AFTER:
-   - *Phase 1 — review.* The full current diff, the constraints, and the fix delta marked as the
-     primary target — and deliberately NOT the previous round's findings. Fresh eyes on the current
-     state.
+   - *Phase 1 — review.* The full current diff and the constraints, WITHOUT the previous round's
+     findings. Do not flag which hunks are new: the fix delta is an answer key to the last round, and
+     pointing at it both anchors the agent on what it is meant not to see and pulls attention into
+     re-critiquing freshly written lines — the prose-churn mode below.
    - *Phase 2 — reconcile.* Send that SAME agent the previous findings verbatim plus each one's
      triage. For any phase-1 finding that overlaps a settled one, it must either WITHDRAW it or STICK
      TO IT by naming what is factually wrong in the rejection reason. It also states, per
@@ -64,19 +65,38 @@ red-team follow-up, task-file record).
    a mis-read line, a since-changed file, a wrong claim about behaviour. Re-asserting the finding, or
    disagreeing with the judgement, is a WITHDRAWAL. Reviewers do not get a second vote on a call the
    coordinator already made on the facts; they get a chance to show the facts were wrong.
-3. **Triage every finding into the LEDGER** — one line per finding, carried verbatim into every later
-   round: severity, `path:line`, the claim, and its disposition. The ledger is what phase 2 reconciles
-   against, and it is the artifact that makes "settled" mean something. Each entry is exactly one of:
+3. **Triage every finding into the LEDGER**, and **write the ledger to the task file BEFORE starting
+   the next round** — it is an input to round N+1, not a report written afterwards. One row per finding:
+
+   | Round | Sev | `path:line` | Claim | Disposition | Reason |
+
+   **The Reason column is the mechanism, not bookkeeping.** Phase 2 asks a reviewer to name what is
+   factually wrong in a rejection; a reviewer who cannot see the reason cannot do that, and per the
+   reconcile rule its re-raise counts as a withdrawal — so an empty ledger silences correct findings
+   automatically. `.claude/tasks/TEMPLATE.md` carries this table. Each entry is exactly one of:
    - **fix** — apply it. **Only CRITICAL and MAJOR feed the loop.** MINORs are collected and either
      applied once as a single batch with no re-review, or handed to the maintainer as a list;
-   - **reject** — with a stated reason. A rejection on project philosophy must name the rule;
+   - **reject** — with a reason that is CHECKABLE: a named project rule, or a fact someone can verify
+     (`X.kt:42 already scopes by org`). **An unfalsifiable rejection is not a rejection.** "Acceptable
+     in practice", "fine for an internal tool", "unlikely" assert nothing a reviewer can refute, and the
+     vaguer the reason the more unassailable it becomes — the incentive runs exactly backwards. A
+     rejection you cannot make checkable is a **maintainer-decision**;
    - **maintainer-decision** — park it (design fork, tradeoff, anything needing product knowledge).
+
+   **You may not reject a CRITICAL/MAJOR raised against code you wrote yourself.** It goes to
+   maintainer-decision. Self-rejection is the cheapest way to make a correct finding disappear.
 4. **Verify each finding against the code before acting on it.** Reviewers here have been confidently
    wrong, and so has the coordinator — say so when one does not survive. Where a one-command
    experiment settles it, run it.
 5. **Apply the fixes**, run the affected tests, and mutation-check anything new that touches a
-   security-critical path (Standard 2).
-6. **If a CRITICAL/MAJOR fix was applied → go to 2.** MINOR-only rounds do not loop.
+   security-critical **or persistence** path (Standard 2).
+6. **If a CRITICAL/MAJOR was FIXED *or REJECTED* → go to 2.** Both, and the rejection case is the one
+   that matters: if only fixes looped, a rejection would end the review, and the reconcile phase — the
+   sole mechanism by which a reviewer can show a rejection was wrong — would never run against it.
+   Rejecting would be strictly cheaper than fixing, and a coordinator could close a gate in one round on
+   their own say-so. When a round produced only rejections, round 2 may be **reconcile-only**: a fresh
+   agent receives each finding with its rejection reason and must accept or refute it. MINOR-only rounds
+   do not loop.
 
 ### Termination — the loop stops ONLY on
 
@@ -96,27 +116,25 @@ red-team follow-up, task-file record).
   round critiques it, and the loop feeds itself.
 - **Scope by risk.** The full charter set is for production code. Test-only or doc-only portions get
   one reviewer or none — mutation checks guard tests harder than a reviewer can.
+- **One severity scale, everywhere: CRITICAL / MAJOR / MINOR.** Not HIGH, not MEDIUM. A gate that
+  loops on "CRITICAL/MAJOR" while a reviewer reports "HIGH" silently drops it — and the repo's own
+  most-cited gate did report HIGH, for a live session token on screen.
 - **Never silently drop a finding.** Every one ends as fix / reject+reason / maintainer-decision.
 - **A finding about a MISSING e2e test is a gate failure, not a debatable nit** — see CLAUDE.md.
 - **Final report** lists rounds run, each round's findings and outcomes, parked decisions on top.
 
-### The three charters
+### The reviewer charters
 
-Reviewers run `opus` at high effort — correctness-critical verification, the tier
-`.claude/skills/agent-fleet/` assigns to hard verification. Do not downgrade them to save tokens.
+**Defined in `.claude/skills/feature-review/`, and only there.** They were duplicated here at first and
+the two copies had already drifted apart within a day — this repo's own "Docs vs skills" rule warns
+about exactly that, and the review skills are not exempt from it.
+
+Reviewers run `opus` at high effort per `.claude/skills/agent-fleet/` — correctness-critical
+verification. Do not downgrade them to save tokens.
 
 Give every reviewer: the change set, the task file, the plan link, its charter, and these constraints —
-findings must cite `path/File.kt:line` and give a concrete failure scenario; "NO FINDINGS" is a valid
-answer; do not pad; do NOT spawn sub-agents.
-
-1. **Implementation & code style** — correctness vs the task spec, edge cases, reuse and
-   simplification, test quality, and `.claude/skills/code-style/` (explicit imports, no FQCN, no
-   wildcards, resolvable KDoc links, branding, pnpm).
-2. **Domain expert** — is it correct *for the domain*? Auth/tenancy/org invariants, data-model
-   soundness, API contract fit, consistency with existing funktor patterns. Judge design fit, not lint.
-3. **Security** — authn/authz gaps, tenant isolation (can org A read org B?), injection, secrets,
-   token/session handling, unsafe deserialization, privilege escalation, input validation, error
-   leakage. Assume a hostile authenticated user of another org.
+findings must use the severity scale **CRITICAL / MAJOR / MINOR**; cite `path/File.kt:line`; give a
+concrete failure scenario; "NO FINDINGS" is a valid answer; do not pad; do NOT spawn sub-agents.
 
 ---
 
@@ -147,7 +165,12 @@ condition under which a green test is worth nothing.
 2. **MUTATE** — introduce ONE targeted mutation that should break the behaviour under test.
    **Prefer mutating the code under test** (flip an operator, off-by-one a constant, drop a term,
    swap a branch); mutating the test's inputs is the fallback.
-3. **RED** — run it. It MUST fail. Still green → the test is toothless; fix it and repeat from 1.
+3. **RED** — run it. It MUST fail, **and you must confirm the failure is the test you mutated for.**
+   This step is the loop's strongest instrument and the easiest to fool: kotest ignores `--tests`, so a
+   filtered run may execute something else entirely, and the XML mis-attributes which case failed. Read
+   the CONSOLE for which case broke and the XML counts to confirm the spec ran at all. A pre-existing
+   flake counts as a false RED — `JwtSignatureGateSpec` was flaky 1-in-4 and would certify a toothless
+   test as checked. Still green → the test is toothless; fix it and repeat from 1.
 4. **RESTORE** — revert exactly, run again, green. **Back up with `cp` first, and NEVER restore with
    `git checkout`** — the file usually carries other uncommitted work, and on this worktree possibly
    another agent's. Verify with `git diff` that only the intended change remains.
@@ -181,7 +204,11 @@ serialize it.**
 
 ---
 
-## Gotchas — this repo specifically
+## Gotchas — the ones specific to reviewing
+
+**CLAUDE.md's "Verification traps" section is canonical and auto-loaded; it is not repeated here.** Read
+it. The two below are about the review process itself rather than about testing, which is why they live
+in this file:
 
 - **Take `.claude/BUILD-LOCK.md` before building.** Reviewers are read-only and need no lock; applying
   fixes and running tests do. Read the lock as its OWN step and act on what it says — chaining the read
@@ -189,21 +216,6 @@ serialize it.**
 - **`git diff <path>` immediately before committing that path.** `git commit -- <path>` commits the
   WORKING TREE, not the index, so it takes another agent's edits to that file too. Checking
   `git diff --cached` does not cover this — that mistake swept a lock claim on 2026-08-24.
-- **kotest ignores `--tests`.** Confirm a spec ran via `build/test-results/**/TEST-*.xml`, never by
-  trusting a filtered gradle invocation. MPP modules use `:jvmTest`; `funktor-demo:server` uses `:test`.
-- **…but that XML mis-attributes WHICH test failed.** Counts are reliable; the `<testcase name>` a
-  failure nests under is not. Use the XML for counts, the console for which case broke.
-- **Module test tasks do not compile everything.** Before claiming a cross-module change is contained:
-  `./gradlew compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
-  compileTestKotlin --continue` and grep `^e:`.
-- **A green compile sweep can be measured against STALE test classes**, most likely after a concurrent
-  build. Recovery: `rm -rf <module>/build/classes/kotlin/**/test` and re-run.
-- **`shouldBe` is untyped**, so `valueClass shouldBe "literal"` rots silently.
-- **A green FIRST run on a new code path is the signal to go check the fixture**, not to move on. It has
-  meant a vacuous test four times on the codegen work alone.
-- **`vue-tsc` cannot catch a missing `.vue` file** — `shims-vue.d.ts` declares `module '*.vue'`, which
-  resolves any specifier whether the file exists or not. Only `vite build` catches it.
-- Local DBs: `docker start mongodb arangodb`.
 
 ## Changelog
 
@@ -212,9 +224,24 @@ serialize it.**
   the prose-churn rule, the 2-round safety valve, and the mutation protocol. Replaced: klang's two
   reviewers with this repo's three charters, and its gotchas with ours.
 
-  **The local evidence that this was needed** is the insights gate of 2026-08-24. It ran ONE round and
-  found a real live secret disclosure — but the fix that round produced was a language allowlist in the
-  frontend, which was *itself wrong*, and the maintainer caught it, not a review. A second round is
-  exactly what that case wanted. The same gate also shows the loop's failure mode already present here:
-  two of my own claims across the session were confidently wrong and had to be withdrawn, which is why
-  step 4 (verify before acting) is not optional.
+  **The local evidence that this was needed, restated 2026-08-28 after the self-review caught me
+  misdescribing it.** I first wrote that the insights gate of 2026-08-24 produced a wrong fix that "the
+  maintainer caught, not a review". **That is false, and the record says so.** The round produced a
+  mitigation, *labelled it* "a mitigation, not the fix", named the real backend fix, put it on the
+  blocking list and FAILED the gate
+  (`.claude/tasks/20260802-insights-vue-tabs.md:487-500`). The maintainer's contribution was a better
+  DESIGN — enforce the invariant at the writer instead of the reader — not a catch the review missed.
+
+  What that gate actually shows, which argues for the loop without needing the misattribution:
+
+  - It confirmed a **CRITICAL it could not fix** (`VaultCollector.Data` unslumberable, dropping every
+    record) and had **nowhere to put it**: no fix, so nothing looped; "reject" would have been wrong.
+    That gap is now finding #11's disposition below.
+  - Three findings finished CONFIRMED-and-open with no re-review path.
+  - A premise the whole feature rested on had to be **retracted mid-session** — the tab's `vars`
+    suppression was believed to contain the exposure and did not. A second round is what tests a claim
+    like that.
+
+  **The lesson I nearly taught instead is the sharper one:** a process document that cites a false
+  precedent teaches reviewers to distrust an accurate record. Verify the evidence in your own changelog
+  against the record, exactly as you would a reviewer's finding.
