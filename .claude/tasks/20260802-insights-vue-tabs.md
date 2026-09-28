@@ -495,9 +495,11 @@ only stops it reaching a screen. The real fix belongs with D1 in the backend.
 
 ### Blocking the gate
 
-- [ ] **D1** — reshape `VaultCollector.Data` into a slumberable `data class` with the needed fields as
-      ctor params. That also removes the `lazy`-totals workaround, and it is the same reshape
-      `20260824-insights-graphs-and-static-slices.md` already plans for the kontainer slice.
+- [x] **D1 — DONE 2026-08-24** (`e448c64d`). `VaultCollector.Data` is an explicit `data class`;
+      `VaultCollectorSlumberSpec` proves the slice slumbers at all, that the timings survive rather than
+      serialising to `{}`, and that no bind value reaches the record. Mutation-tested. The kontainer
+      half of the same reshape is still in `20260824-insights-graphs-and-static-slices.md`.
+      *(Ticked 2026-09-28 — the work landed a month ago and this box was never updated.)*
 - [ ] **S1 at the source** — have Monko record a placeholder-ised query plus separate `vars`, so the
       omission covers Mongo too and the tab can show the query again.
 - [ ] **I4** — extend the spec to follow relative imports out of each emitted file and assert the target
