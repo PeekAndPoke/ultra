@@ -63,6 +63,12 @@ pre code {
     font-family: var(--font-mono);
 }
 
+/* @tailwindcss/typography wraps inline code in literal backticks — the pill above already marks it */
+.prose code::before,
+.prose code::after {
+    content: none;
+}
+
 /* Content spacing — ensures vertical rhythm between sections */
 article h1 {
     margin-bottom: 0.5rem;
