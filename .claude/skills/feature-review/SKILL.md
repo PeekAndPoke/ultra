@@ -88,7 +88,10 @@ rather than opening a second one for the same surface.
 
 - Confirmed findings, grouped and severity-ranked, each with `file:line` and its fix.
 - Fixes applied, tests re-run, mutations reported.
-- The task file's **Review record** updated — including findings that were REJECTED and why, and any
+- The task file's **Review record** — but note it is written **after every round, before the next
+  one starts**, not as an end-of-gate deliverable. It is an input to round N+1 (review-loop step 3);
+  assembling round 2's reconcile packet from conversation memory is how the Reason column goes missing,
+  and a reviewer who cannot see a reason must withdraw. Updated — including findings that were REJECTED and why, and any
   claim of yours that did not survive. That record is the ledger the next round reconciles against.
 - A clear verdict: **gate PASS** (no open CRITICAL or MAJOR, e2e present and green) or **gate FAIL**
   with the blocking items named.

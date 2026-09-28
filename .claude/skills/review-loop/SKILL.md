@@ -53,10 +53,17 @@ red-team follow-up, task-file record).
      findings. Do not flag which hunks are new: the fix delta is an answer key to the last round, and
      pointing at it both anchors the agent on what it is meant not to see and pulls attention into
      re-critiquing freshly written lines — the prose-churn mode below.
-   - *Phase 2 — reconcile.* Send that SAME agent the previous findings verbatim plus each one's
-     triage. For any phase-1 finding that overlaps a settled one, it must either WITHDRAW it or STICK
-     TO IT by naming what is factually wrong in the rejection reason. It also states, per
-     previously-FIXED finding, whether the fix actually holds in the current diff.
+   - *Phase 2 — reconcile.* **Continue the SAME agent** — `SendMessage` to its id, so phase 1 is in
+     its context; spawning a new one makes duty (a) vacuous, since it has no phase-1 findings to range
+     over. Send it the ledger verbatim. Three duties:
+     - **(a)** for each phase-1 finding that overlaps a settled entry: WITHDRAW, or STICK TO IT by
+       naming what is factually wrong in that entry's reason;
+     - **(b)** for each FIXED entry: does the fix still hold in the current files? Name any applied in
+       one file and not the others it needed to reach;
+     - **(c)** for **every REJECTED CRITICAL/MAJOR in the ledger**, whether phase 1 re-found it or not:
+       accept or refute, naming the fact. **Unconditional, and that is the point** — a rejected-but-real
+       defect is the thing a second pass is *least* likely to rediscover on its own, so an audit that
+       fires only on rediscovery does not audit the case it exists for.
 
    Fresh-eyes value and settled-stays-settled, without anchoring the review itself.
 
@@ -65,8 +72,11 @@ red-team follow-up, task-file record).
    a mis-read line, a since-changed file, a wrong claim about behaviour. Re-asserting the finding, or
    disagreeing with the judgement, is a WITHDRAWAL. Reviewers do not get a second vote on a call the
    coordinator already made on the facts; they get a chance to show the facts were wrong.
-3. **Triage every finding into the LEDGER**, and **write the ledger to the task file BEFORE starting
-   the next round** — it is an input to round N+1, not a report written afterwards. One row per finding:
+3. **Triage every finding into the LEDGER**, and **write the ledger down BEFORE starting the next
+   round** — to the task file, or, for a `/code-review` or hotfix with no task file, to a scratch ledger
+   in your scratchpad directory (say where, in the round report). A ledger held only in conversation
+   does not survive a compaction or a handover, and per the reconcile rule a reviewer who cannot see a
+   reason must withdraw — so a lost ledger silences correct findings automatically. It — it is an input to round N+1, not a report written afterwards. One row per finding:
 
    | Round | Sev | `path:line` | Claim | Disposition | Reason |
 
@@ -81,16 +91,47 @@ red-team follow-up, task-file record).
      in practice", "fine for an internal tool", "unlikely" assert nothing a reviewer can refute, and the
      vaguer the reason the more unassailable it becomes — the incentive runs exactly backwards. A
      rejection you cannot make checkable is a **maintainer-decision**;
-   - **maintainer-decision** — park it (design fork, tradeoff, anything needing product knowledge).
+   - **maintainer-decision** — park it (design fork, tradeoff, anything needing product knowledge);
+   - **out-of-scope → follow-up task** — real, but not this change set's to fix. **Does not close a
+     round on its own**, and the gate fails until the follow-up task exists. Not "reject", which asserts
+     the finding is wrong;
+   - **withdrawn** — raised in phase 1, withdrawn by the same agent in phase 2. Recorded, does not
+     loop, and counts as settled for later rounds' overlap test. **It needs to be in this list**: it is
+     the reconcile rule's most common outcome, and without a row for it the choice is to log it as an
+     unfalsifiable "rejection" (which `maintainer-decision` then escalates to a human, spending the
+     maintainer on a round that worked exactly as designed) or to log nothing — and a finding with no
+     row is one round 3 raises from scratch, which is the flip-flop this whole document prevents.
 
-   **You may not reject a CRITICAL/MAJOR raised against code you wrote yourself.** It goes to
-   maintainer-decision. Self-rejection is the cheapest way to make a correct finding disappear.
+   **A severity DOWNGRADE is itself a disposition and needs a checkable reason.** The severity in the
+   ledger is the REVIEWER's; lowering one moves a finding out of the loop, so it must be justified like
+   a rejection and is subject to the provisional rule below. Without this it is the cheapest exit in the
+   document — no reason required, no re-review — and it has already fired once: a MINOR-graded finding
+   was batched on 2026-08-28 and never applied, unnoticed for a month, with nobody trying to suppress
+   anything.
+
+   **A rejection or downgrade of a CRITICAL/MAJOR against code you wrote is PROVISIONAL.** It settles
+   only after one reconcile round in which a fresh reviewer accepts it (duty (c)). "Code you wrote"
+   means authored by this session, including by an implementer you briefed — which is the normal
+   `/feature-review` case, since CLAUDE.md runs the gate straight after implementing.
+
+   > This replaced a flat ban (maintainer, 2026-09-28). The ban's cost was not marginal: it removed the
+   > reject disposition from the author-coordinator entirely, which made step 4 unactionable — verify
+   > every finding, but you may not act on a verification — and stopped the gate on a human for every
+   > confidently-wrong reviewer finding, which this file says at step 4 is recurring. The proof it
+   > backfired is in our own ledger: round 1 produced twelve fixes, one downgrade and **zero
+   > rejections**, so the reject-audit path that same round built had never once executed. Pressure does
+   > not vanish; it finds the cheapest exit. Provisional keeps the intent and costs one round instead of
+   > an interrupt.
 4. **Verify each finding against the code before acting on it.** Reviewers here have been confidently
    wrong, and so has the coordinator — say so when one does not survive. Where a one-command
    experiment settles it, run it.
 5. **Apply the fixes**, run the affected tests, and mutation-check anything new that touches a
    security-critical **or persistence** path (Standard 2).
-6. **If a CRITICAL/MAJOR was FIXED *or REJECTED* → go to 2.** Both, and the rejection case is the one
+6. **Re-derive the change set: `previous set ∪ every file the fix batch touched`.** The loop re-enters
+   at step 2, not step 1, so without this a file that did not exist when the set was stated is never
+   reviewed by anyone — and "the fix adds a file" is the single most common fix shape. A round-1
+   finding of "this endpoint has no e2e test" whose fix adds a spec would ship that spec unreviewed.
+7. **If a CRITICAL/MAJOR was FIXED *or REJECTED* → go to 2.** Both, and the rejection case is the one
    that matters: if only fixes looped, a rejection would end the review, and the reconcile phase — the
    sole mechanism by which a reviewer can show a rejection was wrong — would never run against it.
    Rejecting would be strictly cheaper than fixing, and a coordinator could close a gate in one round on
@@ -100,12 +141,21 @@ red-team follow-up, task-file record).
 
 ### Termination — the loop stops ONLY on
 
-- **Clean round** — zero CRITICAL/MAJOR → done. Remaining MINORs go to the maintainer as a batch.
-- **Maintainer decision needed** — STOP, present the parked decisions crisply, wait. Do not guess.
-- **Wall** — a finding oscillates, reviewers contradict each other, or a fix is impossible without
-  breaking something else → STOP and present the state honestly.
+- **Clean round** — zero CRITICAL/MAJOR → done. **Open MINORs are handed to the maintainer as a list,
+  not applied as an unreviewed batch.** Step 3 offers both; the batch route is what lost a finding for a
+  month on 2026-08-28 — the coordinator chose "apply as a batch", the batch never ran, and nothing
+  surfaced its absence. A list in front of a human cannot silently not-happen.
+- **Maintainer decision needed, on a CRITICAL or MAJOR** — STOP, present crisply, wait. **A parked
+  MINOR does not stop the loop**; it joins the list above. Without that floor, one parked MINOR halts a
+  loop that MINORs are supposed never to affect.
+- **Wall** — reviewers contradict each other, or a fix is impossible without breaking something else →
+  STOP and present the state honestly. (Oscillation is also a wall, but it needs three rounds to
+  observe, so it is only reachable past the valve.)
 - **Safety valve — 2 rounds** without a clean round: STOP and consult the maintainer with the open
-  findings. (Klang cut this from 5 to 2 on 2026-08-28: five rounds let fix-churn feed itself.)
+  findings. **Both rounds count, the blind round 1 included**, which is why the ladder puts
+  `reviewer-top` at "round 3 and later — the safety valve has fired". **It re-arms**: consult again
+  after each further non-clean round, rather than running unbounded at the most expensive tier once
+  waved past. (Klang cut it from 5 to 2 on 2026-08-28: five rounds let fix-churn feed itself.)
 
 ### Rules
 
@@ -114,8 +164,12 @@ red-team follow-up, task-file record).
 - **Comment/KDoc findings only when the text is factually WRONG** — never for completeness or style.
   Prose churn is this loop's documented failure mode: each round's fixes write new text, the next
   round critiques it, and the loop feeds itself.
-- **Scope by risk.** The full charter set is for production code. Test-only or doc-only portions get
+- **Scope by risk.** The full charter set is for production code. Test-only or prose-only portions get
   one reviewer or none — mutation checks guard tests harder than a reviewer can.
+  **`.claude/**` and `CLAUDE.md` are NOT prose-only.** They are agent instructions: every session reads
+  them and copies from them, and this file says so itself two rules down. Treating them as doc-only
+  would give the document that governs every review the lightest review in the repo — a change deleting
+  a safeguard here would qualify for "one reviewer or none". They get the full set.
 - **One severity scale, everywhere: CRITICAL / MAJOR / MINOR.** Not HIGH, not MEDIUM. A gate that
   loops on "CRITICAL/MAJOR" while a reviewer reports "HIGH" silently drops it — and the repo's own
   most-cited gate did report HIGH, for a live session token on screen.
@@ -319,6 +373,37 @@ in this file:
   that also matches your own shell's command line.
 
 ## Changelog
+
+- **2026-09-28 — round 2 of this document reviewing itself. Safety valve FIRED; the maintainer decided.**
+  7 MAJOR, 6 MINOR, 0 CRITICAL, plus a duty-(b) audit of round 1's twelve fixes. Eight held completely;
+  three were applied in some files and not the others they needed to reach — `out-of-scope` reached
+  `feature-review` and `TEMPLATE.md` but never this file's disposition list; "write the ledger before the
+  next round" reached this file and the template but not `feature-review`'s Output section.
+
+  **The finding that mattered: round 1's self-rejection ban backfired, and our own ledger is the
+  evidence.** Round 1 produced twelve fixes, one downgrade and **zero rejections** — not coincidence, but
+  what the ban predicts whenever the coordinator wrote the code, which is nearly every gate. So the
+  reject-audit path that the *same round* built had never once executed. Pressure does not vanish; it
+  took the cheapest remaining exit, and the proof is round 1's own MINOR #9: graded down, batched, never
+  applied, unnoticed for a month, with nobody trying to suppress anything. **Maintainer, 2026-09-28: the
+  ban becomes PROVISIONAL** — reject or downgrade your own code's finding, and it settles only after one
+  reconcile round in which a fresh reviewer accepts it. Keeps the intent, costs a round instead of an
+  interrupt, and makes the honest path cheaper than the quiet one.
+
+  Also closed: `withdrawn` and `out-of-scope` are real dispositions (a withdrawal was the reconcile
+  rule's most common outcome and had no row to go in); a severity DOWNGRADE now needs a checkable reason
+  like a rejection; phase 2 gained an unconditional duty (c) to audit **every** rejected CRITICAL/MAJOR
+  rather than only those phase 1 happened to rediscover; the change set is re-derived each round, so a
+  fix that ADDS a file cannot ship unreviewed; the termination section's four defects from round 1 —
+  batched then never applied, which is itself the finding; the three `reviewer-*.md` bodies collapsed to
+  a pointer at `.claude/agents/reviewer-standing-rules.md` and pinned `tools:` read-only, since prose
+  telling a reviewer not to run Gradle is not the same as being unable to.
+
+  **Two things I am NOT claiming.** The round was not clean, so the standard's own termination condition
+  was not met — this closed on a maintainer call, not on the mechanism. And at 416 lines this file is
+  near the limit where CLAUDE.md's "overflowing docs hide the part the reader needed" starts to bite;
+  the reviewer declined to file it only because no rule concretely fails from length alone. Next
+  substantive change should shorten rather than extend.
 
 - **2026-09-28** — Second adoption from klang, whose copy had kept evolving for a month. Taken: the
   effort ladder (with `reviewer-high`/`-xhigh`/`-top` in `.claude/agents/`, one rung higher than
