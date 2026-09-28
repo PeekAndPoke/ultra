@@ -10,6 +10,7 @@ export const kraftSidebar = [
     {href: '/ultra/kraft/dom-events', label: 'DOM Events', section: 'Core'},
     {href: '/ultra/kraft/messaging', label: 'Messaging', section: 'Core'},
     {href: '/ultra/kraft/routing', label: 'Routing', section: 'Core'},
+    {href: '/ultra/kraft/link-clicks', label: 'Link Clicks', section: 'Core'},
     {href: '/ultra/kraft/forms', label: 'Forms & Validation', section: 'Core'},
 
     {href: '/ultra/kraft/semantic-ui', label: 'SemanticUI DSL', section: 'UI'},

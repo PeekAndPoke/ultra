@@ -5,15 +5,17 @@ import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.getAttributeRecursive
 import io.peekandpoke.kraft.routing.Router.RouterStrategy.Companion.HASH_PREFIX
 import io.peekandpoke.ultra.common.TypedKey
-import io.peekandpoke.ultra.common.isUrlWithProtocol
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
+import kotlinx.browser.document
 import kotlinx.browser.window
+import org.w3c.dom.Document
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.Node
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
 import org.w3c.dom.events.MouseEvent
+import org.w3c.dom.url.URL
 
 /**
  * The Router
@@ -114,6 +116,11 @@ class Router(
 
     /** Path-based routing strategy using the browser's History API. */
     class PathRoutingStrategy(private val router: Router) : RouterStrategy {
+        private companion object {
+            /** RFC 3986 scheme followed by a colon, at the start of an href. */
+            val AbsoluteUrlSchemeRegex = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:")
+        }
+
         override fun init() {
             window.addEventListener("popstate", ::popstateListener)
             // Intercept clicks on links to prevent page reloads
@@ -149,50 +156,97 @@ class Router(
          * Private listener for the "popstate" event (history-based routing)
          */
         private fun popstateListener(event: Event) {
-            if (router.enabled) {
-//                console.log("popstateListener: ${event.type}", event)
-                event.preventDefault()
-                router.navigateToWindowUri()
-            }
+            if (!router.enabled) return
+
+            // Same path and query as the active route: only the fragment moved (in-page anchor, or Back
+            // from one), so the route stays and the browser scrolls
+            val uri = getUriFromWindowLocation()
+            if (uri.substringBefore('#') == router.current().uri.substringBefore('#')) return
+
+            event.preventDefault()
+            router.navigateToWindowUri()
         }
 
         /**
          * Private listener for click events to intercept navigation (history-based routing)
+         *
+         * Intercepts only plain clicks on relative links to this app; everything else is left to the browser.
          */
         @Suppress("detekt:ReturnCount")
         private fun clickListener(event: Event) {
-//            console.log("clickListener: ${event.type}", event)
-
             if (!router.enabled) return
-
-//            console.log("clickListener: 1")
 
             val mouseEvent = event as? MouseEvent ?: return
 
-//            console.log("clickListener: 2", mouseEvent.target)
+            // Someone else already handled it
+            if (mouseEvent.defaultPrevented) return
+
+            // Not a plain primary click: new tab, new window, download, ...
+            if (mouseEvent.button != 0.toShort()) return
+            if (mouseEvent.ctrlKey || mouseEvent.metaKey || mouseEvent.shiftKey || mouseEvent.altKey) return
 
             // Find the closest anchor element by traversing up the DOM tree
-            val target = findClosestAnchor(mouseEvent.target) ?: return
+            val anchor = findClosestAnchor(mouseEvent.target) ?: return
+            val href = anchor.getAttribute("href") ?: return
 
-//            console.log("clickListener: 3")
+            // The author asked the browser to handle it
+            if (!anchor.targetsSelf()) return
+            if (anchor.hasAttribute("download")) return
+            if (anchor.relTokens().contains("external")) return
 
-            // Check if it's an internal link
-            val href = target.getAttribute("href") ?: return
+            // Absolute and scheme-relative hrefs always go to the browser, even on the same origin
+            if (href.isAbsoluteUrl()) return
 
-//            console.log("clickListener: 4")
+            // Resolve like the browser does, so relative hrefs land where a new tab would
+            val base = document.baseURI
+            val url = try {
+                URL(href, base)
+            } catch (_: Throwable) {
+                return
+            }
 
-            // External link, let browser handle it
-            if (href.isUrlWithProtocol()) return
+            // A relative href can still leave via <base href>. Protocol and host rather than origin: blob:
+            // URLs carry their creator's origin, and custom-scheme hosts (Capacitor, file://) have "null".
+            if (url.protocol != window.location.protocol) return
+            if (url.host != window.location.host) return
 
-//            console.log("clickListener: 5")
-
-            // Check if we should open in new tab -> let browser handle it
-            if (willOpenNewTab(mouseEvent)) return
-
-//            console.log("clickListener: 6")
+            // Fragment navigation within the current document: let the browser scroll
+            if (url.href.contains('#') && url.href.substringBefore('#') == window.location.href.substringBefore('#')) {
+                return
+            }
 
             event.preventDefault()
-            router.navToUri(uri = href)
+            router.navToUri(uri = url.pathname + url.search + url.hash)
+        }
+
+        /** True when the link opens in the current browsing context, honouring `<base target>`. */
+        private fun HTMLAnchorElement.targetsSelf(): Boolean {
+            val target = (getAttribute("target") ?: document.querySelector("base[target]")?.getAttribute("target"))
+                ?.lowercase()
+
+            return when (target) {
+                null, "", "_self" -> true
+                // Both name the current context when it is not framed
+                "_top" -> window.top === window
+                "_parent" -> window.parent === window
+                // Any other value, even whitespace, names another browsing context
+                else -> false
+            }
+        }
+
+        /** True for `scheme:…` and `//host…` hrefs, after the clean-up the browser's URL parser applies. */
+        private fun String.isAbsoluteUrl(): Boolean {
+            // C0 controls and spaces at both ends, tab / LF / CR anywhere, and '\' read as '/'
+            val normalized = trim { it <= ' ' }
+                .filterNot { it == '\t' || it == '\n' || it == '\r' }
+                .replace('\\', '/')
+
+            return normalized.startsWith("//") || AbsoluteUrlSchemeRegex.containsMatchIn(normalized)
+        }
+
+        /** The whitespace-separated, lowercased tokens of the `rel` attribute. */
+        private fun HTMLAnchorElement.relTokens(): List<String> {
+            return (getAttribute("rel") ?: "").lowercase().split(' ', '\t', '\n', '\r').filter { it.isNotEmpty() }
         }
 
         /**
@@ -211,7 +265,7 @@ class Router(
                 current = current.parentNode
 
                 // Stop at document level to avoid infinite loops
-                if (current is org.w3c.dom.Document) {
+                if (current is Document) {
                     break
                 }
             }
@@ -459,10 +513,13 @@ class Router(
      */
     fun resolveRouteForUri(uri: String): Pair<MountedRoute, Route.Match>? {
 
+        // The fragment never selects a route, and would otherwise leak into the last param
+        val withoutFragment = uri.substringBefore('#')
+
         // Go through all routes and try to find the first one that matches the current location
         return mountedRoutes.asSequence()
             // Find matches
-            .map { mounted -> mounted.route.match(uri)?.let { mounted to it } }
+            .map { mounted -> mounted.route.match(withoutFragment)?.let { mounted to it } }
             // Skip all that did not match
             .filterNotNull()
             // Get the first match, if there is any

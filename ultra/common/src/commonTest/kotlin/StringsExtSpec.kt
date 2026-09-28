@@ -20,12 +20,71 @@ class StringsExtSpec : StringSpec({
         "Https://example.com".isUrlWithProtocol() shouldBe true
     }
 
+    "isUrlWithProtocol must match hosts without a TLD, IPs and ports" {
+        "http://localhost".isUrlWithProtocol() shouldBe true
+        "http://localhost:55264/page.html".isUrlWithProtocol() shouldBe true
+        "http://devbox:8080/a/b".isUrlWithProtocol() shouldBe true
+        "http://127.0.0.1:3000/".isUrlWithProtocol() shouldBe true
+        "http://[::1]/x".isUrlWithProtocol() shouldBe true
+        "http://[2001:db8::1]:8080".isUrlWithProtocol() shouldBe true
+        "https://user:pass@example.com/".isUrlWithProtocol() shouldBe true
+        "https://example.com./".isUrlWithProtocol() shouldBe true
+        "http://my_service:8080/x".isUrlWithProtocol() shouldBe true
+        "http://my_host.example.com".isUrlWithProtocol() shouldBe true
+    }
+
+    "isUrlWithProtocol must reject non-ASCII, even where case folding would map it to ASCII" {
+        // U+017F folds to 's', U+212A (Kelvin sign) folds to 'k'
+        ("http://" + Char(0x17F) + "ite.com").isUrlWithProtocol() shouldBe false
+        ("http://" + Char(0x212A) + "a.com").isUrlWithProtocol() shouldBe false
+        ("http" + Char(0x17F) + "://example.com").isUrlWithProtocol() shouldBe false
+        ("https://example.com/" + Char(0x17F)).isUrlWithProtocol() shouldBe false
+    }
+
+    "isUrlWithProtocol must reject a second fragment delimiter" {
+        "https://example.com/#a#b".isUrlWithProtocol() shouldBe false
+    }
+
+    "isUrlWithProtocol must match every RFC 3986 path, query and fragment character" {
+        "https://example.com/a,b".isUrlWithProtocol() shouldBe true
+        "https://example.com/?q=a;b".isUrlWithProtocol() shouldBe true
+        "https://example.com/!*'()\$+".isUrlWithProtocol() shouldBe true
+        "https://example.com/?a[]=1&a[]=2".isUrlWithProtocol() shouldBe true
+        "https://example.com/p%20q?x=~y#frag/ment?".isUrlWithProtocol() shouldBe true
+        "https://example.com?q=1".isUrlWithProtocol() shouldBe true
+        "https://example.com#top".isUrlWithProtocol() shouldBe true
+    }
+
     "isUrlWithProtocol must reject invalid URLs" {
         "".isUrlWithProtocol() shouldBe false
         "example.com".isUrlWithProtocol() shouldBe false
         "ftp://example.com".isUrlWithProtocol() shouldBe false
+        "mailto:x@example.com".isUrlWithProtocol() shouldBe false
         "just some text".isUrlWithProtocol() shouldBe false
         "http://".isUrlWithProtocol() shouldBe false
+        "/relative/path".isUrlWithProtocol() shouldBe false
+        "//example.com/x".isUrlWithProtocol() shouldBe false
+    }
+
+    "isUrlWithProtocol must reject malformed hosts and characters outside RFC 3986" {
+        "http://-example.com".isUrlWithProtocol() shouldBe false
+        "http://example-.com".isUrlWithProtocol() shouldBe false
+        "http://exa mple.com".isUrlWithProtocol() shouldBe false
+        "http://example..com".isUrlWithProtocol() shouldBe false
+        "http://example.com:port".isUrlWithProtocol() shouldBe false
+        "http://example.com:123456".isUrlWithProtocol() shouldBe false
+        "http://[::1".isUrlWithProtocol() shouldBe false
+        "https://example.com/a b".isUrlWithProtocol() shouldBe false
+        "https://example.com/<script>".isUrlWithProtocol() shouldBe false
+        "https://example.com/\"q\"".isUrlWithProtocol() shouldBe false
+        "https://example.com/{x}".isUrlWithProtocol() shouldBe false
+        " https://example.com".isUrlWithProtocol() shouldBe false
+    }
+
+    "isUrlWithProtocol must stay linear on long adversarial input" {
+        val long = "http://" + "a.".repeat(50_000) + "!"
+        long.isUrlWithProtocol() shouldBe false
+        ("http://" + "a:".repeat(50_000)).isUrlWithProtocol() shouldBe false
     }
 
     "isEmail must match valid emails" {

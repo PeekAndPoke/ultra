@@ -1089,7 +1089,8 @@ router.navToUri(Nav.about())
 // Navigate with parameters
 router.navToUri(Nav.userProfile("alice"))
 
-// Navigate handling a click event (prevents default, uses router)
+// Navigate from a non-link element; Ctrl/Cmd click opens a new tab instead
+// (onClick never sees the middle button; use onClickOrAuxClick for that)
 ui.button {
     onClick { evt -> router.navToUri(evt, Nav.home()) }
     +"Go home"
@@ -1132,18 +1133,26 @@ fun A.href(route: Route.Bound) {
 }
 ```
 
-Because it sets a real `href`, the browser handles Ctrl/Cmd+Click, middle-click, right-click → "Open in new tab", and
-link previews natively. For clicks that should navigate in-place (and not reload the page), combine `href` with an
-`onClick` that calls `router.navToUri(evt, route)` — Kraft will detect modifier keys and let the browser handle
-new-tab clicks:
+Because it sets a real `href`, a plain click is routed in-app and the browser keeps Ctrl/Cmd+Click, middle-click and
+"Open in new tab". Do not add an `onClick` that calls `router.navToUri` — `onClick` does not prevent the default, so the
+click navigates twice.
 
-```kotlin
-a {
-  href(Nav.userProfile("alice"))
-  onClick { evt -> router.navToUri(evt, Nav.userProfile("alice")) }
-  +"Alice"
-}
-```
+### Link clicks (path strategy)
+
+The router listens for clicks on `window` and handles one only if ALL hold, else the browser does:
+
+- plain primary click (or Enter): no Ctrl / Cmd / Shift / Alt, not middle click
+- no handler called `preventDefault()` (a handler that calls only `stopPropagation()` also keeps the router out)
+- `target` absent, empty or `_self` (anchor's own, else `<base target>`); `_top` / `_parent` only when not framed
+- no `download` attribute, `rel` does not contain `external`
+- href is NOT absolute: `https://…` (even same-origin, even localhost) and `//host/…` always go to the browser
+- relative href resolves (like the browser, against `<base href>`) to the page's own protocol and host
+- not a fragment-only link on the current path and query (`#intro`): the browser scrolls, the active route stays
+
+Relative hrefs resolve like the browser: `settings` on `/users/alice` → `/users/settings`. The fragment never takes part
+in route matching. A same-origin path without a SPA route still goes to `catchAll`; mark backend URLs with
+`rel="external"` or `download`. With `useHashStrategy()` there is no click listener at all, and `#intro` would navigate
+to the route `intro`. Docs: https://peekandpoke.io/ultra/kraft/link-clicks
 
 ## Layouts
 

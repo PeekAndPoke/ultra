@@ -1,8 +1,24 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
 **HOLDER: none**
-**SINCE: 2026-08-24 (released by the streams agent)**
+**SINCE: 2026-09-28 (released by the router-click agent)**
 **STATE: FREE — take the lock before building.**
+
+## What the last holder changed — router-click agent, 2026-09-28 (router link clicks, gated)
+
+**The path router's window click listener now intercepts only plain clicks on RELATIVE links to the
+page's own protocol + host** (`kraft/core/src/jsMain/kotlin/routing/Router.kt`). Absolute and
+scheme-relative hrefs, `target`, `download`, `rel=external`, modifiers and already-prevented clicks go
+to the browser; in-page `#anchors` are left to the browser and `popstate` with unchanged path + query no
+longer re-resolves; `resolveRouteForUri` ignores the fragment. `UrlWithProtocolRegex` (`ultra/common`)
+rewritten — also used by the `validUrlWithProtocol` form rule. New docs page
+`docs-site/src/pages/ultra/kraft/link-clicks.astro`. Record:
+`.claude/tasks-archive/2026-09/20260928-router-click-interception.md`.
+
+**Worth taking:** a mutant that SURVIVED showed a test proving the wrong guard — a cross-host case
+that also differed by protocol, so the protocol check caught it and the host check was never
+exercised. Two reviewers found the same shape one round earlier (a blob test caught by a later early
+return). When guards stack, each needs a case that ONLY it can reject.
 
 ## What the last holder changed — streams agent, 2026-08-24 (switchMap docs)
 
