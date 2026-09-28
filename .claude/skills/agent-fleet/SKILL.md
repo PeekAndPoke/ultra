@@ -36,24 +36,24 @@ can do its task well.
 | Frontier reasoning | inherit (omit `model`) | architecture judgment, deep cross-cutting analysis the coordinator can't decompose further |
 
 **Review rounds do not use this table** — they follow the effort ladder in `/review-loop`
-(`reviewer-high`, then `reviewer-xhigh`, then `reviewer-max`). Security and domain review is
+(`reviewer-high`, then `reviewer-xhigh`, then `reviewer-top`). Security and domain review is
 correctness-critical: never `sonnet`.
 
 ## Effort tiers
 
-| Stage                         | Effort                                                        |
-|-------------------------------|---------------------------------------------------------------|
-| Mechanical / bulk stages      | `low`                                                         |
-| Standard work                 | omit (inherit session effort)                                 |
-| Hardest verify / judge stages | `high` or `xhigh`                                             |
-| Review rounds 1, 2, 3+        | `high`, `xhigh`, `max` via the `reviewer-*` agent definitions |
+| Stage                         | Effort                                                                                           |
+|-------------------------------|--------------------------------------------------------------------------------------------------|
+| Mechanical / bulk stages      | `low`                                                                                            |
+| Standard work                 | omit (inherit session effort)                                                                    |
+| Hardest verify / judge stages | `high` or `xhigh`                                                                                |
+| Review rounds 1, 2, 3+        | `high`, `xhigh`, `xhigh` (round 3+ on the strongest tier) via the `reviewer-*` agent definitions |
 
 ## Where the dials live
 
 - **Agent tool**: set the `model` parameter per call. There is no per-call effort override —
   effort comes from the agent definition. `fork`-type agents always inherit the parent model;
   don't set `model` on them. Effort for reviewers is pinned in `.claude/agents/reviewer-high.md`,
-  `reviewer-xhigh.md` and `reviewer-max.md`.
+  `reviewer-xhigh.md` and `reviewer-top.md`.
 - **Workflow `agent()`**: set both `model` and `effort` in the opts, per stage.
 - **Custom agents** (`.claude/agents/*.md`): can pin model/effort in frontmatter; prefer that
   for agents whose task type never varies.

@@ -158,9 +158,9 @@ red-team follow-up, task-file record).
     |---|---|---|
   | 1 (blind) | `opus`, high | `subagent_type: reviewer-high` |
   | 2 | `opus`, xhigh | `subagent_type: reviewer-xhigh` (opus, not the strongest tier: maintainer, 2026-09-28) |
-  | 3 and later | strongest tier, max | `subagent_type: reviewer-max` (the safety valve has fired; the maintainer is in the loop) |
+  | 3 and later | strongest tier (`fable`), xhigh | `subagent_type: reviewer-top` (the safety valve has fired; the maintainer is in the loop; xhigh, not max: maintainer, 2026-09-28) |
 
-  Why a ladder and not max from the start: a round that is not clean means the previous tier missed
+  Why a ladder and not the top rung from the start: a round that is not clean means the previous tier missed
   something or the fix delta introduced something, and both call for more scrutiny of a SMALLER
   target. **Ultra starts one rung higher than klang** (klang's round 1 is `opus` at session effort):
   this repo already specified `opus`/high for round 1, and `reviewer-high` is what makes that
@@ -321,8 +321,8 @@ in this file:
 ## Changelog
 
 - **2026-09-28** — Second adoption from klang, whose copy had kept evolving for a month. Taken: the
-  effort ladder (with `reviewer-high`/`-xhigh`/`-max` in `.claude/agents/`, one rung higher than
-  klang's in round 1, and round 2 kept on `opus` rather than the strongest tier — maintainer's cost
+  effort ladder (with `reviewer-high`/`-xhigh`/`-top` in `.claude/agents/`, one rung higher than
+  klang's in round 1, round 2 kept on `opus` and round 3+ on `fable` at xhigh rather than max — maintainer's cost
   call), the SURPLUS question, the rules on verifying claims about existing code, closing a
   correction by repo-wide grep with one home, unified paths defusing tests, replaced expressions,
   closed lists by table, reported-vs-landed fixes and naming the run; the `No tests found` and

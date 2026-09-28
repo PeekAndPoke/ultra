@@ -49,7 +49,7 @@ Run the loop from `.claude/skills/review-loop/` with the three charters below â€
 rounds two-phase, findings carried in a ledger, only CRITICAL/MAJOR looping, safety valve at 2 rounds.
 
 All three run in parallel, spawned by review-loop's **effort ladder** (round 1 `reviewer-high`, round 2
-`reviewer-xhigh`, then `reviewer-max`). This is correctness-critical verification; do not downgrade
+`reviewer-xhigh`, then `reviewer-top`). This is correctness-critical verification; do not downgrade
 them to save tokens without saying so in the brief. Ask each the SURPLUS question too. Tell each: cite
 `path/File.kt:line`, give a concrete failure scenario, "NO FINDINGS" is valid, do not pad, and do NOT
 spawn sub-agents.

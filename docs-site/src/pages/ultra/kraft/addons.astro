@@ -285,7 +285,7 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
 }`} lang="kotlin" theme="vitesse-dark" />
 
     <Aside>The <code>starting</code> flag prevents a race: <code>onMount</code> and <code>onUpdate</code> both call
-        <code>tryStart()</code>, but the <code>launch {}</code> is async. Without a sync flag, you'd create two
+        <code>tryStart()</code>, but the <code>launch {'{}'}</code> is async. Without a sync flag, you'd create two
         Applications before the first finishes.
     </Aside>
 
