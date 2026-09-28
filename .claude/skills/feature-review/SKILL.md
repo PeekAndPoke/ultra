@@ -48,8 +48,9 @@ should be committed or at least staged so the change set is well defined.
 Run the loop from `.claude/skills/review-loop/` with the three charters below — round 1 blind, later
 rounds two-phase, findings carried in a ledger, only CRITICAL/MAJOR looping, safety valve at 2 rounds.
 
-All three run `opus` at high effort, in parallel, per `.claude/skills/agent-fleet/`. This is
-correctness-critical verification; do not downgrade them to save tokens. Tell each: cite
+All three run in parallel, spawned by review-loop's **effort ladder** (round 1 `reviewer-high`, round 2
+`reviewer-xhigh`, then `reviewer-max`). This is correctness-critical verification; do not downgrade
+them to save tokens without saying so in the brief. Ask each the SURPLUS question too. Tell each: cite
 `path/File.kt:line`, give a concrete failure scenario, "NO FINDINGS" is valid, do not pad, and do NOT
 spawn sub-agents.
 

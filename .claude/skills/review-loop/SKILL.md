@@ -121,6 +121,52 @@ red-team follow-up, task-file record).
   most-cited gate did report HIGH, for a live session token on screen.
 - **Never silently drop a finding.** Every one ends as fix / reject+reason / maintainer-decision.
 - **A finding about a MISSING e2e test is a gate failure, not a debatable nit** — see CLAUDE.md.
+- **A claim about what existing code DOES is verified by reading it before it is written anywhere** —
+  a plan, a task doc, a brief, a reviewer's remark, a fix round's KDoc alike. It escapes most during a
+  design walk with the maintainer, because a decision is being made and the code is not open: write
+  the decision, mark any sentence about current behaviour UNVERIFIED, and brief the implementer to
+  confirm or refute it before building on it. (Klang rewrote this rule after its third recurrence.)
+- **A correction is CLOSED only by a repo-wide grep**, run and its result recorded before the fix is
+  reported — not by fixing the file it was found in. Repo-wide includes `.claude/skills/`,
+  `docs-site/src/data/llms/` and `docs-site/src/pages/`: those are what agents and readers copy from.
+  A rule stated in many places in different words is not closed by grepping one phrasing: grep its
+  mechanism words (the field, the flag, the function), give the full statement ONE home, and make every
+  other copy a pointer. The same goes for a DELETED symbol: grep its name in comments and KDoc too —
+  the compiler finds the code, nothing finds the prose.
+- **A change that unifies two paths, or makes an input unreachable, defuses tests outside the diff.**
+  The brief asks: which existing tests compare those two things, or feed that input, and what do they
+  test after the change? Found by reading the hits, not by grep alone.
+- **A decision that REPLACES an expression lists every clause of the old one** — floors, initial
+  values, fallbacks, `?:` arms — and marks each kept, changed by a named decision, or gone. A clause
+  nobody named is kept. (Klang, twice: a stateless rewrite and a lifetime expression each silently
+  dropped an implicit floor.)
+- **A rule with a closed list is reviewed by table.** When a change lands or edits a rule that
+  enumerates cases (which endpoint needs which permission, which type has which codec), the brief asks
+  for a table of EVERY case against the rule's clauses, read from the code. Klang: three rounds of prose
+  review missed what one table found in a pass. And an enumeration in a rule says "closed" or does not
+  enumerate.
+- **A reported fix is not a landed fix.** After a fix batch, RE-READ the thing that was wrong, not the
+  patch that was written. A clean later round is not evidence, because a reviewer reads the whole
+  current state and a small regression hides in it.
+- **Every "green" names its run** — made on the final tree, exercising the changed path. A run that
+  predates the last edit, or a suite that never reaches the changed code, backs nothing.
+- **The effort ladder: every round that is not clean escalates one level.** The Agent tool has no
+  per-call effort dial, so the levels are agent definitions in `.claude/agents/` with model and effort
+  pinned:
+
+  | round | reviewers | spawn with |
+    |---|---|---|
+  | 1 (blind) | `opus`, high | `subagent_type: reviewer-high` |
+  | 2 | `opus`, xhigh | `subagent_type: reviewer-xhigh` (opus, not the strongest tier: maintainer, 2026-09-28) |
+  | 3 and later | strongest tier, max | `subagent_type: reviewer-max` (the safety valve has fired; the maintainer is in the loop) |
+
+  Why a ladder and not max from the start: a round that is not clean means the previous tier missed
+  something or the fix delta introduced something, and both call for more scrutiny of a SMALLER
+  target. **Ultra starts one rung higher than klang** (klang's round 1 is `opus` at session effort):
+  this repo already specified `opus`/high for round 1, and `reviewer-high` is what makes that
+  enforceable. Tiering a round DOWN to save tokens is allowed when the brief says so (klang does it
+  for prose-only deltas). Watch it with the defect-density ledger in `/agent-fleet`: if round 2 keeps
+  finding what round 1 missed, the ladder earns its cost.
 - **Final report** lists rounds run, each round's findings and outcomes, parked decisions on top.
 
 ### The reviewer charters
@@ -129,12 +175,16 @@ red-team follow-up, task-file record).
 the two copies had already drifted apart within a day — this repo's own "Docs vs skills" rule warns
 about exactly that, and the review skills are not exempt from it.
 
-Reviewers run `opus` at high effort per `.claude/skills/agent-fleet/` — correctness-critical
-verification. Do not downgrade them to save tokens.
+Reviewers are spawned by the **effort ladder** (Rules, above) — correctness-critical verification. Do
+not downgrade them to save tokens without saying so in the brief.
 
 Give every reviewer: the change set, the task file, the plan link, its charter, and these constraints —
 findings must use the severity scale **CRITICAL / MAJOR / MINOR**; cite `path/File.kt:line`; give a
 concrete failure scenario; "NO FINDINGS" is a valid answer; do not pad; do NOT spawn sub-agents.
+And ask every charter the **SURPLUS** question: what does this change add that the need did not ask
+for (a helper nothing calls yet, a parameter, a branch, a mapping), and could it be removed or
+deferred? A removal is a valid finding. (In klang that question alone shrank a step by a
+quarter.)
 
 ---
 
@@ -170,15 +220,35 @@ condition under which a green test is worth nothing.
    filtered run may execute something else entirely, and the XML mis-attributes which case failed. Read
    the CONSOLE for which case broke and the XML counts to confirm the spec ran at all. A pre-existing
    flake counts as a false RED — `JwtSignatureGateSpec` was flaky 1-in-4 and would certify a toothless
-   test as checked. Still green → the test is toothless; fix it and repeat from 1.
-4. **RESTORE** — revert exactly, run again, green. **Back up with `cp` first, and NEVER restore with
-   `git checkout`** — the file usually carries other uncommitted work, and on this worktree possibly
-   another agent's. Verify with `git diff` that only the intended change remains.
+   test as checked. **A scripted mutate-then-expect-red runner must treat `No tests found` (or zero
+   tests in the XML) as a script error, and print the failing test names** — an empty list on a "red"
+   is the tell; klang logged three spurious RED verdicts from it. Still green → the test is toothless;
+   fix it and repeat from 1.
+4. **RESTORE** — revert exactly, run again, green. **Back up with `cp` immediately before the mutation,
+   restore from that copy and verify with `cmp`; NEVER restore with `git checkout`** — the file usually
+   carries other uncommitted work, and on this worktree possibly another agent's (klang lost a round's
+   doc fix exactly this way). Verify with `git diff` that only the intended change remains. **An agent
+   can be stopped mid-run with a mutant applied:** a worker taking over from a stopped one first `cmp`s
+   every file the predecessor's runner touched against its backups, before reading the code as the
+   predecessor's work. Every brief that allows mutation says "restore before you finish".
 5. **REPORT** one line per test: `mutation-checked: <what was mutated> → red`.
 
 **A surviving mutant is not always a missing test.** It can mean the FIX was wrong, the fixture cannot
 express the difference, or a comment claimed something false. Work out which before adding an assertion
 to make it die.
+
+**Universal, in or out of scope:** a test never derives its expected value or threshold from the
+same constant or expression it guards. Klang's worst survivor was a bound that followed a 60x widening
+of the constant under test. Likewise a mapping table is guarded by its full literal map with a DISTINCT
+value per entry — a spec that asserts only the keys lets two swapped values through.
+
+### What deserves a test at all
+
+- **No value-echo tests.** `config.x shouldBe 0.05` fails only on intentional edits and cannot tell a
+  good one from a bad one. Where a value matters, guard the BEHAVIOUR it buys.
+- **"X is untested" must name a failure the test would catch that reading the code cannot**;
+  otherwise it is rejected without ceremony. **This does not touch CLAUDE.md's coverage rules** —
+  a missing e2e test on backend code and an unserialized production type stay gate failures.
 
 ### Not a retrofit mandate
 
@@ -204,6 +274,31 @@ serialize it.**
 
 ---
 
+## Standard 3 — Every escape closes one hole
+
+Adopted from klang 2026-09-28. The loop improves itself without experiments: every CRITICAL or MAJOR a
+round finds is something the stage before it let through, and each one is classified and closed ONCE,
+so the same class cannot escape the same way again.
+
+**Classify each CRITICAL/MAJOR by what would have caught it earlier**, and make that thing exist:
+
+| class     | what let it through                                         | the fix to the process                                                                                |
+|-----------|-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| brief     | the implementer was not told a constraint or a decided rule | a line in the brief, `/agent-fleet`, or CLAUDE.md                                                     |
+| checklist | no charter asks the question                                | a line in the charter in `/feature-review`, or a Rule above, with the failing scenario as its example |
+| test      | no test could see it (a mutation would have stayed green)   | a mandatory test pattern for that kind of change                                                      |
+| design    | it should have been decided before implementing             | a "decide before implementing" line in `.claude/tasks/TEMPLATE.md` or the plan                        |
+| tooling   | a mechanical check would have caught it                     | a grep or a script, named where it runs                                                               |
+
+**The signal that a rule failed is recurrence, not a rate.** The sample is too small to estimate one.
+If a class that already has a rule escapes again, the rule's TEXT failed (it was not where the agent
+read, or it did not name the scenario) and it is rewritten, not restated. One recurrence is enough.
+
+**The record is [`escape-ledger.md`](escape-ledger.md)**, next to this file. The coordinator appends a
+row when a step commits. Read it BEFORE writing a brief for a kind of change that has escaped before.
+
+---
+
 ## Gotchas — the ones specific to reviewing
 
 **CLAUDE.md's "Verification traps" section is canonical and auto-loaded; it is not repeated here.** Read
@@ -216,8 +311,28 @@ in this file:
 - **`git diff <path>` immediately before committing that path.** `git commit -- <path>` commits the
   WORKING TREE, not the index, so it takes another agent's edits to that file too. Checking
   `git diff --cached` does not cover this — that mistake swept a lock claim on 2026-08-24.
+- **A scripted rename must know what a word is.** A name that is also an English word, rewritten by a
+  bare regex, lands in KDoc prose, docs text and string literals (klang: 215 prose sites in one batch).
+  Rewrite only in a call context, and let the compiler find the rest (CLAUDE.md: rename and compile).
+- **Background Gradle chains get killed under memory pressure** on this machine; a foreground run of
+  the same chain survives. Before a long chain, stop idle Kotlin daemons. Never `pkill -f` a pattern
+  that also matches your own shell's command line.
 
 ## Changelog
+
+- **2026-09-28** — Second adoption from klang, whose copy had kept evolving for a month. Taken: the
+  effort ladder (with `reviewer-high`/`-xhigh`/`-max` in `.claude/agents/`, one rung higher than
+  klang's in round 1, and round 2 kept on `opus` rather than the strongest tier — maintainer's cost
+  call), the SURPLUS question, the rules on verifying claims about existing code, closing a
+  correction by repo-wide grep with one home, unified paths defusing tests, replaced expressions,
+  closed lists by table, reported-vs-landed fixes and naming the run; the `No tests found` and
+  stopped-agent guards in the mutation protocol; the self-reference and value-echo rules; Standard 3
+  and its escape ledger (started empty — klang's rows are audio-specific and stay there). Kept as
+  ultra's: the narrower mutation scope, the three charters, not flagging the fix delta in phase 1 (klang still marks it
+  as primary target), checkable rejections, and reject-also-loops. Left in
+  klang: the audio reviewer, `audio-constraints.md`, the render rules and the Karma/KSP gotchas.
+  Klang's evidence for the two-phase reconcile (2026-09-07, eight rounds): the reconcile phase twice
+  proved a triage REASON factually wrong, and each correction mattered.
 
 - **2026-08-28** — Adopted from `klang/.claude/skills/review-loop/`, which had outgrown this repo's
   one-shot gate. Kept wholesale: the loop, the two-phase later rounds, CRITICAL/MAJOR-only looping,
