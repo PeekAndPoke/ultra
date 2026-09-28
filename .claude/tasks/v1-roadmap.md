@@ -1,6 +1,6 @@
 # v1.0.0 Roadmap — Single Source of Truth
 
-**Current version:** 0.105.0 → **Target:** 1.0.0
+**Current version:** 0.109.0 → **Target:** 1.0.0
 **Last updated:** 2026-04-13
 
 This is the consolidated v1 plan. Replaces the previous v1-parallel-execution, ultra-v1-roadmap,

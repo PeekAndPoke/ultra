@@ -122,13 +122,13 @@ All are on [Maven Central](https://central.sonatype.com/search?q=io.peekandpoke)
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:kontainer:0.108.0")
-    implementation("io.peekandpoke.ultra:slumber:0.108.0")
-    implementation("io.peekandpoke.ultra:streams:0.108.0")
-    implementation("io.peekandpoke.mutator:core:0.108.0")
-    ksp("io.peekandpoke.mutator:ksp:0.108.0")
-    implementation("io.peekandpoke.karango:core:0.108.0")
-    implementation("io.peekandpoke.kraft:core:0.108.0")
+    implementation("io.peekandpoke.ultra:kontainer:0.109.0")
+    implementation("io.peekandpoke.ultra:slumber:0.109.0")
+    implementation("io.peekandpoke.ultra:streams:0.109.0")
+    implementation("io.peekandpoke.mutator:core:0.109.0")
+    ksp("io.peekandpoke.mutator:ksp:0.109.0")
+    implementation("io.peekandpoke.karango:core:0.109.0")
+    implementation("io.peekandpoke.kraft:core:0.109.0")
 }
 ```
 
