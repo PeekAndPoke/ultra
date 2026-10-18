@@ -2,9 +2,9 @@
 // Update these when releasing — all pages reference this file.
 
 // Versions
-export const ultraVersion = '0.108.0';
-export const kraftVersion = '0.108.0';
-export const kotlinVersion = '2.3.10';
+export const ultraVersion = '0.111.0';
+export const kraftVersion = '0.111.0';
+export const kotlinVersion = '2.4.21';
 export const fomanticVersion = '2.8.8';
 
 // Maven coordinates

@@ -24,7 +24,7 @@ class FieldSelectionCodeGenSpec : StringSpec() {
                         package monko.compile
 
                         import ${Vault::class.qualifiedName}
-                        import io.peekandpoke.ultra.slumber.Slumber
+                        import io.peekandpoke.ultra.common.slumber.Slumber
 
                         @Vault
                         abstract class FieldSelection {
@@ -70,7 +70,7 @@ class FieldSelectionCodeGenSpec : StringSpec() {
                         inline val MongoPropertyPath<FieldSelection, FieldSelection>.vaultField @JvmName("vaultField_0") inline get() = append<kotlin.Int, kotlin.Int>("vaultField")
 
                         // slumberField ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        // annotations: io.peekandpoke.ultra.slumber.Slumber.Field
+                        // annotations: io.peekandpoke.ultra.common.slumber.Slumber.Field
                         // defined as:   Property
                         // defined by:   Class monko.compile.FieldSelection
                         // defined type: kotlin.Double

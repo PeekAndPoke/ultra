@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.auth.provider
 
+import io.peekandpoke.ultra.common.model.Redacted
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.json.webtoken.JsonWebSignature
 import io.kotest.assertions.throwables.shouldThrow
@@ -62,7 +63,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 "should create an instance when GOOGLE_SSO_CLIENT_ID is configured" {
                     val config = AppConfig.of(
                         keys = mapOf(
-                            GoogleSsoAuth.GOOGLE_SSO_CLIENT_ID to "my-client-id"
+                            GoogleSsoAuth.GOOGLE_SSO_CLIENT_ID to Redacted("my-client-id")
                         )
                     )
 

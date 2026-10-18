@@ -1,0 +1,178 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import Aside from '../../../components/Aside.astro';
+import { kraftSidebar } from '../../../data/kraft-sidebar';
+import { Code } from 'astro:components';
+---
+
+<DocsLayout title="Link Clicks in Kraft" sidebar={kraftSidebar} description="Which link clicks the Kraft router handles in-app, and which it leaves to the browser">
+
+<h1>Link Clicks</h1>
+
+<p class="text-xl text-gray-400 !mt-2 !mb-8">
+  Which clicks the router turns into in-app navigation, and which it leaves to the browser.
+</p>
+
+<Code code={`a { href(Nav.userProfile("alice")); +"Alice" }            // in-app
+a(href = "/static/manual.pdf", target = "_blank") { +"Manual" } // new tab
+a(href = "https://example.com") { +"Elsewhere" }               // full page load`} lang="kotlin" theme="vitesse-dark" />
+
+<p>
+  With <code>usePathStrategy()</code> the router listens for clicks on the whole page. It takes over a click only when
+  it can serve it as an in-app navigation; everything else goes to the browser, which does what it would do on any
+  other website. A link built with <code>A.href(route)</code> needs no click handler.
+</p>
+
+<h2>At a glance</h2>
+
+<p>What a click on a link does, and when. Modifier keys and middle click come first: they reach the browser whatever the link says.</p>
+
+<div class="not-prose my-8">
+<table class="w-full text-sm text-left">
+  <thead class="text-gray-400 border-b border-white/10">
+    <tr><th class="py-2 pr-4">Behaviour</th><th class="py-2 pr-4">By</th><th class="py-2">Fires when</th></tr>
+  </thead>
+  <tbody class="text-gray-300">
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">In-app navigation, no reload</td><td class="py-2 pr-4">router</td><td class="py-2">Plain left click or Enter, on a relative link (<code>/users</code>, <code>settings</code>, <code>A.href(route)</code>) that resolves to your origin — with no target other than <code>_self</code>, no <code>download</code>, no <code>rel="external"</code>, and no handler that called <code>preventDefault()</code></td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">In-app, <code>catchAll</code> page</td><td class="py-2 pr-4">router</td><td class="py-2">As above, but no route matches the path</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Scroll to anchor, route stays</td><td class="py-2 pr-4">browser</td><td class="py-2"><code>#intro</code>, or the current path and query plus a fragment</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Full page load, same tab</td><td class="py-2 pr-4">browser</td><td class="py-2">Absolute URL (<code>https://…</code>, <code>//host/…</code>), even to your own app · <code>rel="external"</code> · router disabled</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">New tab</td><td class="py-2 pr-4">browser</td><td class="py-2">Ctrl / Cmd + click · middle click · <code>target="_blank"</code></td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">New window</td><td class="py-2 pr-4">browser</td><td class="py-2">Shift + click</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Download</td><td class="py-2 pr-4">browser</td><td class="py-2"><code>download</code> attribute · Alt / Option + click in most browsers</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Opens in another frame or window</td><td class="py-2 pr-4">browser</td><td class="py-2">Named <code>target</code> · <code>&lt;base target&gt;</code> on the page · <code>_top</code> / <code>_parent</code> when the app runs inside a frame</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Mail app, dialer, script, …</td><td class="py-2 pr-4">browser</td><td class="py-2"><code>mailto:</code>, <code>tel:</code>, <code>javascript:</code> and other schemes</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Only your handler runs</td><td class="py-2 pr-4">you</td><td class="py-2">Your handler called <code>preventDefault()</code></td></tr>
+    <tr><td class="py-2 pr-4">Browser default, router stays out</td><td class="py-2 pr-4">browser</td><td class="py-2">Your handler called <code>stopPropagation()</code> but not <code>preventDefault()</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Which links</h2>
+
+<p>For a plain left click, the router handles the link only if every row below says <em>router</em>:</p>
+
+<div class="not-prose my-8">
+<table class="w-full text-sm text-left">
+  <thead class="text-gray-400 border-b border-white/10">
+    <tr><th class="py-2 pr-4">Link</th><th class="py-2 pr-4">Handled by</th><th class="py-2">Result</th></tr>
+  </thead>
+  <tbody class="text-gray-300">
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>/users/alice</code>, <code>A.href(route)</code></td><td class="py-2 pr-4">router</td><td class="py-2">In-app navigation, new history entry</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>settings</code>, <code>../users</code> (relative)</td><td class="py-2 pr-4">router</td><td class="py-2">Resolved like the browser does: <code>settings</code> on <code>/users/alice</code> goes to <code>/users/settings</code>. A <code>&lt;base href&gt;</code> is honoured</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>/docs?tab=2#intro</code></td><td class="py-2 pr-4">router</td><td class="py-2">Query and fragment are kept in the URL; the fragment plays no part in route matching</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>#intro</code>, or the current path and query plus a fragment</td><td class="py-2 pr-4">browser</td><td class="py-2">Scrolls to the anchor. The active route stays, and nothing re-renders. Under a <code>&lt;base href&gt;</code> that points elsewhere, <code>#intro</code> is a link to that page, as in plain HTML</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>https://…</code>, <code>http://localhost:8080/…</code></td><td class="py-2 pr-4">browser</td><td class="py-2">Full page load, even when the URL points at your own app</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>//cdn.example.com/…</code></td><td class="py-2 pr-4">browser</td><td class="py-2">Scheme-relative URLs are absolute URLs too</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>mailto:</code>, <code>tel:</code>, <code>blob:</code>, <code>data:</code>, <code>javascript:</code></td><td class="py-2 pr-4">browser</td><td class="py-2">Whatever the browser does with that scheme</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>target="_blank"</code>, or any named target</td><td class="py-2 pr-4">browser</td><td class="py-2">Opens where the target says</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>target="_self"</code>, <code>target=""</code></td><td class="py-2 pr-4">router</td><td class="py-2">Same as no target</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>target="_top"</code>, <code>target="_parent"</code></td><td class="py-2 pr-4">router / browser</td><td class="py-2">Router when the app is not inside a frame, browser when it is</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">No target, but <code>&lt;base target="_blank"&gt;</code> on the page</td><td class="py-2 pr-4">browser</td><td class="py-2">The base target applies, as in plain HTML</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>download</code> attribute</td><td class="py-2 pr-4">browser</td><td class="py-2">Downloads the file</td></tr>
+    <tr><td class="py-2 pr-4"><code>rel="external"</code></td><td class="py-2 pr-4">browser</td><td class="py-2">Full page load. The escape hatch for same-origin URLs served by your backend</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  A same-origin path the SPA has no route for is still routed in-app, and lands on <code>catchAll</code> — or on
+  nothing but a console error, without one. If
+  <code>/api/export.csv</code> or <code>/oauth/start</code> is served by the backend, say so on the link:
+</p>
+
+<Code code={`a(href = "/api/export.csv") { attributes["download"] = ""; +"Export" }
+a(href = "/oauth/github/start") { attributes["rel"] = "external"; +"Sign in with GitHub" }`} lang="kotlin" theme="vitesse-dark" />
+
+<Aside>
+  „The router used to ask a URL regex whether a link was external. The regex had never heard of
+  <code>localhost</code>, so on a dev machine an absolute link to the app itself was treated as a path, and you ended
+  up at <code>http://localhost:8080/http://localhost:8080/page</code>. It checks what a link looks like now, not what
+  a regex thinks of it."
+</Aside>
+
+<h2>Which clicks</h2>
+
+<p>For a link the router would handle, the way it is clicked decides:</p>
+
+<div class="not-prose my-8">
+<table class="w-full text-sm text-left">
+  <thead class="text-gray-400 border-b border-white/10">
+    <tr><th class="py-2 pr-4">Click</th><th class="py-2 pr-4">Handled by</th><th class="py-2">Usual browser result</th></tr>
+  </thead>
+  <tbody class="text-gray-300">
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Left click, or Enter on a focused link</td><td class="py-2 pr-4">router</td><td class="py-2">—</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Ctrl + click (Cmd + click on macOS)</td><td class="py-2 pr-4">browser</td><td class="py-2">New tab</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Shift + click</td><td class="py-2 pr-4">browser</td><td class="py-2">New window</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Alt + click (Option + click on macOS)</td><td class="py-2 pr-4">browser</td><td class="py-2">Download, in most browsers</td></tr>
+    <tr class="border-b border-white/5"><td class="py-2 pr-4">Middle click</td><td class="py-2 pr-4">browser</td><td class="py-2">New tab</td></tr>
+    <tr><td class="py-2 pr-4">Right click</td><td class="py-2 pr-4">browser</td><td class="py-2">Context menu, "Open in new tab" etc.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Your own click handlers</h2>
+
+<p>
+  If a handler on the link, or on anything inside it, calls <code>preventDefault()</code>, the router leaves the click
+  alone. Kraft's <code>onClick</code> does not do that by itself:
+</p>
+
+<Code code={`// Fine: the router handles the plain click, the browser handles the rest
+a { href(Nav.about()); +"About" }
+
+// Handled twice: onClick navigates, then the router sees an unhandled click
+a {
+    href(Nav.about())
+    onClick { evt -> router.navToUri(evt, Nav.about()) }
+    +"About"
+}
+
+// Your handler only, the browser and the router stay out
+a {
+    href(Nav.about())
+    onClick { evt -> evt.preventDefault(); openAboutDialog() }
+    +"About"
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>
+  To keep the browser's default but stop the router, call <code>evt.stopPropagation()</code> without
+  <code>preventDefault()</code>: the click never reaches the router's listener on <code>window</code>.
+</p>
+
+<p>
+  <code>router.navToUri(evt, route)</code> is for elements that are not links, such as buttons. It opens a new tab on
+  Ctrl / Cmd + click and navigates in-app otherwise. Browsers do not fire <code>click</code> for the middle button, so
+  wire it with <code>onClickOrAuxClick</code> if middle click should open a tab too.
+</p>
+
+<h2>Hash strategy</h2>
+
+<p>
+  With <code>useHashStrategy()</code> the router does not listen for clicks at all. <code>A.href(route)</code> renders
+  <code>#/about</code>, the browser changes the hash, and the router follows the hash change. Everything in the tables
+  above is then plain browser behaviour.
+</p>
+
+<p>
+  An in-page anchor such as <code>#intro</code> does not work in hash mode: the hash <em>is</em> the route, so it
+  navigates to the route <code>intro</code>. Scroll with <code>element.scrollIntoView()</code> instead.
+</p>
+
+<h2>When the router is disabled</h2>
+
+<p><code>router.disable()</code> hands every click to the browser until <code>router.enable()</code>.</p>
+
+<Aside>
+  „A routed link to <code>/docs#intro</code> from another page lands at the top of <code>/docs</code>, not at
+  <code>#intro</code>. The router scrolls to the top on every page change and does not look for the anchor
+  afterwards. On the same page, <code>#intro</code> is the browser's job and works."
+</Aside>
+
+<div class="not-prose mt-8 flex gap-4">
+  <a href="/ultra/kraft/forms" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
+    Forms &amp; validation &rarr;
+  </a>
+</div>
+
+</DocsLayout>

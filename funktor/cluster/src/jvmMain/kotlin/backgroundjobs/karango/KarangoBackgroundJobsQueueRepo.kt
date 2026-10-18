@@ -20,11 +20,11 @@ import io.peekandpoke.karango.aql.RETURN_COUNT
 import io.peekandpoke.karango.aql.RETURN_NEW
 import io.peekandpoke.karango.aql.UPDATE
 import io.peekandpoke.karango.aql.aql
-import io.peekandpoke.karango.aql.ts
 import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Stored

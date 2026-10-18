@@ -24,14 +24,17 @@ kotlin {
 
     dependencies {
         implementation(kotlin("reflect"))
+        implementation(Deps.KotlinX.serialization_json)
         implementation(Deps.KotlinX.coroutines_core)
-        implementation(Deps.JavaLibs.Jackson.module_kotlin)
 
         api(platform(Deps.KotlinLibs.MongoDb.mongodb_driver_bom))
         api(Deps.KotlinLibs.MongoDb.mongodb_driver_kotlin_coroutine)
         api(Deps.KotlinLibs.MongoDb.mongodb_bson_kotlinx)
 
-        implementation(project(":ultra:common"))
+        // `api`: MongoDbConfig.connectionString is a REQUIRED Redacted<String> constructor parameter, so
+        // ultra:common is part of this module's published surface — an external consumer cannot even
+        // construct a MongoDbConfig without it. See the matching note in karango/core.
+        api(project(":ultra:common"))
         implementation(project(":ultra:datetime"))
         implementation(project(":ultra:reflection"))
         implementation(project(":ultra:kontainer"))

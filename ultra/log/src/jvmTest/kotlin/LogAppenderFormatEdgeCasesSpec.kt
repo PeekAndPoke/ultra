@@ -14,14 +14,14 @@ class LogAppenderFormatEdgeCasesSpec : StringSpec() {
 
         "format uses short logger name as-is when length <= 30" {
             val shortName = "a.b.Logger" // 10 chars
-            val result = LogAppender.format(ts, LogLevel.INFO, "msg", shortName)
+            val result = LogAppender.format(LogEvent(ts, LogLevel.INFO, "msg", shortName))
 
             result shouldContain "a.b.Logger"
         }
 
         "format abbreviates logger name when length > 30" {
             val longName = "io.peekandpoke.ultra.log.service.MyService" // 43 chars
-            val result = LogAppender.format(ts, LogLevel.ERROR, "msg", longName)
+            val result = LogAppender.format(LogEvent(ts, LogLevel.ERROR, "msg", longName))
 
             result shouldContain "i.p.u.l.s.MyService"
             result shouldNotContain longName
@@ -30,7 +30,7 @@ class LogAppenderFormatEdgeCasesSpec : StringSpec() {
         "format includes exact 30-char name without abbreviation" {
             // Build a name exactly 30 chars long
             val exactName = "a".repeat(30) // 30 chars
-            val result = LogAppender.format(ts, LogLevel.DEBUG, "msg", exactName)
+            val result = LogAppender.format(LogEvent(ts, LogLevel.DEBUG, "msg", exactName))
 
             result shouldContain exactName
         }
@@ -38,7 +38,7 @@ class LogAppenderFormatEdgeCasesSpec : StringSpec() {
         "format with 31-char name abbreviates" {
             // "io.peekandpoke.ultra.logging.Xx" is 31 chars -> triggers abbreviation
             val longishName = "io.peekandpoke.ultra.logging.Xx"
-            val result = LogAppender.format(ts, LogLevel.DEBUG, "msg", longishName)
+            val result = LogAppender.format(LogEvent(ts, LogLevel.DEBUG, "msg", longishName))
 
             result shouldContain "i.p.u.l.Xx"
         }
@@ -70,7 +70,7 @@ class LogAppenderFormatEdgeCasesSpec : StringSpec() {
         }
 
         "format with empty message" {
-            val result = LogAppender.format(ts, LogLevel.WARNING, "", "short.Logger")
+            val result = LogAppender.format(LogEvent(ts, LogLevel.WARNING, "", "short.Logger"))
 
             result shouldContain "WARNING"
             result shouldContain "short.Logger"
@@ -88,21 +88,44 @@ class LogAppenderFormatEdgeCasesSpec : StringSpec() {
             )
 
             levels.forEach { (level, expected) ->
-                val result = LogAppender.format(ts, level, "test", "short.L")
+                val result = LogAppender.format(LogEvent(ts, level, "test", "short.L"))
                 result shouldContain expected
             }
         }
 
         "format output structure is: date time LEVEL - name - message" {
-            val result = LogAppender.format(ts, LogLevel.INFO, "hello world", "my.Logger")
+            val result = LogAppender.format(LogEvent(ts, LogLevel.INFO, "hello world", "my.Logger"))
 
-            // toLocalDate() = "2025-01-15", toLocalTime() = "08:30"
-            result shouldBe "2025-01-15 08:30 INFO - my.Logger - hello world"
+            result shouldBe "2025-01-15 08:30:00.000 INFO - my.Logger - hello world"
+        }
+
+        "format renders a fixed-width timestamp regardless of precision" {
+            // LocalTime.toString() used to drop zero seconds and append nanos otherwise, so one line
+            // in sixty had no seconds at all and the output could not be parsed positionally.
+            val cases = listOf(
+                ZonedDateTime.parse("2025-01-15T08:30:00+01:00[Europe/Berlin]"),
+                ZonedDateTime.parse("2025-01-15T08:30:45+01:00[Europe/Berlin]"),
+                ZonedDateTime.parse("2025-01-15T08:30:45.1+01:00[Europe/Berlin]"),
+                ZonedDateTime.parse("2025-01-15T08:30:45.123456789+01:00[Europe/Berlin]"),
+            )
+
+            val widths = cases.map { LogAppender.format(LogEvent(it, LogLevel.INFO, "m", "n")).indexOf(" INFO") }
+
+            widths.distinct() shouldBe listOf("2025-01-15 08:30:00.000".length)
+        }
+
+        "formatLoggerName survives empty package segments" {
+            // `it[0]` on an empty segment used to throw StringIndexOutOfBoundsException, which then
+            // suppressed delivery of the event to that appender and every appender after it.
+            LogAppender.formatLoggerName("a..b.C") shouldBe "a..b.C"
+            LogAppender.formatLoggerName(".b.C") shouldBe ".b.C"
+            LogAppender.formatLoggerName("..") shouldBe ".."
+            LogAppender.formatLoggerName(".") shouldBe "."
         }
 
         "format preserves message with special characters" {
             val msg = "Error: NullPointerException at line 42 [code=500]"
-            val result = LogAppender.format(ts, LogLevel.ERROR, msg, "short.L")
+            val result = LogAppender.format(LogEvent(ts, LogLevel.ERROR, msg, "short.L"))
 
             result shouldContain msg
         }

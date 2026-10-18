@@ -2,31 +2,29 @@ package io.peekandpoke.funktor.logging.karango
 
 import io.peekandpoke.ultra.common.network.NetworkUtils
 import io.peekandpoke.ultra.log.LogAppender
+import io.peekandpoke.ultra.log.LogEvent
 import io.peekandpoke.ultra.log.LogLevel
-import java.time.ZonedDateTime
 
 /** Log appender that persists entries to ArangoDB via [KarangoLogRepository]. */
 class KarangoLogAppender(
     repo: Lazy<KarangoLogRepository>,
-    private val minLevel: LogLevel,
+    override val minLevel: LogLevel,
     private val serverName: String = NetworkUtils.getHostNameOrDefault(),
 ) : LogAppender {
 
     val repo by repo
 
-    override suspend fun append(ts: ZonedDateTime, level: LogLevel, message: String, loggerName: String) {
+    // UltraLogManager already honours `minLevel`, so anything arriving here is accepted.
+    override suspend fun append(event: LogEvent) {
 
-        if (level.severity >= minLevel.severity) {
+        val entry = KarangoLogEntry(
+            createdAt = System.currentTimeMillis(),
+            level = event.level,
+            message = event.message,
+            loggerName = event.loggerName,
+            server = serverName,
+        )
 
-            val entry = KarangoLogEntry(
-                createdAt = System.currentTimeMillis(),
-                level = level,
-                message = message,
-                loggerName = loggerName,
-                server = serverName,
-            )
-
-            repo.tryInsert(entry)
-        }
+        repo.tryInsert(entry)
     }
 }

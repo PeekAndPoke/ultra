@@ -1,15 +1,13 @@
 package io.peekandpoke.ultra.security.jwt
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.JWTCreator
-import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.interfaces.Payload
+import io.peekandpoke.ultra.common.model.Redacted
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.security.user.UserRecord
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Pins the FAIL-CLOSED identity extraction.
@@ -29,15 +27,26 @@ class ExtractUserSpec : StringSpec({
     val config = JwtConfig(
         issuer = "testIssuer",
         audience = "testAudience",
-        signingKey = "testSigningKey",
+        keys = listOf(
+            JwtSigningKey(
+                id = "extract-1",
+                secret = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
+            )
+        ),
         permissionsNs = "permissions",
         userNs = ns,
     )
     val generator = JwtGenerator(config = config)
 
-    /** A decoded (signature-irrelevant) payload — extraction runs after verification. */
-    fun payloadOf(builder: JWTCreator.Builder.() -> Unit): Payload =
-        JWT.decode(JWT.create().apply(builder).sign(Algorithm.HMAC512(config.signingKey)))
+    /**
+     * A decoded payload — extraction runs AFTER verification, so no signing is involved here.
+     *
+     * Built straight from the builder's claim map rather than through the verifier, because several
+     * cases below deliberately carry claims a verifier would reject.
+     */
+    fun payloadOf(builder: JwtBuilder.() -> Unit): JwtPayload {
+        return JwtPayload(claims = JsonObject(JwtBuilder().apply(builder).claims))
+    }
 
     "a valid id claim yields that UserId" {
         val payload = payloadOf { withClaim("$ns/id", "b2b_users/u1") }
@@ -100,17 +109,47 @@ class ExtractUserSpec : StringSpec({
         // Identity and permissions come from INDEPENDENT claim sets. A token carrying permission
         // claims but no usable id must not satisfy permission-only auth rules (isSuperUser(),
         // forRole(), ...), so the degradation has to be total.
-        val idLess = JWT.create()
-            .withIssuer(config.issuer)
-            .withAudience(config.audience)
-            .encodePermissions(config.permissionsNs, UserPermissions(isSuperUser = true, roles = setOf("admin")))
-            .sign(Algorithm.HMAC512(config.signingKey))
+        val idLess = generator.sign(
+            JwtBuilder()
+                .withIssuer(config.issuer)
+                .withAudience(config.audience)
+                .encodePermissions(config.permissionsNs, UserPermissions(isSuperUser = true, roles = setOf("admin")))
+                .claims
+        )
 
         val degraded = generator.extractUser(clientIp = "1.2.3.4", jwt = generator.verify(idLess))
 
         degraded.record.isAnonymous() shouldBe true
         degraded.permissions.isSuperUser shouldBe false
         degraded.permissions shouldBe UserPermissions.anonymous
+    }
+
+    "the builder CANNOT smuggle permission claims past the vetted UserPermissions" {
+        // `createJwt` applies the caller's builder block BEFORE encodePermissions, and every write in
+        // encodePermissions is conditional — so before `clearNamespace`, a builder-set claim survived
+        // whenever the corresponding permission was absent. That is a privilege-escalation shape:
+        // `createJwt(user, permissions = vetted) { withClaim("permissions/superuser", true) }` with an
+        // unprivileged `vetted` produced a token that satisfied every permission-only auth rule.
+        val token = generator.createJwt(
+            user = JwtUserData(id = UserId("b2b_users/u1"), desc = "d", type = "t"),
+            permissions = UserPermissions(),
+            builder = {
+                withClaim("permissions/superuser", true)
+                withClaim("permissions/org", "organisation/attacker")
+                withArrayClaim("permissions/roles", arrayOf("admin"))
+                withClaim("user/id", "b2b_users/somebody-else")
+            },
+        )
+
+        val permissions = generator.extractPermissions(generator.verify(token))
+
+        permissions.isSuperUser shouldBe false
+        permissions.org shouldBe null
+        permissions.roles shouldBe emptySet()
+        permissions shouldBe UserPermissions()
+
+        // the user namespace is authoritative too
+        generator.extractUserData(generator.verify(token)).id shouldBe UserId("b2b_users/u1")
     }
 
     "a LEGACY bare-_key org claim degrades to no selected org — fail-closed, not a 500" {

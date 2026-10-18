@@ -33,7 +33,7 @@ import {Code} from 'astro:components';
 val kronos = Kronos.systemUtc
 
 val now = kronos.instantNow()
-val today = kronos.localDateNow()
+val today = kronos.localDateNow(MpTimezone.UTC)
 val currentTime = kronos.localDateTimeNow()
 val zoned = kronos.zonedDateTimeNow(MpTimezone.of("Europe/Berlin"))`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -43,40 +43,60 @@ val zoned = kronos.zonedDateTimeNow(MpTimezone.of("Europe/Berlin"))`} lang="kotl
 
     <Code code={`val frozen = Kronos.fixed(MpInstant.parse("2025-06-15T12:00:00Z"))
 
-println(frozen.instantNow())  // always 2025-06-15T12:00:00Z
-println(frozen.instantNow())  // still 2025-06-15T12:00:00Z
+frozen.instantNow()  // always 2025-06-15T12:00:00Z
+frozen.instantNow()  // still 2025-06-15T12:00:00Z
 
 // Fix to "now" at construction time
 val frozenNow = Kronos.fixedNow()`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Advancing clock</h2>
 
-    <p>Simulate time passing in tests:</p>
+    <p><code>advanceBy</code> returns a new Kronos that runs ahead of (or behind) the one it wraps:</p>
 
     <Code code={`import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 
 val kronos = Kronos.fixed(MpInstant.parse("2025-06-15T12:00:00Z"))
 
-println(kronos.instantNow())  // 2025-06-15T12:00:00Z
-
 val advanced = kronos.advanceBy(2.hours)
-println(advanced.instantNow())  // 2025-06-15T14:00:00Z
+advanced.instantNow()  // 2025-06-15T14:00:00Z
 
 val nextDay = advanced.advanceBy(1.days)
-println(nextDay.instantNow())  // 2025-06-16T14:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+nextDay.instantNow()   // 2025-06-16T14:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Chained advances, including repeated <code>{"mutable.mutate { advanceBy(..) }"}</code> steps, collapse into a
+        single offset, so a clock advanced a million times reads as fast as one advanced once.</p>
+
+    <p>When the offset is not known yet, pass a lambda. It is called once, the first time the clock is read, never
+        while chaining. If it throws, it is called again on the next read.</p>
+
+    <Code code={`// The offset lives in the database, which is not ready while the app boots
+val kronos = Kronos.systemUtc.advanceBy { settings.loadClockOffset() }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Mutable clock</h2>
 
-    <p>For tests that need to change time mid-execution:</p>
+    <p>For tests and simulations that move time mid-execution. <code>mutate</code> replaces the clock with what the
+        block returns, <code>set</code> replaces it outright:</p>
 
     <Code code={`val mutable = Kronos.fixed(MpInstant.parse("2025-01-01T00:00:00Z")).mutable()
 
-println(mutable.instantNow())  // 2025-01-01T00:00:00Z
+mutable.mutate { advanceBy(1.hours) }
+mutable.instantNow()  // 2025-01-01T01:00:00Z
 
-// Advance the same instance
-mutable.advanceBy(1.hours)
-println(mutable.instantNow())  // 2025-01-01T01:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+mutable.set(Kronos.fixed(MpInstant.parse("2030-01-01T00:00:00Z")))
+mutable.instantNow()  // 2030-01-01T00:00:00Z`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>advanceBy</code> on a mutable does not move it: it returns a new clock that follows the mutable.
+        <code>set</code> and <code>mutate</code> throw <code>IllegalArgumentException</code> for a clock that reads
+        the mutable itself, which would recurse forever on every read. The check sees through mutables and
+        <code>advanceBy</code> layers only, not into <code>{"advanceBy { }"}</code> lambdas or custom clocks, and is
+        not safe against two threads setting two mutables to read each other.</p>
+
+    <Aside>„<code>{"mutable.mutate { mutable.advanceBy(1.hours) }"}</code> looks like it advances the clock. It asks the
+        clock to read itself, forever. It used to end in a stack overflow on the first read, now it ends at the call
+        site."
+    </Aside>
 
     <h2>Injecting with Kontainer</h2>
 
@@ -104,18 +124,20 @@ class EventService(private val kronos: Kronos) {
 
     <h2>KronosDescriptor</h2>
 
-    <p>Kronos instances can be described with a serializable <code>KronosDescriptor</code>, useful for persisting or
-        transmitting clock configuration:</p>
+    <p><code>describe()</code> returns a serializable <code>KronosDescriptor</code>, and
+        <code>descriptor.instantiate()</code> turns it back into a Kronos:</p>
 
-    <Code code={`import io.peekandpoke.ultra.datetime.KronosDescriptor
+    <Code code={`val descriptor = Kronos.systemUtc.advanceBy(10.minutes).advanceBy(1.hours).describe()
+// KronosDescriptor.AdvancedBy(durationMs = 4_200_000, inner = KronosDescriptor.SystemClock)
 
-// System clock descriptor
-val desc = KronosDescriptor.SystemClock
+val kronos = descriptor.instantiate()`} lang="kotlin" theme="vitesse-dark"/>
 
-// Advanced-by descriptor
-val advancedDesc = KronosDescriptor.AdvancedBy(
-    millis = 3_600_000L  // +1 hour
-)`} lang="kotlin" theme="vitesse-dark"/>
+    <p>A chain of advances describes as one <code>AdvancedBy</code>. Nested descriptors written by older versions
+        still instantiate.</p>
+
+    <Aside>„A fixed clock describes itself as the system clock, so it does not survive the round trip. Good enough
+        for shifting a server's idea of now; not a way to persist a frozen test clock."
+    </Aside>
 
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/datetime/"

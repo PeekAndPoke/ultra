@@ -1,7 +1,11 @@
 package io.peekandpoke.ultra.codegen.model
 
+import io.peekandpoke.ultra.common.model.Redacted
+import io.peekandpoke.ultra.common.slumber.Slumber
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.slumber.Polymorphic
-import io.peekandpoke.ultra.slumber.Slumber
 import kotlin.reflect.KClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.json.JsonElement
@@ -449,3 +453,80 @@ sealed class FxSame<X, Y>
 data class FxBoth<A>(val a: A) : FxSame<A, A>()
 
 data class FxHoldsSame(val same: FxSame<String, String>)
+
+//  Claimed types reached from a root  ///////////////////////////////////////////////////////////////
+
+/**
+ * Reaches CLAIMED types, so the emitted file carries a real `import ... from './runtime/datetime.ts'`.
+ *
+ * Every other fixture imports nothing but `zod`, which is why an extensionless module specifier
+ * survived until 2026-07-30: `tsc` resolves it under `moduleResolution: bundler`, and nothing ever
+ * asked Node to load a generated file that imports a runtime module.
+ */
+data class FxDated(
+    val at: MpInstant,
+    val day: MpLocalDate,
+    val zone: MpTimezone,
+    val optional: MpInstant?,
+)
+
+//  @Slumber.As — a type that DECLARES its wire shape  ///////////////////////////////////////////////
+
+/** The shape [FxStamp] claims to write. An ordinary data class, walked like any other. */
+data class FxStampRaw(val at: Long, val label: String)
+
+/**
+ * Declares its wire shape, and is deliberately NOT claimed by any contributor.
+ *
+ * Before the annotation was read, a type like this could only be described by a hand-written claim.
+ */
+@Slumber.As(FxStampRaw::class)
+data class FxStamp(val opaqueInternals: String)
+
+data class FxHoldsStamp(val stamp: FxStamp)
+
+/** Declares a SCALAR shape — the `MpLocalTime` / `MpTimezone` case. */
+@Slumber.As(Long::class)
+data class FxTicks(val whatever: String)
+
+@Slumber.As(String::class)
+data class FxZone(val whatever: String)
+
+data class FxHoldsScalarShapes(val ticks: FxTicks, val zone: FxZone)
+
+/** Declares ITSELF, which cannot terminate. */
+@Slumber.As(FxSelfDeclared::class)
+data class FxSelfDeclared(val v: String)
+
+data class FxHoldsSelfDeclared(val s: FxSelfDeclared)
+
+/**
+ * Reaches a custom-coded type that declares NO wire shape, and that the walker CAN classify.
+ *
+ * Both halves matter for the codec-parity check. `java.time.LocalDate` is custom-coded but the walker
+ * cannot classify it at all, so it fails earlier as *unresolved* and never reaches the parity phase.
+ * `Redacted<T>` is an ordinary class the walker classifies happily, while `RedactedSlumberer` writes a
+ * placeholder `String` — so the walker's inference and the codec genuinely disagree.
+ *
+ * It is deliberately unannotated: §10 of the `@Slumber.As` task records that `Redacted` is asymmetric
+ * (it slumbers to `String` but awakes from `T`'s own shape) and out of that task's scope.
+ */
+data class FxHoldsRedacted(val secret: Redacted<String>)
+
+/**
+ * DELIBERATELY named after the production enum in `ultra:remote`, and deliberately not `Fx`-prefixed.
+ *
+ * The point is the name collision. `runtime/acl.ts` originally exported a union called
+ * `ApiAccessLevel`, which is exactly what a real SDK generates into `models.ts` once it reaches
+ * `UserApiAccessMatrix` — and since the barrel `export *`s every module, that was a hard `TS2308` in
+ * every SDK the access lookup exists to serve. It shipped because no ts-verify fixture emitted the
+ * name, so the barrel never had two sources for it. Found in review, 2026-08-01.
+ *
+ * Emitting it here means `tsc` compiles the barrel with both modules present, so re-using ANY
+ * `acl.ts` export name for a generated model turns red instead of reaching a consumer.
+ */
+@Suppress("unused")
+enum class ApiAccessLevel { Granted, Partial, Denied }
+
+/** Root that drags [ApiAccessLevel] into the emitted output. */
+data class FxAccessProbe(val level: ApiAccessLevel)

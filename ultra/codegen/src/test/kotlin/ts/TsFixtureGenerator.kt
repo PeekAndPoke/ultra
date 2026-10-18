@@ -1,6 +1,10 @@
 package io.peekandpoke.ultra.codegen.ts
 
+import io.peekandpoke.ultra.codegen.contributors.MpDateTimeTsContributor
+import io.peekandpoke.ultra.codegen.model.ApiAccessLevel
+import io.peekandpoke.ultra.codegen.model.FxAccessProbe
 import io.peekandpoke.ultra.codegen.model.FxBox
+import io.peekandpoke.ultra.codegen.model.FxDated
 import io.peekandpoke.ultra.codegen.model.FxEvent
 import io.peekandpoke.ultra.codegen.model.FxGAlphaBranch
 import io.peekandpoke.ultra.codegen.model.FxGAlphaLeaf
@@ -30,6 +34,10 @@ import io.peekandpoke.ultra.codegen.model.TsTypeDecl
 import io.peekandpoke.ultra.codegen.model.TypeId
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
+import io.peekandpoke.ultra.codegen.sdk.TsSdkRegistry
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.slumber.Codec
 import java.io.File
@@ -156,6 +164,26 @@ object TsFixtureGenerator {
             instance = FxQuoted.Apostrophe(plain = "ok", `it's` = "apostrophe", `dashed-name` = "dashed"),
             schemaType = typeOf<FxQuoted.Apostrophe>(),
         ),
+        // The ONLY fixture whose emitted file imports a runtime module rather than just `zod`. Until
+        // 2026-07-30 every generated import was extensionless, which `tsc` accepts under
+        // `moduleResolution: bundler` and Node refuses with ERR_MODULE_NOT_FOUND — so the emitted SDK
+        // type-checked and then failed to load. Nothing caught it because nothing ever asked Node to
+        // load a generated file that imports one. `verify.ts` importing this fixture is that ask.
+        Fixture(
+            name = "accessProbe",
+            root = typeOf<FxAccessProbe>(),
+            instance = FxAccessProbe(level = ApiAccessLevel.Granted),
+        ),
+        Fixture(
+            name = "dated",
+            root = typeOf<FxDated>(),
+            instance = FxDated(
+                at = MpInstant.parse("2026-07-30T10:15:30Z"),
+                day = MpLocalDate.of(2026, 7, 30),
+                zone = MpTimezone.of("Europe/Berlin"),
+                optional = null,
+            ),
+        ),
     )
 
     fun generate(targetDir: File) {
@@ -175,8 +203,13 @@ object TsFixtureGenerator {
             ).toJson()
         )
 
+        // The datetime claims are registered for every fixture, not just the one that reaches them:
+        // a claim only takes effect when its type is actually walked to, so this cannot change any
+        // other fixture's output.
+        val claims = TsTypeClaims().also { MpDateTimeTsContributor().claimTypes(it.scopeFor("fixtures")) }
+
         val entries = fixtures.map { fixture ->
-            val model: TypeModel = TypeWalker(TsTypeClaims())
+            val model: TypeModel = TypeWalker(claims)
                 .walk(listOf(TypeWalker.Root(fixture.root, fixture.name)))
 
             File(targetDir, "${fixture.name}.ts").writeText(TsModelEmitter(model).emit())
@@ -199,9 +232,274 @@ object TsFixtureGenerator {
             ManifestEntry(name = fixture.name, schema = decl.name, requiredFields = required)
         }
 
+        generateClient(targetDir, claims)
+
         File(targetDir, "manifest.json").writeText(entries.toManifestJson())
 
         println("[ts-fixtures] wrote ${entries.size} fixtures to $targetDir")
+    }
+
+    /**
+     * Emits a generated API CLIENT, plus the `models.ts` it imports from.
+     *
+     * This is the only place emitted client code meets a real compiler and a real runtime.
+     * `verifyRuntime.ts` constructs it against a stub transport and calls a member, which exercises
+     * the whole chain at once: the emitted class shape, its imports resolving, the schema expression
+     * it passes, `request`, and the envelope parse. A Kotlin assertion over the emitted string can
+     * only compare it to a string written by the same hand that emitted it.
+     *
+     * The client is built by hand from a [TsClientSpec] rather than by running the funktor REST
+     * contributor: that lives in `funktor/codegen`, which depends on this module, so reaching for it
+     * here would invert the dependency. The contributor's own tests cover the route walk that
+     * produces the spec.
+     */
+    private fun generateClient(targetDir: File, claims: TsTypeClaims) {
+        val model = TypeWalker(claims).walk(
+            listOf(
+                TypeWalker.Root(typeOf<List<FxSpeaker>>(), "client:listSpeakers"),
+                TypeWalker.Root(typeOf<FxTalk>(), "client:getTalk"),
+                TypeWalker.Root(typeOf<FxDated?>(), "client:latest"),
+                // A CLAIMED type as the payload itself. Claimed types are not exported by models.ts —
+                // they are imported into it from the module that owns them — so a client returning one
+                // must import it from there instead. Without this root that branch never runs, and the
+                // emitter would happily import a name models.ts does not export.
+                TypeWalker.Root(typeOf<MpInstant>(), "client:serverTime"),
+                // A LIST of a type reachable ONLY as a request body. Both properties are load-bearing:
+                // body-only proves the emitter imports body types (a body type that is also a response
+                // type is imported either way), and the LIST makes the type expression differ from the
+                // schema expression — `FxNode[]` vs `z.array(FxNode)` — so emitting the wrong one of
+                // the two is visible. For a plain object they are the same string.
+                TypeWalker.Root(typeOf<List<FxNode>>(), "client:importNodesBody"),
+            )
+        )
+
+        File(targetDir, "models.ts").writeText(TsModelEmitter(model).emit())
+
+        val spec = TsClientSpec(
+            className = "FxDemoClient",
+            // Emitted at DEPTH 1, mirroring where `TsClientNames.clientFile` puts a real client.
+            // Not cosmetic: a client one level down imports `../models.ts`, and this is the only
+            // place a real `tsc` ever compiles that. With the fixture at the root the whole
+            // depth-rewrite in `TsClientEmitter` would be unexercised and green.
+            fileName = "api/fxDemoClient.ts",
+            doc = "A demo feature.\nSecond line, which must not break out of the comment: */",
+            groups = listOf(
+                TsClientSpec.Group(
+                    className = "FxTalksApi",
+                    member = "talks",
+                    doc = "Routes of the `fx-talks` group.",
+                    endpoints = listOf(
+                        // A LIST payload — the case that needs `z.array(...)`, i.e. the one where the
+                        // schema expression is not simply the declaration's own name.
+                        TsClientSpec.Endpoint(
+                            member = "listSpeakers",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/speakers",
+                            responseRef = model.refForRoot("client:listSpeakers"),
+                            doc = "List all speakers",
+                        ),
+                        // Path AND query parameters, including an optional one and an enum union.
+                        // `tsc` is what proves the emitted signature is usable: a required parameter
+                        // that the caller must pass, an optional one they may omit, and a literal
+                        // union that rejects anything else.
+                        TsClientSpec.Endpoint(
+                            member = "getTalk",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/talks/{id}",
+                            responseRef = model.refForRoot("client:getTalk"),
+                            doc = null,
+                            pathParams = listOf(
+                                TsClientSpec.Param(name = "id", tsType = "string", optional = false),
+                            ),
+                            queryParams = listOf(
+                                TsClientSpec.Param(name = "page", tsType = "number", optional = true),
+                                TsClientSpec.Param(
+                                    name = "order",
+                                    tsType = "'ASC' | 'DESC'",
+                                    optional = true,
+                                ),
+                            ),
+                        ),
+                        // A request BODY, with a path parameter alongside it — the two-argument
+                        // signature. Only tsc can confirm the body type is usable in argument
+                        // position and that its name really is exported by models.ts.
+                        TsClientSpec.Endpoint(
+                            member = "importNodes",
+                            httpMethod = "PUT",
+                            pattern = "/api/fx/talks/{id}/nodes",
+                            responseRef = model.refForRoot("client:getTalk"),
+                            doc = "Replace a talk's nodes",
+                            pathParams = listOf(
+                                TsClientSpec.Param(name = "id", tsType = "string", optional = false),
+                            ),
+                            bodyRef = model.refForRoot("client:importNodesBody"),
+                        ),
+                    ),
+                ),
+                // A second group, so the aggregate really aggregates — and one whose payload reaches
+                // CLAIMED types, which are imported from the runtime module rather than from models.ts.
+                TsClientSpec.Group(
+                    className = "FxStatusApi",
+                    member = "status",
+                    doc = null,
+                    endpoints = listOf(
+                        // PUBLIC — stands in for `signIn`, the route an anonymous visitor must be
+                        // able to reach before any matrix can exist.
+                        TsClientSpec.Endpoint(
+                            member = "signIn",
+                            httpMethod = "POST",
+                            pattern = "/api/fx/signin",
+                            responseRef = model.refForRoot("client:serverTime"),
+                            doc = "A public endpoint, callable without a session",
+                            isPublic = true,
+                        ),
+                        TsClientSpec.Endpoint(
+                            member = "latest",
+                            httpMethod = "POST",
+                            pattern = "/api/fx/status",
+                            responseRef = model.refForRoot("client:latest"),
+                            doc = "Nullable payload",
+                        ),
+                        // A STREAM. It has no response schema at all — `ApiRoute.Sse` carries no
+                        // payload type — so `tsc` is what proves the emitted member is still usable:
+                        // an AsyncGenerator the caller can `for await` over.
+                        TsClientSpec.Endpoint(
+                            member = "watch",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/watch/{room}",
+                            responseRef = null,
+                            doc = "Watch a room",
+                            pathParams = listOf(
+                                TsClientSpec.Param(name = "room", tsType = "string", optional = false),
+                            ),
+                            stream = true,
+                        ),
+                        // A PARAMETERLESS stream. Not decoration: it is the only thing that
+                        // compiles the emitter's `stream && no params && no body` branch, and
+                        // production has such routes (funktor-demo `/showcase/realtime/sse/clock`).
+                        // Without it, dropping that branch's closing paren stays green everywhere.
+                        TsClientSpec.Endpoint(
+                            member = "heartbeat",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/heartbeat",
+                            responseRef = null,
+                            doc = "A stream with no parameters at all",
+                            stream = true,
+                        ),
+                        TsClientSpec.Endpoint(
+                            member = "serverTime",
+                            httpMethod = "GET",
+                            pattern = "/api/fx/time",
+                            responseRef = model.refForRoot("client:serverTime"),
+                            doc = "A claimed type as the payload",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        File(targetDir, spec.fileName).apply { parentFile.mkdirs() }
+            .writeText(TsClientEmitter(model).emit(spec))
+
+        // A barrel over the SDK-SHAPED subset only — `models.ts`, the client, and the runtime.
+        //
+        // NOT over every file in this directory: the per-fixture schema files are standalone
+        // fixtures, not part of an SDK, and several of them declare the same types `models.ts` does
+        // (`talk.ts` and `models.ts` both export `FxTalk`). Barrelling those together would be a
+        // genuine export collision — which is the right error for a real SDK and the wrong one here.
+        //
+        // `verifyRuntime.ts` imports the client THROUGH this file, so `tsc` compiles the barrel. That
+        // is the point: `export *` turns a cross-file name collision into a compile error, and this
+        // is where it must surface rather than in a consumer's build.
+        // `mount.ts` over a registry standing in for two contributors. Its components are STUBS
+        // written below: the emitted routes carry `() => import('./pages/...')`, so `tsc` resolves
+        // them for real and the node harness can actually await one. Without a component on disk the
+        // aggregate would type-check and then fail to load, which is the failure this catches.
+        val registry = TsSdkRegistry()
+
+        registry.scopeFor("fx:auth").route(
+            path = "/login",
+            component = "pages/LoginPage.ts",
+            requiresAuth = false,
+            nav = TsSdkRegistry.Nav(
+                label = "Sign in",
+                order = 100,
+                // PUBLIC, so `canAccess` short-circuits and an anonymous visitor — who has no matrix
+                // at all — still sees it. Without that the sign-in link would hide itself from
+                // exactly the people who need it, and there would be no way back.
+                requires = listOf(
+                    TsSdkRegistry.ApiRouteRef("POST", "/api/fx/signin", isPublic = true),
+                ),
+            ),
+        )
+
+        registry.scopeFor("fx:insights").route(
+            path = "/insights",
+            component = "pages/InsightsPage.ts",
+            requiresAuth = true,
+            nav = TsSdkRegistry.Nav(
+                label = "Insights",
+                icon = "gauge",
+                order = 10,
+                // TWO refs, and `verifyRuntime.ts` builds a matrix that GRANTS the first and DENIES
+                // the second. That asymmetry is the point: ALL and ANY then give different answers,
+                // so a test asserting the ALL rule cannot pass vacuously.
+                requires = listOf(
+                    TsSdkRegistry.ApiRouteRef("GET", "/api/fx/talks/{id}", isPublic = false),
+                    TsSdkRegistry.ApiRouteRef("POST", "/api/fx/status", isPublic = false),
+                ),
+            ),
+        )
+
+        // No nav entry — a route that exists but is in no menu.
+        registry.scopeFor("fx:insights").route(
+            path = "/insights/details",
+            component = "pages/InsightsDetails.ts",
+            requiresAuth = true,
+        )
+
+        File(targetDir, "pages").mkdirs()
+
+        listOf("LoginPage", "InsightsPage", "InsightsDetails").forEach { page ->
+            File(targetDir, "pages/$page.ts")
+                .writeText("export const name = '$page'\nexport default { name }\n")
+        }
+
+        File(targetDir, TsMountEmitter.PATH)
+            .writeText(TsMountEmitter.emit(registry.allRoutes(), registry.navRoutes()))
+
+        // `styles.ts` with REAL stylesheets on disk, deliberately out of registration order so the
+        // emitted file has to sort them.
+        //
+        // The whole point of writing actual `.css` files here is that a side-effect import of one is
+        // TS2882 unless something declares the module — so an empty styles fixture would type-check
+        // and prove nothing, and the mechanism would break for the first contributor to use it.
+        registry.scopeFor("fx:insights").style(path = "styles/insights.css", order = 100)
+        registry.scopeFor("fx:ui").style(path = "styles/theme.css", order = 0)
+        // The same sheet a second module also depends on — must dedupe rather than collide.
+        registry.scopeFor("fx:insights").style(path = "styles/theme.css", order = 0)
+
+        File(targetDir, "styles").mkdirs()
+        File(targetDir, "styles/theme.css").writeText(":root { --fx-fg: #111; }\n")
+        File(targetDir, "styles/insights.css").writeText(".fx-insights { color: var(--fx-fg); }\n")
+
+        File(targetDir, TsStylesEmitter.PATH).writeText(TsStylesEmitter.emit(registry.allStyles()))
+        File(targetDir, TsStylesEmitter.TYPES_PATH).writeText(TsStylesEmitter.emitTypes())
+
+        // TYPES_PATH is in this list ON PURPOSE, even though the barrel must exclude it: passing it
+        // in is the only way the exclusion is exercised by a real `tsc`. Without it, deleting the
+        // `.d.ts` filter left every test green while every real SDK's barrel gained
+        // `export * from './css-modules.d.ts'`. Found by /feature-review 2026-08-09.
+        val sdkFiles = listOf(
+            spec.fileName,
+            "models.ts",
+            TsMountEmitter.PATH,
+            TsStylesEmitter.PATH,
+            TsStylesEmitter.TYPES_PATH,
+        ) +
+                TsRuntime.Module.entries.map { it.path }
+
+        File(targetDir, TsBarrelEmitter.PATH).writeText(TsBarrelEmitter.emit(sdkFiles))
     }
 
     /**

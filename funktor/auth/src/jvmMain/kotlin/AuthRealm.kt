@@ -33,13 +33,17 @@ import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.funktor.messaging.storage.EmailStoring
 import io.peekandpoke.funktor.messaging.storage.EmailStoring.Companion.store
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.i18n.Locale
+import io.peekandpoke.ultra.security.jwt.JwtPayload
+import io.peekandpoke.ultra.security.jwt.JwtVerificationException
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.KnownRole
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.security.user.UserRecord
 import io.peekandpoke.ultra.vault.Stored
 
 /**
@@ -230,8 +234,13 @@ interface AuthRealm<USER : AuthUser> {
      */
     suspend fun resolveSelectedOrg(orgId: OrgId, memberships: Set<OrgMembership>): SelectedOrg? = null
 
-    /** Generates a JWT for the given user and the org selected for this session (null for org-less realms). */
-    suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token
+    /**
+     * Generates a JWT for the given user and the org selected for this session (null for org-less realms).
+     *
+     * Returns the token only. Permissions and expiry are NOT returned alongside it: [successFor] reads
+     * them back out of this token, so what the response says and what the token carries cannot drift.
+     */
+    suspend fun generateJwt(user: Stored<USER>, selectedOrg: SelectedOrg?): String
 
     /**
      * The application-specific roles this realm declares, for the API access matrix in funktor:inspect.
@@ -408,14 +417,13 @@ interface AuthRealm<USER : AuthUser> {
         }
         val org = currentOrgId?.let { oid -> getAccessibleOrgs(memberships).firstOrNull { it.id == oid } }
 
-        val response = successFor(user, selected, org)
+        val (response, payload) = successWithPayload(user, selected, org)
 
         // Validate that the refreshed token's user type matches the original JWT's user type.
         // This prevents cross-realm escalation when realms share a user store with overlapping IDs.
         if (expectedUserType != null) {
-            val newToken = deps.jwtGenerator.extractUserData(
-                deps.jwtGenerator.verify(response.token.token)
-            )
+            val newToken = deps.jwtGenerator.extractUserData(payload)
+
             if (newToken.type != expectedUserType) {
                 throw AuthError("Token refresh denied")
             }
@@ -504,12 +512,51 @@ interface AuthRealm<USER : AuthUser> {
         user: Stored<USER>,
         selectedOrg: SelectedOrg?,
         org: AuthOrgRef?,
-    ): AuthSignInResponse.Success = AuthSignInResponse.Success(
-        token = generateJwt(user, selectedOrg),
-        realm = asApiModel(),
-        user = users.serialize(user),
-        org = org,
-    )
+    ): AuthSignInResponse.Success = successWithPayload(user, selectedOrg, org).first
+
+    /**
+     * As [successFor], but also returns the minted token's verified payload.
+     *
+     * Exists so [refreshToken] can inspect the new token's claims without verifying it a second time.
+     */
+    private suspend fun successWithPayload(
+        user: Stored<USER>,
+        selectedOrg: SelectedOrg?,
+        org: AuthOrgRef?,
+    ): Pair<AuthSignInResponse.Success, JwtPayload> {
+
+        val token = generateJwt(user, selectedOrg)
+
+        // Verify our own freshly minted token, and read the response's permissions, expiry and user id
+        // back out of it. That is the point: the client is told exactly what the token carries, so the
+        // two cannot disagree. Threading them out of `generateJwt` instead would create a second source.
+        // Wrapped: `verify` raises JwtVerificationException, which is NOT an AuthError, so it would
+        // escape AuthLoginApi's `catch (e: AuthError)` and surface as a 500 -- on the sign-up path that
+        // happens AFTER the account, password record and PendingActivation marker are committed, leaving
+        // an account that can never finish signing up. Same failure shape AuthRealm already defends
+        // against for sendAuthEmail. Reachable via a JwtGenerator clock ahead of the realm's Kronos.
+        val payload = try {
+            deps.jwtGenerator.verify(token)
+        } catch (e: JwtVerificationException) {
+            deps.log.error("The realm minted a token its own verifier rejected", e)
+            throw AuthError("Could not establish a session")
+        }
+
+        val success = AuthSignInResponse.Success(
+            session = AuthSignInResponse.Session.Bearer(token),
+            permissions = deps.jwtGenerator.extractPermissions(payload),
+            expiresAt = payload.expiresAt?.let { MpInstant.fromEpochSeconds(it) },
+            // extractUserData, not `sub` directly: this is the function the SERVER resolves identity
+            // with (it prefers the userNs id claim and only falls back to `sub`), so the response
+            // states the identity the request path will actually authorize as.
+            userId = deps.jwtGenerator.extractUserData(payload).id.takeIf { it != UserRecord.ANONYMOUS_ID },
+            realm = asApiModel(),
+            user = users.serialize(user),
+            org = org,
+        )
+
+        return success to payload
+    }
 
     /**
      * Converts the realm to an api model.

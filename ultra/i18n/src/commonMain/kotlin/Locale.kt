@@ -1,5 +1,7 @@
 package io.peekandpoke.ultra.i18n
 
+import io.peekandpoke.ultra.i18n.model.splitLocaleTag
+
 /**
  * A locale = language + optional region (BCP-47 shape: `de`, `de-DE`, `de-CH`).
  *
@@ -25,12 +27,17 @@ data class Locale private constructor(
                 region = region?.trim()?.takeIf { it.isNotBlank() }?.uppercase(),
             )
 
-        /** Parses a tag like `"de"` or `"de-CH"` (separator `-` or `_`), normalizing case. */
+        /**
+         * Parses a tag like `"de"` or `"de-CH"` (separator `-` or `_`), normalizing case.
+         *
+         * The grammar lives in [splitLocaleTag], shared with the build-time catalog tooling so a baked
+         * catalog key cannot be normalized differently from the lookup that reads it.
+         */
         fun parse(tag: String): Locale {
-            val parts = tag.trim().split('-', '_', limit = 2)
+            val (language, region) = splitLocaleTag(tag)
             // Call invoke by name (not `Locale(...)`, which would bind to the private constructor and
-            // skip normalization) so parsed subtags get lower-/upper-cased.
-            return invoke(parts[0], parts.getOrNull(1))
+            // skip normalization).
+            return invoke(language, region)
         }
     }
 

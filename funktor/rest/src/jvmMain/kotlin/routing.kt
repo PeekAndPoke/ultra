@@ -2,17 +2,24 @@
 
 package io.peekandpoke.funktor.rest
 
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.ktor.util.AttributeKey
 import io.peekandpoke.funktor.core.broker.convertIncomingParameters
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.user
 import io.peekandpoke.funktor.rest.auth.AuthRule
 import io.peekandpoke.funktor.rest.auth.HideFailureAsNotFound
+import io.peekandpoke.ultra.common.TypedAttributes
+import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.user.UserPermissions
 
 /**
@@ -31,15 +38,39 @@ import io.peekandpoke.ultra.security.user.UserPermissions
  *    throws the SAME `NotFoundException` a missing entity throws — a byte-identical 404.
  */
 
-/** Dispatches to the correct handler based on the [ApiRoute] variant (plain, params, body, SSE). */
-fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>) {
-    when (route) {
+/**
+ * Carries an [ApiRoute]'s [TypedAttributes] onto the ktor route it was mounted as.
+ *
+ * `ApiRoute` is a build-time object captured in a handler closure — nothing about it is reachable from
+ * an [ApplicationCall]. ktor's own `Route.attributes` is public and lives for the application's
+ * lifetime, so one entry there makes the whole bag readable at request time via
+ * `(call as? RoutingPipelineCall)?.route?.attributes`.
+ *
+ * The bag is carried WHOLE under a single key rather than translated entry by entry: funktor's
+ * [TypedKey] and ktor's [AttributeKey] are unrelated types with no shared registry, so a per-key
+ * mapping would need a translation table. This way every future request-time attribute is free.
+ */
+val FunktorRouteAttributes = AttributeKey<TypedAttributes>("funktor.route.attributes")
+
+/**
+ * Dispatches to the correct handler based on the [ApiRoute] variant (plain, params, body, SSE).
+ *
+ * Returns the mounted ktor route — the method-selector node that request resolution lands on, and the
+ * one carrying [FunktorRouteAttributes]. Returned so a caller (and a test) can assert against the exact
+ * node `insightsOptions()` reads, rather than against the subtree it sits in.
+ */
+fun <RESPONSE> Route.handle(route: ApiRoute<RESPONSE>): Route {
+    val mounted = when (route) {
         is ApiRoute.Plain<*> -> handlePlain(route)
         is ApiRoute.WithParams<*, *> -> handleWithParams(route)
         is ApiRoute.WithBody<*, *> -> handleWithBody(route)
         is ApiRoute.WithBodyAndParams<*, *, *> -> handleWithBodyAndParams(route)
         is ApiRoute.Sse<*> -> handleSse(route)
     }
+
+    mounted.attributes.put(FunktorRouteAttributes, route.attributes)
+
+    return mounted
 }
 
 /**
@@ -52,6 +83,59 @@ internal suspend fun RoutingContext.passesPhase1(route: ApiRoute<*>, uri: String
     val denials = route.phase1Denials(AuthRule.EstimateCtx.of(call.user))
     if (denials.isEmpty()) return true
     call.apiRespondUnauthorized<Any?>(route.method, uri, denials)
+    return false
+}
+
+/**
+ * Body gate: a request carrying a body must declare `application/json`, or it gets a 415 and stops.
+ *
+ * ### This is a CSRF control, not a tidiness rule
+ *
+ * A **simple request** — POST with `text/plain`, `application/x-www-form-urlencoded` or `multipart` — is
+ * sent cross-origin by the browser with **no CORS preflight**. CORS then governs only whether the
+ * *response* is readable; the side effect has already happened. A JSON API is normally immune by
+ * accident, because `application/json` is not a simple content type and therefore always preflights.
+ *
+ * This one was not immune: the body was received as bytes and parsed as JSON whatever the header said,
+ * so `<form enctype="text/plain">` reached a handler. Refusing anything but JSON restores the preflight,
+ * which is what makes the CORS allowlist the actual gate.
+ *
+ * Exposure was limited while every credential is a bearer token — an attacker page cannot set
+ * `Authorization`, so such a request arrives anonymous and dies at the floor. It still mattered for
+ * `public()` routes with side effects, and it is a landmine for any future ambient credential.
+ *
+ * Matched explicitly rather than with `ContentType.match`, which treats `* / *` as a match — an absent
+ * or wildcard header must be refused, not waved through. Parameters such as `charset` are fine.
+ *
+ * ### Exactly one header line, and no comma — defence, NOT a demonstrated bypass
+ *
+ * Raised in review: `ContentType.parse` delegates to `parseHeaderValue(...).last()`, so a comma-joined
+ * `text/plain, application/json` would resolve to its LAST entry, while `request.header(...)` returns the
+ * FIRST of duplicated header *lines* — two layers disagreeing about which value is authoritative, which
+ * in a fail-closed control would be a fail-open.
+ *
+ * **Unproven, and honestly so.** It could not be reproduced through the test harness: ktor's CLIENT
+ * normalises such a value before sending, so the server only ever saw a clean `application/json`
+ * (measured). A raw socket or an intermediary that joins duplicate headers might still produce it; that
+ * was not tested. RFC 9110 §8.3 makes `Content-Type` a single media type, so a list is malformed
+ * regardless — rejecting both shapes costs nothing and removes the disagreement rather than picking a
+ * side.
+ */
+private suspend fun ApplicationCall.passesBodyContentType(): Boolean {
+
+    val lines = request.headers.getAll(HttpHeaders.ContentType).orEmpty()
+
+    val declared = lines.singleOrNull()
+        ?.takeIf { !it.contains(',') }
+        ?.let { runCatching { ContentType.parse(it) }.getOrNull() }
+
+    val isJson = declared != null &&
+            declared.contentType.equals("application", ignoreCase = true) &&
+            declared.contentSubtype.equals("json", ignoreCase = true)
+
+    if (isJson) return true
+
+    apiRespond(ApiResponse.unsupportedMediaType<Any?>().withError("Expected Content-Type: application/json"))
     return false
 }
 
@@ -120,6 +204,10 @@ inline fun <reified RESULT : Any> Route.handle(
     val uri = route.route.pattern.pattern
 
     return route(uri, route.method) {
+        // Same bridge as the dispatching `handle` above — without it a route mounted through this
+        // overload silently ignores `noInsights()` and records in full.
+        attributes.put(FunktorRouteAttributes, route.attributes)
+
         handle {
             // Phase 1 — caller-only rules
             if (!passesPhase1(route, uri)) return@handle
@@ -171,6 +259,7 @@ fun <BODY, RESPONSE> Route.handleWithBody(
             // Phase 1 — caller-only rules, BEFORE receiving/deserializing the body
             if (!passesPhase1(route, uri)) return@handle
             // Receive the request body — reachable only past the floor
+            if (!call.passesBodyContentType()) return@handle
             val bodyContent = call.receive<ByteArray>()
             // Awake the request body
             @Suppress("UNCHECKED_CAST")
@@ -199,6 +288,9 @@ fun <PARAMS, BODY, RESPONSE> Route.handleWithBodyAndParams(
             // Phase 1 — caller-only rules, BEFORE param conversion / body receive
             if (!passesPhase1(route, uri)) return@handle
             // Param conversion + body receive — reachable only past the floor
+            // Before param conversion on purpose: conversion does findById DB reads, and this file's
+            // stated principle is zero entity loads for a request that is going to be refused.
+            if (!call.passesBodyContentType()) return@handle
             val params: PARAMS = call.convertIncomingParameters(route.route)
             val bodyContent = call.receive<ByteArray>()
             // Awake the request body

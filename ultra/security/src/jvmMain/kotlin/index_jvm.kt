@@ -17,7 +17,7 @@ val Ultra_Security = module { config: UltraSecurityConfig ->
 
     // Csrf protection
     dynamic(CsrfProtection::class) { userProvider: UserProvider ->
-        StatelessCsrfProtection(config.csrfSecret, config.csrfTtlMillis, userProvider)
+        StatelessCsrfProtection(config.csrfSecret.value, config.csrfTtlMillis, userProvider)
     }
 
     singleton(PasswordHasher::class) { CompoundPasswordHasher.default }

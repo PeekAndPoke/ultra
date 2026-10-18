@@ -21,7 +21,7 @@ class LogAppenderSpec : StringSpec({
 
     "format includes all components" {
         val ts = ZonedDateTime.parse("2024-06-15T10:30:45+02:00[Europe/Berlin]")
-        val result = LogAppender.format(ts, LogLevel.INFO, "hello world", "short.Logger")
+        val result = LogAppender.format(LogEvent(ts, LogLevel.INFO, "hello world", "short.Logger"))
 
         result shouldContain "2024-06-15"
         result shouldContain "10:30:45"
@@ -34,7 +34,7 @@ class LogAppenderSpec : StringSpec({
         val ts = ZonedDateTime.parse("2024-06-15T10:30:45+02:00[Europe/Berlin]")
         val longName = "io.peekandpoke.ultra.some.very.deep.package.MyService"
 
-        val result = LogAppender.format(ts, LogLevel.DEBUG, "msg", longName)
+        val result = LogAppender.format(LogEvent(ts, LogLevel.DEBUG, "msg", longName))
 
         // Should use abbreviated name since > 30 chars
         result shouldContain "i.p.u.s.v.d.p.MyService"

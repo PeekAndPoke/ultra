@@ -135,7 +135,8 @@ internal suspend fun runHookContained(description: String, log: Log, block: susp
  * nor logged would be invisible, which is the exact problem this whole area set out to fix.
  */
 internal object FallbackLog : Log {
-    override fun log(level: LogLevel, message: String) {
+    override fun log(level: LogLevel, message: String, error: Throwable?) {
         System.err.println("[$level] $message")
+        error?.printStackTrace()
     }
 }

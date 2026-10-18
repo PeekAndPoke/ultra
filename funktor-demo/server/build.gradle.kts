@@ -45,6 +45,9 @@ kotlin {
         Deps.Ktor.Server.full(this)
 
         implementation(project(":funktor:all"))
+        // Dev-time only: the TypeScript SDK generator, reached via `--cli sdk:ts:generate`. It is
+        // deliberately NOT part of `funktor:all`, so a production server never carries it.
+        implementation(project(":funktor:codegen"))
 
         implementation(project(":karango:core"))
         ksp(project(":karango:ksp"))

@@ -3,19 +3,18 @@
 package io.peekandpoke.karango.aql
 
 import io.peekandpoke.ultra.reflection.kType
-import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
  * Return the intersection of all arrays specified. The result is an array of values that occur in all arguments.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#intersection
  */
-@VaultFunctionMarker val INTERSECTION = aqlFunc<List<Any?>>("INTERSECTION")
+val INTERSECTION = aqlFunc<List<Any?>>("INTERSECTION")
 
 /**
  * Return the intersection of all arrays specified. The result is an array of values that occur in all arguments.
  */
-@VaultFunctionMarker inline fun <reified T : Any> INTERSECTION(
+inline fun <reified T : Any> INTERSECTION(
     array1: AqlExpression<out Collection<T>>,
     array2: AqlExpression<out Collection<T>>,
     vararg arrayN: AqlExpression<out Collection<T>>,

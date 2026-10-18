@@ -129,7 +129,6 @@ class MutatorCodeBlocks {
 
         append(
             """
-                @MutatorDsl
                 inline val ${typeParams}Mutator<$clsName>.$fieldName
                     get() = get().$fieldName$nullable.mutator()
                         $nullable.onChange { $fieldName -> modifyValue { get().copy($fieldName = $fieldName) } }
@@ -145,7 +144,6 @@ class MutatorCodeBlocks {
 
         append(
             """
-                @MutatorDsl
                 inline var ${typeParams}Mutator<$clsName>.$fieldName
                     get() = get().$fieldName
                     set(v) = modifyIfChanged(get().$fieldName, v) { it.copy($fieldName = v) }

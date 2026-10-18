@@ -12,7 +12,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 
-/** Awaker for [kotlinx.datetime.LocalDate] values. */
+/**
+ * Awaker for [LocalDate] values.
+ *
+ * Reads `ts` (epoch millis) and an optional `timezone` zone id string, defaulting to UTC when the
+ * `timezone` entry is missing or not a string.
+ */
 object LocalDateAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): LocalDate? {
@@ -34,7 +39,7 @@ object LocalDateAwaker : Awaker {
     }
 }
 
-/** Slumberer for [kotlinx.datetime.LocalDate] values. */
+/** Slumberer for [LocalDate] values. Writes `{ts: epoch millis at start-of-day UTC, timezone: "UTC", human}`. */
 object LocalDateSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

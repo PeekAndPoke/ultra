@@ -2,11 +2,8 @@ package io.peekandpoke.funktor.demo.server
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.ktor.client.request.header
-import io.ktor.client.request.setBody
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
+import io.ktor.client.request.*
+import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSelectOrgRequest
@@ -45,10 +42,10 @@ class B2bAuthFlowTest : AppSpec<FunktorDemoConfig>(testApp) {
     init {
         installAllFixturesBeforeSpec()
 
-        authApi.auth.signIn { signInRoute ->
+        authApi.authLogin.signIn { signInRoute ->
             // NOTE: route blocks register FreeSpec containers at spec level — they cannot nest.
             // The second route is referenced directly; the request-invoke DSL works on any route.
-            val selectOrgRoute = authApi.auth.selectOrg
+            val selectOrgRoute = authApi.authLogin.selectOrg
 
             "a single-org b2b user is auto-selected on sign-in (Success)" {
                 apiApp {

@@ -32,6 +32,8 @@ class ChartJsExample(ctx: NoProps) : PureComponent(ctx) {
 
     private val factor by subscribingTo(ticker(1.seconds).map { 1.0 + sin(it.count * 10 * PI / 180.0) })
 
+    private val tick by subscribingTo(ticker(1.seconds).map { it.count })
+
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
@@ -88,6 +90,17 @@ class ChartJsExample(ctx: NoProps) : PureComponent(ctx) {
                                 +"Docs"
                             }
                         }
+                    }
+                }
+
+                ui.card {
+                    ui.content {
+                        css { height = 50.vh }
+                        scrollingLineChart()
+                    }
+                    ui.content {
+                        ui.header { +"Scrolling Line Chart" }
+                        ui.meta { +"Labels and values shift by one every second" }
                     }
                 }
             }
@@ -169,6 +182,30 @@ class ChartJsExample(ctx: NoProps) : PureComponent(ctx) {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        ChartJs(data)
+    }
+
+    private fun FlowContent.scrollingLineChart() {
+        // A window over the last 12 ticks: the x-axis labels must move with the values
+        val window = (tick - 11..tick).toList()
+
+        val data = chartJsData {
+            jsObject {
+                type = "line"
+                data = jsObject {
+                    labels = window.map { "t$it" }.toTypedArray()
+                    datasets = arrayOf(
+                        jsObject {
+                            label = "sin(t)"
+                            data = window.map { 20 + 15 * sin(it * 30 * PI / 180.0) }.toTypedArray()
+                            borderColor = value("rgba(54, 162, 235, 1)")
+                            borderWidth = value(3)
+                        }
+                    )
                 }
             }
         }

@@ -68,8 +68,10 @@ kotlin {
 
         jvmMain {
             dependencies {
+                // Only the base auth plugin: funktor authenticates via `bearer()` + JwtGenerator.
+                // ktor-server-auth-jwt was dropped 2026-07-31 — nothing imported its plugin API, and
+                // it hauled com.auth0:java-jwt + jwks-rsa + Jackson onto every consumer's classpath.
                 api(Deps.Ktor.Server.auth)
-                api(Deps.Ktor.Server.auth_jwt)
                 api(Deps.Ktor.Server.sse)
             }
         }

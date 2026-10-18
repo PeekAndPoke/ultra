@@ -15,8 +15,8 @@ object MpLocalDateSerializer : KSerializer<MpLocalDate> {
 
     override fun serialize(encoder: Encoder, value: MpLocalDate) {
         encoder.encodeSerializableValue(
-            serializer = SerializationTuple.serializer(),
-            value = SerializationTuple(
+            serializer = MpDateTimeRawData.serializer(),
+            value = MpDateTimeRawData(
                 ts = value.atStartOfDay(TimeZone.UTC).toEpochMillis(),
                 timezone = "UTC",
                 human = value.toIsoString()
@@ -25,7 +25,7 @@ object MpLocalDateSerializer : KSerializer<MpLocalDate> {
     }
 
     override fun deserialize(decoder: Decoder): MpLocalDate {
-        val v = decoder.decodeSerializableValue(SerializationTuple.serializer())
+        val v = decoder.decodeSerializableValue(MpDateTimeRawData.serializer())
 
         val timezone = TimeZone.of(v.timezone)
 

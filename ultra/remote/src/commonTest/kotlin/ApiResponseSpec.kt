@@ -19,8 +19,6 @@ class ApiResponseSpec : StringSpec() {
                 server = "test-server",
                 status = HttpStatusCode.OK,
                 durationMs = 42.0,
-                detailsUri = "/api/details",
-                detailsUrl = "https://test.com/api/details",
             )
 
             val responseWithInsights = originalResponse.withInsights(insights)
@@ -165,8 +163,6 @@ class ApiResponseSpec : StringSpec() {
                 server = "test-server",
                 status = HttpStatusCode.OK,
                 durationMs = 42.0,
-                detailsUri = "/api/details",
-                detailsUrl = "https://test.com/api/details",
             )
 
             val originalResponse = ApiResponse.ok("test data")

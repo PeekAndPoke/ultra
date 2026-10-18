@@ -13,7 +13,7 @@ import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 
 val Config = B2bAppConfig()
 
-val Apis: B2bAppApis = B2bAppApis(Config) { State.auth().token?.token }
+val Apis: B2bAppApis = B2bAppApis(Config) { State.auth().bearerToken }
 
 val State: B2bAppState = B2bAppState(
     auth = authState<B2bUserModel>(

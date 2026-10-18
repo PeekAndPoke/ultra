@@ -14,8 +14,8 @@ object MpInstantSerializer : KSerializer<MpInstant> {
 
     override fun serialize(encoder: Encoder, value: MpInstant) {
         encoder.encodeSerializableValue(
-            serializer = SerializationTuple.serializer(),
-            value = SerializationTuple(
+            serializer = MpDateTimeRawData.serializer(),
+            value = MpDateTimeRawData(
                 ts = value.toEpochMillis(),
                 timezone = "UTC",
                 human = value.toIsoString()
@@ -24,7 +24,7 @@ object MpInstantSerializer : KSerializer<MpInstant> {
     }
 
     override fun deserialize(decoder: Decoder): MpInstant {
-        val v = decoder.decodeSerializableValue(SerializationTuple.serializer())
+        val v = decoder.decodeSerializableValue(MpDateTimeRawData.serializer())
 
         return MpInstant.fromEpochMillis(v.ts)
     }

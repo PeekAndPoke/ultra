@@ -1,11 +1,13 @@
 package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
+import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Serializable(with = MpLocalTimeSerializer::class)
+@Slumber.As(Long::class)
 data class MpLocalTime(
     private val milliSeconds: Long,
 ) : ComparableTo<MpLocalTime> {

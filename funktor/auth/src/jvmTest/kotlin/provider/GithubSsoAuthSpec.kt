@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.auth.provider
 
+import io.peekandpoke.ultra.common.model.Redacted
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
@@ -52,7 +53,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                 "should return null when GITHUB_SSO_CLIENT_ID is not configured" {
                     val config = AppConfig.of(
                         keys = mapOf(
-                            GithubSsoAuth.GITHUB_SSO_CLIENT_SECRET to "my-client-secret"
+                            GithubSsoAuth.GITHUB_SSO_CLIENT_SECRET to Redacted("my-client-secret")
                         )
                     )
                     val subject = GithubSsoAuth.Factory(config, NullLog)
@@ -68,7 +69,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                 "should return null when GITHUB_SSO_CLIENT_SECRET is not configured" {
                     val config = AppConfig.of(
                         keys = mapOf(
-                            GithubSsoAuth.GITHUB_SSO_CLIENT_ID to "my-client-id"
+                            GithubSsoAuth.GITHUB_SSO_CLIENT_ID to Redacted("my-client-id")
                         )
                     )
                     val subject = GithubSsoAuth.Factory(config, NullLog)
@@ -84,8 +85,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                 "should create an instance when GITHUB_SSO_CLIENT_ID and GITHUB_SSO_CLIENT_SECRET are configured" {
                     val config = AppConfig.of(
                         keys = mapOf(
-                            GithubSsoAuth.GITHUB_SSO_CLIENT_ID to "my-client-id",
-                            GithubSsoAuth.GITHUB_SSO_CLIENT_SECRET to "my-client-secret"
+                            GithubSsoAuth.GITHUB_SSO_CLIENT_ID to Redacted("my-client-id"),
+                            GithubSsoAuth.GITHUB_SSO_CLIENT_SECRET to Redacted("my-client-secret")
                         )
                     )
 

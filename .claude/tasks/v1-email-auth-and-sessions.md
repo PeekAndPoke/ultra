@@ -231,7 +231,7 @@ Update `funktor-demo/adminapp` (or add a `userapp` if cleaner) with full Kraft-b
 | `/logout`                               | Authed | Revoke current → clear JWT → redirect to login                                |
 
 All pages live under `funktor-demo/userapp/src/jsMain/kotlin/pages/auth/` (new module if needed). Server-side routes
-wire to the existing `AuthApi`.
+wire to the existing `AuthLoginApi`.
 
 ## Phased execution
 

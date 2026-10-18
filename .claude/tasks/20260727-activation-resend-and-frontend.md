@@ -34,7 +34,7 @@ means only the newest link is live.
 
 ## The contract change this needs
 
-The client cannot detect "not activated" today: `AuthRealm.signIn` throws, `AuthApi` maps it to a 403
+The client cannot detect "not activated" today: `AuthRealm.signIn` throws, `AuthLoginApi` maps it to a 403
 with `withInfo("Account not activated")`, and matching on a message STRING is not a contract —
 it breaks on rewording or translation.
 

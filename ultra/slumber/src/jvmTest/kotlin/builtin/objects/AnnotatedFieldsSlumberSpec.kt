@@ -4,8 +4,8 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.slumber.Codec
-import io.peekandpoke.ultra.slumber.Slumber
 import io.peekandpoke.ultra.slumber.slumber
 
 class AnnotatedFieldsSlumberSpec : StringSpec() {

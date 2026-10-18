@@ -90,8 +90,8 @@ class CommonFixesSpec : StringSpec({
     "GetAndSet equality is symmetric" {
         var a = 1
         var b = 1
-        val one = GetAndSet.of(getter = { a }, setter = { a = it; it })
-        val two = GetAndSet.of(getter = { b }, setter = { b = it; it })
+        val one = GetAndSet.of(getter = { a }, setter = { a = it })
+        val two = GetAndSet.of(getter = { b }, setter = { b = it })
 
         (one == two) shouldBe true
         (two == one) shouldBe true

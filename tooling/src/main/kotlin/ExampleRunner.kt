@@ -20,7 +20,7 @@ class ExampleRunner {
 
             if (idx < examples.size - 1) {
                 println("[Press [ENTER] to continue]")
-                readLine()
+                readln()
                 println()
             }
         }

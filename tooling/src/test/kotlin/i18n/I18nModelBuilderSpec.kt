@@ -2,6 +2,9 @@ package io.peekandpoke.ultra.tooling.i18n
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.i18n.model.I18nMessage
+import io.peekandpoke.ultra.i18n.model.I18nModelBuilder
+import io.peekandpoke.ultra.i18n.model.I18nNamespace
 
 class I18nModelBuilderSpec : StringSpec({
 
@@ -42,9 +45,8 @@ class I18nModelBuilderSpec : StringSpec({
         street.placeholders shouldBe listOf("n")
     }
 
-    "normalizes locale tags to match Locale.tag" {
-        YamlCatalogParser.normalizeLocaleTag("de-ch") shouldBe "de-CH"
-        YamlCatalogParser.normalizeLocaleTag("DE") shouldBe "de"
+    "the parsed locale tag is normalized, so baked keys match runtime lookups" {
         YamlCatalogParser.parse("de_ch", "x: y").localeTag shouldBe "de-CH"
+        YamlCatalogParser.parse("DE", "x: y").localeTag shouldBe "de"
     }
 })

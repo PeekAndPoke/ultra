@@ -1,0 +1,447 @@
+---
+name: review-loop
+description: Use when reviewing code changes, running a code review, applying review findings, or checking that a test can actually fail (mutation check). Codifies the project review standard — reviews loop until a clean round without flip-flopping on settled findings, and tests on security-critical or persistence paths are mutation-checked.
+---
+
+## What This Skill Does
+
+**Adopted from the Klang project 2026-08-28.** The loop mechanics and the two-phase shape are theirs;
+the charters, gotchas and evidence are this repo's.
+
+### The problem it solves
+
+A fix produced by a review is itself an unreviewed change, so one round is never enough. But naive
+looping is worse than no looping, because it **flip-flops**: round 3 re-raises what round 2 rejected,
+round 4 critiques the prose round 3's fix just wrote, and the loop feeds on its own output. Klang ran
+five rounds on one change and rounds 3-5 were almost entirely churn.
+
+**So the loop is built around one property: a settled finding stays settled unless someone can say what
+is factually wrong with the reason it was settled.** Everything below serves that —
+
+| Mechanism | Stops |
+|---|---|
+| **Two-phase rounds** — review blind, THEN reconcile against the ledger | Re-litigating a rejection while still getting fresh eyes |
+| **A findings ledger** carried between rounds, every entry dispositioned | Silently dropping, or silently re-raising |
+| **Reopening requires naming the factual error in the rejection** | "I still think so" restarting a settled argument |
+| **Only CRITICAL/MAJOR loop** | MINOR churn triggering another round |
+| **Comment findings only when factually wrong** | Prose churn — the loop's documented failure mode |
+| **Safety valve at 2 rounds** | Fix-churn feeding itself indefinitely |
+
+The second standard, **mutation-checked tests on security-critical and persistence paths**, is here because a
+review-loop fix almost always ships a test, and a green test proves nothing until it has been RED for
+the right reason. **Scope is narrower here than in klang** — see Standard 2.
+
+Applies whenever you review changes or write tests, including when `/code-review` or `/simplify`
+produce findings — their output enters this loop at step 3. `/feature-review` is this loop run with
+the mandatory three-charter gate; see that skill for the gate-specific parts (e2e precondition,
+red-team follow-up, task-file record).
+
+---
+
+## Standard 1 — The Review Loop
+
+### The loop
+
+1. **Collect the change set.** State the base explicitly — usually the branch point off `master`.
+   On a shared worktree, scope by FILE SET rather than a commit range: another agent's commits will
+   be interleaved with yours.
+2. **Review round** — spawn **FRESH** reviewer agents in parallel, per `.claude/skills/agent-fleet/`.
+   **Round 1 is BLIND**: the task, the change set, the constraints — nothing else.
+   **Every later round runs in TWO PHASES with the same fresh agent** — review FIRST, previous
+   results AFTER:
+   - *Phase 1 — review.* The full current diff and the constraints, WITHOUT the previous round's
+     findings. Do not flag which hunks are new: the fix delta is an answer key to the last round, and
+     pointing at it both anchors the agent on what it is meant not to see and pulls attention into
+     re-critiquing freshly written lines — the prose-churn mode below.
+   - *Phase 2 — reconcile.* **Continue the SAME agent** — `SendMessage` to its id, so phase 1 is in
+     its context; spawning a new one makes duty (a) vacuous, since it has no phase-1 findings to range
+     over. Send it the ledger verbatim. Three duties:
+     - **(a)** for each phase-1 finding that overlaps a settled entry: WITHDRAW, or STICK TO IT by
+       naming what is factually wrong in that entry's reason;
+     - **(b)** for each FIXED entry: does the fix still hold in the current files? Name any applied in
+       one file and not the others it needed to reach;
+     - **(c)** for **every REJECTED CRITICAL/MAJOR in the ledger**, whether phase 1 re-found it or not:
+       accept or refute, naming the fact. **Unconditional, and that is the point** — a rejected-but-real
+       defect is the thing a second pass is *least* likely to rediscover on its own, so an audit that
+       fires only on rediscovery does not audit the case it exists for.
+
+   Fresh-eyes value and settled-stays-settled, without anchoring the review itself.
+
+   **The reconcile rule, stated exactly, because it is the whole point:** a finding that overlaps a
+   settled one may be reopened ONLY by naming what is factually wrong in the rejection reason —
+   a mis-read line, a since-changed file, a wrong claim about behaviour. Re-asserting the finding, or
+   disagreeing with the judgement, is a WITHDRAWAL. Reviewers do not get a second vote on a call the
+   coordinator already made on the facts; they get a chance to show the facts were wrong.
+3. **Triage every finding into the LEDGER**, and **write the ledger down BEFORE starting the next
+   round** — to the task file, or, for a `/code-review` or hotfix with no task file, to a scratch ledger
+   in your scratchpad directory (say where, in the round report). A ledger held only in conversation
+   does not survive a compaction or a handover, and per the reconcile rule a reviewer who cannot see a
+   reason must withdraw — so a lost ledger silences correct findings automatically. It — it is an input to round N+1, not a report written afterwards. One row per finding:
+
+   | Round | Sev | `path:line` | Claim | Disposition | Reason |
+
+   **The Reason column is the mechanism, not bookkeeping.** Phase 2 asks a reviewer to name what is
+   factually wrong in a rejection; a reviewer who cannot see the reason cannot do that, and per the
+   reconcile rule its re-raise counts as a withdrawal — so an empty ledger silences correct findings
+   automatically. `.claude/tasks/TEMPLATE.md` carries this table. Each entry is exactly one of:
+   - **fix** — apply it. **Only CRITICAL and MAJOR feed the loop.** MINORs are collected and either
+     applied once as a single batch with no re-review, or handed to the maintainer as a list;
+   - **reject** — with a reason that is CHECKABLE: a named project rule, or a fact someone can verify
+     (`X.kt:42 already scopes by org`). **An unfalsifiable rejection is not a rejection.** "Acceptable
+     in practice", "fine for an internal tool", "unlikely" assert nothing a reviewer can refute, and the
+     vaguer the reason the more unassailable it becomes — the incentive runs exactly backwards. A
+     rejection you cannot make checkable is a **maintainer-decision**;
+   - **maintainer-decision** — park it (design fork, tradeoff, anything needing product knowledge);
+   - **out-of-scope → follow-up task** — real, but not this change set's to fix. **Does not close a
+     round on its own**, and the gate fails until the follow-up task exists. Not "reject", which asserts
+     the finding is wrong;
+   - **withdrawn** — raised in phase 1, withdrawn by the same agent in phase 2. Recorded, does not
+     loop, and counts as settled for later rounds' overlap test. **It needs to be in this list**: it is
+     the reconcile rule's most common outcome, and without a row for it the choice is to log it as an
+     unfalsifiable "rejection" (which `maintainer-decision` then escalates to a human, spending the
+     maintainer on a round that worked exactly as designed) or to log nothing — and a finding with no
+     row is one round 3 raises from scratch, which is the flip-flop this whole document prevents.
+
+   **A severity DOWNGRADE is itself a disposition and needs a checkable reason.** The severity in the
+   ledger is the REVIEWER's; lowering one moves a finding out of the loop, so it must be justified like
+   a rejection and is subject to the provisional rule below. Without this it is the cheapest exit in the
+   document — no reason required, no re-review — and it has already fired once: a MINOR-graded finding
+   was batched on 2026-08-28 and never applied, unnoticed for a month, with nobody trying to suppress
+   anything.
+
+   **A rejection or downgrade of a CRITICAL/MAJOR against code you wrote is PROVISIONAL.** It settles
+   only after one reconcile round in which a fresh reviewer accepts it (duty (c)). "Code you wrote"
+   means authored by this session, including by an implementer you briefed — which is the normal
+   `/feature-review` case, since CLAUDE.md runs the gate straight after implementing.
+
+   > This replaced a flat ban (maintainer, 2026-09-28). The ban's cost was not marginal: it removed the
+   > reject disposition from the author-coordinator entirely, which made step 4 unactionable — verify
+   > every finding, but you may not act on a verification — and stopped the gate on a human for every
+   > confidently-wrong reviewer finding, which this file says at step 4 is recurring. The proof it
+   > backfired is in our own ledger: round 1 produced twelve fixes, one downgrade and **zero
+   > rejections**, so the reject-audit path that same round built had never once executed. Pressure does
+   > not vanish; it finds the cheapest exit. Provisional keeps the intent and costs one round instead of
+   > an interrupt.
+4. **Verify each finding against the code before acting on it.** Reviewers here have been confidently
+   wrong, and so has the coordinator — say so when one does not survive. Where a one-command
+   experiment settles it, run it.
+5. **Apply the fixes**, run the affected tests, and mutation-check anything new that touches a
+   security-critical **or persistence** path (Standard 2).
+6. **Re-derive the change set: `previous set ∪ every file the fix batch touched`.** The loop re-enters
+   at step 2, not step 1, so without this a file that did not exist when the set was stated is never
+   reviewed by anyone — and "the fix adds a file" is the single most common fix shape. A round-1
+   finding of "this endpoint has no e2e test" whose fix adds a spec would ship that spec unreviewed.
+7. **If a CRITICAL/MAJOR was FIXED *or REJECTED* → go to 2.** Both, and the rejection case is the one
+   that matters: if only fixes looped, a rejection would end the review, and the reconcile phase — the
+   sole mechanism by which a reviewer can show a rejection was wrong — would never run against it.
+   Rejecting would be strictly cheaper than fixing, and a coordinator could close a gate in one round on
+   their own say-so. When a round produced only rejections, round 2 may be **reconcile-only**: a fresh
+   agent receives each finding with its rejection reason and must accept or refute it. MINOR-only rounds
+   do not loop.
+
+### Termination — the loop stops ONLY on
+
+- **Clean round** — zero CRITICAL/MAJOR → done. **Open MINORs are handed to the maintainer as a list,
+  not applied as an unreviewed batch.** Step 3 offers both; the batch route is what lost a finding for a
+  month on 2026-08-28 — the coordinator chose "apply as a batch", the batch never ran, and nothing
+  surfaced its absence. A list in front of a human cannot silently not-happen.
+- **Maintainer decision needed, on a CRITICAL or MAJOR** — STOP, present crisply, wait. **A parked
+  MINOR does not stop the loop**; it joins the list above. Without that floor, one parked MINOR halts a
+  loop that MINORs are supposed never to affect.
+- **Wall** — reviewers contradict each other, or a fix is impossible without breaking something else →
+  STOP and present the state honestly. (Oscillation is also a wall, but it needs three rounds to
+  observe, so it is only reachable past the valve.)
+- **Safety valve — 2 rounds** without a clean round: STOP and consult the maintainer with the open
+  findings. **Both rounds count, the blind round 1 included**, which is why the ladder puts
+  `reviewer-top` at "round 3 and later — the safety valve has fired". **It re-arms**: consult again
+  after each further non-clean round, rather than running unbounded at the most expensive tier once
+  waved past. (Klang cut it from 5 to 2 on 2026-08-28: five rounds let fix-churn feed itself.)
+
+### Rules
+
+- **Fresh agents every round.** A reviewer that saw round N is anchored for N+1. Fresh AGENT, informed
+  PROMPT — the round context of step 2 travels to the new agent.
+- **Comment/KDoc findings only when the text is factually WRONG** — never for completeness or style.
+  Prose churn is this loop's documented failure mode: each round's fixes write new text, the next
+  round critiques it, and the loop feeds itself.
+- **Scope by risk.** The full charter set is for production code. Test-only or prose-only portions get
+  one reviewer or none — mutation checks guard tests harder than a reviewer can.
+  **`.claude/**` and `CLAUDE.md` are NOT prose-only.** They are agent instructions: every session reads
+  them and copies from them, and this file says so itself two rules down. Treating them as doc-only
+  would give the document that governs every review the lightest review in the repo — a change deleting
+  a safeguard here would qualify for "one reviewer or none". They get the full set.
+- **One severity scale, everywhere: CRITICAL / MAJOR / MINOR.** Not HIGH, not MEDIUM. A gate that
+  loops on "CRITICAL/MAJOR" while a reviewer reports "HIGH" silently drops it — and the repo's own
+  most-cited gate did report HIGH, for a live session token on screen.
+- **Never silently drop a finding.** Every one ends as fix / reject+reason / maintainer-decision.
+- **A finding about a MISSING e2e test is a gate failure, not a debatable nit** — see CLAUDE.md.
+- **A claim about what existing code DOES is verified by reading it before it is written anywhere** —
+  a plan, a task doc, a brief, a reviewer's remark, a fix round's KDoc alike. It escapes most during a
+  design walk with the maintainer, because a decision is being made and the code is not open: write
+  the decision, mark any sentence about current behaviour UNVERIFIED, and brief the implementer to
+  confirm or refute it before building on it. (Klang rewrote this rule after its third recurrence.)
+- **A correction is CLOSED only by a repo-wide grep**, run and its result recorded before the fix is
+  reported — not by fixing the file it was found in. Repo-wide includes `.claude/skills/`,
+  `docs-site/src/data/llms/` and `docs-site/src/pages/`: those are what agents and readers copy from.
+  A rule stated in many places in different words is not closed by grepping one phrasing: grep its
+  mechanism words (the field, the flag, the function), give the full statement ONE home, and make every
+  other copy a pointer. The same goes for a DELETED symbol: grep its name in comments and KDoc too —
+  the compiler finds the code, nothing finds the prose.
+- **A change that unifies two paths, or makes an input unreachable, defuses tests outside the diff.**
+  The brief asks: which existing tests compare those two things, or feed that input, and what do they
+  test after the change? Found by reading the hits, not by grep alone.
+- **A decision that REPLACES an expression lists every clause of the old one** — floors, initial
+  values, fallbacks, `?:` arms — and marks each kept, changed by a named decision, or gone. A clause
+  nobody named is kept. (Klang, twice: a stateless rewrite and a lifetime expression each silently
+  dropped an implicit floor.)
+- **A rule with a closed list is reviewed by table.** When a change lands or edits a rule that
+  enumerates cases (which endpoint needs which permission, which type has which codec), the brief asks
+  for a table of EVERY case against the rule's clauses, read from the code. Klang: three rounds of prose
+  review missed what one table found in a pass. And an enumeration in a rule says "closed" or does not
+  enumerate.
+- **A reported fix is not a landed fix.** After a fix batch, RE-READ the thing that was wrong, not the
+  patch that was written. A clean later round is not evidence, because a reviewer reads the whole
+  current state and a small regression hides in it.
+- **Every "green" names its run** — made on the final tree, exercising the changed path. A run that
+  predates the last edit, or a suite that never reaches the changed code, backs nothing.
+- **The effort ladder: every round that is not clean escalates one level.** The Agent tool has no
+  per-call effort dial, so the levels are agent definitions in `.claude/agents/` with model and effort
+  pinned:
+
+  | round | reviewers | spawn with |
+    |---|---|---|
+  | 1 (blind) | `opus`, high | `subagent_type: reviewer-high` |
+  | 2 | `opus`, xhigh | `subagent_type: reviewer-xhigh` (opus, not the strongest tier: maintainer, 2026-09-28) |
+  | 3 and later | strongest tier (`fable`), xhigh | `subagent_type: reviewer-top` (the safety valve has fired; the maintainer is in the loop; xhigh, not max: maintainer, 2026-09-28) |
+
+  Why a ladder and not the top rung from the start: a round that is not clean means the previous tier missed
+  something or the fix delta introduced something, and both call for more scrutiny of a SMALLER
+  target. **Ultra starts one rung higher than klang** (klang's round 1 is `opus` at session effort):
+  this repo already specified `opus`/high for round 1, and `reviewer-high` is what makes that
+  enforceable. Tiering a round DOWN to save tokens is allowed when the brief says so (klang does it
+  for prose-only deltas). Watch it with the defect-density ledger in `/agent-fleet`: if round 2 keeps
+  finding what round 1 missed, the ladder earns its cost.
+- **Final report** lists rounds run, each round's findings and outcomes, parked decisions on top.
+
+### The reviewer charters
+
+**Defined in `.claude/skills/feature-review/`, and only there.** They were duplicated here at first and
+the two copies had already drifted apart within a day — this repo's own "Docs vs skills" rule warns
+about exactly that, and the review skills are not exempt from it.
+
+Reviewers are spawned by the **effort ladder** (Rules, above) — correctness-critical verification. Do
+not downgrade them to save tokens without saying so in the brief.
+
+Give every reviewer: the change set, the task file, the plan link, its charter, and these constraints —
+findings must use the severity scale **CRITICAL / MAJOR / MINOR**; cite `path/File.kt:line`; give a
+concrete failure scenario; "NO FINDINGS" is a valid answer; do not pad; do NOT spawn sub-agents.
+And ask every charter the **SURPLUS** question: what does this change add that the need did not ask
+for (a helper nothing calls yet, a parameter, a branch, a mapping), and could it be removed or
+deferred? A removal is a valid finding. (In klang that question alone shrank a step by a
+quarter.)
+
+---
+
+## Standard 2 — Mutation-check tests on security-critical and persistence paths
+
+A green test proves nothing until it has been RED for the right reason.
+
+**Scope, and it differs from klang deliberately** (maintainer, 2026-08-28). Klang mutation-checks every
+new test; here it is mandatory for two families:
+
+1. **Security-critical** — auth, sessions, tokens, permissions, tenancy, anything guarding a data
+   boundary.
+2. **Persistence** — storage, serialization and codecs, migrations, indexes, query building. Anything
+   whose output ends up on disk or comes back off it.
+
+Plus regression guards and review-loop fixes on either. Everywhere else it is encouraged, not required.
+Do not quietly widen this back to "every test": the narrower scope is a maintainer decision, not an
+oversight in the adoption.
+
+**Why persistence sits beside security rather than below it:** both fail the same way — silently, with
+the damage already done by the time anyone looks. A wrong authz check leaks data that was already
+readable; a wrong codec loses data that is already gone. Neither announces itself, which is exactly the
+condition under which a green test is worth nothing.
+
+### Protocol (per new test)
+
+1. **GREEN** — write it, run it, confirm it passes.
+2. **MUTATE** — introduce ONE targeted mutation that should break the behaviour under test.
+   **Prefer mutating the code under test** (flip an operator, off-by-one a constant, drop a term,
+   swap a branch); mutating the test's inputs is the fallback.
+3. **RED** — run it. It MUST fail, **and you must confirm the failure is the test you mutated for.**
+   This step is the loop's strongest instrument and the easiest to fool: kotest ignores `--tests`, so a
+   filtered run may execute something else entirely, and the XML mis-attributes which case failed. Read
+   the CONSOLE for which case broke and the XML counts to confirm the spec ran at all. A pre-existing
+   flake counts as a false RED — `JwtSignatureGateSpec` was flaky 1-in-4 and would certify a toothless
+   test as checked. **A scripted mutate-then-expect-red runner must treat `No tests found` (or zero
+   tests in the XML) as a script error, and print the failing test names** — an empty list on a "red"
+   is the tell; klang logged three spurious RED verdicts from it. Still green → the test is toothless;
+   fix it and repeat from 1.
+4. **RESTORE** — revert exactly, run again, green. **Back up with `cp` immediately before the mutation,
+   restore from that copy and verify with `cmp`; NEVER restore with `git checkout`** — the file usually
+   carries other uncommitted work, and on this worktree possibly another agent's (klang lost a round's
+   doc fix exactly this way). Verify with `git diff` that only the intended change remains. **An agent
+   can be stopped mid-run with a mutant applied:** a worker taking over from a stopped one first `cmp`s
+   every file the predecessor's runner touched against its backups, before reading the code as the
+   predecessor's work. Every brief that allows mutation says "restore before you finish".
+5. **REPORT** one line per test: `mutation-checked: <what was mutated> → red`.
+
+**A surviving mutant is not always a missing test.** It can mean the FIX was wrong, the fixture cannot
+express the difference, or a comment claimed something false. Work out which before adding an assertion
+to make it die.
+
+**Universal, in or out of scope:** a test never derives its expected value or threshold from the
+same constant or expression it guards. Klang's worst survivor was a bound that followed a 60x widening
+of the constant under test. Likewise a mapping table is guarded by its full literal map with a DISTINCT
+value per entry — a spec that asserts only the keys lets two swapped values through.
+
+### What deserves a test at all
+
+- **No value-echo tests.** `config.x shouldBe 0.05` fails only on intentional edits and cannot tell a
+  good one from a bad one. Where a value matters, guard the BEHAVIOUR it buys.
+- **"X is untested" must name a failure the test would catch that reading the code cannot**;
+  otherwise it is rejected without ceremony. **This does not touch CLAUDE.md's coverage rules** —
+  a missing e2e test on backend code and an unserialized production type stay gate failures.
+
+### Not a retrofit mandate
+
+Mutation-check older tests opportunistically, when a change touches them.
+
+### Why this exists
+
+This repo has shipped toothless guards repeatedly:
+
+- A "single-use token" e2e that a cooldown also satisfied.
+- A `validate()` test that built the healthy object, so it passed whether or not validation ran.
+- A coverage guard comparing two hardcoded lists in the same file — a seventh type would appear in
+  neither. Two reviewers found it independently.
+- `JwtSignatureGateSpec` was flaky 1-in-4 because it built alternates from a char range instead of the
+  base64 alphabet. It passed a three-reviewer gate and most runs.
+
+**And a related one that mutation checking would NOT have caught**, kept here because it is the
+neighbouring trap: `VaultCollector.Data` held a type Slumber had no codec for, so the slice threw in a
+post-response coroutine and silently dropped the WHOLE record — `vault.entries` was `[]` across all 1193
+depot records. No mutation would have found that, because no test exercised the path at all. The rule it
+produced is a coverage rule and lives in CLAUDE.md: **if a type is serialized in production, a test must
+serialize it.**
+
+---
+
+## Standard 3 — Every escape closes one hole
+
+Adopted from klang 2026-09-28. The loop improves itself without experiments: every CRITICAL or MAJOR a
+round finds is something the stage before it let through, and each one is classified and closed ONCE,
+so the same class cannot escape the same way again.
+
+**Classify each CRITICAL/MAJOR by what would have caught it earlier**, and make that thing exist:
+
+| class     | what let it through                                         | the fix to the process                                                                                |
+|-----------|-------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| brief     | the implementer was not told a constraint or a decided rule | a line in the brief, `/agent-fleet`, or CLAUDE.md                                                     |
+| checklist | no charter asks the question                                | a line in the charter in `/feature-review`, or a Rule above, with the failing scenario as its example |
+| test      | no test could see it (a mutation would have stayed green)   | a mandatory test pattern for that kind of change                                                      |
+| design    | it should have been decided before implementing             | a "decide before implementing" line in `.claude/tasks/TEMPLATE.md` or the plan                        |
+| tooling   | a mechanical check would have caught it                     | a grep or a script, named where it runs                                                               |
+
+**The signal that a rule failed is recurrence, not a rate.** The sample is too small to estimate one.
+If a class that already has a rule escapes again, the rule's TEXT failed (it was not where the agent
+read, or it did not name the scenario) and it is rewritten, not restated. One recurrence is enough.
+
+**The record is [`escape-ledger.md`](escape-ledger.md)**, next to this file. The coordinator appends a
+row when a step commits. Read it BEFORE writing a brief for a kind of change that has escaped before.
+
+---
+
+## Gotchas — the ones specific to reviewing
+
+**CLAUDE.md's "Verification traps" section is canonical and auto-loaded; it is not repeated here.** Read
+it. The two below are about the review process itself rather than about testing, which is why they live
+in this file:
+
+- **Take `.claude/BUILD-LOCK.md` before building.** Reviewers are read-only and need no lock; applying
+  fixes and running tests do. Read the lock as its OWN step and act on what it says — chaining the read
+  into the command with `&&` is not a check.
+- **`git diff <path>` immediately before committing that path.** `git commit -- <path>` commits the
+  WORKING TREE, not the index, so it takes another agent's edits to that file too. Checking
+  `git diff --cached` does not cover this — that mistake swept a lock claim on 2026-08-24.
+- **A scripted rename must know what a word is.** A name that is also an English word, rewritten by a
+  bare regex, lands in KDoc prose, docs text and string literals (klang: 215 prose sites in one batch).
+  Rewrite only in a call context, and let the compiler find the rest (CLAUDE.md: rename and compile).
+- **Background Gradle chains get killed under memory pressure** on this machine; a foreground run of
+  the same chain survives. Before a long chain, stop idle Kotlin daemons. Never `pkill -f` a pattern
+  that also matches your own shell's command line.
+
+## Changelog
+
+- **2026-09-28 — round 2 of this document reviewing itself. Safety valve FIRED; the maintainer decided.**
+  7 MAJOR, 6 MINOR, 0 CRITICAL, plus a duty-(b) audit of round 1's twelve fixes. Eight held completely;
+  three were applied in some files and not the others they needed to reach — `out-of-scope` reached
+  `feature-review` and `TEMPLATE.md` but never this file's disposition list; "write the ledger before the
+  next round" reached this file and the template but not `feature-review`'s Output section.
+
+  **The finding that mattered: round 1's self-rejection ban backfired, and our own ledger is the
+  evidence.** Round 1 produced twelve fixes, one downgrade and **zero rejections** — not coincidence, but
+  what the ban predicts whenever the coordinator wrote the code, which is nearly every gate. So the
+  reject-audit path that the *same round* built had never once executed. Pressure does not vanish; it
+  took the cheapest remaining exit, and the proof is round 1's own MINOR #9: graded down, batched, never
+  applied, unnoticed for a month, with nobody trying to suppress anything. **Maintainer, 2026-09-28: the
+  ban becomes PROVISIONAL** — reject or downgrade your own code's finding, and it settles only after one
+  reconcile round in which a fresh reviewer accepts it. Keeps the intent, costs a round instead of an
+  interrupt, and makes the honest path cheaper than the quiet one.
+
+  Also closed: `withdrawn` and `out-of-scope` are real dispositions (a withdrawal was the reconcile
+  rule's most common outcome and had no row to go in); a severity DOWNGRADE now needs a checkable reason
+  like a rejection; phase 2 gained an unconditional duty (c) to audit **every** rejected CRITICAL/MAJOR
+  rather than only those phase 1 happened to rediscover; the change set is re-derived each round, so a
+  fix that ADDS a file cannot ship unreviewed; the termination section's four defects from round 1 —
+  batched then never applied, which is itself the finding; the three `reviewer-*.md` bodies collapsed to
+  a pointer at `.claude/agents/reviewer-standing-rules.md` and pinned `tools:` read-only, since prose
+  telling a reviewer not to run Gradle is not the same as being unable to.
+
+  **Two things I am NOT claiming.** The round was not clean, so the standard's own termination condition
+  was not met — this closed on a maintainer call, not on the mechanism. And at 416 lines this file is
+  near the limit where CLAUDE.md's "overflowing docs hide the part the reader needed" starts to bite;
+  the reviewer declined to file it only because no rule concretely fails from length alone. Next
+  substantive change should shorten rather than extend.
+
+- **2026-09-28** — Second adoption from klang, whose copy had kept evolving for a month. Taken: the
+  effort ladder (with `reviewer-high`/`-xhigh`/`-top` in `.claude/agents/`, one rung higher than
+  klang's in round 1, round 2 kept on `opus` and round 3+ on `fable` at xhigh rather than max — maintainer's cost
+  call), the SURPLUS question, the rules on verifying claims about existing code, closing a
+  correction by repo-wide grep with one home, unified paths defusing tests, replaced expressions,
+  closed lists by table, reported-vs-landed fixes and naming the run; the `No tests found` and
+  stopped-agent guards in the mutation protocol; the self-reference and value-echo rules; Standard 3
+  and its escape ledger (started empty — klang's rows are audio-specific and stay there). Kept as
+  ultra's: the narrower mutation scope, the three charters, not flagging the fix delta in phase 1 (klang still marks it
+  as primary target), checkable rejections, and reject-also-loops. Left in
+  klang: the audio reviewer, `audio-constraints.md`, the render rules and the Karma/KSP gotchas.
+  Klang's evidence for the two-phase reconcile (2026-09-07, eight rounds): the reconcile phase twice
+  proved a triage REASON factually wrong, and each correction mattered.
+
+- **2026-08-28** — Adopted from `klang/.claude/skills/review-loop/`, which had outgrown this repo's
+  one-shot gate. Kept wholesale: the loop, the two-phase later rounds, CRITICAL/MAJOR-only looping,
+  the prose-churn rule, the 2-round safety valve, and the mutation protocol. Replaced: klang's two
+  reviewers with this repo's three charters, and its gotchas with ours.
+
+  **The local evidence that this was needed, restated 2026-08-28 after the self-review caught me
+  misdescribing it.** I first wrote that the insights gate of 2026-08-24 produced a wrong fix that "the
+  maintainer caught, not a review". **That is false, and the record says so.** The round produced a
+  mitigation, *labelled it* "a mitigation, not the fix", named the real backend fix, put it on the
+  blocking list and FAILED the gate
+  (`.claude/tasks/20260802-insights-vue-tabs.md:487-500`). The maintainer's contribution was a better
+  DESIGN — enforce the invariant at the writer instead of the reader — not a catch the review missed.
+
+  What that gate actually shows, which argues for the loop without needing the misattribution:
+
+  - It confirmed a **CRITICAL it could not fix** (`VaultCollector.Data` unslumberable, dropping every
+    record) and had **nowhere to put it**: no fix, so nothing looped; "reject" would have been wrong.
+    That gap is now finding #11's disposition below.
+  - Three findings finished CONFIRMED-and-open with no re-review path.
+  - A premise the whole feature rested on had to be **retracted mid-session** — the tab's `vars`
+    suppression was believed to contain the exposure and did not. A second round is what tests a claim
+    like that.
+
+  **The lesson I nearly taught instead is the sharper one:** a process document that cites a false
+  precedent teaches reviewers to distrust an accurate record. Verify the evidence in your own changelog
+  against the record, exactly as you would a reviewer's finding.

@@ -7,7 +7,7 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.TS
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 
-/** Awaker for [MpInstant] values. */
+/** Awaker for [MpInstant] values. Reads the `ts` map entry as epoch milliseconds; timezone-free by nature. */
 object MpInstantAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpInstant? {
@@ -23,7 +23,7 @@ object MpInstantAwaker : Awaker {
     }
 }
 
-/** Slumberer for [MpInstant] values. */
+/** Slumberer for [MpInstant] values. Writes `{ts: epoch millis, timezone: "UTC", human: isoString}`. */
 object MpInstantSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

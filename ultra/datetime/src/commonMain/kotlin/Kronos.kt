@@ -12,7 +12,14 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 interface Kronos {
 
-    /** Mutable kronos */
+    /**
+     * Mutable kronos.
+     *
+     * [set] and [mutate] throw [IllegalArgumentException] for an inner that reads this mutable, which would
+     * recurse forever on every read. The check sees through mutable and [advanceBy] layers only, not into
+     * `advanceBy { }` providers, clocks or other [Kronos] implementations. It is not safe against concurrent
+     * writers: two threads setting two mutables to read each other can still build a cycle.
+     */
     interface Mutable : Kronos {
         /** Sets the inner kronos */
         fun set(inner: Kronos)
@@ -57,8 +64,25 @@ interface Kronos {
                 }
 
                 is KronosDescriptor.AdvancedBy -> {
-                    descriptor.inner.instantiate()
-                        .advanceBy(descriptor.durationMs.milliseconds)
+                    // Nesting comes from files written before chained advances collapsed, or from a Mutable between
+                    // layers. Walked in a loop rather than recursion, summed innermost first like a live chain reads.
+                    val durations = mutableListOf<Duration>()
+                    var current: KronosDescriptor = descriptor
+
+                    while (current is KronosDescriptor.AdvancedBy) {
+                        durations.add(current.durationMs.milliseconds)
+                        current = current.inner
+                    }
+
+                    val total = durations.foldRight(Duration.ZERO) { duration, acc ->
+                        require(!(acc.isInfinite() && duration.isInfinite() && acc.isPositive() != duration.isPositive())) {
+                            "KronosDescriptor.AdvancedBy cannot sum opposite infinite durations"
+                        }
+
+                        acc + duration
+                    }
+
+                    current.instantiate().advanceBy(total)
                 }
             }
         }
@@ -97,17 +121,38 @@ interface Kronos {
     }
 
     /**
-     * Implementation that gets [instantNow] from the [inner] advanced by [provider].
+     * Implementation that gets [instantNow] from the [inner] advanced by [settled] plus all [pending] durations.
+     *
+     * Chained advances collapse into one instance, so [inner] is never an [AdvancedBy].
      */
-    private class AdvancedBy(private val inner: Kronos, private val provider: () -> Duration) : Kronos {
+    private class AdvancedBy(
+        val inner: Kronos,
+        private val settled: Duration,
+        private val pending: Pending?,
+    ) : Kronos {
 
-        private val duration by lazy { provider() }
+        /** Immutable list of lazy durations nobody has needed yet, newest first. Shared between chained instances. */
+        class Pending(val duration: Lazy<Duration>, val older: Pending?)
+
+        // PUBLICATION: no lock is held while the shared pending lazies run, as before the collapse
+        private val total: Lazy<Duration> = lazy(LazyThreadSafetyMode.PUBLICATION) {
+            // Oldest first, as the former nested implementation did for instantNow()
+            val lazies = mutableListOf<Lazy<Duration>>()
+            var current = pending
+
+            while (current != null) {
+                lazies.add(current.duration)
+                current = current.older
+            }
+
+            lazies.foldRight(settled) { lazy, acc -> acc + lazy.value }
+        }
 
         /**
          * Describes the Kronos.
          */
         override fun describe(): KronosDescriptor = KronosDescriptor.AdvancedBy(
-            durationMs = duration.inWholeMilliseconds,
+            durationMs = total.value.inWholeMilliseconds,
             inner = inner.describe(),
         )
 
@@ -115,7 +160,17 @@ interface Kronos {
          * Return the 'now' moment in time.
          */
         override fun instantNow(): MpInstant {
-            return inner.instantNow().plus(duration)
+            return inner.instantNow().plus(total.value)
+        }
+
+        override fun advanceBy(duration: () -> Duration): Kronos = when {
+            total.isInitialized() -> AdvancedBy(inner, total.value, Pending(lazy(duration), null))
+            else -> AdvancedBy(inner, settled, Pending(lazy(duration), pending))
+        }
+
+        override fun advanceBy(duration: Duration): Kronos = when {
+            total.isInitialized() -> AdvancedBy(inner, total.value + duration, null)
+            else -> AdvancedBy(inner, settled + duration, pending)
         }
     }
 
@@ -127,22 +182,23 @@ interface Kronos {
         private var _inner: Kronos = inner
 
         override fun set(inner: Kronos) {
-            val chain = _inner.recurse {
+            val chain = inner.recurse {
                 when (val rec = this) {
                     is MutableImpl -> rec._inner
+                    is AdvancedBy -> rec.inner
                     else -> null
                 }
             }
 
-            if (this in chain) {
-                return
+            require(this !in chain) {
+                "Kronos.Mutable cannot be set to a kronos that reads the mutable itself"
             }
 
             _inner = inner
         }
 
         override fun mutate(block: Kronos.() -> Kronos) {
-            _inner = block(_inner)
+            set(block(_inner))
         }
 
         override fun describe(): KronosDescriptor = _inner.describe()
@@ -160,17 +216,21 @@ interface Kronos {
      *
      * The created dates and times will be advances by the given [duration].
      *
-     * The provider [duration] is guaranteed to be only called exactly once.
-     * It will be called the first time it is needed.
+     * The provider [duration] is called once, the first time the clock is read, never while chaining.
+     * A provider that throws is called again on the next read.
      */
-    fun advanceBy(duration: () -> Duration): Kronos = AdvancedBy(inner = this, provider = duration)
+    fun advanceBy(duration: () -> Duration): Kronos = AdvancedBy(
+        inner = this,
+        settled = Duration.ZERO,
+        pending = AdvancedBy.Pending(lazy(duration), null),
+    )
 
     /**
      * Creates a Kronos the manipulates created dates and times.
      *
      * The created dates and times will be advances by the given [duration].
      */
-    fun advanceBy(duration: Duration): Kronos = advanceBy { duration }
+    fun advanceBy(duration: Duration): Kronos = AdvancedBy(inner = this, settled = duration, pending = null)
 
     /** Makes this Kronos a [Mutable] */
     fun mutable(): Mutable = when (this) {

@@ -4,12 +4,13 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.RealmId
+import io.peekandpoke.funktor.auth.model.bearerToken
 import io.peekandpoke.funktor.demo.common.b2b.AddMemberRequest
 import io.peekandpoke.funktor.demo.common.b2b.ChangeMemberRolesRequest
 import io.peekandpoke.funktor.demo.common.b2b.OrgMemberModel
@@ -69,7 +70,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
         installAllFixturesBeforeSpec()
 
         api.members.list { list ->
-            val signInRoute = authApi.auth.signIn
+            val signInRoute = authApi.authLogin.signIn
 
             "anonymous list is unauthorized (the b2b-user floor denies)" {
                 val acme = org("acme")
@@ -91,7 +92,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -117,7 +118,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -134,7 +135,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
             // Defined BEFORE the changeRoles block so it runs while `single@` is still an admin (the
             // owner test there promotes single@ and removes owner@). Targets `noorg@b2b.test`, which no
             // other test touches, so these mutations don't perturb the shared fixtures.
-            val signInRoute = authApi.auth.signIn
+            val signInRoute = authApi.authLogin.signIn
 
             "anonymous add is unauthorized (the b2b-user floor denies)" {
                 val acme = org("acme")
@@ -159,7 +160,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -182,7 +183,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -205,7 +206,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -231,7 +232,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -269,7 +270,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -298,7 +299,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
             // Route blocks register FreeSpec containers at spec level and cannot nest — reference the
             // `remove` route directly and invoke it via the request DSL.
             val remove = api.members.remove
-            val signInRoute = authApi.auth.signIn
+            val signInRoute = authApi.authLogin.signIn
 
             "an ADMIN cannot grant the OWNER role (owner-only ownership → 403)" {
                 val acme = org("acme")
@@ -309,7 +310,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -334,7 +335,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("single@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 
@@ -359,7 +360,7 @@ class B2bMembersApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                     anonymous {
                         signInRoute(RealmParam(RealmId("b2b")), body = signIn("owner@b2b.test")) {
                             token = apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.Success>().token.token
+                                .shouldBeInstanceOf<AuthSignInResponse.Success>().bearerToken
                         }
                     }
 

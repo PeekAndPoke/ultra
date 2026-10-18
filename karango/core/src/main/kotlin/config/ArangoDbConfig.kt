@@ -1,6 +1,7 @@
 package io.peekandpoke.karango.config
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import io.peekandpoke.ultra.common.model.Redacted
+
 
 /**
  * Configuration for connecting to an ArangoDB instance.
@@ -9,8 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  */
 data class ArangoDbConfig(
     val user: String = "root",
-    @get:JsonIgnore // Ignored so it will now show up in the logs or insights panel
-    val password: String = "",
+    val password: Redacted<String> = Redacted(""),
     val host: String = "localhost",
     val port: Int = 8529,
     val database: String = "_system",

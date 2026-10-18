@@ -1089,7 +1089,8 @@ router.navToUri(Nav.about())
 // Navigate with parameters
 router.navToUri(Nav.userProfile("alice"))
 
-// Navigate handling a click event (prevents default, uses router)
+// Navigate from a non-link element; Ctrl/Cmd click opens a new tab instead
+// (onClick never sees the middle button; use onClickOrAuxClick for that)
 ui.button {
     onClick { evt -> router.navToUri(evt, Nav.home()) }
     +"Go home"
@@ -1132,18 +1133,26 @@ fun A.href(route: Route.Bound) {
 }
 ```
 
-Because it sets a real `href`, the browser handles Ctrl/Cmd+Click, middle-click, right-click → "Open in new tab", and
-link previews natively. For clicks that should navigate in-place (and not reload the page), combine `href` with an
-`onClick` that calls `router.navToUri(evt, route)` — Kraft will detect modifier keys and let the browser handle
-new-tab clicks:
+Because it sets a real `href`, a plain click is routed in-app and the browser keeps Ctrl/Cmd+Click, middle-click and
+"Open in new tab". Do not add an `onClick` that calls `router.navToUri` — `onClick` does not prevent the default, so the
+click navigates twice.
 
-```kotlin
-a {
-  href(Nav.userProfile("alice"))
-  onClick { evt -> router.navToUri(evt, Nav.userProfile("alice")) }
-  +"Alice"
-}
-```
+### Link clicks (path strategy)
+
+The router listens for clicks on `window` and handles one only if ALL hold, else the browser does:
+
+- plain primary click (or Enter): no Ctrl / Cmd / Shift / Alt, not middle click
+- no handler called `preventDefault()` (a handler that calls only `stopPropagation()` also keeps the router out)
+- `target` absent, empty or `_self` (anchor's own, else `<base target>`); `_top` / `_parent` only when not framed
+- no `download` attribute, `rel` does not contain `external`
+- href is NOT absolute: `https://…` (even same-origin, even localhost) and `//host/…` always go to the browser
+- relative href resolves (like the browser, against `<base href>`) to the page's own protocol and host
+- not a fragment-only link on the current path and query (`#intro`): the browser scrolls, the active route stays
+
+Relative hrefs resolve like the browser: `settings` on `/users/alice` → `/users/settings`. The fragment never takes part
+in route matching. A same-origin path without a SPA route still goes to `catchAll`; mark backend URLs with
+`rel="external"` or `download`. With `useHashStrategy()` there is no click listener at all, and `#intro` would navigate
+to the route `intro`. Docs: https://peekandpoke.io/ultra/kraft/link-clicks
 
 ## Layouts
 
@@ -2350,41 +2359,36 @@ jsMain {
 
 ## chartjs — Data visualization
 
-The `ChartJs` component subscribes to the addon internally — just register `chartJs()` in your app and use it:
+Register `chartJs()` in `addons { }`; the `ChartJs` component subscribes to the addon internally:
 
 ```kotlin
-class SalesChart(ctx: NoProps) : PureComponent(ctx) {
+override fun VDom.render() {
+    div {
+        css { height = 50.vh }
 
-    // Animate the chart — multiply data by a sine wave
-    private val factor by subscribingTo(
-        ticker(1.seconds).map { 1.0 + sin(it.count * 10 * PI / 180.0) }
-    )
-
-    override fun VDom.render() {
-        div {
-            css { height = 50.vh }
-
-            ChartJs(chartJsData {
-                jsObject {
-                    type = "bar"
-                    data = jsObject {
-                        labels = arrayOf("Jan", "Feb", "Mar", "Apr", "May")
-                        datasets = arrayOf(jsObject {
-                            label = "Sales"
-                            data = arrayOf(12, 19, 3, 5, 8)
-                                .map { it * factor }
-                                .toTypedArray()
-                            backgroundColor = value("rgba(99, 132, 255, 0.5)")
-                        })
-                    }
+        ChartJs(chartJsData {
+            jsObject {
+                type = "bar"
+                data = jsObject {
+                    labels = arrayOf("Jan", "Feb", "Mar")
+                    datasets = arrayOf(jsObject {
+                        label = "Sales"
+                        data = arrayOf(12, 19, 3)
+                    })
                 }
-            })
-        }
+            }
+        })
     }
 }
 ```
 
-The chart re-renders whenever `factor` changes — reactive charts with no extra wiring.
+A new config updates the live chart: options, `data` fields and datasets follow it, datasets matched by index
+(Chart.js animates from the old values; legend visibility stays with the position). A changed `type` rebuilds.
+- Pass a NEW config per change: the chart works on a one-level copy, in-place mutation shows up only partially.
+- Options are replaced, not merged: many updates per second → `options = jsObject { asDynamic().animation = false }`
+  in every config.
+- Inline top-level `plugins` are read at creation only; dataset fields starting with `_` are reserved for Chart.js.
+- `Chart.update(mode)` takes a Chart.js 4 update mode (`"none"`, `"resize"`, …).
 
 ## Prism.js — Syntax highlighting
 

@@ -1,8 +1,6 @@
 package io.peekandpoke.ultra.security.jwt
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.exceptions.JWTVerificationException
+import io.peekandpoke.ultra.common.model.Redacted
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
@@ -24,7 +22,12 @@ class JwtGeneratorSpec : StringSpec() {
     private val mockConfig = JwtConfig(
         issuer = "testIssuer",
         audience = "testAudience",
-        signingKey = "testSigningKey",
+        keys = listOf(
+            JwtSigningKey(
+                id = "gen-1",
+                secret = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
+            )
+        ),
         permissionsNs = permissionsNs,
         userNs = userNs,
     )
@@ -37,12 +40,43 @@ class JwtGeneratorSpec : StringSpec() {
             jwtGenerator.config shouldBe mockConfig
         }
 
-        "JwtConfig.toString must redact signingKey" {
+        "JwtConfig.toString must not disclose the signing key" {
             val str = mockConfig.toString()
-            str shouldContain "REDACTED"
-            str shouldNotContain "testSigningKey"
+
+            // JwtConfig's hand-written redacting toString is gone — `Redacted` redacts itself, so the
+            // GENERATED toString is safe. The hand-written one is exactly what made this field look
+            // protected while every serializer wrote it in full, which is how the signing key reached
+            // every insights record.
+            str shouldContain Redacted.PLACEHOLDER
+            // Asserted against the REAL secret, read from the config. The previous version checked a
+            // literal `"testSigningKey"` — the secret's value before the RFC 7518 floor forced it to
+            // 64+ bytes. It had silently stopped matching anything, so a `toString()` of
+            // `"$PLACEHOLDER ($value)"` would have leaked the key with both assertions still green.
+            str shouldNotContain mockConfig.keys.first().secret.value
             str shouldContain "testIssuer"
             str shouldContain "testAudience"
+        }
+
+        "JwtPayload.toString must not disclose the claims" {
+            // Regression guard. JwtPayload is a data class, so the GENERATED toString rendered every
+            // claim — email, org, roles, permissions. The vendor type it replaced
+            // (com.auth0.jwt.impl.PayloadImpl) has no toString override, so this was a NEW disclosure
+            // channel, not an inherited one. Nothing logs a payload today; the KDoc's "do not log it"
+            // is precisely what an `error("... $caller")` violates later.
+            val token = jwtGenerator.createJwt(
+                user = JwtUserData(id = UserId("u9"), desc = "d", type = "t", email = EmailAddress("leak@example.com")),
+                permissions = UserPermissions(isSuperUser = true, roles = setOf("admin")),
+            )
+
+            val rendered = jwtGenerator.verify(token).toString()
+
+            assertSoftly {
+                rendered shouldNotContain "leak@example.com"
+                rendered shouldNotContain "admin"
+                rendered shouldNotContain "superuser"
+                // the subject is deliberately kept — it is the useful part of a log line
+                rendered shouldContain "u9"
+            }
         }
 
         "verify() should work as shorthand for verifier.verify()" {
@@ -52,12 +86,20 @@ class JwtGeneratorSpec : StringSpec() {
             payload.subject shouldBe "v1"
         }
 
-        "verify() should throw JWTVerificationException for invalid token" {
-            val invalidToken = JWT.create()
-                .withIssuer("invalidIssuer")
-                .sign(Algorithm.HMAC512("invalidKey"))
+        "verify() should throw JwtVerificationException for invalid token" {
+            val invalidToken = JwtGenerator(
+                config = mockConfig.copy(
+                    keys = listOf(
+                        JwtSigningKey(
+                            id = "gen-1",
+                            secret = Redacted("a-different-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!!"),
+                        )
+                    ),
+                    issuer = "invalidIssuer",
+                ),
+            ).createJwt(user = JwtUserData(id = UserId("i1"), desc = "d", type = "t"))
 
-            shouldThrow<JWTVerificationException> {
+            shouldThrow<JwtVerificationException> {
                 jwtGenerator.verify(invalidToken)
             }
         }
@@ -76,7 +118,7 @@ class JwtGeneratorSpec : StringSpec() {
             val token = jwtGenerator.createJwt(user = userData, permissions = expectedPermissions)
 
             // Assert
-            val decodedToken = jwtGenerator.verifier.verify(token)
+            val decodedToken = jwtGenerator.verify(token)
             val extractedUser = jwtGenerator.extractUserData(decodedToken)
 
             assertSoftly {
@@ -111,7 +153,7 @@ class JwtGeneratorSpec : StringSpec() {
             }
 
             // Assert
-            val decodedToken = jwtGenerator.verifier.verify(token)
+            val decodedToken = jwtGenerator.verify(token)
             val extractedUser = jwtGenerator.extractUserData(decodedToken)
 
             assertSoftly {
@@ -128,16 +170,20 @@ class JwtGeneratorSpec : StringSpec() {
             }
         }
 
-        "createJwt should throw JWTVerificationException for invalid token" {
-            // Arrange
-            val invalidToken = JWT.create()
-                .withIssuer("invalidIssuer")
-                .sign(Algorithm.HMAC512("invalidKey"))
+        "tryVerify should return null for a token signed with a foreign key" {
+            val invalidToken = JwtGenerator(
+                config = mockConfig.copy(
+                    keys = listOf(
+                        JwtSigningKey(
+                            id = "gen-1",
+                            secret = Redacted("a-different-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!!"),
+                        )
+                    ),
+                    issuer = "invalidIssuer",
+                ),
+            ).createJwt(user = JwtUserData(id = UserId("i2"), desc = "d", type = "t"))
 
-            // Act & Assert
-            shouldThrow<JWTVerificationException> {
-                jwtGenerator.verifier.verify(invalidToken)
-            }
+            jwtGenerator.tryVerify(invalidToken) shouldBe null
         }
 
         "createJwt should encode permissions correctly" {
@@ -183,7 +229,7 @@ class JwtGeneratorSpec : StringSpec() {
                     val token = jwtGenerator.createJwt(user = userData, permissions = permissions)
 
                     // Assert
-                    val decodedToken = jwtGenerator.verifier.verify(token)
+                    val decodedToken = jwtGenerator.verify(token)
                     val extractedPermissions = jwtGenerator.extractPermissions(decodedToken)
 
                     withClue("token should contain the expected permissions") {
@@ -211,7 +257,7 @@ class JwtGeneratorSpec : StringSpec() {
             val token = jwtGenerator.createJwt(user = userData)
 
             // Assert
-            val decodedToken = jwtGenerator.verifier.verify(token)
+            val decodedToken = jwtGenerator.verify(token)
             val extractedPermissions = decodedToken.extractPermissions(permissionsNs)
 
             extractedPermissions.isSuperUser shouldBe false

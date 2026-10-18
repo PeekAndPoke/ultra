@@ -11,6 +11,9 @@ expect object ObjectSizeEstimatorPlatform {
     /**
      * Returns the field values of [obj] using platform reflection,
      * or `null` if reflection is unavailable.
+     *
+     * The order is unspecified, and what counts as a field differs per platform — see the
+     * `actual` declarations.
      */
     fun getFieldsOf(obj: Any): List<Any?>?
 }

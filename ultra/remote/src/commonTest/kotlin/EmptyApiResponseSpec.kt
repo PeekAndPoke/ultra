@@ -64,8 +64,6 @@ class EmptyApiResponseSpec : StringSpec({
             server = "s1",
             status = HttpStatusCode.OK,
             durationMs = 5.0,
-            detailsUri = null,
-            detailsUrl = null,
         )
 
         val response = EmptyApiResponse(

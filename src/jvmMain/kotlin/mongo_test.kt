@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.playground
 
+import io.peekandpoke.ultra.common.model.Redacted
 import com.mongodb.client.model.Filters
 import io.github.serpro69.kfaker.faker
 import io.peekandpoke.monko.MongoDbConfig
@@ -28,7 +29,7 @@ suspend fun main() {
     val vaultConfig = VaultConfig()
 
     val mongoConfig = MongoDbConfig(
-        connectionString = "mongodb://root:root@localhost:27017",
+        connectionString = Redacted("mongodb://root:root@localhost:27017"),
         database = "funktor-demo-dev",
     )
 

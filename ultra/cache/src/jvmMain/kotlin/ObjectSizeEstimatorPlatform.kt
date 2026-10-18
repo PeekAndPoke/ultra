@@ -5,6 +5,14 @@ import java.lang.reflect.Modifier
 /** JVM implementation that extracts fields via `java.lang.reflect`. */
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual object ObjectSizeEstimatorPlatform {
+    /**
+     * Walks the class hierarchy up to (excluding) [Any] and reads every non-static declared field.
+     *
+     * Never returns `null`.
+     */
+    // TODO(scan): nothing is cached — declaredFields plus setAccessible run on every call. Under
+    //  JPMS, setAccessible throws for JDK-internal classes and the field is dropped silently, so
+    //  e.g. a StringBuilder or a BigDecimal reports zero fields. The catch also hides real errors.
     actual fun getFieldsOf(obj: Any): List<Any?>? {
         val out = ArrayList<Any?>()
         var cls: Class<*>? = obj.javaClass

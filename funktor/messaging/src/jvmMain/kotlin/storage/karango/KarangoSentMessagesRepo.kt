@@ -12,10 +12,10 @@ import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.aql.anyOrTrueIfEmpty
 import io.peekandpoke.karango.aql.aql
 import io.peekandpoke.karango.aql.expand
-import io.peekandpoke.karango.aql.ts
 import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
+import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.model.PagedSearchFilter
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor

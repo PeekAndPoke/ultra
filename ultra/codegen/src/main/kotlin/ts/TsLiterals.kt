@@ -10,7 +10,7 @@ package io.peekandpoke.ultra.codegen.ts
  * close the literal, which at best emits a file that does not parse — `identifier = "O'Brien"` was
  * enough — and at worst appends executable TypeScript to output that is checked in and bundled.
  */
-internal fun tsStringLiteral(value: String): String {
+fun tsStringLiteral(value: String): String {
     val escaped = buildString(value.length) {
         value.forEach { ch ->
             when (ch) {
@@ -34,9 +34,19 @@ internal fun tsStringLiteral(value: String): String {
  * Renders [name] for property position: bare when it is a valid TypeScript identifier, otherwise as a
  * quoted and escaped key.
  */
-internal fun tsPropertyName(name: String): String = when {
+fun tsPropertyName(name: String): String = when {
     name.matches(BARE_IDENTIFIER) -> name
     else -> tsStringLiteral(name)
 }
+
+/**
+ * True when [name] can be emitted as a bare TypeScript identifier.
+ *
+ * Public because it is a PRECONDITION, not a formatting choice: anything spliced into identifier
+ * position — a `codeGen { funcName }`, a route parameter name — must be checked against it and
+ * REFUSED otherwise. There is no escaping available in that position, so the only safe alternatives
+ * are "valid identifier" and "fail loudly".
+ */
+fun isBareIdentifier(name: String): Boolean = name.matches(BARE_IDENTIFIER)
 
 private val BARE_IDENTIFIER = Regex("[A-Za-z_$][A-Za-z0-9_$]*")

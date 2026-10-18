@@ -10,7 +10,7 @@ import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.desc
-import io.peekandpoke.monko.lang.ts
+import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.model.PagedSearchFilter
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor

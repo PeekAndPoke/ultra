@@ -9,6 +9,9 @@
  * transport is a one-liner.
  */
 
+/** How a request treats credentials — cookies and TLS client certificates. Mirrors `RequestInit`. */
+export type RequestCredentials = 'omit' | 'same-origin' | 'include'
+
 /** A request about to be sent. */
 export interface HttpRequest {
     method: string
@@ -16,6 +19,22 @@ export interface HttpRequest {
     headers: Record<string, string>
     body?: string
     signal?: AbortSignal
+    /**
+     * Whether the browser attaches cookies, and whether it accepts `Set-Cookie` back.
+     *
+     * A FIELD rather than something an auth wrapper sets on the way past, because a wrapper cannot:
+     * it only sees this object, and `fetch` reads `credentials` from its own init — so a decorator has
+     * nowhere to put it.
+     *
+     * **This SDK's own auth never sets it** — bearer tokens travel in a header. It exists because it
+     * is otherwise unreachable, for a caller talking to an API that does set a cookie.
+     *
+     * Omitted leaves `fetch`'s own default (`same-origin`) in force. `'include'` is what a
+     * cross-origin cookie session needs, and it requires the server to answer with
+     * `Access-Control-Allow-Credentials` — a wildcard `Allow-Origin` is refused by the browser in that
+     * mode.
+     */
+    credentials?: RequestCredentials
 }
 
 /**
@@ -67,6 +86,10 @@ export function fetchTransport(fetchImpl: typeof fetch = globalThis.fetch): Http
                 headers: request.headers,
                 body: request.body,
                 signal: request.signal,
+                // Passed through only when SET, so omitting it leaves fetch's own default rather than
+                // pinning one here. Spelling `credentials: undefined` explicitly is not the same as
+                // leaving the key out for every RequestInit consumer.
+                ...(request.credentials !== undefined ? { credentials: request.credentials } : {}),
             })
 
             return {
@@ -84,8 +107,10 @@ export type UrlParam = string | number | boolean | null | undefined
 /**
  * Builds a request URL from a route pattern.
  *
- * Mirrors `TypedRouteRenderer` (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`)
- * so this client and the Kotlin one produce the same URL for the same route:
+ * Mirrors the KOTLIN API CLIENT's URL builder — `buildUri`
+ * (`ultra/remote/src/commonMain/kotlin/helpers.kt:87`) with `UriParamBuilder`
+ * (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt:46`) — so this client and the Kotlin one
+ * produce the same URL for the same route:
  *
  * - `{name}` placeholders in [pattern] are replaced from [pathParams], percent-encoded.
  * - A query parameter whose value is `null`, `undefined` or the empty string is **omitted**, not sent
@@ -94,9 +119,17 @@ export type UrlParam = string | number | boolean | null | undefined
  * - Each query key appears at most once: funktor converts every route parameter to a single string
  *   (`OutgoingConverter.convert`), so repeated keys are not part of the protocol.
  *
- * Encoding uses `encodeURIComponent`. It leaves a handful of sub-delimiters unescaped that Kotlin's
- * `encodeURLQueryComponent(encodeFull = true)` escapes, but both decode to the same string server
- * side, so the two clients remain interchangeable.
+ * Encoding uses `encodeURIComponent`, matching `encodeUriComponent`
+ * (`ultra/common/src/commonMain/kotlin/strings_mp.kt`) character for character.
+ *
+ * **NOT `TypedRouteRenderer`**, despite what this KDoc claimed until 2026-07-30. That class is the
+ * SERVER-SIDE link renderer, and it double-encodes query values: it calls
+ * `encodeURLQueryComponent(encodeFull = true)` (`TypedRouteRenderer.kt:43`) and then hands the
+ * already-encoded string to `toUri`, which runs `URLEncoder.encode` over it again
+ * (`ultra/common/src/jvmMain/kotlin/strings.kt:33`). So `?at=2026-07-30T10:15:30Z` renders as
+ * `at=2026%252D07%252D30T10%253A15%253A30Z` there and `at=2026-07-30T10%3A15%3A30Z` here. Path
+ * parameters ARE equivalent on both sides; only the query diverges. Do not "fix" this file to match
+ * — the double-encode is the defect, tracked separately.
  *
  * @throws if [pattern] still contains an unfilled `{placeholder}` — otherwise the literal braces would
  *   be sent and surface as a puzzling 404.

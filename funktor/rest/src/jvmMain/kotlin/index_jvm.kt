@@ -47,6 +47,20 @@ val Funktor_Rest = module { config: AppConfig, builder: FunktorRestBuilder.() ->
 
     val codecConfig = SlumberConfig.default.prependModules(VaultSlumberModule)
 
+    // The LIVE serialization config, injectable in its own right. The TypeScript SDK generator needs
+    // it to detect types whose JSON shape a custom codec reshapes — without it, a generated schema can
+    // silently stop describing what the server writes. Reachable by downcasting the injected
+    // `RestCodec`, but that couples every consumer to `SlumberRestCodec`; this is one line instead.
+    //
+    // Deliberately the config BEFORE the per-request attributes are added: those carry a Database and
+    // an EntityCache, which are request-scoped and meaningless to a code generator.
+    // A COPY with a fresh Lookup, not `codecConfig` itself. `SlumberConfig.copy` retains the same
+    // `Lookup` instance, whose maps are plain `mutableMapOf` and are written by `getSlumberer` — and
+    // `TsModelValidator` calls that for every declaration in the model. Sharing it would let a
+    // generator run install uncached slumberers for every model type (disabling the response cache
+    // funktor sizes at 10% of heap, just below) and race the request threads writing the same maps.
+    instance(codecConfig.copy(lookup = SlumberConfig.Lookup()))
+
     val cacheMemory = Runtime.getRuntime().maxMemory() / 10
 
     val rawCache = FastCache.Builder<Any?, Any?>()
@@ -93,6 +107,14 @@ class FunktorRestBuilder internal constructor(
 
     fun jwt(config: JwtConfig?) {
         config ?: error("JwtConfig must not be null")
+
+        // Validate HERE, at boot, not inside the singleton factory. The kontainer binding below is
+        // lazy, so an empty key list, duplicate `kid`s, a too-short secret or overlapping claim
+        // namespaces would otherwise surface as a 500 on the first request carrying a bearer token —
+        // on a running server, long after deploy. `JwtGenerator` and `JwtSignatureGate` run the same
+        // checks on every other construction path; this makes a misconfigured deployment fail to
+        // start instead.
+        JwtGenerator.requireUsableConfig(config)
 
         with(kontainer) {
             singleton(JwtGenerator::class) { JwtGenerator(config) }

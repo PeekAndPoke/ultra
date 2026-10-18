@@ -1,6 +1,6 @@
 package io.peekandpoke.ultra.security.user
 
-import io.peekandpoke.ultra.slumber.Slumber
+import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -41,6 +41,12 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(Deps.KotlinX.serialization_core)
+                // `api`, not `implementation`: JwtPayload.claims is a public JsonObject and
+                // JwtClaim.value a public JsonElement, so these types ARE this module's published
+                // surface. At implementation scope the POM marks them runtime-only and an external
+                // consumer writing `caller.payload.claims["x"]` fails to compile. Not caught in-repo,
+                // because funktor:rest api-exposes kotlinx-json transitively.
+                api(Deps.KotlinX.serialization_json)
 
                 api(project(":ultra:common"))
                 implementation(project(":ultra:slumber"))
@@ -68,7 +74,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(project(":ultra:kontainer"))
-                api(Deps.JavaLibs.auth0_java_jwt)
                 api(Deps.JavaLibs.password4j)
             }
         }

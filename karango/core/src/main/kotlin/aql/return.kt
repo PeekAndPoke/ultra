@@ -3,29 +3,23 @@
 package io.peekandpoke.karango.aql
 
 import io.peekandpoke.ultra.reflection.TypeRef
-import io.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 @Suppress("UnusedReceiverParameter")
-@VaultTerminalExpressionMarker
 fun <R> AqlStatementBuilder.RETURN(ret: AqlExpression<R>): AqlTerminalExpr<R> =
     AqlReturn(ret)
 
 @Suppress("UnusedReceiverParameter")
-@VaultTerminalExpressionMarker
 fun <R> AqlStatementBuilder.RETURN_OLD(ret: AqlExpression<R>): AqlTerminalExpr<R> =
     AqlReturnOld(ret)
 
 @Suppress("UnusedReceiverParameter")
-@VaultTerminalExpressionMarker
 fun <R> AqlStatementBuilder.RETURN_NEW(ret: AqlExpression<R>): AqlTerminalExpr<R> =
     AqlReturnNew(ret)
 
 @Suppress("UnusedReceiverParameter")
-@VaultTerminalExpressionMarker
 fun <R> AqlStatementBuilder.RETURN_DISTINCT(ret: AqlExpression<R>): AqlTerminalExpr<R> =
     AqlReturnDistinct(ret)
 
-@VaultTerminalExpressionMarker
 fun AqlStatementBuilder.RETURN_COUNT(variableName: String = "count"): AqlTerminalExpr<Int> {
 
     val count: AqlExpression<Int> = COLLECT_WITH(COUNT, variableName)

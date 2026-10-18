@@ -9,8 +9,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.ktor.http.HttpStatusCode
-import io.peekandpoke.funktor.testing.AppUnderTest
+import io.ktor.http.*
 import io.peekandpoke.funktor.auth.AuthFrontendRoutes
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
@@ -27,10 +26,10 @@ import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.api.SentMessageModel
 import io.peekandpoke.funktor.messaging.senders.hrefs
+import io.peekandpoke.funktor.testing.AppUnderTest
 import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.common.encodeUriComponent
 import io.peekandpoke.ultra.security.user.EmailAddress
-import io.peekandpoke.ultra.vault.value
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -93,7 +92,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
     ): String = with(scope) {
         var token: String? = null
 
-        api.auth.signIn(
+        api.authLogin.signIn(
             realmParam,
             body = AuthSignInRequest.EmailAndPassword(
                 provider = provider, email = email, password = password,
@@ -115,7 +114,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     //  When a new account is created  //////////////////////////////////////////
 
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -188,7 +187,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     //  Until the link is followed, the account cannot sign in  /////////////////
 
-                    api.auth.signIn(
+                    api.authLogin.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(
                             provider = provider,
@@ -209,7 +208,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     //  The token from the mail activates  //////////////////////////////////////
 
-                    api.auth.activateAccount(
+                    api.authLogin.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(provider = provider, token = token),
                     ) {
@@ -219,7 +218,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     //  ... and now the same credentials work  //////////////////////////////////
 
-                    api.auth.signIn(
+                    api.authLogin.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(
                             provider = provider,
@@ -234,7 +233,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     //  And the token is single-use  ////////////////////////////////////////////
 
-                    api.auth.activateAccount(
+                    api.authLogin.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(provider = provider, token = token),
                     ) {
@@ -254,7 +253,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -281,7 +280,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.resendActivation(
+                    api.authLogin.resendActivation(
                         realmParam,
                         body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
@@ -297,7 +296,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     // Rotation: the superseded link must be dead. Otherwise every resend leaves
                     // another live credential in another inbox copy, for as long as its 24h lasts.
-                    api.auth.activateAccount(
+                    api.authLogin.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(provider = provider, token = firstToken),
                     ) {
@@ -306,7 +305,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     }
 
                     // And the account is still blocked, i.e. the dead link really did nothing.
-                    api.auth.signIn(
+                    api.authLogin.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(
                             provider = provider, email = email, password = password,
@@ -316,7 +315,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                             .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
                     }
 
-                    api.auth.activateAccount(
+                    api.authLogin.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(provider = provider, token = secondToken),
                     ) {
@@ -324,7 +323,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
                     }
 
-                    api.auth.signIn(
+                    api.authLogin.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(
                             provider = provider, email = email, password = password,
@@ -345,7 +344,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                 anonymous {
                     val email = "unauthorized-${System.currentTimeMillis()}@test.com"
 
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -363,7 +362,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.resendActivation(
+                    api.authLogin.resendActivation(
                         realmParam,
                         body = AuthResendActivationRequest(provider = provider, token = "not-a-real-token"),
                     ) {
@@ -381,7 +380,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                 anonymous {
                     val email = "single-use-${System.currentTimeMillis()}@test.com"
 
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -397,7 +396,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     val resendToken = resendTokenFor(this, email)
 
-                    api.auth.resendActivation(
+                    api.authLogin.resendActivation(
                         realmParam,
                         body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
@@ -412,7 +411,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     // `removeAuthRecord` left the suite green until this delay was added.
                     delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
 
-                    api.auth.resendActivation(
+                    api.authLogin.resendActivation(
                         realmParam,
                         body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
@@ -434,7 +433,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                 anonymous {
                     val email = "cooldown-${System.currentTimeMillis()}@test.com"
 
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -450,7 +449,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.resendActivation(
+                    api.authLogin.resendActivation(
                         realmParam,
                         body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
@@ -470,7 +469,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -486,7 +485,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     // only thing stopping the mail is the account's state.
                     val resendToken = resendTokenFor(this, activated)
 
-                    api.auth.activateAccount(
+                    api.authLogin.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(
                             provider = provider,
@@ -500,7 +499,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.resendActivation(
+                    api.authLogin.resendActivation(
                         realmParam,
                         body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
@@ -529,7 +528,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.signUp(
+                    api.authLogin.signUp(
                         realmParam,
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
@@ -563,7 +562,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.auth.resendActivation(
+                    api.authLogin.resendActivation(
                         realmParam,
                         body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
@@ -590,7 +589,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     //  ... and the German link still activates  ////////////////////////////////
 
-                    api.auth.activateAccount(
+                    api.authLogin.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(
                             provider = provider,
@@ -601,7 +600,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
                     }
 
-                    api.auth.signIn(
+                    api.authLogin.signIn(
                         realmParam,
                         body = AuthSignInRequest.EmailAndPassword(
                             provider = provider, email = german, password = password,
@@ -618,7 +617,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
         "An unknown activation token must not activate anything" {
             apiApp {
                 anonymous {
-                    api.auth.activateAccount(
+                    api.authLogin.activateAccount(
                         realmParam,
                         body = AuthActivateAccountRequest(provider = provider, token = "no-such-token"),
                     ) {

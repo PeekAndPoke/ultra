@@ -3,14 +3,31 @@
 package io.peekandpoke.ultra.common
 
 /**
- * Regex that matches a URL with a protocol scheme (e.g. `https://example.com`).
+ * Regex that matches an `http` or `https` URL (e.g. `https://example.com`).
  *
- * Case-insensitive and UNANCHORED — `find`/`containsMatchIn` will happily match a URL embedded in a
- * larger text. Use `matches` (as [isUrlWithProtocol] does) when the whole string must be a URL.
+ * Host is a DNS name (a TLD is not required, so `localhost` and intranet names match; `_` is allowed),
+ * an IPv4 address or a bracketed IPv6 address; optional userinfo and port. Path, query and fragment
+ * accept every RFC 3986 character plus `[` `]`. ASCII only — an IDN or unencoded non-ASCII path does
+ * not match. A shape check: it neither escapes for output nor makes a URL safe to fetch.
+ *
+ * UNANCHORED — `find`/`containsMatchIn` will happily match a URL embedded in a larger text. Use
+ * `matches` (as [isUrlWithProtocol] does) when the whole string must be a URL.
  */
 val UrlWithProtocolRegex = Regex(
-    pattern = "https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)",
-    options = setOf(RegexOption.IGNORE_CASE),
+    // Explicit A-Z ranges instead of IGNORE_CASE, which folds Unicode (U+017F matches `s`) on JVM and JS
+    pattern = "[hH][tT][tT][pP][sS]?://" +
+            // userinfo
+            "(?:[-a-zA-Z0-9._~%!$&'()*+,;=:]+@)?" +
+            // host: DNS name / IPv4, or bracketed IPv6. Label count bounded (DNS max is 127), because the
+            // JVM engine recurses per group repetition and an unbounded one overflows the stack.
+            "(?:(?:[a-zA-Z0-9_](?:[-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?\\.){0,126}" +
+            "[a-zA-Z0-9_](?:[-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?\\.?|\\[[0-9a-fA-F:.]+\\])" +
+            // port
+            "(?::[0-9]{1,5})?" +
+            // path and query
+            "(?:[/?][-a-zA-Z0-9._~%!$&'()*+,;=:@/?\\[\\]]*)?" +
+            // fragment
+            "(?:#[-a-zA-Z0-9._~%!$&'()*+,;=:@/?\\[\\]]*)?",
 )
 
 /**

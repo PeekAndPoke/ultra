@@ -7,6 +7,19 @@ import io.peekandpoke.ultra.reflection.kType
  * Base class for all route collections
  */
 abstract class Routes(
+    /**
+     * A URL prefix prepended to every route this collection declares.
+     *
+     * **Never usable for API routes, and `ApiRoutes` therefore does not expose it.** An API route is
+     * declared by a `TypedApiEndpoint` that the CLIENT owns too — the same object in `commonMain`
+     * builds the server's pattern and the client's request URL. A prefix applied only on the server
+     * is invisible to the client, which then calls the unprefixed path and gets a 404, and whose
+     * access-matrix lookups miss for the same reason. No value can be correct, so the parameter is
+     * simply absent there.
+     *
+     * It is sound HERE because a plain route collection has no client-side counterpart to diverge
+     * from — `InsightsGuiRoutes : Routes("/_")` is the intended use.
+     */
     val mountPoint: String = "",
 ) {
     /**

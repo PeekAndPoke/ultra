@@ -10,66 +10,43 @@ import kotlin.reflect.KClass
 @DslMarker
 annotation class KontainerDsl
 
-/** DSL marker for module registration functions */
-@DslMarker
-annotation class KontainerDslModule
-
-/** DSL marker for singleton service registration */
-@DslMarker
-annotation class KontainerDslSingleton
-
-/** DSL marker for dynamic service registration */
-@DslMarker
-annotation class KontainerDslDynamic
-
-/** DSL marker for prototype service registration */
-@DslMarker
-annotation class KontainerDslPrototype
-
 /**
  * Get name
  */
 internal fun KClass<*>.getName() = this.qualifiedName ?: this.simpleName ?: "<unknown>"
 
 /** Creates a kontainer blueprint */
-@KontainerDsl
 fun kontainer(builder: KontainerBuilder.() -> Unit): KontainerBlueprint =
     KontainerBuilder(builder).build()
 
 /** Creates a kontainer module */
-@KontainerDslModule
 fun module(builder: KontainerBuilder.() -> Unit) =
     KontainerModule(builder)
 
 /** Creates a parameterized kontainer module */
-@KontainerDslModule
 fun <P> module(builder: KontainerBuilder.(P) -> Unit) =
     ParameterizedKontainerModule(builder)
 
 /** Creates a parameterized kontainer module with two parameters */
-@KontainerDslModule
 fun <P1, P2> module(builder: KontainerBuilder.(P1, P2) -> Unit) =
     ParameterizedKontainerModule2(builder)
 
 /** Creates a parameterized kontainer module with three parameters */
-@KontainerDslModule
 fun <P1, P2, P3> module(builder: KontainerBuilder.(P1, P2, P3) -> Unit) =
     ParameterizedKontainerModule3(builder)
 
 /** Creates a parameterized kontainer module with four parameters */
-@KontainerDslModule
 fun <P1, P2, P3, P4> module(builder: KontainerBuilder.(P1, P2, P3, P4) -> Unit) =
     ParameterizedKontainerModule4(builder)
 
 /** Creates a parameterized kontainer module with five parameters */
-@KontainerDslModule
 fun <P1, P2, P3, P4, P5> module(builder: KontainerBuilder.(P1, P2, P3, P4, P5) -> Unit) =
     ParameterizedKontainerModule5(builder)
 
 /**
  * Kontainer module
  */
-@KontainerDslModule
+@KontainerDsl
 class KontainerModule(private val module: KontainerBuilder.() -> Unit) {
     fun apply(builder: KontainerBuilder) {
         builder.module()
@@ -79,7 +56,7 @@ class KontainerModule(private val module: KontainerBuilder.() -> Unit) {
 /**
  * Parameterized Kontainer module
  */
-@KontainerDslModule
+@KontainerDsl
 class ParameterizedKontainerModule<P>(private val module: KontainerBuilder.(P) -> Unit) {
     fun apply(builder: KontainerBuilder, param: P) {
         builder.module(param)
@@ -89,7 +66,7 @@ class ParameterizedKontainerModule<P>(private val module: KontainerBuilder.(P) -
 /**
  * Parameterized Kontainer module
  */
-@KontainerDslModule
+@KontainerDsl
 class ParameterizedKontainerModule2<P1, P2>(private val module: KontainerBuilder.(P1, P2) -> Unit) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2) {
         builder.module(p1, p2)
@@ -99,7 +76,7 @@ class ParameterizedKontainerModule2<P1, P2>(private val module: KontainerBuilder
 /**
  * Parameterized Kontainer module
  */
-@KontainerDslModule
+@KontainerDsl
 class ParameterizedKontainerModule3<P1, P2, P3>(private val module: KontainerBuilder.(P1, P2, P3) -> Unit) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2, p3: P3) {
         builder.module(p1, p2, p3)
@@ -109,7 +86,7 @@ class ParameterizedKontainerModule3<P1, P2, P3>(private val module: KontainerBui
 /**
  * Parameterized Kontainer module
  */
-@KontainerDslModule
+@KontainerDsl
 class ParameterizedKontainerModule4<P1, P2, P3, P4>(private val module: KontainerBuilder.(P1, P2, P3, P4) -> Unit) {
     fun apply(builder: KontainerBuilder, p1: P1, p2: P2, p3: P3, p4: P4) {
         builder.module(p1, p2, p3, p4)
@@ -119,7 +96,7 @@ class ParameterizedKontainerModule4<P1, P2, P3, P4>(private val module: Kontaine
 /**
  * Parameterized Kontainer module
  */
-@KontainerDslModule
+@KontainerDsl
 class ParameterizedKontainerModule5<P1, P2, P3, P4, P5>(
     private val module: KontainerBuilder.(P1, P2, P3, P4, P5) -> Unit
 ) {

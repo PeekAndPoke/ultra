@@ -147,7 +147,7 @@ identifier looks like the strongest reuse candidate.
 - [ ] Correlation id generated once per failure, returned to the client, present on the matching log
       line; reuses an existing request id if one exists
 - [ ] `KarangoQueryException` no longer builds the AQL into `message` (`KarangoDriver.kt:130-138`)
-- [ ] `AuthApi`'s nine `withInfo(e.message)` sites go through the same mechanism
+- [ ] `AuthLoginApi`'s nine `withInfo(e.message)` sites go through the same mechanism
       (overlaps `.claude/tasks/error-disclosure/20260720-auth-error-account-enumeration.md`)
 - [ ] Channel-B diagnostic fields are typed distinctly and cannot be serialised by accident
 - [ ] `ClusterShowcaseApi.getWorkers` no longer exposes failure text publicly

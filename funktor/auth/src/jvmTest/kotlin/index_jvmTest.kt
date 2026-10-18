@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.auth
 
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.funktor.auth.KarangoTestAppUsersRepo.Companion.asApiModel
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
@@ -34,6 +35,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.UltraSecurityConfig
 import io.peekandpoke.ultra.security.jwt.JwtConfig
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
+import io.peekandpoke.ultra.security.jwt.JwtSigningKey
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.ultraSecurity
@@ -63,7 +65,12 @@ val testAppConfig = AppConfig.of(
     funktor = FunktorConfig(
         auth = FunktorConfig.AuthConfig(
             jwt = JwtConfig(
-                signingKey = "secret",
+                keys = listOf(
+                    JwtSigningKey(
+                        id = "test-1",
+                        secret = Redacted("test-signing-key-rfc7518-requires-sixty-four-bytes-minimum!!!!!!!"),
+                    )
+                ),
                 issuer = "issuer",
                 audience = "audience",
                 permissionsNs = "permissions",
@@ -297,7 +304,7 @@ class TestAppUserRealm(
         }
     }
 
-    override suspend fun generateJwt(user: Stored<TestAppUser>, selectedOrg: SelectedOrg?): AuthSignInResponse.Token {
+    override suspend fun generateJwt(user: Stored<TestAppUser>, selectedOrg: SelectedOrg?): String {
         val gen = deps.jwtGenerator
 
         val userValue = user.resolve()
@@ -318,11 +325,7 @@ class TestAppUserRealm(
             withExpiresAt(Kronos.systemUtc.instantNow().plus(1.hours).jvm)
         }
 
-        return AuthSignInResponse.Token(
-            token = token,
-            permissionsNs = gen.permissionsNs,
-            userNs = gen.userNs,
-        )
+        return token
     }
 
 }

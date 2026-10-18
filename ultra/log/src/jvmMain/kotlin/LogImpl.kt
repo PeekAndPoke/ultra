@@ -14,9 +14,22 @@ import kotlin.reflect.KClass
 class LogImpl internal constructor(private val caller: KClass<*>, private val manager: UltraLogManager) : Log {
 
     /**
-     * Forwards the [message] to the [manager] together with the [caller]'s qualified name.
+     * Resolved once: [caller] is immutable, and `qualifiedName` is re-derived from the class
+     * metadata whenever kotlin-reflect's soft reference is cleared.
+     *
+     * Callers without a qualified name - anonymous objects and local classes - become `n/a`.
      */
-    override fun log(level: LogLevel, message: String) {
-        manager.log(level, message, caller.qualifiedName ?: "n/a")
+    private val loggerName = caller.qualifiedName ?: "n/a"
+
+    override fun isEnabled(level: LogLevel): Boolean = manager.isEnabled(level)
+
+    /**
+     * Forwards the message to the [manager] together with the [caller]'s name.
+     *
+     * Dispatch goes through [UltraLogManager.log]: appenders run inline on the calling thread until
+     * one of them suspends, so this call may return before every appender has seen the message.
+     */
+    override fun log(level: LogLevel, message: String, error: Throwable?) {
+        manager.log(level, message, loggerName, error)
     }
 }

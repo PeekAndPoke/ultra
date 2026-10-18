@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+
+    // REQUIRED by the generated SDK, and the reason this app is worth having.
+    //
+    // Generated files import their siblings WITH the extension — `./runtime/client.ts` — because an
+    // extensionless specifier resolves only under `moduleResolution: bundler` and is
+    // ERR_MODULE_NOT_FOUND everywhere else, while `tsc` stays silent about it. That decision pushes
+    // this one flag onto every consuming app, and this file is the first place that cost is real
+    // rather than predicted.
+    //
+    // The flag requires `noEmit`, which a Vite app sets anyway — Vite does the transform.
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
+}

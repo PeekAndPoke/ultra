@@ -36,7 +36,7 @@ class RouterComponent internal constructor(ctx: Ctx<Props>) : Component<RouterCo
 
     private val currentUri: String by subscribingTo(
         activeRouter.current
-            .map { it.uri.split("?").firstOrNull() ?: "" }
+            .map { it.uri.substringBefore('#').substringBefore('?') }
             .distinct()
     ) {
         scrollUp()

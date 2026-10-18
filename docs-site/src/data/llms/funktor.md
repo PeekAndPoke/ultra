@@ -270,21 +270,48 @@ privilege escalation.
 `GET /auth/my-api-access` returns a flat list of API endpoints the current user can access, with their estimated
 access level (`Granted` or `Partial`). Denied endpoints are filtered out.
 
+**ADVISORY ONLY** — decides what to RENDER. The server is the authority; this enforces nothing.
+
 ```kotlin
 // Fetch once after login
 val matrix = api.auth.getMyApiAccess().first().data!!
 val acl = ApiAcl(matrix)
 
-// Type-safe lookup using endpoint objects
-if (acl.hasAccessTo(MyApiClient.CreateEvent)) { /* show button */ }
-if (acl.hasAnyAccessTo(MyApiClient.GetEvent)) { /* show with partial access */ }
+if (acl.canAccess(MyApiClient.GetEvent)) { /* show it */ }
+if (acl.canAccess(MyApiClient.DeleteEvent)) { /* destructive too — Partial IS access */ }
 ```
+
+Predicates (same names in the generated TypeScript SDK's `runtime/acl.ts`):
+
+| | true when |
+|---|---|
+| `canAccess` | not `Denied` — the everyday predicate. **Includes `Partial`, and that is access** |
+| `canFullyAccess` | `Granted` — narrow; the route works whichever resource it is pointed at |
+| `canPartiallyAccess` | `Partial` |
+| `isDenied` | the negation of `canAccess` |
+
+`canAccess` ≡ `!isDenied`; the three exact predicates are mutually exclusive and exhaustive.
+
+**`Partial` means "callable, and the server checks the arguments"** — typically "do you own this
+resource". The user may use the route and its UI; the per-resource rule is the backend's job. So
+`canAccess` is the predicate for visibility, destructive actions included — gating a delete on
+`canFullyAccess` hides it from the user on their OWN resource.
+
+Reach for `canFullyAccess` only for the different question of whether a route works regardless of
+WHICH resource it targets: a bulk operation, an admin screen acting across a set. It is also not a
+promise the call will succeed — handler checks and `RouteParamsGuard`s such as the saas
+`OrgIsolationGuard` are not `AuthRule`s, so `estimateAccess` cannot see them.
+
+**`Partial` is currently produced by no framework rule** — the DSL leaves all yield `Granted` or
+`Denied` and `and`/`or` fold with `maxOf`/`minOf`. Only a hand-written `AccessLevelCheck { Partial }`
+emits it. Do not gate on `canPartiallyAccess` expecting the branch to run.
 
 Key classes:
 
 - `UserApiAccessMatrix` — serializable model (`List<Entry>` with method, uri, level)
-- `ApiAcl` — client-side lookup. `hasAccessTo()` (Granted only), `hasAnyAccessTo()` (not Denied)
-- `ApiAcl.empty` — denies everything (safe default)
+- `ApiAcl` — client-side lookup, keyed on `method|uri` (the uri PATTERN, placeholders included)
+- `ApiAcl.empty` — denies everything, **including `public()` routes**. A logged-out visitor gets this,
+  so do not gate a sign-in control on it
 - `UserApiAccessProvider` — server-side interface, implemented by `ApiAccessDescriptor`
 
 ### Frontend session lifecycle

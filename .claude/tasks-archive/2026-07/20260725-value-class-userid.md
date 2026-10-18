@@ -51,7 +51,7 @@ just the entity).
 - [x] `AuthRealm` / `AuthSystem` / `EmailAndPasswordAuth` signatures
 - [x] Karango + Monko auth-records repos (indexes + filters)
 - [x] `OrgMember.userId` + `OrgMembersStorage` + both saas repos + `OrgMemberships`
-- [x] `AuthSetPasswordRequest.userId`, `AuthApi` ownership check
+- [x] `AuthSetPasswordRequest.userId`, `AuthLoginApi` ownership check
 - [x] `funktor/rest`: `Caller.userId`, `UserRecord.ApiKey`, the `role-eval` probe
 - [x] demo: repos, `B2bMembersApi`, `OrgMemberModel.userId`, b2b-app pages
 - [x] the four demo user models (`B2bUserModel`/`B2b2cUserModel`/`AdminUserModel`/`OperatorUserModel`)

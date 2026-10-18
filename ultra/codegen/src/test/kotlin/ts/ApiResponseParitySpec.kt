@@ -138,8 +138,6 @@ class ApiResponseParitySpec : FreeSpec() {
                     server = "s",
                     status = HttpStatusCode.OK,
                     durationMs = 1.5,
-                    detailsUri = null,
-                    detailsUrl = null,
                 ),
             )
 

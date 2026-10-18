@@ -6,13 +6,10 @@ import io.peekandpoke.karango.vault.KarangoRepository
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.vault.Storable
 import io.peekandpoke.ultra.vault.lang.VaultDslMarker
-import io.peekandpoke.ultra.vault.lang.VaultTerminalExpressionMarker
 
 @Suppress("unused", "UnusedReceiverParameter")
-@VaultTerminalExpressionMarker
 fun <T : Any> AqlStatementBuilder.INSERT(what: AqlExpression<T>) = AqlInsertExpression(what)
 
-@VaultTerminalExpressionMarker
 @JvmName("INSERT_Storable")
 @Suppress("UNCHECKED_CAST")
 fun <T : Any> AqlStatementBuilder.INSERT(what: AqlExpression<Storable<T>>) = INSERT(what as AqlExpression<T>)
@@ -20,7 +17,6 @@ fun <T : Any> AqlStatementBuilder.INSERT(what: AqlExpression<Storable<T>>) = INS
 @VaultDslMarker
 class AqlInsertExpression<T : Any> internal constructor(private val what: AqlExpression<T>) {
     @Suppress("UNCHECKED_CAST")
-    @VaultTerminalExpressionMarker
     infix fun INTO(repo: KarangoRepository<in T>): AqlTerminalExpr<T> =
         AqlInsertExpressionInto(expression = what, repo = repo as KarangoRepository<T>)
 }
@@ -41,12 +37,10 @@ internal class AqlInsertExpressionInto<T : Any>(
 }
 
 @Suppress("unused", "UnusedReceiverParameter")
-@VaultTerminalExpressionMarker
 fun <T : Any> AqlStatementBuilder.INSERT(entity: Storable<T>) = AqlInsertNewStorable(entity)
 
 class AqlInsertNewStorable<T> internal constructor(val entity: Storable<T>)
 
-@VaultTerminalExpressionMarker
 infix fun <T : Any, X : T> AqlInsertNewStorable<X>.INTO(repo: KarangoRepository<T>): AqlTerminalExpr<T> =
     AqlInsertNewStorableInto(entity, repo)
 

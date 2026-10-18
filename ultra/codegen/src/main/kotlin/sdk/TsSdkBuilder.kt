@@ -1,14 +1,28 @@
 package io.peekandpoke.ultra.codegen.sdk
 
 import io.peekandpoke.ultra.codegen.model.TsTypeClaims
+import io.peekandpoke.ultra.codegen.model.TsUrlParamClaims
 import io.peekandpoke.ultra.codegen.model.TypeModel
 import io.peekandpoke.ultra.codegen.model.TypeWalker
+import io.peekandpoke.ultra.codegen.ts.TsBarrelEmitter
+import io.peekandpoke.ultra.codegen.ts.TsMountEmitter
 import io.peekandpoke.ultra.codegen.ts.TsModelEmitter
+import io.peekandpoke.ultra.codegen.ts.TsStylesEmitter
 import io.peekandpoke.ultra.slumber.SlumberConfig
 import kotlin.reflect.KType
 
 /** Roots contributed in phase 2, to be walked into the type model. */
-class TsSdkRoots internal constructor(private val contributor: String) {
+class TsSdkRoots internal constructor(
+    private val contributor: String,
+    /**
+     * Every URL-parameter claim, from every contributor.
+     *
+     * Complete by this phase, because all of phase 1 runs first — so a contributor may consult claims
+     * it did not make itself, which is the point: the REST contributor types its parameters from
+     * claims the datetime and vault contributors registered.
+     */
+    val urlParamClaims: TsUrlParamClaims = TsUrlParamClaims(),
+) {
 
     private val roots = mutableListOf<TypeWalker.Root>()
 
@@ -29,6 +43,8 @@ class TsSdkEmitContext internal constructor(
     val model: TypeModel,
     /** Where to plan files, already scoped to the calling contributor. */
     val out: TsSdkOutput.Scope,
+    /** Where to declare entries the BUILDER renders into a shared aggregate, e.g. page routes. */
+    val registry: TsSdkRegistry.Scope,
 )
 
 /**
@@ -93,10 +109,36 @@ class TsSdkBuilder(
 
         contributors.forEach { it.claimTypes(claims.scopeFor(it.name)) }
 
-        // Phase 2 — roots.
-        val roots = contributors.flatMap { contributor ->
-            TsSdkRoots(contributor.name).also { contributor.contribute(it) }.collected()
+        // Phase 1b — URL-parameter claims. A separate registry, because the two memberships are
+        // independent rather than two renderings of one set; see TsUrlParamClaims.
+        val urlParamClaims = TsUrlParamClaims()
+
+        contributors.forEach { it.claimUrlParams(urlParamClaims.scopeFor(it.name)) }
+
+        // Phase 2 — roots. Both claim registries are complete by now, so a contributor may consult
+        // claims another one made.
+        val rootsByContributor = contributors.map { contributor ->
+            contributor.name to TsSdkRoots(contributor.name, urlParamClaims)
+                .also { contributor.contribute(it) }
+                .collected()
         }
+
+        // A label is how a contributor asks for its root's resolved reference at emit time
+        // (`TypeModel.refForRoot`), so a duplicate would silently hand one contributor another's type.
+        val labelOwners = rootsByContributor
+            .flatMap { (owner, roots) -> roots.map { it.label to owner } }
+            .groupBy({ it.first }, { it.second })
+            .filterValues { it.size > 1 }
+
+        check(labelOwners.isEmpty()) {
+            "Root labels must be unique — duplicated: " +
+                    labelOwners.entries.joinToString { (label, owners) -> "'$label' by ${owners.joinToString()}" } +
+                    ". A label identifies a root's resolved type at emit time, so a duplicate would " +
+                    "give one contributor another's type. Fix: qualify the label with the " +
+                    "contributor's own name."
+        }
+
+        val roots = rootsByContributor.flatMap { (_, roots) -> roots }
 
         check(roots.isNotEmpty()) {
             "No contributor supplied any root type, so the generated SDK would be empty. A contributor " +
@@ -118,6 +160,10 @@ class TsSdkBuilder(
         // feeds it, so no single one owns it.
         output.scopeFor("ultra:codegen").file(path = "models.ts", content = TsModelEmitter(model).emit())
 
+        // Phase 4b — the aggregation registry. Collected during emit, rendered after, because an
+        // aggregate is by definition not any one contributor's to write.
+        val registry = TsSdkRegistry()
+
         contributors.forEach { contributor ->
             contributor.emit(
                 TsSdkEmitContext(
@@ -125,9 +171,101 @@ class TsSdkBuilder(
                     // The contributor's own loader, so `out.resource` finds resources shipped in the
                     // contributor's jar rather than only those on ultra:codegen's classpath.
                     out = output.scopeFor(contributor.name, contributor::class.java.classLoader),
+                    registry = registry.scopeFor(contributor.name),
                 )
             )
         }
+
+        val registeredRoutes = registry.allRoutes()
+        val registeredStyles = registry.allStyles()
+
+        // A registered component or stylesheet that nobody emitted would surface as a
+        // module-resolution error inside generated output — naming a file, not the contributor that
+        // asked for it. The registry cannot see the output plan and the output cannot see the
+        // registry, so this is the one place both are visible.
+        val emitted = output.entries().map { it.path }.toSet()
+
+        val missingComponents = registeredRoutes.filter { it.component !in emitted }
+
+        check(missingComponents.isEmpty()) {
+            "Registered route component(s) were never emitted: " +
+                    missingComponents.joinToString { "'${it.component}' for '${it.path}' by '${it.declaredBy}'" } +
+                    ". A contributor must emit the component it registers, typically with " +
+                    "out.resource(...) in the same emit call."
+        }
+
+        // A page can only ship if what it IMPORTS shipped too. The common case is a generated API
+        // client, which exists only if the profile kept that feature's routes — something the page's
+        // contributor cannot see. Without this, a profile that filters a feature out still emits its
+        // pages, and they import a client that was never written.
+        val unmetRequirements = registeredRoutes
+            .flatMap { route -> route.requiresFiles.map { route to it } }
+            .filter { (_, required) -> required !in emitted }
+
+        check(unmetRequirements.isEmpty()) {
+            "Registered page(s) need files this SDK does not contain: " +
+                    unmetRequirements.joinToString { (route, required) ->
+                        "'${route.path}' (by '${route.declaredBy}') needs '$required'"
+                    } +
+                    ". The usual cause is a PROFILE that filtered out the routes whose client the " +
+                    "page imports, while the page's contributor is still registered. Either widen " +
+                    "the profile or do not register that contributor for this SDK."
+        }
+
+        val missingStyles = registeredStyles.filter { it.path !in emitted }
+
+        check(missingStyles.isEmpty()) {
+            "Registered stylesheet(s) were never emitted: " +
+                    missingStyles.joinToString { "'${it.path}' by '${it.declaredBy}'" } +
+                    ". A contributor must emit the stylesheet it registers, typically with " +
+                    "out.sharedResource(...) in the same emit call."
+        }
+
+        // BOTH aggregates are emitted unconditionally, empty included. They are the app's stable
+        // surface — `import { mountAll } from './funktorsdk/mount.ts'` and
+        // `import './funktorsdk/styles.ts'` are hand-written lines in a file the generator must never
+        // touch, so a file that appears only when some contributor happened to register something
+        // would break the app's wiring on a profile change rather than on a code change.
+        output.scopeFor("ultra:codegen").file(
+            path = TsMountEmitter.PATH,
+            content = TsMountEmitter.emit(registeredRoutes, registry.navRoutes()),
+        )
+
+        output.scopeFor("ultra:codegen").file(
+            path = TsStylesEmitter.PATH,
+            content = TsStylesEmitter.emit(registeredStyles),
+        )
+
+        // Without this, `styles.ts` does not compile as soon as it has a single import — TypeScript
+        // does not know what a `.css` module is.
+        // The ambient CSS declaration only works if its name does not SHADOW an emitted module.
+        // `x.d.ts` is by convention the declaration file FOR `x.ts`, so TypeScript pairs the two and
+        // stops reading it as a global script — the file is then present, correct, and completely
+        // inert, failing with the same TS2882 as if it had never been emitted. That cost a debugging
+        // session when it was named `styles.d.ts`; a contributor emitting `css-modules.ts` would
+        // recreate it silently.
+        val shadowed = TsStylesEmitter.TYPES_PATH.removeSuffix(".d.ts") + ".ts"
+
+        check(output.entries().none { it.path == shadowed }) {
+            "'$shadowed' was emitted, which SHADOWS the ambient declaration " +
+                    "'${TsStylesEmitter.TYPES_PATH}': TypeScript treats an `x.d.ts` as the " +
+                    "declarations for `x.ts` rather than as a global script, so the declaration " +
+                    "becomes inert and every contributed stylesheet import fails with TS2882. " +
+                    "Rename the emitted file, or rename TsStylesEmitter.TYPES_PATH."
+        }
+
+        output.scopeFor("ultra:codegen").file(
+            path = TsStylesEmitter.TYPES_PATH,
+            content = TsStylesEmitter.emitTypes(),
+        )
+
+        // Phase 5 — the barrel. LAST, because it re-exports what every contributor wrote, so it can
+        // only be built once they have all run. The builder's own output for the same reason
+        // `models.ts` is: every contributor feeds it, so no single one owns it.
+        output.scopeFor("ultra:codegen").file(
+            path = TsBarrelEmitter.PATH,
+            content = TsBarrelEmitter.emit(output.entries().map { it.path }),
+        )
 
         return Result(model = model, output = output, advisories = report.advisories)
     }

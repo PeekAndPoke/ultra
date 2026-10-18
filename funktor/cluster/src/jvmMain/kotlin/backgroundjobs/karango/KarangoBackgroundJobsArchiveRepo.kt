@@ -11,6 +11,7 @@ import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
+import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.Stored
@@ -33,7 +34,7 @@ class KarangoBackgroundJobsArchiveRepo(
         }
 
         this.persistentIndex {
-            field { archivedAt.property<Long>("ts") }
+            field { archivedAt.ts }
         }
     }
 
@@ -43,7 +44,7 @@ class KarangoBackgroundJobsArchiveRepo(
 //        }
 
         FOR(repo) {
-            SORT(it.archivedAt.property<Long>("ts").DESC)
+            SORT(it.archivedAt.ts.DESC)
 
             if (page != null && epp != null) {
                 PAGE(page = page, epp = epp)

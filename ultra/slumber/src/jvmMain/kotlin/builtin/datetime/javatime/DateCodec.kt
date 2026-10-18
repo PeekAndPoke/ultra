@@ -5,9 +5,9 @@ import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.slumber.builtin.datetime.TS
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
-import java.util.*
+import java.util.Date
 
-/** Awaker for [java.util.Date] values. */
+/** Awaker for [Date] values. Reads the `ts` map entry as epoch milliseconds; any `timezone` entry is ignored. */
 object DateAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): Date? {
@@ -23,7 +23,7 @@ object DateAwaker : Awaker {
     }
 }
 
-/** Slumberer for [java.util.Date] values. */
+/** Slumberer for [Date] values. Writes `{ts: epoch millis, timezone: "UTC", human}`. */
 object DateSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
@@ -32,6 +32,9 @@ object DateSlumberer : Slumberer {
             return null
         }
 
+        // TODO(scan): Date.toString() renders in the JVM default timezone, not UTC - the "human"
+        //  field here is inconsistent with the "timezone": "UTC" field written alongside it, and
+        //  with every sibling slumberer in this package (their `human` genuinely reflects UTC).
         return toMap(data.time, utc, data.toString())
     }
 }

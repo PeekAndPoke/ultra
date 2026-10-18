@@ -1,33 +1,22 @@
 package io.peekandpoke.funktor.insights.collectors
 
-import io.ktor.server.application.*
+import io.ktor.server.application.ApplicationCall
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
 import io.peekandpoke.funktor.insights.RoutingInstrumentation
-import io.peekandpoke.funktor.insights.gui.InsightsGuiTemplate
-import io.peekandpoke.ultra.semanticui.icon
-import kotlinx.html.pre
 
 class RoutingCollector : InsightsCollector {
 
+    override val key = KEY
+
+    companion object {
+        const val KEY = "routing"
+    }
+
+    /** VUE-REF: `reference/collectors/RoutingCollector.kt` */
     data class Data(
         val trace: String? = null,
-    ) : InsightsCollectorData {
-
-        override fun renderDetails(template: InsightsGuiTemplate) = with(template) {
-            menu {
-                icon.compass_outline()
-                +"Routing"
-            }
-
-            content {
-
-                pre { +(trace ?: "???") }
-
-                json(this@Data)
-            }
-        }
-    }
+    ) : InsightsCollectorData
 
     private var data: Data = Data()
 

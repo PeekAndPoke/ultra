@@ -9,7 +9,6 @@ import io.peekandpoke.funktor.core.appConfig
 import io.peekandpoke.funktor.core.kontainerOrNull
 import io.peekandpoke.funktor.core.metrics.RequestMetricsProvider
 import io.peekandpoke.funktor.rest.auth.AuthRule
-import io.peekandpoke.ultra.common.encodeUriComponent
 import io.peekandpoke.ultra.common.network.NetworkUtils
 import io.peekandpoke.ultra.remote.ApiResponse
 import java.time.Instant
@@ -81,8 +80,6 @@ fun <T : Any?> ApplicationCall.enrichApiResponseWithInsights(response: ApiRespon
             server = server,
             status = response.status,
             durationMs = metrics?.getRequestDurationInMs(),
-            detailsUri = metrics?.getRequestDetailsUri()?.encodeUriComponent(),
-            detailsUrl = metrics?.getRequestDetailsUrl(),
         )
     )
 }

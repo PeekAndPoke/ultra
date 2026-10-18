@@ -78,8 +78,8 @@ class DefaultEntityCache : EntityCache {
  * never repository instances — that is what makes sharing across requests safe; each caller turns
  * the class back into an instance through its own [Database].
  *
- * Misses are cached as well, through a `MISSING` sentinel ([ConcurrentHashMap] forbids null values),
- * so a type or name that resolved to nothing keeps resolving to nothing for the lifetime of this
+ * Misses are cached as well: [NullableCache] tells "cached as null" apart from "not cached", so a
+ * type or name that resolved to nothing keeps resolving to nothing for the lifetime of this
  * instance. The two overloads of [getOrPut] use independent maps.
  */
 class SharedRepoClassLookup {

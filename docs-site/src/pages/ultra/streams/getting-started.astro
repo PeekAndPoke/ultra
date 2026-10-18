@@ -122,7 +122,10 @@ println(sum())  // 105`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>How subscriptions work</h2>
 
-<p>Streams use <strong>lazy subscriptions</strong>. When you chain operators like <code>source.map { }.filter { }</code>, no work happens until someone subscribes to the end of the chain. The subscription propagates upstream — and when the last subscriber unsubscribes, the entire chain tears down.</p>
+    <p>Streams use <strong>lazy subscriptions</strong>. When you chain operators like
+        <code>source.map {'{ }'}.filter {'{ }'}</code>, no work happens until someone subscribes to the end of the
+        chain. The subscription propagates upstream — and when the last subscriber unsubscribes, the entire chain tears
+        down.</p>
 
 <p>This means unused streams cost nothing.</p>
 

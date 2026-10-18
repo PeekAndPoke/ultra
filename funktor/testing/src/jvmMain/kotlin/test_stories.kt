@@ -12,17 +12,13 @@ import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /** DSL marker for story-level test definitions. */
 @DslMarker
 annotation class TestStoryMarker
 
-/** DSL marker for step-level test definitions. */
-@DslMarker
-annotation class TestStoryStepMarker
-
 /** Defines a sequential test story: steps execute in order, and a step failure skips remaining steps. */
-@TestStoryMarker
 suspend fun FreeSpecContainerScope.story(name: String, builder: TestStory.StoryBuilder.() -> Unit) {
     @Suppress("UNCHECKED_CAST")
     val spec = testCase.spec as? AppSpec<AppConfig>
@@ -53,7 +49,7 @@ suspend fun FreeSpecContainerScope.story(name: String, builder: TestStory.StoryB
 
                     when (val f = failedStep) {
                         null -> {
-                            delay(1)
+                            delay(1.milliseconds)
                             step.code.invoke(this)
                         }
 
@@ -86,6 +82,7 @@ suspend fun FreeSpecContainerScope.story(name: String, builder: TestStory.StoryB
 }
 
 /** A named test story consisting of sequential steps with shared mutable state. */
+@TestStoryMarker
 class TestStory(
     val name: String,
     val description: String?,
@@ -130,13 +127,12 @@ class TestStory(
     }
 
     interface Steps : AppSpecAware<AppConfig>, KontainerAware {
-        @TestStoryStepMarker
         fun step(name: String, code: suspend FreeSpecTerminalScope.() -> Unit)
 
-        @TestStoryStepMarker
         fun group(name: String, builder: TestStoryStep.Container.() -> Unit)
     }
 
+    @TestStoryMarker
     class StoryBuilder(
         override val spec: AppSpec<AppConfig>,
         val name: String,
@@ -165,14 +161,12 @@ class TestStory(
             this.urls.add(url)
         }
 
-        @TestStoryStepMarker
         override fun step(name: String, code: suspend FreeSpecTerminalScope.() -> Unit) {
             steps.add(
                 TestStoryStep.Single(name, code)
             )
         }
 
-        @TestStoryStepMarker
         override fun group(name: String, builder: TestStoryStep.Container.() -> Unit) {
             steps.add(
                 TestStoryStep.Container(spec, name).apply(builder)
@@ -184,9 +178,11 @@ class TestStory(
 }
 
 /** A single step or group of steps within a test story. */
+@TestStoryMarker
 sealed class TestStoryStep {
     abstract val name: String
 
+    @TestStoryMarker
     class Single(
         override val name: String,
         val code: suspend FreeSpecTerminalScope.() -> Unit,
@@ -196,6 +192,7 @@ sealed class TestStoryStep {
             .firstOrNull { !it.className.startsWith(TestStoryStep::class.java.`package`.name) }
     }
 
+    @TestStoryMarker
     class Container(
         override val spec: AppSpec<AppConfig>,
         override val name: String,
@@ -207,14 +204,12 @@ sealed class TestStoryStep {
         @PublishedApi
         internal val state = MutableTypedAttributes.empty()
 
-        @TestStoryStepMarker
         override fun step(name: String, code: suspend FreeSpecTerminalScope.() -> Unit) {
             steps.add(
                 Single(name, code)
             )
         }
 
-        @TestStoryStepMarker
         override fun group(name: String, builder: Container.() -> Unit) {
             steps.add(
                 Container(spec, name).apply(builder)

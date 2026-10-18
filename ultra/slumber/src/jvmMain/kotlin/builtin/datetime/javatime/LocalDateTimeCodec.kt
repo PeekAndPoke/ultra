@@ -8,7 +8,12 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import java.time.Instant
 import java.time.LocalDateTime
 
-/** Awaker for [java.time.LocalDateTime] values. */
+/**
+ * Awaker for [LocalDateTime] values.
+ *
+ * Reads the `ts` map entry as epoch milliseconds and always interprets it in UTC - any `timezone`
+ * entry in the map is ignored.
+ */
 object LocalDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): LocalDateTime? {
@@ -24,7 +29,7 @@ object LocalDateTimeAwaker : Awaker {
     }
 }
 
-/** Slumberer for [java.time.LocalDateTime] values. */
+/** Slumberer for [LocalDateTime] values. Writes `{ts: epoch millis (as if UTC), timezone: "UTC", human}`. */
 object LocalDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.server
 
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import io.peekandpoke.funktor.core.config.ktor.KtorConfig
@@ -13,7 +14,7 @@ import io.peekandpoke.monko.MongoDbConfig
 data class FunktorDemoConfig(
     override val ktor: KtorConfig,
     override val funktor: FunktorConfig = FunktorConfig(),
-    override val keys: Map<String, String> = emptyMap(),
+    override val keys: Map<String, Redacted<String>> = emptyMap(),
     val arangodb: ArangoDbConfig,
     val mongodb: MongoDbConfig,
     val api: ApiConfig,

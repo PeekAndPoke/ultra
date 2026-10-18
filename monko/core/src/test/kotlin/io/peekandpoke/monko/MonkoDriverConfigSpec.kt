@@ -38,7 +38,7 @@ class MonkoDriverConfigSpec : FreeSpec() {
             "withLog should return a new driver with the given log" {
                 val driver = createMinimalDriver()
                 val customLog = object : Log {
-                    override fun log(level: LogLevel, message: String) {}
+                    override fun log(level: LogLevel, message: String, error: Throwable?) {}
                 }
 
                 val newDriver = driver.withLog(customLog)
@@ -50,7 +50,7 @@ class MonkoDriverConfigSpec : FreeSpec() {
             "withLog should preserve other settings" {
                 val driver = createMinimalDriver()
                 val customLog = object : Log {
-                    override fun log(level: LogLevel, message: String) {}
+                    override fun log(level: LogLevel, message: String, error: Throwable?) {}
                 }
 
                 val newDriver = driver.withLog(customLog)
@@ -72,7 +72,7 @@ class MonkoDriverConfigSpec : FreeSpec() {
             "withProfiler should preserve log setting" {
                 val driver = createMinimalDriver()
                 val customLog = object : Log {
-                    override fun log(level: LogLevel, message: String) {}
+                    override fun log(level: LogLevel, message: String, error: Throwable?) {}
                 }
 
                 val driverWithLog = driver.withLog(customLog)

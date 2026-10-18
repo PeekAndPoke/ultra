@@ -156,8 +156,8 @@ fun String.camelCaseDivide(divider: String = " "): String = camelCaseSplit().joi
 /**
  * Checks if the string is a url with a protocol, e.g. https://...
  *
- * Only `http` and `https` qualify, and [UrlWithProtocolRegex] must match the WHOLE string — a
- * surrounding sentence or stray whitespace makes this 'false'.
+ * Only `http` and `https` qualify (see [UrlWithProtocolRegex] for what else), and the regex must
+ * match the WHOLE string — a surrounding sentence or stray whitespace makes this 'false'.
  */
 fun String.isUrlWithProtocol(): Boolean {
     return UrlWithProtocolRegex.matches(this)

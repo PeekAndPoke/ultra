@@ -87,10 +87,14 @@ abstract class EntityRepository<T : Any>(
             }
         }
 
+        // Deprecated by driver 7.28 as "removed in ArangoDB 4.0"; still reported by the 3.x servers we run.
+        @Suppress("DEPRECATION")
+        val status = info.status.name
+
         return VaultModels.RepositoryStats(
             type = info.type.name,
             isSystem = info.isSystem,
-            status = info.status.name,
+            status = status,
             storage = VaultModels.RepositoryStats.Storage(
                 count = docCount,
                 totalSize = docTotalSize,

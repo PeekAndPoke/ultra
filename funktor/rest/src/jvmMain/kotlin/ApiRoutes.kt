@@ -17,6 +17,7 @@ import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
 import kotlin.reflect.KClass
+import java.util.Collections
 
 /**
  * The single DSL marker for the route-building DSL receivers: [ApiRoute] (the mount-chain
@@ -46,9 +47,11 @@ annotation class RestDsl
  */
 abstract class ApiRoutes(
     val name: String,
-    mountPoint: String = "",
     authFloor: FloorAuthRuleBuilder.() -> Unit,
-) : Routes(mountPoint) {
+    // A group of API routes has NO mount point and cannot have one — see the KDoc on
+    // `Routes.mountPoint`. An `ApiRoutes` route is declared by a `TypedApiEndpoint` the CLIENT owns
+    // too, and a server-side prefix is invisible to it.
+) : Routes(mountPoint = "") {
 
     /** list with all registered routes */
     private val allRoutes = mutableListOf<ApiRoute<*>>()
@@ -62,10 +65,22 @@ abstract class ApiRoutes(
     internal val floorRules: List<AuthRule<Any?, Any?>> =
         FloorAuthRuleBuilder().apply(authFloor).build(name)
 
-    val routeBuilder = RouteBuilder(mountPoint)
+    val routeBuilder = RouteBuilder()
 
-    /** A list with all registered routes */
-    val all get(): List<ApiRoute<*>> = allRoutes.toList()
+    /**
+     * All registered routes.
+     *
+     * An UNMODIFIABLE VIEW, built once — not a `get()` that copies per access, and not the backing
+     * list itself. `ApiAccessDescriptor` walks every group's routes on every matrix build, so the old
+     * per-access copy allocated once per group per sign-in for no benefit; but handing back
+     * `allRoutes` directly is WORSE than the copy was, because Kotlin's `List` is not runtime-
+     * immutable and a caller can cast it back and mutate a live group.
+     *
+     * A view rather than a one-shot copy so it cannot go stale if a route is ever added after first
+     * access — routes are only appended during construction today, and that should not be something
+     * this property silently depends on.
+     */
+    val all: List<ApiRoute<*>> = Collections.unmodifiableList(allRoutes)
 
     /** Registers a route through the single floor-applying choke point [addRoute]. */
     fun <RESULT, ROUTE : ApiRoute<RESULT>> route(block: RouteBuilder.() -> ROUTE): ApiRoute<RESULT> =
@@ -243,7 +258,7 @@ abstract class ApiRoutes(
     }
 
     @RestDsl
-    class RouteBuilder(private val mountPoint: String) {
+    class RouteBuilder {
 
         ////  GET  ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -393,10 +408,8 @@ abstract class ApiRoutes(
 
         ////  INTERNAL HELPERS  ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        /**
-         * Converts a string into an [UriPattern] while prepending the [mountPoint]
-         */
-        val String.asPattern get() = UriPattern(mountPoint + this)
+        /** Converts a string into an [UriPattern]. */
+        val String.asPattern get() = UriPattern(this)
 
         /**
          *  Helper for creating a plain route

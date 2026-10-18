@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
+import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
@@ -13,6 +14,7 @@ import kotlinx.serialization.Serializable
 
 @Suppress("Detekt.LongParameterList")
 @Serializable(with = MpLocalDateTimeSerializer::class)
+@Slumber.As(MpDateTimeRawData::class)
 data class MpLocalDateTime(
     internal val value: LocalDateTime,
 ) : ComparableTo<MpLocalDateTime> {

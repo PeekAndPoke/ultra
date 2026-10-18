@@ -5,7 +5,6 @@ package io.peekandpoke.karango.aql
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.unList
 import io.peekandpoke.ultra.vault.lang.Expression
-import io.peekandpoke.ultra.vault.lang.VaultTypeConversionMarker
 
 /**
  * Base for all AQL expressions
@@ -97,7 +96,6 @@ interface AqlTerminalExpr<T> : AqlExpression<List<T>> {
  * Sometimes it might be necessary to change the type of the expression
  */
 @Suppress("FunctionName")
-@VaultTypeConversionMarker
 inline fun <reified R : Any> AqlTerminalExpr<*>.AS(type: TypeRef<List<R>>): AqlTerminalExpr<R> =
     AqlTerminalTypeCastExpression(type, this)
 

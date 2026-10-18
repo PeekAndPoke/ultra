@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.tooling.i18n
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.peekandpoke.ultra.i18n.model.LocaleCatalog
 
 class KotlinEmitterSpec : StringSpec({
 

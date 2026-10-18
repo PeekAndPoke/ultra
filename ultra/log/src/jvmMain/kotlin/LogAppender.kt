@@ -1,7 +1,8 @@
 package io.peekandpoke.ultra.log
 
 import io.peekandpoke.ultra.log.LogAppender.Companion.formatLoggerName
-import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * An output sink for log messages.
@@ -9,44 +10,71 @@ import java.time.ZonedDateTime
  * Implementations receive fully-formed log events and are responsible for
  * writing them to a specific destination (console, SLF4J, file, etc.).
  *
+ * [UltraLogManager] hands each event to every appender whose [minLevel] accepts it, in registration
+ * order, and isolates failures: an appender that throws does not stop the ones after it.
+ *
  * @see ConsoleAppender
  * @see Slf4jAppender
  */
 interface LogAppender {
-    /**
-     * Writes a log entry to this appender's output destination.
-     *
-     * @param ts         the timestamp of the log event.
-     * @param level      the severity level.
-     * @param message    the log message text.
-     * @param loggerName the fully-qualified name of the originating logger.
-     */
-    suspend fun append(ts: ZonedDateTime, level: LogLevel, message: String, loggerName: String)
 
+    /**
+     * The least critical level this appender accepts; anything less critical is not delivered to it.
+     *
+     * Defaults to [LogLevel.ALL], i.e. accept everything. Severity runs the other way from
+     * declaration order, so `minLevel = LogLevel.WARNING` accepts WARNING and ERROR only.
+     */
+    val minLevel: LogLevel get() = LogLevel.ALL
+
+    /**
+     * Writes [event] to this appender's output destination.
+     *
+     * Suspending is permitted so that an appender can do IO without blocking the logging caller.
+     */
+    suspend fun append(event: LogEvent)
+
+    /** Log-line formatting helpers, shared by the built-in appenders and usable by custom ones. */
     companion object {
 
-        private val loggerNameLookUp = mutableMapOf<String, String>()
+        /**
+         * Memoises [formatLoggerName] results, keyed by the unabbreviated logger name.
+         *
+         * Concurrent because appenders run on whichever thread called `log`. It never evicts, which
+         * is bounded when names come from [LogImpl] (one entry per class) but not when a caller
+         * passes arbitrary names to [UltraLogManager.log].
+         */
+        private val loggerNameLookUp = ConcurrentHashMap<String, String>()
 
         /**
-         * Formats a complete log line including timestamp, level, logger name, and message.
+         * Fixed-width timestamp, so every line has the same shape.
+         *
+         * `LocalTime.toString()` omits the seconds when they are zero and appends nanoseconds when
+         * they are not, which made the output impossible to parse positionally.
+         */
+        private val timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+
+        /**
+         * Formats [event] as a complete log line, appending the stack trace of
+         * [LogEvent.error] when there is one.
          *
          * Logger names longer than 30 characters are abbreviated via [formatLoggerName].
-         *
-         * @param ts         the timestamp of the log event.
-         * @param level      the severity level.
-         * @param message    the log message text.
-         * @param loggerName the fully-qualified logger name.
-         * @return a formatted log string.
          */
-        fun format(ts: ZonedDateTime, level: LogLevel, message: String, loggerName: String): String {
+        fun format(event: LogEvent): String {
 
             val name = when {
-                loggerName.length <= 30 -> loggerName
+                event.loggerName.length <= 30 -> event.loggerName
 
-                else -> formatLoggerName(loggerName)
+                else -> formatLoggerName(event.loggerName)
             }
 
-            return "${ts.toLocalDate()} ${ts.toLocalTime()} $level - $name - $message"
+            val line = "${timestampFormat.format(event.ts)} ${event.level} - $name - ${event.message}"
+
+            // A console has nowhere else to put the trace, so it goes inline. Appenders talking to a
+            // backend that understands exceptions should use LogEvent.error instead of this.
+            return when (val error = event.error) {
+                null -> line
+                else -> line + "\n" + error.stackTraceToString()
+            }
         }
 
         /**
@@ -57,9 +85,6 @@ interface LogAppender {
          * Single-segment names are returned unchanged.
          *
          * Results are cached in an internal lookup map for performance.
-         *
-         * @param loggerName the fully-qualified logger name to abbreviate.
-         * @return the abbreviated logger name.
          */
         fun formatLoggerName(loggerName: String) = loggerNameLookUp.getOrPut(loggerName) {
 
@@ -68,8 +93,9 @@ interface LogAppender {
             if (parts.size == 1) {
                 parts[0]
             } else {
-                // only use the first character for all but the simple class name
-                parts.take(parts.size - 1).map { it[0] }.joinToString(".") + "." + parts.last()
+                // only use the first character for all but the simple class name. `take(1)` rather
+                // than `[0]`, because an empty segment ("a..b.C") has no first character.
+                parts.take(parts.size - 1).joinToString(".") { it.take(1) } + "." + parts.last()
             }
         }
     }

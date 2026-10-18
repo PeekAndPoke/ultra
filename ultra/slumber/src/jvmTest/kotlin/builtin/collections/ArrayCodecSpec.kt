@@ -64,14 +64,15 @@ class ArrayCodecSpec : FreeSpec() {
                 result.shouldBeInstanceOf<Array<*>>().toList() shouldContainExactly listOf("a", "b")
 
                 withClue("Array<String> must be String[], so a consumer can use it as such") {
-                    result!!::class.java.componentType shouldBe String::class.java
+                    result::class.java.componentType shouldBe String::class.java
                 }
             }
 
             "Array<Int> is boxed — Integer[], never int[]" {
                 val result = codec.awake(typeOf<Array<Int>>(), listOf(1, 2))
 
-                result!!::class.java.componentType shouldBe Integer::class.java
+                @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+                result::class.java.componentType shouldBe Integer::class.java
             }
 
             "each primitive array is produced with a primitive component type" {
@@ -134,7 +135,7 @@ class ArrayCodecSpec : FreeSpec() {
             }
 
             "a polymorphic element keeps its discriminator through the round trip" {
-                val input = arrayOf<Shape>(Shape.Circle(1.0), Shape.Square(2.0))
+                val input = arrayOf(Shape.Circle(1.0), Shape.Square(2.0))
 
                 val slumbered = codec.slumber(typeOf<Array<Shape>>(), input)
 
@@ -169,6 +170,7 @@ class ArrayCodecSpec : FreeSpec() {
             }
 
             "an array inside a data class round trips" {
+                @Suppress("ArrayInDataClass")
                 data class Holder(val values: IntArray)
 
                 val slumbered = codec.slumber(typeOf<Holder>(), Holder(intArrayOf(1, 2, 3)))

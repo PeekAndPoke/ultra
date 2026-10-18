@@ -18,6 +18,7 @@ import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.model.RealmId
+import io.peekandpoke.funktor.auth.model.bearerToken
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.funktor.rest.acl.UserApiAccessMatrix
@@ -35,7 +36,7 @@ class AuthApiSpec : FunktorApiSpec() {
     private val signupEmail = "signup-${System.currentTimeMillis()}@test.com"
 
     init {
-        api.auth.getRealm { route ->
+        api.authLogin.getRealm { route ->
             "Getting an existing realm must return realm details" {
                 apiApp {
                     anonymous {
@@ -61,7 +62,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.signIn { route ->
+        api.authLogin.signIn { route ->
             "Sign in with non-existent realm must return forbidden" {
                 apiApp {
                     anonymous {
@@ -97,7 +98,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.signUp { route ->
+        api.authLogin.signUp { route ->
             "Sign up with non-existent realm must return bad request" {
                 apiApp {
                     anonymous {
@@ -142,7 +143,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.signIn { route ->
+        api.authLogin.signIn { route ->
             "Sign in before activation must be refused, even with the correct password" {
                 apiApp {
                     anonymous {
@@ -177,7 +178,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             .substringAfterLast("/activate/")
                             .decodeUriComponent()
 
-                        api.auth.activateAccount(
+                        api.authLogin.activateAccount(
                             existingRealm,
                             body = AuthActivateAccountRequest(provider = provider, token = token),
                         ) {
@@ -196,7 +197,7 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.token.token.shouldNotBeBlank()
+                            response.bearerToken.shouldNotBeBlank()
                         }
                     }
                 }
@@ -223,7 +224,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.activateAccount { route ->
+        api.authLogin.activateAccount { route ->
             "Activate account with invalid token must return ok with success=false" {
                 apiApp {
                     anonymous {
@@ -256,7 +257,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.recoverAccountInitPasswordReset { route ->
+        api.authLogin.recoverAccountInitPasswordReset { route ->
             "Recover account init with non-existent realm must return bad request" {
                 apiApp {
                     anonymous {
@@ -274,7 +275,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.recoverAccountValidatePasswordResetToken { route ->
+        api.authLogin.recoverAccountValidatePasswordResetToken { route ->
             "Validate reset token with non-existent realm must return bad request" {
                 apiApp {
                     anonymous {
@@ -292,7 +293,7 @@ class AuthApiSpec : FunktorApiSpec() {
             }
         }
 
-        api.auth.recoverAccountSetPasswordWithToken { route ->
+        api.authLogin.recoverAccountSetPasswordWithToken { route ->
             "Set password with token on non-existent realm must return bad request" {
                 apiApp {
                     anonymous {
@@ -367,8 +368,13 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.token.token.shouldNotBeBlank()
-                            response.token.permissionsNs.shouldNotBeBlank()
+                            response.bearerToken.shouldNotBeBlank()
+                            // The response STATES the permissions now -- the client no longer decodes
+                            // them out of the token, so this is the only thing checking they are right.
+                            response.permissions.isSuperUser shouldBe false
+                            response.expiresAt.shouldNotBeNull()
+                            // A refresh must return a token for the SAME user.
+                            response.userId shouldBe regularUserId
                             response.realm.shouldNotBeNull()
                             response.user.shouldNotBeNull()
                         }
@@ -383,8 +389,11 @@ class AuthApiSpec : FunktorApiSpec() {
                             status shouldBe HttpStatusCode.OK
                             val response = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
                             response.shouldNotBeNull()
-                            response.token.token.shouldNotBeBlank()
-                            response.token.permissionsNs.shouldNotBeBlank()
+                            response.bearerToken.shouldNotBeBlank()
+                            response.permissions.isSuperUser shouldBe true
+                            response.expiresAt.shouldNotBeNull()
+                            // A refresh must return a token for the SAME user.
+                            response.userId shouldBe superUserId
                             response.realm.shouldNotBeNull()
                             response.user.shouldNotBeNull()
                         }

@@ -118,18 +118,10 @@ fun A.href(route: Route.Bound) {
     href = router.strategy.render(route)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Because it sets a real <code>href</code>, the browser handles Ctrl/Cmd+Click, middle-click, right-click → "Open
-        in
-        new tab", and link previews natively. For clicks that should navigate in-place (and not reload the page),
-        combine
-        <code>href</code> with an <code>onClick</code> that calls <code>router.navToUri(evt, route)</code> — Kraft will
-        detect modifier keys and let the browser handle new-tab clicks:</p>
-
-    <Code code={`a {
-    href(Nav.userProfile("alice"))
-    onClick { evt -> router.navToUri(evt, Nav.userProfile("alice")) }
-    +"Alice"
-}`} lang="kotlin" theme="vitesse-dark" />
+    <p>Because it sets a real <code>href</code>, a plain click is routed in-app and the browser keeps Ctrl/Cmd+Click,
+        middle-click, "Open in new tab" and link previews. No <code>onClick</code> is needed — adding one that calls
+        <code>router.navToUri</code> makes the click navigate twice. <a href="/ultra/kraft/link-clicks">Link Clicks</a>
+        lists which links and clicks the router handles.</p>
 
 <h2>Layouts</h2>
 

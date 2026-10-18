@@ -9,7 +9,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-/** Awaker for [java.time.ZonedDateTime] values. */
+/** Awaker for [ZonedDateTime] values. Reads `{ts: epoch millis, timezone: zone id string}`. */
 object ZonedDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): ZonedDateTime? {
@@ -22,6 +22,9 @@ object ZonedDateTimeAwaker : Awaker {
         val timezone = data[TIMEZONE]
 
         return when {
+            // TODO(scan): unlike ZoneIdAwaker, the timezone string is not validated here - an
+            //  unresolvable zone id makes ZoneId.of() throw DateTimeException instead of this
+            //  Awaker returning null as its contract requires.
             ts is Number && timezone is String -> ZonedDateTime.ofInstant(
                 Instant.ofEpochMilli(ts.toLong()),
                 ZoneId.of(timezone)
@@ -32,7 +35,7 @@ object ZonedDateTimeAwaker : Awaker {
     }
 }
 
-/** Slumberer for [java.time.ZonedDateTime] values. */
+/** Slumberer for [ZonedDateTime] values. Writes `{ts: epoch millis, timezone: zone id string, human}`. */
 object ZonedDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

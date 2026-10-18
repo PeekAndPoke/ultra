@@ -8,6 +8,9 @@ import Deps.Test.nativeTestDeps
 
 plugins {
     kotlin("multiplatform")
+    // For `Redacted<T>`, whose kotlinx serializer sits on the class itself — the runtime dependency
+    // alone is not enough, `.serializer()` needs the compiler plugin.
+    kotlin("plugin.serialization")
     id("io.kotest")
     id("com.google.devtools.ksp")
     id("com.vanniktech.maven.publish")
@@ -50,12 +53,19 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("reflect"))
+
+                // For `Redacted<T>`, whose kotlinx serializer must sit on the class itself. See
+                // `.claude/tasks/20260731-redacted-and-jackson-removal.md`.
+                implementation(Deps.KotlinX.serialization_core)
             }
         }
 
         commonTest {
             dependencies {
                 commonTestDeps()
+
+                // Redacted<T>'s codec is only worth anything if it is exercised through a real format
+                implementation(Deps.KotlinX.serialization_json)
             }
         }
 

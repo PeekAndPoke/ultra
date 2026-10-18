@@ -39,6 +39,9 @@ object JavaTimeModule : SlumberModule {
             ZonedDateTime::class ->
                 type.wrapIfNonNull(ZonedDateTimeAwaker)
 
+            // TODO(scan): exact-classifier match only - unlike getSlumberer below (which matches any
+            //  ZoneId subtype via isSuperclassOf), a field typed as a ZoneId subtype (e.g. ZoneOffset)
+            //  gets no Awaker here, breaking round-trip for such fields.
             ZoneId::class ->
                 type.wrapIfNonNull(ZoneIdAwaker)
 

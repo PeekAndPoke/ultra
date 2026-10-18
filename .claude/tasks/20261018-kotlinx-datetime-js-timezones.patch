@@ -1,0 +1,593 @@
+diff --git a/buildSrc/src/main/kotlin/Deps.kt b/buildSrc/src/main/kotlin/Deps.kt
+index cb82d499..25911d20 100644
+--- a/buildSrc/src/main/kotlin/Deps.kt
++++ b/buildSrc/src/main/kotlin/Deps.kt
+@@ -108,10 +108,9 @@ object Deps {
+         const val coroutines_core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+         const val coroutines_test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
+ 
+-        // TODO: check if 0.7.1 works
+         // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
+-        // checked 2026-07-29: latest 0.8.0 (held on purpose)
+-        private const val datetime_version = "0.6.2"
++        // checked 2026-10-18: latest 0.8.0
++        private const val datetime_version = "0.8.0"
+         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:$datetime_version"
+ 
+         // https://github.com/Kotlin/kotlinx.serialization/releases
+diff --git a/kraft/addons/avatars/src/jsTest/kotlin/AvatarsAddonSpec.kt b/kraft/addons/avatars/src/jsTest/kotlin/AvatarsAddonSpec.kt
+index 8070266c..b5df3bd0 100644
+--- a/kraft/addons/avatars/src/jsTest/kotlin/AvatarsAddonSpec.kt
++++ b/kraft/addons/avatars/src/jsTest/kotlin/AvatarsAddonSpec.kt
+@@ -14,6 +14,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -24,14 +25,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/addons/browserdetect/src/jsTest/kotlin/BrowserDetectAddonSpec.kt b/kraft/addons/browserdetect/src/jsTest/kotlin/BrowserDetectAddonSpec.kt
+index 7c4d0a3c..9dbb3fbc 100644
+--- a/kraft/addons/browserdetect/src/jsTest/kotlin/BrowserDetectAddonSpec.kt
++++ b/kraft/addons/browserdetect/src/jsTest/kotlin/BrowserDetectAddonSpec.kt
+@@ -15,6 +15,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -25,14 +26,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/addons/chartjs/src/jsTest/kotlin/test_helpers.kt b/kraft/addons/chartjs/src/jsTest/kotlin/test_helpers.kt
+index 9580d98f..966e54b2 100644
+--- a/kraft/addons/chartjs/src/jsTest/kotlin/test_helpers.kt
++++ b/kraft/addons/chartjs/src/jsTest/kotlin/test_helpers.kt
+@@ -1,7 +1,7 @@
+ package io.peekandpoke.kraft.addons.chartjs
+ 
+ import kotlinx.coroutines.delay
+-import kotlinx.datetime.Clock
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+diff --git a/kraft/addons/jwtdecode/src/jsTest/kotlin/JwtDecodeAddonSpec.kt b/kraft/addons/jwtdecode/src/jsTest/kotlin/JwtDecodeAddonSpec.kt
+index 1b99f938..8548846a 100644
+--- a/kraft/addons/jwtdecode/src/jsTest/kotlin/JwtDecodeAddonSpec.kt
++++ b/kraft/addons/jwtdecode/src/jsTest/kotlin/JwtDecodeAddonSpec.kt
+@@ -14,6 +14,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -24,14 +25,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/addons/marked/src/jsTest/kotlin/MarkedAddonSpec.kt b/kraft/addons/marked/src/jsTest/kotlin/MarkedAddonSpec.kt
+index 8903ede7..42aa8ae4 100644
+--- a/kraft/addons/marked/src/jsTest/kotlin/MarkedAddonSpec.kt
++++ b/kraft/addons/marked/src/jsTest/kotlin/MarkedAddonSpec.kt
+@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
+ import kotlinx.html.unsafe
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -26,14 +27,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/addons/pixijs/src/jsTest/kotlin/PixiJsAddonSpec.kt b/kraft/addons/pixijs/src/jsTest/kotlin/PixiJsAddonSpec.kt
+index 609fa452..88e94c04 100644
+--- a/kraft/addons/pixijs/src/jsTest/kotlin/PixiJsAddonSpec.kt
++++ b/kraft/addons/pixijs/src/jsTest/kotlin/PixiJsAddonSpec.kt
+@@ -18,6 +18,7 @@ import kotlinx.coroutines.await
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -28,14 +29,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/addons/prismjs/src/jsTest/kotlin/PrismJsAddonSpec.kt b/kraft/addons/prismjs/src/jsTest/kotlin/PrismJsAddonSpec.kt
+index 9960c9f2..d5dabe5d 100644
+--- a/kraft/addons/prismjs/src/jsTest/kotlin/PrismJsAddonSpec.kt
++++ b/kraft/addons/prismjs/src/jsTest/kotlin/PrismJsAddonSpec.kt
+@@ -14,6 +14,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -24,14 +25,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/addons/signaturepad/src/jsTest/kotlin/SignaturePadAddonSpec.kt b/kraft/addons/signaturepad/src/jsTest/kotlin/SignaturePadAddonSpec.kt
+index 8bd1314d..40484194 100644
+--- a/kraft/addons/signaturepad/src/jsTest/kotlin/SignaturePadAddonSpec.kt
++++ b/kraft/addons/signaturepad/src/jsTest/kotlin/SignaturePadAddonSpec.kt
+@@ -14,6 +14,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -24,14 +25,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/addons/threejs/src/jsTest/kotlin/ThreeJsAddonSpec.kt b/kraft/addons/threejs/src/jsTest/kotlin/ThreeJsAddonSpec.kt
+index 5365b567..ab79a716 100644
+--- a/kraft/addons/threejs/src/jsTest/kotlin/ThreeJsAddonSpec.kt
++++ b/kraft/addons/threejs/src/jsTest/kotlin/ThreeJsAddonSpec.kt
+@@ -18,6 +18,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -28,14 +29,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/core-tests/src/jsTest/kotlin/addons/AddonRegistrySpec.kt b/kraft/core-tests/src/jsTest/kotlin/addons/AddonRegistrySpec.kt
+index 27745bfa..4a54c0ec 100644
+--- a/kraft/core-tests/src/jsTest/kotlin/addons/AddonRegistrySpec.kt
++++ b/kraft/core-tests/src/jsTest/kotlin/addons/AddonRegistrySpec.kt
+@@ -19,6 +19,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -29,14 +30,14 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+ 
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/core-tests/src/jsTest/kotlin/component/ComponentErrorBoundarySpec.kt b/kraft/core-tests/src/jsTest/kotlin/component/ComponentErrorBoundarySpec.kt
+index 3c89ce32..114c15df 100644
+--- a/kraft/core-tests/src/jsTest/kotlin/component/ComponentErrorBoundarySpec.kt
++++ b/kraft/core-tests/src/jsTest/kotlin/component/ComponentErrorBoundarySpec.kt
+@@ -12,6 +12,7 @@ import io.peekandpoke.kraft.vdom.VDom
+ import kotlinx.coroutines.delay
+ import kotlinx.html.Tag
+ import kotlinx.html.div
++import kotlin.time.Clock
+ 
+ // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ // Test scaffolding — errors collected here so nested components can report to the test
+@@ -152,13 +153,13 @@ private suspend fun eventually(
+     poll: kotlin.time.Duration = kotlin.time.Duration.parse("25ms"),
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/kraft/core-tests/src/jsTest/kotlin/component/ResizeHooksSpec.kt b/kraft/core-tests/src/jsTest/kotlin/component/ResizeHooksSpec.kt
+index 00ba94c3..d6e72a13 100644
+--- a/kraft/core-tests/src/jsTest/kotlin/component/ResizeHooksSpec.kt
++++ b/kraft/core-tests/src/jsTest/kotlin/component/ResizeHooksSpec.kt
+@@ -23,6 +23,7 @@ import kotlinx.html.FlowContent
+ import kotlinx.html.Tag
+ import kotlinx.html.div
+ import org.w3c.dom.events.Event
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
+ import kotlin.time.Duration.Companion.seconds
+@@ -32,13 +33,13 @@ private suspend fun eventually(
+     poll: Duration = 25.milliseconds,
+     check: suspend () -> Unit,
+ ) {
+-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
++    val deadline = Clock.System.now().plus(timeout)
+     while (true) {
+         try {
+             check()
+             return
+         } catch (e: Throwable) {
+-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
++            if (Clock.System.now() > deadline) throw e
+             delay(poll)
+         }
+     }
+diff --git a/ultra/datetime/src/commonMain/kotlin/Kronos.kt b/ultra/datetime/src/commonMain/kotlin/Kronos.kt
+index eb2d94b2..55496cc9 100644
+--- a/ultra/datetime/src/commonMain/kotlin/Kronos.kt
++++ b/ultra/datetime/src/commonMain/kotlin/Kronos.kt
+@@ -1,10 +1,10 @@
+ package io.peekandpoke.ultra.datetime
+ 
+-import kotlinx.datetime.Clock
+-import kotlinx.datetime.Instant
+ import kotlinx.datetime.TimeZone
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.milliseconds
++import kotlin.time.Instant
+ 
+ @Suppress("Detekt.TooManyFunctions")
+ /**
+diff --git a/ultra/datetime/src/commonMain/kotlin/MpInstant.kt b/ultra/datetime/src/commonMain/kotlin/MpInstant.kt
+index 373de4bd..1e9d1436 100644
+--- a/ultra/datetime/src/commonMain/kotlin/MpInstant.kt
++++ b/ultra/datetime/src/commonMain/kotlin/MpInstant.kt
+@@ -2,14 +2,14 @@ package io.peekandpoke.ultra.datetime
+ 
+ import io.peekandpoke.ultra.common.ComparableTo
+ import io.peekandpoke.ultra.common.slumber.Slumber
+-import kotlinx.datetime.Clock
+ import kotlinx.datetime.DateTimeUnit
+-import kotlinx.datetime.Instant
++import kotlin.time.Clock
+ import kotlinx.datetime.TimeZone
+ import kotlinx.datetime.plus
+ import kotlinx.datetime.toLocalDateTime
+ import kotlinx.serialization.Serializable
+ import kotlin.time.Duration
++import kotlin.time.Instant
+ 
+ @Suppress("Detekt:TooManyFunctions")
+ @Serializable(with = MpInstantSerializer::class)
+diff --git a/ultra/datetime/src/commonMain/kotlin/MpLocalDate.kt b/ultra/datetime/src/commonMain/kotlin/MpLocalDate.kt
+index d4cb7905..0ca7a3fb 100644
+--- a/ultra/datetime/src/commonMain/kotlin/MpLocalDate.kt
++++ b/ultra/datetime/src/commonMain/kotlin/MpLocalDate.kt
+@@ -5,7 +5,6 @@ import io.peekandpoke.ultra.common.slumber.Slumber
+ import kotlinx.datetime.DatePeriod
+ import kotlinx.datetime.DateTimeUnit
+ import kotlinx.datetime.DayOfWeek
+-import kotlinx.datetime.Instant
+ import kotlinx.datetime.LocalDate
+ import kotlinx.datetime.Month
+ import kotlinx.datetime.TimeZone
+@@ -16,6 +15,7 @@ import kotlinx.datetime.plus
+ import kotlinx.datetime.toLocalDateTime
+ import kotlinx.serialization.Serializable
+ import kotlin.jvm.JvmName
++import kotlin.time.Instant
+ 
+ @Suppress("Detekt:TooManyFunctions")
+ @Serializable(with = MpLocalDateSerializer::class)
+@@ -45,8 +45,8 @@ data class MpLocalDate(
+         fun of(year: Int, month: Int, day: Int): MpLocalDate = MpLocalDate(
+             value = LocalDate(
+                 year = year,
+-                monthNumber = month,
+-                dayOfMonth = day,
++                month = month,
++                day = day,
+             )
+         )
+ 
+@@ -99,13 +99,13 @@ data class MpLocalDate(
+     val year: Int get() = value.year
+ 
+     /** The month as number, where January is "1" */
+-    val monthNumber: Int get() = value.monthNumber
++    val monthNumber: Int get() = value.month.number
+ 
+     /** The month */
+     val month: Month get() = value.month
+ 
+     /** The day of the month */
+-    val day: Int get() = value.dayOfMonth
++    val day: Int get() = value.day
+ 
+     /** The day of the week */
+     val dayOfWeek: DayOfWeek get() = value.dayOfWeek
+diff --git a/ultra/datetime/src/commonMain/kotlin/MpLocalDateTime.kt b/ultra/datetime/src/commonMain/kotlin/MpLocalDateTime.kt
+index fedde9bb..4f8bed2d 100644
+--- a/ultra/datetime/src/commonMain/kotlin/MpLocalDateTime.kt
++++ b/ultra/datetime/src/commonMain/kotlin/MpLocalDateTime.kt
+@@ -3,7 +3,6 @@ package io.peekandpoke.ultra.datetime
+ import io.peekandpoke.ultra.common.ComparableTo
+ import io.peekandpoke.ultra.common.slumber.Slumber
+ import kotlinx.datetime.DayOfWeek
+-import kotlinx.datetime.Instant
+ import kotlinx.datetime.LocalDateTime
+ import kotlinx.datetime.Month
+ import kotlinx.datetime.TimeZone
+@@ -11,6 +10,7 @@ import kotlinx.datetime.number
+ import kotlinx.datetime.toInstant
+ import kotlinx.datetime.toLocalDateTime
+ import kotlinx.serialization.Serializable
++import kotlin.time.Instant
+ 
+ @Suppress("Detekt.LongParameterList")
+ @Serializable(with = MpLocalDateTimeSerializer::class)
+@@ -31,8 +31,8 @@ data class MpLocalDateTime(
+         ): MpLocalDateTime = MpLocalDateTime(
+             LocalDateTime(
+                 year = year,
+-                monthNumber = month,
+-                dayOfMonth = day,
++                month = month,
++                day = day,
+                 hour = hour,
+                 minute = minute,
+                 second = second,
+@@ -112,13 +112,13 @@ data class MpLocalDateTime(
+     val year: Int get() = value.year
+ 
+     /** The month as number, where January is "1" */
+-    val monthNumber: Int get() = value.monthNumber
++    val monthNumber: Int get() = value.month.number
+ 
+     /** The month */
+     val month: Month get() = value.month
+ 
+     /** The day of the month */
+-    val dayOfMonth: Int get() = value.dayOfMonth
++    val dayOfMonth: Int get() = value.day
+ 
+     /** The hour */
+     val hour: Int get() = value.hour
+diff --git a/ultra/datetime/src/commonTest/kotlin/KronosSpec.kt b/ultra/datetime/src/commonTest/kotlin/KronosSpec.kt
+index b9772489..50db7897 100644
+--- a/ultra/datetime/src/commonTest/kotlin/KronosSpec.kt
++++ b/ultra/datetime/src/commonTest/kotlin/KronosSpec.kt
+@@ -6,9 +6,9 @@ import io.kotest.core.spec.style.StringSpec
+ import io.kotest.matchers.shouldBe
+ import io.kotest.matchers.types.shouldBeInstanceOf
+ import io.kotest.matchers.types.shouldBeSameInstanceAs
+-import kotlinx.datetime.Clock
+ import kotlinx.datetime.TimeZone
+ import kotlinx.serialization.json.Json
++import kotlin.time.Clock
+ import kotlin.time.Duration
+ import kotlin.time.Duration.Companion.days
+ import kotlin.time.Duration.Companion.hours
+diff --git a/ultra/datetime/src/jvmTest/kotlin/ConversionSpec.kt b/ultra/datetime/src/jvmTest/kotlin/ConversionSpec.kt
+index f13f66d3..6cd463e3 100644
+--- a/ultra/datetime/src/jvmTest/kotlin/ConversionSpec.kt
++++ b/ultra/datetime/src/jvmTest/kotlin/ConversionSpec.kt
+@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.datetime
+ import io.kotest.core.spec.style.FreeSpec
+ import io.kotest.matchers.shouldBe
+ import kotlinx.datetime.TimeZone
++import kotlinx.datetime.Month as MpMonth
+ import java.time.Instant
+ import java.time.LocalDate
+ import java.time.LocalDateTime
+@@ -38,7 +39,7 @@ class ConversionSpec : FreeSpec() {
+ 
+             "MpLocalDateTime.jvm" {
+                 val mp: MpLocalDateTime = MpLocalDateTime.of(
+-                    2022, Month.APRIL, 5, 12, 13, 14, 123
++                    2022, MpMonth.APRIL, 5, 12, 13, 14, 123
+                 )
+                 val jvm: LocalDateTime = mp.jvm
+ 
+@@ -57,14 +58,14 @@ class ConversionSpec : FreeSpec() {
+                 val mp: MpLocalDateTime = jvm.mp
+ 
+                 mp shouldBe MpLocalDateTime.of(
+-                    2022, Month.APRIL, 5, 12, 13, 14, 123
++                    2022, MpMonth.APRIL, 5, 12, 13, 14, 123
+                 )
+ 
+                 jvm.toEpochSecond(ZoneOffset.UTC) shouldBe mp.atUTC().toEpochSeconds()
+             }
+ 
+             "MpLocalDate.jvm" {
+-                val mp: MpLocalDate = MpLocalDate.of(2022, Month.APRIL, 5)
++                val mp: MpLocalDate = MpLocalDate.of(2022, MpMonth.APRIL, 5)
+                 val jvm: LocalDate = mp.jvm
+ 
+                 jvm shouldBe LocalDate.of(2022, Month.APRIL, 5)
+@@ -74,7 +75,7 @@ class ConversionSpec : FreeSpec() {
+                 val jvm: LocalDate = LocalDate.of(2022, Month.APRIL, 5)
+                 val mp: MpLocalDate = jvm.mp
+ 
+-                mp shouldBe MpLocalDate.of(2022, Month.APRIL, 5)
++                mp shouldBe MpLocalDate.of(2022, MpMonth.APRIL, 5)
+             }
+ 
+             "MpZonedDateTime.jvm" {
+diff --git a/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateCodec.kt b/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateCodec.kt
+index 9b7bfdd8..a1410e7d 100644
+--- a/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateCodec.kt
++++ b/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateCodec.kt
+@@ -6,11 +6,11 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
+ import io.peekandpoke.ultra.slumber.builtin.datetime.TS
+ import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
+ import io.peekandpoke.ultra.slumber.builtin.datetime.utc
+-import kotlinx.datetime.Instant
+ import kotlinx.datetime.LocalDate
+ import kotlinx.datetime.TimeZone
+ import kotlinx.datetime.atStartOfDayIn
+ import kotlinx.datetime.toLocalDateTime
++import kotlin.time.Instant
+ 
+ /**
+  * Awaker for [LocalDate] values.
+diff --git a/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodec.kt b/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodec.kt
+index 7d2fafec..ebbe3864 100644
+--- a/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodec.kt
++++ b/ultra/slumber/src/jvmMain/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodec.kt
+@@ -5,11 +5,11 @@ import io.peekandpoke.ultra.slumber.Slumberer
+ import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
+ import io.peekandpoke.ultra.slumber.builtin.datetime.TS
+ import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
+-import kotlinx.datetime.Instant
+ import kotlinx.datetime.LocalDateTime
+ import kotlinx.datetime.TimeZone
+ import kotlinx.datetime.toInstant
+ import kotlinx.datetime.toLocalDateTime
++import kotlin.time.Instant
+ 
+ /**
+  * Awaker for [LocalDateTime] values.
+diff --git a/ultra/slumber/src/jvmTest/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodecSpec.kt b/ultra/slumber/src/jvmTest/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodecSpec.kt
+index cf186805..047b847b 100644
+--- a/ultra/slumber/src/jvmTest/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodecSpec.kt
++++ b/ultra/slumber/src/jvmTest/kotlin/builtin/datetime/kotlinx/LocalDateTimeCodecSpec.kt
+@@ -5,12 +5,12 @@ import io.kotest.matchers.shouldBe
+ import io.peekandpoke.ultra.slumber.Codec
+ import io.peekandpoke.ultra.slumber.awake
+ import io.peekandpoke.ultra.slumber.slumber
+-import kotlinx.datetime.Instant
+ import kotlinx.datetime.LocalDateTime
+ import kotlinx.datetime.TimeZone
+ import kotlinx.datetime.offsetAt
+ import kotlinx.datetime.toInstant
+ import kotlinx.datetime.toLocalDateTime
++import kotlin.time.Instant
+ 
+ class LocalDateTimeCodecSpec : StringSpec({
+ 

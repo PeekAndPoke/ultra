@@ -16,7 +16,7 @@ demo login flow is complete
       a `saas` dep**: realm hooks `getAccessibleOrgs(memberships)` + `resolveSelectedOrg(orgId, …)`
       (default no-op). `selectOrg(token, orgId)` consumes the single-use token.
 - [x] `generateJwt(user, selectedOrg)` signature; `refreshToken(userId, type, currentOrgId)`
-      re-derives the same org; `AuthSystem.selectOrg` + `AuthApi` `select-org` endpoint + `AuthApiClient`.
+  re-derives the same org; `AuthSystem.selectOrg` + `AuthLoginApi` `select-org` endpoint + `AuthApiClient`.
 - [x] Frontend `AuthState` handles both variants: `pendingOrgSelection` + `selectOrg(orgId)`.
 - [x] All `generateJwt` implementers updated (AdminUserRealm, TestUserRealm, index_jvmTest,
       FunktorApiSpec token builders); `AuthApiSpec` reads narrowed to `Success`.

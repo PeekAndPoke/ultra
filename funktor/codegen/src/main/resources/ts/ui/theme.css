@@ -1,0 +1,604 @@
+/*
+ * funktor:ui -- the default theme.
+ *
+ * This file is ONE FILE OF VARIABLES plus the base rules that read them. It is the customization entry
+ * point: an app overrides variables and every shipped component follows, because `var()` resolves when
+ * the browser paints rather than when anything is built.
+ *
+ * Four levels of customization, in increasing effort:
+ *
+ *   1. Import this file. Done.
+ *   2. Redefine variables in your own CSS, loaded AFTER this file.
+ *   3. Target `.fk-*` classes directly. Nothing here is scoped, so there is no `:deep()` and no
+ *      specificity fight -- see the layer note below, which makes that a guarantee rather than a habit.
+ *   4. Do not import this file at all. Write your own against the same class names; the components
+ *      keep working, they just look like yours.
+ *
+ * ## Cascade layers
+ *
+ * Everything the framework ships lives inside a layer. **Unlayered CSS beats layered CSS outright, no
+ * matter the specificity** -- so an app's plain `.fk-cell { … }` wins over anything here without
+ * `!important`, without counting selectors, and regardless of which stylesheet loaded first. That is
+ * what turns level 3 from "usually works because we load first" into a rule.
+ *
+ * The order below is the cascade order, declared once and up front so a sheet's position stops
+ * depending on when it happened to be imported. `fk.base` is this file; `fk.features` is a module's own
+ * sheet, such as `insights.css`, which reads the variables defined here.
+ *
+ * The palette is deliberately NEUTRAL -- greys and near-blacks, with colour reserved for MEANING
+ * (status, log level, error). An unthemed install should look deliberate rather than like someone
+ * else's brand, and a neutral base does not fight an app's own palette when only some variables are
+ * overridden.
+ *
+ * Every class is prefixed `fk-`. That prefix is the entire price of being unscoped, and it is what
+ * makes level 3 and 4 possible.
+ */
+
+@layer fk.base, fk.features;
+
+@layer fk.base {
+
+    :root {
+        /*  Surfaces  --------------------------------------------------------------------------------  */
+
+        --fk-surface: #ffffff;
+        /* Cards, table headers, anything that should sit visually above the page. */
+        --fk-surface-raised: #f6f6f7;
+        /* Code blocks and pre-formatted output, which read better slightly recessed. */
+        --fk-surface-sunken: #f0f0f2;
+        --fk-border: #d8d8dd;
+
+        /*  Text  ------------------------------------------------------------------------------------  */
+
+        --fk-text: #1a1a1e;
+        --fk-text-muted: #6b6b76;
+        /* Labels under numbers, table keys -- quieter still than muted. */
+        --fk-text-faint: #9a9aa4;
+
+        /*  Accent -- the one branded colour, used for links and focus rings.  ------------------------  */
+
+        --fk-accent: #3f6ad8;
+        --fk-accent-contrast: #ffffff;
+
+        /*  Status -- MEANING, not decoration. Override these only to match a palette, never to rebrand.
+         *  Each has a `-bg` companion for filled labels.  ---------------------------------------------  */
+
+        --fk-ok: #1f7a3d;
+        --fk-ok-bg: #e6f4ea;
+        --fk-warn: #8a6100;
+        --fk-warn-bg: #fdf3d8;
+        --fk-error: #b3261e;
+        --fk-error-bg: #fce8e6;
+        --fk-neutral: #55555f;
+        --fk-neutral-bg: #ececef;
+
+        /*  Shape and type  --------------------------------------------------------------------------  */
+
+        --fk-radius: 6px;
+        --fk-border-width: 1px;
+        --fk-gap: 12px;
+
+        --fk-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --fk-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        --fk-font-size: 14px;
+        --fk-font-size-sm: 12px;
+        --fk-line-height: 1.5;
+    }
+
+    /*
+     * Dark by system preference. An app that wants to PIN a mode sets `data-fk-theme` on any ancestor --
+     * variables inherit, so it does not have to be <html>.
+     */
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-fk-theme="light"]) {
+            --fk-surface: #16161a;
+            --fk-surface-raised: #1e1e24;
+            --fk-surface-sunken: #101014;
+            --fk-border: #33333d;
+
+            --fk-text: #e8e8ec;
+            --fk-text-muted: #9d9daa;
+            --fk-text-faint: #6e6e7a;
+
+            --fk-accent: #7d9ff0;
+            --fk-accent-contrast: #10131c;
+
+            --fk-ok: #6ede8f;
+            --fk-ok-bg: #16301f;
+            --fk-warn: #e8c56a;
+            --fk-warn-bg: #33280d;
+            --fk-error: #f0837a;
+            --fk-error-bg: #371815;
+            --fk-neutral: #a0a0ac;
+            --fk-neutral-bg: #26262e;
+        }
+    }
+
+    [data-fk-theme="dark"] {
+        --fk-surface: #16161a;
+        --fk-surface-raised: #1e1e24;
+        --fk-surface-sunken: #101014;
+        --fk-border: #33333d;
+
+        --fk-text: #e8e8ec;
+        --fk-text-muted: #9d9daa;
+        --fk-text-faint: #6e6e7a;
+
+        --fk-accent: #7d9ff0;
+        --fk-accent-contrast: #10131c;
+
+        --fk-ok: #6ede8f;
+        --fk-ok-bg: #16301f;
+        --fk-warn: #e8c56a;
+        --fk-warn-bg: #33280d;
+        --fk-error: #f0837a;
+        --fk-error-bg: #371815;
+        --fk-neutral: #a0a0ac;
+        --fk-neutral-bg: #26262e;
+    }
+
+    /*  Base  ------------------------------------------------------------------------------------------  */
+
+    .fk-root {
+        color: var(--fk-text);
+        background: var(--fk-surface);
+        font-family: var(--fk-font);
+        font-size: var(--fk-font-size);
+        line-height: var(--fk-line-height);
+    }
+
+    /*  Shared atoms -- used by more than one primitive, so they live here rather than in a component.  --  */
+
+    .fk-label {
+        display: inline-block;
+        padding: 1px 7px;
+        border-radius: calc(var(--fk-radius) - 2px);
+        font-size: var(--fk-font-size-sm);
+        font-weight: 600;
+        color: var(--fk-neutral);
+        background: var(--fk-neutral-bg);
+    }
+
+    .fk-label--ok {
+        color: var(--fk-ok);
+        background: var(--fk-ok-bg);
+    }
+
+    .fk-label--warn {
+        color: var(--fk-warn);
+        background: var(--fk-warn-bg);
+    }
+
+    .fk-label--error {
+        color: var(--fk-error);
+        background: var(--fk-error-bg);
+    }
+
+    .fk-mono {
+        font-family: var(--fk-font-mono);
+        font-size: var(--fk-font-size-sm);
+    }
+
+    .fk-muted {
+        color: var(--fk-text-muted);
+    }
+
+    .fk-empty {
+        padding: var(--fk-gap);
+        color: var(--fk-text-faint);
+        font-style: italic;
+    }
+
+    /*
+     *  Sections and disclosures -- the layout atoms every tab uses.
+     *
+     *  The raw-JSON dump each tab keeps sits in a native <details>: no state, no JavaScript, keyboard and
+     *  screen-reader behaviour for free, and it collapses by default so a 137 KB slice costs nothing until
+     *  someone asks for it.
+     */
+
+    .fk-section + .fk-section {
+        margin-top: calc(var(--fk-gap) * 2);
+    }
+
+    .fk-section__title {
+        margin: 0 0 var(--fk-gap);
+        font-size: var(--fk-font-size);
+        font-weight: 600;
+    }
+
+    .fk-section__note {
+        margin: calc(var(--fk-gap) * -0.5) 0 var(--fk-gap);
+        color: var(--fk-text-muted);
+        font-size: var(--fk-font-size-sm);
+    }
+
+    .fk-details {
+        margin-top: var(--fk-gap);
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+    }
+
+    .fk-details > summary {
+        padding: 6px 12px;
+        color: var(--fk-text-muted);
+        font-size: var(--fk-font-size-sm);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .fk-details[open] > summary {
+        border-bottom: var(--fk-border-width) solid var(--fk-border);
+    }
+
+    .fk-details__body {
+        padding: var(--fk-gap);
+        overflow-x: auto;
+    }
+
+    /*  A definition-style list, for the handful of scalar fields at the top of a tab.  ------------------  */
+
+    .fk-facts {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 4px var(--fk-gap);
+        margin: 0;
+    }
+
+    .fk-facts__key {
+        color: var(--fk-text-muted);
+        font-size: var(--fk-font-size-sm);
+    }
+
+    .fk-facts__value {
+        margin: 0;
+        font-family: var(--fk-font-mono);
+        font-size: var(--fk-font-size-sm);
+        word-break: break-all;
+    }
+
+    /*  Controls  --------------------------------------------------------------------------------------  */
+
+    .fk-button {
+        padding: 5px 12px;
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+        background: var(--fk-surface-raised);
+        color: var(--fk-text);
+        font: inherit;
+        font-size: var(--fk-font-size-sm);
+        cursor: pointer;
+    }
+
+    .fk-button:hover:not(:disabled) {
+        border-color: var(--fk-accent);
+    }
+
+    .fk-button:disabled {
+        color: var(--fk-text-faint);
+        cursor: default;
+        opacity: 0.6;
+    }
+
+    /* A visible focus ring is not decoration -- these views are keyboard-navigated during an incident. */
+    .fk-button:focus-visible,
+    .fk-tabs__tab:focus-visible,
+    .fk-json__toggle:focus-visible {
+        outline: 2px solid var(--fk-accent);
+        outline-offset: 2px;
+    }
+
+    .fk-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: var(--fk-gap);
+    }
+
+    .fk-toolbar__spacer {
+        flex: 1 1 auto;
+    }
+
+    .fk-pager {
+        display: flex;
+        align-items: center;
+        gap: var(--fk-gap);
+        margin-top: var(--fk-gap);
+    }
+
+    /*  Notices  ---------------------------------------------------------------------------------------  */
+
+    .fk-notice {
+        padding: 10px 12px;
+        border-radius: var(--fk-radius);
+        background: var(--fk-neutral-bg);
+        color: var(--fk-neutral);
+        font-size: var(--fk-font-size-sm);
+    }
+
+    .fk-notice--error {
+        background: var(--fk-error-bg);
+        color: var(--fk-error);
+    }
+
+    /*  Tabs  ------------------------------------------------------------------------------------------  */
+
+    .fk-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        margin-top: calc(var(--fk-gap) * 2);
+        border-bottom: var(--fk-border-width) solid var(--fk-border);
+    }
+
+    .fk-tabs__tab {
+        padding: 7px 14px;
+        border: none;
+        /* A transparent border reserves the space, so the active tab does not shift the row by 2px. */
+        border-bottom: 2px solid transparent;
+        background: none;
+        color: var(--fk-text-muted);
+        font: inherit;
+        font-size: var(--fk-font-size-sm);
+        cursor: pointer;
+    }
+
+    .fk-tabs__tab:hover {
+        color: var(--fk-text);
+    }
+
+    .fk-tabs__tab--active {
+        border-bottom-color: var(--fk-accent);
+        color: var(--fk-text);
+        font-weight: 600;
+    }
+
+    .fk-tabs__panel {
+        padding-top: calc(var(--fk-gap) * 1.5);
+    }
+
+    /*  PreBlock  --------------------------------------------------------------------------------------  */
+
+    .fk-pre {
+        margin: 0;
+        padding: var(--fk-gap);
+        overflow-x: auto;
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+        background: var(--fk-surface-sunken);
+        font-family: var(--fk-font-mono);
+        font-size: var(--fk-font-size-sm);
+        line-height: 1.45;
+        /* `pre` keeps runs of spaces, which is the whole point for a routing trace. */
+        white-space: pre;
+        tab-size: 4;
+    }
+
+    .fk-pre--wrap {
+        overflow-x: visible;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /*  StatStrip  -------------------------------------------------------------------------------------  */
+
+    .fk-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--fk-gap);
+    }
+
+    .fk-strip__cell {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-width: 96px;
+        padding: 10px 14px;
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+        background: var(--fk-surface-raised);
+    }
+
+    .fk-strip__value {
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1.2;
+        /* Figures line up in a column when they are tabular, which is most of what this shows. */
+        font-variant-numeric: tabular-nums;
+    }
+
+    .fk-strip__label {
+        margin-top: 2px;
+        color: var(--fk-text-muted);
+        font-size: var(--fk-font-size-sm);
+    }
+
+    .fk-strip__hint {
+        color: var(--fk-text-faint);
+        font-size: var(--fk-font-size-sm);
+    }
+
+    /*
+     * Tone colours the VALUE and a left edge, never the whole cell: a strip of seven filled blocks is
+     * unreadable, and the point is that the one that matters stands out.
+     */
+    .fk-strip__cell--ok {
+        border-left: 3px solid var(--fk-ok);
+    }
+
+    .fk-strip__cell--ok .fk-strip__value {
+        color: var(--fk-ok);
+    }
+
+    .fk-strip__cell--warn {
+        border-left: 3px solid var(--fk-warn);
+    }
+
+    .fk-strip__cell--warn .fk-strip__value {
+        color: var(--fk-warn);
+    }
+
+    .fk-strip__cell--error {
+        border-left: 3px solid var(--fk-error);
+    }
+
+    .fk-strip__cell--error .fk-strip__value {
+        color: var(--fk-error);
+    }
+
+    .fk-strip__cell--neutral {
+        border-left: 3px solid var(--fk-border);
+    }
+
+    /*  KeyValueTable  ---------------------------------------------------------------------------------  */
+
+    .fk-kv {
+        width: 100%;
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .fk-kv th {
+        padding: 8px 12px;
+        border-bottom: var(--fk-border-width) solid var(--fk-border);
+        background: var(--fk-surface-raised);
+        color: var(--fk-text-muted);
+        font-size: var(--fk-font-size-sm);
+        font-weight: 600;
+    }
+
+    .fk-kv td {
+        padding: 8px 12px;
+        border-bottom: var(--fk-border-width) solid var(--fk-border);
+        vertical-align: top;
+    }
+
+    .fk-kv tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .fk-kv__key-head {
+        width: 30%;
+    }
+
+    .fk-kv__key {
+        color: var(--fk-text-muted);
+        font-family: var(--fk-font-mono);
+        font-size: var(--fk-font-size-sm);
+        /* A long header name must not push the value column off screen. */
+        word-break: break-all;
+    }
+
+    .fk-kv__value {
+        font-family: var(--fk-font-mono);
+        font-size: var(--fk-font-size-sm);
+        word-break: break-all;
+    }
+
+    .fk-kv__value + .fk-kv__value {
+        margin-top: 4px;
+    }
+
+    /* Marks the server's placeholder as metadata, so nobody reads it as the actual value. */
+    .fk-kv__value--redacted {
+        color: var(--fk-text-faint);
+        font-style: italic;
+    }
+
+    /*  JsonTree  --------------------------------------------------------------------------------------  */
+
+    .fk-json {
+        font-family: var(--fk-font-mono);
+        font-size: var(--fk-font-size-sm);
+        line-height: 1.6;
+    }
+
+    .fk-json__row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    .fk-json__toggle {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        padding: 0;
+        border: none;
+        background: none;
+        color: var(--fk-text-faint);
+        cursor: pointer;
+    }
+
+    .fk-json__toggle--leaf {
+        cursor: default;
+    }
+
+    /*
+     * The caret is drawn with borders rather than a glyph: no font dependency, no icon set, and it cannot
+     * be affected by an app's font stack.
+     */
+    .fk-json__caret {
+        width: 0;
+        height: 0;
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+        border-left: 5px solid currentColor;
+        transition: transform 0.12s ease;
+    }
+
+    .fk-json__toggle--open .fk-json__caret {
+        transform: rotate(90deg);
+    }
+
+    .fk-json__key {
+        color: var(--fk-text-muted);
+    }
+
+    .fk-json__key::after {
+        content: ':';
+        color: var(--fk-text-faint);
+    }
+
+    .fk-json__summary {
+        color: var(--fk-text-faint);
+    }
+
+    .fk-json__scalar {
+        word-break: break-all;
+    }
+
+    .fk-json__scalar--string {
+        color: var(--fk-ok);
+    }
+
+    .fk-json__scalar--number {
+        color: var(--fk-accent);
+    }
+
+    .fk-json__scalar--boolean {
+        color: var(--fk-warn);
+    }
+
+    .fk-json__scalar--null {
+        color: var(--fk-text-faint);
+        font-style: italic;
+    }
+
+    .fk-json__children {
+        /* The guide line is what makes deep nesting readable; indent alone is not enough. */
+        margin-left: 6px;
+        padding-left: 12px;
+        border-left: var(--fk-border-width) solid var(--fk-border);
+    }
+
+    .fk-json__empty {
+        color: var(--fk-text-faint);
+        font-style: italic;
+    }
+}

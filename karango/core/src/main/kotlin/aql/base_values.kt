@@ -5,14 +5,12 @@ package io.peekandpoke.karango.aql
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kListType
 import io.peekandpoke.ultra.reflection.kType
-import io.peekandpoke.ultra.vault.lang.VaultInputValueMarker
 
 /**
  * Guard function to prevent calls to .aql() on existing AqlExpressions
  */
 @Suppress("unused", "UnusedReceiverParameter")
 @Deprecated("Cannot use .aql() on existing AqlExpressions", level = DeprecationLevel.ERROR)
-@VaultInputValueMarker
 fun <T> AqlExpression<T>.aql(): Nothing {
     throw Exception("Cannot call .aql() on already existing AqlExpression")
 }
@@ -22,7 +20,6 @@ fun <T> AqlExpression<T>.aql(): Nothing {
  */
 @Suppress("unused", "UnusedReceiverParameter")
 @Deprecated("Cannot use .aql() on existing AqlExpressions", level = DeprecationLevel.ERROR)
-@VaultInputValueMarker
 val <T> AqlExpression<T>.aql: Nothing
     get() {
         throw Exception("Cannot call .aql() on already existing AqlExpression")
@@ -32,7 +29,6 @@ val <T> AqlExpression<T>.aql: Nothing
  * Helper to make any object am aql expression
  */
 @Suppress("UNCHECKED_CAST")
-@VaultInputValueMarker
 inline fun <reified T> T.aql(name: String = "v"): AqlExpression<T> = when (this) {
     // guard, so we do not wrap an AqlExpression again
     is AqlExpression<*> -> this as AqlExpression<T>
@@ -66,7 +62,6 @@ fun <T> T.aql(type: TypeRef<T>, name: String = "v"): AqlExpression<T> = when (th
  *
  * Obj().aql
  */
-@VaultInputValueMarker
 inline val <reified T> T.aql: AqlExpression<T>
     get() = this.aql()
 
@@ -79,19 +74,15 @@ inline val <reified T> T.aql: AqlExpression<T>
  *
  * null.aql
  */
-@VaultInputValueMarker
 val Nothing?.aql: AqlExpression<Any?>
     get() = this.aql()
 
-@VaultInputValueMarker
 inline fun <reified T> ARRAY(vararg args: AqlExpression<out T>): AqlExpression<List<T>> =
     ARRAY(args.toList())
 
-@VaultInputValueMarker
 inline fun <reified T> ARRAY(args: List<AqlExpression<out T>>): AqlExpression<List<T>> =
     AqlArrayValueExpr(kListType(), args)
 
-@VaultInputValueMarker
 @JvmName("OBJECT_Pair_StringExpr")
 inline fun <reified T> OBJECT(
     vararg pairs: Pair<String, AqlExpression<out T>>,
@@ -102,14 +93,12 @@ inline fun <reified T> OBJECT(
     return OBJECT(mapped)
 }
 
-@VaultInputValueMarker
 @JvmName("OBJECT_Pair_ExprExpr")
 inline fun <reified T> OBJECT(
     vararg pairs: Pair<AqlExpression<String>, AqlExpression<out T>>,
 ): AqlObjectValueExpr<T> =
     OBJECT(pairs.toList())
 
-@VaultInputValueMarker
 inline fun <reified T> OBJECT(
     pairs: List<Pair<AqlExpression<String>, AqlExpression<out T>>>,
 ): AqlObjectValueExpr<T> =

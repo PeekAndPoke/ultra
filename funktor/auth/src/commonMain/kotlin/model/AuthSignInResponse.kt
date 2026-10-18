@@ -1,5 +1,8 @@
 package io.peekandpoke.funktor.auth.model
 
+import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.security.user.UserPermissions
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -24,7 +27,29 @@ sealed interface AuthSignInResponse {
     @Serializable
     @SerialName("success")
     data class Success(
-        val token: Token,
+        /** How the session is carried — see [Session]. */
+        val session: Session,
+        /**
+         * The caller's permissions.
+         *
+         * Sent explicitly so **no client has to decode the token**. Before this, the browser read them
+         * out of the JWT's `permissionsNs` claims, which is impossible once the token is an httpOnly
+         * cookie — and was never good, because a decoded claim comes from a blob the user can rewrite.
+         *
+         * Still DISPLAY-ONLY. The server re-derives permissions from the verified token on every
+         * request; nothing here is an authorization decision.
+         */
+        val permissions: UserPermissions,
+        /**
+         * When the session expires — drives the client's refresh scheduling.
+         *
+         * Nullable because `exp` is optional: RFC 7519 makes it so, the verifier treats an absent one as
+         * "no expiry check" (pinned by `JwtWireCompatSpec`), and each realm supplies its own claim
+         * lambda. Null means the token states no expiry, which is what the client should be told.
+         */
+        val expiresAt: MpInstant? = null,
+        /** The signed-in user's id, or null if the token carried no usable `sub`. */
+        val userId: UserId? = null,
         val realm: AuthRealmModel,
         val user: JsonObject,
         /** The organisation selected for this session. Null for org-less (`OrgPolicy.None`) realms. */
@@ -65,11 +90,40 @@ sealed interface AuthSignInResponse {
         val resendToken: String,
     ) : AuthSignInResponse
 
+    /**
+     * How the session is carried back to the client.
+     *
+     * **Only [Bearer] exists.** Sealed with a single variant on purpose: it keeps the discriminator in
+     * the wire format and in the generated TypeScript, so adding a transport later is additive rather
+     * than a breaking reshape of every client.
+     *
+     * An `httpOnly` cookie variant was designed and **dropped** (maintainer, 2026-08-02). The reasoning
+     * is in `.claude/tasks/20260719-token-storage-hardening.md`; the short version is that b2b2c
+     * frontends run on customer-controlled custom domains, which are a different *site*, so the cookie
+     * would need `SameSite=None` — losing the strongest protection precisely where it was wanted.
+     */
     @Serializable
-    @SerialName("token")
-    data class Token(
-        val token: String,
-        val permissionsNs: String,
-        val userNs: String,
-    )
+    sealed interface Session {
+
+        /** The token travels in the response body; the client attaches it as `Authorization: Bearer`. */
+        @Serializable
+        @SerialName("bearer")
+        data class Bearer(val token: String) : Session
+    }
 }
+
+/**
+ * The session's bearer token.
+ *
+ * An extension rather than a member so it stays out of the serialized shape and out of the generated
+ * TypeScript: the point of [AuthSignInResponse.Session] being sealed is that a client narrows before
+ * reaching a token, and a nullable convenience field on the wire would undo that.
+ *
+ * Exhaustive `when`, not `as?`. There is one variant today, so this is total — and when a second
+ * transport is added the compiler enumerates every call site, which is what sealing is for. `as?` would
+ * instead start silently returning null.
+ */
+val AuthSignInResponse.Success.bearerToken: String
+    get() = when (val carrier = session) {
+        is AuthSignInResponse.Session.Bearer -> carrier.token
+    }

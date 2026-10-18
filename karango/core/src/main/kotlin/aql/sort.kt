@@ -1,16 +1,11 @@
 package io.peekandpoke.karango.aql
 
-import io.peekandpoke.ultra.vault.lang.VaultDslMarker
-
-@VaultDslMarker
 val <T> AqlExpression<T>.ASC: AqlSorting
     get() = AqlSorting(this, AqlSortDirection.ASC)
 
-@VaultDslMarker
 val <T> AqlExpression<T>.DESC: AqlSorting
     get() = AqlSorting(this, AqlSortDirection.DESC)
 
-@VaultDslMarker
 fun <T> AqlExpression<T>.sort(direction: AqlSortDirection): AqlSorting =
     AqlSorting(expression = this, direction = direction)
 

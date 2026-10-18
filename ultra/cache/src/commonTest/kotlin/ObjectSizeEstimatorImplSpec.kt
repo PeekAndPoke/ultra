@@ -150,6 +150,27 @@ class ObjectSizeEstimatorImplSpec : StringSpec() {
 
             ObjectSizeEstimator().estimate(a) shouldBeGreaterThan 0L
         }
+
+        "a cyclic graph of data classes still terminates" {
+            // EstCycle above is a plain class, so its hashCode is identity-based - the one shape a
+            // hashCode-based visited set cannot choke on. A data class holding the back-reference in
+            // its primary constructor hashes structurally, so hashing it recurses forever.
+            val a = EstDataCycle("a", null)
+            val b = EstDataCycle("b", a)
+            a.other = b
+
+            ObjectSizeEstimator().estimate(a) shouldBeGreaterThan 0L
+        }
+
+        "a self-referential collection still terminates" {
+            // List.hashCode() is structural, so this recurses on any attempt to hash it - and a
+            // cached value holding a collection that contains itself is the realistic shape
+            val list = mutableListOf<Any>()
+            list.add("payload")
+            list.add(list)
+
+            ObjectSizeEstimator().estimate(list) shouldBeGreaterThan 0L
+        }
     }
 }
 
@@ -158,3 +179,5 @@ private data class EstProbe(val x: Int, val y: Int)
 private class EstCycle(val name: String) {
     var other: EstCycle? = null
 }
+
+private data class EstDataCycle(val name: String, var other: EstDataCycle?)

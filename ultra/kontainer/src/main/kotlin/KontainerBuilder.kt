@@ -11,6 +11,7 @@ import kotlin.reflect.KClass
  * Used internally by [kontainer] and [KontainerModule] to collect service definitions
  * before creating a [KontainerBlueprint].
  */
+@KontainerDsl
 class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit) {
 
     private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>()
@@ -58,6 +59,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * Provides overloaded [invoke] operators to register services by class or factory function.
      */
+    @KontainerDsl
     class ServiceBuilder internal constructor(
         private val fn: (cls: KClass<out Any>, producer: ServiceProducer<out Any>) -> Unit,
     ) {
@@ -480,7 +482,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     /**
      * DSL entry point for registering singleton services.
      */
-    @KontainerDslSingleton
     val singleton = ServiceBuilder { cls, producer ->
         @Suppress("UNCHECKED_CAST")
         addSingleton(cls as KClass<Any>, producer as ServiceProducer<Any>)
@@ -495,7 +496,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * Prototype services create a new instance on every injection.
      */
-    @KontainerDslPrototype
     val prototype = ServiceBuilder { cls, producer ->
         @Suppress("UNCHECKED_CAST")
         addPrototype(cls as KClass<Any>, producer as ServiceProducer<Any>)
@@ -510,7 +510,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * Dynamic services are re-created each time a new [Kontainer] is cloned from the blueprint.
      */
-    @KontainerDslDynamic
     val dynamic = ServiceBuilder { cls, producer ->
         @Suppress("UNCHECKED_CAST")
         addDynamic(cls as KClass<Any>, producer as ServiceProducer<Any>)
@@ -611,19 +610,16 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     // //
 
     /** Imports a [KontainerModule], applying all its service definitions to this builder. */
-    @KontainerDslModule
     fun module(
         module: KontainerModule,
     ): KontainerBuilder = apply { module.apply(this) }
 
     /** Imports a parameterized [module] with one configuration parameter. */
-    @KontainerDslModule
     fun <P> module(module: ParameterizedKontainerModule<P>, p1: P): KontainerBuilder = apply {
         module.apply(this, p1)
     }
 
     /** Imports a parameterized [module] with two configuration parameters. */
-    @KontainerDslModule
     fun <P1, P2> module(
         module: ParameterizedKontainerModule2<P1, P2>,
         p1: P1,
@@ -631,7 +627,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     ): KontainerBuilder = apply { module.apply(this, p1, p2) }
 
     /** Imports a parameterized [module] with three configuration parameters. */
-    @KontainerDslModule
     fun <P1, P2, P3> module(
         module: ParameterizedKontainerModule3<P1, P2, P3>,
         p1: P1,
@@ -642,7 +637,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     }
 
     /** Imports a parameterized [module] with four configuration parameters. */
-    @KontainerDslModule
     fun <P1, P2, P3, P4> module(
         module: ParameterizedKontainerModule4<P1, P2, P3, P4>,
         p1: P1,
@@ -654,7 +648,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     }
 
     /** Imports a parameterized [module] with five configuration parameters. */
-    @KontainerDslModule
     fun <P1, P2, P3, P4, P5> module(
         module: ParameterizedKontainerModule5<P1, P2, P3, P4, P5>,
         p1: P1,
@@ -675,7 +668,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * The service can by injected by the type [SRV] and its base types
      */
-    @KontainerDslSingleton
     fun <SRV : Any> instance(
         instance: SRV,
     ): KontainerBuilder {
@@ -692,7 +684,6 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * The service can by injected by the type [SRV] and its base types
      * The actual implementation will have the type [IMPL]
      */
-    @KontainerDslSingleton
     fun <SRV : Any, IMPL : SRV> instance(
         srv: KClass<SRV>,
         instance: IMPL,

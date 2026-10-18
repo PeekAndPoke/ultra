@@ -29,11 +29,11 @@ no i18n dependency in any `package.json` or Gradle file. Nothing to migrate off.
 
 Surfaces to eventually cover, measured:
 
-| Area | Size | Location |
-|---|---|---|
-| Email templates | 2 templates, ~100 words | `funktor/auth/src/jvmMain/kotlin/AuthRealm.kt:68-136` (kotlinx.html builder code) |
-| Validation messages | ~28 framework defaults + ~10 ad-hoc | kraft rule library `kraft/core/src/jsMain/kotlin/forms/validation/` |
-| Server error text | 15 `.withError` + 8 `AuthApi` handlers | `funktor/auth/.../api/AuthApi.kt`, `funktor/saas/.../OrgsApi.kt`, … |
+| Area                | Size                                        | Location                                                                          |
+|---------------------|---------------------------------------------|-----------------------------------------------------------------------------------|
+| Email templates     | 2 templates, ~100 words                     | `funktor/auth/src/jvmMain/kotlin/AuthRealm.kt:68-136` (kotlinx.html builder code) |
+| Validation messages | ~28 framework defaults + ~10 ad-hoc         | kraft rule library `kraft/core/src/jsMain/kotlin/forms/validation/`               |
+| Server error text   | 15 `.withError` + 8 `AuthLoginApi` handlers | `funktor/auth/.../api/AuthApi.kt`, `funktor/saas/.../OrgsApi.kt`, …               |
 
 Helpful existing facts:
 - `ApiResponse.messages` is effectively **write-only** — the frontend already discards server text

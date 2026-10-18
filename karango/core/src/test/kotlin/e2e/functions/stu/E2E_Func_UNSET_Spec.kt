@@ -26,7 +26,7 @@ class E2E_Func_UNSET_Spec : StringSpec({
             list.size shouldBe 1
 
             @Suppress("UNCHECKED_CAST")
-            val unset = list[0] as Map<String, Any?>
+            val unset = list[0]
             unset["a"] shouldBe 1
             unset.containsKey("b") shouldBe false
             unset["c"] shouldBe 3
@@ -48,7 +48,7 @@ class E2E_Func_UNSET_Spec : StringSpec({
             list.size shouldBe 1
 
             @Suppress("UNCHECKED_CAST")
-            val unset = list[0] as Map<String, Any?>
+            val unset = list[0]
             unset.containsKey("a") shouldBe false
             unset["b"] shouldBe 2
             unset.containsKey("c") shouldBe false

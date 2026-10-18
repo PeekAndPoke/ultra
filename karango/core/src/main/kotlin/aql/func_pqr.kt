@@ -4,21 +4,20 @@ package io.peekandpoke.karango.aql
 
 import io.peekandpoke.ultra.reflection.kListType
 import io.peekandpoke.ultra.reflection.kType
-import io.peekandpoke.ultra.vault.lang.VaultFunctionMarker
 
 /**
  * Return the nth percentile of the values in numArray.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#percentile
  */
-@VaultFunctionMarker val PERCENTILE = aqlFunc<Number>("PERCENTILE")
+val PERCENTILE = aqlFunc<Number>("PERCENTILE")
 
 /**
  * Return the nth percentile of the values in numArray.
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#percentile
  */
-@VaultFunctionMarker
+
 fun <T1 : Number, T2 : Number> PERCENTILE(
     numArray: AqlExpression<List<T1>>,
     n: AqlExpression<T2>,
@@ -26,7 +25,7 @@ fun <T1 : Number, T2 : Number> PERCENTILE(
     PERCENTILE.call(numArray, n)
 
 /** Return the nth percentile of the values in numArray. */
-@VaultFunctionMarker
+
 fun <T1 : Number?, T2 : Number> PERCENTILE(
     numArray: AqlExpression<List<T1>>,
     n: AqlExpression<T2>,
@@ -41,10 +40,10 @@ fun <T1 : Number?, T2 : Number> PERCENTILE(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#pi
  */
-@VaultFunctionMarker val PI = aqlFunc<Number>("PI")
+val PI = aqlFunc<Number>("PI")
 
 /** Returns pi. */
-@VaultFunctionMarker
+
 fun PI(): AqlExpression<Number> = PI.call()
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,10 +53,10 @@ fun PI(): AqlExpression<Number> = PI.call()
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#pow
  */
-@VaultFunctionMarker val POW = aqlFunc<Number>("POW")
+val POW = aqlFunc<Number>("POW")
 
 /** Return the base to the exponent exp. */
-@VaultFunctionMarker
+
 fun <T1 : Number, T2 : Number> POW(base: AqlExpression<T1>, exp: AqlExpression<T2>): AqlExpression<Number> =
     POW.call(base, exp)
 
@@ -68,10 +67,10 @@ fun <T1 : Number, T2 : Number> POW(base: AqlExpression<T1>, exp: AqlExpression<T
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#pop
  */
-@VaultFunctionMarker val POP = aqlFunc<List<Any?>>("POP")
+val POP = aqlFunc<List<Any?>>("POP")
 
 /** Remove the last element of array. */
-@VaultFunctionMarker
+
 inline fun <reified T> POP(anyArray: AqlExpression<List<T>>): AqlExpression<List<T>> =
     POP.call(type = kType(), anyArray)
 
@@ -84,10 +83,10 @@ inline fun <reified T> POP(anyArray: AqlExpression<List<T>>): AqlExpression<List
  *
  * To get the position of the occurrence use CONTAINS_ARRAY_IDX()
  */
-@VaultFunctionMarker val POSITION = aqlFunc<Number>("POSITION")
+val POSITION = aqlFunc<Number>("POSITION")
 
 /** Return whether [search] is contained in [anyArray]. */
-@VaultFunctionMarker
+
 fun <T> POSITION(anyArray: AqlExpression<List<T>>, search: AqlExpression<T>): AqlExpression<Number> =
     POSITION.call(anyArray, search, true.aql)
 
@@ -98,15 +97,15 @@ fun <T> POSITION(anyArray: AqlExpression<List<T>>, search: AqlExpression<T>): Aq
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#push
  */
-@VaultFunctionMarker val PUSH = aqlFunc<List<Any?>>("PUSH")
+val PUSH = aqlFunc<List<Any?>>("PUSH")
 
 /** Append value to anyArray (right side). */
-@VaultFunctionMarker
+
 inline fun <reified T> PUSH(anyArray: AqlExpression<out List<T>>, value: AqlExpression<out T>): AqlExpression<List<T>> =
     PUSH.call(type = kType(), anyArray, value)
 
 /** Remove the last element of array. */
-@VaultFunctionMarker
+
 inline fun <reified T> PUSH(
     anyArray: AqlExpression<out List<T>>,
     value: AqlExpression<out T>,
@@ -121,10 +120,10 @@ inline fun <reified T> PUSH(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#radians
  */
-@VaultFunctionMarker val RADIANS = aqlFunc<Number>("RADIANS")
+val RADIANS = aqlFunc<Number>("RADIANS")
 
 /** Return the angle converted from degrees to radians. */
-@VaultFunctionMarker
+
 fun <T : Number> RADIANS(deg: AqlExpression<T>): AqlExpression<Number> = RADIANS.call(deg)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,10 +133,10 @@ fun <T : Number> RADIANS(deg: AqlExpression<T>): AqlExpression<Number> = RADIANS
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#rand
  */
-@VaultFunctionMarker val RAND = aqlFunc<Number>("RAND")
+val RAND = aqlFunc<Number>("RAND")
 
 /** Return a pseudo-random number between 0 and 1. */
-@VaultFunctionMarker
+
 fun RAND(): AqlExpression<Number> = RAND.call()
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,10 +148,10 @@ fun RAND(): AqlExpression<Number> = RAND.call()
  *
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#randomtoken
  */
-@VaultFunctionMarker val RANDOM_TOKEN = aqlFunc<String>("RANDOM_TOKEN")
+val RANDOM_TOKEN = aqlFunc<String>("RANDOM_TOKEN")
 
 /** Generate a pseudo-random token string with the specified length. */
-@VaultFunctionMarker
+
 fun <T : Number> RANDOM_TOKEN(length: AqlExpression<T>): AqlExpression<String> = RANDOM_TOKEN.call(length)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,10 +161,10 @@ fun <T : Number> RANDOM_TOKEN(length: AqlExpression<T>): AqlExpression<String> =
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#range
  */
-@VaultFunctionMarker val RANGE = aqlFunc<List<Number>?>("RANGE")
+val RANGE = aqlFunc<List<Number>?>("RANGE")
 
 /** Return an array of numbers in the specified range, optionally with increments other than 1. */
-@VaultFunctionMarker
+
 fun <T1 : Number, T2 : Number> RANGE(
     start: AqlExpression<T1>,
     stop: AqlExpression<T2>,
@@ -173,7 +172,7 @@ fun <T1 : Number, T2 : Number> RANGE(
     RANGE.call(start, stop)
 
 /** Return an array of numbers in the specified range, optionally with increments other than 1. */
-@VaultFunctionMarker
+
 fun <T1 : Number, T2 : Number, T3 : Number> RANGE(
     start: AqlExpression<T1>,
     stop: AqlExpression<T2>,
@@ -188,15 +187,15 @@ fun <T1 : Number, T2 : Number, T3 : Number> RANGE(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#regexmatches
  */
-@VaultFunctionMarker val REGEX_MATCHES = aqlFunc<List<String>?>("REGEX_MATCHES")
+val REGEX_MATCHES = aqlFunc<List<String>?>("REGEX_MATCHES")
 
 /** Return the matches in the given string text, using the regex. */
-@VaultFunctionMarker
+
 fun REGEX_MATCHES(text: AqlExpression<String>, regex: AqlExpression<String>): AqlExpression<List<String>?> =
     REGEX_MATCHES.call(text, regex)
 
 /** Return the matches in the given string text, using the regex. */
-@VaultFunctionMarker
+
 fun REGEX_MATCHES(
     text: AqlExpression<String>,
     regex: AqlExpression<String>,
@@ -211,15 +210,15 @@ fun REGEX_MATCHES(
  *
  * See https://docs.arangodb.com/stable/aql/functions/string/#regex_split
  */
-@VaultFunctionMarker val REGEX_SPLIT = aqlFunc<List<String>?>("REGEX_SPLIT")
+val REGEX_SPLIT = aqlFunc<List<String>?>("REGEX_SPLIT")
 
 /** Return the matches in the given string text, using the regex. */
-@VaultFunctionMarker
+
 fun REGEX_SPLIT(text: AqlExpression<String>, regex: AqlExpression<String>): AqlExpression<List<String>?> =
     REGEX_SPLIT.call(text, regex)
 
 /** Return the matches in the given string text, using the regex. */
-@VaultFunctionMarker
+
 fun REGEX_SPLIT(
     text: AqlExpression<String>,
     regex: AqlExpression<String>,
@@ -228,7 +227,7 @@ fun REGEX_SPLIT(
     REGEX_SPLIT.call(text, regex, caseInsensitive)
 
 /** Return the matches in the given string text, using the regex. */
-@VaultFunctionMarker
+
 fun REGEX_SPLIT(
     text: AqlExpression<String>,
     regex: AqlExpression<String>,
@@ -244,15 +243,15 @@ fun REGEX_SPLIT(
  *
  * See https://docs.arangodb.com/stable/aql/functions/string/#regex_test
  */
-@VaultFunctionMarker val REGEX_TEST = aqlFunc<Boolean?>("REGEX_TEST")
+val REGEX_TEST = aqlFunc<Boolean?>("REGEX_TEST")
 
 /** Return the matches in the given string text, using the regex. */
-@VaultFunctionMarker
+
 fun REGEX_TEST(text: AqlExpression<String>, regex: AqlExpression<String>): AqlExpression<Boolean?> =
     REGEX_TEST.call(text, regex)
 
 /** Return the matches in the given string text, using the regex. */
-@VaultFunctionMarker
+
 fun REGEX_TEST(
     text: AqlExpression<String>,
     regex: AqlExpression<String>,
@@ -267,10 +266,10 @@ fun REGEX_TEST(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#remove_nth
  */
-@VaultFunctionMarker val REMOVE_NTH = aqlFunc<List<Any?>>("REMOVE_NTH")
+val REMOVE_NTH = aqlFunc<List<Any?>>("REMOVE_NTH")
 
 /** Remove the element at position from the anyArray. */
-@VaultFunctionMarker
+
 inline fun <reified T, N : Number> REMOVE_NTH(
     anyArray: AqlExpression<List<T>>,
     position: AqlExpression<N>,
@@ -284,15 +283,15 @@ inline fun <reified T, N : Number> REMOVE_NTH(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#remove_value
  */
-@VaultFunctionMarker val REMOVE_VALUE = aqlFunc<List<Any?>>("REMOVE_VALUE")
+val REMOVE_VALUE = aqlFunc<List<Any?>>("REMOVE_VALUE")
 
 /** Remove the element at value from the anyArray. */
-@VaultFunctionMarker
+
 inline fun <reified T> REMOVE_VALUE(anyArray: AqlExpression<List<T>>, value: AqlExpression<T>): AqlExpression<List<T>> =
     REMOVE_VALUE.call(type = kType(), anyArray, value)
 
 /** Remove the element at value from the anyArray. */
-@VaultFunctionMarker
+
 fun <T, N : Number> REMOVE_VALUE(
     anyArray: AqlExpression<List<T>>,
     value: AqlExpression<T>,
@@ -307,10 +306,10 @@ fun <T, N : Number> REMOVE_VALUE(
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#remove_values
  */
-@VaultFunctionMarker val REMOVE_VALUES = aqlFunc<List<Any?>>("REMOVE_VALUES")
+val REMOVE_VALUES = aqlFunc<List<Any?>>("REMOVE_VALUES")
 
 /** Remove all occurrences of any of the values from anyArray. */
-@VaultFunctionMarker
+
 inline fun <reified T> REMOVE_VALUES(
     anyArray: AqlExpression<out List<T>>,
     values: AqlExpression<out List<T>>,
@@ -325,15 +324,15 @@ inline fun <reified T> REMOVE_VALUES(
  * See https://docs.arangodb.com/current/AQL/Functions/Array.html#reverse
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#reverse
  */
-@VaultFunctionMarker val REVERSE = aqlFunc<Any>("REVERSE")
+val REVERSE = aqlFunc<Any>("REVERSE")
 
 /** Return an array with its elements reversed. */
-@VaultFunctionMarker @JvmName("REVERSE_Array")
+@JvmName("REVERSE_Array")
 inline fun <reified T> REVERSE(anyArray: AqlExpression<List<T>>): AqlExpression<List<T>> =
     REVERSE.call(type = kType(), anyArray)
 
 /** Return the reverse of the string value. */
-@VaultFunctionMarker @JvmName("REVERSE_String")
+@JvmName("REVERSE_String")
 fun REVERSE_STRING(value: AqlExpression<String>): AqlExpression<String> =
     REVERSE.call(type = kType(), value)
 
@@ -344,10 +343,10 @@ fun REVERSE_STRING(value: AqlExpression<String>): AqlExpression<String> =
  *
  * https://docs.arangodb.com/current/AQL/Functions/String.html#right
  */
-@VaultFunctionMarker val RIGHT = aqlFunc<String>("RIGHT")
+val RIGHT = aqlFunc<String>("RIGHT")
 
 /** Return the n rightmost characters of the string value. */
-@VaultFunctionMarker
+
 fun <T : Number> RIGHT(value: AqlExpression<String>, n: AqlExpression<T>): AqlExpression<String> =
     RIGHT.call(value, n)
 
@@ -358,10 +357,10 @@ fun <T : Number> RIGHT(value: AqlExpression<String>, n: AqlExpression<T>): AqlEx
  *
  * See https://docs.arangodb.com/current/AQL/Functions/Numeric.html#round
  */
-@VaultFunctionMarker val ROUND = aqlFunc<Number>("ROUND")
+val ROUND = aqlFunc<Number>("ROUND")
 
 /** Return the integer closest to value. */
-@VaultFunctionMarker
+
 fun <T : Number> ROUND(value: AqlExpression<T>): AqlExpression<Number> = ROUND.call(value)
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -371,13 +370,13 @@ fun <T : Number> ROUND(value: AqlExpression<T>): AqlExpression<Number> = ROUND.c
  *
  * See https://docs.arangodb.com/current/AQL/Functions/String.html#rtrim
  */
-@VaultFunctionMarker val RTRIM = aqlFunc<String>("RTRIM")
+val RTRIM = aqlFunc<String>("RTRIM")
 
 /** Return the string value with whitespace stripped at the start only. */
-@VaultFunctionMarker
+
 fun RTRIM(subject: AqlExpression<String>): AqlExpression<String> = RTRIM.call(subject)
 
 /** Return the string value with whitespace stripped at the start only. */
-@VaultFunctionMarker
+
 fun RTRIM(subject: AqlExpression<String>, chars: AqlExpression<String>): AqlExpression<String> =
     RTRIM.call(subject, chars)

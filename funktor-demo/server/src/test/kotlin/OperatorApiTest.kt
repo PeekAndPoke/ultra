@@ -4,12 +4,13 @@ import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.RealmId
+import io.peekandpoke.funktor.auth.model.bearerToken
 import io.peekandpoke.funktor.demo.common.operator.OperatorDashboardStats
 import io.peekandpoke.funktor.demo.server.operator.OperatorApiFeature
 import io.peekandpoke.funktor.testing.AppSpec
@@ -37,7 +38,7 @@ class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
         api.operator.dashboardStats { statsRoute ->
             // Route blocks register FreeSpec containers at spec level and cannot nest, so the
             // sign-in route is referenced directly.
-            val signInRoute = authApi.auth.signIn
+            val signInRoute = authApi.authLogin.signIn
 
             // Security boundary: this also proves the feature is registered and the route is
             // mounted (an unmounted route would 404, not 401).
@@ -60,7 +61,7 @@ class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .token.token
+                                .bearerToken
                         }
                     }
 
@@ -87,7 +88,7 @@ class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .token.token
+                                .bearerToken
                         }
                     }
 
@@ -108,7 +109,7 @@ class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
                             status shouldBe HttpStatusCode.OK
                             token = apiResponseData<AuthSignInResponse>()
                                 .shouldBeInstanceOf<AuthSignInResponse.Success>()
-                                .token.token
+                                .bearerToken
                         }
                     }
 

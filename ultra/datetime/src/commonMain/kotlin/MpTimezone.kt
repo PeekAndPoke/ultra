@@ -1,10 +1,12 @@
 package io.peekandpoke.ultra.datetime
 
+import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 
 @ConsistentCopyVisibility
 @Serializable(with = MpTimezoneSerializer::class)
+@Slumber.As(String::class)
 data class MpTimezone private constructor(val id: String) {
     companion object {
         /**

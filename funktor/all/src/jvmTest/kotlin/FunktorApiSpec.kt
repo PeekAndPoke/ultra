@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.messaging.senders.CapturedEmails
 import io.peekandpoke.funktor.messaging.storage.SentMessagesStorage
 import io.peekandpoke.funktor.testing.AppSpec
 import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.coroutines.runBlocking
 
 abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
@@ -23,29 +24,41 @@ abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
     /** The persisted copies of those mails — what `EmailStoring` actually wrote to the database. */
     protected val sentMessages by service(SentMessagesStorage::class)
 
-    protected val superUserToken: String by lazy {
+    private val superUser by lazy {
         runBlocking {
-            val user = usersRepo.insert(
+            usersRepo.insert(
                 TestUser(
                     name = "Super User",
                     email = EmailAddress.of("super-${this@FunktorApiSpec::class.simpleName}@test.com"),
                     isSuperUser = true,
                 )
             )
-            realm.generateJwt(user, selectedOrg = null).token
         }
     }
 
-    protected val regularUserToken: String by lazy {
+    /** Exposed so a refresh can be asserted to return a token for the SAME user. */
+    protected val superUserId: UserId by lazy { UserId(superUser._id) }
+
+    protected val superUserToken: String by lazy {
+        runBlocking { realm.generateJwt(superUser, selectedOrg = null) }
+    }
+
+    private val regularUser by lazy {
         runBlocking {
-            val user = usersRepo.insert(
+            usersRepo.insert(
                 TestUser(
                     name = "Regular User",
                     email = EmailAddress.of("regular-${this@FunktorApiSpec::class.simpleName}@test.com"),
                     isSuperUser = false,
                 )
             )
-            realm.generateJwt(user, selectedOrg = null).token
         }
+    }
+
+    /** Exposed so a refresh can be asserted to return a token for the SAME user. */
+    protected val regularUserId: UserId by lazy { UserId(regularUser._id) }
+
+    protected val regularUserToken: String by lazy {
+        runBlocking { realm.generateJwt(regularUser, selectedOrg = null) }
     }
 }

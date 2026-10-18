@@ -14,7 +14,8 @@ import {Code} from 'astro:components';
         Mount, update, unmount, error boundaries, and browser window events — all auto-cleaned on unmount.
     </p>
 
-    <p>Components register lifecycle handlers in their <code>init</code> block via the <code>lifecycle {}</code> DSL.
+    <p>Components register lifecycle handlers in their <code>init</code> block via the <code>lifecycle {'{}'}</code>
+        DSL.
         Each hook can be registered multiple times; all handlers fire in registration order.</p>
 
     <Aside><strong>Subscribing to the same hook multiple times is totally fine.</strong> Handlers don't replace each
@@ -200,7 +201,7 @@ init {
     <h2>onWindowResize / onWindowFocus / onWindowBlur — browser window events</h2>
 
     <p>For events on the <strong>browser window</strong>, use these hooks. They dispatch through the app-level
-        <code>WindowController</code> (registered by default in every <code>kraftApp {}</code>) and auto-unsubscribe
+        <code>WindowController</code> (registered by default in every <code>kraftApp {'{}'}</code>) and auto-unsubscribe
         on unmount.</p>
 
     <Code code={`class WindowTracker(ctx: NoProps) : PureComponent(ctx) {

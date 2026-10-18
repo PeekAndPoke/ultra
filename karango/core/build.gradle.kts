@@ -26,11 +26,14 @@ kotlin {
         implementation(kotlin("reflect"))
         implementation(Deps.KotlinX.coroutines_core)
 
-        implementation(Deps.JavaLibs.Jackson.annotations)
+        implementation(Deps.KotlinX.serialization_json)
 
         api(Deps.JavaLibs.ArangoDb.java_driver)
 
-        implementation(project(":ultra:common"))
+        // `api`: ArangoDbConfig.password is a Redacted<String> in a PUBLIC constructor, so ultra:common
+        // is part of this module's published surface. At implementation scope the POM marks it
+        // runtime-only and an external consumer cannot write `ArangoDbConfig(password = Redacted("x"))`.
+        api(project(":ultra:common"))
         implementation(project(":ultra:datetime"))
         implementation(project(":ultra:reflection"))
         implementation(project(":ultra:kontainer"))

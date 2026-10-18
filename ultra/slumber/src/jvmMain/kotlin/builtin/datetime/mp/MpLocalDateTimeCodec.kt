@@ -10,7 +10,7 @@ import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import kotlinx.datetime.TimeZone
 
-/** Awaker for [MpLocalDateTime] values. */
+/** Awaker for [MpLocalDateTime] values. Reads `ts` (epoch millis) and a required `timezone` zone id string. */
 object MpLocalDateTimeAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpLocalDateTime? {
@@ -20,6 +20,9 @@ object MpLocalDateTimeAwaker : Awaker {
         }
 
         return when (val ts = data[TS]) {
+            // TODO(scan): unsafe cast - a missing or non-string "timezone" entry throws instead of
+            //  awaking to null, unlike the kotlinx sibling (LocalDateTimeCodec.kt), which defaults to
+            //  UTC via a safe cast (`as? String`).
             is Number -> MpInstant.fromEpochMillis(ts.toLong())
                 .atZone(TimeZone.of(data[TIMEZONE] as String))
                 .datetime
@@ -29,7 +32,7 @@ object MpLocalDateTimeAwaker : Awaker {
     }
 }
 
-/** Slumberer for [MpLocalDateTime] values. */
+/** Slumberer for [MpLocalDateTime] values. Writes `{ts: epoch millis (as if UTC), timezone: "UTC", human}`. */
 object MpLocalDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {

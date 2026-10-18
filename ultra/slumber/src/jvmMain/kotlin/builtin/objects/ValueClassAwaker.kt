@@ -32,6 +32,8 @@ interface ValueClassAwaker : Awaker {
 
         /** A value class has exactly one ctor parameter — the underlying value. */
         private val param = reified.ctorParams2Types.first().first
+
+        /** The reified type of that parameter, so a generic value class resolves its argument. */
         private val innerType = reified.ctorParams2Types.first().second
 
         init {
@@ -48,6 +50,10 @@ interface ValueClassAwaker : Awaker {
             // NonNullAwaker and would THROW here. A nullable UNDERLYING (`value class N(val v: String?)`)
             // still proceeds and constructs `N(null)`. (For a null nullable value-class TYPE, this awaker
             // is bare — not NonNull-wrapped — so returning null yields a null field.)
+            // TODO(scan): the guard reads only the INNER nullability, never reified.type's. For a
+            //   nullable use site of a value class over a nullable inner (`val x: N?`), null awakes to
+            //   N(null) rather than null, so N(null) and an absent value are indistinguishable and the
+            //   round trip breaks.
             if (data == null && !innerType.isMarkedNullable) {
                 return null
             }

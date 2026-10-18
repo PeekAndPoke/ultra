@@ -523,7 +523,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             val record = create()
                             createdAuthRecords.add(record)
                             @Suppress("UNCHECKED_CAST")
-                            Stored(_id = "record-${createdAuthRecords.size}", value = record) as Stored<AuthRecord>
+                            Stored(_id = "record-${createdAuthRecords.size}", value = record)
                         },
                         onGenerateToken = { verificationToken },
                         onInstantNow = { now },
@@ -807,7 +807,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             val record = create()
                             createdAuthRecords.add(record)
                             @Suppress("UNCHECKED_CAST")
-                            Stored(_id = "record-${createdAuthRecords.size}", value = record) as Stored<AuthRecord>
+                            Stored(_id = "record-${createdAuthRecords.size}", value = record)
                         },
                     )
                 }
@@ -875,7 +875,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         },
                         onCreateAuthRecord = { create ->
                             @Suppress("UNCHECKED_CAST")
-                            Stored(_id = "new-password-record", value = create()) as Stored<AuthRecord>
+                            Stored(_id = "new-password-record", value = create())
                         },
                         onRemovePendingActivations = { realm, owner -> activatedOwner = realm to owner },
                         onRemoveAuthRecord = { },
@@ -986,7 +986,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 )
                             )
                         },
-                        onCheckPassword = { plaintext, hash ->
+                        onCheckPassword = { _, _ ->
                             false // wrong password
                         },
                     )

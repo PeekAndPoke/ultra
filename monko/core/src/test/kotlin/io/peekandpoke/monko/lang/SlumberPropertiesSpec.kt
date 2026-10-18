@@ -50,7 +50,7 @@ class SlumberPropertiesSpec : FreeSpec() {
             }
         }
 
-        "MpInstant.ts property" - {
+        "MpInstant 'ts' field path" - {
 
             "should produce 'ts' field path from MpInstant" {
                 val inner = MongoNameExpr(name = "items", type = kType<List<EntityWithInstant>>())
@@ -58,13 +58,13 @@ class SlumberPropertiesSpec : FreeSpec() {
                 val instantPath = MongoPropertyPath.start(r)
                     .append<MpInstant, MpInstant>("createdAt")
 
-                val tsPath = instantPath.ts
+                val tsPath = instantPath.property<Long>("ts")
 
                 tsPath.toFieldPath() shouldBe "createdAt.ts"
             }
         }
 
-        "MpZonedDateTime.ts property" - {
+        "MpZonedDateTime 'ts' field path" - {
 
             "should produce 'ts' field path from MpZonedDateTime" {
                 val inner = MongoNameExpr(name = "items", type = kType<List<EntityWithDates>>())
@@ -72,13 +72,13 @@ class SlumberPropertiesSpec : FreeSpec() {
                 val zonedPath = MongoPropertyPath.start(r)
                     .append<MpZonedDateTime, MpZonedDateTime>("zoned")
 
-                val tsPath = zonedPath.ts
+                val tsPath = zonedPath.property<Long>("ts")
 
                 tsPath.toFieldPath() shouldBe "zoned.ts"
             }
         }
 
-        "MpLocalDateTime.ts property" - {
+        "MpLocalDateTime 'ts' field path" - {
 
             "should produce 'ts' field path from MpLocalDateTime" {
                 val inner = MongoNameExpr(name = "items", type = kType<List<EntityWithDates>>())
@@ -86,13 +86,13 @@ class SlumberPropertiesSpec : FreeSpec() {
                 val localDtPath = MongoPropertyPath.start(r)
                     .append<MpLocalDateTime, MpLocalDateTime>("localDt")
 
-                val tsPath = localDtPath.ts
+                val tsPath = localDtPath.property<Long>("ts")
 
                 tsPath.toFieldPath() shouldBe "localDt.ts"
             }
         }
 
-        "MpLocalDate.ts property" - {
+        "MpLocalDate 'ts' field path" - {
 
             "should produce 'ts' field path from MpLocalDate" {
                 val inner = MongoNameExpr(name = "items", type = kType<List<EntityWithDates>>())
@@ -100,7 +100,7 @@ class SlumberPropertiesSpec : FreeSpec() {
                 val localDPath = MongoPropertyPath.start(r)
                     .append<MpLocalDate, MpLocalDate>("localD")
 
-                val tsPath = localDPath.ts
+                val tsPath = localDPath.property<Long>("ts")
 
                 tsPath.toFieldPath() shouldBe "localD.ts"
             }

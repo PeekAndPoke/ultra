@@ -24,6 +24,9 @@ kotlin {
     dependencies {
         implementation(Deps.Ksp.symbol_processing)
 
+        // Direct: the processor reads @Slumber.Field, which lives here. It also arrives transitively
+        // through :ultra:slumber's api edge, but a source reference should not rely on that.
+        implementation(project(":ultra:common"))
         implementation(project(":ultra:slumber"))
         implementation(project(":ultra:vault"))
 

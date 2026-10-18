@@ -66,19 +66,20 @@ kotlin {
             dependencies {
                 implementation(kotlin("reflect"))
 
-                api(Deps.Ktor.Server.html_builder)
-                api(Deps.KotlinX.wrappers_css)
 
-                api(project(":ultra:semanticui"))
 
                 api(project(":funktor:core"))
                 api(project(":funktor:cluster"))
-                api(project(":funktor:staticweb"))
+                api(project(":funktor:rest"))
             }
         }
 
         jvmTest {
             dependencies {
+                // Drives the collectors through a real ApplicationCall — the redaction call sites are
+                // otherwise untested, and a policy that is never invoked redacts nothing.
+                implementation(Deps.Ktor.Server.Test.host)
+
                 Deps.Test {
                     jvmTestDeps()
                 }

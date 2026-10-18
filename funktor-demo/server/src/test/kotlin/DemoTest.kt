@@ -12,7 +12,7 @@ class DemoTest : AppSpec<FunktorDemoConfig>(testApp) {
     private val api by service(AuthApiFeature::class)
 
     init {
-        api.auth.getRealm { route ->
+        api.authLogin.getRealm { route ->
             "Getting an existing realm must work" {
                 apiApp {
                     anonymous {

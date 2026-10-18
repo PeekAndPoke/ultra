@@ -196,7 +196,7 @@ interface SessionStore {
         }
 
         private fun isExpired(session: Stored<AuthRecord.Session>, nowMs: Long): Boolean {
-            val expiresAtSec = session.value.expiresAt ?: return false
+            val expiresAtSec = session.value.expiresAt
             // Compare in seconds to avoid Long overflow when expiresAt is near Long.MAX_VALUE.
             return expiresAtSec <= nowMs / 1000L
         }

@@ -78,8 +78,8 @@ class GithubSsoAuth(
             }
 
             return invoke(
-                clientId = clientId,
-                clientSecret = clientSecret,
+                clientId = clientId.value,
+                clientSecret = clientSecret.value,
                 capabilities = capabilities,
             )
         }

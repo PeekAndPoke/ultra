@@ -1,9 +1,9 @@
 package io.peekandpoke.ultra.codegen.model
 
+import io.peekandpoke.ultra.common.slumber.Slumber
 import io.peekandpoke.ultra.reflection.ReifiedKType
 import io.peekandpoke.ultra.reflection.hasAnyAnnotationOnPropertyDefinedOnSuperTypes
 import io.peekandpoke.ultra.reflection.hasAnyAnnotationRecursive
-import io.peekandpoke.ultra.slumber.Slumber
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicChildUtil
 import io.peekandpoke.ultra.slumber.builtin.polymorphism.PolymorphicParentUtil
 import kotlin.reflect.KClass
@@ -43,10 +43,15 @@ class TypeWalker(
 
     /** Walks from [roots] and returns the resulting model. */
     fun walk(roots: List<Root>): TypeModel {
+        val rootRefs = LinkedHashMap<String, TsTypeRef>()
+
         roots.forEach { root ->
-            // Resolving the root registers whatever it references; the ref itself is discarded
-            // because a root is a position, not a declaration.
-            resolveRef(root.type, listOf(root.label))
+            // Resolving a root registers whatever it references AND yields the root's own reference.
+            // The reference is kept: an endpoint's response type is a position, not a declaration, so
+            // a client member can only render `z.array(Talk)` from the ref. Deriving it a second time
+            // at emit is the obvious alternative and the wrong one — two resolution paths drift, and
+            // the emitted schema would stop describing what the walk validated.
+            rootRefs[root.label] = resolveRef(root.type, listOf(root.label))
         }
 
         while (queue.isNotEmpty()) {
@@ -60,6 +65,7 @@ class TypeWalker(
             unresolved = unresolved.toList(),
             longValued = longValued.toList(),
             undetermined = undetermined.toList(),
+            rootRefs = rootRefs.toMap(),
         )
     }
 
@@ -155,6 +161,26 @@ class TypeWalker(
      * Returning rather than throwing keeps the walk going, so one run reports EVERY such position
      * instead of the first — the same reason validation collects problems rather than failing fast.
      */
+    /**
+     * The wire shape [cls] declares via `@Slumber.As`, or `null` when it declares none.
+     *
+     * Reflective on purpose: the annotation carries `RUNTIME` retention so consumers like this one can
+     * read it, and karango/monko read the same annotation through KSP at build time.
+     *
+     * A type declaring ITSELF is refused rather than followed — it would recurse forever, and it
+     * cannot be what anyone meant.
+     */
+    private fun declaredWireShape(cls: KClass<*>): KType? {
+        val declared = cls.annotations.filterIsInstance<Slumber.As>().firstOrNull()?.shape ?: return null
+
+        check(declared != cls) {
+            "'${cls.qualifiedName}' declares @Slumber.As(${cls.simpleName}::class) — itself. A wire " +
+                    "shape must be a different type, or resolving it never terminates."
+        }
+
+        return declared.createType()
+    }
+
     private fun undeterminable(path: List<String>, reason: String): TsTypeRef {
         undetermined.add(TypeModel.Undetermined(path = path, reason = reason))
 
@@ -230,6 +256,27 @@ class TypeWalker(
             }
 
             return TsTypeRef.Named(TypeId.declOf(cls, type))
+        }
+
+        // No claim — but the TYPE ITSELF may declare its wire shape. `@Slumber.As` says "on the wire
+        // this IS that", so resolve the declared shape instead of inspecting the class, exactly as a
+        // claim would.
+        //
+        // ORDER MATTERS: a claim still wins. A claim is a downstream override for a type we may not
+        // own, and silently preferring the annotation would change output that contributors control.
+        //
+        // This is NOT purely additive, and the tests said so: a type that is custom-coded, UNCLAIMED
+        // and annotated used to fail the codec-parity check and now resolves. That is the point of
+        // the annotation — but it means the check's remaining subjects are types with no declared
+        // shape: `java.time.*`, `kotlinx.datetime.*`, and anything third-party.
+        //
+        // NOTE the direction: `@Slumber.As` describes what the SLUMBERER writes. That is the right
+        // direction for a response payload, which is what a generated schema parses. It is NOT
+        // necessarily right for a request body, which the server AWAKES — `Redacted<T>` emits a
+        // placeholder String but awakes from T's own raw shape. See §10 of
+        // `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md`.
+        declaredWireShape(cls)?.let { shape ->
+            return resolveRef(shape, path)
         }
 
         // Nothing / Unit -> NullCodec

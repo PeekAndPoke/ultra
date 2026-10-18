@@ -11,31 +11,8 @@ import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.vdom.VDom
-import kotlinx.coroutines.delay
 import kotlinx.html.Tag
 import kotlinx.html.div
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-
-/** Polls until [check] passes or [timeout] is reached. */
-private suspend fun eventually(
-    timeout: Duration = 2.seconds,
-    poll: Duration = 25.milliseconds,
-    check: suspend () -> Unit,
-) {
-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
-
-    while (true) {
-        try {
-            check()
-            return
-        } catch (e: Throwable) {
-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
-            delay(poll)
-        }
-    }
-}
 
 // Component that subscribes to the chartjs addon and renders loading/ready status
 @Suppress("TestFunctionName")

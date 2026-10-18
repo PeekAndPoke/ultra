@@ -1,11 +1,27 @@
 package io.peekandpoke.funktor.insights
 
-import io.ktor.server.application.*
-import io.ktor.server.application.hooks.*
-import io.ktor.server.routing.*
-import io.ktor.util.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.application.hooks.CallSetup
+import io.ktor.server.application.hooks.ResponseSent
+import io.ktor.server.application.install
+import io.ktor.server.application.log
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingCall
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.RoutingPipelineCall
+import io.ktor.server.routing.RoutingResolveTrace
+import io.ktor.server.routing.Routing
+import io.ktor.util.AttributeKey
+import io.ktor.server.request.path
 import io.peekandpoke.funktor.core.fullUrl
 import io.peekandpoke.funktor.core.model.InsightsConfig
+import io.peekandpoke.funktor.rest.FunktorRouteAttributes
+import io.peekandpoke.funktor.rest.InsightsLevel
+import io.peekandpoke.funktor.rest.InsightsOptions
+import io.peekandpoke.funktor.rest.InsightsOptionsKey
+import io.peekandpoke.funktor.insights.api.InsightsApi
 import io.peekandpoke.funktor.insights.collectors.RoutingCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -46,11 +62,29 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
                     application.log.trace("${call.request.fullUrl()} took ${ns / 1_000_000.0} ms")
                 }
 
-                // Record the collected insights
-                insights.let { insights ->
+                // Ask the RESOLVED ROUTE how much to record — never the request uri, which the client
+                // controls. Resolving here rather than inside finish() also avoids launching a
+                // coroutine for a request that is about to be discarded.
+                val options = when {
+                    // Second layer, restored 2026-07-31. The route attribute is the primary mechanism
+                    // and covers every funktor ApiRoute — but a request that resolves to something else
+                    // (a `fallback { }` catch-all, a wrong method, an unmatched sub-path) carries NO
+                    // attribute bag and therefore defaults to FULL. That let an unauthenticated
+                    // `POST /_/funktor/insights/records` write a ~270 KB record of the insights API,
+                    // which the deleted `isExcluded` used to suppress.
+                    //
+                    // Narrower than what it replaces on purpose: matched against the DECODED path only,
+                    // never the query string, so neither of the two bypasses that killed `isExcluded`
+                    // (percent-encoding, and `?next=/_/funktor/insights`) has anywhere to act.
+                    call.request.path().startsWith(InsightsApi.base) -> InsightsOptions.off
+
+                    else -> call.insightsOptions()
+                }
+
+                if (options.level != InsightsLevel.OFF) {
                     call.launch(Dispatchers.IO) {
                         delay(1.microseconds)
-                        insights.finish(call)
+                        insights.finish(call, options)
                     }
                 }
             }
@@ -58,6 +92,31 @@ fun Route.instrumentWithInsights(config: InsightsConfig?) {
     }
 
     install(plugin)
+}
+
+/**
+ * The [InsightsOptions] of the route this call resolved to; [InsightsOptions.default] when there is none.
+ *
+ * The mounting code copies the route's attributes onto the resolved ktor node
+ * (`FunktorRouteAttributes`), so the options are readable from the call.
+ *
+ * **ktor has two routing call types and both must be handled.** At the `ResponseSent` hook the call is a
+ * `RoutingPipelineCall`; *inside a route handler* it is a [RoutingCall], which is a different class and
+ * not a subtype. Matching only the first made this silently return the default whenever a collector was
+ * driven from a handler — `dropQueryParams` failed open there, and no test noticed because none reached
+ * the branch. Found by probing the actual runtime type, 2026-07-31.
+ *
+ * Anything else (static resources, unmatched paths) carries no route attributes and so records in full.
+ */
+fun ApplicationCall.insightsOptions(): InsightsOptions {
+    val node = when (this) {
+        is RoutingPipelineCall -> route
+        is RoutingCall -> route
+        else -> null
+    }
+
+    return node?.attributes?.getOrNull(FunktorRouteAttributes)?.get(InsightsOptionsKey)
+        ?: InsightsOptions.default
 }
 
 object RoutingInstrumentation {

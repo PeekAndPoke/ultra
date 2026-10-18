@@ -335,7 +335,9 @@ class RestApiTsContributor(private val features: Lazy<List<ApiFeature>>) : TsSdk
   (`funktor/core/src/jvmMain/kotlin/broker/TypedRoute.kt:30`); the remaining PARAMS ctor params are query params.
 - [ ] **Match `TypedRouteRenderer` exactly** (`funktor/core/src/jvmMain/kotlin/broker/TypedRouteRenderer.kt:28`)
   — null/empty omission, one value per key. Do not reinvent. (Earlier drafts of this plan named
-  `UriParamBuilder`; **no such class exists**. `runtime/http.ts`'s `buildUrl` is already written against
+  `UriParamBuilder`; **it DOES exist** (`ultra/remote/src/commonMain/kotlin/UriParamBuilder.kt`) and is,
+  with `buildUri` (`ultra/remote/.../helpers.kt:87`), the correct counterpart. `runtime/http.ts`'s
+  `buildUrl` is written against
   the renderer and checked in `ts-verify/verifyRuntime.ts`.)
 - [ ] **Build it profile-shaped from day one**, even though profiles land later (see the incoming
   requirements below). `contribute` is exactly where a root predicate belongs, so take one as a
@@ -499,13 +501,42 @@ conceptually aligned. Auth becomes a one-line transport wrapper, not a generated
 
 ---
 
-## Phase 4 — Wiring and demo
+## Phase 4 — Wiring and demo — DONE 2026-07-31
 
-- [ ] Add `:ultra:codegen` and `:funktor:codegen` to `settings.gradle`.
-- [ ] Register `funktorCodegen()` in the demo server's kontainer.
-- [ ] Generate an SDK for at least `FunktorConfApiFeature` end to end, into a scratch dir.
-- [ ] Type-check the generated output with `tsc --noEmit` as part of the test evidence — generated TS that does not
-  compile is the failure mode a Kotlin-side test cannot catch.
+- [x] `:ultra:codegen` and `:funktor:codegen` in `settings.gradle`.
+- [x] `funktorCodegen()` registered in the demo server's kontainer (`7664e8fd`).
+- [x] SDK generated for the demo's WHOLE API — 16 files, 11 clients (auth, cluster, logging, saas,
+      insights, introspection, operators, b2b, showcase, funktorconf), not just FunktorConf.
+- [x] Type-checked twice, under two different TypeScript majors: `tsc --noEmit` (7.0.2) over the raw
+      output, and `vue-tsc --noEmit` (5.9.3) inside the consuming app.
+- [x] **Consumed for real** — `funktor-demo/sdkgen-app` (`036369b6`, `1619f0ce`), a Vue 3 + Vite app
+      rendering live events from the running server.
+
+**Verified end to end 2026-07-31:** with `fixtures:install` loaded, the app lists the seeded events
+and the requests appear in the browser's network tab. Maintainer confirmed.
+
+### What generating a REAL API found that fixtures never did
+
+- **Two `ApiRoutes` may share a name.** `funktor:auth` declares `ApiRoutes("login")` twice, public and
+  authenticated. Emitting a class per INSTANCE produced two `LoginApi` classes in one file — TS2300.
+  Fixtures all had distinct group names, because that is what one writes when inventing them.
+- **The review's CRITICAL, confirmed on real code.** `FunktorClusterApiFeature`'s three `list` members
+  now carry their own schemas.
+- **`vue-tsc` cannot run on TypeScript 7** (no `typescript/lib/tsc` export). `vue-tsc@3.3.9` is the
+  newest release and its `>=5.0.0` peer range is stale. The app pins 5.9.3 deliberately.
+- **The SDK caught a wrong assumption about the API before any request was sent** — hand-written
+  `event.title` / `event.startsAt` rejected against the real `name` / `startDate`.
+
+### Deviations from this section as originally written
+
+- **Layout is FLAT** — `models.ts` and `*Client.ts` at the SDK root, no `models/`, `clients/` or
+  `index.ts`. Per-feature model files need a rule for a type two features both reach, and a
+  subdirectory needs relative-specifier support (runtime specifiers are root-relative). Deferred
+  deliberately so the decision could be made against real output.
+- **Not "into an existing frontend folder".** Superseded by the owned-directory decision: the
+  generator wipes its target, so it gets `src/funktorsdk/`, git-ignored.
+- The Vite/HMR rationale is unproven — `pnpm run dev` works, but nobody has edited a route and
+  watched it propagate.
 
 **Output shape (decided 2026-07-29):** bare `.ts` sources into an existing frontend folder. Frontend owns tsconfig,
 build and deps; Vite HMR picks up changes with no extra wiring.
@@ -985,7 +1016,8 @@ One item worth a conscious decision rather than a default:
       — `MpDateTimeFieldParitySpec` (8); envelope equivalent is `ApiResponseParitySpec` (8)
 - [x] Cross-check: query-param encoding vs `TypedRouteRenderer` — `buildUrl` in `runtime/http.ts`,
       checked in `ts-verify/verifyRuntime.ts` (omits null/empty, single key per param, encodes both
-      path and query). Note the reference is `TypedRouteRenderer`, not `UriParamBuilder` — no such
+      path and query). **CORRECTED 2026-07-30:** the reference is `UriParamBuilder` + `buildUri`, NOT
+      `TypedRouteRenderer` — the latter is a server-side link renderer that double-encodes query values. Old
       class exists.
 - [x] `tsc --noEmit` on generated output — automated as `:ultra:codegen:tsVerify`, wired into `check`
 - [x] Compile sweep after Phase 0:
@@ -1111,23 +1143,38 @@ red. This is now the strongest evidence in the repo for the mutation-testing rul
 A defect in `ultra/slumber` was also found and reproduced but deliberately NOT fixed — battle-tested
 code gets its own task and review round. See `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`.
 
-### Confirmed, NOT yet fixed — tracked
+### Review findings — AUDITED 2026-07-31
 
-| Finding | Where | Why deferred |
+Every row below was re-checked against the code on 2026-07-31, not carried forward on trust. The
+table had drifted badly: nine of thirteen were already fixed and still listed as outstanding, which
+is exactly the "stale plans cause wrong priorities" failure CLAUDE.md warns about. Two of the stale
+rows concerned `@Slumber.As` territory, so a fresh agent would have started on work already done.
+
+**FIXED — verified, do not re-open**
+
+| Finding | Fixed by | Verified how |
 |---|---|---|
-| `slumberConfig` defaults to `null`, silently disabling the codec-parity check | `sdk/TsSdkBuilder.kt:46`, `sdk/TsModelValidator.kt:166` | raised independently by TWO reviewers; the module's headline check is off by default. Needs an API decision (required param vs named test factory) |
-| Walker degrades to `unknown` in 5 positions with no advisory | `model/TypeWalker.kt` (record value, array item, alias target, non-KClass classifier) | this is the Dart `dynamic` defect returning. `List<*>` emits `unknown[]` silently. Needs a third `TypeModel` channel |
-| Generic sealed hierarchy loses its payload type | `model/TypeWalker.kt` (`createBareType()` for variants) | `Storable<Organisation>` and `Storable<Talk>` become the same TS type carrying `unknown`. Needs type-argument substitution design |
-| Name-collision check ignores claimed `tsName`s | `sdk/TsModelValidator.kt` | app type named `MpInstant` + the datetime claim → TS2440 inside generated code. Also: `nameCollisionProblems`/`danglingReferenceProblems` have ZERO test coverage |
-| `KotlinxJsonTsContributor`'s 5 claims have no drift test | `contributors/KotlinxJsonTsContributor.kt` | violates this doc's own standing rule. `JsonObject`'s shape is whatever `JsonUtil.unwrap` does, and nothing pins it |
-| Tautological test assertion | `ts/TsModelEmitterSpec.kt:62` | `x shouldBe x`; the two neighbours pass when the variant is ABSENT (`indexOf` → -1) |
-| Mp claim-coverage test compares the contributor against a copy of itself | `contributors/MpDateTimeFieldParitySpec.kt:108` | cannot detect the thing it says it detects |
-| `@Slumber.Field` non-ctor props emitted required | `model/TypeWalker.kt` | `DataClassAwaker` never reads them. Ties into request-vs-response shapes, a Phase 2 design question |
-| `@Slumber.Field` selection re-derived from `DataClassSlumberer` | `model/TypeWalker.kt:250-257` | verbatim copy; violates "defer to the slumber-side utility". Needs a slumber-side API |
-| `JsonElement` → `z.unknown()` never reaches the advisory list | `contributors/KotlinxJsonTsContributor.kt:27` | `map()` hardcodes `opaque = false` |
-| No scalar refinement (`Char` → bare `z.string()`) | `model/TypeWalker.kt:114` | `CharAwaker` maps `""` to null, so the client passes input the server rejects |
-| `readArrayElements` duplicated verbatim | `ultra/slumber` collections | production code; cosmetic |
-| `ThirdPartyContributorSpec` clue asserts what it cannot observe | `sdk/ThirdPartyContributorSpec.kt:128` | passes BECAUSE of the classloader bug; needs a child-loader fixture now that the bug is fixed |
+| `slumberConfig` defaulted to `null`, disabling the codec-parity check | `53b68126` | `TsSdkBuilder.kt` — `slumberConfig: SlumberConfig`, no default; `forTesting(...)` is the named test path and the check still runs |
+| Walker degraded to `unknown` in 5 positions with no advisory | `efe2b6ad` | `TypeModel.Undetermined` channel exists and is a BLOCKING problem |
+| Generic sealed hierarchy lost its payload type | `63f9f186` | generic emission replaced monomorphization; `FxStorableNew<T>` carries its parameter in the emitted fixture |
+| Name-collision check ignored claimed `tsName`s | `d605b996` | `TsModelValidator` counts `usedClaims`; `nameCollisionProblems` and `danglingReferenceProblems` both have tests now |
+| `KotlinxJsonTsContributor`'s claims had no drift test | `3bc64c41` | `KotlinxJsonClaimParitySpec` derives each expected combinator FROM the observed codec shape |
+| Tautological assertion in `TsModelEmitterSpec` | `ef5eba72` | replaced by real assertions on escaped literals (`z.literal('O\'Brien\\Co')`) |
+| Mp claim-coverage compared the contributor against a copy of itself | `ccab61d4` | now driven from the ultra/datetime artifact + `MpDateTimeModule`; the test asserts its enumeration found something |
+| `JsonElement` → `z.unknown()` never reached the advisory list | `29a1015d` | goes through `claims.opaque`, which sets the flag `opaqueAdvisories` filters on |
+| `ThirdPartyContributorSpec` clue asserted what it could not observe | `ceef31b0` | now uses a child `ClassLoader` and asserts its own precondition — "the suite's own loader must NOT see it, or nothing is proven" |
+
+**STILL OPEN — 4 of 13**
+
+| Finding | Where | Status |
+|---|---|---|
+| `@Slumber.Field` non-ctor props emitted required | `model/TypeWalker.kt` | **maintainer decision.** `DataClassAwaker` never reads them. Ties to request-vs-response shapes: one declaration cannot describe both directions |
+| No scalar refinement (`Char` → bare `z.string()`) | `model/TypeWalker.kt:259` | **maintainer decision.** Confirmed still `String::class, Char::class -> TsString`. A behaviour change for every existing consumer |
+| `@Slumber.Field` selection re-derived from `DataClassSlumberer` | `model/TypeWalker.kt:454` | **now `@Slumber.As` territory.** Needs a slumber-side API to expose the field selection; see `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md` |
+| `readArrayElements` duplicated verbatim | `ultra/slumber` collections | **not this module's** — cosmetic, in battle-tested code |
+
+So the codegen-side backlog from the review rounds is **empty**: the two remaining codegen items are
+decisions, not work, and the other two belong to `ultra/slumber`.
 
 ### Probed and CLEAN — do not re-tread
 
@@ -1147,6 +1194,59 @@ code gets its own task and review round. See `.claude/tasks/20260730-slumber-int
 - **Kotlin-version sensitivity, already guarded**: on 2.1.10 `typeOf<Array<Int>>().classifier` was
   `IntArray::class`, which would break `forArray`; on the pinned 2.4.10 it is `Array::class`, and
   `ArrayCodecSpec`'s boxed-array case fails loudly if that regresses.
+
+## INCOMING — `Redacted<T>` must emit a string, not a subtree (2026-07-31)
+
+**For the codegen agent. This is a hard requirement, not a suggestion, and it is easy to get silently
+wrong.**
+
+A new type is landing: `Redacted<T>` in `ultra/common/src/commonMain/kotlin/model/`, package
+`io.peekandpoke.ultra.common.model`. Plan and rationale:
+`.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`.
+
+It wraps a value that **deserialises normally but always serialises to a placeholder string**. The round
+trip is broken on purpose — it is how config secrets (JWT signing key, CSRF secret, DB passwords) are
+kept out of insights records, logs and any other output. It is generic so a whole **subtree** can be
+redacted: `Redacted<AwsConfig>`, not merely `Redacted<String>`.
+
+**What codegen must do:** for a field of type `Redacted<T>`, emit **`string`** — never the shape of `T`.
+
+```kotlin
+data class DemoConfig(val aws: Redacted<AwsConfig>)
+```
+```typescript
+// CORRECT                          // WRONG — the wire never carries this
+type DemoConfig = {                 type DemoConfig = {
+    aws: string                         aws: { accessKey: string, region: string }
+}                                   }
+```
+
+**Why the naive walk gets it wrong.** The generator walks the same `SlumberConfig` the runtime uses, and
+resolves a generic by descending into its type argument. `Redacted<T>` is the case where the declared type
+argument is deliberately *not* what appears on the wire. Descending into `T` produces a zod schema that
+expects an object and receives `"REDACTED"` — a runtime `.parse()` failure in the browser, on a field whose
+whole purpose is that it never reaches the browser intact.
+
+**The equivalent Slumber rule, for symmetry:** the Slumberer for `Redacted<T>` is registered as the FIRST
+branch in `BuiltInModule.getSlumberer`, ahead of every other codec, so it cannot be shadowed. Codegen
+needs the same precedence — check for `Redacted<T>` before any generic-descent logic, not after.
+
+Worth a test that pins it: a root containing `Redacted<SomeObject>` emits `string`, and mutating the
+contributor to descend into the argument fails that test.
+
+### This special case is TEMPORARY — `@Slumber.As` supersedes it
+
+`Redacted<T>` will carry **`@Slumber.As(String::class)`**
+(`.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md`), so once codegen consumes that annotation
+this stops being a hand-written rule and becomes derivable like any other declared wire shape. The
+annotation nest moves to `ultra:common`, package `io.peekandpoke.ultra.common.slumber`, precisely so
+that every generator can read it.
+
+`Redacted<T>` is in fact the annotation's cleanest case, and it answers one of that doc's open
+questions: it is a **generic** custom-coded type whose wire shape does not depend on its type argument,
+so `As(KClass)` with no type-argument machinery is exactly sufficient. If you are building
+`@Slumber.As` consumption anyway, do that first and skip the special case entirely — it is the same
+work, done once, for six-plus types instead of one.
 
 ## Incoming requirements from the frontend-SDK design (2026-07-30)
 
@@ -1238,11 +1338,82 @@ external packages and are exempt. This is what survives of a rejected proposal t
 ownership onto the claim; the profile decision above made the restructuring unnecessary, but the gap it
 found is real and general.
 
-**Proposal only, do not build:** `claims.expects<T>(tsName)` — the inverse of a claim, verifying that a
-hand-written component's assumed TS name matches what the model emits (monomorphization makes
-`PageOf<Lock>` emit as `PageOfLock`, which an author must otherwise guess). Deferred by the maintainer
-until misnaming actually recurs; the `vue-tsc` gate is the backstop until then. Rationale recorded in the
-design doc so it is not re-derived.
+**`claims.expects<T>(tsName)` is WITHDRAWN, not deferred.** It was proposed as the inverse of a claim, to
+verify that a hand-written component's assumed TS name matches what the model emits — but its only
+motivation was monomorphization's computed names (`PageOf<Lock>` → `PageOfLock`). Real generics landed the
+same day (`20260730-codegen-generic-emission.md`, `63f9f186`), so a component author writes `PageOf<Lock>`
+verbatim and there is nothing left to guess. Do not build it.
+
+### i18n also lands here (analysed 2026-07-30)
+
+Full analysis in the design doc's "i18n in the SDK" section. What it means for `ultra/codegen`:
+
+- **The TS is emitted by the BUILDER, from the live generated catalog object** — not pre-generated as a
+  jar resource by the Gradle plugin. Reason: the builder then sees every key, so the cross-module
+  namespace collision check and the "every accessor has a fallback entry" check are real rather than
+  derived claims that can drift; and the TS shape evolves with the generator instead of being frozen at
+  each module's build time. **The Kotlin pass is lossless** — the model is a pure function of the flat
+  catalog entries, which the generated object bakes verbatim, so re-deriving the tree at SDK-build time
+  reproduces it exactly. Only `fallbackLang` and `moduleName` are dropped; bake both onto the generated
+  object.
+- **DONE — the key-tree model is already yours to use.** `9dd2befb` moved `I18nModelBuilder`, the node
+  types and `LocaleCatalog` from the unpublished `:tooling` into `io.peekandpoke.ultra.i18n.model`
+  (published), along with the `{{name}}` pattern (`I18nPlaceholders`), the plural suffixes
+  (`pluralSuffixes`, `splitPluralSuffix`, `basePluralKey`) and the locale-tag grammar
+  (`splitLocaleTag`, `normalizeLocaleTag`). The YAML parser, Kotlin emitter and checker stayed in
+  `:tooling`. **Do not unify `:tooling` into `ultra/codegen`** — that would ship a YAML parser and a
+  Kotlin source emitter to every SDK consumer and inverts the dependency sense.
+  - `ultra/codegen` does **not** yet declare `api(project(":ultra:i18n"))` — deliberately, since nothing
+    consumes it. Add it when you start.
+  - The one rule on `ultra/i18n/src/commonMain/kotlin/model/`: it is source-included into buildSrc, so it
+    must reference nothing outside its own directory. Breaking that fails the buildSrc compile before any
+    project builds. (It was also restricted to Kotlin 1.8 until `9dd2befb` took buildSrc off `kotlin-dsl`;
+    that limit is gone, which is why `LocaleCatalog` still carries a `String` tag it no longer needs to.)
+- **A 6th registry target:** the i18n catalog set + merged accessor root.
+- **A registry entry MUST carry a declared layer** (`Framework` < `App`), and emission order derives from
+  it. This is the one place where the "contributor order is structurally irrelevant" property is not
+  enough: catalog precedence is genuinely order-dependent — `I18n.Builder.build()` reverses the install
+  list so the app's override wins (`ultra/i18n/src/commonMain/kotlin/I18n.kt:61`). Aggregate by
+  contribution order and whether an override takes effect depends on DI iteration order, silently and
+  per-key. Ties within a layer are a hard error.
+- **Two modules claiming the same top-level namespace is a hard error naming both.** Kotlin gets this
+  free (ambiguous extension at the call site); merging TS objects would silently drop one.
+- **A new `TsRuntime.Module.I18n`** — hand-written `ts/runtime/i18n.ts` mirroring `MessageResolver`
+  (locale chain, catalog precedence, single-pass `{{name}}` substitution, `_other` plural fallback,
+  key-as-miss-marker). Standing rule applies: it needs a parity test, and the corpus already exists in
+  `tooling/i18n-fixture` — one expectation table read by both the Kotlin spec and the node harness.
+- **No new name-mangling module.** Quoting every key in the emitted object literal makes TS reserved
+  words and hyphenated keys work as-is, so there is no `TsNames` sibling to `KotlinNames.kt`.
+- **i18n is an emit action + registry entry, not a contributor kind** — a catalog is not a type, so an
+  i18n contributor would have no root to condition on and could not be profiled. Whichever contributor
+  ships a component ships its strings too, under one emit condition.
+
+#### Sequencing — what to pick up when
+
+The design above is settled; nothing here is waiting on a maintainer decision. But most of it sits behind
+the aggregation registry, so the order matters:
+
+1. **`TsRuntime.Module.I18n` — startable NOW, independent of everything else.** Hand-written
+   `ts/runtime/i18n.ts`, no registry, no profiles, no catalog enumeration. Take it first: it is the
+   highest-risk piece (a resolver divergence means the frontend renders different text than the server —
+   silently, in one language only), and its corpus already exists. Extend `tooling/i18n-fixture` with a
+   single declarative expectation table (locale, accessor path, args, expected) read by **both** the
+   Kotlin spec and the node harness; two hand-maintained lists would drift, which is the exact failure
+   this test exists to catch.
+2. **`EnumerableI18nCatalog` + `moduleName`/`fallbackTag` on the generated catalog object.** Small, and
+   it lands in `ultra/i18n` + `:tooling`/`KotlinEmitter` rather than in `ultra/codegen` — say so if you
+   would rather it came from this side.
+3. **The single-module accessor emitter** — catalog data + key tree → TS. Testable against one module
+   before aggregation exists.
+4. **Everything multi-module** (the registry target, the layer ordering, the namespace-collision check)
+   waits on aggregation registries, addition #3 above.
+
+Two things stay open and block **none** of the above:
+
+- The `Message` key-vs-text wire fork — a maintainer decision, and it governs whether the framework's
+  *message* catalogs ship at all, not how the emitter works.
+- Bake-all-locales vs per-locale lazy chunks — the file layout is identical either way; only the index
+  differs, so it can be decided after the emitter exists.
 
 **Also:** a `JavaTimeTsContributor` will be needed (`java.time.LocalDateTime`/`Instant` go through custom
 Slumber codecs in `builtin/datetime/javatime/`, so they need claims plus a parity test — the standing
@@ -1251,6 +1422,18 @@ companion, which breaks the repo's no-FQN rule; the maintainer expects this to b
 review rounds, which have not run yet.
 
 ## Follow-ups
+
+- [ ] **REVISIT the Mp* claims once `@Slumber.As` lands** (maintainer, 2026-07-31).
+      `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md`. Once the datetime types declare
+      their wire shape, a good deal of what `ultra/codegen` does by hand should simply go:
+      - `MpDateTimeTsContributor.CLAIMED` — six hand-written claims that become derivable.
+      - Most of `runtime/datetime.ts` — hand-written TypeScript restating the same six shapes.
+      - `MpDateTimeFieldParitySpec` — its whole reason for existing is that a claim is trusted and
+        never verified. With a declared shape verified at the source, this becomes redundant rather
+        than merely passing.
+      **Keep `TsTypeClaims` itself.** `java.time.*` and `kotlinx.datetime.*` are custom-coded and not
+      ours to annotate, so the registry stays as the escape hatch for types we do not own. The
+      annotation shrinks the claim LIST, not the mechanism.
 
 - [ ] **DOCS task** — required on archive. This adds two public modules (`ultra/codegen`,
   `funktor/codegen`) with a public extension point (`TsSdkContributor`). Needs a docs-site page plus the LLM mirror

@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.tooling.i18n
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.i18n.model.LocaleCatalog
 
 class I18nCheckerSpec : StringSpec({
 

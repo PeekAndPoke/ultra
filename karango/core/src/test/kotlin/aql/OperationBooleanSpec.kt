@@ -57,19 +57,19 @@ class OperationBooleanSpec : StringSpec({
         tuple("LTE: expression and expression", 2.aql LTE 2.aql, "2 <= 2"),
 
         // IN Operation
-        tuple("IN: partial and array", ARRAY(1.aql, 2.aql) ALL IN(arrayOf(1)), "[1, 2] ALL IN [ 1 ]"),
-        tuple("IN: partial and collection", ARRAY(1.aql, 2.aql) ALL IN(listOf(1)), "[1, 2] ALL IN [ 1 ]"),
+        tuple("IN: partial and array", ARRAY(1.aql, 2.aql) ALL IN(arrayOf(1)), "[1, 2] ALL IN [\n    1\n]"),
+        tuple("IN: partial and collection", ARRAY(1.aql, 2.aql) ALL IN(listOf(1)), "[1, 2] ALL IN [\n    1\n]"),
         tuple("IN: partial and expression", ARRAY(1.aql, 2.aql) ALL IN(ARRAY(1.aql)), "[1, 2] ALL IN [1]"),
-        tuple("IN: expression and array", 1.aql IN arrayOf(1), "1 IN [ 1 ]"),
-        tuple("IN: expression and collection", 1.aql IN listOf(1), "1 IN [ 1 ]"),
+        tuple("IN: expression and array", 1.aql IN arrayOf(1), "1 IN [\n    1\n]"),
+        tuple("IN: expression and collection", 1.aql IN listOf(1), "1 IN [\n    1\n]"),
         tuple("IN: expression and expression", 1.aql IN ARRAY(1.aql), "1 IN [1]"),
 
         // NOT_IN Operation
-        tuple("NOT_IN: partial and array", ARRAY(1.aql, 2.aql) ALL NOT_IN(arrayOf(1)), "[1, 2] ALL NOT IN [ 1 ]"),
-        tuple("NOT_IN: partial and collection", ARRAY(1.aql, 2.aql) ALL NOT_IN(listOf(1)), "[1, 2] ALL NOT IN [ 1 ]"),
+        tuple("NOT_IN: partial and array", ARRAY(1.aql, 2.aql) ALL NOT_IN(arrayOf(1)), "[1, 2] ALL NOT IN [\n    1\n]"),
+        tuple("NOT_IN: partial and collection", ARRAY(1.aql, 2.aql) ALL NOT_IN(listOf(1)), "[1, 2] ALL NOT IN [\n    1\n]"),
         tuple("NOT_IN: partial and expression", ARRAY(1.aql, 2.aql) ALL NOT_IN(ARRAY(1.aql)), "[1, 2] ALL NOT IN [1]"),
-        tuple("NOT_IN: expression and array", 1.aql NOT_IN arrayOf(1), "1 NOT IN [ 1 ]"),
-        tuple("NOT_IN: expression and collection", 1.aql NOT_IN listOf(1), "1 NOT IN [ 1 ]"),
+        tuple("NOT_IN: expression and array", 1.aql NOT_IN arrayOf(1), "1 NOT IN [\n    1\n]"),
+        tuple("NOT_IN: expression and collection", 1.aql NOT_IN listOf(1), "1 NOT IN [\n    1\n]"),
         tuple("NOT_IN: expression and expression", 1.aql NOT_IN ARRAY(1.aql), "1 NOT IN [1]"),
 
         // LIKE Operation
