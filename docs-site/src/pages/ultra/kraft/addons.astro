@@ -207,9 +207,7 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
     <h2>chartjs — Data visualization</h2>
 
 <Code code={`class SalesChart(ctx: NoProps) : PureComponent(ctx) {
-    private val chart: ChartJsAddon? by subscribingTo(addons.chartJs)
-
-    // ChartJsComponent subscribes to the addon internally — just use it directly
+    // ChartJs subscribes to the addon internally — register chartJs() in addons { }, then just use it
     override fun VDom.render() {
         div {
             css { height = 50.vh }
@@ -230,6 +228,15 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
         }
     }
 }`} lang="kotlin" theme="vitesse-dark" />
+
+    <p>Rendering <code>ChartJs</code> with a new config updates the live chart: labels, datasets and options follow it.
+        Datasets are matched by index, so Chart.js animates from the old values and per-series state (legend
+        visibility) stays with the position. A changed <code>type</code> rebuilds the chart; inline top-level
+        <code>plugins</code> are read only when it is created, and dataset fields starting with <code>_</code> are
+        reserved for Chart.js. Build a new config for every change rather than mutating one in place. A chart updated
+        many times per second sets <code>{"options = jsObject { asDynamic().animation = false }"}</code> in every config
+        it passes.
+        <code>Chart.update(mode)</code> takes a Chart.js 4 update mode such as <code>"none"</code>.</p>
 
     <h2>pixijs — 2D WebGL/WebGPU</h2>
 

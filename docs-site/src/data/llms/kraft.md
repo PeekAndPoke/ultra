@@ -2359,41 +2359,36 @@ jsMain {
 
 ## chartjs — Data visualization
 
-The `ChartJs` component subscribes to the addon internally — just register `chartJs()` in your app and use it:
+Register `chartJs()` in `addons { }`; the `ChartJs` component subscribes to the addon internally:
 
 ```kotlin
-class SalesChart(ctx: NoProps) : PureComponent(ctx) {
+override fun VDom.render() {
+    div {
+        css { height = 50.vh }
 
-    // Animate the chart — multiply data by a sine wave
-    private val factor by subscribingTo(
-        ticker(1.seconds).map { 1.0 + sin(it.count * 10 * PI / 180.0) }
-    )
-
-    override fun VDom.render() {
-        div {
-            css { height = 50.vh }
-
-            ChartJs(chartJsData {
-                jsObject {
-                    type = "bar"
-                    data = jsObject {
-                        labels = arrayOf("Jan", "Feb", "Mar", "Apr", "May")
-                        datasets = arrayOf(jsObject {
-                            label = "Sales"
-                            data = arrayOf(12, 19, 3, 5, 8)
-                                .map { it * factor }
-                                .toTypedArray()
-                            backgroundColor = value("rgba(99, 132, 255, 0.5)")
-                        })
-                    }
+        ChartJs(chartJsData {
+            jsObject {
+                type = "bar"
+                data = jsObject {
+                    labels = arrayOf("Jan", "Feb", "Mar")
+                    datasets = arrayOf(jsObject {
+                        label = "Sales"
+                        data = arrayOf(12, 19, 3)
+                    })
                 }
-            })
-        }
+            }
+        })
     }
 }
 ```
 
-The chart re-renders whenever `factor` changes — reactive charts with no extra wiring.
+A new config updates the live chart: options, `data` fields and datasets follow it, datasets matched by index
+(Chart.js animates from the old values; legend visibility stays with the position). A changed `type` rebuilds.
+- Pass a NEW config per change: the chart works on a one-level copy, in-place mutation shows up only partially.
+- Options are replaced, not merged: many updates per second → `options = jsObject { asDynamic().animation = false }`
+  in every config.
+- Inline top-level `plugins` are read at creation only; dataset fields starting with `_` are reserved for Chart.js.
+- `Chart.update(mode)` takes a Chart.js 4 update mode (`"none"`, `"resize"`, …).
 
 ## Prism.js — Syntax highlighting
 

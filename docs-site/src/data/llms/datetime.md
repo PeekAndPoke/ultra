@@ -270,8 +270,23 @@ kronos.instantNow()
 val frozen = Kronos.fixed(MpInstant.parse("2025-01-01T00:00:00Z"))
 frozen.instantNow()  // always the same
 
-// Tests — advancing clock
+// Advancing clock: chained advances (also repeated mutate { advanceBy(..) }) collapse into one offset
 val advanced = frozen.advanceBy(2.hours)
+
+// Lazy offset: called once, on the first read, never while chaining; retried if it throws
+val shifted = Kronos.systemUtc.advanceBy { loadOffsetFromDb() }
+
+// Mutable clock: advanceBy on a mutable returns a NEW clock that follows it; mutate moves it
+val mutable = frozen.mutable()
+mutable.mutate { advanceBy(1.hours) }
+mutable.set(Kronos.fixed(MpInstant.parse("2030-01-01T00:00:00Z")))
+// set/mutate throw IllegalArgumentException for a clock that reads the mutable itself —
+// seen through mutable and advanceBy layers only (not lambdas or custom clocks); not safe for concurrent writers
+
+// Serializable description; a chain describes as ONE AdvancedBy, old nested descriptors still load
+val descriptor = advanced.describe()   // KronosDescriptor.AdvancedBy(durationMs, inner)
+val again = descriptor.instantiate()
+// Gotcha: a fixed clock describes as SystemClock — it does not round-trip
 
 // Inject via Kontainer
 val blueprint = kontainer {
