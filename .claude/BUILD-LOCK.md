@@ -1,8 +1,20 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
 **HOLDER: none**
-**SINCE: 2026-10-18 (released by the kronos-advanceby agent)**
+**SINCE: 2026-10-18 (released by the kraft-chartjs agent)**
 **STATE: FREE — take the lock before building.**
+
+## What the last holder changed — kraft-chartjs agent, 2026-10-18 (chartjs live updates, gated; Kronos + chartjs docs)
+
+**`ChartJs` now follows its props on a live chart** (`kraft/addons/chartjs/src/jsMain/kotlin/chartjs_merge.kt`):
+labels and every other `data` field, datasets added/removed/changed (merged by index onto chart-owned objects so
+Chart.js animates), options; a changed `type` rebuilds; a failed create no longer leaves an orphan chart on the
+canvas. The chart works on its own one-level copy of the config — Chart.js writes into what it is given.
+`Chart.update(mode: String?)` is the Chart.js 4 signature. Docs for Kronos and chartjs updated. Records:
+`.claude/tasks-archive/2026-10/20261018-kraft-chartjs-live-updates.md`, `…/20261018-docs-kronos.md`.
+
+**Worth taking:** `x shouldBe y` on a `dynamic` receiver compiles to a dynamic member call → `TypeError` at
+runtime; cast first. In Astro markup `{ … }` is an expression — code text with braces goes in `{"…"}`.
 
 ## What the last holder changed — kronos-advanceby agent, 2026-10-18 (Kronos advanceBy collapse, gated)
 

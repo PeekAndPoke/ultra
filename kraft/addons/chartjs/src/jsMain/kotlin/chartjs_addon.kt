@@ -6,6 +6,7 @@ import io.peekandpoke.kraft.addons.registry.AddonRegistry
 import io.peekandpoke.kraft.addons.registry.AddonRegistryBuilder
 import kotlinx.coroutines.await
 import org.w3c.dom.CanvasRenderingContext2D
+import org.w3c.dom.HTMLCanvasElement
 import kotlin.js.Promise
 
 /**
@@ -40,6 +41,11 @@ class ChartJsAddon internal constructor(
         val ctor = chartConstructor
 
         return js("new ctor(ctx, config)").unsafeCast<Chart>()
+    }
+
+    /** Returns the chart currently registered on the given [canvas], if any. */
+    internal fun getChart(canvas: HTMLCanvasElement): Chart? {
+        return chartConstructor.getChart(canvas).unsafeCast<Chart?>()
     }
 }
 

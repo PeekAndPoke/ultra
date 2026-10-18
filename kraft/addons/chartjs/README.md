@@ -1,31 +1,29 @@
 # Kraft Addon: Chart.js
 
-Kotlin/JS wrapper for [Chart.js](https://www.chartjs.org/) (npm: `chart.js`), providing type-safe chart rendering in
-Kraft applications.
+Kotlin/JS wrapper for [Chart.js](https://www.chartjs.org/) 4 (npm: `chart.js`) for Kraft applications.
 
 ## Features
 
-- Render bar, line, pie, doughnut, radar, polar area, bubble, and scatter charts
-- Type-safe configuration DSL for datasets, scales, tooltips, and animations
-- Reactive updates when chart data changes
+- Every Chart.js chart type, configured through typed `ChartConfig` externals and `jsObject { }`
+- Live updates: a new config updates the chart in place (labels, datasets, options); a new `type` rebuilds it
 
 ## Example
 
+Register `chartJs()` in `addons { }`, then render:
+
 ```kotlin
-chartJs {
-    chartConfig {
-        type = ChartType.bar
-        data {
-            labels = listOf("Jan", "Feb", "Mar")
-            datasets {
-                dataset {
-                    label = "Revenue"
-                    data = listOf(120, 190, 300)
-                }
-            }
+ChartJs(chartJsData {
+    jsObject {
+        type = "bar"
+        data = jsObject {
+            labels = arrayOf("Jan", "Feb", "Mar")
+            datasets = arrayOf(jsObject {
+                label = "Revenue"
+                data = arrayOf(120, 190, 300)
+            })
         }
     }
-}
+})
 ```
 
 ## Installation
