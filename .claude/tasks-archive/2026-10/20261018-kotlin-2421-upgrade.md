@@ -1,6 +1,6 @@
 # Upgrade to Kotlin 2.4.21, refresh the dependency set, release 0.111.0
 
-**Status:** IN PROGRESS
+**Status:** DONE (archived 2026-10-18) — `fb1b93f8`, `0dc2df67`, release `54362e3e` / `v0.111.0`
 **Plan:** none — maintainer request, 2026-10-18, right after the 0.110.0 release
 **Security-critical:** no
 **Previous round:** `.claude/tasks-archive/2026-07/20260729-kotlin-24-upgrade.md` — same playbook
@@ -12,8 +12,8 @@
 - [x] kotlinx-datetime attempted LAST — **held at 0.6.2**, see Step 2, in its own commit, so it can be reverted alone (maintainer: it caused trouble in
       the past; 0.7.0 changed formatting and moved `Instant`/`Clock` to `kotlin.time`)
 - [x] Full suite green and matching the baseline below, per target
-- [ ] Release 0.111.0 prepared (version bump + tag; the maintainer builds, pushes and publishes)
-- [ ] The three Kraft example repos on Kotlin 2.4.21 / Ultra 0.111.0 / Gradle 9.7.1 (see "Example repos")
+- [x] Release 0.111.0 prepared — `54362e3e`, tag `v0.111.0`; docs build shows `Version: 0.111.0. Kotlin: 2.4.21.` (version bump + tag; the maintainer builds, pushes and publishes)
+- [x] The three Kraft example repos on Kotlin 2.4.21 / Ultra 0.111.0 / Gradle 9.7.1 (see "Example repos")
 
 ## Baseline — the maintainer's green full run on `9fe1cf72` (0.110.0), 2026-10-18
 
@@ -206,6 +206,16 @@ fixture name, unrelated to datetime; `:funktor:codegen:test` 88/88 after it, war
 
 The 0.110.0 bump of the three example repos (Kotlin 2.4.10, Gradle 9.5.0, two API-break fixes in remote and router) is
 uncommitted in those repos and is folded into this upgrade instead: they move straight to 0.111.0.
+
+State 2026-10-18: all three on Kotlin 2.4.21, KSP 2.3.12, Ultra 0.111.0, Gradle 9.7.1 (wrapper regenerated); remote
+also on Ktor 3.6.0, in step with Ultra. Trial `jsBrowserProductionWebpack` against 0.109.0 (built with Kotlin 2.4.x):
+green in all three. Once 0.111.0 was served by Maven Central: `kotlinUpgradeYarnLock` + clean
+`jsBrowserProductionWebpack` against 0.111.0, green in all three; committed and pushed at the maintainer's request —
+helloworld `60bac94`, remote `d5c4a89`, router `620a717`.
+
+**No docs task:** a dependency upgrade, no Ultra API changed. The docs' `kotlinVersion` moved with it. Found on the
+way and fixed in the same session: the Kraft forms docs called `formCtrl.validate()` (now `suspend`) and the removed
+`ifValidate { }` from `onClick` — five snippets and the API table, in `forms.astro` and the `kraft.md` mirror.
 
 ## Test evidence
 

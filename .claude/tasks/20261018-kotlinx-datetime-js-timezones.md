@@ -1,7 +1,7 @@
 # kotlinx-datetime 0.8: keep zero-data time zones on Kotlin/JS
 
 **Status:** TODO
-**Plan:** none — split out of `.claude/tasks/20261018-kotlin-2421-upgrade.md` (2026-10-18), where 0.8.0 was attempted and held
+**Plan:** none — split out of `.claude/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md` (2026-10-18), where 0.8.0 was attempted and held
 **Security-critical:** no
 
 ## Why

@@ -640,11 +640,8 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
 
             // Disable button when form is invalid
             ui.blue.button.given(!formCtrl.isValid) { disabled }.then {
-                onClick {
-                    if (formCtrl.validate()) {
-                        submitForm()
-                    }
-                }
+                // Runs the block only when every field passes
+                onClick { formCtrl.validate { submitForm() } }
                 +"Register"
             }
         }
@@ -667,7 +664,7 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
 
         // Tracks validity across both sub-forms
         ui.green.button.given(!pageFormCtrl.isValid) { disabled }.then {
-            onClick { pageFormCtrl.ifValidate { submitAll() } }
+            onClick { pageFormCtrl.validate { submitAll() } }
             +"Submit order"
         }
     }
@@ -701,12 +698,20 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
                 <td>Set of all tracked FormField instances</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>validate()</code></td>
-                <td>Touch and validate all fields, returns true if all pass</td>
+                <td class="py-2"><code>validate &#123; ... &#125;</code></td>
+                <td>Touch and validate all fields, run the suspending block only if all pass. Ignored while
+                    <code>isBusy</code>, so a double click submits once</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>ifValidate &#123; ... &#125;</code></td>
-                <td>Validate, execute callback only if all pass</td>
+                <td class="py-2"><code>suspend validate()</code></td>
+                <td>The same check from inside a coroutine: returns true if all pass, leaves <code>status</code>
+                    alone</td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2"><code>status</code> / <code>isBusy</code></td>
+                <td><code>IDLE</code>, <code>VALIDATING</code>, <code>PROCESSING</code> (block running) or
+                    <code>ERROR</code>; <code>isBusy</code> while validating or processing &mdash; for spinners and
+                    disabled buttons. <code>statusStream</code> to subscribe</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>resetAllFields()</code></td>
@@ -779,7 +784,7 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
             ui.buttons {
                 ui.blue.button.given(!canSubmit) { disabled }.then {
                     onClick {
-                        formCtrl.ifValidate {
+                        formCtrl.validate {
                             profile = draft  // commit
                         }
                     }

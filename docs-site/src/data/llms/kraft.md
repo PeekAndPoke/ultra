@@ -1487,12 +1487,8 @@ class RegistrationForm(ctx: NoProps) : PureComponent(ctx) {
 
             // Button disabled when form is invalid
             ui.blue.button.given(!formCtrl.isValid) { disabled }.then {
-                onClick {
-                    if (formCtrl.validate()) {
-                        // All fields passed validation
-                        submitForm()
-                    }
-                }
+                // Runs the block only when every field passes
+                onClick { formCtrl.validate { submitForm() } }
                 +"Register"
             }
         }
@@ -1501,7 +1497,10 @@ class RegistrationForm(ctx: NoProps) : PureComponent(ctx) {
 ```
 
 `formCtrl.isValid` reactively reflects whether all fields pass validation.
-`formCtrl.validate()` triggers validation on all fields and returns `true` if everything passes.
+`formCtrl.validate { }` touches every field, runs the rules, and calls the suspending block only if all pass. While it
+runs, `formCtrl.isBusy` is true (`status`: `VALIDATING`, then `PROCESSING`) and further calls are ignored, so a double
+click submits once. Inside a coroutine, `if (formCtrl.validate())` awaits the same check as a `Boolean` without touching
+`status`; it is `suspend`, so it does not compile in a plain `onClick`.
 
 ## The draft/commit pattern
 
@@ -1543,7 +1542,7 @@ class ProfileEditor(ctx: NoProps) : PureComponent(ctx) {
             ui.buttons {
                 ui.blue.button.given(!canSubmit) { disabled }.then {
                     onClick {
-                        if (formCtrl.validate()) {
+                        formCtrl.validate {
                             profile = draft  // Commit changes
                         }
                     }
