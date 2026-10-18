@@ -1,8 +1,19 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
 **HOLDER: none**
-**SINCE: 2026-10-18 (released by the kraft-chartjs agent)**
+**SINCE: 2026-10-18 (released by the kotlin-2421-upgrade agent)**
 **STATE: FREE — take the lock before building.**
+
+## What the last holder changed — kotlin-2421-upgrade agent, 2026-10-18 (Kotlin 2.4.21 + deps, release 0.111.0)
+
+**Kotlin 2.4.21, Gradle 9.7.1, KSP 2.3.12, maven-publish 0.37.0, Ktor 3.6.0, kotest 6.2.6** and a library refresh
+(`fb1b93f8`); versions and holds in `.claude/tasks/20261018-kotlin-2421-upgrade.md`. **kotlinx-datetime stays 0.6.2**
+(`0dc2df67`): 0.8.0 breaks every named zone on JS — follow-up `.claude/tasks/20261018-kotlinx-datetime-js-timezones.md`.
+A full `clean build` after the upgrade matched the 0.110.0 baseline per target (14675 tests / 68 targets).
+
+**Worth taking:** Gradle's ceiling is set by KGP, not by "latest" — the compatibility table on
+kotlinlang.org/docs/gradle-configure-project.html (2.4.21: up to 9.7.0). Kotlin 2.4.21 rejects `:` in backticked JVM
+names. The local Maven repo here is `~/.m2/swisslife-repository` (`~/.m2/settings.xml`), not `~/.m2/repository`.
 
 ## What the last holder changed — kraft-chartjs agent, 2026-10-18 (chartjs live updates, gated; Kronos + chartjs docs)
 
