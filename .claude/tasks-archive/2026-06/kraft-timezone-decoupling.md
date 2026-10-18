@@ -1,5 +1,11 @@
 # Kraft bundle size: decouple the js-joda timezone DB (+ native tz spike)
 
+> **Superseded 2026-10-18** by `.claude/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md`: ultra/datetime
+> now does its own zone math (Intl on JS), so `installNativeTimezones()`, the js-joda Intl provider
+> (`NativeTimeZones.kt`), `NativeTimeZoneInitializer` and the addon's `nativeTimezones()` are GONE, and Kraft installs no
+> zone support by default. The js-joda loaders and `Builder.timezones(...)` remain, for raw kotlinx `TimeZone.of(...)`
+> only. Phases 2–3 below describe the removed design.
+
 ## Context
 
 Profiling a Kraft hello-world bundle (1,125 KB raw → 146 KB gzip) showed the single biggest

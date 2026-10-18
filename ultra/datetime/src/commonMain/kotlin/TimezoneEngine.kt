@@ -17,7 +17,7 @@ import kotlin.time.Instant
  * Zone math for [MpTimezone], with java.time semantics on every target.
  *
  * Only "offset at an instant" is platform specific ([platformOffsetSecondsAt]). Everything else is derived here
- * from it plus UTC-only kotlinx calls, so no target depends on kotlinx-datetime's own time zone database.
+ * from it plus UTC-only kotlinx calls, so the JS target needs no kotlinx time zone data.
  */
 internal object TimezoneEngine {
 
@@ -145,12 +145,12 @@ internal object TimezoneEngine {
     /**
      * The offset of a fixed-offset zone id, or null for a region id.
      *
-     * Accepts what java.time's `ZoneId.of` accepts for fixed offsets: `Z`, `UTC`, `GMT`, `UT`, a bare offset
+     * Accepts what java.time's `ZoneId.of` accepts for fixed offsets (`Z` never arrives: `MpTimezone.of` maps it to
+     * `UTC`): `UTC`, `GMT`, `UT`, a bare offset
      * (`+h`, `+hh`, `+hh:mm`, `+hhmm`, `+hh:mm:ss`, `+hhmmss`) and those offsets after a `UTC`, `GMT` or `UT` prefix.
      */
     internal fun fixedOffsetSecondsOrNull(zoneId: String): Int? {
         val offset = when {
-            zoneId == "Z" -> return 0
             zoneId.startsWith("+") || zoneId.startsWith("-") -> zoneId
             else -> {
                 val prefix = listOf("UTC", "GMT", "UT").firstOrNull { zoneId.startsWith(it) } ?: return null
@@ -178,7 +178,7 @@ internal object TimezoneEngine {
         val minutes = m.ifEmpty { "0" }.toInt()
         val seconds = s.ifEmpty { "0" }.toInt()
 
-        if (hours > 18 || minutes > 59 || seconds > 59) return null
+        if (minutes > 59 || seconds > 59) return null
 
         val total = hours * 3600 + minutes * 60 + seconds
         if (total > 18 * 3600) return null

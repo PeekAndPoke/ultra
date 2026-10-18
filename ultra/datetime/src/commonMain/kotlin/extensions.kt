@@ -14,12 +14,7 @@ val UtcOffset.totalMillis: Long
 /**
  * Converts the [TimeZone] into an [MpTimezone]
  */
-val TimeZone.mp: MpTimezone
-    get() = when (id) {
-        // kotlinx/JS reports the system zone as "SYSTEM" when no tz database is loaded
-        "SYSTEM" -> MpTimezone.systemDefault
-        else -> MpTimezone.of(id)
-    }
+val TimeZone.mp: MpTimezone get() = MpTimezone.of(id)
 
 /**
  * Get the offset at the given [instant].

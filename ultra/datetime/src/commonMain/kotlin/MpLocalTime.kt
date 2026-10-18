@@ -87,7 +87,7 @@ data class MpLocalTime(
          */
         fun ofMilliSeconds(milliSecondsOfDay: Long): MpLocalTime {
             return MpLocalTime(
-                milliSeconds = milliSecondsOfDay % MILLIS_PER_DAY
+                milliSeconds = milliSecondsOfDay.mod(MILLIS_PER_DAY)
             )
         }
 

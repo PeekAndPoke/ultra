@@ -257,7 +257,7 @@ Three layers:
 2. **`kraft/core` (jsMain) — reactive glue + kraft's own strings.** The `Translations`/`Formatting`
    delegate helpers (D10), registering the `I18n` stream as an app attribute (mirror
    `ResponsiveController`), and an `I18nInitializer` for boot-language resolution (mirror
-   `NativeTimeZoneInitializer`). These need `subscribingTo`/`Component`/app-attributes, which live in
+   the `NativeTimeZoneInitializer` of the time, removed 2026-10-18). These need `subscribingTo`/`Component`/app-attributes, which live in
    kraft, not ultra. kraft's own namespace (`KraftFormsI18n` + its yaml) lives here too — purely
    additive (an `i18n/` dir + a generated srcDir + one `ultra:i18n` dependency), so no `kraft/i18n`
    split. kraft yaml/accessors → `commonMain` for uniformity (jsMain can call commonMain accessors),

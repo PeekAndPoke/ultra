@@ -1,6 +1,6 @@
 # ultra/datetime: own zone engine, then kotlinx-datetime 0.8
 
-**Status:** IN PROGRESS — steps A (`829f6a59`) and B done 2026-10-18; `/feature-review` next
+**Status:** DONE (archived 2026-10-18) — A `829f6a59`, B `fed9393d`, gate PASS, maintainer-chosen MINOR batch applied
 **Plan:** none — split out of `.claude/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md` (2026-10-18), where 0.8.0 was attempted and held
 **Security-critical:** no — but it touches persistence (mutation-check bar, CLAUDE.md)
 
@@ -110,11 +110,14 @@ serializers' deserialize zone → UTC; parser `[zone]` → UTC.
 
 **Step B evidence (2026-10-18, 0.8.0):** `:ultra:datetime:allTests` jvmTest 2439/0, linuxX64Test 1801/0,
 jsBrowserTest 1804/0 (no tz data on JS); `:ultra:slumber:jvmTest` 1243/0. Compile sweep incl. linuxX64: 0 errors,
-0 warnings.
+0 warnings. Final-tree run (fed9393d): `:kraft:core-tests:jsBrowserTest` 412/0, `:kraft:addons:datetime:jsBrowserTest`
+2/0 and the other 9 touched Kraft addon suites green. Mutation: dropping `installTimezones1970to2030()` from
+`kraft/addons/datetime/src/jsTest/kotlin/TimezonesSpec.kt` → RED, so the js-joda loaders work on 0.8.0.
 
 **C — docs** (follow-up task at archive time, but must land before the release): rewrite
-`docs-site/src/pages/ultra/datetime/js-timezones.astro` and `docs-site/src/data/llms/datetime.md` (no setup needed;
-loaders only for raw kotlinx zones), document the kotlinx converters.
+`docs-site/src/pages/ultra/datetime/js-timezones.astro`, `docs-site/src/data/llms/datetime.md` and
+`kraft/addons/datetime/README.md` (no setup needed; loaders only for raw kotlinx zones), document the kotlinx
+converters; correct `.claude/tasks/kraft-timezone-decoupling.md` (Kraft no longer installs zones by default).
 
 ## Acceptance
 
@@ -125,3 +128,50 @@ loaders only for raw kotlinx zones), document the kotlinx converters.
 - [ ] Compile sweep incl. `compileKotlinLinuxX64` clean
 - [ ] `/feature-review` — public API + persisted format
 - [ ] Docs follow-up task created
+
+## Review record — the LEDGER (/feature-review)
+
+Change set `52ab08b1..fed9393d` (829f6a59, fed9393d). Round 1 BLIND, three `reviewer-high` (implementation & style,
+domain expert, security). **Zero CRITICAL/MAJOR in the change set → clean round, loop ends.** Open MINORs go to the
+maintainer as a list (review-loop: not applied as an unreviewed batch). Reviewers I = implementation, D = domain,
+S = security.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `MpZonedDateTime.kt:151` | Instant in the 2nd half of a fall-back overlap does not survive `atZone` / every deserialize (1h early); re-save writes wrong `ts` (D, I) | out-of-scope → follow-up task | Verified real; PRE-EXISTING (kotlinx gave the same earlier offset). `.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md` |
+| 1 | MINOR | `MpZonedDateTime.kt:313` | `MpZonedDateTime.atStartOfDay()` (copy) disagrees with `MpLocalDate.atStartOfDay(tz)` in gaps (D) | out-of-scope → same follow-up task | Pre-existing; same root as the row above |
+| 1 | MINOR | `TimezoneEngineJs.kt:14,57` | Cache is a plain `{}`: ids like `constructor` hit `Object.prototype` → JS `TypeError` instead of `IllegalTimeZoneException` (S, D, I) | fixed (MINOR batch) | `js("Object.create(null)")`; mutation → `'constructor' is rejected` RED |
+| 1 | MINOR | `TimezoneEngineJs.kt:65` | Intl accepts ids case-insensitively → `europe/berlin` works in the browser, persists, then throws on JVM; cache grows per case variant (S, D) | fixed — maintainer: REJECT case variants | Chrome probe: Intl case-folds AND canonicalises aliases (`US/Pacific`→`America/Los_Angeles`, `Asia/Kolkata`→`Asia/Calcutta`), so `resolvedOptions()` cannot tell; check against `MpTimezone.supportedIds` (no lowercase collisions, pinned). Mutation → `'europe/berlin' is rejected` RED |
+| 1 | MINOR | `TimezoneEngineJs.kt:19` | Instants beyond JS `Date` range (±8.64e15 ms) → native `RangeError`; a stored huge `ts` breaks decoding in the browser (S) | fixed (MINOR batch) | `require` → `IllegalArgumentException`; mutation → `TimezoneEngineJsSpec` RED |
+| 1 | MINOR | `MpTimezone.kt:15` | `MpTimezone.of("SYSTEM")` now fails on JS (only `TimeZone.mp` maps it) (D) | fixed (MINOR batch) | `MpTimezone.of("SYSTEM")` → `systemDefault`; `systemDefault` builds directly (via `of` a platform reporting "SYSTEM" would recurse); mutation → SYSTEM test RED |
+| 1 | MINOR | `TimezoneEngineNative.kt:8` | kotlinx 0.8 native re-reads the TZif file per `TimeZone.of`; the engine calls it 3–4x per conversion, ~20x for a start-of-day in a gap (I, D) | fixed (MINOR batch) | Copy-on-write `AtomicReference<Map>` of resolved zones in `TimezoneEngineNative.kt`; NOT measured, NOT independently verified that kotlinx re-reads the file |
+| 1 | MINOR | `TimezoneEngine.kt:151-187` | Fixed-offset parser mostly unpinned (seconds, separator rules, 18h bound, `UT` survive mutation) (I) | fixed (MINOR batch) | `FixedOffsetIdSpec` (all targets) + `FixedOffsetIdJvmSpec` (every row vs `ZoneId.of`). Mutations RED: seconds ignored, `UT` dropped, 18h total bound removed. The `hours > 18` clause SURVIVED — redundant with the total bound, deleted |
+| 1 | MINOR | `TimezoneEngine.kt:19-20`, `ZoneParityTable.kt:5`, slumber `MpTimezoneCodec.kt:18` | Three comments factually wrong (native DOES use kotlinx tz data; spec name `ZoneParityJvmSpec`; unknown id no longer fails "at `.kotlinx`") (I) | fixed (MINOR batch) | All three corrected |
+| 1 | MINOR | `conversionKotlinx.kt:13-56`, `extensions.kt:20` | New converters and the `"SYSTEM"` branch untested (I) | fixed (MINOR batch) | `ConversionKotlinxSpec` |
+| 1 | MINOR | `conversionKotlinx.kt:32` | `MpLocalTime.kotlinx` throws for negative values `MpLocalTime` itself produces (`ofMilliSeconds` does not wrap) (D) | fixed (MINOR batch) | `ofMilliSeconds` uses `mod` (wraps below midnight); mutation → wrap test RED |
+| 1 | MINOR | `KotlinxTimeZoneInputSpec.kt:16` | A test that exercises only kotlinx (I) | fixed (MINOR batch) | Removed |
+| 1 | MINOR | `TimezoneEngine.kt:153` | `"Z"` branch unreachable (`MpTimezone.of("Z")` → UTC, constructor private) (I, surplus) | fixed (MINOR batch) | Removed; KDoc says `Z` never arrives |
+| 1 | MINOR | `extensions.kt:27,48` | `offsetAt` still RETURNS kotlinx `UtcOffset` — against the inputs-and-converters rule (D) | out-of-scope → follow-up task | Maintainer: keep for now, eliminate ALL kotlinx return types in `.claude/tasks/20261018-datetime-no-kotlinx-return-types.md` (breaking, accepted) |
+| 1 | MINOR | `kraft/addons/datetime/README.md:10-33`, `.claude/tasks/kraft-timezone-decoupling.md` | Stale: still recommend the removed `installNativeTimezones()` / say Kraft installs native zones by default (D, I) | fixed (task doc) / follow-up (README) | `kraft-timezone-decoupling.md` marked superseded + archived to `.claude/tasks-archive/2026-06/`; README → `.claude/tasks/20261018-docs-datetime-zone-engine.md` |
+| 1 | MINOR | step B evidence | Kraft suites / js-joda loaders never run on 0.8.0 (D, I) | reject | Final-tree run exists (412/0, 2/0, 9 addon suites green) — was only missing from this file, now recorded; loader mutation RED |
+| 1 | MINOR | `MpInstant.kt:227` | Periods added component by component, resolving after each (≠ java's single resolution) (D) | reject | Documented behaviour: KDoc "Each component is added individually"; pre-existing |
+
+**Probed and CLEAN** (reviewers, recorded so nobody re-treads it): `resolve()` branch analysis incl. 24h gaps and
+overlaps (Apia 2011, Sitka 1867); ±1-day window bound by |offset| ≤ 18h; `transitionAfter` invariants and
+termination; java.time parity of `startOfDay` and date-based `plus`; fixed-offset parser accept/reject set vs
+`ZoneId.of` (~20 strings); `UtcOffset` component signs; nanoseconds; ReDoS in both regexes (bounded / linear); binary
+search can't overflow or loop; JVM/native exception types stay `IllegalTimeZoneException`; slumber awake change is
+lenient, not lossy; no raw kotlinx zone use left in browser code paths (kraft/, funktor/, ultra/).
+Coordinator note: the JVM sweep's 2 "offset at" checks per transition compare java.time with kotlinx-JVM, which
+wraps java.time — not independent evidence; the other ~21 per transition are.
+
+**Verdict: gate PASS** — no open CRITICAL/MAJOR in the change set; the pre-existing MAJOR has its follow-up task.
+
+**MINOR batch** (maintainer chose the fixes 2026-10-18; per review-loop no re-review round): final-tree run
+`:ultra:datetime:allTests` jvmTest 2483/0, linuxX64Test 1843/0, jsBrowserTest 1847/0; `:ultra:slumber:jvmTest` 1243/0;
+`:kraft:addons:datetime:jsBrowserTest` 2/0. Every mutation restored + `cmp`-verified.
+
+**Follow-ups:** docs `.claude/tasks/20261018-docs-datetime-zone-engine.md` (before 0.112.0);
+`.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md`; `.claude/tasks/20261018-datetime-no-kotlinx-return-types.md`;
+performance `.claude/tasks/20261018-datetime-js-performance.md` (from spross, before 0.112.0). No red-team task: not
+security-critical. The applied patch is archived next to this file.

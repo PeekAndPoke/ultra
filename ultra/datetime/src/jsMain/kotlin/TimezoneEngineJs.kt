@@ -11,12 +11,22 @@ import kotlin.time.Instant
 // Zone offsets come from the browser's own IANA database via Intl.DateTimeFormat — no tz data is bundled.
 
 private val intl: dynamic = js("Intl")
-private val formatterCache: dynamic = js("({})")
+// No prototype: ids like "constructor" must miss the cache, not find an Object.prototype member.
+private val formatterCache: dynamic = js("Object.create(null)")
+
+// JS Date covers ±8.64e15 ms; Intl throws a RangeError outside of it.
+private const val MAX_DATE_MS = 8.64e15
+
+// Intl matches zone ids case-insensitively, java.time does not. Reject case variants of known ids, so the browser
+// accepts no id the JVM would reject.
+private val supportedIdsByLowercase: Map<String, String> by lazy { MpTimezone.supportedIds.associateBy { it.lowercase() } }
 
 internal actual fun platformOffsetSecondsAt(zoneId: String, instant: Instant): Int {
     // Intl renders to whole seconds, so compare against a second-floored instant — otherwise
     // sub-second instants (e.g. ...:59.999Z) skew the offset by up to a second.
     val flooredMs = floor(instant.toEpochMilliseconds() / 1000.0) * 1000.0
+
+    require(flooredMs in -MAX_DATE_MS..MAX_DATE_MS) { "Instant $instant is outside the range of JS dates" }
 
     val parts = formatterFor(zoneId).formatToParts(Date(flooredMs))
     val m: dynamic = js("({})")
@@ -61,6 +71,10 @@ private fun formatterFor(zoneId: String): dynamic {
         "({ hour12: false, era: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })"
     )
     opts.timeZone = zoneId
+
+    supportedIdsByLowercase[zoneId.lowercase()]?.let { known ->
+        if (known != zoneId) throw IllegalTimeZoneException("Unknown time zone: $zoneId (ids are case-sensitive: $known)")
+    }
 
     val f = try {
         intl.DateTimeFormat("en-US", opts)

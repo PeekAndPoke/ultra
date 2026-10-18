@@ -13,10 +13,6 @@ import kotlinx.datetime.UtcOffset
 @Suppress("unused")
 class KotlinxTimeZoneInputSpec : StringSpec({
 
-    "kotlinx TimeZone.of works for a region id" {
-        TimeZone.of("Europe/Berlin").id shouldBe "Europe/Berlin"
-    }
-
     "MpTimezone.kotlinx converts to a kotlinx TimeZone" {
         val kotlinxTz = MpTimezone.of("Europe/Berlin").kotlinx
 

@@ -2,7 +2,7 @@ package io.peekandpoke.ultra.datetime
 
 /**
  * Expected zone math, generated from java.time (`ZonedDateTime.ofLocal`, `LocalDate.atStartOfDay`,
- * `ZonedDateTime.plusDays` / `plusMonths`). Runs on every target via [ZoneParitySpec]; `ZoneParityTableJvmSpec`
+ * `ZonedDateTime.plusDays` / `plusMonths`). Runs on every target via [ZoneParitySpec]; `ZoneParityJvmSpec`
  * recomputes every row from java.time, so the table cannot drift from the spec it encodes.
  */
 internal object ZoneParityTable {

@@ -198,7 +198,7 @@ the database. Slumber also went RED where expected: `LocalDateTimeCodecSpec.kt:7
 `TimeZone.UTC.id` becomes `"UTC"` — a persisted wire change.
 
 Reverted (`git apply -R`), and the work kept: root cause, options, the full migration diff and the persistence items
-are in **`.claude/tasks/20261018-kotlinx-datetime-js-timezones.md`** (+ `.patch`, verified to apply on `fb1b93f8`).
+are in **`.claude/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md`** (+ `.patch`, verified to apply on `fb1b93f8`).
 Kept from step 2 only `@Suppress("DANGEROUS_CHARACTERS")` on `FxHostileOrder` — a Kotlin 2.4.21 warning on the `|` in the
 fixture name, unrelated to datetime; `:funktor:codegen:test` 88/88 after it, warning-free.
 
