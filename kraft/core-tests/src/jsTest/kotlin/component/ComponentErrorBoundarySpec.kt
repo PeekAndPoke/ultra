@@ -12,6 +12,7 @@ import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.coroutines.delay
 import kotlinx.html.Tag
 import kotlinx.html.div
+import kotlin.time.Clock
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test scaffolding — errors collected here so nested components can report to the test
@@ -152,13 +153,13 @@ private suspend fun eventually(
     poll: kotlin.time.Duration = kotlin.time.Duration.parse("25ms"),
     check: suspend () -> Unit,
 ) {
-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
+    val deadline = Clock.System.now().plus(timeout)
     while (true) {
         try {
             check()
             return
         } catch (e: Throwable) {
-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
+            if (Clock.System.now() > deadline) throw e
             delay(poll)
         }
     }

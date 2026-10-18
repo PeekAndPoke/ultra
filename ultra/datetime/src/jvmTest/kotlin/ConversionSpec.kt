@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.datetime
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.Month as MpMonth
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -38,7 +39,7 @@ class ConversionSpec : FreeSpec() {
 
             "MpLocalDateTime.jvm" {
                 val mp: MpLocalDateTime = MpLocalDateTime.of(
-                    2022, Month.APRIL, 5, 12, 13, 14, 123
+                    2022, MpMonth.APRIL, 5, 12, 13, 14, 123
                 )
                 val jvm: LocalDateTime = mp.jvm
 
@@ -57,14 +58,14 @@ class ConversionSpec : FreeSpec() {
                 val mp: MpLocalDateTime = jvm.mp
 
                 mp shouldBe MpLocalDateTime.of(
-                    2022, Month.APRIL, 5, 12, 13, 14, 123
+                    2022, MpMonth.APRIL, 5, 12, 13, 14, 123
                 )
 
                 jvm.toEpochSecond(ZoneOffset.UTC) shouldBe mp.atUTC().toEpochSeconds()
             }
 
             "MpLocalDate.jvm" {
-                val mp: MpLocalDate = MpLocalDate.of(2022, Month.APRIL, 5)
+                val mp: MpLocalDate = MpLocalDate.of(2022, MpMonth.APRIL, 5)
                 val jvm: LocalDate = mp.jvm
 
                 jvm shouldBe LocalDate.of(2022, Month.APRIL, 5)
@@ -74,7 +75,7 @@ class ConversionSpec : FreeSpec() {
                 val jvm: LocalDate = LocalDate.of(2022, Month.APRIL, 5)
                 val mp: MpLocalDate = jvm.mp
 
-                mp shouldBe MpLocalDate.of(2022, Month.APRIL, 5)
+                mp shouldBe MpLocalDate.of(2022, MpMonth.APRIL, 5)
             }
 
             "MpZonedDateTime.jvm" {

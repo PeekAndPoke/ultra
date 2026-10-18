@@ -23,6 +23,7 @@ import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.div
 import org.w3c.dom.events.Event
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -32,13 +33,13 @@ private suspend fun eventually(
     poll: Duration = 25.milliseconds,
     check: suspend () -> Unit,
 ) {
-    val deadline = kotlinx.datetime.Clock.System.now().plus(timeout)
+    val deadline = Clock.System.now().plus(timeout)
     while (true) {
         try {
             check()
             return
         } catch (e: Throwable) {
-            if (kotlinx.datetime.Clock.System.now() > deadline) throw e
+            if (Clock.System.now() > deadline) throw e
             delay(poll)
         }
     }

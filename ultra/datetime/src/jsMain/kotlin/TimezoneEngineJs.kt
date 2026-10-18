@@ -3,10 +3,10 @@
 package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.IllegalTimeZoneException
-import kotlinx.datetime.Instant
 import kotlin.js.Date
 import kotlin.math.floor
 import kotlin.math.round
+import kotlin.time.Instant
 
 // Zone offsets come from the browser's own IANA database via Intl.DateTimeFormat — no tz data is bundled.
 

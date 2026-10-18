@@ -5,12 +5,12 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.awake
 import io.peekandpoke.ultra.slumber.slumber
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 class LocalDateTimeCodecSpec : StringSpec({
 
@@ -30,6 +30,26 @@ class LocalDateTimeCodecSpec : StringSpec({
         result shouldBe instant.toLocalDateTime(TimeZone.UTC)
 
         result.toString() shouldBe "2022-03-31T23:00"
+    }
+
+    listOf("UTC", "Z").forEach { utcId ->
+        // "Z" is what this codec wrote before kotlinx-datetime 0.7 — those records must keep awaking as UTC
+        "Awaking a LocalDateTime with the timezone '$utcId'" {
+
+            val codec = Codec.default
+
+            // UTC 2022-03-31T23:00:00.000Z
+            val instant = Instant.fromEpochMilliseconds(1648767600_000)
+
+            val data = mapOf(
+                "ts" to instant.toEpochMilliseconds(),
+                "timezone" to utcId,
+            )
+
+            val result = codec.awake(LocalDateTime::class, data)!!
+
+            result.toString() shouldBe "2022-03-31T23:00"
+        }
     }
 
     "Awaking a LocalDateTime with the timezone 'Europe/Bucharest'" {
@@ -69,7 +89,7 @@ class LocalDateTimeCodecSpec : StringSpec({
 
         result shouldBe mapOf(
             "ts" to instant.toEpochMilliseconds(),
-            "timezone" to "Z",
+            "timezone" to "UTC",
             "human" to "2022-03-31T23:00:00Z",
         )
     }
@@ -91,7 +111,7 @@ class LocalDateTimeCodecSpec : StringSpec({
 
         result shouldBe mapOf(
             "ts" to instant.toEpochMilliseconds() + timezone.offsetAt(instant).totalSeconds * 1000,
-            "timezone" to "Z",
+            "timezone" to "UTC",
             "human" to "2022-04-01T02:00:00Z",
         )
     }

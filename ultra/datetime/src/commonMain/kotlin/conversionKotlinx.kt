@@ -4,11 +4,11 @@ package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimePeriod
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlin.jvm.JvmName
+import kotlin.time.Instant
 
 /** Converts an [MpInstant] into a kotlinx [Instant]. */
 val MpInstant.kotlinx: Instant get() = value

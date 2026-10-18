@@ -2,12 +2,12 @@ package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
 import io.peekandpoke.ultra.common.slumber.Slumber
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpInstantSerializer::class)

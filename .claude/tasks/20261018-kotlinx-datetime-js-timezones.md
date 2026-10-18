@@ -1,6 +1,6 @@
 # ultra/datetime: own zone engine, then kotlinx-datetime 0.8
 
-**Status:** IN PROGRESS — step A DONE 2026-10-18 (uncommitted), step B next
+**Status:** IN PROGRESS — steps A (`829f6a59`) and B done 2026-10-18; `/feature-review` next
 **Plan:** none — split out of `.claude/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md` (2026-10-18), where 0.8.0 was attempted and held
 **Security-critical:** no — but it touches persistence (mutation-check bar, CLAUDE.md)
 
@@ -93,15 +93,24 @@ serializers' deserialize zone → UTC; parser `[zone]` → UTC.
 
 **B — bump to 0.8.0**
 
-- [ ] Apply `.claude/tasks/20261018-kotlinx-datetime-js-timezones.patch` (made on `fb1b93f8`; expect conflicts after A):
-      `kotlin.time.Clock`/`Instant`, `month`/`day` deprecations, JVM `Month` no longer `java.time.Month`
-      (`ConversionSpec` alias), `Kronos.fromClock(kotlin.time.Clock)`.
-- [ ] Slumber `MpLocalDateCodec` / `MpLocalDateTimeCodec` stop calling `TimeZone.of(...)` → `MpTimezone`.
-- [ ] Persistence: update `LocalDateTimeCodecSpec.kt:70,92` write pins to `"UTC"`; keep a read test for legacy
-      `"Z"`; confirm `MpZonedDateTimeSerializer` output unchanged **by test**; grep `@Serializable` classes holding
-      raw kotlinx types (0.7 changed default serializers, 0.8 deprecates `TimeZone` serialization).
-      Mutation-check both directions.
-- [ ] Re-run `Mp*` diff/period specs (0.8.0 fixed `Instant.until` / `periodUntil`).
+- [x] Patch applied (`git apply -3`); only `Deps.kt` conflicted (the hold comment) → `datetime_version = "0.8.0"`,
+      re-checked on Maven Central 2026-10-18 (the `-0.6.x-compat` builds are not for us). Step-A files moved
+      `kotlinx.datetime.Instant` → `kotlin.time.Instant`.
+- [x] Slumber `MpLocalDateCodec` / `MpLocalDateTimeCodec` / `MpZonedDateTimeCodec` → `MpTimezone`. Behaviour note: an
+      invalid zone id no longer throws while the `ts` entry is missing (it awakes to null); with `ts` present it
+      throws at `atZone` as before.
+- [x] Persistence: `LocalDateTimeSlumberer` writes the shared `utc` constant ("UTC") instead of `TimeZone.UTC.id`;
+      pins at `LocalDateTimeCodecSpec.kt` updated; new read tests prove `"UTC"` AND legacy `"Z"` both awake as UTC.
+      `MpZonedDateTimeSerializer` output pinned by `MpZonedDateTimeSerializationSpec` (unchanged, green).
+      Probed CLEAN: no `@Serializable` class in the repo holds a raw kotlinx date type (grep over property
+      declarations after `@Serializable`); `ultra/i18n` and `ultra/common` mention kotlinx-datetime in comments only.
+      Mutations RED + restored/`cmp`: slumberer writes "Z"; awaker mis-reads "Z"; each `Mp*` codec's zone → UTC;
+      `MpZonedDateTimeSerializer` writes "UTC".
+- [x] `Mp*` diff/period specs green on 0.8.0 (part of `:ultra:datetime:allTests`).
+
+**Step B evidence (2026-10-18, 0.8.0):** `:ultra:datetime:allTests` jvmTest 2439/0, linuxX64Test 1801/0,
+jsBrowserTest 1804/0 (no tz data on JS); `:ultra:slumber:jvmTest` 1243/0. Compile sweep incl. linuxX64: 0 errors,
+0 warnings.
 
 **C — docs** (follow-up task at archive time, but must land before the release): rewrite
 `docs-site/src/pages/ultra/datetime/js-timezones.astro` and `docs-site/src/data/llms/datetime.md` (no setup needed;

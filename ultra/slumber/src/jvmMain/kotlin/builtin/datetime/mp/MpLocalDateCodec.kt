@@ -2,13 +2,13 @@ package io.peekandpoke.ultra.slumber.builtin.datetime.mp
 
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
 import io.peekandpoke.ultra.slumber.builtin.datetime.TS
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
-import kotlinx.datetime.TimeZone
 
 /** Awaker for [MpLocalDate] values. Reads `ts` (epoch millis) and a required `timezone` zone id string. */
 object MpLocalDateAwaker : Awaker {
@@ -24,7 +24,7 @@ object MpLocalDateAwaker : Awaker {
             //  awaking to null, unlike the kotlinx sibling (LocalDateCodec.kt), which defaults to UTC
             //  via a safe cast (`as? String`).
             is Number -> MpInstant.fromEpochMillis(ts.toLong())
-                .atZone(TimeZone.of(data[TIMEZONE] as String))
+                .atZone(MpTimezone.of(data[TIMEZONE] as String))
                 .toLocalDate()
 
             else -> null
@@ -42,7 +42,7 @@ object MpLocalDateSlumberer : Slumberer {
         }
 
         return toMap(
-            ts = data.atStartOfDay(TimeZone.UTC).toEpochMillis(),
+            ts = data.atStartOfDay(MpTimezone.UTC).toEpochMillis(),
             timezone = utc,
             human = data.toIsoString(),
         )

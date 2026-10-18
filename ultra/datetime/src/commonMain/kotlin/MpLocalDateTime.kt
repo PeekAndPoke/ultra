@@ -3,13 +3,13 @@ package io.peekandpoke.ultra.datetime
 import io.peekandpoke.ultra.common.ComparableTo
 import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
+import kotlin.time.Instant
 
 @Suppress("Detekt.LongParameterList")
 @Serializable(with = MpLocalDateTimeSerializer::class)
@@ -30,8 +30,8 @@ data class MpLocalDateTime(
         ): MpLocalDateTime = MpLocalDateTime(
             LocalDateTime(
                 year = year,
-                monthNumber = month,
-                dayOfMonth = day,
+                month = month,
+                day = day,
                 hour = hour,
                 minute = minute,
                 second = second,
@@ -111,13 +111,13 @@ data class MpLocalDateTime(
     val year: Int get() = value.year
 
     /** The month as number, where January is "1" */
-    val monthNumber: Int get() = value.monthNumber
+    val monthNumber: Int get() = value.month.number
 
     /** The month */
     val month: Month get() = value.month
 
     /** The day of the month */
-    val dayOfMonth: Int get() = value.dayOfMonth
+    val dayOfMonth: Int get() = value.day
 
     /** The hour */
     val hour: Int get() = value.hour

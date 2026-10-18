@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.IllegalTimeZoneException
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -12,6 +11,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * Zone math for [MpTimezone], with java.time semantics on every target.

@@ -1,10 +1,10 @@
 package io.peekandpoke.ultra.datetime
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 @Suppress("Detekt.TooManyFunctions")
 /**

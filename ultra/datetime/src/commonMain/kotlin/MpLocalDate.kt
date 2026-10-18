@@ -5,7 +5,6 @@ import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
@@ -15,6 +14,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmName
+import kotlin.time.Instant
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpLocalDateSerializer::class)
@@ -44,8 +44,8 @@ data class MpLocalDate(
         fun of(year: Int, month: Int, day: Int): MpLocalDate = MpLocalDate(
             value = LocalDate(
                 year = year,
-                monthNumber = month,
-                dayOfMonth = day,
+                month = month,
+                day = day,
             )
         )
 
@@ -98,13 +98,13 @@ data class MpLocalDate(
     val year: Int get() = value.year
 
     /** The month as number, where January is "1" */
-    val monthNumber: Int get() = value.monthNumber
+    val monthNumber: Int get() = value.month.number
 
     /** The month */
     val month: Month get() = value.month
 
     /** The day of the month */
-    val day: Int get() = value.dayOfMonth
+    val day: Int get() = value.day
 
     /** The day of the week */
     val dayOfWeek: DayOfWeek get() = value.dayOfWeek

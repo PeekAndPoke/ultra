@@ -1,13 +1,13 @@
 package io.peekandpoke.ultra.slumber.builtin.datetime.mp
 
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
 import io.peekandpoke.ultra.slumber.builtin.datetime.TS
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
-import kotlinx.datetime.TimeZone
 
 /** Awaker for [MpZonedDateTime] values. Reads `ts` (epoch millis) and a required `timezone` zone id string. */
 object MpZonedDateTimeAwaker : Awaker {
@@ -22,7 +22,7 @@ object MpZonedDateTimeAwaker : Awaker {
         //  "timezone" (or holding a non-string value there) throws instead of awaking to null, no
         //  matter what "ts" contains. See MpLocalDateCodec.kt/MpLocalDateTimeCodec.kt for the same
         //  pattern, and kotlinx's LocalDateCodec.kt for the safe-cast-with-default alternative.
-        val timezone = TimeZone.of(data[TIMEZONE] as String)
+        val timezone = MpTimezone.of(data[TIMEZONE] as String)
 
         return when (val ts = data[TS]) {
             is Number -> MpZonedDateTime.of(
