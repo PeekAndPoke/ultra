@@ -27,7 +27,7 @@ dependencies {
     implementation("org.ajoberstar.grgit:grgit-core:5.3.3")
 
     // For the i18n codegen sources included below. Keep in sync with Deps.JavaLibs.Yaml.snakeyaml.
-    implementation("org.yaml:snakeyaml:2.6")
+    implementation("org.yaml:snakeyaml:2.7")
 
     // `kotlin-dsl` used to supply both implicitly. Every file here imports `org.gradle.kotlin.dsl.*`
     // (register, configure, provideDelegate, ...), which comes from gradleKotlinDsl().

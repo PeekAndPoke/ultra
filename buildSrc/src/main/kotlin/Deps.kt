@@ -23,13 +23,14 @@ object Deps {
 
     object Ksp {
         // https://github.com/google/ksp/releases
-        const val version = "2.3.10"
+        // checked 2026-10-18: latest 2.3.12
+        const val version = "2.3.12"
         const val symbol_processing = "com.google.devtools.ksp:symbol-processing-api:$version"
 
         // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/ksp
-        // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/core (checked 2026-07-21: latest 0.13.0)
-        // checked 2026-07-29: latest 0.13.0
-        private const val compiletesting_version = "0.13.0"
+        // https://mvnrepository.com/artifact/dev.zacsweers.kctfork/core
+        // checked 2026-10-18: latest 0.14.0
+        private const val compiletesting_version = "0.14.0"
         const val compiletesting_ksp = "dev.zacsweers.kctfork:ksp:$compiletesting_version"
         const val compiletesting_core = "dev.zacsweers.kctfork:core:$compiletesting_version"
     }
@@ -44,14 +45,14 @@ object Deps {
     // Dokka /////////////////////////////////////////////////////////////////////////////////////
     // https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
     // Dokka gradle plugin org.jetbrains.dokka
-    // checked 2026-07-29: latest 2.2.0
+    // checked 2026-10-18: latest 2.2.0 (2.3.0 is Beta)
     const val dokkaVersion = "2.2.0" // kotlinVersion
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     // Publishing ////////////////////////////////////////////////////////////////////////////////
     // https://search.maven.org/artifact/com.vanniktech/gradle-maven-publish-plugin
-    // checked 2026-07-29: latest 0.33.0
-    const val mavenPublishVersion = "0.33.0"
+    // checked 2026-10-18: latest 0.37.0 — needs Gradle >= 9 and Dokka in v2 mode
+    const val mavenPublishVersion = "0.37.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
     object KotlinLibs {
@@ -90,8 +91,8 @@ object Deps {
 
         object MongoDb {
             // https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-bom
-            // checked 2026-07-29: latest 5.9.1
-            private const val mongodb_driver_version = "5.9.1"
+            // checked 2026-10-18: latest 5.13.0
+            private const val mongodb_driver_version = "5.13.0"
             const val mongodb_driver_bom = "org.mongodb:mongodb-driver-bom:$mongodb_driver_version"
             const val mongodb_driver_kotlin_coroutine =
                 "org.mongodb:mongodb-driver-kotlin-coroutine:$mongodb_driver_version"
@@ -127,22 +128,22 @@ object Deps {
         const val html = "org.jetbrains.kotlinx:kotlinx-html:$html_version"
 
         // https://mvnrepository.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-css
-        // checked 2026-07-29: latest 2026.7.7
-        private const val wrappers_version = "2026.7.7"
+        // checked 2026-10-18: latest 2026.10.1
+        private const val wrappers_version = "2026.10.1"
         const val wrappers_css =
             "org.jetbrains.kotlin-wrappers:kotlin-css:$wrappers_version"
 
         // https://central.sonatype.com/artifact/org.jetbrains.kotlin-wrappers/kotlin-js/versions
-        // checked 2026-07-29: latest 2026.7.7
-        private const val wrappers_js_version = "2026.7.7"
+        // checked 2026-10-18: latest 2026.10.1
+        private const val wrappers_js_version = "2026.10.1"
         const val wrappers_js = "org.jetbrains.kotlin-wrappers:kotlin-js:$wrappers_js_version"
     }
 
     object Ktor {
         // https://kotlinlang.org/docs/releases.html
         // https://github.com/ktorio/ktor/releases
-        // checked 2026-07-29: latest 3.5.1
-        const val ktor_version = "3.5.1"
+        // checked 2026-10-18: latest 3.6.0
+        const val ktor_version = "3.6.0"
 
         object Server {
             object Test {
@@ -252,8 +253,8 @@ object Deps {
     object JavaLibs {
         object ArangoDb {
             // https://mvnrepository.com/artifact/com.arangodb/arangodb-java-driver
-            // checked 2026-07-29: latest 7.26.0
-            private const val driver_version = "7.26.0"
+            // checked 2026-10-18: latest 7.28.0
+            private const val driver_version = "7.28.0"
             const val java_driver = "com.arangodb:arangodb-java-driver:$driver_version"
         }
 
@@ -275,8 +276,8 @@ object Deps {
 
         object Aws {
             // https://mvnrepository.com/artifact/software.amazon.awssdk/s3
-            // checked 2026-07-29: latest 2.49.5
-            const val awssdk_version = "2.49.5"
+            // checked 2026-10-18: latest 2.56.0
+            const val awssdk_version = "2.56.0"
 
             const val s3 = "software.amazon.awssdk:s3:$awssdk_version"
             const val ses = "software.amazon.awssdk:ses:$awssdk_version"
@@ -284,8 +285,8 @@ object Deps {
 
         object Yaml {
             // https://mvnrepository.com/artifact/org.yaml/snakeyaml
-            // checked 2026-07-29: latest 2.6
-            private const val snakeyaml_version = "2.6"
+            // checked 2026-10-18: latest 2.7
+            private const val snakeyaml_version = "2.7"
             const val snakeyaml = "org.yaml:snakeyaml:$snakeyaml_version"
         }
 
@@ -296,8 +297,8 @@ object Deps {
             const val auto_service = "com.google.auto.service:auto-service:$auto_service_version"
 
             // https://mvnrepository.com/artifact/com.google.api-client/google-api-client
-            // checked 2026-07-29: latest 2.9.0
-            private const val api_client_version = "2.9.0"
+            // checked 2026-10-18: latest 2.9.1
+            private const val api_client_version = "2.9.1"
             const val api_client = "com.google.api-client:google-api-client:$api_client_version"
 
             // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
@@ -340,8 +341,8 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        // checked 2026-07-29: latest 1.6.1
-        private const val logback_version = "1.6.1"
+        // checked 2026-10-18: latest 1.6.5
+        private const val logback_version = "1.6.5"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://github.com/atteo/classindex
@@ -375,7 +376,8 @@ object Deps {
         const val okhttp = "com.squareup.okhttp3:okhttp:$okhttp_version"
 
         // https://search.maven.org/artifact/io.github.java-diff-utils/java-diff-utils
-        private const val diffutils_version = "4.16"
+        // checked 2026-10-18: latest 4.18
+        private const val diffutils_version = "4.18"
         const val diffutils = "io.github.java-diff-utils:java-diff-utils:$diffutils_version"
 
         //https://mvnrepository.com/artifact/com.password4j/password4j
@@ -383,7 +385,8 @@ object Deps {
         const val password4j = "com.password4j:password4j:$password4j_version"
 
         // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-        private const val slf4j_version = "2.0.17"
+        // checked 2026-10-18: latest 2.0.20 (2.1.0 is alpha)
+        private const val slf4j_version = "2.0.20"
         const val slf4j_api = "org.slf4j:slf4j-api:$slf4j_version"
     }
 
@@ -435,7 +438,7 @@ object Deps {
         }
 
         // https://www.npmjs.com/package/@js-joda/timezone
-        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.23.0")
+        fun KotlinDependencyHandler.jsJodaTimezone() = npm("@js-joda/timezone", "2.26.0")
 
         // https://www.npmjs.com/package/bowser
         fun KotlinDependencyHandler.bowser() = npm("bowser", "2.14.1")
@@ -459,7 +462,7 @@ object Deps {
         fun KotlinDependencyHandler.marked() = npm("marked", "15.0.12")
 
         // https://www.npmjs.com/package/dompurify
-        fun KotlinDependencyHandler.domPurify() = npm("dompurify", "3.3.2")
+        fun KotlinDependencyHandler.domPurify() = npm("dompurify", "3.4.17")
 
         // https://www.npmjs.com/package/@nx-js/compiler-util
         fun KotlinDependencyHandler.nxJsCompilerUtil() = npm("@nx-js/compiler-util", "2.0.0")
@@ -471,22 +474,22 @@ object Deps {
         fun KotlinDependencyHandler.pdfJs() = "4.10.38"
 
         // https://www.npmjs.com/package/pixi.js
-        fun KotlinDependencyHandler.pixiJs() = npm("pixi.js", "8.17.1")
+        fun KotlinDependencyHandler.pixiJs() = npm("pixi.js", "8.22.0")
 
         // https://www.npmjs.com/package/preact
-        fun KotlinDependencyHandler.preact() = npm("preact", "10.26.4")
+        fun KotlinDependencyHandler.preact() = npm("preact", "10.29.8")
 
         // https://www.npmjs.com/package/prismjs
         fun KotlinDependencyHandler.prismjs() = npm("prismjs", "1.30.0")
 
         // https://www.npmjs.com/package/signature_pad
-        fun KotlinDependencyHandler.signaturepad() = npm("signature_pad", "5.1.3")
+        fun KotlinDependencyHandler.signaturepad() = npm("signature_pad", "5.1.4")
 
         // https://www.npmjs.com/package/sourcemapped-stacktrace
         fun KotlinDependencyHandler.sourcemappedStacktrace() = npm("sourcemapped-stacktrace", "1.1.11")
 
         // https://www.npmjs.com/package/three
-        fun KotlinDependencyHandler.threeJs() = npm("three", "0.183.2")
+        fun KotlinDependencyHandler.threeJs() = npm("three", "0.186.1")
 
         // https://www.npmjs.com/package/trim-canvas
         fun KotlinDependencyHandler.trimCanvas() = npm("trim-canvas", "0.1.2")
@@ -501,15 +504,16 @@ object Deps {
         }
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        const val logback_version = "1.5.32"
+        // checked 2026-10-18: latest 1.6.5 — keep in step with JavaLibs.logback_classic
+        const val logback_version = "1.6.5"
         const val logback_classic = "ch.qos.logback:logback-classic:$logback_version"
 
         // https://plugins.gradle.org/plugin/io.kotest
-        // checked 2026-07-29: latest 6.2.3
-        const val kotest_plugin_version = "6.2.3"
+        // checked 2026-10-18: latest 6.2.6
+        const val kotest_plugin_version = "6.2.6"
         // https://mvnrepository.com/artifact/io.kotest/kotest-common
-        // checked 2026-07-29: latest 6.2.3
-        const val kotest_version = "6.2.3"
+        // checked 2026-10-18: latest 6.2.6
+        const val kotest_version = "6.2.6"
 
         const val kotest_framework_engine = "io.kotest:kotest-framework-engine:$kotest_version"
         const val kotest_assertions_core = "io.kotest:kotest-assertions-core:$kotest_version"

@@ -66,7 +66,7 @@ class GetAndSetSpec : StringSpec({
 
     "setting a value notifies observers" {
         var backing = 1
-        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it; it })
+        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it })
         val seen = mutableListOf<Int>()
 
         subject.observe { seen.add(it) }
@@ -79,7 +79,7 @@ class GetAndSetSpec : StringSpec({
 
     "an unsubscribed observer stops receiving values" {
         var backing = 1
-        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it; it })
+        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it })
         val seen = mutableListOf<Int>()
 
         val unsub = subject.observe { seen.add(it) }
@@ -92,7 +92,7 @@ class GetAndSetSpec : StringSpec({
 
     "reading a value notifies nobody" {
         var backing = 1
-        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it; it })
+        val subject = GetAndSet.of(getter = { backing }, setter = { backing = it })
         val seen = mutableListOf<Int>()
 
         subject.observe { seen.add(it) }

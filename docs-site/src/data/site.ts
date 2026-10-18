@@ -4,7 +4,7 @@
 // Versions
 export const ultraVersion = '0.110.0';
 export const kraftVersion = '0.110.0';
-export const kotlinVersion = '2.4.10';
+export const kotlinVersion = '2.4.21';
 export const fomanticVersion = '2.8.8';
 
 // Maven coordinates

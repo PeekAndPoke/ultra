@@ -18,8 +18,6 @@ class TypeWalkerSpec : FreeSpec() {
     private fun walkOf(type: KType, claims: TsTypeClaims = TsTypeClaims()): TypeModel =
         TypeWalker(claims).walk(listOf(TypeWalker.Root(type, "root")))
 
-    private fun TypeModel.declFor(type: KType): TsTypeDecl? = decls[TypeId.of(type)]
-
     init {
         "TypeId" - {
 
