@@ -8,7 +8,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 
@@ -96,7 +95,7 @@ data class MpLocalDateTime(
         }
 
         private fun parseInternal(isoString: String): MpLocalDateTime {
-            return MpDateTimeParser.parseInstant(isoString).atZone(TimeZone.UTC).datetime
+            return MpDateTimeParser.parseInstant(isoString).atZone(MpTimezone.UTC).datetime
         }
 
         val Genesis: MpLocalDateTime = MpLocalDateTime(
@@ -156,19 +155,19 @@ data class MpLocalDateTime(
         milliSecond = milliSecond,
     )
 
-    fun toInstant(timezone: TimeZone): MpInstant = MpInstant(
-        value = value.toInstant(timezone)
+    fun toInstant(timezone: TimeZone): MpInstant = toInstant(timezone.mp)
+
+    fun toInstant(timezone: MpTimezone): MpInstant = MpInstant(
+        value = TimezoneEngine.toInstant(timezone, value)
     )
 
-    fun toInstant(timezone: MpTimezone): MpInstant = toInstant(timezone.kotlinx)
-
     fun atZone(timezone: TimeZone): MpZonedDateTime {
-        return toInstant(timezone).atZone(timezone)
+        return atZone(timezone.mp)
     }
 
     fun atZone(timezone: MpTimezone): MpZonedDateTime {
-        return atZone(timezone.kotlinx)
+        return toInstant(timezone).atZone(timezone)
     }
 
-    fun atUTC(): MpZonedDateTime = atZone(TimeZone.UTC)
+    fun atUTC(): MpZonedDateTime = atZone(MpTimezone.UTC)
 }

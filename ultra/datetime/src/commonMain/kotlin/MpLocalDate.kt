@@ -9,7 +9,6 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
@@ -21,7 +20,7 @@ import kotlin.jvm.JvmName
 @Serializable(with = MpLocalDateSerializer::class)
 @Slumber.As(MpDateTimeRawData::class)
 data class MpLocalDate(
-    private val value: LocalDate,
+    internal val value: LocalDate,
 ) : ComparableTo<MpLocalDate> {
 
     companion object {
@@ -90,7 +89,7 @@ data class MpLocalDate(
             return try {
                 MpLocalDate(LocalDate.parse(isoString))
             } catch (_: Throwable) {
-                MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDate()
+                MpInstant.parse(isoString).atZone(MpTimezone.UTC).toLocalDate()
             }
         }
     }
@@ -150,7 +149,7 @@ data class MpLocalDate(
      * Converts into an iso string.
      */
     fun toIsoString(): String {
-        return atStartOfDay(TimeZone.UTC).toIsoString()
+        return atStartOfDay(MpTimezone.UTC).toIsoString()
     }
 
     /**
@@ -241,14 +240,14 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTime] at the given [timezone].
      */
     fun atStartOfDay(timezone: MpTimezone): MpZonedDateTime {
-        return atStartOfDay(timezone.kotlinx)
+        return MpInstant(TimezoneEngine.startOfDay(timezone, value)).atZone(timezone)
     }
 
     /**
      * Converts into an [MpZonedDateTime] at the given [timezone].
      */
     fun atStartOfDay(timezone: TimeZone): MpZonedDateTime {
-        return MpInstant(value.atStartOfDayIn(timezone)).atZone(timezone)
+        return atStartOfDay(timezone.mp)
     }
 
     /**
@@ -262,14 +261,14 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
      */
     fun atTime(time: MpLocalTime, timezone: TimeZone): MpZonedDateTime {
-        return atStartOfDay(timezone).atTime(time)
+        return atTime(time, timezone.mp)
     }
 
     /**
      * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
      */
     fun atTime(time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
-        return atTime(time, timezone.kotlinx)
+        return atStartOfDay(timezone).atTime(time)
     }
 
     /**
@@ -323,17 +322,17 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: TimeZone): MpZonedDateTimeRange {
-        return MpZonedDateTimeRange(
-            from = atTime(timeslot.from, timezone),
-            to = atTime(timeslot.to, timezone)
-        )
+        return toRange(timeslot, timezone.mp)
     }
 
     /**
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: MpTimezone): MpZonedDateTimeRange {
-        return toRange(timeslot, timezone.kotlinx)
+        return MpZonedDateTimeRange(
+            from = atTime(timeslot.from, timezone),
+            to = atTime(timeslot.to, timezone)
+        )
     }
 
     /**

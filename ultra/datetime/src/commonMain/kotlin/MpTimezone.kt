@@ -19,7 +19,7 @@ data class MpTimezone private constructor(val id: String) {
 
         val UTC: MpTimezone get() = MpTimezone(id = "UTC")
 
-        val systemDefault: MpTimezone get() = MpTimezone(id = TimeZone.currentSystemDefault().id)
+        val systemDefault: MpTimezone get() = of(platformSystemDefaultZoneId())
 
         val supportedIds = setOf(
             "Africa/Abidjan",
@@ -613,7 +613,10 @@ data class MpTimezone private constructor(val id: String) {
     }
 
     /**
-     * Converts to a kotlinx-datetime [TimeZone]
+     * Converts to a kotlinx-datetime [TimeZone].
+     *
+     * On Kotlin/JS this throws for region ids unless the js-joda time zone database is loaded — ultra itself never
+     * needs it.
      */
     val kotlinx: TimeZone get() = TimeZone.of(id)
 }

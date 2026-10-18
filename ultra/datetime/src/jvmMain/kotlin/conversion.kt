@@ -102,7 +102,7 @@ val ZonedDateTime.mp: MpZonedDateTime
     get() {
         return MpZonedDateTime.of(
             datetime = toLocalDateTime().mp,
-            timezone = zone.mp.kotlinx,
+            timezone = zone.mp,
         )
     }
 

@@ -1,0 +1,74 @@
+@file:Suppress("UnsafeCastFromDynamic")
+
+package io.peekandpoke.ultra.datetime
+
+import kotlinx.datetime.IllegalTimeZoneException
+import kotlinx.datetime.Instant
+import kotlin.js.Date
+import kotlin.math.floor
+import kotlin.math.round
+
+// Zone offsets come from the browser's own IANA database via Intl.DateTimeFormat — no tz data is bundled.
+
+private val intl: dynamic = js("Intl")
+private val formatterCache: dynamic = js("({})")
+
+internal actual fun platformOffsetSecondsAt(zoneId: String, instant: Instant): Int {
+    // Intl renders to whole seconds, so compare against a second-floored instant — otherwise
+    // sub-second instants (e.g. ...:59.999Z) skew the offset by up to a second.
+    val flooredMs = floor(instant.toEpochMilliseconds() / 1000.0) * 1000.0
+
+    val parts = formatterFor(zoneId).formatToParts(Date(flooredMs))
+    val m: dynamic = js("({})")
+    val len: Int = parts.length
+    for (i in 0 until len) {
+        val part = parts[i]
+        m[part.type] = part.value
+    }
+
+    var hour: Int = (m.hour as String).toInt()
+    if (hour == 24) hour = 0 // some engines render midnight as "24"
+
+    // Reconstruct the wall-clock instant as UTC via setUTCFullYear/Hours. Using Date.UTC() would
+    // remap 2-digit years (0-99) to 1900-1999, breaking ancient dates (e.g. year 39).
+    val d = Date(0.0)
+    val dd = d.asDynamic()
+    dd.setUTCFullYear(wallYear(m), (m.month as String).toInt() - 1, (m.day as String).toInt())
+    dd.setUTCHours(hour, (m.minute as String).toInt(), (m.second as String).toInt(), 0)
+    val asUtc: Double = d.getTime()
+
+    return round((asUtc - flooredMs) / 1000.0).toInt()
+}
+
+internal actual fun platformSystemDefaultZoneId(): String {
+    val id: dynamic = intl.DateTimeFormat().resolvedOptions().timeZone
+
+    return if (id == null || id == undefined) "UTC" else id as String
+}
+
+/** The proleptic year: en-US renders years before 1 AD as "1 BC" style era years. */
+private fun wallYear(m: dynamic): Int {
+    val year = (m.year as String).toInt()
+
+    return if (m.era == "BC" || m.era == "B") 1 - year else year
+}
+
+private fun formatterFor(zoneId: String): dynamic {
+    val cached = formatterCache[zoneId]
+    if (cached != null && cached != undefined) return cached
+
+    val opts: dynamic = js(
+        "({ hour12: false, era: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })"
+    )
+    opts.timeZone = zoneId
+
+    val f = try {
+        intl.DateTimeFormat("en-US", opts)
+    } catch (e: Throwable) {
+        // Intl throws a RangeError for an unknown zone id
+        throw IllegalTimeZoneException("Unknown time zone: $zoneId", e)
+    }
+
+    formatterCache[zoneId] = f
+    return f
+}

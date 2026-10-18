@@ -58,7 +58,7 @@ class MpLocalDateTimeSerializationSpec : StringSpec({
 
     "De-Serializing - pure - Europe/Bucharest" {
 
-        val timezone = TimeZone.of("Europe/Bucharest")
+        val timezone = MpTimezone.of("Europe/Bucharest")
 
         val result = json.decodeFromString(
             MpLocalDateTime.serializer(),
@@ -74,7 +74,7 @@ class MpLocalDateTimeSerializationSpec : StringSpec({
 
     "De-Serializing - pure - US/Pacific" {
 
-        val timezone = TimeZone.of("US/Pacific")
+        val timezone = MpTimezone.of("US/Pacific")
 
         val result = json.decodeFromString(
             MpLocalDateTime.serializer(),

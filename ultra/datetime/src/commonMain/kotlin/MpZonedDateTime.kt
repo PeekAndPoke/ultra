@@ -22,14 +22,7 @@ data class MpZonedDateTime(
          * Creates from a local [datetime] and a [timezone]
          */
         fun of(datetime: MpLocalDateTime, timezone: TimeZone): MpZonedDateTime {
-            return of(
-                datetime = datetime,
-                timezone = when (timezone.id) {
-                    // WHY? There seems to be a difference between TimeZone.UTC and TimeZone.of("UTC")
-                    "UTC" -> TimeZone.UTC
-                    else -> timezone
-                }.mp
-            )
+            return of(datetime = datetime, timezone = timezone.mp)
         }
 
         /**
@@ -74,6 +67,16 @@ data class MpZonedDateTime(
          */
         @Throws(IllegalArgumentException::class)
         fun parse(isoString: String, timezone: TimeZone): MpZonedDateTime {
+            return parse(isoString, timezone.mp)
+        }
+
+        /**
+         * Parses from an [isoString] and a [timezone].
+         *
+         * Throws an [IllegalArgumentException] if parsing fails.
+         */
+        @Throws(IllegalArgumentException::class)
+        fun parse(isoString: String, timezone: MpTimezone): MpZonedDateTime {
             return parse(isoString).atZone(timezone)
         }
 
@@ -83,6 +86,15 @@ data class MpZonedDateTime(
          * Returns null if parsing fails.
          */
         fun tryParse(isoString: String, timezone: TimeZone): MpZonedDateTime? {
+            return tryParse(isoString, timezone.mp)
+        }
+
+        /**
+         * Parses from an [isoString] and a [timezone].
+         *
+         * Returns null if parsing fails.
+         */
+        fun tryParse(isoString: String, timezone: MpTimezone): MpZonedDateTime? {
             return try {
                 parseInternal(isoString).atZone(timezone)
             } catch (_: Throwable) {
@@ -128,12 +140,12 @@ data class MpZonedDateTime(
         /**
          * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
          */
-        val Genesis: MpZonedDateTime = MpInstant.Genesis.atZone(TimeZone.UTC)
+        val Genesis: MpZonedDateTime = MpInstant.Genesis.atZone(MpTimezone.UTC)
 
         /**
          * The Doomsday, a date in the distant future: +10000-01-01T00:00:00Z
          */
-        val Doomsday: MpZonedDateTime = MpInstant.Doomsday.atZone(TimeZone.UTC)
+        val Doomsday: MpZonedDateTime = MpInstant.Doomsday.atZone(MpTimezone.UTC)
     }
 
     private val instant: MpInstant = datetime.toInstant(timezone)

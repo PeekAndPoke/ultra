@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-import kotlinx.datetime.TimeZone
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -27,7 +26,7 @@ object MpZonedDateTimeSerializer : KSerializer<MpZonedDateTime> {
     override fun deserialize(decoder: Decoder): MpZonedDateTime {
         val v = decoder.decodeSerializableValue(MpDateTimeRawData.serializer())
 
-        val timezone = TimeZone.of(v.timezone)
+        val timezone = MpTimezone.of(v.timezone)
 
         return MpZonedDateTime.of(
             datetime = MpInstant.fromEpochMillis(v.ts).atZone(timezone).datetime,

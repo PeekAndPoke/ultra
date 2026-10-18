@@ -19,7 +19,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
         val result = json.encodeToString(
             MpZonedDateTime.serializer(),
             MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
-                .atZone(TimeZone.of("UTC")),
+                .atZone(MpTimezone.of("UTC")),
         )
 
         result shouldBe """
@@ -32,7 +32,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
         val result = json.encodeToString(
             MpZonedDateTime.serializer(),
             MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
-                .atZone(TimeZone.of("Europe/Bucharest")),
+                .atZone(MpTimezone.of("Europe/Bucharest")),
         )
 
         result shouldBe """
@@ -46,7 +46,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
             Wrapper.serializer(),
             Wrapper(
                 MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
-                    .atZone(TimeZone.of("Europe/Bucharest")),
+                    .atZone(MpTimezone.of("Europe/Bucharest")),
             )
         )
 
@@ -57,7 +57,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
 
     "De-Serializing - pure - UTC" {
 
-        val timezone = TimeZone.of("Z")
+        val timezone = MpTimezone.of("Z")
 
         val result = json.decodeFromString(
             MpZonedDateTime.serializer(),
@@ -74,7 +74,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
 
     "De-Serializing - pure - Europe/Bucharest" {
 
-        val timezone = TimeZone.of("Europe/Bucharest")
+        val timezone = MpTimezone.of("Europe/Bucharest")
 
         val result = json.decodeFromString(
             MpZonedDateTime.serializer(),
@@ -91,7 +91,7 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
 
     "De-Serializing - pure - US/Pacific" {
 
-        val timezone = TimeZone.of("US/Pacific")
+        val timezone = MpTimezone.of("US/Pacific")
 
         val result = json.decodeFromString(
             MpZonedDateTime.serializer(),
@@ -117,14 +117,14 @@ class MpZonedDateTimeSerializationSpec : StringSpec({
 
         result shouldBe Wrapper(
             MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14)
-                .atZone(TimeZone.of("Europe/Bucharest")),
+                .atZone(MpTimezone.of("Europe/Bucharest")),
         )
     }
 
     "Roundtrip - pure" {
 
         val start: MpZonedDateTime = MpLocalDateTime.of(2022, Month.APRIL, 5)
-            .atZone(TimeZone.of("Europe/Bucharest"))
+            .atZone(MpTimezone.of("Europe/Bucharest"))
 
         val result: MpZonedDateTime = json.decodeFromString(
             MpZonedDateTime.serializer(),

@@ -9,70 +9,27 @@ import kotlinx.datetime.UtcOffset
 class ExtensionsSpec : StringSpec({
 
     "TimeZone.mp" {
-        val kotlinxTz = TimeZone.of("Europe/Berlin")
-        val mpTz = kotlinxTz.mp
-
-        mpTz shouldBe MpTimezone.of("Europe/Berlin")
-        mpTz.id shouldBe "Europe/Berlin"
-
         TimeZone.UTC.mp shouldBe MpTimezone.of("UTC")
+        TimeZone.of("+02:00").mp shouldBe MpTimezone.of("+02:00")
     }
 
-    "UtcOffset.totalMillis" {
-
+    "TimeZone.offsetAt - fixed offsets need no zone data on any target" {
         TimeZone.UTC.offset.totalMillis shouldBe 0
-
-        TimeZone.of("Europe/Berlin").offsetAt(
-            MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ).totalMillis shouldBe 1 * 60 * 60 * 1_000
-
-        TimeZone.of("Europe/Berlin").offsetAt(
-            MpInstant.parse("2022-03-28T00:00:00.000Z")
-        ).totalMillis shouldBe 2 * 60 * 60 * 1_000
-    }
-
-    "TimeZone.offsetAt" {
 
         TimeZone.UTC.offsetAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
         ) shouldBe UtcOffset(hours = 0)
 
-        TimeZone.of("Europe/Berlin").offsetAt(
+        TimeZone.of("+02:00").offsetAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 1)
-
-        TimeZone.of("Europe/Berlin").offsetAt(
-            MpInstant.parse("2022-03-28T00:00:00.000Z")
         ) shouldBe UtcOffset(hours = 2)
-    }
 
-    "TimeZone.offsetSecondsAt" {
-
-        TimeZone.UTC.offsetSecondsAt(
+        TimeZone.of("-05:30").offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe 0
+        ) shouldBe -(5 * 60 + 30) * 60
 
-        TimeZone.of("Europe/Berlin").offsetSecondsAt(
+        TimeZone.of("+02:00").offsetMillisAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe 1 * 60 * 60
-
-        TimeZone.of("Europe/Berlin").offsetSecondsAt(
-            MpInstant.parse("2022-03-28T00:00:00.000Z")
-        ) shouldBe 2 * 60 * 60
-    }
-
-    "TimeZone.offsetMillisAt" {
-
-        TimeZone.UTC.offsetMillisAt(
-            MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe 0
-
-        TimeZone.of("Europe/Berlin").offsetMillisAt(
-            MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe 1 * 60 * 60 * 1_000
-
-        TimeZone.of("Europe/Berlin").offsetMillisAt(
-            MpInstant.parse("2022-03-28T00:00:00.000Z")
         ) shouldBe 2 * 60 * 60 * 1_000
     }
 

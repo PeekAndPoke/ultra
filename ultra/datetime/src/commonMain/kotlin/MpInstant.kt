@@ -6,8 +6,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
@@ -109,7 +107,7 @@ data class MpInstant(
      */
     override fun atZone(timezone: MpTimezone): MpZonedDateTime {
         return MpZonedDateTime.of(
-            MpLocalDateTime(value.toLocalDateTime(timezone.kotlinx)),
+            MpLocalDateTime(TimezoneEngine.toLocalDateTime(timezone, value)),
             timezone,
         )
     }
@@ -125,7 +123,7 @@ data class MpInstant(
      * Creates an iso date time string.
      */
     fun toIsoString(): String {
-        return atZone(TimeZone.UTC).toIsoString()
+        return atZone(MpTimezone.UTC).toIsoString()
     }
 
     /**
@@ -186,7 +184,7 @@ data class MpInstant(
      * while the difference between both instants is only 23 hours.
      */
     fun plus(unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
-        return plus(unit = unit, timezone = timezone.kotlinx)
+        return plus(1, unit, timezone)
     }
 
     /**
@@ -199,17 +197,7 @@ data class MpInstant(
      * while the difference between both instants is only 23 hours.
      */
     fun plus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstant {
-        if (value == 0) {
-            return this
-        }
-
-        return MpInstant(
-            value = this.value.plus(
-                value = value,
-                unit = unit,
-                timeZone = timezone,
-            )
-        )
+        return plus(value = value, unit = unit, timezone = timezone.mp)
     }
 
     /**
@@ -222,7 +210,13 @@ data class MpInstant(
      * while the difference between both instants is only 23 hours.
      */
     fun plus(value: Int, unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
-        return plus(value = value, unit = unit, timezone = timezone.kotlinx)
+        if (value == 0) {
+            return this
+        }
+
+        return MpInstant(
+            value = TimezoneEngine.plus(instant = this.value, value = value, unit = unit, timezone = timezone)
+        )
     }
 
     /**
@@ -232,15 +226,13 @@ data class MpInstant(
      */
     fun plus(period: MpTemporalPeriod, timezone: MpTimezone): MpInstant {
 
-        val tz = timezone.kotlinx
-
-        return plus(period.years, DateTimeUnit.YEAR, tz)
-            .plus(period.months, DateTimeUnit.MONTH, tz)
-            .plus(period.days, DateTimeUnit.DAY, tz)
-            .plus(period.hours, DateTimeUnit.HOUR, tz)
-            .plus(period.minutes, DateTimeUnit.MINUTE, tz)
-            .plus(period.seconds, DateTimeUnit.SECOND, tz)
-            .plus(period.milliseconds, DateTimeUnit.MILLISECOND, tz)
+        return plus(period.years, DateTimeUnit.YEAR, timezone)
+            .plus(period.months, DateTimeUnit.MONTH, timezone)
+            .plus(period.days, DateTimeUnit.DAY, timezone)
+            .plus(period.hours, DateTimeUnit.HOUR, timezone)
+            .plus(period.minutes, DateTimeUnit.MINUTE, timezone)
+            .plus(period.seconds, DateTimeUnit.SECOND, timezone)
+            .plus(period.milliseconds, DateTimeUnit.MILLISECOND, timezone)
     }
 
     /**
@@ -273,7 +265,7 @@ data class MpInstant(
      * while the difference between both instants is only 23 hours.
      */
     fun minus(unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
-        return minus(unit = unit, timezone = timezone.kotlinx)
+        return minus(1, unit, timezone)
     }
 
     /**
@@ -286,7 +278,7 @@ data class MpInstant(
      * while the difference between both instants is only 23 hours.
      */
     fun minus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstant {
-        return plus(-value, unit, timezone)
+        return minus(value = value, unit = unit, timezone = timezone.mp)
     }
 
     /**
@@ -299,7 +291,7 @@ data class MpInstant(
      * while the difference between both instants is only 23 hours.
      */
     fun minus(value: Int, unit: DateTimeUnit, timezone: MpTimezone): MpInstant {
-        return minus(value = value, unit = unit, timezone = timezone.kotlinx)
+        return plus(-value, unit, timezone)
     }
 
     /**

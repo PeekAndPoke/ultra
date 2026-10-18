@@ -75,8 +75,8 @@ kotlin {
         jsTest {
             dependencies {
                 jsTestDeps()
-                // No @js-joda/timezone here: the suite runs against the native Intl-backed
-                // provider (installNativeTimezones) registered in ProjectConfig.
+                // No @js-joda/timezone and no zone provider: ultra's zone math runs on Intl
+                // (TimezoneEngineJs.kt), so a green suite proves no path needs kotlinx zone data.
             }
         }
 

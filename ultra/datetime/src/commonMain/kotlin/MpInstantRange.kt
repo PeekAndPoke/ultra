@@ -99,6 +99,13 @@ data class MpInstantRange(
      * Converts into an [MpZonedDateTimeRange] at the given [timezone].
      */
     fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
+        return atZone(timezone.mp)
+    }
+
+    /**
+     * Converts into an [MpZonedDateTimeRange] at the given [timezone].
+     */
+    fun atZone(timezone: MpTimezone): MpZonedDateTimeRange {
         return MpZonedDateTimeRange(
             from = from.atZone(timezone),
             to = to.atZone(timezone),
@@ -106,17 +113,10 @@ data class MpInstantRange(
     }
 
     /**
-     * Converts into an [MpZonedDateTimeRange] at the given [timezone].
-     */
-    fun atZone(timezone: MpTimezone): MpZonedDateTimeRange {
-        return atZone(timezone.kotlinx)
-    }
-
-    /**
      * Converts into an [MpZonedDateTimeRange] at the systems default timezone.
      */
     fun atSystemDefaultZone(): MpZonedDateTimeRange {
-        return atZone(TimeZone.currentSystemDefault())
+        return atZone(MpTimezone.systemDefault)
     }
 
     /**
@@ -258,6 +258,20 @@ data class MpInstantRange(
      * while the difference between both instants is only 23 hours.
      */
     fun plus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstantRange {
+        return plus(value = value, unit = unit, timezone = timezone.mp)
+    }
+
+    /**
+     * Adds once the [unit] by taking the [timezone] into account.
+     */
+    fun plus(unit: DateTimeUnit, timezone: MpTimezone): MpInstantRange {
+        return plus(value = 1, unit = unit, timezone = timezone)
+    }
+
+    /**
+     * Adds the [value] times [unit] by taking the [timezone] into account.
+     */
+    fun plus(value: Int, unit: DateTimeUnit, timezone: MpTimezone): MpInstantRange {
         return MpInstantRange(
             from = from.plus(value = value, unit = unit, timezone = timezone),
             to = to.plus(value = value, unit = unit, timezone = timezone),
@@ -294,6 +308,20 @@ data class MpInstantRange(
      * while the difference between both instants is only 23 hours.
      */
     fun minus(value: Int, unit: DateTimeUnit, timezone: TimeZone): MpInstantRange {
+        return minus(value = value, unit = unit, timezone = timezone.mp)
+    }
+
+    /**
+     * Subtracts once the [unit] by taking the [timezone] into account.
+     */
+    fun minus(unit: DateTimeUnit, timezone: MpTimezone): MpInstantRange {
+        return minus(1, unit, timezone)
+    }
+
+    /**
+     * Subtracts the [value] times [unit] by taking the [timezone] into account.
+     */
+    fun minus(value: Int, unit: DateTimeUnit, timezone: MpTimezone): MpInstantRange {
         return plus(-value, unit, timezone)
     }
 }
