@@ -152,7 +152,7 @@ S = security.
 | 1 | MINOR | `KotlinxTimeZoneInputSpec.kt:16` | A test that exercises only kotlinx (I) | fixed (MINOR batch) | Removed |
 | 1 | MINOR | `TimezoneEngine.kt:153` | `"Z"` branch unreachable (`MpTimezone.of("Z")` → UTC, constructor private) (I, surplus) | fixed (MINOR batch) | Removed; KDoc says `Z` never arrives |
 | 1 | MINOR | `extensions.kt:27,48` | `offsetAt` still RETURNS kotlinx `UtcOffset` — against the inputs-and-converters rule (D) | out-of-scope → follow-up task | Maintainer: keep for now, eliminate ALL kotlinx return types in `.claude/tasks/20261018-datetime-no-kotlinx-return-types.md` (breaking, accepted) |
-| 1 | MINOR | `kraft/addons/datetime/README.md:10-33`, `.claude/tasks/kraft-timezone-decoupling.md` | Stale: still recommend the removed `installNativeTimezones()` / say Kraft installs native zones by default (D, I) | fixed (task doc) / follow-up (README) | `kraft-timezone-decoupling.md` marked superseded + archived to `.claude/tasks-archive/2026-06/`; README → `.claude/tasks/20261018-docs-datetime-zone-engine.md` |
+| 1 | MINOR | `kraft/addons/datetime/README.md:10-33`, `.claude/tasks/kraft-timezone-decoupling.md` | Stale: still recommend the removed `installNativeTimezones()` / say Kraft installs native zones by default (D, I) | fixed (task doc) / follow-up (README) | `kraft-timezone-decoupling.md` marked superseded + archived to `.claude/tasks-archive/2026-06/`; README → `.claude/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` (done) |
 | 1 | MINOR | step B evidence | Kraft suites / js-joda loaders never run on 0.8.0 (D, I) | reject | Final-tree run exists (412/0, 2/0, 9 addon suites green) — was only missing from this file, now recorded; loader mutation RED |
 | 1 | MINOR | `MpInstant.kt:227` | Periods added component by component, resolving after each (≠ java's single resolution) (D) | reject | Documented behaviour: KDoc "Each component is added individually"; pre-existing |
 
@@ -171,7 +171,7 @@ wraps java.time — not independent evidence; the other ~21 per transition are.
 `:ultra:datetime:allTests` jvmTest 2483/0, linuxX64Test 1843/0, jsBrowserTest 1847/0; `:ultra:slumber:jvmTest` 1243/0;
 `:kraft:addons:datetime:jsBrowserTest` 2/0. Every mutation restored + `cmp`-verified.
 
-**Follow-ups:** docs `.claude/tasks/20261018-docs-datetime-zone-engine.md` (before 0.112.0);
+**Follow-ups:** docs `.claude/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` (done);
 `.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md`; `.claude/tasks/20261018-datetime-no-kotlinx-return-types.md`;
 performance `.claude/tasks/20261018-datetime-js-performance.md` (from spross, before 0.112.0). No red-team task: not
 security-critical. The applied patch is archived next to this file.

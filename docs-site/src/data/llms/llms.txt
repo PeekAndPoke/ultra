@@ -14,7 +14,7 @@
 - [Mutator](https://peekandpoke.io/llms/mutator.md): KSP-generated code for mutating nested immutable data structures — @Mutable(deep) controls transitive discovery, @NotMutable excludes types, plugin-extensible
 - [Streams](https://peekandpoke.io/llms/streams.md): Reactive streams — always-has-a-value, composable operators, lazy subscriptions (JVM, JS, Native)
 - [Datetime](https://peekandpoke.io/llms/datetime.md): Multiplatform date/time — guard-rail type system, 600+ timezones, DST-aware arithmetic, testable Kronos clock, native browser timezones via Intl (JVM, JS, Native)
-  - [Timezones on Kotlin/JS](https://peekandpoke.io/ultra/datetime/js-timezones): Native (Intl, zero-data) provider vs bundled IANA datasets; automatic in Kraft
+  - [Timezones on Kotlin/JS](https://peekandpoke.io/ultra/datetime/js-timezones): No setup for Mp* types (Intl, zero data); java.time semantics; datasets only for raw kotlinx zones
 - [Cache](https://peekandpoke.io/llms/cache.md): In-memory caching — TTL/LRU/memory-aware eviction, coroutine-based, multiplatform (JVM, JS, Native)
 - [Maths](https://peekandpoke.io/llms/maths.md): Easing functions & bucketed distributions — 3 curve families, inverse-CDF sampling, combinators (JVM, JS, Native)
 - [i18n](https://peekandpoke.io/llms/i18n.md): Type-safe translations — YAML catalogs compiled to typed accessors, build-time checker for missing keys/languages/placeholders, locale fallback chain, per-module catalog precedence (JVM, JS)

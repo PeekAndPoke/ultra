@@ -7,58 +7,53 @@ import {dep} from '../../../data/site';
 ---
 
 <DocsLayout title="Timezones on Kotlin/JS" sidebar={datetimeSidebar}
-            description="Named time zones in the browser — native (Intl, zero-data) or bundled IANA data">
+            description="Named time zones in the browser: no setup for Mp* types, optional data for raw kotlinx zones">
 
     <h1>Timezones on Kotlin/JS</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        Named zones like <code>Europe/Berlin</code> need a timezone provider in the browser. Pick the native one
-        (zero bundled data) or a bundled IANA dataset.
+        Named zones like <code>Europe/Berlin</code> work in the browser without any setup and without bundled timezone
+        data.
     </p>
 
-    <Aside>JVM and Kotlin/Native have this built in — there's nothing to set up. This page is only about the JS target.
+    <h2>Nothing to set up</h2>
+
+    <Code code={`val berlin = MpTimezone.of("Europe/Berlin")
+
+MpInstant.now().atZone(berlin)                      // works in the browser as is
+MpLocalDate.of(2022, 3, 27).atStartOfDay(berlin)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>On JS, <code>ultra:datetime</code> reads zone offsets from the browser's own IANA database through
+        <code>Intl.DateTimeFormat</code>, so it is as current as the browser and adds no data to your bundle. The zone
+        math on top of it is shared with the JVM and Native and follows java.time:</p>
+
+    <ul>
+        <li>A local time in a DST gap moves forward by the length of the gap (02:30 on a spring-forward night becomes
+            03:30).
+        </li>
+        <li>A local time in a DST overlap takes the earlier offset.</li>
+        <li>Adding days or months keeps the time of day, and keeps the current offset if the result falls into an
+            overlap.
+        </li>
+        <li>The start of a day whose midnight falls into a gap is the end of the gap.</li>
+    </ul>
+
+    <Aside>A test table generated from java.time runs on all three targets, and on the JVM the same algorithm is checked
+        against java.time around every transition of every zone from 1900 to 2040.
     </Aside>
 
-    <h2>Why setup is needed</h2>
+    <h2>Zone ids are case-sensitive</h2>
 
-    <p>On JS the library builds on <a href="https://js-joda.github.io/js-joda/" target="_blank"
-                                      rel="noopener">js-joda</a>.
-        Without a timezone provider only the system zone with a fixed offset is available — <code>MpTimezone.of("Europe/Berlin")</code>
-        and any DST-aware conversion will fail. You register a provider <strong>once at startup</strong>, before the
-        first zone is resolved.</p>
+    <p>The browser's <code>Intl</code> accepts <code>europe/berlin</code>, java.time does not. So that an id accepted in
+        the browser is also accepted on the server, <code>ultra:datetime</code> rejects case variants of known ids on JS
+        too, with an <code>IllegalTimeZoneException</code>.</p>
 
-    <h2>Native — recommended (zero data)</h2>
+    <h2>Raw kotlinx zones</h2>
 
-    <p>The native provider reads offsets from the browser's own IANA database via <code>Intl</code>. It bundles
-        <strong>no</strong> timezone data and is always up to date with the browser:</p>
-
-    <Code code={`import io.peekandpoke.ultra.datetime.installNativeTimezones
-
-fun main() {
-    installNativeTimezones()   // call once, before any zone is used
-
-    val berlin = MpTimezone.of("Europe/Berlin")  // now works
-}`} lang="kotlin" theme="vitesse-dark"/>
-
-    <Aside>Works in all modern browsers (it uses <code>Intl.DateTimeFormat</code>). It passes the full
-        <code>ultra:datetime</code> test suite — named zones and DST transitions included.
-    </Aside>
-
-    <h2>In a Kraft app — automatic</h2>
-
-    <p>Kraft installs the native provider for you, so a <code>kraftApp {'{}'}</code> needs no timezone setup at all —
-        named zones just work:</p>
-
-    <Code code={`val app = kraftApp {
-    // native timezones are already installed — nothing to do here
-    routing { /* ... */ }
-}`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>Bundled IANA data (fallback)</h2>
-
-    <p>To support a pre-<code>Intl</code> engine, or for historical accuracy beyond what the browser provides, bundle a
-        js-joda dataset via the <code>kraft:addons:datetime</code> module. Each loader bundles a different slice of the
-        IANA database — call only the one you need, so dead-code elimination keeps just that dataset:</p>
+    <p>Only code that calls <code>kotlinx-datetime</code> directly, e.g. <code>TimeZone.of("Europe/Berlin")</code>,
+        needs timezone data in the browser. Without it kotlinx knows only UTC and fixed offsets. The
+        <code>kraft:addons:datetime</code> module bundles a js-joda dataset for that case — call only the loader you
+        need, so dead-code elimination keeps just that dataset:</p>
 
     <Code code={`dependencies {
     implementation("${dep.kraftAddonDatetime}")
@@ -69,28 +64,27 @@ fun main() {
             <thead>
             <tr>
                 <th>Loader</th>
+                <th>Kraft builder</th>
                 <th>Coverage</th>
                 <th>Size (min / gzip)</th>
             </tr>
             </thead>
             <tbody>
             <tr>
-                <td><code>installNativeTimezones()</code></td>
-                <td>browser IANA DB via Intl</td>
-                <td>~0 KB</td>
-            </tr>
-            <tr>
                 <td><code>installFullTimezones()</code></td>
+                <td><code>fullTimezones()</code></td>
                 <td>all zones, full history</td>
                 <td>~713 / 37 KB</td>
             </tr>
             <tr>
                 <td><code>installTimezones1970to2030()</code></td>
+                <td><code>timezones1970to2030()</code></td>
                 <td>years 1970&ndash;2030</td>
                 <td>~130 / 18 KB</td>
             </tr>
             <tr>
                 <td><code>installTimezones10YearRange()</code></td>
+                <td><code>timezones10YearRange()</code></td>
                 <td>~&plusmn;5 years from build</td>
                 <td>~40 / 10 KB</td>
             </tr>
@@ -98,15 +92,14 @@ fun main() {
         </table>
     </div>
 
-    <p>In a Kraft app, choose a dataset in the builder instead of the default native provider:</p>
-
-    <Code code={`import io.peekandpoke.kraft.addons.datetime.fullTimezones
+    <Code code={`import io.peekandpoke.kraft.addons.datetime.timezones1970to2030
 
 val app = kraftApp {
-    fullTimezones()   // override the default native provider with the full IANA dataset
+    timezones1970to2030()   // only needed for raw kotlinx TimeZone.of(...)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Outside Kraft, call the matching <code>install&hellip;Timezones()</code> function once at startup.</p>
+    <p>Outside Kraft, call the matching <code>install&hellip;()</code> function once at startup, before the first zone is
+        resolved.</p>
 
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/datetime/mp-timezone"

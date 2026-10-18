@@ -160,29 +160,20 @@ MpTimezone.supportedIds  // 600+ IANA zones
 
 ## Timezones on Kotlin/JS
 
-Named zones (`MpTimezone.of("Europe/Berlin")`) need a timezone provider on the JS target — JVM and Native have it built
-in. Register one **once at startup**, before any zone is resolved.
+No setup. On JS, zone offsets come from the browser's IANA database via `Intl.DateTimeFormat` — no bundled data. The
+zone math is shared with JVM/Native and follows java.time: a DST-gap local time moves forward by the gap; an overlap
+takes the earlier offset; adding days/months keeps the time of day (and the current offset in an overlap); a start of
+day whose midnight is in a gap is the end of the gap.
 
-- **Native (recommended, zero data):** `installNativeTimezones()` resolves offsets from the browser's IANA database via
-  `Intl` — no bundled timezone data, always up to date. Passes the full datetime test suite (named zones + DST).
-- **In a Kraft app:** automatic — `kraftApp { }` installs the native provider by default; nothing to do.
-- **Bundled fallback:** add `io.peekandpoke.kraft:addons-datetime` and call one js-joda loader (for pre-`Intl` engines
-  or
-  historical accuracy). Call only the one you need — DCE bundles just that dataset:
-  - `installNativeTimezones()` — browser Intl, ~0 KB
-  - `installFullTimezones()` — all zones, full history, ~713 KB / 37 KB gzip
-  - `installTimezones1970to2030()` — years 1970–2030, ~130 KB / 18 KB gzip
-  - `installTimezones10YearRange()` — ~±5 years from build, ~40 KB / 10 KB gzip
-- In a Kraft builder, override the default native provider with `fullTimezones()`, `timezones1970to2030()`, etc.
+Zone ids are case-sensitive on every target: JS rejects case variants of known ids (`europe/berlin`) with
+`IllegalTimeZoneException`, like java.time.
 
-```kotlin
-import io.peekandpoke.ultra.datetime.installNativeTimezones
+Only RAW kotlinx zones (`TimeZone.of("Europe/Berlin")`) need data in the browser. Add `io.peekandpoke.kraft:addons-datetime`
+and call one loader once at startup (DCE keeps just that dataset):
 
-fun main() {
-  installNativeTimezones()  // before any zone is resolved
-  val berlin = MpTimezone.of("Europe/Berlin")
-}
-```
+- `installFullTimezones()` / builder `fullTimezones()` — all zones, full history, ~713 KB / 37 KB gzip
+- `installTimezones1970to2030()` / `timezones1970to2030()` — ~130 KB / 18 KB gzip
+- `installTimezones10YearRange()` / `timezones10YearRange()` — ~±5 years from build, ~40 KB / 10 KB gzip
 
 ## Periods
 
@@ -315,3 +306,20 @@ val javaDate = mpDate.jvm
 val mpInstant = javaInstant.mp
 val mpDate = javaDate.mp
 ```
+
+## kotlinx-datetime interop
+
+kotlinx types appear in the API as inputs (e.g. `atZone(TimeZone)`, `plus(1, DateTimeUnit.DAY, tz)`) and through these
+converters (all targets):
+
+```kotlin
+mpInstant.kotlinx        // kotlin.time.Instant          instant.mp
+mpDate.kotlinx           // LocalDate                    localDate.mp
+mpDateTime.kotlinx       // LocalDateTime                localDateTime.mp
+mpTime.kotlinx           // LocalTime                    localTime.mp        (truncated to millis)
+mpTimezone.kotlinx       // TimeZone                     timeZone.mp
+mpDatePeriod.kotlinx     // DatePeriod (months -> years) datePeriod.mp
+mpDateTimePeriod.kotlinx // DateTimePeriod (normalised)  dateTimePeriod.mp   (truncated to millis)
+```
+
+Gotcha: `MpTimezone.kotlinx` throws on JS for region ids unless a js-joda dataset is loaded — ultra itself never needs it.

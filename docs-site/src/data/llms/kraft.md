@@ -188,9 +188,8 @@ fun main() {
 }
 ```
 
-**Timezones:** named zones (`MpTimezone.of("Europe/Berlin")`) work out of the box — Kraft installs a native, zero-data
-timezone provider by default. To bundle IANA data instead (the `addons-datetime` module), see
-https://peekandpoke.io/ultra/datetime/js-timezones
+**Timezones:** named zones (`MpTimezone.of("Europe/Berlin")`) work out of the box with no bundled data. Only raw kotlinx
+`TimeZone.of(...)` needs a dataset (the `addons-datetime` module), see https://peekandpoke.io/ultra/datetime/js-timezones
 
 ## 4. Create your first component
 

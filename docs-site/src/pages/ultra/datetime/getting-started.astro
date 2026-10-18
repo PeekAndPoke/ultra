@@ -113,6 +113,15 @@ val mpInstant: MpInstant = javaInstant.mp
 val mpDate: MpLocalDate = javaDate.mp
 val mpZoned: MpZonedDateTime = javaZoned.mp`} lang="kotlin" theme="vitesse-dark"/>
 
+    <p>On every target, the same <code>.kotlinx</code> / <code>.mp</code> pair converts to and from
+        <code>kotlinx-datetime</code>:</p>
+
+    <Code code={`val instant: kotlin.time.Instant = mpInstant.kotlinx
+val date: kotlinx.datetime.LocalDate = mpDate.kotlinx
+val zone: kotlinx.datetime.TimeZone = mpTimezone.kotlinx
+
+val mpDate: MpLocalDate = date.mp`} lang="kotlin" theme="vitesse-dark"/>
+
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/datetime/types"
            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">
