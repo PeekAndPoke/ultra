@@ -52,6 +52,43 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
         mismatches.take(50).shouldBeEmpty()
     }
 
+    "the assumption holds: no zone has two transitions within a day of each other, from its first one to 2100" {
+        val end = Instant.parse("2100-01-01T00:00:00Z")
+        val tooClose = mutableListOf<String>()
+
+        ZoneId.getAvailableZoneIds().sorted().forEach { zoneId ->
+            val rules = ZoneId.of(zoneId).rules
+            var previous = rules.nextTransition(Instant.MIN.plusSeconds(1))
+
+            while (previous != null && previous.instant < end) {
+                val next = rules.nextTransition(previous.instant) ?: break
+                if (next.instant.epochSecond - previous.instant.epochSecond <= 86_400) tooClose += "$zoneId at ${next.instant}"
+                previous = next
+            }
+        }
+
+        tooClose.shouldBeEmpty()
+    }
+
+    "a daily walk at a fixed time of day 1900 to 2040 matches java.time" {
+        val mismatches = mutableListOf<String>()
+
+        ZoneId.getAvailableZoneIds().sorted().forEach { zoneId ->
+            val zone = ZoneId.of(zoneId)
+            val cache = OffsetIntervalCache { javaOffset(zone, it) }
+
+            var at = from.epochSecond + 7_200
+            while (at < until.epochSecond) {
+                val expected = javaOffset(zone, at)
+                val actual = cache.offsetSecondsAt(at)
+                if (expected != actual) mismatches += "$zoneId at $at: expected $expected, got $actual"
+                at += 86_400
+            }
+        }
+
+        mismatches.take(50).shouldBeEmpty()
+    }
+
     "a sequential hourly walk 1970 to 2040 matches java.time" {
         val mismatches = mutableListOf<String>()
 

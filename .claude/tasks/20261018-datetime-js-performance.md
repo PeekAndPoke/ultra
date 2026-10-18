@@ -49,7 +49,7 @@ stores a `Long`; moving it to `Int` is on Ultra-Main-Dev's list.
 
 ## Spec
 
-- [ ] **Cache zone offsets on JS.** A zone's offset is constant between two transitions (twice a year for
+- [x] **Cache zone offsets on JS.** A zone's offset is constant between two transitions (twice a year for
       `Europe/Berlin`, never for many zones). Proposal: per zone, keep the last interval known to have one offset,
       `[from, until)`, with exact bounds from the binary search `TimezoneEngine` already has (`transitionAfter`,
       `TimezoneEngine.kt:132`), and answer an instant inside it with a range check, no `Intl` call. A sequential
@@ -64,9 +64,10 @@ stores a `Long`; moving it to `Int` is on Ultra-Main-Dev's list.
         instants just before, at and after a transition, cache hits and misses giving the same answers as the
         uncached path over a sweep (every hour of a year in `Europe/Berlin`, `America/New_York`,
         `Australia/Lord_Howe` with its half-hour shift, `Pacific/Apia` with its skipped day).
-- [ ] **Cheaper fixed-offset check.** `fixedOffsetSecondsOrNull` runs on every call; caching its answer per zone id
+- [x] **Cheaper fixed-offset check.** Done as far as worth it: prefixes are a constant (was a `listOf` per call); a
+      per-id memo would cost a string hash per call and was NOT added (review round 1, recorded). `fixedOffsetSecondsOrNull` runs on every call; caching its answer per zone id
       (null included) removes the string work from the hot path.
-- [ ] **The `Long` cost.** `kotlin.time.Instant` and `Duration` are `Long`-backed, and Kotlin/JS emulates `Long` in
+- [x] **The `Long` cost** (measured and reported; see Implementation notes). `kotlin.time.Instant` and `Duration` are `Long`-backed, and Kotlin/JS emulates `Long` in
       software. What ultra can do, to be measured first:
       - keep hot paths of `MpInstant` (compare, minus, plus a `Duration`) from creating intermediate `Long`s or
         boxing them, where kotlinx's API allows (for example comparing epoch seconds and nanos once rather than
@@ -76,7 +77,7 @@ stores a `Long`; moving it to `Int` is on Ultra-Main-Dev's list.
         slower;
       - `hashCode` showed up at about 5 %: if `MpInstant` or `MpTimezone` hash their `Long`s or strings on every
         map lookup, a cached hash (a `MpTimezone` is immutable and few) may pay.
-- [ ] **A benchmark** in `jsTest` (or a small tool) that a change is measured with: for example 100,000 sequential
+- [x] **A benchmark** in `jsTest` (or a small tool) that a change is measured with: for example 100,000 sequential
       minute steps of `atZone(...).toLocalDateTime()` and `toInstant(zone)` in `Europe/Berlin`, timed, before and
       after. The figures go into this file.
 
@@ -104,9 +105,11 @@ stores a `Long`; moving it to `Int` is on Ultra-Main-Dev's list.
   tests and land in the TEST NAMES (`BENCH …: N ns/op` in the jsBrowserTest XML). Run with
   `./gradlew :ultra:datetime:jsBrowserTest --rerun` — without `--rerun` Gradle serves the previous XML. Noise between
   runs is ~20 %, more while other builds run on the machine.
-- `OffsetIntervalCache` (`ultra/datetime/src/commonMain/kotlin/OffsetIntervalCache.kt`): up to 4 `[from, until)`
-  intervals per zone with one offset each, most-recent first, joined when they touch; a miss costs 3 lookups (±1 day)
-  plus a ~17-step binary search per side with a transition. Used only by the JS actual (`TimezoneEngineJs.kt`, one
+- `OffsetIntervalCache` (`ultra/datetime/src/commonMain/kotlin/OffsetIntervalCache.kt`): up to 8 `[from, until)`
+  intervals per zone with one offset each, most-recent first, joined when they touch. LAZY since review round 1: a miss
+  far from anything known costs ONE lookup (remembered as a single second); a miss within a day of an interval extends
+  it (binary search only when the offsets differ — then exactly one transition lies between, ≤ a day apart); a miss
+  within an HOUR also probes a day ahead in the direction of travel (sequential walks). Used only by the JS actual (`TimezoneEngineJs.kt`, one
   cache per zone id that resolved). Checked against java.time by `OffsetIntervalCacheJvmSpec`: every JDK zone, probes
   around every transition 1900–2040 in four orders (1 015 008 checks, 0 mismatches) + hourly walks 1970–2040 for
   Berlin, New York, Lord Howe, Apia, Casablanca; `OffsetIntervalCacheSpec` (common) counts lookups.
@@ -144,11 +147,56 @@ stores a `Long`; moving it to `Int` is on Ultra-Main-Dev's list.
       | `MpLocalTime` plus / hour / minute | 2 500 – 3 100 | 1 000 – 1 100 |
 
       Intermediate: cache only → `atZone` ~21 600, `toInstant` ~24 000; + epoch-second engine → ~11 000 / ~18 700.
+
+      After review round 1 (lazy cache, probe-ahead only within an hour), same engine, 2 runs each, vs the cache
+      BYPASSED (temporary edit, restored + `cmp`):
+
+      | Access pattern (`atZone(berlin).toLocalDateTime()`) | no cache | eager cache (round 1) | lazy, always probe | lazy, probe ≤ 1 h (final) |
+      |---|---|---|---|---|
+      | sequential minutes | 24 400 – 29 300 | 9 100 – 9 200 | 10 200 – 12 500 | 9 600 – 9 800 |
+      | daily stride | 23 400 – 33 400 | (not measured) | 16 100 – 20 800 | 16 100 – 16 400 |
+      | scattered over 50 years | 23 800 – 26 600 | (not measured) | 33 100 – 36 800 | 27 600 – 27 900 |
+
+      Scattered access stays ~5–15 % behind no cache: the lookups are about equal, the rest is the cache's own
+      emulated-`Long` bookkeeping, which cannot pay off when nothing repeats. Final `toInstant` 15 500 – 15 800,
+      `MpLocalTime` 1 100 – 1 200.
 - [ ] spross browser profile against a snapshot, before/after (Spross-Main-Dev)
 
 ## Review record (the ledger, filled by /feature-review)
 
+Change set: `842bdc9e` (base `08e3c8c3`). Round 1 BLIND, three `reviewer-high` (I = implementation & style,
+D = domain, S = security).
+
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MAJOR (fixed, see the access-pattern table) | `OffsetIntervalCache.kt:34-48` | Every miss costs 3 Intl calls and intervals only cover ±1 day around probed points, so cold / random-access callers pay 2–3x MORE than without the cache (cold `toInstant` 6 vs 3; daily stride misses every call); the benchmark only measures the sequential best case (D) | fix | Verified by tracing `remember` + `resolve`: true. Fix: lazy intervals — a cold miss costs ONE lookup and stores the point; only a miss within a day of a known interval extends it (plus one probe ahead in the direction of travel), so sequential stays ~2 lookups per simulated day and cold/daily-stride drop to ~1 per call; benchmark + lookup-count spec gain random-access and daily-stride rows |
+| 1 | MINOR | `MpLocalTime.kt:83` | `of()` wraps only the hour; minute/second/milli overflow Int silently (`of(0, 35_792)`, `of(0, 0, 3_000_000)`) (I, D, S) | fix | Verified REGRESSION: at `08e3c8c3` `of()` computed in Long (`* 1_000L`). Each component wrapped by its own day multiple |
+| 1 | MINOR | `OffsetIntervalCacheJvmSpec.kt:17` | The "no two transitions within a day" assumption is checked only indirectly and only 1900–2040; pre-1900 LMT and Morocco/Palestine predictions to the 2080s are unchecked (D) | fix | Probe run 2026-10-19: 0 pairs ≤ 1 day apart in ANY JDK zone from its first transition to 2100. Pinned as a direct JVM test |
+| 1 | MINOR | `OffsetIntervalCache.kt:8` | KDoc "an interval grows by at most a day per probe" is false (joins) (I) | fix | KDoc rewritten with the lazy design |
+| 1 | MINOR | `TimezoneEngine.kt:28,160` | Spec item "cheaper fixed-offset check" neither done nor declined; spec boxes unticked (I) | fix (record) | Recorded: prefixes made constant; a per-id memo would cost a string hash per call — not added; boxes ticked |
+| 1 | MINOR | `jvmMain/kotlin/conversion.kt:117` | KDoc says `java.time.LocalDate`, returns `LocalTime` (I, pre-existing on a touched line) | fix | Factually wrong |
+| 1 | MINOR | `TimezoneEngineJs.kt:93-104` | Case variants of Intl-known ids MISSING from `supportedIds` (`Europe/Kyiv`, `America/Ciudad_Juarez`, `Pacific/Kanton`) still pass → per-spelling formatter + cache growth (S) | maintainer list | Real, pre-existing key set (same as `formatterCache`); fix would compare `resolvedOptions().timeZone` ignoring case |
+| 1 | MINOR | `OffsetIntervalCache.kt:37-88` | Worst case per miss rose from 1 to ~20 Intl calls; adversarial instants near many transitions defeat the 4-entry LRU (S) | fix (by the MAJOR's fix) | Lazy design: an isolated miss is 1 call; the binary search runs only between two verified points less than a day apart |
+| 1 | MINOR | `MpLocalTimeSlot.kt:173-180` | `splitWithGaps` loops forever (memory DoS) when `duration (+ gap)` wraps past midnight, e.g. `24.hours` (S) | out-of-scope → follow-up task | Verified by reading; PRE-EXISTING (old `%` wrapped the same). `.claude/tasks/20261019-mplocaltimeslot-splitwithgaps-loop.md` |
+| 1 | MINOR | `MpLocalTimeSerializer.kt:13` | Descriptor says `PrimitiveKind.STRING` but encodes a Long (D, I; pre-existing) | maintainer list | Pre-existing; matters for descriptor-driven formats only |
+| 1 | MINOR | `jvmMain/kotlin/conversion.kt:112` | JVM `LocalTime.mp` drops milliseconds, the kotlinx one keeps them (I, pre-existing) | maintainer list | Pre-existing |
+| 1 | MINOR | surplus | `MpLocalTime` Int API was not asked for by the profile (I) | reject | Settled maintainer decision 2026-10-18 ("Switch to Int"), recorded under Decisions |
+| 1 | MINOR | surplus | Benchmark runs on every `jsBrowserTest` (~1–2 s) (I, D) | maintainer list | Real cost; could be gated by a flag |
 
-**Verdict:**
+**Probed and CLEAN** (reviewers): interval bounds inclusive/exclusive; join soundness; no overflow / infinite loop in
+the binary searches; no half-built interval after a throwing lookup; no prototype keys (`Object.create(null)`); cached
+answers never outside the JS Date range; `shift()` clamping and nanos; MpLocalTime decode wrap for every Long incl.
+`Long.MIN_VALUE`, NaN/∞ via slumber; benchmark method adequate for the SEQUENTIAL figures; Intl stable per process.
+
+Fix-batch mutations (each RED, restored + `cmp`): near-threshold 30 days → RED only after adding "points with the
+same offset more than a day apart are not joined across a short period of another offset" (the sweep cannot see it:
+no real zone has transitions that close — that is the assumption); backward and forward branch without the binary
+search → RED only after adding "a point learned on the other side of a transition is not stretched over it" (after a
+probe ahead the bounds are already exact, so the sweep never reaches those branches with a coarse bound); probe ahead
+on every miss → RED ("costs one lookup (no probe ahead)"); never probe ahead → RED (sequential lookup count); cold
+miss probing → RED ("exactly one lookup"); `MpLocalTime.of` regression pinned by "of() wraps every component".
+
+Fix-batch final tree (2026-10-19): `:ultra:datetime:allTests` jvmTest 2498/0, linuxX64Test 1854/0, jsBrowserTest
+1866/0; `:ultra:slumber:jvmTest` 1244/0; `:kraft:addons:datetime:jsBrowserTest` 2/0.
+
+**Verdict:** round 1 NOT clean (1 MAJOR fixed) → round 2 (`reviewer-xhigh`, two-phase) after the fix batch.

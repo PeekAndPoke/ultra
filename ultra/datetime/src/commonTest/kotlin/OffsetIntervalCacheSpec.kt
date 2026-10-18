@@ -40,8 +40,71 @@ class OffsetIntervalCacheSpec : StringSpec({
             at += 60
         }
 
-        // a few lookups per day of time covered, plus one binary search per side of the transition
-        zone.lookups shouldBeLessThan 100
+        // about two lookups per day walked, plus one binary search for the transition
+        zone.lookups shouldBeLessThan 2 * 10 + 20
+    }
+
+    "a cold lookup far from anything known costs exactly one lookup" {
+        val zone = FakeZone()
+        val cache = OffsetIntervalCache(lookup = zone::offsetAt)
+
+        listOf(0L, 3_000_000L, 6_000_000L, 12_000_000L).forEach { at ->
+            val before = zone.lookups
+            cache.offsetSecondsAt(at)
+            zone.lookups - before shouldBe 1
+        }
+    }
+
+    "a miss within a day but more than an hour from what is known costs one lookup (no probe ahead)" {
+        val zone = FakeZone()
+        val cache = OffsetIntervalCache(lookup = zone::offsetAt)
+
+        cache.offsetSecondsAt(3_000_000L)
+
+        listOf(3_000_000L + 6 * 3_600L, 3_000_000L - 6 * 3_600L).forEach { at ->
+            val before = zone.lookups
+            cache.offsetSecondsAt(at) shouldBe 7200
+            zone.lookups - before shouldBe 1
+        }
+    }
+
+    "a daily stride costs about one lookup per call, not three" {
+        val zone = FakeZone()
+        val cache = OffsetIntervalCache(lookup = zone::offsetAt)
+
+        // 100 days, one call per day, across both transitions
+        var at = 0L
+        repeat(100) {
+            cache.offsetSecondsAt(at) shouldBe if (at in 1_000_000L until 9_000_000L) 7200 else 3600
+            at += 86_400
+        }
+
+        // ~1 per call, plus one binary search (~17) per transition crossed
+        zone.lookups shouldBeLessThan 100 + 2 * 20
+    }
+
+    "points with the same offset more than a day apart are not joined across a short period of another offset" {
+        // +1h, except +2h for three days
+        val shortPeriod = 2_000_000L until 2_000_000L + 3 * 86_400L
+        val cache = OffsetIntervalCache { if (it in shortPeriod) 7200 else 3600 }
+
+        cache.offsetSecondsAt(shortPeriod.first - 2 * 86_400L) shouldBe 3600
+        cache.offsetSecondsAt(shortPeriod.last + 2 * 86_400L) shouldBe 3600
+        cache.offsetSecondsAt(shortPeriod.first + 86_400L) shouldBe 7200
+    }
+
+    "a point learned on the other side of a transition is not stretched over it" {
+        listOf(-3_600L to 3 * 3_600L, 3 * 3_600L to -3_600L).forEach { (first, second) ->
+            val zone = FakeZone()
+            val cache = OffsetIntervalCache(lookup = zone::offsetAt)
+            val transition = 1_000_000L
+
+            cache.offsetSecondsAt(transition + first)
+            cache.offsetSecondsAt(transition + second)
+
+            cache.offsetSecondsAt(transition - 60) shouldBe 3600
+            cache.offsetSecondsAt(transition + 60) shouldBe 7200
+        }
     }
 
     "jumping between more places than it keeps still answers correctly" {

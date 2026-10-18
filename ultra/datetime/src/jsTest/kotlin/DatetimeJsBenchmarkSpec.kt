@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.datetime
 
 import io.kotest.core.spec.style.StringSpec
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
@@ -43,6 +44,23 @@ class DatetimeJsBenchmarkSpec : StringSpec({
             repeat(steps) {
                 sink += local.toInstant(berlin).toEpochSeconds()
                 local = local.toInstant(MpTimezone.UTC).plus(1.minutes).atZone(MpTimezone.UTC).toLocalDateTime()
+            }
+        }
+
+        bench("atZone, daily stride", steps) {
+            var t = start
+            repeat(steps) {
+                sink += t.atZone(berlin).toLocalDateTime().minute
+                t += 1.days
+            }
+        }
+
+        bench("atZone, scattered over 50 years (cold-ish)", steps) {
+            var seconds = start.toEpochSeconds()
+            repeat(steps) {
+                // a large odd stride: every call lands far from the previous ones
+                seconds = 1_000_000_000L + (seconds * 7_919L + 104_729L).mod(1_600_000_000L)
+                sink += MpInstant.fromEpochSeconds(seconds).atZone(berlin).toLocalDateTime().minute
             }
         }
 

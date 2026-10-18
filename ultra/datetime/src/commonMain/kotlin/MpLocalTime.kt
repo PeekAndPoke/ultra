@@ -78,10 +78,10 @@ data class MpLocalTime(
          * Creates an [MpLocalTime].
          */
         fun of(hour: Int, minute: Int, second: Int = 0, milliSecond: Int = 0): MpLocalTime {
-            // hour wrapped first, so hours beyond a day cannot overflow the Int
-            return ofMilliSeconds(
-                milliSecondsOfDay = (hour.mod(24) * 60 * 60 + minute * 60 + second) * MILLIS_PER_SECOND + milliSecond
-            )
+            // Each part wrapped into a day first, so the sum stays far inside the Int range for any input.
+            val seconds = hour.mod(24) * 3_600 + minute.mod(1_440) * 60 + second.mod(SECONDS_PER_DAY)
+
+            return ofMilliSeconds(milliSecondsOfDay = seconds * MILLIS_PER_SECOND + milliSecond.mod(MILLIS_PER_DAY))
         }
 
         /**

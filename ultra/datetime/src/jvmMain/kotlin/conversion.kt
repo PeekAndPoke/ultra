@@ -114,7 +114,7 @@ val LocalTime.mp: MpLocalTime
         MpLocalTime.ofMilliSeconds(milliSecondsOfDay = 1000 * (hour * 60 * 60 + minute * 60 + second))
 
 /**
- * Converts an [MpLocalTime] into a [java.time.LocalDate]
+ * Converts an [MpLocalTime] into a [java.time.LocalTime]
  */
 val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay((inWholeMilliSeconds() / 1000).toLong())
 

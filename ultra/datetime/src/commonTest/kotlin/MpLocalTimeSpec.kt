@@ -92,6 +92,13 @@ class MpLocalTimeSpec : StringSpec({
         ) shouldBe MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0)
     }
 
+    "of() wraps every component into the day, also past the Int range" {
+        MpLocalTime.of(0, 35_792) shouldBe MpLocalTime.of(20, 32)
+        MpLocalTime.of(0, 0, second = 3_000_000) shouldBe MpLocalTime.of(17, 20)
+        MpLocalTime.of(0, 0, milliSecond = Int.MAX_VALUE) shouldBe MpLocalTime.ofMilliSeconds(Int.MAX_VALUE.mod(86_400_000))
+        MpLocalTime.of(25, -30) shouldBe MpLocalTime.of(0, 30)
+    }
+
     "plus a duration longer than an Int of milliseconds" {
         MpLocalTime.of(1, 0).plus(30.days + 2.hours) shouldBe MpLocalTime.of(3, 0)
         MpLocalTime.of(1, 0).minus(30.days + 2.hours) shouldBe MpLocalTime.of(23, 0)
