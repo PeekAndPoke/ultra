@@ -16,9 +16,8 @@ object MpLocalTimeAwaker : Awaker {
         // TODO(scan): different unit than the javatime sibling (LocalTimeCodec.kt: seconds-of-day) -
         //  the same wall-clock time serializes 1000x apart depending on which codec produced it.
         // TODO(scan): no range validation, unlike the javatime sibling. A negative or >= one-day value
-        //  is accepted and silently wrapped/corrupted by ofMilliSeconds()'s modulo (e.g. -1000 awakes
-        //  to an MpLocalTime with second == -1) instead of awaking to null.
-        return MpLocalTime.ofMilliSeconds(data.toLong())
+        //  is accepted and wrapped into the day (e.g. -1000 awakes as 23:59:59) instead of awaking to null.
+        return MpLocalTime.ofMilliSeconds(data.toLong().mod(MpLocalTime.MILLIS_PER_DAY.toLong()).toInt())
     }
 }
 
@@ -31,6 +30,7 @@ object MpLocalTimeSlumberer : Slumberer {
             return null
         }
 
-        return data.inWholeMilliSeconds()
+        // Still a Long, so the stored number type does not change with the Int storage.
+        return data.inWholeMilliSeconds().toLong()
     }
 }

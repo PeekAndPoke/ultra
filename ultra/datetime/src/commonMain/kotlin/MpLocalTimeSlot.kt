@@ -21,7 +21,7 @@ data class MpLocalTimeSlot(
             )
         }
 
-        fun ofSecondsOfDay(from: Long, to: Long): MpLocalTimeSlot {
+        fun ofSecondsOfDay(from: Int, to: Int): MpLocalTimeSlot {
             return MpLocalTimeSlot(
                 from = MpLocalTime.ofSecondOfDay(from),
                 to = MpLocalTime.ofSecondOfDay(to),

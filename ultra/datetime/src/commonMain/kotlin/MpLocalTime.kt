@@ -9,11 +9,12 @@ import kotlin.time.Duration.Companion.milliseconds
 @Serializable(with = MpLocalTimeSerializer::class)
 @Slumber.As(Long::class)
 data class MpLocalTime(
-    private val milliSeconds: Long,
+    // Int, not Long: a day has 86_400_000 ms, and Long is emulated (slow) on Kotlin/JS.
+    private val milliSeconds: Int,
 ) : ComparableTo<MpLocalTime> {
 
     companion object {
-        const val MILLIS_PER_SECOND = 1_000L
+        const val MILLIS_PER_SECOND = 1_000
         const val MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND
         const val MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE
         const val MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR
@@ -77,15 +78,16 @@ data class MpLocalTime(
          * Creates an [MpLocalTime].
          */
         fun of(hour: Int, minute: Int, second: Int = 0, milliSecond: Int = 0): MpLocalTime {
+            // hour wrapped first, so hours beyond a day cannot overflow the Int
             return ofMilliSeconds(
-                milliSecondsOfDay = (hour * 60 * 60 + minute * 60 + second) * 1_000L + milliSecond
+                milliSecondsOfDay = (hour.mod(24) * 60 * 60 + minute * 60 + second) * MILLIS_PER_SECOND + milliSecond
             )
         }
 
         /**
          * Creates an [MpLocalTime] from the given [milliSecondsOfDay].
          */
-        fun ofMilliSeconds(milliSecondsOfDay: Long): MpLocalTime {
+        fun ofMilliSeconds(milliSecondsOfDay: Int): MpLocalTime {
             return MpLocalTime(
                 milliSeconds = milliSecondsOfDay.mod(MILLIS_PER_DAY)
             )
@@ -94,9 +96,11 @@ data class MpLocalTime(
         /**
          * Creates an [MpLocalTime] from the given [secondsOfDay].
          */
-        fun ofSecondOfDay(secondsOfDay: Long): MpLocalTime {
-            return ofMilliSeconds(milliSecondsOfDay = secondsOfDay * 1_000L)
+        fun ofSecondOfDay(secondsOfDay: Int): MpLocalTime {
+            return ofMilliSeconds(milliSecondsOfDay = secondsOfDay.mod(SECONDS_PER_DAY) * MILLIS_PER_SECOND)
         }
+
+        private const val SECONDS_PER_DAY = 86_400
 
         /**
          * The minimal possible time at 00:00:00.000
@@ -117,25 +121,25 @@ data class MpLocalTime(
     /** The hour component. */
     val hour: Int
         get() {
-            return ((milliSeconds % MILLIS_PER_DAY) / MILLIS_PER_HOUR).toInt()
+            return (milliSeconds % MILLIS_PER_DAY) / MILLIS_PER_HOUR
         }
 
     /** The minute component. */
     val minute: Int
         get() {
-            return ((milliSeconds % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE).toInt()
+            return (milliSeconds % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE
         }
 
     /** The second component. */
     val second: Int
         get() {
-            return ((milliSeconds % MILLIS_PER_MINUTE) / MILLIS_PER_SECOND).toInt()
+            return (milliSeconds % MILLIS_PER_MINUTE) / MILLIS_PER_SECOND
         }
 
     /** The millisecond component. */
     val milliSecond: Int
         get() {
-            return (milliSeconds % MILLIS_PER_SECOND).toInt()
+            return milliSeconds % MILLIS_PER_SECOND
         }
 
     /**
@@ -177,7 +181,7 @@ data class MpLocalTime(
     /**
      * Get the milliseconds of day represented by this time.
      */
-    fun inWholeMilliSeconds(): Long {
+    fun inWholeMilliSeconds(): Int {
         return milliSeconds
     }
 
@@ -185,7 +189,8 @@ data class MpLocalTime(
      * Adds the given [duration].
      */
     fun plus(duration: Duration): MpLocalTime {
-        return ofMilliSeconds(milliSeconds + duration.inWholeMilliseconds)
+        // Duration is Long-based: reduce it to less than a day once, then stay in Int.
+        return ofMilliSeconds(milliSeconds + (duration.inWholeMilliseconds % MILLIS_PER_DAY).toInt())
     }
 
     /**

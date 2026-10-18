@@ -29,10 +29,10 @@ val MpLocalDateTime.kotlinx: LocalDateTime get() = value
 val LocalDateTime.mp: MpLocalDateTime get() = MpLocalDateTime(this)
 
 /** Converts an [MpLocalTime] into a kotlinx [LocalTime]. */
-val MpLocalTime.kotlinx: LocalTime get() = LocalTime.fromMillisecondOfDay(inWholeMilliSeconds().toInt())
+val MpLocalTime.kotlinx: LocalTime get() = LocalTime.fromMillisecondOfDay(inWholeMilliSeconds())
 
 /** Converts a kotlinx [LocalTime] into an [MpLocalTime], truncated to milliseconds. */
-val LocalTime.mp: MpLocalTime get() = MpLocalTime.ofMilliSeconds(toMillisecondOfDay().toLong())
+val LocalTime.mp: MpLocalTime get() = MpLocalTime.ofMilliSeconds(toMillisecondOfDay())
 
 /** Converts an [MpDatePeriod] into a kotlinx [DatePeriod], which normalises months into years. */
 val MpDatePeriod.kotlinx: DatePeriod get() = DatePeriod(years = years, months = months, days = days)

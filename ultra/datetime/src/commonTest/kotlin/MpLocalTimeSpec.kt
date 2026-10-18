@@ -9,6 +9,7 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.peekandpoke.ultra.common.tuple
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -89,6 +90,11 @@ class MpLocalTimeSpec : StringSpec({
                     14 * MpLocalTime.MILLIS_PER_SECOND +
                     123) / 1_000
         ) shouldBe MpLocalTime.of(hour = 12, minute = 13, second = 14, milliSecond = 0)
+    }
+
+    "plus a duration longer than an Int of milliseconds" {
+        MpLocalTime.of(1, 0).plus(30.days + 2.hours) shouldBe MpLocalTime.of(3, 0)
+        MpLocalTime.of(1, 0).minus(30.days + 2.hours) shouldBe MpLocalTime.of(23, 0)
     }
 
     "Creation - Min, Max, Noon" {

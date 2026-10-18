@@ -40,8 +40,8 @@ class MpLocalTimeSlotSpec : StringSpec({
 
     "Creation - via ofSecondsOfDay" {
         val subject = MpLocalTimeSlot.ofSecondsOfDay(
-            from = 1L * 60 * 60,
-            to = 2L * 60 * 60
+            from = 1 * 60 * 60,
+            to = 2 * 60 * 60
         )
 
         subject.from shouldBe MpLocalTime.of(1, 0)

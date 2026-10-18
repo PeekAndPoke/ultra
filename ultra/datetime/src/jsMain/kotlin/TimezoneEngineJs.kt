@@ -4,9 +4,7 @@ package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.IllegalTimeZoneException
 import kotlin.js.Date
-import kotlin.math.floor
 import kotlin.math.round
-import kotlin.time.Instant
 
 // Zone offsets come from the browser's own IANA database via Intl.DateTimeFormat — no tz data is bundled.
 
@@ -21,12 +19,32 @@ private const val MAX_DATE_MS = 8.64e15
 // accepts no id the JVM would reject.
 private val supportedIdsByLowercase: Map<String, String> by lazy { MpTimezone.supportedIds.associateBy { it.lowercase() } }
 
-internal actual fun platformOffsetSecondsAt(zoneId: String, instant: Instant): Int {
-    // Intl renders to whole seconds, so compare against a second-floored instant — otherwise
-    // sub-second instants (e.g. ...:59.999Z) skew the offset by up to a second.
-    val flooredMs = floor(instant.toEpochMilliseconds() / 1000.0) * 1000.0
+// One interval cache per zone id that resolved; Intl is far too slow to ask on every conversion.
+private val offsetCaches: dynamic = js("Object.create(null)")
 
-    require(flooredMs in -MAX_DATE_MS..MAX_DATE_MS) { "Instant $instant is outside the range of JS dates" }
+internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Long): Int {
+    return offsetCacheFor(zoneId).offsetSecondsAt(epochSeconds)
+}
+
+private fun offsetCacheFor(zoneId: String): OffsetIntervalCache {
+    val cached = offsetCaches[zoneId]
+    if (cached != null && cached != undefined) return cached.unsafeCast<OffsetIntervalCache>()
+
+    // Validates the id first, so unknown ids never get a cache.
+    formatterFor(zoneId)
+
+    val cache = OffsetIntervalCache { epochSeconds -> intlOffsetSecondsAt(zoneId, epochSeconds) }
+    offsetCaches[zoneId] = cache
+    return cache
+}
+
+/** The offset of [zoneId] at [epochSeconds], from Intl's wall-clock rendering. */
+private fun intlOffsetSecondsAt(zoneId: String, epochSeconds: Long): Int {
+    // Intl renders to whole seconds, so ask about whole seconds — otherwise sub-second instants
+    // (e.g. ...:59.999Z) skew the offset by up to a second.
+    val flooredMs = epochSeconds.toDouble() * 1000.0
+
+    require(flooredMs in -MAX_DATE_MS..MAX_DATE_MS) { "Instant at $epochSeconds s is outside the range of JS dates" }
 
     val parts = formatterFor(zoneId).formatToParts(Date(flooredMs))
     val m: dynamic = js("({})")

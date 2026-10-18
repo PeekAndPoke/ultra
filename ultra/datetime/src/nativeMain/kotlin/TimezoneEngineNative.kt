@@ -9,8 +9,8 @@ import kotlin.time.Instant
 // times. Only ids that resolved are cached, so the map is bounded by the system's tz database.
 private val zones = AtomicReference<Map<String, TimeZone>>(emptyMap())
 
-internal actual fun platformOffsetSecondsAt(zoneId: String, instant: Instant): Int {
-    return zoneFor(zoneId).offsetAt(instant).totalSeconds
+internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Long): Int {
+    return zoneFor(zoneId).offsetAt(Instant.fromEpochSeconds(epochSeconds)).totalSeconds
 }
 
 internal actual fun platformSystemDefaultZoneId(): String {
