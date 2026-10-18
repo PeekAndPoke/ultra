@@ -257,7 +257,11 @@ class FxHostileParamRoutes : ApiRoutes("fx-hostile-param", authFloor = { public(
         }
 }
 
-/** An enum whose constant names are not identifier-shaped. Kotlin 2.4.21 rejects `:` in a JVM name. */
+/**
+ * An enum whose constant names are not identifier-shaped. Kotlin 2.4.21 rejects `:` in a JVM name; the `|` is the
+ * payload (it widens the emitted union) and is only a problem for class FILE names, which enum constants are not.
+ */
+@Suppress("DANGEROUS_CHARACTERS")
 enum class FxHostileOrder { `a' | string | 'b`, SANE }
 
 class FxHostileEnumRoutes : ApiRoutes("fx-hostile-enum", authFloor = { public() }) {

@@ -7,11 +7,11 @@
 
 ## Spec
 
-- [ ] Kotlin 2.4.10 → **2.4.21** (stable, released 2026-10-08) in `gradle.properties` and `docs-site/src/data/site.ts`
-- [ ] Every other dependency to its newest version that is compatible with Kotlin 2.4.21 — holds named below with a reason
-- [ ] kotlinx-datetime attempted LAST, in its own commit, so it can be reverted alone (maintainer: it caused trouble in
+- [x] Kotlin 2.4.10 → **2.4.21** (stable, released 2026-10-08) in `gradle.properties` and `docs-site/src/data/site.ts`
+- [x] Every other dependency to its newest version that is compatible with Kotlin 2.4.21 — holds named below with a reason
+- [x] kotlinx-datetime attempted LAST — **held at 0.6.2**, see Step 2, in its own commit, so it can be reverted alone (maintainer: it caused trouble in
       the past; 0.7.0 changed formatting and moved `Instant`/`Clock` to `kotlin.time`)
-- [ ] Full suite green and matching the baseline below, per target
+- [x] Full suite green and matching the baseline below, per target
 - [ ] Release 0.111.0 prepared (version bump + tag; the maintainer builds, pushes and publishes)
 - [ ] The three Kraft example repos on Kotlin 2.4.21 / Ultra 0.111.0 / Gradle 9.7.1 (see "Example repos")
 
@@ -123,7 +123,7 @@ Sources: `repo1.maven.org` `maven-metadata.xml` (newest stable), the npm registr
 | kotlin-wrappers (css, js) | 2026.7.7 | 2026.10.1 | |
 | Ktor | 3.5.1 | 3.6.0 | |
 | mongodb driver | 5.9.1 | 5.13.0 | |
-| kotlinx-datetime | 0.6.2 | 0.8.0 | LAST, own commit — see Spec |
+| kotlinx-datetime | 0.6.2 | **held 0.6.2** | 0.8.0 breaks every named zone on JS — see Step 2 |
 
 ### JVM libraries
 
@@ -189,6 +189,19 @@ caused by the upgrade, all fixed:
 `./gradlew wrapper --gradle-version 9.7.1` regenerated the wrapper jar and scripts; `kotlinUpgradeYarnLock` refreshed
 `kotlin-js-store/yarn.lock`.
 
+### Step 2 — kotlinx-datetime 0.8.0: attempted, HELD at 0.6.2 (maintainer, 2026-10-18)
+
+Green on JVM (1792) and native (1752); **in the browser every named zone fails** — `:ultra:datetime:jsBrowserTest` ran
+595 of 1753 and failed 518 (`Invalid zone ID`). 0.7+ on JS reads the packed IANA data through js-joda's
+`getTzdbData()` hook and ignores the Intl-backed `ZoneRulesProvider` that `ultra/datetime` installs instead of shipping
+the database. Slumber also went RED where expected: `LocalDateTimeCodecSpec.kt:70,92` pin the `"Z"` that
+`TimeZone.UTC.id` becomes `"UTC"` — a persisted wire change.
+
+Reverted (`git apply -R`), and the work kept: root cause, options, the full migration diff and the persistence items
+are in **`.claude/tasks/20261018-kotlinx-datetime-js-timezones.md`** (+ `.patch`, verified to apply on `fb1b93f8`).
+Kept from step 2 only `@Suppress("DANGEROUS_CHARACTERS")` on `FxHostileOrder` — a Kotlin 2.4.21 warning on the `|` in the
+fixture name, unrelated to datetime; `:funktor:codegen:test` 88/88 after it, warning-free.
+
 ## Example repos
 
 The 0.110.0 bump of the three example repos (Kotlin 2.4.10, Gradle 9.5.0, two API-break fixes in remote and router) is
@@ -196,9 +209,21 @@ uncommitted in those repos and is folded into this upgrade instead: they move st
 
 ## Test evidence
 
+- [x] Compile sweep (all JVM/JS/native main + test targets, `--continue`): 0 errors, 0 warnings after step 1's fixes
+- [x] `./gradlew clean build --continue` with both DBs up, after step 1: BUILD SUCCESSFUL, **14675 tests over 68
+      targets, 0 failures — identical per target to the baseline**
+- [x] Mutation check on the changed security fixture (`FxHostileOrder`): RED for the right spec, restored, `cmp`-verified
+- [x] maven-publish 0.37.0: `:ultra:common:publishToMavenLocal` under a throwaway version produced jar, sources, javadoc,
+      module and POM, all signed, POM on kotlin-stdlib 2.4.21; trial version removed from the local repo
+      (`~/.m2/swisslife-repository`, per `settings.xml`) and its metadata restored. The maintainer publishes.
+
 ## Review record — the LEDGER (filled by /feature-review)
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
 
-**Verdict:**
+**Verdict:** gate NOT RUN — a dependency upgrade, not a feature; the previous one
+(`.claude/tasks-archive/2026-07/20260729-kotlin-24-upgrade.md`) ran none either. The only production-code change is one
+`@Suppress("DEPRECATION")` in `karango/core/src/main/kotlin/vault/EntityRepository.kt`; everything else is build
+configuration and test fixtures, covered by the full suite matching the baseline per target. Maintainer may still ask
+for it.
