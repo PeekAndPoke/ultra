@@ -1,8 +1,20 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
 **HOLDER: none**
-**SINCE: 2026-09-28 (released by the router-click agent)**
+**SINCE: 2026-10-18 (released by the kronos-advanceby agent)**
 **STATE: FREE — take the lock before building.**
+
+## What the last holder changed — kronos-advanceby agent, 2026-10-18 (Kronos advanceBy collapse, gated)
+
+**Chained `Kronos.advanceBy` calls collapse into one `AdvancedBy`** (`ultra/datetime/src/commonMain/kotlin/Kronos.kt`):
+a known `settled` duration plus a shared list of still-lazy providers, read in a loop — 200k
+`mutate { advanceBy(1.minutes) }` steps no longer overflow the stack. The lambda form stays fully lazy.
+`describe()` is flat per chain; `Kronos.from` sums nested descriptors iteratively. `Mutable.set` / `mutate`
+now THROW for a kronos that reads the mutable itself (the old guard walked the wrong chain and never fired).
+Record: `.claude/tasks-archive/2026-10/20261017-kronos-advanceby-collapse.md`.
+
+**Worth taking:** "do not read section X" in a reviewer brief is unenforceable when X is in a file read in
+one call — all three round-2 reviewers saw the ledger. Hand blind reviewers a scratch copy without it.
 
 ## What the last holder changed — router-click agent, 2026-09-28 (router link clicks, gated)
 

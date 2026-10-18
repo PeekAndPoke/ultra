@@ -17,3 +17,4 @@ repeated. Reading this file for recurrences before writing a brief is the point 
 
 | date | step | the escape | class | what it changed |
 |------|------|------------|-------|-----------------|
+| 2026-10-17 | Kronos advanceBy collapse, round 1 (`.claude/tasks-archive/2026-10/20261017-kronos-advanceby-collapse.md`) | `advanceBy { }` on an already-read node (`total.isInitialized()` arm, `ultra/datetime/src/commonMain/kotlin/Kronos.kt`) had no test; `ZERO` / double-count / `settled` mutants survived. The coordinator's own mutant list skipped that arm | test | OPEN — proposal: Standard 2 gains "a branch on cached or lazy state (`isInitialized()`, a memo hit) gets one mutant per arm". Not applied: a `.claude/skills/` edit takes the full review set |
