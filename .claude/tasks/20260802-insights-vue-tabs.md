@@ -637,3 +637,32 @@ Collected, not run; T1 may not edit that file.
 - **The CLI check changes behaviour for every app**: an app with funktor insights must now declare
   `vis-network` or `sdk:ts:generate` refuses. Intended per the plan ("failing with the line to paste"), but
   it is a visible change to the generator's contract.
+
+## Review record — T1 round 1 (/feature-review, 2026-10-19), the LEDGER
+
+`reviewer-high` ×3, blind, base `ea7bd99b`. **1 MAJOR → not clean.** S1 holds on both backends (no construct records a
+bind value; the e2e proves it on one app with Karango + Monko), no XSS path, the supply chain is pinned. The maintainer
+asked for the MINORs to be fixed too, so they ride in the same batch and round 2 reviews them.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `slices.ts:632-635`, `KontainerTab.vue:53,66` (domain) | A slim record joins a `DynamicOverride` service to its BLUEPRINT definition, so the table and both graphs show a definition and edges that did not produce this request's instance (the v1 record of the same request truthfully shows `creates UserProvider$Lazy … overwrites`) | fix | T2's contract (`20260824-…:186-189`) says the graph lists such a service with its blueprint definition, "whose injects did NOT run". Fix: for `DynamicOverride`, synthesise the v1 shape (`creates` = instance class, `injectionType` Dynamic, no injects, `overwrites` = the graph definition), pinned against the real fixtures |
+| 1 | MINOR | `slices.ts:622-641`, `vue-verify/tests/slices.spec.ts:83-92` (implementation) | The join is never checked to attach the RIGHT definition per `cls` (a join by index or simple name would stay green) | fix | Assert each joined `definition` deep-equals `graph.services.find(cls).definition` |
+| 1 | MINOR | `MonkoDriver.kt:151-155` (domain) | The Mongo query text does not name the collection (AQL does), so five `{_id: @p1}` lookups in one request cannot be told apart | fix | Add `"collection": <name>` to the printed document; a collection name is not a bind value |
+| 1 | MINOR | `MonkoDriver.kt:83-87` (domain; T1's own open question) | `"@p1"` erases the BSON type (an ObjectId vs a string `_id` — the classic Mongo wrong-query bug — reads the same), and reads like a literal string | fix | Typed placeholders, e.g. `"@p1:objectId"`, `"@p2:string"`, `"@p3:array[2]"` — the type, never the value (this also restores `$in` length and `$exists` truthiness) |
+| 1 | MINOR | `VaultCollector.kt:102-104`, `MonkoDriver.kt:325-330` (domain m7, security 1) | The trust boundary is the generic label `json`: a later Monko path that sets `query` from raw `print()` (update, delete, aggregate), or a pre-T1 `monko:core` under a strict pin, is trusted by name and records the token; the KDoc "never by default" is false for it | fix | A driver-specific label set next to `printQuery()` (e.g. `mongo-bound`), allowlisted instead of `json`; correct the KDoc |
+| 1 | MINOR | `MonkoDriver.kt:148-161` (domain m9) | `printQuery()` / `Printed` are public in a published library, used in-module only | fix | `internal` |
+| 1 | MINOR | `MonkoDriver.kt:146` (domain m8) | KDoc "sort values can only be directions" is false (`{$meta: "textScore"}`) | fix | Correct the text (still no bind value) |
+| 1 | MINOR | `slices.ts:651-653` (domain m3) | A slim record with a null `graphFingerprint` is joined to today's graph with no notice | fix | Treat null as "cannot verify" and say so |
+| 1 | MINOR | `VaultTab.vue:117-133,180-187` (domain m4) | The database graph is today's schema shown under a historical record without saying so | fix | One line of note text |
+| 1 | MINOR | `slices.ts:414`, `VaultTab.vue:146` (domain m5) | Mongo entries recorded 2026-08-24..2026-10-19 show "Bind vars 0" (values were inlined then) as a fact | fix | `json` + no query → "unknown" |
+| 1 | MINOR | `TsSdkGenerateCliCommand.kt:24-25,169-198`, `TsImports.kt:35-39` (domain m6, implementation 4, security 4) | The CLI KDoc ("build plus file I/O") is now false; the hint `pnpm add vis-network` installs latest, not the tested 10.1.2; a malformed `package.json` throws a parser error naming no file; an `@sdk/…` alias would be refused as a package | fix | KDoc; print `pnpm add --save-exact <pkg>@<tested version>` (tested versions for the packages the generator contributes, `--save-exact` otherwise); wrap the parse error with the manifest path; exempt configured aliases. Workspace-root manifests: design note, not a defect |
+| 1 | MINOR | `TsSdkGenerateCliCommandSpec.kt:~241` (implementation 3) | "--dry-run reports it and still writes nothing" asserts only the second half (the check-disabled mutant stays green) | fix | Capture stdout; assert the `[problem]` and the `pnpm add` line |
+| 1 | MINOR | `vue-verify/fixtures/refresh.mjs`, all six fixtures (implementation 2, security 2) | The fixtures carry the build machine's hostname (`insights.server`) and the test database name; the "byte-for-byte" comment is false (re-serialised); a stale record can be picked (`readdir` order); `.pathname` breaks on spaces | fix | Rewrite `insights.server` (and the database name) to constants, regenerate; correct the comment; fail on more than one match; `fileURLToPath` |
+| 1 | MINOR | `InsightsVaultBindValuesSpec.kt:298,307,309` (implementation 5) | `varsCount >= 1` and `query shouldContain "@"` are looser than known (a wrongly bound `limit` would pass) | fix | `varsCount shouldBe 1`; Arango `"== @v_"` |
+| 1 | MINOR | `NetworkGraph.vue:10` (security 3) | KDoc tells operators to allow inline styles "for the tooltip" — no tooltip is ever set | fix | Correct the text (a strict CSP blocks the injected `<style>` harmlessly); optionally the `peer` build + its CSS file |
+| 1 | MINOR (surplus) | `TsImports`, `UndeclaredPackagesException` (security) | New public API in `funktor:codegen` main, used in-module | fix | `internal` |
+| 1 | — | `reference/` (T1's open question) | Delete it now (vue-tabs step 10)? | coordinator: keep until T4 lands | T4 ports from it; TAB-SPECS is now the current wire reference |
+| 1 | — | `RuntimeCollector.kt:58` (security red-team note) | Pre-existing: ALL system properties are recorded unredacted on every request (a secret passed as `-D…` reaches the depot and the Runtime tab) | out-of-scope → follow-up | Recorded in the plan backlog with the insights production gate |
+
+**Verdict:** round 1 NOT clean (1 MAJOR). Fix batch, then round 2 (`reviewer-xhigh`, two-phase).
