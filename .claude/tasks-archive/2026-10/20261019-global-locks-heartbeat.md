@@ -1,6 +1,6 @@
 # funktor/cluster: global locks expire by heartbeat, not by creation time
 
-**Status:** IMPLEMENTED 2026-10-19 on `wt/locks-heartbeat`; gate PASSED in round 2; the round-2 MINOR batch is fixed, awaiting its check
+**Status:** DONE (archived 2026-10-19) — gate PASS (round 1: 2 MAJOR fixed; round 2 clean; MINOR batches reviewed), merged `d9ffbb32`; master full suite green (15769 tests / 0 failures). Open with the maintainer: rows 11 (clock skew) and 14 (no max hold); docs follow-up `.claude/tasks/20261019-docs-global-locks-heartbeat.md`
 **Plan:** none — maintainer request, 2026-10-19
 **Security-critical:** no (concurrency correctness; no auth or data boundary)
 
