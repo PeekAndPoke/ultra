@@ -9,6 +9,13 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.codegen.cli.TsSdkGenerateCliCommand
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
+import io.peekandpoke.ultra.codegen.sdk.TsSdkContributor
+import io.peekandpoke.ultra.codegen.sdk.TsSdkEmitContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 
 class TsSdkGenerateCliCommandSpec : FreeSpec() {
 
@@ -27,6 +34,36 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
         TsSdkBuilder.forTesting(
             listOf(RestApiTsContributor(lazyOf(listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes()))))))
         )
+    }
+
+    /** The real builder plus a component importing `@sdk/models.ts`, as an app with an alias would write it. */
+    private fun aliasingBuilder(): Lazy<TsSdkBuilder> = lazy {
+        TsSdkBuilder.forTesting(
+            listOf(
+                RestApiTsContributor(lazyOf(listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes()))))),
+                object : TsSdkContributor {
+                    override val name = "fx:aliased"
+                    override fun emit(context: TsSdkEmitContext) {
+                        context.out.file("pages/Aliased.ts", "import type { FxTalkModel } from '@sdk/models.ts'\nexport type T = FxTalkModel\n")
+                    }
+                },
+            )
+        )
+    }
+
+    /** What [block] prints to stdout. */
+    private fun stdoutOf(block: () -> Unit): String {
+        val original = System.out
+        val buffer = ByteArrayOutputStream()
+
+        System.setOut(PrintStream(buffer, true))
+        try {
+            block()
+        } finally {
+            System.setOut(original)
+        }
+
+        return buffer.toString()
     }
 
     /** Runs the command exactly as the CLI would, returning whatever it threw. */
@@ -210,7 +247,10 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
 
                 (thrown as TsSdkGenerateCliCommand.UndeclaredPackagesException).packages.keys shouldBe setOf("zod")
                 thrown.message!! shouldContain "runtime/client.ts"
-                thrown.message!! shouldContain "pnpm add zod"
+
+                withClue("the line to paste installs the TESTED version, exactly") {
+                    thrown.message!! shouldContain "pnpm add --save-exact zod@${TsSdkGenerateCliCommand.TESTED_VERSIONS["zod"]}"
+                }
 
                 withClue("refused BEFORE writing: the SDK directory must not exist") {
                     File(dir, SDK).exists() shouldBe false
@@ -242,9 +282,45 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
                 val dir = tempdir()
                 File(dir, "package.json").writeText("{}")
 
-                run("--out", dir.absolutePath, "--dry-run") shouldBe null
+                val printed = stdoutOf { run("--out", dir.absolutePath, "--dry-run") shouldBe null }
 
+                printed shouldContain "[problem]"
+                printed shouldContain "pnpm add --save-exact zod@"
                 dir.listFiles().orEmpty().map { it.name } shouldBe listOf("package.json")
+            }
+
+            "a package.json that is not JSON fails naming the file, not with a bare parser error" {
+                val dir = tempdir()
+                File(dir, "package.json").writeText("{ not json")
+
+                val thrown = run("--out", dir.absolutePath)
+
+                thrown!!.message!! shouldContain File(dir, "package.json").path
+            }
+
+            "an import alias the app resolves itself is not a package" {
+                val dir = tempdir()
+                File(dir, "package.json").writeText(DECLARES_ZOD)
+
+                fun runAliased(vararg args: String) = runCatching {
+                    TsSdkGenerateCliCommand(aliasingBuilder()).parse(arrayOf(*args))
+                }.exceptionOrNull()
+
+                val refused = runAliased("--out", dir.absolutePath)
+                (refused as TsSdkGenerateCliCommand.UndeclaredPackagesException).packages.keys shouldBe setOf("@sdk/models.ts")
+
+                runAliased("--out", dir.absolutePath, "--alias", "@sdk") shouldBe null
+            }
+
+            "the tested versions offered are the ones vue-verify pins" {
+                // Resolved from the module root, like the resource dirs in InsightsTsContributorSpec.
+                val pinned = Json.parseToJsonElement(File("vue-verify/package.json").readText())
+                    .jsonObject["dependencies"]!!.jsonObject
+                    .mapValues { it.value.jsonPrimitive.content }
+
+                TsSdkGenerateCliCommand.TESTED_VERSIONS.forEach { (pkg, version) ->
+                    withClue(pkg) { pinned[pkg] shouldBe version }
+                }
             }
         }
 

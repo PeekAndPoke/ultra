@@ -6,7 +6,7 @@ package io.peekandpoke.funktor.codegen
  * A text scan, not a parser -- enough for the generator's own output, whose import style it pins. Comments
  * are stripped first, so a KDoc example does not count as an import.
  */
-object TsImports {
+internal object TsImports {
 
     private val blockComment = Regex("""/\*[\s\S]*?\*/""")
     private val htmlComment = Regex("""<!--[\s\S]*?-->""")
