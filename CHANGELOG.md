@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.113.0
+
+### Breaking changes
+
+- **The `macosX64` (Intel Mac) native target is gone** from `ultra:common`, `cache`, `datetime`, `maths` and
+  `streams` — Kotlin deprecated it. `macosArm64`, `linuxX64`, `linuxArm64` and `mingwX64` stay.
+
+### Build
+
+- The build scripts no longer use what Gradle 9.6 deprecated in the Kotlin DSL (`by project` / `by extra` delegates,
+  `tasks.registering`, `tasks.create`, the yarn-lock setters); the build configures without warnings.
+
+Otherwise the same code as 0.112.0.
+
 ## 0.112.0
 
 ### Breaking changes
