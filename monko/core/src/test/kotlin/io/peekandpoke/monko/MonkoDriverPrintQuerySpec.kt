@@ -21,10 +21,11 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
 
     companion object {
         private const val TOKEN = "a-live-session-token-4f9c2e"
+        private const val COLLECTION = "system_auth_records"
     }
 
     private fun printed(block: MonkoDriver.FindQueryBuilder.() -> Unit): MonkoDriver.FindQueryBuilder.Printed =
-        MonkoDriver.FindQueryBuilder().apply(block).printQuery()
+        MonkoDriver.FindQueryBuilder().apply(block).printQuery(COLLECTION)
 
     init {
         "a token lookup records the field and a placeholder, and the token only in vars" {
@@ -36,7 +37,7 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
 
             withClue(result.query) {
                 result.query shouldNotContain TOKEN
-                result.query shouldContain "\"token\": \"@p3\""
+                result.query shouldContain "\"token\": \"@p3:string\""
             }
 
             result.vars shouldBe mapOf("p1" to "session", "p2" to "app", "p3" to TOKEN)
@@ -52,9 +53,9 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
 
             val doc = BsonDocument.parse(result.query)
 
-            withClue("operators and field names are structure, so they stay readable") {
+            withClue("the collection, operators and field names are structure, so they stay readable") {
                 doc.toJson() shouldBe BsonDocument.parse(
-                    """{"filter": {"${'$'}or": [{"a": "@p1"}, {"b": {"${'$'}gt": "@p2"}}]},
+                    """{"collection": "$COLLECTION", "filter": {"${'$'}or": [{"a": "@p1:int"}, {"b": {"${'$'}gt": "@p2:int"}}]},
                        "sort": {"createdAt": -1}, "limit": 10, "skip": 20}"""
                 ).toJson()
             }
@@ -94,7 +95,9 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
             val result = printed { filter(Filters.`in`("token", listOf(TOKEN, "other"))) }
 
             result.query shouldNotContain TOKEN
-            result.query shouldContain "\"${'$'}in\": \"@p1\""
+            withClue("the length is structure, the elements are values") {
+                result.query shouldContain "\"${'$'}in\": \"@p1:array[2]\""
+            }
             result.vars shouldBe mapOf("p1" to listOf(TOKEN, "other"))
         }
 
@@ -110,14 +113,49 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
 
             result.vars shouldBe emptyMap()
             BsonDocument.parse(result.query).toJson() shouldBe
-                    BsonDocument.parse("""{"filter": null, "sort": null, "limit": 5, "skip": 10}""").toJson()
+                    BsonDocument.parse("""{"collection": "$COLLECTION", "filter": null, "sort": null, "limit": 5, "skip": 10}""").toJson()
+        }
+
+        "the placeholder carries the BSON type, so an ObjectId _id and a string _id read differently" {
+            val id = ObjectId()
+
+            printed { filter(Filters.eq("_id", id)) }.query shouldContain "\"_id\": \"@p1:objectId\""
+            printed { filter(Filters.eq("_id", id.toHexString())) }.query shouldContain "\"_id\": \"@p1:string\""
+        }
+
+        "every placeholder is exactly @pN:<type> -- nothing of a value can travel in the suffix" {
+            // Values chosen so that ANY leak is visible: each would have to show up verbatim.
+            val result = printed {
+                filter(
+                    Filters.and(
+                        Filters.eq("a", TOKEN),
+                        Filters.eq("b", 734_912L),
+                        Filters.`in`("c", listOf(TOKEN, TOKEN)),
+                        Filters.regex("d", Pattern.compile(TOKEN)),
+                        Filters.eq("e", 1.5),
+                    )
+                )
+            }
+
+            val placeholders = Regex("\"@[^\"]*\"").findAll(result.query).map { it.value }.toList()
+
+            placeholders shouldBe listOf(
+                "\"@p1:string\"", "\"@p2:long\"", "\"@p3:array[2]\"", "\"@p4:regex\"", "\"@p5:double\"",
+            )
+            result.query shouldNotContain TOKEN
+            result.query shouldNotContain "734912"
+            result.query shouldNotContain "1.5"
+        }
+
+        "the label Monko records under is its own, not the generic json the collector no longer trusts" {
+            MonkoDriver.FindQueryBuilder.Printed.LANGUAGE shouldBe "mongo-bound"
         }
 
         "print() still shows the values -- it is a debugging aid and must not be what gets recorded" {
             val builder = MonkoDriver.FindQueryBuilder().apply { filter(Filters.eq("token", TOKEN)) }
 
             builder.print() shouldContain TOKEN
-            builder.printQuery().query shouldNotContain TOKEN
+            builder.printQuery(COLLECTION).query shouldNotContain TOKEN
         }
     }
 }

@@ -30,6 +30,7 @@ import org.bson.BsonDocumentReader
 import org.bson.BsonInt32
 import org.bson.BsonNull
 import org.bson.BsonString
+import org.bson.BsonType
 import org.bson.BsonValue
 import org.bson.Document
 import org.bson.codecs.DecoderContext
@@ -67,7 +68,7 @@ class MonkoDriver(
         private val documentCodec = DocumentCodec()
 
         /**
-         * Replaces every value in [value] by an `@pN` placeholder, recording the value in [vars].
+         * Replaces every value in [value] by an `@pN:<type>` placeholder, recording the value in [vars].
          *
          * Fail-closed: only documents and arrays holding documents are walked as structure, so anything else,
          * a whole `$in` list included, is a value. Keys are kept; they are field names and operators.
@@ -83,8 +84,39 @@ class MonkoDriver(
             else -> {
                 val name = "p${vars.size + 1}"
                 vars[name] = value.toPlain()
-                BsonString("@$name")
+                BsonString("@$name:${typeLabel(value)}")
             }
+        }
+
+        /**
+         * Mongo's `$type` alias of [value]'s BSON type, and an array's length: what the value IS, never the value.
+         *
+         * Read from the type alone, so nothing of the value can travel in it. It is what tells an `ObjectId`
+         * `_id` from a string one -- the classic wrong-query bug -- which an untyped `@p1` hides.
+         */
+        private fun typeLabel(value: BsonValue): String = when (value.bsonType) {
+            BsonType.ARRAY -> "array[${value.asArray().size}]"
+            BsonType.DOUBLE -> "double"
+            BsonType.STRING -> "string"
+            BsonType.DOCUMENT -> "object"
+            BsonType.BINARY -> "binData"
+            BsonType.UNDEFINED -> "undefined"
+            BsonType.OBJECT_ID -> "objectId"
+            BsonType.BOOLEAN -> "bool"
+            BsonType.DATE_TIME -> "date"
+            BsonType.NULL -> "null"
+            BsonType.REGULAR_EXPRESSION -> "regex"
+            BsonType.DB_POINTER -> "dbPointer"
+            BsonType.JAVASCRIPT -> "javascript"
+            BsonType.SYMBOL -> "symbol"
+            BsonType.JAVASCRIPT_WITH_SCOPE -> "javascriptWithScope"
+            BsonType.INT32 -> "int"
+            BsonType.TIMESTAMP -> "timestamp"
+            BsonType.INT64 -> "long"
+            BsonType.DECIMAL128 -> "decimal"
+            BsonType.MIN_KEY -> "minKey"
+            BsonType.MAX_KEY -> "maxKey"
+            BsonType.END_OF_DOCUMENT, null -> "unknown"
         }
 
         /** The plain Java value a [Document] would hold, e.g. a `String` rather than a `BsonString`. */
@@ -140,15 +172,17 @@ class MonkoDriver(
         }
 
         /**
-         * The query as the profiler records it: every filter VALUE is an `@pN` placeholder, held in [Printed.vars].
+         * The query as the profiler records it: every filter VALUE is an `@pN:<type>` placeholder, held in
+         * [Printed.vars].
          *
-         * Field names, `sort`, `limit` and `skip` stay in the text, as AQL keeps attribute names and `LIMIT`.
-         * Sort values can only be directions, which the server enforces.
+         * The [collection], field names, `sort`, `limit` and `skip` stay in the text, as AQL keeps its collection,
+         * attribute names and `LIMIT`. A sort value is a direction or a `{$meta: …}` expression, never a bind value.
          */
-        fun printQuery(): Printed {
+        internal fun printQuery(collection: String): Printed {
             val vars = linkedMapOf<String, Any?>()
 
             val doc = BsonDocument()
+            doc["collection"] = BsonString(collection)
             doc["filter"] = filter?.let { placeholderise(it.toBsonDocument(), vars) } ?: BsonNull.VALUE
             doc["sort"] = sort?.toBsonDocument() ?: BsonNull.VALUE
             doc["limit"] = limit?.let { BsonInt32(it) } ?: BsonNull.VALUE
@@ -158,7 +192,18 @@ class MonkoDriver(
         }
 
         /** A placeholder-ised query and the values its placeholders stand for. */
-        data class Printed(val query: String, val vars: Map<String, Any?>)
+        internal data class Printed(val query: String, val vars: Map<String, Any?>) {
+            companion object {
+                /**
+                 * The query language this text is recorded under -- and ONLY text from [printQuery] may be.
+                 *
+                 * `VaultCollector` keeps a query's text by this label alone, so a path recording raw `print()`
+                 * under it would put bind values into insights records. Before 2026-10-19 Monko recorded raw
+                 * text as `json`; that label is no longer trusted.
+                 */
+                const val LANGUAGE: String = "mongo-bound"
+            }
+        }
     }
 
     val codec by lazyCodec
@@ -307,7 +352,7 @@ class MonkoDriver(
         type: TypeRef<T>,
         query: FindQueryBuilder.() -> Unit = {},
     ): MonkoCursor<Stored<T>> {
-        return profile {
+        return profile(queryLanguage = FindQueryBuilder.Printed.LANGUAGE) {
             findStored(collection, type, query)
         }
     }
@@ -322,9 +367,10 @@ class MonkoDriver(
         )
     }
 
-    private suspend fun <R> profile(block: suspend QueryProfiler.Entry.() -> R): R = profiler.profile(
+    /** [queryLanguage] is required: each call site states what kind of text it records. */
+    private suspend fun <R> profile(queryLanguage: String, block: suspend QueryProfiler.Entry.() -> R): R = profiler.profile(
         connection = getConnectionName(),
-        queryLanguage = "json",
+        queryLanguage = queryLanguage,
         query = "",
         block = block,
     )
@@ -382,7 +428,7 @@ class MonkoDriver(
 
         // Placeholders, not `print()`: this text reaches the profiler and so the insights record, and a filter
         // is how a session token or an activation code is looked up.
-        val printed = builder.printQuery()
+        val printed = builder.printQuery(collection)
 
         val cursor = MonkoCursor(
             entries = entries,
