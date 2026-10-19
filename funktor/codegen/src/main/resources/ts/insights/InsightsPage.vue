@@ -54,8 +54,8 @@ if (props.client === undefined && injectedConfig === null) {
 // computed to react to, and rebuilding one per render would discard nothing but cost allocations.
 const client = props.client ?? new FunktorInsightsClient(injectedConfig!)
 
-// The two graphs are static per deployed build: one source for the page's lifetime fetches each at most
-// once, however many records are opened. Nothing is fetched until a tab asks.
+// One graph source for the page's lifetime, however many records are opened: the kontainer graph cached by
+// fingerprint, the database graph fetched once. Nothing is fetched until a tab asks.
 provideInsightsGraphs(createGraphSource(() => client))
 
 /**
@@ -79,8 +79,9 @@ const selected: Ref<InsightsRecordRef | null> = ref(null)
       null case.
 
       TYPES: TypeScript narrows through it. Deleting the guard fails the build with TS18047 on exactly
-      these two lines -- so this is enforced by `vue-tsc`, not by anyone remembering. That check lives in
-      the consuming app, which is the only place a generated SDK is compiled by a real toolchain.
+      these two lines -- so this is enforced by `vue-tsc`, not by anyone remembering: in a consuming app,
+      and in `funktor/codegen/vue-verify`, which compiles a generated SDK with the real toolchain on every
+      `:funktor:codegen:check`.
     -->
     <InsightsDetailPage
         v-if="selected !== null"

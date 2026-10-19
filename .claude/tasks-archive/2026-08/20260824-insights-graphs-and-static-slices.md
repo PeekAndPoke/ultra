@@ -305,16 +305,12 @@ dashed "Lazy" edges can no longer occur). `id.connection` is `ArangoDB(<version>
 `"Access to the resource 'GET /_/funktor/insights/graphs/kontainer' is not authorized."` plus, outside
 production only, `"Failed auth rules: Is SuperUser"`. Identical, apart from the URI, to the record endpoints'.
 
-**Today's Vue `KontainerTab` on each shape** — checked read-only by RUNNING `readKontainer` from a copy of
-`slices.ts` under `node --experimental-strip-types` against the real slices:
-
-- new slice: `readKontainer` → `null`, no throw. The tab shows only `<JsonTree :expand-depth="2">` — top
-  level and the `services` array open, the 74 entries collapsed. No facts, no table, no "Raw slice"
-  details, nothing saying which shape it got. Degraded, readable, not misread.
-- old slice: reads fully, as before (178 services, `createdAt` correct through `{ts}`).
-- Found in passing: `KontainerTab.vue` says "Old is alive longer than 15 minutes". The threshold is 15
-  SECONDS — `KontainerTracker.getAlive(olderThanSec)` compares epoch seconds; `OLD_AFTER_SECONDS` in
-  `KontainerCollector.kt`.
+**The Vue `KontainerTab` BEFORE T1 on each shape** — checked read-only (T2, 2026-10-19) by running
+`readKontainer` from a copy of `slices.ts` under `node --experimental-strip-types`: the slim slice read as
+`null` (raw tree only, degraded but not misread), the fat one fully. T1 since reads both
+(`slices.ts:586`). Found in passing then: the tab said "15 minutes" for an "old" kontainer, the threshold
+was 15 SECONDS. Moot now: the slim slice has no `numOld`/`numTotal` and `OLD_AFTER_SECONDS` is deleted
+(`KontainerCollector.kt:67`).
 
 ## Implementation notes (T2, 2026-10-19)
 
@@ -334,9 +330,10 @@ Line numbers as of the MINOR batch (2026-10-19, evening).
 - `funktor/insights/src/jvmMain/kotlin/collectors/KontainerCollector.kt:79` — the slim `Data`; `of`
   (`:110`) reads `factory.getAllProviders()` and keeps those with instances (`:120`) instead of
   `getDebugInfo()`, which would build all definitions only to drop them. Names go through
-  `DebugInfo.ClassInfo`, so the join key is exactly the graph's. `finish` (`:134`) wires four sources into
-  `collect` (`:47`), which never throws — a collector that throws drops the whole record — with two
-  separate tries (`:53`, `:60`), and reads `numTotal` before `numOld` (`:61`).
+  `DebugInfo.ClassInfo`, so the join key is exactly the graph's. `finish` (`:120`) wires two sources, the
+  graph's fingerprint and the providers, into `collect` (`:42`), which never throws — a collector that throws
+  drops the whole record — with two separate tries (`:46`, `:53`). (Lines as of 2026-10-19, after T1 dropped
+  `numOld`/`numTotal`.)
 - **Database graph is NOT backend-independent**, so it is e2e'd on both: each repository's `connection` is
   read from its driver, which asks the SERVER (Arango `version`, Mongo `buildInfo`, `runBlocking`, once
   per driver instance — on the request thread, as the drivers already do for profiling).
@@ -486,21 +483,24 @@ All under `funktor/codegen/src/main/resources/ts/insights/` unless named otherwi
 
 - **Both slice shapes** — `slices.ts:565` `readKontainer`: the `graphFingerprint` KEY marks v2 (`slim`), `info`
   marks v1 (`full`), neither is unrecognised (raw tree). `readFqn` and `readDefinition` (`:531`) read both the
-  `{fqn}`/`{location}` wrappers and flat strings. `instanceCountsMeasured` (`:588`): 0/0 shows as "not
-  measured". `isProcessWide` (`:598`): `type == Singleton` is process state, every other type the request's own
+  `{fqn}`/`{location}` wrappers and flat strings. No `instanceCountsMeasured` any more: a full
+  record's young/old/total row always says "not measured" (`KontainerTab.vue:111`). `isProcessWide` (`:598`): `type == Singleton` is process state, every other type the request's own
   (T2's final correction) — each row and the summary say which. `joinKontainerGraph` (`:622`) fills a slim
   record's definitions from the graph and keeps the RECORD's type (only the record knows `DynamicOverride`).
-  `graphMismatch` (`:651`) makes the tab say so.
+  `graphMatch` (`slices.ts:686`: `same` / `other` / `unknown`) makes the tab say whether the record joins the
+  graph shown.
 - **The graphs** — `graphs.ts`: `kontainerNetwork` (`:72`) and `databaseNetwork` (`:210`) port the old
   renderers' nodes, edges, colours and sizes; `networkOptions` (`:117`) their vis.js options. An injection
   whose DECLARED type is no service key is not drawn but counted (the old graph drew it to an id with no
   node, which vis.js drops silently); the note under the graph says how many. Database edges are never dashed:
   `Reference.type` is gone and was always `Direct`.
-- **Lazy, at most once per page** — `createGraphSource` (`graphs.ts:309`) keeps a successful fetch, forgets a
-  failure (`once`, `:298`), and never throws (`attempt`, `:287`: a non-envelope 404 from an older server
-  is a `GraphResult`, not an exception). `InsightsPage.vue:59` provides ONE source for the page's lifetime;
-  `InsightsDetailPage.vue:60` provides its own only when used standalone. Tabs inject it
-  (`useInsightsGraphsOrNull`, `:339`); without one a slim record shows its table and says why there is no graph.
+- **Lazy, cached for the page** — `createGraphSource` (`graphs.ts:352`) caches the kontainer graph by
+  fingerprint (`byFingerprint`, `:325`, Part A's decision, done in the round-2 MINORs 2026-10-19): a record
+  naming an uncached fingerprint triggers one refetch. The database graph is fetched once (`once`, `:313`).
+  A failure is forgotten, nothing throws (`attempt`, `:301`: a non-envelope 404 from an older server is a
+  `GraphResult`, not an exception). `InsightsPage.vue:59` provides ONE source for the page's lifetime;
+  `InsightsDetailPage.vue:61` provides its own only when used standalone. Tabs inject it
+  (`useInsightsGraphsOrNull`, `:382`); without one a slim record shows its table and says why there is no graph.
 - **Drawing** — `NetworkGraph.vue:35` imports `vis-network/standalone` dynamically: one 652 KB chunk (158 KB
   gzip), downloaded on the first click. Standalone bundles its peers and injects its CSS into `<head>`. A
   failure to load or draw is shown inside the component and the tab keeps rendering (tested with the REAL

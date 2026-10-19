@@ -96,6 +96,7 @@ class VaultCollectorSlumberSpec : FreeSpec() {
                     entry("json", OLD_MONKO_QUERY),
                     entry("aql", "FOR d IN c FILTER d.t == @v1"),
                     entry("sql", "SELECT * FROM c WHERE t = '$TOKEN'"),
+                    entry("aql-raw", "FOR d IN c FILTER d.t == '$TOKEN'"),
                 )
             )
 
@@ -113,6 +114,7 @@ class VaultCollectorSlumberSpec : FreeSpec() {
                     entry("json", OLD_MONKO_QUERY),
                     entry("aql", "FOR d IN c FILTER d.t == @v1"),
                     entry("sql", "SELECT * FROM c WHERE t = '$TOKEN'"),
+                    entry("aql-raw", "FOR d IN c FILTER d.t == '$TOKEN'"),
                 )
             )
 
@@ -127,6 +129,9 @@ class VaultCollectorSlumberSpec : FreeSpec() {
             }
             withClue("fail-closed: a language nobody vetted is suppressed, not trusted") {
                 data.entries[3].query shouldBe null
+            }
+            withClue("raw AQL (AqlTypedQuery.of) has its own label: Karango cannot vouch for its text") {
+                data.entries[4].query shouldBe null
             }
             withClue("the COUNT of bind variables is still useful, and discloses nothing") {
                 data.entries[0].varsCount shouldBe 1

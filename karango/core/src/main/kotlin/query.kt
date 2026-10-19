@@ -1,7 +1,6 @@
 package io.peekandpoke.karango
 
 import com.arangodb.model.AqlQueryOptions
-import io.peekandpoke.karango.aql.AqlPrinter
 import io.peekandpoke.karango.aql.AqlRootExpression
 import io.peekandpoke.karango.aql.AqlStatementBuilderImpl
 import io.peekandpoke.karango.aql.AqlTerminalExpr
@@ -14,7 +13,7 @@ fun <T> buildAqlQuery(builder: AqlStatementBuilderImpl.() -> AqlTerminalExpr<T>)
 
     val root = AqlRootExpression.from(builder)
 
-    val query = AqlPrinter().append(root).build()
+    val query = root.printed
 
     return AqlTypedQuery(root = root, query = query.query, vars = query.vars)
 }

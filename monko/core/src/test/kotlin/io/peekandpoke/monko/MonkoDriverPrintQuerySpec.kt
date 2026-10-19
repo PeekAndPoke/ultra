@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.bson.BsonDocument
+import org.bson.Document
 import org.bson.types.ObjectId
 import java.util.regex.Pattern
 
@@ -106,6 +107,46 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
 
             result.query shouldNotContain TOKEN
             result.vars.values.toList() shouldBe listOf(TOKEN)
+        }
+
+        "an embedded document compared with a field is ONE value -- its keys are data, not field names" {
+            // Embedded-document equality: a secret used as a KEY must not reach the text either.
+            val result = printed { filter(Filters.eq("profile", Document(TOKEN, 1))) }
+
+            withClue(result.query) {
+                result.query shouldNotContain TOKEN
+                result.query shouldContain "\"profile\": \"@p1:object\""
+            }
+            result.vars shouldBe mapOf("p1" to Document(TOKEN, 1))
+        }
+
+        "an embedded document under an operator is ONE value too, and so is a list of them" {
+            val result = printed {
+                filter(Filters.and(Filters.ne("a", Document(TOKEN, 1)), Filters.`in`("b", listOf(Document(TOKEN, 2)))))
+            }
+
+            withClue(result.query) {
+                result.query shouldNotContain TOKEN
+                BsonDocument.parse(result.query)["filter"]!!.asDocument().toJson() shouldBe BsonDocument.parse(
+                    """{"${'$'}and": [{"a": {"${'$'}ne": "@p1:object"}}, {"b": {"${'$'}in": "@p2:array[1]"}}]}"""
+                ).toJson()
+            }
+        }
+
+        "an operator document is structure at any depth: \$not, and an \$elemMatch of operators" {
+            val result = printed {
+                filter(
+                    Filters.and(
+                        Filters.not(Filters.gt("a", 5)),
+                        Filters.elemMatch("scores", Document("${'$'}gte", 80).append("${'$'}lt", 85)),
+                    )
+                )
+            }
+
+            BsonDocument.parse(result.query)["filter"]!!.asDocument().toJson() shouldBe BsonDocument.parse(
+                """{"${'$'}and": [{"a": {"${'$'}not": {"${'$'}gt": "@p1:int"}}},
+                   {"scores": {"${'$'}elemMatch": {"${'$'}gte": "@p2:int", "${'$'}lt": "@p3:int"}}}]}"""
+            ).toJson()
         }
 
         "no filter records no vars and keeps the paging" {

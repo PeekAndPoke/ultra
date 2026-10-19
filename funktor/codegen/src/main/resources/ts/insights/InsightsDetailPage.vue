@@ -7,10 +7,11 @@
  * `collectors` is an open envelope so an app-defined collector is possible at all. A key with no
  * registered component therefore is NOT an error -- it renders through `JsonTree`.
  *
- * ## The graphs are fetched only when a tab asks, and at most once per page
+ * ## The graphs are fetched only when a tab asks, and cached for the page
  *
- * The `kontainer` and `vault` tabs draw graphs from two static endpoints. `InsightsPage` provides one
- * graph source for its whole lifetime; mounted without it, this page provides its own.
+ * The `kontainer` and `vault` tabs draw graphs from two endpoints. `InsightsPage` provides one graph source
+ * for its whole lifetime (`InsightsGraphSource` says what it caches); mounted without it, this page
+ * provides its own.
  *
  * ## Why the headline is repeated here
  *

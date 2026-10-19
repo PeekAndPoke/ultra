@@ -98,7 +98,7 @@ class KarangoDriver(
 
         return profiler.profile(
             connection = "ArangoDB::${arangoDb.name()}",
-            queryLanguage = "aql",
+            queryLanguage = query.queryLanguage,
             query = query.query
         ) { profilerEntry ->
 

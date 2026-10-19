@@ -30,7 +30,10 @@ afterEach(() => {
     mounted = null
 })
 
-/** Renders [component] over [data] and checks the payload arrived as text, never as an element. */
+/**
+ * Renders [component] over [data] and checks the payload arrived as text, never as an element, EXACTLY
+ * [times] times: a tab dropping one planted field must fail, which a lower bound lets through.
+ */
 async function expectEscaped(component: object, data: unknown, times = 1): Promise<void> {
     mounted = await mount(component, { data })
     const host = mounted.host
@@ -38,7 +41,7 @@ async function expectEscaped(component: object, data: unknown, times = 1): Promi
     expect(host.querySelector('img'), 'the payload reached the DOM as markup').toBeNull()
 
     const shown = host.textContent?.split(PAYLOAD).length ?? 1
-    expect(shown - 1, 'the payload is not on the page at all -- the case proves nothing (BLIND)').toBeGreaterThanOrEqual(times)
+    expect(shown - 1, 'the payload is not shown once per planted position -- a field was dropped or doubled').toBe(times)
 }
 
 describe('a recorded <img onerror> renders as text', () => {
@@ -49,7 +52,8 @@ describe('a recorded <img onerror> renders as text', () => {
         slice.queryParams = { q: [PAYLOAD] }
         slice.uri = `/search/${PAYLOAD}`
 
-        await expectEscaped(RequestTab, slice, 4)
+        // 5, not 4: the raw tree shows `uri`, a top-level string, while it keeps the maps collapsed.
+        await expectEscaped(RequestTab, slice, 5)
     })
 
     it('response: a header value', async () => {

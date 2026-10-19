@@ -400,13 +400,14 @@ function sumMeasures(measures: VaultMeasure[]): VaultMeasure {
 }
 
 /**
- * True for a Mongo entry recorded 2026-08-24..2026-10-19, under Monko's old label `json`.
+ * True for any Mongo entry under Monko's old label `json`, written before 2026-10-19.
  *
- * Monko inlined the values into its text then and sent no `vars`: the collector withheld the text and counted
- * 0 bind variables -- a 0 that is not a fact. Monko records under `mongo-bound` since.
+ * Monko inlined the values into its text then and sent `vars: {}`, so every such entry counts 0 bind
+ * variables -- a 0 that is not a fact, with or without its text (a pre-collector record keeps it). Monko
+ * records under `mongo-bound` since.
  */
 export function isInlinedMongoEntry(entry: Record<string, unknown>): boolean {
-    return asString(entry.queryLanguage) === 'json' && asString(entry.query) === null
+    return asString(entry.queryLanguage) === 'json'
 }
 
 export function readVault(data: unknown): VaultSlice | null {
@@ -415,6 +416,8 @@ export function readVault(data: unknown): VaultSlice | null {
 
     const entries: VaultEntry[] = rawEntries.map((raw) => {
         const record = asRecord(raw) ?? {}
+        // Coupled to the collector never writing `vars` (`20260731-query-vars-in-insights.md`): if it ever
+        // does, this marks every entry legacy and hides all text.
         const legacy = 'vars' in record || 'queryExplained' in record
         return {
             connection: asString(record.connection),

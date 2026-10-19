@@ -258,8 +258,14 @@ export function databaseNetwork(graph: DatabaseGraphData): NetworkData {
 
 /*  Where a tab gets the graphs  -------------------------------------------------------------------------  */
 
-/** A graph, or why there is none. A failure is a value: the tab keeps rendering without the graph. */
-export type GraphResult<T> = { ok: true; value: T } | { ok: false; reason: string }
+/**
+ * A graph and when it was fetched (epoch millis), or why there is none. A failure is a value: the tab keeps
+ * rendering without the graph.
+ */
+export type GraphResult<T> = { ok: true; value: T; fetchedAt: number } | { ok: false; reason: string }
+
+/** What a loader answers; [attempt] stamps the fetch time on success. */
+type Loaded<T> = { ok: true; value: T } | { ok: false; reason: string }
 
 export interface DatabaseGraphResult {
     graph: DatabaseGraphData
@@ -270,12 +276,20 @@ export interface DatabaseGraphResult {
 /**
  * Fetches the two graph endpoints for the tabs, LAZILY: nothing is requested until a tab asks.
  *
- * Each graph is fetched at most once per source, and `InsightsPage` holds one source for the page's
- * lifetime: both are static per deployed build. A FAILED fetch is not kept, so the next click asks again.
- * Neither method ever throws.
+ * `InsightsPage` holds one source for the page's lifetime. A FAILED fetch is not kept, so the next click
+ * asks again. Neither method ever throws.
  */
 export interface InsightsGraphSource {
-    kontainer(): Promise<GraphResult<KontainerGraphData>>
+    /**
+     * The kontainer graph for a record written against [fingerprint] (null: the record names none).
+     *
+     * Cached by the fingerprint the server answered. A fingerprint not in the cache is fetched ONCE: after a
+     * redeploy the server serves another graph, and a page open across it would otherwise keep the old one.
+     * If the server still answers another fingerprint, that answer is kept for [fingerprint]. A record naming
+     * none takes the latest answer.
+     */
+    kontainer(fingerprint: string | null): Promise<GraphResult<KontainerGraphData>>
+    /** The database graph, fetched once per source: it has no fingerprint, nothing joins it. */
     database(): Promise<GraphResult<DatabaseGraphResult>>
 }
 
@@ -284,9 +298,10 @@ function refusal(response: ApiResponse<unknown>): string {
     return `${response.status.value} ${response.status.description}${messages ? ` -- ${messages}` : ''}`
 }
 
-async function attempt<T>(load: () => Promise<GraphResult<T>>): Promise<GraphResult<T>> {
+async function attempt<T>(load: () => Promise<Loaded<T>>): Promise<GraphResult<T>> {
     try {
-        return await load()
+        const result = await load()
+        return result.ok ? { ...result, fetchedAt: Date.now() } : result
     } catch (error) {
         // A missing endpoint on an older server answers with something that is not an envelope, and
         // the client throws. That is a reason to show, not a reason to take the tab down.
@@ -295,7 +310,7 @@ async function attempt<T>(load: () => Promise<GraphResult<T>>): Promise<GraphRes
 }
 
 /** Keeps a successful result; forgets a failed one, so the next call asks again. */
-function once<T>(load: () => Promise<GraphResult<T>>): () => Promise<GraphResult<T>> {
+function once<T>(load: () => Promise<Loaded<T>>): () => Promise<GraphResult<T>> {
     let pending: Promise<GraphResult<T>> | null = null
 
     return async () => {
@@ -306,9 +321,37 @@ function once<T>(load: () => Promise<GraphResult<T>>): () => Promise<GraphResult
     }
 }
 
+/** The cache behind [InsightsGraphSource.kontainer]. */
+function byFingerprint(load: () => Promise<Loaded<KontainerGraphData>>): InsightsGraphSource['kontainer'] {
+    /** Successful answers, by the fingerprint the SERVER sent. */
+    const answers = new Map<string, GraphResult<KontainerGraphData>>()
+    /** The fetch made for each fingerprint a record named; null for a record naming none. */
+    const asked = new Map<string | null, Promise<GraphResult<KontainerGraphData>>>()
+    let latest: GraphResult<KontainerGraphData> | null = null
+
+    function ask(wanted: string | null): Promise<GraphResult<KontainerGraphData>> {
+        const pending = attempt(load).then((result) => {
+            if (result.ok) {
+                if (result.value.fingerprint !== null) answers.set(result.value.fingerprint, result)
+                latest = result
+            } else {
+                asked.delete(wanted)
+            }
+            return result
+        })
+        asked.set(wanted, pending)
+        return pending
+    }
+
+    return async (wanted) => {
+        const known = wanted === null ? latest : answers.get(wanted)
+        return known ?? (await (asked.get(wanted) ?? ask(wanted)))
+    }
+}
+
 export function createGraphSource(client: () => FunktorInsightsClient): InsightsGraphSource {
     return {
-        kontainer: once<KontainerGraphData>(async () => {
+        kontainer: byFingerprint(async () => {
             const response = await client().insights.getKontainerGraph()
             if (!isSuccess(response)) return { ok: false, reason: refusal(response) }
 

@@ -547,8 +547,9 @@ The gate blockers. The graphs and the kontainer shapes are recorded in
   component fails the typecheck (probed: TS2307). `verify` = `vue-tsc --noEmit && vite build && vitest run`;
   vitest writes JUnit XML to `funktor/codegen/build/test-results/vueVerify/`.
 - **Fixtures are real responses**, copied by `vue-verify/fixtures/refresh.mjs` from the funktor/all e2e dumps
-  (`INSIGHTS_WIRE_SAMPLES_DIR`). Its one change: the runtime slice's `systemProperties` keep six keys and lose
-  the rest, which hold the build machine's paths and user name.
+  (`INSIGHTS_WIRE_SAMPLES_DIR`). It rewrites three things, each identifying the build machine: the runtime
+  slice's `systemProperties` keep six keys, `insights.server` becomes `build-host`, and per-worktree database
+  names become `funktor_test`.
 
 **Versions** (looked up on npm 2026-10-19, pinned exact): vitest 5.0.5, happy-dom 21.0.3, vis-network 10.1.2,
 vue 3.5.44, vite 8.3.4, @vitejs/plugin-vue 6.0.10, vue-tsc 3.3.13, zod 4.6.7 — all newest. TypeScript **6.0.3**,
@@ -607,9 +608,9 @@ every mutant, and the ten were re-run clean.
   mechanism in `ultra:codegen` (outside T1's area); the check sits in `funktor:codegen`'s CLI instead and
   derives the requirement from what the SDK imports, so it cannot drift. It applies to every package (`vue`,
   `zod` too) and only when `<out>/package.json` exists.
-- **A failed graph fetch is retried on the next click.** The contract says "at most once per page lifetime";
-  a SUCCESSFUL fetch is kept for the page's lifetime (`InsightsPage` owns the source), a failure is not
-  cached. A 401 therefore repeats per click; a network blip recovers without a reload.
+- **A failed graph fetch is retried on the next click.** A SUCCESSFUL fetch is kept for the page's lifetime
+  (`InsightsPage` owns the source; the kontainer graph per fingerprint since the round-2 MINORs), a failure is
+  not cached. A 401 therefore repeats per click; a network blip recovers without a reload.
 - **The S1 probe logs two lines**, so `record-vault.json` carries a real log slice — none of the samples had
   one.
 

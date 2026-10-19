@@ -67,25 +67,54 @@ class MonkoDriver(
 
         private val documentCodec = DocumentCodec()
 
+        /** The logical operators whose operand is a list of query documents. */
+        private val LOGICAL_OPERATORS = setOf("\$and", "\$or", "\$nor")
+
         /**
-         * Replaces every value in [value] by an `@pN:<type>` placeholder, recording the value in [vars].
-         *
-         * Fail-closed: only documents and arrays holding documents are walked as structure, so anything else,
-         * a whole `$in` list included, is a value. Keys are kept; they are field names and operators.
+         * Placeholder-ises a query document, recording each value in [vars]. Its keys are field names and
+         * operators, so they are kept; each value goes through [placeholderiseValue].
          */
-        private fun placeholderise(value: BsonValue, vars: MutableMap<String, Any?>): BsonValue = when {
-            value.isDocument -> BsonDocument().also { out ->
-                value.asDocument().forEach { (key, child) -> out[key] = placeholderise(child, vars) }
+        private fun placeholderiseQuery(query: BsonDocument, vars: MutableMap<String, Any?>): BsonDocument =
+            BsonDocument().also { out ->
+                query.forEach { (key, child) ->
+                    out[key] = when {
+                        key in LOGICAL_OPERATORS && child.isArray -> BsonArray(
+                            child.asArray().map { if (it.isDocument) placeholderiseQuery(it.asDocument(), vars) else bind(it, vars) }
+                        )
+
+                        else -> placeholderiseValue(child, vars)
+                    }
+                }
             }
 
-            value.isArray && value.asArray().any { it.isDocument } ->
-                BsonArray(value.asArray().map { placeholderise(it, vars) })
+        /**
+         * Placeholder-ises what a field or an operator is compared with.
+         *
+         * Fail-closed: only an operator document (every key starts with `$`) is walked, and an `$elemMatch`
+         * operand is walked as a query. Anything else is ONE value -- a whole `$in` list, and an embedded
+         * document, whose keys may be data (`{profile: {<secret>: 1}}`).
+         */
+        private fun placeholderiseValue(value: BsonValue, vars: MutableMap<String, Any?>): BsonValue {
+            if (!value.isOperatorDocument()) return bind(value, vars)
 
-            else -> {
-                val name = "p${vars.size + 1}"
-                vars[name] = value.toPlain()
-                BsonString("@$name:${typeLabel(value)}")
+            return BsonDocument().also { out ->
+                value.asDocument().forEach { (operator, operand) ->
+                    out[operator] = when {
+                        operator == "\$elemMatch" && operand.isDocument -> placeholderiseQuery(operand.asDocument(), vars)
+                        else -> placeholderiseValue(operand, vars)
+                    }
+                }
             }
+        }
+
+        private fun BsonValue.isOperatorDocument(): Boolean =
+            isDocument && asDocument().isNotEmpty() && asDocument().keys.all { it.startsWith("$") }
+
+        /** Records [value] in [vars] and returns its `@pN:<type>` placeholder. */
+        private fun bind(value: BsonValue, vars: MutableMap<String, Any?>): BsonString {
+            val name = "p${vars.size + 1}"
+            vars[name] = value.toPlain()
+            return BsonString("@$name:${typeLabel(value)}")
         }
 
         /**
@@ -183,7 +212,7 @@ class MonkoDriver(
 
             val doc = BsonDocument()
             doc["collection"] = BsonString(collection)
-            doc["filter"] = filter?.let { placeholderise(it.toBsonDocument(), vars) } ?: BsonNull.VALUE
+            doc["filter"] = filter?.let { placeholderiseQuery(it.toBsonDocument(), vars) } ?: BsonNull.VALUE
             doc["sort"] = sort?.toBsonDocument() ?: BsonNull.VALUE
             doc["limit"] = limit?.let { BsonInt32(it) } ?: BsonNull.VALUE
             doc["skip"] = skip?.let { BsonInt32(it) } ?: BsonNull.VALUE
@@ -417,6 +446,13 @@ class MonkoDriver(
 
         val storedType = type.wrapWith<Stored<T>>()
 
+        // Placeholders, not `print()`: this text reaches the profiler and so the insights record, and a filter
+        // is how a session token or an activation code is looked up. Recorded BEFORE executing, so a failed
+        // query keeps its text, as Karango's does.
+        val printed = builder.printQuery(collection)
+        profile.query = printed.query
+        profile.vars = printed.vars
+
         val entries = profile.measureQuery.async {
             mapped.toList()
         }
@@ -425,10 +461,6 @@ class MonkoDriver(
         val fullCount: Long? = builder.filter?.let { filter ->
             database.getCollection<Document>(collection).countDocuments(filter)
         }
-
-        // Placeholders, not `print()`: this text reaches the profiler and so the insights record, and a filter
-        // is how a session token or an activation code is looked up.
-        val printed = builder.printQuery(collection)
 
         val cursor = MonkoCursor(
             entries = entries,
@@ -442,8 +474,6 @@ class MonkoDriver(
         )
 
         profile.count = cursor.count
-        profile.query = cursor.query.query
-        profile.vars = cursor.query.vars
 
         if (profiler.explainQueries) {
             profile.measureExplain.async {

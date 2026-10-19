@@ -1,59 +1,48 @@
-# Query parameter VALUES are recorded into insights, with no way to opt out
+# Query bind VALUES in insights: record them, their shape, or nothing?
 
-**Status:** FOUND, NOT FIXED — **deferred by the maintainer 2026-08-24**, kept as a future task.
-**CORRECTED 2026-08-24 — that containment claim was FALSE.** It held for the field NAME, not the data: Mongo records bind values inside `query` (`vars` is empty there), and Arango's EXPLAIN substitutes them into `queryExplained`. Both were being rendered. Now suppressed in `VaultTab` (allowlist on `queryLanguage`; no explain output at all) — a mitigation only, since the values are still written to the depot file. The Vue `VaultTab` omits it and
-therefore also ships **no raw-slice dump and no JSON fallback**, because a viewer for the object would
-defeat suppressing one field of it (`20260802-insights-vue-tabs.md`). The same constraint is written
-into `20260824-insights-kraft-gui.md` so the Kraft port does not reintroduce it.
+**Status:** OPEN — maintainer decision **D4** of `20261019-insights-auth-parallel-plan.md`, not blocking. Rewritten
+2026-10-19 (round-2 MINORs): the earlier text predated D1 and T1 and was wrong on four facts.
 **Security-critical:** yes — data exposure, not injection
 **Found:** 2026-07-31, while removing Jackson from the query printers
 
-## What happens
+## Where it stands (2026-10-19)
 
-`KarangoDriver.kt:109` sets `profilerEntry.vars = vars` — the **bind variable values** of every query —
-and `VaultCollector` puts the whole `QueryProfiler.Entry` into the insights record. The old GUI rendered
-them (`reference/collectors/VaultCollector.kt`, `json(it.vars)`), and the Vue tab will too unless
-something changes (`funktor/insights/reference/TAB-SPECS.md`, vault section).
+- **No bind value reaches a record or the depot.** Both drivers still hand values to the profiler
+  (`KarangoDriver.kt:109`, `MonkoDriver.kt:454`), but `VaultCollector.Data.of` keeps only their COUNT
+  (`VaultCollector.kt:124`) and never the EXPLAIN plan, which the database fills with the literals. Since D1
+  (`e448c64d`, 2026-08-24) the slice is an explicit DTO; before it, a profiled request's record could not be
+  written at all.
+- **Monko's values are in `vars` now**, not its text: `FindQueryBuilder.printQuery` writes typed `@pN:<type>`
+  placeholders under the label `mongo-bound` (T1). Monko's old label `json` meant values inline.
+- **The allowlist lives in `VaultCollector`** (`PLACEHOLDER_SAFE_LANGUAGES`, `VaultCollector.kt:108`), not in the
+  Vue tab: only `aql` and `mongo-bound` keep their text. Raw AQL from `AqlTypedQuery.of` is `aql-raw`
+  (`AqlTypedQuery.kt:30`) and withheld.
+- **Old records still hold values on disk**: those written while Jackson serialised the profiler entry whole.
+  The Vue tab marks them legacy and hides their text; it renders no `vars` and has no raw-slice dump, for
+  any record. The same constraint stands for the Kraft port (`20260824-insights-kraft-gui.md`).
+- Not injection: values travel separately to the database. `AqlPrinter.raw` (`printer.kt:70`), which inlines
+  them, has no production caller.
 
-So every value that has ever been bound into a query is written to disk and served to a superuser:
+## The decision (D4)
 
-- a user search term — other people's names, emails, whatever was typed
-- an auth lookup — the token, session id or activation code **being looked up**
-- anything else a repository is asked to find something by
-
-**This is not injection.** Verified while investigating: `query.query` keeps its `@placeholders` and
-`vars` travel separately to the driver (`KarangoDriver.kt:124-127`), so values never enter the query
-text. `AqlPrinter.raw`, which does substitute them, has **zero production call sites** — every consumer
-is under `src/test/`. The exposure is the recording, not the execution.
-
-## Why it needs a decision rather than a fix
-
-The obvious answers are all wrong on their own:
-
-- **Drop `vars` entirely** — kills most of the profiler's debugging value. Knowing a query was slow
-  without knowing what it was slow *for* is close to useless.
-- **Redact by parameter name** — the names are generated (`@v1`, `@v2`) or derived from field names, so
-  there is nothing meaningful to match on. This is exactly where the `HeaderLogging` approach fails.
-- **`Redacted<T>` on the values** — they are arbitrary bound values, not declared fields. There is no
-  declaration site.
-
-The maintainer's framing (2026-07-31): **a way to override this per query or per repository.** Neither
-shape is obvious.
-
-Sketches, none decided:
+Recording nothing costs debugging value: a slow query without what it was slow *for*. Redacting by parameter
+name fails (names are generated), and `Redacted<T>` has no declaration site. Options, none decided:
 
 | Shape | Note |
 |---|---|
-| Per-repository default | `KarangoRepository` declares whether its query vars may be recorded. Coarse, but repositories are exactly where "this one holds credentials" is known — the auth/session repos would opt out wholesale |
-| Per-query opt-out | An option on the query builder, e.g. `.noProfilingVars()`. Precise, but per-route `.noInsights()` has already shown that per-call-site controls get forgotten |
-| Both, repo as the floor | Mirrors `ApiRoutes.authFloor`: the repository sets the floor, a query can only tighten it. The house pattern for exactly this problem |
-| Record only the SHAPE | Types and arity instead of values — `@v1: String(len=24)`. Keeps most debugging value with no content. Cheapest to make safe by default |
+| Per-repository default | The repository knows "this one holds credentials"; auth/session repos opt out wholesale |
+| Per-query opt-out | Precise, but per-call-site controls get forgotten (cf. `.noInsights()`) |
+| Both, repo as the floor | Mirrors `ApiRoutes.authFloor`: a query can only tighten it |
+| Record only the SHAPE | Type and arity, no content. Half exists: Monko's placeholders carry the type, Karango's do not |
 
-The last one deserves weighing seriously: it needs no per-site decision at all, which is the failure
-mode the other three share.
+## Coupling to know before recording anything
+
+The Vue tab detects a pre-collector entry by the presence of a `vars` KEY (`slices.ts:421`): such an entry
+is legacy and its text is hidden. Recording values, or their shape, under `vars` would mark every new entry
+legacy and hide ALL query text. Use another key, or change the detection in the same change.
 
 ## Related
 
-- `.claude/tasks-archive/2026-07/20260730-insights-rest-api.md` — the API that made this remotely readable
+- `.claude/tasks-archive/2026-07/20260730-insights-rest-api.md` — the API that made records remotely readable
 - `.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md` — the config half of the same problem
-- `funktor/insights/reference/TAB-SPECS.md` — the vault tab that will render it
+- `.claude/tasks/20260730-redteam-insights-api.md` — attack scenarios against the recorded slices

@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor
 
+import com.mongodb.client.model.Filters
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -26,6 +27,7 @@ import io.peekandpoke.karango.aql.FOR
 import io.peekandpoke.karango.aql.RETURN
 import io.peekandpoke.karango.config.ArangoDbConfig
 import io.peekandpoke.karango.karango
+import io.peekandpoke.karango.vault.AqlTypedQuery
 import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.monko.MongoDbConfig
@@ -54,10 +56,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.bson.Document
 import java.util.UUID
 import kotlin.io.path.createTempDirectory
 import kotlin.time.Duration.Companion.milliseconds
@@ -83,6 +87,10 @@ class S1KaSessionsRepo(driver: KarangoDriver) : EntityRepository<S1KaSession>(
             RETURN(r)
         }
     }
+
+    /** Raw AQL with the token inlined as a literal -- what `AqlTypedQuery.of` permits. */
+    suspend fun countByRawAql(token: String): Long =
+        query(AqlTypedQuery.of(kType<Any>(), "FOR d IN insights_s1_ka_sessions FILTER d.token == \"$token\" RETURN d")).count
 }
 
 class S1MoSessionsRepo(driver: MonkoDriver) : MonkoRepository<S1MoSession>(
@@ -94,6 +102,16 @@ class S1MoSessionsRepo(driver: MonkoDriver) : MonkoRepository<S1MoSession>(
         filter(r.token eq token)
         limit(1)
     }.firstOrNull()
+
+    /** Embedded-document equality with the token as the KEY: matches nothing; the document is one bind value. */
+    suspend fun countByTokenAsKey(token: String): Long = find {
+        filter(Filters.eq("token", Document(token, 1)))
+    }.count
+
+    /** A query the server rejects: `$noSuchOperator` is no operator. */
+    suspend fun failingLookup(): Result<Long> = runCatching {
+        find { filter(Document("token", Document("\$noSuchOperator", 1))) }.count
+    }
 }
 
 /** Looks up [S1ProbeApi.token] in both repositories, so the request's record holds one query per backend. */
@@ -109,10 +127,17 @@ class S1ProbeApi : ApiRoutes("insights-s1-probe", authFloor = { authenticated() 
     val probe = Probe.mount {
         docs { name = "S1 probe" }.handle {
             val kontainer = call.kontainer
+            val kaSessions = kontainer.get(S1KaSessionsRepo::class)
+            val moSessions = kontainer.get(S1MoSessionsRepo::class)
             val found = listOfNotNull(
-                kontainer.get(S1KaSessionsRepo::class).findByToken(token),
-                kontainer.get(S1MoSessionsRepo::class).findByToken(token),
+                kaSessions.findByToken(token),
+                moSessions.findByToken(token),
             )
+
+            // After the lookups, so the specs can tell each entry apart by its label and text.
+            check(kaSessions.countByRawAql(token) == 1L)
+            check(moSessions.countByTokenAsKey(token) == 0L)
+            check(moSessions.failingLookup().isFailure) { "the server accepted \$noSuchOperator" }
 
             // Two log lines, so the record's log slice is real too -- for the Vue fixtures. No token in them:
             // a log line IS recorded verbatim, which is the app's own business.
@@ -269,12 +294,12 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             .single { it["key"]!!.jsonPrimitive.content == VaultCollector.KEY }["data"]!!.jsonObject["entries"]!!
             .jsonArray.map { it.jsonObject }
 
-    /** This backend's token lookup: the entry of [language] whose query text names the `token` field. */
-    private fun lookup(body: String, language: String): JsonObject {
+    /** The first entry of [language] whose query text contains [text]; by default this backend's token lookup. */
+    private fun lookup(body: String, language: String, text: String = "token"): JsonObject {
         val entries = vaultEntries(body).filter { it["queryLanguage"]?.jsonPrimitive?.content == language }
 
-        return withClue("no $language entry names the token field, among ${entries.size}: $entries") {
-            entries.firstOrNull { (it["query"]?.jsonPrimitive?.content ?: "").contains("token") }.shouldNotBeNull()
+        return withClue("no $language entry contains '$text', among ${entries.size}: $entries") {
+            entries.firstOrNull { (it["query"]?.jsonPrimitive?.content ?: "").contains(text) }.shouldNotBeNull()
         }
     }
 
@@ -303,6 +328,31 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             entry["connection"]!!.jsonPrimitive.content shouldContain "MongoDB"
         }
 
+        "raw AQL is recorded under its own label, and its text -- the token inlined -- is withheld" {
+            val raw = vaultEntries(probeRecord()).filter { it["queryLanguage"]?.jsonPrimitive?.content == "aql-raw" }
+
+            raw.size shouldBe 1
+            raw.single()["query"]?.jsonPrimitive?.contentOrNull shouldBe null
+        }
+
+        "a Mongo filter comparing with an embedded document binds it whole -- its keys can be data" {
+            val entry = lookup(probeRecord(), language = "mongo-bound", text = "\"token\": \"@p1:object\"")
+
+            withClue("the token was the document's KEY") {
+                entry["query"]!!.jsonPrimitive.content shouldNotContain S1ProbeApi.token
+            }
+            entry["varsCount"]!!.jsonPrimitive.int shouldBe 1
+        }
+
+        "a FAILED Mongo query keeps its placeholder text, as an Arango one does" {
+            val entry = lookup(probeRecord(), language = "mongo-bound", text = "\$noSuchOperator")
+
+            withClue(entry) {
+                entry["query"]!!.jsonPrimitive.content shouldContain "\"\$noSuchOperator\": \"@p1:int\""
+                entry["varsCount"]!!.jsonPrimitive.int shouldBe 1
+            }
+        }
+
         "the Arango lookup is recorded as placeholder text, with the value counted" {
             val entry = lookup(probeRecord(), language = "aql")
             val query = entry["query"]!!.jsonPrimitive.content
@@ -320,7 +370,9 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
                 .map { it.jsonObject }
                 .single { it["key"]!!.jsonPrimitive.content == "log" }["data"]!!.jsonObject["entries"]!!.jsonArray
 
-            log.map { it.jsonObject["level"]!!.jsonPrimitive.content } shouldBe listOf("INFO", "WARNING")
+            // Sorted: the order is not guaranteed. `UltraLogManager` launches each event on `Dispatchers.Unconfined`,
+            // so once an appender suspends (e.g. `KarangoLogAppender` writing), the next event can overtake. Seen 2026-10-19.
+            log.map { it.jsonObject["level"]!!.jsonPrimitive.content }.sorted() shouldBe listOf("INFO", "WARNING")
         }
 
         "no entry carries the fields that used to hold values" {
