@@ -190,7 +190,10 @@ Counts from `build/test-results/**/TEST-*.xml` (kotest ignores `--tests`); faili
       records AND users on each backend, unique email index on both, production `RealmTokenConfig` against an advanced
       clock. `AccountActivationEmailE2eSpec` 8 and `AuthApiSpec` 23 adapted to the two-link mail and the delays.
 - [x] `:funktor-demo:server:compileKotlin` green (all four demo realms implement `retire`; the worker compiles).
-- [ ] Full suite — see below.
+- [x] **Full suite** (`console/wt-gradle.sh --full-suite`, `clean build --continue`, at `0618d85e`): BUILD SUCCESSFUL in
+      14m 15s, no `^e:`. XMLs: **15861 tests, 0 failures, 0 errors, 7 skipped** across 49 modules — jvmTest 7422, test
+      2639, jsBrowserTest 3451, linuxX64Test 2349. `funktor/auth` 207 (jvm 196 + js 11), `funktor/all` 210,
+      `funktor-demo/server` 47. No tracked generated file changed.
 
 ### Mutation evidence
 
