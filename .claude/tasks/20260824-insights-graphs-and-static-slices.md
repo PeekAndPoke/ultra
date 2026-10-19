@@ -1,7 +1,7 @@
 # Insights — the three graphs, and moving static data off every record
 
 **Status:** IN PROGRESS — Parts A+B DONE 2026-10-19 (track T2, gate PASS round 1, merged; maintainer-approved
-MINOR batch reviewed); Parts C+D are track T1's. Created 2026-08-24 from maintainer decisions on
+MINOR batch reviewed); Parts C+D DONE 2026-10-19 (track T1, branch `wt/insights-vue`), gate not yet run. Created 2026-08-24 from maintainer decisions on
 `.claude/tasks/20260802-insights-vue-tabs.md`'s gap inventory.
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md`
 **Security-critical:** yes — it adds REST endpoints that expose the service graph and the database
@@ -62,7 +62,7 @@ service definitions repeated on every single request.
       unchanged (asserted JSON-equal), and the new slice lives under a new top-level key (`services`, not
       `info.services`), so today's reader cannot mistake it for the old shape — it returns null and the
       tab falls back to its raw tree (verified by running it, below).
-  - [ ] **(T1)** the tab tells the two shapes apart and says which one it shows.
+  - [x] **(T1)** the tab tells the two shapes apart and says which one it shows. DONE 2026-10-19.
 - [x] Re-measure a record afterwards. The point of the exercise is the size; state the before and after.
       DONE — see "Record size".
 
@@ -79,11 +79,13 @@ Checked on npm 2026-08-24, rather than from memory:
 - **It has no runtime `dependencies`** — but **six `peerDependencies`**: `uuid`, `keycharm`, `vis-data`,
   `vis-util`, `@egjs/hammerjs`, `component-emitter`. The old v6 line depended on `moment`; v10 does not.
 
-- [ ] **Verify the peer install rather than assuming it.** `auto-install-peers` defaults to true in
+- [x] **Verify the peer install rather than assuming it.** DONE 2026-10-19 (T1): pnpm 10.26.2 put all six
+      peers (+ `@types/hammerjs`) into `sdkgen-app`'s lockfile unasked; `vite build` is green there. `auto-install-peers` defaults to true in
       pnpm 8+, and the demo app is on `pnpm@10.26.2` with no `.npmrc` overriding it — so this probably
       just works. Probably is not a good enough basis for a shipped component: install it in
       `sdkgen-app` and check `vite build` before committing to the choice.
-- [ ] **The generator cannot install it.** A component that imports `vis-network` needs the dependency in
+- [x] **The generator cannot install it.** DONE 2026-10-19 (T1) as a CHECK in `sdk:ts:generate`, not an
+      `out.requires` API (that would be `ultra:codegen`'s) — see "T1 — implementation notes". A component that imports `vis-network` needs the dependency in
       the APP's `package.json` — a file outside `<out>/`, which the ownership rule forbids the generator
       to write. This is exactly the `out.requires` case: emit the requirement and verify it, failing with
       the line to paste. Coordinate with the codegen agent; do not silently ship an import that only
@@ -96,31 +98,32 @@ every consuming app. Do not take this branch without measuring the first.
 
 ## Part D — the tabs
 
-- [ ] `KontainerTab`: two buttons, "Show instances Graph" and "Show Full Graph", differing only in
+- [x] `KontainerTab`: two buttons, "Show instances Graph" and "Show Full Graph", differing only in
       whether services with no instances are included. Node label `simpleName\ntype`, size = injected
       class count, colour by type (Singleton `#1E90FF`, Prototype `#FFD700`, Dynamic `#8B0000`,
       SemiDynamic `#9400D3`, DynamicOverride `#DC143C`); edge per injection, arrow at the target,
       **dashed when `provisionType == Lazy`**, weight 2 Direct / 1 Lazy.
-- [ ] `VaultTab`: the "Show Database Graph" button and its network, plus the old "Database Graph Data"
+- [x] `VaultTab`: the "Show Database Graph" button and its network, plus the old "Database Graph Data"
       `<details>` holding the raw model.
-- [ ] **Both fetch lazily, on first click.** The old GUI did the same (`setTimeout(..., 500)` after
+- [x] **Both fetch lazily, on first click.** The old GUI did the same (`setTimeout(..., 500)` after
       revealing the container) because a hidden canvas cannot be laid out. More importantly here: the
       static graph is a second HTTP request, and a user who never opens the tab should never make it.
-- [ ] Both tabs must still render **without** the graph — the endpoint can 403 for a non-superuser or
+- [x] Both tabs must still render **without** the graph — the endpoint can 403 for a non-superuser or
       fail outright, and a broken graph must not take the tab with it.
 
 ## Verification
 
 - [x] e2e for both endpoints, including that a non-superuser gets the floor's answer, not the graph.
       DONE 2026-10-19: `InsightsGraphsApiSpec`, `InsightsDatabaseGraphBackendsSpec`.
-- [ ] `vite build`, not just `vue-tsc` — a new dependency and new imports are exactly what a typecheck
-      cannot confirm (see the `shims-vue.d.ts` note in the insights task).
+- [x] `vite build`, not just `vue-tsc` — a new dependency and new imports are exactly what a typecheck
+      cannot confirm (see the `shims-vue.d.ts` note in the insights task). DONE 2026-10-19 (T1): on every
+      `check` in `funktor/codegen/vue-verify`, and in `sdkgen-app`.
 - [x] Record size before and after Part B, measured on a real record from `InsightsRecordingSpec`.
       DONE — the same request, recorded by `InsightsKontainerSliceSpec`.
-- [ ] An OLD (fat) record still renders the kontainer tab.
+- [x] An OLD (fat) record still renders the kontainer tab.
   - [x] Backend half: an old record still LOADS through the API, its slice untouched
         (`InsightsKontainerSliceSpec`, frozen real fat record). DONE 2026-10-19.
-  - [ ] **(T1)** the tab renders it.
+  - [x] **(T1)** the tab renders it — `vue-verify/tests/tabs.spec.ts`, on the served `FAT_RECORD`.
 
 ## Red-team follow-up
 
@@ -475,6 +478,90 @@ first. Commits `249eca0a` (wire + simplifications) and `7579868b` (collector + s
 
 Tests: `:funktor:insights:jvmTest` 13 specs / 95 tests, `:funktor:all:jvmTest` 15 / 178, all green. No
 full suite for this batch (coordinator).
+
+## T1 — implementation notes, Parts C+D (2026-10-19, branch `wt/insights-vue`)
+
+All under `funktor/codegen/src/main/resources/ts/insights/` unless named otherwise.
+
+- **Both slice shapes** — `slices.ts:565` `readKontainer`: the `graphFingerprint` KEY marks v2 (`slim`), `info`
+  marks v1 (`full`), neither is unrecognised (raw tree). `readFqn` and `readDefinition` (`:531`) read both the
+  `{fqn}`/`{location}` wrappers and flat strings. `instanceCountsMeasured` (`:588`): 0/0 shows as "not
+  measured". `isProcessWide` (`:598`): `type == Singleton` is process state, every other type the request's own
+  (T2's final correction) — each row and the summary say which. `joinKontainerGraph` (`:622`) fills a slim
+  record's definitions from the graph and keeps the RECORD's type (only the record knows `DynamicOverride`).
+  `graphMismatch` (`:651`) makes the tab say so.
+- **The graphs** — `graphs.ts`: `kontainerNetwork` (`:72`) and `databaseNetwork` (`:210`) port the old
+  renderers' nodes, edges, colours and sizes; `networkOptions` (`:117`) their vis.js options. An injection
+  whose DECLARED type is no service key is not drawn but counted (the old graph drew it to an id with no
+  node, which vis.js drops silently); the note under the graph says how many. Database edges are never dashed:
+  `Reference.type` is gone and was always `Direct`.
+- **Lazy, at most once per page** — `createGraphSource` (`graphs.ts:309`) keeps a successful fetch, forgets a
+  failure (`once`, `:298`), and never throws (`attempt`, `:287`: a non-envelope 404 from an older server
+  is a `GraphResult`, not an exception). `InsightsPage.vue:59` provides ONE source for the page's lifetime;
+  `InsightsDetailPage.vue:60` provides its own only when used standalone. Tabs inject it
+  (`useInsightsGraphsOrNull`, `:339`); without one a slim record shows its table and says why there is no graph.
+- **Drawing** — `NetworkGraph.vue:35` imports `vis-network/standalone` dynamically: one 652 KB chunk (158 KB
+  gzip), downloaded on the first click. Standalone bundles its peers and injects its CSS into `<head>`. A
+  failure to load or draw is shown inside the component and the tab keeps rendering (tested with the REAL
+  library, which throws under happy-dom for want of a canvas).
+- **Tabs** — `KontainerTab.vue:69` `toggle`; a full record draws from itself with no request. `VaultTab.vue:77`
+  `loadGraph`, shared by "Show Database Graph" and opening "Database Graph Data" (`:95`).
+- **The app's dependency** — `funktor/codegen/src/main/kotlin/cli/TsSdkGenerateCliCommand.kt:128`: generation
+  refuses an SDK whose package imports `<out>/package.json` does not declare. `funktor-demo/sdkgen-app` declares
+  `vis-network@10.1.2`.
+
+### Deviations (T1) — for the gate
+
+- **Retry after a failed fetch**, against the contract's "at most once per page": a success is kept for the
+  page's lifetime, a failure is asked again on the next click (a 401 thus repeats per click).
+- **No ETag/fingerprint refetch**: a record naming another fingerprint is drawn against today's graph with a
+  notice, not refetched — "at most once" wins over "the server may have redeployed meanwhile".
+- **The check, not an API**: no `out.requires` in `ultra:codegen`; see the vue-tabs task.
+
+### Test evidence (T1)
+
+Module counts are in `.claude/tasks/20260802-insights-vue-tabs.md`, "Test evidence (T1)". The graph-specific
+component tests: `vue-verify/tests/graphs.spec.ts` (17: lazy, once per page across two tabs, 401, HTML 404,
+retry after failure, mismatch said and not said, the fat record drawing with no request, no source; edges,
+dangling count, Lazy dashes, `DynamicOverride` colour; the database graph's fetch, raw view, 401, the
+cross-backend edge), `graphs-real-library.spec.ts` (2), `detail-page.spec.ts` (ancestor's source vs own).
+
+FULL_SUITE_PLACEHOLDER
+
+### Mutation table (T1) — readers, graph source, rendering
+
+Applied to the resource, copied into the harness SDK (emission is verbatim, `diff -r` before and after every
+mutant), vitest run, restored with `cp` + `cmp`. 58 tests per run.
+
+| # | Mutant | Red | Why that is the right reason |
+|---|---|---|---|
+| R1 | v2 told by `services[]`, not by the key | 2 | a slice with neither marker is guessed instead of shown raw |
+| R2 | `codeLocation` only as a flat string | 3 | the old record's `{location}` vanishes from table and reader |
+| R3 | class names only as `{fqn}` | 8 | every slim-record and graph class name is null: join, edges, colours |
+| R4 | shapes swapped | 17 | every shape-dependent behaviour |
+| R5 | the join takes the graph's type | 2 | `DynamicOverride` lost: drawn and listed as `Dynamic` |
+| R6 | counts always shown | 2 | "0 / 0 / 0" instead of "not measured" |
+| R7 | Jackson-era seconds not scaled | 1 | a 1970 date |
+| R8 | process-wide told by having instances | 1 | every row "process-wide" |
+| G1 | no caching | 1 | a second request on the same page |
+| G2 | a failure cached | 1 | the retry click does not ask again |
+| G3 | the kontainer graph fetched on mount | 3 | a request before any click; the fat record's no-request case |
+| G4 | a thrown client error not contained | 1 | the HTML-404 case: the tab fails instead of saying so |
+| G5 | a drawing failure escapes `NetworkGraph` | 2 | the real library's failure takes the tab down |
+| G6 | dangling injection edges drawn | 1 | an edge with no target node |
+| G7 | Lazy not dashed | 1 | |
+| G8 | database edge reversed | 1 | the arrow points the old GUI's other way |
+| G9 | mismatch never said | 1 | |
+| G10 | the detail page ignores the ancestor's source | 1 | a second fetch per opened record |
+
+### Red-team scenarios proposed (T1) — for `.claude/tasks/20260730-redteam-insights-api.md`
+
+Collected, not run; T1 may not edit that file. The rendering and S1 ones are in the vue-tabs task.
+
+1. The graph endpoints' class names, code locations and repository names are rendered as canvas labels: confirm
+   no `title`/tooltip path turns one into HTML (vis-network sets string titles via `innerText`; none are set).
+2. A record crafted on disk (depot write access) with a huge `services` list or a deep `overwrites` chain:
+   the reader bounds the chain at 16, not the list — measure what freezes the tab.
 
 ## Review record — the LEDGER, Parts A+B (T2), /feature-review 2026-10-19
 

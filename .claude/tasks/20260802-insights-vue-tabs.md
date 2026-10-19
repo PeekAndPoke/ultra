@@ -1,6 +1,7 @@
 # Insights — the Vue detail page and its collector tabs
 
-**Status:** IN PROGRESS — started 2026-08-02
+**Status:** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE
+2026-10-19 (track T1, branch `wt/insights-vue`); the coordinator's `/feature-review` re-run is next
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → "Insights specifics"
 **Spec:** `funktor/insights/reference/TAB-SPECS.md` — all ten tabs, wire shapes read from a real record
 **Security-critical:** yes. Superuser-only data, rendered from attacker-controlled strings.
@@ -122,10 +123,10 @@ bundle. It is safe — the minifier only drops it when the layers are defined la
 
 | Tab | Gate |
 |---|---|
-| `vault` — the `vars` field | **BLOCKED.** `.claude/tasks/20260731-query-vars-in-insights.md` is open and needs a maintainer decision. Bind values include auth lookups — the token or activation code *being looked up*. Build the tab **without rendering `vars`**; everything else in it is fine |
-| `vault` — the database graph | **CANNOT be built from a record.** It came from `DatabaseGraphBuilder`, a live kontainer service queried at render time. Needs a decision: its own live endpoint (it describes the schema, not the request) or `VaultCollector` storing `DatabaseGraphModel`. Do not promise the tab includes it |
+| `vault` — the `vars` field | **BLOCKED** (D4, not blocking this task). `.claude/tasks/20260731-query-vars-in-insights.md` is open and needs a maintainer decision. Bind values include auth lookups — the token or activation code *being looked up*. Build the tab **without rendering `vars`**; everything else in it is fine |
+| `vault` — the database graph | **BUILT 2026-10-19** from its own endpoint (T2's `graphs/database`), not from the record |
 | `app-config` | **UNBLOCKED 2026-08-02**, was not on 2026-07-31. `Redacted<T>` closed all four known leaks — verified field by field, see the corrected note in TAB-SPECS. Residual, and it must reach the docs: an *app's own* config secret in a plain `String` is still rendered verbatim |
-| `kontainer` | Free. Everything the old graph drew is derivable from the record — unlike vault's |
+| `kontainer` | Graphs **BUILT 2026-10-19**: a full (old) record draws from itself, a slim one joins `graphs/kontainer` |
 | the rest | Free |
 
 ## Build order
@@ -170,8 +171,8 @@ Leaves first, because of D-1 — each step is useful even if the import question
       at `<out>/ui/` and these at `<out>/insights/`. That is the plan's "freeze the layout" option, taken
       as an interim. When the `@sdk` alias lands the imports become alias-based and stop depending on
       depth; until then **the layout is a contract the contributor must honour**.
-- [ ] **9. The contributor** — `InsightsTsContributor` in `funktor/insights`. Page routes are
-      `requiresAuth = true`, **declared not derived**.
+- [x] **9. The contributor** — `InsightsTsContributor`, in `funktor/codegen` (see "Where the files live"),
+      not `funktor/insights` as first planned. Page routes are `requiresAuth = true`, **declared not derived**.
 
       **Use `out.sharedResource` for every `funktor/ui` file, never `out.resource`** — flagged by the
       codegen agent, verified in the code. `resource` delegates to `file`, which is exclusive: *"a second
@@ -184,17 +185,18 @@ Leaves first, because of D-1 — each step is useful even if the import question
       The tabs and pages themselves stay `resource`: `funktor/insights` genuinely is their sole owner.
 - [ ] **10. Delete as you go** — per `reference/README.md`, a shipped tab deletes its `reference/collectors/*.kt`
       and its TAB-SPECS section. When both are empty, delete `reference/`.
+      **Not done, and needs a maintainer decision (T1, 2026-10-19):** every tab has shipped, but T4 (the Kraft
+      port) still needs the old renderers as its spec, and TAB-SPECS is now the CURRENT wire reference rather
+      than a distillation to delete. Recommendation: keep `reference/` until T4 lands, then delete
+      `collectors/` + `gui/` + `assets/` and keep TAB-SPECS (moved next to the collectors).
 
-## What the wire actually looks like — the traps TAB-SPECS already caught
+## What the wire actually looks like
 
-Do not re-derive these from the Kotlin types; they were read out of a real record and several differ:
-
-- `request.method` and `response.status` are **objects**, not strings — ktor's `HttpMethod` serialises as
-  `{value}` and `HttpStatusCode` as `{value, description}`.
-- `request.uri` is **path only**. The computed `fullUrl` was removed; Vue composes it.
-- `user.userId` is a **flat string** — the value class does not survive as an object.
-- `kontainer …instances[].createdAt` is epoch **seconds as a double**.
-- `log.entries[].text` is already formatted by `LogAppender.format` — render, do not re-parse.
+`funktor/insights/reference/TAB-SPECS.md`, re-derived from current records on 2026-10-19; the samples
+themselves are `funktor/codegen/vue-verify/fixtures/`. The traps worth knowing without opening it:
+`request.method` / `response.status` are objects; `request.uri` is the path only; `user.userId` is flat and
+`isSystem`/`isAnonymous` do not exist (`_type` does); `createdAt` is `{ts, timezone, human}` in MILLIS (only
+Jackson-era records have seconds); the kontainer slice has two shapes; `vault` has no `vars`.
 
 ## The collector `Data` classes are NOT typed in TypeScript, despite the KDoc
 
@@ -245,17 +247,9 @@ build path.
   fall back to a JSON tree. None throws.
 - All three pages mount, compile and reach their loading state.
 
-**The gap, stated because it is easy to read the green above as more than it is:** SSR renders only the
-synchronous state, so **the pages' LOADED state is unverified** — the table rows, the tab shell driven by
-a real record, prev/next. Testing it needs a DOM (`happy-dom`/`jsdom`), which is not in the demo app's
-`node_modules`, and adding a dependency there is the codegen agent's call. The tabs themselves are fully
-exercised because they are pure props-in.
-
-**Owed:** that harness lives in a scratch dir, not in the repo — it proves the code is right today and
-guards nothing tomorrow. It needs a permanent home before this task can pass its gate; that is a Vue test
-setup decision (vitest in `sdkgen-app`, or a dedicated harness module) which touches the codegen agent's
-area, so it is not taken unilaterally. A grep-based guard is NOT a substitute but is a cheap stopgap —
-note it must match `v-html=`, not the word, since every one of these files mentions it in KDoc.
+**The gap this left — the pages' LOADED state, and a harness that lived in a scratch dir — is closed**
+(2026-10-19): `funktor/codegen/vue-verify` runs on every `check`, with happy-dom, and
+`tests/detail-page.spec.ts` drives the detail page through the real generated client over a recorded record.
 
 ## Steps 3–6 evidence — the four heavy tabs, 2026-08-02
 
@@ -354,9 +348,8 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
       `prism(Language.Json)`, and the vault tab highlighted the query by its `queryLanguage` plus the
       explain output as `text`. `JsonTree` replaces the JSON case and is better (collapsible,
       searchable by eye) — **but query text is now unhighlighted plain `<pre>`.**
-- [ ] **Three vis.js graphs, none ported.** See the two tabs below. The single largest gap, and now
-      its own task: `.claude/tasks/20260824-insights-graphs-and-static-slices.md` — which also slims
-      the kontainer slice, since the static definitions are 73.6% of every record.
+- [x] **Three vis.js graphs** — ported 2026-10-19 (T1), `vis-network` 10.1.2. See
+      `.claude/tasks/20260824-insights-graphs-and-static-slices.md` Parts C+D.
 - [ ] **The bar's git version and environment id have no home.** The bar is deleted by decision, and
       the list page absorbed status/duration — but `appInfo.version.describeGit()` and
       `appConfig.ktor.application.id` were bar items and are now shown nowhere. Both are in the
@@ -384,14 +377,13 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
       explain output. Needs a highlighter the SDK can ship.
 - [ ] **`vars`** — BLOCKED on `.claude/tasks/20260731-query-vars-in-insights.md`, deliberately omitted,
       and the reason the tab has no raw dump or JSON fallback either.
-- [ ] **The repository graph** (red "Show Database Graph" button + network). **Not derivable from a
-      record** — it came from `DatabaseGraphBuilder`, a live kontainer service queried at render time.
-      Needs its own endpoint or a stored model.
-- [ ] **"Database Graph Data"** — a `<details>` holding the raw graph JSON. Same blocker as above.
+- [x] **The repository graph** (red "Show Database Graph" button + network) — DONE 2026-10-19, from
+      `GET …/graphs/database`, fetched on first click.
+- [x] **"Database Graph Data"** — DONE 2026-10-19, the same single fetch.
 
 ### `kontainer` — the three gaps
 
-- [ ] **"Show instances Graph" (green) and "Show Full Graph" (red)** — two vis.js networks differing only
+- [x] **"Show instances Graph" (green) and "Show Full Graph" (red)** — DONE 2026-10-19. Two networks differing only
       in whether services without instances are included. Node label `simpleName\ntype`, size = injected
       class count, colour by type (Singleton `#1E90FF`, Prototype `#FFD700`, Dynamic `#8B0000`,
       SemiDynamic `#9400D3`, DynamicOverride `#DC143C`); edge per injection, arrow at target, **dashed
@@ -436,14 +428,14 @@ the `vault` `vars` suppression, which it must carry.
 
 ## Test evidence
 
-- [ ] `vue-tsc --noEmit` green in `funktor-demo/sdkgen-app` — the only place that proves a generated SDK
-      is consumable from a real toolchain.
-- [ ] A component test per tab against a **real recorded slice**, not a hand-written fixture.
-      `InsightsRecordingSpec` already writes real records to a depot; take the sample from there.
-- [ ] **The `v-html` guard is a test, not a review note:** assert that a slice containing
-      `<img src=x onerror=alert(1)>` renders as text. Mutation-test it by switching one binding to
-      `v-html` and confirming it goes red.
-- [ ] e2e: the API half is already covered; this task adds no backend behaviour.
+- [x] `vue-tsc --noEmit` AND `vite build` green in `funktor-demo/sdkgen-app` against a freshly generated SDK
+      (2026-10-19), and in `funktor/codegen/vue-verify` on every `check`.
+- [x] A component test per tab against a **real recorded slice** — `vue-verify/tests/tabs.spec.ts`, fixtures
+      copied by `fixtures/refresh.mjs` from what the funktor/all e2e specs serve (the request
+      `InsightsRecordingSpec` records, via `InsightsKontainerSliceSpec`'s dump).
+- [x] **The `v-html` guard is a test** — `vue-verify/tests/escaping.spec.ts`, nine positions. Mutation-tested:
+      `v-html` in `PreBlock`, `KeyValueTable` or `FactList` each turns exactly the tabs using it red.
+- [x] e2e: this task DID add backend behaviour (S1, Monko) — `InsightsVaultBindValuesSpec`, both backends.
 
 ## Review record — /feature-review, 2026-08-24
 
@@ -478,10 +470,10 @@ taken on it. Corrected everywhere.
 | S3/D7 | MED | `TABS[key]` resolves through `Object.prototype`, so a collector keyed `constructor` skips the `JsonTree` fallback. | **CONFIRMED**, fixed |
 | I2 | MED | **`TemplateTab` had no JSON fallback** and collapsed "no view rendered" with "slice unreadable" into one `null` — so a renamed field showed a 4.5 ms render as nothing, with the data displayed nowhere. | **CONFIRMED**, fixed |
 | I3 | MED | **A header or query parameter named `__proto__` vanished from the table.** `out[key] =` on an object literal hits `Object.prototype`'s setter: no own property is created, so the table omitted it while the raw-slice tree beside it showed it — two views of one record disagreeing, in a forensic tool, on a key an attacker picks (`GET /x?__proto__=1`). | **CONFIRMED**, fixed — null-prototype maps |
-| I4 | MED | The spec guards the file LISTS but not the IMPORTS between them: rename a `ui/` file, update `UI_FILES`, miss one importing tab, and both set comparisons pass while `vite build` fails downstream. | CONFIRMED, **open** |
+| I4 | MED | The spec guards the file LISTS but not the IMPORTS between them: rename a `ui/` file, update `UI_FILES`, miss one importing tab, and both set comparisons pass while `vite build` fails downstream. | CONFIRMED, **fixed 2026-10-19** |
 | I5 | LOW | `durationTone` restated `toneAbove` by hand — the helper's one call site that had gone its own way, and it exists precisely to stop that. | **CONFIRMED**, fixed |
-| D5 | LOW | The Overview runtime strip loses the "not measured" caveat the tab shows. | CONFIRMED, open |
-| D6 | LOW | Overview status drops the reason phrase the old Overview had. | CONFIRMED, open |
+| D5 | LOW | The Overview runtime strip loses the "not measured" caveat the tab shows. | CONFIRMED, **fixed 2026-10-19** — the caveat is in the cell (`runtimeCells`) |
+| D6 | LOW | Overview status drops the reason phrase the old Overview had. | CONFIRMED, **fixed 2026-10-19** — read from the `response` slice |
 | I6 | INFO | `bytesToMb` rounds where the old tab truncated (100.7 MB → `101` vs `100`). Recorded so it is not "fixed" backwards; rounding is the better choice. | noted |
 
 ### The fix for S1/S2, and why it is an allowlist
@@ -500,13 +492,148 @@ only stops it reaching a screen. The real fix belongs with D1 in the backend.
       serialising to `{}`, and that no bind value reaches the record. Mutation-tested. The kontainer
       half of the same reshape is still in `20260824-insights-graphs-and-static-slices.md`.
       *(Ticked 2026-09-28 — the work landed a month ago and this box was never updated.)*
-- [ ] **S1 at the source** — have Monko record a placeholder-ised query plus separate `vars`, so the
-      omission covers Mongo too and the tab can show the query again.
-- [ ] **I4** — extend the spec to follow relative imports out of each emitted file and assert the target
-      is also emitted. ~10 lines, and it closes the class of defect the drift guard only half covers.
-- [ ] **Re-derive TAB-SPECS from a current record** before trusting any remaining wire claim.
-- [ ] Re-run the suite, regenerate, and re-verify once the tree is quiet.
+- [x] **S1 at the source** — DONE 2026-10-19 (T1). Monko records `@pN` placeholders with the values in
+      `vars`; `VaultCollector` admits `json`; the Database tab shows Mongo queries again. Both backends e2e.
+- [x] **I4** — DONE 2026-10-19. The spec follows every relative import of every emitted file of the REAL
+      insights SDK and asserts the target is emitted.
+- [x] **Re-derive TAB-SPECS from a current record** — DONE 2026-10-19.
+- [x] Re-run the suite, regenerate, and re-verify — DONE 2026-10-19, see "Test evidence (T1)".
 
 **Red-team follow-up:** required — `.claude/tasks/20260730-redteam-insights-api.md` already exists for the
 API half; extend it with the rendering scenarios (stored XSS via header/UA, secret disclosure through the
-config tab) rather than opening a second file.
+config tab) rather than opening a second file. T1 may not edit that file; its proposals are below under
+"Red-team scenarios proposed (T1)" for the coordinator to carry over.
+
+## T1 — implementation notes (2026-10-19, branch `wt/insights-vue`)
+
+The gate blockers. The graphs and the kontainer shapes are recorded in
+`.claude/tasks/20260824-insights-graphs-and-static-slices.md`, Parts C+D.
+
+- **S1 at the source.** `monko/core/src/main/kotlin/MonkoDriver.kt:148` `FindQueryBuilder.printQuery()` turns
+  every filter value into an `@pN` placeholder (`placeholderise`, `:75`) with the values, as plain Java values,
+  in `vars`; field names, `sort`, `limit`, `skip` stay, as AQL keeps attribute names and `LIMIT`. Fail-closed:
+  only documents and arrays holding documents are walked, so a whole `$in` list is ONE value. `findStored`
+  records it (`:385`); `print()` (`:132`) stays the raw debugging aid. `VaultCollector.kt:104` admits `json`.
+- **I4.** `funktor/codegen/src/test/kotlin/InsightsTsContributorSpec.kt:103` walks every relative import of
+  every emitted `.ts`/`.vue` of the SDK built from the REAL `InsightsApiFeature` (`RealInsightsSdk.kt`, which
+  needs `testImplementation(project(":funktor:insights"))`, `build.gradle.kts:45`, test-only) and resolves it
+  (`:45`). Two further pins: no barrel-exported `.ts` imports a package but `vue`; only `NetworkGraph.vue`
+  imports `vis-network`. The scanner is `funktor/codegen/src/main/kotlin/TsImports.kt:20` (comments stripped).
+- **TAB-SPECS** re-derived from current records: `funktor/insights/reference/TAB-SPECS.md`.
+- **D5** `slices.ts:708` `fileDescriptorsUnmeasured`, used by the cell hint in `runtimeCells`, so the Overview
+  strip says "not measured" too. **D6** `InsightsDetailPage.vue:132` reads the reason phrase from the
+  `response` slice, only when its status equals the headline's.
+- **How an app gets `vis-network`:** `funktor/codegen/src/main/kotlin/cli/TsSdkGenerateCliCommand.kt:128` —
+  `sdk:ts:generate` refuses an SDK whose package imports `<out>/package.json` does not declare (`:169`), naming
+  the package, its importers and the `pnpm add` line (`:194`). Verified on the demo: it refused until
+  `sdkgen-app` declared `vis-network`.
+
+### The harness — where, and why there
+
+`funktor/codegen/vue-verify/`, wired into `funktor/codegen`'s `check` as `vueVerify`
+(`build.gradle.kts:70,98,121`; opt out `-PskipVueVerify=true`). Modelled on `ultra/codegen/ts-verify`: its own
+`package.json`, frozen `pnpm-lock.yaml`, `.npmrc` (pinned Node 22.12.0, pnpm enforces `packageManager`).
+
+- **Not in `sdkgen-app`**, because that app's SDK is generated by RUNNING the demo server, is gitignored, and
+  is not built by Gradle at all — tests there would guard nothing in CI.
+- **In `funktor/codegen`**, because the Vue resources and their contributor live there: a change to either
+  fails that module's own `check`. The SDK it tests is generated from the real insights feature by the same
+  kontainer wiring `sdk:ts:generate` uses (`generateVueVerifySdk`).
+- **No `shims-vue.d.ts`** in its tsconfig, unlike the demo: `vue-tsc` resolves `.vue` itself, so a missing
+  component fails the typecheck (probed: TS2307). `verify` = `vue-tsc --noEmit && vite build && vitest run`;
+  vitest writes JUnit XML to `funktor/codegen/build/test-results/vueVerify/`.
+- **Fixtures are real responses**, copied by `vue-verify/fixtures/refresh.mjs` from the funktor/all e2e dumps
+  (`INSIGHTS_WIRE_SAMPLES_DIR`). Its one change: the runtime slice's `systemProperties` keep six keys and lose
+  the rest, which hold the build machine's paths and user name.
+
+**Versions** (looked up on npm 2026-10-19, pinned exact): vitest 5.0.5, happy-dom 21.0.3, vis-network 10.1.2,
+vue 3.5.44, vite 8.3.4, @vitejs/plugin-vue 6.0.10, vue-tsc 3.3.13, zod 4.6.7 — all newest. TypeScript **6.0.3**,
+not the newest 7.0.2: `vue-tsc` cannot run on TS 7 (see `sdkgen-app/README.md`), and 6.0.3 is the newest it
+runs on. No `@vue/test-utils`: `createApp` + happy-dom sufficed, one dependency fewer.
+
+## Test evidence (T1, 2026-10-19)
+
+Counts from `build/test-results/**/TEST-*.xml`, after rebasing onto `525b1da1`; all failures 0:
+
+- `:monko:core:test` — 26 specs, 256 tests (new `MonkoDriverPrintQuerySpec` 7).
+- `:funktor:insights:jvmTest` — 13 specs, 95 tests (`VaultCollectorSlumberSpec` 4, rewritten for `json`).
+- `:funktor:codegen:test` — 9 specs, 100 tests (`InsightsTsContributorSpec` 13, +3; `TsImportsSpec` 5, new;
+  `TsSdkGenerateCliCommandSpec` 24, +4).
+- `:funktor:all:jvmTest` — 16 specs, 183 tests (`InsightsVaultBindValuesSpec` 5, new: Arango AND Mongo).
+- `:funktor:codegen:vueVerify` — vue-tsc clean, vite build (vis-network its own 652 KB / 158 KB gzip chunk),
+  vitest **6 files, 58 tests**: `tabs` 15, `escaping` 9, `graphs` 17, `graphs-real-library` 2, `detail-page` 5,
+  `slices` 10.
+- `funktor-demo/sdkgen-app`: `pnpm run build` (vue-tsc on TS 5.9.3 + vite build) green on a freshly generated SDK.
+- Full suite: see the graphs task, "Test evidence (T1)".
+
+## Mutation table (T1, 2026-10-19)
+
+Each mutant backed up with `cp` to the session scratchpad (source-set path in the name), run, restored with
+`cp`, verified by `cmp` and a clean `git status`. Kotlin failures read from the console, counts from the XML.
+
+| # | Mutant | Red in | Why that is the right reason |
+|---|---|---|---|
+| S1-a | `findStored` records `print()` again | `InsightsVaultBindValuesSpec` 2/4 | "the token appears NOWHERE" (the token is in the served record) and "recorded as placeholder text" (no `@p1`) |
+| S1-b | `placeholderise` leaves strings unbound | `MonkoDriverPrintQuerySpec` 3/7; e2e 2/4 | the token in the text, on both levels |
+| S1-c | allowlist without `json` | `VaultCollectorSlumberSpec` 1/4; e2e 1/4 | the Mongo text is dropped; the leak test rightly stays green |
+| S1-d | allowlist ignored, every text kept | `VaultCollectorSlumberSpec` 2/4 | the unvetted `sql` entry's token. e2e green — correctly: both real drivers are safe now |
+| S1-e | the EXPLAIN plan recorded as the query | e2e 2/4 | the database substitutes the token into the plan (S2), on both backends |
+| S1-f | Karango appends `vars` to its text (temporary, outside T1's area) | e2e 1/4 | the Arango half of "nowhere in the record" |
+| V1 | `PreBlock` `{{ text }}` -> `v-html` (Gradle) | escaping 3/9: routing, log, vault | "the payload reached the DOM as markup: expected `<img …>` to be null" |
+| V2 | `KeyValueTable` value -> `v-html` (Gradle) | escaping 3/9: request, response, runtime | same message |
+| V3 | `FactList` value -> `v-html` | escaping 2/9: request, user | same message |
+| B1 | `UserTab` silently drops the e-mail row | escaping user (BLIND), tabs user | the payload is not on the page: a dropped field cannot pass as escaped |
+| D5 | the caveat back in the tab only | detail-page D5, slices | the Overview strip says `max: 0` |
+| D6 | the reason phrase dropped | detail-page D6 | `200` instead of `200 OK` |
+| I4-a | `KontainerTab` imports `./NetworkGraphs.vue` | `InsightsTsContributorSpec` 1/13 — the import walk ONLY | the mirror checks pass, exactly the defect class I4 named |
+| I4-b | `graphs.ts` imports a type from `vis-network` | `InsightsTsContributorSpec` 2/13 | a barrel-exported file would make every app depend on it |
+| C1 | the package.json check never runs | `TsSdkGenerateCliCommandSpec` 2/24 | **`--dry-run` stays green**: it pins "writes nothing", not that the problem is printed |
+
+Graph and reader mutants: the graphs task, "Mutation table (T1)".
+
+**Found while mutating, and worth keeping:** a Gradle `vueVerify` run copies the generated SDK into the
+harness's gitignored `src/funktorsdk/`, so restoring the RESOURCE after V2 left the mutant alive in that copy.
+The next ten vitest mutants all showed the same three extra failures. Caught because the extras repeated
+across unrelated mutants; the mutation helper now diffs the whole copy against the resources before and after
+every mutant, and the ten were re-run clean.
+
+## Deviations from the brief (T1)
+
+- **The graph library is the app's dependency, verified rather than installed.** There is no `out.requires`
+  mechanism in `ultra:codegen` (outside T1's area); the check sits in `funktor:codegen`'s CLI instead and
+  derives the requirement from what the SDK imports, so it cannot drift. It applies to every package (`vue`,
+  `zod` too) and only when `<out>/package.json` exists.
+- **A failed graph fetch is retried on the next click.** The contract says "at most once per page lifetime";
+  a SUCCESSFUL fetch is kept for the page's lifetime (`InsightsPage` owns the source), a failure is not
+  cached. A 401 therefore repeats per click; a network blip recovers without a reload.
+- **The S1 probe logs two lines**, so `record-vault.json` carries a real log slice — none of the samples had
+  one.
+
+## Red-team scenarios proposed (T1) — for `.claude/tasks/20260730-redteam-insights-api.md`
+
+Collected, not run; T1 may not edit that file.
+
+1. **A Mongo field path built from a secret.** Placeholders cover VALUES only; keys stay in the text. An app
+   that filters on `"tokens.<secret>"` (a map keyed by token) records the secret. Find such a filter in
+   funktor and in the demo.
+2. **The language label as a trust boundary.** `VaultCollector` trusts `aql` and `json` by name; a third
+   driver labelling itself `json` while inlining values would be trusted. Try a custom `QueryProfiler` entry.
+3. **`$where` / `$expr` / `$function`.** Their JavaScript and expressions are bound as one value each — check
+   that no part of an expression survives as structure (e.g. an operator document inside `$expr` with a
+   literal in it).
+4. **Stored XSS through every tab**: header names, query keys, user agents, a `__proto__` key, a service
+   class name, a log line — the escaping spec covers nine positions; look for a tenth (e.g. `JsonTree` keys
+   inside the collapsed raw views, the `title` attribute of a service cell).
+5. **The graph library**: `vis-network` injects its stylesheet; under a strict CSP without `'unsafe-inline'`
+   styles the tooltip breaks. Confirm nothing else (no `eval`, no HTML `title`) is needed.
+
+## What T1 is unsure about
+
+- **Placeholder text format.** `@pN` inside JSON strings (`"token": "@p1"`) reads like a literal. Nothing in
+  a placeholder-ised filter is a literal, so it is unambiguous, but it is a format a maintainer may want
+  otherwise (e.g. `{"$bind": "p1"}`).
+- **`sort` is kept verbatim.** Mongo only accepts directions or `{$meta}` there and a failed query records no
+  text (its `query` is set after execution), so no value can reach it — reasoned, not tested against a server.
+- **The CLI check changes behaviour for every app**: an app with funktor insights must now declare
+  `vis-network` or `sdk:ts:generate` refuses. Intended per the plan ("failing with the line to paste"), but
+  it is a visible change to the generator's contract.
