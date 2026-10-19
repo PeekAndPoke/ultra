@@ -61,4 +61,5 @@ reported MISSING (it was `KarangoGlobalLocksE2eSpec`/`MonkoGlobalLocksE2eSpec`).
 
 ## Not here
 
-Merge preflight (#4) is undrafted; the repo-facts snapshot (#5) is Mission-Control's own.
+`stack-merge` (shared, 2026-10-19): not adopted for now — tracks merge one at a time with `merge --no-ff` and a full
+suite each, and two parallel tracks rarely need stacking; revisit if merges start to queue. Merge preflight (#4) is undrafted; the repo-facts snapshot (#5) is Mission-Control's own.
