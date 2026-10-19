@@ -1,7 +1,7 @@
 # Docs: global locks expire by heartbeat
 
-**Status:** TODO — write after the maintainer settles the two open rows of the heartbeat gate (clock skew; "no max hold"
-vs an opt-in `maxHold`), since either may add a parameter
+**Status:** TODO — write after `.claude/tasks/20261019-global-locks-max-hold.md` lands (it adds the `maxHold` parameter).
+Settled 2026-10-19: lock timing relies on NTP (state it as a requirement)
 **Plan:** follow-up of `.claude/tasks-archive/2026-10/20261019-global-locks-heartbeat.md` (public API changed)
 **Security-critical:** no
 

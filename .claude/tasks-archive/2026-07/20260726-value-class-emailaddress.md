@@ -1,6 +1,6 @@
 # `EmailAddress` value class (value-class-ids Step 4)
 
-**Status:** IN REVIEW — gate round 2 findings applied (2026-07-26)
+**Status:** DONE (archived 2026-10-19) — gate passed in two rounds (2026-07-26, looped to zero confirmed findings; amended 2026-07-27). The ROLLOUT STEP below is not needed: the maintainer confirmed (2026-10-19) there are no real deployments with existing user data, and no backward-compatibility concern — the maintainer's own apps are the only users.
 **Plan:** `.claude/tasks/20260724-value-class-ids-migration.md` → Step 4
 **Closes:** `.claude/tasks/20260724-email-canonicalization.md` — this IS that task's **Option C**
 ("an `EmailAddress` value type … strongest (wrong usage unrepresentable)"), which was deferred at the

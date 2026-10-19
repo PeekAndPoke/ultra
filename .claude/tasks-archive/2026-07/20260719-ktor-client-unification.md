@@ -1,14 +1,6 @@
 # Unify the HTTP client on Ktor (remove custom fetch/interceptor machinery)
 
-**Status:** IMPLEMENTED 2026-07-20 (`d7101e56`, gate round 1 fixes included); every Spec box ticked 2026-10-19 against the
-code, with the evidence under each. **Not archived, deliberately:** the doc's own gate left two verification items that need a
-person with a browser, and neither is ticked or answered anywhere — the "Manual (user)" Test-evidence box (boot the dev server
-and ops-app; login 401/403 is a clean failure, the devtools request list still populates, cross-origin bearer/CORS as before)
-and the MED "CORS / credentials parity" security follow-up ("verify before marking the branch done"). Static evidence points
-to parity: the old JS impl left `credentials` and `mode` `undefined` — i.e. browser defaults
-(`d7101e56^:ultra/remote/src/jsMain/kotlin/RemoteRequestImpl.kt:28-29`), its public `RemoteRequest` had no way to set them
-and no caller did, and nothing sets them now. What the check is actually about — the Ktor Js engine's own default — lives
-outside this repo and was not looked at. Archive once the maintainer ticks or accepts those two.
+**Status:** DONE (archived 2026-10-19) — the manual browser check is closed by the maintainer (2026-10-19): the CORS/credentials part is settled from the Ktor 3.6.0 source (below), and the apps have run on it daily since 2026-07-20.
 **Plan:** (infra groundwork — prerequisite for the typed-`ApiResponse`-error work)
 **Security-critical:** no (transport refactor; no authz logic changes — bearer header just moves
 into ktor's `defaultRequest`. Keep an eye on CORS/credentials parity.)
@@ -98,7 +90,7 @@ follow-up "typed error data" decision trivial (envelope always decodes on both p
 - [x] Behavior check (code trace): JS login on 401/403 now emits `ApiResponse(data=null)` instead
       of throwing → `AuthState.login` yields `null` → "sign-in failed" (same UX), no console-error
       spam (interceptor deleted). See `funktor/auth/src/jsMain/kotlin/AuthState.kt:158`.
-- [ ] Manual (user): boot dev server + ops-app; confirm login 401/403 is a clean failure, the
+- [x] Manual (user) — closed by the maintainer 2026-10-19: boot dev server + ops-app; confirm login 401/403 is a clean failure, the
       devtools request list still populates, and cross-origin bearer/CORS behaves as before.
       **CORS/credentials parity settled from source (coordinator, 2026-10-19):** Ktor 3.6.0's JS engine
       builds the fetch `RequestInit` from method, headers, redirect and body only
