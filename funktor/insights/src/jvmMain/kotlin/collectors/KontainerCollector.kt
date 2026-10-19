@@ -13,10 +13,12 @@ import java.time.Instant
 import kotlin.reflect.KClass
 
 /**
- * The services this request's kontainer held instances of — the request-specific part only.
+ * The services this request's kontainer held instances of when the request finished.
  *
- * The definitions are static per blueprint, so `InsightsApi.GetKontainerGraph` serves them once instead
- * of every record repeating them; a reader joins on [Data.Service.cls].
+ * Not all of it is request-specific: a global singleton's instance is process state, created by whichever
+ * request — or the boot — first needed it; `createdAt` tells the two apart. The definitions are static
+ * per blueprint, so `InsightsApi.GetKontainerGraph` serves them once instead of every record repeating
+ * them; a reader joins on [Data.Service.cls].
  *
  * VUE-REF: `reference/collectors/KontainerCollector.kt`
  */
@@ -33,11 +35,46 @@ class KontainerCollector(
 
         /** A kontainer alive longer than this counts as old. */
         private const val OLD_AFTER_SECONDS = 15
+
+        /**
+         * Builds the slice, and never throws: a collector that throws drops the WHOLE record.
+         *
+         * Two tries, not one, so a graph that cannot be built leaves `graphFingerprint` null and keeps the
+         * request's services. [numTotal] is read before [numOld], so a kontainer collected in between cannot
+         * make `numOld` exceed `numTotal`.
+         */
+        @Suppress("detekt:TooGenericExceptionCaught")
+        internal fun collect(
+            graphFingerprint: () -> String,
+            numTotal: () -> Int,
+            numOld: () -> Int,
+            providers: () -> Map<KClass<*>, ServiceProvider>,
+        ): Data {
+            val fingerprint = try {
+                graphFingerprint()
+            } catch (e: Throwable) {
+                println("[ERROR] Could not build the kontainer graph!\n${e.stackTraceToString()}")
+                null
+            }
+
+            return try {
+                val total = numTotal()
+
+                Data.of(numOld = numOld(), numTotal = total, graphFingerprint = fingerprint, providers = providers())
+            } catch (e: Throwable) {
+                println("[ERROR] Could not read the kontainer's services!\n${e.stackTraceToString()}")
+
+                Data(numOld = 0, numTotal = 0, graphFingerprint = fingerprint, services = emptyList())
+            }
+        }
     }
 
     /**
      * The slice. **A wire break**: records written before 2026-10-19 carry every definition under
      * `info.services` instead, and are still served as written.
+     *
+     * [numOld] and [numTotal] are always 0 in funktor: they count tracked kontainers, and tracking
+     * (`KontainerBlueprint.Config.trackKontainers`) cannot be switched on from outside `ultra:kontainer`.
      */
     data class Data(
         val numOld: Int,
@@ -94,28 +131,11 @@ class KontainerCollector(
         }
     }
 
-    @Suppress("detekt:TooGenericExceptionCaught")
-    override fun finish(call: ApplicationCall): Data {
-        // Separately, so a graph that cannot be built still leaves the request's own services in the record
-        val graphFingerprint = try {
-            graphs.kontainerGraph.fingerprint
-        } catch (e: Throwable) {
-            println("[ERROR] Could not build the kontainer graph!\n${e.stackTraceToString()}")
-            null
-        }
-
-        return try {
-            Data.of(
-                // TODO: make the threshold configurable
-                numOld = blueprint.tracker.getNumAlive(OLD_AFTER_SECONDS),
-                numTotal = blueprint.tracker.getNumAlive(),
-                graphFingerprint = graphFingerprint,
-                providers = kontainer.tools.factory.getAllProviders(),
-            )
-        } catch (e: Throwable) {
-            println("[ERROR] Could not read the kontainer's services!\n${e.stackTraceToString()}")
-
-            Data(numOld = 0, numTotal = 0, graphFingerprint = graphFingerprint, services = emptyList())
-        }
-    }
+    override fun finish(call: ApplicationCall): Data = collect(
+        graphFingerprint = { graphs.kontainerGraph.fingerprint },
+        numTotal = { blueprint.tracker.getNumAlive() },
+        // TODO: make the threshold configurable
+        numOld = { blueprint.tracker.getNumAlive(OLD_AFTER_SECONDS) },
+        providers = { kontainer.tools.factory.getAllProviders() },
+    )
 }

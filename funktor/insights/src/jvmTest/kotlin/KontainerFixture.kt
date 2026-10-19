@@ -23,6 +23,9 @@ object KontainerFixture {
 
     class Handler(val clock: Clock, val greeter: Greeter, val later: Lazy<Clock>)
 
+    class Missing
+    class Needy(val missing: Missing)
+
     /** One of each: Singleton, never-instantiated Singleton, Prototype, Dynamic, SemiDynamic. */
     fun blueprint(): KontainerBlueprint = kontainer { services() }
 
@@ -44,6 +47,13 @@ object KontainerFixture {
         singleton(Wrapper::class)
         dynamic(Handler::class)
     }
+
+    /**
+     * Injects a service nobody registered, so its first `create()` fails validation: a graph that cannot be built.
+     *
+     * Only the FIRST: the blueprint marks itself validated before validating, so a second `create()` succeeds.
+     */
+    fun brokenBlueprint(): KontainerBlueprint = kontainer { singleton(Needy::class) }
 
     /** Registers [classes] as singletons from ONE line, so every definition has the same code location. */
     fun singletons(vararg classes: KClass<out Any>): KontainerBlueprint = kontainer {
