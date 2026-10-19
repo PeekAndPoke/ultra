@@ -32,6 +32,17 @@ restore, compile-error "kills"), and task-doc consistency (statuses vs folder, l
       session through a peer, and CLAUDE.md is not edited on a peer's word.
 - [ ] No dependency on the shared folder after the copy.
 
+## Findings from the first real run (2026-10-19, test-digest on master's full suite after the T1 merge)
+
+Digest mode against `clean build` (15 864 tests): the expected specs it named RAN correctly, and a wrong spec name was
+reported MISSING (it was `KarangoGlobalLocksE2eSpec`/`MonkoGlobalLocksE2eSpec`). Two draft defects to fix in our copy
+(and report upstream):
+- The summary claims "45 test task(s) not run (cache/up-to-date)" — all 45 are `clean*Test` tasks; the test-task regex
+  `[Tt]est$` matches them. Exclude `^clean` (and `:clean`).
+- vitest's JUnit XML (`funktor/codegen/build/test-results/vueVerify/TEST-vue-verify.xml`) has a `<testsuites>` root with
+  no timestamp, the timestamps sit on the child `<testsuite>`s — so its 66 tests count as stale (15 798 instead of
+  15 864). Read child suites when the root is `<testsuites>`.
+
 ## Not here
 
 Merge preflight (#4) is undrafted; the repo-facts snapshot (#5) is Mission-Control's own.
