@@ -1,6 +1,6 @@
 # Build: Gradle 9.6 Kotlin DSL deprecations, drop the macosX64 target
 
-**Status:** IN PROGRESS (Ultra-Main-Dev, 2026-10-19)
+**Status:** DONE (archived 2026-10-19)
 **Plan:** none — maintainer request, 2026-10-19: after the `~/.gradle` cache wipe the recompiled build scripts printed
 deprecation warnings, "we should fix them too"
 **Security-critical:** no
@@ -21,10 +21,10 @@ deprecation warnings, "we should fix them too"
 - [x] **macosX64 dropped** (maintainer decision, 2026-10-19 — Kotlin deprecated the target): removed from
       `ultra/common`, `cache`, `datetime`, `maths`, `streams`; platform lists on the docs site and in
       `docs-site/src/data/llms/maths.md` updated. From 0.113.0 on there are no `*-macosx64` artifacts.
-- [ ] `./gradlew help --warning-mode all` shows no deprecation left except the three "Native task … is disabled"
+- [x] `./gradlew help --warning-mode all` shows no deprecation left except the "Native task … is disabled"
       notices (host limitation: macOS/Windows tests cannot run on Linux — nothing to fix).
-- [ ] Full `clean build` green.
-- [ ] CHANGELOG 0.113.0: macosX64 removal under breaking changes.
+- [x] Full `clean build` green.
+- [x] CHANGELOG 0.113.0: macosX64 removal under breaking changes.
 
 ## Implementation notes
 
@@ -35,4 +35,11 @@ deprecation warnings, "we should fix them too"
 
 - [x] `./gradlew help --warning-mode all` after the delegate/registering/create fixes: only macosX64 (5) and the
       3 host notices remained (2026-10-19 12:2x).
-- [ ] After the macosX64 removal: config run + full `clean build`.
+- [x] After the macosX64 removal: `help --warning-mode all` leaves only the two host notices; cold `clean build`
+      green, 68 targets / 15630 tests / 0 failures (2026-10-19 12:31).
+
+## Review
+
+Scoped by risk (review-loop): mechanical build-script changes with no library code touched, verified by the
+warning-free configuration and the cold full build; no reviewer round. The macosX64 removal is a maintainer decision.
+No docs follow-up: the platform lists were updated in this change.

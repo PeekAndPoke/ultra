@@ -1,9 +1,23 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: Ultra-Main-Dev agent**
-**SINCE: 2026-10-19 11:45**
-**STATE: HELD — flaky Kraft addon tests (IrLinkageError), then the full suite and release 0.113.0
-(.claude/tasks/20261019-flaky-kraft-addon-irlinkageerror.md). Humans too: please don't build this worktree meanwhile.**
+**HOLDER: none**
+**SINCE: 2026-10-19 12:45 (released by Ultra-Main-Dev)**
+**STATE: FREE — take the lock before building.**
+
+## What the last holder changed — Ultra-Main-Dev, 2026-10-19 (flaky addon tests, Gradle DSL deprecations, 0.113.0)
+
+**The "flaky" Kraft addon JS tests were poisoned build-cache entries**, not flaky tests. Two builds overlapped in this
+worktree; one stored test bundles the other had half-deleted (no `ultra-kraft-testing.mjs` → `IrLinkageError`) in the
+SHARED `~/.gradle/caches/build-cache-1`, under correct keys, and every later build — `clean` included — restored them.
+The maintainer wiped the caches; a cold `clean build` is green (15630 tests / 68 targets). Record:
+`.claude/tasks-archive/2026-10/20261019-flaky-kraft-addon-irlinkageerror.md`.
+
+**The build scripts are free of the Gradle 9.6 Kotlin DSL deprecations, and macosX64 is dropped** (`a8cbf052`). Record:
+`.claude/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md`.
+
+**Worth taking:** after ANY concurrent build in this worktree, `clean` is not enough — damaged outputs can sit in the
+build cache. Build with `--no-build-cache`, or have the entries written during the overlap removed (the cache is shared
+with other projects, so that is the maintainer's call).
 
 ## What the last holder changed — datetime-zone-engine agent, 2026-10-18 (zone engine + kotlinx-datetime 0.8.0)
 

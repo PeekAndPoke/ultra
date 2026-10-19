@@ -1,6 +1,6 @@
 # Kraft addon JS tests fail with IrLinkageError (TestBed.Companion)
 
-**Status:** IN PROGRESS (Ultra-Main-Dev, 2026-10-19)
+**Status:** DONE (archived 2026-10-19) — not flaky tests: poisoned build-cache entries from two overlapping builds
 **Plan:** none — maintainer: fix the flaky tests first, then the full suite green, then prepare 0.113.0
 **Security-critical:** no
 
@@ -40,7 +40,7 @@ IrLinkageError: Can not get instance of singleton 'Companion': No class found fo
 - [x] The 8 addons after a module `clean` + `--no-build-cache`: 59 tests, 0 failures; both bundles now contain
       `ultra-kraft-testing`
 - [x] Damaged cache entries removed — the maintainer wiped `~/.gradle/caches` (2026-10-19 ~12:00)
-- [ ] Full `clean build` green on the empty cache (runs as the 0.113.0 verification build)
+- [x] Full `clean build` green on the empty cache (the 0.113.0 verification build)
 
 ## Implementation notes
 
@@ -73,3 +73,13 @@ Possible hardening (proposal, not done): `-Xpartial-linkage-loglevel=ERROR` for 
 missing library fails the link (and is never cached as a success) instead of surfacing as a runtime `IrLinkageError`.
 
 ## Test evidence
+
+- The 8 addons after a module `clean` + `--no-build-cache`: 59 tests, 0 failures (2026-10-19 ~11:55).
+- Cold `./gradlew clean build --continue --warning-mode all` at 0.113.0 after the maintainer's cache wipe:
+  BUILD SUCCESSFUL in 16 m 29 s, 68 targets / 15630 tests / 0 failures (counted from the test-result XMLs), no `w:`
+  lines besides the host notices, no deprecation output (2026-10-19 12:31).
+- The published 0.112.0 staging (snapshotted before any clean) vs a local re-staging from that build, entry names and
+  content, version-normalised: 440 jars/klibs, 147 POMs, 147 `.module` files identical. Differences: the dropped
+  macosX64 artifacts (30) and their traces in 5 metadata jars / tooling JSONs, and two classes of `cluster-jvm`
+  (`AwsS3Repository$DepotS3File` / `$DepotS3Folder`) whose members are the same but ordered differently — Kotlin emits
+  interface-delegation members in no fixed order. **0.112.0 as published is sound.**
