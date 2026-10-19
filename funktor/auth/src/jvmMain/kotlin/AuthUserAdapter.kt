@@ -78,8 +78,10 @@ interface AuthUserAdapter<USER : AuthUser> {
     suspend fun createForSignup(params: CreateUserForSignupParams): Stored<USER>
 
     /**
-     * Retires [user]: renames EVERY unique-key field with [retirement] and saves, so its address can sign
-     * up again. The row and the data that references it stay.
+     * Retires [user]: renames its email with [retirement] and saves, so the address can sign up again. The row
+     * and the data that references it stay, but no plaintext of the address may: also clear any field derived
+     * from it, e.g. a display name defaulted from its local part. Another unique field needs its own non-
+     * guessable rename.
      *
      * Required, with no default: a silent no-op would leave the address taken forever. The framework
      * calls this only for a never-activated account (expired or cancelled), removes the auth records

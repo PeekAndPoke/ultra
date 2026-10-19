@@ -333,7 +333,7 @@ class TestAppUserRealm(
         }
 
         override suspend fun retire(user: Stored<TestAppUser>, retirement: AccountRetirement): Stored<TestAppUser> {
-            return repo.save(user.modify { it.copy(email = retirement.rename(it.email)) })
+            return repo.save(user.modify { it.copy(email = retirement.rename(it.email), name = "retired") })
         }
 
         override suspend fun serialize(user: Stored<TestAppUser>): JsonObject {

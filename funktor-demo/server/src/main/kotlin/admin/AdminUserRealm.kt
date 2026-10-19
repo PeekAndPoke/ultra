@@ -34,6 +34,9 @@ class AdminUserRealm(
 ) : AuthRealm<AdminUser> {
     companion object {
         val REALM = RealmId("admin-user")
+
+        /** The display name of a retired account; the original may echo the address it gave up. */
+        const val RETIRED_NAME = "Retired account"
     }
 
     override val deps: AuthSystem.Deps by deps
@@ -88,7 +91,8 @@ class AdminUserRealm(
 
         override suspend fun retire(user: Stored<AdminUser>, retirement: AccountRetirement): Stored<AdminUser> {
             // `email` is the only unique key of an admin user (see AdminUsersRepo.buildIndexes).
-            return repo.save(user.modify { it.copy(email = retirement.rename(it.email)) })
+            // `email` is the only unique key; `name` defaults to the address's local part, so it goes too.
+            return repo.save(user.modify { it.copy(email = retirement.rename(it.email), name = RETIRED_NAME) })
         }
 
         override suspend fun serialize(user: Stored<AdminUser>): JsonObject {

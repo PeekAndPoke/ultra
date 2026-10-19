@@ -7,6 +7,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.client.statement.HttpResponse
@@ -109,7 +110,8 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
         api.authLogin.signUp(
             realmParam,
             body = AuthSignUpRequest.EmailAndPassword(
-                provider = provider, email = email, password = password, displayName = "Hardening",
+                // No display name: it defaults to the address's local part, which retirement must not keep.
+                provider = provider, email = email, password = password, displayName = null,
             ),
         ) {
             status shouldBe HttpStatusCode.OK
@@ -326,6 +328,10 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     val token = activationTokenTo(email)
                     val id = userOf(email).shouldNotBeNull()._id
 
+                    withClue("precondition: the name carries the address's local part until retirement") {
+                        userOf(email).shouldNotBeNull().value.name shouldBe email.substringBefore("@")
+                    }
+
                     withClue("one minute before expiry the sweep leaves it alone") {
                         advance(config.pendingAccountLifetime - 1.minutes)
                         runExpiryWorker()
@@ -338,10 +344,16 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     val retired = users.byId(id).shouldNotBeNull()
 
                     withClue("the row stays — other collections may reference it — under a retired address") {
-                        retired.value.email.value shouldStartWith "$email#retired-"
+                        retired.value.email.value shouldStartWith AccountRetirement.retiredKeyPrefix(EmailAddress.of(email))
                         retired.value.email.value shouldEndWith ".invalid"
                         AccountRetirement.isRetired(retired.value.email) shouldBe true
                         retired.value.email.isValidFormat shouldBe false
+                    }
+
+                    withClue("NO plaintext of the address stays on the row — not in the key, not in the name") {
+                        val localPart = email.substringBefore("@")
+                        retired.value.email.value shouldNotContain localPart
+                        retired.value.name shouldNotContain localPart
                     }
 
                     withClue("its password, tokens and marker are gone") {

@@ -195,7 +195,8 @@ class ActivationHardeningRealm(
             store.create(TestUser(name = params.displayName, email = params.email))
 
         override suspend fun retire(user: Stored<TestUser>, retirement: AccountRetirement) =
-            store.update(user.modify { it.copy(email = retirement.rename(it.email)) })
+            // `name` defaults to the address's local part: it goes with the address.
+            store.update(user.modify { it.copy(email = retirement.rename(it.email), name = "retired") })
 
         override suspend fun serialize(user: Stored<TestUser>): JsonObject =
             Json.encodeToJsonElement(TestUser.serializer(), user.resolve()).jsonObject
