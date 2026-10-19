@@ -36,41 +36,46 @@ account. Industry name: account pre-hijacking, "classic-federated merge" (Sudhod
 
 **Retire mechanism.** `AuthUserAdapter.retire(user, retirement: AccountRetirement): Stored<USER>` — ABSTRACT, like
 `createForSignup`: every realm must spell it out, and a realm without sign-up throws `AuthError.notSupported()` exactly
-as it already does for `createForSignup`. The framework owns everything around it, in `AuthRealm.retirePendingAccount`:
-refuse unless the PENDING marker exists → remove every auth record of the owner in the realm EXCEPT the marker → ask the
-realm to rename → **verify** that `loadByEmail(original)` no longer resolves to this account (a no-op `retire` is caught
-here, logged, and the account stays pending) → remove the marker LAST. Every intermediate state is still "pending", so
-a crash leaves an account the next sweep retires again, never a live one.
+as it already does for `createForSignup`. The realm renames the email AND clears anything derived from it (the demo and
+test realms reset a display name defaulted from the local part). The framework owns everything around it, in
+`AuthRealm.retirePendingAccount`: refuse unless the PENDING marker exists → remove every auth record of the owner
+except the marker → ask the realm to rename → **verify** that `loadByEmail(original)` no longer resolves to this account
+(a no-op or throwing `retire` is caught, logged, and the account stays pending) → remove the marker LAST, **by its
+count** — the commit point: of a retire and a concurrent activation exactly one wins. Every intermediate state is still
+"pending", so a crash leaves a pending account, never a live one.
 
-**Renamed-key format:** `<original email>#retired-<32 hex>.invalid`, e.g.
-`adam@example.com#retired-3f2a9c0e5b7d41a2a8c6e0f1d2b3c4a5.invalid`.
-- *Never collides with a sign-up.* Every account-creating path asserts `EmailAddress.isValidFormat`. The suffix has no
-  `@`, so it always lands in the DOMAIN part, and a domain containing `#` matches neither alternative of `EmailRegex`
-  (hostname labels are `[a-z0-9-]`; the IP-literal form must end in `]`). So the value fails `isValidFormat` whatever
-  the original was — including a legacy, never-validated SSO address — and no sign-up can produce it.
-- *Valid stored value.* Lowercase ASCII, no control or line-separator characters, non-blank; the original is truncated
-  so the whole stays within `EmailAddress.MAX_LENGTH` (254).
-- *Unique across repeated retirements.* The 32 hex are the first 16 bytes of SHA-256 over the account's `_id`. Each
-  retirement retires a DIFFERENT account, and a retired account keeps its `_id`, so two retirements of
-  `adam@example.com` never share a value. Deterministic, so two concurrent retirements of the same account write the
-  same value instead of fighting over the unique index.
-- *Undeliverable.* `.invalid` is reserved by RFC 2606/6761 and never resolves, so even a lenient mailer that accepts
-  `#` in a domain (RFC 5322 dot-atom does) cannot deliver it. The framework also refuses to mail a retired address.
-- *Unique indexes.* Values are distinct strings; nothing about them strains a Karango persistent or a Mongo index.
-- The original stays readable, so support can find it and a later app-level merge has something to match on.
-- `AccountRetirement.rename(value)` renames any OTHER unique field the same way (`<value>#retired-<hex>`).
+**Renamed-key format (REVISED 2026-10-19 by the maintainer's decision on the round-1 row: no plaintext):**
+`retired-<64 hex>@<32 hex>#retired.invalid`, e.g.
+`retired-9c5e…(64)@3f2a9c0e5b7d41a2a8c6e0f1d2b3c4a5#retired.invalid`.
+- *No plaintext of the address.* The 64 hex are the full SHA-256 over the CANONICAL address (`EmailAddress.value`).
+  Unkeyed, as decided: the hash minimises what the row keeps; it is not a secret (a dictionary of known addresses
+  reverses it). No other field may keep the address either — see the realm contract above.
+- *An app-level merge still finds an address's retired rows:* `AccountRetirement.retiredKeyPrefix(email)` is what every
+  retired key of that address starts with (`retired-<64 hex>@`), for a prefix query; apps never re-derive the hash.
+- *Never collides with a sign-up.* Every account-creating path asserts `EmailAddress.isValidFormat`. The domain part is
+  `<32 hex>#retired.invalid`; a domain containing `#` matches neither alternative of `EmailRegex` (hostname labels are
+  `[a-z0-9-]`; the IP-literal form starts with `[`), so the value always fails it and no sign-up can produce it.
+- *Valid stored value.* Fixed length (121), lowercase ASCII, no control or line-separator characters — well within
+  `EmailAddress.MAX_LENGTH` (254) whatever the original's length.
+- *Unique across repeated retirements.* The 32 hex are the first 16 bytes of SHA-256 over the account's `_id`; each
+  retirement retires a DIFFERENT account, and a retired account keeps its `_id`. Deterministic, so two concurrent
+  retirements of one account write the same value instead of fighting over the unique index.
+- *Undeliverable.* `.invalid` (RFC 2606/6761) never resolves; the framework also refuses to mail a retired key.
+- *Recognisable.* `AccountRetirement.isRetired` is a full match on the format.
+- No `rename(String)` for other unique fields (dropped in round 1: an unkeyed tag on a user-chosen field can be
+  squatted); a realm with another unique field gives it its own non-guessable rename.
 
-**Expiry without a worker dependency.** `funktor/auth` cannot use `funktor/cluster`'s `Worker`: `funktor/inspect`
-depends on `funktor/auth` and `funktor/cluster` on `funktor/inspect`, so it would be a cycle. So expiry is enforced at
-USE time and the worker is only garbage collection:
-- the activation link's lifetime is capped at the pending account's expiry, so nothing activates after it;
-- resend refuses an expired account;
-- sign-up of an address held by an EXPIRED pending account retires that account inline and proceeds;
-- `AuthSystem.retireExpiredPendingAccounts()` sweeps; the demo registers a cluster worker for it. The framework-wide
-  home for that worker is `funktor/all`'s `Funktor` module, outside this track's edit scope — recommended there.
+**Expiry.** An expired pending account counts as retired at EVERY use: sign-up retires it inline and proceeds; sign-in
+by password still answers `ActivationRequired`, but resend refuses; activation, password reset (request and completion)
+and SSO retire it inline — SSO sign-up then creates a fresh account. The activation link never outlives the account.
+`AuthSystem.retireExpiredPendingAccounts()` frees what nobody touches again; it runs as `PendingAccountsExpiryWorker`,
+registered by `funktor/all`'s `Funktor` module (`funktor/auth` cannot depend on `funktor/cluster`: a cycle through
+`funktor/inspect`). The sweep pages forward by `createdAt` and passes accounts that fail.
 
-**Cancel** is authorized by the activation token itself (whoever can activate may also decline), on its own page
-action and endpoint, POST-only for the same scanner reason as activation, and single-use by delete count.
+**Cancel** has its own record, `AuthRecord.SignUpCancelToken`: one per pending account, expiring WITH the account (7
+days), mailed again by every resend — so a victim can decline long after the 24 h activation link died. The activation
+page's own cancel button may still use the activation token (whoever may activate may decline). POST-only for the same
+scanner reason as activation, single-use by delete count.
 
 **Growing resend delays** live on the marker (`PendingActivation.resends`, `lastSentAt`), default 5 min, 15 min, 1 h,
 4 h, 12 h, then 24 h repeating. The slot is reserved (marker saved) BEFORE the mail goes out. The response stays honest:
@@ -123,7 +128,14 @@ action and endpoint, POST-only for the same scanner reason as activation, and si
       auth records AND users on each backend, unique email index on both); mutation table below.
 - [ ] **Docs follow-up at archive time:** `docs-site/src/pages/ultra/funktor/auth.astro:123-134` and
       `docs-site/src/data/llms/funktor.md:185-190` over-claim the resend token and state a rule activation did not meet.
-      Public API changed (list under Implementation notes) — the follow-up must cover it.
+      Public API changed (list under Implementation notes) — the follow-up must cover it, and these four upgrade traps
+      that give NO compile signal (gate round 1):
+      1. an app's own `AccountActivationEmailTemplate` renderer still compiles without `cancelUrl` — it silently mails
+         no cancel link;
+      2. an app with its own frontend routes mails a `cancel-signup` link its router does not mount;
+      3. an app's own activation page that POSTs on load reopens the scanner-detonation hole (decision 1);
+      4. an app's own SSO provider must route an existing account through `AuthRealm.resolveSsoAccount` (sign-in AND
+         sign-up), or pending accounts are taken over exactly as before.
 
 ## Out of scope (tracked elsewhere)
 
@@ -231,6 +243,60 @@ went RED for the right reason; "module" = `:funktor:auth`, "e2e" = `:funktor:all
 | 25 | `expiredOnly` ignored in `retirePendingAccount` | ✅ RED e2e "… before expiry the address is still taken" (sign-up would retire a FRESH pending account) |
 | 26 | A FAILED resend mail still reports `nextResendAt` (the page would then say "we already sent one recently") | ✅ RED unit "sent=false when the mail FAILED" — a defect found in self-review after the first round, fixed and pinned in the same commit |
 | — | Sweep passes `expiredOnly = false` | not run: EQUIVALENT — the sweep's query already filters on the cutoff; `expiredOnly` there is defence in depth |
+
+## Round 1 fix batch (2026-10-19)
+
+Rebased onto master `47c0a7dc` first (clean). Every row dispositioned `fix`, plus the maintainer's decision on the
+plaintext row (decided 2026-10-19: keep only a hash). The other parked row (Activate requires a password) is NOT
+decided and is untouched. Line references in the sections above are as of `e7910eeb`; current ones are here.
+
+| Ledger row | What changed | Where |
+|---|---|---|
+| MAJOR expiry worker | Moved to `funktor/all`, registered by the `Funktor` module; the demo copy and its registration removed; KDocs corrected; the e2e runs the REAL worker and pins the registration through `WorkerRegistry` | `funktor/all/src/jvmMain/kotlin/PendingAccountsExpiryWorker.kt:16`, `funktor.kt:34`, `RealmTokenConfig.kt:26`, `AuthSystem.kt:128` |
+| Resend upsert | `AuthRecordStorage.replaceIfExists` — never inserts; Karango: `FOR … FILTER _key … REPLACE … RETURN NEW`, Mongo: `replaceOne(upsert = false)`; a vanished marker answers `sent = false` | `AuthRecordStorage.kt` (`replaceIfExists`), `KarangoAuthRecordsRepo.kt:163`, `MonkoAuthRecordsRepo.kt:175`, `EmailAndPasswordAuth.kt:408` |
+| Nothing activates after expiry | An expired pending account is retired at every use: activation, reset request (answered as unknown) and completion, SSO (sign-in → 403; sign-up then creates a fresh account). The final marker delete is the commit point by count in retire, SSO, activation and reset completion (a reset that loses it removes its new password) | `AuthRealm.kt:456,528,544`, `EmailAndPasswordAuth.kt:532,621,690,705`; `resolveSsoAccount` now returns `Stored<USER>?` |
+| Cancel lifetime | `AuthRecord.SignUpCancelToken`, one per account, expiring with it, re-mailed by every resend; cancel accepts it or the activation token; Cancel mode has its own dead-link copy | `AuthRecord.kt:149`, `EmailAndPasswordAuth.kt:469,552`, `ActivateAccountPage.kt:286` |
+| Sweep head-of-line | Pages forward by `createdAt` (new `after` cursor on both repos), catches per account, stops on a non-advancing page; `CancellationException` rethrown at both catch sites; KDoc corrected for a failed cancel | `AuthRealm.kt:438,473,497`, `AuthSystem.kt:128` |
+| Single-use e2e vacuous | Case deleted (pinned by `AccountActivationEmailE2eSpec` and the realm specs); the password clue now signs in with the RETIRED key + password | `ActivationHardeningE2eSpec.kt` |
+| Page spec | The fake server records request bodies (token, provider asserted); both deep links mounted through `AuthState.mount` | `ActivateAccountPageSpec.kt` |
+| Expiry rule twice | `realm.isExpired(marker.value)` in resend | `EmailAndPasswordAuth.kt:391` |
+| `rename(String)` | Dropped | `AccountRetirement.kt` |
+| Retired address reachable | `resolveSsoAccount` and `refreshToken` refuse a retired key | `AuthRealm.kt:520,602` |
+| Upgrade traps | `AuthProvider` sign-in/sign-up KDoc; the template Params KDoc's false "compile error" claim corrected; all four traps in the docs follow-up box | `AuthProvider.kt:45`, `AccountActivationEmailTemplate.kt:24` |
+| Red-team additions | The four collected scenarios added | `20260727-redteam-account-activation.md` |
+| **Maintainer decision: no plaintext** | Key `retired-<sha256(canonical address)>@<id tag>#retired.invalid`; `AccountRetirement.retiredKeyPrefix(email)` for merges; the realm contract also clears address-derived fields — demo and test realms reset the name (defaulted from the local part) | `AccountRetirement.kt:39,50`, `AuthUserAdapter.kt` (`retire`), `AdminUserRealm.kt:95` |
+
+**Tests (fresh XML):** `:funktor:auth:jvmTest` **218 / 0 failures**; `:funktor:auth:jsTest` **13 / 0**;
+`:funktor:all:jvmTest` **226 / 0** (`ActivationHardening{Karango,Monko}E2eSpec` 19 + 19). New cases: storage
+`replaceIfExists`, the `after` cursor and the cancel token on both backends; realm commit point, sweep across pages with
+failing accounts, cancellation, refresh of a retired account; SSO expired / retired / retire-wins-the-marker; reset
+completion expired / raced; e2e cancel on day 6 and dead after day 7, expired reset, expired SSO sign-in and fresh
+SSO sign-up, worker registration; JS refused-cancel copy and routed deep links. `InsightsVaultBindValuesSpec` (from
+master) failed once in a baseline run and once under mutant C1 on its log-order race (its own comment documents it)
+and passed in the other runs — not touched by this track.
+
+**Mutation evidence (round-1 batch).** `cp` backup outside the worktree (path in the name), `cp` restore + `cmp`.
+
+| # | Mutant | Result |
+|---|---|---|
+| R2a / R2b | `replaceIfExists` upserts — Karango / Monko separately | ✅ RED storage "must NEVER bring a deleted one back" on that backend |
+| R2c | Resend ignores a vanished marker | ✅ RED unit "an activation that removed the marker meanwhile wins" |
+| R3a | SSO activates an EXPIRED pending account | ✅ RED `SsoPendingAccount*` "EXPIRED pending account is retired" |
+| R3b | Retire's final marker delete unconditional | ✅ RED `AuthRealmActivation*` "activation DURING the retire wins" |
+| R3c | SSO's marker delete unconditional | ✅ RED `SsoPendingAccount*` "a retire that wins the marker meanwhile" |
+| R3d / R3e | Reset completion: expired check / race cleanup removed | ✅ RED the two new unit cases |
+| X1 | Reset request ignores expiry | ✅ RED e2e "A reset of an EXPIRED pending account" |
+| C1 | Cancel token lives 24 h (the activation link's lifetime) | ✅ RED e2e "cancel link works for the account's WHOLE pending life" |
+| R5a | Sweep without the per-account catch | ✅ RED `AuthRealmActivation*` "does not hold up the rest, across pages" |
+| R5b / R5c | `after` cursor ignored — Karango / Monko | ✅ RED storage `findCreatedBefore` + the sweep test (timed out: the page never advanced — hence the non-advancing-page guard) |
+| R5d | `CancellationException` swallowed | ✅ RED "cancellation is NOT swallowed" |
+| R10a / R10b | SSO / refresh accept a retired key | ✅ RED the SSO and refresh cases |
+| W1 | Worker not registered in `Funktor` | ✅ RED e2e registration case + both sweep cases |
+| J1 | The page POSTs a different token | ✅ RED page body assertions (direct and routed) |
+| J2 | `cancelSignUp` mounted in Activate mode | ✅ RED the routed deep-link case |
+| J3 | Cancel mode shows the generic dead-link copy | ✅ RED "a refused CANCEL link speaks to someone who did not sign up" |
+| H1 | Retired key keeps the plaintext address | ✅ RED `AccountRetirementSpec` (format, no-plaintext, prefix, length) |
+| H2 | Realm retire keeps the address-derived name | ✅ RED e2e sweep case — **only after the fixture was fixed**: the e2e signed up with an explicit display name, so the name never carried the local part and H2 first SURVIVED; it now signs up without one and asserts the precondition |
 
 ## Review record — the LEDGER (filled by /feature-review)
 

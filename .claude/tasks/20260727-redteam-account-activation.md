@@ -151,10 +151,14 @@ Collected, not executed. The design: `.claude/tasks/20261019-activation-hardenin
 - **Scanner detonation, again** — the page now needs a click. Does a sandbox that runs JS and clicks the first primary
   button (some do) activate a pre-registered account? Does any gateway follow the CANCEL link and click it, retiring
   legitimate sign-ups at scale?
-- **Retired-address collisions** — sign up the exact retired string (`<addr>#retired-<hex>.invalid`), its upper-case
-  form, with surrounding whitespace, with a Unicode look-alike of `#`; every path must refuse. Then try to make a
-  retirement collide on the unique index (two accounts whose `_id`s hash to the same 16 bytes is out of reach; look for a
-  realm whose `retire()` renames from something other than the account).
+- **Retired-key collisions** — sign up the exact retired key (`retired-<sha256(addr)>@<tag>#retired.invalid`, revised
+  2026-10-19: the address is hashed, not kept), its upper-case form, with surrounding whitespace, with a Unicode
+  look-alike of `#`; every path must refuse. Then try to make a retirement collide on the unique index (two accounts
+  whose `_id`s hash to the same 16 bytes is out of reach; look for a realm whose `retire()` renames from something
+  other than the account).
+- **Reversing the address hash** — the hash is unkeyed by decision: measure how fast a dictionary of a customer's known
+  addresses maps retired rows back to addresses, and whether any other field on a retired row (name, profile, audit
+  data) still carries the address.
 - **Reviving a retired account** — password reset to the retired string, SSO whose provider reports it, an admin or
   app path that loads users by email; any session for a retired row is a finding.
 - **Cancel as a weapon** — the cancel token IS the activation token. Can anyone but the mailbox holder obtain it
@@ -171,3 +175,18 @@ Collected, not executed. The design: `.claude/tasks/20261019-activation-hardenin
 - **Retire vs activate race** — click Activate while the sweep (or a cancel) retires the same account; possible outcomes
   include an account reported activated that is in fact retired.
 
+
+## Added by the activation-hardening gate, round 1 (2026-10-19)
+
+Collected, not executed.
+
+- **Re-registration of an expired victim sign-up** — the victim signs up and lets it lapse; the attacker polls sign-up
+  for that address, re-registers it the moment it expires, and the victim — who is EXPECTING an activation mail —
+  clicks Activate on the attacker's account. Measure the window and whether the mail gives the victim any cue.
+- **Cancel → immediate re-registration loops** — the victim cancels, the attacker re-registers within seconds,
+  repeatedly. Does anything slow the loop down, and does the victim's mailbox become a mail stream?
+- **Resend racing a cancel** — a resend that loaded the user just before a cancel retired it: does it issue a live link
+  for a retired row, with a stale `Stored` user whose address is still the original (so the retired-recipient guard
+  does not fire)?
+- **SSO racing the sweep or a cancel** — an SSO sign-in that resolved the user before a retire renamed it: is a session
+  issued for the retired row, and does `refreshToken` keep renewing it?
