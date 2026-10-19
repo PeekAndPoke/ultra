@@ -104,6 +104,20 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
 31. **Concurrent first calls on a cold app** — the `lazy` builds once and every caller sees the same
     fingerprint.
 
+### Added 2026-10-19 from T1's gate (insights-vue, round 2) — Monko query text, the label allowlist
+
+32. **Raw AQL under the trusted `aql` label** — a repository passing hand-built text to
+    `driver.query(AqlTypedQuery.of(type, "… == \"$token\" …"))` (`AqlTypedQuery.kt:15`, labelled at
+    `KarangoDriver.kt:101`): does the token reach the depot and the Database tab? Fix tracked in
+    `20261019-insights-vue-round2-minors.md` item 6.
+33. **A secret as a document KEY at a value position** — `Filters.eq("grants", Document(apiKey, true))`: the
+    placeholder-iser keeps keys (`MonkoDriver.kt:73-79`). Item 7 of the same follow-up.
+34. **A failed Mongo query whose server error echoes literal filter values**, logged during the request —
+    `LogCollector` (`LogCollector.kt:32-35`) records the message verbatim (reasoned, not run).
+35. **`enrichApiResponseWithInsights` on API responses** (`funktor/rest/src/jvmMain/kotlin/respond.kt:71-84`)
+    — server hostname and full URL in responses, the 401 sent to a non-superuser included
+    (`vue-verify/fixtures/refusal-graph.json:19-28`). Unverified, outside T1's change.
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes
