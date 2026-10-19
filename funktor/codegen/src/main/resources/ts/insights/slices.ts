@@ -354,8 +354,11 @@ export interface VaultEntry {
      */
     query: string | null
     queryLanguage: string | null
-    /** How many bind variables the query had. The VALUES are deliberately not recorded. */
-    varsCount: number
+    /**
+     * How many bind variables the query had; the VALUES are deliberately not recorded. Null when unknown:
+     * see {@link isInlinedMongoEntry}.
+     */
+    varsCount: number | null
     /**
      * True when the slice predates `VaultCollector.Data` and carries the raw profiler entry.
      *
@@ -396,6 +399,16 @@ function sumMeasures(measures: VaultMeasure[]): VaultMeasure {
     )
 }
 
+/**
+ * True for a Mongo entry recorded 2026-08-24..2026-10-19, under Monko's old label `json`.
+ *
+ * Monko inlined the values into its text then and sent no `vars`: the collector withheld the text and counted
+ * 0 bind variables -- a 0 that is not a fact. Monko records under `mongo-bound` since.
+ */
+export function isInlinedMongoEntry(entry: Record<string, unknown>): boolean {
+    return asString(entry.queryLanguage) === 'json' && asString(entry.query) === null
+}
+
 export function readVault(data: unknown): VaultSlice | null {
     const rawEntries = asArray(asRecord(data)?.entries)
     if (rawEntries === null) return null
@@ -411,7 +424,9 @@ export function readVault(data: unknown): VaultSlice | null {
             // trusted. Its `vars` and `queryExplained` are simply never read by this file.
             query: legacy ? null : asString(record.query),
             queryLanguage: asString(record.queryLanguage),
-            varsCount: asNumber(record.varsCount) ?? (legacy ? Object.keys(asRecord(record.vars) ?? {}).length : 0),
+            varsCount: isInlinedMongoEntry(record)
+                ? null
+                : (asNumber(record.varsCount) ?? (legacy ? Object.keys(asRecord(record.vars) ?? {}).length : 0)),
             legacy,
             totalNs: asNumber(record.totalNs) ?? 0,
             serializer: readMeasure(record.measureSerializer),
@@ -437,6 +452,7 @@ export function readVault(data: unknown): VaultSlice | null {
 
 export interface KontainerInjection {
     name: string | null
+    /** The DECLARED parameter types. Not necessarily service keys -- one may name no service at all. */
     classes: string[]
     provisionType: string | null
 }
@@ -478,17 +494,34 @@ export function readInstantMillis(value: unknown): number | null {
 export interface KontainerService {
     cls: string | null
     type: string | null
+    /** Null on a `slim` record, whose definitions live in the kontainer graph -- see {@link joinKontainerGraph}. */
     definition: KontainerDefinition | null
     instances: KontainerInstance[]
 }
 
+/**
+ * Which of the two slice shapes a record carries.
+ *
+ * - `full` -- written before 2026-10-19: EVERY service, definitions inline (`info.services`).
+ * - `slim` -- written since: only services with instances (`services`), joined to the kontainer graph
+ *   endpoint by `cls`. The definitions were 70-85% of every record and are the same on every request.
+ */
+export type KontainerShape = 'full' | 'slim'
+
 export interface KontainerSlice {
+    shape: KontainerShape
+    /**
+     * `full` records only, and always 0 there: they counted TRACKED kontainers, and tracking cannot be switched
+     * on from outside `ultra:kontainer`. A `slim` record has no such fields (maintainer, 2026-10-19): null.
+     */
     numOld: number | null
     numTotal: number | null
+    /** The graph a `slim` record was written against; null on `full`, or when the server could not build one. */
+    graphFingerprint: string | null
     services: KontainerService[]
 }
 
-/** Class references are wrapped: `{"fqn": "..."}`. */
+/** Class references: `{"fqn": "..."}` on a `full` record, a flat string on a `slim` one and in the graph. */
 function readFqn(value: unknown): string | null {
     return asString(asRecord(value)?.fqn) ?? asString(value)
 }
@@ -512,39 +545,145 @@ function readDefinition(value: unknown, depth = 0): KontainerDefinition | null {
                 provisionType: asString(inject.provisionType),
             }
         }),
-        codeLocation: asString(asRecord(record.codeLocation)?.location),
+        // `{location}` on a `full` record, a flat string in the graph.
+        codeLocation: asString(record.codeLocation) ?? asString(asRecord(record.codeLocation)?.location),
         overwrites,
     }
 }
 
+function readService(raw: unknown): KontainerService {
+    const service = asRecord(raw) ?? {}
+    return {
+        cls: readFqn(service.cls),
+        type: asString(service.type),
+        definition: readDefinition(service.definition),
+        instances: (asArray(service.instances) ?? []).map((rawInstance) => {
+            const instance = asRecord(rawInstance) ?? {}
+            return { cls: readFqn(instance.cls), createdAtMillis: readInstantMillis(instance.createdAt) }
+        }),
+    }
+}
+
+/**
+ * The old table's order: services WITH instances first, then by FQN. Instantiated services are the
+ * ones the tab is usually open to see.
+ */
+function sortServices(services: KontainerService[]): KontainerService[] {
+    return [...services].sort((a, b) => {
+        const byInstances = Number(b.instances.length > 0) - Number(a.instances.length > 0)
+        return byInstances !== 0 ? byInstances : (a.cls ?? '').localeCompare(b.cls ?? '')
+    })
+}
+
+/**
+ * Either shape, told apart by what is THERE: the `graphFingerprint` KEY marks `slim` (even when its value
+ * is null), `info` marks `full`, and a slice with neither is unrecognised -- null, and the tab shows the
+ * raw tree.
+ */
 export function readKontainer(data: unknown): KontainerSlice | null {
     const record = asRecord(data)
     if (record === null) return null
 
-    const rawServices = asArray(asRecord(record.info)?.services)
+    const slim = 'graphFingerprint' in record
+    const rawServices = slim ? asArray(record.services) : asArray(asRecord(record.info)?.services)
     if (rawServices === null) return null
 
-    const services: KontainerService[] = rawServices.map((raw) => {
-        const service = asRecord(raw) ?? {}
-        return {
-            cls: readFqn(service.cls),
-            type: asString(service.type),
-            definition: readDefinition(service.definition),
-            instances: (asArray(service.instances) ?? []).map((rawInstance) => {
-                const instance = asRecord(rawInstance) ?? {}
-                return { cls: readFqn(instance.cls), createdAtMillis: readInstantMillis(instance.createdAt) }
-            }),
-        }
+    return {
+        shape: slim ? 'slim' : 'full',
+        numOld: slim ? null : asNumber(record.numOld),
+        numTotal: slim ? null : asNumber(record.numTotal),
+        graphFingerprint: asString(record.graphFingerprint),
+        services: sortServices(rawServices.map(readService)),
+    }
+}
+
+/**
+ * True for a service whose instance is PROCESS state, shared by every request: a `Singleton`, created at
+ * boot or by whichever request first needed it. Every other type belongs to this request's kontainer.
+ *
+ * The type tells, not the creation time: `createdAt` only says whether THIS request created the instance.
+ */
+export function isProcessWide(service: KontainerService): boolean {
+    return service.type === 'Singleton'
+}
+
+/** The kontainer graph endpoint's `data`: every service with its definition, and the graph's fingerprint. */
+export interface KontainerGraphData {
+    fingerprint: string | null
+    services: KontainerService[]
+}
+
+export function readKontainerGraph(data: unknown): KontainerGraphData | null {
+    const record = asRecord(data)
+    const services = asArray(record?.services)
+    if (record === null || services === null) return null
+
+    return { fingerprint: asString(record.fingerprint), services: services.map(readService) }
+}
+
+/**
+ * A `slim` record's services with their definitions filled in from [graph], joined on `cls`.
+ *
+ * The TYPE stays the record's: it is what the provider was in THIS request's kontainer, and only the
+ * record can say `DynamicOverride`. With `includeAll`, the graph's services without instances are added.
+ *
+ * A `DynamicOverride` does NOT get the graph's definition: its instance was handed in when the kontainer
+ * was created, so the blueprint's injects never ran for it. It gets what a `full` record wrote for it --
+ * see {@link overrideDefinition}.
+ */
+export function joinKontainerGraph(
+    slice: KontainerSlice,
+    graph: KontainerGraphData,
+    includeAll: boolean,
+): KontainerService[] {
+    const byCls = new Map<string, KontainerService>()
+    for (const service of graph.services) {
+        if (service.cls !== null) byCls.set(service.cls, service)
+    }
+
+    const joined = slice.services.map((service) => {
+        const blueprint = service.cls === null ? null : (byCls.get(service.cls)?.definition ?? null)
+        const definition =
+            service.definition ?? (service.type === 'DynamicOverride' ? overrideDefinition(service, blueprint) : blueprint)
+
+        return { ...service, definition }
     })
 
-    // The old table's order: services WITH instances first, then by FQN. Instantiated services are what
-    // the request actually touched, which is the question the tab is usually open to answer.
-    services.sort((a, b) => {
-        const byInstances = Number(b.instances.length > 0) - Number(a.instances.length > 0)
-        return byInstances !== 0 ? byInstances : (a.cls ?? '').localeCompare(b.cls ?? '')
-    })
+    if (!includeAll) return joined
 
-    return { numOld: asNumber(record.numOld), numTotal: asNumber(record.numTotal), services }
+    const recorded = new Set(slice.services.map((service) => service.cls))
+    const rest = graph.services.filter((service) => !recorded.has(service.cls)).map((service) => ({ ...service, instances: [] }))
+
+    return sortServices([...joined, ...rest])
+}
+
+/**
+ * The definition a `full` record carried for a `DynamicOverride`: it creates the instance's own class,
+ * `Dynamic`, injects nothing, and overwrites the blueprint's definition.
+ *
+ * No code location: the override has none of its own (a `full` record named `ServiceProviderFactory`'s
+ * constructor). Without injects it draws no edge -- the blueprint's injects did not run for this instance.
+ */
+export function overrideDefinition(service: KontainerService, blueprint: KontainerDefinition | null): KontainerDefinition {
+    return {
+        creates: service.instances[0]?.cls ?? service.cls,
+        injectionType: 'Dynamic',
+        injects: [],
+        codeLocation: null,
+        overwrites: blueprint,
+    }
+}
+
+/**
+ * Whether a `slim` record was written against [graph]: `same`, `other` -- expected after almost any deploy,
+ * the fingerprint covers every code location, line numbers included -- or `unknown` when the record names
+ * no graph (the server could not build one then). In the last two cases the definitions and edges shown are
+ * today's, not necessarily the ones the request ran with. A `full` record carries its own: `same`.
+ */
+export function graphMatch(slice: KontainerSlice, graph: KontainerGraphData): 'same' | 'other' | 'unknown' {
+    if (slice.shape === 'full') return 'same'
+    if (slice.graphFingerprint === null) return 'unknown'
+    return slice.graphFingerprint === graph.fingerprint ? 'same' : 'other'
 }
 
 /** Walks the `overwrites` chain into a flat list; the first entry is the definition in force. */
@@ -592,11 +731,16 @@ export function runtimeCells(slice: RuntimeSlice): StatCell[] {
         {
             label: 'File descriptors',
             value: slice.openFileDescriptors,
-            // Both are 0 on non-Unix, which is "not measured" rather than "none open" -- so the hint
-            // says max rather than implying a ratio that would read as 0/0.
-            hint: `max: ${slice.maxFileDescriptors ?? 'n/a'}`,
+            // Both are 0 on non-Unix, which is "not measured" rather than "none open". Said in the CELL,
+            // so the Overview strip carries the caveat too -- it used to live only in the tab (D5).
+            hint: fileDescriptorsUnmeasured(slice) ? 'not measured on this platform' : `max: ${slice.maxFileDescriptors ?? 'n/a'}`,
         },
     ]
+}
+
+/** True when both descriptor counts are 0, which is what a non-Unix JVM reports: not measured, not none. */
+export function fileDescriptorsUnmeasured(slice: RuntimeSlice): boolean {
+    return slice.openFileDescriptors === 0 && slice.maxFileDescriptors === 0
 }
 
 /** The seven database cells. Also shown in Overview -- same reason as {@link runtimeCells}. */

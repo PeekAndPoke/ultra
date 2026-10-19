@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    // The generated SDK imports its siblings WITH the extension; see funktor-demo/sdkgen-app/tsconfig.json.
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  // NO `shims-vue.d.ts`, unlike the demo app: its `declare module '*.vue'` resolves ANY `.vue` specifier,
+  // which is how a missing tab once type-checked clean. vue-tsc resolves `.vue` files itself.
+  "include": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts", "vite.config.ts"]
+}

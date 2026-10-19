@@ -1,0 +1,254 @@
+{
+  "status": {
+    "value": 200,
+    "description": "OK"
+  },
+  "data": {
+    "repos": [
+      {
+        "id": {
+          "name": "system_auth_records",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$ActivationResendToken",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$EmailChangeToken",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$EmailVerificationToken",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$OrgSelectionToken",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$Password",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$PasswordRecoveryToken",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$PendingActivation",
+            "references": []
+          },
+          {
+            "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord$Session",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_background_jobs_queue",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_background_jobs_archive",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchived",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_global_locks",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_server_beacons",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.cluster.locks.domain.ServerBeacon",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_random_data",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.cluster.storage.domain.RawRandomData",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_random_cache",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.cluster.storage.domain.RawCacheData",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_worker_history",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.cluster.workers.vault.VaultWorkerRun",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_logs",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.logging.karango.KarangoLogEntry",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "system_sent_messages",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.messaging.storage.SentMessage",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "saas_organisations",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.saas.domain.Organisation",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "saas_org_members",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.saas.domain.OrgMember",
+            "references": [
+              {
+                "repo": {
+                  "name": "saas_organisations",
+                  "connection": "ArangoDB(3.12.6)::funktor_test"
+                },
+                "fqn": "io.peekandpoke.funktor.saas.domain.Organisation"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "funktor_all_test_users",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.TestUser",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "insights_graph_e2e_authors",
+          "connection": "ArangoDB(3.12.6)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.GraphE2eAuthor",
+            "references": []
+          }
+        ]
+      },
+      {
+        "id": {
+          "name": "insights_graph_e2e_books",
+          "connection": "MongoDB(8.2.1)::funktor_test"
+        },
+        "storedClasses": [
+          {
+            "fqn": "io.peekandpoke.funktor.GraphE2eBook",
+            "references": [
+              {
+                "repo": {
+                  "name": "insights_graph_e2e_authors",
+                  "connection": "ArangoDB(3.12.6)::funktor_test"
+                },
+                "fqn": "io.peekandpoke.funktor.GraphE2eAuthor"
+              },
+              {
+                "repo": null,
+                "fqn": "io.peekandpoke.funktor.GraphE2eUnstored"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "messages": null,
+  "insights": {
+    "ts": 1792424920,
+    "method": "GET",
+    "url": "http://api.funktor.local:80/_/funktor/insights/graphs/database",
+    "server": "build-host",
+    "status": {
+      "value": 200,
+      "description": "OK"
+    },
+    "durationMs": 0.061597
+  }
+}

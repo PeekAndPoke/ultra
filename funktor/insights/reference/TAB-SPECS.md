@@ -1,211 +1,158 @@
-# Tab specs — what each insights tab has to show
+# Tab specs — what each insights tab is given
 
-The input for the Vue rewrite. For each collector: **the wire shape the API actually serves**, what the
-old SemanticUI tab displayed, and what the old tab used that the record no longer carries.
+The wire shape of every collector slice, **read from current records**, and what its tab shows.
 
-Wire shapes were read out of a real record (`InsightsRecordingSpec`'s depot), not inferred from the
-Kotlin types — several differ from what the `Data` class suggests.
+**Re-derived 2026-10-19 (T1)** from real API responses, not from the Kotlin types:
 
-**Every string below is attacker-controlled.** Headers, query parameters, paths and user agents come from
-unauthenticated requests. Render with `{{ }}` or `v-text`; **never `v-html`**. See
-`InsightsCollectorSlice`'s KDoc.
+```bash
+INSIGHTS_WIRE_SAMPLES_DIR=/some/dir console/wt-gradle.sh :funktor:all:jvmTest
+node funktor/codegen/vue-verify/fixtures/refresh.mjs /some/dir
+```
+
+The second line copies them into `funktor/codegen/vue-verify/fixtures/`, which the component tests read,
+so **those files are the current samples**: `record-slim.json` (the request `InsightsRecordingSpec` records),
+`record-vault.json` (queries on Arango and Mongo, profiling and explain on, two log lines), `record-fat.json`
+(a record written before 2026-10-19), and the graph endpoints' responses. Regenerate rather than trust
+this file once a collector moves.
+
+**Every string is attacker-controlled.** Headers, query parameters, paths and user agents come from
+unauthenticated requests. Render with `{{ }}`; **never `v-html`** — pinned by
+`vue-verify/tests/escaping.spec.ts`.
 
 ## The envelope
 
-`GET /_/funktor/insights/records/{bucket}/{file}` → `InsightsRecord`:
+`GET /_/funktor/insights/records/{bucket}/{file}` → `data`:
 
 ```
-ref { bucket, file }   recordedAt: MpInstant?   durationMs: Double?
-next / previous: InsightsRecordRef?            collectors: [{ key, data }]
+ref {bucket, file}   recordedAt {ts, timezone, human}   method   path   status: Int   durationMs
+next / previous: ref | null                             collectors: [{key, data}]
 ```
 
-`data` is opaque JSON. A tab looks up its own `key` and parses only that. An unknown key is a record from
-an app-defined collector — see D-M6 in the task file; there is no fallback tab yet.
-
-## Shell — page chrome, not a tab
-
-The old GUI had a **bar** (an overlay on every page, per-request) and a **details page** (tabs). Only the
-details page survives; the bar's job moves to the list view.
-
-| Old bar item | Source now |
-|---|---|
-| status code, green/red | `InsightsRecordSummary.status` |
-| processing time, red >300ms / yellow >150 / olive >75 / green | `InsightsRecordSummary.durationMs` |
-| git branch + describe | `app-config` slice → `info.version` |
-| environment id | `app-config` slice → `config.ktor.application.id` |
-
-Old **Overview** tab — keep as the detail page's landing section: request `method + url`, status
-(green on 2xx, red otherwise, with the reason phrase), response time, timestamp. Then the Database and
-Runtime stat strips inlined from their tabs.
-
----
+- `recordedAt` is the depot file's time, `ts` in epoch millis. **The record FILE's own top-level `ts` is
+  off by the server's UTC offset** (a `LocalDateTime` written as UTC); the API does not serve it — never read it.
+- `status` is a bare number here; the reason phrase is in the `response` slice.
+- A BRIEF record has `collectors: []`. An unknown `key` is an app-defined collector: show its raw tree.
 
 ## `request`
 
 ```json
-{ "method": {"value": "GET"}, "scheme": "http", "host": "…", "port": 80,
-  "uri": "/path/only", "headers": {"Name": ["v", …]}, "queryParams": {"k": ["v"]} }
+{ "method": {"value": "GET"}, "scheme": "http", "host": "insights.funktor.local", "port": 80,
+  "uri": "/_/funktor/introspection/lifecycle-hooks",
+  "headers": {"Authorization": ["***redacted***"], "User-Agent": ["ktor-client"]}, "queryParams": {} }
 ```
 
-- **`method` is an object, not a string** — ktor `HttpMethod` serialises as `{value}`. Same for
-  `HttpStatusCode` in `response`.
-- `uri` is **path only**. The old `Data` had a computed `fullUrl`; it was removed (it skewed the stored
-  shape). Vue composes `scheme://host:port + uri` itself.
-- `headers` and `queryParams` are already redacted server-side — `***redacted***` is a real value to
-  render, not an error. A `DROP`ped header is absent entirely.
-
-Old tab: icon `cloud_upload_alternate`, title "Request", body was a raw JSON dump. A table of
-name → values is the obvious improvement; the JSON dump is worth keeping behind a toggle.
+`method` is an object. `uri` is the path only; the tab composes `scheme://host:port + uri`. Header names
+keep the client's casing. `***redacted***` is a value to render; a DROPped header is absent.
 
 ## `response`
 
 ```json
-{ "status": {"value": 200, "description": "OK"}, "headers": {"Name": ["v"]} }
+{ "status": {"value": 200, "description": "OK"}, "headers": {"Content-Type": ["application/json; charset=UTF-8"]} }
 ```
-
-Old tab: icon `cloud_download_alternate`, title "Response", raw JSON dump. Same treatment as `request`.
-`Set-Cookie` arrives redacted.
 
 ## `user`
 
 ```json
-{ "user": { "userId", "clientIp", "email", "desc", "type", "isSystem", "isAnonymous" },
-  "permissions": { "isSuperUser", "org", "accessibleOrgs", "branches", "groups", "roles", "permissions" } }
+{ "user": { "userId": "funktor_all_test_users/59138399", "clientIp": "localhost", "email": "…", "desc": "Super User",
+            "type": "test-user", "_type": "logged-in" },
+  "permissions": { "isSuperUser": true, "org": null, "accessibleOrgs": [], "branches": [], "groups": [],
+                   "roles": [], "permissions": [] } }
 ```
 
-`userId` is a flat string — the value class does not survive as an object. Old tab: icon `user`, two
-`H4` sections "User" and "Permissions", each a JSON dump. Old bar showed `userId` alone.
+`userId` is a flat string. **No `isSystem` / `isAnonymous`**: they are functions on `UserRecord`. `_type`
+(`anonymous`, `system`, `logged-in`, `api-key`) is the discriminator the tab shows as "Kind".
 
 ## `routing`
 
-```json
-{ "trace": "…multi-line ktor RoutingResolveTrace…" }
-```
-
-A pre-formatted text tree. Old tab: icon `compass_outline`, `<pre>` of the trace, then a JSON dump.
-Keep the `<pre>`; the JSON dump adds nothing here.
+`{ "trace": "Trace for [_, funktor, …]\n/, segment:0 -> SUCCESS @ /\n  …" }` — pre-formatted text, a `<pre>`.
 
 ## `runtime`
 
 ```json
-{ "jvmVersion", "kotlinVersion", "cpus", "maxMem", "reservedMem", "freeMem",
-  "openFileDescriptors", "maxFileDescriptors", "systemProperties": {"k": "v"} }
+{ "jvmVersion": "17.0.17", "kotlinVersion": "2.4.21", "cpus": 16, "maxMem": 536870912, "reservedMem": 408944640,
+  "freeMem": 233964432, "openFileDescriptors": 306, "maxFileDescriptors": 1048576, "systemProperties": {"os.name": "Linux"} }
 ```
 
-Old tab: icon `microchip`, title "Runtime". A horizontal stat strip of seven cells — **JVM**, **Kotlin**,
-**CPUs**, **Free Heap**, **Reserved Heap**, **Max Heap** (all three as `%d MB`, dividing by 1024·1024),
-**File descriptors** (`open:` / `max:` on two lines) — then a plain list of `systemProperties`.
-
-The same stat strip appeared inside Overview. Old bar showed `$cpus CPUs` and free/reserved/max in GB to
-two decimals (dividing by 1e9 — deliberately different units from the tab's MB).
-
-`openFileDescriptors`/`maxFileDescriptors` are `0` on non-Unix.
+Memory in bytes (shown as whole MB). Both descriptor counts are `0` on non-Unix: "not measured", which
+the cell itself says, so the Overview strip carries it too. `systemProperties` is the whole JVM set — paths
+and user name of the server included; the fixtures keep six keys.
 
 ## `log`
 
 ```json
-{ "entries": [ { "level": "INFO", "text": "…preformatted…" } ] }
+{ "entries": [ { "level": "INFO", "text": "2026-10-19 16:52:22.698 INFO - i.p.f.S1ProbeApi - S1 probe: …" } ] }
 ```
 
-`level` serialises as the enum name: `ALL TRACE DEBUG INFO WARNING ERROR OFF`. `text` is already
-formatted by `LogAppender.format` — render as `<pre>`, do not re-parse.
-
-Old tab: icon `list`, title "Logs". Empty → a single "No log entries" message. Otherwise one message
-block per entry, coloured by level: INFO → positive/green, WARNING → warning/yellow, ERROR and OFF →
-error/red, TRACE/DEBUG/ALL → neutral. Old bar showed the entry count.
+`level` is the `LogLevel` name. `text` is already formatted by `LogAppender.format`: render, do not parse.
 
 ## `template`
 
+`{ "timeNs": null }` — null on every request that rendered no view, which is every API call. Normal, not an error.
+
+## `vault`
+
 ```json
-{ "timeNs": null }
+{ "entries": [ {
+    "connection": "MongoDB(8.2.1)::funktor_test", "queryLanguage": "mongo-bound",
+    "query": "{\n  \"collection\": \"insights_s1_mo_sessions\",\n  \"filter\": {\n    \"token\": \"@p1:string\"\n  },\n  \"sort\": null,\n  \"limit\": 1,\n  \"skip\": null\n}",
+    "varsCount": 1, "count": 1, "totalCount": null, "totalNs": 37765040,
+    "measureQuery": {"totalNs": 1979916, "count": 1}, "measureIterator": {…}, "measureSerializer": {…},
+    "measureDeserializer": {…}, "measureExplain": {…} } ] }
 ```
 
-View rendering time, `null` when nothing rendered — which is every API request, so the tab must handle
-null as the normal case, not an error.
-
-Old tab: icon `tv`, title "View", JSON dump. Old bar: `%.2f ms` with a `tv` icon, red >30ms,
-yellow >10ms, green otherwise. Those thresholds are the only content this collector really has.
-
-## `vault` — database queries
-
-**This section is DELETED, and its deletion is the finding.** It described a shape read off the Kotlin
-types because the sample record's `entries` was empty — the one inference this document warns against
-everywhere else. The review gate on 2026-08-24 established why the sample was empty: the slice could
-never be written at all (`QueryProfiler.Entry.Impl` is a plain class with a 3-arg constructor, so Slumber
-has no codec for it, and the failure silently dropped the WHOLE record). Confirmed across 1193 real
-depot records: `vault.entries` is `[]` in every one.
-
-`VaultCollector` now has an explicit DTO, and the wire shape is that DTO. Do not re-derive it from here;
-read `VaultCollector.Data` and a real record.
+- `query` holds placeholders, never a value: Karango's `@v_1` (`aql`); Monko's `@p1:<type>` (`mongo-bound`,
+  since 2026-10-19), the type being Mongo's `$type` alias (`string`, `objectId`, `int`, …) and a list
+  `array[<length>]` -- the type, never the value. Monko's text also names the `collection`. `VaultCollector`
+  keeps the text only for `aql` and `mongo-bound`; for any other label it is `null`.
+- **`json` is Monko's OLD label** (2026-08-24..2026-10-19): its text inlined the values, so it was withheld and
+  `varsCount` is a false 0 -- the tab shows "unknown".
+- **No `vars`, no `queryExplained`**: values are counted (`varsCount`), and an EXPLAIN plan has the values
+  substituted in by the database itself. An entry WITH either field predates `VaultCollector.Data`: its
+  `query` may hold values and must not be shown (`slices.ts` marks it `legacy`).
+- Arango's `connection` is `ArangoDB::<db>` (no version), Mongo's `MongoDB(<version>)::<db>`.
+- Totals across entries are summed by the frontend; they are not in the record.
 
 ## `kontainer`
 
-```json
-{ "numOld": 0, "numTotal": 0,
-  "info": { "services": [ { "cls": {"fqn"}, "type": "Singleton",
-      "definition": { "creates": {"fqn"}, "injectionType", "injects": [{"name", "classes": [{"fqn"}], "provisionType"}],
-                      "codeLocation": {"location"}, "overwrites": null },
-      "instances": [ {"createdAt": 1785496992.70, "cls": {"fqn"}} ] } ] } }
-```
+Two shapes. **The full contract** — v1 and v2, the join, the fingerprint, the caveats — is in
+`.claude/tasks/20260824-insights-graphs-and-static-slices.md`, "Wire contract"; the reader is `readKontainer`.
 
-`createdAt` is epoch **seconds** as a double. `type` and `injectionType` are enum names:
-`Singleton Prototype Dynamic SemiDynamic DynamicOverride`. `provisionType` is `Direct` or `Lazy`.
-`overwrites` is a nested definition of the same shape, or null — a chain.
-
-The biggest slice by far: **137.8 KB average, 73.6% of a record.**
-
-Old tab: icon `cubes`, title "Kontainer". A sortable table sorted by *services with instances first, then
-FQN*, with columns **Service** (fqn), **Type**, **Instances** (fqn + createdAt per instance), **Injects**
-(param name, then the classes it may receive), **Definition & Overwrites** (walk the `overwrites` chain;
-the first row plain, later rows prefixed `Overwrites -> `, each showing `injectionType - creates.fqn` and
-the code location).
-
-Two vis.js graph buttons, differing only in which services are included:
-
-| Button | Nodes |
-|---|---|
-| "Show instances Graph" (green) | services with `instances` non-empty |
-| "Show Full Graph" (red) | all services |
-
-Node = a service: label `simpleName\ntype`, size = number of injected classes, colour by type —
-Singleton `#1E90FF`, Prototype `#FFD700`, Dynamic `#8B0000`, SemiDynamic `#9400D3`, DynamicOverride
-`#DC143C`. Edge = an injection, `from` service `to` injected class, arrow at the target, **dashed when
-`provisionType == Lazy`**, weight 2 for Direct / 1 for Lazy.
-
-All of that is derivable from the record — unlike the vault graph. The layout physics is vis.js tuning,
-not spec; pick whatever the Vue graph library does well.
-
-Old bar: `young / old / total` as `${numTotal - numOld} / $numOld / $numTotal`, icon green <10 old,
-yellow <50, red otherwise. `numOld` is "alive longer than 15 minutes" — the threshold is hardcoded.
+- **v2 (since 2026-10-19)** `{ graphFingerprint, services: [{cls, type, instances: [{cls, createdAt}]}] }`
+  — marked by the `graphFingerprint` KEY (its value may be `null`); only services with instances; class names
+  flat strings; definitions come from `GET /_/funktor/insights/graphs/kontainer`, joined on `cls`.
+- **v1 (before)** `{ numOld, numTotal, info: { services: [...] } }` — every service with its definition inline;
+  class names `{"fqn"}`, `codeLocation` `{"location"}`.
+- `createdAt` is `{ts, timezone, human}`, `ts` in millis (Jackson-era records: epoch seconds as a double).
+- `type == "Singleton"` is process state shared by every request; any other type is this request's own.
+  `createdAt` only says whether this request created the instance.
+- `numOld` / `numTotal` exist on v1 only, and were always 0 (tracking cannot be switched on): shown as
+  recorded, marked "not measured". v2 dropped them (maintainer, 2026-10-19) and shows no counters.
+- A `DynamicOverride` of a v2 record is shown as v1 recorded it -- creates the instance's class, `Dynamic`, no
+  injects, overwriting the graph's (blueprint) definition -- never with the blueprint's injects, which did not
+  run for a handed-in instance (`overrideDefinition` in `slices.ts`).
 
 ## `app-config`
 
 ```json
-{ "info": { "version": {…}, "versionName", "versionHash" }, "config": { …the whole AppConfig… } }
+{ "info": { "version": {"project": "n/a", "gitBranch": "n/a", "gitDesc": "n/a", …}, "versionName": "…", "versionHash": "…" },
+  "config": { "ktor": {…}, "funktor": {…}, "keys": {…} } }
 ```
 
-`info` is `AppInfo`; `config` is the entire application config. Both are `Any` in Kotlin and arrive as
-free-form JSON — this is the collector that cannot be typed (see the task file), so a generic JSON tree
-view is the honest rendering.
+Both are free-form (`Any` in Kotlin): a JSON tree. Fields declared `Redacted<T>` arrive as `***redacted***`;
+**a secret an app keeps in a plain `String` is recorded and displayed verbatim** — the tab says so in the UI.
 
-Old tab: icon `cog`, title "Config", two `H4` sections "AppInfo" and "Config", each a JSON dump.
+## The graph endpoints
 
-> **The STOP is lifted — but read this before building the tab.** The four known leaks (JWT signing key,
-> CSRF secret, Arango password, Mongo connection string) were closed on 2026-08-01 by `Redacted<T>`, which
-> redacts at the *serializer*, not just in `toString()`. Verified 2026-08-02: all four are declared
-> `Redacted<String>` — `JwtSigningKey.secret:36`, `UltraSecurityConfig.csrfSecret:6`,
-> `ArangoDbConfig.password:13`, `MongoDbConfig.connectionString:7`. Task archived at
-> `.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md`.
->
-> **What is NOT closed:** `Redacted<T>` protects a *declared* field, and this collector serialises the
-> whole `AppConfig` as `Any`. An application config that holds a secret in a plain `String` still writes
-> it into every record, and this tab would put it on a screen. That is a property of the app's own config,
-> which the framework cannot see — so the tab ships, and the docs for it must say plainly that anything
-> not wrapped in `Redacted` is rendered verbatim.
+`GET …/graphs/kontainer` (every service, its definition, the `fingerprint`) and `GET …/graphs/database`
+(`{repos: [{id: {name, connection}, storedClasses: [{fqn, references: [{repo: id | null, fqn}]}]}]}`). Both
+superuser-only (`401` otherwise), both static per deployed build; the Vue page fetches each at most once, on the
+first click. Contract: the task file named under `kontainer` above.
 
----
+## Shell — the deleted bar's items
 
-## Deleting from here
-
-Per `README.md`: when a tab ships, delete its `collectors/*.kt` reference file **and its section above**.
-When both are empty, delete the directory.
+| Old bar item | Source now |
+|---|---|
+| status code | the envelope's `status` |
+| processing time | the envelope's `durationMs` |
+| git branch + describe | `app-config` → `info.version` (shown only inside the Config tab's tree) |
+| environment id | `app-config` → `config.ktor.application.id` (likewise) |

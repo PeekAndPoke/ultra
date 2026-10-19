@@ -55,3 +55,8 @@ Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: Package subpath './lib/tsc' is not define
 stale rather than accurate. This app therefore pins **TypeScript 5.9.3** while `ultra/codegen`'s
 `ts-verify` harness pins **7.0.2**. That divergence is worth keeping: the generated SDK is checked by
 two different TypeScript majors, which is stronger evidence than either alone.
+
+**The insights graphs need `vis-network` in THIS app's `package.json`.** The generator may not write
+it, so `sdk:ts:generate` refuses to write an SDK whose imports `package.json` does not declare, and names
+the `pnpm add` line. The library is loaded on first use as its own ~650 KB chunk; `vis-network@10.1.2`
+needs six peers, which pnpm 10 installs by itself (`auto-install-peers`).

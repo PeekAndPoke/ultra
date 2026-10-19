@@ -31,21 +31,28 @@
  * itself is clean, but the reasoning stands: a viewer for the whole object defeats withholding part of
  * it, and the slice is the one place a future field could arrive unreviewed.
  *
- * ## One thing the old tab had that this one does not
+ * ## The repository graph is not in the record
  *
- * **No repository graph.** It came from `DatabaseGraphBuilder`, a live kontainer service queried at
- * render time, and is not in the stored data at all. Tracked in
- * `.claude/tasks/20260824-insights-graphs-and-static-slices.md`.
+ * It describes the schema, not the request, so it comes from its own endpoint
+ * (`GET /_/funktor/insights/graphs/database`), fetched on the first click of "Show Database Graph" or
+ * of "Database Graph Data", and never before. Without it -- no API client, a 401, a missing endpoint --
+ * the tab renders as before, with a notice. Its raw view is safe to show: it holds repository names,
+ * stored classes and references, no query and no value.
  *
  * Queries are shown through `PreBlock` rather than syntax-highlighted: the old tab used Prism, which is
  * a dependency this SDK does not have and cannot assume the consuming app has.
  *
  * See `RequestTab.vue` for the import-path note.
  */
-import { computed } from 'vue'
-// Deliberately no JsonTree import -- see the note above about `vars`.
+import { computed, ref } from 'vue'
+import type { Ref } from 'vue'
+// JsonTree renders the DATABASE GRAPH only, never the slice -- see the note above about `vars`.
+import JsonTree from '../ui/JsonTree.vue'
 import PreBlock from '../ui/PreBlock.vue'
 import StatStrip from '../ui/StatStrip.vue'
+import { databaseNetwork, useInsightsGraphsOrNull } from './graphs.ts'
+import type { DatabaseGraphResult } from './graphs.ts'
+import NetworkGraph from './NetworkGraph.vue'
 import { nsToMs, readVault, vaultCells } from './slices.ts'
 import type { VaultEntry, VaultMeasure } from './slices.ts'
 
@@ -56,9 +63,52 @@ const props = defineProps<{ data: unknown }>()
 const slice = computed(() => readVault(props.data))
 const cells = computed(() => (slice.value === null ? [] : vaultCells(slice.value)))
 
+/** Null outside a detail page, e.g. a tab mounted on its own: the graph is then not offered. */
+const graphs = useInsightsGraphsOrNull()
+
+const database: Ref<DatabaseGraphResult | null> = ref(null)
+const graphProblem: Ref<string | null> = ref(null)
+const loading = ref(false)
+const showGraph = ref(false)
+
+const network = computed(() => (showGraph.value && database.value !== null ? databaseNetwork(database.value.graph) : null))
+
+/** Fetches the database graph once; both the button and the raw view call this. */
+async function loadGraph(): Promise<void> {
+    if (database.value !== null || loading.value || graphs === null) return
+
+    loading.value = true
+    graphProblem.value = null
+
+    const result = await graphs.database()
+
+    loading.value = false
+    if (result.ok) database.value = result.value
+    else graphProblem.value = `The database graph is not available: ${result.reason}`
+}
+
+function toggleGraph(): void {
+    showGraph.value = !showGraph.value
+    if (showGraph.value) void loadGraph()
+}
+
+function onDataToggle(event: Event): void {
+    if ((event.target as HTMLDetailsElement).open) void loadGraph()
+}
+
 /** `X ms (Nx)` -- the old per-query format, where the count matters as much as the time. */
 function measure(value: VaultMeasure): string {
     return `${nsToMs(value.totalNs)} (${value.count}x)`
+}
+
+/** Why an entry has no query text; Monko's old `json` entries have their own reason. */
+function emptyQueryText(entry: VaultEntry): string {
+    if (entry.queryLanguage === 'json') {
+        return 'No query text recorded: written before 2026-10-19, when Monko still put the bind values into its ' +
+            'query text, so the server withheld it and did not count the bind variables.'
+    }
+    return `No query text recorded (${entry.queryLanguage ?? 'unknown language'}). Either the driver is not known ` +
+        'to keep bind values out of it, so the server withholds it, or the query failed before it was printed.'
 }
 
 function results(entry: VaultEntry): string {
@@ -74,6 +124,27 @@ function results(entry: VaultEntry): string {
             <StatStrip :cells="cells" />
         </section>
 
+        <section class="fk-section">
+            <div class="fk-toolbar">
+                <button
+                    type="button"
+                    class="fk-button fk-graph-button--error"
+                    :disabled="graphs === null"
+                    :aria-pressed="showGraph"
+                    @click="toggleGraph"
+                >
+                    Show Database Graph
+                </button>
+            </div>
+            <p class="fk-section__note">
+                The database graph is today's schema, fetched from the server now -- not part of this record.
+            </p>
+            <div v-if="graphs === null" class="fk-notice">No API client here to fetch the database graph.</div>
+            <div v-if="loading" class="fk-empty">Loading the database graph...</div>
+            <div v-if="graphProblem !== null" class="fk-notice fk-notice--error">{{ graphProblem }}</div>
+            <NetworkGraph v-if="network !== null" :data="network" />
+        </section>
+
         <div v-if="slice.entries.length === 0" class="fk-empty">No database queries ran for this request.</div>
 
         <section v-for="(entry, index) in slice.entries" :key="index" class="fk-section fk-query">
@@ -85,7 +156,7 @@ function results(entry: VaultEntry): string {
             <StatStrip
                 :cells="[
                     { label: 'Results', value: results(entry) },
-                    { label: 'Bind vars', value: entry.varsCount },
+                    { label: 'Bind vars', value: entry.varsCount ?? 'unknown' },
                     { label: 'Serializer', value: measure(entry.serializer) },
                     { label: 'Query', value: measure(entry.query_) },
                     { label: 'Iterator', value: measure(entry.iterator) },
@@ -97,7 +168,7 @@ function results(entry: VaultEntry): string {
             <PreBlock
                 v-if="!entry.legacy"
                 :text="entry.query"
-                :empty-text="`No query text recorded for ${entry.queryLanguage ?? 'this driver'} — it inlines bind values, so the server does not store the text.`"
+                :empty-text="emptyQueryText(entry)"
                 wrap
             />
             <!--
@@ -119,6 +190,14 @@ function results(entry: VaultEntry): string {
             -->
         </section>
 
+        <details v-if="graphs !== null" class="fk-details" @toggle="onDataToggle">
+            <summary>Database Graph Data</summary>
+            <div class="fk-details__body">
+                <JsonTree v-if="database !== null" :value="database.raw" :expand-depth="2" />
+                <div v-else-if="graphProblem !== null" class="fk-notice fk-notice--error">{{ graphProblem }}</div>
+                <div v-else class="fk-empty">Loading the database graph...</div>
+            </div>
+        </details>
     </div>
 
     <!--

@@ -95,10 +95,16 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
              * unconditionally and needs no such list.
              *
              * `aql` qualifies: Karango records the query with its `@placeholders` intact and passes
-             * values separately. Mongo does not — `MonkoDriver` records the filter document *with* its
-             * values and leaves `vars` empty — so its text is dropped until that is fixed at the driver.
+             * values separately. `mongo-bound` qualifies: `MonkoDriver` records the text of
+             * `FindQueryBuilder.printQuery()` under that label, every filter value an `@pN:<type>`
+             * placeholder. Monko's old label `json` does NOT: until 2026-10-19 it was the filter WITH its
+             * values, and a driver older than that may still send it.
+             *
+             * **Trusted by the label alone.** This cannot see how a text was made, so a driver path that
+             * recorded raw text under an allowlisted label would leak; each label names exactly one
+             * placeholder-ising printer, and a new one is added here only after its printer is.
              */
-            private val PLACEHOLDER_SAFE_LANGUAGES = setOf("aql")
+            private val PLACEHOLDER_SAFE_LANGUAGES = setOf("aql", "mongo-bound")
 
             /**
              * Takes [QueryProfiler.Entry.Impl], not the `Entry` interface.
@@ -135,7 +141,8 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
      * It cannot be made safe by placeholder-ising, because the DATABASE substitutes the values into the
      * plan it returns — measured against a real Arango server, which answered with
      * `FILTER ((d.token == "<the actual token>"))`. Mongo's `QUERY_PLANNER` output carries the same
-     * literals in `parsedQuery`. Recording it would put a live session token in a depot file.
+     * literals in `parsedQuery`, placeholders in the query or not. Recording it would put a live
+     * session token in a depot file.
      */
     override fun finish(call: ApplicationCall): Data =
         Data.of(profiler.entries.filterIsInstance<QueryProfiler.Entry.Impl>())

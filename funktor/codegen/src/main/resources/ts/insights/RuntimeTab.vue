@@ -15,7 +15,7 @@ import { computed } from 'vue'
 import JsonTree from '../ui/JsonTree.vue'
 import KeyValueTable from '../ui/KeyValueTable.vue'
 import StatStrip from '../ui/StatStrip.vue'
-import { readRuntime, runtimeCells } from './slices.ts'
+import { fileDescriptorsUnmeasured, readRuntime, runtimeCells } from './slices.ts'
 
 defineOptions({ name: 'RuntimeTab' })
 
@@ -29,7 +29,7 @@ const cells = computed(() => (slice.value === null ? [] : runtimeCells(slice.val
     <div v-if="slice !== null">
         <section class="fk-section">
             <StatStrip :cells="cells" />
-            <p v-if="slice.openFileDescriptors === 0 && slice.maxFileDescriptors === 0" class="fk-section__note">
+            <p v-if="fileDescriptorsUnmeasured(slice)" class="fk-section__note">
                 File descriptor counts are 0 on non-Unix platforms -- that is "not measured", not "none open".
             </p>
         </section>

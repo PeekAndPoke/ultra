@@ -92,6 +92,8 @@ class InsightsTsContributor(
         val INSIGHTS_FILES: List<String> = listOf(
             "insights.css",
             "slices.ts",
+            "graphs.ts",
+            "NetworkGraph.vue",
             "RequestTab.vue",
             "ResponseTab.vue",
             "UserTab.vue",

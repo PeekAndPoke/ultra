@@ -35,8 +35,6 @@ class KontainerCollectorSlumberSpec : FreeSpec() {
 
     private fun slice(kontainer: Kontainer = KontainerFixture.requestKontainer()): KontainerCollector.Data =
         KontainerCollector.Data.of(
-            numOld = 1,
-            numTotal = 3,
             graphFingerprint = "f".repeat(64),
             providers = kontainer.tools.factory.getAllProviders(),
         )
@@ -52,12 +50,10 @@ class KontainerCollectorSlumberSpec : FreeSpec() {
         services().single { it["cls"] == cls.java.name }
 
     init {
-        "the slice slumbers, to exactly the four top-level fields" {
+        "the slice slumbers, to exactly its two top-level fields -- no numOld/numTotal since 2026-10-19" {
             val map = slumbered(slice())
 
-            map.keys shouldContainExactlyInAnyOrder listOf("numOld", "numTotal", "graphFingerprint", "services")
-            map["numOld"] shouldBe 1
-            map["numTotal"] shouldBe 3
+            map.keys shouldContainExactlyInAnyOrder listOf("graphFingerprint", "services")
             map["graphFingerprint"] shouldBe "f".repeat(64)
         }
 
