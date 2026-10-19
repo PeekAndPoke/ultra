@@ -166,6 +166,21 @@ class ActivateAccountPageSpec : StringSpec({
         }
     }
 
+    "a refused CANCEL link speaks to someone who did not sign up — not 'try signing in'" {
+        val server = FakeAuthServer().apply {
+            answer(cancelPath, AuthCancelSignUpResponse.serializer()) { AuthCancelSignUpResponse(success = false) }
+        }
+        val state = stateOn(server)
+
+        TestBed.preact({
+            ActivateAccountPage(state = state, provider = "email-password", token = "tok", mode = ActivateAccountPage.Mode.Cancel)
+        }) { root ->
+            root.button("Cancel this sign-up").click()
+            root.awaitText("Forgot password")
+            root.containsText("Try signing in") shouldBe false
+        }
+    }
+
     "a server that cannot be reached is NOT reported as a dead link, and Retry repeats the click" {
         // The dead Retry branch of round 2: a transient failure on a valid link used to read "not valid".
         var reachable = false

@@ -492,7 +492,10 @@ interface AuthRealm<USER : AuthUser> {
 
             // Strictly after the page's newest: a marker sharing that exact millisecond waits for the next run.
             if (page.size < pageSize) return retired
-            after = page.last().value.createdAt
+            val newest = page.last().value.createdAt
+            // A store that ignored the cursor would hand back the same page forever.
+            if (after != null && newest <= after) return retired
+            after = newest
         }
     }
 

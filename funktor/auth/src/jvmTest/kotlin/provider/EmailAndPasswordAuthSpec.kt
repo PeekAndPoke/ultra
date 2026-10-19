@@ -11,6 +11,7 @@ import io.peekandpoke.funktor.auth.MinimalTestDeps
 import io.peekandpoke.funktor.auth.MinimalTestRealm
 import io.peekandpoke.funktor.auth.MinimalTestUser
 import io.peekandpoke.funktor.auth.NullStorageTestDeps
+import io.peekandpoke.funktor.auth.RealmTokenConfig
 import io.peekandpoke.funktor.auth.TestMessaging
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
@@ -1165,6 +1166,71 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 activatedOwner shouldBe (realm.id to ownerId)
                 removedIds shouldBe listOf("recovery-record", "pending-activation")
+            }
+        }
+
+        "recoverAccountSetPasswordWithToken on a pending account that is not plainly live" - {
+
+            fun recoveryToken(realm: RealmId) = Stored(
+                _id = "recovery-record",
+                value = AuthRecord.PasswordRecoveryToken(
+                    realm = realm, ownerId = UserId("user-id"), token = "t", expiresAt = Long.MAX_VALUE,
+                ),
+            )
+
+            fun subjectWith(services: Lazy<EmailAndPasswordAuth.Services>) = EmailAndPasswordAuth(
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                log = NullLog,
+                services = services,
+            )
+
+            val request = AuthRecoverAccountRequest.SetPasswordWithToken(provider = "email-password", token = "t", password = "Pw-123456!")
+
+            "an EXPIRED pending account is not revived by a reset link issued before it expired" {
+                // `createAuthRecord` keeps its exploding default: no password may be written.
+                val services = lazy {
+                    TestServices(
+                        onFindPasswordRecoveryToken = { realm, _ -> recoveryToken(realm) },
+                        onRemoveAuthRecord = { true },
+                        onFindPendingActivation = { realm, owner ->
+                            Stored(
+                                _id = "pending-activation",
+                                value = AuthRecord.PendingActivation(
+                                    realm = realm, ownerId = owner,
+                                    createdAt = Kronos.systemUtc.instantNow().minus(RealmTokenConfig().pendingAccountLifetime),
+                                ),
+                            )
+                        },
+                    )
+                }
+
+                subjectWith(services).recoverAccountSetPasswordWithToken(MinimalTestRealm(), request).success shouldBe false
+            }
+
+            "a retire that won the marker meanwhile takes the new password with it" {
+                val removedPasswordsOf = mutableListOf<UserId>()
+
+                val services = lazy {
+                    TestServices(
+                        onHashPassword = { "hash" },
+                        onFindPasswordRecoveryToken = { realm, _ -> recoveryToken(realm) },
+                        onCreateAuthRecord = { create -> Stored(_id = "new-password", value = create()) },
+                        onFindPendingActivation = { realm, owner ->
+                            Stored(
+                                _id = "pending-activation",
+                                value = AuthRecord.PendingActivation(
+                                    realm = realm, ownerId = owner, createdAt = Kronos.systemUtc.instantNow(),
+                                ),
+                            )
+                        },
+                        // The token delete succeeds; the marker is already gone — a retire won it.
+                        onRemoveAuthRecord = { id -> id != "pending-activation" },
+                        onRemovePasswords = { _, owner -> removedPasswordsOf += owner },
+                    )
+                }
+
+                subjectWith(services).recoverAccountSetPasswordWithToken(MinimalTestRealm(), request).success shouldBe false
+                removedPasswordsOf shouldBe listOf(UserId("user-id"))
             }
         }
 
