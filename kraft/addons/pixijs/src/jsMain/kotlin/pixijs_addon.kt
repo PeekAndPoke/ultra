@@ -53,10 +53,31 @@ fun AddonRegistryBuilder.pixiJs(lazy: Boolean = false): Addon<PixiJsAddon> = reg
 ) {
     @Suppress("UnsafeCastFromDynamic")
     val module: dynamic = (js("import('pixi.js')") as Promise<dynamic>).await()
+    val pixi: dynamic = module.default ?: module
 
-    PixiJsAddon(
-        pixiModule = module.default ?: module,
-    )
+    registerApplicationPlugins(pixi)
+
+    PixiJsAddon(pixiModule = pixi)
+}
+
+/**
+ * Makes sure the Application plugins (ticker, resize) are registered, whatever the bundler did.
+ *
+ * pixi registers them in `pixi.js/lib/app/init.mjs`, a side-effect-only import inside `Application.mjs`. Webpack 5.108
+ * drops that import, so `init()` resolves but `app.ticker` is undefined. Two independent remedies, each covering the
+ * other's risk: import the `pixi.js/app` entry (a dynamic import always runs, and it registers whatever pixi puts there
+ * in future versions), and register the two known plugins explicitly (pixi skips extensions already registered).
+ */
+private suspend fun registerApplicationPlugins(pixi: dynamic) {
+    @Suppress("UnsafeCastFromDynamic")
+    (js("import('pixi.js/app')") as Promise<dynamic>).await()
+
+    val extensions = pixi.extensions
+    if (extensions == null || extensions == undefined) return
+
+    listOf(pixi.TickerPlugin, pixi.ResizePlugin)
+        .filter { it != null && it != undefined }
+        .forEach { extensions.add(it) }
 }
 
 /** Accessor for the pixi.js addon on the registry. */
