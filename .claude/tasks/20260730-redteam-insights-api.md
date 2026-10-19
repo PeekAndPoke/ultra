@@ -78,6 +78,32 @@ The pre-fix state (see the feature task) stored `Cookie` and `Set-Cookie` verbat
     The deleted kotlinx.html GUI escaped; the Vue replacement must too. Re-run this once a viewer
     exists.
 
+## Added by the graphs gate (T2, 2026-10-19)
+
+The two superuser graph endpoints (`GET /_/funktor/insights/graphs/kontainer`, `/graphs/database`) widen
+what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now also cover them.
+
+24. **Reach a graph below superuser through path variants** — trailing slash, `//_/funktor/…`, `%2F`,
+    `%69nsights`, case changes, `HEAD`, `OPTIONS`/CORS preflight; also whether a variant that routes but
+    misses the `startsWith(InsightsApi.base)` check gets RECORDED.
+25. **Foreign or stale superuser credentials** against both graphs: a token minted by another realm, an
+    expired or revoked one, an API-key caller (cf. 2-4).
+26. **Inventory the disclosure** a superuser gets: `codeLocation` file:line in every definition, parameter
+    names, Arango/Mongo server versions, database names. Confirm no `instance(...)` config value, credential
+    or host appears — in apps that register config objects as instances too.
+27. **Hammer `graphs/database`** — each call reflects over every repository and makes one blocking round trip
+    per driver on the request thread; N parallel superuser calls vs request-thread starvation (compare
+    `VaultApi.listRepositories`).
+28. **Database down or slow during `graphs/database`** — what the production 500 body carries
+    (`cause.message` from the driver may name hosts).
+29. **Insights disabled in production** — both graphs (and the record endpoints) still answer a superuser;
+    see the plan's "production gate for insights" row.
+30. **Make the kontainer graph build fail, then send anonymous traffic** — `lazy` does not memoize an
+    exception, so every recorded request rebuilds and prints a stack trace: log flooding by unauthenticated
+    callers.
+31. **Concurrent first calls on a cold app** — the `lazy` builds once and every caller sees the same
+    fingerprint.
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes
