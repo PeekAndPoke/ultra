@@ -31,7 +31,10 @@ data class InsightsKontainerGraph(
     data class Definition(
         /** FQN of the class the producer creates. */
         val creates: String,
-        /** As declared — `Singleton`, `Dynamic` or `Prototype` — before any downgrade to `SemiDynamic`. */
+        /**
+         * `Singleton`, `Dynamic` or `Prototype`, as registered — upgraded to `Dynamic` or `Prototype` when it
+         * replaces a definition of that type. The downgrade to `SemiDynamic` shows only in [Service.type].
+         */
         val injectionType: String,
         /** In constructor order. */
         val injects: List<Injection>,
@@ -47,7 +50,10 @@ data class InsightsKontainerGraph(
         val name: String,
         /** `Direct` or `Lazy`. */
         val provisionType: String,
-        /** FQNs of the services that can satisfy the parameter, sorted. */
+        /**
+         * Sorted FQNs of what the parameter asks for: its DECLARED type for a single service — often an
+         * interface that is no service key, e.g. `AppConfig` — or every candidate for a `List` or `Lookup`.
+         */
         val classes: List<String>,
     )
 }
@@ -56,7 +62,8 @@ data class InsightsKontainerGraph(
  * The repositories and the references between the classes they store, as [InsightsApi.GetDatabaseGraph]
  * serves it.
  *
- * Mirrors `DatabaseGraphModel` field for field, so the old renderer ports without translation.
+ * `DatabaseGraphModel` without its two dead fields: `Repo.connection` duplicated [Repo.Id.connection], and
+ * `Reference.type` is always `Direct` since `LazyRef` was merged into `Ref`.
  */
 @Serializable
 data class InsightsDatabaseGraph(
@@ -66,8 +73,6 @@ data class InsightsDatabaseGraph(
     @Serializable
     data class Repo(
         val id: Id,
-        /** Duplicates [Id.connection], as the model does. */
-        val connection: String,
         val storedClasses: List<StoredClass>,
     ) {
         /** A repository's name and connection, e.g. `ArangoDB(3.12.4)::my_db`. */
@@ -91,7 +96,5 @@ data class InsightsDatabaseGraph(
         /** The repository storing the referenced type; null when no registered repository stores it. */
         val repo: Repo.Id?,
         val fqn: String,
-        /** Always `Direct`: since `LazyRef` was merged into `Ref`, `Lazy` is never produced. */
-        val type: String,
     )
 }

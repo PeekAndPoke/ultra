@@ -1,16 +1,13 @@
 package io.peekandpoke.funktor.insights
 
-import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldMatch
-import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.peekandpoke.funktor.insights.api.InsightsDatabaseGraph
 import io.peekandpoke.funktor.insights.api.InsightsKontainerGraph
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.awake
 import io.peekandpoke.ultra.slumber.slumber
@@ -31,6 +28,8 @@ class InsightsGraphsSpec : FreeSpec() {
                 graph.service(KontainerFixture.Unused::class).type shouldBe "Singleton"
                 graph.service(KontainerFixture.Stamp::class).type shouldBe "Prototype"
                 graph.service(KontainerFixture.Greeter::class).type shouldBe "Dynamic"
+                graph.service(KontainerFixture.Greeter::class).definition.creates shouldBe
+                        KontainerFixture.DefaultGreeter::class.java.name
                 graph.service(KontainerFixture.Wrapper::class).type shouldBe "SemiDynamic"
 
                 val handler = graph.service(KontainerFixture.Handler::class)
@@ -43,23 +42,8 @@ class InsightsGraphsSpec : FreeSpec() {
                 handler.definition.overwrites shouldBe null
             }
 
-            "is read WITHOUT the request's overrides, so who asks does not change it" {
-                val request = KontainerFixture.requestKontainer()
-
-                withClue("the request's own kontainer reports the handed-in instance as an override") {
-                    request.tools.getDebugInfo().services
-                        .single { it.cls.fqn == KontainerFixture.Greeter::class.java.name }
-                        .type shouldBe ServiceProvider.Type.DynamicOverride
-                }
-
-                val greeter = InsightsGraphs(request.blueprint).kontainerGraph.service(KontainerFixture.Greeter::class)
-
-                withClue("the graph shows the blueprint's definition, not the override's empty one") {
-                    greeter.type shouldBe "Dynamic"
-                    greeter.definition.creates shouldBe KontainerFixture.DefaultGreeter::class.java.name
-                    greeter.definition.codeLocation shouldNotContain "ServiceProviderFactory"
-                }
-            }
+            // That the graph does not depend on WHO asks is InsightsGraphsApiSpec's: only a real request
+            // hands in an override, and InsightsGraphs never sees one (mutation G1 kills it there).
 
             "carries an overwritten definition as a chain" {
                 val greeter = InsightsGraphs(KontainerFixture.blueprintWithOverwrite()).kontainerGraph
@@ -102,7 +86,7 @@ class InsightsGraphsSpec : FreeSpec() {
             }
         }
 
-        "the database graph mirrors the model field for field" {
+        "the database graph maps the model, without its duplicated connection and its always-Direct type" {
             val users = DatabaseGraphModel.Repo.Id(name = "users", connection = "ArangoDB(3.12)::db")
 
             val model = DatabaseGraphModel(
@@ -131,13 +115,10 @@ class InsightsGraphsSpec : FreeSpec() {
                 ),
             )
 
-            val graph = InsightsGraphs(KontainerFixture.blueprint()).databaseGraph(model)
-
-            graph shouldBe InsightsDatabaseGraph(
+            model.toInsightsDatabaseGraph() shouldBe InsightsDatabaseGraph(
                 repos = listOf(
                     InsightsDatabaseGraph.Repo(
                         id = InsightsDatabaseGraph.Repo.Id(name = "users", connection = "ArangoDB(3.12)::db"),
-                        connection = "ArangoDB(3.12)::db",
                         storedClasses = listOf(
                             InsightsDatabaseGraph.StoredClass(
                                 fqn = "app.User",
@@ -145,9 +126,8 @@ class InsightsGraphsSpec : FreeSpec() {
                                     InsightsDatabaseGraph.Reference(
                                         repo = InsightsDatabaseGraph.Repo.Id(name = "users", connection = "ArangoDB(3.12)::db"),
                                         fqn = "app.User",
-                                        type = "Direct",
                                     ),
-                                    InsightsDatabaseGraph.Reference(repo = null, fqn = "app.Unstored", type = "Direct"),
+                                    InsightsDatabaseGraph.Reference(repo = null, fqn = "app.Unstored"),
                                 ),
                             ),
                         ),
@@ -169,11 +149,13 @@ class InsightsGraphsSpec : FreeSpec() {
                 repos = listOf(
                     InsightsDatabaseGraph.Repo(
                         id = InsightsDatabaseGraph.Repo.Id("users", "c"),
-                        connection = "c",
                         storedClasses = listOf(
                             InsightsDatabaseGraph.StoredClass(
                                 fqn = "app.User",
-                                references = listOf(InsightsDatabaseGraph.Reference(repo = null, fqn = "x", type = "Direct")),
+                                references = listOf(
+                                    InsightsDatabaseGraph.Reference(repo = InsightsDatabaseGraph.Repo.Id("users", "c"), fqn = "x"),
+                                    InsightsDatabaseGraph.Reference(repo = null, fqn = "y"),
+                                ),
                             ),
                         ),
                     ),

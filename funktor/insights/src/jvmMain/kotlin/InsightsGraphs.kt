@@ -11,18 +11,17 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
 /**
- * Builds the two static graphs the insights API serves.
+ * Builds the kontainer graph the insights API serves, once per blueprint.
  *
  * A singleton that injects only the blueprint — itself a singleton — so [kontainerGraph] is built once
- * per blueprint and shared by every request. Injecting anything dynamic would make it one per request.
+ * and shared by every request. Injecting anything dynamic would make it one per request.
  */
 class InsightsGraphs(private val blueprint: KontainerBlueprint) {
 
     private companion object {
-        val json = Json
-
+        /** Over every field, code locations and their line numbers included: a deploy that moves one changes it. */
         fun fingerprintOf(services: List<InsightsKontainerGraph.Service>): String =
-            json.encodeToString(ListSerializer(InsightsKontainerGraph.Service.serializer()), services)
+            Json.encodeToString(ListSerializer(InsightsKontainerGraph.Service.serializer()), services)
                 .sha256()
                 .toHex()
     }
@@ -42,26 +41,6 @@ class InsightsGraphs(private val blueprint: KontainerBlueprint) {
 
         InsightsKontainerGraph(fingerprint = fingerprintOf(services), services = services)
     }
-
-    /** [model] as the wire DTO. */
-    fun databaseGraph(model: DatabaseGraphModel): InsightsDatabaseGraph = InsightsDatabaseGraph(
-        repos = model.repos.map { repo ->
-            InsightsDatabaseGraph.Repo(
-                id = repo.id.toGraph(),
-                connection = repo.connection,
-                storedClasses = repo.storedClasses.map { stored ->
-                    InsightsDatabaseGraph.StoredClass(
-                        fqn = stored.fqn,
-                        references = stored.references.map { ref ->
-                            InsightsDatabaseGraph.Reference(repo = ref.repo?.toGraph(), fqn = ref.fqn, type = ref.type.name)
-                        },
-                    )
-                },
-            )
-        },
-    )
-
-    private fun DatabaseGraphModel.Repo.Id.toGraph() = InsightsDatabaseGraph.Repo.Id(name = name, connection = connection)
 
     private fun DebugInfo.ServiceDebugInfo.toGraph() = InsightsKontainerGraph.Service(
         cls = cls.fqn,
@@ -84,3 +63,26 @@ class InsightsGraphs(private val blueprint: KontainerBlueprint) {
             overwrites = overwrites?.toGraph(),
         )
 }
+
+/**
+ * This model as the wire DTO, without its two dead fields.
+ *
+ * An extension here rather than a factory on the DTO, which must stay free of JVM-only types.
+ */
+fun DatabaseGraphModel.toInsightsDatabaseGraph(): InsightsDatabaseGraph = InsightsDatabaseGraph(
+    repos = repos.map { repo ->
+        InsightsDatabaseGraph.Repo(
+            id = repo.id.toInsightsId(),
+            storedClasses = repo.storedClasses.map { stored ->
+                InsightsDatabaseGraph.StoredClass(
+                    fqn = stored.fqn,
+                    references = stored.references.map { ref ->
+                        InsightsDatabaseGraph.Reference(repo = ref.repo?.toInsightsId(), fqn = ref.fqn)
+                    },
+                )
+            },
+        )
+    },
+)
+
+private fun DatabaseGraphModel.Repo.Id.toInsightsId() = InsightsDatabaseGraph.Repo.Id(name = name, connection = connection)
