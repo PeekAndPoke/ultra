@@ -3,7 +3,7 @@
 **Status:** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE
 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
 below (icons, highlighting, sort, FQNs, `vars`), step 10 (delete `reference/` — kept until T4 ports from it), and the
-round-2 MINORs (`.claude/tasks/20261019-insights-vue-round2-minors.md`)
+round-2 MINORs (`.claude/tasks-archive/2026-10/20261019-insights-vue-round2-minors.md`)
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → "Insights specifics"
 **Spec:** `funktor/insights/reference/TAB-SPECS.md` — all ten tabs, wire shapes read from a real record
 **Security-critical:** yes. Superuser-only data, rendered from attacker-controlled strings.
@@ -778,7 +778,7 @@ RuntimeCollector rows accepted (the follow-up is master's `20261019-insights-pro
 disclosed a grep that hit two ledger lines in phase 1; nothing it reported came from them. Coordinator spot-checks:
 `RequestTab.vue:64` (the raw tree repeats `uri`), `KarangoDriver.kt:101` (`aql` on any text), the pre-T1 driver
 (`query = builder.print()`, `vars = emptyMap()`), `.npmrc:3` — all as claimed. 12 MINORs, all stand after phase 2,
-none overlapping a settled row → the follow-up task `.claude/tasks/20261019-insights-vue-round2-minors.md`.
+none overlapping a settled row → the follow-up task `.claude/tasks-archive/2026-10/20261019-insights-vue-round2-minors.md`.
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|

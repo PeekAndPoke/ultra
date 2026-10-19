@@ -118,6 +118,20 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
     — server hostname and full URL in responses, the 401 sent to a non-superuser included
     (`vue-verify/fixtures/refusal-graph.json:19-28`). Unverified, outside T1's change.
 
+### Added 2026-10-19 from the insights-minors review (security)
+
+33a. **Addendum to 33:** a `$`-prefixed secret (a bcrypt/argon2 hash) as a key at a value position, in a query the
+    server REJECTS — since the print moved before execution, the failed query's text holds the key
+    (`MonkoDriver.kt:110-111`; fix: `20261019-insights-minors-followups.md` item 1).
+36. **Raw AQL that fails** — `KarangoQueryException`'s message embeds the full `query.query`
+    (`karango/core/src/main/kotlin/vault/KarangoDriver.kt:130-137`); for `aql-raw` that includes the inlined token. If
+    the app logs it (`LogCollector.kt:35` records verbatim) or a 500 body carries it, the record holds what the vault
+    slice withholds.
+37. **Secrets as field names** — `Filters.exists("sessions.$token")`, query-form `elemMatch("grants", Document(apiKey,
+    true))`, Karango `property<…>(token)` / `aqlFunc(name)` / `AqlNameExpr(name)`, a custom `AqlExpression` using the
+    public `AqlPrinter.append(String)`. Both printers keep names by design under a trusted label — inventory real apps
+    for data-keyed maps.
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes
