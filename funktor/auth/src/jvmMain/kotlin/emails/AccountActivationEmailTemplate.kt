@@ -31,7 +31,7 @@ abstract class AccountActivationEmailTemplate :
         val applicationName: String,
         /** Carries a live single-use token. Never put this in a subject — subjects are not anonymized. */
         val activationUrl: String,
-        /** "Didn't sign up? Cancel" — carries the SAME live token as [activationUrl]. */
+        /** "Didn't sign up? Cancel" — carries the account's own cancel token, live as long as the sign-up. */
         val cancelUrl: String,
     )
 }

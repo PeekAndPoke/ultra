@@ -46,12 +46,12 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 return RemoveResult.empty
             }
 
-            override suspend fun <T : AuthRecord> saveRecord(stored: Stored<T>): Stored<T> {
-                error("Not yet implemented")
+            override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? {
+                return null
             }
 
-            override suspend fun <T : AuthRecord> replaceRecordIfExists(stored: Stored<T>): Stored<T>? {
-                return null
+            override suspend fun removeRecordIfUnclaimed(id: String): RemoveResult {
+                return RemoveResult.empty
             }
 
             override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
@@ -84,7 +84,9 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                     realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
                 ): List<Stored<AuthRecord>>
 
-                suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>?
+                suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>?
+
+                suspend fun removeIfUnclaimed(id: String): RemoveResult
             }
 
             override suspend fun removeById(id: String): RemoveResult {
@@ -117,12 +119,12 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 return inner.removeAllByOwner(realm, type, owner, exceptId)
             }
 
-            override suspend fun <T : AuthRecord> saveRecord(stored: Stored<T>): Stored<T> {
-                return inner.save(stored)
+            override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? {
+                return inner.replaceIfUnclaimed(stored)
             }
 
-            override suspend fun <T : AuthRecord> replaceRecordIfExists(stored: Stored<T>): Stored<T>? {
-                return inner.replaceIfExists(stored)
+            override suspend fun removeRecordIfUnclaimed(id: String): RemoveResult {
+                return inner.removeIfUnclaimed(id)
             }
 
             override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
@@ -154,11 +156,14 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
             realm: RealmId, type: String, owner: UserId, exceptId: String? = null,
         ): RemoveResult
 
-        /** Replaces an existing record. */
-        suspend fun <T : AuthRecord> saveRecord(stored: Stored<T>): Stored<T>
+        /**
+         * Replaces [stored] only while a record with its `_id` exists AND nobody has claimed it (its stored
+         * `claimedBy` is null or absent) — atomically, never inserting; null otherwise.
+         */
+        suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>?
 
-        /** Replaces [stored] only if a record with its `_id` still exists — never inserts; null otherwise. */
-        suspend fun <T : AuthRecord> replaceRecordIfExists(stored: Stored<T>): Stored<T>?
+        /** Removes the record [id] only while nobody has claimed it — atomically. */
+        suspend fun removeRecordIfUnclaimed(id: String): RemoveResult
 
         /** Removes every record of [owner] in [realm], of ANY type except [exceptType]. */
         suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String? = null): RemoveResult
@@ -227,21 +232,21 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         )
     }
 
-    /** Replaces an existing record, inserting it if it is gone. */
-    suspend fun <T : AuthRecord> save(stored: Stored<T>): Stored<T> {
-        return adapter.saveRecord(stored)
-    }
-
     /**
-     * Replaces [stored] only while it still exists, stamping `updatedAt`; null when it is gone.
-     *
-     * The write for state that another request may have deleted meanwhile — a [save] would bring it back.
+     * Replaces [stored] only while it still exists and is unclaimed (see [AuthRecord.PendingActivation.claimedBy]),
+     * stamping `updatedAt`; null otherwise. Atomic on both backends — the write for state another request may
+     * have deleted or claimed meanwhile. Never inserts.
      */
-    suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>? {
+    suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>? {
         @Suppress("UNCHECKED_CAST")
         val stamped = stored.modify { it.withUpdatedAt(kronos.instantNow()) as T }
 
-        return adapter.replaceRecordIfExists(stamped)
+        return adapter.replaceRecordIfUnclaimed(stamped)
+    }
+
+    /** Removes the record [id] only while it is unclaimed; atomic on both backends. True when THIS call removed it. */
+    suspend fun removeIfUnclaimed(id: String): Boolean {
+        return adapter.removeRecordIfUnclaimed(id).count == 1L
     }
 
     /** Remove every record of [owner] in [realm], of any type, optionally keeping those of [except]. */

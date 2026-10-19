@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldNotBeInstanceOf
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.MinimalTestDeps
 import io.peekandpoke.funktor.auth.MinimalTestRealm
@@ -58,7 +59,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             { _, _ -> error("findSignUpCancelToken not implemented") },
         val onFindSignUpCancelTokenOf: suspend (RealmId, UserId) -> Stored<AuthRecord.SignUpCancelToken>? =
             { _, _ -> error("findSignUpCancelTokenOf not implemented") },
-        val onRemovePasswords: suspend (RealmId, UserId) -> Unit = { _, _ -> error("removePasswords not implemented") },
+        val onRemovePendingActivationIfUnclaimed: suspend (String) -> Boolean =
+            { error("removePendingActivationIfUnclaimed not implemented") },
         val onRemoveAuthRecord: suspend (String) -> Boolean = { error("removeAuthRecord not implemented") },
     ) : EmailAndPasswordAuth.Services {
         override fun hashPassword(password: String): String = onHashPassword(password)
@@ -101,7 +103,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
         override suspend fun findSignUpCancelTokenOf(realm: RealmId, owner: UserId) =
             onFindSignUpCancelTokenOf(realm, owner)
 
-        override suspend fun removePasswords(realm: RealmId, owner: UserId) = onRemovePasswords(realm, owner)
+        override suspend fun removePendingActivationIfUnclaimed(id: String) = onRemovePendingActivationIfUnclaimed(id)
 
         override suspend fun removeAuthRecord(id: String) = onRemoveAuthRecord(id)
     }
@@ -375,6 +377,59 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 }
 
                 error.message shouldBe "Account not activated"
+            }
+
+            "a RETIRED key never signs in — the account is not even looked up" {
+                // `onLoadUserByEmail` keeps its exploding default.
+                val retired = AccountRetirement.of(UserId("users/1")).rename(EmailAddress.of("user@example.com"))
+                val subject = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignIn),
+                    log = NullLog,
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    services = lazy { TestServices() },
+                )
+
+                shouldThrow<AuthError> {
+                    subject.signIn(
+                        MinimalTestRealm(),
+                        AuthSignInRequest.EmailAndPassword(provider = subject.id, email = retired.value, password = "pw"),
+                    )
+                }.message shouldBe "Invalid credentials"
+            }
+
+            "a CLAIMED account refuses sign-in without a resend token, even with the right password" {
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+                val subject = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignIn),
+                    log = NullLog,
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    services = lazy {
+                        TestServices(
+                            onCheckPassword = { _, _ -> true },
+                            onFindLatestPasswordRecord = { realm, owner ->
+                                Stored(_id = "pw", value = AuthRecord.Password(realm = realm, ownerId = owner, token = "h"))
+                            },
+                            onFindPendingActivation = { realm, owner ->
+                                Stored(
+                                    _id = "pending",
+                                    value = AuthRecord.PendingActivation(
+                                        realm = realm, ownerId = owner,
+                                        claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE,
+                                    ),
+                                )
+                            },
+                        )
+                    },
+                )
+
+                val error = shouldThrow<AuthError> {
+                    subject.signIn(
+                        MinimalTestRealm(onLoadUserByEmail = { storedUser }),
+                        AuthSignInRequest.EmailAndPassword(provider = subject.id, email = "user@example.com", password = "pw"),
+                    )
+                }
+
+                error.shouldNotBeInstanceOf<AuthError.AccountNotActivated>()
             }
 
             "should check the PASSWORD before the pending marker" {
@@ -717,6 +772,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 )
                             )
                         },
+                        onRemovePendingActivationIfUnclaimed = { removedRecordIds += it; true },
                         onRemoveAuthRecord = { removedRecordIds += it; true },
                     )
                 }
@@ -1133,6 +1189,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 ),
                             )
                         },
+                        onRemovePendingActivationIfUnclaimed = { removedIds += it; true },
                         onRemoveAuthRecord = { removedIds += it; true },
                     )
                 }
@@ -1186,6 +1243,38 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
             val request = AuthRecoverAccountRequest.SetPasswordWithToken(provider = "email-password", token = "t", password = "Pw-123456!")
 
+            "a token another completion consumed first does nothing" {
+                // `createAuthRecord` keeps its exploding default.
+                val services = lazy {
+                    TestServices(
+                        onFindPasswordRecoveryToken = { realm, _ -> recoveryToken(realm) },
+                        onRemoveAuthRecord = { false },
+                    )
+                }
+
+                subjectWith(services).recoverAccountSetPasswordWithToken(MinimalTestRealm(), request).success shouldBe false
+            }
+
+            "an account a retire has CLAIMED is not this reset's to finish" {
+                val services = lazy {
+                    TestServices(
+                        onFindPasswordRecoveryToken = { realm, _ -> recoveryToken(realm) },
+                        onRemoveAuthRecord = { true },
+                        onFindPendingActivation = { realm, owner ->
+                            Stored(
+                                _id = "pending-activation",
+                                value = AuthRecord.PendingActivation(
+                                    realm = realm, ownerId = owner, createdAt = Kronos.systemUtc.instantNow(),
+                                    claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE,
+                                ),
+                            )
+                        },
+                    )
+                }
+
+                subjectWith(services).recoverAccountSetPasswordWithToken(MinimalTestRealm(), request).success shouldBe false
+            }
+
             "an EXPIRED pending account is not revived by a reset link issued before it expired" {
                 // `createAuthRecord` keeps its exploding default: no password may be written.
                 val services = lazy {
@@ -1207,8 +1296,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 subjectWith(services).recoverAccountSetPasswordWithToken(MinimalTestRealm(), request).success shouldBe false
             }
 
-            "a retire that won the marker meanwhile takes the new password with it" {
-                val removedPasswordsOf = mutableListOf<UserId>()
+            "a retire that claimed the marker meanwhile takes back exactly the password this reset wrote" {
+                val removed = mutableListOf<String>()
 
                 val services = lazy {
                     TestServices(
@@ -1223,14 +1312,15 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 ),
                             )
                         },
-                        // The token delete succeeds; the marker is already gone — a retire won it.
-                        onRemoveAuthRecord = { id -> id != "pending-activation" },
-                        onRemovePasswords = { _, owner -> removedPasswordsOf += owner },
+                        onRemoveAuthRecord = { id -> removed += id; true },
+                        // A retire claimed the marker meanwhile.
+                        onRemovePendingActivationIfUnclaimed = { false },
                     )
                 }
 
                 subjectWith(services).recoverAccountSetPasswordWithToken(MinimalTestRealm(), request).success shouldBe false
-                removedPasswordsOf shouldBe listOf(UserId("user-id"))
+                // The token, then EXACTLY the password this reset wrote — not any other.
+                removed shouldBe listOf("recovery-record", "new-password")
             }
         }
 

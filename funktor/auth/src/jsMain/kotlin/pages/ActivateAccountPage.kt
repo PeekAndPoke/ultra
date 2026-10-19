@@ -28,8 +28,9 @@ import kotlin.time.Duration
  *
  * **Opening the page changes nothing.** Mail gateways (Safe Links, Mimecast, Proofpoint) open links
  * in a sandbox, so a link that activated on load would activate an account nobody chose to — including
- * one an attacker pre-registered with a victim's address. Only a click POSTs: [Mode.Activate] leads
- * with "Activate", [Mode.Cancel] with "Cancel this sign-up", and both offer the other.
+ * one an attacker pre-registered with a victim's address. Only a click POSTs: `Mode.Activate` offers
+ * "Activate" and "I did not sign up — cancel"; `Mode.Cancel` (the mail's cancel link, whose token cannot
+ * activate) offers only "Cancel this sign-up" and points at the activation link for the other way.
  *
  * [token] is null when the LOGIN page sent the user here after a sign-in was refused for a
  * not-yet-activated account — there is nothing to redeem then, only a resend to offer.
@@ -241,13 +242,9 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
 
                 ui.hidden.divider()
 
-                p { +"Did you sign up after all?" }
-
-                ui.field {
-                    ui.basic.fluid.givenNot(noDblClick.canRun) { loading }.button {
-                        onClick { launch { activate(s.token) } }
-                        +"Activate my account instead"
-                    }
+                // No "activate instead" here: this link carries the CANCEL token, which cannot activate.
+                p {
+                    +"Did you sign up after all? Then use the \"Activate account\" link in the same mail instead."
                 }
             }
         }

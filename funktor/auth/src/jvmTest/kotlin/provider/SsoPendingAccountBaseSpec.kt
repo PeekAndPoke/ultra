@@ -5,6 +5,7 @@ import com.google.api.client.json.webtoken.JsonWebSignature
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthError
@@ -239,6 +240,27 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                         true
                     }
                 }.message shouldBe "Invalid credentials"
+            }
+
+            "CLAIM FIRST: a retire that claims the account while the provider is asked wins, and NOTHING is deleted" {
+                val deps = realDeps()
+                deps.storage.authRecords.preRegister(pending = true)
+                val realm = realmWith(deps)
+
+                shouldThrow<AuthError> {
+                    realm.resolveSsoAccount(user, provider = "test") {
+                        val marker = deps.storage.authRecords
+                            .findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldNotBeNull()
+                        deps.storage.authRecords.replaceIfUnclaimed(
+                            marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) }
+                        ).shouldNotBeNull()
+                        true
+                    }
+                }.message shouldBe "Invalid credentials"
+
+                withClue("the SSO lost the claim, so the password and tokens are the retire's to remove — untouched") {
+                    deps.storage.authRecords.state() shouldBe untouched
+                }
             }
 
             "the password goes BEFORE the marker: a failure in between leaves the account pending, never live" {

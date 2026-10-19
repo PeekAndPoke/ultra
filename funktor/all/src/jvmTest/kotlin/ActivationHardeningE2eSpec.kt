@@ -98,6 +98,13 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
     private suspend fun isPending(id: String) =
         records.findLatestRecordBy(AuthRecord.PendingActivation, realm.id, UserId(id)) != null
 
+    /** Every auth row of [id] straight from the store — expired ones included, so only a delete makes it empty. */
+    private suspend fun rawRowsOf(id: String): Map<String, Int> = listOf(
+        AuthRecord.Password, AuthRecord.PasswordRecoveryToken, AuthRecord.PendingActivation,
+        AuthRecord.ActivationResendToken, AuthRecord.EmailVerificationToken, AuthRecord.SignUpCancelToken,
+    ).associate { it.identifier to records.adapter.findAllByOwner(realm.id, it.identifier, UserId(id)).size }
+        .filterValues { it > 0 }
+
     private suspend fun hasPassword(id: String) =
         records.findLatestRecordBy(AuthRecord.Password, realm.id, UserId(id)) != null
 
@@ -218,7 +225,11 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
     }
 
     init {
-        beforeEach { kronos.set(Kronos.systemUtc) }
+        beforeEach {
+            kronos.set(Kronos.systemUtc)
+            RetireGate.beforeRename = {}
+            RetireGate.afterRetireClaim = {}
+        }
 
         //  Password before marker  ///////////////////////////////////////////////////////////////////////////
 
@@ -361,8 +372,10 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                         isPending(id) shouldBe false
                     }
 
-                    withClue("the address is free and the old link is dead") {
+                    withClue("the address is free, and the retire itself DELETED every auth row (not merely let it expire)") {
                         userOf(email).shouldBeNull()
+                        retired.value.email shouldBe AccountRetirement.of(UserId(id)).rename(EmailAddress.of(email))
+                        rawRowsOf(id) shouldBe emptyMap()
                         activate(token) shouldBe false
                     }
                 }
@@ -541,6 +554,112 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     withClue("not even a reset token is issued: the mailer's own refusal is a second layer, not the first") {
                         records.findLatestRecordBy(AuthRecord.PasswordRecoveryToken, realm.id, UserId(id)).shouldBeNull()
                     }
+                }
+            }
+        }
+
+        "The activation page's own cancel button: the ACTIVATION token cancels too" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("cancel-by-activation-token")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    cancel(activationTokenTo(email)) shouldBe true
+
+                    AccountRetirement.isRetired(users.byId(id).shouldNotBeNull().value.email) shouldBe true
+                    rawRowsOf(id) shouldBe emptyMap()
+                }
+            }
+        }
+
+        //  Retire vs activation: CLAIM FIRST  //////////////////////////////////////////////////////////////////
+
+        "Activation wins (it commits before the retire claims): NOTHING of the account is touched" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("activation-wins")
+                    signUp(email)
+                    val cancelToken = cancelTokenTo(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    activate(activationTokenTo(email)) shouldBe true
+                    cancel(cancelToken) shouldBe false
+
+                    withClue("credentials still there, address NOT renamed, and the account signs in") {
+                        hasPassword(id) shouldBe true
+                        users.byId(id).shouldNotBeNull().value.email shouldBe EmailAddress.of(email)
+                        passwordSignIn(email) { response ->
+                            response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                        }
+                    }
+                }
+            }
+        }
+
+        "Retire wins (it claimed first): an activation landing mid-retire changes nothing, and the retire completes" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("retire-wins")
+                    signUp(email)
+                    val activationToken = activationTokenTo(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    // The activation runs in the window right after the retire's claim, while its token and the
+                    // marker still exist — exactly the request that read the marker before the claim and commits after.
+                    var midRetireActivation: Boolean? = null
+                    RetireGate.afterRetireClaim = {
+                        midRetireActivation = authSystem.activate(
+                            ActivationHardeningRealm.REALM,
+                            AuthActivateAccountRequest(provider = provider, token = activationToken),
+                        ).success
+                    }
+
+                    cancel(cancelTokenTo(email)) shouldBe true
+                    RetireGate.afterRetireClaim = {}
+
+                    midRetireActivation shouldBe false
+
+                    withClue("fully retired: renamed, every auth row gone, and the activation link cannot revive it") {
+                        users.byId(id).shouldNotBeNull().value.email shouldBe
+                                AccountRetirement.of(UserId(id)).rename(EmailAddress.of(email))
+                        rawRowsOf(id) shouldBe emptyMap()
+                        activate(activationToken) shouldBe false
+                    }
+                }
+            }
+        }
+
+        "A retire that stops part-way stays claimed and blocked, and the next sweep finishes it" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("partial-retire")
+                    signUp(email)
+                    val activationToken = activationTokenTo(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    RetireGate.beforeRename = { error("the user store is down") }
+                    cancel(cancelTokenTo(email)) shouldBe false
+                    RetireGate.beforeRename = {}
+
+                    withClue("claimed but unfinished: credentials gone, address still held, NOTHING can activate it") {
+                        records.findLatestRecordBy(AuthRecord.PendingActivation, realm.id, UserId(id)).shouldNotBeNull()
+                            .value.claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+                        hasPassword(id) shouldBe false
+                        users.byId(id).shouldNotBeNull().value.email shouldBe EmailAddress.of(email)
+                        activate(activationToken) shouldBe false
+                        githubSignIn(FakeGithub.verified(email)) { response ->
+                            response.status shouldBe HttpStatusCode.Forbidden
+                        }
+                    }
+
+                    // The account is FRESH (day 0): only the claim makes the sweep take it.
+                    runExpiryWorker()
+
+                    users.byId(id).shouldNotBeNull().value.email shouldBe
+                            AccountRetirement.of(UserId(id)).rename(EmailAddress.of(email))
+                    rawRowsOf(id) shouldBe emptyMap()
+                    withClue("the address is free again") { signUp(email) }
                 }
             }
         }

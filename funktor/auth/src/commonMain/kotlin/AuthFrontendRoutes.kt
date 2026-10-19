@@ -19,7 +19,7 @@ class AuthFrontendRoutes(mountPoint: String = DEFAULT_MOUNT_POINT) {
     /** Deep-link target of the activation mail. Opening it changes nothing; the page's button activates. */
     val activateAccount = Route2("$mountPoint/{$PROVIDER_PARAM}/activate/{$TOKEN_PARAM}")
 
-    /** The activation mail's "Didn't sign up? Cancel" link — the same token, the same page, cancel first. */
+    /** The activation mail's "Didn't sign up? Cancel" link — its own cancel token, the same page, cancel only. */
     val cancelSignUp = Route2("$mountPoint/{$PROVIDER_PARAM}/cancel-signup/{$TOKEN_PARAM}")
 
     /**

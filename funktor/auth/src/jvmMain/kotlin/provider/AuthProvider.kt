@@ -98,7 +98,8 @@ interface AuthProvider {
     }
 
     /**
-     * Retires a never-activated account, authorized by the activation token mailed at sign-up.
+     * Retires a never-activated account, authorized by the cancel token mailed at sign-up (or by the
+     * activation token, from the activation page's own cancel button).
      *
      * Answers `success = false` rather than throwing for an unusable token, as [activateAccount] does.
      */

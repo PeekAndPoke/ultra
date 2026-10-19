@@ -2,9 +2,11 @@ package io.peekandpoke.funktor
 
 import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
+import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.FunktorAuthBuilder
+import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -143,6 +145,31 @@ object FakeGithub : GithubSsoAuth.RemoteClient {
     fun unverified(email: String) = "unverified:$email"
 }
 
+/**
+ * Test hook inside [ActivationHardeningRealm]'s `retire()`, AFTER the framework claimed the account and stripped its
+ * credentials and BEFORE the rename: a spec runs a concurrent activation there, or makes the retire fail part-way.
+ */
+object RetireGate {
+    @Volatile
+    var beforeRename: suspend () -> Unit = {}
+
+    /**
+     * Runs right after a retire's CLAIM landed, before anything is stripped — the window in which an activation
+     * that already read the (then unclaimed) marker would try to commit.
+     */
+    @Volatile
+    var afterRetireClaim: suspend () -> Unit = {}
+}
+
+/** The real adapter, with [RetireGate.afterRetireClaim] run after a successful retire claim. */
+class RetireClaimGatedAdapter(private val inner: AuthRecordStorage.Adapter) : AuthRecordStorage.Adapter by inner {
+    override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? =
+        inner.replaceRecordIfUnclaimed(stored).also { replaced ->
+            val claim = (stored.value() as? AuthRecord.PendingActivation)?.claimedBy
+            if (replaced != null && claim == AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) RetireGate.afterRetireClaim()
+        }
+}
+
 //  The realm  //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -194,9 +221,11 @@ class ActivationHardeningRealm(
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams) =
             store.create(TestUser(name = params.displayName, email = params.email))
 
-        override suspend fun retire(user: Stored<TestUser>, retirement: AccountRetirement) =
+        override suspend fun retire(user: Stored<TestUser>, retirement: AccountRetirement): Stored<TestUser> {
+            RetireGate.beforeRename()
             // `name` defaults to the address's local part: it goes with the address.
-            store.update(user.modify { it.copy(email = retirement.rename(it.email), name = "retired") })
+            return store.update(user.modify { it.copy(email = retirement.rename(it.email), name = "retired") })
+        }
 
         override suspend fun serialize(user: Stored<TestUser>): JsonObject =
             Json.encodeToJsonElement(TestUser.serializer(), user.resolve()).jsonObject
@@ -239,6 +268,10 @@ private fun createHardeningBlueprint(
     instance(Kronos::class, Kronos.systemUtc.mutable())
 
     dynamic(ActivationHardeningRealm::class)
+    // The real Vault adapter of the configured backend, wrapped so a spec can act right after a retire's claim.
+    dynamic(AuthRecordStorage.Adapter::class) { repo: AuthRecordStorage.Adapter.Vault.Repo ->
+        RetireClaimGatedAdapter(AuthRecordStorage.Adapter.Vault(repo))
+    }
     users()
 }
 

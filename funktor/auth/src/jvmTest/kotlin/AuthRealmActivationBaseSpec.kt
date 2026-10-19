@@ -7,6 +7,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -176,26 +177,119 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
     }
 
     init {
-        "retirePendingAccount: the final marker delete is the commit point" - {
+        "retirePendingAccount: CLAIM FIRST" - {
 
-            "an activation that removed the marker DURING the retire wins: the retire reports false" {
+            "an activation that lost to the claim changes nothing, and the retire completes" {
                 val real = realDeps()
                 val marker = real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
                 var renamedTo: EmailAddress? = null
+                var activationWon: Boolean? = null
 
                 val realm = MinimalTestRealm(
                     getDeps = { real },
                     onLoadUserById = { user },
                     onLoadUserByEmail = { if (it == email && renamedTo == null) user else null },
                     onRetire = { u, retirement ->
-                        // A concurrent activation lands while the realm renames.
-                        real.storage.authRecords.removeById(marker._id)
+                        // A concurrent activation lands while the realm renames: its conditional delete must lose.
+                        activationWon = real.storage.authRecords.removeIfUnclaimed(marker._id)
+                        renamedTo = retirement.rename(u.value().email)
+                        u
+                    },
+                )
+
+                realm.retirePendingAccount(owner) shouldBe true
+                activationWon shouldBe false
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldBeNull()
+            }
+
+            "an activation that READ the marker before a retire claimed it cannot commit after — the delete is conditional" {
+                // The one interleaving only the conditional delete stops: the activation's read saw an unclaimed,
+                // fresh marker (so neither the claim check nor the expiry check fires), the retire's claim lands,
+                // then the activation deletes. Simulated with a store that serves the activation the stale read.
+                val real = realDeps()
+                val marker = real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
+                real.storage.authRecords.create(
+                    AuthRecord.EmailVerificationToken(
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                    )
+                )
+
+                real.storage.authRecords.replaceIfUnclaimed(
+                    marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) }
+                ).shouldNotBeNull()
+
+                val staleRead = depsWhereMarkerReadIs(real, marker)
+                val provider = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    log = NullLog,
+                    services = lazy { EmailAndPasswordAuth.Services(staleRead) },
+                )
+
+                provider.activateAccount(
+                    MinimalTestRealm(getDeps = { staleRead }),
+                    AuthActivateAccountRequest(provider = provider.id, token = "act"),
+                ).success shouldBe false
+
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner)
+                    .shouldNotBeNull().value().claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+            }
+
+            "a retire that LOST the claim to an activation changes NOTHING — credentials and address stay" {
+                val real = realDeps()
+                real.storage.authRecords.create(AuthRecord.Password(realm = realmId, ownerId = owner, token = "pw"))
+                val marker = real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
+
+                // The activation committed between the retire's read and its claim: simulated by a store whose
+                // claim write finds the marker gone.
+                val activatedMeanwhile = depsWhereReplaceIfUnclaimed(real) {
+                    real.storage.authRecords.removeIfUnclaimed(marker._id) shouldBe true
+                    null
+                }
+
+                // `onRetire` keeps its exploding default: nothing may be renamed.
+                val realm = MinimalTestRealm(getDeps = { activatedMeanwhile }, onLoadUserById = { user })
+
+                realm.retirePendingAccount(owner) shouldBe false
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldNotBeNull()
+            }
+
+            "a retire that stops part-way stays CLAIMED, blocked and swept: the next sweep finishes it" {
+                val real = realDeps()
+                real.storage.authRecords.create(AuthRecord.Password(realm = realmId, ownerId = owner, token = "pw"))
+                real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
+                var storeDown = true
+                var renamedTo: EmailAddress? = null
+
+                // A FRESH account and the default 7-day lifetime: only the claim can make the sweep pick it up.
+                val realm = MinimalTestRealm(
+                    getDeps = { real },
+                    onLoadUserById = { user },
+                    onLoadUserByEmail = { if (it == email && renamedTo == null) user else null },
+                    onRetire = { u, retirement ->
+                        check(!storeDown) { "the user store is down" }
                         renamedTo = retirement.rename(u.value().email)
                         u
                     },
                 )
 
                 realm.retirePendingAccount(owner) shouldBe false
+
+                val claimed = real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner)
+                    .shouldNotBeNull()
+                claimed.value().claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
+                withClue("an activation cannot take a claimed marker") {
+                    real.storage.authRecords.removeIfUnclaimed(claimed._id) shouldBe false
+                }
+                withClue("refresh refuses it") {
+                    shouldThrow<AuthError> { realm.refreshToken(owner, expectedUserType = null, currentOrgId = null) }
+                }
+
+                storeDown = false
+                realm.retireExpiredPendingAccounts() shouldBe 1
+
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldBeNull()
+                AccountRetirement.isRetired(renamedTo.shouldNotBeNull()) shouldBe true
             }
         }
 
@@ -265,6 +359,41 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
             shouldThrow<AuthError> {
                 realm.refreshToken(owner, expectedUserType = null, currentOrgId = null)
             }
+        }
+    }
+
+    /** [deps] whose marker lookups answer [stale] — what a request read before the stored marker changed. */
+    private fun depsWhereMarkerReadIs(deps: AuthSystem.Deps, stale: Stored<AuthRecord.PendingActivation>): AuthSystem.Deps {
+        val real = deps.storage.authRecords
+
+        val adapter = object : AuthRecordStorage.Adapter by real.adapter {
+            override suspend fun findLatest(realm: RealmId, type: String, owner: UserId): Stored<AuthRecord>? = when (type) {
+                AuthRecord.PendingActivation.identifier -> stale
+                else -> real.adapter.findLatest(realm, type, owner)
+            }
+        }
+
+        val storage = AuthSystem.Storage(lazy { AuthRecordStorage(lazy { adapter }, lazy { real.kronos }) })
+
+        return object : AuthSystem.Deps by deps {
+            override val storage: AuthSystem.Storage = storage
+        }
+    }
+
+    /** [deps] whose `replaceRecordIfUnclaimed` is replaced by [onReplace]. */
+    private fun depsWhereReplaceIfUnclaimed(deps: AuthSystem.Deps, onReplace: suspend () -> Stored<AuthRecord>?): AuthSystem.Deps {
+        val real = deps.storage.authRecords
+
+        val adapter = object : AuthRecordStorage.Adapter by real.adapter {
+            @Suppress("UNCHECKED_CAST")
+            override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? =
+                onReplace() as Stored<T>?
+        }
+
+        val storage = AuthSystem.Storage(lazy { AuthRecordStorage(lazy { adapter }, lazy { real.kronos }) })
+
+        return object : AuthSystem.Deps by deps {
+            override val storage: AuthSystem.Storage = storage
         }
     }
 

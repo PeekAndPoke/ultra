@@ -77,9 +77,22 @@ sealed interface AuthRecord : Timestamped {
         val resends: Int = 0,
         /** When the last activation mail was sent; null means the sign-up mail at [createdAt]. */
         val lastSentAt: MpInstant? = null,
+        /**
+         * Who has CLAIMED this account for a one-way change: [CLAIMED_BY_RETIRE] or [CLAIMED_BY_SSO]; null while
+         * nobody has. Set by a conditional write (`AuthRecordStorage.replaceIfUnclaimed`) BEFORE anything
+         * destructive happens, so of a retire and an activation exactly one proceeds. A claimed account stays
+         * blocked — no sign-in, activation, reset, SSO, resend — until the claimant finishes.
+         */
+        val claimedBy: String? = null,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<PendingActivation> {
             override val identifier = "pending-activation"
+
+            /** The account is being retired; the next sweep finishes a retire that stopped part-way. */
+            const val CLAIMED_BY_RETIRE = "retire"
+
+            /** The account is being activated by SSO with a verified address; the next SSO sign-in finishes it. */
+            const val CLAIMED_BY_SSO = "sso"
         }
 
         /** Never expires: it is state, not a secret. */
@@ -122,7 +135,8 @@ sealed interface AuthRecord : Timestamped {
     /**
      * Single-use token sent to a user's email address to verify ownership at sign-up time.
      * Consumed by `EmailAndPasswordAuth.activateAccount`, which also removes the [PendingActivation]
-     * marker; the activation page may also cancel with it. Never outlives the pending account.
+     * marker. The activation page's own cancel button may also present it to `cancelSignUp`; the mail's cancel
+     * link carries a [SignUpCancelToken] instead. Never outlives the pending account.
      */
     data class EmailVerificationToken(
         override val realm: RealmId,

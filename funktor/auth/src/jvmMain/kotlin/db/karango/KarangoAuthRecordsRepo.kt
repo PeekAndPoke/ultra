@@ -58,6 +58,13 @@ class KarangoAuthRecordsRepo(
             field { _type }
         }
 
+        // The expiry sweep: markers of one realm by age.
+        persistentIndex {
+            field { realm }
+            field { _type }
+            field { createdAt.ts }
+        }
+
         ttlIndex {
             field { expiresAt }
         }
@@ -160,15 +167,26 @@ class KarangoAuthRecordsRepo(
         return cursor.toList()
     }
 
-    override suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>? {
+    override suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>? {
         @Suppress("UNCHECKED_CAST")
-        return findFirst { ReplaceIfExists(stored, repo) } as Stored<T>?
+        return findFirst { IfUnclaimed(stored._key, repo) { p -> p.value("v", stored) } } as Stored<T>?
     }
 
-    /** `REPLACE` of a document that still exists — unlike `UPSERT`, a vanished one stays gone. */
-    private class ReplaceIfExists<T : Any, X : T>(
-        private val entity: Stored<X>,
+    override suspend fun removeIfUnclaimed(id: String): RemoveResult {
+        val removed = find { IfUnclaimed(id.substringAfterLast("/"), repo, replaceWith = null) }.toList()
+
+        return RemoveResult(count = removed.size.toLong(), query = null)
+    }
+
+    /**
+     * One AQL statement on the document [key] while it exists and is unclaimed: `REPLACE` it with [replaceWith],
+     * or `REMOVE` it when that is null. Atomic, unlike a read followed by a write; a missing `claimedBy`
+     * attribute reads as null, so other record types always qualify.
+     */
+    private class IfUnclaimed<T : Any>(
+        private val key: String,
         private val repo: KarangoRepository<T>,
+        private val replaceWith: ((AqlPrinter) -> Unit)?,
     ) : AqlTerminalExpr<T> {
 
         override fun innerType(): TypeRef<T> = repo.storedType
@@ -176,11 +194,19 @@ class KarangoAuthRecordsRepo(
         override fun getType() = repo.getType()
 
         override fun print(p: AqlPrinter) {
-            p.append("FOR doc IN ").append(repo).append(" FILTER doc._key == ").value("replace_key", entity._key)
-                .appendLine()
+            p.append("FOR doc IN ").append(repo)
+                .append(" FILTER doc._key == ").value("key", key)
+                .append(" && doc.claimedBy == null").appendLine()
             p.indent {
-                append("REPLACE doc WITH ").value("v", entity).append(" IN ").append(repo).appendLine()
-                append("RETURN NEW").appendLine()
+                when (replaceWith) {
+                    null -> append("REMOVE doc IN ").append(repo).appendLine().append("RETURN OLD").appendLine()
+                    else -> {
+                        append("REPLACE doc WITH ")
+                        replaceWith(this)
+                        append(" IN ").append(repo).appendLine()
+                        append("RETURN NEW").appendLine()
+                    }
+                }
             }
         }
     }

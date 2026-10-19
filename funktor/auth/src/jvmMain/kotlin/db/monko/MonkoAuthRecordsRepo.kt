@@ -56,6 +56,13 @@ class MonkoAuthRecordsRepo(
             field { it._type }
         }
 
+        // The expiry sweep: markers of one realm by age.
+        persistentIndex {
+            field { it.realm }
+            field { it._type }
+            field { it.createdAt.ts }
+        }
+
         // Meant to mirror Karango's TTL index, but it culls NOTHING today: `expiresAt` is a Long of epoch
         // seconds and a MongoDB TTL index only expires BSON Date fields. The code-level `hasNotExpired()`
         // filter in AuthRecordStorage is therefore the ONLY expiry boundary on Mongo, and expired rows
@@ -172,18 +179,29 @@ class MonkoAuthRecordsRepo(
         return cursor.toList()
     }
 
-    override suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>? {
-        @Suppress("UNCHECKED_CAST")
+    override suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>? {
         // As the sealed AuthRecord, so the document carries its `_type` exactly like an inserted one.
+        @Suppress("UNCHECKED_CAST")
         val document = Document(driver.codec.slumber(kType<AuthRecord>().type, stored.resolve()) as Map<String, Any?>)
-        // The same key mapping as removeAllByOwner: an ObjectId when the key is one, else the raw string.
-        val key = stored._key
-        val bsonId: Any = if (ObjectId.isValid(key)) ObjectId(key) else key
+        val bsonId = bsonIdOf(stored._key)
         document["_id"] = bsonId
 
         val result = driver.database.getCollection<Document>(name)
-            .replaceOne(Filters.eq("_id", bsonId), document, ReplaceOptions().upsert(false))
+            .replaceOne(unclaimed(bsonId), document, ReplaceOptions().upsert(false))
 
         return stored.takeIf { result.matchedCount == 1L }
     }
+
+    override suspend fun removeIfUnclaimed(id: String): RemoveResult {
+        val result = driver.database.getCollection<Document>(name)
+            .deleteOne(unclaimed(bsonIdOf(id.substringAfterLast("/"))))
+
+        return RemoveResult(count = result.deletedCount, query = null)
+    }
+
+    /** The document [bsonId] while nobody has claimed it; `eq(null)` also matches a missing field. */
+    private fun unclaimed(bsonId: Any) = Filters.and(Filters.eq("_id", bsonId), Filters.eq("claimedBy", null))
+
+    /** The same key mapping as removeAllByOwner: an ObjectId when the key is one, else the raw string. */
+    private fun bsonIdOf(key: String): Any = if (ObjectId.isValid(key)) ObjectId(key) else key
 }

@@ -540,7 +540,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             val sentAt = MpInstant.parse("2026-10-19T12:34:56Z")
 
-            authRecords.save(created.modify { it.copy(resends = 3, lastSentAt = sentAt) })
+            authRecords.replaceIfUnclaimed(created.modify { it.copy(resends = 3, lastSentAt = sentAt) }).shouldNotBeNull()
 
             val loaded = authRecords
                 .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
@@ -550,7 +550,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             loaded.value.resends shouldBe 3
             loaded.value.lastSentAt shouldBe sentAt
 
-            withClue("save REPLACES — it must not add a second marker") {
+            withClue("the replace REPLACES — it must not add a second marker") {
                 authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
                     .size shouldBe 1
             }
@@ -633,7 +633,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             }
         }
 
-        "replaceIfExists must replace a live record, and must NEVER bring a deleted one back" {
+        "replaceIfUnclaimed must replace a live record, and must NEVER bring a deleted one back" {
             // The resend schedule's write. A save (upsert) here re-inserted a marker that a concurrent
             // activation had just removed — the active account read pending again and the sweep retired it.
             val kontainer = createKontainer()
@@ -643,7 +643,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
 
             withClue("a live record is replaced in place") {
-                val replaced = authRecords.replaceIfExists(marker.modify { it.copy(resends = 2) }).shouldNotBeNull()
+                val replaced = authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = 2) }).shouldNotBeNull()
                 replaced._id shouldBe marker._id
 
                 val loaded = authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
@@ -656,9 +656,44 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             authRecords.removeById(marker._id)
 
             withClue("a deleted record stays deleted") {
-                authRecords.replaceIfExists(marker.modify { it.copy(resends = 3) }).shouldBeNull()
+                authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = 3) }).shouldBeNull()
                 authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1")) shouldBe
                         emptyList()
+            }
+        }
+
+        "a CLAIMED marker can be neither replaced nor removed by the conditional writes — the claim is atomic" {
+            // The commit point of retire-vs-activation: whoever claims (retire) or removes (activation) first wins,
+            // and the other's conditional write changes nothing.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+            val claimed = authRecords.replaceIfUnclaimed(
+                marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) }
+            ).shouldNotBeNull()
+
+            withClue("the claim persisted") {
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull().value.claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+            }
+
+            withClue("a second claim (or a resend's write) loses") {
+                authRecords.replaceIfUnclaimed(marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO) })
+                    .shouldBeNull()
+            }
+
+            withClue("an activation's conditional delete loses, and the marker stays") {
+                authRecords.removeIfUnclaimed(claimed._id) shouldBe false
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull().value.claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+            }
+
+            withClue("an UNCLAIMED marker is removed by it, once") {
+                val other = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner2")))
+                authRecords.removeIfUnclaimed(other._id) shouldBe true
+                authRecords.removeIfUnclaimed(other._id) shouldBe false
             }
         }
 

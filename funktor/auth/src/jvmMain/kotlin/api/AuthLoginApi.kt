@@ -108,9 +108,10 @@ class AuthLoginApi : ApiRoutes("login", authFloor = { public() }) {
                 funktorAuth
                     .activate(params.realm, body)
                     .let { ApiResponse.ok(it) }
-            } catch (e: AuthError) {
+            } catch (_: AuthError) {
+                // No `withInfo(e.message)`: anonymous endpoint, and the message can echo caller input — as for
+                // `cancelSignUp`, see the error-disclosure inventory.
                 ApiResponse.badRequest(AuthActivateAccountResponse(success = false))
-                    .withInfo(e.message ?: "")
             }
         }
     }
@@ -127,9 +128,10 @@ class AuthLoginApi : ApiRoutes("login", authFloor = { public() }) {
                 funktorAuth
                     .resendActivation(params.realm, body)
                     .let { ApiResponse.ok(it) }
-            } catch (e: AuthError) {
+            } catch (_: AuthError) {
+                // No `withInfo(e.message)`: anonymous endpoint, and the message can echo caller input — as for
+                // `cancelSignUp`, see the error-disclosure inventory.
                 ApiResponse.badRequest(AuthResendActivationResponse(sent = false))
-                    .withInfo(e.message ?: "")
             }
         }
     }

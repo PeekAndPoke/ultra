@@ -146,6 +146,11 @@ class ActivateAccountPageSpec : StringSpec({
             delay(300)
             server.calls shouldBe emptyList()
 
+            withClue("the cancel token cannot activate, so Cancel mode offers NO activate action — it points at the mail") {
+                root.button("Activate").size shouldBe 0
+                root.containsText("\"Activate account\" link in the same mail") shouldBe true
+            }
+
             root.button("Cancel this sign-up").click()
             root.awaitText("The sign-up is cancelled")
 
@@ -163,6 +168,21 @@ class ActivateAccountPageSpec : StringSpec({
         TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
             root.button("Activate my account").click()
             root.awaitText("This link is not valid any more")
+        }
+    }
+
+    "the ACTIVATION page's cancel button sends the activation token to cancel — never to activate" {
+        val server = FakeAuthServer().apply {
+            answer(cancelPath, AuthCancelSignUpResponse.serializer()) { AuthCancelSignUpResponse(success = true) }
+        }
+        val state = stateOn(server)
+
+        TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "activation-tok") }) { root ->
+            root.button("cancel this account").click()
+            root.awaitText("The sign-up is cancelled")
+
+            server.calls shouldBe listOf("POST $cancelPath")
+            server.bodies.single()["token"]?.jsonPrimitive?.content shouldBe "activation-tok"
         }
     }
 

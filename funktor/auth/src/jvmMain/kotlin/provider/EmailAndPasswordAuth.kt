@@ -121,19 +121,19 @@ class EmailAndPasswordAuth(
         /** Find the pending-activation marker for [realm] / [owner], or null when activated */
         suspend fun findPendingActivation(realm: RealmId, owner: UserId): Stored<AuthRecord.PendingActivation>?
 
-        /** Replace the pending-activation [marker] only while it still exists; null when it is gone */
+        /** Replace the pending-activation [marker] only while it exists and is unclaimed; null otherwise */
         suspend fun replacePendingActivation(
             marker: Stored<AuthRecord.PendingActivation>,
         ): Stored<AuthRecord.PendingActivation>?
+
+        /** Remove the pending-activation marker [id] only while it is unclaimed — i.e. activate; true when THIS call did */
+        suspend fun removePendingActivationIfUnclaimed(id: String): Boolean
 
         /** Find the sign-up cancel token for [realm] and [token] */
         suspend fun findSignUpCancelToken(realm: RealmId, token: String): Stored<AuthRecord.SignUpCancelToken>?
 
         /** Find the live sign-up cancel token of [realm] / [owner], if any */
         suspend fun findSignUpCancelTokenOf(realm: RealmId, owner: UserId): Stored<AuthRecord.SignUpCancelToken>?
-
-        /** Remove every password record of [realm] / [owner] */
-        suspend fun removePasswords(realm: RealmId, owner: UserId)
 
 
         /** Remove an auth record by its [id]; true when THIS call removed it */
@@ -221,7 +221,12 @@ class EmailAndPasswordAuth(
         override suspend fun replacePendingActivation(
             marker: Stored<AuthRecord.PendingActivation>,
         ): Stored<AuthRecord.PendingActivation>? {
-            return authRecordStorage.replaceIfExists(marker)
+            return authRecordStorage.replaceIfUnclaimed(marker)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun removePendingActivationIfUnclaimed(id: String): Boolean {
+            return authRecordStorage.removeIfUnclaimed(id)
         }
 
         /** @{inheritDoc} */
@@ -238,11 +243,6 @@ class EmailAndPasswordAuth(
             owner: UserId,
         ): Stored<AuthRecord.SignUpCancelToken>? {
             return authRecordStorage.findLatestRecordBy(type = AuthRecord.SignUpCancelToken, realm = realm, owner = owner)
-        }
-
-        /** @{inheritDoc} */
-        override suspend fun removePasswords(realm: RealmId, owner: UserId) {
-            authRecordStorage.removeAllByOwner(type = AuthRecord.Password, realm = realm, owner = owner)
         }
 
         /** @{inheritDoc} */
@@ -295,6 +295,8 @@ class EmailAndPasswordAuth(
         // Raw user input — parse at the boundary. This both VALIDATES and canonicalizes, so the
         // case-sensitive lookup below matches regardless of how the user typed it.
         val email = EmailAddress.parseOrNull(typed.email)
+            // A retired key is no account: nothing signs into it, whatever is (still) stored for it.
+            ?.takeUnless { AccountRetirement.isRetired(it) }
             ?: throw AuthError.invalidCredentials()
         // Validate password
         val password = typed.password.takeIf { it.isNotBlank() }
@@ -310,7 +312,13 @@ class EmailAndPasswordAuth(
         // "an unexpired verification token exists": tokens expire and expired records are filtered
         // out of every lookup, so the token-based check would erase itself after 24 hours and quietly
         // let every lapsed sign-up in.
-        if (services.findPendingActivation(realm = realm.id, owner = UserId(user._id)) != null) {
+        val marker = services.findPendingActivation(realm = realm.id, owner = UserId(user._id))
+
+        if (marker != null) {
+            // Claimed by a retire or an SSO activation in progress: no resend token, no hint — it is not
+            // this caller's account to finish.
+            if (marker.value.claimedBy != null) throw AuthError.invalidCredentials()
+
             throw AuthError.AccountNotActivated(userId = UserId(user._id))
         }
 
@@ -387,8 +395,9 @@ class EmailAndPasswordAuth(
         val marker = services.findPendingActivation(realm = realm.id, owner = owner)
             ?: return AuthResendActivationResponse(sent = false)
 
-        // An expired account is retired, not re-mailed: expiry is what bounds the schedule below.
-        if (realm.isExpired(marker.value)) {
+        // An expired account is retired, not re-mailed: expiry is what bounds the schedule below. A claimed one
+        // is being retired or activated.
+        if (marker.value.claimedBy != null || realm.isExpired(marker.value)) {
             return AuthResendActivationResponse(sent = false)
         }
 
@@ -516,6 +525,9 @@ class EmailAndPasswordAuth(
         val marker = services.findPendingActivation(realm = realm.id, owner = owner)
 
         if (marker != null) {
+            // Claimed: a retire (or an SSO activation) owns the account now.
+            if (marker.value.claimedBy != null) return AuthActivateAccountResponse(success = false)
+
             // An expired account is retired, not activated — whatever is left of its link.
             if (realm.isExpired(marker.value)) {
                 realm.retirePendingAccount(owner, expiredOnly = true)
@@ -528,8 +540,9 @@ class EmailAndPasswordAuth(
             //                    live for its remaining lifetime; replaying it is a no-op.
             //   token first   -> if the marker drop fails, the link is dead AND the account is still
             //                    blocked, until the user signs in again and asks for a resend.
-            // By its count: if a retire removed the marker meanwhile, the retire won.
-            if (!services.removeAuthRecord(marker._id)) {
+            // Atomically, and only while unclaimed: if a retire claimed the marker meanwhile, the retire won
+            // and this activation changes nothing.
+            if (!services.removePendingActivationIfUnclaimed(marker._id)) {
                 return AuthActivateAccountResponse(success = false)
             }
         }
@@ -618,9 +631,10 @@ class EmailAndPasswordAuth(
         // An EXPIRED pending account is retired here, and answered like an unknown address: a reset would
         // otherwise activate an account that has outlived its sign-up.
         services.findPendingActivation(realm = realm.id, owner = UserId(user._id))
-            ?.takeIf { realm.isExpired(it.value) }
+            ?.takeIf { it.value.claimedBy != null || realm.isExpired(it.value) }
             ?.let {
-                realm.retirePendingAccount(UserId(user._id), expiredOnly = true)
+                // Claimed accounts belong to their claimant; an expired one is retired here.
+                if (it.value.claimedBy == null) realm.retirePendingAccount(UserId(user._id), expiredOnly = true)
                 return AuthRecoverAccountResponse.InitPasswordReset
             }
 
@@ -680,30 +694,38 @@ class EmailAndPasswordAuth(
             .findPasswordRecoveryToken(realm = realm.id, token = request.token)
             ?: return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
 
-        // Invalidate the token immediately so it cannot be reused
-        services.removeAuthRecord(tokenRecord._id)
+        // Invalidate the token immediately so it cannot be reused — by its count: of two concurrent
+        // completions with one token, only the one whose delete removed it goes on.
+        if (!services.removeAuthRecord(tokenRecord._id)) {
+            return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
+        }
 
         val owner = tokenRecord.value.ownerId
         val marker = services.findPendingActivation(realm = realm.id, owner = owner)
 
-        // A reset link issued before the account expired does not revive it after.
-        if (marker != null && realm.isExpired(marker.value)) {
-            realm.retirePendingAccount(owner, expiredOnly = true)
-            return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
+        if (marker != null) {
+            // Claimed by a retire or an SSO activation: not this reset's account to finish.
+            if (marker.value.claimedBy != null) return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
+
+            // A reset link issued before the account expired does not revive it after.
+            if (realm.isExpired(marker.value)) {
+                realm.retirePendingAccount(owner, expiredOnly = true)
+                return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
+            }
         }
 
         // Write a new password entry into the auth records storage
-        services.createAuthRecord {
+        val newPassword = services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = owner, password = request.password)
         }
 
         // Following a link mailed to the address proves what the activation link proves, AND the new
         // password supersedes the sign-up one, so a completed reset also activates. It is the way back
         // for a pending owner who does not know the sign-up password. The password goes in FIRST and the
-        // marker by its count: if a retire won the marker meanwhile, the new password must not stay on the
-        // retired row.
-        if (marker != null && !services.removeAuthRecord(marker._id)) {
-            services.removePasswords(realm = realm.id, owner = owner)
+        // marker atomically, only while unclaimed: if a retire claimed it meanwhile, exactly the password this
+        // reset wrote is taken back — the retire removes the rest.
+        if (marker != null && !services.removePendingActivationIfUnclaimed(marker._id)) {
+            services.removeAuthRecord(newPassword._id)
             return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
         }
 
