@@ -93,7 +93,20 @@ RED; with the current setup it is GREEN.
 
 ## Review record — the LEDGER (filled by /feature-review)
 
+Change set `54c80970`. Scoped by risk (a few lines in an addon + tests, no input surface): ONE `reviewer-high` with
+a combined implementation & domain charter, no security charter.
+
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MAJOR | `pixijs_addon.kt:71-81`, `PixiJsContractSpec.kt` | Webpack 5.108 drops EVERY pixi class-local `import './init.mjs'` (Graphics, Text, Mesh, TilingSprite, BitmapText, HTMLText, NineSliceSprite, ParticleContainer), not only `app/init`; `scene/graphics/init` alone registers the Graphics pipes → a `Graphics` renders nothing, later redraws throw. Masked in Klang by its webpack rule; the task told Klang to delete it. No test row rendered | fix | CONFIRMED by experiment: new row "Graphics and Text actually render: their render pipes are registered" RED against `54c80970`. Fix: import all nine class-local init entries (`pixi.js/app`, `/graphics`, `/text`, `/text-bitmap`, `/text-html`, `/mesh`, `/sprite-tiling`, `/sprite-nine-slice`, `/particle-container`) — the list grepped from `pixi.js/lib` |
+| 1 | MINOR | `PixiJsContractSpec.kt:77-90` | Ticker row cannot fail for `start`/`remove`/`stop` individually (`autoStart` defaults true; remove+stop asserted together) | fix | `autoStart = false`; each step asserted on its own |
+| 1 | MINOR | `PixiJsContractSpec.kt:54` | Plugin row reads pixi's `@internal` `Application._plugins` — brittle across versions | fix (documented) | Kept on purpose (root cause, GPU-free); comment says so and points at the behaviour rows |
 
-**Verdict:**
+**Probed and CLEAN** (reviewer): `pixi.js/app` resolves through pixi's exports to `lib/app/init.mjs`, same
+`Extensions` instance; `extensions.add` idempotent (`handleByList` `includes`, pipes/systems `handleByNamedList`);
+plugin order irrelevant; no race (registration before the facade exists); `rendering/init`, `spritesheet/init` and
+`browserAll` are eager (imported from side-effectful modules); resize row deterministic; cleanup OK.
+
+Fix batch: `:kraft:addons:pixijs:jsBrowserTest` contract 10/10 + existing 3/3 green.
+
+**Verdict:** round 1 NOT clean (1 MAJOR fixed) → round 2.

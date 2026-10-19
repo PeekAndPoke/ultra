@@ -55,22 +55,33 @@ fun AddonRegistryBuilder.pixiJs(lazy: Boolean = false): Addon<PixiJsAddon> = reg
     val module: dynamic = (js("import('pixi.js')") as Promise<dynamic>).await()
     val pixi: dynamic = module.default ?: module
 
-    registerApplicationPlugins(pixi)
+    registerExtensions(pixi)
 
     PixiJsAddon(pixiModule = pixi)
 }
 
 /**
- * Makes sure the Application plugins (ticker, resize) are registered, whatever the bundler did.
+ * Makes sure pixi's extensions are registered, whatever the bundler did.
  *
- * pixi registers them in `pixi.js/lib/app/init.mjs`, a side-effect-only import inside `Application.mjs`. Webpack 5.108
- * drops that import, so `init()` resolves but `app.ticker` is undefined. Two independent remedies, each covering the
- * other's risk: import the `pixi.js/app` entry (a dynamic import always runs, and it registers whatever pixi puts there
- * in future versions), and register the two known plugins explicitly (pixi skips extensions already registered).
+ * Nine pixi classes register their extensions through a side-effect-only `import './init.mjs'` inside the class module
+ * (`Application`: the ticker and resize plugins; `Graphics`, `Text` and the other scene classes: their render pipes and
+ * systems). Webpack 5.108 drops those imports, so `init()` resolves but `app.ticker` is undefined and a `Graphics`
+ * renders nothing. Two remedies: import every such init entry (a dynamic import always runs), and register the two
+ * Application plugins explicitly as well (pixi skips extensions already registered).
  */
-private suspend fun registerApplicationPlugins(pixi: dynamic) {
-    @Suppress("UnsafeCastFromDynamic")
-    (js("import('pixi.js/app')") as Promise<dynamic>).await()
+private suspend fun registerExtensions(pixi: dynamic) {
+    // Literal specifiers, so the bundler can resolve each one.
+    listOf<Promise<dynamic>>(
+        js("import('pixi.js/app')"),
+        js("import('pixi.js/graphics')"),
+        js("import('pixi.js/text')"),
+        js("import('pixi.js/text-bitmap')"),
+        js("import('pixi.js/text-html')"),
+        js("import('pixi.js/mesh')"),
+        js("import('pixi.js/sprite-tiling')"),
+        js("import('pixi.js/sprite-nine-slice')"),
+        js("import('pixi.js/particle-container')"),
+    ).forEach { it.await() }
 
     val extensions = pixi.extensions
     if (extensions == null || extensions == undefined) return

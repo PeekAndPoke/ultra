@@ -48,6 +48,8 @@ class PixiJsContractSpec : StringSpec({
         return app
     }
 
+    // Reads pixi's @internal `Application._plugins` on purpose: it is the root cause itself and needs no GPU. A pixi
+    // rename turns this row red although the behaviour is fine — the ticker and resizeTo rows then say whether it is.
     "the Application plugins are registered (no GPU needed): TickerPlugin and ResizePlugin" {
         loadAddon()
         val pixi: dynamic = js("import('pixi.js')").unsafeCast<Promise<dynamic>>().await()
@@ -65,29 +67,45 @@ class PixiJsContractSpec : StringSpec({
         addon.createText(jsObject { text = "hi" }).text shouldBe "hi"
     }
 
-    "after init the ticker exists and drives callbacks; remove and stop work" {
-        val app = initializedApp()
+    "after init the ticker exists and drives callbacks; start, remove and stop each work" {
+        val app = initializedApp { asDynamic().autoStart = false }
         val ticker: Ticker? = app.asDynamic().ticker.unsafeCast<Ticker?>()
 
         ticker shouldNotBe null
 
+        suspend fun callsWithin(callback: () -> Int): Int {
+            var waited = 0
+            val before = callback()
+            while (callback() == before && waited < 2_000) {
+                delay(20.milliseconds); waited += 20
+            }
+            return callback() - before
+        }
+
         var calls = 0
         val callback: (Ticker) -> Unit = { calls++ }
-
         ticker!!.add(callback)
-        ticker.start()
 
-        var waited = 0
-        while (calls == 0 && waited < 2_000) {
-            delay(20.milliseconds); waited += 20
-        }
-        (calls > 0) shouldBe true
-
-        ticker.remove(callback)
-        ticker.stop()
-        val afterStop = calls
+        // not started yet (autoStart = false): nothing is called
         delay(100.milliseconds)
-        calls shouldBe afterStop
+        calls shouldBe 0
+
+        ticker.start()
+        (callsWithin { calls } > 0) shouldBe true
+
+        // remove alone: the ticker keeps running, the callback is no longer called
+        ticker.remove(callback)
+        var other = 0
+        ticker.add { other++ }
+        val afterRemove = calls
+        (callsWithin { other } > 0) shouldBe true
+        calls shouldBe afterRemove
+
+        // stop alone: nothing is called any more
+        ticker.stop()
+        val afterStop = other
+        delay(100.milliseconds)
+        other shouldBe afterStop
 
         app.destroy(rendererDestroy = true)
     }
@@ -100,6 +118,21 @@ class PixiJsContractSpec : StringSpec({
         app.canvas shouldNotBe null
         app.stage.addChild(g)
         app.stage.children.size shouldBe 1
+
+        app.destroy(rendererDestroy = true)
+    }
+
+    "Graphics and Text actually render: their render pipes are registered" {
+        val addon = loadAddon()
+        val app = initializedApp()
+
+        app.stage.addChild(addon.createGraphics().apply { rect(0.0, 0.0, 20.0, 10.0).fill(0xff00ff) })
+        app.stage.addChild(addon.createText(jsObject { text = "hello" }))
+        app.render()
+
+        val pipes: dynamic = app.asDynamic().renderer.renderPipes
+        (pipes.graphics.unsafeCast<Any?>()) shouldNotBe null
+        (pipes.text.unsafeCast<Any?>()) shouldNotBe null
 
         app.destroy(rendererDestroy = true)
     }
