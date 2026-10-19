@@ -10,6 +10,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import io.peekandpoke.funktor.auth.AuthSessionConfig
 import io.peekandpoke.funktor.auth.AuthState
@@ -22,7 +23,9 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
 import io.peekandpoke.funktor.auth.model.RealmId
+import io.peekandpoke.kraft.routing.RouterComponent
 import io.peekandpoke.kraft.routing.Static
+import io.peekandpoke.kraft.routing.router
 import io.peekandpoke.kraft.testing.KQuery
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.click
@@ -32,10 +35,13 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.api
+import kotlinx.browser.window
 import kotlinx.coroutines.delay
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.w3c.dom.Element
 import kotlin.time.Duration.Companion.minutes
 
@@ -53,6 +59,7 @@ class ActivateAccountPageSpec : StringSpec({
     /** Answers one auth endpoint; `null` makes the request fail in transport. */
     class FakeAuthServer {
         val calls = mutableListOf<String>()
+        val bodies = mutableListOf<JsonObject>()
         val answers = mutableMapOf<String, () -> String?>()
 
         fun <T> answer(path: String, serializer: KSerializer<T>, value: () -> T?) {
@@ -63,6 +70,7 @@ class ActivateAccountPageSpec : StringSpec({
             MockEngine { request ->
                 val path = request.url.encodedPath
                 calls += "${request.method.value} $path"
+                (request.body as? TextContent)?.let { bodies += codec.parseToJsonElement(it.text).jsonObject }
 
                 val body = answers[path]?.invoke() ?: error("the server cannot be reached")
 
@@ -119,6 +127,10 @@ class ActivateAccountPageSpec : StringSpec({
             root.awaitText("Your account is activated")
 
             server.calls shouldBe listOf("POST $activatePath")
+            server.bodies.single().let {
+                it["token"]?.jsonPrimitive?.content shouldBe "tok"
+                it["provider"]?.jsonPrimitive?.content shouldBe "email-password"
+            }
         }
     }
 
@@ -138,6 +150,7 @@ class ActivateAccountPageSpec : StringSpec({
             root.awaitText("The sign-up is cancelled")
 
             server.calls shouldBe listOf("POST $cancelPath")
+            server.bodies.single()["token"]?.jsonPrimitive?.content shouldBe "tok"
         }
     }
 
@@ -259,6 +272,48 @@ class ActivateAccountPageSpec : StringSpec({
                     if (answer?.nextResendAt == null) {
                         root.containsText("recently") shouldBe false
                     }
+                }
+            }
+        }
+    }
+
+    "each mailed deep link, MOUNTED through AuthState, opens its own mode and POSTs the token from the URL" {
+        // The wiring `AuthFrontend.mount` owns: the activation link must open Activate-first, the cancel link
+        // Cancel-first, and both must hand the URL's token — not some other value — to the server.
+        val cases = listOf(
+            Triple("/auth/email-password/activate/tok-a", "Activate my account", activatePath),
+            Triple("/auth/email-password/cancel-signup/tok-c", "Cancel this sign-up", cancelPath),
+        )
+
+        cases.forEach { (uri, primary, endpoint) ->
+            withClue(uri) {
+                val server = FakeAuthServer().apply {
+                    answer(activatePath, AuthActivateAccountResponse.serializer()) { AuthActivateAccountResponse(success = true) }
+                    answer(cancelPath, AuthCancelSignUpResponse.serializer()) { AuthCancelSignUpResponse(success = true) }
+                }
+                val state = stateOn(server)
+                val routes = router { state.mount(this) }
+                val originalHash = window.location.hash
+
+                try {
+                    TestBed.preact({ RouterComponent(routes) }) { root ->
+                        routes.navToUri(uri)
+                        root.awaitText(primary)
+                        delay(300)
+                        server.calls shouldBe emptyList()
+
+                        root.button(primary).click()
+                        root.awaitText("The sign-up is cancelled".takeIf { endpoint == cancelPath } ?: "Your account is activated")
+
+                        server.calls shouldBe listOf("POST $endpoint")
+                        server.bodies.single().let {
+                            it["token"]?.jsonPrimitive?.content shouldBe uri.substringAfterLast("/")
+                            it["provider"]?.jsonPrimitive?.content shouldBe "email-password"
+                        }
+                    }
+                } finally {
+                    routes.disable()
+                    window.location.hash = originalHash
                 }
             }
         }

@@ -23,8 +23,9 @@ data class RealmTokenConfig(
     /** Lifetime of email-verification tokens issued at sign-up; never beyond [pendingAccountLifetime]. */
     val emailVerificationTokenLifetime: Duration = 24.hours,
     /**
-     * How long a never-activated account lives. After it, the account is retired and its address is free
-     * for a new sign-up — see `AuthRealm.retirePendingAccount`. Also bounds how much mail resend can cause.
+     * How long a never-activated account lives. After it the account is retired — at its next use, or by
+     * `funktor/all`'s `PendingAccountsExpiryWorker` — and its address is free for a new sign-up; see
+     * `AuthRealm.retirePendingAccount`. Also bounds how much mail resend can cause.
      */
     val pendingAccountLifetime: Duration = 7.days,
     /**

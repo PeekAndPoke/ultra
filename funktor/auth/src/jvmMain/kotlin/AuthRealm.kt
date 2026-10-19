@@ -48,6 +48,7 @@ import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserRecord
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Defines an auth realm
@@ -407,8 +408,12 @@ interface AuthRealm<USER : AuthUser> {
      * its auth records. The row stays, since other collections may reference it.
      *
      * Returns false, changing nothing, unless the account is still PENDING (and, with [expiredOnly],
-     * past its lifetime) — an activated account is never retired. Every step leaves the account
-     * pending until the last one, so a failure part-way is retried by the next sweep, never left live.
+     * past its lifetime) — an activated account is never retired. Every step leaves the account pending
+     * until the last one, so a failure part-way leaves a pending account, never a live one: an expired one
+     * is retried by the next sweep, a cancelled one stays pending until it expires.
+     *
+     * The final marker delete is the commit point: it acts on its count, so of a retire and a concurrent
+     * activation exactly one wins.
      */
     suspend fun retirePendingAccount(userId: UserId, expiredOnly: Boolean = false): Boolean {
         val records = deps.storage.authRecords
@@ -430,6 +435,8 @@ interface AuthRealm<USER : AuthUser> {
             if (!AccountRetirement.isRetired(original)) {
                 try {
                     users.retire(user, AccountRetirement.of(userId))
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     deps.log.error("Retiring $userId in realm $id failed; it stays pending", e)
                     return false
@@ -444,28 +451,59 @@ interface AuthRealm<USER : AuthUser> {
             }
         }
 
-        // LAST: the marker is what makes every earlier step safe to repeat.
-        records.removeAllByOwner(type = AuthRecord.PendingActivation, realm = id, owner = userId)
+        // LAST: the marker is what makes every earlier step safe to repeat. Conditional on its count —
+        // if an activation removed it meanwhile, that activation won and this retire did not happen.
+        if (records.removeById(marker._id).count != 1L) {
+            deps.log.error("Retiring $userId in realm $id raced an activation; the activation won")
+            return false
+        }
 
         deps.log.info("SECURITY: retired never-activated account $userId in realm $id")
 
         return true
     }
 
-    /** Retires up to [limit] pending accounts of this realm that outlived their lifetime; returns how many. */
-    suspend fun retireExpiredPendingAccounts(limit: Int = 100): Int {
+    /**
+     * Retires every pending account of this realm that outlived its lifetime, in pages of [pageSize];
+     * returns how many.
+     *
+     * Pages forward by `createdAt`, and an account that fails is logged and passed, so one that can never
+     * be retired cannot hold up the rest; it is tried again by the next run.
+     */
+    suspend fun retireExpiredPendingAccounts(pageSize: Int = 100): Int {
         val before = deps.kronos.instantNow().minus(tokenConfig.pendingAccountLifetime)
+        var after: MpInstant? = null
+        var retired = 0
 
-        return deps.storage.authRecords
-            .findCreatedBefore(AuthRecord.PendingActivation, realm = id, before = before, limit = limit)
-            .count { retirePendingAccount(it.value.ownerId, expiredOnly = true) }
+        while (true) {
+            val page = deps.storage.authRecords.findCreatedBefore(
+                AuthRecord.PendingActivation, realm = id, before = before, after = after, limit = pageSize,
+            )
+
+            page.forEach { marker ->
+                try {
+                    if (retirePendingAccount(marker.value.ownerId, expiredOnly = true)) retired++
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    deps.log.error("Retiring expired ${marker.value.ownerId} in realm $id failed", e)
+                }
+            }
+
+            // Strictly after the page's newest: a marker sharing that exact millisecond waits for the next run.
+            if (page.size < pageSize) return retired
+            after = page.last().value.createdAt
+        }
     }
 
     /**
      * The SSO policy for an account that signed up by password and never activated, shared by every SSO
      * provider: call it with the account the provider's address resolved to.
      *
+     * - a retired account → [AuthError.invalidCredentials];
      * - not pending → [user] unchanged, and [isEmailVerified] is never asked;
+     * - pending but EXPIRED → retired here, and null: the address is free, so a sign-up may create a
+     *   fresh account (a sign-in has nothing to sign into);
      * - pending and verified → activated: the sign-up password is deleted FIRST, so a password chosen
      *   by whoever pre-registered the address can never start working; the account becomes SSO-only
      *   until its owner sets a password through a reset;
@@ -475,20 +513,32 @@ interface AuthRealm<USER : AuthUser> {
         user: Stored<USER>,
         provider: String,
         isEmailVerified: suspend () -> Boolean,
-    ): Stored<USER> {
+    ): Stored<USER>? {
+        if (AccountRetirement.isRetired(user.value.email)) throw AuthError.invalidCredentials()
+
         val records = deps.storage.authRecords
         val owner = UserId(user._id)
 
-        records.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = owner)
+        val marker = records.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = owner)
             ?: return user
+
+        if (isExpired(marker.value)) {
+            return when (retirePendingAccount(owner, expiredOnly = true)) {
+                true -> null
+                false -> throw AuthError.invalidCredentials()
+            }
+        }
 
         if (!isEmailVerified()) throw AuthError.invalidCredentials()
 
         records.removeAllByOwner(type = AuthRecord.Password, realm = id, owner = owner)
         records.removeAllByOwner(type = AuthRecord.ActivationResendToken, realm = id, owner = owner)
         records.removeAllByOwner(type = AuthRecord.EmailVerificationToken, realm = id, owner = owner)
-        // LAST, for the same reason as in [retirePendingAccount].
-        records.removeAllByOwner(type = AuthRecord.PendingActivation, realm = id, owner = owner)
+        records.removeAllByOwner(type = AuthRecord.SignUpCancelToken, realm = id, owner = owner)
+
+        // LAST, for the same reason as in [retirePendingAccount], and conditional on its count: a retire
+        // that won the marker has renamed the account, so there is nothing left to sign into.
+        if (records.removeById(marker._id).count != 1L) throw AuthError.invalidCredentials()
 
         deps.log.warning(
             "SECURITY: pending account $owner in realm $id activated by '$provider' with a verified address; " +
@@ -545,6 +595,8 @@ interface AuthRealm<USER : AuthUser> {
      */
     suspend fun refreshToken(userId: UserId, expectedUserType: String?, currentOrgId: OrgId?): AuthSignInResponse {
         val user = users.loadById(userId)
+            // A retired account (renamed, credentials gone) is gone for every purpose, including a session.
+            ?.takeUnless { AccountRetirement.isRetired(it.value.email) }
             ?: throw AuthError("User not found: $userId")
 
         // An [OrgPolicy.Required] realm has NO valid org-less session: `signIn` and `selectOrg` can

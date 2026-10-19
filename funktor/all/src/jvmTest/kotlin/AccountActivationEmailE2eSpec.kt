@@ -158,8 +158,9 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     link shouldStartWith activationLinkPrefix
 
-                    withClue("the cancel link carries the SAME token — whoever may activate may decline") {
-                        cancelLink shouldBe cancelLinkPrefix + link.removePrefix(activationLinkPrefix)
+                    withClue("the cancel link carries its OWN token, which lives as long as the account") {
+                        cancelLink shouldStartWith cancelLinkPrefix
+                        cancelLink.removePrefix(cancelLinkPrefix) shouldNotBe link.removePrefix(activationLinkPrefix)
                     }
 
                     val tokenSegment = link.removePrefix(activationLinkPrefix)

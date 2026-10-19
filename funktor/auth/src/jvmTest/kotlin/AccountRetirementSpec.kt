@@ -91,12 +91,4 @@ class AccountRetirementSpec : StringSpec({
         AccountRetirement.isRetired(EmailAddress.of("retired@example.invalid")) shouldBe false
         AccountRetirement.isRetired(EmailAddress.of("a#retired-0123456789abcdef0123456789abcdef@b.invalid")) shouldBe false
     }
-
-    "any other unique key renames in the same scheme, idempotently" {
-        val retirement = AccountRetirement.of(UserId("users/1"))
-        val renamed = retirement.rename("adam-the-username")
-
-        renamed shouldMatch Regex("adam-the-username#retired-[0-9a-f]{32}")
-        retirement.rename(renamed) shouldBe renamed
-    }
 })

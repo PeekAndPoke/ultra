@@ -218,7 +218,7 @@ class GithubSsoAuth(
 
         return realm.resolveSsoAccount(user, provider = id) {
             isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))
-        }
+        } ?: throw AuthError.invalidCredentials()
     }
 
     /**

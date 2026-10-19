@@ -281,6 +281,19 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
             +"This link is not valid any more."
         }
 
+        // The cancel link is the way out for someone who did NOT sign up; "try signing in" would be advice
+        // for the wrong person. It lives as long as the sign-up, so a dead one means the sign-up is over.
+        if (props.mode == Mode.Cancel) {
+            p {
+                +"The sign-up was already cancelled, it has expired - then the address is free again and "
+                +"nothing more needs doing - or it was activated. If it was activated and you did not do that, "
+                +"use \"Forgot password\" on the login page: the reset link goes to your mailbox only."
+            }
+
+            renderBackLink()
+            return
+        }
+
         p {
             // ALL possibilities, because the page cannot tell them apart and the most common one is the
             // happy case: a second click on a link that already worked.

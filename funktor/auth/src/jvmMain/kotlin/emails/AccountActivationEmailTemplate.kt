@@ -20,9 +20,9 @@ abstract class AccountActivationEmailTemplate :
     LocalizedEmailTemplate<AccountActivationEmailTemplate.Params>() {
 
     /**
-     * Nested so that adding a value later is a change in one file rather than a new parameter
-     * threaded through every template. A value added here is a compile error at each renderer that
-     * has not been updated — which is the whole reason these are types and not `{{placeholders}}`.
+     * Nested so that adding a value later is a change in one file rather than a new parameter threaded
+     * through every template. NOTE a renderer that ignores a new value still compiles: an app template
+     * written before [cancelUrl] existed silently mails no cancel link.
      */
     data class Params(
         val recipient: EmailAddress,

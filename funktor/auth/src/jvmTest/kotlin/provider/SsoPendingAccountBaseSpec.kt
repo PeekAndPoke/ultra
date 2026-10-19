@@ -6,12 +6,14 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.FunktorAuthBuilder
 import io.peekandpoke.funktor.auth.MinimalTestRealm
 import io.peekandpoke.funktor.auth.MinimalTestUser
+import io.peekandpoke.funktor.auth.RealmTokenConfig
 import io.peekandpoke.funktor.auth.createAuthTestContainer
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.funktorAuth
@@ -33,6 +35,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
 class SsoPendingAccountKarangoSpec : SsoPendingAccountBaseSpec() {
@@ -189,6 +192,53 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
 
                 deps.storage.authRecords.state() shouldBe untouched.plus("marker" to false)
+            }
+
+            "an EXPIRED pending account is retired, not activated — even with a verified address" {
+                val deps = realDeps()
+                deps.storage.authRecords.preRegister(pending = true)
+                var retired = false
+
+                val realm = MinimalTestRealm(
+                    getDeps = { deps },
+                    tokenConfig = RealmTokenConfig(pendingAccountLifetime = Duration.ZERO),
+                    onLoadUserById = { user },
+                    onLoadUserByEmail = { if (it == email && !retired) user else null },
+                    onRetire = { u, _ -> retired = true; u },
+                )
+                val subject = google(verified = true)
+
+                shouldThrow<AuthError> { subject.signIn(realm, ssoRequest(subject)) }.message shouldBe "Invalid credentials"
+
+                retired shouldBe true
+                deps.storage.authRecords.state() shouldBe activated
+            }
+
+            "a RETIRED address is refused, whatever the provider says" {
+                val deps = realDeps()
+                val retiredUser = Stored(
+                    _id = user._id,
+                    value = MinimalTestUser(email = AccountRetirement.of(owner).rename(email)),
+                )
+                val realm = MinimalTestRealm(getDeps = { deps })
+
+                shouldThrow<AuthError> {
+                    realm.resolveSsoAccount(retiredUser, provider = "test") { true }
+                }.message shouldBe "Invalid credentials"
+            }
+
+            "a retire that wins the marker meanwhile leaves nothing to sign into" {
+                val deps = realDeps()
+                deps.storage.authRecords.preRegister(pending = true)
+                val realm = realmWith(deps)
+
+                shouldThrow<AuthError> {
+                    realm.resolveSsoAccount(user, provider = "test") {
+                        // A concurrent retire removes the marker while the provider is asked.
+                        deps.storage.authRecords.removeAllByOwner(AuthRecord.PendingActivation, realmId, owner)
+                        true
+                    }
+                }.message shouldBe "Invalid credentials"
             }
 
             "the password goes BEFORE the marker: a failure in between leaves the account pending, never live" {

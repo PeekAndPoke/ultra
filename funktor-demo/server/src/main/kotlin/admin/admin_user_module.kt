@@ -19,7 +19,4 @@ val AdminUserModule = module {
 
     dynamic(AdminUsersRepo::class)
     dynamic(AdminUsersRepo.Fixtures::class)
-
-    // The only demo realm with self sign-up; the worker sweeps every realm.
-    dynamic(PendingAccountsExpiryWorker::class)
 }

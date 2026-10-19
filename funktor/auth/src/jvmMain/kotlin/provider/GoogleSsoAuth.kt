@@ -170,6 +170,7 @@ class GoogleSsoAuth(
             ?: throw AuthError.invalidCredentials()
 
         return realm.resolveSsoAccount(user, provider = id) { payload.isEmailVerified() }
+            ?: throw AuthError.invalidCredentials()
     }
 
     /** Google's `email_verified` claim; anything but an explicit `true` is unverified. */

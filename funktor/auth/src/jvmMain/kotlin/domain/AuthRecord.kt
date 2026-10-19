@@ -122,7 +122,7 @@ sealed interface AuthRecord : Timestamped {
     /**
      * Single-use token sent to a user's email address to verify ownership at sign-up time.
      * Consumed by `EmailAndPasswordAuth.activateAccount`, which also removes the [PendingActivation]
-     * marker, or by `cancelSignUp`, which retires the account. Never outlives the pending account.
+     * marker; the activation page may also cancel with it. Never outlives the pending account.
      */
     data class EmailVerificationToken(
         override val realm: RealmId,
@@ -135,6 +135,29 @@ sealed interface AuthRecord : Timestamped {
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<EmailVerificationToken> {
             override val identifier = "email-verification-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
+     * The secret behind the activation mail's "Didn't sign up? Cancel" link: single-use, one per pending
+     * account, expiring WITH the account rather than with the activation link, so a victim can cancel for
+     * the account's whole pending life. Every resend mails the same one.
+     */
+    data class SignUpCancelToken(
+        override val realm: RealmId,
+        override val ownerId: UserId,
+        /** The pending account's own expiry, in epoch seconds. */
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret mailed in the cancel link. */
+        override val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<SignUpCancelToken> {
+            override val identifier = "sign-up-cancel-token"
         }
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)

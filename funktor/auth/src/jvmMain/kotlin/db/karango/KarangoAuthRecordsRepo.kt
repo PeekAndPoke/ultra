@@ -9,10 +9,13 @@ import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
+import io.peekandpoke.karango.aql.AqlPrinter
+import io.peekandpoke.karango.aql.AqlTerminalExpr
 import io.peekandpoke.karango.aql.ASC
 import io.peekandpoke.karango.aql.DESC
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
+import io.peekandpoke.karango.aql.GT
 import io.peekandpoke.karango.aql.LT
 import io.peekandpoke.karango.aql.NE
 import io.peekandpoke.karango.aql.REMOVE
@@ -21,9 +24,11 @@ import io.peekandpoke.karango.aql._type
 import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
+import io.peekandpoke.karango.vault.KarangoRepository
 import io.peekandpoke.karango.vault._id
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.ts
+import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
@@ -137,18 +142,46 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun findCreatedBefore(
-        realm: RealmId, type: String, before: MpInstant, limit: Int,
+        realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
     ): List<Stored<AuthRecord>> {
         val cursor = find {
             FOR(repo) { r ->
                 FILTER(r._type EQ type)
                 FILTER(r.realm EQ realm)
                 FILTER(r.createdAt.ts LT before.toEpochMillis())
+                if (after != null) {
+                    FILTER(r.createdAt.ts GT after.toEpochMillis())
+                }
                 SORT(r.createdAt.ts.ASC)
                 LIMIT(limit)
                 RETURN(r)
             }
         }
         return cursor.toList()
+    }
+
+    override suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>? {
+        @Suppress("UNCHECKED_CAST")
+        return findFirst { ReplaceIfExists(stored, repo) } as Stored<T>?
+    }
+
+    /** `REPLACE` of a document that still exists — unlike `UPSERT`, a vanished one stays gone. */
+    private class ReplaceIfExists<T : Any, X : T>(
+        private val entity: Stored<X>,
+        private val repo: KarangoRepository<T>,
+    ) : AqlTerminalExpr<T> {
+
+        override fun innerType(): TypeRef<T> = repo.storedType
+
+        override fun getType() = repo.getType()
+
+        override fun print(p: AqlPrinter) {
+            p.append("FOR doc IN ").append(repo).append(" FILTER doc._key == ").value("replace_key", entity._key)
+                .appendLine()
+            p.indent {
+                append("REPLACE doc WITH ").value("v", entity).append(" IN ").append(repo).appendLine()
+                append("RETURN NEW").appendLine()
+            }
+        }
     }
 }

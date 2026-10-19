@@ -53,10 +53,4 @@ class AccountRetirement private constructor(
 
         return EmailAddress("$original$MARKER$tag$TLD")
     }
-
-    /** Any OTHER unique-key value of the account, renamed in the same scheme. Idempotent. */
-    fun rename(value: String): String = when {
-        value.endsWith("$MARKER$tag") -> value
-        else -> "$value$MARKER$tag"
-    }
 }

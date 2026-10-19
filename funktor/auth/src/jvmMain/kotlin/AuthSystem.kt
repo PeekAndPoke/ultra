@@ -23,6 +23,7 @@ import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * AuthSystem manages and provides access to multiple authentication realms.
@@ -119,14 +120,17 @@ class AuthSystem(
     }
 
     /**
-     * Retires the pending accounts of every realm that outlived `RealmTokenConfig.pendingAccountLifetime`,
-     * up to [limitPerRealm] each; returns how many. Meant for a periodic worker — expiry is also enforced
-     * where it matters (activation, resend, sign-up), so this is garbage collection, not the guard.
+     * Retires the pending accounts of every realm that outlived `RealmTokenConfig.pendingAccountLifetime`;
+     * returns how many. Run periodically by `funktor/all`'s `PendingAccountsExpiryWorker`. Expiry is also
+     * enforced at every use of an account (sign-up, sign-in, SSO, activation, reset), so this frees what
+     * nobody touches again.
      */
-    suspend fun retireExpiredPendingAccounts(limitPerRealm: Int = 100): Int {
+    suspend fun retireExpiredPendingAccounts(): Int {
         return realms.sumOf { realm ->
             try {
-                realm.retireExpiredPendingAccounts(limit = limitPerRealm)
+                realm.retireExpiredPendingAccounts()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 deps.log.error("Retiring expired pending accounts failed in realm ${realm.id}", e)
                 0

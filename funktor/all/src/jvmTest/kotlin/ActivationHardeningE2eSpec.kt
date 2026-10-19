@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor
 
 import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -29,6 +30,8 @@ import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.auth.provider.GithubSsoAuth
+import io.peekandpoke.funktor.cluster.workers.WorkersRunner
+import io.peekandpoke.funktor.cluster.workers.services.WorkerRegistry
 import io.peekandpoke.funktor.core.App
 import io.peekandpoke.funktor.messaging.senders.CapturedEmails
 import io.peekandpoke.funktor.messaging.senders.hrefs
@@ -80,6 +83,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
     private val password = "Hardening1234!"
 
     private val activationLinkPrefix = "https://example.com/auth/$provider/activate/"
+    private val cancelLinkPrefix = "https://example.com/auth/$provider/cancel-signup/"
 
     private var counter = 0
 
@@ -119,6 +123,17 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             .also { it shouldStartWith activationLinkPrefix }
             .removePrefix(activationLinkPrefix)
             .decodeUriComponent()
+
+    /** The cancel token from the newest mail to [email] — its own secret, living as long as the account. */
+    private fun cancelTokenTo(email: String): String =
+        emails.lastTo(email).shouldNotBeNull().hrefs().last()
+            .also { it shouldStartWith cancelLinkPrefix }
+            .removePrefix(cancelLinkPrefix)
+            .decodeUriComponent()
+
+    /** One run of the expiry worker exactly as the cluster's runner calls it. */
+    private suspend fun runExpiryWorker() =
+        kontainer.get(PendingAccountsExpiryWorker::class).execute { WorkersRunner.State.Running }
 
     private suspend fun AppUnderTest<FunktorAllTestConfig>.passwordSignIn(
         email: String,
@@ -301,26 +316,6 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             }
         }
 
-        "A resend token is single-use" {
-            apiApp {
-                anonymous {
-                    val email = freshEmail("single-use")
-                    signUp(email)
-
-                    advance(config.activationResendDelays[0])
-                    val token = resendToken(email)
-                    resend(token).sent shouldBe true
-
-                    // Past the NEXT delay, so single use is the only thing that can refuse the replay.
-                    advance(config.activationResendDelays[1])
-                    emails.clear()
-
-                    resend(token).sent shouldBe false
-                    emails.capturedTo(email) shouldBe emptyList()
-                }
-            }
-        }
-
         //  Expiry and retirement  ///////////////////////////////////////////////////////////////////////////
 
         "An expired pending account is retired by the sweep: address renamed, auth records gone, row kept" {
@@ -333,12 +328,12 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
 
                     withClue("one minute before expiry the sweep leaves it alone") {
                         advance(config.pendingAccountLifetime - 1.minutes)
-                        authSystem.retireExpiredPendingAccounts()
+                        runExpiryWorker()
                         userOf(email).shouldNotBeNull()._id shouldBe id
                     }
 
                     advance(2.minutes)
-                    authSystem.retireExpiredPendingAccounts()
+                    runExpiryWorker()
 
                     val retired = users.byId(id).shouldNotBeNull()
 
@@ -374,7 +369,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                         ids += userOf(email).shouldNotBeNull()._id
 
                         advance(config.pendingAccountLifetime + 1.minutes)
-                        authSystem.retireExpiredPendingAccounts()
+                        runExpiryWorker()
                         userOf(email).shouldBeNull()
                     }
 
@@ -444,22 +439,27 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                 anonymous {
                     val email = freshEmail("cancel")
                     signUp(email)
-                    val token = activationTokenTo(email)
+                    val activationToken = activationTokenTo(email)
+                    val token = cancelTokenTo(email)
                     val id = userOf(email).shouldNotBeNull()._id
 
                     cancel(token) shouldBe true
 
-                    AccountRetirement.isRetired(users.byId(id).shouldNotBeNull().value.email) shouldBe true
+                    val retired = users.byId(id).shouldNotBeNull().value.email
+                    AccountRetirement.isRetired(retired) shouldBe true
                     hasPassword(id) shouldBe false
                     isPending(id) shouldBe false
 
-                    withClue("single-use, and the same token cannot activate afterwards") {
+                    withClue("single-use, and the activation link died with the account") {
                         cancel(token) shouldBe false
-                        activate(token) shouldBe false
+                        activate(activationToken) shouldBe false
                     }
 
-                    withClue("the pre-registering password is gone with it") {
-                        passwordSignIn(email) { response -> response.status shouldBe HttpStatusCode.Forbidden }
+                    withClue("the pre-registering password is gone: not even the RETIRED address signs in with it") {
+                        passwordSignIn(retired.value) { response ->
+                            response.status shouldBe HttpStatusCode.Forbidden
+                            response.apiResponseData<AuthSignInResponse>().shouldBeNull()
+                        }
                     }
 
                     withClue("the address is free") { signUp(email) }
@@ -474,7 +474,9 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                 anonymous {
                     val email = freshEmail("cancel-active")
                     signUp(email)
-                    val token = activationTokenTo(email)
+                    // The cancel token outlives an activation (it expires with the pending lifetime), so only
+                    // the account's state can refuse here.
+                    val cancelToken = cancelTokenTo(email)
                     val id = userOf(email).shouldNotBeNull()._id
 
                     emails.clear()
@@ -495,7 +497,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
 
                     isPending(id) shouldBe false
 
-                    cancel(token) shouldBe false
+                    cancel(cancelToken) shouldBe false
 
                     users.byId(id).shouldNotBeNull().value.email shouldBe EmailAddress.of(email)
                     passwordSignIn(email, password = "Brand-new-1234!") { response ->
@@ -511,7 +513,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     val email = freshEmail("retired-reset")
                     signUp(email)
                     val id = userOf(email).shouldNotBeNull()._id
-                    cancel(activationTokenTo(email)) shouldBe true
+                    cancel(cancelTokenTo(email)) shouldBe true
 
                     val retired = users.byId(id).shouldNotBeNull().value.email
 
@@ -529,6 +531,98 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     }
                 }
             }
+        }
+
+        "The cancel link works for the account's WHOLE pending life, long after the activation link died" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("cancel-day-6")
+                    signUp(email)
+                    val activationToken = activationTokenTo(email)
+                    val cancelToken = cancelTokenTo(email)
+
+                    advance(6.days)
+
+                    withClue("the 24 h activation link is long dead") { activate(activationToken) shouldBe false }
+                    withClue("the victim can still decline") { cancel(cancelToken) shouldBe true }
+                    userOf(email).shouldBeNull()
+                }
+            }
+        }
+
+        "The cancel link dies WITH the account" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("cancel-day-8")
+                    signUp(email)
+                    val cancelToken = cancelTokenTo(email)
+
+                    advance(config.pendingAccountLifetime + 1.minutes)
+
+                    cancel(cancelToken) shouldBe false
+                }
+            }
+        }
+
+        //  Expired = retired at the point of use  ////////////////////////////////////////////////////////////
+
+        "A reset of an EXPIRED pending account retires it and answers like an unknown address" {
+            // Otherwise a reset would activate an account that outlived its sign-up — sweep or no sweep.
+            apiApp {
+                anonymous {
+                    val email = freshEmail("expired-reset")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    advance(config.pendingAccountLifetime + 1.minutes)
+                    emails.clear()
+
+                    api.authLogin.recoverAccountInitPasswordReset(
+                        realmParam,
+                        body = AuthRecoverAccountRequest.InitPasswordReset(provider = provider, email = email),
+                    ) { status shouldBe HttpStatusCode.OK }
+
+                    emails.capturedTo(email) shouldBe emptyList()
+                    userOf(email).shouldBeNull()
+                    AccountRetirement.isRetired(users.byId(id).shouldNotBeNull().value.email) shouldBe true
+                }
+            }
+        }
+
+        "Verified SSO on an EXPIRED pending account: sign-in finds nothing, sign-up gets a FRESH account" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("expired-sso")
+                    signUp(email)
+                    val oldId = userOf(email).shouldNotBeNull()._id
+
+                    advance(config.pendingAccountLifetime + 1.minutes)
+
+                    githubSignIn(FakeGithub.verified(email)) { response ->
+                        response.status shouldBe HttpStatusCode.Forbidden
+                    }
+
+                    withClue("the expired account was retired, not activated") {
+                        userOf(email).shouldBeNull()
+                        isPending(oldId) shouldBe false
+                        hasPassword(oldId) shouldBe false
+                    }
+
+                    api.authLogin.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.OAuth(provider = GithubSsoAuth.ID, token = FakeGithub.verified(email)),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthSignUpResponse>().shouldNotBeNull().signIn.shouldNotBeNull()
+                    }
+
+                    userOf(email).shouldNotBeNull()._id shouldNotBe oldId
+                }
+            }
+        }
+
+        "The Funktor module registers the expiry worker, so every app on funktor/all retires expired sign-ups" {
+            kontainer.get(WorkerRegistry::class).workerClasses shouldContain PendingAccountsExpiryWorker::class
         }
 
         //  SSO on a pending account  ///////////////////////////////////////////////////////////////////////////

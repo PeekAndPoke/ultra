@@ -1,5 +1,7 @@
 package io.peekandpoke.funktor.auth
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -18,7 +20,11 @@ import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
+import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 
 class AuthRealmActivationKarangoSpec : AuthRealmActivationBaseSpec() {
     override fun KontainerBuilder.configureKontainer() {
@@ -165,6 +171,99 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 realm.retirePendingAccount(owner) shouldBe true
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldBeNull()
                 AccountRetirement.isRetired(renamedTo.shouldNotBeNull()) shouldBe true
+            }
+        }
+    }
+
+    init {
+        "retirePendingAccount: the final marker delete is the commit point" - {
+
+            "an activation that removed the marker DURING the retire wins: the retire reports false" {
+                val real = realDeps()
+                val marker = real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
+                var renamedTo: EmailAddress? = null
+
+                val realm = MinimalTestRealm(
+                    getDeps = { real },
+                    onLoadUserById = { user },
+                    onLoadUserByEmail = { if (it == email && renamedTo == null) user else null },
+                    onRetire = { u, retirement ->
+                        // A concurrent activation lands while the realm renames.
+                        real.storage.authRecords.removeById(marker._id)
+                        renamedTo = retirement.rename(u.value().email)
+                        u
+                    },
+                )
+
+                realm.retirePendingAccount(owner) shouldBe false
+            }
+        }
+
+        "retireExpiredPendingAccounts" - {
+
+            val expired = RealmTokenConfig(pendingAccountLifetime = Duration.ZERO)
+
+            "an account that cannot be retired does not hold up the rest, across pages" {
+                val real = realDeps()
+                val owners = listOf("test_users/a", "test_users/b", "test_users/c").map { UserId(it) }
+                owners.forEach {
+                    real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = it))
+                    delay(5.milliseconds)
+                }
+
+                val renamed = mutableSetOf<String>()
+
+                val realm = MinimalTestRealm(
+                    getDeps = { real },
+                    tokenConfig = expired,
+                    // The OLDEST one cannot even be loaded; the next one cannot be renamed.
+                    onLoadUserById = { id ->
+                        check(id != owners[0]) { "the user store is down for ${id.value}" }
+                        Stored(_id = id.value, value = MinimalTestUser(email = EmailAddress.of("${id.value.substringAfter("/")}@x.com")))
+                    },
+                    onLoadUserByEmail = { null },
+                    onRetire = { u, retirement ->
+                        check(u._id != owners[1].value) { "cannot rename ${u._id}" }
+                        renamed += u._id
+                        u.modify { it.copy(email = retirement.rename(it.email)) }
+                    },
+                )
+
+                realm.retireExpiredPendingAccounts(pageSize = 1) shouldBe 1
+
+                renamed shouldBe setOf(owners[2].value)
+                withClue("the failures stay pending, to be tried again by the next run") {
+                    real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owners[0]).shouldNotBeNull()
+                    real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owners[1]).shouldNotBeNull()
+                    real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owners[2]).shouldBeNull()
+                }
+            }
+
+            "cancellation is NOT swallowed" {
+                val real = realDeps()
+                real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
+
+                val realm = MinimalTestRealm(
+                    getDeps = { real },
+                    tokenConfig = expired,
+                    onLoadUserById = { user },
+                    onRetire = { _, _ -> throw CancellationException("the worker is stopping") },
+                )
+
+                shouldThrow<CancellationException> { realm.retireExpiredPendingAccounts() }
+            }
+        }
+
+        "refreshToken refuses a RETIRED account" {
+            val retired = Stored(
+                _id = user._id,
+                value = MinimalTestUser(email = AccountRetirement.of(owner).rename(email)),
+            )
+
+            val realm = MinimalTestRealm(getDeps = { NullStorageTestDeps() }, onLoadUserById = { retired })
+
+            shouldThrow<AuthError> {
+                realm.refreshToken(owner, expectedUserType = null, currentOrgId = null)
             }
         }
     }

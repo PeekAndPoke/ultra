@@ -50,12 +50,16 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 error("Not yet implemented")
             }
 
+            override suspend fun <T : AuthRecord> replaceRecordIfExists(stored: Stored<T>): Stored<T>? {
+                return null
+            }
+
             override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
                 return RemoveResult.empty
             }
 
             override suspend fun findCreatedBefore(
-                realm: RealmId, type: String, before: MpInstant, limit: Int,
+                realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
             ): List<Stored<AuthRecord>> {
                 return emptyList()
             }
@@ -77,8 +81,10 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult
 
                 suspend fun findCreatedBefore(
-                    realm: RealmId, type: String, before: MpInstant, limit: Int,
+                    realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
                 ): List<Stored<AuthRecord>>
+
+                suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>?
             }
 
             override suspend fun removeById(id: String): RemoveResult {
@@ -115,14 +121,18 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 return inner.save(stored)
             }
 
+            override suspend fun <T : AuthRecord> replaceRecordIfExists(stored: Stored<T>): Stored<T>? {
+                return inner.replaceIfExists(stored)
+            }
+
             override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
                 return inner.removeAllOfOwner(realm, owner, exceptType)
             }
 
             override suspend fun findCreatedBefore(
-                realm: RealmId, type: String, before: MpInstant, limit: Int,
+                realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
             ): List<Stored<AuthRecord>> {
-                return inner.findCreatedBefore(realm, type, before, limit)
+                return inner.findCreatedBefore(realm, type, before, after, limit)
             }
         }
 
@@ -147,12 +157,18 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         /** Replaces an existing record. */
         suspend fun <T : AuthRecord> saveRecord(stored: Stored<T>): Stored<T>
 
+        /** Replaces [stored] only if a record with its `_id` still exists — never inserts; null otherwise. */
+        suspend fun <T : AuthRecord> replaceRecordIfExists(stored: Stored<T>): Stored<T>?
+
         /** Removes every record of [owner] in [realm], of ANY type except [exceptType]. */
         suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String? = null): RemoveResult
 
-        /** Returns up to [limit] records of [type] in [realm] created before [before], oldest first. */
+        /**
+         * Returns up to [limit] records of [type] in [realm] created before [before] — and, when given, after
+         * [after] — oldest first.
+         */
         suspend fun findCreatedBefore(
-            realm: RealmId, type: String, before: MpInstant, limit: Int,
+            realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
         ): List<Stored<AuthRecord>>
     }
 
@@ -211,9 +227,21 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         )
     }
 
-    /** Replaces an existing record, e.g. to advance a [AuthRecord.PendingActivation]'s resend schedule. */
+    /** Replaces an existing record, inserting it if it is gone. */
     suspend fun <T : AuthRecord> save(stored: Stored<T>): Stored<T> {
         return adapter.saveRecord(stored)
+    }
+
+    /**
+     * Replaces [stored] only while it still exists, stamping `updatedAt`; null when it is gone.
+     *
+     * The write for state that another request may have deleted meanwhile — a [save] would bring it back.
+     */
+    suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>? {
+        @Suppress("UNCHECKED_CAST")
+        val stamped = stored.modify { it.withUpdatedAt(kronos.instantNow()) as T }
+
+        return adapter.replaceRecordIfExists(stamped)
     }
 
     /** Remove every record of [owner] in [realm], of any type, optionally keeping those of [except]. */
@@ -223,11 +251,15 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         return adapter.removeAllOfOwner(realm = realm, owner = owner, exceptType = except?.identifier)
     }
 
-    /** Up to [limit] records of [type] in [realm] created before [before], oldest first, expired or not. */
+    /**
+     * Up to [limit] records of [type] in [realm] created before [before] (and after [after], to page on),
+     * oldest first, expired or not.
+     */
     suspend inline fun <reified T : AuthRecord> findCreatedBefore(
-        type: Polymorphic.TypedChild<T>, realm: RealmId, before: MpInstant, limit: Int,
+        type: Polymorphic.TypedChild<T>, realm: RealmId, before: MpInstant, after: MpInstant? = null, limit: Int,
     ): List<Stored<T>> {
-        return adapter.findCreatedBefore(realm = realm, type = type.identifier, before = before, limit = limit)
+        return adapter
+            .findCreatedBefore(realm = realm, type = type.identifier, before = before, after = after, limit = limit)
             .mapNotNull { it.castTyped() }
     }
 

@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.demo.server.admin
+package io.peekandpoke.funktor
 
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.cluster.workers.StateProvider
@@ -9,9 +9,9 @@ import io.peekandpoke.ultra.log.Log
 /**
  * Retires the never-activated accounts of every realm once they outlive `RealmTokenConfig.pendingAccountLifetime`.
  *
- * Garbage collection, not the guard: expiry is enforced at use (activation, resend, sign-up) whether or not
- * this runs. Lives in the demo because `funktor/auth` cannot depend on `funktor/cluster` (that would be a
- * cycle through `funktor/inspect`); an app outside `funktor/all` registers the same few lines.
+ * Registered by the [Funktor] module. It lives here, not in `funktor/auth`, because only `funktor/all` sees both
+ * auth and the cluster's workers (auth → cluster would be a cycle through `funktor/inspect`). Expiry is also
+ * enforced at every use of an account, so this frees what nobody touches again.
  */
 class PendingAccountsExpiryWorker(
     authSystem: Lazy<AuthSystem>,

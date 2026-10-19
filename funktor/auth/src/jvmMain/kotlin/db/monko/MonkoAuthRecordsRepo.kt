@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.auth.db.monko
 
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.ReplaceOptions
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.domain.createdAt
@@ -18,6 +19,7 @@ import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.asc
 import io.peekandpoke.monko.lang.dsl.desc
 import io.peekandpoke.monko.lang.dsl.eq
+import io.peekandpoke.monko.lang.dsl.gt
 import io.peekandpoke.monko.lang.dsl.lt
 import io.peekandpoke.monko.lang.dsl.toFieldPath
 import io.peekandpoke.ultra.datetime.MpInstant
@@ -29,6 +31,7 @@ import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.firstOrNull
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
+import org.bson.Document
 import org.bson.types.ObjectId
 
 class MonkoAuthRecordsRepo(
@@ -150,19 +153,37 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun findCreatedBefore(
-        realm: RealmId, type: String, before: MpInstant, limit: Int,
+        realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
     ): List<Stored<AuthRecord>> {
         val cursor = find { r ->
             filter(
                 and(
-                    r._type eq type,
-                    r.realm eq realm,
-                    r.createdAt.ts lt before.toEpochMillis(),
+                    listOfNotNull(
+                        r._type eq type,
+                        r.realm eq realm,
+                        r.createdAt.ts lt before.toEpochMillis(),
+                        after?.let { r.createdAt.ts gt it.toEpochMillis() },
+                    )
                 )
             )
             sort(r.createdAt.ts.asc)
             limit(limit)
         }
         return cursor.toList()
+    }
+
+    override suspend fun <T : AuthRecord> replaceIfExists(stored: Stored<T>): Stored<T>? {
+        @Suppress("UNCHECKED_CAST")
+        // As the sealed AuthRecord, so the document carries its `_type` exactly like an inserted one.
+        val document = Document(driver.codec.slumber(kType<AuthRecord>().type, stored.resolve()) as Map<String, Any?>)
+        // The same key mapping as removeAllByOwner: an ObjectId when the key is one, else the raw string.
+        val key = stored._key
+        val bsonId: Any = if (ObjectId.isValid(key)) ObjectId(key) else key
+        document["_id"] = bsonId
+
+        val result = driver.database.getCollection<Document>(name)
+            .replaceOne(Filters.eq("_id", bsonId), document, ReplaceOptions().upsert(false))
+
+        return stored.takeIf { result.matchedCount == 1L }
     }
 }

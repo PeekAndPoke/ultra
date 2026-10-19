@@ -625,6 +625,70 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 authRecords.findCreatedBefore(AuthRecord.PendingActivation, RealmId("realm"), cutoff, limit = 1)
                     .map { it._id } shouldBe listOf(first._id)
             }
+
+            withClue("`after` pages on: strictly newer than the given instant") {
+                authRecords.findCreatedBefore(
+                    AuthRecord.PendingActivation, RealmId("realm"), cutoff, after = first.value.createdAt, limit = 10,
+                ).map { it._id } shouldBe listOf(second._id)
+            }
+        }
+
+        "replaceIfExists must replace a live record, and must NEVER bring a deleted one back" {
+            // The resend schedule's write. A save (upsert) here re-inserted a marker that a concurrent
+            // activation had just removed — the active account read pending again and the sweep retired it.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+
+            withClue("a live record is replaced in place") {
+                val replaced = authRecords.replaceIfExists(marker.modify { it.copy(resends = 2) }).shouldNotBeNull()
+                replaced._id shouldBe marker._id
+
+                val loaded = authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull()
+                loaded._id shouldBe marker._id
+                loaded.value.resends shouldBe 2
+                loaded.value.createdAt.toEpochMillis() shouldBe marker.value.createdAt.toEpochMillis()
+            }
+
+            authRecords.removeById(marker._id)
+
+            withClue("a deleted record stays deleted") {
+                authRecords.replaceIfExists(marker.modify { it.copy(resends = 3) }).shouldBeNull()
+                authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1")) shouldBe
+                        emptyList()
+            }
+        }
+
+        "A sign-up cancel token must round-trip through findByToken, scoped by type, and expire with the account" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val expiresAt = kronos.instantNow().plus(150.hours).toEpochSeconds()
+
+            authRecords.create(
+                AuthRecord.SignUpCancelToken(RealmId("realm"), UserId("owner1"), expiresAt = expiresAt, token = "cancel-1")
+            )
+            authRecords.create(
+                AuthRecord.SignUpCancelToken(
+                    RealmId("realm"), UserId("owner2"),
+                    expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(), token = "cancel-old",
+                )
+            )
+
+            val loaded = authRecords.findByToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-1")
+                .shouldNotBeNull()
+            loaded.value.ownerId shouldBe UserId("owner1")
+            loaded.value.expiresAt shouldBe expiresAt
+
+            authRecords.findLatestRecordBy(AuthRecord.SignUpCancelToken, RealmId("realm"), UserId("owner1"))
+                .shouldNotBeNull()
+            authRecords.findByToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "cancel-1").shouldBeNull()
+            authRecords.findByToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-old").shouldBeNull()
         }
     }
 }
