@@ -510,7 +510,10 @@ export type KontainerShape = 'full' | 'slim'
 
 export interface KontainerSlice {
     shape: KontainerShape
-    /** Always 0 in funktor: kontainer tracking cannot be switched on. See {@link instanceCountsMeasured}. */
+    /**
+     * `full` records only, and always 0 there: they counted TRACKED kontainers, and tracking cannot be switched
+     * on from outside `ultra:kontainer`. A `slim` record has no such fields (maintainer, 2026-10-19): null.
+     */
     numOld: number | null
     numTotal: number | null
     /** The graph a `slim` record was written against; null on `full`, or when the server could not build one. */
@@ -587,21 +590,11 @@ export function readKontainer(data: unknown): KontainerSlice | null {
 
     return {
         shape: slim ? 'slim' : 'full',
-        numOld: asNumber(record.numOld),
-        numTotal: asNumber(record.numTotal),
+        numOld: slim ? null : asNumber(record.numOld),
+        numTotal: slim ? null : asNumber(record.numTotal),
         graphFingerprint: asString(record.graphFingerprint),
         services: sortServices(rawServices.map(readService)),
     }
-}
-
-/**
- * False when the young/old counts are the constant they always are in funktor: both 0 (or absent).
- *
- * They count TRACKED kontainers, and tracking (`KontainerBlueprint.Config.trackKontainers`) cannot be
- * switched on from outside `ultra:kontainer`. "0 / 0 / 0" next to 78 instances would read as a count.
- */
-export function instanceCountsMeasured(slice: KontainerSlice): boolean {
-    return (slice.numTotal ?? 0) !== 0 || (slice.numOld ?? 0) !== 0
 }
 
 /**

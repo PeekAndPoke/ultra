@@ -193,12 +193,12 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
             }
         }
 
-        "the slim slice on the wire: {numOld, numTotal, graphFingerprint, services}" {
+        "the slim slice on the wire: {graphFingerprint, services}" {
             val slice = served(recordedRef()).kontainerSlice()
 
-            slice.keys shouldContainExactlyInAnyOrder listOf("numOld", "numTotal", "graphFingerprint", "services")
-            (slice["numOld"].shouldNotBeNull().jsonPrimitive.long >= 0) shouldBe true
-            (slice["numTotal"].shouldNotBeNull().jsonPrimitive.long >= 0) shouldBe true
+            withClue("no numOld/numTotal since 2026-10-19 (maintainer): tracking is never enabled, they were always 0") {
+                slice.keys shouldContainExactlyInAnyOrder listOf("graphFingerprint", "services")
+            }
 
             val services = slice["services"].shouldNotBeNull().jsonArray
             services.shouldNotBeEmpty()

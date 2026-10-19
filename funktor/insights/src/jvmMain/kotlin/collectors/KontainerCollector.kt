@@ -6,7 +6,6 @@ import io.peekandpoke.funktor.insights.InsightsCollectorData
 import io.peekandpoke.funktor.insights.InsightsGraphs
 import io.peekandpoke.funktor.insights.api.InsightsKontainerGraph
 import io.peekandpoke.ultra.kontainer.Kontainer
-import io.peekandpoke.ultra.kontainer.KontainerBlueprint
 import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo
 import java.time.Instant
@@ -25,7 +24,6 @@ import kotlin.reflect.KClass
  */
 class KontainerCollector(
     private val kontainer: Kontainer,
-    private val blueprint: KontainerBlueprint,
     private val graphs: InsightsGraphs,
 ) : InsightsCollector {
 
@@ -34,21 +32,15 @@ class KontainerCollector(
     companion object {
         const val KEY = "kontainer"
 
-        /** A kontainer alive longer than this counts as old. */
-        private const val OLD_AFTER_SECONDS = 15
-
         /**
          * Builds the slice, and never throws: a collector that throws drops the WHOLE record.
          *
          * Two tries, not one, so a graph that cannot be built leaves `graphFingerprint` null and keeps the
-         * request's services. [numTotal] is read before [numOld], so a kontainer collected in between cannot
-         * make `numOld` exceed `numTotal`.
+         * request's services.
          */
         @Suppress("detekt:TooGenericExceptionCaught")
         internal fun collect(
             graphFingerprint: () -> String,
-            numTotal: () -> Int,
-            numOld: () -> Int,
             providers: () -> Map<KClass<*>, ServiceProvider>,
         ): Data {
             val fingerprint = try {
@@ -59,13 +51,11 @@ class KontainerCollector(
             }
 
             return try {
-                val total = numTotal()
-
-                Data.of(numOld = numOld(), numTotal = total, graphFingerprint = fingerprint, providers = providers())
+                Data.of(graphFingerprint = fingerprint, providers = providers())
             } catch (e: Throwable) {
                 println("[ERROR] Could not read the kontainer's services!\n${e.stackTraceToString()}")
 
-                Data(numOld = 0, numTotal = 0, graphFingerprint = fingerprint, services = emptyList())
+                Data(graphFingerprint = fingerprint, services = emptyList())
             }
         }
     }
@@ -74,12 +64,11 @@ class KontainerCollector(
      * The slice. **A wire break**: records written before 2026-10-19 carry every definition under
      * `info.services` instead, and are still served as written.
      *
-     * [numOld] and [numTotal] are always 0 in funktor: they count tracked kontainers, and tracking
-     * (`KontainerBlueprint.Config.trackKontainers`) cannot be switched on from outside `ultra:kontainer`.
+     * No `numOld`/`numTotal`, which those records still have (maintainer, 2026-10-19): they counted tracked
+     * kontainers, and tracking (`KontainerBlueprint.Config.trackKontainers`) cannot be switched on from
+     * outside `ultra:kontainer`, so they were always 0.
      */
     data class Data(
-        val numOld: Int,
-        val numTotal: Int,
         /** [InsightsKontainerGraph.fingerprint] of the graph [services] join against; null when it could not be built. */
         val graphFingerprint: String?,
         /** Only the services with at least one instance. */
@@ -109,13 +98,9 @@ class KontainerCollector(
              * them to be dropped. Names go through [DebugInfo.ClassInfo] so the join key is exactly the graph's.
              */
             fun of(
-                numOld: Int,
-                numTotal: Int,
                 graphFingerprint: String?,
                 providers: Map<KClass<*>, ServiceProvider>,
             ) = Data(
-                numOld = numOld,
-                numTotal = numTotal,
                 graphFingerprint = graphFingerprint,
                 services = providers
                     .filterValues { it.instances.isNotEmpty() }
@@ -134,9 +119,6 @@ class KontainerCollector(
 
     override fun finish(call: ApplicationCall): Data = collect(
         graphFingerprint = { graphs.kontainerGraph.fingerprint },
-        numTotal = { blueprint.tracker.getNumAlive() },
-        // TODO: make the threshold configurable
-        numOld = { blueprint.tracker.getNumAlive(OLD_AFTER_SECONDS) },
         providers = { kontainer.tools.factory.getAllProviders() },
     )
 }

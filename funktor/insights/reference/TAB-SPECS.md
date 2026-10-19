@@ -117,7 +117,7 @@ and user name of the server included; the fixtures keep six keys.
 Two shapes. **The full contract** — v1 and v2, the join, the fingerprint, the caveats — is in
 `.claude/tasks/20260824-insights-graphs-and-static-slices.md`, "Wire contract"; the reader is `readKontainer`.
 
-- **v2 (since 2026-10-19)** `{ numOld, numTotal, graphFingerprint, services: [{cls, type, instances: [{cls, createdAt}]}] }`
+- **v2 (since 2026-10-19)** `{ graphFingerprint, services: [{cls, type, instances: [{cls, createdAt}]}] }`
   — marked by the `graphFingerprint` KEY (its value may be `null`); only services with instances; class names
   flat strings; definitions come from `GET /_/funktor/insights/graphs/kontainer`, joined on `cls`.
 - **v1 (before)** `{ numOld, numTotal, info: { services: [...] } }` — every service with its definition inline;
@@ -125,7 +125,8 @@ Two shapes. **The full contract** — v1 and v2, the join, the fingerprint, the 
 - `createdAt` is `{ts, timezone, human}`, `ts` in millis (Jackson-era records: epoch seconds as a double).
 - `type == "Singleton"` is process state shared by every request; any other type is this request's own.
   `createdAt` only says whether this request created the instance.
-- `numOld` / `numTotal` are always 0 in funktor (tracking cannot be switched on): shown as "not measured".
+- `numOld` / `numTotal` exist on v1 only, and were always 0 (tracking cannot be switched on): shown as
+  recorded, marked "not measured". v2 dropped them (maintainer, 2026-10-19) and shows no counters.
 - A `DynamicOverride` of a v2 record is shown as v1 recorded it -- creates the instance's class, `Dynamic`, no
   injects, overwriting the graph's (blueprint) definition -- never with the blueprint's injects, which did not
   run for a handed-in instance (`overrideDefinition` in `slices.ts`).

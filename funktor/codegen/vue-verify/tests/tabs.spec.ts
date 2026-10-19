@@ -188,7 +188,7 @@ describe('kontainer', () => {
         const host = await render(KontainerTab, slice)
 
         expect(fact(host, 'Record shape')).toContain('slim')
-        expect(fact(host, 'Kontainers (young / old / total)')).toBe('not measured')
+        expect(fact(host, 'Kontainers (young / old / total)'), 'a slim record shows no counters at all').toBeUndefined()
         expect(fact(host, 'Graph fingerprint')).toBe(slice.graphFingerprint)
         expect(host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.services.length)
         expect(host.textContent).toContain('Injects and definitions are not part of this record')
@@ -216,6 +216,9 @@ describe('kontainer', () => {
 
         expect(fact(host, 'Record shape')).toContain('full')
         expect(host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.info.services.length)
+        expect(fact(host, 'Kontainers (young / old / total)')).toBe(
+            `${slice.numTotal - slice.numOld} / ${slice.numOld} / ${slice.numTotal} -- not measured, tracking is never enabled`,
+        )
 
         for (const service of slice.info.services) {
             expect(host.textContent).toContain(service.definition.codeLocation.location)
@@ -223,7 +226,7 @@ describe('kontainer', () => {
     })
 
     it('a kontainer slice of neither shape falls back to the raw tree', async () => {
-        const host = await render(KontainerTab, { numOld: 0, numTotal: 0, services: [] })
+        const host = await render(KontainerTab, { services: [] })
 
         expect(rawTreeOnly(host)).toBe(true)
     })

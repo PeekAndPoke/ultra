@@ -4,7 +4,7 @@
     "description": "OK"
   },
   "data": {
-    "fingerprint": "8595b7ee36e1a6324fffc62ef8bd22a3fc0ac470dd50281f3f92237012c4315f",
+    "fingerprint": "34b98c6b4f4635f55d108a6dde5a862b71605652c89b663acc586cc1cd5167a3",
     "services": [
       {
         "cls": "com.arangodb.ArangoDatabaseAsync",
@@ -2401,13 +2401,6 @@
               ]
             },
             {
-              "name": "blueprint",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.ultra.kontainer.KontainerBlueprint"
-              ]
-            },
-            {
               "name": "graphs",
               "provisionType": "Direct",
               "classes": [
@@ -3824,7 +3817,7 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1792424024,
+    "ts": 1792424921,
     "method": "GET",
     "url": "http://api.funktor.local:80/_/funktor/insights/graphs/kontainer",
     "server": "build-host",
@@ -3832,6 +3825,6 @@
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 0.058371
+    "durationMs": 0.054675
   }
 }

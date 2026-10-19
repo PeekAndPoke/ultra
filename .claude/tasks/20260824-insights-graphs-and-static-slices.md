@@ -50,7 +50,8 @@ service definitions repeated on every single request.
 
 ## Part B — slim the kontainer slice
 
-- [x] `KontainerCollector.Data` keeps `numOld` / `numTotal` and **only the instantiated services** —
+- [x] `KontainerCollector.Data` keeps **only the instantiated services** (and, until 2026-10-19 T1, `numOld` /
+      `numTotal` — dropped by maintainer decision: always 0) —
       the `instances` list with its `createdAt` values, plus enough identity (the service FQN) to join
       against the static graph. DONE 2026-10-19, plus `type` per service and `graphFingerprint` (see
       the wire contract).
@@ -151,8 +152,6 @@ into their DTOs — pinned by the specs.
 
 ```json
 {
-  "numOld": 0,
-  "numTotal": 0,
   "graphFingerprint": "7ef2c0349a48b0b81fa41681c1fb55999d30808ae303af6795fb0a85f8650d70",
   "services": [
     {
@@ -171,9 +170,10 @@ into their DTOs — pinned by the specs.
 
 - **The `graphFingerprint` KEY marks this shape (v2)** — present even when its value is `null`. The old
   shape (v1) has `info` instead; a slice with neither is unknown: show the raw tree.
-- `numOld`, `numTotal`: int, and **always 0 in funktor** — they count tracked kontainers, and tracking
-  (`KontainerBlueprint.Config.trackKontainers`) cannot be switched on from outside `ultra:kontainer`.
-  Showing them is showing a constant.
+- **No `numOld` / `numTotal`** (maintainer, 2026-10-19, T1): they counted tracked kontainers, tracking
+  (`KontainerBlueprint.Config.trackKontainers`) cannot be switched on from outside `ultra:kontainer`, so they
+  were always 0. Exactly two keys; pinned by slumbering the slice (`KontainerCollectorSlumberSpec`,
+  `KontainerCollectorFinishSpec`) and on the wire (`InsightsKontainerSliceSpec`). v1 records keep theirs.
 - `graphFingerprint`: 64 lowercase hex, or `null` if the graph could not be built.
 - `services`: ONLY services with at least one instance (74 of 179 here); order not significant; `instances`
   is never empty. Exactly the keys `cls`, `type`, `instances` — no definition.

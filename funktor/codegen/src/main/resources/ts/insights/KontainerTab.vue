@@ -26,7 +26,7 @@ import type { Fact } from '../ui/types.ts'
 import { kontainerNetwork, useInsightsGraphsOrNull } from './graphs.ts'
 import type { NetworkData } from './graphs.ts'
 import NetworkGraph from './NetworkGraph.vue'
-import { definitionChain, graphMatch, instanceCountsMeasured, isProcessWide, joinKontainerGraph, readKontainer } from './slices.ts'
+import { definitionChain, graphMatch, isProcessWide, joinKontainerGraph, readKontainer } from './slices.ts'
 import type { KontainerGraphData, KontainerInstance, KontainerService } from './slices.ts'
 
 defineOptions({ name: 'KontainerTab' })
@@ -86,8 +86,6 @@ const summary = computed<Fact[]>(() => {
     const value = slice.value
     if (value === null) return []
 
-    const total = value.numTotal ?? 0
-    const old = value.numOld ?? 0
     const instantiated = value.services.filter((service) => service.instances.length > 0)
     const shared = instantiated.filter(isProcessWide).length
     const own = `${instantiated.length} instantiated: ${instantiated.length - shared} this request's own, ${shared} process-wide singletons`
@@ -100,12 +98,11 @@ const summary = computed<Fact[]>(() => {
                     ? 'full -- every definition inline (written before 2026-10-19)'
                     : 'slim -- instantiated services only; definitions come from the kontainer graph',
         },
-        // The old bar's `young / old / total`. "Old" is alive longer than 15 SECONDS -- `OLD_AFTER_SECONDS`
-        // in the collector, hardcoded. Funktor never switches tracking on, so the counts are always 0.
-        {
-            key: 'Kontainers (young / old / total)',
-            value: instanceCountsMeasured(value) ? `${total - old} / ${old} / ${total}` : 'not measured',
-        },
+        // The old bar's `young / old / total`, "old" meaning alive longer than 15 SECONDS. Only a `full` record
+        // has them, as recorded -- and they were never measured: funktor never switches kontainer tracking on.
+        ...(value.shape === 'full'
+            ? [{ key: 'Kontainers (young / old / total)', value: `${counts(value)} -- not measured, tracking is never enabled` }]
+            : []),
         { key: 'Services', value: value.shape === 'full' ? `${value.services.length} defined, ${own}` : own },
         ...(value.shape === 'slim'
             ? [{ key: 'Graph fingerprint', value: value.graphFingerprint ?? 'none -- the server could not build the graph' }]
@@ -119,6 +116,12 @@ const match = computed(() => (slice.value === null || graph.value === null ? nul
 /** Full date and time, not just the clock: it says whether THIS request created the instance. */
 function createdAt(instance: KontainerInstance): string {
     return instance.createdAtMillis === null ? 'n/a' : new Date(instance.createdAtMillis).toLocaleString()
+}
+
+/** A full record's counts exactly as recorded; `?` for a missing one. */
+function counts(value: { numOld: number | null; numTotal: number | null }): string {
+    const young = value.numTotal === null || value.numOld === null ? '?' : `${value.numTotal - value.numOld}`
+    return `${young} / ${value.numOld ?? '?'} / ${value.numTotal ?? '?'}`
 }
 
 function shortName(fqn: string | null): string {

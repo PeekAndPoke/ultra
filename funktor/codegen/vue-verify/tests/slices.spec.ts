@@ -5,7 +5,6 @@
 import { describe, expect, it } from 'vitest'
 import {
     graphMatch,
-    instanceCountsMeasured,
     joinKontainerGraph,
     readInstantMillis,
     readKontainer,
@@ -62,9 +61,13 @@ describe('readKontainer', () => {
         expect(readKontainer(raw)).toBeNull()
     })
 
-    it('the counts are "not measured" when they are funktor\'s constant 0', () => {
-        expect(instanceCountsMeasured(readKontainer(sliceOf(recorded.slim(), 'kontainer'))!)).toBe(false)
-        expect(instanceCountsMeasured({ ...readKontainer(sliceOf(recorded.slim(), 'kontainer'))!, numTotal: 3 })).toBe(true)
+    it('only a full record has counts: a slim one has none, and a stray field is not read as one', () => {
+        const fat = sliceOf(recorded.fat(), 'kontainer')
+        expect(readKontainer(fat)).toMatchObject({ numOld: fat.numOld, numTotal: fat.numTotal })
+
+        const slim = sliceOf(recorded.slim(), 'kontainer')
+        expect(Object.keys(slim).sort()).toEqual(['graphFingerprint', 'services'])
+        expect(readKontainer({ ...slim, numOld: 3, numTotal: 7 })).toMatchObject({ numOld: null, numTotal: null })
     })
 })
 

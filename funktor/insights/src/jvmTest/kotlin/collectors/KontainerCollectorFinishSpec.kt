@@ -53,22 +53,26 @@ class KontainerCollectorFinishSpec : FreeSpec() {
                 val request = KontainerFixture.requestKontainer()
                 val graphs = InsightsGraphs(request.blueprint)
 
-                val data = finish(KontainerCollector(request, request.blueprint, graphs))
+                val data = finish(KontainerCollector(request, graphs))
 
                 data.graphFingerprint shouldBe graphs.kontainerGraph.fingerprint
                 data.has(KontainerFixture.Handler::class.java) shouldBe true
+            }
 
-                withClue("always 0 in funktor: kontainer tracking cannot be switched on from outside ultra:kontainer") {
-                    data.numTotal shouldBe 0
-                    data.numOld shouldBe 0
-                }
+            "writes exactly graphFingerprint and services -- no counters (maintainer, 2026-10-19)" {
+                // numOld/numTotal counted TRACKED kontainers and tracking is never enabled: always 0. Slumbered
+                // with the writer's codec, because writing is what the slice undergoes in production.
+                val request = KontainerFixture.requestKontainer()
+                val data = finish(KontainerCollector(request, InsightsGraphs(request.blueprint)))
+
+                InsightsCodec().slumber(data).toJsonElement().jsonObject.keys shouldBe setOf("graphFingerprint", "services")
             }
 
             "a graph that cannot be built leaves the fingerprint null and the services in place" {
                 val request = KontainerFixture.requestKontainer()
                 val broken = InsightsGraphs(KontainerFixture.brokenBlueprint())
 
-                val data = finish(KontainerCollector(request, request.blueprint, broken))
+                val data = finish(KontainerCollector(request, broken))
 
                 data.graphFingerprint shouldBe null
 
@@ -94,41 +98,11 @@ class KontainerCollectorFinishSpec : FreeSpec() {
             "services that cannot be read leave an empty list and keep the fingerprint" {
                 val data = KontainerCollector.collect(
                     graphFingerprint = { "f".repeat(64) },
-                    numTotal = { 5 },
-                    numOld = { 2 },
                     providers = { error("the providers could not be read") },
                 )
 
                 data.services.shouldBeEmpty()
                 data.graphFingerprint shouldBe "f".repeat(64)
-            }
-
-            "numTotal and numOld land in their own fields" {
-                val data = KontainerCollector.collect(
-                    graphFingerprint = { "f".repeat(64) },
-                    numTotal = { 5 },
-                    numOld = { 2 },
-                    providers = { emptyMap() },
-                )
-
-                data.numTotal shouldBe 5
-                data.numOld shouldBe 2
-            }
-
-            "numOld cannot exceed numTotal when kontainers are collected between the two reads" {
-                // Whichever is read first sees 5 alive, the second sees 1: the others were collected in between.
-                val alive = ArrayDeque(listOf(5, 1))
-
-                val data = KontainerCollector.collect(
-                    graphFingerprint = { "f".repeat(64) },
-                    numTotal = { alive.removeFirst() },
-                    numOld = { alive.removeFirst() },
-                    providers = { emptyMap() },
-                )
-
-                withClue("numOld=${data.numOld} numTotal=${data.numTotal}: numTotal must be read first") {
-                    (data.numOld <= data.numTotal) shouldBe true
-                }
             }
         }
     }
