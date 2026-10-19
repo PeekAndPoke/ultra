@@ -39,13 +39,13 @@ class GlobalLocksCleanupWorker(
             log.warning(
                 """
                     Removed ${heldByDeadServers.size} Global Locks that where held by dead servers.
-                    Server => Lock => Created => Expires:
+                    Server => Lock => Created => Last heartbeat:
 
                 """.trimIndent() + mapped
             )
         }
 
-        val expired = globalLocks.releaseBy { lock -> now > lock.expires }
+        val expired = globalLocks.releaseExpired()
 
         if (expired.isNotEmpty()) {
             val mapped = expired.mapped()
@@ -53,7 +53,7 @@ class GlobalLocksCleanupWorker(
             log.warning(
                 """
                     Removed ${expired.size} Global Locks that where expired.
-                    Server => Lock => Created => Expires:
+                    Server => Lock => Created => Last heartbeat:
 
                 """.trimIndent() + mapped
             )
@@ -61,6 +61,6 @@ class GlobalLocksCleanupWorker(
     }
 
     private fun List<GlobalLockEntry>.mapped() = joinToString("\n") {
-        "${it.serverId} => ${it.key} => ${it.created.toIsoString()} => ${it.expires.toIsoString()}"
+        "${it.serverId} => ${it.key} => ${it.created.toIsoString()} => ${it.lastHeartbeat.toIsoString()}"
     }
 }

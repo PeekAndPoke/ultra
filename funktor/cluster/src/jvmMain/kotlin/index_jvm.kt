@@ -52,6 +52,7 @@ import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 
@@ -218,11 +219,12 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
 
             singleton(KarangoGlobalLocksRepo.Fixtures::class)
 
-            singleton(GlobalLocksProvider::class) { repository: KarangoGlobalLocksRepo, serverId: GlobalServerId ->
+            singleton(GlobalLocksProvider::class) { repository: KarangoGlobalLocksRepo, serverId: GlobalServerId, log: Log ->
                 VaultGlobalLocksProvider(
                     repository = repository,
                     serverId = serverId,
                     retryDelayMs = 100,
+                    log = log,
                 )
             }
 
@@ -330,11 +332,12 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
 
             singleton(MonkoGlobalLocksRepo.Fixtures::class)
 
-            singleton(GlobalLocksProvider::class) { repository: MonkoGlobalLocksRepo, serverId: GlobalServerId ->
+            singleton(GlobalLocksProvider::class) { repository: MonkoGlobalLocksRepo, serverId: GlobalServerId, log: Log ->
                 VaultGlobalLocksProvider(
                     repository = repository,
                     serverId = serverId,
                     retryDelayMs = 100,
+                    log = log,
                 )
             }
 

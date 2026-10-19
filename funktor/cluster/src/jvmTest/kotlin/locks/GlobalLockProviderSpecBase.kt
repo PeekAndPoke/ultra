@@ -7,9 +7,13 @@ import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.datetime.Kronos
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.merge
 import kotlin.time.Duration.Companion.milliseconds
@@ -20,14 +24,22 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
 
     abstract fun createSubject(): GlobalLocksProvider
 
+    /** Collects this flow only once [holding] completed: it must contend for a lock that is held, not race for it. */
+    private fun <T> Flow<T>.onceHeld(holding: CompletableDeferred<Unit>): Flow<T> = flow {
+        holding.await()
+        emitAll(this@onceHeld)
+    }
+
     init {
 
         "Locking must work" {
 
             val subject = createSubject()
             val key = "key"
+            val holding = CompletableDeferred<Unit>()
 
             val flow1 = subject.acquire(key) {
+                holding.complete(Unit)
                 delay(10)
                 "1st"
             }
@@ -35,7 +47,7 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val flow2 = subject.acquire(key, 1.seconds) {
                 delay(10)
                 "2nd"
-            }
+            }.onceHeld(holding)
 
             val result = merge(flow1, flow2).fold(emptyList<String>()) { acc, it -> acc.plus(it) }
 
@@ -93,15 +105,17 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val subject = createSubject()
 
             val key = "key"
+            val holding = CompletableDeferred<Unit>()
 
             val flow1 = subject.acquire(key) {
+                holding.complete(Unit)
                 delay(100)
                 "1st"
             }
 
             val flow2 = subject.acquire(key, 1.seconds) {
                 "2nd"
-            }
+            }.onceHeld(holding)
 
             val result = merge(flow1, flow2)
                 .fold(emptyList<String>()) { acc, it -> acc.plus(it) }
@@ -142,8 +156,10 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val inst = createSubject()
 
             val key = "key"
+            val holding = CompletableDeferred<Unit>()
 
             val flow1 = inst.acquire(key) {
+                holding.complete(Unit)
                 delay(100)
                 "1st"
             }
@@ -151,7 +167,7 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val flow2 = inst.acquire(key, 1.milliseconds) {
                 delay(10)
                 "2nd"
-            }.catch {
+            }.onceHeld(holding).catch {
                 emit("2nd failed")
             }
 
@@ -166,8 +182,10 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val two = createSubject()
 
             val key = "key"
+            val holding = CompletableDeferred<Unit>()
 
             val flow1 = one.acquire(key) {
+                holding.complete(Unit)
                 delay(100)
                 "1st"
             }
@@ -175,7 +193,7 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val flow2 = two.acquire(key, 1.milliseconds) {
                 delay(10)
                 "2nd"
-            }.catch {
+            }.onceHeld(holding).catch {
                 emit("2nd failed")
             }
 
@@ -189,8 +207,10 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
 
             val subject = createSubject()
             val key = "key"
+            val holding = CompletableDeferred<Unit>()
 
             val flow1 = subject.acquire<String>(key) {
+                holding.complete(Unit)
                 delay(100)
                 error("1st failed")
             }.catch { e ->
@@ -199,7 +219,7 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
 
             val flow2 = subject.acquire(key, 1.seconds) {
                 "2nd"
-            }.catch { e ->
+            }.onceHeld(holding).catch { e ->
                 emit("error: ${e.message}")
             }
 
