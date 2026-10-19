@@ -1,8 +1,9 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-10-19 (released by the datetime-zone-engine agent)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: Ultra-Main-Dev agent**
+**SINCE: 2026-10-19 11:45**
+**STATE: HELD — flaky Kraft addon tests (IrLinkageError), then the full suite and release 0.113.0
+(.claude/tasks/20261019-flaky-kraft-addon-irlinkageerror.md). Humans too: please don't build this worktree meanwhile.**
 
 ## What the last holder changed — datetime-zone-engine agent, 2026-10-18 (zone engine + kotlinx-datetime 0.8.0)
 
