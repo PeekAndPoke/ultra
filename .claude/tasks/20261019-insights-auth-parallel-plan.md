@@ -27,7 +27,7 @@ worktrees … which parts can be developed independently and are easy to merge")
       Verified 2026-10-19: `:funktor:cluster:jvmTest` + `:funktor-demo:server:test` with probe values wrote their
       collections into the probe databases on both backends (the override reaches the forked test JVMs).
 - [x] **E3** Generated files: take `distributeJsExample` out of `build` into an explicit task run at release (D9). Verified: an example's `build` leaves `docs/` untouched; the release skill has the step.
-- [ ] **E4** (may run alongside Wave 1; touches only task docs no track owns) Task-doc housekeeping in one commit: archive what is done but still open (auth-hardening parts 1–4,
+- [x] **E4** (`428435c0`, ran alongside Wave 1; touched only task docs no track owns) Task-doc housekeeping in one commit: archive what is done but still open (auth-hardening parts 1–4,
       account-activation backend, activation-resend, apiacl naming, value-class EmailAddress, ktor-client
       unification, …) and fix the stale claims the inventory found (TAB-SPECS `createdAt`/`isSystem`, the Kraft doc's
       "gate has not run", `insights.astro` documenting the deleted `InsightsGui`). Every worktree then starts from
