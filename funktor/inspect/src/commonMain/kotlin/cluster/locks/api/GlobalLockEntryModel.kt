@@ -11,6 +11,8 @@ data class GlobalLockEntryModel(
     val serverId: String,
     /** The timestamp when the lock was created */
     val created: MpInstant,
-    /** The timestamp when the lock expires */
+    /** When the lock expires for servers that predate heartbeats */
     val expires: MpInstant,
+    /** The last time the holder signalled that it is still alive */
+    val lastHeartbeat: MpInstant,
 )

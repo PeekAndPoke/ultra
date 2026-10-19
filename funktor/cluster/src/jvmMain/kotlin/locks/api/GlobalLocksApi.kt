@@ -50,6 +50,7 @@ class GlobalLocksApi : ApiRoutes("global-locks", authFloor = { isSuperUser() }) 
                         serverId = it.serverId,
                         created = it.created,
                         expires = it.expires,
+                        lastHeartbeat = it.lastHeartbeat,
                     )
                 }
             )
