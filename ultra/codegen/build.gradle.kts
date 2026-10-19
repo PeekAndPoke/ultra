@@ -7,8 +7,8 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val ULTRA_GROUP: String by project
-val VERSION_NAME: String by project
+val ULTRA_GROUP = providers.gradleProperty("ULTRA_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = ULTRA_GROUP
 version = VERSION_NAME
@@ -69,7 +69,7 @@ tasks {
 val tsVerifyDir = layout.projectDirectory.dir("ts-verify")
 val tsGeneratedDir = layout.buildDirectory.dir("ts-verify-generated")
 
-val generateTsFixtures by tasks.registering(JavaExec::class) {
+val generateTsFixtures = tasks.register<JavaExec>("generateTsFixtures") {
     group = "verification"
     description = "Emits TypeScript fixtures plus real Slumber output for the ts-verify harness"
 
@@ -82,7 +82,7 @@ val generateTsFixtures by tasks.registering(JavaExec::class) {
     outputs.dir(tsGeneratedDir)
 }
 
-val tsVerifyInstall by tasks.registering(Exec::class) {
+val tsVerifyInstall = tasks.register<Exec>("tsVerifyInstall") {
     group = "verification"
     description = "Installs the pinned TypeScript verification toolchain"
 
@@ -98,7 +98,7 @@ val tsVerifyInstall by tasks.registering(Exec::class) {
     outputs.dir(tsVerifyDir.dir("node_modules"))
 }
 
-val tsVerify by tasks.registering(Exec::class) {
+val tsVerify = tasks.register<Exec>("tsVerify") {
     group = "verification"
     description = "Type-checks and executes the generated TypeScript (tsc + zod via pnpm)"
 

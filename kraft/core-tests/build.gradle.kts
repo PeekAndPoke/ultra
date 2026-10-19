@@ -12,8 +12,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val KRAFT_GROUP: String by project
-val VERSION_NAME: String by project
+val KRAFT_GROUP = providers.gradleProperty("KRAFT_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = KRAFT_GROUP
 version = VERSION_NAME

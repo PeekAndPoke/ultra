@@ -7,8 +7,8 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val ULTRA_GROUP: String by project
-val VERSION_NAME: String by project
+val ULTRA_GROUP = providers.gradleProperty("ULTRA_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = ULTRA_GROUP
 version = VERSION_NAME
@@ -46,13 +46,13 @@ tasks {
         dependsOn("generateDocs")
     }
 
-    create("runExamples", JavaExec::class) {
+    register<JavaExec>("runExamples") {
         mainClass.set("io.peekandpoke.ultra.kontainer.examples.IndexKt")
         classpath = sourceSets.getByName("test").runtimeClasspath
         standardInput = System.`in`
     }
 
-    create("generateDocs", JavaExec::class) {
+    register<JavaExec>("generateDocs") {
         mainClass.set("io.peekandpoke.ultra.kontainer.examples.GenerateDocsKt")
         classpath = sourceSets.getByName("test").runtimeClasspath
     }

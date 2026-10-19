@@ -12,7 +12,7 @@ samWithReceiver {
 }
 
 /** Resolved in `settings.gradle.kts` from the root `gradle.properties`. */
-val kotlinVersion: String by extra
+val kotlinVersion = extra["kotlinVersion"] as String
 
 repositories {
     gradlePluginPortal()
