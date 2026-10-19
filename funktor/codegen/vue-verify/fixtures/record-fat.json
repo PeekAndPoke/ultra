@@ -1,0 +1,144 @@
+{
+  "status": {
+    "value": 200,
+    "description": "OK"
+  },
+  "data": {
+    "ref": {
+      "bucket": "records-2026-10-01",
+      "file": "2026-10-01T12:00:00.000000000.json"
+    },
+    "recordedAt": {
+      "ts": 1792419656270,
+      "timezone": "UTC",
+      "human": "2026-10-19T14:20:56.270Z"
+    },
+    "method": "GET",
+    "path": "/_/funktor/introspection/lifecycle-hooks",
+    "status": 200,
+    "durationMs": 7.177276,
+    "collectors": [
+      {
+        "key": "kontainer",
+        "data": {
+          "numOld": 0,
+          "numTotal": 0,
+          "info": {
+            "services": [
+              {
+                "cls": {
+                  "fqn": "io.peekandpoke.ultra.security.password.PasswordHasher"
+                },
+                "type": "Singleton",
+                "definition": {
+                  "creates": {
+                    "fqn": "io.peekandpoke.ultra.security.password.CompoundPasswordHasher"
+                  },
+                  "injectionType": "Singleton",
+                  "injects": [],
+                  "codeLocation": {
+                    "location": "io.peekandpoke.ultra.security.Index_jvmKt.Ultra_Security$lambda$0(index_jvm.kt:49)"
+                  },
+                  "overwrites": null
+                },
+                "instances": []
+              },
+              {
+                "cls": {
+                  "fqn": "io.peekandpoke.ultra.security.user.UserProvider"
+                },
+                "type": "DynamicOverride",
+                "definition": {
+                  "creates": {
+                    "fqn": "io.peekandpoke.ultra.security.user.UserProvider$Lazy"
+                  },
+                  "injectionType": "Dynamic",
+                  "injects": [],
+                  "codeLocation": {
+                    "location": "io.peekandpoke.ultra.kontainer.ServiceProviderFactory.<init>(ServiceProviderFactory.kt:26)"
+                  },
+                  "overwrites": {
+                    "creates": {
+                      "fqn": "io.peekandpoke.ultra.security.user.UserProvider"
+                    },
+                    "injectionType": "Dynamic",
+                    "injects": [],
+                    "codeLocation": {
+                      "location": "io.peekandpoke.ultra.security.Index_jvmKt.Ultra_Security$lambda$0(index_jvm.kt:26)"
+                    },
+                    "overwrites": null
+                  }
+                },
+                "instances": [
+                  {
+                    "createdAt": {
+                      "ts": 1792412488863,
+                      "timezone": "UTC",
+                      "human": "2026-10-19T12:21:28.863898199Z"
+                    },
+                    "cls": {
+                      "fqn": "io.peekandpoke.ultra.security.user.UserProvider$Lazy"
+                    }
+                  }
+                ]
+              },
+              {
+                "cls": {
+                  "fqn": "io.peekandpoke.funktor.insights.InsightsRepository"
+                },
+                "type": "Dynamic",
+                "definition": {
+                  "creates": {
+                    "fqn": "io.peekandpoke.funktor.insights.InsightsFileRepository"
+                  },
+                  "injectionType": "Dynamic",
+                  "injects": [],
+                  "codeLocation": {
+                    "location": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint$lambda$0(index_testJvm.kt:94)"
+                  },
+                  "overwrites": {
+                    "creates": {
+                      "fqn": "io.peekandpoke.funktor.insights.InsightsFileRepository"
+                    },
+                    "injectionType": "Dynamic",
+                    "injects": [],
+                    "codeLocation": {
+                      "location": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:113)"
+                    },
+                    "overwrites": null
+                  }
+                },
+                "instances": [
+                  {
+                    "createdAt": {
+                      "ts": 1792412488864,
+                      "timezone": "UTC",
+                      "human": "2026-10-19T12:21:28.864064539Z"
+                    },
+                    "cls": {
+                      "fqn": "io.peekandpoke.funktor.insights.InsightsFileRepository"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "next": null,
+    "previous": null
+  },
+  "messages": null,
+  "insights": {
+    "ts": 1792419656,
+    "method": "GET",
+    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D10%2D01/2026%2D10%2D01T12%3A00%3A00%2E000000000%2Ejson",
+    "server": "thebasez16-2",
+    "status": {
+      "value": 200,
+      "description": "OK"
+    },
+    "durationMs": 1.315686
+  }
+}

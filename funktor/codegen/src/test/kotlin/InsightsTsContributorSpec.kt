@@ -4,12 +4,15 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain as shouldContainText
 import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
 import java.io.File
+import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Guards the one thing about [InsightsTsContributor] that cannot fail loudly on its own: its file lists
@@ -37,6 +40,12 @@ class InsightsTsContributorSpec : FreeSpec() {
          */
         private fun resourceDir(name: String): File =
             File("src/main/resources/ts/$name").absoluteFile
+
+        /** Where [specifier], imported by the emitted file at [from], lands inside the SDK. */
+        private fun resolveImport(from: String, specifier: String): String {
+            val dir = from.substringBeforeLast('/', missingDelimiterValue = "")
+            return Paths.get(dir, specifier).normalize().invariantSeparatorsPathString
+        }
     }
 
     private fun assertMirrors(dirName: String, declared: List<String>) {
@@ -81,6 +90,56 @@ class InsightsTsContributorSpec : FreeSpec() {
             // deletes the resources AND the list entries together, which is the shape of a bad rebase.
             listOf("RuntimeTab.vue", "VaultTab.vue", "KontainerTab.vue", "AppConfigTab.vue").forEach {
                 InsightsTsContributor.INSIGHTS_FILES shouldContain it
+            }
+        }
+
+        //  The imports BETWEEN the emitted files  /////////////////////////////////////////////////////
+        //
+        //  I4 of the 2026-08-24 gate: the mirror checks above guard the LISTS, not what the files
+        //  import. Rename a `ui/` file and update `UI_FILES`, miss one importing tab, and both set
+        //  comparisons pass while `vite build` fails downstream. Run against the REAL feature, so the
+        //  runtime and model files the pages import are emitted the way an app gets them.
+
+        "with the REAL insights feature" - {
+
+            val output = RealInsightsSdk.build()
+            val paths = output.entries().map { it.path }.toSet()
+            val sources = output.entries().filter { it.path.endsWith(".ts") || it.path.endsWith(".vue") }
+
+            "every relative import of every emitted file names an emitted file" {
+                val imports = sources.flatMap { entry ->
+                    TsImports.of(entry.content).filter { TsImports.isRelative(it) }.map { entry.path to it }
+                }
+
+                withClue("the walk must have something to walk, or the check below is vacuous") {
+                    imports.size shouldBeGreaterThan 50
+                }
+
+                val dangling = imports
+                    .map { (from, specifier) -> "$from -> $specifier" to resolveImport(from, specifier) }
+                    .filter { (_, target) -> target !in paths }
+                    .map { it.first }
+
+                withClue("imports whose target the SDK does not contain -- `vue-tsc` cannot see these, `vite build` can") {
+                    dangling.shouldBeEmpty()
+                }
+            }
+
+            "a .ts file of the insights UI imports no package but vue" {
+                // The SDK barrel re-exports every `.ts` file, so a package imported by one becomes a
+                // dependency of every app importing the barrel. `vis-network` is loaded by
+                // `NetworkGraph.vue`, which only the tabs reach.
+                val packages = sources
+                    .filter { it.path.endsWith(".ts") && (it.path.startsWith("insights/") || it.path.startsWith("ui/")) }
+                    .flatMap { entry -> TsImports.of(entry.content).filterNot { TsImports.isRelative(it) } }
+                    .toSet()
+
+                packages shouldBe setOf("vue")
+            }
+
+            "the graph library is imported by the graph component and by nothing else" {
+                sources.filter { entry -> TsImports.of(entry.content).any { it.startsWith("vis-network") } }
+                    .map { it.path } shouldBe listOf("insights/NetworkGraph.vue")
             }
         }
 

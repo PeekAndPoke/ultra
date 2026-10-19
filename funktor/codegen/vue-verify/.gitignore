@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# Copied in from build/vue-verify-sdk by the vueVerify task, every run.
+src/funktorsdk/

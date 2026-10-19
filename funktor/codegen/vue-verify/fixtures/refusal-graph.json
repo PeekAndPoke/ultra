@@ -1,0 +1,30 @@
+{
+  "status": {
+    "value": 401,
+    "description": "Unauthorized"
+  },
+  "data": null,
+  "messages": [
+    {
+      "type": "error",
+      "text": "Access to the resource 'GET /_/funktor/insights/graphs/kontainer' is not authorized.",
+      "ts": null
+    },
+    {
+      "type": "info",
+      "text": "Failed auth rules: Is SuperUser",
+      "ts": null
+    }
+  ],
+  "insights": {
+    "ts": 1792419654,
+    "method": "GET",
+    "url": "http://api.funktor.local:80/_/funktor/insights/graphs/kontainer",
+    "server": "thebasez16-2",
+    "status": {
+      "value": 401,
+      "description": "Unauthorized"
+    },
+    "durationMs": 0.029956
+  }
+}

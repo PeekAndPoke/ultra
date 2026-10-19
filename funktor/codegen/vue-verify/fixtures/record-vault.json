@@ -1,0 +1,1237 @@
+{
+  "status": {
+    "value": 200,
+    "description": "OK"
+  },
+  "data": {
+    "ref": {
+      "bucket": "records-2026-10-19",
+      "file": "2026-10-19T16:20:59.009460003.json"
+    },
+    "recordedAt": {
+      "ts": 1792419659199,
+      "timezone": "UTC",
+      "human": "2026-10-19T14:20:59.199Z"
+    },
+    "method": "GET",
+    "path": "/_/e2e/insights-s1/probe",
+    "status": 200,
+    "durationMs": 167.853309,
+    "collectors": [
+      {
+        "key": "user",
+        "data": {
+          "user": {
+            "userId": "s1-e2e",
+            "clientIp": "localhost",
+            "email": "s1-e2e@test.com",
+            "desc": "s1 e2e",
+            "type": "test-user",
+            "_type": "logged-in"
+          },
+          "permissions": {
+            "isSuperUser": true,
+            "org": null,
+            "accessibleOrgs": [],
+            "branches": [],
+            "groups": [],
+            "roles": [],
+            "permissions": []
+          }
+        }
+      },
+      {
+        "key": "request",
+        "data": {
+          "method": {
+            "value": "GET"
+          },
+          "scheme": "http",
+          "host": "insights.funktor.local",
+          "port": 80,
+          "uri": "/_/e2e/insights-s1/probe",
+          "headers": {
+            "Host": [
+              "insights.funktor.local"
+            ],
+            "Authorization": [
+              "***redacted***"
+            ],
+            "Accept": [
+              "*/*"
+            ],
+            "User-Agent": [
+              "ktor-client"
+            ],
+            "Content-Length": [
+              "0"
+            ]
+          },
+          "queryParams": {}
+        }
+      },
+      {
+        "key": "response",
+        "data": {
+          "status": {
+            "value": 200,
+            "description": "OK"
+          },
+          "headers": {
+            "Content-Length": [
+              "267"
+            ],
+            "Content-Type": [
+              "application/json; charset=UTF-8"
+            ]
+          }
+        }
+      },
+      {
+        "key": "routing",
+        "data": {
+          "trace": "Trace for [_, e2e, insights-s1, probe]\n/, segment:0 -> SUCCESS @ /\n  / [([], [api.*], [])], segment:0 -> FAILURE \"Selector didn't match\" @ / [([], [api.*], [])]\n  / [([], [insights.*], [])], segment:0 -> SUCCESS; Parameters [$RequestHost=[insights.funktor.local], $RequestPort=[80]] @ / [([], [insights.*], [])]\n    / [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:0 -> SUCCESS @ / [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n      /auth [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:0 -> FAILURE \"Selector didn't match\" @ /auth [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n      /_ [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:1 -> SUCCESS @ /_ [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n        /_/funktor [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:1 -> FAILURE \"Selector didn't match\" @ /_/funktor [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n        /_/background-jobs [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:1 -> FAILURE \"Selector didn't match\" @ /_/background-jobs [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n        /_/vault [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:1 -> FAILURE \"Selector didn't match\" @ /_/vault [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n        /_/workers [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:1 -> FAILURE \"Selector didn't match\" @ /_/workers [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n        /_/e2e [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:2 -> SUCCESS @ /_/e2e [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n          /_/e2e/insights-s1 [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:3 -> SUCCESS @ /_/e2e/insights-s1 [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n            /_/e2e/insights-s1/probe [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:4 -> SUCCESS @ /_/e2e/insights-s1/probe [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\n              /_/e2e/insights-s1/probe [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon), (method:GET)], segment:4 -> SUCCESS @ /_/e2e/insights-s1/probe [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon), (method:GET)]\n      /api [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)], segment:0 -> FAILURE \"Selector didn't match\" @ /api [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon)]\nMatched routes:\n  \"\" -> \"([], [insights.*], [])\" -> \"(authenticate api.funktor.test.jwt, api.funktor.test.anon)\" -> \"_\" -> \"e2e\" -> \"insights-s1\" -> \"probe\" -> \"(method:GET)\"\nRouting resolve result:\n  SUCCESS; Parameters [$RequestHost=[insights.funktor.local], $RequestPort=[80]] @ /_/e2e/insights-s1/probe [([], [insights.*], []), (authenticate api.funktor.test.jwt, api.funktor.test.anon), (method:GET)]"
+        }
+      },
+      {
+        "key": "app-config",
+        "data": {
+          "info": {
+            "version": {
+              "project": "n/a",
+              "version": "n/a",
+              "gitBranch": "n/a",
+              "gitRev": "n/a",
+              "gitDesc": "n/a",
+              "date": null
+            },
+            "versionName": "-1792419658074000",
+            "versionHash": "5372d3d4-186fa280-1f137eac-15295b00"
+          },
+          "config": {
+            "ktor": {
+              "deployment": {
+                "environment": "test",
+                "host": "127.0.0.1",
+                "port": 8080,
+                "sslPort": 8443,
+                "autoreload": false,
+                "watch": []
+              },
+              "application": {
+                "id": "Funktor-All | Test",
+                "modules": [
+                  "io.peekandpoke.funktor.ServerKt.module"
+                ]
+              },
+              "security": null
+            },
+            "funktor": {
+              "security": {
+                "csrfSecret": "***redacted***",
+                "csrfTtlMillis": 0
+              },
+              "tracking": {
+                "gtm": null
+              },
+              "cookieConsent": {
+                "cookiebot": null,
+                "ccm19": null
+              },
+              "vault": {
+                "profile": true,
+                "explain": true
+              },
+              "auth": {
+                "jwt": {
+                  "keys": [
+                    {
+                      "id": "test-1",
+                      "secret": "***redacted***",
+                      "alg": "HS512",
+                      "issued": "2026-08-01"
+                    }
+                  ],
+                  "issuer": "Funktor-All | Test",
+                  "audience": "api",
+                  "permissionsNs": "permissions",
+                  "userNs": "user"
+                },
+                "baseUrls": {}
+              }
+            },
+            "keys": {}
+          }
+        }
+      },
+      {
+        "key": "kontainer",
+        "data": {
+          "numOld": 0,
+          "numTotal": 0,
+          "graphFingerprint": "1eec6aac0a51ad0d6939f0e1bc2426e50f01f230ea0f10c18012114d42ece07e",
+          "services": [
+            {
+              "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
+                  "createdAt": {
+                    "ts": 1792419658677,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.677343315Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.model.AppInfo",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.model.AppInfo",
+                  "createdAt": {
+                    "ts": 1792419659000,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.000354368Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
+                  "createdAt": {
+                    "ts": 1792419658079,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.079703794Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
+                  "createdAt": {
+                    "ts": 1792419658079,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.079769238Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
+                  "createdAt": {
+                    "ts": 1792419658995,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.995720416Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
+                  "createdAt": {
+                    "ts": 1792419659004,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.004161972Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
+                  "createdAt": {
+                    "ts": 1792419659004,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.004311766Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
+                  "createdAt": {
+                    "ts": 1792419659004,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.004317056Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
+                  "createdAt": {
+                    "ts": 1792419659004,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.004324620Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
+                  "createdAt": {
+                    "ts": 1792419659004,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.004333457Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
+                  "createdAt": {
+                    "ts": 1792419658799,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.799122330Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
+                  "createdAt": {
+                    "ts": 1792419658799,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.799098535Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
+                  "createdAt": {
+                    "ts": 1792419658799,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.799103475Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
+                  "createdAt": {
+                    "ts": 1792419658799,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.799107292Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
+                  "createdAt": {
+                    "ts": 1792419658799,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.799111029Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
+                  "createdAt": {
+                    "ts": 1792419658799,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.799116489Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
+                  "createdAt": {
+                    "ts": 1792419658802,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.802222943Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
+                  "createdAt": {
+                    "ts": 1792419658997,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.997599381Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
+                  "createdAt": {
+                    "ts": 1792419658997,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.997607075Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
+                  "createdAt": {
+                    "ts": 1792419658797,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.797731061Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
+                  "createdAt": {
+                    "ts": 1792419658995,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.995994877Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
+                  "createdAt": {
+                    "ts": 1792419658677,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.677977949Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
+                  "createdAt": {
+                    "ts": 1792419658677,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.677992407Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
+                  "createdAt": {
+                    "ts": 1792419658996,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.996089707Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.log.Slf4jAppender",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.log.Slf4jAppender",
+                  "createdAt": {
+                    "ts": 1792419658079,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.079746776Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
+                  "createdAt": {
+                    "ts": 1792419658996,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.996159649Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
+                  "createdAt": {
+                    "ts": 1792419658997,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.997613999Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
+                  "createdAt": {
+                    "ts": 1792419659004,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.004464145Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.InsightsCodec",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.InsightsCodec",
+                  "createdAt": {
+                    "ts": 1792419659000,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.000351212Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.HeaderLogging",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.HeaderLogging",
+                  "createdAt": {
+                    "ts": 1792419659000,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.000286379Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.InsightsGraphs",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.InsightsGraphs",
+                  "createdAt": {
+                    "ts": 1792419659000,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.000392490Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
+                  "createdAt": {
+                    "ts": 1792419658798,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.798586123Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
+                  "createdAt": {
+                    "ts": 1792419658996,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.996330784Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "com.arangodb.ArangoDatabaseAsync",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "com.arangodb.internal.ArangoDatabaseAsyncImpl",
+                  "createdAt": {
+                    "ts": 1792419658079,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.079774919Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "com.mongodb.kotlin.client.coroutine.MongoClient",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "com.mongodb.kotlin.client.coroutine.MongoClient",
+                  "createdAt": {
+                    "ts": 1792419658616,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.616580844Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "com.mongodb.kotlin.client.coroutine.MongoDatabase",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "com.mongodb.kotlin.client.coroutine.MongoDatabase",
+                  "createdAt": {
+                    "ts": 1792419658616,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.616614077Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.S1ProbeFeature",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.S1ProbeFeature",
+                  "createdAt": {
+                    "ts": 1792419658997,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:58.997554876Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
+              "type": "Singleton",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
+                  "createdAt": {
+                    "ts": 1792419659000,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.000381098Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
+              "type": "SemiDynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
+                  "createdAt": {
+                    "ts": 1792419659010,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.010158218Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.log.UltraLogManager",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.log.UltraLogManager",
+                  "createdAt": {
+                    "ts": 1792419659010,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.010192303Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.security.user.UserProvider",
+              "type": "DynamicOverride",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.security.user.UserProvider$Lazy",
+                  "createdAt": {
+                    "ts": 1792419659009,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.009241188Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.vault.Database",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.vault.Database",
+                  "createdAt": {
+                    "ts": 1792419659016,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.016656998Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.vault.EntityCache",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.vault.DefaultEntityCache",
+                  "createdAt": {
+                    "ts": 1792419659016,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.016675643Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.vault.profiling.QueryProfiler",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler",
+                  "createdAt": {
+                    "ts": 1792419659013,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.013631147Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.rest.codec.RestCodec",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.rest.codec.SlumberRestCodec",
+                  "createdAt": {
+                    "ts": 1792419659175,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.175520331Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
+              "type": "DynamicOverride",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
+                  "createdAt": {
+                    "ts": 1792419659009,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.009254353Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.Insights",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "impl.InsightsFull",
+                  "createdAt": {
+                    "ts": 1792419659009,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.009481945Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.InsightsRepository",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.InsightsFileRepository",
+                  "createdAt": {
+                    "ts": 1792419659009,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.009418244Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.UserCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.UserCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177326057Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177336377Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177342749Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177359220Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177374068Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177382815Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177388085Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177391922Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
+                  "createdAt": {
+                    "ts": 1792419659010,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.010183586Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177398645Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
+                  "createdAt": {
+                    "ts": 1792419659177,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.177403764Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.karango.vault.KarangoDriver",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.karango.vault.KarangoDriver",
+                  "createdAt": {
+                    "ts": 1792419659010,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.010220306Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.karango.slumber.KarangoCodec",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.karango.slumber.KarangoCodec",
+                  "createdAt": {
+                    "ts": 1792419659016,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.016717973Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.monko.MonkoDriver",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.monko.MonkoDriver",
+                  "createdAt": {
+                    "ts": 1792419659094,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.094820724Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.monko.MonkoCodec",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.monko.MonkoCodec",
+                  "createdAt": {
+                    "ts": 1792419659133,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.133534694Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.S1KaSessionsRepo",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.S1KaSessionsRepo",
+                  "createdAt": {
+                    "ts": 1792419659010,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.010239041Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.funktor.S1MoSessionsRepo",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.funktor.S1MoSessionsRepo",
+                  "createdAt": {
+                    "ts": 1792419659094,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.094833328Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.kontainer.Kontainer",
+              "type": "Dynamic",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.kontainer.Kontainer",
+                  "createdAt": {
+                    "ts": 1792419659009,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.009388528Z"
+                  }
+                }
+              ]
+            },
+            {
+              "cls": "io.peekandpoke.ultra.log.Log",
+              "type": "Prototype",
+              "instances": [
+                {
+                  "cls": "io.peekandpoke.ultra.log.LogImpl",
+                  "createdAt": {
+                    "ts": 1792419659010,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.010203764Z"
+                  }
+                },
+                {
+                  "cls": "io.peekandpoke.ultra.log.LogImpl",
+                  "createdAt": {
+                    "ts": 1792419659094,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T14:20:59.094800435Z"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "key": "runtime",
+        "data": {
+          "jvmVersion": "17.0.17",
+          "maxMem": 536870912,
+          "reservedMem": 408944640,
+          "freeMem": 219062520,
+          "cpus": 16,
+          "kotlinVersion": "2.4.21",
+          "openFileDescriptors": 306,
+          "maxFileDescriptors": 1048576,
+          "systemProperties": {
+            "os.name": "Linux",
+            "file.encoding": "UTF-8",
+            "java.vm.name": "OpenJDK 64-Bit Server VM",
+            "java.version": "17.0.17",
+            "os.arch": "amd64",
+            "java.vendor": "Amazon.com Inc."
+          }
+        }
+      },
+      {
+        "key": "log",
+        "data": {
+          "entries": []
+        }
+      },
+      {
+        "key": "vault",
+        "data": {
+          "entries": [
+            {
+              "connection": "ArangoDB::ultra_wt_insights_vue",
+              "queryLanguage": "aql",
+              "query": "FOR `p2_75c9ffdb` IN `insights_s1_ka_sessions`\n    FILTER `p2_75c9ffdb`.`token` == @v_1\n    LIMIT 0, 1\n    RETURN `p2_75c9ffdb`\n",
+              "varsCount": 1,
+              "count": 1,
+              "totalCount": null,
+              "totalNs": 78870216,
+              "measureQuery": {
+                "totalNs": 1979916,
+                "count": 1
+              },
+              "measureIterator": {
+                "totalNs": 0,
+                "count": 0
+              },
+              "measureSerializer": {
+                "totalNs": 0,
+                "count": 0
+              },
+              "measureDeserializer": {
+                "totalNs": 62629,
+                "count": 1
+              },
+              "measureExplain": {
+                "totalNs": 76827671,
+                "count": 1
+              }
+            },
+            {
+              "connection": "MongoDB(8.2.1)::ultra_wt_insights_vue",
+              "queryLanguage": "json",
+              "query": "{\n  \"filter\": {\n    \"token\": \"@p1\"\n  },\n  \"sort\": null,\n  \"limit\": 1,\n  \"skip\": null\n}",
+              "varsCount": 1,
+              "count": 1,
+              "totalCount": null,
+              "totalNs": 37765040,
+              "measureQuery": {
+                "totalNs": 23906707,
+                "count": 1
+              },
+              "measureIterator": {
+                "totalNs": 0,
+                "count": 0
+              },
+              "measureSerializer": {
+                "totalNs": 0,
+                "count": 0
+              },
+              "measureDeserializer": {
+                "totalNs": 666034,
+                "count": 1
+              },
+              "measureExplain": {
+                "totalNs": 13192299,
+                "count": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "key": "template",
+        "data": {
+          "timeNs": null
+        }
+      }
+    ],
+    "next": null,
+    "previous": null
+  },
+  "messages": null,
+  "insights": {
+    "ts": 1792419659,
+    "method": "GET",
+    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D10%2D19/2026%2D10%2D19T16%3A20%3A59%2E009460003%2Ejson",
+    "server": "thebasez16-2",
+    "status": {
+      "value": 200,
+      "description": "OK"
+    },
+    "durationMs": 1.173346
+  }
+}

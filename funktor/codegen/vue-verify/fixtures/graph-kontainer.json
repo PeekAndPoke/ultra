@@ -1,0 +1,3830 @@
+{
+  "status": {
+    "value": 200,
+    "description": "OK"
+  },
+  "data": {
+    "fingerprint": "7ef2c0349a48b0b81fa41681c1fb55999d30808ae303af6795fb0a85f8650d70",
+    "services": [
+      {
+        "cls": "com.arangodb.ArangoDatabaseAsync",
+        "type": "Singleton",
+        "definition": {
+          "creates": "com.arangodb.internal.ArangoDatabaseAsyncImpl",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.karango.IndexKt.KarangoModule$lambda$0(index.kt:40)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.ktor.server.sessions.CurrentSession",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.session.NullCurrentSession",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:251)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.FunktorAllTestConfig",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:123)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.TestUserRealm",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.TestUserRealm",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "deps",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthSystem$Deps"
+              ]
+            },
+            {
+              "name": "usersRepo",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.TestUsersRepo"
+              ]
+            },
+            {
+              "name": "emailAndPassword",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth$Factory"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.TestUserRealmKt.TestUserModule$lambda$0(TestUserRealm.kt:165)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.TestUsersRepo",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.TestUsersRepo",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "driver",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.TestUserRealmKt.TestUserModule$lambda$0(TestUserRealm.kt:166)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.AuthRandom$Impl",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.AuthRandom$Impl",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:36)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.AuthRecordStorage",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.AuthRecordStorage",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "adapter",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthRecordStorage$Adapter"
+              ]
+            },
+            {
+              "name": "kronos",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:42)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.AuthRecordStorage$Adapter",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.AuthRecordStorage$Adapter$Vault",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "inner",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthRecordStorage$Adapter$Vault$Repo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.FunktorAuthBuilder.useKarango(index_jvm.kt:62)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.auth.AuthRecordStorage$Adapter$Null",
+            "injectionType": "Dynamic",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:113)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.AuthSystem",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.AuthSystem",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "realms",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.TestUserRealm"
+              ]
+            },
+            {
+              "name": "deps",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthSystem$Deps"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:31)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.AuthSystem$Deps",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.AuthSystem$DefaultDeps",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "config",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            },
+            {
+              "name": "kronos",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            },
+            {
+              "name": "messaging",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.MessagingServices"
+              ]
+            },
+            {
+              "name": "jwtGenerator",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.security.jwt.JwtGenerator"
+              ]
+            },
+            {
+              "name": "storage",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthSystem$Storage"
+              ]
+            },
+            {
+              "name": "passwordHasher",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.security.password.PasswordHasher"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            },
+            {
+              "name": "random",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthRandom"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:33)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.AuthSystem$Storage",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.AuthSystem$Storage",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "authRecords",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthRecordStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:34)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.AuthSystemAppHooks",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.AuthSystemAppHooks",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "authSystem",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthSystem"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:32)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:45)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "random",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthRandom"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:47)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": []
+            },
+            {
+              "name": "p3",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.hooks.TimestampedHook"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.FunktorAuthBuilder.useKarango(index_jvm.kt:105)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo$Fixtures",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo$Fixtures",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.FunktorAuthBuilder.useKarango(index_jvm.kt:77)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth$Factory",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth$Factory",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "deps",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthSystem$Deps"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:38)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.provider.GithubSsoAuth$Factory",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.provider.GithubSsoAuth$Factory",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "config",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:40)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.auth.provider.GoogleSsoAuth$Factory",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.auth.provider.GoogleSsoAuth$Factory",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "config",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.auth.Index_jvmKt.FunktorAuth$lambda$0(index_jvm.kt:39)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:89)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.FunktorClusterFacade",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.FunktorClusterFacade",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "serverId",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerId"
+              ]
+            },
+            {
+              "name": "servers",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerList"
+              ]
+            },
+            {
+              "name": "locks",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.LocksFacade"
+              ]
+            },
+            {
+              "name": "workers",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.WorkersFacade"
+              ]
+            },
+            {
+              "name": "backgroundJobs",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs"
+              ]
+            },
+            {
+              "name": "depot",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.depot.DepotFacade"
+              ]
+            },
+            {
+              "name": "storage",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.StorageFacade"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:87)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "handlers",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01",
+                "io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02"
+              ]
+            },
+            {
+              "name": "entityCache",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.vault.EntityCache"
+              ]
+            },
+            {
+              "name": "queue",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Queue"
+              ]
+            },
+            {
+              "name": "archive",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Archive"
+              ]
+            },
+            {
+              "name": "serverId",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerId"
+              ]
+            },
+            {
+              "name": "codec",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$DataCodec"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:94)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Archive",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Archive$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Archive$Vault$Repo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:206)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Archive$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:415)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$DataCodec",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$DataCodec",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:95)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Queue",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Queue$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Queue$Vault$Repo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:194)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Queue$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:406)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "backgroundJobs",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:100)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "backgroundJobs",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:101)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:407)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo$Fixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo$Fixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:204)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:393)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo$Fixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo$Fixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:192)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.backgroundjobs.workers.BackgroundJobsWorker",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.workers.BackgroundJobsWorker",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "backgroundJobs",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:98)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.depot.DepotFacade",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.depot.DepotFacade",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "drivers",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.insights.InsightsRepository"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:106)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.VaultGlobalLocksProvider",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerId"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:435)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.locks.PrimitiveGlobalLocksProvider",
+            "injectionType": "Dynamic",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:424)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "config",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:112)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerList",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.GlobalServerList",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:113)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.LocksFacade",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.LocksFacade",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "global",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider"
+              ]
+            },
+            {
+              "name": "beacons",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:111)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository$Vault",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "inner",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository$Vault$Repo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:238)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository$Null",
+            "injectionType": "Dynamic",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:433)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.cli.ReleaseLocksCliCommand",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.cli.ReleaseLocksCliCommand",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "locks",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.LocksFacade"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:124)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:421)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo$Fixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo$Fixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:219)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:453)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo$Fixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo$Fixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:236)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "globalLocksProvider",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider"
+              ]
+            },
+            {
+              "name": "serverId",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerId"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:117)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "globalLocksProvider",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider"
+              ]
+            },
+            {
+              "name": "serverId",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerId"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:118)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "servers",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerList"
+              ]
+            },
+            {
+              "name": "globalLocks",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:122)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconCleanupWorker",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconCleanupWorker",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "serverBeaconRepository",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository"
+              ]
+            },
+            {
+              "name": "servers",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerList"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:121)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "serverId",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerId"
+              ]
+            },
+            {
+              "name": "serverBeaconRepository",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository"
+              ]
+            },
+            {
+              "name": "appInfo",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.AppInfo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:120)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "kronos",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            },
+            {
+              "name": "adapter",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:140)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "inner",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter$Vault$Repo"
+              ]
+            },
+            {
+              "name": "kronos",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:264)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:451)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter$Vault$Repo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.karango.KarangoRandomCacheRepository",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.hooks.TimestampedHook"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:485)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.RandomDataStorage",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.RandomDataStorage",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "adapter",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:132)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "inner",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter$Vault$Repo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:253)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:442)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter$Vault$Repo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.karango.KarangoRandomDataRepository",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.hooks.TimestampedHook"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:467)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.StorageFacade",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.StorageFacade",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "randomData",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomDataStorage"
+              ]
+            },
+            {
+              "name": "randomCache",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:129)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.example.RandomDataStorage_Example01",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.example.RandomDataStorage_Example01",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "storage",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomDataStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:137)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.fixtures.RandomCacheStorageFixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.fixtures.RandomCacheStorageFixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "randomCacheStorage",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:143)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.storage.fixtures.RandomDataStorageFixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.storage.fixtures.RandomDataStorageFixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "randomDataStorage",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.storage.RandomDataStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:135)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "database",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:148)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.workers.WorkersFacade",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.workers.WorkersFacade",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "kontainer",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.kontainer.Kontainer"
+              ]
+            },
+            {
+              "name": "kronos",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            },
+            {
+              "name": "registry",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerRegistry"
+              ]
+            },
+            {
+              "name": "tracker",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker"
+              ]
+            },
+            {
+              "name": "history",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:153)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.workers.fixtures.WorkerFixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.workers.fixtures.WorkerFixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "history",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory"
+              ]
+            },
+            {
+              "name": "tracker",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:274)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "adapter",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter"
+              ]
+            },
+            {
+              "name": "serverId",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.GlobalServerId"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:156)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "inner",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter$Vault$Repo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:276)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter$InMemory",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:460)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter$Vault$Repo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.workers.vault.KarangoWorkerHistoryRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:503)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerRegistry",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.workers.services.WorkerRegistry",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "workersLookup",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.backgroundjobs.workers.BackgroundJobsWorker",
+                "io.peekandpoke.funktor.cluster.locks.workers.GlobalLocksCleanupWorker",
+                "io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconCleanupWorker",
+                "io.peekandpoke.funktor.cluster.locks.workers.ServerBeaconUpdateWorker"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:154)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:155)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.JsonPrinter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.JsonPrinter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:127)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.IncomingConverter",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.IncomingConverter",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "csrfProtection",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.security.csrf.CsrfProtection"
+              ]
+            },
+            {
+              "name": "lookUp",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.broker.IncomingConverterLookup"
+              ]
+            },
+            {
+              "name": "converters",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
+                "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
+                "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
+                "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
+                "io.peekandpoke.funktor.core.broker.vault.IncomingVaultConverter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:48)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:47)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "converters",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
+                "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
+                "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
+                "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
+                "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:56)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.TypedRouteRenderer",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.TypedRouteRenderer",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "converter",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.broker.OutgoingConverter"
+              ]
+            },
+            {
+              "name": "csrf",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.security.csrf.CsrfProtection"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:55)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:52)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:50)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:51)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "primitive",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:53)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingVaultConverter",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.IncomingVaultConverter",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "db",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:49)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:60)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:59)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:58)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:61)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.broker.IndexKt._get_Funktor_Broker_$lambda$0(index.kt:57)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.cli.CliRunner",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.cli.CliRunner",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "commands",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand",
+                "io.peekandpoke.funktor.cluster.locks.cli.ReleaseLocksCliCommand",
+                "io.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand",
+                "io.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand",
+                "io.peekandpoke.funktor.core.fixtures.cli.InstallFixturesCliCommand",
+                "io.peekandpoke.funktor.core.fixtures.cli.ListFixturesCliCommand",
+                "io.peekandpoke.funktor.core.repair.RepairRunCliCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultIndexesEnsureCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultIndexesRecreateCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultIndexesValidateCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultRepositoriesEnsureCommand"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.cli.Cli_moduleKt.Funktor_Cli$lambda$0(cli_module.kt:19)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.cli.CliServices",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.cli.CliServices",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "commands",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand",
+                "io.peekandpoke.funktor.cluster.locks.cli.ReleaseLocksCliCommand",
+                "io.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand",
+                "io.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand",
+                "io.peekandpoke.funktor.core.fixtures.cli.InstallFixturesCliCommand",
+                "io.peekandpoke.funktor.core.fixtures.cli.ListFixturesCliCommand",
+                "io.peekandpoke.funktor.core.repair.RepairRunCliCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultIndexesEnsureCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultIndexesRecreateCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultIndexesValidateCommand",
+                "io.peekandpoke.ultra.vault.cli.VaultRepositoriesEnsureCommand"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.cli.Cli_moduleKt.Funktor_Cli$lambda$0(cli_module.kt:20)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "config",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            },
+            {
+              "name": "jsonPrinter",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.JsonPrinter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.cli.Cli_moduleKt.Funktor_Cli$lambda$0(cli_module.kt:24)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "appInfo",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.AppInfo"
+              ]
+            },
+            {
+              "name": "jsonPrinter",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.JsonPrinter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.cli.Cli_moduleKt.Funktor_Cli$lambda$0(cli_module.kt:23)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.fixtures.FixtureInstaller",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.fixtures.SimpleFixtureInstaller",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "allLoaders",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo$Fixtures",
+                "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo$Fixtures",
+                "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo$Fixtures",
+                "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo$Fixtures",
+                "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo$Fixtures",
+                "io.peekandpoke.funktor.cluster.storage.fixtures.RandomCacheStorageFixtures",
+                "io.peekandpoke.funktor.cluster.storage.fixtures.RandomDataStorageFixtures",
+                "io.peekandpoke.funktor.cluster.workers.fixtures.WorkerFixtures",
+                "io.peekandpoke.funktor.messaging.fixtures.SentMessagesFixtures",
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo$Fixtures",
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo$Fixtures"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.fixtures.Fixtures_moduleKt.Funktor_Fixtures$lambda$0(fixtures_module.kt:21)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.fixtures.cli.InstallFixturesCliCommand",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.fixtures.cli.InstallFixturesCliCommand",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "kontainer",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.kontainer.Kontainer"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.fixtures.Fixtures_moduleKt.Funktor_Fixtures$lambda$0(fixtures_module.kt:24)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.fixtures.cli.ListFixturesCliCommand",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.fixtures.cli.ListFixturesCliCommand",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "installer",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.fixtures.FixtureInstaller"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.fixtures.Fixtures_moduleKt.Funktor_Fixtures$lambda$0(fixtures_module.kt:25)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "onAppStarting",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.auth.AuthSystemAppHooks",
+                "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting",
+                "io.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting",
+                "io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder",
+                "io.peekandpoke.funktor.core.repair.RepairManOnAppStartingHook",
+                "io.peekandpoke.funktor.insights.CollectorKeyUniquenessCheck",
+                "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
+                "io.peekandpoke.funktor.saas.EnsureOrganisationOnAppStarting"
+              ]
+            },
+            {
+              "name": "onAppStarted",
+              "provisionType": "Direct",
+              "classes": []
+            },
+            {
+              "name": "onAppStopPreparing",
+              "provisionType": "Direct",
+              "classes": []
+            },
+            {
+              "name": "onAppStopping",
+              "provisionType": "Direct",
+              "classes": []
+            },
+            {
+              "name": "onAppStopped",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:137)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "hookScope",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.DeferredVaultHookScope"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:139)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.model.AppInfo",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.model.AppInfo",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:125)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.model.CacheBuster",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.model.CacheBuster",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.AppInfo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:237)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.model.InsightsConfig",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:89)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.repair.RepairMan",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.repair.RepairMan",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "repairs",
+              "provisionType": "Direct",
+              "classes": []
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.repair.Repair_moduleKt.Funktor_Repair$lambda$0(repair_module.kt:19)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.repair.RepairManOnAppStartingHook",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.repair.RepairManOnAppStartingHook",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repairMan",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.repair.RepairMan"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.repair.Repair_moduleKt.Funktor_Repair$lambda$0(repair_module.kt:22)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.core.repair.RepairRunCliCommand",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.core.repair.RepairRunCliCommand",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "repairMan",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.core.repair.RepairMan"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.core.repair.Repair_moduleKt.Funktor_Repair$lambda$0(repair_module.kt:25)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.CollectorKeyUniquenessCheck",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.CollectorKeyUniquenessCheck",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "collectors",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
+                "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
+                "io.peekandpoke.funktor.insights.collectors.LogCollector",
+                "io.peekandpoke.funktor.insights.collectors.RequestCollector",
+                "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
+                "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
+                "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
+                "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
+                "io.peekandpoke.funktor.insights.collectors.UserCollector",
+                "io.peekandpoke.funktor.insights.collectors.VaultCollector"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:79)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.HeaderLogging",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.HeaderLogging",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:62)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.Insights",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.Insights$Base",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.InsightsConfig"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.kontainer.Kontainer"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:98)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.InsightsCodec",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.InsightsCodec",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:57)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.InsightsDataLoader",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.InsightsDataLoader",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "repository",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.insights.InsightsRepository"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:59)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.InsightsGraphs",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.InsightsGraphs",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "blueprint",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.kontainer.KontainerBlueprint"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:82)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.InsightsRepository",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.InsightsFileRepository",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint$lambda$0(index_testJvm.kt:94)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.insights.InsightsFileRepository",
+            "injectionType": "Dynamic",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:116)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:85)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "codec",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.insights.InsightsCodec"
+              ]
+            },
+            {
+              "name": "appConfig",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            },
+            {
+              "name": "appInfo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.AppInfo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:70)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "kontainer",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.kontainer.Kontainer"
+              ]
+            },
+            {
+              "name": "blueprint",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.kontainer.KontainerBlueprint"
+              ]
+            },
+            {
+              "name": "graphs",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.insights.InsightsGraphs"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:71)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.LogCollector",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:73)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:74)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "headerLogging",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.insights.HeaderLogging"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:67)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "headerLogging",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.insights.HeaderLogging"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:68)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:69)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:72)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:76)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.UserCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.UserCollector",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "user",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.security.user.UserProvider"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:66)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "profiler",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.profiling.QueryProfiler"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:75)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.inspect.introspection.Introspection_moduleKt.Funktor_Introspection$lambda$0(introspection_module.kt:11)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.inspect.introspection.services.ApiAccessDescriptor",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.inspect.introspection.services.ApiAccessDescriptor",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "features",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.api.AuthApiFeature",
+                "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
+                "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
+                "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
+                "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
+                "io.peekandpoke.funktor.saas.api.OrgsApiFeature"
+              ]
+            },
+            {
+              "name": "realms",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.TestUserRealm"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.inspect.introspection.Introspection_moduleKt.Funktor_Introspection$lambda$0(introspection_module.kt:12)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.logging.LoggingFacade",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.logging.LoggingFacade",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "logsStorage",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.logging.LogsStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.logging.Logging_moduleKt.Funktor_Logging$lambda$0(logging_module.kt:39)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.logging.LogsStorage",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.logging.karango.KarangoLogsStorage",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.logging.karango.KarangoLogRepository"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.logging.FunktorLoggingBuilder.useKarango(logging_module.kt:76)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.logging.LogsStorage$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.logging.Logging_moduleKt.Funktor_Logging$lambda$0(logging_module.kt:42)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.logging.Logging_moduleKt.Funktor_Logging$lambda$0(logging_module.kt:45)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.logging.karango.KarangoLogRepository"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.logging.FunktorLoggingBuilder.useKarango(logging_module.kt:100)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogRepository",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.logging.karango.KarangoLogRepository",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.logging.FunktorLoggingBuilder.useKarango(logging_module.kt:114)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.Mailing",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.SimpleMailing",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.senders.ConfiguredEmailSender"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            },
+            {
+              "name": "p3",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.storage.StoringEmailHook"
+              ]
+            },
+            {
+              "name": "p4",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.senders.CapturedEmails"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.messaging.Index_jvmKt.Funktor_Messaging$lambda$0(index_jvm.kt:224)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.MessagingServices",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.MessagingServices",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "mailing",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.Mailing"
+              ]
+            },
+            {
+              "name": "sentMessages",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.storage.SentMessagesStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.messaging.Index_jvmKt.Funktor_Messaging$lambda$0(index_jvm.kt:45)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.fixtures.SentMessagesFixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.fixtures.SentMessagesFixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.storage.SentMessagesStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.messaging.Index_jvmKt.Funktor_Messaging$lambda$0(index_jvm.kt:60)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.senders.CapturedEmails",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.senders.CapturedEmails",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.messaging.Index_jvmKt.Funktor_Messaging$lambda$0(index_jvm.kt:57)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.senders.ConfiguredEmailSender",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.senders.ConfiguredEmailSender",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.messaging.Index_jvmKt.Funktor_Messaging$lambda$0(index_jvm.kt:215)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.storage.SentMessagesStorage",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.storage.SentMessagesStorage$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.messaging.FunktorMessagingBuilder.useKarango(index_jvm.kt:233)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.messaging.storage.SentMessagesStorage$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.messaging.Index_jvmKt.Funktor_Messaging$lambda$0(index_jvm.kt:53)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.storage.StoringEmailHook",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.storage.StoringEmailHook",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.messaging.storage.SentMessagesStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.messaging.Index_jvmKt.Funktor_Messaging$lambda$0(index_jvm.kt:52)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.hooks.TimestampedHook"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.messaging.FunktorMessagingBuilder.useKarango(index_jvm.kt:215)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.rest.Index_jvmKt.Funktor_Rest$lambda$0(index_jvm.kt:46)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "converter",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.broker.OutgoingConverter"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.rest.Index_jvmKt.Funktor_Rest$lambda$0(index_jvm.kt:45)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "checks",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.rest.AuthChainBootCheck",
+                "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
+                "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck"
+              ]
+            },
+            {
+              "name": "features",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.auth.api.AuthApiFeature",
+                "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
+                "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
+                "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
+                "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
+                "io.peekandpoke.funktor.saas.api.OrgsApiFeature"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.rest.Index_jvmKt.Funktor_Rest$lambda$0(index_jvm.kt:41)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.rest.codec.RestCodec",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.rest.codec.SlumberRestCodec",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.EntityCache"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.rest.Index_jvmKt.Funktor_Rest$lambda$0(index_jvm.kt:133)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.EnsureOrganisationOnAppStarting",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.EnsureOrganisationOnAppStarting",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.saas.storage.OrgsStorage"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.saas.FunktorSaasBuilder.ensureOrganisation(index_jvm.kt:290)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.saas.Index_jvmKt.Funktor_Saas$lambda$0(index_jvm.kt:45)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.saas.Index_jvmKt.Funktor_Saas$lambda$0(index_jvm.kt:49)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.saas.Index_jvmKt.Funktor_Saas$lambda$0(index_jvm.kt:50)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.storage.OrgMembersStorage",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.storage.OrgMembersStorage$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.saas.FunktorSaasBuilder.useKarango(index_jvm.kt:211)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.saas.storage.OrgMembersStorage$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.saas.Index_jvmKt.Funktor_Saas$lambda$0(index_jvm.kt:42)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.storage.OrgsStorage",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.storage.OrgsStorage$Vault",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.saas.FunktorSaasBuilder.useKarango(index_jvm.kt:179)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.saas.storage.OrgsStorage$Null",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.saas.Index_jvmKt.Funktor_Saas$lambda$0(index_jvm.kt:39)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.hooks.TimestampedHook"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.saas.FunktorSaasBuilder.useKarango(index_jvm.kt:193)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo$Fixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo$Fixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.saas.FunktorSaasBuilder.useKarango(index_jvm.kt:90)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.karango.vault.KarangoDriver"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.hooks.TimestampedHook"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.saas.FunktorSaasBuilder.useKarango(index_jvm.kt:164)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo$Fixtures",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo$Fixtures",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.saas.FunktorSaasBuilder.useKarango(index_jvm.kt:76)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.flashsession.FlashSession",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.flashsession.FlashSession",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.ktor.server.sessions.CurrentSession"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.flashsession.Flash_session_moduleKt.Funktor_FlashSession$lambda$0(flash_session_module.kt:29)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.resources.WebResources",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.resources.WebResources",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "groups",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.staticweb.resources.common.FomanticUiWebResources",
+                "io.peekandpoke.funktor.staticweb.resources.common.JQueryWebResource",
+                "io.peekandpoke.funktor.staticweb.resources.common.LazySizesWebResource",
+                "io.peekandpoke.funktor.staticweb.resources.common.VisJsWebResource",
+                "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources"
+              ]
+            },
+            {
+              "name": "cacheBuster",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.CacheBuster"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.Resources_moduleKt.Funktor_Resources$lambda$0(resources_module.kt:20)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.resources.common.FomanticUiWebResources",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.resources.common.FomanticUiWebResources",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "cacheBuster",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.CacheBuster"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:16)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.resources.common.JQueryWebResource",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.resources.common.JQueryWebResource",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "cacheBuster",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.CacheBuster"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:17)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.resources.common.LazySizesWebResource",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.resources.common.LazySizesWebResource",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "cacheBuster",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.CacheBuster"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:18)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.resources.common.VisJsWebResource",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.resources.common.VisJsWebResource",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "cacheBuster",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.CacheBuster"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:19)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "cacheBuster",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.model.CacheBuster"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.prismjs.IndexKt.Funktor_PrismJs$lambda$0(index.kt:20)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources",
+            "injectionType": "Singleton",
+            "injects": [
+              {
+                "name": "cacheBuster",
+                "provisionType": "Direct",
+                "classes": [
+                  "io.peekandpoke.funktor.core.model.CacheBuster"
+                ]
+              }
+            ],
+            "codeLocation": "io.peekandpoke.funktor.staticweb.resources.prismjs.IndexKt.Funktor_PrismJs$lambda$0(index.kt:20)",
+            "overwrites": null
+          }
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.staticweb.templating.TemplateTools",
+        "type": "Prototype",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.staticweb.templating.TemplateToolsImpl",
+          "injectionType": "Prototype",
+          "injects": [
+            {
+              "name": "config",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            },
+            {
+              "name": "flash",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.staticweb.flashsession.FlashSession"
+              ]
+            },
+            {
+              "name": "resource",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.staticweb.resources.WebResources"
+              ]
+            },
+            {
+              "name": "routes",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.broker.TypedRouteRenderer"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.staticweb.templating.Templating_moduleKt.Funktor_Templating$lambda$0(templating_module.kt:22)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.karango.slumber.KarangoCodec",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.karango.slumber.KarangoCodec",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.EntityCache"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.karango.IndexKt.KarangoModule$lambda$0(index.kt:111)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.karango.vault.KarangoDriver",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.karango.vault.KarangoDriver",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "lazyCodec",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.karango.slumber.KarangoCodec"
+              ]
+            },
+            {
+              "name": "lazyArangoDb",
+              "provisionType": "Lazy",
+              "classes": [
+                "com.arangodb.ArangoDatabaseAsync"
+              ]
+            },
+            {
+              "name": "lazyProfiler",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.vault.profiling.QueryProfiler"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            },
+            {
+              "name": "hookScope",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.VaultHookScope"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.karango.IndexKt.KarangoModule$lambda$0(index.kt:42)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.datetime.Kronos",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.datetime.Kronos",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:228)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.kontainer.InjectionContext",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.kontainer.InjectionContext",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:24)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.kontainer.Kontainer",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.kontainer.Kontainer",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:24)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:24)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.log.Log",
+        "type": "Prototype",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.log.Log",
+          "injectionType": "Prototype",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.UltraLogManager"
+              ]
+            },
+            {
+              "name": "p2",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.kontainer.InjectionContext"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.log.Index_jvmKt.Ultra_Logging$lambda$0(index_jvm.kt:70)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.log.Slf4jAppender",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.log.Slf4jAppender",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.logging.Logging_moduleKt.Funktor_Logging$lambda$0(logging_module.kt:51)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.log.UltraLogManager",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.log.UltraLogManager",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
+                "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
+                "io.peekandpoke.ultra.log.Slf4jAppender"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.log.Index_jvmKt.Ultra_Logging$lambda$0(index_jvm.kt:56)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.security.csrf.CsrfProtection",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.security.csrf.StatelessCsrfProtection",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.security.user.UserProvider"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.security.Index_jvmKt.Ultra_Security$lambda$0(index_jvm.kt:35)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.rest.FunktorRestBuilder.jwt(index_jvm.kt:125)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.security.password.PasswordHasher",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.security.password.CompoundPasswordHasher",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.ultra.security.Index_jvmKt.Ultra_Security$lambda$0(index_jvm.kt:49)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.security.user.UserProvider",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.security.user.UserProvider",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.ultra.security.Index_jvmKt.Ultra_Security$lambda$0(index_jvm.kt:26)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.slumber.SlumberConfig",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.slumber.SlumberConfig",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.funktor.rest.Index_jvmKt.Funktor_Rest$lambda$0(index_jvm.kt:62)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.Database",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.Database",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "repositories",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.TestUsersRepo",
+                "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo",
+                "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo",
+                "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo",
+                "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo",
+                "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo",
+                "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter$Vault$Repo",
+                "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter$Vault$Repo",
+                "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter$Vault$Repo",
+                "io.peekandpoke.funktor.logging.karango.KarangoLogRepository",
+                "io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo",
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgMembersRepo",
+                "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo"
+              ]
+            },
+            {
+              "name": "repoClassLookup",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.SharedRepoClassLookup"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:39)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:51)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.EntityCache",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.DefaultEntityCache",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:43)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
+          "injectionType": "Singleton",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:40)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.cli.VaultIndexesEnsureCommand",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.cli.VaultIndexesEnsureCommand",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "database",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:68)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.cli.VaultIndexesRecreateCommand",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.cli.VaultIndexesRecreateCommand",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "database",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:69)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.cli.VaultIndexesValidateCommand",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.cli.VaultIndexesValidateCommand",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "database",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:70)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.cli.VaultRepositoriesEnsureCommand",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.cli.VaultRepositoriesEnsureCommand",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "database",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:67)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.hooks.TimestampedHook",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.hooks.TimestampedHook",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "kronos",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:46)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.hooks.TimestampedMillisHook",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.hooks.TimestampedMillisHook",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "kronos",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:47)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.profiling.QueryProfiler",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.profiling.QueryProfiler",
+          "injectionType": "Dynamic",
+          "injects": [],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:73)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "database",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.Database"
+              ]
+            },
+            {
+              "name": "log",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.log.Log"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:64)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.vault.tools.DatabaseTools",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.vault.tools.DatabaseTools",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "graphBuilder",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.ultra.vault.Vault_moduleKt.Ultra_Vault$lambda$0(vault_module.kt:63)",
+          "overwrites": null
+        }
+      }
+    ]
+  },
+  "messages": null,
+  "insights": {
+    "ts": 1792419654,
+    "method": "GET",
+    "url": "http://api.funktor.local:80/_/funktor/insights/graphs/kontainer",
+    "server": "thebasez16-2",
+    "status": {
+      "value": 200,
+      "description": "OK"
+    },
+    "durationMs": 0.053902
+  }
+}

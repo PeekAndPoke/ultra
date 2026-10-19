@@ -38,6 +38,11 @@ dependencies {
     Deps.Test {
         jvmTestDeps()
     }
+
+    // TEST ONLY, deliberately: main code matches insights by NAME (see InsightsTsContributor) so the
+    // generator never depends on it. The specs and the vue-verify harness need the REAL feature, whose
+    // models the pages import; the fixtures only borrow its name.
+    testImplementation(project(":funktor:insights"))
 }
 
 kotlin {
@@ -46,6 +51,75 @@ kotlin {
 
 tasks {
     configureJvmTests()
+}
+
+//  Vue verification  //////////////////////////////////////////////////////////////////////////////////////
+//
+//  Compiles, bundles and component-tests the Vue resources the way an app consumes them: an SDK generated
+//  from the REAL insights feature, then `vue-tsc`, `vite build` and vitest + happy-dom over it. A Kotlin test
+//  cannot see a broken `.vue`, and `vue-tsc` alone cannot see a missing one (`shims-vue.d.ts`).
+//
+//  `vue-verify/` follows `ultra/codegen/ts-verify/`: its own package.json, lockfile, pinned pnpm (the
+//  packageManager field) and pinned Node (.npmrc use-node-version), installed with --frozen-lockfile.
+//
+//  Opt out with -PskipVueVerify=true. It fails loudly when the toolchain is missing.
+
+val vueVerifyDir = layout.projectDirectory.dir("vue-verify")
+val vueVerifySdkDir = layout.buildDirectory.dir("vue-verify-sdk")
+
+val generateVueVerifySdk = tasks.register<JavaExec>("generateVueVerifySdk") {
+    group = "verification"
+    description = "Generates the SDK of an app with the real insights feature, for the vue-verify harness"
+
+    dependsOn(tasks.named("testClasses"))
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("io.peekandpoke.funktor.codegen.RealInsightsSdkKt")
+    argumentProviders.add { listOf(vueVerifySdkDir.get().asFile.absolutePath) }
+
+    inputs.files(sourceSets["main"].output, sourceSets["test"].output)
+    outputs.dir(vueVerifySdkDir)
+}
+
+val vueVerifyInstall = tasks.register<Exec>("vueVerifyInstall") {
+    group = "verification"
+    description = "Installs the pinned Vue verification toolchain"
+
+    workingDir = vueVerifyDir.asFile
+
+    // --frozen-lockfile: fail rather than silently resolving different versions.
+    commandLine("pnpm", "install", "--frozen-lockfile")
+
+    inputs.file(vueVerifyDir.file("package.json"))
+    inputs.file(vueVerifyDir.file("pnpm-lock.yaml"))
+    inputs.file(vueVerifyDir.file(".npmrc"))
+    outputs.dir(vueVerifyDir.dir("node_modules"))
+}
+
+val vueVerify = tasks.register<Exec>("vueVerify") {
+    group = "verification"
+    description = "Type-checks, bundles and component-tests the insights Vue pages (vue-tsc, vite, vitest)"
+
+    dependsOn(generateVueVerifySdk, vueVerifyInstall)
+
+    workingDir = vueVerifyDir.asFile
+
+    commandLine("pnpm", "run", "--silent", "verify")
+
+    inputs.dir(vueVerifySdkDir)
+    outputs.upToDateWhen { false }
+
+    doFirst {
+        // The SDK is generated under build/; copy it where the harness app imports it from.
+        val linked = vueVerifyDir.dir("src/funktorsdk").asFile
+        linked.deleteRecursively()
+        vueVerifySdkDir.get().asFile.copyRecursively(linked, overwrite = true)
+    }
+}
+
+tasks.named("check") {
+    if (!providers.gradleProperty("skipVueVerify").isPresent) {
+        dependsOn(vueVerify)
+    }
 }
 
 mavenPublishing {
