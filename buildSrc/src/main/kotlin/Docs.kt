@@ -44,7 +44,7 @@ object Docs {
 
         val taskName = "distributeJsExample"
 
-        tasks.named("build") { finalizedBy(taskName) }
+        // Not part of `build`: the bundles under docs/ are tracked, so they are refreshed on purpose (the release does).
 
         tasks.register<Sync>(taskName) {
             dependsOn("assemble")

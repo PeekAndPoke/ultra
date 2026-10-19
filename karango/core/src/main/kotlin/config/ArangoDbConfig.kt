@@ -18,6 +18,7 @@ data class ArangoDbConfig(
     val caCertX509: String? = null,
 ) {
     companion object {
-        val forUnitTests get() = ArangoDbConfig()
+        /** The local test database; `ULTRA_TEST_ARANGO_DB` selects another one (one per worktree). */
+        val forUnitTests get() = ArangoDbConfig(database = System.getenv("ULTRA_TEST_ARANGO_DB") ?: "_system")
     }
 }

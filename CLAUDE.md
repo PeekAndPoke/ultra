@@ -53,6 +53,19 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
   retrieval/mechanical work, strong tiers for coding/verification; the coordinator stays on the
   user-selected model. See `.claude/skills/agent-fleet/` (provisional).
 
+## Parallel worktrees
+
+Tracks run in their own git worktrees (`.claude/tasks/20261019-insights-auth-parallel-plan.md`).
+`console/worktree-new.sh <track>` creates `../ultra-wt/<track>` on branch `wt/<track>` from master, with its own
+test databases.
+
+- **In a worktree, build only through `console/wt-gradle.sh`.** It points the tests at that worktree's own Arango and
+  Mongo databases (`ULTRA_TEST_ARANGO_DB`, `ULTRA_TEST_MONGO_DB`, `ULTRA_TEST_DEMO_DB`). A bare `./gradlew` uses the
+  SHARED test databases and wipes another worktree's data mid-run.
+- **One full suite at a time, machine-wide:** `console/wt-gradle.sh --full-suite`. Memory allows 2–3 builds at once.
+- A track edits its own area and its own task file. `CLAUDE.md`, skills, `v1-roadmap.md`, `CHANGELOG.md` and
+  `BUILD-LOCK.md` change on master only, by the coordinator. Never push; the coordinator merges.
+
 ## Development workflow
 
 - **Re-confirm the plan before implementing it.** Summarise what an open task/plan doc commits to —

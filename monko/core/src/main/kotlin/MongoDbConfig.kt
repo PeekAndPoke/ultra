@@ -8,10 +8,11 @@ data class MongoDbConfig(
     val database: String,
 ) {
     companion object {
+        /** The local test database; `ULTRA_TEST_MONGO_DB` selects another one (one per worktree). */
         val forUnitTests
             get() = MongoDbConfig(
                 connectionString = Redacted("mongodb://root:root@localhost:27017"),
-                database = "test"
+                database = System.getenv("ULTRA_TEST_MONGO_DB") ?: "test"
             )
     }
 }

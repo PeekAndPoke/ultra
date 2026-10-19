@@ -21,16 +21,18 @@ worktrees … which parts can be developed independently and are easy to merge")
 ## Wave 0 — coordinator, on master, before any worktree starts
 
 - [x] **E1** `auth-increments` merged into `master` (`f61c8731`, tree identical, local — not pushed).
-- [ ] **E2** Per-worktree test databases: `forUnitTests` honours `ULTRA_TEST_ARANGO_DB` / `ULTRA_TEST_MONGO_DB`
+- [x] **E2** Per-worktree test databases: `forUnitTests` honours `ULTRA_TEST_ARANGO_DB` / `ULTRA_TEST_MONGO_DB`
       (defaults unchanged), the same for funktor-demo's `application.test.conf`; a setup script creates the Arango
-      databases per worktree (Karango never creates a database).
-- [ ] **E3** Generated files: take `distributeJsExample` out of `build` into an explicit task run at release (D9).
+      databases per worktree (Karango never creates a database). `console/worktree-new.sh`, `console/wt-gradle.sh`.
+      Verified 2026-10-19: `:funktor:cluster:jvmTest` + `:funktor-demo:server:test` with probe values wrote their
+      collections into the probe databases on both backends (the override reaches the forked test JVMs).
+- [x] **E3** Generated files: take `distributeJsExample` out of `build` into an explicit task run at release (D9). Verified: an example's `build` leaves `docs/` untouched; the release skill has the step.
 - [ ] **E4** (may run alongside Wave 1; touches only task docs no track owns) Task-doc housekeeping in one commit: archive what is done but still open (auth-hardening parts 1–4,
       account-activation backend, activation-resend, apiacl naming, value-class EmailAddress, ktor-client
       unification, …) and fix the stale claims the inventory found (TAB-SPECS `createdAt`/`isSystem`, the Kraft doc's
       "gate has not run", `insights.astro` documenting the deleted `InsightsGui`). Every worktree then starts from
       accurate docs, and nobody edits them in parallel.
-- [ ] **E5** One full suite at a time across all worktrees: `flock /tmp/ultra-full-suite.lock ./gradlew clean build`.
+- [x] **E5** One full suite at a time across all worktrees: `console/wt-gradle.sh --full-suite` (`flock /tmp/ultra-full-suite.lock`).
       Module-level builds run freely in their own worktree.
 
 ## The tracks

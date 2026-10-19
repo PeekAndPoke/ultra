@@ -74,6 +74,13 @@ zero hits.
 3. **funktor-demo smoke** (optional but recommended for major/minor releases): `./gradlew :funktor-demo:server:run`
    against both ArangoDB and MongoDB configurations. Skip for patch releases unless the user asks.
 
+4. **Kraft example bundles.** `./gradlew distributeJsExample` refreshes `docs/kraft/examples/` from the verified
+   build. It is deliberately NOT part of `build` (since 2026-10-19), so branches and worktrees never fight over the
+   tracked bundles. Commit them on their own — `build files: Kraft examples rebuilt for $1` — before the release commit.
+
+While worktree tracks are active, run step 1 as `console/wt-gradle.sh --full-suite`: it waits for the machine-wide
+full-suite slot, so the release build never races another worktree's suite for memory.
+
 If any step fails, stop. Do NOT proceed to publish. Report the failure and wait for the user.
 
 ## Commit + tag
@@ -114,6 +121,7 @@ landed), skip items marked *(major/minor only)*.
 - [ ] Every public API has KDoc *(major only)*
 - [ ] `./gradlew clean build` green, no warnings
 - [ ] `cd docs-site && pnpm astro build` green; LLM mirrors show the new version
+- [ ] Kraft example bundles refreshed (`./gradlew distributeJsExample`) and committed on their own
 - [ ] Every library has a README
 - [ ] CHANGELOG.md updated with release notes *(major/minor only)*
 - [ ] Root README points at the new version
