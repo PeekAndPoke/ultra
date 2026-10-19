@@ -9,6 +9,14 @@ dir="$(dirname "$main")/ultra-wt/$track"
 
 git -C "$main" worktree add -b "wt/$track" "$dir" master
 
+# Gitignored local config the test suites read: linked, so the secrets stay in one place.
+for f in funktor-demo/server/src/main/resources/config/keys.env.conf; do
+  if [[ -f "$main/$f" ]]; then
+    ln -s "$main/$f" "$dir/$f"
+    echo "linked $f"
+  fi
+done
+
 db="ultra_wt_$(printf '%s' "$track" | tr -c 'a-zA-Z0-9' '_')"
 
 # Karango creates collections and indexes, never a database. MongoDB creates its database on first write.

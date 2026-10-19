@@ -15,10 +15,10 @@ class MongoDbConfigSpec : FreeSpec() {
                 config.connectionString.value shouldBe "mongodb://root:root@localhost:27017"
             }
 
-            "forUnitTests should use 'test' database" {
+            "forUnitTests should use the 'test' database, unless ULTRA_TEST_MONGO_DB names a worktree's own" {
                 val config = MongoDbConfig.forUnitTests
 
-                config.database shouldBe "test"
+                config.database shouldBe (System.getenv("ULTRA_TEST_MONGO_DB") ?: "test")
             }
 
             "should support custom configuration" {
