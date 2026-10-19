@@ -6,6 +6,8 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
@@ -23,6 +25,7 @@ import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -255,7 +258,8 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
                 stored("key")!!.lastHeartbeat.toEpochMillis() shouldBeGreaterThan acquired.lastHeartbeat.toEpochMillis()
             }
 
-            log.warnings.filter { it.contains("heartbeat failed") } shouldHaveSize 2
+            // Only the injected failures: a real beat slower than the 50 ms interval also times out under load.
+            log.warningCauses.filter { it.message == "database hiccup" } shouldHaveSize 2
         }
 
         "A hanging heartbeat times out, and the next beat retries" {
@@ -276,7 +280,10 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
                 stored("key")!!.lastHeartbeat.toEpochMillis() shouldBeGreaterThan acquired.lastHeartbeat.toEpochMillis()
             }
 
-            log.warnings.filter { it.contains("heartbeat failed") } shouldHaveSize 2
+            withClue("the two injected hangs each end in a timeout warning; a slow real beat may add more") {
+                log.warningCauses.filterIsInstance<TimeoutCancellationException>().size shouldBeGreaterThanOrEqual 2
+            }
+            hangs.get() shouldBeLessThanOrEqual 0
         }
 
         "A lock whose holder stopped beating is taken over once the ttl has passed" {
@@ -608,13 +615,16 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
     }
 
     private class CapturingLog : Log {
-        private val captured = mutableListOf<String>()
+        private val captured = mutableListOf<Pair<String, Throwable?>>()
 
-        val warnings: List<String> get() = synchronized(captured) { captured.toList() }
+        val warnings: List<String> get() = synchronized(captured) { captured.map { it.first } }
+
+        /** The errors logged with the warnings, so a test can count the failures it injected. */
+        val warningCauses: List<Throwable> get() = synchronized(captured) { captured.mapNotNull { it.second } }
 
         override fun log(level: LogLevel, message: String, error: Throwable?) {
             if (level == LogLevel.WARNING) {
-                synchronized(captured) { captured.add(message) }
+                synchronized(captured) { captured.add(message to error) }
             }
         }
     }

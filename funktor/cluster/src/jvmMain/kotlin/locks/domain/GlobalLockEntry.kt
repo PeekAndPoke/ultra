@@ -23,8 +23,9 @@ data class GlobalLockEntry(
 )
 
 /**
- * Written by a version without heartbeats: no token, so only [GlobalLockEntry.expires] tells whether it is alive.
+ * Written by a version without heartbeats: no token, so it is judged by [GlobalLockEntry.expires] (and by its
+ * server's beacon), not by a heartbeat.
  *
  * An extension, so that it can never become part of the stored record.
  */
-val GlobalLockEntry.isLegacy: Boolean get() = token.isEmpty()
+internal val GlobalLockEntry.isLegacy: Boolean get() = token.isEmpty()
