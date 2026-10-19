@@ -18,6 +18,7 @@ import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.log.NullLog
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -398,6 +399,20 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
 
             repo.removeIfUnchanged(read) shouldBe false
             stored("key")?.token shouldBe "second"
+        }
+
+        "removeIfUnchanged of one lock by several at once: exactly one wins, and none fails" {
+            // Many rounds of a crowd, so that their removes collide (on Arango: write-write conflicts).
+            repeat(20) {
+                insertLock("key", created = MpInstant.now().minus(1.minutes))
+                val read = stored("key")!!
+
+                val removed = coroutineScope {
+                    List(8) { async(Dispatchers.IO) { repo.removeIfUnchanged(read) } }.awaitAll()
+                }
+
+                removed.count { it } shouldBe 1
+            }
         }
 
         "removeIfUnchanged tells two token-less locks apart by their creation time" {
