@@ -38,7 +38,7 @@ restore, compile-error "kills"), and task-doc consistency (statuses vs folder, l
       - REMOVE hand procedures the tools enforce (the cp / path-mirrored backup / never-`git checkout` protocol,
         reading `TEST-*.xml` by hand) → "use <tool>".
       - DON'T remove traps no tool covers: compile sweep, stale test classes after an ABI change, greps missing
-        receiver-less calls and anonymous objects, untyped `shouldBe`, `\\uXXXX` escapes, "a surviving mutant is not
+        receiver-less calls and anonymous objects, untyped `shouldBe`, `\uXXXX` escapes, "a surviving mutant is not
         always a missing test". When unsure, keep.
       - Same pass over MEMORY.md and skills that repeat the protocol (review-loop's mutation steps).
 
