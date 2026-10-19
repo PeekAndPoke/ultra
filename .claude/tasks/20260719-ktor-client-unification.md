@@ -100,6 +100,12 @@ follow-up "typed error data" decision trivial (envelope always decodes on both p
       spam (interceptor deleted). See `funktor/auth/src/jsMain/kotlin/AuthState.kt:158`.
 - [ ] Manual (user): boot dev server + ops-app; confirm login 401/403 is a clean failure, the
       devtools request list still populates, and cross-origin bearer/CORS behaves as before.
+      **CORS/credentials parity settled from source (coordinator, 2026-10-19):** Ktor 3.6.0's JS engine
+      builds the fetch `RequestInit` from method, headers, redirect and body only
+      (`ktor-client-core-js-3.6.0-sources.jar`, `io/ktor/client/utils/JsUtils.js.kt:29-42`) — no `credentials`,
+      no `mode`, so browser defaults (`same-origin` credentials: no cookies cross-origin), exactly as the old
+      `window.fetch` call. Nothing in ultra or kraft calls `JsClientEngineConfig.configureRequest`. What remains
+      manual is the UI part (clean 401/403, devtools list), which the apps have exercised daily since 2026-07-20.
 
 ## Behavior change (call-site relevant)
 
