@@ -351,7 +351,7 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
       explain output as `text`. `JsonTree` replaces the JSON case and is better (collapsible,
       searchable by eye) — **but query text is now unhighlighted plain `<pre>`.**
 - [x] **Three vis.js graphs** — ported 2026-10-19 (T1), `vis-network` 10.1.2. See
-      `.claude/tasks/20260824-insights-graphs-and-static-slices.md` Parts C+D.
+      `.claude/tasks-archive/2026-08/20260824-insights-graphs-and-static-slices.md` Parts C+D.
 - [ ] **The bar's git version and environment id have no home.** The bar is deleted by decision, and
       the list page absorbed status/duration — but `appInfo.version.describeGit()` and
       `appConfig.ktor.application.id` were bar items and are now shown nowhere. Both are in the
@@ -510,7 +510,7 @@ config tab) rather than opening a second file. T1 may not edit that file; its pr
 ## T1 — implementation notes (2026-10-19, branch `wt/insights-vue`)
 
 The gate blockers. The graphs and the kontainer shapes are recorded in
-`.claude/tasks/20260824-insights-graphs-and-static-slices.md`, Parts C+D.
+`.claude/tasks-archive/2026-08/20260824-insights-graphs-and-static-slices.md`, Parts C+D.
 
 - **S1 at the source.** `monko/core/src/main/kotlin/MonkoDriver.kt:148` `FindQueryBuilder.printQuery()` turns
   every filter value into an `@pN:<type>` placeholder (`placeholderise`) with the values, as plain Java values,
