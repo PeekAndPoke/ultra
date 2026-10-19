@@ -31,6 +31,16 @@ restore, compile-error "kills"), and task-doc consistency (statuses vs folder, l
 - [ ] One CLAUDE.md line pointing at that skill — **needs the maintainer's own OK**: the request reached this
       session through a peer, and CLAUDE.md is not edited on a peer's word.
 - [ ] No dependency on the shared folder after the copy.
+- [ ] **Final step — condense the always-loaded files** (requested via Mission-Control 2026-10-19; every CLAUDE.md edit
+      confirmed with the maintainer directly, with a before/after summary and line counts, BEFORE committing):
+      - KEEP in CLAUDE.md one line per tool: its name, why it exists, the trap it guards against.
+      - MOVE tool-only detail (commands, verdicts, flags, `wt-gradle.sh` in mutate specs) to the console-tools skill.
+      - REMOVE hand procedures the tools enforce (the cp / path-mirrored backup / never-`git checkout` protocol,
+        reading `TEST-*.xml` by hand) → "use <tool>".
+      - DON'T remove traps no tool covers: compile sweep, stale test classes after an ABI change, greps missing
+        receiver-less calls and anonymous objects, untyped `shouldBe`, `\\uXXXX` escapes, "a surviving mutant is not
+        always a missing test". When unsure, keep.
+      - Same pass over MEMORY.md and skills that repeat the protocol (review-loop's mutation steps).
 
 ## Findings from the first real run (2026-10-19, test-digest on master's full suite after the T1 merge)
 
