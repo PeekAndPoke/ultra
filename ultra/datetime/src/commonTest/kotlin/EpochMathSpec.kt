@@ -77,9 +77,12 @@ class EpochMathSpec : StringSpec({
             withClue(date) {
                 val expected = date.atStartOfDayIn(TimeZone.UTC)
 
-                EpochMath.instant(date, 0) shouldBe expected
-                EpochMath.epochSecondsExact(date) shouldBe expected.epochSeconds
                 EpochMath.localDateTime(expected.epochSeconds, 0, 0).date shouldBe date
+
+                // odd offsets: a midnight read as UTC is exact in a Double, a midnight minus an odd offset is not
+                listOf(0, 1, -1_521, 3_600, -9_001).forEach { offset ->
+                    EpochMath.instant(date, offset) shouldBe expected.minus(offset.seconds)
+                }
             }
         }
     }

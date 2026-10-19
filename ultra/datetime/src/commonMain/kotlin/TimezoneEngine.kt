@@ -5,6 +5,7 @@ import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
+import kotlin.math.abs
 import kotlin.time.Instant
 
 /**
@@ -16,26 +17,22 @@ import kotlin.time.Instant
 internal object TimezoneEngine {
 
     // Epoch seconds as Double and the date split in EpochMath, not Instant ± Duration or kotlinx's own conversion: on
-    // JS every Long is emulated, and this code runs on every conversion. Results are built by EpochMath from the exact
-    // values; the Double seconds only find the offset (beyond 2^53 s they are rounded, the offset is not affected).
-    private const val PROBE_WINDOW_SECONDS = 86_400.0
+    // JS every Long is emulated, and this code runs on every conversion. A Double holds every whole second only up to
+    // 2^53, so from 2^52 on the zone lookups take the exact Long path (JVM/native; JS never gets that far — Intl's
+    // range ends at ±8.64e12 s). Results are built by EpochMath from exact values.
+    private const val PROBE_WINDOW_SECONDS = 86_400
+    private const val EXACT_AS_DOUBLE = 4_503_599_627_370_496.0 // 2^52
 
     /** The offset of [timezone] at [instant], in seconds. */
     fun offsetSecondsAt(timezone: MpTimezone, instant: Instant): Int {
-        return offsetSecondsAt(timezone, instant.epochSeconds.toDouble())
-    }
-
-    private fun offsetSecondsAt(timezone: MpTimezone, epochSeconds: Double): Int {
-        return fixedOffsetSecondsOrNull(timezone.id) ?: platformOffsetSecondsAt(timezone.id, epochSeconds)
+        return fixedOffsetSecondsOrNull(timezone.id) ?: lookup(timezone.id, instant.epochSeconds)
     }
 
     /** The wall-clock time of [instant] in [timezone]. */
     fun toLocalDateTime(timezone: MpTimezone, instant: Instant): LocalDateTime {
-        val epochSeconds = instant.epochSeconds
-
         return EpochMath.localDateTime(
-            epochSeconds = epochSeconds,
-            offsetSeconds = offsetSecondsAt(timezone, epochSeconds.toDouble()),
+            epochSeconds = instant.epochSeconds,
+            offsetSeconds = offsetSecondsAt(timezone, instant),
             nanos = instant.nanosecondsOfSecond,
         )
     }
@@ -47,11 +44,16 @@ internal object TimezoneEngine {
      * it is one of the two valid offsets, otherwise the earlier offset does.
      */
     fun toInstant(timezone: MpTimezone, local: LocalDateTime, preferredOffsetSeconds: Int? = null): Instant {
-        val wall = EpochMath.epochSeconds(local)
-
         fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(local, it) }
 
-        val offset = when (val resolution = resolve(timezone.id, wall)) {
+        val wall = EpochMath.epochSeconds(local)
+
+        val resolution = when {
+            abs(wall) < EXACT_AS_DOUBLE -> resolve { platformOffsetSecondsAt(timezone.id, wall + it) }
+            else -> EpochMath.instant(local, 0).epochSeconds.let { exact -> resolve { lookup(timezone.id, exact + it) } }
+        }
+
+        val offset = when (resolution) {
             is Resolution.Unique -> resolution.offset
             is Resolution.Overlap -> when (preferredOffsetSeconds) {
                 resolution.later -> resolution.later
@@ -66,16 +68,22 @@ internal object TimezoneEngine {
 
     /** The first instant of [date] in [timezone]: midnight, or the end of the gap when midnight does not exist. */
     fun startOfDay(timezone: MpTimezone, date: LocalDate): Instant {
-        val wall = EpochMath.epochSeconds(date)
-
         fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(date, it) }
 
-        return when (val resolution = resolve(timezone.id, wall)) {
+        val wall = EpochMath.epochSeconds(date)
+
+        val resolution = when {
+            abs(wall) < EXACT_AS_DOUBLE -> resolve { platformOffsetSecondsAt(timezone.id, wall + it) }
+            else -> EpochMath.instant(date, 0).epochSeconds.let { exact -> resolve { lookup(timezone.id, exact + it) } }
+        }
+
+        return when (resolution) {
             is Resolution.Unique -> EpochMath.instant(date, resolution.offset)
             is Resolution.Overlap -> EpochMath.instant(date, resolution.earlier)
-            is Resolution.Gap -> Instant.fromEpochSeconds(
-                transitionAfter(timezone.id, EpochMath.epochSecondsExact(date) - DAY_SECONDS, resolution.before)
-            )
+            is Resolution.Gap -> {
+                val midnight = EpochMath.instant(date, 0).epochSeconds
+                Instant.fromEpochSeconds(transitionAfter(timezone.id, midnight - PROBE_WINDOW_SECONDS, resolution.before))
+            }
         }
     }
 
@@ -90,13 +98,22 @@ internal object TimezoneEngine {
             is DateTimeUnit.TimeBased -> instant.plus(value, unit)
 
             is DateTimeUnit.DateBased -> {
-                val epochSeconds = instant.epochSeconds
-                val offset = offsetSecondsAt(timezone, epochSeconds.toDouble())
-                val local = EpochMath.localDateTime(epochSeconds, offset, instant.nanosecondsOfSecond)
+                val offset = offsetSecondsAt(timezone, instant)
+                val local = EpochMath.localDateTime(instant.epochSeconds, offset, instant.nanosecondsOfSecond)
                 val shifted = LocalDateTime(local.date.plus(value, unit), local.time)
 
                 toInstant(timezone, shifted, preferredOffsetSeconds = offset)
             }
+        }
+    }
+
+    /** The offset of the region zone [zoneId] at [epochSeconds]: fast as a Double where that is exact, else exact. */
+    private fun lookup(zoneId: String, epochSeconds: Long): Int {
+        val asDouble = epochSeconds.toDouble()
+
+        return when {
+            abs(asDouble) < EXACT_AS_DOUBLE -> platformOffsetSecondsAt(zoneId, asDouble)
+            else -> platformOffsetSecondsAtExact(zoneId, epochSeconds)
         }
     }
 
@@ -110,23 +127,22 @@ internal object TimezoneEngine {
     }
 
     /**
-     * Resolves the wall-clock time [wall] (epoch seconds as if it were UTC) in the zone [zoneId].
+     * Resolves a wall-clock time in a zone, given [offsetAt] — the zone's offset at the wall time read as UTC, shifted by
+     * the given number of seconds.
      *
      * Assumes no two transitions within two days of each other (pinned by `OffsetIntervalCacheJvmSpec`).
      */
-    private fun resolve(zoneId: String, wall: Double): Resolution {
-        val before = platformOffsetSecondsAt(zoneId, wall - PROBE_WINDOW_SECONDS)
-        val after = platformOffsetSecondsAt(zoneId, wall + PROBE_WINDOW_SECONDS)
+    private inline fun resolve(offsetAt: (shiftSeconds: Int) -> Int): Resolution {
+        val before = offsetAt(-PROBE_WINDOW_SECONDS)
+        val after = offsetAt(PROBE_WINDOW_SECONDS)
 
-        fun isValid(offset: Int) = platformOffsetSecondsAt(zoneId, wall - offset) == offset
-
-        val validBefore = isValid(before)
+        val validBefore = offsetAt(-before) == before
 
         if (before == after) {
-            return Resolution.Unique(if (validBefore) before else platformOffsetSecondsAt(zoneId, wall))
+            return Resolution.Unique(if (validBefore) before else offsetAt(0))
         }
 
-        val validAfter = isValid(after)
+        val validAfter = offsetAt(-after) == after
 
         return when {
             validBefore && validAfter -> Resolution.Overlap(earlier = before, later = after)
@@ -144,18 +160,16 @@ internal object TimezoneEngine {
      */
     private fun transitionAfter(zoneId: String, from: Long, before: Int): Long {
         var lo = from
-        var hi = from + 2 * DAY_SECONDS
+        var hi = from + 2 * PROBE_WINDOW_SECONDS
 
         while (hi - lo > 1) {
             val mid = lo + (hi - lo) / 2
 
-            if (platformOffsetSecondsAt(zoneId, mid.toDouble()) == before) lo = mid else hi = mid
+            if (lookup(zoneId, mid) == before) lo = mid else hi = mid
         }
 
         return hi
     }
-
-    private const val DAY_SECONDS = 86_400L
 
     /**
      * The offset of a fixed-offset zone id, or null for a region id.
@@ -210,6 +224,9 @@ internal object TimezoneEngine {
  * `Long`), in seconds. Throws [IllegalTimeZoneException] if unknown.
  */
 internal expect fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Double): Int
+
+/** Like [platformOffsetSecondsAt], exact for any [epochSeconds] (used from 2^52 on, where a Double is not). */
+internal expect fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: Long): Int
 
 /** The id of the system's time zone. */
 internal expect fun platformSystemDefaultZoneId(): String

@@ -61,7 +61,7 @@ internal object EpochMath {
 
     /**
      * The epoch seconds of [local] read as UTC, as a `Double` for the zone math (whole seconds; the nanoseconds are left
-     * out). Beyond the exact range it is rounded: use it to find the offset, then [instant] for the result.
+     * out). Rounded beyond 2^53: the zone math then switches to exact values, and results always come from [instant].
      */
     fun epochSeconds(local: LocalDateTime): Double {
         if (abs(local.year) > MAX_EXACT_YEAR) {
@@ -79,15 +79,6 @@ internal object EpochMath {
         }
 
         return epochDays(date.year, date.month.number, date.day) * SECONDS_PER_DAY
-    }
-
-    /** The exact epoch seconds of the start of [date] read as UTC. */
-    fun epochSecondsExact(date: LocalDate): Long {
-        if (abs(date.year) > MAX_EXACT_YEAR) {
-            return date.atStartOfDayIn(TimeZone.UTC).epochSeconds
-        }
-
-        return epochSeconds(date).toLong()
     }
 
     /** The instant of [local] read with [offsetSeconds], i.e. `local − offset`, exactly. */

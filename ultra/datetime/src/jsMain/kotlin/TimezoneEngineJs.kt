@@ -27,6 +27,11 @@ internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Double
     return offsetCacheFor(zoneId).offsetSecondsAt(epochSeconds)
 }
 
+// Only asked from 2^52 s on, far outside the JS Date range: the Double lookup throws there, as it should.
+internal actual fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: Long): Int {
+    return platformOffsetSecondsAt(zoneId, epochSeconds.toDouble())
+}
+
 private fun offsetCacheFor(zoneId: String): OffsetIntervalCache {
     val cached = offsetCaches[zoneId]
     if (cached != null && cached != undefined) return cached.unsafeCast<OffsetIntervalCache>()

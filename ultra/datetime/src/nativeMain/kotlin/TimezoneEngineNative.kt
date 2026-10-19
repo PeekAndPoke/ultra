@@ -13,6 +13,10 @@ internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Double
     return zoneFor(zoneId).offsetAt(Instant.fromEpochSeconds(epochSeconds.toLong())).totalSeconds
 }
 
+internal actual fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: Long): Int {
+    return zoneFor(zoneId).offsetAt(Instant.fromEpochSeconds(epochSeconds)).totalSeconds
+}
+
 internal actual fun platformSystemDefaultZoneId(): String {
     return TimeZone.currentSystemDefault().id
 }

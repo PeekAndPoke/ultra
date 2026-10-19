@@ -30,9 +30,11 @@ that work went through js-joda and cost nothing in `Long` terms.
 
 - `ultra/datetime/src/commonMain/kotlin/EpochMath.kt`: civil-from-days / days-from-civil (Hinnant) on `Int` days and
   `Double` seconds; kotlinx takes over beyond ±1 million years (`MAX_EXACT_YEAR`), where `Int` days would overflow.
-- `TimezoneEngine` runs on `Double` epoch seconds end to end (`resolve`, `transitionAfter`, `startOfDay`, `plus`);
-  the platform primitive and `OffsetIntervalCache` take `Double` seconds, so a JS conversion creates no emulated
-  `Long` except reading `Instant.epochSeconds` and building the result `Instant`. Date-based `plus` still adds the
+- `TimezoneEngine` runs on `Double` epoch seconds (`resolve` probes, the platform primitive, `OffsetIntervalCache`)
+  wherever a Double holds every whole second (|s| < 2^52); from 2^52 on it takes an exact Long path
+  (`platformOffsetSecondsAtExact`; JS never gets there). `transitionAfter` bisects on Long. Results are always built
+  by `EpochMath` from exact values. A JS conversion creates no emulated `Long` except reading `Instant.epochSeconds`
+  and building the result `Instant`. Date-based `plus` still adds the
   date through kotlinx (`LocalDate.plus`) — not on spross's hot path.
 - Tests: `EpochMathSpec` (common, all targets) compares with kotlinx on 20 000 pseudo-random instants over ±12 000
   years, the exact-range edges and the fallback range near `Instant`'s own limits, plus calendar edge dates.
@@ -93,3 +95,30 @@ compile sweep 0 errors / 0 warnings. Benchmark held: `atZone` 3 400 – 3 500, `
 8 100 – 8 300, scattered 16 700 – 17 300 ns/op.
 
 **Verdict:** round 1 NOT clean (1 CRITICAL + 1 MAJOR) → fix batch → round 2.
+
+**Round 2** (`reviewer-xhigh`, two-phase; the reviewers read the task only up to the ledger this time). Phase 1 is
+the basis below; the SAFETY VALVE fired (two rounds without a clean one), so phase 2 was not run and the open
+findings went to the maintainer, who chose "exact Long path, then round 3" (2026-10-19).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MAJOR | `TimezoneEngine.kt:25,38,94,118-126` + `TimezoneEngine{Jvm,Native}.kt` | Beyond 2^53 s the zone LOOKUP still takes a rounded Double: one or two seconds before each DST transition (transitions ≡ 0 mod 4) the offset AFTER the transition comes back. A stored `MpZonedDateTime` `ts` there decodes an hour off and re-encodes 3 600 000 ms different (JVM/native; years 285M–292M); regression (base looked up with Long); the "offset is not affected" comment is false (D, S MAJOR; I MINOR) | fix | Verified by reasoning, then by test: `FarFutureZoneJvmSpec` (300 java.time comparisons around transitions in years 290M and 600M, Berlin `ts` re-save) — RED with the routing mutated. Fix: `platformOffsetSecondsAtExact(zoneId, Long)` for \|s\| ≥ 2^52; `resolve` is one inline function fed by a fast Double or an exact Long probe; `transitionAfter` probes through the same router; comments corrected |
+| 2 | MINOR | `EpochMath.kt:104-106` | The `instant(date, offset)` fallback cannot fail any test (midnights are exact Doubles; only offset 0 tested) (I) | fix | Calendar rows over odd offsets (1, −1521, 3600, −9001); deleting the branch → RED |
+| 2 | MINOR | `TimezoneEngine.kt:50,69` | `wall` computed before the fixed-offset early return (wasted on every UTC encode/decode) (D, S, I) | fix | Fixed-offset check first |
+| 2 | MINOR | `EpochMath.kt:84-91` | `epochSecondsExact` redundant (S, I) | fix | Removed; `instant(date, 0).epochSeconds` |
+| 2 | MINOR | task file line 33 | Says `transitionAfter` runs on Double (D) | fix | Restated |
+| 2 | MINOR | `FarFutureZoneJvmSpec.kt:11-12` | KDoc "within a couple of seconds" false for the local time (I, D, S) | fix | Spec rewritten: exact equality with java.time |
+
+**Probed and CLEAN** (round 2): Hinnant formulas and Int ranges again; both fast-path thresholds exact; fallbacks
+get exact Longs; `transitionAfter` (Long) and the cache's guarded bisection terminate for any input; UTC/fixed-offset
+round trips stable for every Long `ts`; no new exception types; JS unaffected beyond the Date range. Pre-existing,
+not from this change: JVM `DateTimeException` within a day of year ±999 999 999 in DST zones (`resolve` probes ±1
+day); JS `offsetSecondsAt` NaN → 0 within |offset| of the ±8.64e15 ms limit; the overlap round trip (own task).
+
+Round-2 fix batch, final tree (2026-10-19): `:ultra:datetime:allTests` jvmTest 2507/0, linuxX64Test 1860/0,
+jsBrowserTest 1872/0; slumber 1244/0; kraft core-tests 412/0; kraft datetime addon 2/0, pixijs addon 14/0; compile
+sweep 0/0. Mutations RED (restored + `cmp`): lookup always via Double → all 3 `FarFutureZoneJvmSpec` rows;
+`toInstant` always on the fast path → 2 rows; `instant(date, offset)` fallback deleted → `EpochMathSpec` calendar
+rows. Benchmark: `atZone` 2 740, `toInstant` 3 650, daily stride 6 550, scattered 13 800 ns/op.
+
+**Round 3** (`reviewer-top`, maintainer in the loop) next.
