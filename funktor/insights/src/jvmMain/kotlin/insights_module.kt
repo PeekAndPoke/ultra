@@ -78,6 +78,9 @@ val Funktor_Insights = module {
     // Fails the boot on duplicate collector keys — see the class for why it cannot wait
     singleton(CollectorKeyUniquenessCheck::class)
 
+    // The static graphs. A true singleton, so the kontainer graph is built once per blueprint
+    singleton(InsightsGraphs::class)
+
     // The API — superuser-gated, and the only way to reach the recorded data
     singleton(InsightsApiFeature::class)
 }

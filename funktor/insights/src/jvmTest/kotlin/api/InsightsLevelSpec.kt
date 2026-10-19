@@ -33,7 +33,7 @@ class InsightsLevelSpec : StringSpec({
     )
 
     "every insights route opts out of recording" {
-        api.all.size shouldBe 2
+        api.all.size shouldBe 4
 
         api.all.forEach { route ->
             withClue(route.pattern.pattern) {
