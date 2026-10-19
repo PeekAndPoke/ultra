@@ -162,6 +162,8 @@ internal class OffsetIntervalCache(
 
         while (b - a > 1.0) {
             val mid = floor((a + b) / 2.0)
+            // Beyond 2^53 a Double midpoint can land on a bound; stop rather than loop (callers stay far below that).
+            if (mid <= a || mid >= b) break
             if (lookup(mid) == offset) a = mid else b = mid
         }
 

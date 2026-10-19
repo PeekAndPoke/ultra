@@ -54,9 +54,42 @@ that work went through js-joda and cost nothing in `Long` terms.
   | `atZone`, daily stride | 14 100 – 15 900 | 7 600 – 9 100 |
   | `atZone`, scattered over 50 years | 21 700 – 26 200 | 18 600 |
 
+- **spross browser profile** (Spross-Main-Dev, 2026-10-19; spross 7e5d09b, headless Chrome 155, 1440x, 3 alternating
+  runs, development builds), inclusive % of wall time, 0.111.0 → snapshot `fd8eb172` [the `60bdd5d3` snapshot]:
+  `atZone` 8.5 → 1.5 [9.7]; `toInstant` 2.8 → 1.0 [6.1]; `MpZonedDateTime` init 2.8 → 0.7 [4.6]; `offsetSecondsAt` 7.2
+  → 0.2 [0.2]; kotlinx `localDateTimeToInstant`/`instantToLocalDateTime` 0 → 0.0 [3.8/4.4]; **all datetime stacks 8.7 →
+  1.7 [11.4]**. Remaining `Long` work under datetime ~0.7 points. Seen on the caller's side only:
+  `kotlin.time.Instant.plus(Duration)` (spross calls it per stored sample per tick; spross fixes its loop).
+
 ## Review record — the LEDGER (filled by /feature-review)
+
+Change set `fd8eb172` (base `60bdd5d3`). Round 1 BLIND, three `reviewer-high` (I, D, S).
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | CRITICAL | `TimezoneEngine.kt:136-147` | `transitionAfter` bisects on Double; beyond 2^53 s the midpoint rounds onto `lo`/`hi` and the loop NEVER ends — a start of day with midnight in a gap (Asia/Beirut, Havana, Santiago, Cairo) at year ~285M+ hangs a JVM/native worker thread; reachable from stored `ts`, ISO strings, `MpLocalDate.atStartOfDay`/`atTime`/`toRange`, `DateTimeRangeConverter` (S) | fix | CONFIRMED by experiment: `FarFutureZoneJvmSpec` (thread join 10 s) — worker still alive. Regression of this commit (base bisected on Long). Fix: Long bisection in the engine; progress guard in the cache's Double bisection |
+| 1 | MAJOR | `EpochMath.kt:29-30, 60-61, 70-71, 78-79` + `TimezoneEngine.kt` callers | Beyond 2^53 s the "kotlinx fallback" gets an already-rounded Double: dates up to ±2 s off, and a stored `ts` ≥ ~9.007e18 ms CHANGES on decode → re-encode (S; I and D raised it as MINOR) | fix | Verified by reading; the MAJOR (persistence) severity is the reviewer's and stands. Fix: Long across every inexact boundary — `localDateTime(epochSeconds: Long, offset, nanos)`, `instant(local, offset)` / `instant(date, offset)` exact via kotlinx beyond the exact range; tests with odd seconds above 2^53 against Long oracles + a `ts` re-save test |
+| 1 | MINOR | `EpochMathSpec.kt:27-28` | "far beyond" values are round (exact in Double) so the fallback test passes for the wrong reason; the comment "days no longer fit an Int" is false for ±4e13 (I, D, S) | fix | Odd values above 2^53 added; comment corrected |
+| 1 | MINOR | `EpochMathSpec.kt:45` | Expected value in the fallback range is the same lossy `.toDouble()` as the code (I, S) | fix | Oracle becomes kotlinx's Long result, compared as Long |
+| 1 | MINOR | `EpochMath.kt:17-19` | KDoc says kotlinx "does the conversion" beyond the exact range — implies exactness that was not there (S) | fix | Rewritten with the fix |
+| 1 | MINOR | surplus | `EpochMath.epochSeconds` fallbacks unreachable/useless as written (I) | fix (superseded) | The Long-boundary rewrite replaces them |
 
-**Verdict:**
+**Probed and CLEAN** (reviewers): Hinnant formulas line by line (era floor, March shift, Jan/Feb carry, year 0, negative
+years, century/400 rules); Int division truncates on every target; exactness of the ±1 M-year path (Int days to
+±5.88 M years, Double seconds ≤ 3.2e13, `floor(s/86400)` cannot misround); nanoseconds preserved; every cache/platform
+caller passes whole seconds; no new exception types; `toLong` saturation unreachable; JS Date-range behaviour unchanged;
+benchmark credible as a relative gain. Remaining cost: `MpZonedDateTime` init re-resolving + `Instant` construction —
+the overlap follow-up task.
+
+Fix batch (2026-10-19): `transitionAfter` bisects on Long again (`TimezoneEngine.kt`); `EpochMath` keeps Long across
+every inexact boundary (`localDateTime(epochSeconds: Long, offset, nanos)`, `instant(local, offset)`,
+`instant(date, offset)`, `epochSecondsExact(date)`); progress guard in `OffsetIntervalCache.firstChangeAfter`.
+New tests: `FarFutureZoneJvmSpec` (the hang, 10 s join), odd seconds above 2^53 with kotlinx Long oracles, a stored
+`ts` of 2^53+1 s surviving decode → re-encode. Mutations RED (restored + `cmp`): Double midpoint in `transitionAfter`
+→ the hang test; fallback fed the rounded Double (both directions) → `EpochMathSpec` + the `ts` test. The cache guard
+has no test of its own (the JS domain keeps it far below 2^53). Final tree: `:ultra:datetime:allTests` jvmTest
+2505/0, linuxX64Test 1860/0, jsBrowserTest 1872/0; slumber 1244/0; kraft core-tests 412/0; kraft datetime addon 2/0;
+compile sweep 0 errors / 0 warnings. Benchmark held: `atZone` 3 400 – 3 500, `toInstant` 4 400, daily stride
+8 100 – 8 300, scattered 16 700 – 17 300 ns/op.
+
+**Verdict:** round 1 NOT clean (1 CRITICAL + 1 MAJOR) → fix batch → round 2.

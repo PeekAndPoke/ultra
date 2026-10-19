@@ -5,7 +5,6 @@ import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
-import kotlin.math.floor
 import kotlin.time.Instant
 
 /**
@@ -17,7 +16,8 @@ import kotlin.time.Instant
 internal object TimezoneEngine {
 
     // Epoch seconds as Double and the date split in EpochMath, not Instant ± Duration or kotlinx's own conversion: on
-    // JS every Long is emulated, and this code runs on every conversion. Exact for ±1 million years (EpochMath).
+    // JS every Long is emulated, and this code runs on every conversion. Results are built by EpochMath from the exact
+    // values; the Double seconds only find the offset (beyond 2^53 s they are rounded, the offset is not affected).
     private const val PROBE_WINDOW_SECONDS = 86_400.0
 
     /** The offset of [timezone] at [instant], in seconds. */
@@ -31,9 +31,13 @@ internal object TimezoneEngine {
 
     /** The wall-clock time of [instant] in [timezone]. */
     fun toLocalDateTime(timezone: MpTimezone, instant: Instant): LocalDateTime {
-        val seconds = instant.epochSeconds.toDouble()
+        val epochSeconds = instant.epochSeconds
 
-        return EpochMath.localDateTime(seconds + offsetSecondsAt(timezone, seconds), instant.nanosecondsOfSecond)
+        return EpochMath.localDateTime(
+            epochSeconds = epochSeconds,
+            offsetSeconds = offsetSecondsAt(timezone, epochSeconds.toDouble()),
+            nanos = instant.nanosecondsOfSecond,
+        )
     }
 
     /**
@@ -45,7 +49,7 @@ internal object TimezoneEngine {
     fun toInstant(timezone: MpTimezone, local: LocalDateTime, preferredOffsetSeconds: Int? = null): Instant {
         val wall = EpochMath.epochSeconds(local)
 
-        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(wall - it, local.nanosecond) }
+        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(local, it) }
 
         val offset = when (val resolution = resolve(timezone.id, wall)) {
             is Resolution.Unique -> resolution.offset
@@ -57,22 +61,22 @@ internal object TimezoneEngine {
             is Resolution.Gap -> resolution.before
         }
 
-        return EpochMath.instant(wall - offset, local.nanosecond)
+        return EpochMath.instant(local, offset)
     }
 
     /** The first instant of [date] in [timezone]: midnight, or the end of the gap when midnight does not exist. */
     fun startOfDay(timezone: MpTimezone, date: LocalDate): Instant {
         val wall = EpochMath.epochSeconds(date)
 
-        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(wall - it, 0) }
+        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(date, it) }
 
-        val start = when (val resolution = resolve(timezone.id, wall)) {
-            is Resolution.Unique -> wall - resolution.offset
-            is Resolution.Overlap -> wall - resolution.earlier
-            is Resolution.Gap -> transitionAfter(timezone.id, wall - PROBE_WINDOW_SECONDS, resolution.before)
+        return when (val resolution = resolve(timezone.id, wall)) {
+            is Resolution.Unique -> EpochMath.instant(date, resolution.offset)
+            is Resolution.Overlap -> EpochMath.instant(date, resolution.earlier)
+            is Resolution.Gap -> Instant.fromEpochSeconds(
+                transitionAfter(timezone.id, EpochMath.epochSecondsExact(date) - DAY_SECONDS, resolution.before)
+            )
         }
-
-        return EpochMath.instant(start, 0)
     }
 
     /**
@@ -86,9 +90,9 @@ internal object TimezoneEngine {
             is DateTimeUnit.TimeBased -> instant.plus(value, unit)
 
             is DateTimeUnit.DateBased -> {
-                val seconds = instant.epochSeconds.toDouble()
-                val offset = offsetSecondsAt(timezone, seconds)
-                val local = EpochMath.localDateTime(seconds + offset, instant.nanosecondsOfSecond)
+                val epochSeconds = instant.epochSeconds
+                val offset = offsetSecondsAt(timezone, epochSeconds.toDouble())
+                val local = EpochMath.localDateTime(epochSeconds, offset, instant.nanosecondsOfSecond)
                 val shifted = LocalDateTime(local.date.plus(value, unit), local.time)
 
                 toInstant(timezone, shifted, preferredOffsetSeconds = offset)
@@ -132,19 +136,26 @@ internal object TimezoneEngine {
         }
     }
 
-    /** The first second after [from] at which [zoneId] stops using the offset [before]. */
-    private fun transitionAfter(zoneId: String, from: Double, before: Int): Double {
+    /**
+     * The first second after [from] at which [zoneId] stops using the offset [before].
+     *
+     * Bisects on Long, not Double: beyond 2^53 a Double midpoint can round onto a bound and never make progress. This
+     * runs only for a start of day inside a gap, so the emulated Long on JS does not matter.
+     */
+    private fun transitionAfter(zoneId: String, from: Long, before: Int): Long {
         var lo = from
-        var hi = from + 2 * PROBE_WINDOW_SECONDS
+        var hi = from + 2 * DAY_SECONDS
 
-        while (hi - lo > 1.0) {
-            val mid = floor((lo + hi) / 2.0)
+        while (hi - lo > 1) {
+            val mid = lo + (hi - lo) / 2
 
-            if (platformOffsetSecondsAt(zoneId, mid) == before) lo = mid else hi = mid
+            if (platformOffsetSecondsAt(zoneId, mid.toDouble()) == before) lo = mid else hi = mid
         }
 
         return hi
     }
+
+    private const val DAY_SECONDS = 86_400L
 
     /**
      * The offset of a fixed-offset zone id, or null for a region id.
