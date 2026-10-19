@@ -55,7 +55,7 @@ sealed interface AuthRecord : Timestamped {
      * expired records out, so every account that let its activation link lapse would silently become
      * activated. Keeping the state here lets the token expire on its own schedule.
      *
-     * Written by `EmailAndPasswordAuth.signUp`. Cleared by exactly three operations, each of which leaves
+     * Written by `EmailAndPasswordAuth.signUp`. ACTIVATED by exactly three operations, each of which leaves
      * no password behind that the mailbox owner did not confirm:
      * - **`activateAccount`** — an explicit click (a POST, never a page load) by whoever holds the
      *   mailed link, on a page that offers "I did not sign up — cancel" right next to it.
@@ -65,8 +65,8 @@ sealed interface AuthRecord : Timestamped {
      *   password FIRST, so a pre-registering attacker's password can never start working.
      *
      * Authenticated `setPassword` deliberately does NOT clear it: it proves the current password, not
-     * the mailbox. A pending account that is never cleared is retired after
-     * `RealmTokenConfig.pendingAccountLifetime` — see `AuthRealm.retirePendingAccount`.
+     * the mailbox. Otherwise the marker goes only with the account itself, when it is RETIRED — cancelled
+     * from the mail, or past `RealmTokenConfig.pendingAccountLifetime`; see `AuthRealm.retirePendingAccount`.
      */
     data class PendingActivation(
         override val realm: RealmId,
