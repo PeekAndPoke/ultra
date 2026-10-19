@@ -26,7 +26,7 @@ import type { Fact } from '../ui/types.ts'
 import { kontainerNetwork, useInsightsGraphsOrNull } from './graphs.ts'
 import type { NetworkData } from './graphs.ts'
 import NetworkGraph from './NetworkGraph.vue'
-import { definitionChain, graphMismatch, instanceCountsMeasured, joinKontainerGraph, readKontainer } from './slices.ts'
+import { definitionChain, graphMismatch, instanceCountsMeasured, isProcessWide, joinKontainerGraph, readKontainer } from './slices.ts'
 import type { KontainerGraphData, KontainerInstance, KontainerService } from './slices.ts'
 
 defineOptions({ name: 'KontainerTab' })
@@ -88,7 +88,9 @@ const summary = computed<Fact[]>(() => {
 
     const total = value.numTotal ?? 0
     const old = value.numOld ?? 0
-    const instantiated = value.services.filter((service) => service.instances.length > 0).length
+    const instantiated = value.services.filter((service) => service.instances.length > 0)
+    const shared = instantiated.filter(isProcessWide).length
+    const own = `${instantiated.length} instantiated: ${instantiated.length - shared} this request's own, ${shared} process-wide singletons`
 
     return [
         {
@@ -104,10 +106,7 @@ const summary = computed<Fact[]>(() => {
             key: 'Kontainers (young / old / total)',
             value: instanceCountsMeasured(value) ? `${total - old} / ${old} / ${total}` : 'not measured',
         },
-        {
-            key: 'Services',
-            value: value.shape === 'full' ? `${value.services.length} (${instantiated} instantiated)` : `${instantiated} instantiated`,
-        },
+        { key: 'Services', value: value.shape === 'full' ? `${value.services.length} defined, ${own}` : own },
         ...(value.shape === 'slim'
             ? [{ key: 'Graph fingerprint', value: value.graphFingerprint ?? 'none -- the server could not build the graph' }]
             : []),
@@ -116,12 +115,7 @@ const summary = computed<Fact[]>(() => {
 
 const mismatch = computed(() => slice.value !== null && graph.value !== null && graphMismatch(slice.value, graph.value))
 
-/**
- * Full date and time, not just the clock.
- *
- * The date is what separates "instantiated during this request" from "alive since boot": a singleton
- * is process-wide, so its instance is listed on every record and usually predates the request.
- */
+/** Full date and time, not just the clock: it says whether THIS request created the instance. */
 function createdAt(instance: KontainerInstance): string {
     return instance.createdAtMillis === null ? 'n/a' : new Date(instance.createdAtMillis).toLocaleString()
 }
@@ -136,8 +130,9 @@ function shortName(fqn: string | null): string {
         <section class="fk-section">
             <FactList :facts="summary" />
             <p class="fk-section__note">
-                Singletons are process-wide: an instance listed here may have been created long before this
-                request. Compare its creation time with the record's.
+                A Singleton is process state, shared by every request: created at boot or by whichever request
+                first needed it. Every other type belongs to this request's kontainer. The creation time only
+                says whether this request was the one that created the instance.
             </p>
         </section>
 
@@ -195,7 +190,12 @@ function shortName(fqn: string | null): string {
                 <tbody>
                     <tr v-for="service in services" :key="service.cls ?? ''">
                         <td class="fk-mono" :title="service.cls ?? ''">{{ shortName(service.cls) }}</td>
-                        <td><span class="fk-label">{{ service.type ?? 'n/a' }}</span></td>
+                        <td>
+                            <span class="fk-label">{{ service.type ?? 'n/a' }}</span>
+                            <div v-if="service.instances.length > 0" class="fk-muted">
+                                {{ isProcessWide(service) ? 'process-wide' : "this request's" }}
+                            </div>
+                        </td>
 
                         <td class="fk-mono">
                             <div v-if="service.instances.length === 0" class="fk-muted">-</div>

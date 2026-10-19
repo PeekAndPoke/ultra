@@ -165,6 +165,22 @@ describe('kontainer', () => {
         expect(host.textContent).toContain('Injects and definitions are not part of this record')
     })
 
+    it('tells process-wide singletons from this request\'s own by TYPE, not by creation time', async () => {
+        const slice = sliceOf(recorded.slim(), 'kontainer')
+        const host = await render(KontainerTab, slice)
+
+        const singletons = slice.services.filter((service: { type: string }) => service.type === 'Singleton').length
+        expect(singletons).toBeGreaterThan(0)
+        expect(singletons).toBeLessThan(slice.services.length)
+
+        const marks = [...host.querySelectorAll('.fk-services tbody td:nth-child(2) .fk-muted')].map((it) => it.textContent?.trim())
+        expect(marks.filter((it) => it === 'process-wide')).toHaveLength(singletons)
+        expect(marks.filter((it) => it === "this request's")).toHaveLength(slice.services.length - singletons)
+        expect(fact(host, 'Services')).toBe(
+            `${slice.services.length} instantiated: ${slice.services.length - singletons} this request's own, ${singletons} process-wide singletons`,
+        )
+    })
+
     it('an OLD (fat) record still renders: shape said, definitions and code locations inline', async () => {
         const slice = sliceOf(recorded.fat(), 'kontainer')
         const host = await render(KontainerTab, slice)

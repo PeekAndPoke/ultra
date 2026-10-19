@@ -58,7 +58,6 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.File
 import java.util.UUID
 import kotlin.io.path.createTempDirectory
 import kotlin.time.Duration.Companion.milliseconds
@@ -252,7 +251,7 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
         }
 
         // opt-in, like the other insights specs: a real record with queries on both backends
-        System.getenv("INSIGHTS_WIRE_SAMPLES_DIR")?.let { File(it, "record-response-vault-two-backends.json").writeText(body) }
+        insightsWireSample("record-response-vault-two-backends.json", body)
 
         body.also { served = it }
     }

@@ -10,7 +10,6 @@
           "name": "system_auth_records",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.auth.domain.AuthRecord",
@@ -55,7 +54,6 @@
           "name": "system_background_jobs_queue",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued",
@@ -68,7 +66,6 @@
           "name": "system_background_jobs_archive",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchived",
@@ -81,7 +78,6 @@
           "name": "system_global_locks",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry",
@@ -94,7 +90,6 @@
           "name": "system_server_beacons",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.cluster.locks.domain.ServerBeacon",
@@ -107,7 +102,6 @@
           "name": "system_random_data",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.cluster.storage.domain.RawRandomData",
@@ -120,7 +114,6 @@
           "name": "system_random_cache",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.cluster.storage.domain.RawCacheData",
@@ -133,7 +126,6 @@
           "name": "system_worker_history",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.cluster.workers.vault.VaultWorkerRun",
@@ -146,7 +138,6 @@
           "name": "system_logs",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.logging.karango.KarangoLogEntry",
@@ -159,7 +150,6 @@
           "name": "system_sent_messages",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.messaging.storage.SentMessage",
@@ -172,7 +162,6 @@
           "name": "saas_organisations",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.saas.domain.Organisation",
@@ -185,7 +174,6 @@
           "name": "saas_org_members",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.saas.domain.OrgMember",
@@ -195,8 +183,7 @@
                   "name": "saas_organisations",
                   "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
                 },
-                "fqn": "io.peekandpoke.funktor.saas.domain.Organisation",
-                "type": "Direct"
+                "fqn": "io.peekandpoke.funktor.saas.domain.Organisation"
               }
             ]
           }
@@ -207,7 +194,6 @@
           "name": "funktor_all_test_users",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.TestUser",
@@ -220,7 +206,6 @@
           "name": "insights_graph_e2e_authors",
           "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
         },
-        "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.GraphE2eAuthor",
@@ -233,7 +218,6 @@
           "name": "insights_graph_e2e_books",
           "connection": "MongoDB(8.2.1)::ultra_wt_insights_vue"
         },
-        "connection": "MongoDB(8.2.1)::ultra_wt_insights_vue",
         "storedClasses": [
           {
             "fqn": "io.peekandpoke.funktor.GraphE2eBook",
@@ -243,13 +227,11 @@
                   "name": "insights_graph_e2e_authors",
                   "connection": "ArangoDB(3.12.6)::ultra_wt_insights_vue"
                 },
-                "fqn": "io.peekandpoke.funktor.GraphE2eAuthor",
-                "type": "Direct"
+                "fqn": "io.peekandpoke.funktor.GraphE2eAuthor"
               },
               {
                 "repo": null,
-                "fqn": "io.peekandpoke.funktor.GraphE2eUnstored",
-                "type": "Direct"
+                "fqn": "io.peekandpoke.funktor.GraphE2eUnstored"
               }
             ]
           }
@@ -259,7 +241,7 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1792419653,
+    "ts": 1792421017,
     "method": "GET",
     "url": "http://api.funktor.local:80/_/funktor/insights/graphs/database",
     "server": "thebasez16-2",
@@ -267,6 +249,6 @@
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 0.041369
+    "durationMs": 0.056397
   }
 }

@@ -589,6 +589,16 @@ export function instanceCountsMeasured(slice: KontainerSlice): boolean {
     return (slice.numTotal ?? 0) !== 0 || (slice.numOld ?? 0) !== 0
 }
 
+/**
+ * True for a service whose instance is PROCESS state, shared by every request: a `Singleton`, created at
+ * boot or by whichever request first needed it. Every other type belongs to this request's kontainer.
+ *
+ * The type tells, not the creation time: `createdAt` only says whether THIS request created the instance.
+ */
+export function isProcessWide(service: KontainerService): boolean {
+    return service.type === 'Singleton'
+}
+
 /** The kontainer graph endpoint's `data`: every service with its definition, and the graph's fingerprint. */
 export interface KontainerGraphData {
     fingerprint: string | null
