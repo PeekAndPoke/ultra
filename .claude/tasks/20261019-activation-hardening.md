@@ -382,6 +382,39 @@ closed), resend racing retire (stray mail, no session), custom-provider `e.userI
 **Verdict:** round 2 NOT clean (3 MAJOR). Safety valve: stop and ask the maintainer before the round-2 fix batch and
 round 3 (`reviewer-top`).
 
+Round 3 (2026-10-19), two-phase, `reviewer-top` ×3, head `8d3e01dd` on master `d9016c81`. **2 MAJOR → not clean;
+maintainer asked again (the safety valve already fired after round 2).** Every round-2 `fix` row: HOLDING, as judged by
+all three reviewers, except the SSO half of the retire row (see the first MAJOR below). Coordinator checks:
+`EmailAndPasswordAuth.kt:305-325` and `:748-752` were read — the Password row is read, then Argon2id runs, then the marker
+is read at `:315`, and nothing is re-checked before `issueSignIn`; `AuthRealm.kt:580-586` deletes the password before the
+marker. `AuthRealm.kt:451` (`else -> return false`) refuses an `sso` claim on every retire, the sweep included. Both
+MAJORs are real. **A coordinator claim that did not survive:** in round 2 I withdrew "sign-in reads the password before
+the marker" because the full security report listed "SSO password-before-marker order" as CLEAN. That note covered the
+WRITE order inside `resolveSsoAccount`, not a concurrent password sign-in READING across it — the race had never been
+reviewed.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 | MAJOR | `EmailAndPasswordAuth.kt:305-325,748-752`, `AuthRealm.kt:319,580-586`, `EmailAndPasswordAuth.kt:718-727` (security) | A password sign-in in flight across a one-way flow gets a session: it reads the Password row, hashes it, then reads the marker. SSO activation and reset completion change the password BEFORE removing the marker, so a sign-in that read the old password and then finds no marker gets a refreshable session on the victim's now-ACTIVE account. The pre-registering attacker loops sign-ins with their own password, which reopens decision 2. Via retire: a 1 h JWT on a dead row, refresh refuses (already-recorded bounded race). No test has a sign-in in flight | fix | After the marker check, re-read `findLatestPasswordRecord` and require the same `_id` that was checked — "the credential proven must still be live at commit", as token delete counts already do. Sound because every one-way flow touches the password before the marker. Test: a real-storage interleave on both backends; mutation: drop the re-read → red |
+| 3 | MAJOR (domain) / MINOR (implementation) | `AuthRealm.kt:451,559,571-586`, `EmailAndPasswordAuth.kt:350,633-639,708` | An SSO claim that stops part-way (a crash or a DB error between the claim and the marker delete) has no exit except the same provider verifying the same address again. Sign-in, reset, sign-up and the sweep all refuse it, and the sweep does so silently, forever. The round-2 Reason "reset still recovers" was invalidated by the claim itself | fix | The sweep takes over an EXPIRED `sso` claim by a conditional write (`claimedBy == sso → retire`); SSO's final marker delete becomes conditional on its own claim, so a takeover is not undone. Generalise `IfUnclaimed` to "if claimedBy == expected" on both backends. Realm spec on both backends; mutation-checked. Severity disputed; fixed either way |
+| 3 | MINOR | `AuthError.kt:6`, `AuthRealm.kt:468,512`, `AuthSystem.kt:134` (security) | `AuthError` is a `Throwable`, not an `Exception`: a realm whose `retire()` throws `AuthError.notSupported()` (as `AuthUserAdapter.kt:89` advises) escapes the per-account catch, and the Epoch-dated claim then aborts every later sweep | fix | Catch `Throwable` except `CancellationException` at the three nets (covers `TODO()` too) |
+| 3 | MINOR | `EmailAndPasswordAuth.kt:364,372` (implementation) | Sign-up inserts the password before the marker; a failed marker insert leaves an ACTIVE account with an unproven address (the pre-hijack outcome). Pre-existing order | fix | Marker first, then the password |
+| 3 | MINOR | `AuthRealm.kt:441`, `Timestamped.kt:29-38` (domain) | Back-dating the claim to Epoch reuses the value `withTimestamps` treats as "unset, re-stamp". Any future hooked save would un-back-date it, and the real sign-up time is lost | fix | Keep `createdAt` honest: the sweep also selects `retire`-claimed markers of any age (and expired `sso` ones, per the MAJOR) |
+| 3 | MINOR | `AuthSystem.kt:124-125`, `RealmTokenConfig.kt:26-27` (implementation + domain) | The KDocs say expiry is enforced at sign-in; sign-in answers `ActivationRequired`, and only resend refuses | fix | Correct the KDocs (the behaviour is the spec's) |
+| 3 | MINOR | `AuthRecordStorage.kt:14` (domain) | `OnAfterSave` listeners never see the conditional writes | docs task | One line in the docs follow-up |
+| 3 | MINOR | `AccountRetirement.kt:20`, `EmailAndPasswordAuthSpec.kt:839-921`, `AdminUserRealm.kt:93-94`, `EmailAndPasswordAuth.kt:537-544` (implementation + domain, SURPLUS) | Public `userId` with no reader; mangled test formatting; a duplicate comment; a stale half-comment | fix | Tidy |
+| 3 | — | `AuthRealm.kt:404-406,646` (implementation + domain, SURPLUS) | `isBeingRetired` costs a query per refresh, for a state no framework path produces | keep | Defence in depth for custom providers (round-1 row); say so in its KDoc |
+| 3 | — | resend × retire stray mail / false "activated" page (security, withdrawn in phase 2) | — | already recorded | Red-team bounded race; no session |
+
+Probed CLEAN in round 3: claim-first on both backends — AQL bind params, BSON filters, a missing `claimedBy` reads as null,
+`_type` survives REPLACE; every marker writer is conditional; every pair of activate, retire, SSO, reset, resend and
+cancel settles on the one conditional write, and no interleaving needs a lock (domain walked them all). Concurrent
+multi-node sweeps are safe (deterministic rename, resume). Back-dated markers do not head-of-line-block. Old records
+decode to defaults. Retired-key refusal holds at every entry point. Realm isolation holds. No error echo. Code style is
+clean across all 45 files. Serialized types have serializing tests.
+
+**Verdict:** round 3 NOT clean (2 MAJOR). Fix batch proposed to the maintainer; round 4 (`reviewer-top`) after it.
+
 ## Round 2 fix batch (2026-10-19, maintainer-approved design: CLAIM FIRST)
 
 Every round-2 row dispositioned `fix`; the `docs task` row is listed in the docs follow-up box; the `maintainer note`
