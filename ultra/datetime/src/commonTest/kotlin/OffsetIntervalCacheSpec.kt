@@ -72,9 +72,9 @@ class OffsetIntervalCacheSpec : StringSpec({
         val zone = FakeZone()
         val cache = OffsetIntervalCache(lookup = zone::offsetAt)
 
-        // 100 days, one call per day, across both transitions
+        // 110 days, one call per day, across both transitions
         var at = 0L
-        repeat(100) {
+        repeat(110) {
             cache.offsetSecondsAt(at) shouldBe if (at in 1_000_000L until 9_000_000L) 7200 else 3600
             at += 86_400
         }
@@ -84,13 +84,37 @@ class OffsetIntervalCacheSpec : StringSpec({
     }
 
     "points with the same offset more than a day apart are not joined across a short period of another offset" {
-        // +1h, except +2h for three days
-        val shortPeriod = 2_000_000L until 2_000_000L + 3 * 86_400L
+        // +1h, except +2h for a day and a half; the two +1h points are ~1.9 days apart, so any threshold above a day
+        // would join them across the +2h period
+        val shortPeriod = 2_000_000L until 2_000_000L + 129_600L
         val cache = OffsetIntervalCache { if (it in shortPeriod) 7200 else 3600 }
 
-        cache.offsetSecondsAt(shortPeriod.first - 2 * 86_400L) shouldBe 3600
-        cache.offsetSecondsAt(shortPeriod.last + 2 * 86_400L) shouldBe 3600
-        cache.offsetSecondsAt(shortPeriod.first + 86_400L) shouldBe 7200
+        cache.offsetSecondsAt(shortPeriod.first - 17_280L) shouldBe 3600
+        cache.offsetSecondsAt(shortPeriod.last + 17_280L) shouldBe 3600
+        cache.offsetSecondsAt(shortPeriod.first + 64_800L) shouldBe 7200
+    }
+
+    "a probe ahead outside the lookup's domain is skipped, not asked" {
+        val cache = OffsetIntervalCache(domain = 0L..100_000L) { at ->
+            require(at in 0L..100_000L) { "outside: $at" }
+            3600
+        }
+
+        cache.offsetSecondsAt(90_000L)
+        // a dense miss: would probe 90_060 + 86_400, outside the domain
+        cache.offsetSecondsAt(90_060L) shouldBe 3600
+    }
+
+    "two points less than a day apart across a transition, far from each other, cost no search" {
+        val zone = FakeZone()
+        val cache = OffsetIntervalCache(lookup = zone::offsetAt)
+
+        // what TimezoneEngine.resolve asks for a wall time just after the transition
+        cache.offsetSecondsAt(1_005_400L - 86_400L)
+        cache.offsetSecondsAt(1_005_400L + 86_400L)
+        val before = zone.lookups
+        cache.offsetSecondsAt(1_005_400L - 3_600L) shouldBe 7200
+        zone.lookups - before shouldBe 1
     }
 
     "a point learned on the other side of a transition is not stretched over it" {

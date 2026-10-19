@@ -19,6 +19,26 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
 
     fun javaOffset(zone: ZoneId, epochSeconds: Long) = zone.rules.getOffset(Instant.ofEpochSecond(epochSeconds)).totalSeconds
 
+    /** Asks [cache] about the seconds around every transition of [zone] in `[start, end)`; returns the mismatches. */
+    fun recheckTransitions(zone: ZoneId, cache: OffsetIntervalCache, start: Instant, end: Instant): List<String> {
+        val mismatches = mutableListOf<String>()
+        var transition = zone.rules.nextTransition(start)
+
+        while (transition != null && transition.instant < end) {
+            val t = transition.instant.epochSecond
+
+            listOf(t - 1, t, t + 1).forEach { at ->
+                val expected = javaOffset(zone, at)
+                val actual = cache.offsetSecondsAt(at)
+                if (expected != actual) mismatches += "${zone.id} re-check at $at: expected $expected, got $actual"
+            }
+
+            transition = zone.rules.nextTransition(transition.instant)
+        }
+
+        return mismatches
+    }
+
     "the cache matches java.time around every transition of every zone, 1900 to 2040" {
         val mismatches = mutableListOf<String>()
         var checks = 0
@@ -52,7 +72,8 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
         mismatches.take(50).shouldBeEmpty()
     }
 
-    "the assumption holds: no zone has two transitions within a day of each other, from its first one to 2100" {
+    // The cache needs transitions more than a day apart; TimezoneEngine.resolve probes ±1 day and needs two days.
+    "the assumption holds: no zone has two transitions within two days of each other, from its first one to 2100" {
         val end = Instant.parse("2100-01-01T00:00:00Z")
         val tooClose = mutableListOf<String>()
 
@@ -62,7 +83,7 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
 
             while (previous != null && previous.instant < end) {
                 val next = rules.nextTransition(previous.instant) ?: break
-                if (next.instant.epochSecond - previous.instant.epochSecond <= 86_400) tooClose += "$zoneId at ${next.instant}"
+                if (next.instant.epochSecond - previous.instant.epochSecond <= 2 * 86_400) tooClose += "$zoneId at ${next.instant}"
                 previous = next
             }
         }
@@ -84,6 +105,9 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
                 if (expected != actual) mismatches += "$zoneId at $at: expected $expected, got $actual"
                 at += 86_400
             }
+
+            // The walk itself only asks about its own points; what the cache INFERRED between them shows here.
+            mismatches += recheckTransitions(zone, cache, from, until)
         }
 
         mismatches.take(50).shouldBeEmpty()
@@ -105,6 +129,8 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
                 if (expected != actual) mismatches += "$zoneId at $at: expected $expected, got $actual"
                 at += 3_600
             }
+
+            mismatches += recheckTransitions(zone, cache, Instant.ofEpochSecond(0), Instant.ofEpochSecond(end))
         }
 
         mismatches.take(50).shouldBeEmpty()

@@ -1,7 +1,7 @@
 # MpLocalTimeSlot.splitWithGaps loops forever across midnight
 
 **Status:** TODO
-**Plan:** none — out-of-scope finding from the `/feature-review` of `.claude/tasks/20261018-datetime-js-performance.md` (round 1, 2026-10-19)
+**Plan:** none — out-of-scope finding from the `/feature-review` of `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md` (round 1, 2026-10-19)
 **Security-critical:** yes, mildly (a caller-controlled duration hangs the thread and fills memory) → red-team note below
 
 ## Spec

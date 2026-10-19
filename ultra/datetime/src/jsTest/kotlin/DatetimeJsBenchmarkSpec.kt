@@ -9,7 +9,7 @@ import kotlin.time.TimeSource
 /**
  * Timings for the browser's hot paths. Not an assertion: the figures are measured while the spec registers its tests and
  * end up in the TEST NAMES (`BENCH <name>: <ns> ns/op`, see the jsBrowserTest XML), because browser console output is
- * not captured. Compare them in `.claude/tasks/20261018-datetime-js-performance.md` before and after a change.
+ * not captured. Compare them in `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md` before and after a change.
  */
 @Suppress("unused")
 class DatetimeJsBenchmarkSpec : StringSpec({

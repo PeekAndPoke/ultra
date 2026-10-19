@@ -173,5 +173,5 @@ wraps java.time — not independent evidence; the other ~21 per transition are.
 
 **Follow-ups:** docs `.claude/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` (done);
 `.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md`; `.claude/tasks/20261018-datetime-no-kotlinx-return-types.md`;
-performance `.claude/tasks/20261018-datetime-js-performance.md` (from spross, before 0.112.0). No red-team task: not
+performance `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md` (from spross, before 0.112.0). No red-team task: not
 security-critical. The applied patch is archived next to this file.

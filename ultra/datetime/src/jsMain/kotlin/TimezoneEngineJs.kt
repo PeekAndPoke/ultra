@@ -14,6 +14,7 @@ private val formatterCache: dynamic = js("Object.create(null)")
 
 // JS Date covers ±8.64e15 ms; Intl throws a RangeError outside of it.
 private const val MAX_DATE_MS = 8.64e15
+private const val MAX_DATE_SECONDS = 8_640_000_000_000L
 
 // Intl matches zone ids case-insensitively, java.time does not. Reject case variants of known ids, so the browser
 // accepts no id the JVM would reject.
@@ -33,7 +34,9 @@ private fun offsetCacheFor(zoneId: String): OffsetIntervalCache {
     // Validates the id first, so unknown ids never get a cache.
     formatterFor(zoneId)
 
-    val cache = OffsetIntervalCache { epochSeconds -> intlOffsetSecondsAt(zoneId, epochSeconds) }
+    val cache = OffsetIntervalCache(domain = -MAX_DATE_SECONDS..MAX_DATE_SECONDS) { epochSeconds ->
+        intlOffsetSecondsAt(zoneId, epochSeconds)
+    }
     offsetCaches[zoneId] = cache
     return cache
 }
@@ -68,11 +71,15 @@ private fun intlOffsetSecondsAt(zoneId: String, epochSeconds: Long): Int {
     return round((asUtc - flooredMs) / 1000.0).toInt()
 }
 
-internal actual fun platformSystemDefaultZoneId(): String {
+// Read once: building an Intl.DateTimeFormat per access is expensive, and the JVM's ZoneId.systemDefault() also keeps
+// the zone the process started with. A tab picks up an OS zone change on reload.
+private val systemZoneId: String by lazy {
     val id: dynamic = intl.DateTimeFormat().resolvedOptions().timeZone
 
-    return if (id == null || id == undefined) "UTC" else id as String
+    if (id == null || id == undefined) "UTC" else id as String
 }
+
+internal actual fun platformSystemDefaultZoneId(): String = systemZoneId
 
 /** The proleptic year: en-US renders years before 1 AD as "1 BC" style era years. */
 private fun wallYear(m: dynamic): Int {
