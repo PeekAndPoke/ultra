@@ -1,6 +1,10 @@
 # Two-phase auth evaluation + org-isolation — no loads before auth, no cross-org param spoofing
 
-**Status:** DONE (2026-07-23) — two-phase eval + pluggable route checks + saas org-isolation.
+**Status:** DONE (2026-07-23; archived 2026-10-19) — two-phase eval + pluggable route checks + saas org-isolation.
+The Implementation-plan and Test-evidence boxes below sat at 0/23 although the work shipped; ticked 2026-10-19 against the
+code, each with the evidence it was ticked on. "Green" means the last recorded run (`build/test-results` XML of
+2026-10-19: `funktor:rest` 116 tests, `funktor:saas` 50, `funktor:all` 158, `funktor-demo:server` 47, all 0 failures) —
+not re-run for the archive. The counts quoted in the next paragraph are the 2026-07-23 ones.
 **Review LOOP CLOSED at round 5 (zero findings).** Rounds: 1 reworked on 2 HIGH direction findings
 (caller-binding authority + structural forcing); 2 confirmed the idiomatic route airtight, fixed
 edge/DiD (runtime-value org detection, docs, tests); 3 fixed LOW/INFO (guard↔loader reflection
@@ -27,14 +31,14 @@ half drove the rework below. A fresh **round 2** runs over the WHOLE reworked di
 `checkAccess`. Consequences on a `Stored<T>`-param route: pre-auth DB reads for unauthenticated
 callers, and a 404-vs-401 existence oracle. **Closed** by two-phase evaluation (below).
 
-## Problem B — cross-org param spoofing / referential consistency (REWORKING)
+## Problem B — cross-org param spoofing / referential consistency (DONE — reworked, see below)
 
 `/orgs/{org}/entities/{entity}`: nothing forces `entity.org == org`, nor that the caller may access
 `{org}`. Forgetting either = cross-org IDOR. Must be structural, not remembered.
 
 ---
 
-## Design — two-phase eval (DONE) + pluggable route checks (TODO)
+## Design — two-phase eval (DONE) + pluggable route checks (DONE)
 
 ### Two-phase rule evaluation (Problem A) — DONE
 
@@ -101,66 +105,92 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 ## Implementation plan (ordered)
 
 **A. Extension points (funktor/rest)**
-- [ ] `RouteBootCheck.kt` — the boot interface.
-- [ ] `RouteParamsGuard.kt` — the request interface + `GuardVerdict { Pass, DenyAsNotFound }`.
+- [x] `RouteBootCheck.kt` — the boot interface. *(`RouteBootCheck.kt:14`)*
+- [x] `RouteParamsGuard.kt` — the request interface + `GuardVerdict { Pass, DenyAsNotFound }`.
+      *(`RouteParamsGuard.kt:14,20`)*
 
 **B. Migrate boot checks onto the runner (funktor/rest)**
-- [ ] `ConverterCompatBootCheck : RouteBootCheck` (takes `OutgoingConverter`) — wraps
-      `TypedRoute.validateConverterCompatibility`.
-- [ ] `AuthChainBootCheck : RouteBootCheck` — the empty-chain + `validateChain` checks.
-- [ ] Rewrite `ValidateRoutesOnAppStarting` as a runner injecting `Lazy<List<RouteBootCheck>>`;
+- [x] `ConverterCompatBootCheck : RouteBootCheck` (takes `OutgoingConverter`) — wraps
+      `TypedRoute.validateConverterCompatibility`. *(`ConverterCompatBootCheck.kt:10`)*
+- [x] `AuthChainBootCheck : RouteBootCheck` — the empty-chain + `validateChain` checks. *(`AuthChainBootCheck.kt:14`)*
+- [x] Rewrite `ValidateRoutesOnAppStarting` as a runner injecting `Lazy<List<RouteBootCheck>>`;
       keep the actionable aggregated `AppStartException` header + the multiline-indent formatting fix
       (see `20260722-actionable-boot-error-messages.md`).
-- [ ] Register both checks in the rest module (`funktor/rest/.../index_jvm.kt`).
+      *(`ValidateRoutesOnAppStarting.kt:16` runner, `:33` `validateOrThrow`, `:58` `indentEntry`)*
+- [x] Register both checks in the rest module (`funktor/rest/.../index_jvm.kt`). *(`index_jvm.kt:45-46`)*
 
 **C. Request-time guard wiring (funktor/rest)**
-- [ ] `routing.kt` phase 2 (param-bearing variants only — WithParams/WithBodyAndParams/Sse): after
+- [x] `routing.kt` phase 2 (param-bearing variants only — WithParams/WithBodyAndParams/Sse): after
       `checkParamPhase`, run `call.kontainer.getAll(RouteParamsGuard)`; `DenyAsNotFound` → throw
       `NotFoundException`. Keep the existing `HideFailureAsNotFound`/401 handling for authRules.
+      *(`routing.kt:155` `deniedByGuards`, called at `:241` WithParams, `:303` WithBodyAndParams, `:341` Sse;
+      `HideFailureAsNotFound` handling kept in `dispatchPhase2`)*
 
 **D. Remove the org auto-rules + ConsistentParam forcing (funktor/rest + core)**
-- [ ] Delete `OrgScopedParam` (core `ConsistentParam.kt`) and `CallerScopedParamRule`
+- [x] Delete `OrgScopedParam` (core `ConsistentParam.kt`) and `CallerScopedParamRule`
       (`ParamAutoRules.kt`) and its append in `ApiRoutes.addRoute`.
-- [ ] Keep `ConsistentParam` + `ConsistentParamRule` + its opt-in append; delete
+      *(no hit for either name, nor for `consistencyForcingError`, in any `*.kt` outside `build/`)*
+- [x] Keep `ConsistentParam` + `ConsistentParamRule` + its opt-in append; delete
       `consistencyForcingError` from the boot validator (no more `≥2` forcing).
+      *(`ParamAutoRules.kt:23`, opt-in append `ApiRoutes.kt:256`)*
 
 **E. Org-isolation (funktor/saas)**
-- [ ] `OrgAware` + `OrgAwareParam` interfaces (concrete `Ref<Organisation>` / `Stored<Organisation>`).
-- [ ] `OrgIsolationBootCheck` — reflect `route.typedRoute.reifiedParamsType` via
+- [x] `OrgAware` + `OrgAwareParam` interfaces (concrete `Ref<Organisation>` / `Stored<Organisation>`).
+      *(`isolation/OrgIsolation.kt:31,61`)*
+- [x] `OrgIsolationBootCheck` — reflect `route.typedRoute.reifiedParamsType` via
       `entityRefParams()`; if any entity-ref inner type is `OrgAware` and the params type is not
-      `OrgAwareParam` → actionable error.
-- [ ] `OrgIsolationGuard` — `params as? OrgAwareParam ?: Pass`; caller-binding via
+      `OrgAwareParam` → actionable error. *(`isolation/OrgIsolationBootCheck.kt:23,28`)*
+- [x] `OrgIsolationGuard` — `params as? OrgAwareParam ?: Pass`; caller-binding via
       `hasOrganisation(param.org._key)`; org-consistency via reflected OrgAware entity fields (cache
       the field list per params `KClass`), `entity.org hasSameIdAs param.org`; fail → `DenyAsNotFound`.
-- [ ] Register both in the saas module (`funktor/saas/.../index_jvm.kt`).
+      *(`isolation/OrgIsolationGuard.kt:41`; the cache is `:44,:71`, `hasSameIdAs` at `:75`. Caller-binding has since
+      moved from `_key` to the collection-qualified `_id` — `OrgId.parseOrNull(orgParam.org._id)` at `:63` — by the
+      value-class-ids work, not a regression.)*
+- [x] Register both in the saas module (`funktor/saas/.../index_jvm.kt`). *(`index_jvm.kt:49-50`)*
 
 **F. Tests**
-- [ ] Unit (rest): `RouteBootCheck` runner aggregation; `ConverterCompatBootCheck` +
+- [x] Unit (rest): `RouteBootCheck` runner aggregation; `ConverterCompatBootCheck` +
       `AuthChainBootCheck` still catch what the old inline checks did; `ConsistentParam` opt-in
       (rule appended + runs, NO forcing); keep `AuthPhaseSpec` (flattening etc.).
-- [ ] Unit (saas): `OrgIsolationBootCheck.validate` (OrgAware entity w/o OrgAwareParam → error; with
+      *(`ValidateRoutesOnAppStartingSpec` 6 cases — runner aggregation, both checks; `AuthPhaseSpec` 12 cases;
+      opt-in `ConsistentParamRule` runs in `OrgIsolationE2eSpec` "karango: opt-in ConsistentParam rejects an
+      inconsistent pair (404)…" (`:277`). The "NO forcing" half is the absence of `consistencyForcingError`, not a
+      test.)*
+- [x] Unit (saas): `OrgIsolationBootCheck.validate` (OrgAware entity w/o OrgAwareParam → error; with
       → ok; non-org param → ok); `OrgIsolationGuard.guard` (wrong selected org → deny; foreign entity
       org → deny; matching → pass; non-OrgAwareParam → pass/abstain).
-- [ ] e2e (funktor:all, BOTH backends): rework `ConsistentParamE2eSpec` → seed real `Organisation`s
+      *(`OrgIsolationSpec` 12 cases: 4 boot, 8 guard incl. super-user and aliased-ctor entities)*
+- [x] e2e (funktor:all, BOTH backends): rework `ConsistentParamE2eSpec` → seed real `Organisation`s
       (acme/globex) via `OrgsStorage`; `Widget : OrgAware(Ref<Organisation>)`; params
       `: OrgAwareParam(Stored<Organisation>)`. Assert: anonymous → 401 identical + no read (oracle);
       authed matching org → 200; caller selected other org (even if accessible) → 404; foreign
       entity org spoofed into own-org URL → 404; boot-force: an OrgAware-entity route whose params
       omit `OrgAwareParam` fails app start.
+      *(`OrgIsolationE2eSpec` — the renamed spec — 10 cases, Karango and Monko each running oracle / 200-404 /
+      selected-org binding / foreign-org spoof. The boot-force leg is unit-level through the real runner:
+      `OrgIsolationSpec` "boot: the runner + OrgIsolationBootCheck ABORTS app start on an unbound OrgAware route"
+      (`:73`); the e2e adds "the saas module registers the org-isolation boot check + guard" (`:297`).)*
 
 **G. Docs + hygiene + gate**
-- [ ] Update `ConsistentParam.kt` KDoc (opt-in; point to saas `OrgAware` for isolation); saas
+- [x] Update `ConsistentParam.kt` KDoc (opt-in; point to saas `OrgAware` for isolation); saas
       interface KDoc; the docs collector `20260722-docs-auth-dsl-and-floor.md`.
-- [ ] Create follow-up task: migrate `validateUriPattern` onto `RouteBootCheck` + the entity-`OrgAware`
-      linter (see Cross-references).
-- [ ] Run the FULL round-2 gate over the whole reworked diff; loop to zero findings.
+      *(`ConsistentParam.kt:10,19-25` say opt-in and not-a-tenant-boundary; `OrgIsolation.kt` KDoc; the collector captures
+      part 3 — items 1–3 under its "Still undocumented" list, as rewritten 2026-10-19)*
+- [x] Create follow-up task: migrate `validateUriPattern` onto `RouteBootCheck` + the entity-`OrgAware`
+      linter (see Cross-references). *(`20260722-route-check-followups.md`, items 1 and 2)*
+- [x] Run the FULL round-2 gate over the whole reworked diff; loop to zero findings.
+      *(Status above: loop closed at round 5; the fix commits exist — `625b3d7a` round 2, `f0038e1b` round 3,
+      `c5e63d06` round 4. The round-by-round findings are summarised in the Status above; they were not re-derived
+      for the archive.)*
 
 ## Test evidence
 
-- [ ] Unit + saas-unit green (above).
-- [ ] e2e (AppSpec, BOTH DB backends) green (above).
-- [ ] Boot test: OrgAware-entity route without `OrgAwareParam` ⇒ app start fails (actionable).
-- [ ] Full backend suites green: `funktor:rest`, `funktor:all`, `funktor-demo:server`.
+- [x] Unit + saas-unit green (above). *(`funktor:rest` 116 / `funktor:saas` 50 tests, 0 failures, last recorded run)*
+- [x] e2e (AppSpec, BOTH DB backends) green (above). *(`OrgIsolationE2eSpec` 10 / 0 failures)*
+- [x] Boot test: OrgAware-entity route without `OrgAwareParam` ⇒ app start fails (actionable).
+      *(`OrgIsolationSpec.kt:73`; the message names the fix — asserted via `shouldContain "OrgAwareParam"`)*
+- [x] Full backend suites green: `funktor:rest`, `funktor:all`, `funktor-demo:server`.
+      *(116 / 158 / 47 tests, 0 failures, last recorded run of 2026-10-19)*
 
 ## Cross-references
 

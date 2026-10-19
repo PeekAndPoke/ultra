@@ -1,7 +1,7 @@
 # Red-team — auth email templates (rendered in code)
 
 **Status:** COLLECTED — NOT EXECUTED
-**Feature:** `.claude/tasks/20260728-auth-email-templates-in-code.md`
+**Feature:** `.claude/tasks-archive/2026-07/20260728-auth-email-templates-in-code.md`
 **Rule:** these are attack scenarios for a dedicated penetration-test session. Do NOT run them as
 part of normal feature work.
 

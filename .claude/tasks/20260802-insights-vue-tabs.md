@@ -44,7 +44,7 @@ and can be written today. The page that calls the client cannot. So build leaves
 
 ### D-2. Ownership overlaps the codegen agent
 
-Their backlog (`20260802-codegen-loop-handoff.md` §4) has "an insights contributor — the registry's
+Their backlog (`.claude/tasks-archive/2026-08/20260802-codegen-loop-handoff.md` §4) has "an insights contributor — the registry's
 SECOND consumer". Proposed split, to be confirmed with them via `.claude/BUILD-LOCK.md`:
 
 - **Them:** the mechanism — import-specifier resolution, registry, emission.
@@ -76,7 +76,7 @@ silently corrupts a value rather than showing a gap.
 
 ## One blocker remains, in the codegen agent's area
 
-Written up in `.claude/tasks/20260802-insights-to-codegen-handover.md`.
+Written up in `.claude/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md`.
 
 **The emit path is a depth contract.** The pages import `../models.ts` and `../ui/JsonTree.vue`
 relatively, so `ui/` and `insights/` must both sit at depth 1 under `<out>/`. The codegen agent's

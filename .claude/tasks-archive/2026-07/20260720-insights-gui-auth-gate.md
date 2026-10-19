@@ -1,6 +1,21 @@
 # Insights GUI must be authenticated and environment-gated
 
-**Status:** TODO
+**Status:** SUPERSEDED (2026-07-30/31; archived 2026-10-19). The surface this doc set out to gate no longer exists. On
+2026-07-30 the maintainer decided the static-web insights GUI disappears wholesale rather than being gated
+(`.claude/tasks-archive/2026-07/20260730-insights-rest-api.md`, "The raw GUI route cannot be gated — which is why this is an
+API, not a patch"), and `b62ab6cd` (2026-07-31, "strip rendering, redact headers properly, drop staticweb") deleted
+`InsightsGui` with its two routes; `detailsUri` / `detailsUrl` are gone from `ApiResponse.Insights` (`respond.kt`). Insights
+records are now read through `InsightsApi`, an `ApiRoutes` group floored at `isSuperUser()`
+(`funktor/insights/src/jvmMain/kotlin/api/InsightsApi.kt:21`), and `InsightsConfig` still defaults to `Disabled`
+(`insights_module.kt:32`). So the anonymous-GUI exposure described under Spec is closed by removal, not by the gate designed below.
+
+**Residue — never built, and no live task tracks it:** (1) an environment gate on the insights surface (allow-list
+`AppConfig.ktor.isDevelopment`, §5); (2) the startup refusal `RefuseInsightsInProduction` (§6) — nothing stops an app from
+running `InsightsConfig(enabled = true)` in production, where every request is then captured and written to the depot
+(nothing in `funktor/` or the demo checks the environment before honouring the flag). Scenario 11 of the live
+`20260720-redteam-error-disclosure.md` ("Confirm insights cannot be enabled at all in a production environment") presumes that
+refusal and would fail today; its scenarios 8–9 target routes and a field that no longer exist.
+
 **Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (finding 2)
 **Security-critical:** yes
 

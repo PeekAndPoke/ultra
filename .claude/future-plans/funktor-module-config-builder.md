@@ -2,7 +2,7 @@
 
 **Status:** FUTURE / not scheduled (captured 2026-07-23)
 **Type:** framework DX + boot hardening (funktor)
-**Origin:** auth-hardening part 4 (`.claude/tasks/auth-hardening/20260722-stored-param-migration.md`)
+**Origin:** auth-hardening part 4 (`.claude/tasks-archive/2026-07/20260722-stored-param-migration.md`)
 review — the "saas loaded but no DB backend selected" misconfiguration surfaced as a confusing
 runtime 500 instead of an actionable boot failure. User's steer: don't bolt on a one-off boot check;
 fix the configuration model so each module validates its own invariants.

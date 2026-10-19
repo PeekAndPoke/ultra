@@ -483,7 +483,7 @@ pages. Maintainer's call, and correct: these are generator INPUTS, no JVM code r
 `ts/runtime/auth.ts` already set the precedent. **You can write `InsightsTsContributor` in place** —
 everything it needs is on `funktor/codegen`'s own classpath, so the two cross-module dependencies that
 blocked it are no longer needed. Full detail:
-`.claude/tasks/20260802-insights-to-codegen-handover.md`.
+`.claude/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md`.
 
 **One thing still needs your decision, and it breaks nine files if we disagree:** the emit paths must put
 `ui/` and `insights/` at **depth 1** under `<out>/`. The components import `../models.ts` and

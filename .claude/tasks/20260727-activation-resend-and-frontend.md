@@ -1,8 +1,15 @@
 # Activation resend + the activation frontend
 
-**Status:** IN PROGRESS 2026-07-27
+**Status:** IMPLEMENTED 2026-07-27 (`84fa3b47`, reshaped by the gate in `0a5ca8bf`); every Spec box ticked 2026-10-19 against
+the code, with the evidence under each. **Not archived, deliberately:** this doc records ONE gate round — 16 confirmed
+findings (13 fixed, 3 recorded), and the HIGH reshaped the feature (a single-use `ActivationResendToken` replaced the
+email-keyed resend) — but neither a PASS verdict nor a second review round over the reshaped design. Its sibling
+`20260727-account-activation.md` got a "gate passed" commit (`b96c2c1c`); this doc never did, and the Status was never
+touched after the fix commit. Archive on the maintainer's word that the gate stands, or after a clean round. Open elsewhere,
+not here: `.claude/tasks/20260727-activation-resend-cooldown-atomicity.md` (TODO) and
+`.claude/tasks/20260727-redteam-account-activation.md` (collected, not executed).
 **Plan:** `.claude/tasks/v1-email-auth-and-sessions.md` → Phase 4 (verification) + Phase 6 (demo pages)
-**Follows:** `.claude/tasks/20260727-account-activation.md` — the backend guard. This is its open scope
+**Follows:** `.claude/tasks-archive/2026-07/20260727-account-activation.md` — the backend guard. This is its open scope
 item 2, plus the resend it deliberately deferred.
 **Security-critical:** yes → red-team scenarios fold into
 `.claude/tasks/20260727-redteam-account-activation.md`
@@ -50,22 +57,33 @@ message.
 ## Spec
 
 Backend:
-- [ ] `AuthError.AccountNotActivated` typed subclass
-- [ ] `AuthSignInResponse.ActivationRequired`; `AuthRealm.signIn` returns it
-- [ ] `AuthResendActivationRequest` / `AuthResendActivationResponse` (neutral — the same answer for an
+- [x] `AuthError.AccountNotActivated` typed subclass *(`AuthError.kt:16`)*
+- [x] `AuthSignInResponse.ActivationRequired`; `AuthRealm.signIn` returns it *(`AuthSignInResponse.kt:81`; the catch,
+      the `ActivationResendToken` write and the return are `AuthRealm.kt:269-289`)*
+- [x] `AuthResendActivationRequest` / `AuthResendActivationResponse` (neutral — the same answer for an
       unknown address, an already-activated account, and a cooldown hit)
-- [ ] `EmailAndPasswordAuth.resendActivation`: only for accounts with a pending marker, cooldown on the
+      *(as REDESIGNED by the gate, not as written here: the request carries the single-use resend `token` instead of an
+      address and the response reports `sent` — see the Review record. Models: `AuthResendActivationRequest.kt`,
+      `AuthResendActivationResponse.kt`)*
+- [x] `EmailAndPasswordAuth.resendActivation`: only for accounts with a pending marker, cooldown on the
       newest token, rotate the token, share the send path with `signUp`
-- [ ] `RealmTokenConfig.activationResendCooldown`
-- [ ] Realm + system + API route + client
+      *(`EmailAndPasswordAuth.kt:364`; cooldown `:394`; shared `issueAndSendActivationToken` `:416`, called from `:353`
+      and `:401`)*
+- [x] `RealmTokenConfig.activationResendCooldown` *(`RealmTokenConfig.kt:33`; the gate added
+      `activationResendTokenLifetime`, `:39`)*
+- [x] Realm + system + API route + client *(`AuthRealm.kt:349`, `AuthSystem.kt:110`, `AuthLoginApi.kt:117`,
+      `AuthApiClient.kt:60` endpoint and `:121` call)*
 
 Frontend:
-- [ ] `AuthFrontendRoutes.resendActivation` (the no-token variant of the deep link)
-- [ ] `AuthState.activateAccount` / `resendActivation` / `pendingActivation` carrier
-- [ ] `ActivateAccountPage` — serves the deep link, shows activated / expired, and carries the resend
-      form for the expired case
-- [ ] `AuthFrontendDefault.mount` mounts both
-- [ ] `LoginController` routes an unactivated sign-in to the page with the email carried over
+- [x] `AuthFrontendRoutes.resendActivation` (the no-token variant of the deep link) *(`AuthFrontendRoutes.kt:29`)*
+- [x] `AuthState.activateAccount` / `resendActivation` / `pendingActivation` carrier *(`AuthState.kt:263,271`; carrier
+      `PendingActivation` `:208`, `pendingActivation` `:219`)*
+- [x] `ActivateAccountPage` — serves the deep link, shows activated / expired, and carries the resend
+      form for the expired case *(`ActivateAccountPage.kt`: states `Activated` / `LinkNotUsable` / `Offer`; as redesigned
+      by the gate there is no email field — the resend button uses the carried token)*
+- [x] `AuthFrontendDefault.mount` mounts both *(`AuthFrontend.kt:41` and `:50`)*
+- [x] `LoginController` routes an unactivated sign-in to the page with the email carried over
+      *(`LoginController.kt:535`; the address travels on `AuthState.pendingActivation`, in memory, not in the URL)*
 
 ## Implementation notes
 
@@ -99,6 +117,9 @@ Frontend:
       already-activated addresses send nothing.
 - [x] `funktor:auth` green, `funktor:all` 132 → 135, `funktor-demo:server` green, `assemble` green
       (JS included).
+      *Re-checked 2026-10-19 from the last recorded run (`build/test-results` XML, not re-run): `EmailAndPasswordAuthSpec`
+      26, `AccountActivationEmailE2eSpec` 8 (the doc's counts above are the 2026-07-27 ones), `AuthApiSpec` 23 — all 0
+      failures.*
 
 ### Mutation evidence
 

@@ -1116,7 +1116,7 @@ Decision pending with the maintainer.
 
 ### Post-review hardening run, 2026-07-30 (13 iterations, autonomous)
 
-Backlog and per-iteration detail in `.claude/tasks/20260730-codegen-loop-handoff.md`. Final state:
+Backlog and per-iteration detail in `.claude/tasks-archive/2026-07/20260730-codegen-loop-handoff.md`. Final state:
 **163 codegen tests + 7 ts-verify fixtures green, `:ultra:slumber:jvmTest` 1232 green, compile sweep
 clean.** Commits `ef5eba72` … `29a1015d`.
 

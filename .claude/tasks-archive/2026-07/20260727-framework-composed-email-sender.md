@@ -1,6 +1,11 @@
 # The framework composes the email sender chain; the app supplies only a provider
 
-**Status:** DONE 2026-07-27 (implemented + gate passed same day)
+**Status:** DONE 2026-07-27 (implemented + gate passed same day; archived 2026-10-19). Archive check 2026-10-19: the composed
+chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmailSender` under
+`funktor/messaging/src/jvmMain/kotlin/senders/`, `useSender` / `onAfterSend` in `index_jvm.kt`); the symbols it deleted
+(`canDeliver`, `suppressDeliveryInTestMode`, `TestOutbox`) occur nowhere; its specs are in the tree and green in the last
+recorded run. Residuals live in `.claude/tasks/20260727-messaging-followups.md` and
+`.claude/tasks/20260727-redteam-messaging.md`; the docs follow-up is `.claude/tasks/20260727-docs-messaging-test-seam.md`.
 **Plan:** `/Users/gerk/.claude/plans/indexed-stargazing-spring.md`
 **Supersedes:** the guard design in `.claude/tasks-archive/2026-07/20260726-email-e2e-test-seam.md`
 **Security-critical:** yes — this is what makes "a test run never reaches a real provider" true.

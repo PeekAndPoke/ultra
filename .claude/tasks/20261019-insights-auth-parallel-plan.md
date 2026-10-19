@@ -46,6 +46,8 @@ worktrees … which parts can be developed independently and are easy to merge")
 | **T5 auth-errors** | `error-disclosure/*` (generic production messages, account enumeration, env classification, fixtures gate) | `funktor/rest` (`ApiStatusPages`), `funktor/core` (`KtorConfig`, fixtures), `funktor/auth` (`AuthLoginApi`, `AuthUserApi`, `EmailAndPasswordAuth` messages) | password track (`EmailAndPasswordAuth.kt`) → that one goes after |
 | **T6 auth-sso-verification** | `20260726-sso-email-verification.md` | `funktor/auth` SSO providers | T5 only if both touch `AuthLoginApi` |
 | **T7 auth-sessions** | `20260728-session-revocation-wiring.md` | `funktor/auth` (`AuthRealm`, JWT claims, `SessionStore`) | T5/T6 in `AuthRealm` → after them |
+| **insights, no task yet** | a production gate for insights: nothing refuses `enabled = true` in production (no environment allow-list, no `RefuseInsightsInProduction`; scenario 11 of `error-disclosure/20260720-redteam-error-disclosure.md` presumes one). Residue of the archived `2026-07/20260720-insights-gui-auth-gate.md` | `funktor/insights` | T2 → after it lands, same area |
+| **auth, no task yet** | `RefreshToken` is a GET that mints a token (`AuthApiClient.kt:95`) and bodiless mutating routes bypass the Content-Type gate (`ApiRoutes.kt:307`). Residuals recorded only in the archived `20260802-rest-content-type-enforcement.md` | `funktor/auth`, `funktor/rest` | T5 |
 | later | password hardening (after T5), JWT rotation operability (independent, small — a filler), CSP + token TTL, SDK auth Vue binding + SSE (after T1: same TS tree), route-check follow-ups | | |
 
 **Wave 1** (two at a time, maintainer 2026-10-19) — T2 and T3 first (T3 is drafted and frees its slot soon;

@@ -1,6 +1,27 @@
 # Routes without auth rules must not silently be public
 
-**Status:** TODO
+**Status:** MECHANISM DONE, TASK STILL OPEN — rechecked 2026-10-19. The finding ("a route with no rules is silently public")
+is closed structurally, but NOT by the startup hook this doc designs. The auth-hardening quartet (archived:
+`.claude/tasks-archive/2026-07/20260722-apiroutes-auth-floor.md` and its index) made `authFloor` a mandatory, default-less
+`ApiRoutes` constructor parameter (`ApiRoutes.kt:50`), so a group cannot be written without a floor; `addRoute`, the single
+registration choke point, prepends it and refuses an empty combined chain (`ApiRoutes.kt:217-238`); and `AuthChainBootCheck`
+(`AuthChainBootCheck.kt:19-25`, run by `ValidateRoutesOnAppStarting`) re-checks every route at boot. Intentionally public
+groups declare `authFloor = { public() }`. The `ValidateRouteAuthOnAppStarting` class sketched in §4 was never built, and §4's
+rejection of option (b) ("compile-time enforcement would need a different shape") is exactly what the floor turned out to be.
+
+**Still open — why this is not archived:**
+- The acceptance boxes and the Test-evidence list below describe the sketched hook; they were never ticked or rewritten for
+  the built mechanism. Equivalent coverage exists — `FloorAuthRuleBuilderSpec` (empty or constant-mixing floor aborts group
+  construction), `ValidateRoutesOnAppStartingSpec`, 401-at-the-floor e2e in `OrgsApiSpec` / `ClusterApiSpec` — except that the
+  empty-route-chain branch itself (`AuthChainBootCheck.kt:19`, `ApiRoutes.kt:229`) has no direct test: the DSL cannot reach
+  it, so only a hand-built route could.
+- The last acceptance item was never decided: should `ApiRoute.estimateAccess` stop folding an empty rule list to `Granted`?
+  `ApiRouteEstimateAccessSpec.kt:96` still pins "route with no auth rules defaults to Granted". With the floor it only matters
+  for hand-built routes, but it is the maintainer's call.
+- The review record is empty — the finding was closed under the quartet's own gate (part 2 closed at round 3), not under this doc.
+- Unchanged from the audit: the raw Ktor handlers outside `ApiRoutes` (`/_/ping`, `/_/appinfo`, `funktor-demo/server/.../api/ApiApp.kt:41,59`)
+  are invisible to the route registry, so none of this covers them.
+
 **Plan:** none — from `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` (finding 6)
 **Security-critical:** yes
 

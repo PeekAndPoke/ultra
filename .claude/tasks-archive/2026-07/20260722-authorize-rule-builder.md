@@ -1,7 +1,9 @@
 # authorize {} builder-accumulator — kill the last-expression-wins footgun
 
-**Status:** DONE (2026-07-22) — review loop terminated on round 4 (zero confirmed findings across
+**Status:** DONE (2026-07-22; archived 2026-10-19) — review loop terminated on round 4 (zero confirmed findings across
 all three reviewers). All 4 rounds' findings fixed; 27 funktor:rest specs + full backend suites green.
+Archive check 2026-10-19: every Spec/Test box was already ticked; the builder, `RestDsl` marker and the specs it names
+(`AuthRuleBuilderSpec` 20, `AuthRuleDslCompileSpec` 4) are all still in the tree and green in the last recorded run.
 **Plan:** part 1 of the auth-hardening quartet: this → `20260722-apiroutes-auth-floor.md` →
 `20260722-two-phase-auth-consistent-params.md` → `20260722-stored-param-migration.md`
 **Security-critical:** YES — this changes how every API auth rule is declared.

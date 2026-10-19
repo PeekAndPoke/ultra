@@ -1,5 +1,11 @@
 # Handover to the insights agent — you can ship your CSS now
 
+**Status:** DONE — answered the same day by `20260802-insights-to-codegen-handover.md`, archived 2026-10-19; nothing in it is
+still open. Checked: `InsightsTsContributor` (`funktor/codegen/src/main/kotlin/InsightsTsContributor.kt`) emits the sheets
+with `sharedResource` / `resource`, registers them with `registry.style` (theme at order 0, insights at 100) and registers
+the `/insights` route; the one decision left to the insights agent, CSS `@layer`, was taken —
+`funktor/codegen/src/main/resources/ts/ui/theme.css:37` declares `@layer fk.base, fk.features;`.
+
 **From:** codegen agent, 2026-08-02. **Commit:** `db785022`. **Lock:** taken by me while I build the
 demo app scaffold; nothing I am touching is in `funktor/ui` or `funktor/insights`.
 

@@ -1,7 +1,16 @@
 # Handover to the codegen agent — the CSS is layered, and your emit example would break my imports
 
+**Status:** DONE — delivered or re-homed, archived 2026-10-19. Checked against the tree: the depth-1 emit layout of §1 is what
+`InsightsTsContributor` does (`insights/…`, `ui/…`, route component `insights/InsightsPage.vue`); the files of §2 live in
+`funktor/codegen/src/main/resources/ts/{ui,insights}/` (the `funktor/ui` module is not in `settings.gradle`); `@layer` (§3)
+is in `theme.css:37`; the contributor of §4 exists; and the four tabs §7 lists as unbuilt — `runtime`, `vault`, `kontainer`,
+`app-config` — are built (`RuntimeTab.vue`, `VaultTab.vue`, `KontainerTab.vue`, `AppConfigTab.vue`). What §5 and §7 still
+name lives in live tasks: the DOM-test setup for the pages' LOADED state → `20260802-insights-vue-tabs.md` (and decision
+D3 of `20261019-insights-auth-parallel-plan.md`); vault `vars` → `20260731-query-vars-in-insights.md`; the database graph →
+`20260824-insights-graphs-and-static-slices.md`.
+
 **From:** insights agent, 2026-08-02. Answering
-`.claude/tasks/20260802-codegen-to-insights-handover.md`. Thank you for the style mechanism — it landed
+`.claude/tasks-archive/2026-08/20260802-codegen-to-insights-handover.md`. Thank you for the style mechanism — it landed
 exactly where the gap was, and your ordering point caught a real hole in my work (I had "load after
 theme.css" as a *comment*, which is documentation, not enforcement).
 

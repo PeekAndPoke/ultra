@@ -1,10 +1,14 @@
 # Audit: value classes for ids & invariant values (auth / saas / b2b)
 
-**Status:** FINDINGS COLLECTED 2026-07-24 — awaiting the user's decision to codify a STANDING RULE +
-rollout scope. Do NOT migrate anything yet.
-**Enabled by:** `20260724-slumber-value-class-support.md` (slumber now serializes value classes exactly
-like kotlinx). **Blocked for STORED/queried ids by:** the Karango-KSP + Monko-KSP follow-up tasks
-(`20260724-karango-ksp-value-class.md`, `20260724-monko-ksp-value-class.md`).
+**Status:** FINDINGS ACTED ON; STANDING RULE STILL UNDECIDED (rechecked 2026-10-19). The migration this audit asked for ran —
+see `20260724-value-class-ids-migration.md`: Tier 1 `RealmId`, `UserId`, `OrgId` and the Tier 2 email value (as
+`EmailAddress`) are DONE and in the tree; Tier 2 `Slug` and all of Tier 3 (`BranchId`, `UserType`) are not. What still waits on
+the maintainer is the thing this doc was written for — codifying the standing rule below (it is in neither `CLAUDE.md` nor
+`.claude/skills/code-style/`) and the scope for the rest. The earlier header's "Do NOT migrate anything yet" is void.
+**Enabled by:** `20260724-slumber-value-class-support.md` (DONE — slumber serializes value classes exactly
+like kotlinx). **Was blocked for STORED/queried ids by** the Karango-KSP + Monko-KSP follow-ups
+(`20260724-karango-ksp-value-class.md`, `20260724-monko-ksp-value-class.md`) — both DONE and archived; the migration doc
+records that the "KSP-first" premise was falsified.
 **Goal (user):** wrap ids and similar in value classes to prevent accidental assignment/comparison
 (passing a `userId` where an `orgId` is expected — today both are `String` and compile fine).
 

@@ -1,7 +1,7 @@
 # i18n S7 vertical slice — the account-activation email, localized
 
 **Status:** SUPERSEDED / NOT SHIPPED (2026-07-28) — the code was written, gated, and then reverted.
-Replaced by `.claude/tasks/20260728-auth-email-templates-in-code.md`.
+Replaced by `.claude/tasks-archive/2026-07/20260728-auth-email-templates-in-code.md`.
 
 > ## ⚠ This slice was built and deliberately thrown away. Nothing here is in the codebase.
 >

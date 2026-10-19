@@ -1,7 +1,16 @@
 # Migration: wrap ids in `@JvmInline value class`es (RealmId pilot → the rest)
 
-**Status:** PLANNED 2026-07-24 — awaiting go-ahead. `RealmId` is the pilot (Step 1) to surface
-unforeseen complications before committing to the rest.
+**Status:** IN PROGRESS — Steps 1–4 DONE (2026-07-25/26), Step 5 (`Slug`) and the standing rule OPEN (rechecked 2026-10-19).
+In the tree: `RealmId` (`funktor/auth/src/commonMain/kotlin/model/RealmId.kt:24`), `UserId`
+(`ultra/security/src/commonMain/kotlin/user/UserId.kt:35`), `OrgId` (`OrgId.kt:31`) and `EmailAddress` (`EmailAddress.kt:56`).
+The Step 2/3 task docs are archived in `.claude/tasks-archive/2026-07/`; the Step 4 doc,
+`20260726-value-class-emailaddress.md`, is still IN REVIEW, awaiting the maintainer's sign-off. Still open:
+- **Step 5 `Slug`** — `Organisation.slug` and `Branch.slug` are still `String` (`funktor/saas/src/jvmMain/kotlin/domain/Organisation.kt:17,29`),
+  as are the API models (`OrgModel.kt:25,35`, `OrgsApiClient.kt:20`); `Slugs` is only a normalizer. The denylist-vs-allowlist
+  question below has to be settled first.
+- **The standing rule** — "To be codified by the user", and it is in neither `CLAUDE.md` nor `.claude/skills/code-style/`.
+- The optional `BranchId` / `UserType` items under "Later / optional".
+**Was:** PLANNED 2026-07-24 — awaiting go-ahead; `RealmId` the pilot (Step 1) to surface unforeseen complications first.
 **Rationale / candidate survey:** `20260724-value-class-ids-audit.md`.
 **Enabled by:** `20260724-slumber-value-class-support.md` (DONE — value classes serialize like kotlinx).
 **User decision:** use SPECIFIC id classes (`RealmId`, `UserId`, `OrgId`, …), not a generic `Id<T>`.
@@ -83,7 +92,7 @@ planned id (`RealmId`/`UserId`/`OrgId`/`Email`/`Slug`) is `String`-backed → fi
 non-primitive (date/UUID/nested VC) would fail loudly at bind time — acceptable, documented.
 
 ## Step 2 — `UserId` ✅ DONE 2026-07-25
-See `.claude/tasks/20260725-value-class-userid.md` (gate PASS). Two corrections to the plan below:
+See `.claude/tasks-archive/2026-07/20260725-value-class-userid.md` (gate PASS). Two corrections to the plan below:
 **placement is `ultra/security` commonMain, NOT `funktor/auth`** (`OrgMember` lives in funktor/saas,
 which has no dependency on funktor:auth — ultra:security is the lowest common module and already owns
 `UserRecord.userId`/`JwtUserData`/the CSRF key); and **the invariant is STRUCTURAL, not coll/key**,
@@ -100,7 +109,7 @@ queried → KSP), `AuthSystem`. Vault `Stored<T>._id` stays a generic `String`; 
 auth/domain layer with conversion at the vault boundary (or a KSP helper). `init { require non-blank }`.
 
 ## Step 3 — `OrgId` ✅ DONE 2026-07-25
-See `.claude/tasks/20260725-value-class-orgid.md` (gate PASS; atomic flip verified complete, and
+See `.claude/tasks-archive/2026-07/20260725-value-class-orgid.md` (gate PASS; atomic flip verified complete, and
 mutation-tested — reverting the guard to `._key` is caught by 7 tests).
 
 > ⚠️ **THE ORIGINAL PLAN TEXT BELOW WAS INVERTED AND IS NO LONGER THE CONTRACT.** It said
@@ -142,7 +151,7 @@ See `.claude/tasks/20260726-value-class-emailaddress.md`. Three corrections to t
 3. `of()` also rejects non-ASCII raw input before lowercasing, so U+212A (which lowercases to `k`)
    cannot canonicalize onto a different existing address.
 
-**Closes `.claude/tasks/20260724-email-canonicalization.md`** as its Option C — the 5 documented
+**Closes `.claude/tasks-archive/2026-07/20260724-email-canonicalization.md`** as its Option C — the 5 documented
 lookup gaps are now fixed structurally.
 
 ### Original plan text
@@ -158,7 +167,7 @@ binding. Surface: user models/entities across realms.
 
 ### OPEN QUESTION to settle in this step: denylist or allowlist?
 
-Raised by the domain reviewer of `.claude/tasks/20260726-email-e2e-test-seam.md` (2026-07-27), and it
+Raised by the domain reviewer of `.claude/tasks-archive/2026-07/20260726-email-e2e-test-seam.md` (2026-07-27), and it
 is a decision for the standing rule below, not a defect in what shipped.
 
 The repo currently has BOTH patterns:

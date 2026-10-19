@@ -3,6 +3,14 @@
 **From:** auth-transport agent. **Status:** increment 1 COMPLETE and through `/feature-review` (PASS).
 Lock is FREE. Nothing is owed to you, and nothing of mine is half-finished.
 
+**Archive check 2026-10-19 — NOT archived.** §1–§3 and §5 are history. §4 is the only live content, and its two residuals
+still hold in the current code but have no live task; they are recorded only in the ARCHIVED
+`.claude/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` ("Not fixed — recorded, with reasons"):
+(a) `RefreshToken` is still a `GET` that mints a token (`AuthApiClient.kt:95`, route `AuthUserApi.kt:47`) — to become a POST
+before any ambient credential lands; (b) bodiless mutating routes still bypass the Content-Type gate —
+`ApiRoutes.RouteBuilder.post(uri): ApiRoute.Plain` (`ApiRoutes.kt:307`) exists and is ungated, with no production use today.
+Archive this doc once those two have a live home.
+
 ## 1. What changed in your dependencies
 
 ### `AuthSignInResponse` — regenerate the SDK

@@ -1,6 +1,8 @@
 # Auth-hardening quartet — index
 
-**Status:** IN PROGRESS — parts 1–2 DONE, parts 3–4 + docs TODO (as of 2026-07-22)
+**Status:** DONE (quartet complete 2026-07-23; archived 2026-10-19). Parts 1–4 are all DONE and archived next to this file in
+`.claude/tasks-archive/2026-07/`. The follow-ups in the last four table rows are NOT done and stay open as ordinary tasks in
+`.claude/tasks/auth-hardening/` — they no longer have an umbrella.
 **Plan:** none — this is the umbrella/index for the quartet
 **Security-critical:** yes
 
@@ -15,11 +17,12 @@ dependency on the previous one, so land them in order.
 | 2 | `20260722-apiroutes-auth-floor.md` | Mandatory `authFloor` floor on `ApiRoutes` (renamed from `defaultAuth`, part 4) — structural default-deny; a route with no rule is denied, not public | **DONE** (2026-07-22, review loop ended round 3, zero findings) |
 | 3 | `20260722-two-phase-auth-consistent-params.md` | Two-phase auth eval + pluggable `RouteBootCheck`/`RouteParamsGuard` + saas org-isolation (`OrgAware`/`OrgAwareParam`) — no entity loads before auth passes, structural cross-org isolation | **DONE** (2026-07-23, review loop: round-1 reworked on 2 HIGH direction findings, round-2 confirmed mechanism airtight, edge findings fixed) |
 | 4 | `20260722-stored-param-migration.md` | Migrate framework APIs from in-handler `findById` to `Stored` params + entity-based param naming + `defaultAuth`→`authFloor` rename | **DONE** (2026-07-23, review loop ended round 3, zero findings) |
-| — | `20260722-docs-auth-dsl-and-floor.md` | Docs follow-up (collector) for the DSL rewrite + floor + part-3 checks/guards. Write the prose after 1–4 land | **TODO** (collector) |
+| — | `20260722-docs-auth-dsl-and-floor.md` | Docs follow-up (collector) for the DSL rewrite + floor + part-3 checks/guards. Write the prose after 1–4 land | **PARTIAL** (checked 2026-10-19: floor + DSL are documented, two-phase eval / `RouteBootCheck` / `ConsistentParam` / `Stored` params are not) |
 | — | `20260722-route-check-followups.md` | Part-3 spin-offs: `validateUriPattern`→`RouteBootCheck`, entity-`OrgAware` linter, branch-level isolation | **TODO** |
+| — | `20260723-security-open-questions.md` | Open design questions on owner-in-URI, body-embedded ids, cross-org operations | **OPEN QUESTIONS** (not in this index until 2026-10-19) |
 | — | `20260723-redteam-org-isolation.md` | Red-team attack scenarios for the org-isolation (security-critical follow-up) | **TODO** (collected, not executed) |
 
-Dependency chain: **1 → 2 → 3 → 4**, docs last. Part 3 done → part 4 unblocked.
+Dependency chain: **1 → 2 → 3 → 4**, docs last — the four parts are done; only the follow-up rows above remain.
 
 ## Shared review protocol (user directive, 2026-07-22 — applies to all four)
 

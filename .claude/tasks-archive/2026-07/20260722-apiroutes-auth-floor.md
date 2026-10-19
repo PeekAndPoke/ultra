@@ -4,9 +4,12 @@
 route rules can only STRENGTHEN, not an overridable default). This doc's historical references to
 `defaultAuth` describe the API as originally built; the current name is `authFloor`.
 
-**Status:** DONE (2026-07-22) — review loop terminated on round 3 (zero confirmed findings across
+**Status:** DONE (2026-07-22; archived 2026-10-19) — review loop terminated on round 3 (zero confirmed findings across
 all three reviewers). Mechanism + full 19→23-group sweep; all rounds' findings fixed; backend suites
 green. Depends on `20260722-authorize-rule-builder.md` (DONE).
+The Spec and Test-evidence boxes below sat at 0/9 although the work shipped; ticked 2026-10-19 against the code, each with
+the evidence it was ticked on. "Green" means the last recorded run (`build/test-results` XML of 2026-10-19: `funktor:rest`
+116 tests, `funktor:all` 158, `funktor-demo:server` 47, all 0 failures) — not re-run for the archive.
 
 ## Review record (review LOOP, 2026-07-22, 3× Opus per round)
 
@@ -97,22 +100,46 @@ currently implicit. Known groups to sweep (complete during implementation with a
 
 ## Spec
 
-- [ ] Mandatory `defaultAuth` on `ApiRoutes`; seed replayed into every route chain; hard floor
+- [x] Mandatory `defaultAuth` (now `authFloor`) on `ApiRoutes`; seed replayed into every route chain; hard floor
       (no clearing API exists).
-- [ ] Per-route `authorize` optional.
-- [ ] Public groups declare `{ public() }` explicitly; `public()` marker + floor coexistence
+      *Ticked on:* `ApiRoutes.kt:50` (`authFloor`, no default value); `addRoute` prepends `floorRules` via
+      `withFloor` (`ApiRoutes.kt:217-219`); `floorRules` is `@PublishedApi internal` (`ApiRoutes.kt:64-65`) and no API
+      clears it.
+- [x] Per-route `authorize` optional.
+      *Ticked on:* `FloorAuthRuleBuilderSpec` "every route in a group inherits the floor with no per-route authorize".
+- [x] Public groups declare `{ public() }` explicitly; `public()` marker + floor coexistence
       validated (a group seeded public() must not ALSO seed restrictive rules — boot check).
-- [ ] Sweep completed: every ApiRoutes group in the repo declares its floor; ambiguous audiences
+      *Ticked on:* `FloorAuthRuleBuilderSpec` "a floor combining public() with a restrictive rule aborts group
+      construction" and "a public-floored group with a route that tries to add a restrictive rule fails at build";
+      public groups declare it (`AuthLoginApi.kt:22`, the showcase groups in `funktor-demo`).
+- [x] Sweep completed: every ApiRoutes group in the repo declares its floor; ambiguous audiences
       escalated, not guessed.
-- [ ] Generated docs show floor rules per route.
-- [ ] Full backend e2e suites green; the cross-realm locks (OperatorApiTest) still pass with the
+      *Ticked on:* the param has no default, so the compiler enforces the sweep; a grep of `: ApiRoutes(` over
+      `funktor/` and `funktor-demo/` (main sources) finds 25 groups, all passing `authFloor = …` (`OperatorApi` on the
+      lines after the declaration). The audience calls are recorded under "Implementation notes" below (4 mixed groups
+      split by user decision 2026-07-22).
+- [x] Generated docs show floor rules per route.
+      *Ticked on, by construction:* the registered route IS the floored copy (`allRoutes.add(withAuto)`,
+      `ApiRoutes.kt:237`), and `IntrospectionApi.getAllEndpoints` (`IntrospectionApi.kt:147`) and `estimateAccess` both
+      read `authRules`. There is no dedicated test of the rendered docs; `FloorAuthRuleBuilderSpec` pins the floor being
+      IN `authRules`, first.
+- [x] Full backend e2e suites green; the cross-realm locks (OperatorApiTest) still pass with the
       guard expressed as a floor instead of per-route.
+      *Ticked on:* `OperatorApi` declares the guard as its floor (`OperatorApi.kt:19-25`); `OperatorApiTest` still holds
+      the realm-boundary cases ("an admin-realm super-user is rejected", "a b2b tenant user is rejected") and is 4/4 in
+      the last recorded run, with the suites named in the Status.
 
 ## Test evidence
 
-- [ ] Unit: seed replay per route; strengthening appends; no weakening path exists.
-- [ ] e2e: a route with no per-route authorize is enforced at the floor (401/403 matrix).
-- [ ] Boot: missing/empty floor impossible (compile or boot failure, per part-1 decision).
+- [x] Unit: seed replay per route; strengthening appends; no weakening path exists.
+      *Ticked on:* `FloorAuthRuleBuilderSpec` (11 cases): inherit, strengthen (both rules enforced), floor PREPENDED,
+      empty/constant-mixing floors abort.
+- [x] e2e: a route with no per-route authorize is enforced at the floor (401/403 matrix).
+      *Ticked on:* anonymous → 401 on floor-only routes in `OrgsApiSpec`, `ClusterApiSpec` and
+      `StoredParamMigrationE2eSpec` (`funktor/all/src/jvmTest/kotlin/`).
+- [x] Boot: missing/empty floor impossible (compile or boot failure, per part-1 decision).
+      *Ticked on:* missing → compile error (no default on `authFloor`); empty → `FloorAuthRuleBuilderSpec` "an empty
+      floor aborts group construction".
 
 ## Implementation notes (2026-07-22)
 

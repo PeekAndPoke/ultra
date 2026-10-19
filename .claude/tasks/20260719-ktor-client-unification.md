@@ -1,6 +1,14 @@
 # Unify the HTTP client on Ktor (remove custom fetch/interceptor machinery)
 
-**Status:** IN PROGRESS
+**Status:** IMPLEMENTED 2026-07-20 (`d7101e56`, gate round 1 fixes included); every Spec box ticked 2026-10-19 against the
+code, with the evidence under each. **Not archived, deliberately:** the doc's own gate left two verification items that need a
+person with a browser, and neither is ticked or answered anywhere — the "Manual (user)" Test-evidence box (boot the dev server
+and ops-app; login 401/403 is a clean failure, the devtools request list still populates, cross-origin bearer/CORS as before)
+and the MED "CORS / credentials parity" security follow-up ("verify before marking the branch done"). Static evidence points
+to parity: the old JS impl left `credentials` and `mode` `undefined` — i.e. browser defaults
+(`d7101e56^:ultra/remote/src/jsMain/kotlin/RemoteRequestImpl.kt:28-29`), its public `RemoteRequest` had no way to set them
+and no caller did, and nothing sets them now. What the check is actually about — the Ktor Js engine's own default — lives
+outside this repo and was not looked at. Archive once the maintainer ticks or accepts those two.
 **Plan:** (infra groundwork — prerequisite for the typed-`ApiResponse`-error work)
 **Security-critical:** no (transport refactor; no authz logic changes — bearer header just moves
 into ktor's `defaultRequest`. Keep an eye on CORS/credentials parity.)
@@ -24,28 +32,40 @@ follow-up "typed error data" decision trivial (envelope always decodes on both p
 
 ## Spec
 
-- [ ] Single **commonMain** Ktor-`HttpClient`-backed `RemoteRequest` implementation; delete the
+- [x] Single **commonMain** Ktor-`HttpClient`-backed `RemoteRequest` implementation; delete the
       `expect/actual createRequest`, both platform `RemoteRequestImpl`s, both `RemoteResponseImpl`s.
-- [ ] `expectSuccess = false` semantics: non-2xx (incl. 4xx/5xx that carry an `ApiResponse`
+      *(`ultra/remote/src/commonMain/kotlin/RemoteRequestImpl.kt`; `createRequest` is a plain function in `helpers.kt:17`;
+      `jsMain`/`jvmMain` now hold only `index_jsMain.kt` / `index_jvmMain.kt`)*
+- [x] `expectSuccess = false` semantics: non-2xx (incl. 4xx/5xx that carry an `ApiResponse`
       envelope) **emit**, never throw. Genuine transport failures (network/DNS/engine) still throw
-      through the flow.
-- [ ] Keep a **slim `RemoteResponse`** interface (`status`, `statusText`, `body`, `ok`, `is4xx`,
-      `is5xx`; drop the `request` back-reference — unused).
-- [ ] **Bearer token via Ktor machinery**: app configures `defaultRequest { }` on its `HttpClient`
+      through the flow. *(`RemoteRequestImpl.kt:54`; `RemoteRequestTransportSpec` 5 cases, green on JVM and JS in the
+      last recorded run)*
+- [x] Keep a **slim `RemoteResponse`** interface (`status`, `statusText`, `body`, `ok`, `is4xx`,
+      `is5xx`; drop the `request` back-reference — unused). *(`RemoteResponse.kt`)*
+- [x] **Bearer token via Ktor machinery**: app configures `defaultRequest { }` on its `HttpClient`
       (token evaluated per-request). Delete `SetBearerRequestInterceptor`.
-- [ ] **Delete** `ErrorLoggingResponseInterceptor` (the false-positive source),
+      *(`funktor-demo/adminapp/src/jsMain/kotlin/api.kt` and `ops-app/.../api.kt`; no `SetBearerRequestInterceptor`
+      in any `*.kt`)*
+- [x] **Delete** `ErrorLoggingResponseInterceptor` (the false-positive source),
       `RequestInterceptor`, `ResponseInterceptor`, `RemoteException`, JS `remote.kt`
       (onError/btoa helpers), remote `_mp.kt` (`encodeURIComponent` here is dead — call sites use
-      `ultra.common.encodeUriComponent`).
-- [ ] **Devtools request list preserved** via an `onResponse` observer hook applied with
+      `ultra.common.encodeUriComponent`). *(none of those names occurs in any `*.kt`; the files are gone from
+      `ultra/remote/src`)*
+- [x] **Devtools request list preserved** via an `onResponse` observer hook applied with
       `.onEach {}` on the response flow (not an interceptor). Convert `DevtoolsApiResponseInterceptor`
       (funktor/inspect) to a plain `suspend (RemoteResponse) -> Unit` observer.
-- [ ] `ApiClient.Config`: `client: HttpClient` becomes **required**; drop `requestInterceptors`/
-      `responseInterceptors`; add `onResponse: List<suspend (RemoteResponse) -> Unit>`.
-- [ ] Public `ApiClient` / `call()` / `TypedApiEndpoint` API stays byte-compatible; only the app
+      *(`funktor/inspect/src/commonMain/kotlin/cluster/devtools/DevtoolsResponseObserver.kt:14`, registered in
+      `adminapp/.../api.kt:40`; whether the list still POPULATES in a browser is the unticked manual item below)*
+- [x] `ApiClient.Config`: `client: HttpClient` becomes **required**; drop `requestInterceptors`/
+      `responseInterceptors`; add `onResponse: List<suspend (RemoteResponse) -> Unit>`. *(`ApiClient.kt:33-38`)*
+- [x] Public `ApiClient` / `call()` / `TypedApiEndpoint` API stays byte-compatible; only the app
       `api.kt` files (ops-app, adminapp) and the devtools observer change.
-- [ ] Add `ktor-client-js` (JS engine) dependency — the one genuinely new dep. jvmMain gets a
+      *(by `d7101e56`'s file list: outside `ultra/remote` it touches only the two apps' `api.kt` + `build.gradle.kts`, the
+      devtools observer, and the one `.catch`/`.map` reorder in `LogsBulkActionPopup.kt` from the review. Not checked with an
+      ABI tool.)*
+- [x] Add `ktor-client-js` (JS engine) dependency — the one genuinely new dep. jvmMain gets a
       default engine (`cio`) so `HttpClient {}` auto-resolves per platform.
+      *(`ultra/remote/build.gradle.kts`: `jsMain` → `Deps.Ktor.Client.js`, `jvmMain` → `Deps.Ktor.Client.cio`)*
 
 ## Implementation notes
 

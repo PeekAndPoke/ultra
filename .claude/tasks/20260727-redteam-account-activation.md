@@ -2,7 +2,7 @@
 
 **Status:** COLLECTED 2026-07-27 — **do NOT execute during feature work.** These are for a dedicated
 penetration-test session.
-**Feature:** `.claude/tasks/20260727-account-activation.md` (commit `31667449`)
+**Feature:** `.claude/tasks-archive/2026-07/20260727-account-activation.md` (commit `31667449`)
 **Related:** `.claude/tasks/20260726-redteam-value-class-emailaddress.md` §1–2 (SSO auto-link),
 `.claude/tasks/20260727-redteam-messaging.md`
 

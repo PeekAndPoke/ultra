@@ -1,7 +1,7 @@
 # Sign-up is an unthrottled outbound-mail primitive — needs a suppression point
 
 **Status:** TODO — deferred by the user 2026-07-27, to be handled later
-**Found via:** the security review of `.claude/tasks/20260727-account-activation.md` (commit
+**Found via:** the security review of `.claude/tasks-archive/2026-07/20260727-account-activation.md` (commit
 `31667449`), which is also what introduced the exposure
 **Security-critical:** yes → attack scenarios already recorded, see the bottom
 **Supersedes:** `.claude/tasks/20260727-messaging-followups.md` §5 — that item asked for the same
@@ -45,7 +45,7 @@ rejects non-ASCII, but folds neither subaddress tags nor dots. Therefore
 
 ### Where the original scope-cut argument went wrong
 
-`.claude/tasks/20260727-account-activation.md` argued that the missing `OnBeforeSend` hook blocks
+`.claude/tasks-archive/2026-07/20260727-account-activation.md` argued that the missing `OnBeforeSend` hook blocks
 activation RESEND, not activation, so resend could be cut and the hook deferred. That is true as far
 as it goes, and it missed that **sign-up is the same primitive as resend** — an anonymous request that
 causes a send to a caller-chosen address. Resend was cut; sign-up shipped.

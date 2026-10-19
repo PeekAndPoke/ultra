@@ -589,7 +589,7 @@ class EmailAndPasswordAuth(
         // Following a link mailed to the address proves exactly what the activation link proves, so a
         // completed reset also activates. This is the ONLY way back for an account whose activation
         // link expired, because this increment ships no resend endpoint - see
-        // `.claude/tasks/20260727-account-activation.md`.
+        // `.claude/tasks-archive/2026-07/20260727-account-activation.md`.
         services.removePendingActivations(realm = realm.id, owner = tokenRecord.value.ownerId)
 
         // Send email to the user to notify them that their password has been changed

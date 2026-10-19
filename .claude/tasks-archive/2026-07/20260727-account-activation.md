@@ -1,7 +1,12 @@
 # Account activation (email verification on sign-up)
 
-**Status:** BACKEND DONE 2026-07-27, gate passed — **not archived**: two scope items below are still
-open and point here. Archive once the activation frontend lands.
+**Status:** DONE (backend 2026-07-27, gate passed — `b96c2c1c`; archived 2026-10-19). Both scope items at the bottom are
+closed: (1) the sign-up mail throttle stays deferred, as its own task `.claude/tasks/20260727-signup-mail-throttle.md`
+(TODO); (2) the frontend landed the same day in `84fa3b47` — `ActivateAccountPage.kt`, mounted by `AuthFrontendDefault`
+at `AuthFrontend.kt:41` (the mailed deep link) and `:50` (the no-token resend page), and used by the demo `adminapp`
+through `AuthFrontend.default(…)`. Resend, the `ActivationRequired` sign-in response and their gate are carried by
+`.claude/tasks/20260727-activation-resend-and-frontend.md`. Still open elsewhere, not here:
+`.claude/tasks/20260727-redteam-account-activation.md` (collected, not executed).
 **Plan:** `.claude/tasks/v1-email-auth-and-sessions.md` → Phase 4, verification half (§7 "signUp →
 if `requiresActivation`, create `EmailVerificationToken`, send verification email. Don't auto-issue
 session/JWT yet"; §7 "signIn → on unverified user").
@@ -231,6 +236,11 @@ or per-IP counters, and a suppression point in the send chain).
 `.claude/tasks/20260727-messaging-followups.md` §5 (same mechanism, second consumer).
 
 ### 2. The frontend is a separate increment — the mailed link currently lands on nothing
+
+**RESOLVED 2026-07-27 (`84fa3b47`), checked 2026-10-19:** `AuthFrontendDefault.mount` mounts `routes.activateAccount` and
+`routes.resendActivation` (`AuthFrontend.kt:41,50`), `AuthState` has `activateAccount` / `resendActivation`
+(`AuthState.kt:263,271`), and `LoginController` sends an unactivated sign-in to the page (`LoginController.kt:535`). The
+text below is the state at the time of the gate.
 
 `AuthFrontendRoutes.activateAccount` is new, but `AuthFrontendDefault.mount` mounts only `login` and
 `resetPassword`, there is no `ActivateAccountPage`, and `AuthState` has no `activateAccount` call.

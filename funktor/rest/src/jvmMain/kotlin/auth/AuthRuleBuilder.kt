@@ -8,7 +8,7 @@ import io.peekandpoke.ultra.remote.ApiAccessLevel
  * Accumulating builder for a route's auth rules — the receiver of `authorize {}` and of the
  * `forAll {}` / `forAny {}` combinator blocks.
  *
- * SEMANTICS (see `.claude/tasks/20260722-authorize-rule-builder.md`, ambiguity inventory):
+ * SEMANTICS (see `.claude/tasks-archive/2026-07/20260722-authorize-rule-builder.md`, ambiguity inventory):
  * - Every rule call APPENDS to the enclosing block's chain; nothing returns a rule, so value
  *   composition (`forAny(a, b)`, `a or b`) is unrepresentable — statements are the only syntax.
  * - Statements in `authorize {}` and `forAll {}` are conjuncts (ALL must pass); statements in
