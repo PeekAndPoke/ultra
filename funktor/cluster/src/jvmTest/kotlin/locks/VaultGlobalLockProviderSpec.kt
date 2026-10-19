@@ -1,63 +1,38 @@
 package io.peekandpoke.funktor.cluster.locks
 
-import io.kotest.matchers.comparables.shouldBeLessThan
-import io.kotest.matchers.shouldBe
+import io.kotest.assertions.throwables.shouldNotThrowAny
+import io.kotest.assertions.throwables.shouldThrow
 import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
-import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.funktor.cluster.locks.domain.isLegacy
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.RemoveResult
-
-import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
-import kotlinx.coroutines.flow.single
+import io.peekandpoke.ultra.vault.value
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-class VaultGlobalLockProviderSpec : GlobalLockProviderSpecBase() {
+class VaultGlobalLockProviderSpec : VaultGlobalLocksProviderSpecBase() {
 
-    private val testRepo = TestLockRepo()
-    private val globalServerId = GlobalServerId.withoutConfig()
-
-    override fun createSubject() = VaultGlobalLocksProvider(
-        repository = testRepo,
-        serverId = globalServerId,
-        retryDelayMs = 10,
-    )
+    override val repo: VaultGlobalLocksProvider.Repo = TestLockRepo()
 
     init {
-        "An acquire on a key whose existing lock has expired succeeds without waiting for cleanup" {
-            val key = "stale-key"
-            val now = MpInstant.now()
+        // Versions without heartbeats judge a lock by `expires`, 15 minutes after its last beat: a longer ttl would let
+        // them take over a lock this version still counts as alive.
+        "A ttl of 15 minutes is accepted" {
+            shouldNotThrowAny { createSubject(ttl = 15.minutes) }
+        }
 
-            testRepo.insert(
-                key = key,
-                new = GlobalLockEntry(
-                    key = key,
-                    serverId = "dead-server",
-                    created = now.minus(30.minutes),
-                    expires = now.minus(15.minutes),
-                ),
-            )
-
-            val subject = createSubject()
-            val start = Kronos.systemUtc.instantNow()
-
-            val result = subject.acquire(key, 2.seconds) { "got it" }.single()
-
-            val elapsed = Kronos.systemUtc.instantNow() - start
-
-            result shouldBe "got it"
-            elapsed shouldBeLessThan 500.milliseconds
+        "A ttl longer than 15 minutes is rejected" {
+            shouldThrow<IllegalArgumentException> { createSubject(ttl = 15.minutes + 1.milliseconds) }
         }
     }
 
-    private class TestLockRepo : Repository<GlobalLockEntry> {
+    private class TestLockRepo : VaultGlobalLocksProvider.Repo {
 
         private val entries = mutableMapOf<String, Stored<GlobalLockEntry>>()
 
@@ -68,7 +43,7 @@ class VaultGlobalLockProviderSpec : GlobalLockProviderSpecBase() {
         override val storedType: TypeRef<GlobalLockEntry> = kType()
 
         override suspend fun findAll(): Cursor<Stored<GlobalLockEntry>> {
-            return Cursor.of(entries.values.toList())
+            return Cursor.of(synchronized(entries) { entries.values.toList() })
         }
 
         override suspend fun <X : GlobalLockEntry> insert(new: New<X>): Stored<X> {
@@ -88,17 +63,7 @@ class VaultGlobalLockProviderSpec : GlobalLockProviderSpecBase() {
 
         override suspend fun remove(idOrKey: String): RemoveResult {
             return synchronized(entries) {
-
-                when (entries.contains(idOrKey)) {
-                    true -> {
-                        entries.remove(idOrKey)
-                        RemoveResult(count = 1, query = null)
-                    }
-
-                    else -> {
-                        RemoveResult(count = 0, query = null)
-                    }
-                }
+                RemoveResult(count = if (entries.remove(idOrKey) != null) 1 else 0, query = null)
             }
         }
 
@@ -112,7 +77,37 @@ class VaultGlobalLockProviderSpec : GlobalLockProviderSpecBase() {
         }
 
         override suspend fun removeAll(): RemoveResult {
-            error("Not yet implemented")
+            return synchronized(entries) {
+                RemoveResult(count = entries.size.toLong(), query = null).also { entries.clear() }
+            }
+        }
+
+        override suspend fun heartbeat(
+            key: String,
+            token: String,
+            heartbeatAt: MpInstant,
+            expiresAt: MpInstant,
+        ): Boolean = synchronized(entries) {
+            val stored = entries[key]?.takeIf { it.value.token == token } ?: return false
+
+            entries[key] = stored.modify { it.copy(lastHeartbeat = heartbeatAt, expires = expiresAt) }
+
+            true
+        }
+
+        override suspend fun removeIfHeld(key: String, token: String): Boolean = synchronized(entries) {
+            (entries[key]?.value?.token == token).also { held -> if (held) entries.remove(key) }
+        }
+
+        override suspend fun removeIfUnchanged(entry: GlobalLockEntry): Boolean = synchronized(entries) {
+            val current = entries[entry.key]?.value ?: return false
+
+            val unchanged = when (entry.isLegacy) {
+                true -> current.created == entry.created
+                false -> current.token == entry.token && current.lastHeartbeat == entry.lastHeartbeat
+            }
+
+            unchanged.also { if (it) entries.remove(entry.key) }
         }
     }
 }

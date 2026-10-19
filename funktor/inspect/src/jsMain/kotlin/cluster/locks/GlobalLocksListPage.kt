@@ -65,6 +65,7 @@ class GlobalLocksListPage(ctx: Ctx<Props>) : Component<GlobalLocksListPage.Props
                     th { +"Key" }
                     th { +"Acquired by server" }
                     th { +"Acquired at" }
+                    th { +"Last heartbeat" }
                     th { +"Expires at" }
                 }
             }
@@ -78,8 +79,11 @@ class GlobalLocksListPage(ctx: Ctx<Props>) : Component<GlobalLocksListPage.Props
                         td { // Server Id
                             +lock.serverId
                         }
-                        td { // Last Ping
+                        td { // Acquired at
                             +lock.created.atSystemDefaultZone().formatDdMmmYyyyHhMmSs()
+                        }
+                        td { // Last heartbeat
+                            +lock.lastHeartbeat.atSystemDefaultZone().formatDdMmmYyyyHhMmSs()
                         }
                         td { // Expires at
                             +lock.expires.atSystemDefaultZone().formatDdMmmYyyyHhMmSs()

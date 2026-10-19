@@ -93,6 +93,13 @@ interface GlobalLocksProvider {
     suspend fun releaseBy(filter: (GlobalLockEntry) -> Boolean): List<GlobalLockEntry>
 
     /**
+     * Releases all locks whose holder has gone silent.
+     *
+     * Returns a list of locks that were released.
+     */
+    suspend fun releaseExpired(): List<GlobalLockEntry>
+
+    /**
      * Releases all Locks that are held by the given [serverId].
      */
     suspend fun releaseByServerId(serverId: GlobalServerId) = releaseBy { it.serverId == serverId.getId() }

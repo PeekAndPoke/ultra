@@ -79,6 +79,10 @@ class PrimitiveGlobalLocksProvider(private val retryDelayMs: Long = 1) : GlobalL
         return emptyList()
     }
 
+    override suspend fun releaseExpired(): List<GlobalLockEntry> {
+        return emptyList()
+    }
+
     fun numEntriesFor(key: String): Int = synchronized(Storage) {
         Storage.lockMap[key]?.size ?: 0
     }
