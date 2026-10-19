@@ -45,7 +45,7 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
 
         ZoneId.getAvailableZoneIds().sorted().forEach { zoneId ->
             val zone = ZoneId.of(zoneId)
-            val cache = OffsetIntervalCache { javaOffset(zone, it) }
+            val cache = OffsetIntervalCache { javaOffset(zone, it.toLong()) }
 
             val probes = mutableListOf<Long>()
             var transition = zone.rules.nextTransition(from)
@@ -96,7 +96,7 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
 
         ZoneId.getAvailableZoneIds().sorted().forEach { zoneId ->
             val zone = ZoneId.of(zoneId)
-            val cache = OffsetIntervalCache { javaOffset(zone, it) }
+            val cache = OffsetIntervalCache { javaOffset(zone, it.toLong()) }
 
             var at = from.epochSecond + 7_200
             while (at < until.epochSecond) {
@@ -118,7 +118,7 @@ class OffsetIntervalCacheJvmSpec : StringSpec({
 
         listOf("Europe/Berlin", "America/New_York", "Australia/Lord_Howe", "Pacific/Apia", "Africa/Casablanca").forEach { zoneId ->
             val zone = ZoneId.of(zoneId)
-            val cache = OffsetIntervalCache { javaOffset(zone, it) }
+            val cache = OffsetIntervalCache { javaOffset(zone, it.toLong()) }
 
             var at = Instant.parse("1970-01-01T00:00:00Z").epochSecond
             val end = Instant.parse("2040-01-01T00:00:00Z").epochSecond

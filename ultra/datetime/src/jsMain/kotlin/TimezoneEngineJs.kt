@@ -14,7 +14,7 @@ private val formatterCache: dynamic = js("Object.create(null)")
 
 // JS Date covers ±8.64e15 ms; Intl throws a RangeError outside of it.
 private const val MAX_DATE_MS = 8.64e15
-private const val MAX_DATE_SECONDS = 8_640_000_000_000L
+private const val MAX_DATE_SECONDS = 8_640_000_000_000.0
 
 // Intl matches zone ids case-insensitively, java.time does not. Reject case variants of known ids, so the browser
 // accepts no id the JVM would reject.
@@ -23,7 +23,7 @@ private val supportedIdsByLowercase: Map<String, String> by lazy { MpTimezone.su
 // One interval cache per zone id that resolved; Intl is far too slow to ask on every conversion.
 private val offsetCaches: dynamic = js("Object.create(null)")
 
-internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Long): Int {
+internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Double): Int {
     return offsetCacheFor(zoneId).offsetSecondsAt(epochSeconds)
 }
 
@@ -34,7 +34,7 @@ private fun offsetCacheFor(zoneId: String): OffsetIntervalCache {
     // Validates the id first, so unknown ids never get a cache.
     formatterFor(zoneId)
 
-    val cache = OffsetIntervalCache(domain = -MAX_DATE_SECONDS..MAX_DATE_SECONDS) { epochSeconds ->
+    val cache = OffsetIntervalCache(domainStart = -MAX_DATE_SECONDS, domainEnd = MAX_DATE_SECONDS) { epochSeconds ->
         intlOffsetSecondsAt(zoneId, epochSeconds)
     }
     offsetCaches[zoneId] = cache
@@ -42,10 +42,10 @@ private fun offsetCacheFor(zoneId: String): OffsetIntervalCache {
 }
 
 /** The offset of [zoneId] at [epochSeconds], from Intl's wall-clock rendering. */
-private fun intlOffsetSecondsAt(zoneId: String, epochSeconds: Long): Int {
+private fun intlOffsetSecondsAt(zoneId: String, epochSeconds: Double): Int {
     // Intl renders to whole seconds, so ask about whole seconds — otherwise sub-second instants
     // (e.g. ...:59.999Z) skew the offset by up to a second.
-    val flooredMs = epochSeconds.toDouble() * 1000.0
+    val flooredMs = epochSeconds * 1000.0
 
     require(flooredMs in -MAX_DATE_MS..MAX_DATE_MS) { "Instant at $epochSeconds s is outside the range of JS dates" }
 

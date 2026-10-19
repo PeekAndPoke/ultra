@@ -11,9 +11,9 @@ class OffsetIntervalCacheSpec : StringSpec({
     class FakeZone {
         var lookups = 0
 
-        fun offsetAt(epochSeconds: Long): Int {
+        fun offsetAt(epochSeconds: Double): Int {
             lookups++
-            return if (epochSeconds in 1_000_000L until 9_000_000L) 7200 else 3600
+            return if (epochSeconds >= 1_000_000.0 && epochSeconds < 9_000_000.0) 7200 else 3600
         }
     }
 
@@ -24,7 +24,7 @@ class OffsetIntervalCacheSpec : StringSpec({
         listOf(1_000_000L, 9_000_000L).forEach { transition ->
             (-3L..3L).forEach { delta ->
                 val at = transition + delta
-                cache.offsetSecondsAt(at) shouldBe zone.offsetAt(at)
+                cache.offsetSecondsAt(at) shouldBe zone.offsetAt(at.toDouble())
             }
         }
     }
@@ -87,7 +87,7 @@ class OffsetIntervalCacheSpec : StringSpec({
         // +1h, except +2h for a day and a half; the two +1h points are ~1.9 days apart, so any threshold above a day
         // would join them across the +2h period
         val shortPeriod = 2_000_000L until 2_000_000L + 129_600L
-        val cache = OffsetIntervalCache { if (it in shortPeriod) 7200 else 3600 }
+        val cache = OffsetIntervalCache { if (it >= shortPeriod.first && it <= shortPeriod.last) 7200 else 3600 }
 
         cache.offsetSecondsAt(shortPeriod.first - 17_280L) shouldBe 3600
         cache.offsetSecondsAt(shortPeriod.last + 17_280L) shouldBe 3600
@@ -95,8 +95,8 @@ class OffsetIntervalCacheSpec : StringSpec({
     }
 
     "a probe ahead outside the lookup's domain is skipped, not asked" {
-        val cache = OffsetIntervalCache(domain = 0L..100_000L) { at ->
-            require(at in 0L..100_000L) { "outside: $at" }
+        val cache = OffsetIntervalCache(domainStart = 0.0, domainEnd = 100_000.0) { at ->
+            require(at >= 0.0 && at <= 100_000.0) { "outside: $at" }
             3600
         }
 
@@ -141,3 +141,6 @@ class OffsetIntervalCacheSpec : StringSpec({
         }
     }
 })
+
+/** The tests think in whole Long seconds; the cache takes them as a Double. */
+internal fun OffsetIntervalCache.offsetSecondsAt(epochSeconds: Long): Int = offsetSecondsAt(epochSeconds.toDouble())

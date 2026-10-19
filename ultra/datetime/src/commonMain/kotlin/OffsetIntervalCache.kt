@@ -18,24 +18,22 @@ import kotlin.math.floor
  */
 internal class OffsetIntervalCache(
     private val maxIntervals: Int = 8,
-    /** The seconds [lookup] can answer; probes outside are skipped. */
-    private val domain: LongRange = Long.MIN_VALUE..Long.MAX_VALUE,
-    private val lookup: (epochSeconds: Long) -> Int,
+    /** The seconds [lookup] can answer, inclusive; probes outside are skipped. */
+    private val domainStart: Double = -Double.MAX_VALUE,
+    private val domainEnd: Double = Double.MAX_VALUE,
+    private val lookup: (epochSeconds: Double) -> Int,
 ) {
-    private val domainStart = domain.first.toDouble()
-    private val domainEnd = domain.last.toDouble()
-
-    // Bounds are Double, not Long: on Kotlin/JS a Long is emulated, and the range check on every hit should be plain
-    // number comparisons. Exact for every second a JS Date can hold (±8.64e12 < 2^53).
+    // Seconds are Double, not Long: on Kotlin/JS a Long is emulated, and the range check on every hit should be plain
+    // number comparisons. Callers pass whole seconds; exact up to 2^53.
     /** Every second in `[from, until)` has [offset]. */
     private class Interval(var from: Double, var until: Double, val offset: Int)
 
     // Most recently used first.
     private val intervals = ArrayList<Interval>(maxIntervals)
 
-    /** The offset at [epochSeconds], in seconds. */
-    fun offsetSecondsAt(epochSeconds: Long): Int {
-        val at = epochSeconds.toDouble()
+    /** The offset at [epochSeconds] (whole seconds), in seconds. */
+    fun offsetSecondsAt(epochSeconds: Double): Int {
+        val at = epochSeconds
 
         for (i in intervals.indices) {
             val interval = intervals[i]
@@ -53,10 +51,8 @@ internal class OffsetIntervalCache(
         return learn(at)
     }
 
-    private fun lookupAt(at: Double): Int = lookup(at.toLong())
-
     private fun learn(at: Double): Int {
-        val offset = lookupAt(at)
+        val offset = lookup(at)
         val near = nearestWithinADay(at)
 
         when {
@@ -96,7 +92,7 @@ internal class OffsetIntervalCache(
         val probe = at + step
         if (probe < domainStart || probe > domainEnd) return
 
-        val offset = lookupAt(probe)
+        val offset = lookup(probe)
 
         when {
             offset == interval.offset && step > 0.0 -> interval.until = probe + 1.0
@@ -166,7 +162,7 @@ internal class OffsetIntervalCache(
 
         while (b - a > 1.0) {
             val mid = floor((a + b) / 2.0)
-            if (lookupAt(mid) == offset) a = mid else b = mid
+            if (lookup(mid) == offset) a = mid else b = mid
         }
 
         return b
