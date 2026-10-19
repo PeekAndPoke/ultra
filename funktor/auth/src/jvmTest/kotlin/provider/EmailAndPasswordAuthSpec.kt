@@ -936,7 +936,11 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     },
                 )
 
-                subjectWith(services).resendActivation(realm, owner).sent shouldBe false
+                val response = subjectWith(services).resendActivation(realm, owner)
+
+                response.sent shouldBe false
+                // A delay here would make the client say "we already sent one recently" — about a failed mail.
+                response.nextResendAt shouldBe null
             }
 
             "the new link never outlives the pending account" {

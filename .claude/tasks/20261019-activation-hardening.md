@@ -226,6 +226,7 @@ went RED for the right reason; "module" = `:funktor:auth`, "e2e" = `:funktor:all
 | 23 | `AccountRetirement.rename` a no-op / no truncation / constant digest | ✅ RED `AccountRetirementSpec` (format, isValidFormat, MAX_LENGTH, uniqueness, case) |
 | 24 | Mailer guard for a retired recipient removed | ✅ RED `DefaultMessagingRetiredRecipientSpec` (reached the mailer) |
 | 25 | `expiredOnly` ignored in `retirePendingAccount` | ✅ RED e2e "… before expiry the address is still taken" (sign-up would retire a FRESH pending account) |
+| 26 | A FAILED resend mail still reports `nextResendAt` (the page would then say "we already sent one recently") | ✅ RED unit "sent=false when the mail FAILED" — a defect found in self-review after the first round, fixed and pinned in the same commit |
 | — | Sweep passes `expiredOnly = false` | not run: EQUIVALENT — the sweep's query already filters on the cutoff; `expiredOnly` there is defence in depth |
 
 ## Review record — the LEDGER (filled by /feature-review)

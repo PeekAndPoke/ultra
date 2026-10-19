@@ -18,6 +18,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AuthResendActivationResponse(
     val sent: Boolean,
-    /** When the next resend becomes possible; set whenever that is known. */
+    /** When the next resend becomes possible: set when [sent], and when refused as too soon — never otherwise. */
     val nextResendAt: MpInstant? = null,
 )

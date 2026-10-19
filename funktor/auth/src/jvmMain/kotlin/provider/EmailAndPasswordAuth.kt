@@ -387,10 +387,11 @@ class EmailAndPasswordAuth(
 
         val result = issueAndSendActivationToken(realm = realm, user = user, marker = advanced.value)
 
-        // Honest: a failed mail is `sent = false`, even though rotation already revoked the older link.
+        // Honest: a failed mail is `sent = false` — and WITHOUT `nextResendAt`, which a client reads as "too
+        // soon, we already sent one". The slot stays reserved; a retry inside it is answered as too soon.
         return AuthResendActivationResponse(
             sent = result.success,
-            nextResendAt = advanced.value.nextResendAt(realm),
+            nextResendAt = advanced.value.nextResendAt(realm).takeIf { result.success },
         )
     }
 
