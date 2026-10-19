@@ -8,8 +8,8 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val KARANGO_GROUP: String by project
-val VERSION_NAME: String by project
+val KARANGO_GROUP = providers.gradleProperty("KARANGO_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = KARANGO_GROUP
 version = VERSION_NAME

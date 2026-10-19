@@ -13,12 +13,13 @@ object MpLocalTimeSerializer : KSerializer<MpLocalTime> {
         PrimitiveSerialDescriptor("MpTimeSerializer", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: MpLocalTime) {
-        encoder.encodeLong(value.inWholeMilliSeconds())
+        // Still written as a Long: the wire format does not change with the Int storage.
+        encoder.encodeLong(value.inWholeMilliSeconds().toLong())
     }
 
     override fun deserialize(decoder: Decoder): MpLocalTime {
         val v = decoder.decodeLong()
 
-        return MpLocalTime.ofMilliSeconds(v)
+        return MpLocalTime.ofMilliSeconds(v.mod(MpLocalTime.MILLIS_PER_DAY.toLong()).toInt())
     }
 }

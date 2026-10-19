@@ -5,7 +5,7 @@ no global state.
 
 - Package: `io.peekandpoke.ultra:maths`
 - Version: {{ultraVersion}}
-- Platforms: JVM, JS, Native (linuxX64, linuxArm64, macosX64, macosArm64, mingwX64)
+- Platforms: JVM, JS, Native (linuxX64, linuxArm64, macosArm64, mingwX64)
 - Docs: https://peekandpoke.io/ultra/maths/
 
 ## Easing

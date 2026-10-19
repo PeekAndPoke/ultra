@@ -15,7 +15,7 @@ object MpTimezoneAwaker : Awaker {
 
         // TODO(scan): unlike the javatime sibling (ZoneIdCodec.kt, which whitelists against
         //  ZoneId.getAvailableZoneIds()), MpTimezone.of() performs no validation - an unknown zone id
-        //  string awakes successfully here, and only fails later, at the first `.kotlinx` access.
+        //  string awakes successfully here, and only fails later, at the first zone calculation.
         return MpTimezone.of(data)
     }
 }

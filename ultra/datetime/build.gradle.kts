@@ -14,8 +14,8 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val ULTRA_GROUP: String by project
-val VERSION_NAME: String by project
+val ULTRA_GROUP = providers.gradleProperty("ULTRA_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = ULTRA_GROUP
 version = VERSION_NAME
@@ -43,7 +43,6 @@ kotlin {
 
     linuxX64()
     linuxArm64()
-    macosX64()
     macosArm64()
     mingwX64()
 
@@ -75,8 +74,8 @@ kotlin {
         jsTest {
             dependencies {
                 jsTestDeps()
-                // No @js-joda/timezone here: the suite runs against the native Intl-backed
-                // provider (installNativeTimezones) registered in ProjectConfig.
+                // No @js-joda/timezone and no zone provider: ultra's zone math runs on Intl
+                // (TimezoneEngineJs.kt), so a green suite proves no path needs kotlinx zone data.
             }
         }
 

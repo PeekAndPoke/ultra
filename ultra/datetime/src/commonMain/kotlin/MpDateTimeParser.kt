@@ -1,7 +1,6 @@
 package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
 
 object MpDateTimeParser {
 
@@ -22,7 +21,7 @@ object MpDateTimeParser {
         return datetime.atZone(timezone)
     }
 
-    private fun parse(isoString: String): Pair<MpLocalDateTime, TimeZone> {
+    private fun parse(isoString: String): Pair<MpLocalDateTime, MpTimezone> {
         val match = isoWithTimezone.find(isoString)
             ?: throw IllegalArgumentException("Cannot parse iso date string '$isoString'")
 
@@ -30,8 +29,8 @@ object MpDateTimeParser {
         val time = match.groupValues[2]
 
         val timezone = when (val tz = match.groupValues[3]) {
-            "", "Z" -> TimeZone.UTC
-            else -> TimeZone.of(tz.drop(1).dropLast(1))
+            "", "Z" -> MpTimezone.UTC
+            else -> MpTimezone.of(tz.drop(1).dropLast(1))
         }
 
         val localDateTime = MpLocalDateTime(

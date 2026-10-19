@@ -14,8 +14,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val ULTRA_GROUP: String by project
-val VERSION_NAME: String by project
+val ULTRA_GROUP = providers.gradleProperty("ULTRA_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = ULTRA_GROUP
 version = VERSION_NAME

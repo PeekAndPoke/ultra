@@ -102,14 +102,14 @@ data class MpZonedDateTimeRange(
      * Converts to the given [timezone].
      */
     fun atZone(timezone: TimeZone): MpZonedDateTimeRange {
+        return atZone(timezone.mp)
+    }
+
+    fun atZone(timezone: MpTimezone): MpZonedDateTimeRange {
         return MpZonedDateTimeRange(
             from = from.atZone(timezone),
             to = to.atZone(timezone),
         )
-    }
-
-    fun atZone(timezone: MpTimezone): MpZonedDateTimeRange {
-        return atZone(timezone.kotlinx)
     }
 
     /**
@@ -129,6 +129,13 @@ data class MpZonedDateTimeRange(
      * Checks if this range contains the given [datetime] at the given [timezone].
      */
     fun contains(datetime: MpLocalDateTime, timezone: TimeZone): Boolean {
+        return contains(datetime, timezone.mp)
+    }
+
+    /**
+     * Checks if this range contains the given [datetime] at the given [timezone].
+     */
+    fun contains(datetime: MpLocalDateTime, timezone: MpTimezone): Boolean {
         return contains(datetime.toInstant(timezone))
     }
 

@@ -5,11 +5,12 @@ import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
 import io.peekandpoke.ultra.slumber.builtin.datetime.TS
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
-import kotlinx.datetime.Instant
+import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 /**
  * Awaker for [LocalDateTime] values.
@@ -39,7 +40,7 @@ object LocalDateTimeAwaker : Awaker {
     }
 }
 
-/** Slumberer for [LocalDateTime] values. Writes `{ts: epoch millis (as if UTC), timezone: "Z", human}`. */
+/** Slumberer for [LocalDateTime] values. Writes `{ts: epoch millis (as if UTC), timezone: "UTC", human}`. */
 object LocalDateTimeSlumberer : Slumberer {
 
     override fun slumber(data: Any?, context: Slumberer.Context): Map<String, Any>? {
@@ -51,13 +52,11 @@ object LocalDateTimeSlumberer : Slumberer {
         val timezone = TimeZone.UTC
         val zoned = data.toInstant(timezone)
 
-        // TODO(scan): TimeZone.UTC.id is "Z" (kotlinx-datetime's FixedOffsetTimeZone renders its id
-        //  from the offset string), not "UTC" - every other UTC-writing slumberer in this module
-        //  (including the sibling LocalDateCodec.kt, which reuses the shared java.time `utc` constant)
-        //  writes the literal "UTC". Inconsistent wire value for the same concept.
+        // The literal, not TimeZone.UTC.id: that was "Z" before kotlinx-datetime 0.7, so records written earlier
+        // hold "Z" — the awaker accepts both.
         return toMap(
             zoned.toEpochMilliseconds(),
-            TimeZone.UTC.id,
+            utc,
             zoned.toString(),
         )
     }

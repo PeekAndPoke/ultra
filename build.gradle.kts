@@ -62,11 +62,11 @@ subprojects {
 rootProject.plugins.withType<YarnPlugin> {
     rootProject.the<YarnRootExtension>().apply {
         // Don't fail the build when yarn.lock changes (optional but common)
-        yarnLockMismatchReport = YarnLockMismatchReport.WARNING
+        yarnLockMismatchReportProperty.set(YarnLockMismatchReport.WARNING)
         // Always just regenerate/replace yarn.lock
-        yarnLockAutoReplace = true
+        yarnLockAutoReplaceProperty.set(true)
         // Optional: if a new lock didn't exist before, don't spam about it
-        reportNewYarnLock = false
+        reportNewYarnLockProperty.set(false)
     }
 }
 

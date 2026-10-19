@@ -127,7 +127,7 @@ class MpInstantSpec : StringSpec({
 
         val start: MpInstant = MpLocalDateTime.of(2022, Month.APRIL, 5).toInstant(TimeZone.UTC)
 
-        val atZone = start.atZone(TimeZone.of("Europe/Bucharest"))
+        val atZone = start.atZone(MpTimezone.of("Europe/Bucharest"))
 
         atZone.toIsoString() shouldBe "2022-04-05T03:00:00.000[Europe/Bucharest]"
     }
@@ -202,7 +202,7 @@ class MpInstantSpec : StringSpec({
 
         val beforeDST = MpInstant.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
 
-        val afterDST = beforeDST.plus(1, DateTimeUnit.DAY, TimeZone.of("Europe/Berlin"))
+        val afterDST = beforeDST.plus(1, DateTimeUnit.DAY, MpTimezone.of("Europe/Berlin"))
 
         afterDST shouldBe MpInstant.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
 
@@ -220,7 +220,7 @@ class MpInstantSpec : StringSpec({
 
         val beforeDST = MpInstant.parse("2022-03-28T00:00:00.000[Europe/Berlin]")
 
-        val afterDST = beforeDST.minus(1, DateTimeUnit.DAY, TimeZone.of("Europe/Berlin"))
+        val afterDST = beforeDST.minus(1, DateTimeUnit.DAY, MpTimezone.of("Europe/Berlin"))
 
         afterDST shouldBe MpInstant.parse("2022-03-27T00:00:00.000[Europe/Berlin]")
 
@@ -248,7 +248,7 @@ class MpInstantSpec : StringSpec({
 
         val result = source.atSystemDefaultZone()
 
-        result shouldBe source.atZone(TimeZone.currentSystemDefault())
+        result shouldBe source.atZone(MpTimezone.systemDefault)
         result.toEpochMillis() shouldBe source.toEpochMillis()
     }
 })

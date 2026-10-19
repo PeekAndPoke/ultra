@@ -39,7 +39,7 @@ object TestConstants {
     const val tsUtc_20220405_121314: Long = 1649160794000L
 
     val tsBucharest_20220405_121314: Long = (tsUtc_20220405_121314 -
-            TimeZone.of("Europe/Bucharest").offsetMillisAt(
+            MpTimezone.of("Europe/Bucharest").offsetMillisAt(
                 MpInstant.fromEpochMillis(tsUtc_20220405_121314)
             ))
 }

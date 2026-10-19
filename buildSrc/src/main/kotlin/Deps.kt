@@ -109,9 +109,9 @@ object Deps {
         const val coroutines_test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
 
         // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-datetime
-        // checked 2026-10-18: latest 0.8.0 — HELD. 0.7+ on JS ignores our Intl zone provider and needs the js-joda
-        // tz database; every named zone fails in the browser. See .claude/tasks/20261018-kotlinx-datetime-js-timezones.md
-        private const val datetime_version = "0.6.2"
+        // checked 2026-10-18: latest 0.8.0 (the -0.6.x-compat builds are not for us). Zone math for Mp* types does NOT
+        // use kotlinx zones (ultra/datetime TimezoneEngine), so JS needs no tz database.
+        private const val datetime_version = "0.8.0"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:$datetime_version"
 
         // https://github.com/Kotlin/kotlinx.serialization/releases

@@ -5,23 +5,22 @@ import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmName
+import kotlin.time.Instant
 
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpLocalDateSerializer::class)
 @Slumber.As(MpDateTimeRawData::class)
 data class MpLocalDate(
-    private val value: LocalDate,
+    internal val value: LocalDate,
 ) : ComparableTo<MpLocalDate> {
 
     companion object {
@@ -45,8 +44,8 @@ data class MpLocalDate(
         fun of(year: Int, month: Int, day: Int): MpLocalDate = MpLocalDate(
             value = LocalDate(
                 year = year,
-                monthNumber = month,
-                dayOfMonth = day,
+                month = month,
+                day = day,
             )
         )
 
@@ -90,7 +89,7 @@ data class MpLocalDate(
             return try {
                 MpLocalDate(LocalDate.parse(isoString))
             } catch (_: Throwable) {
-                MpInstant.parse(isoString).atZone(TimeZone.UTC).toLocalDate()
+                MpInstant.parse(isoString).atZone(MpTimezone.UTC).toLocalDate()
             }
         }
     }
@@ -99,13 +98,13 @@ data class MpLocalDate(
     val year: Int get() = value.year
 
     /** The month as number, where January is "1" */
-    val monthNumber: Int get() = value.monthNumber
+    val monthNumber: Int get() = value.month.number
 
     /** The month */
     val month: Month get() = value.month
 
     /** The day of the month */
-    val day: Int get() = value.dayOfMonth
+    val day: Int get() = value.day
 
     /** The day of the week */
     val dayOfWeek: DayOfWeek get() = value.dayOfWeek
@@ -150,7 +149,7 @@ data class MpLocalDate(
      * Converts into an iso string.
      */
     fun toIsoString(): String {
-        return atStartOfDay(TimeZone.UTC).toIsoString()
+        return atStartOfDay(MpTimezone.UTC).toIsoString()
     }
 
     /**
@@ -241,14 +240,14 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTime] at the given [timezone].
      */
     fun atStartOfDay(timezone: MpTimezone): MpZonedDateTime {
-        return atStartOfDay(timezone.kotlinx)
+        return MpInstant(TimezoneEngine.startOfDay(timezone, value)).atZone(timezone)
     }
 
     /**
      * Converts into an [MpZonedDateTime] at the given [timezone].
      */
     fun atStartOfDay(timezone: TimeZone): MpZonedDateTime {
-        return MpInstant(value.atStartOfDayIn(timezone)).atZone(timezone)
+        return atStartOfDay(timezone.mp)
     }
 
     /**
@@ -262,14 +261,14 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
      */
     fun atTime(time: MpLocalTime, timezone: TimeZone): MpZonedDateTime {
-        return atStartOfDay(timezone).atTime(time)
+        return atTime(time, timezone.mp)
     }
 
     /**
      * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
      */
     fun atTime(time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
-        return atTime(time, timezone.kotlinx)
+        return atStartOfDay(timezone).atTime(time)
     }
 
     /**
@@ -323,17 +322,17 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: TimeZone): MpZonedDateTimeRange {
-        return MpZonedDateTimeRange(
-            from = atTime(timeslot.from, timezone),
-            to = atTime(timeslot.to, timezone)
-        )
+        return toRange(timeslot, timezone.mp)
     }
 
     /**
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: MpTimezone): MpZonedDateTimeRange {
-        return toRange(timeslot, timezone.kotlinx)
+        return MpZonedDateTimeRange(
+            from = atTime(timeslot.from, timezone),
+            to = atTime(timeslot.to, timezone)
+        )
     }
 
     /**

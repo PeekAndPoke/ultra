@@ -1,10 +1,10 @@
 package io.peekandpoke.ultra.datetime
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 @Suppress("Detekt.TooManyFunctions")
 /**
@@ -252,36 +252,36 @@ interface Kronos {
 
     /** Creates a [MpLocalDateTime] for 'now' */
     fun localDateTimeNow(): MpLocalDateTime {
-        return instantNow().atZone(TimeZone.UTC).toLocalDateTime()
+        return instantNow().atZone(MpTimezone.UTC).toLocalDateTime()
     }
 
     /** Creates a [MpLocalDate] in the given [timezone] */
     fun localDateNow(timezone: TimeZone): MpLocalDate {
-        return instantNow().atZone(timezone).toLocalDate()
+        return localDateNow(timezone.mp)
     }
 
     /** Creates a [MpLocalDate] in the given [timezone] */
     fun localDateNow(timezone: MpTimezone): MpLocalDate {
-        return localDateNow(timezone.kotlinx)
+        return instantNow().atZone(timezone).toLocalDate()
     }
 
     /** Creates a [MpLocalTime] in the given [timezone] */
     fun localTimeNow(timezone: TimeZone): MpLocalTime {
-        return zonedDateTimeNow(timezone).toLocalTime()
+        return localTimeNow(timezone.mp)
     }
 
     /** Creates a [MpLocalTime] in the given [timezone] */
     fun localTimeNow(timezone: MpTimezone): MpLocalTime {
-        return localTimeNow(timezone.kotlinx)
+        return zonedDateTimeNow(timezone).toLocalTime()
     }
 
     /** Creates a [MpZonedDateTime] for 'now' */
     fun zonedDateTimeNow(timezone: TimeZone): MpZonedDateTime {
-        return instantNow().atZone(timezone)
+        return zonedDateTimeNow(timezone.mp)
     }
 
     /** Creates a [MpZonedDateTime] for 'now' */
     fun zonedDateTimeNow(timezone: MpTimezone): MpZonedDateTime {
-        return zonedDateTimeNow(timezone.kotlinx)
+        return instantNow().atZone(timezone)
     }
 }

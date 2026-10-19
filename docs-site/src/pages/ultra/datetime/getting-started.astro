@@ -26,7 +26,7 @@ import {dep, mavenCentralUrl} from '../../../data/site';
     <p>Find the latest version on <a href={mavenCentralUrl} target="_blank" rel="noopener">Maven Central</a>.</p>
 
     <p>Datetime is a Kotlin Multiplatform library — it works in <code>commonMain</code>, <code>jvmMain</code>,
-        <code>jsMain</code>, and <code>nativeMain</code> (linuxX64, linuxArm64, macosX64, macosArm64, mingwX64).</p>
+        <code>jsMain</code>, and <code>nativeMain</code> (linuxX64, linuxArm64, macosArm64, mingwX64).</p>
 
     <h2>2. Create dates and times</h2>
 
@@ -112,6 +112,15 @@ val javaZoned: java.time.ZonedDateTime = mpZoned.jvm
 val mpInstant: MpInstant = javaInstant.mp
 val mpDate: MpLocalDate = javaDate.mp
 val mpZoned: MpZonedDateTime = javaZoned.mp`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>On every target, the same <code>.kotlinx</code> / <code>.mp</code> pair converts to and from
+        <code>kotlinx-datetime</code>:</p>
+
+    <Code code={`val instant: kotlin.time.Instant = mpInstant.kotlinx
+val date: kotlinx.datetime.LocalDate = mpDate.kotlinx
+val zone: kotlinx.datetime.TimeZone = mpTimezone.kotlinx
+
+val mpDate: MpLocalDate = date.mp`} lang="kotlin" theme="vitesse-dark"/>
 
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/datetime/types"

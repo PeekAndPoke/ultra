@@ -309,13 +309,13 @@ class MpLocalDateSpec : StringSpec() {
             subject.atStartOfDay(TimeZone.UTC) shouldBe
                     MpZonedDateTime.parse("2022-04-05T00:00:00.000Z")
 
-            subject.atStartOfDay(TimeZone.of("Europe/Bucharest")) shouldBe
+            subject.atStartOfDay(MpTimezone.of("Europe/Bucharest")) shouldBe
                     MpZonedDateTime.parse("2022-04-05T00:00:00.000[Europe/Bucharest]")
         }
 
         "atStartOfDay - Bucharest" {
 
-            val timezone = TimeZone.of("Europe/Bucharest")
+            val timezone = MpTimezone.of("Europe/Bucharest")
 
             val date = MpLocalDate.of(2022, Month.APRIL, 5)
 

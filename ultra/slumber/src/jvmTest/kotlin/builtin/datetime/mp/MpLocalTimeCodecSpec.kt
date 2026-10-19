@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.slumber.builtin.datetime.mp
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.peekandpoke.ultra.datetime.MpLocalTime
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.awake
@@ -17,7 +18,14 @@ class MpLocalTimeCodecSpec : StringSpec({
 
         val result = codec.slumber(subject)
 
-        result shouldBe 123
+        // a Long, not an Int: the stored number type (Int64) must not change with MpLocalTime's Int storage
+        result.shouldBeInstanceOf<Long>()
+        result shouldBe 123L
+    }
+
+    "De-Serializing wraps values outside the day, also beyond the Int range" {
+        codec.awake<MpLocalTime>(-1000) shouldBe MpLocalTime.of(23, 59, 59)
+        codec.awake<MpLocalTime>(5_000_000_000L) shouldBe MpLocalTime.of(20, 53, 20)
     }
 
     "De-Serializing" {

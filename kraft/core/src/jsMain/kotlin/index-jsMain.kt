@@ -13,7 +13,6 @@ import io.peekandpoke.kraft.vdom.VDomEngine
 import io.peekandpoke.ultra.common.MutableTypedAttributes
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.common.TypedKey
-import io.peekandpoke.ultra.datetime.installNativeTimezones
 import kotlinx.browser.document
 import kotlinx.html.FlowContent
 import org.w3c.dom.HTMLElement
@@ -25,13 +24,6 @@ fun kraftApp(block: KraftApp.Builder.() -> Unit = {}) = KraftApp.Builder().apply
 
 /** App-attribute key holding the timezone [KraftApp.AppInitializer], overridable via [KraftApp.Builder.timezones]. */
 private val TimeZoneInitializerKey: TypedKey<KraftApp.AppInitializer> = TypedKey("kraft.timezone.initializer")
-
-/** Default timezone support: the native browser provider via `Intl` (zero bundled data). */
-private object NativeTimeZoneInitializer : KraftApp.AppInitializer {
-    // Time zones must be ready before any other initializer or view code resolves a zone.
-    override val initPriority: Int = Int.MAX_VALUE
-    override fun initialize() = installNativeTimezones()
-}
 
 class KraftApp internal constructor(
     val appAttributes: TypedAttributes,
@@ -71,8 +63,6 @@ class KraftApp internal constructor(
         private val router = RootRouterBuilder()
 
         init {
-            // Native timezone support by default (zero bundled data); override with timezones(...)
-            timezones(NativeTimeZoneInitializer)
             // We always add the default Modals manager
             modals()
             // We always add the default toasts manager
@@ -103,8 +93,8 @@ class KraftApp internal constructor(
         fun i18n(controller: I18nController) = setAttribute(I18nController.key, controller)
 
         /**
-         * Configures timezone support. Default: the native browser provider (Intl, zero data).
-         * Override with a bundled dataset from `kraft:addons:datetime`, e.g. `fullTimezones()`.
+         * Loads a time zone dataset for raw kotlinx `TimeZone.of(...)`, e.g. `fullTimezones()` from
+         * `kraft:addons:datetime`. Default: none — ultra's `Mp*` types need no dataset.
          */
         fun timezones(initializer: AppInitializer) = setAttribute(TimeZoneInitializerKey, initializer)
 

@@ -3,7 +3,6 @@
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
-import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.register
 import java.io.File
 
@@ -16,7 +15,7 @@ object Docs {
     fun Project.useEmptyJavadoc() {
 
         @Suppress("LocalVariableName")
-        val VERSION_NAME: String by project
+        val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
         tasks.findByName("dokkaHtml")?.let {
             it.enabled = false

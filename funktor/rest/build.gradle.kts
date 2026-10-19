@@ -10,8 +10,8 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val FUNKTOR_GROUP: String by project
-val VERSION_NAME: String by project
+val FUNKTOR_GROUP = providers.gradleProperty("FUNKTOR_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = FUNKTOR_GROUP
 version = VERSION_NAME

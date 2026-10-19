@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
-import kotlinx.datetime.offsetAt as instantOffsetAt
 
 /**
  * Get the offset in total milliseconds
@@ -21,40 +20,42 @@ val TimeZone.mp: MpTimezone get() = MpTimezone.of(id)
  * Get the offset at the given [instant].
  */
 fun TimeZone.offsetAt(instant: MpInstant): UtcOffset {
-    return instantOffsetAt(instant.value)
+    return mp.offsetAt(instant)
 }
 
 /**
  * Get the offset in total seconds at the given [instant].
  */
 fun TimeZone.offsetSecondsAt(instant: MpInstant): Int {
-    return offsetAt(instant).totalSeconds
+    return mp.offsetSecondsAt(instant)
 }
 
 /**
  * Get the offset in total milliseconds at the given [instant].
  */
 fun TimeZone.offsetMillisAt(instant: MpInstant): Long {
-    return offsetAt(instant).totalMillis
+    return mp.offsetMillisAt(instant)
 }
 
 /**
  * Get the offset at the given [instant].
  */
 fun MpTimezone.offsetAt(instant: MpInstant): UtcOffset {
-    return kotlinx.offsetAt(instant)
+    val total = offsetSecondsAt(instant)
+
+    return UtcOffset(hours = total / 3600, minutes = (total % 3600) / 60, seconds = total % 60)
 }
 
 /**
  * Get the offset in total seconds at the given [instant].
  */
 fun MpTimezone.offsetSecondsAt(instant: MpInstant): Int {
-    return offsetAt(instant).totalSeconds
+    return TimezoneEngine.offsetSecondsAt(this, instant.value)
 }
 
 /**
  * Get the offset in total milliseconds at the given [instant].
  */
 fun MpTimezone.offsetMillisAt(instant: MpInstant): Long {
-    return offsetAt(instant).totalMillis
+    return offsetSecondsAt(instant) * 1000L
 }

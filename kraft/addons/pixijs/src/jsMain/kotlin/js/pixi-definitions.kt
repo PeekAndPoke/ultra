@@ -19,6 +19,7 @@ external interface ApplicationOptions {
     var width: Int
     var height: Int
     var backgroundColor: dynamic // Number | String
+    var backgroundAlpha: Double
     var antialias: Boolean
     var resolution: Double
     var autoDensity: Boolean

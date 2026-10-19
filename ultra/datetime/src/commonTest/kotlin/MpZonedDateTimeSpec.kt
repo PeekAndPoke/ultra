@@ -22,46 +22,46 @@ class MpZonedDateTimeSpec : StringSpec({
 
     "Construction - parse(isoString, timezone)" {
 
-        val utc = MpZonedDateTime.parse("2022-04-05T00:00", TimeZone.of("UTC"))
+        val utc = MpZonedDateTime.parse("2022-04-05T00:00", MpTimezone.of("UTC"))
 
         utc shouldBeEqualComparingTo MpZonedDateTime.parse(
             isoString = "2022-04-05T00:00",
-            timezone = TimeZone.of("Europe/Bucharest")
+            timezone = MpTimezone.of("Europe/Bucharest")
         )
 
         utc shouldBeEqualComparingTo MpZonedDateTime.parse(
             isoString = "2022-04-05T00:00:00.000Z",
-            timezone = TimeZone.of("Europe/Bucharest")
+            timezone = MpTimezone.of("Europe/Bucharest")
         )
 
         utc shouldBeEqualComparingTo MpZonedDateTime.parse(
             isoString = "2022-04-05T03:00:00[Europe/Bucharest]",
-            timezone = TimeZone.of("Europe/Bucharest")
+            timezone = MpTimezone.of("Europe/Bucharest")
         )
 
         utc shouldBeEqualComparingTo MpZonedDateTime.parse(
             isoString = "2022-04-05T00:00",
-            timezone = TimeZone.of("Europe/Berlin")
+            timezone = MpTimezone.of("Europe/Berlin")
         )
 
         utc shouldBeEqualComparingTo MpZonedDateTime.parse(
             isoString = "2022-04-05T02:00:00[Europe/Berlin]",
-            timezone = TimeZone.of("Europe/Berlin")
+            timezone = MpTimezone.of("Europe/Berlin")
         )
 
         utc shouldBeEqualComparingTo MpZonedDateTime.parse(
             isoString = "2022-04-05T02:00:00[Europe/Berlin]",
-            timezone = TimeZone.of("Europe/Bucharest")
+            timezone = MpTimezone.of("Europe/Bucharest")
         )
 
         MpZonedDateTime.parse(
             isoString = "2022-04-05T02:00:00[Europe/Berlin]",
-            timezone = TimeZone.of("Europe/Bucharest")
+            timezone = MpTimezone.of("Europe/Bucharest")
         ).toIsoString() shouldBe "2022-04-05T03:00:00.000[Europe/Bucharest]"
 
         MpZonedDateTime.parse(
             isoString = "2022-04-05T02:00:00[Europe/Bucharest]",
-            timezone = TimeZone.of("Europe/Berlin")
+            timezone = MpTimezone.of("Europe/Berlin")
         ).toIsoString() shouldBe "2022-04-05T01:00:00.000[Europe/Berlin]"
     }
 
@@ -112,7 +112,7 @@ class MpZonedDateTimeSpec : StringSpec({
 
         MpZonedDateTime.fromEpochSeconds(
             seconds = tsUTC_20220405_000000 / 1_000,
-            timezone = TimeZone.of("Europe/Bucharest")
+            timezone = MpTimezone.of("Europe/Bucharest")
         ) shouldBe MpZonedDateTime.parse("2022-04-05T03:00:00.000[Europe/Bucharest]")
     }
 
@@ -151,7 +151,7 @@ class MpZonedDateTimeSpec : StringSpec({
         MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.UTC)
             .toString() shouldBe "MpZonedDateTime(2022-04-05T00:00:00.000Z)"
 
-        MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("Europe/Bucharest"))
+        MpZonedDateTime.parse("2022-04-05T00:00:00", MpTimezone.of("Europe/Bucharest"))
             .toString() shouldBe "MpZonedDateTime(2022-04-05T03:00:00.000[Europe/Bucharest])"
     }
 
@@ -160,30 +160,30 @@ class MpZonedDateTimeSpec : StringSpec({
         MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.UTC)
             .toIsoString() shouldBe "2022-04-05T00:00:00.000Z"
 
-        MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("UTC"))
+        MpZonedDateTime.parse("2022-04-05T00:00:00", MpTimezone.of("UTC"))
             .toIsoString() shouldBe "2022-04-05T00:00:00.000Z"
 
-        MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("Europe/Berlin"))
+        MpZonedDateTime.parse("2022-04-05T00:00:00", MpTimezone.of("Europe/Berlin"))
             .toIsoString() shouldBe "2022-04-05T02:00:00.000[Europe/Berlin]"
 
         MpZonedDateTime.of(
             datetime = MpLocalDateTime.of(year = 2, month = 3, day = 4),
-            timezone = TimeZone.of("UTC")
+            timezone = MpTimezone.of("UTC")
         ).toIsoString() shouldBe "0002-03-04T00:00:00.000Z"
 
         MpZonedDateTime.of(
             datetime = MpLocalDateTime.of(year = 232, month = 12, day = 2),
-            timezone = TimeZone.of("UTC")
+            timezone = MpTimezone.of("UTC")
         ).toIsoString() shouldBe "0232-12-02T00:00:00.000Z"
 
         MpZonedDateTime.of(
             datetime = MpLocalDateTime.of(year = 39, month = 11, day = 25, hour = 15, minute = 44),
-            timezone = TimeZone.of("Europe/Berlin")
+            timezone = MpTimezone.of("Europe/Berlin")
         ).toIsoString() shouldBe "0039-11-25T15:44:00.000[Europe/Berlin]"
     }
 
     "parse - toIsoString - round trip" {
-        val source = MpZonedDateTime.parse("2022-04-05T00:00:00", TimeZone.of("Europe/Bucharest"))
+        val source = MpZonedDateTime.parse("2022-04-05T00:00:00", MpTimezone.of("Europe/Bucharest"))
 
         val result = MpZonedDateTime.parse(source.toIsoString())
 
@@ -204,7 +204,7 @@ class MpZonedDateTimeSpec : StringSpec({
     "Fields year, monthNumber, month, dayOfMonth, dayOfWeek, dayOfYear, hour, minute, second, nano" {
 
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
-            .atZone(TimeZone.of("Europe/Bucharest"))
+            .atZone(MpTimezone.of("Europe/Bucharest"))
 
         subject.year shouldBe 2022
         subject.monthNumber shouldBe 4
@@ -221,14 +221,14 @@ class MpZonedDateTimeSpec : StringSpec({
 
     "Fields dayOfWeek" {
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
-            .atZone(TimeZone.of("Europe/Bucharest"))
+            .atZone(MpTimezone.of("Europe/Bucharest"))
 
         subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
     }
 
     "Fields dayOfYear" {
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
-            .atZone(TimeZone.of("Europe/Bucharest"))
+            .atZone(MpTimezone.of("Europe/Bucharest"))
 
         subject.dayOfYear shouldBe 95
     }
@@ -249,7 +249,7 @@ class MpZonedDateTimeSpec : StringSpec({
         val result = subject.toInstant()
 
         result.toEpochMillis() shouldBe
-                (tsUtc_20220405_121314 - TimeZone.of("Europe/Bucharest").offsetMillisAt(result))
+                (tsUtc_20220405_121314 - MpTimezone.of("Europe/Bucharest").offsetMillisAt(result))
 
         result shouldBe MpInstant.parse("2022-04-05T09:13:14Z")
     }
@@ -265,7 +265,7 @@ class MpZonedDateTimeSpec : StringSpec({
     }
 
     "toLocalDate - Europe/Bucharest" {
-        val timezone = TimeZone.of("Europe/Bucharest")
+        val timezone = MpTimezone.of("Europe/Bucharest")
 
         MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
             .toLocalDate() shouldBe MpLocalDate.parse("2022-04-05")
@@ -285,7 +285,7 @@ class MpZonedDateTimeSpec : StringSpec({
     }
 
     "toLocalTime - Europe/Bucharest" {
-        val timezone = TimeZone.of("Europe/Bucharest")
+        val timezone = MpTimezone.of("Europe/Bucharest")
 
         MpZonedDateTime.parse("2022-04-05T00:00:00", timezone)
             .toLocalTime() shouldBe MpLocalTime.of(hour = 3, minute = 0, second = 0, milliSecond = 0)
@@ -305,7 +305,7 @@ class MpZonedDateTimeSpec : StringSpec({
     }
 
     "toLocalDateTime - Europe/Bucharest" {
-        val timezone = TimeZone.of("Europe/Bucharest")
+        val timezone = MpTimezone.of("Europe/Bucharest")
 
         MpZonedDateTime.parse("2022-04-05T22:00:00", timezone)
             .toLocalDateTime() shouldBe MpLocalDateTime.parse("2022-04-06T01:00:00")
@@ -332,10 +332,10 @@ class MpZonedDateTimeSpec : StringSpec({
 
         val source = MpZonedDateTime.parse("2022-04-05T12:13:14.123Z")
 
-        val timezone = TimeZone.of("Europe/Bucharest")
+        val timezone = MpTimezone.of("Europe/Bucharest")
         val atZone = source.atZone(timezone)
 
-        atZone.timezone shouldBe timezone.mp
+        atZone.timezone shouldBe timezone
         atZone.toEpochMillis() shouldBe source.toEpochMillis()
 
         atZone.toIsoString() shouldBe "2022-04-05T15:13:14.123[Europe/Bucharest]"
@@ -343,14 +343,14 @@ class MpZonedDateTimeSpec : StringSpec({
 
     "atZone - same timezone" {
 
-        val timezone = TimeZone.of("Europe/Bucharest")
+        val timezone = MpTimezone.of("Europe/Bucharest")
 
         val source = MpZonedDateTime.parse("2022-04-05T12:13:14.123[Europe/Bucharest]")
-        source.timezone shouldBe timezone.mp
+        source.timezone shouldBe timezone
 
         val atZone = source.atZone(timezone)
 
-        atZone.timezone shouldBe timezone.mp
+        atZone.timezone shouldBe timezone
         atZone.toEpochMillis() shouldBe source.toEpochMillis()
 
         atZone.toIsoString() shouldBe "2022-04-05T12:13:14.123[Europe/Bucharest]"
@@ -693,7 +693,7 @@ class MpZonedDateTimeSpec : StringSpec({
 
         val result = source.atSystemDefaultZone()
 
-        result shouldBe source.toInstant().atZone(TimeZone.currentSystemDefault())
+        result shouldBe source.toInstant().atZone(MpTimezone.systemDefault)
         result.toEpochMillis() shouldBe source.toEpochMillis()
     }
 })

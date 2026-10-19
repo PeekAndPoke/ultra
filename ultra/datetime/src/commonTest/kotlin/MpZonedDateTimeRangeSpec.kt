@@ -524,7 +524,7 @@ class MpZonedDateTimeRangeSpec : StringSpec({
 
     "atZone() - range remains valid after timezone conversion" {
         val range = now.toRange(3.hours)
-        val someZone = TimeZone.of("America/New_York")
+        val someZone = MpTimezone.of("America/New_York")
         val convertedRange = range.atZone(someZone)
 
         (convertedRange.from < convertedRange.to) shouldBe true

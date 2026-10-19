@@ -6,7 +6,7 @@ plugins {
 }
 
 val GROUP = "io.peekandpoke.funktor_demo"
-val VERSION_NAME: String by project
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = GROUP
 version = VERSION_NAME

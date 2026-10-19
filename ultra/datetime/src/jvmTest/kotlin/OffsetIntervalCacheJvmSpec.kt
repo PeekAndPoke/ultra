@@ -1,0 +1,138 @@
+package io.peekandpoke.ultra.datetime
+
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.ints.shouldBeGreaterThan
+import java.time.Instant
+import java.time.ZoneId
+
+/**
+ * The JS offset cache (`OffsetIntervalCache`, common code) against java.time, for every zone the JDK knows: around every
+ * transition 1900–2040 in an order that jumps around, and a sequential hourly walk over decades for zones with odd
+ * transitions.
+ */
+@Suppress("unused")
+class OffsetIntervalCacheJvmSpec : StringSpec({
+
+    val from = Instant.parse("1900-01-01T00:00:00Z")
+    val until = Instant.parse("2040-01-01T00:00:00Z")
+
+    fun javaOffset(zone: ZoneId, epochSeconds: Long) = zone.rules.getOffset(Instant.ofEpochSecond(epochSeconds)).totalSeconds
+
+    /** Asks [cache] about the seconds around every transition of [zone] in `[start, end)`; returns the mismatches. */
+    fun recheckTransitions(zone: ZoneId, cache: OffsetIntervalCache, start: Instant, end: Instant): List<String> {
+        val mismatches = mutableListOf<String>()
+        var transition = zone.rules.nextTransition(start)
+
+        while (transition != null && transition.instant < end) {
+            val t = transition.instant.epochSecond
+
+            listOf(t - 1, t, t + 1).forEach { at ->
+                val expected = javaOffset(zone, at)
+                val actual = cache.offsetSecondsAt(at)
+                if (expected != actual) mismatches += "${zone.id} re-check at $at: expected $expected, got $actual"
+            }
+
+            transition = zone.rules.nextTransition(transition.instant)
+        }
+
+        return mismatches
+    }
+
+    "the cache matches java.time around every transition of every zone, 1900 to 2040" {
+        val mismatches = mutableListOf<String>()
+        var checks = 0
+
+        ZoneId.getAvailableZoneIds().sorted().forEach { zoneId ->
+            val zone = ZoneId.of(zoneId)
+            val cache = OffsetIntervalCache { javaOffset(zone, it.toLong()) }
+
+            val probes = mutableListOf<Long>()
+            var transition = zone.rules.nextTransition(from)
+
+            while (transition != null && transition.instant < until) {
+                val t = transition.instant.epochSecond
+                probes += listOf(t - 86_400, t - 3_600, t - 1, t, t + 1, t + 3_600, t + 86_400, t + 43_200)
+                transition = zone.rules.nextTransition(transition.instant)
+            }
+
+            // Forwards, then backwards, then interleaved: hits, misses, joins and evictions all happen.
+            (probes + probes.reversed() + probes.filterIndexed { i, _ -> i % 2 == 0 } + probes.filterIndexed { i, _ -> i % 2 == 1 })
+                .forEach { at ->
+                    checks++
+                    val expected = javaOffset(zone, at)
+                    val actual = cache.offsetSecondsAt(at)
+                    if (expected != actual) mismatches += "$zoneId at $at: expected $expected, got $actual"
+                }
+        }
+
+        println("OffsetIntervalCacheJvmSpec: $checks checks")
+
+        checks shouldBeGreaterThan 100_000
+        mismatches.take(50).shouldBeEmpty()
+    }
+
+    // The cache needs transitions more than a day apart; TimezoneEngine.resolve probes ±1 day and needs two days.
+    "the assumption holds: no zone has two transitions within two days of each other, from its first one to 2100" {
+        val end = Instant.parse("2100-01-01T00:00:00Z")
+        val tooClose = mutableListOf<String>()
+
+        ZoneId.getAvailableZoneIds().sorted().forEach { zoneId ->
+            val rules = ZoneId.of(zoneId).rules
+            var previous = rules.nextTransition(Instant.MIN.plusSeconds(1))
+
+            while (previous != null && previous.instant < end) {
+                val next = rules.nextTransition(previous.instant) ?: break
+                if (next.instant.epochSecond - previous.instant.epochSecond <= 2 * 86_400) tooClose += "$zoneId at ${next.instant}"
+                previous = next
+            }
+        }
+
+        tooClose.shouldBeEmpty()
+    }
+
+    "a daily walk at a fixed time of day 1900 to 2040 matches java.time" {
+        val mismatches = mutableListOf<String>()
+
+        ZoneId.getAvailableZoneIds().sorted().forEach { zoneId ->
+            val zone = ZoneId.of(zoneId)
+            val cache = OffsetIntervalCache { javaOffset(zone, it.toLong()) }
+
+            var at = from.epochSecond + 7_200
+            while (at < until.epochSecond) {
+                val expected = javaOffset(zone, at)
+                val actual = cache.offsetSecondsAt(at)
+                if (expected != actual) mismatches += "$zoneId at $at: expected $expected, got $actual"
+                at += 86_400
+            }
+
+            // The walk itself only asks about its own points; what the cache INFERRED between them shows here.
+            mismatches += recheckTransitions(zone, cache, from, until)
+        }
+
+        mismatches.take(50).shouldBeEmpty()
+    }
+
+    "a sequential hourly walk 1970 to 2040 matches java.time" {
+        val mismatches = mutableListOf<String>()
+
+        listOf("Europe/Berlin", "America/New_York", "Australia/Lord_Howe", "Pacific/Apia", "Africa/Casablanca").forEach { zoneId ->
+            val zone = ZoneId.of(zoneId)
+            val cache = OffsetIntervalCache { javaOffset(zone, it.toLong()) }
+
+            var at = Instant.parse("1970-01-01T00:00:00Z").epochSecond
+            val end = Instant.parse("2040-01-01T00:00:00Z").epochSecond
+
+            while (at < end) {
+                val expected = javaOffset(zone, at)
+                val actual = cache.offsetSecondsAt(at)
+                if (expected != actual) mismatches += "$zoneId at $at: expected $expected, got $actual"
+                at += 3_600
+            }
+
+            mismatches += recheckTransitions(zone, cache, Instant.ofEpochSecond(0), Instant.ofEpochSecond(end))
+        }
+
+        mismatches.take(50).shouldBeEmpty()
+    }
+})

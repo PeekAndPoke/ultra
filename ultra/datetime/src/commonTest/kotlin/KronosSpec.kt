@@ -6,9 +6,9 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
-import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.json.Json
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -155,7 +155,7 @@ class KronosSpec : StringSpec({
     "Kronos.fromClock fixed - localDateNow - kotlinx timezone" {
         fixedKronos.localDateNow(TimeZone.UTC) shouldBe fixedLocalDateTime.toDate()
 
-        fixedKronos.localDateNow(TimeZone.of("Europe/Berlin")) shouldBe fixedLocalDateTime.toDate()
+        fixedKronos.localDateNow(MpTimezone.of("Europe/Berlin")) shouldBe fixedLocalDateTime.toDate()
     }
 
     "Kronos.fromClock fixed - localDateNow - MpTimezone" {
@@ -167,7 +167,7 @@ class KronosSpec : StringSpec({
     "Kronos.fromClock fixed - localTimeNow - kotlinx timezone" {
         fixedKronos.localTimeNow(TimeZone.UTC) shouldBe fixedLocalDateTime.toTime()
 
-        fixedKronos.localTimeNow(TimeZone.of("Europe/Berlin")) shouldBe MpLocalTime.of(13, 0)
+        fixedKronos.localTimeNow(MpTimezone.of("Europe/Berlin")) shouldBe MpLocalTime.of(13, 0)
     }
 
     "Kronos.fromClock fixed - localTimeNow - MpTimezone" {
@@ -178,7 +178,7 @@ class KronosSpec : StringSpec({
 
     "Kronos.fromClock fixed - zonedDateTimeNow - kotlinx Timezone" {
         MpTimezone.supportedIds.take(10).forEach { zoneId ->
-            val timezone = TimeZone.of(zoneId)
+            val timezone = MpTimezone.of(zoneId)
 
             withClue("Must work for timezone '$zoneId'") {
                 fixedKronos.zonedDateTimeNow(timezone).toInstant() shouldBe fixedInstant
@@ -247,7 +247,7 @@ class KronosSpec : StringSpec({
 
         "Kronos.advanceBy $advance - zonedDateTimeNow" {
             MpTimezone.supportedIds.forEach {
-                val timezone = TimeZone.of(it)
+                val timezone = MpTimezone.of(it)
 
                 withClue("Must work for timezone '$timezone'") {
                     subject.zonedDateTimeNow(timezone).toInstant() shouldBe fixedInstant.plus(advance)

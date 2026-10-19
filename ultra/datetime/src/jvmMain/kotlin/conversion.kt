@@ -102,7 +102,7 @@ val ZonedDateTime.mp: MpZonedDateTime
     get() {
         return MpZonedDateTime.of(
             datetime = toLocalDateTime().mp,
-            timezone = zone.mp.kotlinx,
+            timezone = zone.mp,
         )
     }
 
@@ -111,12 +111,12 @@ val ZonedDateTime.mp: MpZonedDateTime
  */
 val LocalTime.mp: MpLocalTime
     get() =
-        MpLocalTime.ofMilliSeconds(milliSecondsOfDay = 1000L * (hour * 60 * 60 + minute * 60 + second))
+        MpLocalTime.ofMilliSeconds(milliSecondsOfDay = 1000 * (hour * 60 * 60 + minute * 60 + second))
 
 /**
- * Converts an [MpLocalTime] into a [java.time.LocalDate]
+ * Converts an [MpLocalTime] into a [java.time.LocalTime]
  */
-val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay(inWholeMilliSeconds() / 1000)
+val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay((inWholeMilliSeconds() / 1000).toLong())
 
 /**
  * Converts a [java.time.ZoneId] to a [TimeZone].

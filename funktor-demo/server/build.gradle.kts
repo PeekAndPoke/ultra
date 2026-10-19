@@ -13,8 +13,8 @@ plugins {
     application
 }
 
-val FUNKTOR_DEMO_GROUP: String by project
-val VERSION_NAME: String by project
+val FUNKTOR_DEMO_GROUP = providers.gradleProperty("FUNKTOR_DEMO_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = FUNKTOR_DEMO_GROUP
 version = VERSION_NAME

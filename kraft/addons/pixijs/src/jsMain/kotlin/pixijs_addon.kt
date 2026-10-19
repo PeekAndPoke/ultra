@@ -53,10 +53,42 @@ fun AddonRegistryBuilder.pixiJs(lazy: Boolean = false): Addon<PixiJsAddon> = reg
 ) {
     @Suppress("UnsafeCastFromDynamic")
     val module: dynamic = (js("import('pixi.js')") as Promise<dynamic>).await()
+    val pixi: dynamic = module.default ?: module
 
-    PixiJsAddon(
-        pixiModule = module.default ?: module,
-    )
+    registerExtensions(pixi)
+
+    PixiJsAddon(pixiModule = pixi)
+}
+
+/**
+ * Makes sure pixi's extensions are registered, whatever the bundler did.
+ *
+ * Nine pixi classes register their extensions through a side-effect-only `import './init.mjs'` inside the class module
+ * (`Application`: the ticker and resize plugins; `Graphics`, `Text` and the other scene classes: their render pipes and
+ * systems). Webpack 5.108 drops those imports, so `init()` resolves but `app.ticker` is undefined and a `Graphics`
+ * renders nothing. Two remedies: import every such init entry (a dynamic import always runs), and register the two
+ * Application plugins explicitly as well (pixi skips extensions already registered).
+ */
+private suspend fun registerExtensions(pixi: dynamic) {
+    // Literal specifiers, so the bundler can resolve each one.
+    listOf<Promise<dynamic>>(
+        js("import('pixi.js/app')"),
+        js("import('pixi.js/graphics')"),
+        js("import('pixi.js/text')"),
+        js("import('pixi.js/text-bitmap')"),
+        js("import('pixi.js/text-html')"),
+        js("import('pixi.js/mesh')"),
+        js("import('pixi.js/sprite-tiling')"),
+        js("import('pixi.js/sprite-nine-slice')"),
+        js("import('pixi.js/particle-container')"),
+    ).forEach { it.await() }
+
+    val extensions = pixi.extensions
+    if (extensions == null || extensions == undefined) return
+
+    listOf(pixi.TickerPlugin, pixi.ResizePlugin)
+        .filter { it != null && it != undefined }
+        .forEach { extensions.add(it) }
 }
 
 /** Accessor for the pixi.js addon on the registry. */

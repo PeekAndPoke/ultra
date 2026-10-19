@@ -228,7 +228,7 @@ class MpLocalDateTimeSpec : StringSpec({
         }
 
         withClue("at TimeZone Europe/Bucharest must shift the timestamp") {
-            val timezone = TimeZone.of("Europe/Bucharest")
+            val timezone = MpTimezone.of("Europe/Bucharest")
             val instantBucharest = source.toInstant(timezone)
             instantBucharest shouldBe MpInstant.parse("2022-04-05T09:13:14.000Z")
             instantBucharest.toEpochMillis() shouldBe
@@ -244,9 +244,9 @@ class MpLocalDateTimeSpec : StringSpec({
         val expectedTs = TestConstants.tsUtc_20220405_121314
 
         val zones = listOf(
-            TimeZone.UTC,
-            TimeZone.of("UTC"),
-            TimeZone.of("Europe/Bucharest")
+            TimeZone.UTC.mp,
+            MpTimezone.of("UTC"),
+            MpTimezone.of("Europe/Bucharest")
         )
 
         zones.forEach { timezone ->
@@ -268,6 +268,6 @@ class MpLocalDateTimeSpec : StringSpec({
 
         source.atUTC() shouldBe source.atZone(TimeZone.UTC)
 
-        source.atUTC() shouldBe source.atZone(TimeZone.of("UTC"))
+        source.atUTC() shouldBe source.atZone(MpTimezone.of("UTC"))
     }
 })

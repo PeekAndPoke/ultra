@@ -29,7 +29,7 @@ class MpDateTimeParserSpec : StringSpec({
     "parseInstant with named timezone" {
         val result = MpDateTimeParser.parseInstant("2024-06-15T10:30:00[Europe/Berlin]")
 
-        val zoned = result.atZone(TimeZone.of("Europe/Berlin"))
+        val zoned = result.atZone(MpTimezone.of("Europe/Berlin"))
         zoned.year shouldBe 2024
         zoned.hour shouldBe 10
         zoned.minute shouldBe 30

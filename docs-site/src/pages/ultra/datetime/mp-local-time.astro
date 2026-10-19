@@ -34,8 +34,8 @@ val parsed = MpLocalTime.parse("14:30:15")
 val maybe = MpLocalTime.tryParse("not-a-time")    // null
 
 // From raw units
-val fromMillis = MpLocalTime.ofMilliSeconds(52_215_000L)  // 14:30:15
-val fromSeconds = MpLocalTime.ofSecondOfDay(52_215L)       // 14:30:15
+val fromMillis = MpLocalTime.ofMilliSeconds(52_215_000)  // 14:30:15
+val fromSeconds = MpLocalTime.ofSecondOfDay(52_215)       // 14:30:15
 
 // Constants
 val midnight = MpLocalTime.Min   // 00:00:00.000

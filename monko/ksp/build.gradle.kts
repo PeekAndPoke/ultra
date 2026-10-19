@@ -8,8 +8,8 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
-val MONKO_GROUP: String by project
-val VERSION_NAME: String by project
+val MONKO_GROUP = providers.gradleProperty("MONKO_GROUP").get()
+val VERSION_NAME = providers.gradleProperty("VERSION_NAME").get()
 
 group = MONKO_GROUP
 version = VERSION_NAME

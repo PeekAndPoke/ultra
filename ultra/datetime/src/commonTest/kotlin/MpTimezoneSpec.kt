@@ -3,8 +3,6 @@ package io.peekandpoke.ultra.datetime
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.types.shouldBeInstanceOf
-import kotlinx.datetime.TimeZone
 
 class MpTimezoneSpec : StringSpec({
 
@@ -18,12 +16,13 @@ class MpTimezoneSpec : StringSpec({
 
             "Creating a TimeZone from id '$timezoneId' must work" {
 
-                MpTimezone.of(timezoneId).id shouldBe timezoneId
+                val timezone = MpTimezone.of(timezoneId)
 
-                MpTimezone.of(timezoneId).kotlinx.let {
-                    it.shouldBeInstanceOf<TimeZone>()
-                    it.id shouldBe timezoneId
-                }
+                timezone.id shouldBe timezoneId
+
+                // Resolving the zone must work on every target, the browser included, without any tz data.
+                val instant = MpInstant.parse("2022-07-01T12:00:00Z")
+                instant.atZone(timezone).toInstant() shouldBe instant
             }
         }
 
@@ -40,13 +39,5 @@ class MpTimezoneSpec : StringSpec({
         val systemDefault = MpTimezone.systemDefault
         systemDefault shouldNotBe null
         systemDefault.id shouldNotBe ""
-    }
-
-    "kotlinx property must convert to kotlinx TimeZone" {
-        val mpTimezone = MpTimezone.of("Europe/Berlin")
-        val kotlinxTz = mpTimezone.kotlinx
-
-        kotlinxTz.shouldBeInstanceOf<TimeZone>()
-        kotlinxTz.id shouldBe "Europe/Berlin"
     }
 })
