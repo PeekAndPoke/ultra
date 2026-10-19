@@ -9,8 +9,13 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
+import io.peekandpoke.funktor.insights.InsightsCodec
 import io.peekandpoke.funktor.insights.InsightsGraphs
 import io.peekandpoke.funktor.insights.KontainerFixture
+import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
+import io.peekandpoke.ultra.slumber.slumber
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.jsonObject
 
 /**
  * `KontainerCollector.finish` never throws, and what it keeps when a part fails.
@@ -70,6 +75,13 @@ class KontainerCollectorFinishSpec : FreeSpec() {
                 withClue("one try around both would have dropped the request's services with the graph") {
                     data.has(KontainerFixture.Handler::class.java) shouldBe true
                     data.has(KontainerFixture.Greeter::class.java) shouldBe true
+                }
+
+                withClue("the graphFingerprint KEY marks the v2 shape, so a null value must be written, not omitted") {
+                    val written = InsightsCodec().slumber(data).toJsonElement().jsonObject
+
+                    written.containsKey("graphFingerprint") shouldBe true
+                    written["graphFingerprint"] shouldBe JsonNull
                 }
             }
         }

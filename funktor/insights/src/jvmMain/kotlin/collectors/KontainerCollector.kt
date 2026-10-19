@@ -15,8 +15,9 @@ import kotlin.reflect.KClass
 /**
  * The services this request's kontainer held instances of when the request finished.
  *
- * Not all of it is request-specific: a global singleton's instance is process state, created by whichever
- * request — or the boot — first needed it; `createdAt` tells the two apart. The definitions are static
+ * Not all of it is request-specific: a `Singleton` entry is process state, shared by every request and
+ * created by the boot or by whichever request first needed it; every other type is this kontainer's own.
+ * `createdAt` only says whether this request was the one that created it. The definitions are static
  * per blueprint, so `InsightsApi.GetKontainerGraph` serves them once instead of every record repeating
  * them; a reader joins on [Data.Service.cls].
  *
