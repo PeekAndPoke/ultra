@@ -6,23 +6,23 @@
   "data": {
     "ref": {
       "bucket": "records-2026-10-19",
-      "file": "2026-10-19T16:52:18.448177077.json"
+      "file": "2026-10-19T17:33:46.125620938.json"
     },
     "recordedAt": {
-      "ts": 1792421538667,
+      "ts": 1792424026421,
       "timezone": "UTC",
-      "human": "2026-10-19T14:52:18.667Z"
+      "human": "2026-10-19T15:33:46.421Z"
     },
     "method": "GET",
     "path": "/_/funktor/introspection/lifecycle-hooks",
     "status": 200,
-    "durationMs": 7.806684,
+    "durationMs": 8.970446,
     "collectors": [
       {
         "key": "user",
         "data": {
           "user": {
-            "userId": "funktor_all_test_users/59298248",
+            "userId": "funktor_all_test_users/59434433",
             "clientIp": "localhost",
             "email": "super-insightskontainerslicespec@test.com",
             "desc": "Super User",
@@ -105,8 +105,8 @@
               "gitDesc": "n/a",
               "date": null
             },
-            "versionName": "-1792421537576000",
-            "versionHash": "ec275ce-a036a40-59b3e7f2-48dc4480"
+            "versionName": "-1792424025091000",
+            "versionHash": "2c2ca8d1-6b0163e0-150a2f4f-5a6e3040"
           },
           "config": {
             "ktor": {
@@ -169,7 +169,7 @@
         "data": {
           "numOld": 0,
           "numTotal": 0,
-          "graphFingerprint": "7ef2c0349a48b0b81fa41681c1fb55999d30808ae303af6795fb0a85f8650d70",
+          "graphFingerprint": "8595b7ee36e1a6324fffc62ef8bd22a3fc0ac470dd50281f3f92237012c4315f",
           "services": [
             {
               "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
@@ -178,9 +178,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
                   "createdAt": {
-                    "ts": 1792421538250,
+                    "ts": 1792424025800,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.250039748Z"
+                    "human": "2026-10-19T15:33:45.800393119Z"
                   }
                 }
               ]
@@ -192,9 +192,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.model.AppInfo",
                   "createdAt": {
-                    "ts": 1792421538434,
+                    "ts": 1792424026111,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.434792915Z"
+                    "human": "2026-10-19T15:33:46.111933201Z"
                   }
                 }
               ]
@@ -206,9 +206,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
                   "createdAt": {
-                    "ts": 1792421537586,
+                    "ts": 1792424025104,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:17.586941993Z"
+                    "human": "2026-10-19T15:33:45.104642834Z"
                   }
                 }
               ]
@@ -220,9 +220,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
                   "createdAt": {
-                    "ts": 1792421537587,
+                    "ts": 1792424025104,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:17.587068213Z"
+                    "human": "2026-10-19T15:33:45.104772081Z"
                   }
                 }
               ]
@@ -234,9 +234,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
                   "createdAt": {
-                    "ts": 1792421538425,
+                    "ts": 1792424026102,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.425433131Z"
+                    "human": "2026-10-19T15:33:46.102407174Z"
                   }
                 }
               ]
@@ -248,9 +248,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
                   "createdAt": {
-                    "ts": 1792421538441,
+                    "ts": 1792424026116,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.441084320Z"
+                    "human": "2026-10-19T15:33:46.116886312Z"
                   }
                 }
               ]
@@ -262,9 +262,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
                   "createdAt": {
-                    "ts": 1792421538441,
+                    "ts": 1792424026117,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.441316351Z"
+                    "human": "2026-10-19T15:33:46.117044094Z"
                   }
                 }
               ]
@@ -276,9 +276,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
                   "createdAt": {
-                    "ts": 1792421538441,
+                    "ts": 1792424026117,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.441322342Z"
+                    "human": "2026-10-19T15:33:46.117048692Z"
                   }
                 }
               ]
@@ -290,9 +290,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
                   "createdAt": {
-                    "ts": 1792421538441,
+                    "ts": 1792424026117,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.441328283Z"
+                    "human": "2026-10-19T15:33:46.117053201Z"
                   }
                 }
               ]
@@ -304,9 +304,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
                   "createdAt": {
-                    "ts": 1792421538441,
+                    "ts": 1792424026117,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.441334135Z"
+                    "human": "2026-10-19T15:33:46.117058661Z"
                   }
                 }
               ]
@@ -318,9 +318,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
                   "createdAt": {
-                    "ts": 1792421538312,
+                    "ts": 1792424025903,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.312312552Z"
+                    "human": "2026-10-19T15:33:45.903767291Z"
                   }
                 }
               ]
@@ -332,9 +332,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
                   "createdAt": {
-                    "ts": 1792421538312,
+                    "ts": 1792424025903,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.312272165Z"
+                    "human": "2026-10-19T15:33:45.903724429Z"
                   }
                 }
               ]
@@ -346,9 +346,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
                   "createdAt": {
-                    "ts": 1792421538312,
+                    "ts": 1792424025903,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.312278337Z"
+                    "human": "2026-10-19T15:33:45.903733787Z"
                   }
                 }
               ]
@@ -360,9 +360,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
                   "createdAt": {
-                    "ts": 1792421538312,
+                    "ts": 1792424025903,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.312282505Z"
+                    "human": "2026-10-19T15:33:45.903741792Z"
                   }
                 }
               ]
@@ -374,9 +374,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
                   "createdAt": {
-                    "ts": 1792421538312,
+                    "ts": 1792424025903,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.312286112Z"
+                    "human": "2026-10-19T15:33:45.903750088Z"
                   }
                 }
               ]
@@ -388,9 +388,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
                   "createdAt": {
-                    "ts": 1792421538312,
+                    "ts": 1792424025903,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.312307061Z"
+                    "human": "2026-10-19T15:33:45.903759326Z"
                   }
                 }
               ]
@@ -402,9 +402,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
                   "createdAt": {
-                    "ts": 1792421538315,
+                    "ts": 1792424025907,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.315656436Z"
+                    "human": "2026-10-19T15:33:45.907202032Z"
                   }
                 }
               ]
@@ -416,9 +416,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
                   "createdAt": {
-                    "ts": 1792421538426,
+                    "ts": 1792424026103,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.426448671Z"
+                    "human": "2026-10-19T15:33:46.103225647Z"
                   }
                 }
               ]
@@ -430,9 +430,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
                   "createdAt": {
-                    "ts": 1792421538426,
+                    "ts": 1792424026103,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.426459261Z"
+                    "human": "2026-10-19T15:33:46.103235977Z"
                   }
                 }
               ]
@@ -444,9 +444,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
                   "createdAt": {
-                    "ts": 1792421538310,
+                    "ts": 1792424025902,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.310753690Z"
+                    "human": "2026-10-19T15:33:45.902093303Z"
                   }
                 }
               ]
@@ -458,9 +458,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
                   "createdAt": {
-                    "ts": 1792421538425,
+                    "ts": 1792424026102,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.425875241Z"
+                    "human": "2026-10-19T15:33:46.102752293Z"
                   }
                 }
               ]
@@ -472,9 +472,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
                   "createdAt": {
-                    "ts": 1792421538250,
+                    "ts": 1792424025801,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.250883291Z"
+                    "human": "2026-10-19T15:33:45.801353374Z"
                   }
                 }
               ]
@@ -486,9 +486,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
                   "createdAt": {
-                    "ts": 1792421538250,
+                    "ts": 1792424025801,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.250903149Z"
+                    "human": "2026-10-19T15:33:45.801378462Z"
                   }
                 }
               ]
@@ -500,9 +500,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
                   "createdAt": {
-                    "ts": 1792421538426,
+                    "ts": 1792424026102,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.426040034Z"
+                    "human": "2026-10-19T15:33:46.102854919Z"
                   }
                 }
               ]
@@ -514,9 +514,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.log.Slf4jAppender",
                   "createdAt": {
-                    "ts": 1792421537587,
+                    "ts": 1792424025104,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:17.587027646Z"
+                    "human": "2026-10-19T15:33:45.104722346Z"
                   }
                 }
               ]
@@ -528,9 +528,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
                   "createdAt": {
-                    "ts": 1792421538426,
+                    "ts": 1792424026102,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.426176373Z"
+                    "human": "2026-10-19T15:33:46.102936835Z"
                   }
                 }
               ]
@@ -542,9 +542,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
                   "createdAt": {
-                    "ts": 1792421538426,
+                    "ts": 1792424026103,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.426463549Z"
+                    "human": "2026-10-19T15:33:46.103241297Z"
                   }
                 }
               ]
@@ -556,9 +556,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
                   "createdAt": {
-                    "ts": 1792421538441,
+                    "ts": 1792424026117,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.441533293Z"
+                    "human": "2026-10-19T15:33:46.117220290Z"
                   }
                 }
               ]
@@ -570,9 +570,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.InsightsCodec",
                   "createdAt": {
-                    "ts": 1792421538434,
+                    "ts": 1792424026111,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.434788637Z"
+                    "human": "2026-10-19T15:33:46.111928382Z"
                   }
                 }
               ]
@@ -584,9 +584,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.HeaderLogging",
                   "createdAt": {
-                    "ts": 1792421538434,
+                    "ts": 1792424026111,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.434757037Z"
+                    "human": "2026-10-19T15:33:46.111884718Z"
                   }
                 }
               ]
@@ -598,9 +598,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.InsightsGraphs",
                   "createdAt": {
-                    "ts": 1792421538434,
+                    "ts": 1792424026111,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.434820788Z"
+                    "human": "2026-10-19T15:33:46.111963569Z"
                   }
                 }
               ]
@@ -612,9 +612,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
                   "createdAt": {
-                    "ts": 1792421538311,
+                    "ts": 1792424025903,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.311657978Z"
+                    "human": "2026-10-19T15:33:45.903108162Z"
                   }
                 }
               ]
@@ -626,9 +626,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
                   "createdAt": {
-                    "ts": 1792421538426,
+                    "ts": 1792424026103,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.426418694Z"
+                    "human": "2026-10-19T15:33:46.103192173Z"
                   }
                 }
               ]
@@ -640,9 +640,9 @@
                 {
                   "cls": "com.arangodb.internal.ArangoDatabaseAsyncImpl",
                   "createdAt": {
-                    "ts": 1792421537587,
+                    "ts": 1792424025104,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:17.587077781Z"
+                    "human": "2026-10-19T15:33:45.104782461Z"
                   }
                 }
               ]
@@ -654,9 +654,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
                   "createdAt": {
-                    "ts": 1792421538434,
+                    "ts": 1792424026111,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.434812142Z"
+                    "human": "2026-10-19T15:33:46.111954512Z"
                   }
                 }
               ]
@@ -668,9 +668,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448981866Z"
+                    "human": "2026-10-19T15:33:46.126662547Z"
                   }
                 }
               ]
@@ -682,9 +682,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448922744Z"
+                    "human": "2026-10-19T15:33:46.126598174Z"
                   }
                 }
               ]
@@ -696,9 +696,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448948563Z"
+                    "human": "2026-10-19T15:33:46.126625927Z"
                   }
                 }
               ]
@@ -710,9 +710,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.repair.RepairManOnAppStartingHook",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448836880Z"
+                    "human": "2026-10-19T15:33:46.126495067Z"
                   }
                 }
               ]
@@ -724,9 +724,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.CollectorKeyUniquenessCheck",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448964092Z"
+                    "human": "2026-10-19T15:33:46.126643511Z"
                   }
                 }
               ]
@@ -738,9 +738,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448885072Z"
+                    "human": "2026-10-19T15:33:46.126543831Z"
                   }
                 }
               ]
@@ -752,9 +752,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.storage.OrgsStorage$Vault",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448953712Z"
+                    "human": "2026-10-19T15:33:46.126631147Z"
                   }
                 }
               ]
@@ -766,9 +766,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448755636Z"
+                    "human": "2026-10-19T15:33:46.126415365Z"
                   }
                 }
               ]
@@ -780,9 +780,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.EnsureOrganisationOnAppStarting",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448957860Z"
+                    "human": "2026-10-19T15:33:46.126635846Z"
                   }
                 }
               ]
@@ -794,9 +794,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448795011Z"
+                    "human": "2026-10-19T15:33:46.126475610Z"
                   }
                 }
               ]
@@ -808,9 +808,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.log.UltraLogManager",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448775985Z"
+                    "human": "2026-10-19T15:33:46.126449811Z"
                   }
                 }
               ]
@@ -822,9 +822,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.security.user.UserProvider$Lazy",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026125,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448044354Z"
+                    "human": "2026-10-19T15:33:46.125383023Z"
                   }
                 }
               ]
@@ -836,9 +836,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.Database",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448918676Z"
+                    "human": "2026-10-19T15:33:46.126594487Z"
                   }
                 }
               ]
@@ -850,9 +850,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.DefaultEntityCache",
                   "createdAt": {
-                    "ts": 1792421538449,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.449210170Z"
+                    "human": "2026-10-19T15:33:46.126907375Z"
                   }
                 }
               ]
@@ -864,9 +864,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.hooks.TimestampedHook",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448933744Z"
+                    "human": "2026-10-19T15:33:46.126610448Z"
                   }
                 }
               ]
@@ -878,9 +878,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.profiling.NullQueryProfiler",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456262059Z"
+                    "human": "2026-10-19T15:33:46.134895494Z"
                   }
                 }
               ]
@@ -892,9 +892,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.repair.RepairMan",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448832492Z"
+                    "human": "2026-10-19T15:33:46.126490879Z"
                   }
                 }
               ]
@@ -906,9 +906,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.auth.AuthSystemAppHooks",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448842591Z"
+                    "human": "2026-10-19T15:33:46.126500788Z"
                   }
                 }
               ]
@@ -920,9 +920,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.codec.SlumberRestCodec",
                   "createdAt": {
-                    "ts": 1792421538449,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.449236700Z"
+                    "human": "2026-10-19T15:33:46.126945227Z"
                   }
                 }
               ]
@@ -934,9 +934,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.locks.VaultGlobalLocksProvider",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448893608Z"
+                    "human": "2026-10-19T15:33:46.126567917Z"
                   }
                 }
               ]
@@ -948,9 +948,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448901253Z"
+                    "human": "2026-10-19T15:33:46.126575762Z"
                   }
                 }
               ]
@@ -962,9 +962,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448978399Z"
+                    "human": "2026-10-19T15:33:46.126658830Z"
                   }
                 }
               ]
@@ -976,9 +976,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026125,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448054444Z"
+                    "human": "2026-10-19T15:33:46.125398422Z"
                   }
                 }
               ]
@@ -990,9 +990,9 @@
                 {
                   "cls": "impl.InsightsFull",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026125,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448193177Z"
+                    "human": "2026-10-19T15:33:46.125645905Z"
                   }
                 }
               ]
@@ -1004,9 +1004,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.InsightsFileRepository",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026125,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448146308Z"
+                    "human": "2026-10-19T15:33:46.125565822Z"
                   }
                 }
               ]
@@ -1018,9 +1018,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.UserCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456180534Z"
+                    "human": "2026-10-19T15:33:46.134802998Z"
                   }
                 }
               ]
@@ -1032,9 +1032,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456189892Z"
+                    "human": "2026-10-19T15:33:46.134815151Z"
                   }
                 }
               ]
@@ -1046,9 +1046,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456196103Z"
+                    "human": "2026-10-19T15:33:46.134822395Z"
                   }
                 }
               ]
@@ -1060,9 +1060,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456214018Z"
+                    "human": "2026-10-19T15:33:46.134845549Z"
                   }
                 }
               ]
@@ -1074,9 +1074,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456229507Z"
+                    "human": "2026-10-19T15:33:46.134861479Z"
                   }
                 }
               ]
@@ -1088,9 +1088,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456238795Z"
+                    "human": "2026-10-19T15:33:46.134871268Z"
                   }
                 }
               ]
@@ -1102,9 +1102,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456244666Z"
+                    "human": "2026-10-19T15:33:46.134877049Z"
                   }
                 }
               ]
@@ -1116,9 +1116,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456250647Z"
+                    "human": "2026-10-19T15:33:46.134884393Z"
                   }
                 }
               ]
@@ -1130,9 +1130,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448768861Z"
+                    "human": "2026-10-19T15:33:46.126439020Z"
                   }
                 }
               ]
@@ -1144,9 +1144,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456264554Z"
+                    "human": "2026-10-19T15:33:46.134898781Z"
                   }
                 }
               ]
@@ -1158,9 +1158,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
                   "createdAt": {
-                    "ts": 1792421538456,
+                    "ts": 1792424026134,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.456269162Z"
+                    "human": "2026-10-19T15:33:46.134904872Z"
                   }
                 }
               ]
@@ -1172,9 +1172,9 @@
                 {
                   "cls": "io.peekandpoke.karango.vault.KarangoDriver",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448869512Z"
+                    "human": "2026-10-19T15:33:46.126526427Z"
                   }
                 }
               ]
@@ -1186,9 +1186,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.kontainer.Kontainer",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026125,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448122152Z"
+                    "human": "2026-10-19T15:33:46.125528210Z"
                   }
                 }
               ]
@@ -1200,41 +1200,49 @@
                 {
                   "cls": "io.peekandpoke.ultra.log.LogImpl",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448786234Z"
+                    "human": "2026-10-19T15:33:46.126461072Z"
                   }
                 },
                 {
                   "cls": "io.peekandpoke.ultra.log.LogImpl",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448828364Z"
+                    "human": "2026-10-19T15:33:46.126487062Z"
                   }
                 },
                 {
                   "cls": "io.peekandpoke.ultra.log.LogImpl",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448856979Z"
+                    "human": "2026-10-19T15:33:46.126515456Z"
                   }
                 },
                 {
                   "cls": "io.peekandpoke.ultra.log.LogImpl",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448897435Z"
+                    "human": "2026-10-19T15:33:46.126550062Z"
                   }
                 },
                 {
                   "cls": "io.peekandpoke.ultra.log.LogImpl",
                   "createdAt": {
-                    "ts": 1792421538448,
+                    "ts": 1792424026126,
                     "timezone": "UTC",
-                    "human": "2026-10-19T14:52:18.448974191Z"
+                    "human": "2026-10-19T15:33:46.126572175Z"
+                  }
+                },
+                {
+                  "cls": "io.peekandpoke.ultra.log.LogImpl",
+                  "createdAt": {
+                    "ts": 1792424026126,
+                    "timezone": "UTC",
+                    "human": "2026-10-19T15:33:46.126654211Z"
                   }
                 }
               ]
@@ -1248,7 +1256,7 @@
           "jvmVersion": "17.0.17",
           "maxMem": 536870912,
           "reservedMem": 405798912,
-          "freeMem": 230547624,
+          "freeMem": 230316680,
           "cpus": 16,
           "kotlinVersion": "2.4.21",
           "openFileDescriptors": 306,
@@ -1287,14 +1295,14 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1792421538,
+    "ts": 1792424026,
     "method": "GET",
-    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D10%2D19/2026%2D10%2D19T16%3A52%3A18%2E448177077%2Ejson",
-    "server": "thebasez16-2",
+    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D10%2D19/2026%2D10%2D19T17%3A33%3A46%2E125620938%2Ejson",
+    "server": "build-host",
     "status": {
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 2.126581
+    "durationMs": 9.850196
   }
 }

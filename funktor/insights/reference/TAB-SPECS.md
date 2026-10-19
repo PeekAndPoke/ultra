@@ -93,15 +93,19 @@ and user name of the server included; the fixtures keep six keys.
 
 ```json
 { "entries": [ {
-    "connection": "MongoDB(8.2.1)::ultra_wt_insights_vue", "queryLanguage": "json",
-    "query": "{\n  \"filter\": {\n    \"token\": \"@p1\"\n  },\n  \"sort\": null,\n  \"limit\": 1,\n  \"skip\": null\n}",
+    "connection": "MongoDB(8.2.1)::funktor_test", "queryLanguage": "mongo-bound",
+    "query": "{\n  \"collection\": \"insights_s1_mo_sessions\",\n  \"filter\": {\n    \"token\": \"@p1:string\"\n  },\n  \"sort\": null,\n  \"limit\": 1,\n  \"skip\": null\n}",
     "varsCount": 1, "count": 1, "totalCount": null, "totalNs": 37765040,
     "measureQuery": {"totalNs": 1979916, "count": 1}, "measureIterator": {…}, "measureSerializer": {…},
     "measureDeserializer": {…}, "measureExplain": {…} } ] }
 ```
 
-- `query` holds placeholders, never a value: Karango's `@v_1` (`aql`), Monko's `@p1` (`json`, since
-  2026-10-19). `VaultCollector` keeps the text only for those two languages; for any other it is `null`.
+- `query` holds placeholders, never a value: Karango's `@v_1` (`aql`); Monko's `@p1:<type>` (`mongo-bound`,
+  since 2026-10-19), the type being Mongo's `$type` alias (`string`, `objectId`, `int`, …) and a list
+  `array[<length>]` -- the type, never the value. Monko's text also names the `collection`. `VaultCollector`
+  keeps the text only for `aql` and `mongo-bound`; for any other label it is `null`.
+- **`json` is Monko's OLD label** (2026-08-24..2026-10-19): its text inlined the values, so it was withheld and
+  `varsCount` is a false 0 -- the tab shows "unknown".
 - **No `vars`, no `queryExplained`**: values are counted (`varsCount`), and an EXPLAIN plan has the values
   substituted in by the database itself. An entry WITH either field predates `VaultCollector.Data`: its
   `query` may hold values and must not be shown (`slices.ts` marks it `legacy`).
@@ -122,6 +126,9 @@ Two shapes. **The full contract** — v1 and v2, the join, the fingerprint, the 
 - `type == "Singleton"` is process state shared by every request; any other type is this request's own.
   `createdAt` only says whether this request created the instance.
 - `numOld` / `numTotal` are always 0 in funktor (tracking cannot be switched on): shown as "not measured".
+- A `DynamicOverride` of a v2 record is shown as v1 recorded it -- creates the instance's class, `Dynamic`, no
+  injects, overwriting the graph's (blueprint) definition -- never with the blueprint's injects, which did not
+  run for a handed-in instance (`overrideDefinition` in `slices.ts`).
 
 ## `app-config`
 

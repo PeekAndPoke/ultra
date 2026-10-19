@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+    graphMatch,
     instanceCountsMeasured,
     joinKontainerGraph,
     readInstantMillis,
@@ -69,7 +70,7 @@ describe('readKontainer', () => {
 
 describe('the kontainer graph', () => {
     it('reads flat strings for every class and code location', () => {
-        const raw = recorded.kontainerGraph().data
+        const raw: any = recorded.kontainerGraph().data
         const graph = readKontainerGraph(raw)!
 
         expect(graph.fingerprint).toBe(raw.fingerprint)
@@ -80,15 +81,98 @@ describe('the kontainer graph', () => {
         expect(read.definition!.injects[0].classes).toEqual(withInjects.definition.injects[0].classes)
     })
 
-    it('joins a slim record on cls: definitions from the graph, the type from the record', () => {
+    it('joins a slim record on cls: each service gets ITS definition from the graph, the type from the record', () => {
         const slice = readKontainer(sliceOf(recorded.slim(), 'kontainer'))!
         const graph = readKontainerGraph(recorded.kontainerGraph().data)!
 
         const joined = joinKontainerGraph(slice, graph, false)
 
         expect(joined).toHaveLength(slice.services.length)
-        expect(joined.every((service) => service.definition !== null)).toBe(true)
         expect(joined.map((service) => service.type)).toEqual(slice.services.map((service) => service.type))
+
+        // By cls, not by index or simple name: deep-equal to the graph's own entry for the same class.
+        for (const service of joined.filter((it) => it.type !== 'DynamicOverride')) {
+            expect(service.definition, service.cls ?? '').toEqual(graph.services.find((it) => it.cls === service.cls)!.definition)
+        }
+    })
+
+    it('a DynamicOverride gets what a full record wrote for it, not the blueprint whose injects did not run', () => {
+        const slice = readKontainer(sliceOf(recorded.slim(), 'kontainer'))!
+        const graph = readKontainerGraph(recorded.kontainerGraph().data)!
+        const joined = joinKontainerGraph(slice, graph, true)
+
+        const overrides = joined.filter((service) => service.type === 'DynamicOverride')
+        expect(overrides.map((service) => service.cls)).toEqual(
+            expect.arrayContaining(['io.peekandpoke.ultra.security.user.UserProvider', 'io.peekandpoke.funktor.core.model.InsightsConfig']),
+        )
+
+        for (const service of overrides) {
+            const blueprint = graph.services.find((it) => it.cls === service.cls)!.definition
+            expect(service.definition).toEqual({
+                creates: service.instances[0].cls,
+                injectionType: 'Dynamic',
+                injects: [],
+                codeLocation: null,
+                overwrites: blueprint,
+            })
+        }
+
+        // ...which is what the full record of the same service really says
+        const v1 = readKontainer(sliceOf(recorded.fat(), 'kontainer'))!.services
+            .find((service) => service.cls === 'io.peekandpoke.ultra.security.user.UserProvider')!.definition!
+        const v2 = overrides.find((service) => service.cls === 'io.peekandpoke.ultra.security.user.UserProvider')!.definition!
+
+        expect(v1.creates).toBe(v2.creates)
+        expect(v1.injectionType).toBe(v2.injectionType)
+        expect(v1.injects).toEqual(v2.injects)
+        expect(v1.overwrites!.creates).toBe(v2.overwrites!.creates)
+        expect(v1.overwrites!.injectionType).toBe(v2.overwrites!.injectionType)
+    })
+
+    it('an override shows NONE of its blueprint\'s injects, even when the blueprint has some', () => {
+        // Derived: the real graph, with UserProvider's blueprint given the injects of a real service. The two
+        // real overrides' blueprints inject nothing, so the real data alone cannot tell "[]" from "the blueprint's".
+        const raw: any = recorded.kontainerGraph().data
+        const donor = raw.services.find((it: any) => it.cls === 'io.peekandpoke.funktor.auth.AuthRecordStorage')
+        const blueprint = raw.services.find((it: any) => it.cls === 'io.peekandpoke.ultra.security.user.UserProvider')
+        blueprint.definition.injects = donor.definition.injects
+        expect(blueprint.definition.injects.length).toBeGreaterThan(0)
+
+        const joined = joinKontainerGraph(readKontainer(sliceOf(recorded.slim(), 'kontainer'))!, readKontainerGraph(raw)!, true)
+        const override = joined.find((it) => it.cls === 'io.peekandpoke.ultra.security.user.UserProvider')!
+
+        expect(override.definition!.injects).toEqual([])
+        expect(override.definition!.overwrites!.injects.length).toBe(donor.definition.injects.length)
+    })
+
+    it('joins by the FULL class name: a same-named class elsewhere in the graph is not taken', () => {
+        // Derived: the real graph has no two services sharing a simple name, so a join by simple name would
+        // pass on it. A decoy, same simple name, other package and definition, is put FIRST.
+        const raw: any = recorded.kontainerGraph().data
+        const slice = readKontainer(sliceOf(recorded.slim(), 'kontainer'))!
+        const target = slice.services.find((it) => it.type !== 'DynamicOverride')!
+        const simple = target.cls!.split('.').pop()
+        const decoyDefinition = { ...raw.services[0].definition, creates: `decoy.${simple}`, codeLocation: 'decoy' }
+        raw.services.unshift({ cls: `decoy.${simple}`, type: 'Singleton', definition: decoyDefinition })
+
+        const graph = readKontainerGraph(raw)!
+        const joined = joinKontainerGraph(slice, graph, false).find((it) => it.cls === target.cls)!
+
+        expect(joined.definition).toEqual(graph.services.find((it) => it.cls === target.cls)!.definition)
+        expect(joined.definition!.creates).not.toBe(`decoy.${simple}`)
+    })
+
+    it('says whether a record was written against the graph: same, other, or unknown when it names none', () => {
+        const graph = readKontainerGraph(recorded.kontainerGraph().data)!
+
+        expect(graphMatch(readKontainer(sliceOf(recorded.slim(), 'kontainer'))!, graph)).toBe('same')
+        expect(graphMatch(readKontainer(sliceOf(recorded.vault(), 'kontainer'))!, graph)).toBe('other')
+
+        const nameless = sliceOf(recorded.slim(), 'kontainer')
+        nameless.graphFingerprint = null
+        expect(graphMatch(readKontainer(nameless)!, graph)).toBe('unknown')
+
+        expect(graphMatch(readKontainer(sliceOf(recorded.fat(), 'kontainer'))!, graph)).toBe('same')
     })
 })
 
@@ -101,7 +185,20 @@ describe('the other readers', () => {
     it('vault entries of the current collector are not legacy, and keep their placeholder text', () => {
         const slice = readVault(sliceOf(recorded.vault(), 'vault'))!
 
+        expect(slice.entries.map((entry) => entry.queryLanguage).sort()).toEqual(['aql', 'mongo-bound'])
         expect(slice.entries.every((entry) => !entry.legacy && entry.query !== null && entry.varsCount === 1)).toBe(true)
+    })
+
+    it('a Mongo entry under the OLD label json has an UNKNOWN bind count, not the 0 it was recorded with', () => {
+        // What the collector wrote for Monko 2026-08-24..2026-10-19: text dropped, `vars` empty, so 0.
+        const raw = sliceOf(recorded.vault(), 'vault')
+        const mongo = raw.entries.find((entry: { queryLanguage: string }) => entry.queryLanguage === 'mongo-bound')
+        Object.assign(mongo, { queryLanguage: 'json', query: null, varsCount: 0 })
+
+        const entry = readVault(raw)!.entries.find((it) => it.queryLanguage === 'json')!
+
+        expect(entry.varsCount).toBeNull()
+        expect(readVault(sliceOf(recorded.vault(), 'vault'))!.entries.every((it) => it.varsCount === 1)).toBe(true)
     })
 
     it('the file descriptor cell carries the "not measured" caveat when both counts are 0', () => {

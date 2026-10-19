@@ -354,8 +354,11 @@ export interface VaultEntry {
      */
     query: string | null
     queryLanguage: string | null
-    /** How many bind variables the query had. The VALUES are deliberately not recorded. */
-    varsCount: number
+    /**
+     * How many bind variables the query had; the VALUES are deliberately not recorded. Null when unknown:
+     * see {@link isInlinedMongoEntry}.
+     */
+    varsCount: number | null
     /**
      * True when the slice predates `VaultCollector.Data` and carries the raw profiler entry.
      *
@@ -396,6 +399,16 @@ function sumMeasures(measures: VaultMeasure[]): VaultMeasure {
     )
 }
 
+/**
+ * True for a Mongo entry recorded 2026-08-24..2026-10-19, under Monko's old label `json`.
+ *
+ * Monko inlined the values into its text then and sent no `vars`: the collector withheld the text and counted
+ * 0 bind variables -- a 0 that is not a fact. Monko records under `mongo-bound` since.
+ */
+export function isInlinedMongoEntry(entry: Record<string, unknown>): boolean {
+    return asString(entry.queryLanguage) === 'json' && asString(entry.query) === null
+}
+
 export function readVault(data: unknown): VaultSlice | null {
     const rawEntries = asArray(asRecord(data)?.entries)
     if (rawEntries === null) return null
@@ -411,7 +424,9 @@ export function readVault(data: unknown): VaultSlice | null {
             // trusted. Its `vars` and `queryExplained` are simply never read by this file.
             query: legacy ? null : asString(record.query),
             queryLanguage: asString(record.queryLanguage),
-            varsCount: asNumber(record.varsCount) ?? (legacy ? Object.keys(asRecord(record.vars) ?? {}).length : 0),
+            varsCount: isInlinedMongoEntry(record)
+                ? null
+                : (asNumber(record.varsCount) ?? (legacy ? Object.keys(asRecord(record.vars) ?? {}).length : 0)),
             legacy,
             totalNs: asNumber(record.totalNs) ?? 0,
             serializer: readMeasure(record.measureSerializer),
@@ -618,6 +633,10 @@ export function readKontainerGraph(data: unknown): KontainerGraphData | null {
  *
  * The TYPE stays the record's: it is what the provider was in THIS request's kontainer, and only the
  * record can say `DynamicOverride`. With `includeAll`, the graph's services without instances are added.
+ *
+ * A `DynamicOverride` does NOT get the graph's definition: its instance was handed in when the kontainer
+ * was created, so the blueprint's injects never ran for it. It gets what a `full` record wrote for it --
+ * see {@link overrideDefinition}.
  */
 export function joinKontainerGraph(
     slice: KontainerSlice,
@@ -629,10 +648,13 @@ export function joinKontainerGraph(
         if (service.cls !== null) byCls.set(service.cls, service)
     }
 
-    const joined = slice.services.map((service) => ({
-        ...service,
-        definition: service.definition ?? (service.cls === null ? null : (byCls.get(service.cls)?.definition ?? null)),
-    }))
+    const joined = slice.services.map((service) => {
+        const blueprint = service.cls === null ? null : (byCls.get(service.cls)?.definition ?? null)
+        const definition =
+            service.definition ?? (service.type === 'DynamicOverride' ? overrideDefinition(service, blueprint) : blueprint)
+
+        return { ...service, definition }
+    })
 
     if (!includeAll) return joined
 
@@ -643,13 +665,32 @@ export function joinKontainerGraph(
 }
 
 /**
- * True when a `slim` record was written against ANOTHER graph than [graph].
+ * The definition a `full` record carried for a `DynamicOverride`: it creates the instance's own class,
+ * `Dynamic`, injects nothing, and overwrites the blueprint's definition.
  *
- * Expected after almost any deploy: the fingerprint covers every code location, line numbers included.
- * The edges and definitions shown are then today's, not necessarily the ones the request ran with.
+ * No code location: the override has none of its own (a `full` record named `ServiceProviderFactory`'s
+ * constructor). Without injects it draws no edge -- the blueprint's injects did not run for this instance.
  */
-export function graphMismatch(slice: KontainerSlice, graph: KontainerGraphData): boolean {
-    return slice.shape === 'slim' && slice.graphFingerprint !== null && slice.graphFingerprint !== graph.fingerprint
+export function overrideDefinition(service: KontainerService, blueprint: KontainerDefinition | null): KontainerDefinition {
+    return {
+        creates: service.instances[0]?.cls ?? service.cls,
+        injectionType: 'Dynamic',
+        injects: [],
+        codeLocation: null,
+        overwrites: blueprint,
+    }
+}
+
+/**
+ * Whether a `slim` record was written against [graph]: `same`, `other` -- expected after almost any deploy,
+ * the fingerprint covers every code location, line numbers included -- or `unknown` when the record names
+ * no graph (the server could not build one then). In the last two cases the definitions and edges shown are
+ * today's, not necessarily the ones the request ran with. A `full` record carries its own: `same`.
+ */
+export function graphMatch(slice: KontainerSlice, graph: KontainerGraphData): 'same' | 'other' | 'unknown' {
+    if (slice.shape === 'full') return 'same'
+    if (slice.graphFingerprint === null) return 'unknown'
+    return slice.graphFingerprint === graph.fingerprint ? 'same' : 'other'
 }
 
 /** Walks the `overwrites` chain into a flat list; the first entry is the definition in force. */

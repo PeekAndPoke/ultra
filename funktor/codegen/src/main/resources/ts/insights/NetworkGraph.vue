@@ -6,8 +6,9 @@
  * whose imports `package.json` does not declare. The import is dynamic, so the ~650 KB bundle is a
  * separate chunk that only a click on a graph button downloads.
  *
- * `vis-network/standalone` bundles its own `vis-data` and the other peers, and injects its stylesheet
- * into `<head>` (a CSP must allow inline styles for the tooltip). Labels are drawn on a canvas.
+ * `vis-network/standalone` bundles its own `vis-data` and the other peers, and injects a `<style>` into
+ * `<head>` for its tooltip and navigation widgets. Neither is used here -- no node or edge has a `title` --
+ * so a strict CSP that blocks that style costs nothing. Labels are drawn on a canvas.
  *
  * Mounted only when its graph is asked for: a canvas created while hidden cannot be laid out, which is
  * why the old GUI waited 500 ms after revealing the container.

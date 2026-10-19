@@ -26,7 +26,7 @@ import type { Fact } from '../ui/types.ts'
 import { kontainerNetwork, useInsightsGraphsOrNull } from './graphs.ts'
 import type { NetworkData } from './graphs.ts'
 import NetworkGraph from './NetworkGraph.vue'
-import { definitionChain, graphMismatch, instanceCountsMeasured, isProcessWide, joinKontainerGraph, readKontainer } from './slices.ts'
+import { definitionChain, graphMatch, instanceCountsMeasured, isProcessWide, joinKontainerGraph, readKontainer } from './slices.ts'
 import type { KontainerGraphData, KontainerInstance, KontainerService } from './slices.ts'
 
 defineOptions({ name: 'KontainerTab' })
@@ -113,7 +113,8 @@ const summary = computed<Fact[]>(() => {
     ]
 })
 
-const mismatch = computed(() => slice.value !== null && graph.value !== null && graphMismatch(slice.value, graph.value))
+/** Null until the graph is in; then whether this record was written against it. */
+const match = computed(() => (slice.value === null || graph.value === null ? null : graphMatch(slice.value, graph.value)))
 
 /** Full date and time, not just the clock: it says whether THIS request created the instance. */
 function createdAt(instance: KontainerInstance): string {
@@ -163,10 +164,14 @@ function shortName(fqn: string | null): string {
             </div>
             <div v-if="loading" class="fk-empty">Loading the kontainer graph...</div>
             <div v-if="graphProblem !== null" class="fk-notice fk-notice--error">{{ graphProblem }}</div>
-            <div v-if="mismatch" class="fk-notice">
+            <div v-if="match === 'other'" class="fk-notice">
                 This record was written against another kontainer graph (fingerprint
                 {{ slice.graphFingerprint }}, today {{ graph?.fingerprint ?? 'none' }}). The definitions and
                 edges shown are today's. Expected after almost any deploy: the fingerprint covers line numbers.
+            </div>
+            <div v-if="match === 'unknown'" class="fk-notice">
+                This record names no kontainer graph -- the server could not build one when it was written -- so
+                whether today's graph matches it cannot be verified. The definitions and edges shown are today's.
             </div>
 
             <NetworkGraph v-if="network !== null" :key="shown ?? ''" :data="network" />

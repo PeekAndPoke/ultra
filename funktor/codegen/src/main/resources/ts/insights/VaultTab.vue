@@ -101,6 +101,16 @@ function measure(value: VaultMeasure): string {
     return `${nsToMs(value.totalNs)} (${value.count}x)`
 }
 
+/** Why an entry has no query text; Monko's old `json` entries have their own reason. */
+function emptyQueryText(entry: VaultEntry): string {
+    if (entry.queryLanguage === 'json') {
+        return 'No query text recorded: written before 2026-10-19, when Monko still put the bind values into its ' +
+            'query text, so the server withheld it and did not count the bind variables.'
+    }
+    return `No query text recorded (${entry.queryLanguage ?? 'unknown language'}). Either the driver is not known ` +
+        'to keep bind values out of it, so the server withholds it, or the query failed before it was printed.'
+}
+
 function results(entry: VaultEntry): string {
     const count = entry.count ?? 0
     return entry.totalCount === null ? `${count} of n/a` : `${count} of ${entry.totalCount}`
@@ -126,6 +136,9 @@ function results(entry: VaultEntry): string {
                     Show Database Graph
                 </button>
             </div>
+            <p class="fk-section__note">
+                The database graph is today's schema, fetched from the server now -- not part of this record.
+            </p>
             <div v-if="graphs === null" class="fk-notice">No API client here to fetch the database graph.</div>
             <div v-if="loading" class="fk-empty">Loading the database graph...</div>
             <div v-if="graphProblem !== null" class="fk-notice fk-notice--error">{{ graphProblem }}</div>
@@ -143,7 +156,7 @@ function results(entry: VaultEntry): string {
             <StatStrip
                 :cells="[
                     { label: 'Results', value: results(entry) },
-                    { label: 'Bind vars', value: entry.varsCount },
+                    { label: 'Bind vars', value: entry.varsCount ?? 'unknown' },
                     { label: 'Serializer', value: measure(entry.serializer) },
                     { label: 'Query', value: measure(entry.query_) },
                     { label: 'Iterator', value: measure(entry.iterator) },
@@ -155,7 +168,7 @@ function results(entry: VaultEntry): string {
             <PreBlock
                 v-if="!entry.legacy"
                 :text="entry.query"
-                :empty-text="`No query text recorded (${entry.queryLanguage ?? 'unknown language'}). Either the driver is not known to keep bind values out of it, so the server withholds it, or the query failed before it was printed.`"
+                :empty-text="emptyQueryText(entry)"
                 wrap
             />
             <!--

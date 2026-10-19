@@ -147,6 +147,18 @@ describe('the kontainer graphs', () => {
         expect(host.textContent).toContain('written against another kontainer graph')
     })
 
+    it('a record that names NO graph says its match cannot be verified', async () => {
+        const slice = sliceOf(recorded.slim(), 'kontainer')
+        slice.graphFingerprint = null
+
+        const { graphs } = recordedGraphs()
+        const host = await render(KontainerTab, slice, graphs)
+        await click(host, 'Show instances Graph')
+
+        expect(host.textContent).toContain('cannot be verified')
+        expect(host.textContent).not.toContain('written against another kontainer graph')
+    })
+
     it('...and a record of the SAME graph does not', async () => {
         const slice = sliceOf(recorded.slim(), 'kontainer')
         expect(slice.graphFingerprint).toBe(recorded.kontainerGraph().data.fingerprint)
@@ -209,6 +221,17 @@ describe('the kontainer network, built from the real graph', () => {
         for (const edge of network.edges) expect(edge.value).toBe(edge.dashes ? 1 : 2)
     })
 
+    it('draws NO injection edge out of a DynamicOverride, in either graph -- its blueprint injects did not run', () => {
+        for (const kind of ['instances', 'full'] as const) {
+            const joined = joinKontainerGraph(slimSlice(), graphData(), kind === 'full')
+            const network = kontainerNetwork(joined, kind)
+            const overrideIds = network.nodes.filter((node) => node.label.endsWith('\nDynamicOverride')).map((node) => node.id)
+
+            expect(overrideIds, kind).toHaveLength(2)
+            expect(network.edges.filter((edge) => overrideIds.includes(edge.from)), kind).toEqual([])
+        }
+    })
+
     it('colours by the RECORD\'s type, so a DynamicOverride shows as one', () => {
         const joined = joinKontainerGraph(slimSlice(), graphData(), false)
         const override = joined.find((service) => service.type === 'DynamicOverride')!
@@ -232,6 +255,7 @@ describe('the database graph', () => {
 
         expect(requests).toEqual([DATABASE_GRAPH_PATH])
         expect(drawn.networks[0].data.nodes).toHaveLength(recorded.databaseGraph().data.repos.length)
+        expect(host.textContent).toContain("today's schema")
     })
 
     it('"Database Graph Data" shows the raw model, from the same single fetch', async () => {

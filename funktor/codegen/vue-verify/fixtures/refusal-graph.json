@@ -17,14 +17,14 @@
     }
   ],
   "insights": {
-    "ts": 1792421537,
+    "ts": 1792424024,
     "method": "GET",
     "url": "http://api.funktor.local:80/_/funktor/insights/graphs/kontainer",
-    "server": "thebasez16-2",
+    "server": "build-host",
     "status": {
       "value": 401,
       "description": "Unauthorized"
     },
-    "durationMs": 0.037992
+    "durationMs": 0.040668
   }
 }

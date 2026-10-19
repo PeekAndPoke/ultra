@@ -159,12 +159,26 @@ describe('vault', () => {
         expect(cards).toHaveLength(slice.entries.length)
 
         const languages = slice.entries.map((entry: { queryLanguage: string }) => entry.queryLanguage)
-        expect(languages).toEqual(expect.arrayContaining(['aql', 'json']))
+        expect(languages).toEqual(expect.arrayContaining(['aql', 'mongo-bound']))
 
         // Mongo's text used to be dropped because it inlined the values; it is placeholders now (S1).
         const texts = [...host.querySelectorAll('pre')].map((pre) => pre.textContent)
         for (const entry of slice.entries) expect(texts).toContain(entry.query)
-        expect(texts.join('\n')).toContain('"token": "@p1"')
+        expect(texts.join('\n')).toContain('"token": "@p1:string"')
+    })
+
+    it('an old Mongo entry, under the label json, says why it has no text and that its bind count is unknown', async () => {
+        // Derived from the real record: what the collector wrote for Monko 2026-08-24..2026-10-19.
+        const slice = sliceOf(recorded.vault(), 'vault')
+        const mongo = slice.entries.find((entry: { queryLanguage: string }) => entry.queryLanguage === 'mongo-bound')
+        Object.assign(mongo, { queryLanguage: 'json', query: null, varsCount: 0 })
+
+        const host = await render(VaultTab, slice)
+        const card = [...host.querySelectorAll('.fk-query')].find((it) => it.textContent?.includes('MongoDB'))!
+
+        expect(card.textContent).toContain('written before 2026-10-19')
+        const bindVars = [...card.querySelectorAll('.fk-strip__cell')].find((cell) => cell.textContent?.includes('Bind vars'))!
+        expect(bindVars.querySelector('.fk-strip__value')?.textContent).toBe('unknown')
     })
 })
 
