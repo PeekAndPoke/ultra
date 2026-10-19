@@ -564,7 +564,7 @@ Counts from `build/test-results/**/TEST-*.xml`, after rebasing onto `525b1da1`; 
   vitest **6 files, 58 tests**: `tabs` 15, `escaping` 9, `graphs` 17, `graphs-real-library` 2, `detail-page` 5,
   `slices` 10.
 - `funktor-demo/sdkgen-app`: `pnpm run build` (vue-tsc on TS 5.9.3 + vite build) green on a freshly generated SDK.
-- Full suite: see the graphs task, "Test evidence (T1)".
+- **Full suite** (`console/wt-gradle.sh --full-suite`, 2026-10-19 16:59-17:09, 8m 10s, on `18cef881` rebased onto `ea7bd99b`): BUILD SUCCESSFUL -- 69 targets, 929 spec files, 15 751 tests, 7 skipped, **0 failures, 0 errors** (`vueVerify` ran inside it: its 58 vitest cases are in that count).
 
 ## Mutation table (T1, 2026-10-19)
 

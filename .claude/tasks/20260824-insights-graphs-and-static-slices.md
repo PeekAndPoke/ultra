@@ -526,7 +526,7 @@ retry after failure, mismatch said and not said, the fat record drawing with no 
 dangling count, Lazy dashes, `DynamicOverride` colour; the database graph's fetch, raw view, 401, the
 cross-backend edge), `graphs-real-library.spec.ts` (2), `detail-page.spec.ts` (ancestor's source vs own).
 
-FULL_SUITE_PLACEHOLDER
+**Full suite** (`console/wt-gradle.sh --full-suite`, 2026-10-19 16:59-17:09, 8m 10s, on `18cef881` rebased onto `ea7bd99b`): BUILD SUCCESSFUL -- 69 targets, 929 spec files, 15 751 tests, 7 skipped, **0 failures, 0 errors** (`vueVerify` ran inside it: its 58 vitest cases are in that count).
 
 ### Mutation table (T1) — readers, graph source, rendering
 
