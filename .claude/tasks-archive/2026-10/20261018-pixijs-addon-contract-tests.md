@@ -1,6 +1,6 @@
 # kraft/addons/pixijs: contract tests that survive version updates
 
-**Status:** IN REVIEW (Ultra-Main-Dev) — implemented 2026-10-19
+**Status:** DONE (archived 2026-10-19) — gate PASS after 2 rounds
 **Plan:** none (asked by the maintainer, 2026-10-18, after the Klang playback highlight broke on a dependency bump)
 **Security-critical:** no
 
@@ -74,22 +74,26 @@ RED; with the current setup it is GREEN.
 - After the next Ultra release with the fix, Klang removes `klang/webpack.config.d/04-pixi-side-effects.js`.
 
 **Done (2026-10-19), decisions by the maintainer: both remedies; the optional API rows yes.**
-- Fix: `kraft/addons/pixijs/src/jsMain/kotlin/pixijs_addon.kt` `registerApplicationPlugins` — `import('pixi.js/app')`
-  AND `extensions.add(TickerPlugin)` / `(ResizePlugin)` (guarded against missing exports). `backgroundAlpha` added to
-  `ApplicationOptions` (Klang sets it).
-- Tests: `kraft/addons/pixijs/src/jsTest/kotlin/PixiJsContractSpec.kt`, 9 rows. The GPU-free row checks pixi's
-  `Application._plugins` for `TickerPlugin` and `ResizePlugin` — the root cause itself. WebGL is available in the
-  Karma ChromeHeadless (software); the plugin row guards even where it is not.
+- Fix: `kraft/addons/pixijs/src/jsMain/kotlin/pixijs_addon.kt` `registerExtensions` — imports ALL NINE pixi init
+  entries whose import webpack 5.108 drops (the class-local `import './init.mjs'` in Application, Graphics, Text,
+  BitmapText, HTMLText, Mesh, TilingSprite, NineSliceSprite, ParticleContainer; list grepped from `pixi.js/lib`), and
+  registers `TickerPlugin` / `ResizePlugin` explicitly as well. `backgroundAlpha` added to `ApplicationOptions`.
+- Tests: `kraft/addons/pixijs/src/jsTest/kotlin/PixiJsContractSpec.kt`, 10 rows. GPU-free row: pixi's
+  `Application._plugins` contains both plugins (the root cause itself; `@internal` field, kept on purpose). A row
+  renders a `Graphics` and a `Text` and checks their render pipes. WebGL is available in the Karma ChromeHeadless.
 - **The break reproduces in ultra's own test bundle, no extra webpack rule needed** (pixi 8.22 + webpack 5.108).
+- Klang can delete `klang/webpack.config.d/04-pixi-side-effects.js` after the release (it uses Application,
+  Graphics, the ticker and resizeTo — all covered).
 
 ## Test evidence
 
-- [x] Before the fix: 5 contract rows RED (plugins, ticker, resizeTo, re-create, API existence) — the 0.111.0 symptom.
-- [x] After: `:kraft:addons:pixijs:jsBrowserTest` 9/9 contract + 3/3 existing green.
-- [x] Mutations (restored + `cmp`): without the `pixi.js/app` import → still green (the explicit registration
-      covers it); without the explicit registration → still green (the import covers it); without both → the same
-      5 rows RED. So each remedy works on its own.
-
+- [x] Before the fix: 5 contract rows RED (plugins, ticker, resizeTo, re-create, API existence); the render-pipes row
+      RED against `54c80970` (only `app/init` fixed).
+- [x] Final (`9883bd6f`): `:kraft:addons:pixijs:jsBrowserTest` 10/10 contract + 3/3 existing green.
+- [x] Mutations (restored + `cmp`): without the `pixi.js/app` import → green (the explicit registration covers it);
+      without the explicit registration → green (the import covers it); without both → the same 5 rows RED; dropping
+      `pixi.js/graphics` or `pixi.js/text` → the render-pipes row RED (reviewer-confirmed at
+      `PixiJsContractSpec.kt:134/135`).
 
 ## Review record — the LEDGER (filled by /feature-review)
 
@@ -109,4 +113,8 @@ plugin order irrelevant; no race (registration before the facade exists); `rende
 
 Fix batch: `:kraft:addons:pixijs:jsBrowserTest` contract 10/10 + existing 3/3 green.
 
-**Verdict:** round 1 NOT clean (1 MAJOR fixed) → round 2.
+Round 2 (`reviewer-xhigh`, two-phase): zero CRITICAL/MAJOR. Phase-1 MINOR "six of the nine imports serve classes the
+facade cannot create" WITHDRAWN in phase 2 (scope decision, no factual error). MINOR "task record out of date for
+`9883bd6f`" → fixed (this section restated). All FIXED entries confirmed holding.
+
+**Verdict: gate PASS** (round 2 clean).
