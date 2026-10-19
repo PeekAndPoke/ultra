@@ -1,9 +1,9 @@
 # Insights Vue: the round-2 MINORs of T1's gate
 
-**Status:** IMPLEMENTED 2026-10-19 on `wt/insights-minors` — items 1–11 done, module tests green, not yet
-reviewed (the coordinator decides whether a `/feature-review` round runs). 12 MINORs from round 2 of the gate of
+**Status:** DONE (archived 2026-10-19) — items 1–11 implemented on `wt/insights-minors`; review round 1 (`reviewer-high`
+×2: implementation + domain fit, security) CLEAN — 0 CRITICAL / 0 MAJOR; its 7 MINORs and one pre-existing product defect
+go to `.claude/tasks/20261019-insights-minors-followups.md`. Originally: 12 MINORs from round 2 of the gate of
 `20260802-insights-vue-tabs.md` (gate PASS, merged `a578ef0a`); the maintainer's standing direction is to fix MINORs.
-Ledger: that task's "Round 2" table.
 **Plan:** `.claude/tasks/20261019-insights-auth-parallel-plan.md` (insights follow-ups; touches T1's area)
 **Security-critical:** partly — items 3, 6 and 7 change what reaches the depot; red-team:
 `.claude/tasks/20260730-redteam-insights-api.md` (scenarios 32–35 already added on master, `:109-117`)
@@ -116,7 +116,23 @@ No compile sweep: the only public API change is two added constants on `AqlTyped
 
 ## Review record — the LEDGER (filled by /feature-review)
 
+Round 1 (2026-10-19), blind, base `0062fa47`, head `55bb2549`. Two charters (implementation + domain fit; security) —
+scoped by risk: a MINOR fix batch, the domain questions (Karango API fit, cache semantics) folded into the first.
+Coordinator checks: `UltraLogManager.kt:31,97` (one coroutine per event on `Dispatchers.Unconfined`, appenders walked
+in order) — as claimed; the `$`-prefix rule — the implementer's own recorded residual.
+
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MINOR | `MonkoDriver.kt:110-111` + `:452-454` (security) | A value-position document whose keys all start with `$` is walked as operators, so a `$`-prefixed secret key (a bcrypt/argon2 hash as a map key) stays in the text; printing before execution now records it for server-rejected queries too | follow-up | Closed set of Mongo query operators; anything else bound whole |
+| 1 | MINOR | `VaultCollector.kt:123`, `slices.ts:428` (security) | Depot records written before this change may hold raw AQL labelled `aql`; nothing at read time can tell | follow-up | Not fixable at read time — a release note (purge or accept) |
+| 1 | MINOR | `slices.ts:681-685` (implementation) | `graphMatch` KDoc still says "today's" | follow-up | Reword |
+| 1 | MINOR | `KontainerTab.vue:12` (implementation) | KDoc "fetched for this record" — the fetch is per fingerprint | follow-up | Reword |
+| 1 | MINOR | `vue-verify/tests/graphs.spec.ts` (implementation) | No test pins `fetchedAt` across a cache hit; re-stamping on a hit survives | follow-up | Fake timers: fetch at T1, advance, assert T1 |
+| 1 | MINOR | `KontainerTab.vue:86`, `VaultTab.vue:90` (implementation) | `toLocaleTimeString()` drops the date; an overnight tab reads as today | follow-up | `toLocaleString()` |
+| 1 | MINOR (surplus) | `AqlTypedQuery.kt` `LANGUAGE`/`LANGUAGE_RAW` (implementation) | New public constants with no reader outside karango; Monko's equivalent is internal | follow-up | `internal` |
+| 1 | MINOR | `InsightsVaultBindValuesSpec.kt:373-375`, `UltraLogManager.kt:97`, `LogCollector.kt:47-50` (implementation) | The sort fixes the test, but the product defect stays: a suspending appender (Karango) delays later appenders, so the Log tab shows arrival order, and a line still in flight at `finish` is LOST (the e2e can still flake as size 1) | out-of-scope → follow-up | Pre-existing, `ultra/log` + `funktor/insights`; same follow-up task |
 
-**Verdict:**
+Red-team (security, collected): 36 raw AQL that fails — `KarangoQueryException` embeds `query.query`
+(`KarangoDriver.kt:130-137`); 37 secrets as field names (both printers keep names by design); 33a — addendum to 33.
+
+**Verdict:** PASS — round 1 clean (0 CRITICAL / 0 MAJOR); module tests green; mutation table above.
