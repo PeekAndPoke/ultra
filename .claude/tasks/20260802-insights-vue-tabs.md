@@ -1,7 +1,9 @@
 # Insights — the Vue detail page and its collector tabs
 
 **Status:** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE
-2026-10-19 (track T1, branch `wt/insights-vue`); the coordinator's `/feature-review` re-run is next
+2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
+below (icons, highlighting, sort, FQNs, `vars`), step 10 (delete `reference/` — kept until T4 ports from it), and the
+round-2 MINORs (`.claude/tasks/20261019-insights-vue-round2-minors.md`)
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` → "Insights specifics"
 **Spec:** `funktor/insights/reference/TAB-SPECS.md` — all ten tabs, wire shapes read from a real record
 **Security-critical:** yes. Superuser-only data, rendered from attacker-controlled strings.
@@ -766,3 +768,36 @@ asked for the MINORs to be fixed too, so they ride in the same batch and round 2
 | 1 | — | `RuntimeCollector.kt:58` (security red-team note) | Pre-existing: ALL system properties are recorded unredacted on every request (a secret passed as `-D…` reaches the depot and the Runtime tab) | out-of-scope → follow-up | Recorded in the plan backlog with the insights production gate |
 
 **Verdict:** round 1 NOT clean (1 MAJOR). Fix batch, then round 2 (`reviewer-xhigh`, two-phase).
+
+### Round 2 (2026-10-19) — `reviewer-xhigh` ×3, two-phase, base `d9ffbb32`, head `f1f5acb3`
+
+**Clean: 0 CRITICAL / 0 MAJOR.** Phase 2: every round-1 fix HOLDS in the current files (all three reviewers, each
+row checked with `path:line`), including the MAJOR; no rejected CRITICAL/MAJOR existed to audit; the `reference/` and
+RuntimeCollector rows accepted (the follow-up is master's `20261019-insights-production-gate.md`). The domain reviewer
+disclosed a grep that hit two ledger lines in phase 1; nothing it reported came from them. Coordinator spot-checks:
+`RequestTab.vue:64` (the raw tree repeats `uri`), `KarangoDriver.kt:101` (`aql` on any text), the pre-T1 driver
+(`query = builder.print()`, `vars = emptyMap()`), `.npmrc:3` — all as claimed. 12 MINORs, all stand after phase 2,
+none overlapping a settled row → the follow-up task `.claude/tasks/20261019-insights-vue-round2-minors.md`.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MINOR | `graphs.ts:298-307`, `InsightsPage.vue:59`, `KontainerTab.vue:170-174`, `VaultTab.vue:139-141` (domain) | The graph is fetched once per page; after a redeploy the mismatch notice calls the cached old graph "today's", and Vault's "fetched from the server now" is false for every record after the first | follow-up | T2's Part A decision (graphs task `:44-48`): cache by fingerprint, refetch for a record naming another one |
+| 2 | MINOR | `slices.ts:408-410` (domain; reopens round-1 m5 with a fact) | A pre-D1 Monko entry carries text AND `vars: {}` (pre-T1 driver: `query = builder.print()`, `vars = emptyMap()`), so it shows a false "Bind vars 0" | follow-up | m5's "no query" condition assumed the false 0 only where text was dropped — factually incomplete. Drop the `query === null` clause |
+| 2 | MINOR | `MonkoDriver.kt:420-446` (domain) | A failed Mongo query records no text (set after execution); Arango sets it before | follow-up | Compute `printed` before executing. Persistence/security path → mutation-checked |
+| 2 | MINOR | `.claude/tasks/20260731-query-vars-in-insights.md:4,13-14`; `slices.ts:418` (domain) | The query-vars task (input to maintainer decision D4) is stale on four facts; any `vars` key marks an entry legacy, so recording vars later would hide all text | follow-up | Rewrite that task; note the coupling |
+| 2 | MINOR | this file `:548`; graphs task `:307-316`, `:336-338`, `:488`, `:492` (domain + implementation) | Notes describe a deleted `OLD_AFTER_SECONDS`, four `finish` sources, "one change" in `refresh.mjs`, and symbols `instanceCountsMeasured` / `graphMismatch` that no longer exist | follow-up | Rewrite the notes |
+| 2 | MINOR | `VaultCollector.kt:103-107`, `KarangoDriver.kt:101`, `AqlTypedQuery.kt:15` (security) | `aql` is stamped on any text, including the public raw `AqlTypedQuery.of(type, query)`; the KDoc "each label names exactly one placeholder-ising printer" is false for it | follow-up | New, not inside round-1 row m7 (Monko-only). No in-repo caller of `of(`. Give raw roots their own label, or correct the KDoc + red-team scenario |
+| 2 | MINOR | `MonkoDriver.kt:73-79` (security) | Keys of a document used as a filter VALUE (embedded-document equality) are kept, so a secret used as a key is recorded | follow-up | Walk a value-position document only if it is an operator document; else bind it as `@pN:object`. Mutation-checked |
+| 2 | MINOR | `vue-verify/.npmrc:3` (+ `ultra/codegen/ts-verify/.npmrc`) (security) | Node pinned at 22.12.0 (2024-12); 22.x has had security releases since | follow-up | Bump within 22.x, newest looked up online |
+| 2 | MINOR | `vue-verify/tests/escaping.spec.ts:41,52` (implementation) | `>=` with `times=4`, but the page holds 5 copies (the raw tree repeats `uri`), so a tab dropping one field stays green | follow-up | Exact count, or assert per position |
+| 2 | MINOR | `vue-verify/tests/graphs.spec.ts:216-221` (implementation) | Only checks dashes ⇔ weight; inverting the Lazy predicate (`graphs.ts:97`) survives | follow-up | Count Lazy injections independently |
+| 2 | MINOR | `InsightsPage.vue:82-83` (implementation) | "the only place a generated SDK is compiled by a real toolchain" — false since vue-verify | follow-up | Restate |
+| 2 | — | surplus (security, implementation, domain) | `--alias` has no user until `@sdk` lands; barrel exports `overrideDefinition`, `isInlinedMongoEntry`, `readDatabaseGraph`; v1's always-"not measured" counters row | maintainer list | Not defects; listed in the follow-up for a decision |
+
+Red-team scenarios proposed (security, collected only): raw AQL under `aql`; a document value keyed by a secret; a
+failed Mongo query whose server error echoes literal values into a logged message (`LogCollector.kt:32-35`, reasoned);
+`enrichApiResponseWithInsights` (`funktor/rest/src/jvmMain/kotlin/respond.kt:71-84`) adding hostname + URL to API
+responses, the 401 to a non-superuser included (unverified, outside this change).
+
+**Verdict:** gate PASS — round 2 clean, e2e present and green on both backends, full suite green on `ff2a865c`
+(15 864 tests, 0 failures; `f1f5acb3` is task docs only).
