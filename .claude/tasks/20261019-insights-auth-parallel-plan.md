@@ -62,7 +62,8 @@ slots). Then T6, T7 and the rest as slots free up. Docs follow-ups land only aft
 **Progress (2026-10-19):** T3 DONE (gate PASS, merged `d9ffbb32`). T2 DONE (gate PASS, merged `d9ffbb32`). T1 DONE
 (gate PASS in round 2, merged `a578ef0a`; MINORs → `20261019-insights-vue-round2-minors.md`; the vue-tabs task stays open
 for its inventory gaps). Running: activation hardening (`20261019-activation-hardening.md`, the first auth track, taken
-ahead of T4 by the maintainer). Next free slot: T4.
+ahead of T4 by the maintainer) and `insights-minors` (`20261019-insights-vue-round2-minors.md`, started 2026-10-19 while
+T4 waits on the maintainer's Kraft-client decision). Next free slot: T4 once decided.
 
 ## Working rules for a track agent
 
