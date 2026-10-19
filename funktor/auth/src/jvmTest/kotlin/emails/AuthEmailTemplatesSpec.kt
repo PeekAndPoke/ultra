@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.MinimalTestRealm
 import io.peekandpoke.funktor.auth.MinimalTestUser
@@ -18,6 +19,8 @@ import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.funktor.messaging.templates.EmailLayout
 import io.peekandpoke.ultra.i18n.Locale
 import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.vault.Stored
 import kotlinx.html.body
 import kotlinx.html.div
 
@@ -358,6 +361,31 @@ class DefaultMessagingLocaleWiringSpec : StringSpec({
 
         messagingFor(Locale("de")).preferredLocales(germanUser) shouldBe
                 listOf(Locale("fr"), Locale("de"))
+    }
+})
+
+/**
+ * A retired account's address is undeliverable by construction; the framework does not even try. A second
+ * layer behind the reset path's own refusal, so a future flow that reaches a retired account cannot mail it.
+ */
+class DefaultMessagingRetiredRecipientSpec : StringSpec({
+
+    "every auth mail to a RETIRED account is refused before anything is rendered or sent" {
+        // `MinimalTestRealm`'s deps have no mailer: reaching it at all fails this test.
+        val messaging = AuthRealm.DefaultMessaging(
+            senderEmail = "sender@test.com",
+            senderName = "Sender",
+            applicationName = "Demo App",
+            realm = MinimalTestRealm(),
+        )
+
+        val retired = AccountRetirement.of(UserId("users/1")).rename(EmailAddress.of("user@test.com"))
+        val user = Stored(_id = "users/1", value = MinimalTestUser(email = retired))
+
+        messaging.sendAccountActivationEmail(user, activationUrl = "https://a", cancelUrl = "https://c")
+            .success shouldBe false
+        messaging.sendPasswordRecoveryEmil(user, resetUrl = "https://r").success shouldBe false
+        messaging.sendPasswordChangedEmail(user).success shouldBe false
     }
 })
 

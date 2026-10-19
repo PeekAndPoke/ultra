@@ -523,6 +523,10 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
 
                     emails.capturedTo(retired.value) shouldBe emptyList()
                     emails.capturedTo(email) shouldBe emptyList()
+
+                    withClue("not even a reset token is issued: the mailer's own refusal is a second layer, not the first") {
+                        records.findLatestRecordBy(AuthRecord.PasswordRecoveryToken, realm.id, UserId(id)).shouldBeNull()
+                    }
                 }
             }
         }
