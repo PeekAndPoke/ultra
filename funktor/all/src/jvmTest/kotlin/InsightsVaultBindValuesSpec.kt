@@ -35,6 +35,7 @@ import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang.dsl.eq
 import io.peekandpoke.monko.monko
 import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.UltraLogManager
 import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
@@ -113,6 +114,13 @@ class S1ProbeApi : ApiRoutes("insights-s1-probe", authFloor = { authenticated() 
                 kontainer.get(S1KaSessionsRepo::class).findByToken(token),
                 kontainer.get(S1MoSessionsRepo::class).findByToken(token),
             )
+
+            // Two log lines, so the record's log slice is real too -- for the Vue fixtures. No token in them:
+            // a log line IS recorded verbatim, which is the app's own business.
+            kontainer.get(UltraLogManager::class).getLogger(S1ProbeApi::class).apply {
+                info("S1 probe: looked a session token up on both backends")
+                warning("S1 probe: found ${found.size} of 2")
+            }
 
             ApiResponse.ok(found.size)
         }
@@ -299,6 +307,14 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
                 query shouldContain "@"
             }
             entry["varsCount"]!!.jsonPrimitive.int shouldBeGreaterThanOrEqual 1
+        }
+
+        "the probe's log lines are recorded, so the log slice of this record is real" {
+            val log = Json.parseToJsonElement(probeRecord()).jsonObject["data"]!!.jsonObject["collectors"]!!.jsonArray
+                .map { it.jsonObject }
+                .single { it["key"]!!.jsonPrimitive.content == "log" }["data"]!!.jsonObject["entries"]!!.jsonArray
+
+            log.map { it.jsonObject["level"]!!.jsonPrimitive.content } shouldBe listOf("INFO", "WARNING")
         }
 
         "no entry carries the fields that used to hold values" {

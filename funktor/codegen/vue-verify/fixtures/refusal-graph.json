@@ -17,7 +17,7 @@
     }
   ],
   "insights": {
-    "ts": 1792421018,
+    "ts": 1792421537,
     "method": "GET",
     "url": "http://api.funktor.local:80/_/funktor/insights/graphs/kontainer",
     "server": "thebasez16-2",
@@ -25,6 +25,6 @@
       "value": 401,
       "description": "Unauthorized"
     },
-    "durationMs": 0.04204
+    "durationMs": 0.037992
   }
 }

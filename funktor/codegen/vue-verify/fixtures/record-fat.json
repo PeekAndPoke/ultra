@@ -9,9 +9,9 @@
       "file": "2026-10-01T12:00:00.000000000.json"
     },
     "recordedAt": {
-      "ts": 1792421021430,
+      "ts": 1792421539508,
       "timezone": "UTC",
-      "human": "2026-10-19T14:43:41.430Z"
+      "human": "2026-10-19T14:52:19.508Z"
     },
     "method": "GET",
     "path": "/_/funktor/introspection/lifecycle-hooks",
@@ -131,7 +131,7 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1792421021,
+    "ts": 1792421539,
     "method": "GET",
     "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D10%2D01/2026%2D10%2D01T12%3A00%3A00%2E000000000%2Ejson",
     "server": "thebasez16-2",
@@ -139,6 +139,6 @@
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 2.039588
+    "durationMs": 1.246929
   }
 }

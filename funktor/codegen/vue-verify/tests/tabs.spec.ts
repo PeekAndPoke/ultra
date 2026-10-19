@@ -114,6 +114,21 @@ describe('log', () => {
 
         expect(host.textContent).toContain('No log entries')
     })
+
+    it('shows each recorded line in a pre, toned by level', async () => {
+        const slice = sliceOf(recorded.vault(), 'log')
+        expect(slice.entries.map((entry: { level: string }) => entry.level)).toEqual(['INFO', 'WARNING'])
+
+        const host = await render(LogTab, slice)
+
+        expect([...host.querySelectorAll('pre')].map((pre) => pre.textContent)).toEqual(
+            slice.entries.map((entry: { text: string }) => entry.text),
+        )
+        expect([...host.querySelectorAll('.fk-log-entry .fk-label')].map((label) => label.className)).toEqual([
+            'fk-label fk-label--ok',
+            'fk-label fk-label--warn',
+        ])
+    })
 })
 
 describe('runtime', () => {
