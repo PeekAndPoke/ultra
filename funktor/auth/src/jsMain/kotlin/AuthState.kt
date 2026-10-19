@@ -3,6 +3,8 @@ package io.peekandpoke.funktor.auth
 import io.peekandpoke.funktor.auth.api.AuthApiClient
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
@@ -260,6 +262,7 @@ class AuthState<USER>(
         return streamSource()
     }
 
+    /** Activates the account; null when the server could not be asked (transport or server error). */
     suspend fun activateAccount(request: AuthActivateAccountRequest): AuthActivateAccountResponse? {
         return api
             .activateAccount(request)
@@ -268,6 +271,16 @@ class AuthState<USER>(
             .firstOrNull()
     }
 
+    /** Retires a never-activated account ("I did not sign up"); null when the server could not be asked. */
+    suspend fun cancelSignUp(request: AuthCancelSignUpRequest): AuthCancelSignUpResponse? {
+        return api
+            .cancelSignUp(request)
+            .map { it.data!! }
+            .catch { /* noop */ }
+            .firstOrNull()
+    }
+
+    /** Asks for a new activation mail; null when the server could not be asked. */
     suspend fun resendActivation(request: AuthResendActivationRequest): AuthResendActivationResponse? {
         return api
             .resendActivation(request)
