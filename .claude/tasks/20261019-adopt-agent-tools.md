@@ -24,6 +24,12 @@ restore, compile-error "kills"), and task-doc consistency (statuses vs folder, l
       before archiving, `.claude/tasks/…` links resolve. Fix the 5 broken links it already found in
       `.claude/tasks-archive/2026-03`/`2026-04` (`funktor-v1-roadmap.md`, `monko-query-dsl.md`,
       `mutator-quality-improvements.md`).
+- [ ] `console/tools/review-pack/` — per review round: `full.diff` from the merge base (untracked included) and
+      `delta.diff` since the previous round, round states under `refs/review-pack/<label>/round-<n>`; warns when the merge
+      base moved (T3's wrong-diff-base slip). Would have replaced the hand-made `change.diff` / ledger-free task copy of
+      T1's round 2. One real run on the next gate.
+- [ ] Copy the CURRENT versions (test-digest fixed both first-run defects; mutate now re-runs the restored code after a
+      campaign so the last mutant's failing XML does not linger as fresh).
 - [ ] Point the review-loop skill and CLAUDE.md's verification traps at the tools (one line each), on master.
 - [ ] Skill `.claude/skills/console-tools/SKILL.md` from the draft `/opt/dev/peekandpoke/agent-tools/skill/console-tools/
       SKILL.md` (requested via Mission-Control 2026-10-19), adapted: `console/wt-gradle.sh` as the test command, the
