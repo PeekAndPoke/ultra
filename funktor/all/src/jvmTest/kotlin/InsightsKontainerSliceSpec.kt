@@ -25,6 +25,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -200,18 +201,20 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
             services.forEach { raw ->
                 withClue(raw.toString().take(200)) {
                     raw.keys() shouldContainExactlyInAnyOrder listOf("cls", "type", "instances")
-                    raw.jsonObject["cls"].shouldNotBeNull().jsonPrimitive.isString shouldBe true
-                    raw.jsonObject["type"].shouldNotBeNull().jsonPrimitive.isString shouldBe true
+                    // a flat string: the fat shape wrapped every class name as {"fqn": ...}
+                    (raw.jsonObject["cls"] as? JsonPrimitive)?.isString shouldBe true
+                    (raw.jsonObject["type"] as? JsonPrimitive)?.isString shouldBe true
 
                     val instances = raw.jsonObject["instances"].shouldNotBeNull().jsonArray
                     instances.shouldNotBeEmpty()
 
                     instances.forEach { instance ->
                         instance.keys() shouldContainExactlyInAnyOrder listOf("cls", "createdAt")
-                        instance.jsonObject["cls"].shouldNotBeNull().jsonPrimitive.isString shouldBe true
+                        (instance.jsonObject["cls"] as? JsonPrimitive)?.isString shouldBe true
 
+                        // an object, never a bare number: a reader took bare numbers for epoch SECONDS (D2)
                         val createdAt = instance.jsonObject["createdAt"].shouldNotBeNull()
-                        createdAt.keys() shouldContainExactlyInAnyOrder listOf("ts", "timezone", "human")
+                        (createdAt as? JsonObject)?.keys shouldBe setOf("ts", "timezone", "human")
 
                         // epoch MILLIS: a seconds value would be ~1000x too small to land in this window
                         val ts = createdAt.jsonObject["ts"].shouldNotBeNull().jsonPrimitive.long

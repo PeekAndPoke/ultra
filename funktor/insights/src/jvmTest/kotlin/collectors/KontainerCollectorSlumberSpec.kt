@@ -81,13 +81,18 @@ class KontainerCollectorSlumberSpec : FreeSpec() {
         }
 
         "class names are flat strings, not {fqn} objects" {
-            val handler = slumbered(slice()).service(KontainerFixture.Handler::class)
+            val services = slumbered(slice()).services()
 
-            handler["cls"].shouldBeInstanceOf<String>()
+            services.forEach { service ->
+                service["cls"].shouldBeInstanceOf<String>()
+
+                @Suppress("UNCHECKED_CAST")
+                (service["instances"] as List<Map<String, Any?>>).forEach { it["cls"].shouldBeInstanceOf<String>() }
+            }
 
             @Suppress("UNCHECKED_CAST")
-            val instance = (handler["instances"] as List<Map<String, Any?>>).single()
-            instance["cls"] shouldBe KontainerFixture.Handler::class.java.name
+            val handler = (slumbered(slice()).service(KontainerFixture.Handler::class)["instances"] as List<Map<String, Any?>>)
+            handler.single()["cls"] shouldBe KontainerFixture.Handler::class.java.name
         }
 
         "createdAt is {ts, timezone, human}, ts in epoch MILLIS" {
