@@ -1,8 +1,10 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-10-19 12:45 (released by Ultra-Main-Dev)**
-**STATE: FREE — take the lock before building.**
+**HOLDER: Ultra-Main-Dev agent**
+**SINCE: 2026-10-19 13:45**
+**STATE: HELD — Wave 0 of `.claude/tasks/20261019-insights-auth-parallel-plan.md` (test-DB isolation, example bundles
+out of `build`, full-suite slot), then merges from the worktree tracks. Humans too: please don't build this worktree
+meanwhile.**
 
 ## What the last holder changed — Ultra-Main-Dev, 2026-10-19 (flaky addon tests, Gradle DSL deprecations, 0.113.0)
 
