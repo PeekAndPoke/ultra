@@ -340,3 +340,37 @@ not fire); SSO racing the sweep/cancel (does `refreshToken` renew a session for 
 
 **Verdict:** round 1 NOT clean (1 MAJOR). Fix batch (the MAJOR + the MINORs, maintainer's standing direction), then
 round 2 (`reviewer-xhigh`, two-phase). Two maintainer decisions parked (they do not stop the loop).
+
+Round 2 (2026-10-19), two-phase, `reviewer-xhigh` ×3, head `f8135e70` on master `6b6743ad`. **3 MAJOR → not clean;
+safety valve fired (two rounds without a clean one) → maintainer asked before round 3.**
+Coordinator checks: `AuthRealm.kt:418-464` read — credentials go at `:427`, the rename at `:437`, the conditional
+marker delete (the commit point) only at `:456`, so the reviewers' interleaving is real; `ActivateAccountPage.kt:246-251`
+posts the cancel token to activate while `EmailAndPasswordAuth.kt:511-513` accepts only the activation token — the
+button cannot succeed; `:552-554` cancel falls back to the activation token with no test. **A coordinator claim that did
+not survive:** from a truncated copy of the security report I relayed its MAJOR as "sign-in reads the password before
+the marker"; the full report lists SSO password-before-marker as CLEAN and its MAJOR is the retire ordering below.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MAJOR | `AuthRealm.kt:418-464` (`:427`, `:437` before `:456`) (all three) | Round 1's conditional marker delete fixes only WHO wins, not WHAT is left: retire strips credentials and renames the email before its commit point, so an activation that wins the race leaves an ACTIVE account with no credentials under a retired key — permanent lockout (reset/SSO/refresh refuse retired rows). The KDoc's "changing nothing / never a live one" is false. Reachable via Cancel-vs-Activate and sweep-vs-activate at day 7. The commit-point test (`AuthRealmActivationBaseSpec.kt:181`) asserts only the boolean, on a non-persisting mock | fix (design: maintainer) | Claim first: the commit point must come BEFORE anything destructive, and a claimed-but-unfinished retire must stay non-activatable and retryable. Same pattern in `resolveSsoAccount` (`:537-544`) |
+| 2 | MAJOR | `ActivateAccountPage.kt:246-251`, `EmailAndPasswordAuth.kt:511-513` (implementation + domain) | Cancel mode's "Activate my account instead" posts the cancel token to activate, which accepts only the activation token — it always fails | fix | Drop the button (text pointing at the activation mail); the cancel token must NOT activate |
+| 2 | MAJOR | `EmailAndPasswordAuth.kt:552-554` (implementation) | Cancel with the ACTIVATION token (the fallback) has no test on either backend | fix | e2e on both backends + jsTest; mutation-checked (remove the fallback → red) |
+| 2 | MINOR | `AuthRealm.kt:537-544` (security) | `resolveSsoAccount` deletes passwords/tokens before its commit; no rename, reset still recovers | fix | Same claim-first ordering as the retire MAJOR |
+| 2 | MINOR | five KDocs (implementation) | Still say cancel uses the activation token | fix | Rewrite |
+| 2 | MINOR | `AuthLoginApi.kt:113,131` (security) | activate/resend echo `e.message`; `cancelSignUp` suppresses it | fix | Same treatment as cancel |
+| 2 | MINOR | reset completion; `signIn` (domain) | Reset completion ignores the token delete count; `signIn` does not refuse `isRetired` | fix | Act on the count; refuse retired |
+| 2 | MINOR | reset-loses-marker path (domain) | Removes ALL passwords, not the stale one | fix | Narrow it |
+| 2 | MINOR | sweep e2e (implementation) | The assertion passes because the token expired | fix | Assert on the retire itself |
+| 2 | MINOR | `[Mode.*]` KDoc links (implementation) | Unresolved | fix | Resolve or plain code |
+| 2 | MINOR | sweep query (domain) | No index on (realm, `_type`, `createdAt.ts`) | fix | Add it, both backends |
+| 2 | MINOR | `AuthRecordStorage.save`, `Adapter.saveRecord` (implementation, SURPLUS) | No caller left after `replaceIfExists` | fix | Remove |
+| 2 | MINOR | docs follow-up (domain) | New upgrade traps: GitHub `user:email` consent; the first sweep retires OLD pending accounts; retired rows in the user collection; the worker only via `Funktor`; `TODO()` retire throws an Error; passwordless after SSO; custom Messaging lacks the guard; stale API list | docs task | Listed in the docs follow-up on archive |
+| 2 | — | sent-message store refs, failed-mail logs (domain) | Keep the plaintext address that the retired row now hashes | **maintainer note** | Out of this track's scope; raise with the maintainer |
+
+CLEAN (security, round 2): retired-key forging/squatting, revival paths, token single-use/owner/type/realm scoping,
+cancel cannot hit an active account, link lifetimes, SSO verified-claim handling, SSO password-before-marker order,
+enumeration on cancel/activate/resend. Bounded races already in the red-team task: SSO racing retire (refresh fails
+closed), resend racing retire (stray mail, no session), custom-provider `e.userId` trust.
+
+**Verdict:** round 2 NOT clean (3 MAJOR). Safety valve: stop and ask the maintainer before the round-2 fix batch and
+round 3 (`reviewer-top`).
