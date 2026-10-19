@@ -157,6 +157,9 @@ internal class AqlRootExpression<T>(
 
     private val stmts: List<AqlStatement> get() = builder.stmts
 
+    /** This query, printed once: `buildAqlQuery` takes its text from here, so `AqlTypedQuery` can tell it from raw text. */
+    val printed: AqlPrinter.Result by lazy { AqlPrinter().append(this).build() }
+
     override fun getType() = ret.getType()
 
     override fun innerType() = ret.innerType()

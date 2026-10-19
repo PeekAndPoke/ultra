@@ -94,8 +94,9 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
              * enforce the invariant for every consumer at once. The frontend renders [Entry.query]
              * unconditionally and needs no such list.
              *
-             * `aql` qualifies: Karango records the query with its `@placeholders` intact and passes
-             * values separately. `mongo-bound` qualifies: `MonkoDriver` records the text of
+             * `aql` qualifies: Karango records under it only the text its query DSL printed, `@placeholders`
+             * intact and values passed separately. Raw text (`AqlTypedQuery.of`) is `aql-raw`, NOT trusted:
+             * it may hold literals. `mongo-bound` qualifies: `MonkoDriver` records the text of
              * `FindQueryBuilder.printQuery()` under that label, every filter value an `@pN:<type>`
              * placeholder. Monko's old label `json` does NOT: until 2026-10-19 it was the filter WITH its
              * values, and a driver older than that may still send it.
