@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.cluster.locks.workers
 import io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
 import io.peekandpoke.funktor.cluster.locks.GlobalServerList
 import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.funktor.cluster.locks.domain.isLegacy
 import io.peekandpoke.funktor.cluster.workers.StateProvider
 import io.peekandpoke.funktor.cluster.workers.Worker
 import io.peekandpoke.ultra.datetime.MpInstant
@@ -42,7 +43,7 @@ class GlobalLocksCleanupWorker(
             log.warning(
                 """
                     Removed ${expired.size} Global Locks that where expired.
-                    Server => Lock => Created => Last heartbeat:
+                    Server => Lock => Created => Last heartbeat, or expiry:
 
                 """.trimIndent() + mapped
             )
@@ -51,7 +52,7 @@ class GlobalLocksCleanupWorker(
 
     private suspend fun releaseHeldByDeadServers(aliveServerIds: Set<String>) {
         // Only locks without a token: a lock with one is dead once its heartbeat stops, sooner than its server's beacon.
-        val heldByDeadServers = globalLocks.releaseBy { lock -> lock.token.isEmpty() && lock.serverId !in aliveServerIds }
+        val heldByDeadServers = globalLocks.releaseBy { lock -> lock.isLegacy && lock.serverId !in aliveServerIds }
 
         if (heldByDeadServers.isNotEmpty()) {
             val mapped = heldByDeadServers.mapped()
@@ -59,7 +60,7 @@ class GlobalLocksCleanupWorker(
             log.warning(
                 """
                     Removed ${heldByDeadServers.size} Global Locks that where held by dead servers.
-                    Server => Lock => Created => Last heartbeat:
+                    Server => Lock => Created => Last heartbeat, or expiry:
 
                 """.trimIndent() + mapped
             )
@@ -67,6 +68,12 @@ class GlobalLocksCleanupWorker(
     }
 
     private fun List<GlobalLockEntry>.mapped() = joinToString("\n") {
-        "${it.serverId} => ${it.key} => ${it.created.toIsoString()} => ${it.lastHeartbeat.toIsoString()}"
+        // The field a lock is judged by: `expires` without heartbeats, else the last heartbeat.
+        val decisive = when (it.isLegacy) {
+            true -> "expires ${it.expires.toIsoString()}"
+            false -> "last heartbeat ${it.lastHeartbeat.toIsoString()}"
+        }
+
+        "${it.serverId} => ${it.key} => ${it.created.toIsoString()} => $decisive"
     }
 }

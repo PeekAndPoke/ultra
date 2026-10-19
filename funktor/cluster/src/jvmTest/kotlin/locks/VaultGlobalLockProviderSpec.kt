@@ -1,7 +1,9 @@
 package io.peekandpoke.funktor.cluster.locks
 
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.funktor.cluster.locks.domain.isLegacy
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
@@ -10,7 +12,7 @@ import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
-import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -19,11 +21,14 @@ class VaultGlobalLockProviderSpec : VaultGlobalLocksProviderSpecBase() {
     override val repo: VaultGlobalLocksProvider.Repo = TestLockRepo()
 
     init {
-        "A heartbeat interval at or beyond the legacy expiry is rejected" {
-            // Shorter than the ttl, but `expires` (15 minutes ahead of each beat) would lapse between two beats.
-            shouldThrow<IllegalArgumentException> {
-                createSubject(ttl = 1.hours, heartbeatInterval = 20.minutes)
-            }
+        // Versions without heartbeats judge a lock by `expires`, 15 minutes after its last beat: a longer ttl would let
+        // them take over a lock this version still counts as alive.
+        "A ttl of 15 minutes is accepted" {
+            shouldNotThrowAny { createSubject(ttl = 15.minutes) }
+        }
+
+        "A ttl longer than 15 minutes is rejected" {
+            shouldThrow<IllegalArgumentException> { createSubject(ttl = 15.minutes + 1.milliseconds) }
         }
     }
 
@@ -97,7 +102,7 @@ class VaultGlobalLockProviderSpec : VaultGlobalLocksProviderSpecBase() {
         override suspend fun removeIfUnchanged(entry: GlobalLockEntry): Boolean = synchronized(entries) {
             val current = entries[entry.key]?.value ?: return false
 
-            val unchanged = when (entry.token.isEmpty()) {
+            val unchanged = when (entry.isLegacy) {
                 true -> current.created == entry.created
                 false -> current.token == entry.token && current.lastHeartbeat == entry.lastHeartbeat
             }

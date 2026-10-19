@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -66,9 +67,6 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
     protected suspend fun stored(key: String): GlobalLockEntry? = repo.findById(key)?.resolve()
 
     protected suspend fun storedKeys(): List<String> = repo.findAll().toList().map { it.resolve().key }.sorted()
-
-    /** Whether a heartbeat on its own dispatcher keeps beating while blocking work saturates Dispatchers.IO. */
-    protected open val beatsThroughSaturatedIo: Boolean get() = true
 
     protected suspend fun insertLock(
         key: String,
@@ -118,8 +116,19 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
         insertLock(entry.key, token = "new-owner")
     }
 
-    private suspend fun runCleanupWorker(servers: GlobalServerList, ttl: Duration = 300.milliseconds) {
-        GlobalLocksCleanupWorker(servers = servers, globalLocks = createSubject(ttl = ttl), log = NullLog)
+    /** The repo, with each heartbeat going through [intercept], which may call [beat] (the real one), or not. */
+    private fun interceptingHeartbeat(intercept: suspend (beat: suspend () -> Boolean) -> Boolean): VaultGlobalLocksProvider.Repo {
+        // Named apart: inside the object, `repo` is the object's own Repository.repo.
+        val inner = repo
+
+        return object : VaultGlobalLocksProvider.Repo by inner {
+            override suspend fun heartbeat(key: String, token: String, heartbeatAt: MpInstant, expiresAt: MpInstant): Boolean =
+                intercept { inner.heartbeat(key = key, token = token, heartbeatAt = heartbeatAt, expiresAt = expiresAt) }
+        }
+    }
+
+    private suspend fun runCleanupWorker(servers: GlobalServerList, log: Log = NullLog) {
+        GlobalLocksCleanupWorker(servers = servers, globalLocks = createSubject(ttl = 300.milliseconds), log = log)
             .execute { WorkersRunner.State.Running }
     }
 
@@ -176,9 +185,15 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
             }
         }
 
-        "A holder keeps beating while blocking work saturates Dispatchers.IO".config(enabledIf = { beatsThroughSaturatedIo }) {
+        "A holder keeps beating while blocking work saturates Dispatchers.IO" {
             val ttl = 300.milliseconds
-            val subject = createSubject(ttl = ttl, heartbeatInterval = 50.milliseconds)
+            // When each beat landed. Kept in memory: reading it needs no IO thread (a repo read might).
+            val beats = ConcurrentLinkedDeque<MpInstant>()
+            val subject = createSubject(
+                ttl = ttl,
+                heartbeatInterval = 50.milliseconds,
+                repository = interceptingHeartbeat { beat -> beat().also { if (it) beats.add(MpInstant.now()) } },
+            )
             val holding = CompletableDeferred<Unit>()
             val done = CompletableDeferred<Unit>()
 
@@ -186,6 +201,7 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
             withContext(Dispatchers.Default) {
                 val held = async { subject.lock("key") { holding.complete(Unit); done.await() } }
                 holding.await()
+                val acquiredAt = MpInstant.now()
 
                 // More blocking work than Dispatchers.IO has threads (64, or the number of cores).
                 val blockers = List(maxOf(64, Runtime.getRuntime().availableProcessors()) + 8) {
@@ -196,8 +212,8 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
                 }
 
                 delay(ttl * 2)
-                // Read while IO is still saturated: the holder must have beaten within the last ttl.
-                val silentFor = MpInstant.now() - stored("key")!!.lastHeartbeat
+                // IO is still saturated: a beat must have landed within the last ttl.
+                val silentFor = MpInstant.now() - (beats.peekLast() ?: acquiredAt)
 
                 blockers.joinAll()
                 done.complete(Unit)
@@ -224,30 +240,38 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
         "A failed heartbeat is retried with the next beat" {
             val log = CapturingLog()
             val failures = AtomicInteger(2)
-            // Named apart: inside the object, `repo` is the object's own Repository.repo.
-            val inner = repo
-            // The first two beats fail, as on a database hiccup.
-            val flaky = object : VaultGlobalLocksProvider.Repo by inner {
-                override suspend fun heartbeat(
-                    key: String,
-                    token: String,
-                    heartbeatAt: MpInstant,
-                    expiresAt: MpInstant,
-                ): Boolean = when (failures.getAndDecrement() > 0) {
-                    true -> error("database hiccup")
-                    false -> inner.heartbeat(key = key, token = token, heartbeatAt = heartbeatAt, expiresAt = expiresAt)
-                }
-            }
             val subject = createSubject(
                 ttl = 300.milliseconds,
                 heartbeatInterval = 50.milliseconds,
                 log = log,
-                repository = flaky,
+                // The first two beats fail, as on a database hiccup.
+                repository = interceptingHeartbeat { beat -> if (failures.getAndDecrement() > 0) error("database hiccup") else beat() },
             )
 
             subject.lock("key") {
                 val acquired = stored("key")!!
                 delay(300.milliseconds)
+
+                stored("key")!!.lastHeartbeat.toEpochMillis() shouldBeGreaterThan acquired.lastHeartbeat.toEpochMillis()
+            }
+
+            log.warnings.filter { it.contains("heartbeat failed") } shouldHaveSize 2
+        }
+
+        "A hanging heartbeat times out, and the next beat retries" {
+            val log = CapturingLog()
+            val hangs = AtomicInteger(2)
+            val subject = createSubject(
+                ttl = 300.milliseconds,
+                heartbeatInterval = 50.milliseconds,
+                log = log,
+                // The first two beats hang, as on a stuck connection.
+                repository = interceptingHeartbeat { beat -> if (hangs.getAndDecrement() > 0) awaitCancellation() else beat() },
+            )
+
+            subject.lock("key") {
+                val acquired = stored("key")!!
+                delay(400.milliseconds)
 
                 stored("key")!!.lastHeartbeat.toEpochMillis() shouldBeGreaterThan acquired.lastHeartbeat.toEpochMillis()
             }
@@ -470,19 +494,24 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
             // Neither is expired, so only the dead-server rule decides.
             insertLock("dead", token = "", created = now.minus(1.hours), expires = now.plus(10.minutes), serverId = "dead-server")
             insertLock("alive", token = "", created = now.minus(1.hours), expires = now.plus(10.minutes), serverId = "other-server")
+            val log = CapturingLog()
+            val dead = stored("dead")!!
 
             runCleanupWorker(
-                GlobalServerList().apply {
+                servers = GlobalServerList().apply {
                     setAll(
                         listOf(
                             ServerBeacon(serverId = "dead-server", lastPing = now.minus(10.minutes)),
                             ServerBeacon(serverId = "other-server", lastPing = now),
                         )
                     )
-                }
+                },
+                log = log,
             )
 
             storedKeys() shouldBe listOf("alive")
+            // Logged with the field a lock without heartbeats is judged by.
+            log.warnings.single() shouldContain "dead-server => dead => ${dead.created.toIsoString()} => expires ${dead.expires.toIsoString()}"
         }
 
         // Repo //////////////////////////////////////////////////////////////////////////////////////////////////

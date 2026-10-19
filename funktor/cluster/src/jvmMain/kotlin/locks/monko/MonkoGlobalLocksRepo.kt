@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.cluster.locks.VaultGlobalLocksProvider
 import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import io.peekandpoke.funktor.cluster.locks.domain.created
 import io.peekandpoke.funktor.cluster.locks.domain.expires
+import io.peekandpoke.funktor.cluster.locks.domain.isLegacy
 import io.peekandpoke.funktor.cluster.locks.domain.lastHeartbeat
 import io.peekandpoke.funktor.cluster.locks.domain.token
 import io.peekandpoke.funktor.core.fixtures.FixtureLoader
@@ -73,7 +74,7 @@ class MonkoGlobalLocksRepo(driver: MonkoDriver, repoName: String) :
     }
 
     override suspend fun removeIfUnchanged(entry: GlobalLockEntry): Boolean {
-        val unchanged = when (entry.token.isEmpty()) {
+        val unchanged = when (entry.isLegacy) {
             // Written without heartbeats: the creation time tells two acquisitions apart.
             true -> repoExpr.created.ts eq entry.created.toEpochMillis()
             // The same acquisition, and no heartbeat since it was read.

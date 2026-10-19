@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.cluster.locks
 
 import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
+import io.peekandpoke.funktor.cluster.locks.domain.isLegacy
 import io.peekandpoke.funktor.core.Retry.retry
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.Log
@@ -17,6 +18,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.util.UUID
 import kotlin.math.max
 import kotlin.time.Duration
@@ -30,6 +32,14 @@ import kotlin.time.Duration.Companion.seconds
  * While a handler runs, the holder refreshes [GlobalLockEntry.lastHeartbeat] every [heartbeatInterval]. A lock whose
  * last heartbeat is older than [ttl] is dead and may be taken over, however long it has been held. A lock written by
  * a version without heartbeats (empty [GlobalLockEntry.token]) is dead once its [GlobalLockEntry.expires] has passed.
+ *
+ * Operating constraints:
+ * - [ttl] must exceed the worst database stall plus the clock skew between servers plus one [heartbeatInterval];
+ *   otherwise a live lock can be taken over.
+ * - [ttl] and [heartbeatInterval] must be the same on every server, so changing them takes two deploys: a server
+ *   judges other servers' locks by its own [ttl].
+ * - A lock makes concurrent work unlikely, not impossible: a write that protects an invariant also needs a
+ *   conditional write.
  *
  * When acquiring the lock fails, this provider will wait until it retries.
  * The duration of this delay can be configured by [retryDelayMs].
@@ -63,7 +73,7 @@ open class VaultGlobalLocksProvider(
     companion object {
         private val cleanRegex = "[^a-zA-Z0-9]".toRegex()
 
-        /** How far each write moves [GlobalLockEntry.expires], the only field versions without heartbeats read. */
+        /** How far each write moves [GlobalLockEntry.expires], which versions without heartbeats judge a lock by. */
         internal val legacyExpiry: Duration = 15.minutes
 
         // Its own threads, beyond the limit of Dispatchers.IO, which blocking handlers may saturate. Few suffice:
@@ -75,9 +85,9 @@ open class VaultGlobalLocksProvider(
         require(heartbeatInterval.isPositive() && heartbeatInterval < ttl) {
             "heartbeatInterval ($heartbeatInterval) must be positive and shorter than ttl ($ttl)"
         }
-        // Otherwise `expires` lapses between two beats, and a server without heartbeats takes the live lock over.
-        require(heartbeatInterval < legacyExpiry) {
-            "heartbeatInterval ($heartbeatInterval) must be shorter than $legacyExpiry"
+        // Otherwise a server without heartbeats, judging by `expires`, takes over a lock this one still counts as alive.
+        require(ttl <= legacyExpiry) {
+            "ttl ($ttl) must not exceed $legacyExpiry"
         }
     }
 
@@ -176,7 +186,10 @@ open class VaultGlobalLocksProvider(
             val now = MpInstant.now()
 
             val held = try {
-                repository.heartbeat(key = key, token = token, heartbeatAt = now, expiresAt = now.plus(legacyExpiry))
+                // A hanging call counts as a failed beat, rather than silently stopping the beating.
+                withTimeout(heartbeatInterval) {
+                    repository.heartbeat(key = key, token = token, heartbeatAt = now, expiresAt = now.plus(legacyExpiry))
+                }
             } catch (e: Throwable) {
                 // Only our own cancellation ends the beating; any other failure is retried with the next beat.
                 currentCoroutineContext().ensureActive()
@@ -203,7 +216,7 @@ open class VaultGlobalLocksProvider(
         }
     }
 
-    private fun isDead(entry: GlobalLockEntry, now: MpInstant): Boolean = when (entry.token.isEmpty()) {
+    private fun isDead(entry: GlobalLockEntry, now: MpInstant): Boolean = when (entry.isLegacy) {
         // Written by a version without heartbeats, which keeps `expires` as its only rule.
         true -> now > entry.expires
         false -> now - entry.lastHeartbeat > ttl
