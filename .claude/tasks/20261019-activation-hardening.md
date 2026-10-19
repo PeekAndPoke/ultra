@@ -136,6 +136,13 @@ scanner reason as activation, single-use by delete count.
       3. an app's own activation page that POSTs on load reopens the scanner-detonation hole (decision 1);
       4. an app's own SSO provider must route an existing account through `AuthRealm.resolveSsoAccount` (sign-in AND
          sign-up), or pending accounts are taken over exactly as before.
+      Round 2 added (gate, 2026-10-19): GitHub sign-in now asks for the `user:email` scope (a new consent prompt); the
+      first sweep after upgrading retires every OLD pending account at once; retired rows stay in the app's user
+      collection (lists and admin screens show them); the expiry worker exists only via `funktor/all`'s `Funktor`
+      module; a `retire()` left as `TODO()` throws an `Error`, not an `Exception`; an account activated by SSO is
+      passwordless until a reset; an app's own `AuthRealm.Messaging` lacks the retired-recipient guard; and the
+      breaking-API list under Implementation notes must be re-checked against the final code (`claimedBy`,
+      `replaceIfUnclaimed` / `removeIfUnclaimed`, `SignUpCancelToken`, `retiredKeyPrefix`, `save` removed).
 
 ## Out of scope (tracked elsewhere)
 
@@ -374,3 +381,64 @@ closed), resend racing retire (stray mail, no session), custom-provider `e.userI
 
 **Verdict:** round 2 NOT clean (3 MAJOR). Safety valve: stop and ask the maintainer before the round-2 fix batch and
 round 3 (`reviewer-top`).
+
+## Round 2 fix batch (2026-10-19, maintainer-approved design: CLAIM FIRST)
+
+Every round-2 row dispositioned `fix`; the `docs task` row is listed in the docs follow-up box; the `maintainer note`
+row (sent-message refs and failed-mail logs keep the plaintext address) is skipped as instructed. Activate stays as
+it is (the password-at-activation question is answered by `20261019-email-first-signup.md`). No GlobalLocks: the
+commit point is a conditional write on the pending marker itself.
+
+**The claim.** `AuthRecord.PendingActivation.claimedBy` (`AuthRecord.kt:86`) is null until a one-way change takes the
+account: `"retire"` or `"sso"`. Two atomic, conditional storage steps, both backends:
+- `AuthRecordStorage.replaceIfUnclaimed` (`AuthRecordStorage.kt:87`) — replace only while the record exists AND is
+  unclaimed. Karango: one AQL `FOR doc … FILTER doc._key == @key && doc.claimedBy == null REPLACE … RETURN NEW`
+  (`KarangoAuthRecordsRepo.kt:170`); Mongo: `replaceOne(and(_id, claimedBy == null), upsert = false)`
+  (`MonkoAuthRecordsRepo.kt:182`). A missing `claimedBy` reads as null, so other records and pre-existing markers
+  qualify. This is also resend's write, so a resend can never undo a claim.
+- `AuthRecordStorage.removeIfUnclaimed` (`:89`) — the same filter with `REMOVE` / `deleteOne`: the activation and
+  reset commit point.
+
+| Ledger row | What changed | Where |
+|---|---|---|
+| MAJOR retire ordering | `retirePendingAccount` CLAIMS FIRST (`replaceIfUnclaimed` with `claimedBy = retire`); a lost claim changes NOTHING and returns false; a claim already held by `retire` is resumed; only then credentials go, the email is renamed, and the marker goes last. The claimed marker is back-dated to the epoch, so the next sweep finishes a retire that stopped part-way (a failing or no-op `retire()` now leaves the account CLAIMED and blocked, not pending). KDoc rewritten to match | `AuthRealm.kt:426,439,455` |
+| … blocked while claimed | sign-in refuses a claimed account (no resend token) (`EmailAndPasswordAuth.kt:320`); resend refuses (`:400`, and its conditional write); activation refuses and commits only by `removeIfUnclaimed` (`:529,545`); reset request (`:634`) and completion refuse; SSO refuses a retire claim; refresh refuses via `isBeingRetired` (`AuthRealm.kt:404,646`) | as listed |
+| MINOR SSO ordering | `resolveSsoAccount` claims first (`claimedBy = sso`), then deletes the password and tokens, then the marker; losing the claim to a retire touches nothing; a claim stopped part-way is finished by the next verified SSO sign-in | `AuthRealm.kt:541` |
+| MAJOR Cancel mode activate | Removed; Cancel mode points at the mail's "Activate account" link instead — its token cannot activate | `ActivateAccountPage.kt:245` |
+| MAJOR cancel by activation token | e2e on both backends + page spec (Activate mode's cancel posts the activation token to `/activate/cancel`) | `ActivationHardeningE2eSpec.kt`, `ActivateAccountPageSpec.kt` |
+| Five stale KDocs | `AccountActivationEmailTemplate.Params.cancelUrl`, `AuthProvider.cancelSignUp`, `AuthFrontendRoutes.cancelSignUp`, `AuthCancelSignUpRequest`, `AuthRecord.EmailVerificationToken` (+ `AuthRealm.cancelSignUp`) | — |
+| `e.message` echo | activate and resend no longer echo (as cancel); inventory updated | `AuthLoginApi.kt:112,132`, `error-disclosure/20260720-auth-error-account-enumeration.md` |
+| Reset completion / signIn | completion consumes its token by count (`EmailAndPasswordAuth.kt:699`); `signIn` refuses a retired key before any lookup (`:299`) | — |
+| Narrowed delete | a reset that loses the marker takes back exactly the password it wrote (`:728`) | — |
+| Sweep e2e | asserts the retire itself: exact renamed key and every raw auth row DELETED (expired rows included) | `ActivationHardeningE2eSpec.kt` (`rawRowsOf`) |
+| `[Mode.*]` links | plain code | `ActivateAccountPage.kt:31` |
+| Sweep index | `(realm, _type, createdAt.ts)` on both backends | `KarangoAuthRecordsRepo.kt:65`, `MonkoAuthRecordsRepo.kt:63` |
+| Surplus `save` | `AuthRecordStorage.save` / `Adapter.saveRecord` removed | `AuthRecordStorage.kt` |
+
+**Tests (fresh `TEST-*.xml`):** `:funktor:auth:jvmTest` **232 / 0**, `:funktor:auth:jsTest` **14 / 0**,
+`:funktor:all:jvmTest` **234 / 0** (`ActivationHardening{Karango,Monko}E2eSpec` 23 + 23). New: storage "a CLAIMED marker
+can be neither replaced nor removed" (both backends); realm (both backends) — claim beats a mid-retire activation, a
+retire that lost the claim changes nothing (credentials kept), partial retire stays claimed/blocked/refresh-refused and
+the next sweep finishes it, the stale-read activation race; SSO claim-first; unit — reset token count, claimed reset,
+retired-key and claimed sign-in; e2e (both backends, through a test-only adapter gate right after the claim, and a gate
+inside the realm's `retire()`) — activation wins (credentials kept, address not renamed, signs in), retire wins
+(fully retired, activation link dead), partial retire then sweep, cancel by activation token; JS — no activate action in
+Cancel mode, Activate mode's cancel posts the activation token.
+
+**Mutation evidence (round 2).** `cp` backups outside the worktree (path in the name), `cp` restore + `cmp`.
+
+| # | Mutant | Result |
+|---|---|---|
+| MA | Retire strips credentials BEFORE its claim | ✅ RED realm "a retire that LOST the claim … changes NOTHING" (both backends) |
+| MB1 | Activation ignores the claim (claim check removed AND unconditional delete) | ✅ RED realm "an activation that READ the marker before a retire claimed it cannot commit after" (both) — **only after that test was added**: in the e2e gate the claimed marker is back-dated, so activation took its EXPIRY branch and the mutant survived; the e2e's first gate (inside `retire()`) ran after the token was already gone and could not express the race at all |
+| MB0 | Only the explicit claim check removed | survives, by design — the conditional delete (and the expiry branch) still guard; defence in depth |
+| MC | Cancel without the activation-token fallback | ✅ RED e2e "the ACTIVATION token cancels too" (both) |
+| MD | SSO deletes the password before its claim | ✅ RED `SsoPendingAccount*` "CLAIM FIRST … NOTHING is deleted" (both) |
+| ME | Cancel mode offers "Activate instead" again | ✅ RED page spec "cancel link leads with Cancel" (no activate action) |
+| MF | Claim not back-dated | ✅ RED e2e "A retire that stops part-way … next sweep finishes it" (both) |
+| MG | Refresh ignores a retire claim | ✅ RED realm partial-retire case (both) |
+| MH | Reset completion ignores its token delete count | ✅ RED unit "a token another completion consumed first does nothing" |
+| MI | A reset losing the marker keeps its password | ✅ RED unit "takes back exactly the password this reset wrote" |
+| MJ / MK | `signIn` accepts a retired key / ignores a claim | ✅ RED the two unit cases |
+| MM | `replaceIfUnclaimed` ignores the claim — Karango / Monko separately | ✅ RED storage + realm + SSO claim cases on that backend |
+

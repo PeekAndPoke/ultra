@@ -39,6 +39,8 @@ Added 2026-10-19 by `.claude/tasks/20261019-activation-hardening.md` (round-2 MI
 table above still cites the pre-split `AuthApi.kt`; since the split the public handlers live in `AuthLoginApi.kt` and the
 authenticated ones in `AuthUserApi.kt`. The same change added `cancelSignUp` (`AuthLoginApi.kt:137`, `public()`), which
 deliberately does NOT echo `e.message` — it answers a bare `400 {success: false}` — so it is not an eleventh site.
+Round 2 of that gate (2026-10-19) gave `activateAccount` and `resendActivation` the same treatment: those two sites no
+longer echo, so the remaining public echo sites are `signIn`, `selectOrg`, `signUp` and the three recovery handlers.
 
 ## 1. Complete inventory of `AuthError` construction sites
 
