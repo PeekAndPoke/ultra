@@ -34,10 +34,9 @@ class UltraLogManager(
     /**
      * The registered appenders.
      *
-     * Copy-on-write because [add] can race an in-flight dispatch: a plain list threw
-     * `ConcurrentModificationException` inside the dispatch coroutine, where nothing surfaced it to
-     * the caller and the event was simply lost. Iteration here sees a stable snapshot, and appends
-     * are rare compared to reads.
+     * Copy-on-write because [add] can race a dispatch (another thread, or an appender registering one
+     * from inside `append`): a plain list throws `ConcurrentModificationException` out of [log] and the
+     * later appenders lose the event. Iteration sees a stable snapshot; appends are rare compared to reads.
      */
     private val appenders = CopyOnWriteArrayList(appenders)
 
@@ -96,7 +95,8 @@ class UltraLogManager(
 
         // One coroutine PER appender. Under Unconfined each runs on the caller until it first suspends, so an
         // appender that never suspends (e.g. the insights per-request collector) has the event before `log`
-        // returns. A single coroutine walking the appenders in order held every later appender behind the
+        // returns - unless `log` is itself called inside an Unconfined coroutine, which queues the launch until
+        // that one suspends. A single coroutine walking the appenders in order held every later appender behind the
         // first one that suspended on IO, so lines reached them late, out of order, or after the request.
         appenders.forEach { appender ->
 

@@ -4,8 +4,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
-import java.time.ZonedDateTime
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -64,31 +62,24 @@ class UltraLogManagerDispatchSpec : StringSpec({
         trailing.entries shouldContainExactly listOf("first", "second")
     }
 
-    "an appender registered during an in-flight dispatch does not lose the event" {
-        // Deterministic by construction, not by racing threads: `append` is a suspend function, so a
-        // suspending appender holds the dispatch iteration open across its IO. `log` returns at that
-        // suspension point, the test thread then mutates the list, and the iterator resumes into it.
-        //
-        // Two details make the naive version of this test vacuous. ArrayList's iterator checks
-        // modCount in next(), not hasNext(), so an appender at index 0 always receives the event
-        // before the throw - the recorder has to come AFTER the suspending one. And the CME lands
-        // inside the dispatch coroutine, never on the caller, so asserting that `log.info` did not
-        // throw proves nothing whatsoever. Only the delivery count is evidence.
-        val slow = Suspending(delayMs = 50)
+    "an appender registered during a dispatch does not break it" {
+        // Deterministic: the appender at index 0 registers another one from inside `append`, i.e. while
+        // `log` is still iterating. A plain list throws ConcurrentModificationException from the iterator's
+        // next() - out of `log`, into the caller - and the recorder after it never gets the event.
+        lateinit var manager: UltraLogManager
         val trailing = Recording("trailing")
-        val manager = UltraLogManager(listOf(slow, trailing))
-
-        manager.getLogger(UltraLogManagerDispatchSpec::class).info("event")
-
-        manager.add(Recording("added-mid-flight"))
-
-        // let the parked dispatch resume and finish
-        withTimeout(5000) {
-            while (trailing.entries.isEmpty()) {
-                delay(10)
+        val registering = object : LogAppender {
+            override suspend fun append(event: LogEvent) {
+                manager.add(Recording("added-mid-dispatch"))
             }
         }
+        manager = UltraLogManager(listOf(registering, trailing))
 
+        val caught = runCatching {
+            manager.getLogger(UltraLogManagerDispatchSpec::class).info("event")
+        }.exceptionOrNull()
+
+        caught shouldBe null
         trailing.entries shouldContainExactly listOf("event")
     }
 })

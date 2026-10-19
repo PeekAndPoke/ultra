@@ -370,9 +370,9 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
                 .map { it.jsonObject }
                 .single { it["key"]!!.jsonPrimitive.content == "log" }["data"]!!.jsonObject["entries"]!!.jsonArray
 
-            // Sorted: the order is not guaranteed. `UltraLogManager` launches each event on `Dispatchers.Unconfined`,
-            // so once an appender suspends (e.g. `KarangoLogAppender` writing), the next event can overtake. Seen 2026-10-19.
-            log.map { it.jsonObject["level"]!!.jsonPrimitive.content }.sorted() shouldBe listOf("INFO", "WARNING")
+            // In order and complete: `UltraLogManager` hands each appender the event on its own, so the
+            // per-request collector is no longer held behind the Karango appender's insert (lost a line, 2026-10-19).
+            log.map { it.jsonObject["level"]!!.jsonPrimitive.content } shouldBe listOf("INFO", "WARNING")
         }
 
         "no entry carries the fields that used to hold values" {
