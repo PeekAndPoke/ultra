@@ -234,7 +234,33 @@ went RED for the right reason; "module" = `:funktor:auth`, "e2e" = `:funktor:all
 
 ## Review record — the LEDGER (filled by /feature-review)
 
+Round 1 (2026-10-19), blind, `reviewer-high` ×3, base `41d6900d`, head `e7910eeb`. **1 MAJOR → not clean.**
+Coordinator checks: no framework caller of `retireExpiredPendingAccounts` (grep: the demo worker + the e2e only);
+`funktor/all/build.gradle.kts:41-42` depends on auth AND cluster (a cycle-free home); the cancel token is the
+activation token, capped at `now + 24h` (`EmailAndPasswordAuth.kt:421-424`, `:497-499`); `savePendingActivation` is a
+save (upsert) of the read marker (`:384-386`); the single-use e2e advances 15 min against a 15-min token
+(`ActivationHardeningE2eSpec.kt:304-322`, `RealmTokenConfig.kt:38,45`) — all as claimed.
+
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MAJOR | `funktor-demo/.../PendingAccountsExpiryWorker.kt:12-14`, `admin_user_module.kt:24`, `funktor/all/src/jvmMain/kotlin/funktor.kt:27-39` (domain) | The expiry sweep (decision 3) runs only in the demo; no app on funktor gets it, while KDocs (`RealmTokenConfig.kt:26`, `AuthSystem.kt:122-125`) say accounts ARE retired | fix | The module cycle is real for `funktor/auth`, but `funktor/all` depends on both: move the worker there, register it in `Funktor`, drop the demo registration (else twice). Coordinator widens the edit scope to `funktor/all/src/jvmMain` |
+| 1 | MINOR | `EmailAndPasswordAuth.kt:365,384-386` (implementation) | A resend's upsert re-inserts a marker deleted by a concurrent activation; the active account reads pending again and the day-7 sweep RETIRES it (password and records gone) | fix | Conditional replace (no upsert) — "only if this `_id` still exists"; or re-read and answer `sent = false` |
+| 1 | MINOR | `EmailAndPasswordAuth.kt:419-420,630`, `AuthRealm.kt:448,482-491` (domain) | "Nothing activates after expiry" is false: reset and verified SSO activate an expired, unswept account; the outcome depends on sweep timing; the marker delete is unconditional, so an activation racing a retire gets a session on a renamed account | fix | Expired = retired at use: reset/SSO retire inline (SSO sign-up then creates a fresh account, reset answers as unknown); make the final marker delete conditional on its count |
+| 1 | MINOR | `EmailAndPasswordAuth.kt:497-499`, `:421-424` (security) | The cancel link dies with the 24 h activation token, but the account lives 7 days; a Wednesday cancel fails and the page's advice ("try signing in") is wrong for a victim | fix | Cancel honours the pending lifetime (its own record, expiring with the account — Karango's TTL culls at `expiresAt`); Cancel mode gets its own "link not usable" text |
+| 1 | MINOR | `AuthRealm.kt:456-462`, `findCreatedBefore` (both repos), `AuthRealm.kt:433`, `AuthSystem.kt:130` (domain + implementation) | Head-of-line blocking: a marker whose retire keeps failing (or whose user load throws, aborting the batch) stays oldest forever; the "retried by the next sweep" KDoc is false for a failed cancel; `catch (Exception)` swallows `CancellationException` | fix | Catch per account; move past failures (attempt stamp / backoff on the marker); rethrow cancellation; correct the KDoc |
+| 1 | MINOR | `ActivationHardeningE2eSpec.kt:304-322`, `:461-463` (implementation) | "A resend token is single-use" passes because the token has EXPIRED (15 min = 15 min), never by single use; the retired-password clue gets its 403 from the rename | fix | Delete or reword the case (the property is pinned in `AccountActivationEmailE2eSpec` and the realm specs); fix the clue |
+| 1 | MINOR | `funktor/auth/src/jsTest/kotlin/pages/ActivateAccountPageSpec.kt:65`, `AuthFrontend.kt:50` (implementation) | The fake server records only method + path — a page POSTing a wrong/empty token passes; the `cancelSignUp` → `Mode.Cancel` wiring is untested | fix | Capture the body (token, provider); one routed mount per deep link |
+| 1 | MINOR | `EmailAndPasswordAuth.kt:371` vs `AuthRealm.kt:402` (domain + implementation) | The expiry rule is written twice, on two clocks (`services.instantNow()` vs `deps.kronos`) | fix | `realm.isExpired(marker.value)` |
+| 1 | MINOR | `AccountRetirement.kt:33-37,57-61` (security) | `rename(value: String)` (no production caller) produces a predictable tag (unkeyed SHA-256 of `_id`); a user-chosen unique field allowing `#` can be squatted, so the victim's retire collides forever | fix | Drop the `String` overload until an app needs it (email is safe: `#` lands in the domain part) |
+| 1 | MINOR | `GoogleSsoAuth.kt:169`, `GithubSsoAuth.kt:216`, `AuthRealm.kt:547` (security) | Only reset guards retired addresses; `resolveSsoAccount` and `refreshToken` would hand a session to a retired row if anything presented the retired string | fix | Refuse `AccountRetirement.isRetired(email)` in `resolveSsoAccount` (shared by all SSO); refresh refuses a retired account |
+| 1 | MINOR | `AuthProvider.kt:39-49,60-67`, `AccountActivationEmailTemplate.kt:22-25` (domain) | Upgrade traps with no compile signal: custom templates silently mail no cancel link (the Params KDoc's "compile error" claim is false), custom frontends mail an unmounted route, app pages POSTing activate on load, app SSO providers not told to use `resolveSsoAccount` | fix | One line on the `AuthProvider` sign-in/sign-up KDoc; correct the Params KDoc; list all four in the docs follow-up |
+| 1 | — | `AccountRetirement.kt:49-55` (domain) | The disowned address stays in plaintext forever on the retired row ("I did not sign up"); data minimisation (GDPR Art. 5(1)(c)) — a hash would still let a later merge match | **maintainer-decision** | Decision 3 renames the key and leaves merging to apps; whether the original stays readable is the maintainer's call |
+| 1 | — | `ActivateAccountPage.kt` / activate endpoint (security) | Classic-federated merge survives ONE victim click on Activate (accepted by decision 1); closing it cheaply: the Activate POST requires the account's password — the real owner knows it, a pre-registration victim does not and is steered to cancel/reset/SSO | **maintainer-decision** | Changes decision 1's UX; the maintainer's call |
 
-**Verdict:**
+Red-team additions (security, collected): re-registration of an expired victim sign-up (attacker polls sign-up, the
+victim then clicks Activate on the attacker's account while EXPECTING the mail); cancel → immediate re-registration
+loops; resend racing a cancel (stale `Stored` user → a live link for a retired row, the retired-recipient guard does
+not fire); SSO racing the sweep/cancel (does `refreshToken` renew a session for a retired row).
+
+**Verdict:** round 1 NOT clean (1 MAJOR). Fix batch (the MAJOR + the MINORs, maintainer's standing direction), then
+round 2 (`reviewer-xhigh`, two-phase). Two maintainer decisions parked (they do not stop the loop).
