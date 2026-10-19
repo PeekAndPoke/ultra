@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.funktorAuth
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
@@ -129,6 +130,26 @@ class AuthLoginApi : ApiRoutes("login", authFloor = { public() }) {
             } catch (e: AuthError) {
                 ApiResponse.badRequest(AuthResendActivationResponse(sent = false))
                     .withInfo(e.message ?: "")
+            }
+        }
+    }
+
+    val cancelSignUp = AuthApiClient.CancelSignUp.mount(RealmParam::class) {
+        docs {
+            name = "Cancel Sign-up"
+        }.codeGen {
+            funcName = "cancelSignUp"
+        }.handle { params, body ->
+            letTheBotsWait()
+
+            try {
+                funktorAuth
+                    .cancelSignUp(params.realm, body)
+                    .let { ApiResponse.ok(it) }
+            } catch (_: AuthError) {
+                // Deliberately NO `withInfo(e.message)`: the endpoint is anonymous, and the message can
+                // echo caller input (`Provider '...' not found`). See the error-disclosure inventory.
+                ApiResponse.badRequest(AuthCancelSignUpResponse(success = false))
             }
         }
     }

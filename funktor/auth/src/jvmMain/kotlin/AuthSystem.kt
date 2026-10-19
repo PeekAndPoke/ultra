@@ -2,6 +2,8 @@ package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
@@ -109,6 +111,27 @@ class AuthSystem(
     /** Send a fresh activation mail for [realm] and [request] */
     suspend fun resendActivation(realm: RealmId, request: AuthResendActivationRequest): AuthResendActivationResponse {
         return getRealm(realm).resendActivation(request)
+    }
+
+    /** Retire a never-activated account by [realm] and [request] ("I did not sign up") */
+    suspend fun cancelSignUp(realm: RealmId, request: AuthCancelSignUpRequest): AuthCancelSignUpResponse {
+        return getRealm(realm).cancelSignUp(request)
+    }
+
+    /**
+     * Retires the pending accounts of every realm that outlived `RealmTokenConfig.pendingAccountLifetime`,
+     * up to [limitPerRealm] each; returns how many. Meant for a periodic worker — expiry is also enforced
+     * where it matters (activation, resend, sign-up), so this is garbage collection, not the guard.
+     */
+    suspend fun retireExpiredPendingAccounts(limitPerRealm: Int = 100): Int {
+        return realms.sumOf { realm ->
+            try {
+                realm.retireExpiredPendingAccounts(limit = limitPerRealm)
+            } catch (e: Exception) {
+                deps.log.error("Retiring expired pending accounts failed in realm ${realm.id}", e)
+                0
+            }
+        }
     }
 
     /** Sign in a user by [realm] and [request] */

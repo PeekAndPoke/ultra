@@ -20,17 +20,23 @@ data class RealmTokenConfig(
      * one [sessionCacheTtl] window.
      */
     val sessionLifetime: Duration = 30.days,
-    /** Lifetime of email-verification tokens issued at sign-up. */
+    /** Lifetime of email-verification tokens issued at sign-up; never beyond [pendingAccountLifetime]. */
     val emailVerificationTokenLifetime: Duration = 24.hours,
     /**
-     * How long a user must wait before another activation mail is sent.
-     *
-     * THE throttle on activation resend, and the reason resend needs no messaging-level suppression
-     * hook: it targets an account that already exists, so that account's newest verification token is
-     * the rate limit. Sign-up has no equivalent — every aliased address is a new user — which is what
-     * `.claude/tasks/20260727-signup-mail-throttle.md` is about.
+     * How long a never-activated account lives. After it, the account is retired and its address is free
+     * for a new sign-up — see `AuthRealm.retirePendingAccount`. Also bounds how much mail resend can cause.
      */
-    val activationResendCooldown: Duration = 5.minutes,
+    val pendingAccountLifetime: Duration = 7.days,
+    /**
+     * The growing wait before each activation resend: the first after the sign-up mail waits the first
+     * entry, the next the second, and the last entry repeats. Must not be empty.
+     *
+     * Per pending account, stored on its marker. It bounds the mail an account's own password holder can
+     * cause — including an attacker who pre-registered someone else's address.
+     */
+    val activationResendDelays: List<Duration> = listOf(
+        5.minutes, 15.minutes, 1.hours, 4.hours, 12.hours, 24.hours,
+    ),
     /**
      * Lifetime of the single-use token handed out when a sign-in is refused for a pending account.
      *
@@ -55,4 +61,12 @@ data class RealmTokenConfig(
     val sessionCacheTtl: Duration = 30.seconds,
     /** Length in bytes of randomly generated tokens (verification, recovery, email-change). */
     val randomTokenByteLength: Int = 256,
-)
+) {
+    init {
+        require(activationResendDelays.isNotEmpty()) { "activationResendDelays must not be empty" }
+    }
+
+    /** The wait before the resend that follows [resends] earlier ones. */
+    fun activationResendDelay(resends: Int): Duration =
+        activationResendDelays[resends.coerceIn(0, activationResendDelays.lastIndex)]
+}

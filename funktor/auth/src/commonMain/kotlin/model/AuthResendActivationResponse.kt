@@ -1,20 +1,23 @@
 package io.peekandpoke.funktor.auth.model
 
+import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.Serializable
 
 /**
  * Whether a mail actually went out.
  *
  * Honest rather than neutral, and that is safe BECAUSE the request is authorized by a single-use
- * token: the caller already passed the password check for this account, so `sent` tells them nothing
- * they did not put in. An email-keyed endpoint would have to lie here to avoid being an enumeration
- * oracle — and lying is what made the first cut tell users "a new link is on its way" when the
- * cooldown had silently suppressed it.
+ * token: the caller already passed the password check for this account, so the answer tells them
+ * nothing they did not put in.
  *
- * `sent = false` means: the token was unknown or used, the account is already activated, or the
- * cooldown window is still open.
+ * - `sent = true` — a new link is on its way.
+ * - `sent = false` with [nextResendAt] — too soon: the account's growing resend delay has not elapsed.
+ * - `sent = false` without it — not possible (the token was unknown or used, the account is activated
+ *   or expired) or the mail could not be sent.
  */
 @Serializable
 data class AuthResendActivationResponse(
     val sent: Boolean,
+    /** When the next resend becomes possible; set whenever that is known. */
+    val nextResendAt: MpInstant? = null,
 )

@@ -30,6 +30,7 @@ import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.log.ultraLogging
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.UltraSecurityConfig
@@ -120,7 +121,7 @@ class TestMessaging(
     val onSendPasswordRecoveryEmil: suspend (Stored<MinimalTestUser>, String) -> EmailResult = { _, _ ->
         error("sendPasswordRecoveryEmil was not expected to be called")
     },
-    val onSendAccountActivationEmail: suspend (Stored<MinimalTestUser>, String) -> EmailResult = { _, _ ->
+    val onSendAccountActivationEmail: suspend (Stored<MinimalTestUser>, String, String) -> EmailResult = { _, _, _ ->
         error("sendAccountActivationEmail was not expected to be called")
     },
 ) : AuthRealm.Messaging<MinimalTestUser> {
@@ -133,7 +134,8 @@ class TestMessaging(
     override suspend fun sendAccountActivationEmail(
         user: Stored<MinimalTestUser>,
         activationUrl: String,
-    ): EmailResult = onSendAccountActivationEmail(user, activationUrl)
+        cancelUrl: String,
+    ): EmailResult = onSendAccountActivationEmail(user, activationUrl, cancelUrl)
 }
 
 class MinimalTestDeps : AuthSystem.Deps {
@@ -154,6 +156,30 @@ class MinimalTestDeps : AuthSystem.Deps {
     override val random: AuthRandom get() = error("Not needed for test")
 }
 
+/**
+ * Deps whose auth-record store is [AuthRecordStorage.Adapter.Null]: lookups find nothing, so no account is
+ * pending. Everything a provider unit test should not reach still fails loudly.
+ */
+class NullStorageTestDeps(
+    override val kronos: Kronos = Kronos.systemUtc,
+) : AuthSystem.Deps {
+    override val config: AppConfig get() = error("Not needed for test")
+
+    override val messaging: MessagingServices get() = error("Not needed for test")
+
+    override val jwtGenerator: JwtGenerator get() = error("Not needed for test")
+
+    override val storage: AuthSystem.Storage = AuthSystem.Storage(
+        authRecords = lazy { AuthRecordStorage(adapter = lazy { AuthRecordStorage.Adapter.Null }, kronos = lazy { kronos }) },
+    )
+
+    override val passwordHasher: PasswordHasher get() = error("Not needed for test")
+
+    override val log: Log = NullLog
+
+    override val random: AuthRandom get() = error("Not needed for test")
+}
+
 class MinimalTestRealm(
     override val passwordPolicy: PasswordPolicy = PasswordPolicy.default,
     /** Exposed so a spec can prove `DefaultMessaging` actually consults the realm's default. */
@@ -165,6 +191,12 @@ class MinimalTestRealm(
         { error("onLoadUserById was not expected to be called") },
     val onCreateUserForSignup: suspend (params: AuthUserAdapter.CreateUserForSignupParams) -> Stored<MinimalTestUser> =
         { error("createUserForSignup was not expected to be called") },
+    val onRetire: suspend (Stored<MinimalTestUser>, AccountRetirement) -> Stored<MinimalTestUser> =
+        { _, _ -> error("retire was not expected to be called") },
+    /** Defaults to deps with an EMPTY auth-record store: every account reads as activated. */
+    val getDeps: () -> AuthSystem.Deps = { NullStorageTestDeps() },
+    val getProviders: () -> List<AuthProvider> = { error("Not needed for test") },
+    override val tokenConfig: RealmTokenConfig = RealmTokenConfig(),
 ) : AuthRealm<MinimalTestUser> {
     override val id: RealmId get() = RealmId("test-realm")
 
@@ -178,15 +210,18 @@ class MinimalTestRealm(
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<MinimalTestUser> =
             onCreateUserForSignup(params)
 
+        override suspend fun retire(user: Stored<MinimalTestUser>, retirement: AccountRetirement): Stored<MinimalTestUser> =
+            onRetire(user, retirement)
+
         override suspend fun serialize(user: Stored<MinimalTestUser>): JsonObject =
             error("Not needed for test")
     }
 
     override val messaging get() = getMessaging()
 
-    override val deps get() = error("Not needed for test")
+    override val deps get() = getDeps()
 
-    override val providers get() = error("Not needed for test")
+    override val providers get() = getProviders()
 
     override suspend fun generateJwt(user: Stored<MinimalTestUser>, selectedOrg: SelectedOrg?) =
         error("Not needed for test")
@@ -295,6 +330,10 @@ class TestAppUserRealm(
                     email = params.email,
                 )
             )
+        }
+
+        override suspend fun retire(user: Stored<TestAppUser>, retirement: AccountRetirement): Stored<TestAppUser> {
+            return repo.save(user.modify { it.copy(email = retirement.rename(it.email)) })
         }
 
         override suspend fun serialize(user: Stored<TestAppUser>): JsonObject {

@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.server.admin
 
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
@@ -83,6 +84,11 @@ class AdminUserRealm(
                     email = params.email,
                 )
             )
+        }
+
+        override suspend fun retire(user: Stored<AdminUser>, retirement: AccountRetirement): Stored<AdminUser> {
+            // `email` is the only unique key of an admin user (see AdminUsersRepo.buildIndexes).
+            return repo.save(user.modify { it.copy(email = retirement.rename(it.email)) })
         }
 
         override suspend fun serialize(user: Stored<AdminUser>): JsonObject {

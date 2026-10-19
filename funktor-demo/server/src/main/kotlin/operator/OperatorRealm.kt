@@ -1,5 +1,7 @@
 package io.peekandpoke.funktor.demo.server.operator
 
+import io.peekandpoke.funktor.auth.AccountRetirement
+import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
@@ -72,6 +74,11 @@ class OperatorRealm(
 
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<OperatorUser> {
             error("Operator self-signup is not supported")
+        }
+
+        override suspend fun retire(user: Stored<OperatorUser>, retirement: AccountRetirement): Stored<OperatorUser> {
+            // No self-signup, so no operator is ever pending activation — nothing to retire.
+            throw AuthError.notSupported()
         }
 
         override suspend fun serialize(user: Stored<OperatorUser>): JsonObject {

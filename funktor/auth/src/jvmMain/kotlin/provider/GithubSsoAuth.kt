@@ -17,8 +17,10 @@ import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -98,6 +100,13 @@ class GithubSsoAuth(
 
         /** Gets the user for the given [access] token */
         suspend fun getUser(access: JsonObject): JsonObject?
+
+        /**
+         * Gets the user's addresses (`GET /user/emails`, needs the `user:email` scope), or null.
+         *
+         * Defaults to null, which reads as "nothing verified" — the safe answer.
+         */
+        suspend fun getEmails(access: JsonObject): JsonArray? = null
     }
 
     /** Default implementation of the remote client */
@@ -138,6 +147,22 @@ class GithubSsoAuth(
             if (!response.status.isSuccess()) return null
 
             return response.body<JsonObject?>()
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun getEmails(access: JsonObject): JsonArray? {
+
+            val tokenType = access["token_type"]?.jsonPrimitive?.content
+            val accessToken = access["access_token"]?.jsonPrimitive?.content
+
+            val response = httpClient.get("https://api.github.com/user/emails") {
+                accept(ContentType.Application.Json)
+                header(HttpHeaders.Authorization, "$tokenType $accessToken")
+            }
+
+            if (!response.status.isSuccess()) return null
+
+            return response.body<JsonArray?>()
         }
     }
 
@@ -181,9 +206,26 @@ class GithubSsoAuth(
         val email = EmailAddress.parseOrNull((ghUser["email"] as? JsonPrimitive)?.contentOrNull)
             ?: throw AuthError.invalidCredentials()
 
-        return realm.users.loadByEmail(email)
+        val user = realm.users.loadByEmail(email)
             ?: throw AuthError.invalidCredentials()
+
+        return realm.resolveSsoAccount(user, provider = id) {
+            isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))
+        }
     }
+
+    /**
+     * GitHub's verified claim: [email] is the account's PRIMARY address and GitHub has verified it. The
+     * profile's `email` field alone proves nothing — GitHub does not require it to be verified.
+     */
+    private fun isVerifiedPrimary(email: EmailAddress, emails: JsonArray?): Boolean =
+        emails.orEmpty().any { entry ->
+            val obj = entry as? JsonObject ?: return@any false
+
+            EmailAddress.parseOrNull((obj["email"] as? JsonPrimitive)?.contentOrNull) == email &&
+                    (obj["primary"] as? JsonPrimitive)?.booleanOrNull == true &&
+                    (obj["verified"] as? JsonPrimitive)?.booleanOrNull == true
+        }
 
     /**
      * @{inheritDoc}
@@ -214,12 +256,18 @@ class GithubSsoAuth(
         // Creating, however, requires a well-formed address.
         if (existing == null && !email.isValidFormat) throw AuthError.invalidCredentials()
 
-        val user = existing ?: realm.users.createForSignup(
-            AuthUserAdapter.CreateUserForSignupParams.of(
-                email = email,
-                displayName = name,
+        val user = existing
+            ?.let {
+                realm.resolveSsoAccount(it, provider = id) {
+                    isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))
+                }
+            }
+            ?: realm.users.createForSignup(
+                AuthUserAdapter.CreateUserForSignupParams.of(
+                    email = email,
+                    displayName = name,
+                )
             )
-        )
 
         return AuthProvider.SignUpResult(
             user = user,

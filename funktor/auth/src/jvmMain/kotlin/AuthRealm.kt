@@ -9,6 +9,8 @@ import io.peekandpoke.funktor.auth.emails.authEmailLocales
 import io.peekandpoke.funktor.auth.emails.requireAuthEmailEnvelope
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
@@ -45,6 +47,7 @@ import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserRecord
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.value
 
 /**
  * Defines an auth realm
@@ -59,8 +62,11 @@ interface AuthRealm<USER : AuthUser> {
 
         suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult
 
-        /** Sent at sign-up. Until the link is followed the account cannot sign in. */
-        suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String): EmailResult
+        /**
+         * Sent at sign-up and on resend. Until the account is activated it cannot sign in; [cancelUrl]
+         * lets someone who did not sign up retire it instead.
+         */
+        suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String, cancelUrl: String): EmailResult
     }
 
     /**
@@ -95,7 +101,7 @@ interface AuthRealm<USER : AuthUser> {
          * failed `EmailResult` — the senders catch `Throwable` themselves — and callers are written
          * against that: `EmailAndPasswordAuth` logs a warning and leaves the account recoverable via
          * resend or password reset. Rendering is now app-overridable code running OUTSIDE that
-         * protocol, and `AuthApi` catches only `AuthError`, so an app template that throws would
+         * protocol, and `AuthLoginApi` catches only `AuthError`, so an app template that throws would
          * instead 500 the request. On sign-up that happens after the account, the password record and
          * the `PendingActivation` marker are already written; on resend it happens after the previous
          * activation link has been revoked — a deterministic throw there is an unrecoverable lockout.
@@ -109,6 +115,12 @@ interface AuthRealm<USER : AuthUser> {
             build: suspend (recipient: EmailAddress) -> Email,
         ): EmailResult {
             val userEmail = user.value().email
+
+            // A retired account's address is undeliverable by construction; refusing here keeps every
+            // auth mail from even trying, whichever flow reached this account.
+            if (AccountRetirement.isRetired(userEmail)) {
+                return EmailResult.ofError(IllegalStateException("Account ${user._id} is retired"))
+            }
 
             val email = try {
                 val built = build(userEmail)
@@ -147,7 +159,11 @@ interface AuthRealm<USER : AuthUser> {
                 )
             }
 
-        override suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String): EmailResult =
+        override suspend fun sendAccountActivationEmail(
+            user: Stored<USER>,
+            activationUrl: String,
+            cancelUrl: String,
+        ): EmailResult =
             sendAuthEmail(user, tag = "account-activation") { recipient ->
                 templates.accountActivation.render(
                     params = AccountActivationEmailTemplate.Params(
@@ -156,6 +172,7 @@ interface AuthRealm<USER : AuthUser> {
                         senderName = senderName,
                         applicationName = applicationName,
                         activationUrl = activationUrl,
+                        cancelUrl = cancelUrl,
                     ),
                     preferred = preferredLocales(user.value()),
                 )
@@ -276,7 +293,7 @@ interface AuthRealm<USER : AuthUser> {
             // what authorizes `resendActivation`. Exactly the OrgSelectionToken pattern below.
             val resendToken = deps.random.getTokenAsBase64(tokenConfig.randomTokenByteLength)
 
-            deps.storage.authRecords.create {
+            val minted = deps.storage.authRecords.create {
                 AuthRecord.ActivationResendToken(
                     realm = id,
                     ownerId = e.userId,
@@ -285,6 +302,12 @@ interface AuthRealm<USER : AuthUser> {
                         .plus(tokenConfig.activationResendTokenLifetime).toEpochSeconds(),
                 )
             }
+
+            // Only the newest token stays live. Without this, K parallel sign-ins hold K tokens, and K
+            // parallel resends race the delay check instead of sharing one token.
+            deps.storage.authRecords.removeAllByOwner(
+                type = AuthRecord.ActivationResendToken, realm = id, owner = e.userId, exceptId = minted._id,
+            )
 
             return AuthSignInResponse.ActivationRequired(
                 realm = asApiModel(),
@@ -344,10 +367,135 @@ interface AuthRealm<USER : AuthUser> {
      *
      * Ungated on capabilities, like [activate], but for its own reason: the token was already issued
      * to someone who proved the password, and stranding those users when registration closes helps
-     * nobody. The token — not the capability — is what stops this being an open mail relay.
+     * nobody. The token stops this being an anonymous mail relay; the account's growing resend delay
+     * and its expiry bound what the password holder can cause.
+     *
+     * Found AND consumed here, where it is minted — the [selectOrg] pattern — so a provider never has
+     * to know the token exists.
      */
     suspend fun resendActivation(request: AuthResendActivationRequest): AuthResendActivationResponse {
-        return getProvider(request.provider).resendActivation(realm = this, request = request)
+        val provider = getProvider(request.provider)
+
+        val record = deps.storage.authRecords
+            .findByToken(AuthRecord.ActivationResendToken, realm = id, token = request.token)
+            ?: return AuthResendActivationResponse(sent = false)
+
+        // Single-use under concurrency too: of two requests that both found the token, only the one
+        // whose delete actually removed it may go on.
+        if (deps.storage.authRecords.removeById(record._id).count != 1L) {
+            return AuthResendActivationResponse(sent = false)
+        }
+
+        return provider.resendActivation(realm = this, owner = record.value.ownerId)
+    }
+
+    /**
+     * "I did not sign up": retires a never-activated account, authorized by the activation token.
+     *
+     * Ungated on capabilities for the same reason as [activate].
+     */
+    suspend fun cancelSignUp(request: AuthCancelSignUpRequest): AuthCancelSignUpResponse {
+        return getProvider(request.provider).cancelSignUp(realm = this, request = request)
+    }
+
+    /** True when [marker]'s account has outlived [RealmTokenConfig.pendingAccountLifetime]. */
+    fun isExpired(marker: AuthRecord.PendingActivation): Boolean =
+        marker.createdAt.plus(tokenConfig.pendingAccountLifetime) <= deps.kronos.instantNow()
+
+    /**
+     * Retires the never-activated account [userId]: frees its address for a new sign-up and removes
+     * its auth records. The row stays, since other collections may reference it.
+     *
+     * Returns false, changing nothing, unless the account is still PENDING (and, with [expiredOnly],
+     * past its lifetime) — an activated account is never retired. Every step leaves the account
+     * pending until the last one, so a failure part-way is retried by the next sweep, never left live.
+     */
+    suspend fun retirePendingAccount(userId: UserId, expiredOnly: Boolean = false): Boolean {
+        val records = deps.storage.authRecords
+
+        val marker = records.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = userId)
+            ?: return false
+
+        if (expiredOnly && !isExpired(marker.value)) return false
+
+        // Credentials and tokens first: from here on nothing can sign in or activate this account.
+        records.removeAllOfOwner(realm = id, owner = userId, except = AuthRecord.PendingActivation)
+
+        // The round trip guards Monko's key-only findById, which could resolve another realm's row.
+        val user = users.loadById(userId)?.takeIf { it._id == userId.value }
+
+        if (user != null) {
+            val original = user.value.email
+
+            if (!AccountRetirement.isRetired(original)) {
+                try {
+                    users.retire(user, AccountRetirement.of(userId))
+                } catch (e: Exception) {
+                    deps.log.error("Retiring $userId in realm $id failed; it stays pending", e)
+                    return false
+                }
+
+                // A realm whose retire() renamed nothing would leave the address taken forever. Caught
+                // here, and the account stays pending so the failure stays visible.
+                if (users.loadByEmail(original)?._id == userId.value) {
+                    deps.log.error("Retiring $userId in realm $id did not free its address; it stays pending")
+                    return false
+                }
+            }
+        }
+
+        // LAST: the marker is what makes every earlier step safe to repeat.
+        records.removeAllByOwner(type = AuthRecord.PendingActivation, realm = id, owner = userId)
+
+        deps.log.info("SECURITY: retired never-activated account $userId in realm $id")
+
+        return true
+    }
+
+    /** Retires up to [limit] pending accounts of this realm that outlived their lifetime; returns how many. */
+    suspend fun retireExpiredPendingAccounts(limit: Int = 100): Int {
+        val before = deps.kronos.instantNow().minus(tokenConfig.pendingAccountLifetime)
+
+        return deps.storage.authRecords
+            .findCreatedBefore(AuthRecord.PendingActivation, realm = id, before = before, limit = limit)
+            .count { retirePendingAccount(it.value.ownerId, expiredOnly = true) }
+    }
+
+    /**
+     * The SSO policy for an account that signed up by password and never activated, shared by every SSO
+     * provider: call it with the account the provider's address resolved to.
+     *
+     * - not pending → [user] unchanged, and [isEmailVerified] is never asked;
+     * - pending and verified → activated: the sign-up password is deleted FIRST, so a password chosen
+     *   by whoever pre-registered the address can never start working; the account becomes SSO-only
+     *   until its owner sets a password through a reset;
+     * - pending and not verified → [AuthError.invalidCredentials].
+     */
+    suspend fun resolveSsoAccount(
+        user: Stored<USER>,
+        provider: String,
+        isEmailVerified: suspend () -> Boolean,
+    ): Stored<USER> {
+        val records = deps.storage.authRecords
+        val owner = UserId(user._id)
+
+        records.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = owner)
+            ?: return user
+
+        if (!isEmailVerified()) throw AuthError.invalidCredentials()
+
+        records.removeAllByOwner(type = AuthRecord.Password, realm = id, owner = owner)
+        records.removeAllByOwner(type = AuthRecord.ActivationResendToken, realm = id, owner = owner)
+        records.removeAllByOwner(type = AuthRecord.EmailVerificationToken, realm = id, owner = owner)
+        // LAST, for the same reason as in [retirePendingAccount].
+        records.removeAllByOwner(type = AuthRecord.PendingActivation, realm = id, owner = owner)
+
+        deps.log.warning(
+            "SECURITY: pending account $owner in realm $id activated by '$provider' with a verified address; " +
+                    "its sign-up password was removed"
+        )
+
+        return user
     }
 
     /**

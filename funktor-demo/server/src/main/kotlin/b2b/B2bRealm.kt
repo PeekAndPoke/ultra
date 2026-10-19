@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.demo.server.b2b
 
 import io.peekandpoke.funktor.auth.AuthError
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
@@ -92,6 +93,11 @@ class B2bRealm(
             // B2B is invite-only (users are created inside an organisation). AuthError — not
             // error() — so if a capability change ever exposes sign-up, the API fails closed as a
             // 403, not a 500.
+            throw AuthError.notSupported()
+        }
+
+        override suspend fun retire(user: Stored<B2bUser>, retirement: AccountRetirement): Stored<B2bUser> {
+            // Invite-only, so no account here is ever pending activation — nothing to retire.
             throw AuthError.notSupported()
         }
 

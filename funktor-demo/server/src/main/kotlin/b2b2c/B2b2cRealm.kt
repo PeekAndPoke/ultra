@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.demo.server.b2b2c
 
 import io.peekandpoke.funktor.auth.AuthError
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
@@ -90,6 +91,11 @@ class B2b2cRealm(
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams): Stored<B2b2cUser> {
             // End-users are provisioned by their organisation for now. AuthError — not error() — so
             // if a capability change ever exposes sign-up, the API fails closed as a 403, not a 500.
+            throw AuthError.notSupported()
+        }
+
+        override suspend fun retire(user: Stored<B2b2cUser>, retirement: AccountRetirement): Stored<B2b2cUser> {
+            // Provisioned by their organisation, so never pending activation — nothing to retire.
             throw AuthError.notSupported()
         }
 

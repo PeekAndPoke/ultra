@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor
 
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
@@ -65,7 +66,7 @@ class TestUserRealm(
 
         /** Exposed so specs can wait exactly as long as the realm is configured for. */
         val TOKEN_CONFIG = RealmTokenConfig(
-            activationResendCooldown = 2.seconds,
+            activationResendDelays = listOf(2.seconds, 3.seconds),
         )
     }
 
@@ -76,10 +77,11 @@ class TestUserRealm(
     override val id: RealmId = REALM
 
     /**
-     * Only the activation-resend cooldown deviates from the defaults, and only so that BOTH sides of
-     * it stay testable against a real clock: `AccountActivationEmailE2eSpec` waits this out to prove a
-     * resend delivers a new link, and resends back-to-back to prove the window suppresses one. The
-     * production default is minutes, which no test can wait for.
+     * Only the activation-resend delays deviate from the defaults, and only so that BOTH sides of them
+     * stay testable against a real clock: `AccountActivationEmailE2eSpec` waits them out to prove a
+     * resend delivers a new link, and resends back-to-back to prove the delay suppresses one. The
+     * production defaults are minutes to hours; `ActivationHardeningE2eSpec` covers those with a clock
+     * it can advance.
      */
     override val tokenConfig = TOKEN_CONFIG
 
@@ -127,6 +129,10 @@ class TestUserRealm(
                     email = params.email,
                 )
             )
+        }
+
+        override suspend fun retire(user: Stored<TestUser>, retirement: AccountRetirement): Stored<TestUser> {
+            return repo.save(user.modify { it.copy(email = retirement.rename(it.email)) })
         }
 
         override suspend fun serialize(user: Stored<TestUser>): JsonObject {

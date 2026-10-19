@@ -10,8 +10,9 @@ import kotlinx.html.h1
 import kotlinx.html.p
 
 /**
- * Sent at sign-up, and again on resend. Until the link inside is followed the account cannot sign in,
- * which makes this the one auth mail whose failure locks a brand-new user out entirely.
+ * Sent at sign-up, and again on resend. Until the account is activated it cannot sign in, which makes
+ * this the one auth mail whose failure locks a brand-new user out entirely. It also carries the way out
+ * for someone who did NOT sign up: the cancel link.
  *
  * Subclass to replace it; the framework's rendering is [DefaultAccountActivationEmailTemplate].
  */
@@ -30,6 +31,8 @@ abstract class AccountActivationEmailTemplate :
         val applicationName: String,
         /** Carries a live single-use token. Never put this in a subject — subjects are not anonymized. */
         val activationUrl: String,
+        /** "Didn't sign up? Cancel" — carries the SAME live token as [activationUrl]. */
+        val cancelUrl: String,
     )
 }
 
@@ -65,6 +68,13 @@ class DefaultAccountActivationEmailTemplate(
             }
         }
 
+        p {
+            +"Didn't sign up? Someone may have used your address. "
+            a(href = params.cancelUrl) {
+                +"Cancel this sign-up"
+            }
+        }
+
         authEmailSignature(locale, params.senderName)
     }
 
@@ -87,6 +97,13 @@ class DefaultAccountActivationEmailTemplate(
         p {
             a(href = params.activationUrl) {
                 +"Konto aktivieren"
+            }
+        }
+
+        p {
+            +"Du hast dich nicht registriert? Dann hat womöglich jemand deine Adresse benutzt. "
+            a(href = params.cancelUrl) {
+                +"Registrierung abbrechen"
             }
         }
 

@@ -9,7 +9,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.ktor.http.*
+import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.auth.AuthFrontendRoutes
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
@@ -66,15 +66,24 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
     /** The link the realm builds, up to but excluding the token — see [AuthFrontendRoutes.activateAccount]. */
     private val activationLinkPrefix = "https://example.com/auth/$provider/activate/"
 
+    /** The "Didn't sign up? Cancel" link — see [AuthFrontendRoutes.cancelSignUp]. */
+    private val cancelLinkPrefix = "https://example.com/auth/$provider/cancel-signup/"
+
     /**
      * The token a browser would hand to the route, taken out of a real mail.
      *
-     * `single()` is an assertion: an activation mail carries ONE link and nothing else. The URL
-     * ENCODING of the token is pinned separately, in the first test.
+     * The destructuring is an assertion: an activation mail carries exactly the activation link and the
+     * cancel link, in that order, and nothing else. The URL ENCODING of the token is pinned separately,
+     * in the first test.
      */
-    private fun activationTokenFrom(mail: Email): String = mail.hrefs().single()
-        .removePrefix(activationLinkPrefix)
-        .decodeUriComponent()
+    private fun activationTokenFrom(mail: Email): String {
+        val (activate, cancel) = mail.hrefs().also { it.size shouldBe 2 }
+
+        activate shouldStartWith activationLinkPrefix
+        cancel shouldStartWith cancelLinkPrefix
+
+        return activate.removePrefix(activationLinkPrefix).decodeUriComponent()
+    }
 
     /** Read from the realm, so the waits below cannot drift out of step with the configured window. */
     private val realmTokenConfig = TestUserRealm.TOKEN_CONFIG
@@ -143,11 +152,15 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     activationMail.subject shouldBe "Funktor All Test: Activate your Account"
                     activationMail.source shouldBe "test@example.com"
 
-                    // `singleOrNull` is a real assertion: an activation mail should carry ONE link and
-                    // nothing else — no support link to be confused with the real one.
-                    val link = activationMail.hrefs().singleOrNull().shouldNotBeNull()
+                    // Exactly two links: activate, and the way out for someone who did not sign up.
+                    // Nothing else — no support link to be confused with the real ones.
+                    val (link, cancelLink) = activationMail.hrefs().also { it.size shouldBe 2 }
 
                     link shouldStartWith activationLinkPrefix
+
+                    withClue("the cancel link carries the SAME token — whoever may activate may decline") {
+                        cancelLink shouldBe cancelLinkPrefix + link.removePrefix(activationLinkPrefix)
+                    }
 
                     val tokenSegment = link.removePrefix(activationLinkPrefix)
 
@@ -267,12 +280,11 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     val firstToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
 
-                    // Sign-up has just issued a token, so the cooldown is running. Waiting it out is
-                    // the point: it proves the window OPENS again rather than blocking forever, which
-                    // a mocked clock would not. `TestUserRealm` shortens it to 2s for exactly this.
-                    // The wait can only LENGTHEN the elapsed time, so a slow machine cannot flip what
-                    // this test means.
-                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+                    // Sign-up has just sent a mail, so the first resend delay is running. Waiting it out is
+                    // the point: it proves the window OPENS again rather than blocking forever.
+                    // `TestUserRealm` shortens it to 2s for exactly this. The wait can only LENGTHEN the
+                    // elapsed time, so a slow machine cannot flip what this test means.
+                    delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
 
                     // The resend authorization comes from a refused sign-in, and nowhere else — an
                     // anonymous caller naming an address cannot reach this endpoint at all.
@@ -356,9 +368,9 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         status shouldBe HttpStatusCode.OK
                     }
 
-                    // A real pending account exists, the caller knows the address, and the cooldown is
+                    // A real pending account exists, the caller knows the address, and the delay is
                     // irrelevant here — without the token there is still nothing they can cause.
-                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+                    delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
 
                     emails.clear()
 
@@ -392,7 +404,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         status shouldBe HttpStatusCode.OK
                     }
 
-                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+                    delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
 
                     val resendToken = resendTokenFor(this, email)
 
@@ -405,11 +417,11 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    // Wait the cooldown out FIRST, so single-use is the only thing that can stop the
+                    // Wait the NEXT delay out FIRST, so single-use is the only thing that can stop the
                     // replay. Without this wait the test passes even when the token is never consumed,
-                    // because the cooldown blocks the second send — verified by mutation: dropping
-                    // `removeAuthRecord` left the suite green until this delay was added.
-                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+                    // because the delay blocks the second send — verified by mutation: dropping the
+                    // consumption left the suite green until this delay was added.
+                    delay(realmTokenConfig.activationResendDelays[1] + 500.milliseconds)
 
                     api.authLogin.resendActivation(
                         realmParam,
@@ -424,11 +436,11 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
             }
         }
 
-        "A resend inside the cooldown must send nothing, even with a valid token" {
+        "A resend inside the delay must send nothing, even with a valid token, and say when" {
             // THE throttle behind the authorization: re-authenticating in a loop must not mail faster
-            // than the window. Sign-up has just issued a token, so this resend is inside it — and the
-            // test does NOT wait, so a slow machine can only make the elapsed time approach the window
-            // and fail LOUDLY, never silently exercise a different path.
+            // than the delay. Sign-up has just sent a mail, so this resend is inside it — and the test
+            // does NOT wait, so a slow machine can only make the elapsed time approach the delay and
+            // fail LOUDLY, never silently exercise a different path.
             apiApp {
                 anonymous {
                     val email = "cooldown-${System.currentTimeMillis()}@test.com"
@@ -454,7 +466,10 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         body = AuthResendActivationRequest(provider = provider, token = resendToken),
                     ) {
                         status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
+                        val response = apiResponseData<AuthResendActivationResponse>().shouldNotBeNull()
+                        response.sent shouldBe false
+                        // Honest: this refusal IS the delay, so the client may say "try again later".
+                        response.nextResendAt.shouldNotBeNull()
                     }
 
                     emails.capturedTo(email) shouldBe emptyList()
@@ -495,7 +510,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
                     }
 
-                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+                    delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
 
                     emails.clear()
 
@@ -556,7 +571,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     // the fallback chain walks region -> base language rather than dropping straight to
                     // the `en` fallback.
 
-                    delay(realmTokenConfig.activationResendCooldown + 500.milliseconds)
+                    delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
 
                     val resendToken = resendTokenFor(this, german)
 

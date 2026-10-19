@@ -3,7 +3,6 @@ package io.peekandpoke.funktor.auth.emails
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -43,6 +42,7 @@ class AuthEmailTemplatesSpec : StringSpec({
             senderName = "Sender Name",
             applicationName = "Demo App",
             activationUrl = "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
+            cancelUrl = "https://app.test/auth/email-password/cancel-signup/S3cr3t%2BT0ken",
         ),
         preferred = preferred,
     )
@@ -161,6 +161,7 @@ class AuthEmailTemplatesSpec : StringSpec({
                     senderName = "S",
                     applicationName = "A",
                     activationUrl = "https://app.test/a",
+                    cancelUrl = "https://app.test/c",
                 ),
                 de,
             ),
@@ -278,21 +279,34 @@ class AuthEmailTemplatesSpec : StringSpec({
         }
     }
 
-    "a link-carrying mail carries EXACTLY one link, and it survives rendering intact" {
+    "a link-carrying mail carries EXACTLY its links, and they survive rendering intact" {
         // `hrefs()` is what the e2e specs use to pull the token back out. A base64 token contains
         // `+` and `=` routinely, so a rendering that mangles it produces a dead link while every
         // server-side test still passes.
+        val activationLinks = listOf(
+            "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
+            "https://app.test/auth/email-password/cancel-signup/S3cr3t%2BT0ken",
+        )
+
         listOf(
-            activation(en) to "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
-            activation(de) to "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
-            recovery(en) to "https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken",
-            recovery(de) to "https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken",
+            activation(en) to activationLinks,
+            activation(de) to activationLinks,
+            recovery(en) to listOf("https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken"),
+            recovery(de) to listOf("https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken"),
         ).forEach { (mail, expected) ->
             withClue(mail.subject) {
-                mail.hrefs() shouldHaveSize 1
-                mail.hrefs().single() shouldBe expected
+                // In this order: the activation link comes first, the cancel link is the way out.
+                mail.hrefs() shouldBe expected
             }
         }
+    }
+
+    "the activation mail offers the way out for someone who did not sign up" {
+        // Decision 3 (2026-10-19): a pre-registered victim must be able to free their address from the
+        // mail itself — they do not know the password, so no other screen is open to them.
+        activation(en).body.content shouldContain "Didn't sign up?"
+        activation(en).body.content shouldContain "Cancel this sign-up"
+        activation(de).body.content shouldContain "Registrierung abbrechen"
     }
 
     "the password-changed mail carries NO link" {
