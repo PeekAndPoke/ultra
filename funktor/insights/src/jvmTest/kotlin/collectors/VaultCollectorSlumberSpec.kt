@@ -27,7 +27,11 @@ class VaultCollectorSlumberSpec : FreeSpec() {
         private const val TOKEN = "a-live-session-token"
 
         /** What `MonkoDriver` records for a token lookup: the value is a placeholder, the token is in `vars`. */
-        private val MONKO_QUERY = """{"filter": {"token": "@p1"}, "sort": null, "limit": 1, "skip": null}"""
+        private val MONKO_QUERY =
+            """{"collection": "sessions", "filter": {"token": "@p1:string"}, "sort": null, "limit": 1, "skip": null}"""
+
+        /** What `MonkoDriver` recorded before 2026-10-19, under the label `json`: the value inline. */
+        private val OLD_MONKO_QUERY = """{"filter": {"token": "$TOKEN"}, "sort": null, "limit": 1, "skip": null}"""
 
         /** An entry as a driver really fills it in, values and all. */
         private fun entry(language: String, query: String) = QueryProfiler.Entry.Impl(
@@ -88,7 +92,8 @@ class VaultCollectorSlumberSpec : FreeSpec() {
             // third entry is a driver nobody vetted, inlining its value: its text must not survive.
             val data = VaultCollector.Data.of(
                 listOf(
-                    entry("json", MONKO_QUERY),
+                    entry("mongo-bound", MONKO_QUERY),
+                    entry("json", OLD_MONKO_QUERY),
                     entry("aql", "FOR d IN c FILTER d.t == @v1"),
                     entry("sql", "SELECT * FROM c WHERE t = '$TOKEN'"),
                 )
@@ -104,20 +109,24 @@ class VaultCollectorSlumberSpec : FreeSpec() {
         "only drivers known to keep values out of the text keep it; any other has it dropped" {
             val data = VaultCollector.Data.of(
                 listOf(
-                    entry("json", MONKO_QUERY),
+                    entry("mongo-bound", MONKO_QUERY),
+                    entry("json", OLD_MONKO_QUERY),
                     entry("aql", "FOR d IN c FILTER d.t == @v1"),
                     entry("sql", "SELECT * FROM c WHERE t = '$TOKEN'"),
                 )
             )
 
-            withClue("monko records placeholders since 2026-10-19 (MonkoDriver.FindQueryBuilder.printQuery)") {
+            withClue("monko's own label: placeholders since 2026-10-19 (MonkoDriver.FindQueryBuilder.printQuery)") {
                 data.entries[0].query shouldBe MONKO_QUERY
             }
+            withClue("monko's OLD label is no longer trusted: an older driver still inlines its values under it") {
+                data.entries[1].query shouldBe null
+            }
             withClue("aql keeps @placeholders and passes values separately, so its text is safe") {
-                data.entries[1].query shouldBe "FOR d IN c FILTER d.t == @v1"
+                data.entries[2].query shouldBe "FOR d IN c FILTER d.t == @v1"
             }
             withClue("fail-closed: a language nobody vetted is suppressed, not trusted") {
-                data.entries[2].query shouldBe null
+                data.entries[3].query shouldBe null
             }
             withClue("the COUNT of bind variables is still useful, and discloses nothing") {
                 data.entries[0].varsCount shouldBe 1

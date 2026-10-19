@@ -2,7 +2,6 @@ package io.peekandpoke.funktor
 
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
-import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -288,14 +287,19 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             }
         }
 
-        "the Mongo lookup is recorded as placeholder text, with the value counted" {
-            val entry = lookup(probeRecord(), language = "json")
+        "the Mongo lookup is recorded as typed placeholder text under Monko's own label, with the value counted" {
+            // `mongo-bound`, not `json`: the collector trusts the label, and `json` is what Monko used while it
+            // still inlined values (MonkoDriver.FindQueryBuilder.Printed.LANGUAGE, internal to monko).
+            val entry = lookup(probeRecord(), language = "mongo-bound")
             val query = entry["query"]!!.jsonPrimitive.content
 
             withClue(query) {
-                query shouldContain "\"token\": \"@p1\""
+                query shouldContain "\"collection\": \"insights_s1_mo_sessions\""
+                query shouldContain "\"token\": \"@p1:string\""
             }
-            entry["varsCount"]!!.jsonPrimitive.int shouldBeGreaterThanOrEqual 1
+            withClue("exactly the token: a wrongly bound limit would make it 2") {
+                entry["varsCount"]!!.jsonPrimitive.int shouldBe 1
+            }
             entry["connection"]!!.jsonPrimitive.content shouldContain "MongoDB"
         }
 
@@ -304,9 +308,11 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             val query = entry["query"]!!.jsonPrimitive.content
 
             withClue(query) {
-                query shouldContain "@"
+                query shouldContain "`token` == @v_"
             }
-            entry["varsCount"]!!.jsonPrimitive.int shouldBeGreaterThanOrEqual 1
+            withClue("exactly the token: Karango inlines LIMIT, so it is the only bind value") {
+                entry["varsCount"]!!.jsonPrimitive.int shouldBe 1
+            }
         }
 
         "the probe's log lines are recorded, so the log slice of this record is real" {

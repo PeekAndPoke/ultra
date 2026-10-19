@@ -95,13 +95,16 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
              * unconditionally and needs no such list.
              *
              * `aql` qualifies: Karango records the query with its `@placeholders` intact and passes
-             * values separately. `json` (Monko) qualifies since 2026-10-19: `MonkoDriver` records
-             * `FindQueryBuilder.printQuery()`, which replaces every filter value by an `@pN` placeholder.
-             * Before that it recorded the filter WITH its values, and its text was dropped here.
+             * values separately. `mongo-bound` qualifies: `MonkoDriver` records the text of
+             * `FindQueryBuilder.printQuery()` under that label, every filter value an `@pN:<type>`
+             * placeholder. Monko's old label `json` does NOT: until 2026-10-19 it was the filter WITH its
+             * values, and a driver older than that may still send it.
              *
-             * Keyed on the language label, so a new driver must be added here deliberately, never by default.
+             * **Trusted by the label alone.** This cannot see how a text was made, so a driver path that
+             * recorded raw text under an allowlisted label would leak; each label names exactly one
+             * placeholder-ising printer, and a new one is added here only after its printer is.
              */
-            private val PLACEHOLDER_SAFE_LANGUAGES = setOf("aql", "json")
+            private val PLACEHOLDER_SAFE_LANGUAGES = setOf("aql", "mongo-bound")
 
             /**
              * Takes [QueryProfiler.Entry.Impl], not the `Entry` interface.
