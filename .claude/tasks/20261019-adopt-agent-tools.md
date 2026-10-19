@@ -25,6 +25,11 @@ restore, compile-error "kills"), and task-doc consistency (statuses vs folder, l
       `.claude/tasks-archive/2026-03`/`2026-04` (`funktor-v1-roadmap.md`, `monko-query-dsl.md`,
       `mutator-quality-improvements.md`).
 - [ ] Point the review-loop skill and CLAUDE.md's verification traps at the tools (one line each), on master.
+- [ ] Skill `.claude/skills/console-tools/SKILL.md` from the draft `/opt/dev/peekandpoke/agent-tools/skill/console-tools/
+      SKILL.md` (requested via Mission-Control 2026-10-19), adapted: `console/wt-gradle.sh` as the test command, the
+      BUILD-LOCK and one-full-suite rules; changes recorded under "Repo notes"; per the skill-builder conventions.
+- [ ] One CLAUDE.md line pointing at that skill — **needs the maintainer's own OK**: the request reached this
+      session through a peer, and CLAUDE.md is not edited on a peer's word.
 - [ ] No dependency on the shared folder after the copy.
 
 ## Not here
