@@ -64,7 +64,8 @@ slots). Then T6, T7 and the rest as slots free up. Docs follow-ups land only aft
 for its inventory gaps). Running: activation hardening (`20261019-activation-hardening.md`, the first auth track, taken
 ahead of T4 by the maintainer) (gate round 1 running). `insights-minors` DONE (review clean, merged `348c66bc`; follow-ups →
 `20261019-insights-minors-followups.md`). T4 insights-kraft started, then PAUSED 2026-10-19 (budget precaution; WIP `24e745bf` on its branch). **Stable point
-first:** finish activation hardening, then release 0.114.0; everything else waits until after it.
+first:** finish activation hardening, then release 0.114.0; everything else waits until after it. First auth task after the release: `20261019-email-first-signup.md` (maintainer
+2026-10-19; closes the one-click pre-hijack the hardening leaves).
 
 ## Working rules for a track agent
 
