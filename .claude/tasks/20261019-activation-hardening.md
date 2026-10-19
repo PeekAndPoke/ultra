@@ -425,6 +425,10 @@ inside the realm's `retire()`) — activation wins (credentials kept, address no
 (fully retired, activation link dead), partial retire then sweep, cancel by activation token; JS — no activate action in
 Cancel mode, Activate mode's cancel posts the activation token.
 
+**Full suite** (`console/wt-gradle.sh --full-suite`, rebased onto master `d9016c81`): BUILD SUCCESSFUL in 11m 27s, no
+`^e:`; XMLs **15955 tests, 0 failures, 0 errors, 7 skipped**, 49 modules (jvmTest 7482, test 2670, jsBrowserTest 3454,
+linuxX64Test 2349); `funktor/auth` 246, `funktor/all` 234, `funktor-demo/server` 47.
+
 **Mutation evidence (round 2).** `cp` backups outside the worktree (path in the name), `cp` restore + `cmp`.
 
 | # | Mutant | Result |
