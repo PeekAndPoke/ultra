@@ -128,3 +128,20 @@ password for a pending account.
   comes from the token record, not the request — confirm).
 - **Attempt:** harvest a resend token from a browser (it is held in memory on `AuthState`, not in
   localStorage or the URL — confirm it does not leak into history or `Referer`).
+
+## Added by the activation-resend gate, round 2 (2026-10-19)
+
+Collected, not executed. §2's "a copy change to close" is wrong once activation is zero-click.
+
+- **Scanner detonation** — pre-register an address on a Defender / Mimecast / Proofpoint tenant; does the sandbox fire the
+  activation? Then sign in with the attacker's password; retry via resend.
+- **Sustained resend stream** — from an attacker-owned pending account, loop sign-in + resend at the cooldown cadence;
+  mails per day to a non-aliasable address, and does anything ever stop it?
+- **Persistence after the victim's reset** — take a session after a zero-click activation; let the victim reset the
+  password; does `refresh-token` keep renewing the attacker's JWT?
+- **Resend-token row growth** — N refused sign-ins give N rows; Mongo TTL culling; `findByToken` latency under growth.
+- **Type confusion** — a resend token at `/activate`, a verification token at `/activate/resend`; a resend token redeemed
+  through a second `EmailAndPasswordAuth` with other `FrontendUrls`.
+- **Custom providers** — a provider that throws `AccountNotActivated(userId)` before its own credential check makes the
+  realm mint a resend token for an arbitrary user (`AuthRealm.kt:269-287` trusts `e.userId`).
+- **Concurrent burst** — K parallel sign-ins mint K resend tokens; K parallel resends race the non-atomic cooldown.
