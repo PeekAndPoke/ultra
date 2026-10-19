@@ -1,6 +1,6 @@
 # funktor/cluster: global locks expire by heartbeat, not by creation time
 
-**Status:** IMPLEMENTED 2026-10-19 on `wt/locks-heartbeat`, awaiting the `/feature-review` gate (run by the coordinator)
+**Status:** IMPLEMENTED 2026-10-19 on `wt/locks-heartbeat`; review round 1 findings fixed, awaiting round 2 of the `/feature-review` gate (run by the coordinator)
 **Plan:** none — maintainer request, 2026-10-19
 **Security-critical:** no (concurrency correctness; no auth or data boundary)
 
@@ -90,22 +90,34 @@ Paths are relative to `funktor/cluster/src/jvmMain/kotlin/locks/` unless given i
   - The Monko heartbeat slumbers its instants (`:63`). Measured: without it, the driver writes the SAME shape
     `{ts, timezone, human}` through bson-kotlinx (`KotlinSerializerCodec` + `MpInstantSerializer`), so mutant M7 is
     equivalent. Kept, so the codec that reads the shape back also decides it; the comment was corrected.
-- **Provider** `VaultGlobalLocksProvider.kt`: `ttl`/`heartbeatInterval`/`log` (`:41-43`), validated (`:71`); token
-  per acquisition (`:95`); heartbeat child in `coroutineScope`, cancelled and joined before the release (`:128`).
+- **Provider** `VaultGlobalLocksProvider.kt`: `ttl`/`heartbeatInterval`/`log` (`:41-43`), validated: interval
+  positive and below the ttl, and (round 1) below `legacyExpiry` (`:79`), else `expires` lapses between beats and a
+  server without heartbeats takes the live lock over. `legacyExpiry` is `internal` (`:67`). Token per acquisition
+  (`:103`); heartbeat child in `coroutineScope`, cancelled and joined before the release (`:136`).
   Decisions of mine, beyond the spec — please confirm:
-  - **Heartbeat on `Dispatchers.IO`** (`:128`): a handler that blocks its thread (collected via `acquire()` on a
-    confined dispatcher) would otherwise starve the beat and lose its lock after the ttl. Test "A handler that blocks
-    its thread keeps its lock" (M13).
-  - **Only our own cancellation ends the beating** (`:174`, `ensureActive()` in the catch): a foreign
+  - **Heartbeat on its own `Dispatchers.IO.limitedParallelism(4)` view** (`:71`, `:136`; round 1 replaced plain
+    `Dispatchers.IO`). Off the handler's dispatcher, so a handler blocking its thread cannot starve it (M13); and a
+    view of IO gets threads beyond IO's own limit, so blocking handlers that saturate IO cannot starve it either (C1).
+    Four threads: a beat suspends while the database works. **Not on Karango**: its driver runs every query in
+    `async(Dispatchers.IO)` (`karango/core/src/main/kotlin/vault/KarangoDriver.kt:120`), so a saturated IO pool stalls
+    the beat's query whatever the beat runs on. Measured (C2): the saturated-IO test fails on Karango even with the
+    fix, so it is skipped there with that reason (`funktor/cluster/src/jvmTest/kotlin/locks/karango/KarangoGlobalLockProviderSpec.kt:58`).
+    Fixing that is a karango/core change, outside this track.
+  - **Only our own cancellation ends the beating** (`:182`, `ensureActive()` in the catch): a foreign
     `CancellationException` (e.g. a driver-side timeout) is a failed beat, not a silent stop.
-  - **Release in `withContext(NonCancellable)`** (`:145`, from the draft, kept): a cancelled handler still releases
+  - **Release in `withContext(NonCancellable)`** (`:153`, from the draft, kept): a cancelled handler still releases
     instead of leaving the lock for the ttl. Test "A cancelled handler still releases its lock" (M8).
   - Lost-lock warning says "released or taken over" (the cleanup worker or the CLI may also have removed it).
-- **Dead rule** `isDead` (`:198`), used by the takeover (`:189`) and `releaseExpired` (`:213`); `releaseBy` removes
-  through `removeIfUnchanged` and returns only what it actually removed (`:208`).
+- **Dead rule** `isDead` (`:206`), used by the takeover (`:197`) and `releaseExpired` (`:221`); `releaseBy` removes
+  through `removeIfUnchanged` and returns only what it actually removed (`:216`). Pinned by wrapper repos that beat or
+  re-acquire the lock right after `findAll`/`findById` (X1, X2).
 - `GlobalLocksProvider.releaseExpired()` is abstract (`GlobalLocksProvider.kt:100`); the compiler found one other
-  implementor, `PrimitiveGlobalLocksProvider.kt:82` (returns `emptyList()`, like its `list`/`releaseBy`). Cleanup
-  worker `workers/GlobalLocksCleanupWorker.kt:48`, log headers "Last heartbeat".
+  implementor, `PrimitiveGlobalLocksProvider.kt:82` (returns `emptyList()`, like its `list`/`releaseBy`).
+- **Cleanup worker** `workers/GlobalLocksCleanupWorker.kt`: `releaseExpired()` (`:37`), log headers "Last heartbeat".
+  Round 1 (MAJOR): the dead-server rule applies to locks **without a token only** (`:54`) — a lock with one dies by its
+  heartbeat within the ttl, before the 3-min beacon rule — and is **skipped until the beacons were read once**
+  (`:28`, `GlobalServerList.isPopulated`, `GlobalServerList.kt:17`, set in `setAll` `:25`; `@Volatile` and written
+  after the list, so a reader that sees it also sees the list).
 - `Log` injected into both factories (`funktor/cluster/src/jvmMain/kotlin/index_jvm.kt:222`, `:335`). **Scoping
   note, correcting the draft's reasoning:** the provider is `Dynamic` with or without `Log`, because
   `useKarango()`/`useMonko()` register a `singleton` over the module's `dynamic` default and an override keeps
@@ -115,13 +127,17 @@ Paths are relative to `funktor/cluster/src/jvmMain/kotlin/locks/` unless given i
   (`ultra/kontainer/src/main/kotlin/KontainerBlueprint.kt:77-81`), so a true singleton injecting `Log` becomes
   SemiDynamic (cf. the TODO at `ultra/log/src/jvmMain/kotlin/index_jvm.kt:41`). No change in behaviour here.
 - **Inspect**: `GlobalLocksApi.kt:53`, `funktor/inspect/src/commonMain/kotlin/cluster/locks/api/GlobalLockEntryModel.kt:17`
-  (appended, no default), `funktor/inspect/src/jsMain/kotlin/cluster/locks/GlobalLocksListPage.kt:86`. No token.
+  (appended; round 1: defaults to `created`, so the new UI decodes an old server's listing — the server side encodes
+  with Slumber, which always writes the field), `funktor/inspect/src/jsMain/kotlin/cluster/locks/GlobalLocksListPage.kt:86`.
+  No token.
 - **Tests**: `funktor/cluster/src/jvmTest/kotlin/locks/VaultGlobalLocksProviderSpecBase.kt` (provider and repo rules)
   runs against the in-memory repo (`VaultGlobalLockProviderSpec`), Karango and Monko; it extends
   `GlobalLockProviderSpecBase`, whose generic tests therefore now also run on both DBs. Two of those raced there and
   were fixed in the test: four started both acquires at once (now `onceHeld`: the second waits until the first holds
   the lock), and "Handler throwing an error" asserted an emission order that is a genuine race after the release
-  (now order-independent; seen red once on Monko during the mutation runs).
+  (now order-independent; seen red once on Monko during the mutation runs). Round 1: the property that order carried
+  is back as a flag — the second handler checks that the first had failed before it ran
+  (`funktor/cluster/src/jvmTest/kotlin/locks/GlobalLockProviderSpecBase.kt:213`; A1).
 - **E2e** in a NEW file `funktor/all/src/jvmTest/kotlin/GlobalLocksE2eSpec.kt` (not `ClusterApiSpec`: this track adds
   spec files to `funktor/all` only): `KarangoGlobalLocksE2eSpec` on the default test app, `MonkoGlobalLocksE2eSpec`
   on a blueprint with `cluster = { useMonko() }`; each pins its repo class. The app's provider holds the lock; one beat
@@ -132,19 +148,12 @@ Paths are relative to `funktor/cluster/src/jvmMain/kotlin/locks/` unless given i
 
 ### Found, not changed (need a decision or are out of scope)
 
-- **Startup race in the cleanup worker (read from code, not reproduced).** The dead-server rule releases every lock
-  whose server is not in `GlobalServerList` (`workers/GlobalLocksCleanupWorker.kt:27-34`). That list starts empty
-  (`GlobalServerList.kt:9`) and is filled only by `ServerBeaconCleanupWorker` (`workers/ServerBeaconCleanupWorker.kt:30`),
-  and workers run concurrently (`funktor/cluster/src/jvmMain/kotlin/workers/WorkersFacade.kt:64`). If the lock cleanup
-  reads the list first after a server start, it releases every lock in the cluster, live ones included. With
-  heartbeats the rule is redundant for token locks (a dead server stops beating: dead after 60 s, faster than the 3 min
-  beacon rule). Options: skip it while the list is empty, or restrict it to legacy locks.
+- (The startup race of the dead-server rule, listed here in round 0, is fixed in round 1 — see "Cleanup worker".)
 - A cancelled `lock()` surfaces as `LocksException.Execution(cause = CancellationException)`
-  (`VaultGlobalLocksProvider.kt:137-138`, pre-existing, Primitive too), so the caller's parent sees a failure rather
+  (`VaultGlobalLocksProvider.kt:145-146`, pre-existing, Primitive too), so the caller's parent sees a failure rather
   than a cancellation.
-- The dead rule compares the reader's clock with the writer's `lastHeartbeat`: clock skew eats into the
-  `ttl - heartbeatInterval` margin (40 s by default). The ttl is the reader's setting and the interval the writer's,
-  so a deploy that changes them can steal live locks for its duration.
+- Clock skew and mixed ttl/interval settings during a deploy: in the ledger as a maintainer decision.
+- Karango heartbeats share Dispatchers.IO through the driver (see "Heartbeat on its own … view").
 - An insert that succeeds in the DB but fails on the client leaves our own lock blocking us until the ttl (it is not
   beaten). Previously 15 min.
 
@@ -152,6 +161,21 @@ Paths are relative to `funktor/cluster/src/jvmMain/kotlin/locks/` unless given i
 
 All runs via `console/wt-gradle.sh` (worktree DBs `ultra_wt_locks_heartbeat`); counts from
 `build/test-results/**/TEST-*.xml`, failing cases read from the console.
+
+**Round 1 fixes** (rebased onto master `eb7b8d91` first):
+
+- `:funktor:cluster:jvmTest` (all specs): **150 tests, 0 failures, 1 skipped**, three runs in a row. Locks: in-memory
+  `VaultGlobalLockProviderSpec` 34, `KarangoGlobalLockProviderSpec` 35 (1 skipped: the saturated-IO test, see the
+  notes), `MonkoGlobalLockProviderSpec` 35, `PrimitiveGlobalLockProviderSpec` 8, `GlobalLockEntryModelSpec` 1.
+- `:funktor:all:jvmTest` (all specs): **160 tests, 0 failures**, incl. both e2e specs and `ClusterApiSpec`.
+- Full suite `console/wt-gradle.sh --full-suite` (12m29s, no `^e:`, no Kotlin daemon failure): **68 test targets,
+  15726 tests, 1 failure, 0 errors, 8 skipped.** `funktor/cluster` 150/0 (1 skipped), `funktor/all` 160/0,
+  `funktor-demo:server` 47/0 and `monko:core` 249/0 (the round-0 environment failures are gone after the rebase).
+  The one failure is `ultra:cache` `FastCacheOnEvictionSpec` "onEviction fires when expireAfterAccess evicts" on
+  linuxX64 (expected two evictions within its time window, saw none): untouched code, passed in the round-0 suite, and
+  `:ultra:cache:linuxX64Test` re-run alone: 123 tests, 0 failures — a timing flake under full-suite load.
+
+**Round 0** (before the review):
 
 - `:funktor:cluster:jvmTest` (all specs): **130 tests, 0 failures**, three runs in a row. Locks: in-memory
   `VaultGlobalLockProviderSpec` 27, `KarangoGlobalLockProviderSpec` 29, `MonkoGlobalLockProviderSpec` 29,
@@ -200,6 +224,19 @@ Each mutant: `cp` backup to `/tmp/locks-mutants/` (source-set path in the name),
 | M17 | Monko, same | the same two (Monko) | — |
 | M18a | Karango `removeIfUnchanged` without the token | "removeIfUnchanged loses to a re-acquisition in between" (Karango) | — |
 | M18b | Monko, same | same (Monko) | — |
+| **Round 1** | | | |
+| W1 | dead-server rule applies to locks with a token too | "The cleanup worker leaves a beating lock alone, though its server has no beacon (yet)" (all 3) | the beating lock released |
+| W2 | dead-server rule runs before the beacons were read | "Before the beacons were read once, … releases no lock …" (all 3) | legacy lock released on the empty list |
+| W3 | `setAll` never marks the list populated | "Once the beacons were read, … releases a lock without a token whose server is dead" (all 3) | dead server's lock kept |
+| W4 | restriction inverted (`token.isNotEmpty()`) | W1's and W3's tests (all 3) | both |
+| X1 | `releaseBy` removes by key | "releaseExpired and releaseBy leave a lock alone that changed after they read it" (all 3) | the beaten lock released |
+| X2 | the takeover removes by key | "The takeover leaves a lock alone that changed after it was read" (all 3); on Monko also the contenders and ObjectId-key tests | taken over; Monko: `remove` deletes a fresh lock / misses the ObjectId-like key |
+| A1 | a contender runs while the lock is held (insert failure counted as acquired) | "Handler throwing an error" (all 3, failure lists "2nd, while the 1st still ran") and 10 more exclusion tests | the restored flag; without it this test stayed green |
+| B1 | the `heartbeatInterval < legacyExpiry` require dropped | "A heartbeat interval at or beyond the legacy expiry is rejected" (in-memory spec) | no exception |
+| C1 | heartbeat on plain `Dispatchers.IO` | "A holder keeps beating while blocking work saturates Dispatchers.IO" (in-memory, Monko) | silent for ≥ ttl |
+| M13b | heartbeat on the collector's dispatcher (M13 re-run) | "A handler that blocks its thread keeps its lock" (all 3), saturated-IO test (in-memory, Monko) | — |
+| C2 | experiment: the saturated-IO test enabled on Karango, with the fix in place | red (Karango) | confirms the skip reason: the Karango driver queries on `Dispatchers.IO` |
+| D1 | `GlobalLockEntryModel.lastHeartbeat` without default | `GlobalLockEntryModelSpec` | `MissingFieldException` |
 
 ## Review record — the LEDGER (filled by /feature-review)
 
