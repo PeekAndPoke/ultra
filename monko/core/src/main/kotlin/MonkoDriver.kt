@@ -24,7 +24,16 @@ import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import org.bson.BsonArray
+import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
+import org.bson.BsonInt32
+import org.bson.BsonNull
+import org.bson.BsonString
+import org.bson.BsonValue
 import org.bson.Document
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.DocumentCodec
 import org.bson.conversions.Bson
 import org.bson.json.JsonWriterSettings
 import org.bson.types.ObjectId
@@ -54,6 +63,33 @@ class MonkoDriver(
         internal fun toBsonId(key: String): Any {
             return if (ObjectId.isValid(key)) ObjectId(key) else key
         }
+
+        private val documentCodec = DocumentCodec()
+
+        /**
+         * Replaces every value in [value] by an `@pN` placeholder, recording the value in [vars].
+         *
+         * Fail-closed: only documents and arrays holding documents are walked as structure, so anything else,
+         * a whole `$in` list included, is a value. Keys are kept; they are field names and operators.
+         */
+        private fun placeholderise(value: BsonValue, vars: MutableMap<String, Any?>): BsonValue = when {
+            value.isDocument -> BsonDocument().also { out ->
+                value.asDocument().forEach { (key, child) -> out[key] = placeholderise(child, vars) }
+            }
+
+            value.isArray && value.asArray().any { it.isDocument } ->
+                BsonArray(value.asArray().map { placeholderise(it, vars) })
+
+            else -> {
+                val name = "p${vars.size + 1}"
+                vars[name] = value.toPlain()
+                BsonString("@$name")
+            }
+        }
+
+        /** The plain Java value a [Document] would hold, e.g. a `String` rather than a `BsonString`. */
+        private fun BsonValue.toPlain(): Any? =
+            documentCodec.decode(BsonDocumentReader(BsonDocument("v", this)), DecoderContext.builder().build())["v"]
     }
 
     class FindQueryBuilder internal constructor() {
@@ -92,6 +128,7 @@ class MonkoDriver(
                 .apply { skip?.let { flow.skip(it) } ?: this }
         }
 
+        /** The query with every value inline. A debugging aid: never record it, see [printQuery]. */
         fun print(): String {
             val doc = Document()
             doc["filter"] = filter?.toBsonDocument()
@@ -101,6 +138,27 @@ class MonkoDriver(
 
             return doc.toPrettyJson()
         }
+
+        /**
+         * The query as the profiler records it: every filter VALUE is an `@pN` placeholder, held in [Printed.vars].
+         *
+         * Field names, `sort`, `limit` and `skip` stay in the text, as AQL keeps attribute names and `LIMIT`.
+         * Sort values can only be directions, which the server enforces.
+         */
+        fun printQuery(): Printed {
+            val vars = linkedMapOf<String, Any?>()
+
+            val doc = BsonDocument()
+            doc["filter"] = filter?.let { placeholderise(it.toBsonDocument(), vars) } ?: BsonNull.VALUE
+            doc["sort"] = sort?.toBsonDocument() ?: BsonNull.VALUE
+            doc["limit"] = limit?.let { BsonInt32(it) } ?: BsonNull.VALUE
+            doc["skip"] = skip?.let { BsonInt32(it) } ?: BsonNull.VALUE
+
+            return Printed(query = doc.toJson(prettyJsonWriterSettings), vars = vars)
+        }
+
+        /** A placeholder-ised query and the values its placeholders stand for. */
+        data class Printed(val query: String, val vars: Map<String, Any?>)
     }
 
     val codec by lazyCodec
@@ -322,12 +380,16 @@ class MonkoDriver(
             database.getCollection<Document>(collection).countDocuments(filter)
         }
 
+        // Placeholders, not `print()`: this text reaches the profiler and so the insights record, and a filter
+        // is how a session token or an activation code is looked up.
+        val printed = builder.printQuery()
+
         val cursor = MonkoCursor(
             entries = entries,
             query = MongoTypedQuery.of(
                 type = storedType,
-                query = builder.print(),
-                vars = emptyMap(),
+                query = printed.query,
+                vars = printed.vars,
             ),
             entityCache = codec.entityCache,
             _fullCount = fullCount,
