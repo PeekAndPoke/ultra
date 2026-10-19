@@ -8,8 +8,9 @@
  *   the record itself, which is what the request actually ran with.
  * - `slim` (since) -- only services with instances, plus the `graphFingerprint` they were written
  *   against. Injects and definitions come from the kontainer graph endpoint, joined on `cls`, fetched on
- *   the first graph click and never before, at most once per page. A fingerprint mismatch is said, not
- *   hidden: the edges are then today's, which is expected after almost any deploy.
+ *   the first graph click and never before, and cached by fingerprint (`InsightsGraphSource.kontainer`). A
+ *   fingerprint mismatch is said, not hidden: the edges are then the server's, fetched for this record,
+ *   which is expected after almost any deploy.
  *
  * Services are ordered with instantiated ones first, then by FQN (`readKontainer` does the sort).
  *
@@ -40,6 +41,8 @@ const slice = computed(() => readKontainer(props.data))
 
 /** The kontainer graph endpoint's answer. Only a `slim` record asks for it, and only on a graph click. */
 const graph: Ref<KontainerGraphData | null> = ref(null)
+/** When [graph] was fetched -- possibly for an earlier record of the same fingerprint. */
+const fetchedAt: Ref<string | null> = ref(null)
 const graphProblem: Ref<string | null> = ref(null)
 const loading = ref(false)
 const shown: Ref<'instances' | 'full' | null> = ref(null)
@@ -75,11 +78,15 @@ async function toggle(which: 'instances' | 'full'): Promise<void> {
     loading.value = true
     graphProblem.value = null
 
-    const result = await graphs.kontainer()
+    const result = await graphs.kontainer(value.graphFingerprint)
 
     loading.value = false
-    if (result.ok) graph.value = result.value
-    else graphProblem.value = `The kontainer graph is not available: ${result.reason}`
+    if (result.ok) {
+        graph.value = result.value
+        fetchedAt.value = new Date(result.fetchedAt).toLocaleTimeString()
+    } else {
+        graphProblem.value = `The kontainer graph is not available: ${result.reason}`
+    }
 }
 
 const summary = computed<Fact[]>(() => {
@@ -169,12 +176,14 @@ function shortName(fqn: string | null): string {
             <div v-if="graphProblem !== null" class="fk-notice fk-notice--error">{{ graphProblem }}</div>
             <div v-if="match === 'other'" class="fk-notice">
                 This record was written against another kontainer graph (fingerprint
-                {{ slice.graphFingerprint }}, today {{ graph?.fingerprint ?? 'none' }}). The definitions and
-                edges shown are today's. Expected after almost any deploy: the fingerprint covers line numbers.
+                {{ slice.graphFingerprint }}). Asked for it at {{ fetchedAt }}, the server answered
+                {{ graph?.fingerprint ?? 'none' }}: the definitions and edges shown are that graph's, not this
+                record's. Expected after almost any deploy: the fingerprint covers line numbers.
             </div>
             <div v-if="match === 'unknown'" class="fk-notice">
                 This record names no kontainer graph -- the server could not build one when it was written -- so
-                whether today's graph matches it cannot be verified. The definitions and edges shown are today's.
+                whether the server's graph, fetched at {{ fetchedAt }}, matches it cannot be verified. The
+                definitions and edges shown are that graph's.
             </div>
 
             <NetworkGraph v-if="network !== null" :key="shown ?? ''" :data="network" />

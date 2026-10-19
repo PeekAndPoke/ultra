@@ -180,6 +180,18 @@ describe('vault', () => {
         const bindVars = [...card.querySelectorAll('.fk-strip__cell')].find((cell) => cell.textContent?.includes('Bind vars'))!
         expect(bindVars.querySelector('.fk-strip__value')?.textContent).toBe('unknown')
     })
+
+    it('a raw AQL entry says why it has no text', async () => {
+        // What the collector writes for AqlTypedQuery.of: its own label, the text withheld.
+        const slice = sliceOf(recorded.vault(), 'vault')
+        const arango = slice.entries.find((entry: { queryLanguage: string }) => entry.queryLanguage === 'aql')
+        Object.assign(arango, { queryLanguage: 'aql-raw', query: null })
+
+        const host = await render(VaultTab, slice)
+        const card = [...host.querySelectorAll('.fk-query')].find((it) => it.textContent?.includes('ArangoDB'))!
+
+        expect(card.textContent).toContain('raw AQL, not printed by the query DSL')
+    })
 })
 
 describe('kontainer', () => {

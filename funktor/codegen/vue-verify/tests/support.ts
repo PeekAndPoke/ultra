@@ -88,6 +88,25 @@ export function recordedGraphs(overrides: Record<string, Answer> = {}): { graphs
     return { graphs: createGraphSource(() => client), requests }
 }
 
+/** A graph source whose kontainer endpoint answers [bodies] in turn, the last one from then on: a redeploy. */
+export function sequencedKontainerGraphs(bodies: unknown[]): { graphs: InsightsGraphSource; requests: string[] } {
+    const requests: string[] = []
+
+    const transport: HttpTransport = {
+        async send(request: HttpRequest): Promise<HttpResponse> {
+            const path = decodeURIComponent(new URL(request.url).pathname)
+            if (path !== KONTAINER_GRAPH_PATH) throw new Error(`unexpected request: ${path}`)
+
+            const body = bodies[Math.min(requests.length, bodies.length - 1)]
+            requests.push(path)
+            return { status: 200, statusText: '', body: JSON.stringify(body) }
+        },
+    }
+
+    const client = clientOver(transport)
+    return { graphs: createGraphSource(() => client), requests }
+}
+
 export interface Mounted {
     host: HTMLElement
     unmount(): void

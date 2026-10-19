@@ -204,6 +204,16 @@ describe('the other readers', () => {
         expect(readVault(sliceOf(recorded.vault(), 'vault'))!.entries.every((it) => it.varsCount === 1)).toBe(true)
     })
 
+    it('...and so has a PRE-collector one, which kept its text and an empty vars', () => {
+        // The raw profiler entry Jackson wrote before VaultCollector.Data: Monko's text, values inline, `vars: {}`.
+        const raw = { entries: [{ queryLanguage: 'json', query: '{"filter": {"token": "x"}}', vars: {}, totalNs: 1 }] }
+
+        const entry = readVault(raw)!.entries[0]
+
+        expect(entry.legacy).toBe(true)
+        expect(entry.varsCount).toBeNull()
+    })
+
     it('the file descriptor cell carries the "not measured" caveat when both counts are 0', () => {
         const raw = sliceOf(recorded.slim(), 'runtime')
         const measured = runtimeCells(readRuntime(raw)!).find((cell) => cell.label === 'File descriptors')!

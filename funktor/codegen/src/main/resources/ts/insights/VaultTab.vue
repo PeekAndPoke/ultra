@@ -35,7 +35,7 @@
  *
  * It describes the schema, not the request, so it comes from its own endpoint
  * (`GET /_/funktor/insights/graphs/database`), fetched on the first click of "Show Database Graph" or
- * of "Database Graph Data", and never before. Without it -- no API client, a 401, a missing endpoint --
+ * of "Database Graph Data", never before, and once per page. Without it -- no API client, a 401, a missing endpoint --
  * the tab renders as before, with a notice. Its raw view is safe to show: it holds repository names,
  * stored classes and references, no query and no value.
  *
@@ -67,6 +67,8 @@ const cells = computed(() => (slice.value === null ? [] : vaultCells(slice.value
 const graphs = useInsightsGraphsOrNull()
 
 const database: Ref<DatabaseGraphResult | null> = ref(null)
+/** When [database] was fetched: once per page, so possibly for an earlier record. */
+const fetchedAt: Ref<string | null> = ref(null)
 const graphProblem: Ref<string | null> = ref(null)
 const loading = ref(false)
 const showGraph = ref(false)
@@ -83,8 +85,12 @@ async function loadGraph(): Promise<void> {
     const result = await graphs.database()
 
     loading.value = false
-    if (result.ok) database.value = result.value
-    else graphProblem.value = `The database graph is not available: ${result.reason}`
+    if (result.ok) {
+        database.value = result.value
+        fetchedAt.value = new Date(result.fetchedAt).toLocaleTimeString()
+    } else {
+        graphProblem.value = `The database graph is not available: ${result.reason}`
+    }
 }
 
 function toggleGraph(): void {
@@ -101,11 +107,15 @@ function measure(value: VaultMeasure): string {
     return `${nsToMs(value.totalNs)} (${value.count}x)`
 }
 
-/** Why an entry has no query text; Monko's old `json` entries have their own reason. */
+/** Why an entry has no query text; Monko's old `json` entries and raw AQL have their own reasons. */
 function emptyQueryText(entry: VaultEntry): string {
     if (entry.queryLanguage === 'json') {
         return 'No query text recorded: written before 2026-10-19, when Monko still put the bind values into its ' +
             'query text, so the server withheld it and did not count the bind variables.'
+    }
+    if (entry.queryLanguage === 'aql-raw') {
+        return 'No query text recorded: raw AQL, not printed by the query DSL, so it may hold literal values ' +
+            'and the server withholds it.'
     }
     return `No query text recorded (${entry.queryLanguage ?? 'unknown language'}). Either the driver is not known ` +
         'to keep bind values out of it, so the server withholds it, or the query failed before it was printed.'
@@ -137,7 +147,8 @@ function results(entry: VaultEntry): string {
                 </button>
             </div>
             <p class="fk-section__note">
-                The database graph is today's schema, fetched from the server now -- not part of this record.
+                The database graph is the server's schema{{ fetchedAt === null ? '' : ` as fetched at ${fetchedAt}` }},
+                not part of this record. It is fetched once per page.
             </p>
             <div v-if="graphs === null" class="fk-notice">No API client here to fetch the database graph.</div>
             <div v-if="loading" class="fk-empty">Loading the database graph...</div>

@@ -1,6 +1,6 @@
 /**
- * The graphs: fetched lazily, at most once per page, drawn from the right data, and never able to take
- * a tab down. `vis-network` is replaced by a recorder here; `graphs-real-library.spec.ts` runs the real one.
+ * The graphs: fetched lazily, the kontainer graph cached by fingerprint, drawn from the right data, and never
+ * able to take a tab down. `vis-network` is replaced by a recorder here; `graphs-real-library.spec.ts` runs the real one.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import KontainerTab from '../src/funktorsdk/insights/KontainerTab.vue'
@@ -15,6 +15,7 @@ import {
     mount,
     recorded,
     recordedGraphs,
+    sequencedKontainerGraphs,
     sliceOf,
 } from './support.ts'
 import type { Mounted } from './support.ts'
@@ -81,24 +82,88 @@ describe('the kontainer graphs', () => {
         expect(host.textContent).toContain('insights_module.kt')
     })
 
-    it('are fetched at most ONCE per page, however many tabs and graphs ask', async () => {
+    it('are fetched ONCE per fingerprint, however many tabs, graphs and records of it ask', async () => {
         const { graphs, requests } = recordedGraphs()
         const first = await render(KontainerTab, sliceOf(recorded.slim(), 'kontainer'), graphs)
 
         await click(first, 'Show instances Graph')
         await click(first, 'Show Full Graph')
 
-        // another record opened on the same page: the same source
-        const second = await render(KontainerTab, sliceOf(recorded.vault(), 'kontainer'), graphs)
+        // another record of the same graph, opened on the same page: the same source
+        const second = await render(KontainerTab, sliceOf(recorded.slim(), 'kontainer'), graphs)
         await click(second, 'Show Full Graph')
 
         expect(requests).toEqual([KONTAINER_GRAPH_PATH])
+    })
 
-        // That record comes from another app: its full graph is its own services plus today's graph's.
+    it('a record naming ANOTHER fingerprint asks once more; the server still differing, that answer is kept', async () => {
+        const { graphs, requests } = recordedGraphs()
+        const first = await render(KontainerTab, sliceOf(recorded.slim(), 'kontainer'), graphs)
+        await click(first, 'Show instances Graph')
+
+        // record-vault.json was written by another app, so it names another fingerprint
+        const other = await render(KontainerTab, sliceOf(recorded.vault(), 'kontainer'), graphs)
+        await click(other, 'Show Full Graph')
+
+        expect(requests).toEqual([KONTAINER_GRAPH_PATH, KONTAINER_GRAPH_PATH])
+        expect(other.textContent).toContain('written against another kontainer graph')
+        expect(other.textContent).toContain('Asked for it at')
+
+        // That record's full graph is its own services plus the server's graph's.
         const own = sliceOf(recorded.vault(), 'kontainer').services.map((service: { cls: string }) => service.cls)
         const union = new Set([...own, ...graphData().services.map((service) => service.cls)])
         expect(drawn.networks.at(-1)!.data.nodes).toHaveLength(union.size)
         expect(drawn.networks.at(-1)!.options.physics.solver).toBe('barnesHut')
+
+        // ...and a third record naming it does not ask again
+        const again = await render(KontainerTab, sliceOf(recorded.vault(), 'kontainer'), graphs)
+        await click(again, 'Show instances Graph')
+        expect(requests).toHaveLength(2)
+        expect(again.textContent).toContain('written against another kontainer graph')
+    })
+
+    it('the graph a fetch brought is cached under ITS fingerprint, and a record naming none takes it', async () => {
+        const { graphs, requests } = recordedGraphs()
+
+        // asked for another fingerprint, the server answers its own
+        const other = await render(KontainerTab, sliceOf(recorded.vault(), 'kontainer'), graphs)
+        await click(other, 'Show instances Graph')
+
+        const same = await render(KontainerTab, sliceOf(recorded.slim(), 'kontainer'), graphs)
+        await click(same, 'Show instances Graph')
+
+        const none = sliceOf(recorded.slim(), 'kontainer')
+        none.graphFingerprint = null
+        const unnamed = await render(KontainerTab, none, graphs)
+        await click(unnamed, 'Show instances Graph')
+
+        expect(requests).toEqual([KONTAINER_GRAPH_PATH])
+        expect(same.textContent).not.toContain('written against another kontainer graph')
+        expect(unnamed.textContent).toContain('cannot be verified')
+    })
+
+    it('after a redeploy, a record of the NEW build gets the new graph, not the one cached before it', async () => {
+        const before = recorded.kontainerGraph()
+        before.data.fingerprint = 'graph-before-the-deploy'
+        const { graphs, requests } = sequencedKontainerGraphs([before, recorded.kontainerGraph()])
+
+        const old = sliceOf(recorded.slim(), 'kontainer')
+        old.graphFingerprint = 'graph-before-the-deploy'
+        const oldHost = await render(KontainerTab, old, graphs)
+        await click(oldHost, 'Show instances Graph')
+        expect(oldHost.textContent).not.toContain('written against another kontainer graph')
+
+        const fresh = await render(KontainerTab, sliceOf(recorded.slim(), 'kontainer'), graphs)
+        await click(fresh, 'Show instances Graph')
+
+        expect(requests).toEqual([KONTAINER_GRAPH_PATH, KONTAINER_GRAPH_PATH])
+        expect(fresh.textContent).not.toContain('written against another kontainer graph')
+
+        // both answers stay cached under their own fingerprints
+        const oldAgain = await render(KontainerTab, old, graphs)
+        await click(oldAgain, 'Show instances Graph')
+        expect(requests).toHaveLength(2)
+        expect(oldAgain.textContent).not.toContain('written against another kontainer graph')
     })
 
     it('a 401 leaves the tab rendering, with the refusal said', async () => {
@@ -156,6 +221,7 @@ describe('the kontainer graphs', () => {
         await click(host, 'Show instances Graph')
 
         expect(host.textContent).toContain('cannot be verified')
+        expect(host.textContent).toContain('fetched at')
         expect(host.textContent).not.toContain('written against another kontainer graph')
     })
 
@@ -215,9 +281,21 @@ describe('the kontainer network, built from the real graph', () => {
 
     it('dashes and lightens exactly the Lazy injections', () => {
         const network = kontainerNetwork(services(), 'full')
-        const lazy = network.edges.filter((edge) => edge.dashes)
 
-        expect(lazy.length).toBeGreaterThan(0)
+        // Counted from the data, not the network: each drawable injection, by its provision type.
+        const keys = new Set(services().map((service) => service.cls))
+        const drawable = (lazy: boolean) =>
+            services()
+                .filter((service) => service.cls !== null)
+                .flatMap((service) => service.definition?.injects ?? [])
+                .filter((inject) => (inject.provisionType === 'Lazy') === lazy)
+                .flatMap((inject) => inject.classes)
+                .filter((cls) => keys.has(cls)).length
+
+        expect(drawable(true)).toBeGreaterThan(0)
+        expect(drawable(false)).toBeGreaterThan(0)
+        expect(network.edges.filter((edge) => edge.dashes)).toHaveLength(drawable(true))
+        expect(network.edges.filter((edge) => !edge.dashes)).toHaveLength(drawable(false))
         for (const edge of network.edges) expect(edge.value).toBe(edge.dashes ? 1 : 2)
     })
 
@@ -255,7 +333,7 @@ describe('the database graph', () => {
 
         expect(requests).toEqual([DATABASE_GRAPH_PATH])
         expect(drawn.networks[0].data.nodes).toHaveLength(recorded.databaseGraph().data.repos.length)
-        expect(host.textContent).toContain("today's schema")
+        expect(host.textContent).toContain("the server's schema as fetched at")
     })
 
     it('"Database Graph Data" shows the raw model, from the same single fetch', async () => {
