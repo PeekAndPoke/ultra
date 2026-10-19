@@ -1,14 +1,31 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
 **HOLDER: none**
-**SINCE: 2026-10-18 (released by the kotlin-2421-upgrade agent)**
+**SINCE: 2026-10-19 (released by the datetime-zone-engine agent)**
 **STATE: FREE — take the lock before building.**
+
+## What the last holder changed — datetime-zone-engine agent, 2026-10-18 (zone engine + kotlinx-datetime 0.8.0)
+
+**2026-10-19 additions:** JS offset-interval cache (`OffsetIntervalCache.kt`), own epoch ↔ date-time arithmetic
+(`EpochMath.kt`, exact Long beyond 2^52 s), `MpLocalTime` is `Int`-based, pixijs addon registers pixi's extensions
+itself. Records: `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md`,
+`20261019-datetime-own-epoch-conversions.md`, `20261018-pixijs-addon-contract-tests.md`.
+
+**ultra/datetime does its own zone math** (`ultra/datetime/src/commonMain/kotlin/TimezoneEngine.kt`, java.time
+semantics, Intl on JS) and **kotlinx-datetime is 0.8.0** (`829f6a59`, `fed9393d`, + the review-fix commit). JS needs no
+tz data; `installNativeTimezones()` is GONE (ultra and Kraft) and Kraft installs no zone provider by default.
+Record: `.claude/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md`.
+
+**Worth taking:** Chrome's Intl case-folds zone ids AND canonicalises aliases (`US/Pacific` → `America/Los_Angeles`,
+`Asia/Kolkata` → `Asia/Calcutta`), so `resolvedOptions().timeZone` cannot tell a typo from an alias. The JVM parity
+sweep (`ZoneParityJvmSpec`) runs the shared algorithm against java.time for every JDK zone — rerun it after any engine
+change.
 
 ## What the last holder changed — kotlin-2421-upgrade agent, 2026-10-18 (Kotlin 2.4.21 + deps, release 0.111.0)
 
 **Kotlin 2.4.21, Gradle 9.7.1, KSP 2.3.12, maven-publish 0.37.0, Ktor 3.6.0, kotest 6.2.6** and a library refresh
 (`fb1b93f8`); versions and holds in `.claude/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md`. **kotlinx-datetime stays 0.6.2**
-(`0dc2df67`): 0.8.0 breaks every named zone on JS — follow-up `.claude/tasks/20261018-kotlinx-datetime-js-timezones.md`.
+(`0dc2df67`): 0.8.0 breaks every named zone on JS — follow-up `.claude/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md` (done).
 A full `clean build` after the upgrade matched the 0.110.0 baseline per target (14675 tests / 68 targets).
 
 **Worth taking:** Gradle's ceiling is set by KGP, not by "latest" — the compatibility table on

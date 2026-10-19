@@ -1,6 +1,6 @@
 # ultra/datetime: own epoch ↔ local date-time conversion (no emulated Long on JS)
 
-**Status:** IN REVIEW (Ultra-Main-Dev) — implemented 2026-10-19, `/feature-review` next
+**Status:** DONE (archived 2026-10-19) — gate PASS after 3 rounds (round 3 with the maintainer in the loop)
 **Plan:** follow-up of `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md`; maintainer: before the 0.112.0 release (2026-10-19)
 **Security-critical:** no — but every zoned value goes through it, persistence included (mutation-check bar)
 
@@ -16,15 +16,15 @@ that work went through js-joda and cost nothing in `Long` terms.
 
 ## Spec
 
-- [ ] `TimezoneEngine` splits epoch seconds + offset into date and time itself, and back, with `Int`/`Double`
+- [x] `TimezoneEngine` splits epoch seconds + offset into date and time itself, and back, with `Int`/`Double`
       arithmetic (Hinnant's days-from-civil / civil-from-days) instead of kotlinx's `toLocalDateTime(UTC)` /
       `toInstant(UTC)` / `atStartOfDayIn(UTC)`; kotlinx stays the holder of the values. Outside the range where
       `Int` days and `Double` seconds are exact, fall back to kotlinx.
-- [ ] Parity: a common test comparing the own conversion with kotlinx's over a wide spread of instants, offsets and
+- [x] Parity: a common test comparing the own conversion with kotlinx's over a wide spread of instants, offsets and
       dates (incl. negative years, leap days, centuries, the fallback edges), on all three targets; the existing
       ZoneParity table + JVM sweeps stay green.
-- [ ] Measured: the benchmark rows before/after; then spross re-profiles against a snapshot.
-- [ ] Mutation-checked (persistence bar).
+- [x] Measured: the benchmark rows before/after; then spross re-profiles against a snapshot.
+- [x] Mutation-checked (persistence bar).
 
 ## Implementation notes
 
@@ -47,7 +47,9 @@ that work went through js-joda and cost nothing in `Long` terms.
 - Mutations (each RED, restored + `cmp`): no fallback; year carry for Jan/Feb dropped; days-from-civil March shift
   dropped; truncating instead of flooring division (negative instants); century rule dropped — each fails
   `EpochMathSpec` and, for most, `ZoneParitySpec` / `Kronos` / Genesis–Doomsday specs too.
-- Benchmark (ns/op, ChromeHeadless 155, load average ~5; before = the `60bdd5d3` figures):
+- Benchmark (ns/op, ChromeHeadless 155, load average ~5; before = the `60bdd5d3` figures, after = `fd8eb172`; the
+  final tree `79284123` measured `atZone` 2 740, `toInstant` 3 650, daily stride 6 550, scattered 13 800 — see the
+  ledger):
 
   | Row | before | after |
   |---|---|---|
@@ -121,4 +123,26 @@ sweep 0/0. Mutations RED (restored + `cmp`): lookup always via Double → all 3 
 `toInstant` always on the fast path → 2 rows; `instant(date, offset)` fallback deleted → `EpochMathSpec` calendar
 rows. Benchmark: `atZone` 2 740, `toInstant` 3 650, daily stride 6 550, scattered 13 800 ns/op.
 
-**Round 3** (`reviewer-top`, maintainer in the loop) next.
+**Round 3** (`reviewer-top`, two-phase; maintainer in the loop). Phase 1: **zero CRITICAL/MAJOR in the change set**
+from all three charters (reviewer 1 disclosed that a Grep returned nine ledger lines; analysis from the code).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 | MAJOR (pre-existing) | `nativeMain/kotlin/TimezoneEngineNative.kt:10,24-33` | Native zone cache keyed by the raw id; kotlinx native accepts path variants (`Europe/./Berlin`, `Europe//Berlin`) → unbounded growth + O(n) copy per insert from hostile ids (S) | out-of-scope → follow-up task | Introduced by the previous task's MINOR batch, not this change set; JVM/JS unaffected. `.claude/tasks/20261019-datetime-native-zone-cache-growth.md` |
+| 3 | MAJOR (pre-existing) | `MpZonedDateTime.kt:151` | A stored `ts` in the second half of an overlap re-encodes an hour early (I, D, S) | out-of-scope → existing follow-up | Already `.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md` |
+| 3 | MINOR (pre-existing) | `TimezoneEngineJs.kt:70-76` | JS: wall time past the Date limit → NaN → offset 0, silently (D) | maintainer list | Year ±275 760 only; noted in the native-cache follow-up task |
+| 3 | MINOR (pre-existing) | `TimezoneEngine.kt:52-53,76-77` + `TimezoneEngineJvm.kt:12` | JVM/native: 999999999-12-31 in a rules zone → +1-day probe → raw `DateTimeException` (D, S) | maintainer list | One day out of ±10^9 years; noted in the follow-up task |
+| 3 | MINOR | `TimezoneEngineJs.kt:53` | `flooredMs` no longer floors (I) | maintainer list | Cosmetic rename |
+| 3 | MINOR | `TimezoneEngine.kt:139-142` | `validBefore` evaluated before the `before == after` short-circuit; `offsetAt(0)` arm unreachable under the pinned assumption — one lookup per unique resolution could go (I) | maintainer list | Simplification; the defensive arm is a legitimate choice |
+| 3 | note | benchmark | The "after" figures should name their tree (D) | fix | Recorded: final-tree run on `79284123` — `atZone` 2 740, `toInstant` 3 650, daily stride 6 550, scattered 13 800 ns/op |
+
+Phase 2 (reconcile): all three — nothing reopened; every FIXED entry holds at `79284123` and reached every place it
+needed (security noted one record-only gap: the Spec benchmark table did not name its tree → fixed); no rejected
+CRITICAL/MAJOR; both out-of-scope MAJORs have their follow-up tasks. Security additionally confirmed the JS NaN row
+(its phase-1 "JS range CLEAN" was too broad). Pre-existing note for the maintainer list: `MpLocalDateTime`/
+`MpLocalDate` decode honour a non-UTC `timezone` but always encode `"UTC"` (shifts `ts` on re-save of such payloads).
+
+**Verdict: gate PASS** (round 3 clean). Open MINORs → maintainer list: `flooredMs` rename; `validBefore` ordering /
+unreachable `offsetAt(0)` arm; JS wall-time NaN at the Date limit; JVM `DateTimeException` on 999999999-12-31; the
+`MpLocalDateTime`/`MpLocalDate` non-UTC decode note. Follow-ups: `.claude/tasks/20261019-datetime-native-zone-cache-growth.md`,
+`.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md`. No docs task: no public API changed (internal engine only).
