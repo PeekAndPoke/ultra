@@ -68,12 +68,11 @@ class ApiAcl(matrix: UserApiAccessMatrix) {
     }
 
     /**
-     * Callable unconditionally, with no argument-dependent check.
+     * Estimated [ApiAccessLevel.Granted]: no auth rule REPORTED a check on the arguments.
      *
-     * Narrow by design, and rarely what a view wants: use [canAccess] for "should this appear",
-     * including for destructive actions. This answers the different question of whether the route
-     * works regardless of WHICH resource it is pointed at — a bulk operation, an admin screen acting
-     * across a set.
+     * Rarely what a view wants: use [canAccess] for "should this appear", destructive actions included.
+     * Not proof that the route works for every resource — a `forCall` rule estimates `Granted` unless
+     * it is given an `estimateFn`, and handler checks and route guards are invisible to the matrix.
      */
     fun canFullyAccess(endpoint: TypedApiEndpoint): Boolean {
         return getAccessLevel(endpoint).isGranted()
@@ -83,7 +82,9 @@ class ApiAcl(matrix: UserApiAccessMatrix) {
      * Callable, but the server applies a further check on the ARGUMENTS — typically that an id in the
      * path is the caller's own, as with `/users/{id}/update`.
      *
-     * The matrix cannot evaluate that; the caller must supply the equivalent rule:
+     * Only a rule that estimates `Partial` produces it (`forCall(..., estimateFn = { Partial })`) — with
+     * `forCall`'s default the route reads `Granted` and the first arm below admits everyone. The matrix
+     * cannot evaluate the check; the caller must supply the equivalent rule:
      *
      * ```
      * val mayEdit = acl.canFullyAccess(UpdateUser) ||
@@ -94,7 +95,7 @@ class ApiAcl(matrix: UserApiAccessMatrix) {
         return getAccessLevel(endpoint).isPartial()
     }
 
-    /** Never callable. */
+    /** Not listed as callable for this user — absence from the matrix reads as denied. */
     fun isDenied(endpoint: TypedApiEndpoint): Boolean {
         return getAccessLevel(endpoint).isDenied()
     }

@@ -1,6 +1,8 @@
 # Align the Kotlin `ApiAcl` vocabulary with the TypeScript SDK
 
-**Status:** IN REVIEW — implemented 2026-08-01 alongside the TypeScript side
+**Status:** DONE (archived 2026-10-19) — implemented 2026-08-01 alongside the TypeScript side; one implementation
+reviewer (maintainer, 2026-10-19), its MAJOR and MINORs fixed. Docs were updated in the same change, so no docs
+follow-up task. One design question parked for the maintainer (below).
 **Plan:** none — a standalone rename that falls out of
 `.claude/tasks/20260801-sdk-route-access-control.md`
 **Security-critical:** no — a rename of an advisory client-side lookup; nothing here enforces
@@ -69,7 +71,8 @@ point at `canFullyAccess`.
       `canAccess` ≡ `!isDenied`; the three exact-match predicates are mutually exclusive and
       exhaustive; `canAccess` ≡ `canFullyAccess || canPartiallyAccess`.
 - [x] KDoc on `canAccess` must say it includes `Partial`, i.e. the server may still reject specific
-      arguments, and that destructive actions should use `canFullyAccess`.
+      arguments — and that it is the predicate for visibility, destructive actions INCLUDED (corrected by `56a896f9`:
+      the first wording sent destructive actions to `canFullyAccess`, which hides them on the user's own resource).
 - [x] KDoc on `canPartiallyAccess` must say what `Partial` means: the server checks the ARGUMENTS,
       typically that an id in the path is the caller's own. The matrix cannot evaluate that; the
       caller must apply the equivalent rule.
@@ -79,7 +82,8 @@ point at `canFullyAccess`.
 ## Test evidence
 
 - [x] `ApiAclSpec` covers all four predicates against `Granted` / `Partial` / `Denied` **and** the
-      absent-entry case, which must read `Denied`.
+      absent-entry case, which must read `Denied` (the absent case pinned only three of them until the 2026-10-19
+      review).
 - [x] Mutation-test: inverting any predicate must fail a test. The existing spec asserted only two
       of the three levels per predicate — worth checking it is not vacuous while renaming it.
 - [x] Compile sweep, since this is an ABI change to a published module:
@@ -90,10 +94,29 @@ point at `canFullyAccess`.
 
 ## Review record (filled by /feature-review)
 
-| Reviewer | Verdict | Confirmed findings |
-|---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+Scope (maintainer, 2026-10-19): ONE implementation reviewer, then archive. Domain and security charters not run — the
+change is a rename of an advisory, client-side lookup.
 
-Fixes applied: ...
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `funktor/rest/src/commonMain/kotlin/acl/ApiAcl.kt:71-76` (+ `auth.astro:261-265`, `llms/funktor.md:300-303`, TS `runtime/acl.ts:117-120`) | `canFullyAccess` KDoc promises "callable unconditionally … regardless of WHICH resource"; `forCall` estimates `Granted` by default, so an ownership-checked route reads full access | CONFIRMED → fixed | verified `AuthRule.kt:51`, `AuthRuleBuilder.kt:84`: `estimateFn` defaults to `Granted`. All four surfaces now say `Granted` = no rule REPORTED an argument check |
+| 1 | MINOR | `ApiAcl.kt:88-91` | the `canPartiallyAccess` example's `canFullyAccess ||` arm admits everyone on a default-estimate `forCall` route | CONFIRMED → fixed | KDoc states the route's rule must estimate `Partial` |
+| 1 | MINOR | `ApiAclSpec.kt:98-106` | absent entry pinned `canAccess`/`isDenied` only, not `canFullyAccess`/`canPartiallyAccess` | CONFIRMED → fixed | two assertions added |
+| 1 | MINOR | `ApiAcl.kt:97` | `isDenied` "Never callable." — false for unlisted routes, e.g. `public()` under `ApiAcl.empty` | CONFIRMED → fixed | Kotlin + TS reworded |
+| 1 | MINOR | this file `:71-72`, `:81-82` | spec line carried the pre-`56a896f9` advice; test-evidence tick overstated | CONFIRMED → fixed | rewritten above |
+| 1 | — | docs `Partial` sentence | "only a hand-written `AccessLevelCheck` emits `Partial`" — `forCall(estimateFn = { Partial })` does too | found by the coordinator while fixing → fixed | docs + TS reworded |
+
+Probed and CLEAN (reviewer): predicate mapping; the grid test kills inversion/swap mutants; "server omits Denied
+entries" (`ApiAccessDescriptor.kt:29-31`); no built-in rule yields `Partial`; no old names outside `.claude/`; imports,
+KDoc links, branding; `ApiAccessLevel` predicates untouched.
+
+Tests after fixes: `:funktor:rest:jvmTest` 116/0, `:ultra:codegen:test` 325/0 (XML fresh, `ApiAclSpec`,
+`AclRuntimeSpec` ran).
+
+**Parked for the maintainer:** should `forCall` default its estimate to `Partial` instead of `Granted`? Its `checkFn`
+sees params and body, so it is argument-dependent by construction; `Partial` would make the matrix honest for
+ownership checks. `canAccess` is unaffected either way (both levels are access); only `canFullyAccess` /
+`canPartiallyAccess` change, for every app route using `forCall` without an `estimateFn`. A user-only `forCall` (e.g.
+"is admin") would then under-report as `Partial`. Behaviour change → not made here.
+
+**Verdict:** PASS (no open CRITICAL/MAJOR).

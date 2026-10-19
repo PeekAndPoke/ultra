@@ -114,10 +114,10 @@ export class ApiAcl {
      * group's `authenticated()` floor, so it reports `Granted` to every logged-in user while the
      * handler enforces `userId == caller`.
      *
-     * Narrow by design, and rarely what a view wants: use [canAccess] for "should this appear",
-     * including for destructive actions. This answers the different question of whether the route
-     * works regardless of WHICH resource it is pointed at — a bulk operation, an admin screen acting
-     * across a set.
+     * Rarely what a view wants: use [canAccess] for "should this appear", destructive actions
+     * included. `'Granted'` means only that no auth rule REPORTED an argument check — a `forCall`
+     * rule estimates `Granted` unless it is given an `estimateFn`, so an ownership check written with
+     * it reads as full access too.
      *
      * **Deliberately does NOT short-circuit on `isPublic`**, unlike [canAccess]. For an anonymous
      * visitor with no matrix the honest answer is no, and widening it would leave the strict
@@ -131,15 +131,16 @@ export class ApiAcl {
      *
      * **Reads false for every funktor route today.** No framework rule produces `Partial`: the DSL
      * leaves all yield `Granted` or `Denied`, and `and`/`or` fold with `maxOf`/`minOf`, so the level
-     * cannot appear unless an app hand-writes `AccessLevelCheck { Partial }`. Kept because it mirrors
-     * the Kotlin enum and because argument-scoped rules are expected to start reporting it — but do
-     * NOT gate on it today expecting the branch to run.
+     * cannot appear unless a rule estimates it — `forCall(..., estimateFn = { Partial })` or an
+     * `AccessLevelCheck { Partial }`. Kept because it mirrors the Kotlin enum and because
+     * argument-scoped rules are expected to start reporting it — but do NOT gate on it today
+     * expecting the branch to run.
      */
     readonly canPartiallyAccess = (route: RouteRef): boolean =>
         this.getAccessLevel(route) === 'Partial'
 
     /**
-     * Never callable.
+     * Not callable for this user as far as the matrix knows.
      *
      * The negation of [canAccess] rather than a test for `'Denied'`, so anything the two positive
      * predicates do not recognise lands here.

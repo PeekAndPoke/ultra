@@ -297,14 +297,14 @@ resource". The user may use the route and its UI; the per-resource rule is the b
 `canAccess` is the predicate for visibility, destructive actions included — gating a delete on
 `canFullyAccess` hides it from the user on their OWN resource.
 
-Reach for `canFullyAccess` only for the different question of whether a route works regardless of
-WHICH resource it targets: a bulk operation, an admin screen acting across a set. It is also not a
-promise the call will succeed — handler checks and `RouteParamsGuard`s such as the saas
-`OrgIsolationGuard` are not `AuthRule`s, so `estimateAccess` cannot see them.
+**`canFullyAccess` means only that no rule REPORTED an argument check** — not that the route works
+for every resource. `forCall` estimates `Granted` unless given an `estimateFn`, so an ownership check
+written with it reads as full access; handler checks and `RouteParamsGuard`s such as the saas
+`OrgIsolationGuard` are not `AuthRule`s, so `estimateAccess` cannot see them either.
 
-**`Partial` is currently produced by no framework rule** — the DSL leaves all yield `Granted` or
-`Denied` and `and`/`or` fold with `maxOf`/`minOf`. Only a hand-written `AccessLevelCheck { Partial }`
-emits it. Do not gate on `canPartiallyAccess` expecting the branch to run.
+**`Partial` comes only from a rule that estimates it** — `forCall(..., estimateFn = { Partial })` or
+an `AccessLevelCheck`. The built-in rules yield `Granted` or `Denied` and `and`/`or` fold with
+`maxOf`/`minOf`. Do not gate on `canPartiallyAccess` expecting the branch to run.
 
 Key classes:
 

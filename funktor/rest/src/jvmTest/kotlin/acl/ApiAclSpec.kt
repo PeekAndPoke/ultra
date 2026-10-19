@@ -46,9 +46,8 @@ class ApiAclSpec : FreeSpec() {
     init {
         "every predicate against every level" - {
 
-            // The full grid, stated exhaustively rather than two predicates per level as before —
-            // that could not distinguish a correct implementation from one whose predicate ignores
-            // its argument.
+            // The full grid: two predicates per level could not tell a correct implementation from
+            // one whose predicate ignores its argument.
             listOf(
                 Row(ApiAccessLevel.Granted, canAccess = true, canFullyAccess = true, canPartiallyAccess = false, isDenied = false),
                 Row(ApiAccessLevel.Partial, canAccess = true, canFullyAccess = false, canPartiallyAccess = true, isDenied = false),
@@ -102,6 +101,8 @@ class ApiAclSpec : FreeSpec() {
 
             acl.getAccessLevel(deleteEvent) shouldBe ApiAccessLevel.Denied
             acl.canAccess(deleteEvent) shouldBe false
+            acl.canFullyAccess(deleteEvent) shouldBe false
+            acl.canPartiallyAccess(deleteEvent) shouldBe false
             acl.isDenied(deleteEvent) shouldBe true
         }
 

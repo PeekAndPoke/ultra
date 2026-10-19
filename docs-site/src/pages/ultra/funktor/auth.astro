@@ -254,15 +254,17 @@ if (acl.canAccess(MyApiClient.DeleteEvent)) {
         "do you own this resource". So <code>canAccess</code> is the predicate for visibility,
         destructive actions included; gating a delete on <code>canFullyAccess</code> would hide it
         from the user on their own resource. <code>canPartiallyAccess</code> is <code>Partial</code>
-        only and <code>isDenied</code> is the negation of <code>canAccess</code>. No framework rule
-        currently produces <code>Partial</code>, so do not gate on <code>canPartiallyAccess</code>
-        expecting the branch to run.</p>
+        only and <code>isDenied</code> is the negation of <code>canAccess</code>. Only a rule that
+        <em>estimates</em> <code>Partial</code> produces it &mdash; <code>forCall</code> given an
+        <code>estimateFn</code>, or an <code>AccessLevelCheck</code>; the built-in rules never do, so do
+        not gate on <code>canPartiallyAccess</code> expecting the branch to run.</p>
 
-    <p>Reach for <code>canFullyAccess</code> only for the different question of whether a route works
-        regardless of WHICH resource it targets &mdash; a bulk operation, an admin screen acting across
-        a set. It is also <strong>not</strong> a promise the call will succeed: checks written inside a
-        handler, and <code>RouteParamsGuard</code>s such as the saas <code>OrgIsolationGuard</code>,
-        are not auth rules, so the matrix cannot see them.</p>
+    <p><code>canFullyAccess</code> means only that no auth rule <em>reported</em> an argument check
+        &mdash; <strong>not</strong> that the route works for every resource. A <code>forCall</code>
+        rule estimates <code>Granted</code> unless it is given an <code>estimateFn</code>, so an
+        ownership check written with it reads as full access; checks inside a handler, and
+        <code>RouteParamsGuard</code>s such as the saas <code>OrgIsolationGuard</code>, are not auth
+        rules and are invisible too.</p>
 
     <p><code>ApiAcl.empty</code> denies everything, and unknown endpoints default to
         <code>Denied</code>. Note that this includes <code>public()</code> routes &mdash; a logged-out
