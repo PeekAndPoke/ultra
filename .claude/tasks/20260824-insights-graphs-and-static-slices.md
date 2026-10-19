@@ -391,3 +391,39 @@ from the XML.
 
 Probed and CLEAN: the old record also lists through `listRecords` and its headline still reads; the API
 serves the new slice exactly as the file holds it (JSON-equal, numbers intact).
+
+## Review record — the LEDGER, Parts A+B (T2), /feature-review 2026-10-19
+
+Round 1 (blind, `reviewer-high` ×3: implementation, domain, security). **0 CRITICAL, 0 MAJOR → clean round.**
+The MINORs below are handed to the maintainer as a list (review-loop termination rule), not applied.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR | `InsightsApi.kt:95-120`, `insights_module.kt:82,85` | Both graphs are served even when insights recording is disabled (a production app keeping `InsightsConfig.Disabled` still exposes ~180 definitions with code locations) | maintainer-decision | Joins the plan's "production gate for insights" row; options: 404 when disabled, or record that the graphs are superuser introspection independent of recording |
+| 1 | MINOR | `InsightsGraphModels.kt:67-71`, `:90-95` | New DTO freezes dead/redundant fields (`Repo.connection` duplicating `Id.connection`, `Reference.type` always `Direct`) | maintainer-decision | Domain + security recommend dropping them now, before T4 publishes the DTO from commonMain; the implementer kept them for a verbatim port (deviation listed above) |
+| 1 | MINOR | `InsightsGraphs.kt:24-27` | The fingerprint also hashes `codeLocation` line numbers, so nearly every pre-deploy record shows "another graph" | maintainer-decision | Trade-off: a second, topology-only fingerprint, or document "a mismatch is expected after any deploy touching a module file" |
+| 1 | MINOR | `InsightsGraphModels.kt:50`, `:34`; `KontainerCollector.kt:16`; wire contract | KDoc/contract text factually wrong: `Injection.classes` is the DECLARED type (may be no service key); `injectionType` is after override upgrade; "request-specific" is false for global singletons; the contract's `Kontainer` example IS a service key | maintainer-decision | Factually-wrong-text findings; cheap, but they shape the T1/T4 readers — apply before T1 starts? |
+| 1 | MINOR | wire contract | Missing contract statements: `codeLocation` went `{location}` → string; refetch at most once per page; `numOld`/`numTotal` are always 0 (tracking never enabled); presence of `graphFingerprint` marks the v2 shape; the record's own `ts` is a `LocalDateTime` encoded as UTC (`InsightsFull.kt:37`, already worked around at `InsightsModels.kt:37`) — readers must not use it | maintainer-decision | Contract completeness for T1/T4 |
+| 1 | MINOR | `KontainerCollector.kt:97-118` | `finish` and both catch branches are untested; merging the two tries back would lose the whole record on a graph failure (the D1 mode) | maintainer-decision | A unit test with a throwing graph |
+| 1 | MINOR | `KontainerCollectorSlumberSpec.kt:38-39`, `InsightsKontainerSliceSpec.kt:193` | `numOld`/`numTotal` pinned by nothing (swap or constant-0 mutants survive); evaluation order changed (`:110-111`, numOld read first) | maintainer-decision | Test with `trackKontainers = true`; restore the read order |
+| 1 | MINOR | `InsightsGraphsSpec.kt:46-62` | "read WITHOUT the request's overrides" cannot fail for the reason in its name | maintainer-decision | Rename, or leave the claim to `InsightsGraphsApiSpec.kt:190` |
+| 1 | MINOR | `InsightsKontainerSliceSpec.kt:177-179` | Compares UTF-16 chars with file bytes: fails on a machine with a non-ASCII path or user name | maintainer-decision | `toByteArray().size` |
+| 1 | MINOR | `InsightsKontainerSliceSpec.kt:61,73-95,281` | The record wait counts one page of 200; once the JVM has ≥200 records the spec fails with a misleading message | maintainer-decision | Compare `Paged.fullItemCount` |
+| 1 | MINOR (surplus) | `InsightsGraphs.kt:47`, `InsightsApi.kt:113-118`, `InsightsGraphs.kt:22`, the three sample-dump hooks | `databaseGraph(model)` is a pure mapper on a singleton; an untested 404 branch for a case funktor never produces; a `Json` alias; three copies of a test-only dumper | maintainer-decision | Small simplifications |
+
+**Probed and CLEAN in round 1:**
+- the `isSuperUser()` floor is structural (`ApiRoutes.addRoute`), and S1/S2 mutants go red;
+- the graph endpoints are not recorded (`.noInsights()` plus the path prefix);
+- connection strings carry no credentials or hosts;
+- no config values in the service graph (`forInstance` records the class only);
+- `blueprint.create()` instantiates no services and has no side effects; `InsightsGraphs` is a true singleton, built once;
+- record and graph join on the same key;
+- old and new slice shapes are disjoint; old records are served unchanged;
+- the fingerprint is deterministic;
+- no injection or unsafe deserialization;
+- the DoS cost is bounded and superuser-only (cheaper than `VaultApi.listRepositories`);
+- code style clean (the wildcard imports in `insights_module.kt` and `InsightsFull.kt` predate this change).
+
+**Red-team:** scenarios 24-31 added to `.claude/tasks/20260730-redteam-insights-api.md` on master (`e20fd6dc`).
+
+**Verdict:** gate PASS for Parts A+B (round 1 clean; e2e present on both backends and green). Parts C+D stay open for T1.
