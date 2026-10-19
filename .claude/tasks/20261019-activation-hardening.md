@@ -275,6 +275,16 @@ SSO sign-up, worker registration; JS refused-cancel copy and routed deep links. 
 master) failed once in a baseline run and once under mutant C1 on its log-order race (its own comment documents it)
 and passed in the other runs — not touched by this track.
 
+**Full suite** (`console/wt-gradle.sh --full-suite` at `a3fd060a`, base master `47c0a7dc`): no `^e:`; XMLs **15931
+tests, 2 failures, 0 errors, 7 skipped**, 49 modules (jvmTest 7459, test 2670, jsBrowserTest 3453, linuxX64Test 2349).
+`funktor/auth` 231, `funktor/all` 226, `funktor-demo/server` 47, `monko/core` 262, `karango/core` 1652,
+`funktor/insights` 94, `funktor/codegen` 103 — all 0 failures. The two failures are outside this track and untouched by
+it: `InsightsVaultBindValuesSpec` "log slice … is real" (expected `[INFO, WARNING]`, got `[INFO]` — the log-order race;
+master fixed it meanwhile in `f8dadd86`) and `ultra/cache` `FastCacheRefreshAfterWriteSpec` "only one refresh per key at
+a time" on linuxX64 (timing; the parallel plan lists a FastCache linuxX64 flake).
+**After rebasing onto master `6b6743ad`** (which carries `f8dadd86`, clean rebase): `:ultra:log:jvmTest` 67/0,
+`:funktor:auth:jvmTest` 218/0, `:funktor:all:jvmTest` 226/0 incl. `InsightsVaultBindValuesSpec` 8/0 — fresh XML.
+
 **Mutation evidence (round-1 batch).** `cp` backup outside the worktree (path in the name), `cp` restore + `cmp`.
 
 | # | Mutant | Result |
