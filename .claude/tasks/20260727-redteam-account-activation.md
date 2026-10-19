@@ -58,11 +58,10 @@ addresses will generate mail.
 Registering a victim's address before they do leaves them with an account they cannot use until they
 prove the mailbox.
 
-UPDATED 2026-07-27: the resend feature changed the shape of this. Sign-in now answers
-`AuthSignInResponse.ActivationRequired`, the login page routes the user to the activation page, and
-resend is reachable there — but ONLY for someone who knows the password. So a victim who was
-pre-registered by an attacker still cannot self-serve, because they do not know the password the
-attacker chose; their route in remains "forgot password", which also activates.
+UPDATED 2026-10-19: resend is reachable only for someone who knows the password, so a pre-registered victim cannot
+use it. Their routes in: "forgot password" (activates, and supersedes the attacker's password), SSO with a verified
+address (activates and deletes the attacker's password), or the mail's "Didn't sign up? Cancel" link (retires the
+account and frees the address). Untouched, the account expires after 7 days and the address is free again.
 
 - **Attempt:** pre-register a target address, then walk the victim's real options end to end and
   measure whether any of them is discoverable without already knowing what happened.
@@ -87,10 +86,9 @@ into `issueSignIn` ignores the marker.
 
 - **Attempt:** with a pending marker on an account, obtain a session via Google SSO, GitHub SSO,
   `selectOrg`, or `refreshToken`.
-- **Expected:** SSO succeeds by design (see the rule documented on `AuthRecord.PendingActivation` —
-  clearing on SSO would reopen the pre-hijack chain, so the marker deliberately SURVIVES and the
-  attacker's password stays blocked). `selectOrg` and `refreshToken` are downstream of a completed
-  provider sign-in. Confirm both.
+- **Expected (2026-10-19):** SSO on a pending account succeeds ONLY with a provider-verified address, and then
+  activates it after deleting the sign-up password (`AuthRealm.resolveSsoAccount`); unverified is refused.
+  `selectOrg` and `refreshToken` are downstream of a completed provider sign-in. Confirm all three.
 - **The real target:** any provider an app adds to the same realm inherits no marker check. Try a
   hand-rolled magic-link or API-key provider.
 
@@ -102,19 +100,19 @@ for a lapsed activation, so it is now the path locked-out users are guaranteed t
 
 - **Attempt:** complete a reset with a one-character password.
 
-## 8. Resend: the cooldown is a check-then-act
+## 8. Resend: the growing delay is a check-then-act
 
-Added 2026-07-27 after the gate on the resend feature. `EmailAndPasswordAuth.resendActivation` reads
-the newest verification token, compares it to the window, then rotates and writes — with no
-transaction, no lock and no unique index on `(realm, ownerId, _type)`.
+REWRITTEN 2026-10-19 (`.claude/tasks/20261019-activation-hardening.md`). The July premise — "K concurrent requests must
+share ONE token" — was false: every refused sign-in minted a fresh token and none was revoked. Now minting revokes the
+owner's earlier tokens, a token is consumed only by the request whose delete removed it (`count == 1`), and the delay
+lives on the `PendingActivation` marker: read, compare, save, send — still no transaction or conditional write.
 
-- **Attempt:** fire K concurrent `POST /login/{realm}/activate/resend` sharing ONE valid resend token.
-  Every request whose read completes before the first write commits passes the window check.
-- **Bounding it:** the resend token is single-use and consumed before the send, and it can only be
-  obtained by passing the password check, so this is not anonymous and not unbounded — the question is
-  how many sends one token can produce under a burst.
-- **Real fix if it reproduces:** a unique index on `(realm, ownerId, _type)` for
-  `EmailVerificationToken` plus a conditional upsert, or a compare-and-set on the newest `createdAt`.
+- **Attempt:** fire K concurrent sign-ins for one pending account, then K concurrent resends with whatever tokens
+  survived each other's revocation. Count the mails, and whether the marker's `resends` advanced once or K times.
+- **Attempt:** K concurrent resends sharing ONE token — expected: exactly one passes the delete count.
+- **Bounding it:** the schedule grows per account and the account expires after 7 days, so a won race adds mail inside
+  one window; it does not reset the schedule. Fix if it reproduces: a compare-and-set save of the marker
+  (`20260727-activation-resend-cooldown-atomicity.md`, option A).
 
 ## 9. Resend authorization
 
@@ -145,3 +143,31 @@ Collected, not executed. §2's "a copy change to close" is wrong once activation
 - **Custom providers** — a provider that throws `AccountNotActivated(userId)` before its own credential check makes the
   realm mint a resend token for an arbitrary user (`AuthRealm.kt:269-287` trusts `e.userId`).
 - **Concurrent burst** — K parallel sign-ins mint K resend tokens; K parallel resends race the non-atomic cooldown.
+
+## Added by the activation hardening (2026-10-19)
+
+Collected, not executed. The design: `.claude/tasks/20261019-activation-hardening.md`.
+
+- **Scanner detonation, again** — the page now needs a click. Does a sandbox that runs JS and clicks the first primary
+  button (some do) activate a pre-registered account? Does any gateway follow the CANCEL link and click it, retiring
+  legitimate sign-ups at scale?
+- **Retired-address collisions** — sign up the exact retired string (`<addr>#retired-<hex>.invalid`), its upper-case
+  form, with surrounding whitespace, with a Unicode look-alike of `#`; every path must refuse. Then try to make a
+  retirement collide on the unique index (two accounts whose `_id`s hash to the same 16 bytes is out of reach; look for a
+  realm whose `retire()` renames from something other than the account).
+- **Reviving a retired account** — password reset to the retired string, SSO whose provider reports it, an admin or
+  app path that loads users by email; any session for a retired row is a finding.
+- **Cancel as a weapon** — the cancel token IS the activation token. Can anyone but the mailbox holder obtain it
+  (Referer, browser history of the `/cancel-signup/{token}` route, stored mail anonymization)? Can a cancel retire an
+  ACTIVE account through a race with activation or reset?
+- **SSO verified-claim spoofing** — Google: a Workspace on an attacker domain asserting `email_verified` for a victim
+  address on that domain; GitHub: an unverified secondary set as primary, a token without the `user:email` scope, an
+  `/user/emails` error path. Each must leave the pending account untouched.
+- **Sweep head-of-line blocking** — the sweep takes the 100 OLDEST expired markers per realm; seed 100 accounts whose
+  `retire()` keeps failing and check whether younger expired accounts are ever retired.
+- **Expiry boundary** — activate, cancel and resend at `pendingAccountLifetime ± 1 s`, with the app clock and the DB
+  clock skewed; the link's capped `expiresAt` and the marker's `createdAt` come from the same Kronos only if the repo
+  hook and the provider share it.
+- **Retire vs activate race** — click Activate while the sweep (or a cancel) retires the same account; possible outcomes
+  include an account reported activated that is in fact retired.
+

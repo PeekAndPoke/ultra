@@ -1,50 +1,57 @@
-# The activation-resend cooldown is a check-then-act
+# The activation-resend delay is a check-then-act
 
 **Status:** TODO — recorded 2026-07-27 from the review gate on
-`.claude/tasks/20260727-activation-resend-and-frontend.md`
-**Security-critical:** yes (it is a rate limit) → red-team scenario already recorded as
-`.claude/tasks/20260727-redteam-account-activation.md` §8
-**Severity:** LOW as it stands, and it is LOW only because of the single-use token in front of it —
-see "Why this is not urgent". It becomes the whole defence if that token is ever relaxed.
+`.claude/tasks/20260727-activation-resend-and-frontend.md`; premise REWRITTEN 2026-10-19 by
+`.claude/tasks/20261019-activation-hardening.md` (the July premise was false, see "What the July version got wrong")
+**Security-critical:** yes (it is a rate limit) → red-team scenario `.claude/tasks/20260727-redteam-account-activation.md` §8
+**Severity:** LOW, bounded by the hardening of 2026-10-19 — see "Why it is bounded now".
 
 ## The gap
 
-`EmailAndPasswordAuth.resendActivation` (`funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt`):
+`EmailAndPasswordAuth.resendActivation` (`funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt`) reads the
+`PendingActivation` marker, compares `lastSentAt + activationResendDelay(resends)` to now, then SAVES the advanced marker
+and sends. Read, compare and save are separate operations with no transaction, no lock and no conditional write, so two
+requests that both read the marker before either save lands both pass the check and both send.
 
-```
-findActivationResendToken   ─┐
-removeAuthRecord            │  four separate operations,
-findPendingActivation       │  no transaction, no lock,
-findLatestEmailVerificationToken → compare to the window
-issueAndSendActivationToken ─┘  no uniqueness constraint
-```
+## What the July version got wrong
 
-Every request whose *read* completes before the first *write* commits passes the window check. So K
-concurrent requests can all decide "the cooldown has elapsed" and all send.
+It called this LOW because "K concurrent requests must share one token". That was false: every refused sign-in minted a
+fresh `ActivationResendToken` and none was ever revoked, so K parallel sign-ins gave K tokens and K resends raced the
+check (round-2 MAJOR, `20260727-activation-resend-and-frontend.md`). Token consumption also ignored the delete count, so
+even one token was single-use only under sequential access.
 
-`letTheBotsWait()` (`api/AuthApi.kt`) is a 250–500 ms per-request `delay`; it spreads arrivals and
-damps this in practice but bounds nothing — the race window is the read→write round trip, and the
-attacker simply raises K.
+## Why it is bounded now (2026-10-19)
 
-The same shape applies to the token consumption: two requests can both read the resend token before
-either `removeAuthRecord` lands, so "single-use" is itself only single-use under sequential access.
+- Minting a resend token revokes the owner's earlier ones (`AuthRealm.signIn`), and the realm consumes a token only when
+  ITS delete removed it (`AuthRealm.resendActivation`, `count == 1`). One token buys at most one resend, even under a
+  burst. K concurrent resends need K tokens that all survived each other's revocation — a narrow interleaving of K
+  sign-ins, each of which needs the password.
+- The delay grows per account (5 min, 15 min, 1 h, 4 h, 12 h, then daily) and the account expires after 7 days, so the
+  total mail one pending account can cause is bounded even if this race is won repeatedly: a won race adds a mail inside
+  one window, it does not reset the schedule.
+- The attacker this matters for is the account's own password holder (e.g. someone who pre-registered a victim's
+  address). Their mailbox target is the victim's; the burst is a handful of extra mails, not a faucet.
 
-## Why this is not urgent
+## Acceptance (unchanged in intent)
 
-The endpoint is authorized by `AuthRecord.ActivationResendToken`, which is single-use, short-lived,
-and mintable ONLY by passing the password check for that account. So:
-
-- this is not reachable anonymously — the attacker must know the password;
-- an attacker who knows the password can already sign in, so the interesting target is a burst aimed
-  at the account's own mailbox rather than a takeover;
-- each burst needs one token, and getting another means another sign-in.
-
-It is recorded rather than fixed because closing it properly means a storage-level constraint on both
-DB backends, which is more than the feature it guards is worth today.
+- [ ] Concurrent resends for one owner produce AT MOST one mail per delay window
+- [ ] Never two simultaneously live `EmailVerificationToken` rows for one owner
+- [ ] A concurrent burst can never delete a token that has already been mailed
+- [x] The resend token is consumed exactly once under concurrency — 2026-10-19, `AuthRealm.resendActivation` acts only
+      when its own delete reports `count == 1`; pinned by `AuthRealmActivationBaseSpec` on both backends
+- [ ] **A concurrency test.** Single-threaded tests cannot see this. Precedent: `CapturedEmailsSpec` fires 200
+      concurrent sends and reddens reliably without its lock.
+- [ ] Both DB backends (the `AuthRecordStorageBaseSpec` pattern), since the fix is storage-level
 
 ## Options
 
-### A. Unique index + conditional write (preferred)
+### A. Conditional save of the marker (preferred since 2026-10-19)
+
+The schedule now lives on ONE row per account (`PendingActivation`), so a compare-and-set on it — save only if the row
+still carries the `resends` / `_rev` the check read — makes the second concurrent writer lose at the database. Needs a
+conditional-update primitive on `AuthRecordStorage` for both backends.
+
+### A'. Unique index + conditional write (the July option)
 
 A unique index on `(realm, ownerId, _type)` for `EmailVerificationToken` makes the second concurrent
 writer lose at the database rather than in application logic. Index declaration already has a home on
@@ -65,18 +72,6 @@ needs a conditional-update primitive that `AuthRecordStorage` does not currently
 
 Simplest to reason about, and the worst fit for a multi-JVM deployment — the very case where the race
 is reachable. Listed for completeness; do not pick it without a distributed lock.
-
-## Acceptance
-
-- [ ] Concurrent resends for one owner produce AT MOST one mail per cooldown window
-- [ ] Never two simultaneously live `EmailVerificationToken` rows for one owner
-- [ ] A concurrent burst can never delete a token that has already been mailed
-- [ ] The resend token is consumed exactly once under concurrency
-- [ ] **A concurrency test.** The existing single-threaded tests cannot see any of this — that is why
-      it survived the gate's mutation round. Precedent for the shape: `CapturedEmailsSpec` fires 200
-      concurrent sends and reddens reliably without its lock.
-- [ ] Both DB backends (`MatrixTest2d` / the `AuthRecordStorageBaseSpec` pattern), since the fix is
-      storage-level
 
 ## Related, deliberately NOT in scope
 
