@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.cluster.locks
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
@@ -226,7 +227,8 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val result = merge(flow1, flow2)
                 .fold(emptyList<String>()) { acc, it -> acc.plus(it) }
 
-            result shouldBe listOf("error: 1st failed", "2nd")
+            // The error is emitted after the release, so the second handler may come first.
+            result shouldContainExactlyInAnyOrder listOf("error: 1st failed", "2nd")
         }
     }
 }
