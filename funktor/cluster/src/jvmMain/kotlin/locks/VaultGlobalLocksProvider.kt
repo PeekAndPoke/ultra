@@ -64,12 +64,20 @@ open class VaultGlobalLocksProvider(
         private val cleanRegex = "[^a-zA-Z0-9]".toRegex()
 
         /** How far each write moves [GlobalLockEntry.expires], the only field versions without heartbeats read. */
-        val legacyExpiry: Duration = 15.minutes
+        internal val legacyExpiry: Duration = 15.minutes
+
+        // Its own threads, beyond the limit of Dispatchers.IO, which blocking handlers may saturate. Few suffice:
+        // a beat suspends while the database works.
+        private val heartbeatDispatcher = Dispatchers.IO.limitedParallelism(4, "global-locks-heartbeat")
     }
 
     init {
         require(heartbeatInterval.isPositive() && heartbeatInterval < ttl) {
             "heartbeatInterval ($heartbeatInterval) must be positive and shorter than ttl ($ttl)"
+        }
+        // Otherwise `expires` lapses between two beats, and a server without heartbeats takes the live lock over.
+        require(heartbeatInterval < legacyExpiry) {
+            "heartbeatInterval ($heartbeatInterval) must be shorter than $legacyExpiry"
         }
     }
 
@@ -124,8 +132,8 @@ open class VaultGlobalLocksProvider(
             if (acquired) {
                 try {
                     coroutineScope {
-                        // On IO: a handler that blocks its thread must not starve the heartbeat.
-                        val heartbeat = launch(Dispatchers.IO) { keepAlive(key = key, token = token) }
+                        // Off the handler's dispatcher: a handler that blocks its thread must not starve the heartbeat.
+                        val heartbeat = launch(heartbeatDispatcher) { keepAlive(key = key, token = token) }
 
                         try {
                             val result = handler()

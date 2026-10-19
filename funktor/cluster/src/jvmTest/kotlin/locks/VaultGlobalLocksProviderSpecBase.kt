@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.cluster.locks
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -17,6 +18,9 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.log.NullLog
+import io.peekandpoke.ultra.vault.Cursor
+import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.value
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -27,7 +31,9 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -61,24 +67,60 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
 
     protected suspend fun storedKeys(): List<String> = repo.findAll().toList().map { it.resolve().key }.sorted()
 
+    /** Whether a heartbeat on its own dispatcher keeps beating while blocking work saturates Dispatchers.IO. */
+    protected open val beatsThroughSaturatedIo: Boolean get() = true
+
     protected suspend fun insertLock(
         key: String,
         token: String = "token-$key",
         created: MpInstant = MpInstant.now(),
         lastHeartbeat: MpInstant = created,
         expires: MpInstant = created.plus(VaultGlobalLocksProvider.legacyExpiry),
+        serverId: String = "other-server",
     ) {
         repo.insert(
             key = key,
             new = GlobalLockEntry(
                 key = key,
-                serverId = "other-server",
+                serverId = serverId,
                 created = created,
                 expires = expires,
                 token = token,
                 lastHeartbeat = lastHeartbeat,
             ),
         )
+    }
+
+    /** The repo, but each read ends by [change]-ing the lock it read: as if it was beaten, or re-acquired, right after. */
+    private fun changedAfterRead(change: suspend (GlobalLockEntry) -> Unit): VaultGlobalLocksProvider.Repo {
+        // Named apart: inside the object, `repo` is the object's own Repository.repo.
+        val inner = repo
+
+        return object : VaultGlobalLocksProvider.Repo by inner {
+            override suspend fun findAll(): Cursor<Stored<GlobalLockEntry>> =
+                Cursor.of(inner.findAll().toList().onEach { change(it.value) })
+
+            override suspend fun findById(id: String?): Stored<GlobalLockEntry>? =
+                inner.findById(id)?.also { change(it.value) }
+        }
+    }
+
+    /** Its holder beats the lock: strictly later than what was read, also within the same millisecond. */
+    private suspend fun beat(entry: GlobalLockEntry) {
+        val at = maxOf(MpInstant.now(), entry.lastHeartbeat.plus(1.milliseconds))
+
+        repo.heartbeat(key = entry.key, token = entry.token, heartbeatAt = at, expiresAt = at.plus(15.minutes))
+    }
+
+    /** Another server re-acquires the lock. */
+    private suspend fun reacquire(entry: GlobalLockEntry) {
+        repo.removeIfHeld(key = entry.key, token = entry.token)
+        insertLock(entry.key, token = "new-owner")
+    }
+
+    private suspend fun runCleanupWorker(servers: GlobalServerList, ttl: Duration = 300.milliseconds) {
+        GlobalLocksCleanupWorker(servers = servers, globalLocks = createSubject(ttl = ttl), log = NullLog)
+            .execute { WorkersRunner.State.Running }
     }
 
     init {
@@ -131,6 +173,37 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
 
                     held.await() shouldBe "holder"
                 }
+            }
+        }
+
+        "A holder keeps beating while blocking work saturates Dispatchers.IO".config(enabledIf = { beatsThroughSaturatedIo }) {
+            val ttl = 300.milliseconds
+            val subject = createSubject(ttl = ttl, heartbeatInterval = 50.milliseconds)
+            val holding = CompletableDeferred<Unit>()
+            val done = CompletableDeferred<Unit>()
+
+            // On Default: the test itself must not wait for an IO thread.
+            withContext(Dispatchers.Default) {
+                val held = async { subject.lock("key") { holding.complete(Unit); done.await() } }
+                holding.await()
+
+                // More blocking work than Dispatchers.IO has threads (64, or the number of cores).
+                val blockers = List(maxOf(64, Runtime.getRuntime().availableProcessors()) + 8) {
+                    launch(Dispatchers.IO) {
+                        @Suppress("BlockingMethodInNonBlockingContext")
+                        Thread.sleep((ttl * 3).inWholeMilliseconds)
+                    }
+                }
+
+                delay(ttl * 2)
+                // Read while IO is still saturated: the holder must have beaten within the last ttl.
+                val silentFor = MpInstant.now() - stored("key")!!.lastHeartbeat
+
+                blockers.joinAll()
+                done.complete(Unit)
+                held.await()
+
+                silentFor shouldBeLessThan ttl
             }
         }
 
@@ -251,6 +324,25 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
             mostInside.get() shouldBe 1
         }
 
+        "The takeover leaves a lock alone that changed after it was read" {
+            listOf<Pair<String, suspend (GlobalLockEntry) -> Unit>>("beaten" to { beat(it) }, "re-acquired" to { reacquire(it) })
+                .forEach { (how, change) ->
+                    withClue(how) {
+                        repo.removeAll()
+                        val now = MpInstant.now()
+                        // Silent when read.
+                        insertLock("key", created = now.minus(2.minutes), lastHeartbeat = now.minus(1.minutes))
+
+                        shouldThrow<LocksException.Timeout> {
+                            createSubject(ttl = 300.milliseconds, repository = changedAfterRead(change))
+                                .lock("key", timeout = 200.milliseconds) { "taken over" }
+                        }
+
+                        storedKeys() shouldBe listOf("key")
+                    }
+                }
+        }
+
         "A lock whose key looks like a Mongo ObjectId is taken over, held and released like any other" {
             val key = "5f2b8c1e9d3a4b6c7e8f9a0b"
             val now = MpInstant.now()
@@ -331,10 +423,66 @@ abstract class VaultGlobalLocksProviderSpecBase : GlobalLockProviderSpecBase() {
                 setAll(listOf(ServerBeacon(serverId = "other-server", lastPing = now)))
             }
 
-            GlobalLocksCleanupWorker(servers = servers, globalLocks = createSubject(ttl = 300.milliseconds), log = NullLog)
-                .execute { WorkersRunner.State.Running }
+            runCleanupWorker(servers)
 
             storedKeys() shouldBe listOf("beating")
+        }
+
+        "releaseExpired and releaseBy leave a lock alone that changed after they read it" {
+            val now = MpInstant.now()
+            // Silent when read, beaten right after.
+            insertLock("key", created = now.minus(2.minutes), lastHeartbeat = now.minus(1.minutes))
+
+            createSubject(ttl = 300.milliseconds, repository = changedAfterRead { beat(it) })
+                .releaseExpired().shouldBeEmpty()
+
+            stored("key")!!.lastHeartbeat.toEpochMillis() shouldBeGreaterThan now.minus(1.minutes).toEpochMillis()
+
+            // Re-acquired by another server right after it was read.
+            createSubject(ttl = 300.milliseconds, repository = changedAfterRead { reacquire(it) })
+                .releaseBy { true }.shouldBeEmpty()
+
+            stored("key")?.token shouldBe "new-owner"
+        }
+
+        "The cleanup worker leaves a beating lock alone, though its server has no beacon (yet)" {
+            // E.g. a server that just started, and has not written its first beacon.
+            insertLock("beating", lastHeartbeat = MpInstant.now(), serverId = "starting-server")
+
+            runCleanupWorker(
+                GlobalServerList().apply { setAll(listOf(ServerBeacon(serverId = "other-server", lastPing = MpInstant.now()))) }
+            )
+
+            storedKeys() shouldBe listOf("beating")
+        }
+
+        "Before the beacons were read once, the cleanup worker releases no lock for its server being dead" {
+            // Without a token and not expired: only the dead-server rule could release it.
+            insertLock("legacy", token = "", created = MpInstant.now().minus(1.hours), expires = MpInstant.now().plus(10.minutes))
+
+            runCleanupWorker(GlobalServerList())
+
+            storedKeys() shouldBe listOf("legacy")
+        }
+
+        "Once the beacons were read, the cleanup worker releases a lock without a token whose server is dead" {
+            val now = MpInstant.now()
+            // Neither is expired, so only the dead-server rule decides.
+            insertLock("dead", token = "", created = now.minus(1.hours), expires = now.plus(10.minutes), serverId = "dead-server")
+            insertLock("alive", token = "", created = now.minus(1.hours), expires = now.plus(10.minutes), serverId = "other-server")
+
+            runCleanupWorker(
+                GlobalServerList().apply {
+                    setAll(
+                        listOf(
+                            ServerBeacon(serverId = "dead-server", lastPing = now.minus(10.minutes)),
+                            ServerBeacon(serverId = "other-server", lastPing = now),
+                        )
+                    )
+                }
+            )
+
+            storedKeys() shouldBe listOf("alive")
         }
 
         // Repo //////////////////////////////////////////////////////////////////////////////////////////////////

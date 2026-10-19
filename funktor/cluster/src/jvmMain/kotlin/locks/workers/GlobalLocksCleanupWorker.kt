@@ -24,25 +24,14 @@ class GlobalLocksCleanupWorker(
         val now = MpInstant.now()
         val serverExpiresAt = now.minus(3.minutes)
 
-        val beacons = servers.getAll()
+        // Right after a server starts, the beacons have not been read yet: an empty list would make every server dead.
+        if (servers.isPopulated) {
+            val aliveServerIds: Set<String> = servers.getAll()
+                .filter { it.lastPing > serverExpiresAt }
+                .map { it.serverId }
+                .toSet()
 
-        val aliveServerIds: Set<String> = beacons
-            .filter { it.lastPing > serverExpiresAt }
-            .map { it.serverId }
-            .toSet()
-
-        val heldByDeadServers = globalLocks.releaseBy { lock -> lock.serverId !in aliveServerIds }
-
-        if (heldByDeadServers.isNotEmpty()) {
-            val mapped = heldByDeadServers.mapped()
-
-            log.warning(
-                """
-                    Removed ${heldByDeadServers.size} Global Locks that where held by dead servers.
-                    Server => Lock => Created => Last heartbeat:
-
-                """.trimIndent() + mapped
-            )
+            releaseHeldByDeadServers(aliveServerIds)
         }
 
         val expired = globalLocks.releaseExpired()
@@ -53,6 +42,23 @@ class GlobalLocksCleanupWorker(
             log.warning(
                 """
                     Removed ${expired.size} Global Locks that where expired.
+                    Server => Lock => Created => Last heartbeat:
+
+                """.trimIndent() + mapped
+            )
+        }
+    }
+
+    private suspend fun releaseHeldByDeadServers(aliveServerIds: Set<String>) {
+        // Only locks without a token: a lock with one is dead once its heartbeat stops, sooner than its server's beacon.
+        val heldByDeadServers = globalLocks.releaseBy { lock -> lock.token.isEmpty() && lock.serverId !in aliveServerIds }
+
+        if (heldByDeadServers.isNotEmpty()) {
+            val mapped = heldByDeadServers.mapped()
+
+            log.warning(
+                """
+                    Removed ${heldByDeadServers.size} Global Locks that where held by dead servers.
                     Server => Lock => Created => Last heartbeat:
 
                 """.trimIndent() + mapped

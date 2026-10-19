@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.cluster.locks
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.peekandpoke.funktor.cluster.locks.domain.GlobalLockEntry
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.reflection.TypeRef
@@ -9,11 +10,22 @@ import io.peekandpoke.ultra.vault.New
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class VaultGlobalLockProviderSpec : VaultGlobalLocksProviderSpecBase() {
 
     override val repo: VaultGlobalLocksProvider.Repo = TestLockRepo()
+
+    init {
+        "A heartbeat interval at or beyond the legacy expiry is rejected" {
+            // Shorter than the ttl, but `expires` (15 minutes ahead of each beat) would lapse between two beats.
+            shouldThrow<IllegalArgumentException> {
+                createSubject(ttl = 1.hours, heartbeatInterval = 20.minutes)
+            }
+        }
+    }
 
     private class TestLockRepo : VaultGlobalLocksProvider.Repo {
 

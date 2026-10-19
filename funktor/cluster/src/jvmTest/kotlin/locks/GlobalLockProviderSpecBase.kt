@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.merge
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -209,17 +210,20 @@ abstract class GlobalLockProviderSpecBase : StringSpec() {
             val subject = createSubject()
             val key = "key"
             val holding = CompletableDeferred<Unit>()
+            val firstFailed = AtomicBoolean(false)
 
             val flow1 = subject.acquire<String>(key) {
                 holding.complete(Unit)
                 delay(100)
+                firstFailed.set(true)
                 error("1st failed")
             }.catch { e ->
                 emit("error: ${e.message}")
             }
 
             val flow2 = subject.acquire(key, 1.seconds) {
-                "2nd"
+                // Only once the first handler has failed: it held the lock until then.
+                if (firstFailed.get()) "2nd" else "2nd, while the 1st still ran"
             }.onceHeld(holding).catch { e ->
                 emit("error: ${e.message}")
             }

@@ -53,6 +53,10 @@ class KarangoGlobalLockProviderSpec : VaultGlobalLocksProviderSpecBase() {
 
     private val driver: KarangoDriver get() = kontainer.get(KarangoDriver::class)
 
+    // Karango runs every query on Dispatchers.IO itself (karango/core/src/main/kotlin/vault/KarangoDriver.kt:120),
+    // so a saturated IO pool stalls the beat's query, whatever dispatcher the beat runs on.
+    override val beatsThroughSaturatedIo: Boolean get() = false
+
     /** Writes a lock the way a version without heartbeats did: no token, no lastHeartbeat. */
     private suspend fun insertLegacy(key: String, created: MpInstant, expires: MpInstant) {
         @Suppress("UNCHECKED_CAST")
