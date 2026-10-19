@@ -554,6 +554,12 @@ mutant), vitest run, restored with `cp` + `cmp`. 58 tests per run.
 | G9 | mismatch never said | 1 | |
 | G10 | the detail page ignores the ancestor's source | 1 | a second fetch per opened record |
 
+### Round 1 fix batch (T1, 2026-10-19)
+
+The `DynamicOverride` join (round 1's MAJOR), the three-way fingerprint match, the database graph's
+"today's schema" note and the dropped `numOld`/`numTotal` are recorded, with `path:line`, evidence and mutants,
+in `.claude/tasks/20260802-insights-vue-tabs.md`, "T1 — round 1 fix batch".
+
 ### Red-team scenarios proposed (T1) — for `.claude/tasks/20260730-redteam-insights-api.md`
 
 Collected, not run; T1 may not edit that file. The rendering and S1 ones are in the vue-tabs task.

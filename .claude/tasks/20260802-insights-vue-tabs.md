@@ -492,8 +492,9 @@ only stops it reaching a screen. The real fix belongs with D1 in the backend.
       serialising to `{}`, and that no bind value reaches the record. Mutation-tested. The kontainer
       half of the same reshape is still in `20260824-insights-graphs-and-static-slices.md`.
       *(Ticked 2026-09-28 — the work landed a month ago and this box was never updated.)*
-- [x] **S1 at the source** — DONE 2026-10-19 (T1). Monko records `@pN` placeholders with the values in
-      `vars`; `VaultCollector` admits `json`; the Database tab shows Mongo queries again. Both backends e2e.
+- [x] **S1 at the source** — DONE 2026-10-19 (T1). Monko records typed `@pN:<type>` placeholders with the
+      values in `vars`, under its own label `mongo-bound` (round 1), which `VaultCollector` admits; the Database
+      tab shows Mongo queries again. Both backends e2e.
 - [x] **I4** — DONE 2026-10-19. The spec follows every relative import of every emitted file of the REAL
       insights SDK and asserts the target is emitted.
 - [x] **Re-derive TAB-SPECS from a current record** — DONE 2026-10-19.
@@ -510,10 +511,11 @@ The gate blockers. The graphs and the kontainer shapes are recorded in
 `.claude/tasks/20260824-insights-graphs-and-static-slices.md`, Parts C+D.
 
 - **S1 at the source.** `monko/core/src/main/kotlin/MonkoDriver.kt:148` `FindQueryBuilder.printQuery()` turns
-  every filter value into an `@pN` placeholder (`placeholderise`, `:75`) with the values, as plain Java values,
+  every filter value into an `@pN:<type>` placeholder (`placeholderise`) with the values, as plain Java values,
   in `vars`; field names, `sort`, `limit`, `skip` stay, as AQL keeps attribute names and `LIMIT`. Fail-closed:
   only documents and arrays holding documents are walked, so a whole `$in` list is ONE value. `findStored`
-  records it (`:385`); `print()` (`:132`) stays the raw debugging aid. `VaultCollector.kt:104` admits `json`.
+  records it; `print()` stays the raw debugging aid. `VaultCollector.kt:107` admits Monko's label — `mongo-bound`
+  since round 1 (the line numbers of this bullet are in "T1 — round 1 fix batch").
 - **I4.** `funktor/codegen/src/test/kotlin/InsightsTsContributorSpec.kt:103` walks every relative import of
   every emitted `.ts`/`.vue` of the SDK built from the REAL `InsightsApiFeature` (`RealInsightsSdk.kt`, which
   needs `testImplementation(project(":funktor:insights"))`, `build.gradle.kts:45`, test-only) and resolves it
@@ -616,8 +618,9 @@ Collected, not run; T1 may not edit that file.
 1. **A Mongo field path built from a secret.** Placeholders cover VALUES only; keys stay in the text. An app
    that filters on `"tokens.<secret>"` (a map keyed by token) records the secret. Find such a filter in
    funktor and in the demo.
-2. **The language label as a trust boundary.** `VaultCollector` trusts `aql` and `json` by name; a third
-   driver labelling itself `json` while inlining values would be trusted. Try a custom `QueryProfiler` entry.
+2. **The language label as a trust boundary.** `VaultCollector` trusts `aql` and `mongo-bound` by name; any
+   path recording raw text under either label would be trusted. Try a custom `QueryProfiler` entry, and look
+   for a Monko path other than `findStored` that profiles under `mongo-bound`.
 3. **`$where` / `$expr` / `$function`.** Their JavaScript and expressions are bound as one value each — check
    that no part of an expression survives as structure (e.g. an operator document inside `$expr` with a
    literal in it).
@@ -629,14 +632,111 @@ Collected, not run; T1 may not edit that file.
 
 ## What T1 is unsure about
 
-- **Placeholder text format.** `@pN` inside JSON strings (`"token": "@p1"`) reads like a literal. Nothing in
-  a placeholder-ised filter is a literal, so it is unambiguous, but it is a format a maintainer may want
-  otherwise (e.g. `{"$bind": "p1"}`).
-- **`sort` is kept verbatim.** Mongo only accepts directions or `{$meta}` there and a failed query records no
-  text (its `query` is set after execution), so no value can reach it — reasoned, not tested against a server.
-- **The CLI check changes behaviour for every app**: an app with funktor insights must now declare
-  `vis-network` or `sdk:ts:generate` refuses. Intended per the plan ("failing with the line to paste"), but
-  it is a visible change to the generator's contract.
+- **`sort` is kept verbatim.** A sort value is a direction or a `{$meta: …}` expression, and a failed query
+  records no text (its `query` is set after execution), so no bind value can reach it — reasoned, not tested
+  against a server.
+- **The CLI check changes behaviour for every app**: an app with funktor insights must declare `vis-network`,
+  or `sdk:ts:generate` refuses. Intended per the plan ("failing with the line to paste"), but visible.
+- *(Resolved in round 1: the placeholder format — now typed, `@p1:string`.)*
+
+## T1 — round 1 fix batch (2026-10-19)
+
+Every ledger row marked "fix", plus the maintainer's 2026-10-19 decision to drop `numOld`/`numTotal` from the
+v2 kontainer slice. Rebased onto master `d9ffbb32` (T3) first, without conflicts.
+
+### What changed, `path:line`
+
+- **MAJOR, the `DynamicOverride` join** — `funktor/codegen/src/main/resources/ts/insights/slices.ts:647` gives a
+  slim record's `DynamicOverride` what v1 recorded (`overrideDefinition`, `:667`): it creates the instance's
+  class, is `Dynamic`, injects nothing, and overwrites the graph's (blueprint) definition. Pinned against the
+  REAL fat record of the same service (`UserProvider`, creates `UserProvider$Lazy`); no edge leaves either
+  override in either graph. Edges INTO it (services that inject `UserProvider`) stay, as v1 drew them.
+- **The join per `cls`** — `vue-verify/tests/slices.spec.ts`: each joined definition deep-equals the graph's for
+  the same class, plus a decoy sharing a simple name put first in the graph.
+- **Monko** — `monko/core/src/main/kotlin/MonkoDriver.kt`:
+  - the text names the `collection` (`:185`);
+  - typed placeholders `@pN:<type>` (`typeLabel`, `:97`): Mongo's `$type` alias read from `bsonType` only,
+    arrays `array[n]` — never the value;
+  - the label `mongo-bound` (`Printed.LANGUAGE`, `:204`), not `json`; `profile` (`:371`) takes the label, so
+    each call site states it;
+  - `printQuery`/`Printed` are `internal` (`:181`, `:195`); the sort KDoc names `{$meta}`.
+- **The trust boundary** — `funktor/insights/src/jvmMain/kotlin/collectors/VaultCollector.kt:107` allowlists
+  `mongo-bound` instead of `json`; the KDoc says the collector trusts the label alone.
+- **Old `json` entries** (2026-08-24..2026-10-19) — `slices.ts:408` `isInlinedMongoEntry`: their bind count is
+  `unknown`, not the false 0 (`VaultTab.vue:159`), and their empty text says why (`VaultTab.vue:105`).
+- **A record naming no graph** — `slices.ts:683` `graphMatch` is `same` / `other` / `unknown`;
+  `KontainerTab.vue:175` says the match cannot be verified.
+- **The database graph is today's schema** — `VaultTab.vue:140`, one line.
+- **CSP note** — `NetworkGraph.vue:11`: no `title` is ever set, so a strict CSP blocking the injected style
+  costs nothing.
+- **The CLI** — `funktor/codegen/src/main/kotlin/cli/TsSdkGenerateCliCommand.kt`:
+  - the class KDoc is true (`:25`);
+  - the fix-it line is `pnpm add --save-exact <pkg>@<tested>` (`TESTED_VERSIONS`, `:75`), kept equal to
+    `vue-verify/package.json` by a spec;
+  - a bad `package.json` fails naming the file (`:192`);
+  - `--alias <prefix>` exempts an import the app resolves itself (`:53`);
+  - `UndeclaredPackagesException` (`:214`) and `TsImports` are `internal`;
+  - the `--dry-run` test asserts the printed `[problem]` and the `pnpm add` line.
+  - **Design note, not a defect:** in a pnpm workspace the app's own `package.json` still has to declare
+    what it imports (pnpm is strict), so checking `<out>/package.json` alone is right; a root-only declaration
+    would fail in the app's own build too.
+- **Fixtures** — `vue-verify/fixtures/refresh.mjs`:
+  - `insights.server` becomes `build-host` and every `ultra_wt_…` becomes `funktor_test`; grep of the
+    committed fixtures for the hostname, `ultra_wt_`, the user name and `/home/`: 0 hits;
+  - the comment says re-serialised;
+  - more than one candidate record is an error;
+  - `fileURLToPath`.
+- **The e2e** — `InsightsVaultBindValuesSpec`: `varsCount shouldBe 1` on both backends; Arango
+  `` `token` == @v_ ``; Mongo's `collection` and `"@p1:string"`.
+- **`numOld`/`numTotal` dropped from v2** (maintainer) — `KontainerCollector.kt:71` `Data` is
+  `{graphFingerprint, services}`, `collect` (`:42`) and `finish` (`:120`) lose the tracker, and the collector
+  loses its `blueprint` dependency (it existed only for the tracker). Pinned by SLUMBERING the slice
+  (`KontainerCollectorSlumberSpec`, `KontainerCollectorFinishSpec`) and on the wire (`InsightsKontainerSliceSpec`).
+  - `KontainerCollectorFinishSpec`'s two counter tests are gone with the fields.
+  - v1 records keep theirs: shown as recorded, marked "not measured" (`KontainerTab.vue:103`, `counts` `:122`).
+  - v2 shows none, and a stray field is not read (`slices.ts:593`).
+  - The wire contract in `20260824-insights-graphs-and-static-slices.md` and TAB-SPECS follow.
+
+### Test evidence (round 1 batch)
+
+Counts from `build/test-results/**/TEST-*.xml`, all failures 0:
+
+- `:monko:core:test` — 26 specs, 259 tests (`MonkoDriverPrintQuerySpec` 10, +3).
+- `:funktor:insights:jvmTest` — 13 specs, 94 tests (the two counter tests gone; one "exactly two keys" added).
+- `:funktor:codegen:test` — 9 specs, 103 tests (`TsSdkGenerateCliCommandSpec` 27, +3).
+- `:funktor:all:jvmTest` — 18 specs, 185 tests (T3's specs arrived with the rebase).
+- `:funktor:codegen:vueVerify` — vue-tsc clean, vite build, vitest 6 files, **66 tests**.
+- Full suite: `console/wt-gradle.sh --full-suite` on `ff2a865c`, 2026-10-19 17:53-18:03 (10m): BUILD SUCCESSFUL -- 69 targets, 932 spec files, 15 864 tests, 7 skipped, **0 failures, 0 errors** (vueVerify inside it).
+
+### Mutation table (round 1 batch)
+
+Same protocol: backup outside the worktree with the path in its name, `cp` back, `cmp`, the harness copy diffed
+against the resources before and after every Vue mutant.
+
+| # | Mutant | Red in | Why that is the right reason |
+|---|---|---|---|
+| T1 | the type suffix carries the value (`@p1:string=<value>`) | `MonkoDriverPrintQuerySpec` 8/10; e2e 2/5 | the token, the PIN and the ObjectId hex appear in the text |
+| T2 | `array[n]` carries the elements | `MonkoDriverPrintQuerySpec` 2/10 | the token in the `$in` placeholder |
+| L1 | Monko records under `json` again | Monko label test; e2e Mongo lookup | the collector drops the text: no `mongo-bound` entry |
+| K1 | the collection dropped | Monko structure + paging tests; e2e Mongo lookup | |
+| L2 | the allowlist trusts `json` again | `VaultCollectorSlumberSpec` 2/4 | the old Monko entry's token is kept |
+| C2 | `--dry-run` prints nothing | the dry-run test | **was the round-0 survivor**; now red |
+| C3 | no tested version in the fix-it line | 2 CLI tests | `pnpm add --save-exact zod@4.6.7` missing |
+| C4 | `--alias` ignored | the alias test | `@sdk/models.ts` refused as a package |
+| C5 | the parse error unwrapped | the bad-manifest test | the message does not name the file |
+| O1 | a `DynamicOverride` joined to its blueprint (the MAJOR) | the override test | `creates` is the service key, `overwrites` null |
+| O2 | the override keeps the blueprint's injects | **survived first** | the real overrides' blueprints inject nothing: the fixture cannot express it. Killed by a derived test (a real graph, `UserProvider`'s blueprint given a real service's injects) |
+| O3 | the override `creates` the service key | the override test | |
+| J1 | the join by position | 3 tests | wrong definitions, wrong edges |
+| J2 | the join by simple name | **survived first** | the real graph has no two services sharing a simple name. Killed by a decoy put first |
+| N1 | a record naming no graph counts as `same` | 2 | |
+| M1 | old `json` entries keep their 0 | 2 | |
+| M2 | old `json` entries get the generic text | 1 | |
+| V4 | the today's-schema note dropped | 1 | |
+| Z1 | the v2 `Data` carries `numOld` again | `KontainerCollectorSlumberSpec`, `…FinishSpec`, e2e wire shape | SERIALIZED with the writer's codec: a third key |
+| Z2 | a slim record shows counters | the slim tab test | |
+| Z3 | the reader reads a slim slice's stray counters | the reader test | |
+| Z4 | a full record's counters lose "not measured" | the fat tab test | |
 
 ## Review record — T1 round 1 (/feature-review, 2026-10-19), the LEDGER
 
