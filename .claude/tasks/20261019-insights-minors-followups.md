@@ -19,7 +19,7 @@ merged `348c66bc`); the maintainer's standing direction is to fix MINORs
 - [ ] 5. `vue-verify/tests/graphs.spec.ts`: pin `fetchedAt` across a cache hit with fake timers (the re-stamp mutant
       must die).
 - [ ] 6. `karango/core/src/main/kotlin/vault/AqlTypedQuery.kt`: `LANGUAGE` / `LANGUAGE_RAW` → `internal`.
-- [ ] 7. **Log lines out of order or LOST** (pre-existing product defect): `ultra/log/src/jvmMain/kotlin/UltraLogManager.kt:97`
+- [x] 7. DONE 2026-10-19 (coordinator, on master — it turned master's full suite red: the e2e lost `WARNING`): `UltraLogManager.log` now launches one coroutine PER appender, so a non-suspending appender has the event before `log` returns; pinned by `UltraLogManagerDispatchSpec` "an appender after a suspending one has the event before log returns" (mutant: one coroutine walking all appenders → red at the new assertion, restored + `cmp`). Was: **Log lines out of order or LOST** (pre-existing product defect): `ultra/log/src/jvmMain/kotlin/UltraLogManager.kt:97`
       launches one coroutine per event on `Dispatchers.Unconfined` and walks appenders in order; a suspending appender
       (`KarangoLogAppender.append` → `repo.tryInsert`) delays every later one, so the insights `LogCollector` receives
       lines in arrival order, and a line still in flight when `LogCollector.finish` runs (`getAndClear`) never reaches

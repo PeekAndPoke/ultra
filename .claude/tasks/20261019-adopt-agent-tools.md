@@ -34,11 +34,10 @@ restore, compile-error "kills"), and task-doc consistency (statuses vs folder, l
 - [ ] Skill `.claude/skills/console-tools/SKILL.md` from the draft `/opt/dev/peekandpoke/agent-tools/skill/console-tools/
       SKILL.md` (requested via Mission-Control 2026-10-19), adapted: `console/wt-gradle.sh` as the test command, the
       BUILD-LOCK and one-full-suite rules; changes recorded under "Repo notes"; per the skill-builder conventions.
-- [ ] One CLAUDE.md line pointing at that skill — **needs the maintainer's own OK**: the request reached this
-      session through a peer, and CLAUDE.md is not edited on a peer's word.
+- [ ] One CLAUDE.md line pointing at that skill — **approved by the maintainer directly 2026-10-19** ("yes add the line").
 - [ ] No dependency on the shared folder after the copy.
-- [ ] **Final step — condense the always-loaded files** (requested via Mission-Control 2026-10-19; every CLAUDE.md edit
-      confirmed with the maintainer directly, with a before/after summary and line counts, BEFORE committing):
+- [ ] **Final step — condense the always-loaded files** (maintainer, directly, 2026-10-19: "yes condense it as you
+      proposed"; still show the before/after summary with line counts BEFORE committing):
       - KEEP in CLAUDE.md one line per tool: its name, why it exists, the trap it guards against.
       - MOVE tool-only detail (commands, verdicts, flags, `wt-gradle.sh` in mutate specs) to the console-tools skill.
       - REMOVE hand procedures the tools enforce (the cp / path-mirrored backup / never-`git checkout` protocol,

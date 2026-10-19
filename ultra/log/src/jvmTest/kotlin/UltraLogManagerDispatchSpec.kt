@@ -52,6 +52,18 @@ class UltraLogManagerDispatchSpec : StringSpec({
         caught shouldBe null
     }
 
+    "an appender after a suspending one has the event before log returns" {
+        // The insights per-request collector sits behind the Karango appender, which suspends on its
+        // insert; a request that ended meanwhile lost the line. No waiting here: delivery must be eager.
+        val trailing = Recording("trailing")
+        val manager = UltraLogManager(listOf(Suspending(delayMs = 5_000), trailing))
+
+        manager.getLogger(UltraLogManagerDispatchSpec::class).info("first")
+        manager.getLogger(UltraLogManagerDispatchSpec::class).warning("second")
+
+        trailing.entries shouldContainExactly listOf("first", "second")
+    }
+
     "an appender registered during an in-flight dispatch does not lose the event" {
         // Deterministic by construction, not by racing threads: `append` is a suspend function, so a
         // suspending appender holds the dispatch iteration open across its IO. `log` returns at that

@@ -39,7 +39,10 @@ So this is a new page, not a port of Kraft code. The two things that DO exist as
 The client is generated for TypeScript but **not** for Kotlin — `InsightsApiFeature` deliberately ships
 no hand-written `ApiClient` (its KDoc explains why). So decide first:
 
-- [ ] **Does Kraft get a hand-written `InsightsApiClient`,** in the pattern of the other funktor API
+- [x] DECIDED 2026-10-19 (maintainer): **yes — a Kotlin `InsightsApiClient` in `funktor/insights` commonMain**, in the
+      `AuthApiClient` pattern: the four endpoint declarations move onto it, the server mounts them (so the generated TS
+      client reads the same single source), and `InsightsApiFeature`'s "no hand-written ApiClient" KDoc is corrected.
+      Was: **Does Kraft get a hand-written `InsightsApiClient`,** in the pattern of the other funktor API
       clients, or does that reopen the "codegen replaces hand-written clients" direction? This is the
       one real design question in the task; everything after it is rendering.
 

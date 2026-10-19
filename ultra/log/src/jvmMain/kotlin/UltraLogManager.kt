@@ -94,13 +94,17 @@ class UltraLogManager(
             error = error,
         )
 
-        scope.launch {
-            appenders.forEach { appender ->
+        // One coroutine PER appender. Under Unconfined each runs on the caller until it first suspends, so an
+        // appender that never suspends (e.g. the insights per-request collector) has the event before `log`
+        // returns. A single coroutine walking the appenders in order held every later appender behind the
+        // first one that suspended on IO, so lines reached them late, out of order, or after the request.
+        appenders.forEach { appender ->
 
-                if (level.severity < appender.minLevel.severity) {
-                    return@forEach
-                }
+            if (level.severity < appender.minLevel.severity) {
+                return@forEach
+            }
 
+            scope.launch {
                 try {
                     appender.append(event)
                 } catch (e: CancellationException) {
