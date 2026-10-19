@@ -10,6 +10,7 @@ import io.peekandpoke.funktor.insights.CollectorData
 import io.peekandpoke.funktor.insights.InsightsCodec
 import io.peekandpoke.funktor.insights.InsightsData
 import io.peekandpoke.funktor.insights.KontainerFixture
+import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
 import io.peekandpoke.ultra.slumber.slumber
 import kotlinx.serialization.json.JsonObject
@@ -32,12 +33,13 @@ class KontainerCollectorSlumberSpec : FreeSpec() {
 
     private val codec = InsightsCodec()
 
-    private fun slice(): KontainerCollector.Data = KontainerCollector.Data.of(
-        numOld = 1,
-        numTotal = 3,
-        graphFingerprint = "f".repeat(64),
-        providers = KontainerFixture.requestKontainer().tools.factory.getAllProviders(),
-    )
+    private fun slice(kontainer: Kontainer = KontainerFixture.requestKontainer()): KontainerCollector.Data =
+        KontainerCollector.Data.of(
+            numOld = 1,
+            numTotal = 3,
+            graphFingerprint = "f".repeat(64),
+            providers = kontainer.tools.factory.getAllProviders(),
+        )
 
     @Suppress("UNCHECKED_CAST")
     private fun slumbered(data: KontainerCollector.Data): Map<String, Any?> =
@@ -98,8 +100,12 @@ class KontainerCollectorSlumberSpec : FreeSpec() {
         "createdAt is {ts, timezone, human}, ts in epoch MILLIS" {
             // The reader that took a bare number for epoch SECONDS would put a millis value in the year 58,000
             // (finding D2). The object form is what it reads correctly, so it is what must be written.
-            val data = slice()
-            val expected = data.services.single { it.cls == KontainerFixture.Handler::class.java.name }
+            val kontainer = KontainerFixture.requestKontainer()
+            val data = slice(kontainer)
+
+            // From the kontainer itself, not from the slice under test: an expected value read back off the
+            // slice would agree with any unit the collector got wrong. (Mutation-checked: seconds → red.)
+            val expected = kontainer.tools.factory.getProvider(KontainerFixture.Handler::class)
                 .instances.single().createdAt
 
             @Suppress("UNCHECKED_CAST")
