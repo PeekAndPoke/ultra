@@ -205,5 +205,30 @@ Each mutant: `cp` backup to `/tmp/locks-mutants/` (source-set path in the name),
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MAJOR | `GlobalLocksCleanupWorker.kt:27-34`, `GlobalServerList.kt:8-9` | The dead-server rule releases EVERY lock in the cluster on a server's first worker tick (the server list is still empty), and a peer deletes a booting server's new locks during the 10 s beacon lag | fix | Verified by the coordinator: the list starts empty and only `ServerBeaconCleanupWorker` fills it, after a DB read (`ServerBeaconCleanupWorker.kt:24-31`); every worker is due on the first tick (`WorkerTracker.kt:133`, Epoch) and all start together (`WorkersFacade.kt:52-75`); `GlobalServerList` is a true singleton (`index_jvm.kt:114`). Pre-existing, but it defeats this feature's guarantee, in a file this change edits. Fix: the rule applies to token-less locks only (token locks die by heartbeat in 60 s, before the 3-min beacon rule), and is skipped until the list has been populated once |
+| 1 | MAJOR | `VaultGlobalLocksProvider.kt:189-196`, `:208-211` | The read-then-remove race fixes (`releaseBy` and the takeover → `removeIfUnchanged`) are pinned by no test: a delete-by-key mutant stays green | fix | Verified: no test changes a lock between `list()`/`findById` and the remove; the mutation table has no row for it (M4 is the holder's release, M10 the worker predicate). Fix: wrapper-repo tests on all three backends that beat or replace the lock between the read and the remove; record both mutants |
+| 1 | MINOR | `GlobalLocksProvider.kt:100` | `releaseExpired()` is abstract: an outside implementor stops compiling | maintainer-decision | No outside implementor is known; a default body would silently give a new provider the legacy `expires` rule. Maintainer list |
+| 1 | MINOR | `GlobalLockProviderSpecBase.kt:207-232` | "Handler throwing an error" no longer proves the second handler ran AFTER the failing one | fix (with the MAJOR batch; reviewed in round 2) | Cheap: a flag set before `error(...)`, asserted by the second handler |
+| 1 | MINOR | `VaultGlobalLocksProvider.kt:70-74` | `heartbeatInterval` is not bounded by `legacyExpiry`: an interval over 15 min lets `expires` lapse between beats, and an OLD server steals the live lock | fix (batch) | `require(heartbeatInterval < legacyExpiry)` |
+| 1 | MINOR | `KarangoGlobalLocksRepo.kt:59-70`, `:91-94` | Non-1200 Karango query errors are no longer swallowed in the holder's release and `releaseBy` | maintainer-decision (no change proposed) | The reviewer could not show such an error is reachable; recorded so it is not re-derived |
+| 1 | MINOR | `VaultGlobalLocksProvider.kt:201` | Clock-skew tolerance shrinks from ~15 min to ~40 s: one skewed server's cleanup deletes live locks cluster-wide | maintainer-decision | Design fork: judge by the DB clock (`DATE_NOW()` / `$$NOW`) or a local monotonic observation, or at least warn when a read heartbeat lies in the reader's future |
+| 1 | MINOR | `VaultGlobalLocksProvider.kt:128` | Heartbeats share `Dispatchers.IO` with blocking handlers; saturation for ~40 s loses the holders' own locks | fix (batch) | A dedicated `Dispatchers.IO.limitedParallelism(n)` view in the companion |
+| 1 | MINOR | `GlobalLockEntryModel.kt:17` | `lastHeartbeat` has no default: a new UI talking to an old server during a rolling deploy fails to decode the listing | fix (batch) | `= created`; cheap. (The implementation reviewer judged it not a finding; the domain reviewer MINOR) |
+| 1 | MINOR | `VaultGlobalLocksProvider.kt:128`, `:164-187` (security + domain) | A stuck-but-alive handler now holds its lock forever (the old 15-min ceiling is gone); the task's "Why" counted the stuck case as improved | maintainer-decision | Follows from the maintainer's "no maximum lifetime"; options: an opt-in `maxHold`, or record "no max hold" explicitly and correct the "Why" |
+| 1 | MINOR (surplus) | `VaultGlobalLocksProvider.kt:67` | `legacyExpiry` is a public companion `val` nothing outside needs | fix (batch) | Both implementation and domain reviewers; make it `internal` |
 
-**Verdict:**
+**Probed and CLEAN in round 1:**
+- authz floor unchanged (`GlobalLocksApi.kt:13`).
+- the token leaves the server through no API, UI, CLI, log or insights record.
+- lock keys are sanitized before AQL/Mongo/log use, so no injection and no log forging.
+- old servers decode new records (unknown keys are ignored) and new servers decode legacy ones (defaults).
+- heartbeat vs release ordering (`coroutineScope` joins the beat first).
+- `emit` inside `coroutineScope` is legal.
+- Monko `matchedCount` and the plain-string `_id` match.
+- Karango REMOVE returns OLD.
+- the in-memory repo is synchronized.
+- code style: no wildcards, no FQCN, KDoc links resolve.
+- Kontainer scoping is harmless (the provider holds no shared state).
+- the four `onceHeld` test edits remove a real race without weakening anything.
+
+**Verdict:** round 1 NOT clean (2 MAJOR, fixed in the round-2 batch) — round 2 follows.
