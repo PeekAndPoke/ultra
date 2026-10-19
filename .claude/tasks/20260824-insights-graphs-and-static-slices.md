@@ -1,7 +1,7 @@
 # Insights — the three graphs, and moving static data off every record
 
-**Status:** IN PROGRESS — Parts A+B DONE 2026-10-19 (track T2, branch `wt/insights-backend`), review gate
-not yet run; Parts C+D are track T1's. Created 2026-08-24 from maintainer decisions on
+**Status:** IN PROGRESS — Parts A+B DONE 2026-10-19 (track T2, gate PASS round 1, merged; maintainer-approved
+MINOR batch reviewed); Parts C+D are track T1's. Created 2026-08-24 from maintainer decisions on
 `.claude/tasks/20260802-insights-vue-tabs.md`'s gap inventory.
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md`
 **Security-critical:** yes — it adds REST endpoints that expose the service graph and the database
@@ -166,9 +166,18 @@ into their DTOs — pinned by the specs.
 }
 ```
 
-- `numOld`, `numTotal`: int. `graphFingerprint`: 64 lowercase hex, or `null` if the graph could not be built.
+- **The `graphFingerprint` KEY marks this shape (v2)** — present even when its value is `null`. The old
+  shape (v1) has `info` instead; a slice with neither is unknown: show the raw tree.
+- `numOld`, `numTotal`: int, and **always 0 in funktor** — they count tracked kontainers, and tracking
+  (`KontainerBlueprint.Config.trackKontainers`) cannot be switched on from outside `ultra:kontainer`.
+  Showing them is showing a constant.
+- `graphFingerprint`: 64 lowercase hex, or `null` if the graph could not be built.
 - `services`: ONLY services with at least one instance (74 of 179 here); order not significant; `instances`
   is never empty. Exactly the keys `cls`, `type`, `instances` — no definition.
+- **Not all of it is the request's own — `type` tells.** A `Singleton` entry is process state, shared by
+  every request (created by the boot or by whichever request first needed it); every other type
+  (`SemiDynamic`, `Dynamic`, `Prototype`, `DynamicOverride`) is this kontainer's own. `createdAt` only says
+  whether this request was the one that created the instance.
 - Every class name is a **flat string**; the old shape wrapped them as `{"fqn": …}`.
 - `createdAt` is Slumber's instant object, `ts` in epoch **millis** — `readInstantMillis` reads it as is.
 - `type` is the provider type **in this request's kontainer**: `Singleton`, `SemiDynamic`, `Dynamic`,
@@ -177,7 +186,13 @@ into their DTOs — pinned by the specs.
   its blueprint definition, whose injects did NOT run in this request.
 - Join on `cls` against the graph's `services[].cls`. "Injects" and "Definition & overwrites" exist only
   in the graph. If `graphFingerprint` differs from the graph's `fingerprint`, the record was written
-  against another graph (another build): say so rather than draw today's edges as if they were its own.
+  against another graph: say so, rather than draw today's edges as if they were its own. **A mismatch is
+  expected after almost any deploy**: the fingerprint covers every code location, line numbers included,
+  so moving one registration line changes it even when the topology did not change.
+- **The record's own top-level `ts` is wrong by the server's UTC offset — do not use it.** It is a
+  `LocalDateTime` (`InsightsFull.kt:37`) that Slumber writes as if it were UTC: the frozen `FAT_RECORD`
+  says `"human": "2026-10-19T14:21:28…Z[UTC]"` while its instances were created at `12:21:28Z`, on a CEST
+  machine. Use the API's `recordedAt` (the depot file's time, `InsightsModels.kt:41`).
 
 **Old `kontainer` slice** (records written before 2026-10-19; still on disk, served unchanged). A trimmed
 real one is frozen as `FAT_RECORD` in `InsightsKontainerSliceSpec`:
@@ -208,9 +223,13 @@ real one is frozen as `FAT_RECORD` in `InsightsKontainerSliceSpec`:
 (The `injects` entry is `KontainerCollector`'s, spliced in for illustration; `InsightsRepository`'s is `[]`.)
 ALL services (178 here), `instances` may be `[]`. A `DynamicOverride` entry carries the override's own
 definition: empty `injects`, `codeLocation` inside `ServiceProviderFactory.<init>`, the blueprint one under
-`overwrites`. **Telling them apart:** `info` is an object → old; `services` is an array at the top level →
-new; neither → unknown, show the raw tree. Records from before 2026-07-31 (Jackson) wrote `createdAt` as
-epoch SECONDS (a double) — per `slices.ts`, not observed here.
+`overwrites`. Records from before 2026-07-31 (Jackson) wrote `createdAt` as epoch SECONDS (a double) — per
+`slices.ts`, not observed here.
+
+**v1 → v2, what a reader of both must translate** — every `{"fqn": …}` became a plain string (`cls`,
+`creates`, `classes[]`, instance `cls`); `codeLocation` went from `{"location": …}` to a plain string;
+definitions moved from the record to the graph; `info.services` (all services) became `services` (only
+those with instances).
 
 **`GET /_/funktor/insights/graphs/kontainer`** → `data` (93 KB compact, 179 services; computed once per
 blueprint):
@@ -236,11 +255,19 @@ blueprint):
 }
 ```
 
+- **Fetch it at most once per page lifetime.** It changes only with the deployed build; cache it, keyed by
+  `fingerprint` if anything.
 - `services` holds EVERY service, sorted by `cls`. `type`: `Singleton`, `SemiDynamic`, `Dynamic` or
   `Prototype` — never `DynamicOverride`: the graph is read from a kontainer without overrides, so it does
-  not depend on who asks. `injectionType`: `Singleton`, `Dynamic` or `Prototype` (as declared).
-- `injects` in constructor order; `classes` are sorted strings and may name classes that are not
-  service keys (e.g. `Kontainer`). `provisionType`: `Direct` or `Lazy`.
+  not depend on who asks.
+- `injectionType`: `Singleton`, `Dynamic` or `Prototype` as registered — upgraded to `Dynamic` or
+  `Prototype` when the definition replaces one of that type (`KontainerBuilder.withTypeUpgrade`). The
+  downgrade to `SemiDynamic` shows only in `type`.
+- `injects` in constructor order; `provisionType`: `Direct` or `Lazy`. `classes` (sorted) is what the
+  parameter ASKS for: for a single service, its **declared** type, which need not be a service key —
+  `AppConfigCollector`'s `appConfig` asks for `io.peekandpoke.funktor.core.config.AppConfig`, while the
+  key is the app's concrete config class (`io.peekandpoke.funktor.FunktorAllTestConfig` here). Resolve such
+  an edge by supertype, or draw it dangling. For a `List`/`Lookup` parameter it is the candidate keys.
 - `overwrites`: `null` or another object with the same five keys — a chain. All strings are flat.
 
 **`GET /_/funktor/insights/graphs/database`** → `data` (4.5 KB for 13 repos; built per request):
@@ -250,13 +277,12 @@ blueprint):
   "repos": [
     {
       "id": { "name": "insights_graph_e2e_books", "connection": "MongoDB(8.2.1)::ultra_wt_insights_backend" },
-      "connection": "MongoDB(8.2.1)::ultra_wt_insights_backend",
       "storedClasses": [
         {
           "fqn": "io.peekandpoke.funktor.GraphE2eBook",
           "references": [
-            { "repo": { "name": "insights_graph_e2e_authors", "connection": "ArangoDB(3.12.6)::ultra_wt_insights_backend" }, "fqn": "io.peekandpoke.funktor.GraphE2eAuthor", "type": "Direct" },
-            { "repo": null, "fqn": "io.peekandpoke.funktor.GraphE2eUnstored", "type": "Direct" }
+            { "repo": { "name": "insights_graph_e2e_authors", "connection": "ArangoDB(3.12.6)::ultra_wt_insights_backend" }, "fqn": "io.peekandpoke.funktor.GraphE2eAuthor" },
+            { "repo": null, "fqn": "io.peekandpoke.funktor.GraphE2eUnstored" }
           ]
         }
       ]
@@ -265,10 +291,11 @@ blueprint):
 }
 ```
 
-- Field for field `DatabaseGraphModel`. `connection` = `id.connection`, `ArangoDB(<version>)::<db>` or
-  `MongoDB(<version>)::<db>`; a reference may cross backends; `repo: null` = no repository stores the
-  type; `type` is always `Direct`. `repos` is `[]` for an app without repositories. 404 only for a kontainer
-  without a `DatabaseGraphBuilder` — funktor core always registers one.
+(Re-observed after the MINOR batch.) `DatabaseGraphModel` WITHOUT its two dead fields — no repo-level
+`connection` (it duplicated `id.connection`), no reference `type` (always `Direct`; the old renderer's
+dashed "Lazy" edges can no longer occur). `id.connection` is `ArangoDB(<version>)::<db>` or
+`MongoDB(<version>)::<db>`; a reference may cross backends; `repo: null` = no repository stores the type.
+`repos` is `[]` for an app without repositories. Built per request.
 
 **Refusal** — anonymous or non-superuser, both graphs: `401` with `data: null` and messages
 `"Access to the resource 'GET /_/funktor/insights/graphs/kontainer' is not authorized."` plus, outside
@@ -287,20 +314,25 @@ production only, `"Failed auth rules: Is SuperUser"`. Identical, apart from the 
 
 ## Implementation notes (T2, 2026-10-19)
 
+Line numbers as of the MINOR batch (2026-10-19, evening).
+
 - `funktor/insights/src/jvmMain/kotlin/api/InsightsGraphModels.kt` — the two wire DTOs. Plain strings for
   every enum, no JVM-only type, so T4 can move the file to commonMain as is.
-- `funktor/insights/src/jvmMain/kotlin/InsightsGraphs.kt:19` — builds both graphs; a true singleton
-  (`insights_module.kt:82`) injecting only the blueprint, itself a singleton. `kontainerGraph` (`:38`) is a
-  `lazy`, read from `blueprint.create()` — a kontainer WITHOUT dynamic overrides — and sorted (`:41`);
-  `fingerprintOf` (`:24`) is SHA-256 over the services' JSON. `databaseGraph` (`:47`) maps the model.
-- `funktor/insights/src/jvmMain/kotlin/api/InsightsApi.kt:42,48` declare, `:95,105` mount, with
-  `.noInsights()` and under the group's `isSuperUser()` floor (`:24`). The path layer in `routing.kt`
-  already keeps everything under `InsightsApi.base` out of the depot.
-- `funktor/insights/src/jvmMain/kotlin/collectors/KontainerCollector.kt:42` — the slim `Data`; `of` (`:73`)
-  reads `factory.getAllProviders()` and keeps those with instances (`:83`) instead of `getDebugInfo()`,
-  which would build all definitions only to drop them. Names go through `DebugInfo.ClassInfo`, so the join
-  key is exactly the graph's. The fingerprint is fetched separately (`:101`): a graph that cannot be
-  built leaves `null` there and the request's services still in the record.
+- `funktor/insights/src/jvmMain/kotlin/InsightsGraphs.kt:19` — builds the kontainer graph; a true singleton
+  (`insights_module.kt:82`) injecting only the blueprint, itself a singleton. `kontainerGraph` (`:37`) is a
+  `lazy`, read from `blueprint.create()` — a kontainer WITHOUT dynamic overrides — and sorted (`:40`);
+  `fingerprintOf` (`:23`) is SHA-256 over the services' JSON. The database mapping is a pure extension,
+  `DatabaseGraphModel.toInsightsDatabaseGraph()` (`:72`), outside the DTO file so that stays commonMain-ready.
+- `funktor/insights/src/jvmMain/kotlin/api/InsightsApi.kt:43,49` declare, `:96,106` mount, with
+  `.noInsights()` and under the group's `isSuperUser()` floor (`:25`). The database handler uses
+  `kontainer.get(DatabaseGraphBuilder::class)` (`:113`): funktor core always registers it. The path layer
+  in `routing.kt` already keeps everything under `InsightsApi.base` out of the depot.
+- `funktor/insights/src/jvmMain/kotlin/collectors/KontainerCollector.kt:79` — the slim `Data`; `of`
+  (`:110`) reads `factory.getAllProviders()` and keeps those with instances (`:120`) instead of
+  `getDebugInfo()`, which would build all definitions only to drop them. Names go through
+  `DebugInfo.ClassInfo`, so the join key is exactly the graph's. `finish` (`:134`) wires four sources into
+  `collect` (`:47`), which never throws — a collector that throws drops the whole record — with two
+  separate tries (`:53`, `:60`), and reads `numTotal` before `numOld` (`:61`).
 - **Database graph is NOT backend-independent**, so it is e2e'd on both: each repository's `connection` is
   read from its driver, which asks the SERVER (Arango `version`, Mongo `buildInfo`, `runBlocking`, once
   per driver instance — on the request thread, as the drivers already do for profiling).
@@ -315,8 +347,8 @@ production only, `"Failed auth rules: Is SuperUser"`. Identical, apart from the 
   `DynamicOverride` and always the blueprint definition (pinned e2e, mutation G1).
 - **`createdAt` stays Slumber's `{ts, timezone, human}`**, not a bare number: a bare number is exactly what
   today's reader misreads as seconds (D2).
-- **The database DTO keeps the model's redundancies** (`connection` twice, the obsolete `Reference.type`)
-  so the old renderer ports verbatim.
+- **The database DTO drops the model's two dead fields** (`Repo.connection`, `Reference.type`) — maintainer,
+  MINOR batch, before T4 publishes the DTO. Not a field-for-field mirror any more.
 - Sizes are measured on funktor/all's app, not the demo the 73.6% came from.
 
 ## Record size — the same request on the same app, before and after (2026-10-19)
@@ -342,12 +374,14 @@ pretty-printing itself (106 KB on disk for 69 KB of JSON). Neither is this task'
 
 Counts from `build/test-results/**/TEST-*.xml`, all failures 0:
 
-- `:funktor:insights:jvmTest` — 12 specs, 91 tests. New: `KontainerCollectorSlumberSpec` 6 (the slice
-  through `InsightsCodec`, the writer's own codec, and through the record envelope), `InsightsGraphsSpec`
-  9. Changed: `InsightsApiRoutesSpec`, `InsightsLevelSpec` (four routes).
-- `:funktor:all:jvmTest` — 15 specs, 178 tests. New: `InsightsGraphsApiSpec` 11,
-  `InsightsKontainerSliceSpec` 5, `InsightsDatabaseGraphBackendsSpec` 4 (one app, an Arango and a Mongo
-  repository, a reference between them).
+- `:funktor:insights:jvmTest` — after the MINOR batch 13 specs, 95 tests (was 12 / 91). New:
+  `KontainerCollectorSlumberSpec` 6 (the slice through `InsightsCodec`, the writer's own codec, and through
+  the record envelope), `InsightsGraphsSpec` 8, `KontainerCollectorFinishSpec` 5 (`finish` through a real
+  `ApplicationCall`, both guards, the counters). Changed: `InsightsApiRoutesSpec`, `InsightsLevelSpec`
+  (four routes).
+- `:funktor:all:jvmTest` — 15 specs, 178 tests, before and after the batch. New: `InsightsGraphsApiSpec`
+  11, `InsightsKontainerSliceSpec` 5, `InsightsDatabaseGraphBackendsSpec` 4 (one app, an Arango and a Mongo
+  repository, a reference between them). `InsightsWireSamples.kt` is the one shared opt-in dumper.
 - **Full suite** (`console/wt-gradle.sh --full-suite`, 2026-10-19 15:24–15:33, 9m 40s): BUILD FAILED — 68
   targets, 924 spec files, 15 632 tests, 7 skipped, **16 failures**, 0 errors. insights 91/0 and
   funktor/all 178/0 inside it. All 16 failures are worktree infrastructure, not this change (the branch
@@ -388,9 +422,59 @@ from the XML.
 | S2 | graphs mounted on a separate `public()` group | every floor case incl. anonymous (5 + backends 1); routes/level specs | anonymous got `200` with the graph |
 | O1 | loader drops a fat kontainer slice | old-record e2e | the slice is not served |
 | O2 | loader strips `info` from a fat slice | old-record e2e | "nothing reshapes an old slice on the way out" |
+| F1 | `collect`'s two tries merged into one (MINOR batch) | `KontainerCollectorFinishSpec`: graph failure, unreadable services | "one try around both would have dropped the request's services with the graph"; fingerprint `null` instead of kept |
+| F2 | no guard around reading the services | unreadable-services test | the providers' exception escaped `collect` |
+| F3 | `numOld`/`numTotal` swapped into each other's field | "own fields", "cannot exceed" | `expected:<5> but was:<2>` |
+| F4 | `numTotal` constant 0 | same two | `expected:<5> but was:<0>` |
+| F5 | `numOld` constant 0 | "own fields" | `expected:<2> but was:<0>` |
+| F6 | `numOld` read before `numTotal` | "cannot exceed" | "numOld=5 numTotal=1: numTotal must be read first" |
+| F7 | the swap moved into `finish`'s wiring | **survives** — expected, see the batch notes | both counters are 0 through `finish`; no public API gives a live tracker |
+| D1 | `Reference.type` back on the database DTO | e2e database wire shape | reference keys `["repo", "fqn"]` violated; unit equality survives by construction (a default on both sides) |
 
-Probed and CLEAN: the old record also lists through `listRecords` and its headline still reads; the API
+Probed and CLEAN: the old record also lists through the list endpoint and its headline still reads; the API
 serves the new slice exactly as the file holds it (JSON-equal, numbers intact).
+
+## MINOR batch (T2, 2026-10-19 evening) — what changed, per ledger row
+
+Maintainer: fix the open MINORs except "serve the graphs while insights is disabled". Rebased onto master
+first. Commits `249eca0a` (wire + simplifications) and `7579868b` (collector + specs).
+
+1. **Dead DTO fields** — `Repo.connection` and `Reference.type` dropped (`InsightsGraphModels.kt:61-100`);
+   contract, `InsightsGraphsSpec`, `InsightsGraphsApiSpec`, `InsightsDatabaseGraphBackendsSpec` follow.
+   Re-observed on a real response. Mutation D1.
+2. **Wrong text** — `Injection.classes` KDoc (`InsightsGraphModels.kt:53-57`): the DECLARED type, e.g.
+   `AppConfig`, which is no key (verified in the real graph: `AppConfigCollector.appConfig`).
+   `injectionType` (`:34-38`): as registered, after the upgrade. `KontainerCollector.kt:15-24`: no longer
+   "request-specific only". The contract's non-key example is now `AppConfig`, not `Kontainer`.
+3. **Contract completeness** — v1→v2 translation (`{fqn}`/`{location}` → strings), refetch at most once per
+   page, counters always 0, `graphFingerprint` key marks v2, the record's `ts` is off by the UTC offset
+   (observed +2 h), a fingerprint mismatch is expected after almost any deploy. **No topology-only
+   fingerprint:** it would call two graphs equal whose `codeLocation`s — shown in the Definition column —
+   differ, a false "same" in exchange for a false "different"; and nothing yet needs to tell a
+   line-move from a real change. Documented instead.
+4. **`finish` and both guards** — `KontainerCollector.kt:47-68` `collect`, `finish` (`:134`) wires into it.
+   `KontainerCollectorFinishSpec`: through a real `ApplicationCall` with a blueprint that fails validation
+   (`KontainerFixture.brokenBlueprint`) → `graphFingerprint == null`, services kept; the unreadable-services
+   branch through `collect`, since no real kontainer fails there. Mutations F1, F2.
+5. **Counters** — read order restored, `numTotal` first (`:61`). **Pinning them with
+   `trackKontainers = true` is impossible from here:** `KontainerBuilder.build(config)`
+   (`ultra/kontainer/.../KontainerBuilder.kt:543`) and the `KontainerBlueprint` constructor are
+   `internal`, and `kontainer { }` (`index.kt:19`) always uses the default config — no public API, no
+   funktor code, enables tracking. So `collect` pins them with distinct values (F3–F6 die), while the swap
+   moved into `finish`'s wiring survives (F7): both are 0 there. A maintainer call: make tracking
+   enable-able in `ultra:kontainer`, or drop two fields that are always 0.
+6. **Misnamed unit test** — "is read WITHOUT the request's overrides" deleted; its `creates` assertion moved
+   into the listing test; the claim stays with `InsightsGraphsApiSpec` (mutation G1).
+7. **Bytes** — `InsightsKontainerSliceSpec` measures `toByteArray().size` throughout. Not mutation-checkable
+   here: on this ASCII-only machine chars and bytes agree.
+8. **Record wait** — `Paged.fullItemCount` on a page of one, done when the count grew and the newest file
+   parses; the old-record lookup walks every page (`allRecords`). The ≥200-record case was not reproduced.
+9. **Simplifications** — `DatabaseGraphModel.toInsightsDatabaseGraph()` extension (`InsightsGraphs.kt:72`);
+   `kontainer.get` replaces the 404 branch (`InsightsApi.kt:113`); no `Json` alias; one
+   `insightsWireSample` (`funktor/all/src/jvmTest/kotlin/InsightsWireSamples.kt`).
+
+Tests: `:funktor:insights:jvmTest` 13 specs / 95 tests, `:funktor:all:jvmTest` 15 / 178, all green. No
+full suite for this batch (coordinator).
 
 ## Review record — the LEDGER, Parts A+B (T2), /feature-review 2026-10-19
 
@@ -400,16 +484,16 @@ The MINORs below are handed to the maintainer as a list (review-loop termination
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
 | 1 | MINOR | `InsightsApi.kt:95-120`, `insights_module.kt:82,85` | Both graphs are served even when insights recording is disabled (a production app keeping `InsightsConfig.Disabled` still exposes ~180 definitions with code locations) | maintainer-decision | Joins the plan's "production gate for insights" row; options: 404 when disabled, or record that the graphs are superuser introspection independent of recording |
-| 1 | MINOR | `InsightsGraphModels.kt:67-71`, `:90-95` | New DTO freezes dead/redundant fields (`Repo.connection` duplicating `Id.connection`, `Reference.type` always `Direct`) | maintainer-decision | Domain + security recommend dropping them now, before T4 publishes the DTO from commonMain; the implementer kept them for a verbatim port (deviation listed above) |
-| 1 | MINOR | `InsightsGraphs.kt:24-27` | The fingerprint also hashes `codeLocation` line numbers, so nearly every pre-deploy record shows "another graph" | maintainer-decision | Trade-off: a second, topology-only fingerprint, or document "a mismatch is expected after any deploy touching a module file" |
-| 1 | MINOR | `InsightsGraphModels.kt:50`, `:34`; `KontainerCollector.kt:16`; wire contract | KDoc/contract text factually wrong: `Injection.classes` is the DECLARED type (may be no service key); `injectionType` is after override upgrade; "request-specific" is false for global singletons; the contract's `Kontainer` example IS a service key | maintainer-decision | Factually-wrong-text findings; cheap, but they shape the T1/T4 readers — apply before T1 starts? |
-| 1 | MINOR | wire contract | Missing contract statements: `codeLocation` went `{location}` → string; refetch at most once per page; `numOld`/`numTotal` are always 0 (tracking never enabled); presence of `graphFingerprint` marks the v2 shape; the record's own `ts` is a `LocalDateTime` encoded as UTC (`InsightsFull.kt:37`, already worked around at `InsightsModels.kt:37`) — readers must not use it | maintainer-decision | Contract completeness for T1/T4 |
-| 1 | MINOR | `KontainerCollector.kt:97-118` | `finish` and both catch branches are untested; merging the two tries back would lose the whole record on a graph failure (the D1 mode) | maintainer-decision | A unit test with a throwing graph |
-| 1 | MINOR | `KontainerCollectorSlumberSpec.kt:38-39`, `InsightsKontainerSliceSpec.kt:193` | `numOld`/`numTotal` pinned by nothing (swap or constant-0 mutants survive); evaluation order changed (`:110-111`, numOld read first) | maintainer-decision | Test with `trackKontainers = true`; restore the read order |
-| 1 | MINOR | `InsightsGraphsSpec.kt:46-62` | "read WITHOUT the request's overrides" cannot fail for the reason in its name | maintainer-decision | Rename, or leave the claim to `InsightsGraphsApiSpec.kt:190` |
-| 1 | MINOR | `InsightsKontainerSliceSpec.kt:177-179` | Compares UTF-16 chars with file bytes: fails on a machine with a non-ASCII path or user name | maintainer-decision | `toByteArray().size` |
-| 1 | MINOR | `InsightsKontainerSliceSpec.kt:61,73-95,281` | The record wait counts one page of 200; once the JVM has ≥200 records the spec fails with a misleading message | maintainer-decision | Compare `Paged.fullItemCount` |
-| 1 | MINOR (surplus) | `InsightsGraphs.kt:47`, `InsightsApi.kt:113-118`, `InsightsGraphs.kt:22`, the three sample-dump hooks | `databaseGraph(model)` is a pure mapper on a singleton; an untested 404 branch for a case funktor never produces; a `Json` alias; three copies of a test-only dumper | maintainer-decision | Small simplifications |
+| 1 | MINOR | `InsightsGraphModels.kt:67-71`, `:90-95` | New DTO freezes dead/redundant fields (`Repo.connection` duplicating `Id.connection`, `Reference.type` always `Direct`) | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | Domain + security recommend dropping them now, before T4 publishes the DTO from commonMain; the implementer kept them for a verbatim port (deviation listed above) |
+| 1 | MINOR | `InsightsGraphs.kt:24-27` | The fingerprint also hashes `codeLocation` line numbers, so nearly every pre-deploy record shows "another graph" | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | Trade-off: a second, topology-only fingerprint, or document "a mismatch is expected after any deploy touching a module file" |
+| 1 | MINOR | `InsightsGraphModels.kt:50`, `:34`; `KontainerCollector.kt:16`; wire contract | KDoc/contract text factually wrong: `Injection.classes` is the DECLARED type (may be no service key); `injectionType` is after override upgrade; "request-specific" is false for global singletons; the contract's `Kontainer` example IS a service key | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | Factually-wrong-text findings; cheap, but they shape the T1/T4 readers — apply before T1 starts? |
+| 1 | MINOR | wire contract | Missing contract statements: `codeLocation` went `{location}` → string; refetch at most once per page; `numOld`/`numTotal` are always 0 (tracking never enabled); presence of `graphFingerprint` marks the v2 shape; the record's own `ts` is a `LocalDateTime` encoded as UTC (`InsightsFull.kt:37`, already worked around at `InsightsModels.kt:37`) — readers must not use it | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | Contract completeness for T1/T4 |
+| 1 | MINOR | `KontainerCollector.kt:97-118` | `finish` and both catch branches are untested; merging the two tries back would lose the whole record on a graph failure (the D1 mode) | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | A unit test with a throwing graph |
+| 1 | MINOR | `KontainerCollectorSlumberSpec.kt:38-39`, `InsightsKontainerSliceSpec.kt:193` | `numOld`/`numTotal` pinned by nothing (swap or constant-0 mutants survive); evaluation order changed (`:110-111`, numOld read first) | fixed in part | Test with `trackKontainers = true`; restore the read order | — PARTLY: read order restored and both values pinned through `collect`; a tracker-enabled blueprint cannot be built from outside `ultra:kontainer`, so "make tracking switchable vs drop the always-0 fields" is a NEW maintainer decision
+| 1 | MINOR | `InsightsGraphsSpec.kt:46-62` | "read WITHOUT the request's overrides" cannot fail for the reason in its name | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | Rename, or leave the claim to `InsightsGraphsApiSpec.kt:190` |
+| 1 | MINOR | `InsightsKontainerSliceSpec.kt:177-179` | Compares UTF-16 chars with file bytes: fails on a machine with a non-ASCII path or user name | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | `toByteArray().size` |
+| 1 | MINOR | `InsightsKontainerSliceSpec.kt:61,73-95,281` | The record wait counts one page of 200; once the JVM has ≥200 records the spec fails with a misleading message | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | Compare `Paged.fullItemCount` |
+| 1 | MINOR (surplus) | `InsightsGraphs.kt:47`, `InsightsApi.kt:113-118`, `InsightsGraphs.kt:22`, the three sample-dump hooks | `databaseGraph(model)` is a pure mapper on a singleton; an untested 404 branch for a case funktor never produces; a `Json` alias; three copies of a test-only dumper | FIXED in the maintainer-approved batch (`249eca0a`, `7579868b`) | Small simplifications |
 
 **Probed and CLEAN in round 1:**
 - the `isSuperUser()` floor is structural (`ApiRoutes.addRoute`), and S1/S2 mutants go red;
@@ -427,3 +511,15 @@ The MINORs below are handed to the maintainer as a list (review-loop termination
 **Red-team:** scenarios 24-31 added to `.claude/tasks/20260730-redteam-insights-api.md` on master (`e20fd6dc`).
 
 **Verdict:** gate PASS for Parts A+B (round 1 clean; e2e present on both backends and green). Parts C+D stay open for T1.
+
+**Batch review (one `reviewer-high`, the maintainer-approved MINOR batch, 2026-10-19): 0 CRITICAL, 0 MAJOR, 3 MINOR — all fixed by the coordinator.**
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| batch | MINOR | `KontainerCollector.kt:18-19`, contract | Names `createdAt` as what tells request state from process state; it is `type` (`Singleton` is shared, `ServiceProvider.kt:39-46`; every other type is per kontainer, `:48-56`) | fix | KDoc and contract corrected |
+| batch | MINOR | `KontainerCollectorFinishSpec.kt` | The v2 marker's null case ("key present even when null") is serialized by no test | fix | The broken-graph case now slumbers its data and asserts the key is present and null |
+| batch | MINOR | this file | Ledger rows not re-dispositioned, stale Status line, `InsightsApi.kt:24` → `:25` | fix | Done in this edit |
+
+**Verified clean by the batch review:** every listed fix landed (re-read in the current files); the `collect`/`finish` split keeps
+two independent guards and `finish` cannot throw; the counters are structurally 0 (`DummyTracker`); the record-`ts` offset and
+`codeLocation`-as-string claims hold; nothing outside the diff references the removed fields; no surplus.

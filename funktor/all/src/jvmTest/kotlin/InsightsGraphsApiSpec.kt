@@ -24,7 +24,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.File
 
 /**
  * The two graph endpoints over real HTTP: who may read them, and what their JSON looks like on the wire.
@@ -45,11 +44,6 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
     private fun String.data(): JsonElement = Json.parseToJsonElement(this).jsonObject["data"].shouldNotBeNull()
 
     private fun JsonElement.keys(): Set<String> = jsonObject.keys
-
-    /** Writes [body] to `$INSIGHTS_WIRE_SAMPLES_DIR/<name>` when set, so the contract can be re-read from a real response. */
-    private fun sample(name: String, body: String) {
-        System.getenv("INSIGHTS_WIRE_SAMPLES_DIR")?.let { File(it, name).writeText(body) }
-    }
 
     init {
         "the floor: neither graph reaches anyone below superuser" - {
@@ -106,7 +100,7 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
                     }
                 }
 
-                sample("refusal-kontainer-graph.json", graphBody)
+                insightsWireSample("refusal-kontainer-graph.json", graphBody)
 
                 fun JsonElement.refusal() = jsonObject.filterKeys { it != "insights" }.let { JsonObject(it) }
                     .toString()
@@ -135,7 +129,7 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
             }
 
             "the wire shape: {fingerprint, services[{cls, type, definition}]}" {
-                val body = fetch().also { sample("kontainer-graph.json", it) }
+                val body = fetch().also { insightsWireSample("kontainer-graph.json", it) }
                 val data = body.data()
 
                 data.keys() shouldContainExactlyInAnyOrder listOf("fingerprint", "services")
@@ -214,7 +208,7 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
 
         "GET database graph, as a superuser" - {
 
-            "the wire shape: {repos[{id{name, connection}, connection, storedClasses[{fqn, references}]}]}" {
+            "the wire shape: {repos[{id{name, connection}, storedClasses[{fqn, references[{repo, fqn}]}]}]}" {
                 var body = ""
 
                 apiApp {
@@ -226,7 +220,7 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
                     }
                 }
 
-                sample("database-graph.json", body)
+                insightsWireSample("database-graph.json", body)
 
                 val data = body.data()
                 data.keys() shouldBe setOf("repos")
@@ -239,15 +233,16 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
                     val id = repo["id"].shouldNotBeNull()
 
                     withClue(id.toString()) {
-                        repo.keys shouldContainExactlyInAnyOrder listOf("id", "connection", "storedClasses")
+                        // no top-level `connection` and no reference `type`: the model's dead fields are dropped
+                        repo.keys shouldContainExactlyInAnyOrder listOf("id", "storedClasses")
                         id.keys() shouldContainExactlyInAnyOrder listOf("name", "connection")
                         // this app is Karango-only; the two-backend case is InsightsDatabaseGraphBackendsSpec
-                        repo["connection"].shouldNotBeNull().jsonPrimitive.content shouldMatch Regex("ArangoDB\\(.+\\)::.+")
+                        id.jsonObject["connection"].shouldNotBeNull().jsonPrimitive.content shouldMatch Regex("ArangoDB\\(.+\\)::.+")
 
                         repo["storedClasses"].shouldNotBeNull().jsonArray.forEach { stored ->
                             stored.keys() shouldContainExactlyInAnyOrder listOf("fqn", "references")
                             stored.jsonObject["references"].shouldNotBeNull().jsonArray.forEach { ref ->
-                                ref.keys() shouldContainExactlyInAnyOrder listOf("repo", "fqn", "type")
+                                ref.keys() shouldContainExactlyInAnyOrder listOf("repo", "fqn")
                             }
                         }
                     }

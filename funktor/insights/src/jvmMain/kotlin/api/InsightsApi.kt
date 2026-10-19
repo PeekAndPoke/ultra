@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.insights.api
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.insights.InsightsDataLoader
 import io.peekandpoke.funktor.insights.InsightsGraphs
+import io.peekandpoke.funktor.insights.toInsightsDatabaseGraph
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
@@ -108,14 +109,8 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }.codeGen {
             funcName = "getDatabaseGraph"
         }.noInsights().handle {
-            val kontainer = call.kontainer
-
-            // funktor core always registers the builder; the 404 is for a kontainer assembled without it
-            ApiResponse.okOrNotFound(
-                kontainer.getOrNull(DatabaseGraphBuilder::class)?.let { builder ->
-                    kontainer.get(InsightsGraphs::class).databaseGraph(builder.getGraph())
-                }
-            )
+            // Always registered: funktor core installs `ultraVault` (`funktor/core/.../core_module.kt`)
+            ApiResponse.ok(call.kontainer.get(DatabaseGraphBuilder::class).getGraph().toInsightsDatabaseGraph())
         }
     }
 }

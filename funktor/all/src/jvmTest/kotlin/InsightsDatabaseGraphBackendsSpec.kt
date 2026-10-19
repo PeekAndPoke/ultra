@@ -30,7 +30,6 @@ import io.peekandpoke.ultra.security.user.UserPermissions
 import io.peekandpoke.ultra.vault.Ref
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import java.io.File
 
 //  One repository per backend, and a reference from one to the other  /////////////////////////////////
 
@@ -111,8 +110,7 @@ class InsightsDatabaseGraphBackendsSpec : AppSpec<FunktorAllTestConfig>(database
             }
         }
 
-        // opt-in, like the other insights specs: a real response to re-read the contract from
-        System.getenv("INSIGHTS_WIRE_SAMPLES_DIR")?.let { File(it, "database-graph-two-backends.json").writeText(body) }
+        insightsWireSample("database-graph-two-backends.json", body)
 
         return Json.decodeFromJsonElement(
             InsightsDatabaseGraph.serializer(),
@@ -126,16 +124,14 @@ class InsightsDatabaseGraphBackendsSpec : AppSpec<FunktorAllTestConfig>(database
         "an Arango repository is listed with an ArangoDB connection" {
             val authors = fetchGraph().repo("insights_graph_e2e_authors")
 
-            authors.connection shouldMatch Regex("ArangoDB\\(.+\\)::.+")
-            authors.id.connection shouldBe authors.connection
+            authors.id.connection shouldMatch Regex("ArangoDB\\(.+\\)::.+")
             authors.storedClasses.map { it.fqn } shouldBe listOf(GraphE2eAuthor::class.java.name)
         }
 
         "a Mongo repository is listed with a MongoDB connection" {
             val books = fetchGraph().repo("insights_graph_e2e_books")
 
-            books.connection shouldMatch Regex("MongoDB\\(.+\\)::.+")
-            books.id.connection shouldBe books.connection
+            books.id.connection shouldMatch Regex("MongoDB\\(.+\\)::.+")
         }
 
         "a reference from the Mongo repository resolves to the Arango one" {
@@ -144,7 +140,6 @@ class InsightsDatabaseGraphBackendsSpec : AppSpec<FunktorAllTestConfig>(database
 
             val toAuthor = book.references.single { it.fqn == GraphE2eAuthor::class.java.name }
             toAuthor.repo shouldBe graph.repo("insights_graph_e2e_authors").id
-            toAuthor.type shouldBe "Direct"
 
             withClue("a reference to a type no repository stores leaves the known graph: repo is null") {
                 book.references.single { it.fqn == GraphE2eUnstored::class.java.name }.repo shouldBe null

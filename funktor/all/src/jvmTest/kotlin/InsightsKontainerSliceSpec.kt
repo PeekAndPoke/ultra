@@ -53,24 +53,32 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
 
     private var recorded: InsightsRecordRef? = null
 
-    private suspend fun listRecords(): List<InsightsRecordSummary> {
-        var items: List<InsightsRecordSummary> = emptyList()
+    private suspend fun listPage(page: Int, epp: Int): Paged<InsightsRecordSummary> {
+        var paged: Paged<InsightsRecordSummary>? = null
 
         insightsApp {
             authenticate(superUserToken) {
-                request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = 1, epp = InsightsApi.MAX_EPP)) {
+                request(insightsApi.insights.listRecords, InsightsApiFeature.PagingParam(page = page, epp = epp)) {
                     status shouldBe HttpStatusCode.OK
-                    items = apiResponseData<Paged<InsightsRecordSummary>>()?.items ?: emptyList()
+                    paged = apiResponseData<Paged<InsightsRecordSummary>>()
                 }
             }
         }
 
-        return items
+        return paged.shouldNotBeNull()
+    }
+
+    /** Every record the list shows, page by page: the depot outgrows one page once a JVM has run enough specs. */
+    private suspend fun allRecords(): List<InsightsRecordSummary> {
+        val pages = listPage(page = 1, epp = InsightsApi.MAX_EPP).fullPageCount.shouldNotBeNull()
+
+        return (1..pages.toInt()).flatMap { listPage(page = it, epp = InsightsApi.MAX_EPP).items }
     }
 
     /** Records the request `InsightsRecordingSpec` records, once per spec, and returns its ref. */
     private suspend fun recordedRef(): InsightsRecordRef = recorded ?: run {
-        val before = listRecords().size
+        // The FULL count, not the length of one page, which stops growing at MAX_EPP
+        val before = listPage(page = 1, epp = 1).fullItemCount.shouldNotBeNull()
 
         insightsApp {
             authenticate(superUserToken) {
@@ -80,21 +88,22 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
             }
         }
 
-        var found: List<InsightsRecordSummary> = emptyList()
+        var newest: InsightsRecordSummary? = null
 
-        // Counts PARSEABLE records, so a half-written file is not mistaken for the finished one
+        // Done once the count has grown AND the newest file parses: a half-written one lists as an empty page
         withTimeoutOrNull(10.seconds) {
-            while (found.size <= before) {
-                found = listRecords()
-                if (found.size <= before) delay(25.milliseconds)
+            while (newest == null) {
+                val page = listPage(page = 1, epp = 1)
+                newest = page.items.firstOrNull()?.takeIf { (page.fullItemCount ?: 0) > before }
+                if (newest == null) delay(25.milliseconds)
             }
         }
 
-        withClue("no NEW insights record appeared within 10s (had $before) — was the slice slumberable?") {
-            (found.size > before) shouldBe true
+        val found = withClue("no NEW insights record appeared within 10s (had $before) — was the slice slumberable?") {
+            newest.shouldNotBeNull()
         }
 
-        found.first().ref.also { recorded = it }
+        found.ref.also { recorded = it }
     }
 
     /** The record as the API serves it, raw. */
@@ -110,7 +119,7 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
             }
         }
 
-        sample("record-response-${ref.file}", body)
+        insightsWireSample("record-response-${ref.file}", body)
 
         return Json.parseToJsonElement(body).jsonObject["data"].shouldNotBeNull().jsonObject
     }
@@ -140,18 +149,13 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
 
     private fun JsonElement.keys(): Set<String> = jsonObject.keys
 
-    /** Writes [content] to `$INSIGHTS_WIRE_SAMPLES_DIR/<name>` when set, so the contract can be re-read from real data. */
-    private fun sample(name: String, content: String) {
-        System.getenv("INSIGHTS_WIRE_SAMPLES_DIR")?.let { File(it, name).writeText(content) }
-    }
-
     init {
         "measure: the record and its kontainer slice, as written to disk" {
             val ref = recordedRef()
             val file = File(insightsDepotDir, ref.toPath())
             val root = Json.parseToJsonElement(file.readText()).jsonObject
 
-            sample("record-${ref.file}", file.readText())
+            insightsWireSample("record-${ref.file}", file.readText())
 
             val withoutSlice = JsonObject(
                 root + ("collectors" to JsonArray(
@@ -161,12 +165,15 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
                 ))
             )
 
-            val rendered = prettyJson.encodeToString(JsonElement.serializer(), root).length
-            val share = rendered - prettyJson.encodeToString(JsonElement.serializer(), withoutSlice).length
+            // BYTES throughout, as the file is measured: a char count drifts on any non-ASCII path or name
+            fun JsonElement.prettyBytes() = prettyJson.encodeToString(JsonElement.serializer(), this).toByteArray().size
+
+            val rendered = root.prettyBytes()
+            val share = rendered - withoutSlice.prettyBytes()
             val slice = root.kontainerSlice()
             val services = slice["services"].shouldNotBeNull().jsonArray
             val instances = services.sumOf { it.jsonObject["instances"]!!.jsonArray.size }
-            val sliceCompact = slice.toString().length
+            val sliceCompact = slice.toString().toByteArray().size
 
             println(
                 "[insights-size] record=${file.length()} rendered=$rendered kontainerSliceShare=$share " +
@@ -278,7 +285,7 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
                     slice["info"]!!.jsonObject["services"]!!.jsonArray.size shouldBe 3
                 }
 
-                listRecords().map { it.ref } shouldContain ref
+                allRecords().map { it.ref } shouldContain ref
             } finally {
                 repository.removeFile(ref.toPath()) shouldNotBe false
             }
