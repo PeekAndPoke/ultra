@@ -314,3 +314,11 @@ maintainer-requested batch ("fix the MINORs"), checked by one reviewer afterward
 | 2 | — | rows 11, 14 | Clock skew; stuck handler | still maintainer-decision | Facts added in round 2: a taken-over lock lets two owner demotions both pass the demo's `wouldOrphanOrg`; the CLI `funktor:cluster:release-locks` does free a beating lock (`removeIfUnchanged` succeeds between beats); the task's "Why" bullet 2 still needs correcting if "no max hold" stands |
 
 **Verdict:** gate PASS (round 2 clean; e2e present on both backends and green). MINOR batch follows; rows 11 and 14 stay with the maintainer.
+
+**Batch review** (one `reviewer-high`, the round-2 MINOR batch): 0 CRITICAL, 0 MAJOR, 3 MINOR — all fixed by the
+coordinator: the `isLegacy` KDoc claimed only `expires` judges a legacy lock (its server's beacon does too); `isLegacy`
+made `internal`; the two heartbeat-failure tests counted every "heartbeat failed" warning, so a slow real beat under load
+(timeout = interval = 50 ms) could add one — they now count the injected causes. Verified clean: the direct Karango call
+(same AQL and bind encoding; only the profiler entry and the `KarangoQueryException` wrapping are lost, nothing depends on
+them), the `ttl <= legacyExpiry` boundary, the timeout/`ensureActive` interplay, `isLegacy` in all five places, the log, the
+KDoc constraints, and the saturated-IO test (K1/C1 turn it red on Karango).
