@@ -55,7 +55,8 @@ class MonkoGlobalLocksRepo(driver: MonkoDriver, repoName: String) :
     }
 
     override suspend fun heartbeat(key: String, token: String, heartbeatAt: MpInstant, expiresAt: MpInstant): Boolean {
-        // Update values bypass slumber, so the instants are slumbered here into the shape an insert stores.
+        // Update values bypass slumber. Slumbered here, so that the codec reading them back also decides their shape,
+        // not the driver's own codec for MpInstant (bson-kotlinx, which today happens to write the same shape).
         val result = collection.updateOne(
             heldWith(key = key, token = token),
             combine(
