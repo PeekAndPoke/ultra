@@ -37,6 +37,9 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
     private companion object {
         /** Mirrors the CLI default, so the tests read the way a caller invokes it. */
         const val SDK = TsSdkGenerateCliCommand.DEFAULT_SDK_DIR
+
+        /** The one package `realBuilder()`'s SDK imports (its runtime validates with zod). */
+        const val DECLARES_ZOD = """{ "dependencies": { "zod": "4.4.3" } }"""
     }
 
     init {
@@ -63,14 +66,15 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
 
                 run("--out", dir.absolutePath) shouldBe null
 
+                // Declares what the SDK imports: since 2026-10-19 an undeclared package fails the run
                 val sentinel = File(dir, "package.json")
-                sentinel.writeText("{}")
+                sentinel.writeText(DECLARES_ZOD)
                 File(dir, "src/main.ts").writeText("// the app")
 
                 run("--out", dir.absolutePath) shouldBe null
 
                 withClue("regeneration must not touch anything outside <out>/<sdkDir>") {
-                    sentinel.readText() shouldBe "{}"
+                    sentinel.readText() shouldBe DECLARES_ZOD
                     File(dir, "src/main.ts").readText() shouldBe "// the app"
                 }
             }
@@ -185,6 +189,62 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
                 withClue("a dry run must leave the directory untouched, marker included") {
                     dir.listFiles().orEmpty().map { it.name } shouldBe emptyList()
                 }
+            }
+        }
+
+        "a package the SDK imports must be declared in <out>/package.json" - {
+
+            // The generator may not write the app's package.json, so it verifies instead. Without
+            // this, a contributed component importing a package the app lacks -- vis-network, for
+            // the insights graphs -- surfaces as an unresolved import in the app's `vite build`.
+
+            "an undeclared package fails the run, naming it, its importer and the command to fix it" {
+                val dir = tempdir()
+                File(dir, "package.json").writeText("""{ "dependencies": { "vue": "3.5.44" } }""")
+
+                val thrown = run("--out", dir.absolutePath)
+
+                withClue("the SDK imports zod, which this package.json does not declare") {
+                    (thrown is TsSdkGenerateCliCommand.UndeclaredPackagesException) shouldBe true
+                }
+
+                (thrown as TsSdkGenerateCliCommand.UndeclaredPackagesException).packages.keys shouldBe setOf("zod")
+                thrown.message!! shouldContain "runtime/client.ts"
+                thrown.message!! shouldContain "pnpm add zod"
+
+                withClue("refused BEFORE writing: the SDK directory must not exist") {
+                    File(dir, SDK).exists() shouldBe false
+                }
+            }
+
+            "a package declared in ANY dependency field satisfies the import" {
+                listOf("dependencies", "devDependencies", "peerDependencies", "optionalDependencies").forEach { field ->
+                    val dir = tempdir()
+                    File(dir, "package.json").writeText("""{ "$field": { "zod": "4.4.3" } }""")
+
+                    withClue(field) {
+                        run("--out", dir.absolutePath) shouldBe null
+                    }
+                }
+            }
+
+            "--check fails the same way, so CI catches it too" {
+                val dir = tempdir()
+                File(dir, "package.json").writeText(DECLARES_ZOD)
+                run("--out", dir.absolutePath) shouldBe null
+
+                File(dir, "package.json").writeText("{}")
+
+                (run("--out", dir.absolutePath, "--check") is TsSdkGenerateCliCommand.UndeclaredPackagesException) shouldBe true
+            }
+
+            "--dry-run reports it and still writes nothing" {
+                val dir = tempdir()
+                File(dir, "package.json").writeText("{}")
+
+                run("--out", dir.absolutePath, "--dry-run") shouldBe null
+
+                dir.listFiles().orEmpty().map { it.name } shouldBe listOf("package.json")
             }
         }
 

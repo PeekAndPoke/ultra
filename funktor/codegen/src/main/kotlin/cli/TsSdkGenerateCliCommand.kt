@@ -6,7 +6,12 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
+import io.peekandpoke.funktor.codegen.TsImports
 import io.peekandpoke.ultra.codegen.sdk.TsSdkBuilder
+import io.peekandpoke.ultra.codegen.sdk.TsSdkOutput
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import java.io.File
 
 /**
@@ -55,6 +60,9 @@ class TsSdkGenerateCliCommand(
          * wrong for the standard layout is a default nobody uses.
          */
         const val DEFAULT_SDK_DIR: String = "src/funktorsdk"
+
+        /** Where `package.json` may declare a package; any one of them satisfies an import. */
+        private val DEPENDENCY_FIELDS = listOf("dependencies", "devDependencies", "peerDependencies", "optionalDependencies")
     }
 
     override fun run() {
@@ -115,6 +123,16 @@ class TsSdkGenerateCliCommand(
 
         result.advisories.forEach { println("[advisory] $it") }
 
+        // The generator may not write the app's package.json, so a package the SDK imports is only
+        // VERIFIED. Without this the gap surfaces as an unresolved import in the app's `vite build`.
+        val undeclared = undeclaredPackages(appRoot, entries)
+
+        if (undeclared.isNotEmpty()) {
+            val problem = UndeclaredPackagesException(File(appRoot, "package.json"), undeclared)
+
+            if (dryRun) println("[problem] ${problem.message}") else throw problem
+        }
+
         when {
             // `--check` is not optional, and it comes BEFORE --dry-run: a stale checked-in SDK is
             // invisible until a frontend developer hits a runtime shape mismatch, so CI needs a
@@ -142,6 +160,43 @@ class TsSdkGenerateCliCommand(
             }
         }
     }
+
+    /**
+     * Packages the SDK imports that `<appRoot>/package.json` does not declare, each with the files importing it.
+     *
+     * Empty when there is no `package.json`: `--out` is then not a Node app root and there is nothing to check.
+     */
+    private fun undeclaredPackages(appRoot: File, entries: List<TsSdkOutput.Entry>): Map<String, List<String>> {
+        val manifest = File(appRoot, "package.json")
+
+        if (!manifest.isFile) return emptyMap()
+
+        val root = Json.parseToJsonElement(manifest.readText()).jsonObject
+
+        val declared = DEPENDENCY_FIELDS
+            .flatMap { field -> (root[field] as? JsonObject)?.keys ?: emptySet() }
+            .toSet()
+
+        return entries
+            .filter { it.path.endsWith(".ts") || it.path.endsWith(".vue") }
+            .flatMap { entry ->
+                TsImports.of(entry.content)
+                    .filterNot { TsImports.isRelative(it) }
+                    .map { TsImports.packageOf(it) to entry.path }
+            }
+            .filter { (pkg, _) -> pkg !in declared }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, files) -> files.distinct().sorted() }
+            .toSortedMap()
+    }
+
+    /** Thrown when the SDK imports a package the app's `package.json` does not declare. */
+    class UndeclaredPackagesException(manifest: File, val packages: Map<String, List<String>>) : RuntimeException(
+        "The generated SDK imports ${packages.size} package(s) that $manifest does not declare:\n" +
+                packages.entries.joinToString("\n") { (pkg, files) -> "  $pkg  (imported by ${files.joinToString()})" } +
+                "\nThe generator does not write package.json; the app owns it. Add them, then re-run:\n" +
+                "  pnpm add ${packages.keys.joinToString(" ")}"
+    )
 
     /**
      * Thrown when `--check` finds drift.
