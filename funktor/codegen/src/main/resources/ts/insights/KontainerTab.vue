@@ -1,31 +1,86 @@
 <script setup lang="ts">
 /**
- * The `kontainer` slice: every service definition, and which of them were instantiated.
+ * The `kontainer` slice: which services this request's kontainer instantiated, and the service graph.
  *
- * **The biggest slice by far -- 137.8 KB average, 73.6% of a record.** That is why the raw dump stays in
- * a collapsed `<details>` and why `JsonTree` renders nothing until opened.
+ * ## Two shapes, and the tab says which one it shows
  *
- * Services are ordered with instantiated ones first, then by FQN (`readKontainer` does the sort). That
- * was the old table's order and it is right: what the request actually touched is the usual question.
+ * - `full` (written before 2026-10-19) -- every service with its definition. The graphs are drawn from
+ *   the record itself, which is what the request actually ran with.
+ * - `slim` (since) -- only services with instances, plus the `graphFingerprint` they were written
+ *   against. Injects and definitions come from the kontainer graph endpoint, joined on `cls`, fetched on
+ *   the first graph click and never before, at most once per page. A fingerprint mismatch is said, not
+ *   hidden: the edges are then today's, which is expected after almost any deploy.
  *
- * The old tab also drew two vis.js graphs, and everything they needed IS derivable from the record --
- * unlike the vault graph. Not built here: it needs a graph library, which is a dependency decision for
- * the SDK rather than something this tab should pick unilaterally.
+ * Services are ordered with instantiated ones first, then by FQN (`readKontainer` does the sort).
+ *
+ * **Without the graph the tab still renders**: no API client, a 401, a missing endpoint -- each leaves a
+ * notice and the table, never an exception.
  *
  * See `RequestTab.vue` for the import-path note.
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import type { Ref } from 'vue'
 import FactList from '../ui/FactList.vue'
 import JsonTree from '../ui/JsonTree.vue'
 import type { Fact } from '../ui/types.ts'
-import { definitionChain, readKontainer } from './slices.ts'
-import type { KontainerInstance } from './slices.ts'
+import { kontainerNetwork, useInsightsGraphsOrNull } from './graphs.ts'
+import type { NetworkData } from './graphs.ts'
+import NetworkGraph from './NetworkGraph.vue'
+import { definitionChain, graphMismatch, instanceCountsMeasured, joinKontainerGraph, readKontainer } from './slices.ts'
+import type { KontainerGraphData, KontainerInstance, KontainerService } from './slices.ts'
 
 defineOptions({ name: 'KontainerTab' })
 
 const props = defineProps<{ data: unknown }>()
 
+/** Null outside a detail page, e.g. a tab mounted on its own; a `slim` record then has no graph. */
+const graphs = useInsightsGraphsOrNull()
+
 const slice = computed(() => readKontainer(props.data))
+
+/** The kontainer graph endpoint's answer. Only a `slim` record asks for it, and only on a graph click. */
+const graph: Ref<KontainerGraphData | null> = ref(null)
+const graphProblem: Ref<string | null> = ref(null)
+const loading = ref(false)
+const shown: Ref<'instances' | 'full' | null> = ref(null)
+
+const canDraw = computed(() => slice.value?.shape === 'full' || graphs !== null)
+
+/** What the table lists: a `slim` record's services, joined with their definitions once the graph is in. */
+const services = computed<KontainerService[]>(() => {
+    const value = slice.value
+    if (value === null) return []
+    return value.shape === 'full' || graph.value === null ? value.services : joinKontainerGraph(value, graph.value, false)
+})
+
+const network = computed<NetworkData | null>(() => {
+    const value = slice.value
+    const which = shown.value
+    if (value === null || which === null) return null
+
+    if (value.shape === 'full') {
+        const pool = which === 'instances' ? value.services.filter((service) => service.instances.length > 0) : value.services
+        return kontainerNetwork(pool, which)
+    }
+
+    return graph.value === null ? null : kontainerNetwork(joinKontainerGraph(value, graph.value, which === 'full'), which)
+})
+
+async function toggle(which: 'instances' | 'full'): Promise<void> {
+    shown.value = shown.value === which ? null : which
+
+    const value = slice.value
+    if (shown.value === null || value === null || value.shape === 'full' || graph.value !== null || graphs === null) return
+
+    loading.value = true
+    graphProblem.value = null
+
+    const result = await graphs.kontainer()
+
+    loading.value = false
+    if (result.ok) graph.value = result.value
+    else graphProblem.value = `The kontainer graph is not available: ${result.reason}`
+}
 
 const summary = computed<Fact[]>(() => {
     const value = slice.value
@@ -33,21 +88,39 @@ const summary = computed<Fact[]>(() => {
 
     const total = value.numTotal ?? 0
     const old = value.numOld ?? 0
+    const instantiated = value.services.filter((service) => service.instances.length > 0).length
 
     return [
-        // The old bar's `young / old / total`. "Old" is alive longer than 15 minutes -- a hardcoded
-        // threshold in the collector, not something configurable, so it is stated rather than implied.
-        { key: 'Instances (young / old / total)', value: `${total - old} / ${old} / ${total}` },
-        { key: 'Services', value: value.services.length },
+        {
+            key: 'Record shape',
+            value:
+                value.shape === 'full'
+                    ? 'full -- every definition inline (written before 2026-10-19)'
+                    : 'slim -- instantiated services only; definitions come from the kontainer graph',
+        },
+        // The old bar's `young / old / total`. "Old" is alive longer than 15 SECONDS -- `OLD_AFTER_SECONDS`
+        // in the collector, hardcoded. Funktor never switches tracking on, so the counts are always 0.
+        {
+            key: 'Kontainers (young / old / total)',
+            value: instanceCountsMeasured(value) ? `${total - old} / ${old} / ${total}` : 'not measured',
+        },
+        {
+            key: 'Services',
+            value: value.shape === 'full' ? `${value.services.length} (${instantiated} instantiated)` : `${instantiated} instantiated`,
+        },
+        ...(value.shape === 'slim'
+            ? [{ key: 'Graph fingerprint', value: value.graphFingerprint ?? 'none -- the server could not build the graph' }]
+            : []),
     ]
 })
+
+const mismatch = computed(() => slice.value !== null && graph.value !== null && graphMismatch(slice.value, graph.value))
 
 /**
  * Full date and time, not just the clock.
  *
- * The old table printed `Instant.toString()` in full, and the date is what separates "instantiated
- * during this request" from "alive since boot" -- which is the whole reason the table sorts
- * instantiated services first. `toLocaleTimeString` dropped it.
+ * The date is what separates "instantiated during this request" from "alive since boot": a singleton
+ * is process-wide, so its instance is listed on every record and usually predates the request.
  */
 function createdAt(instance: KontainerInstance): string {
     return instance.createdAtMillis === null ? 'n/a' : new Date(instance.createdAtMillis).toLocaleString()
@@ -62,9 +135,53 @@ function shortName(fqn: string | null): string {
     <div v-if="slice !== null">
         <section class="fk-section">
             <FactList :facts="summary" />
+            <p class="fk-section__note">
+                Singletons are process-wide: an instance listed here may have been created long before this
+                request. Compare its creation time with the record's.
+            </p>
         </section>
 
         <section class="fk-section">
+            <div class="fk-toolbar">
+                <button
+                    type="button"
+                    class="fk-button fk-graph-button--ok"
+                    :disabled="!canDraw"
+                    :aria-pressed="shown === 'instances'"
+                    @click="toggle('instances')"
+                >
+                    Show instances Graph
+                </button>
+                <button
+                    type="button"
+                    class="fk-button fk-graph-button--error"
+                    :disabled="!canDraw"
+                    :aria-pressed="shown === 'full'"
+                    @click="toggle('full')"
+                >
+                    Show Full Graph
+                </button>
+            </div>
+
+            <div v-if="!canDraw" class="fk-notice">
+                No API client here to fetch the kontainer graph, which this record's shape needs.
+            </div>
+            <div v-if="loading" class="fk-empty">Loading the kontainer graph...</div>
+            <div v-if="graphProblem !== null" class="fk-notice fk-notice--error">{{ graphProblem }}</div>
+            <div v-if="mismatch" class="fk-notice">
+                This record was written against another kontainer graph (fingerprint
+                {{ slice.graphFingerprint }}, today {{ graph?.fingerprint ?? 'none' }}). The definitions and
+                edges shown are today's. Expected after almost any deploy: the fingerprint covers line numbers.
+            </div>
+
+            <NetworkGraph v-if="network !== null" :key="shown ?? ''" :data="network" />
+        </section>
+
+        <section class="fk-section">
+            <p v-if="slice.shape === 'slim' && graph === null" class="fk-section__note">
+                Injects and definitions are not part of this record. Show a graph to load them from the
+                server; the table fills in too.
+            </p>
             <table class="fk-kv fk-services">
                 <thead>
                     <tr>
@@ -76,7 +193,7 @@ function shortName(fqn: string | null): string {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="service in slice.services" :key="service.cls ?? ''">
+                    <tr v-for="service in services" :key="service.cls ?? ''">
                         <td class="fk-mono" :title="service.cls ?? ''">{{ shortName(service.cls) }}</td>
                         <td><span class="fk-label">{{ service.type ?? 'n/a' }}</span></td>
 
@@ -101,6 +218,7 @@ function shortName(fqn: string | null): string {
                         </td>
 
                         <td class="fk-mono">
+                            <div v-if="service.definition === null" class="fk-muted">-</div>
                             <div
                                 v-for="(definition, index) in definitionChain(service.definition)"
                                 :key="index"
@@ -118,7 +236,7 @@ function shortName(fqn: string | null): string {
         </section>
 
         <details class="fk-details">
-            <summary>Raw slice -- large, around 137 KB</summary>
+            <summary>Raw slice{{ slice.shape === 'full' ? ' -- large, every definition inline' : '' }}</summary>
             <div class="fk-details__body"><JsonTree :value="data" /></div>
         </details>
     </div>

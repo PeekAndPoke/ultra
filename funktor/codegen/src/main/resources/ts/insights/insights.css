@@ -87,5 +87,32 @@
     .fk-services td {
         vertical-align: top;
     }
+
+    /*  Graphs (KontainerTab, VaultTab)  ---------------------------------------------------------------  */
+
+    /* The old GUI's button colours: green for the instances graph, red for the full and database ones. */
+    .fk-graph-button--ok {
+        border-color: var(--fk-ok);
+        color: var(--fk-ok);
+    }
+
+    .fk-graph-button--error {
+        border-color: var(--fk-error);
+        color: var(--fk-error);
+    }
+
+    .fk-graph-button--ok[aria-pressed='true'],
+    .fk-graph-button--error[aria-pressed='true'] {
+        background: var(--fk-surface-sunken);
+    }
+
+    /* vis-network sizes its canvas to this box; a box without a height draws nothing. */
+    .fk-graph__canvas {
+        width: 100%;
+        height: 85vh;
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+        background: var(--fk-surface);
+    }
 }
 

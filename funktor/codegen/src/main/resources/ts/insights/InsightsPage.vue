@@ -26,6 +26,7 @@ import type { Ref } from 'vue'
 import { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
 import type { InsightsRecordRef } from '../models.ts'
 import { useSdkConfigOrNull } from '../ui/sdkContext.ts'
+import { createGraphSource, provideInsightsGraphs } from './graphs.ts'
 import InsightsDetailPage from './InsightsDetailPage.vue'
 import InsightsListPage from './InsightsListPage.vue'
 
@@ -52,6 +53,10 @@ if (props.client === undefined && injectedConfig === null) {
 // Resolved ONCE. The client is a stable singleton over the app's transport, so there is nothing for a
 // computed to react to, and rebuilding one per render would discard nothing but cost allocations.
 const client = props.client ?? new FunktorInsightsClient(injectedConfig!)
+
+// The two graphs are static per deployed build: one source for the page's lifetime fetches each at most
+// once, however many records are opened. Nothing is fetched until a tab asks.
+provideInsightsGraphs(createGraphSource(() => client))
 
 /**
  * Annotated as `Ref<…>` on the const rather than `ref<…>(null)`.

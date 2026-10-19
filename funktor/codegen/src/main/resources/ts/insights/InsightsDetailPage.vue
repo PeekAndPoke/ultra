@@ -5,9 +5,12 @@
  * ## The tab registry is OPEN, and that is the point
  *
  * `collectors` is an open envelope so an app-defined collector is possible at all. A key with no
- * registered component therefore is NOT an error -- it renders through `JsonTree`, which is also how
- * the four collectors whose tabs are not built yet (`runtime`, `vault`, `kontainer`, `app-config`)
- * currently appear. The page is complete and usable now; tabs improve it as they land.
+ * registered component therefore is NOT an error -- it renders through `JsonTree`.
+ *
+ * ## The graphs are fetched only when a tab asks, and at most once per page
+ *
+ * The `kontainer` and `vault` tabs draw graphs from two static endpoints. `InsightsPage` provides one
+ * graph source for its whole lifetime; mounted without it, this page provides its own.
  *
  * ## Why the headline is repeated here
  *
@@ -38,7 +41,8 @@ import RuntimeTab from './RuntimeTab.vue'
 import TemplateTab from './TemplateTab.vue'
 import UserTab from './UserTab.vue'
 import VaultTab from './VaultTab.vue'
-import { readRuntime, readVault, runtimeCells, vaultCells } from './slices.ts'
+import { createGraphSource, provideInsightsGraphs, useInsightsGraphsOrNull } from './graphs.ts'
+import { readResponse, readRuntime, readVault, runtimeCells, vaultCells } from './slices.ts'
 
 defineOptions({ name: 'InsightsDetailPage' })
 
@@ -50,6 +54,10 @@ const props = defineProps<{
 
 /** Call-signature form, not the object map -- see the note in `InsightsListPage.vue`. */
 const emit = defineEmits<{ (e: 'navigate', ref: InsightsRecordRef): void; (e: 'back'): void }>()
+
+// Only when no ancestor provides one: `InsightsPage` does, so going back to the list and into another
+// record reuses a graph already fetched. The client is read when a graph is first asked for.
+if (useInsightsGraphsOrNull() === null) provideInsightsGraphs(createGraphSource(() => props.client))
 
 /** Collector key to component. A key that is absent falls through to `JsonTree`. */
 const TABS: Record<string, Component> = {
@@ -119,9 +127,17 @@ const overview = computed<Fact[]>(() => {
     const value = record.value
     if (value === null) return []
 
+    // The reason phrase lives in the `response` slice, not in the headline -- the old Overview showed it (D6).
+    const response = readResponse(sliceFor('response'))
+    const reason = response !== null && response.status === value.status ? response.statusDescription : null
+
     return [
         { key: 'Request', value: [value.method, value.path].filter((part) => part !== null).join(' ') || null },
-        { key: 'Status', value: value.status, tone: toneForStatus(value.status) },
+        {
+            key: 'Status',
+            value: value.status === null ? null : reason === null ? value.status : `${value.status} ${reason}`,
+            tone: toneForStatus(value.status),
+        },
         { key: 'Duration', value: value.durationMs === null ? null : `${value.durationMs.toFixed(1)} ms` },
         { key: 'Recorded', value: value.recordedAt === null ? null : toDate(value.recordedAt).toLocaleString() },
     ]
