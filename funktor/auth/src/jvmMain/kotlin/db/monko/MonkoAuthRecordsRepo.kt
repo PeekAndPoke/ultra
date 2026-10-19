@@ -15,9 +15,12 @@ import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang._type
 import io.peekandpoke.monko.lang.dsl.and
+import io.peekandpoke.monko.lang.dsl.asc
 import io.peekandpoke.monko.lang.dsl.desc
 import io.peekandpoke.monko.lang.dsl.eq
+import io.peekandpoke.monko.lang.dsl.lt
 import io.peekandpoke.monko.lang.dsl.toFieldPath
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.user.UserId
@@ -50,10 +53,10 @@ class MonkoAuthRecordsRepo(
             field { it._type }
         }
 
-        // Mirror Karango's TTL index so expired auth records (sessions, password-recovery
-        // tokens, email-verification tokens, email-change tokens) are culled automatically.
-        // The code-level `hasNotExpired()` filter in AuthRecordStorage is then a safety net
-        // rather than the only boundary.
+        // Meant to mirror Karango's TTL index, but it culls NOTHING today: `expiresAt` is a Long of epoch
+        // seconds and a MongoDB TTL index only expires BSON Date fields. The code-level `hasNotExpired()`
+        // filter in AuthRecordStorage is therefore the ONLY expiry boundary on Mongo, and expired rows
+        // accumulate. Tracked in the parallel plan's backlog (`e4076e46`).
         ttlIndex {
             field { it.expiresAt }
             expireAfter(0)
@@ -129,5 +132,37 @@ class MonkoAuthRecordsRepo(
 
         val result = coll.deleteMany(Filters.and(filters))
         return RemoveResult(count = result.deletedCount, query = null)
+    }
+
+    override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
+        val coll = driver.database.getCollection<Map<String, Any?>>(name)
+
+        val filters = mutableListOf(
+            Filters.eq(repoExpr.realm.toFieldPath(), realm.value),
+            Filters.eq(repoExpr.ownerId.toFieldPath(), owner.value),
+        )
+        if (exceptType != null) {
+            filters.add(Filters.ne(repoExpr._type.toFieldPath(), exceptType))
+        }
+
+        val result = coll.deleteMany(Filters.and(filters))
+        return RemoveResult(count = result.deletedCount, query = null)
+    }
+
+    override suspend fun findCreatedBefore(
+        realm: RealmId, type: String, before: MpInstant, limit: Int,
+    ): List<Stored<AuthRecord>> {
+        val cursor = find { r ->
+            filter(
+                and(
+                    r._type eq type,
+                    r.realm eq realm,
+                    r.createdAt.ts lt before.toEpochMillis(),
+                )
+            )
+            sort(r.createdAt.ts.asc)
+            limit(limit)
+        }
+        return cursor.toList()
     }
 }

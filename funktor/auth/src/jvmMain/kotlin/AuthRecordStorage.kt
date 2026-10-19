@@ -3,6 +3,7 @@ package io.peekandpoke.funktor.auth
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.slumber.Polymorphic
 import io.peekandpoke.ultra.vault.RemoveResult
@@ -44,6 +45,20 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
             ): RemoveResult {
                 return RemoveResult.empty
             }
+
+            override suspend fun <T : AuthRecord> saveRecord(stored: Stored<T>): Stored<T> {
+                error("Not yet implemented")
+            }
+
+            override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
+                return RemoveResult.empty
+            }
+
+            override suspend fun findCreatedBefore(
+                realm: RealmId, type: String, before: MpInstant, limit: Int,
+            ): List<Stored<AuthRecord>> {
+                return emptyList()
+            }
         }
 
         class Vault(val inner: Repo) : Adapter {
@@ -58,6 +73,12 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 suspend fun removeAllByOwner(
                     realm: RealmId, type: String, owner: UserId, exceptId: String?,
                 ): RemoveResult
+
+                suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult
+
+                suspend fun findCreatedBefore(
+                    realm: RealmId, type: String, before: MpInstant, limit: Int,
+                ): List<Stored<AuthRecord>>
             }
 
             override suspend fun removeById(id: String): RemoveResult {
@@ -89,6 +110,20 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
             ): RemoveResult {
                 return inner.removeAllByOwner(realm, type, owner, exceptId)
             }
+
+            override suspend fun <T : AuthRecord> saveRecord(stored: Stored<T>): Stored<T> {
+                return inner.save(stored)
+            }
+
+            override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
+                return inner.removeAllOfOwner(realm, owner, exceptType)
+            }
+
+            override suspend fun findCreatedBefore(
+                realm: RealmId, type: String, before: MpInstant, limit: Int,
+            ): List<Stored<AuthRecord>> {
+                return inner.findCreatedBefore(realm, type, before, limit)
+            }
         }
 
         suspend fun <T : AuthRecord> createRecord(new: T): Stored<T>
@@ -108,6 +143,17 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         suspend fun removeAllByOwner(
             realm: RealmId, type: String, owner: UserId, exceptId: String? = null,
         ): RemoveResult
+
+        /** Replaces an existing record. */
+        suspend fun <T : AuthRecord> saveRecord(stored: Stored<T>): Stored<T>
+
+        /** Removes every record of [owner] in [realm], of ANY type except [exceptType]. */
+        suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String? = null): RemoveResult
+
+        /** Returns up to [limit] records of [type] in [realm] created before [before], oldest first. */
+        suspend fun findCreatedBefore(
+            realm: RealmId, type: String, before: MpInstant, limit: Int,
+        ): List<Stored<AuthRecord>>
     }
 
     val adapter by adapter
@@ -163,6 +209,26 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         return adapter.removeAllByOwner(
             type = type.identifier, realm = realm, owner = owner, exceptId = exceptId,
         )
+    }
+
+    /** Replaces an existing record, e.g. to advance a [AuthRecord.PendingActivation]'s resend schedule. */
+    suspend fun <T : AuthRecord> save(stored: Stored<T>): Stored<T> {
+        return adapter.saveRecord(stored)
+    }
+
+    /** Remove every record of [owner] in [realm], of any type, optionally keeping those of [except]. */
+    suspend fun removeAllOfOwner(
+        realm: RealmId, owner: UserId, except: Polymorphic.TypedChild<*>? = null,
+    ): RemoveResult {
+        return adapter.removeAllOfOwner(realm = realm, owner = owner, exceptType = except?.identifier)
+    }
+
+    /** Up to [limit] records of [type] in [realm] created before [before], oldest first, expired or not. */
+    suspend inline fun <reified T : AuthRecord> findCreatedBefore(
+        type: Polymorphic.TypedChild<T>, realm: RealmId, before: MpInstant, limit: Int,
+    ): List<Stored<T>> {
+        return adapter.findCreatedBefore(realm = realm, type = type.identifier, before = before, limit = limit)
+            .mapNotNull { it.castTyped() }
     }
 
     /** Checks if the given record has not yet expired */

@@ -9,9 +9,11 @@ import io.peekandpoke.funktor.auth.domain.realm
 import io.peekandpoke.funktor.auth.domain.token
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
+import io.peekandpoke.karango.aql.ASC
 import io.peekandpoke.karango.aql.DESC
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
+import io.peekandpoke.karango.aql.LT
 import io.peekandpoke.karango.aql.NE
 import io.peekandpoke.karango.aql.REMOVE
 import io.peekandpoke.karango.aql.RETURN
@@ -20,6 +22,7 @@ import io.peekandpoke.karango.vault.EntityRepository
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.karango.vault.KarangoIndexBuilder
 import io.peekandpoke.karango.vault._id
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.user.UserId
@@ -116,5 +119,36 @@ class KarangoAuthRecordsRepo(
         }
 
         return RemoveResult(count = result.count, query = result.query)
+    }
+
+    override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
+        val result = query {
+            FOR(repo) { r ->
+                FILTER(r.realm EQ realm)
+                FILTER(r.ownerId EQ owner)
+                if (exceptType != null) {
+                    FILTER(r._type NE exceptType)
+                }
+                REMOVE(r) IN repo
+            }
+        }
+
+        return RemoveResult(count = result.count, query = result.query)
+    }
+
+    override suspend fun findCreatedBefore(
+        realm: RealmId, type: String, before: MpInstant, limit: Int,
+    ): List<Stored<AuthRecord>> {
+        val cursor = find {
+            FOR(repo) { r ->
+                FILTER(r._type EQ type)
+                FILTER(r.realm EQ realm)
+                FILTER(r.createdAt.ts LT before.toEpochMillis())
+                SORT(r.createdAt.ts.ASC)
+                LIMIT(limit)
+                RETURN(r)
+            }
+        }
+        return cursor.toList()
     }
 }
