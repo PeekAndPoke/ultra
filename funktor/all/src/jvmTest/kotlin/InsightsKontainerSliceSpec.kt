@@ -178,8 +178,8 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
                 rendered.toLong() shouldBe file.length()
             }
 
-            // Measured on this very record (2026-10-19): the fat slice was 115 738 compact bytes for 77 instances,
-            // ~1 500 per instance, because it carried all 178 definitions; the slim one is 19 465 for 78, ~250
+            // Measured on this very record (2026-10-19): the fat slice was 115 737 compact bytes for 77 instances,
+            // ~1 500 per instance, because it carried all 178 definitions; the slim one is 19 461 for 78, ~250
             // per instance. Per instance, so the guard grows with the app and ignores the other slices.
             withClue("the definitions are back in the record: $sliceCompact compact bytes for $instances instances") {
                 (sliceCompact < 600 * instances) shouldBe true
