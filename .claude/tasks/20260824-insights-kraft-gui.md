@@ -1,6 +1,11 @@
 # Insights — the Kraft (Kotlin/JS) GUI, on par with the Vue one
 
-**Status:** TODO — created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
+**Status:** PAUSED 2026-10-19 (maintainer: budget precaution before the 0.114.0 release) — started as track T4 on
+`wt/insights-kraft` (worktree `/opt/dev/peekandpoke/ultra-wt/insights-kraft`). Done so far, UNVERIFIED, committed as WIP
+`24e745bf`: the four endpoint declarations moved to a commonMain `InsightsApiClient`, the API models moved to commonMain,
+the server mounts them. Next on resume: re-take the generated-TS baseline FROM MASTER (the implementer's copy was not
+kept), regenerate on the branch, `diff -r` (must be empty or explained), run the module tests, then the pages.
+Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
 **Plan:** `.claude/tasks/20260730-frontend-sdk-vue-contributors.md`
 **Counterpart:** `.claude/tasks/20260802-insights-vue-tabs.md` — the Vue implementation and its full
 gap inventory against the old kotlinx.html GUI.
