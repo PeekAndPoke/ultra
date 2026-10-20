@@ -105,7 +105,8 @@ for a lapsed activation, so it is now the path locked-out users are guaranteed t
 REWRITTEN 2026-10-19 (`.claude/tasks/20261019-activation-hardening.md`). The July premise — "K concurrent requests must
 share ONE token" — was false: every refused sign-in minted a fresh token and none was revoked. Now minting revokes the
 owner's earlier tokens, a token is consumed only by the request whose delete removed it (`count == 1`), and the delay
-lives on the `PendingActivation` marker: read, compare, save, send — still no transaction or conditional write.
+lives on the `PendingActivation` marker: read, compare, write, send. The write (`replaceIfUnclaimed`) is conditional on
+`claimedBy` only — it loses to a retire or an SSO claim, never to another resend.
 
 - **Attempt:** fire K concurrent sign-ins for one pending account, then K concurrent resends with whatever tokens
   survived each other's revocation. Count the mails, and whether the marker's `resends` advanced once or K times.
@@ -187,6 +188,7 @@ Collected, not executed.
   repeatedly. Does anything slow the loop down, and does the victim's mailbox become a mail stream?
 - **Resend racing a cancel** — a resend that loaded the user just before a cancel retired it: does it issue a live link
   for a retired row, with a stale `Stored` user whose address is still the original (so the retired-recipient guard
-  does not fire)?
+  does not fire)? It also finds no `SignUpCancelToken` (the retire deleted them) and MINTS a new one on the retired
+  account (`EmailAndPasswordAuth.resendActivation`): check what that orphan token can still reach.
 - **SSO racing the sweep or a cancel** — an SSO sign-in that resolved the user before a retire renamed it: is a session
   issued for the retired row, and does `refreshToken` keep renewing it?

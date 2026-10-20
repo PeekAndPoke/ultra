@@ -9,9 +9,10 @@
 ## The gap
 
 `EmailAndPasswordAuth.resendActivation` (`funktor/auth/src/jvmMain/kotlin/provider/EmailAndPasswordAuth.kt`) reads the
-`PendingActivation` marker, compares `lastSentAt + activationResendDelay(resends)` to now, then SAVES the advanced marker
-and sends. Read, compare and save are separate operations with no transaction, no lock and no conditional write, so two
-requests that both read the marker before either save lands both pass the check and both send.
+`PendingActivation` marker, compares `lastSentAt + activationResendDelay(resends)` to now, then writes the advanced marker
+with `replaceIfUnclaimed` and sends. That write is conditional on `claimedBy` ONLY — it loses to a retire or an SSO
+claim, not to another resend — so two requests that both read the marker before either write lands both pass the check
+and both send.
 
 ## What the July version got wrong
 
@@ -47,9 +48,10 @@ even one token was single-use only under sequential access.
 
 ### A. Conditional save of the marker (preferred since 2026-10-19)
 
-The schedule now lives on ONE row per account (`PendingActivation`), so a compare-and-set on it — save only if the row
-still carries the `resends` / `_rev` the check read — makes the second concurrent writer lose at the database. Needs a
-conditional-update primitive on `AuthRecordStorage` for both backends.
+The schedule lives on ONE row per account (`PendingActivation`), and the conditional primitive exists on both backends:
+`AuthRecordStorage.replaceIfClaimedBy` / `replaceIfUnclaimed` (one atomic AQL `REPLACE` / Mongo `replaceOne`), today
+filtering on `claimedBy` only. Option A extends that filter to the `resends` / `updatedAt` the check read, so the
+second concurrent writer matches nothing and loses at the database.
 
 ### A'. Unique index + conditional write (the July option)
 
