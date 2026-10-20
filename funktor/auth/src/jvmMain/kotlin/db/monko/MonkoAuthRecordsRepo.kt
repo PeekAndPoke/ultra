@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.auth.db.monko
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.Sorts
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.domain.createdAt
@@ -16,11 +17,8 @@ import io.peekandpoke.monko.MonkoIndexBuilder
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.lang._type
 import io.peekandpoke.monko.lang.dsl.and
-import io.peekandpoke.monko.lang.dsl.asc
 import io.peekandpoke.monko.lang.dsl.desc
 import io.peekandpoke.monko.lang.dsl.eq
-import io.peekandpoke.monko.lang.dsl.gt
-import io.peekandpoke.monko.lang.dsl.lt
 import io.peekandpoke.monko.lang.dsl.toFieldPath
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.ts
@@ -160,26 +158,30 @@ class MonkoAuthRecordsRepo(
     }
 
     override suspend fun findCreatedBefore(
-        realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
+        realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
     ): List<Stored<AuthRecord>> {
-        val cursor = find { r ->
-            filter(
-                and(
-                    listOfNotNull(
-                        r._type eq type,
-                        r.realm eq realm,
-                        r.createdAt.ts lt before.toEpochMillis(),
-                        after?.let { r.createdAt.ts gt it.toEpochMillis() },
-                    )
-                )
+        val createdAt = repoExpr.createdAt.ts.toFieldPath()
+        val aged = Filters.lt(createdAt, before.toEpochMillis())
+
+        val filter = Filters.and(
+            listOfNotNull(
+                Filters.eq(repoExpr._type.toFieldPath(), type),
+                Filters.eq(repoExpr.realm.toFieldPath(), realm.value),
+                // `claimedBy` lives on one record type only, so it is addressed by name.
+                orClaimedBy?.let { Filters.or(aged, Filters.eq("claimedBy", it)) } ?: aged,
+                after?.let { Filters.gt(createdAt, it.toEpochMillis()) },
             )
-            sort(r.createdAt.ts.asc)
+        )
+
+        val cursor = find { _ ->
+            filter(filter)
+            sort(Sorts.ascending(createdAt))
             limit(limit)
         }
         return cursor.toList()
     }
 
-    override suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>? {
+    override suspend fun <T : AuthRecord> replaceIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
         // As the sealed AuthRecord, so the document carries its `_type` exactly like an inserted one.
         @Suppress("UNCHECKED_CAST")
         val document = Document(driver.codec.slumber(kType<AuthRecord>().type, stored.resolve()) as Map<String, Any?>)
@@ -187,20 +189,21 @@ class MonkoAuthRecordsRepo(
         document["_id"] = bsonId
 
         val result = driver.database.getCollection<Document>(name)
-            .replaceOne(unclaimed(bsonId), document, ReplaceOptions().upsert(false))
+            .replaceOne(claimedBy(bsonId, expected), document, ReplaceOptions().upsert(false))
 
         return stored.takeIf { result.matchedCount == 1L }
     }
 
-    override suspend fun removeIfUnclaimed(id: String): RemoveResult {
+    override suspend fun removeIfClaimedBy(id: String, expected: String?): RemoveResult {
         val result = driver.database.getCollection<Document>(name)
-            .deleteOne(unclaimed(bsonIdOf(id.substringAfterLast("/"))))
+            .deleteOne(claimedBy(bsonIdOf(id.substringAfterLast("/")), expected))
 
         return RemoveResult(count = result.deletedCount, query = null)
     }
 
-    /** The document [bsonId] while nobody has claimed it; `eq(null)` also matches a missing field. */
-    private fun unclaimed(bsonId: Any) = Filters.and(Filters.eq("_id", bsonId), Filters.eq("claimedBy", null))
+    /** The document [bsonId] while its `claimedBy` equals [expected]; `eq(null)` also matches a missing field. */
+    private fun claimedBy(bsonId: Any, expected: String?) =
+        Filters.and(Filters.eq("_id", bsonId), Filters.eq("claimedBy", expected))
 
     /** The same key mapping as removeAllByOwner: an ObjectId when the key is one, else the raw string. */
     private fun bsonIdOf(key: String): Any = if (ObjectId.isValid(key)) ObjectId(key) else key

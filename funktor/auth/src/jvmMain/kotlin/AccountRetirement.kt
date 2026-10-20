@@ -16,8 +16,6 @@ import java.security.MessageDigest
  *   ever produce it; `.invalid` (RFC 2606) never resolves.
  */
 class AccountRetirement private constructor(
-    /** The account being retired. */
-    val userId: UserId,
     private val tag: String,
 ) {
     companion object {
@@ -27,7 +25,7 @@ class AccountRetirement private constructor(
         private val retiredEmail = Regex("retired-[0-9a-f]{64}@[0-9a-f]{32}#retired\\.invalid")
 
         /** The retirement of the account [userId]. */
-        fun of(userId: UserId): AccountRetirement = AccountRetirement(userId = userId, tag = sha256Hex(userId.value).take(32))
+        fun of(userId: UserId): AccountRetirement = AccountRetirement(tag = sha256Hex(userId.value).take(32))
 
         /** True when [email] is a retired account's renamed key. */
         fun isRetired(email: EmailAddress): Boolean = retiredEmail.matches(email.value)

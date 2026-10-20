@@ -122,8 +122,8 @@ class AuthSystem(
     /**
      * Retires the pending accounts of every realm that outlived `RealmTokenConfig.pendingAccountLifetime`;
      * returns how many. Run periodically by `funktor/all`'s `PendingAccountsExpiryWorker`. Expiry is also
-     * enforced at every use of an account (sign-up, sign-in, SSO, activation, reset), so this frees what
-     * nobody touches again.
+     * enforced where an expired account is used: sign-up, SSO, activation and reset retire it, resend refuses
+     * it; a password sign-in still answers `ActivationRequired`. So this frees what nobody touches again.
      */
     suspend fun retireExpiredPendingAccounts(): Int {
         return realms.sumOf { realm ->
@@ -131,7 +131,7 @@ class AuthSystem(
                 realm.retireExpiredPendingAccounts()
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 deps.log.error("Retiring expired pending accounts failed in realm ${realm.id}", e)
                 0
             }

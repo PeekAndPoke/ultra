@@ -400,7 +400,12 @@ interface AuthRealm<USER : AuthUser> {
         return getProvider(request.provider).cancelSignUp(realm = this, request = request)
     }
 
-    /** True when a retire has claimed [userId]'s account and not finished yet. */
+    /**
+     * True when a retire has claimed [userId]'s account and not finished yet.
+     *
+     * No framework path hands such an account a session; refresh still pays this query as defence in depth for
+     * custom providers, which sign users in by their own rules.
+     */
     suspend fun isBeingRetired(userId: UserId): Boolean =
         deps.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = userId)
             ?.value?.claimedBy == AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
@@ -418,10 +423,12 @@ interface AuthRealm<USER : AuthUser> {
      * (false). Once claimed, the account stays blocked for every path — sign-in, activation, reset, SSO,
      * resend, refresh — until the retire finishes, so it can never become active half-retired. A retire that
      * stops part-way (a crash, a realm whose `retire()` fails or renames nothing) leaves the claim in place;
-     * the claimed marker is back-dated to the epoch, so the next sweep finds it and finishes the job.
+     * the sweep selects `retire`-claimed markers of any age, so the next run finishes the job.
      *
-     * Refuses an activated account, an account claimed by an SSO activation, and — with [expiredOnly] — an
-     * unclaimed one still inside its lifetime.
+     * An SSO claim that stopped part-way is TAKEN OVER once the account has expired, by a conditional write
+     * `sso → retire` (only with [expiredOnly], i.e. the sweep and an expired-only caller); a live SSO claim is
+     * left to its SSO sign-in. Refuses an activated account and — with [expiredOnly] — an unclaimed one still
+     * inside its lifetime.
      */
     suspend fun retirePendingAccount(userId: UserId, expiredOnly: Boolean = false): Boolean {
         val records = deps.storage.authRecords
@@ -436,16 +443,14 @@ interface AuthRealm<USER : AuthUser> {
             null -> {
                 if (expiredOnly && !isExpired(marker.value)) return false
 
-                records.replaceIfUnclaimed(
-                    marker.modify {
-                        it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE, createdAt = MpInstant.Epoch)
-                    }
-                )
-                // Lost the claim: an activation took the marker, or another request claimed it. Resume only
-                // if that other request is a retire too; otherwise nothing has changed.
-                    ?: records.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = userId)
-                        ?.takeIf { it.value.claimedBy == AuthRecord.PendingActivation.CLAIMED_BY_RETIRE }
-                    ?: return false
+                claimForRetire(marker, expected = null) ?: return false
+            }
+
+            // An SSO activation that stopped part-way: taken over once the account has expired, never before.
+            AuthRecord.PendingActivation.CLAIMED_BY_SSO -> {
+                if (!expiredOnly || !isExpired(marker.value)) return false
+
+                claimForRetire(marker, expected = AuthRecord.PendingActivation.CLAIMED_BY_SSO) ?: return false
             }
 
             else -> return false
@@ -465,7 +470,8 @@ interface AuthRealm<USER : AuthUser> {
                     users.retire(user, AccountRetirement.of(userId))
                 } catch (e: CancellationException) {
                     throw e
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
+                    // Throwable: `AuthError` (as the adapter KDoc advises) and `TODO()` are not Exceptions.
                     deps.log.error("Retiring $userId in realm $id failed; it stays claimed for the next sweep", e)
                     return false
                 }
@@ -488,8 +494,26 @@ interface AuthRealm<USER : AuthUser> {
     }
 
     /**
-     * Retires every pending account of this realm that outlived its lifetime, in pages of [pageSize];
-     * returns how many.
+     * Claims [marker] for a retire while its stored claim is still [expected]; on losing, resumes only if
+     * another retire holds it now. Null when this retire must not proceed (nothing has changed).
+     */
+    private suspend fun claimForRetire(
+        marker: Stored<AuthRecord.PendingActivation>,
+        expected: String?,
+    ): Stored<AuthRecord.PendingActivation>? {
+        val records = deps.storage.authRecords
+
+        return records.replaceIfClaimedBy(
+            marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) },
+            expected = expected,
+        )
+            ?: records.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = marker.value.ownerId)
+                ?.takeIf { it.value.claimedBy == AuthRecord.PendingActivation.CLAIMED_BY_RETIRE }
+    }
+
+    /**
+     * Retires every pending account of this realm that outlived its lifetime — and finishes every retire that
+     * stopped part-way, whatever its age — in pages of [pageSize]; returns how many.
      *
      * Pages forward by `createdAt`, and an account that fails is logged and passed, so one that can never
      * be retired cannot hold up the rest; it is tried again by the next run.
@@ -501,7 +525,12 @@ interface AuthRealm<USER : AuthUser> {
 
         while (true) {
             val page = deps.storage.authRecords.findCreatedBefore(
-                AuthRecord.PendingActivation, realm = id, before = before, after = after, limit = pageSize,
+                AuthRecord.PendingActivation,
+                realm = id,
+                before = before,
+                orClaimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE,
+                after = after,
+                limit = pageSize,
             )
 
             page.forEach { marker ->
@@ -509,7 +538,7 @@ interface AuthRealm<USER : AuthUser> {
                     if (retirePendingAccount(marker.value.ownerId, expiredOnly = true)) retired++
                 } catch (e: CancellationException) {
                     throw e
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     deps.log.error("Retiring expired ${marker.value.ownerId} in realm $id failed", e)
                 }
             }
@@ -535,7 +564,9 @@ interface AuthRealm<USER : AuthUser> {
      *   write (losing to a retire changes nothing), then the sign-up password is deleted — so a password chosen
      *   by whoever pre-registered the address can never start working — and the marker goes last. The account
      *   becomes SSO-only until its owner sets a password through a reset. A claim that stops part-way is
-     *   finished by the next verified SSO sign-in;
+     *   finished by the next verified SSO sign-in — or, once the account has expired, taken over and retired by
+     *   the sweep; the final marker delete is conditional on this SSO's claim, so a takeover is never undone and
+     *   hands out no session;
      * - pending and not verified → [AuthError.invalidCredentials].
      */
     suspend fun resolveSsoAccount(
@@ -582,8 +613,11 @@ interface AuthRealm<USER : AuthUser> {
         records.removeAllByOwner(type = AuthRecord.EmailVerificationToken, realm = id, owner = owner)
         records.removeAllByOwner(type = AuthRecord.SignUpCancelToken, realm = id, owner = owner)
 
-        // LAST: until the marker goes, the claim keeps everything else off this account.
-        records.removeById(claimed._id)
+        // LAST, and only while the claim is still SSO's: if the sweep took an expired claim over meanwhile, the
+        // account is being retired — no session.
+        if (!records.removeIfClaimedBy(claimed._id, expected = AuthRecord.PendingActivation.CLAIMED_BY_SSO)) {
+            throw AuthError.invalidCredentials()
+        }
 
         deps.log.warning(
             "SECURITY: pending account $owner in realm $id activated by '$provider' with a verified address; " +

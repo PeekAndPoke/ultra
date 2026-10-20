@@ -333,6 +333,30 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 }
             }
 
+            "a realm whose retire() throws an AuthError (not an Exception) does not stop the sweep" {
+                // `AuthError` is a Throwable; the adapter KDoc tells realms without sign-up to throw notSupported().
+                val real = realDeps()
+                val owners = listOf("test_users/x", "test_users/y").map { UserId(it) }
+                owners.forEach {
+                    real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = it))
+                    delay(5.milliseconds)
+                }
+
+                val realm = MinimalTestRealm(
+                    getDeps = { real },
+                    tokenConfig = expired,
+                    onLoadUserById = { id -> Stored(_id = id.value, value = MinimalTestUser(email = EmailAddress.of("${id.value.substringAfter("/")}@x.com"))) },
+                    onLoadUserByEmail = { null },
+                    onRetire = { u, retirement ->
+                        if (u._id == owners[0].value) throw AuthError.notSupported()
+                        u.modify { it.copy(email = retirement.rename(it.email)) }
+                    },
+                )
+
+                realm.retireExpiredPendingAccounts() shouldBe 1
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owners[1]).shouldBeNull()
+            }
+
             "cancellation is NOT swallowed" {
                 val real = realDeps()
                 real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
@@ -345,6 +369,66 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 )
 
                 shouldThrow<CancellationException> { realm.retireExpiredPendingAccounts() }
+            }
+        }
+
+        "a stuck SSO claim" - {
+
+            suspend fun stuckSsoClaim(real: AuthSystem.Deps) = real.storage.authRecords.create(
+                AuthRecord.PendingActivation(
+                    realm = realmId, ownerId = owner, claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO,
+                )
+            )
+
+            fun realmOn(deps: AuthSystem.Deps, config: RealmTokenConfig, renamed: MutableList<EmailAddress>) =
+                MinimalTestRealm(
+                    getDeps = { deps },
+                    tokenConfig = config,
+                    onLoadUserById = { user },
+                    onLoadUserByEmail = { if (it == email && renamed.isEmpty()) user else null },
+                    onRetire = { u, retirement -> renamed += retirement.rename(u.value().email); u },
+                )
+
+            "is NOT retired before the account expires — it is still its SSO sign-in's to finish" {
+                val real = realDeps()
+                stuckSsoClaim(real)
+                val renamed = mutableListOf<EmailAddress>()
+
+                realmOn(real, RealmTokenConfig(), renamed).retireExpiredPendingAccounts() shouldBe 0
+
+                renamed shouldBe emptyList()
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner)
+                    .shouldNotBeNull().value().claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_SSO
+            }
+
+            "is TAKEN OVER and retired by the sweep once the account has expired" {
+                val real = realDeps()
+                stuckSsoClaim(real)
+                val renamed = mutableListOf<EmailAddress>()
+
+                realmOn(real, RealmTokenConfig(pendingAccountLifetime = Duration.ZERO), renamed)
+                    .retireExpiredPendingAccounts() shouldBe 1
+
+                renamed.size shouldBe 1
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldBeNull()
+            }
+
+            "an SSO sign-in finishing its claim while the sweep takes it over loses cleanly: no session, retired" {
+                val real = realDeps()
+                stuckSsoClaim(real)
+                real.storage.authRecords.create(AuthRecord.Password(realm = realmId, ownerId = owner, token = "pw"))
+                val renamed = mutableListOf<EmailAddress>()
+                val sweeper = realmOn(real, RealmTokenConfig(pendingAccountLifetime = Duration.ZERO), renamed)
+
+                // The takeover lands right before SSO's final, conditional marker delete.
+                val racing = depsWhereRemoveIfClaimedByRunsFirst(real) { sweeper.retireExpiredPendingAccounts() }
+                val sso = realmOn(racing, RealmTokenConfig(pendingAccountLifetime = Duration.ZERO), renamed)
+
+                shouldThrow<AuthError> { sso.resolveSsoAccount(user, provider = "test") { true } }
+                    .message shouldBe "Invalid credentials"
+
+                renamed.size shouldBe 1
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldBeNull()
             }
         }
 
@@ -380,13 +464,35 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
         }
     }
 
-    /** [deps] whose `replaceRecordIfUnclaimed` is replaced by [onReplace]. */
+    /** [deps] whose conditional removes run [first] (once) before they act. */
+    private fun depsWhereRemoveIfClaimedByRunsFirst(deps: AuthSystem.Deps, first: suspend () -> Unit): AuthSystem.Deps {
+        val real = deps.storage.authRecords
+        var armed = true
+
+        val adapter = object : AuthRecordStorage.Adapter by real.adapter {
+            override suspend fun removeRecordIfClaimedBy(id: String, expected: String?): RemoveResult {
+                if (armed) {
+                    armed = false
+                    first()
+                }
+                return real.adapter.removeRecordIfClaimedBy(id, expected)
+            }
+        }
+
+        val storage = AuthSystem.Storage(lazy { AuthRecordStorage(lazy { adapter }, lazy { real.kronos }) })
+
+        return object : AuthSystem.Deps by deps {
+            override val storage: AuthSystem.Storage = storage
+        }
+    }
+
+    /** [deps] whose `replaceRecordIfClaimedBy` is replaced by [onReplace]. */
     private fun depsWhereReplaceIfUnclaimed(deps: AuthSystem.Deps, onReplace: suspend () -> Stored<AuthRecord>?): AuthSystem.Deps {
         val real = deps.storage.authRecords
 
         val adapter = object : AuthRecordStorage.Adapter by real.adapter {
             @Suppress("UNCHECKED_CAST")
-            override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? =
+            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? =
                 onReplace() as Stored<T>?
         }
 

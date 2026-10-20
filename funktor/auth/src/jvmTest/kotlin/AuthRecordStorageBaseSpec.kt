@@ -626,6 +626,21 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                     .map { it._id } shouldBe listOf(first._id)
             }
 
+            withClue("orClaimedBy also selects a FRESH marker claimed that way, in createdAt order") {
+                val fresh = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("fresh-claimed")))
+                authRecords.replaceIfUnclaimed(
+                    fresh.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) }
+                ).shouldNotBeNull()
+
+                authRecords.findCreatedBefore(
+                    AuthRecord.PendingActivation, RealmId("realm"), cutoff,
+                    orClaimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE, limit = 10,
+                ).map { it._id } shouldBe listOf(first._id, second._id, fresh._id)
+
+                authRecords.findCreatedBefore(AuthRecord.PendingActivation, RealmId("realm"), cutoff, limit = 10)
+                    .map { it._id } shouldBe listOf(first._id, second._id)
+            }
+
             withClue("`after` pages on: strictly newer than the given instant") {
                 authRecords.findCreatedBefore(
                     AuthRecord.PendingActivation, RealmId("realm"), cutoff, after = first.value.createdAt, limit = 10,
@@ -688,6 +703,19 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 authRecords.removeIfUnclaimed(claimed._id) shouldBe false
                 authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
                     .shouldNotBeNull().value.claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+            }
+
+            withClue("a write conditional on the CURRENT claim (a takeover) wins, and only that one") {
+                authRecords.replaceIfClaimedBy(
+                    claimed.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO) },
+                    expected = AuthRecord.PendingActivation.CLAIMED_BY_SSO,
+                ).shouldBeNull()
+                val taken = authRecords.replaceIfClaimedBy(
+                    claimed.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO) },
+                    expected = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE,
+                ).shouldNotBeNull()
+                authRecords.removeIfClaimedBy(taken._id, expected = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) shouldBe false
+                authRecords.removeIfClaimedBy(taken._id, expected = AuthRecord.PendingActivation.CLAIMED_BY_SSO) shouldBe true
             }
 
             withClue("an UNCLAIMED marker is removed by it, once") {

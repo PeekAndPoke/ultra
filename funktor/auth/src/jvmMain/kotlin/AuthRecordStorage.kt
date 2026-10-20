@@ -46,11 +46,11 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 return RemoveResult.empty
             }
 
-            override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? {
+            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
                 return null
             }
 
-            override suspend fun removeRecordIfUnclaimed(id: String): RemoveResult {
+            override suspend fun removeRecordIfClaimedBy(id: String, expected: String?): RemoveResult {
                 return RemoveResult.empty
             }
 
@@ -59,7 +59,7 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
             }
 
             override suspend fun findCreatedBefore(
-                realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
+                realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
             ): List<Stored<AuthRecord>> {
                 return emptyList()
             }
@@ -81,12 +81,12 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult
 
                 suspend fun findCreatedBefore(
-                    realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
+                    realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
                 ): List<Stored<AuthRecord>>
 
-                suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>?
+                suspend fun <T : AuthRecord> replaceIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>?
 
-                suspend fun removeIfUnclaimed(id: String): RemoveResult
+                suspend fun removeIfClaimedBy(id: String, expected: String?): RemoveResult
             }
 
             override suspend fun removeById(id: String): RemoveResult {
@@ -119,12 +119,12 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 return inner.removeAllByOwner(realm, type, owner, exceptId)
             }
 
-            override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? {
-                return inner.replaceIfUnclaimed(stored)
+            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
+                return inner.replaceIfClaimedBy(stored, expected)
             }
 
-            override suspend fun removeRecordIfUnclaimed(id: String): RemoveResult {
-                return inner.removeIfUnclaimed(id)
+            override suspend fun removeRecordIfClaimedBy(id: String, expected: String?): RemoveResult {
+                return inner.removeIfClaimedBy(id, expected)
             }
 
             override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
@@ -132,9 +132,9 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
             }
 
             override suspend fun findCreatedBefore(
-                realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
+                realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
             ): List<Stored<AuthRecord>> {
-                return inner.findCreatedBefore(realm, type, before, after, limit)
+                return inner.findCreatedBefore(realm, type, before, orClaimedBy, after, limit)
             }
         }
 
@@ -157,23 +157,23 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         ): RemoveResult
 
         /**
-         * Replaces [stored] only while a record with its `_id` exists AND nobody has claimed it (its stored
-         * `claimedBy` is null or absent) — atomically, never inserting; null otherwise.
+         * Replaces [stored] only while a record with its `_id` exists AND its stored `claimedBy` equals [expected]
+         * (null: unclaimed, which an absent field also is) — in one atomic statement, never inserting; null otherwise.
          */
-        suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>?
+        suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>?
 
-        /** Removes the record [id] only while nobody has claimed it — atomically. */
-        suspend fun removeRecordIfUnclaimed(id: String): RemoveResult
+        /** Removes the record [id] only while its `claimedBy` equals [expected] — in one atomic statement. */
+        suspend fun removeRecordIfClaimedBy(id: String, expected: String?): RemoveResult
 
         /** Removes every record of [owner] in [realm], of ANY type except [exceptType]. */
         suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String? = null): RemoveResult
 
         /**
-         * Returns up to [limit] records of [type] in [realm] created before [before] — and, when given, after
-         * [after] — oldest first.
+         * Returns up to [limit] records of [type] in [realm] created before [before] OR, when given, claimed by
+         * [orClaimedBy] at any age — and, when given, created after [after] — oldest first.
          */
         suspend fun findCreatedBefore(
-            realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
+            realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
         ): List<Stored<AuthRecord>>
     }
 
@@ -237,16 +237,26 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
      * stamping `updatedAt`; null otherwise. Atomic on both backends — the write for state another request may
      * have deleted or claimed meanwhile. Never inserts.
      */
-    suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>? {
+    suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>? = replaceIfClaimedBy(stored, expected = null)
+
+    /**
+     * Replaces [stored] only while it still exists and its stored `claimedBy` equals [expected] (null: unclaimed),
+     * stamping `updatedAt`; null otherwise. One atomic statement on both backends — e.g. a claim TAKEOVER, which
+     * must lose if the claimant finished meanwhile.
+     */
+    suspend fun <T : AuthRecord> replaceIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
         @Suppress("UNCHECKED_CAST")
         val stamped = stored.modify { it.withUpdatedAt(kronos.instantNow()) as T }
 
-        return adapter.replaceRecordIfUnclaimed(stamped)
+        return adapter.replaceRecordIfClaimedBy(stamped, expected)
     }
 
     /** Removes the record [id] only while it is unclaimed; atomic on both backends. True when THIS call removed it. */
-    suspend fun removeIfUnclaimed(id: String): Boolean {
-        return adapter.removeRecordIfUnclaimed(id).count == 1L
+    suspend fun removeIfUnclaimed(id: String): Boolean = removeIfClaimedBy(id, expected = null)
+
+    /** Removes the record [id] only while its `claimedBy` equals [expected]; atomic. True when THIS call removed it. */
+    suspend fun removeIfClaimedBy(id: String, expected: String?): Boolean {
+        return adapter.removeRecordIfClaimedBy(id, expected).count == 1L
     }
 
     /** Remove every record of [owner] in [realm], of any type, optionally keeping those of [except]. */
@@ -257,14 +267,22 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
     }
 
     /**
-     * Up to [limit] records of [type] in [realm] created before [before] (and after [after], to page on),
-     * oldest first, expired or not.
+     * Up to [limit] records of [type] in [realm] created before [before] — or claimed by [orClaimedBy] at any age —
+     * and after [after] (to page on), oldest first, expired or not.
      */
     suspend inline fun <reified T : AuthRecord> findCreatedBefore(
-        type: Polymorphic.TypedChild<T>, realm: RealmId, before: MpInstant, after: MpInstant? = null, limit: Int,
+        type: Polymorphic.TypedChild<T>,
+        realm: RealmId,
+        before: MpInstant,
+        orClaimedBy: String? = null,
+        after: MpInstant? = null,
+        limit: Int,
     ): List<Stored<T>> {
         return adapter
-            .findCreatedBefore(realm = realm, type = type.identifier, before = before, after = after, limit = limit)
+            .findCreatedBefore(
+                realm = realm, type = type.identifier, before = before, orClaimedBy = orClaimedBy, after = after,
+                limit = limit,
+            )
             .mapNotNull { it.castTyped() }
     }
 

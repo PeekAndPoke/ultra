@@ -11,12 +11,9 @@ import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.karango.aql.AqlPrinter
 import io.peekandpoke.karango.aql.AqlTerminalExpr
-import io.peekandpoke.karango.aql.ASC
 import io.peekandpoke.karango.aql.DESC
 import io.peekandpoke.karango.aql.EQ
 import io.peekandpoke.karango.aql.FOR
-import io.peekandpoke.karango.aql.GT
-import io.peekandpoke.karango.aql.LT
 import io.peekandpoke.karango.aql.NE
 import io.peekandpoke.karango.aql.REMOVE
 import io.peekandpoke.karango.aql.RETURN
@@ -149,42 +146,60 @@ class KarangoAuthRecordsRepo(
     }
 
     override suspend fun findCreatedBefore(
-        realm: RealmId, type: String, before: MpInstant, after: MpInstant?, limit: Int,
+        realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
     ): List<Stored<AuthRecord>> {
+        // Hand-written: `claimedBy` lives on one record type only, so the typed DSL has no path to it.
         val cursor = find {
-            FOR(repo) { r ->
-                FILTER(r._type EQ type)
-                FILTER(r.realm EQ realm)
-                FILTER(r.createdAt.ts LT before.toEpochMillis())
-                if (after != null) {
-                    FILTER(r.createdAt.ts GT after.toEpochMillis())
+            Aql(repo) { p ->
+                p.append("FOR r IN ").append(repo).appendLine()
+                p.indent {
+                    append("FILTER r._type == ").value("type", type).append(" && r.realm == ").value("realm", realm.value)
+                        .appendLine()
+                    append("FILTER r.createdAt.ts < ").value("before", before.toEpochMillis())
+                    if (orClaimedBy != null) append(" || r.claimedBy == ").value("claimedBy", orClaimedBy)
+                    appendLine()
+                    if (after != null) append("FILTER r.createdAt.ts > ").value("after", after.toEpochMillis()).appendLine()
+                    append("SORT r.createdAt.ts ASC").appendLine()
+                    append("LIMIT ").value("limit", limit).appendLine()
+                    append("RETURN r").appendLine()
                 }
-                SORT(r.createdAt.ts.ASC)
-                LIMIT(limit)
-                RETURN(r)
             }
         }
         return cursor.toList()
     }
 
-    override suspend fun <T : AuthRecord> replaceIfUnclaimed(stored: Stored<T>): Stored<T>? {
+    override suspend fun <T : AuthRecord> replaceIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
         @Suppress("UNCHECKED_CAST")
-        return findFirst { IfUnclaimed(stored._key, repo) { p -> p.value("v", stored) } } as Stored<T>?
+        return findFirst { IfClaimedBy(stored._key, expected, repo) { p -> p.value("v", stored) } } as Stored<T>?
     }
 
-    override suspend fun removeIfUnclaimed(id: String): RemoveResult {
-        val removed = find { IfUnclaimed(id.substringAfterLast("/"), repo, replaceWith = null) }.toList()
+    override suspend fun removeIfClaimedBy(id: String, expected: String?): RemoveResult {
+        val removed = find { IfClaimedBy(id.substringAfterLast("/"), expected, repo, replaceWith = null) }.toList()
 
         return RemoveResult(count = removed.size.toLong(), query = null)
     }
 
+    /** A hand-written AQL query over [repo], returning its documents. */
+    private class Aql<T : Any>(
+        private val repo: KarangoRepository<T>,
+        private val printer: (AqlPrinter) -> Unit,
+    ) : AqlTerminalExpr<T> {
+
+        override fun innerType(): TypeRef<T> = repo.storedType
+
+        override fun getType() = repo.getType()
+
+        override fun print(p: AqlPrinter) = printer(p)
+    }
+
     /**
-     * One AQL statement on the document [key] while it exists and is unclaimed: `REPLACE` it with [replaceWith],
-     * or `REMOVE` it when that is null. Atomic, unlike a read followed by a write; a missing `claimedBy`
-     * attribute reads as null, so other record types always qualify.
+     * One AQL statement on the document [key] while it exists and its `claimedBy` equals [expected] (null:
+     * unclaimed — a missing attribute reads as null, so other record types qualify): `REPLACE` it with
+     * [replaceWith], or `REMOVE` it when that is null. Atomic, unlike a read followed by a write.
      */
-    private class IfUnclaimed<T : Any>(
+    private class IfClaimedBy<T : Any>(
         private val key: String,
+        private val expected: String?,
         private val repo: KarangoRepository<T>,
         private val replaceWith: ((AqlPrinter) -> Unit)?,
     ) : AqlTerminalExpr<T> {
@@ -196,7 +211,7 @@ class KarangoAuthRecordsRepo(
         override fun print(p: AqlPrinter) {
             p.append("FOR doc IN ").append(repo)
                 .append(" FILTER doc._key == ").value("key", key)
-                .append(" && doc.claimedBy == null").appendLine()
+                .append(" && doc.claimedBy == ").value("expected", expected).appendLine()
             p.indent {
                 when (replaceWith) {
                     null -> append("REMOVE doc IN ").append(repo).appendLine().append("RETURN OLD").appendLine()

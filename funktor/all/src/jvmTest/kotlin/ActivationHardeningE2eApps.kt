@@ -163,8 +163,8 @@ object RetireGate {
 
 /** The real adapter, with [RetireGate.afterRetireClaim] run after a successful retire claim. */
 class RetireClaimGatedAdapter(private val inner: AuthRecordStorage.Adapter) : AuthRecordStorage.Adapter by inner {
-    override suspend fun <T : AuthRecord> replaceRecordIfUnclaimed(stored: Stored<T>): Stored<T>? =
-        inner.replaceRecordIfUnclaimed(stored).also { replaced ->
+    override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? =
+        inner.replaceRecordIfClaimedBy(stored, expected).also { replaced ->
             val claim = (stored.value() as? AuthRecord.PendingActivation)?.claimedBy
             if (replaced != null && claim == AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) RetireGate.afterRetireClaim()
         }

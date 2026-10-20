@@ -304,8 +304,8 @@ class EmailAndPasswordAuth(
         // Load user
         val user = realm.users.loadByEmail(email)
             ?: throw AuthError.invalidCredentials()
-        // Validate password
-        validateCurrentPassword(realm, user, password).takeIf { it }
+        // Validate password — and keep WHICH password record was proven, see below.
+        val proven = validateCurrentPassword(realm, user, password)
             ?: throw AuthError.invalidCredentials()
 
         // The account must have proven it owns the address. Keyed on the PENDING MARKER, never on
@@ -320,6 +320,15 @@ class EmailAndPasswordAuth(
             if (marker.value.claimedBy != null) throw AuthError.invalidCredentials()
 
             throw AuthError.AccountNotActivated(userId = UserId(user._id))
+        }
+
+        // The credential proven must still be LIVE now that the marker has been read. Every one-way flow — SSO
+        // activation, a reset completion, a retire — changes the password BEFORE it removes the marker, so a
+        // missing marker means such a change is already visible here. A sign-in that read the password just
+        // before an SSO activation deleted it (or a reset replaced it) must not leave with a session on the now
+        // active account.
+        if (services.findLatestPasswordRecord(realm = realm.id, owner = UserId(user._id))?._id != proven._id) {
+            throw AuthError.invalidCredentials()
         }
 
         return user
@@ -360,17 +369,16 @@ class EmailAndPasswordAuth(
             // Duplicate key exception from a concurrent sign-up race — treat as "already exists"
             throw AuthError("User already exists", cause = e)
         }
+        // Mark the account as not-yet-activated FIRST — before its password, before any mail. The marker is what
+        // blocks sign-in, so a failure after it leaves a pending (at worst passwordless) account, never an
+        // active one with an unproven address. `createdAt` explicitly: the account's expiry counts from it.
+        val marker = services.createAuthRecord {
+            AuthRecord.PendingActivation(realm = realm.id, ownerId = UserId(user._id), createdAt = services.instantNow())
+        }
+
         // Store password record
         services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = UserId(user._id), password = typed.password)
-        }
-
-        // Mark the account as not-yet-activated BEFORE mailing anything. The marker is what blocks
-        // sign-in, so writing it first means a crash between the two steps leaves an account that
-        // cannot be used rather than one that is silently activated.
-        // `createdAt` explicitly: the account's expiry, and with it the activation link's, counts from it.
-        val marker = services.createAuthRecord {
-            AuthRecord.PendingActivation(realm = realm.id, ownerId = UserId(user._id), createdAt = services.instantNow())
         }
 
         issueAndSendActivationToken(realm = realm, user = user, marker = marker.value)
@@ -534,14 +542,9 @@ class EmailAndPasswordAuth(
                 return AuthActivateAccountResponse(success = false)
             }
 
-            // Dropping the marker IS the activation, and it goes FIRST. The two writes are not atomic, so
-            // the order decides how a failure between them lands:
-            //   marker first  -> if the token delete fails, the account is activated and the token stays
-            //                    live for its remaining lifetime; replaying it is a no-op.
-            //   token first   -> if the marker drop fails, the link is dead AND the account is still
-            //                    blocked, until the user signs in again and asks for a resend.
-            // Atomically, and only while unclaimed: if a retire claimed the marker meanwhile, the retire won
-            // and this activation changes nothing.
+            // Dropping the marker IS the activation, before the token goes (a failed token delete then leaves a
+            // live token on an active account — replaying it is a no-op). Atomically, and only while unclaimed:
+            // if a retire claimed the marker meanwhile, the retire won and this activation changes nothing.
             if (!services.removePendingActivationIfUnclaimed(marker._id)) {
                 return AuthActivateAccountResponse(success = false)
             }
@@ -592,7 +595,7 @@ class EmailAndPasswordAuth(
             ?: throw AuthError.userNotFound(request.userId.value)
 
         // 2. Verify the current password before allowing a change
-        validateCurrentPassword(realm, user, request.currentPassword).takeIf { it }
+        validateCurrentPassword(realm, user, request.currentPassword)
             ?: throw AuthError.invalidCredentials()
 
         // 3. Write new password entry into database
@@ -740,16 +743,17 @@ class EmailAndPasswordAuth(
     }
 
     /**
-     * Validates the given [password] against the latest password for the given [user] in the [realm].
+     * Validates the given [password] against the latest password for the given [user] in the [realm]; returns the
+     * record it proved, or null.
      */
     private suspend fun <USER : AuthUser> validateCurrentPassword(
         realm: AuthRealm<USER>, user: Stored<USER>, password: String,
-    ): Boolean {
+    ): Stored<AuthRecord.Password>? {
         val record = services
             .findLatestPasswordRecord(realm = realm.id, owner = UserId(user._id))
-            ?: return false
+            ?: return null
 
-        return services.checkPassword(plaintext = password, hash = record.resolve().token)
+        return record.takeIf { services.checkPassword(plaintext = password, hash = record.resolve().token) }
     }
 
     /**

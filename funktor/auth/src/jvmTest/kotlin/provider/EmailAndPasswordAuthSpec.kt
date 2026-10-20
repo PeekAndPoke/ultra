@@ -5,6 +5,7 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldNotBeInstanceOf
 import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthError
@@ -716,6 +717,43 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             }
         }
 
+        "signUp writes the marker FIRST" - {
+            "a failing password insert leaves a PENDING (passwordless) account, never an active one" {
+                val created = mutableListOf<AuthRecord>()
+                val services = lazy {
+                    TestServices(
+                        onInstantNow = { MpInstant.parse("2026-10-20T10:00:00Z") },
+                        onCreateAuthRecord = { create ->
+                            val record = create()
+                            check(record !is AuthRecord.Password) { "the store fails on the password insert" }
+                            created += record
+                            Stored(_id = "record-${created.size}", value = record)
+                        },
+                    )
+                }
+                val subject = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                    log = NullLog,
+                    services = services,
+                )
+
+                shouldThrow<IllegalStateException> {
+                    subject.signUp(
+                        MinimalTestRealm(
+                            onLoadUserByEmail = { null },
+                            onCreateUserForSignup = { Stored(_id = "user-id", value = MinimalTestUser()) },
+                        ),
+                        AuthSignUpRequest.EmailAndPassword(
+                            provider = subject.id, email = "new@example.com", password = "A-valid-password-123!",
+                        ),
+                    )
+                }
+
+                created.single().shouldBeInstanceOf<AuthRecord.PendingActivation>()
+            }
+        }
+
         "activateAccount" - {
 
             "should answer success=false for an unknown token, without touching anything" {
@@ -807,8 +845,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             // Expressed against the config rather than magic numbers, so the tests still mean something
             // if the defaults change.
             val now = MpInstant.parse("2026-07-27T12:00:00Z")
-            val config = MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },).tokenConfig
+            val config = MinimalTestRealm().tokenConfig
             val firstDelay = config.activationResendDelays[0]
             val thirdDelay = config.activationResendDelays[2]
 
@@ -837,7 +874,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 // Every other service keeps its exploding default: nothing may be touched.
                 val result = subjectWith(lazy { TestServices() }).resendActivation(
                     MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },onLoadUserById = { null }),
+                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
+                        onLoadUserById = { null },
+                    ),
                     owner,
                 )
 
@@ -850,7 +889,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 val result = subjectWith(services).resendActivation(
                     MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },onLoadUserById = { storedUser }),
+                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
+                        onLoadUserById = { storedUser },
+                    ),
                     owner,
                 )
 
@@ -870,7 +911,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 val result = subjectWith(services).resendActivation(
                     MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },onLoadUserById = { storedUser }),
+                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
+                        onLoadUserById = { storedUser },
+                    ),
                     owner,
                 )
 
@@ -892,7 +935,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 val result = subjectWith(services).resendActivation(
                     MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },onLoadUserById = { storedUser }),
+                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
+                        onLoadUserById = { storedUser },
+                    ),
                     owner,
                 )
 
@@ -918,7 +963,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 val result = subjectWith(services).resendActivation(
                     MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },onLoadUserById = { storedUser }),
+                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
+                        onLoadUserById = { storedUser },
+                    ),
                     owner,
                 )
 

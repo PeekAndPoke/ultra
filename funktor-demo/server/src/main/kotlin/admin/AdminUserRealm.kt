@@ -90,8 +90,8 @@ class AdminUserRealm(
         }
 
         override suspend fun retire(user: Stored<AdminUser>, retirement: AccountRetirement): Stored<AdminUser> {
-            // `email` is the only unique key of an admin user (see AdminUsersRepo.buildIndexes).
-            // `email` is the only unique key; `name` defaults to the address's local part, so it goes too.
+            // `email` is the only unique key (see AdminUsersRepo.buildIndexes); `name` defaults to the address's
+            // local part, so it goes too.
             return repo.save(user.modify { it.copy(email = retirement.rename(it.email), name = RETIRED_NAME) })
         }
 
