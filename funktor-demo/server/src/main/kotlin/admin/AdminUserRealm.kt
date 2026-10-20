@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.demo.server.admin
 
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
@@ -33,6 +34,9 @@ class AdminUserRealm(
 ) : AuthRealm<AdminUser> {
     companion object {
         val REALM = RealmId("admin-user")
+
+        /** The display name of a retired account; the original may echo the address it gave up. */
+        const val RETIRED_NAME = "Retired account"
     }
 
     override val deps: AuthSystem.Deps by deps
@@ -83,6 +87,12 @@ class AdminUserRealm(
                     email = params.email,
                 )
             )
+        }
+
+        override suspend fun retire(user: Stored<AdminUser>, retirement: AccountRetirement): Stored<AdminUser> {
+            // `email` is the only unique key (see AdminUsersRepo.buildIndexes); `name` defaults to the address's
+            // local part, so it goes too.
+            return repo.save(user.modify { it.copy(email = retirement.rename(it.email), name = RETIRED_NAME) })
         }
 
         override suspend fun serialize(user: Stored<AdminUser>): JsonObject {

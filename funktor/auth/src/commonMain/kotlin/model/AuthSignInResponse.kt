@@ -82,10 +82,11 @@ sealed interface AuthSignInResponse {
         val realm: AuthRealmModel,
         /**
          * Short-lived, single-use proof that the credential check passed — the authorization for
-         * `resend-activation`, exactly as [OrgSelectionRequired.selectionToken] authorizes `selectOrg`.
+         * `POST /auth/{realm}/activate/resend`, exactly as [OrgSelectionRequired.selectionToken] authorizes
+         * `selectOrg`. A newer sign-in revokes it.
          *
          * Grants nothing else: it cannot sign in, and it can only ever cause a mail to the address
-         * already on the account.
+         * already on the account, at the account's growing resend delay.
          */
         val resendToken: String,
     ) : AuthSignInResponse

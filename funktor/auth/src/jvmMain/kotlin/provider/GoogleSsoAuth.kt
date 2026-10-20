@@ -166,9 +166,15 @@ class GoogleSsoAuth(
         val email = EmailAddress.parseOrNull(payload.email)
             ?: throw AuthError.invalidCredentials()
 
-        return realm.users.loadByEmail(email)
+        val user = realm.users.loadByEmail(email)
+            ?: throw AuthError.invalidCredentials()
+
+        return realm.resolveSsoAccount(user, provider = id) { payload.isEmailVerified() }
             ?: throw AuthError.invalidCredentials()
     }
+
+    /** Google's `email_verified` claim; anything but an explicit `true` is unverified. */
+    private fun GoogleIdToken.Payload.isEmailVerified(): Boolean = emailVerified == true
 
     /**
      * @{inheritDoc}
@@ -198,12 +204,14 @@ class GoogleSsoAuth(
         // Creating, however, requires a well-formed address.
         if (existing == null && !email.isValidFormat) throw AuthError.invalidCredentials()
 
-        val user = existing ?: realm.users.createForSignup(
-            AuthUserAdapter.CreateUserForSignupParams.of(
-                email = email,
-                displayName = displayName,
+        val user = existing
+            ?.let { realm.resolveSsoAccount(it, provider = id) { payload.isEmailVerified() } }
+            ?: realm.users.createForSignup(
+                AuthUserAdapter.CreateUserForSignupParams.of(
+                    email = email,
+                    displayName = displayName,
+                )
             )
-        )
 
         return AuthProvider.SignUpResult(
             user = user,

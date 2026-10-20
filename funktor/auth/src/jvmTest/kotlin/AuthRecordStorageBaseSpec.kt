@@ -10,7 +10,9 @@ import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.vault.value
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -20,6 +22,9 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
     abstract fun KontainerBuilder.configureKontainer()
 
     abstract fun FunktorAuthBuilder.configureAuth()
+
+    /** Removes the `claimedBy` key from the stored record [key] — the shape a pre-upgrade marker has. */
+    abstract suspend fun Kontainer.stripClaimedBy(key: String)
 
     suspend fun createKontainer(): Kontainer {
         return createAuthTestContainer(
@@ -409,6 +414,381 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                     .shouldNotBeNull()
                     .resolve().token shouldBe keep.resolve().token
             }
+        }
+
+        "An activation-resend token must round-trip through findByToken, scoped by realm and TYPE" {
+            // Written in production by every refused sign-in on a pending account, and read back by
+            // `AuthRealm.resendActivation` — a backend that mangled it would make resend silently dead.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds()
+
+            val created = authRecords.create(
+                AuthRecord.ActivationResendToken(
+                    realm = RealmId("realm"), ownerId = UserId("owner1"), token = "resend-1", expiresAt = expiresAt,
+                )
+            )
+            // The SAME secret under another record type — a lookup must never cross types.
+            authRecords.create(
+                AuthRecord.EmailVerificationToken(
+                    realm = RealmId("realm"), ownerId = UserId("owner2"), token = "verify-1", expiresAt = expiresAt,
+                )
+            )
+
+            withClue("round trip") {
+                val loaded = authRecords
+                    .findByToken(AuthRecord.ActivationResendToken, RealmId("realm"), "resend-1")
+                    .shouldNotBeNull()
+
+                loaded._id shouldBe created._id
+                loaded.value.ownerId shouldBe UserId("owner1")
+                loaded.value.token shouldBe "resend-1"
+                loaded.value.expiresAt shouldBe expiresAt
+            }
+
+            withClue("another realm does not match") {
+                authRecords.findByToken(AuthRecord.ActivationResendToken, RealmId("other"), "resend-1").shouldBeNull()
+            }
+
+            withClue("a verification token is not a resend token, and the other way round") {
+                authRecords.findByToken(AuthRecord.ActivationResendToken, RealmId("realm"), "verify-1").shouldBeNull()
+                authRecords.findByToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "resend-1").shouldBeNull()
+            }
+        }
+
+        "An EXPIRED activation-resend token must not be found" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            authRecords.create(
+                AuthRecord.ActivationResendToken(
+                    realm = RealmId("realm"),
+                    ownerId = UserId("owner1"),
+                    token = "expired",
+                    expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(),
+                )
+            )
+
+            authRecords.findByToken(AuthRecord.ActivationResendToken, RealmId("realm"), "expired").shouldBeNull()
+        }
+
+        "removeById must report 1 for the call that removed a record and 0 for every later one" {
+            // Single-use under concurrency rests on THIS count: of two requests that both found a token,
+            // only the one whose delete reports 1 may act on it.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val record = authRecords.create(
+                AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner1"), token = "pw")
+            )
+
+            authRecords.removeById(record._id).count shouldBe 1L
+            authRecords.removeById(record._id).count shouldBe 0L
+        }
+
+        "removeAllByOwner(exceptId) must keep exactly the excepted record" {
+            // What token rotation relies on: the newest link is created first, then every OTHER one
+            // goes. A backend that ignored `exceptId` would delete the link it is about to mail.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            suspend fun token(owner: String, token: String) = authRecords.create(
+                AuthRecord.EmailVerificationToken(
+                    realm = RealmId("realm"),
+                    ownerId = UserId(owner),
+                    token = token,
+                    expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
+                )
+            )
+
+            token("owner1", "old-1")
+            token("owner1", "old-2")
+            val keep = token("owner1", "newest")
+            token("owner2", "someone-else")
+
+            val removed = authRecords.removeAllByOwner(
+                AuthRecord.EmailVerificationToken, RealmId("realm"), UserId("owner1"), exceptId = keep._id,
+            )
+
+            removed.count shouldBe 2L
+
+            authRecords.findAllByOwner(AuthRecord.EmailVerificationToken, RealmId("realm"), UserId("owner1"))
+                .map { it._id } shouldBe listOf(keep._id)
+
+            authRecords.findByToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "someone-else")
+                .shouldNotBeNull()
+        }
+
+        "A pending-activation marker's resend schedule must survive save and reload" {
+            // The growing resend delay lives on the marker, so a backend that dropped these fields on
+            // save would reset every account to the first, shortest delay — an unbounded faucet again.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val created = authRecords.create(
+                AuthRecord.PendingActivation(realm = RealmId("realm"), ownerId = UserId("owner1"))
+            )
+
+            created.value.resends shouldBe 0
+            created.value.lastSentAt.shouldBeNull()
+
+            val sentAt = MpInstant.parse("2026-10-19T12:34:56Z")
+
+            authRecords.replaceIfUnclaimed(created.modify { it.copy(resends = 3, lastSentAt = sentAt) }).shouldNotBeNull()
+
+            val loaded = authRecords
+                .findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                .shouldNotBeNull()
+
+            loaded._id shouldBe created._id
+            loaded.value.resends shouldBe 3
+            loaded.value.lastSentAt shouldBe sentAt
+
+            withClue("the replace REPLACES — it must not add a second marker") {
+                authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .size shouldBe 1
+            }
+        }
+
+        "removeAllOfOwner must remove every record TYPE of one owner in one realm, except the one kept" {
+            // What retiring an account does first: credentials and tokens go, the marker stays until last.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds()
+            val realm = RealmId("realm-a")
+            val owner = UserId("owner1")
+
+            authRecords.create(AuthRecord.Password(realm = realm, ownerId = owner, token = "pw"))
+            authRecords.create(AuthRecord.EmailVerificationToken(realm, owner, expiresAt, token = "v"))
+            authRecords.create(AuthRecord.ActivationResendToken(realm, owner, expiresAt, token = "r"))
+            authRecords.create(AuthRecord.PasswordRecoveryToken(realm, owner, expiresAt, token = "p"))
+            authRecords.create(AuthRecord.PendingActivation(realm = realm, ownerId = owner))
+            // Untouchable neighbours:
+            authRecords.create(AuthRecord.Password(realm = realm, ownerId = UserId("owner2"), token = "pw2"))
+            authRecords.create(AuthRecord.Password(realm = RealmId("realm-b"), ownerId = owner, token = "pw3"))
+
+            authRecords.removeAllOfOwner(realm, owner, except = AuthRecord.PendingActivation).count shouldBe 4L
+
+            authRecords.findLatestRecordBy(AuthRecord.Password, realm, owner).shouldBeNull()
+            authRecords.findLatestRecordBy(AuthRecord.EmailVerificationToken, realm, owner).shouldBeNull()
+            authRecords.findLatestRecordBy(AuthRecord.ActivationResendToken, realm, owner).shouldBeNull()
+            authRecords.findLatestRecordBy(AuthRecord.PasswordRecoveryToken, realm, owner).shouldBeNull()
+
+            withClue("the excepted type stays") {
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realm, owner).shouldNotBeNull()
+            }
+            withClue("another owner in the same realm is untouched") {
+                authRecords.findLatestRecordBy(AuthRecord.Password, realm, UserId("owner2")).shouldNotBeNull()
+            }
+            withClue("the same owner in another realm is untouched") {
+                authRecords.findLatestRecordBy(AuthRecord.Password, RealmId("realm-b"), owner).shouldNotBeNull()
+            }
+
+            withClue("without an exception, the rest goes too") {
+                authRecords.removeAllOfOwner(realm, owner).count shouldBe 1L
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realm, owner).shouldBeNull()
+            }
+        }
+
+        "findCreatedBefore must return only that type in that realm created before the cutoff, oldest first" {
+            // What the expiry sweep reads. A backend that ignored the cutoff would retire FRESH sign-ups.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val first = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+            delay(5.milliseconds)
+            val second = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner2")))
+            authRecords.create(AuthRecord.PendingActivation(RealmId("other-realm"), UserId("owner3")))
+            authRecords.create(AuthRecord.Password(realm = RealmId("realm"), ownerId = UserId("owner4"), token = "pw"))
+            delay(5.milliseconds)
+
+            val cutoff = kronos.instantNow()
+            delay(5.milliseconds)
+
+            authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("fresh")))
+
+            authRecords.findCreatedBefore(AuthRecord.PendingActivation, RealmId("realm"), cutoff, limit = 10)
+                .map { it._id } shouldBe listOf(first._id, second._id)
+
+            withClue("the limit takes the OLDEST") {
+                authRecords.findCreatedBefore(AuthRecord.PendingActivation, RealmId("realm"), cutoff, limit = 1)
+                    .map { it._id } shouldBe listOf(first._id)
+            }
+
+            withClue("orClaimedBy also selects a FRESH marker claimed that way, in createdAt order") {
+                val fresh = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("fresh-claimed")))
+                authRecords.replaceIfUnclaimed(
+                    fresh.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) }
+                ).shouldNotBeNull()
+
+                authRecords.findCreatedBefore(
+                    AuthRecord.PendingActivation, RealmId("realm"), cutoff,
+                    orClaimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE, limit = 10,
+                ).map { it._id } shouldBe listOf(first._id, second._id, fresh._id)
+
+                authRecords.findCreatedBefore(AuthRecord.PendingActivation, RealmId("realm"), cutoff, limit = 10)
+                    .map { it._id } shouldBe listOf(first._id, second._id)
+            }
+
+            withClue("`after` pages on: strictly newer than the given instant") {
+                authRecords.findCreatedBefore(
+                    AuthRecord.PendingActivation, RealmId("realm"), cutoff, after = first.value.createdAt, limit = 10,
+                ).map { it._id } shouldBe listOf(second._id)
+            }
+        }
+
+        "replaceIfUnclaimed must replace a live record, and must NEVER bring a deleted one back" {
+            // The resend schedule's write. A save (upsert) here re-inserted a marker that a concurrent
+            // activation had just removed — the active account read pending again and the sweep retired it.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+
+            withClue("a live record is replaced in place") {
+                val replaced = authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = 2) }).shouldNotBeNull()
+                replaced._id shouldBe marker._id
+
+                val loaded = authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull()
+                loaded._id shouldBe marker._id
+                loaded.value.resends shouldBe 2
+                loaded.value.createdAt.toEpochMillis() shouldBe marker.value.createdAt.toEpochMillis()
+            }
+
+            authRecords.removeById(marker._id)
+
+            withClue("a deleted record stays deleted") {
+                authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = 3) }).shouldBeNull()
+                authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1")) shouldBe
+                        emptyList()
+            }
+        }
+
+        "a CLAIMED marker can be neither replaced nor removed by the conditional writes — the claim is atomic" {
+            // The commit point of retire-vs-activation: whoever claims (retire) or removes (activation) first wins,
+            // and the other's conditional write changes nothing.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+            val claimed = authRecords.replaceIfUnclaimed(
+                marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) }
+            ).shouldNotBeNull()
+
+            withClue("the claim persisted") {
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull().value.claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+            }
+
+            withClue("a second claim (or a resend's write) loses") {
+                authRecords.replaceIfUnclaimed(marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO) })
+                    .shouldBeNull()
+            }
+
+            withClue("an activation's conditional delete loses, and the marker stays") {
+                authRecords.removeIfUnclaimed(claimed._id) shouldBe false
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull().value.claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+            }
+
+            withClue("a write conditional on the CURRENT claim (a takeover) wins, and only that one") {
+                authRecords.replaceIfClaimedBy(
+                    claimed.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO) },
+                    expected = AuthRecord.PendingActivation.CLAIMED_BY_SSO,
+                ).shouldBeNull()
+                val taken = authRecords.replaceIfClaimedBy(
+                    claimed.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO) },
+                    expected = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE,
+                ).shouldNotBeNull()
+                authRecords.removeIfClaimedBy(taken._id, expected = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) shouldBe false
+                authRecords.removeIfClaimedBy(taken._id, expected = AuthRecord.PendingActivation.CLAIMED_BY_SSO) shouldBe true
+            }
+
+            withClue("an UNCLAIMED marker is removed by it, once") {
+                val other = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner2")))
+                authRecords.removeIfUnclaimed(other._id) shouldBe true
+                authRecords.removeIfUnclaimed(other._id) shouldBe false
+            }
+        }
+
+        "a PRE-UPGRADE marker (no `claimedBy` key at all) counts as unclaimed everywhere" {
+            // Markers written before the claim existed carry no key. A filter that required it would leave them
+            // un-activatable, un-resendable and invisible to the sweep — stuck pending forever.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+            kontainer.stripClaimedBy(marker._key)
+            delay(5.milliseconds)
+            val cutoff = kronos.instantNow()
+
+            withClue("the sweep selects it once aged") {
+                authRecords.findCreatedBefore(
+                    AuthRecord.PendingActivation, RealmId("realm"), cutoff,
+                    orClaimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE, limit = 10,
+                ).map { it._id } shouldBe listOf(marker._id)
+            }
+
+            withClue("replaceIfUnclaimed takes it") {
+                authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = 1) }).shouldNotBeNull()
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull().value.resends shouldBe 1
+            }
+
+            withClue("removeIfUnclaimed takes it") {
+                kontainer.stripClaimedBy(marker._key)
+                authRecords.removeIfUnclaimed(marker._id) shouldBe true
+                authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1")) shouldBe
+                        emptyList()
+            }
+        }
+
+        "A sign-up cancel token must round-trip through findByToken, scoped by type, and expire with the account" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val expiresAt = kronos.instantNow().plus(150.hours).toEpochSeconds()
+
+            authRecords.create(
+                AuthRecord.SignUpCancelToken(RealmId("realm"), UserId("owner1"), expiresAt = expiresAt, token = "cancel-1")
+            )
+            authRecords.create(
+                AuthRecord.SignUpCancelToken(
+                    RealmId("realm"), UserId("owner2"),
+                    expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(), token = "cancel-old",
+                )
+            )
+
+            val loaded = authRecords.findByToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-1")
+                .shouldNotBeNull()
+            loaded.value.ownerId shouldBe UserId("owner1")
+            loaded.value.expiresAt shouldBe expiresAt
+
+            authRecords.findLatestRecordBy(AuthRecord.SignUpCancelToken, RealmId("realm"), UserId("owner1"))
+                .shouldNotBeNull()
+            authRecords.findByToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "cancel-1").shouldBeNull()
+            authRecords.findByToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-old").shouldBeNull()
         }
     }
 }

@@ -172,9 +172,10 @@ class AuthApiSpec : FunktorApiSpec() {
                 apiApp {
                     anonymous {
                         // The activation token is only ever delivered by mail — there is no other way
-                        // to get one, which is the point of the whole flow.
+                        // to get one, which is the point of the whole flow. The mail's links are
+                        // "activate" and "cancel"; this takes the activation one by its route.
                         val token = capturedEmails.lastTo(signupEmail).shouldNotBeNull()
-                            .hrefs().single()
+                            .hrefs().single { "/activate/" in it }
                             .substringAfterLast("/activate/")
                             .decodeUriComponent()
 

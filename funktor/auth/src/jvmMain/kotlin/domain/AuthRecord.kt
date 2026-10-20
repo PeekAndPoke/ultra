@@ -55,36 +55,44 @@ sealed interface AuthRecord : Timestamped {
      * expired records out, so every account that let its activation link lapse would silently become
      * activated. Keeping the state here lets the token expire on its own schedule.
      *
-     * Written by `EmailAndPasswordAuth.signUp`, removed by `activateAccount` — and also by a completed
-     * password reset.
+     * Written by `EmailAndPasswordAuth.signUp`. ACTIVATED by exactly three operations, each of which leaves
+     * no password behind that the mailbox owner did not confirm:
+     * - **`activateAccount`** — an explicit click (a POST, never a page load) by whoever holds the
+     *   mailed link, on a page that offers "I did not sign up — cancel" right next to it.
+     * - **a completed password reset** — proves the mailbox, and `findLatestPasswordRecord` only ever
+     *   validates the NEWEST password, so the sign-up password stops working.
+     * - **SSO with a provider-verified address** — `AuthRealm.resolveSsoAccount` deletes the sign-up
+     *   password FIRST, so a pre-registering attacker's password can never start working.
      *
-     * **The rule for clearing it: an operation must BOTH prove control of the mailbox AND invalidate
-     * every password set before it.** A password reset does both — the token was mailed to the
-     * address, and `findLatestPasswordRecord` only ever validates the NEWEST password record, so the
-     * password chosen at sign-up stops working the moment the reset writes a new one.
-     *
-     * That rule is why two neighbouring operations deliberately do NOT clear it, even though both look
-     * like they prove enough:
-     * - **SSO sign-in for the same address.** It proves the mailbox but leaves the sign-up password
-     *   intact. Clearing here would REOPEN the attack this whole feature closes: an attacker registers
-     *   `victim@corp.com` with a password of their choosing, the victim later signs in with Google,
-     *   and the attacker's password would silently start working. The victim's own way back is
-     *   "forgot password", which satisfies both halves.
-     * - **Authenticated `setPassword`.** It proves knowledge of the current password but says nothing
-     *   about the mailbox.
-     *
-     * The cost is that an account which signed up by password and never activated cannot use its
-     * password until it goes through a reset, even if it signs in via SSO. That is the intended
-     * trade: a stuck credential, not a shared account.
+     * Authenticated `setPassword` deliberately does NOT clear it: it proves the current password, not
+     * the mailbox. Otherwise the marker goes only with the account itself, when it is RETIRED — cancelled
+     * from the mail, or past `RealmTokenConfig.pendingAccountLifetime`; see `AuthRealm.retirePendingAccount`.
      */
     data class PendingActivation(
         override val realm: RealmId,
         override val ownerId: UserId,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
+        /** Activation mails resent so far; indexes `RealmTokenConfig.activationResendDelays`. */
+        val resends: Int = 0,
+        /** When the last activation mail was sent; null means the sign-up mail at [createdAt]. */
+        val lastSentAt: MpInstant? = null,
+        /**
+         * Who has CLAIMED this account for a one-way change: [CLAIMED_BY_RETIRE] or [CLAIMED_BY_SSO]; null while
+         * nobody has. Set by a conditional write (`AuthRecordStorage.replaceIfUnclaimed`) BEFORE anything
+         * destructive happens, so of a retire and an activation exactly one proceeds. A claimed account stays
+         * blocked — no sign-in, activation, reset, SSO, resend — until the claimant finishes.
+         */
+        val claimedBy: String? = null,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<PendingActivation> {
             override val identifier = "pending-activation"
+
+            /** The account is being retired; the next sweep finishes a retire that stopped part-way. */
+            const val CLAIMED_BY_RETIRE = "retire"
+
+            /** The account is being activated by SSO with a verified address; the next SSO sign-in finishes it. */
+            const val CLAIMED_BY_SSO = "sso"
         }
 
         /** Never expires: it is state, not a secret. */
@@ -99,12 +107,13 @@ sealed interface AuthRecord : Timestamped {
 
     /**
      * Single-use, short-lived proof that a caller passed the password check for an account that is
-     * still pending activation. Exchanged at `resend-activation` for a fresh activation mail.
+     * still pending activation. Exchanged at `POST /auth/{realm}/activate/resend` for a fresh activation
+     * mail; minting one revokes the owner's earlier ones.
      *
      * The exact shape of [OrgSelectionToken], for the exact same reason: the follow-up call needs an
-     * authorization, and the credential check is the only thing that can supply one. Without it,
-     * "resend the activation mail" is a mail primitive any stranger can aim at any address — the
-     * per-account cooldown bounds mail PER ACCOUNT while an attacker picks how many accounts exist.
+     * authorization, and the credential check is the only thing that can supply one. It does NOT bound
+     * the mail an account's own password holder can cause — the growing delays on [PendingActivation]
+     * and its expiry do.
      */
     data class ActivationResendToken(
         override val realm: RealmId,
@@ -126,7 +135,8 @@ sealed interface AuthRecord : Timestamped {
     /**
      * Single-use token sent to a user's email address to verify ownership at sign-up time.
      * Consumed by `EmailAndPasswordAuth.activateAccount`, which also removes the [PendingActivation]
-     * marker.
+     * marker. The activation page's own cancel button may also present it to `cancelSignUp`; the mail's cancel
+     * link carries a [SignUpCancelToken] instead. Never outlives the pending account.
      */
     data class EmailVerificationToken(
         override val realm: RealmId,
@@ -139,6 +149,29 @@ sealed interface AuthRecord : Timestamped {
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<EmailVerificationToken> {
             override val identifier = "email-verification-token"
+        }
+
+        override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
+        override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
+    }
+
+    /**
+     * The secret behind the activation mail's "Didn't sign up? Cancel" link: single-use, one per pending
+     * account, expiring WITH the account rather than with the activation link, so a victim can cancel for
+     * the account's whole pending life. Every resend mails the same one.
+     */
+    data class SignUpCancelToken(
+        override val realm: RealmId,
+        override val ownerId: UserId,
+        /** The pending account's own expiry, in epoch seconds. */
+        override val expiresAt: Long,
+        override val createdAt: MpInstant = MpInstant.Epoch,
+        override val updatedAt: MpInstant = createdAt,
+        /** Random secret mailed in the cancel link. */
+        override val token: String,
+    ) : AuthRecord {
+        companion object : Polymorphic.TypedChild<SignUpCancelToken> {
+            override val identifier = "sign-up-cancel-token"
         }
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)

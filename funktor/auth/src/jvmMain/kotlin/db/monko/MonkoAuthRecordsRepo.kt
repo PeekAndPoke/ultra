@@ -1,6 +1,8 @@
 package io.peekandpoke.funktor.auth.db.monko
 
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.Sorts
 import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.domain.createdAt
@@ -18,6 +20,7 @@ import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.desc
 import io.peekandpoke.monko.lang.dsl.eq
 import io.peekandpoke.monko.lang.dsl.toFieldPath
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.ts
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.user.UserId
@@ -26,6 +29,7 @@ import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.firstOrNull
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
+import org.bson.Document
 import org.bson.types.ObjectId
 
 class MonkoAuthRecordsRepo(
@@ -50,10 +54,17 @@ class MonkoAuthRecordsRepo(
             field { it._type }
         }
 
-        // Mirror Karango's TTL index so expired auth records (sessions, password-recovery
-        // tokens, email-verification tokens, email-change tokens) are culled automatically.
-        // The code-level `hasNotExpired()` filter in AuthRecordStorage is then a safety net
-        // rather than the only boundary.
+        // The expiry sweep: markers of one realm by age.
+        persistentIndex {
+            field { it.realm }
+            field { it._type }
+            field { it.createdAt.ts }
+        }
+
+        // Meant to mirror Karango's TTL index, but it culls NOTHING today: `expiresAt` is a Long of epoch
+        // seconds and a MongoDB TTL index only expires BSON Date fields. The code-level `hasNotExpired()`
+        // filter in AuthRecordStorage is therefore the ONLY expiry boundary on Mongo, and expired rows
+        // accumulate. Tracked in the parallel plan's backlog (`e4076e46`).
         ttlIndex {
             field { it.expiresAt }
             expireAfter(0)
@@ -130,4 +141,70 @@ class MonkoAuthRecordsRepo(
         val result = coll.deleteMany(Filters.and(filters))
         return RemoveResult(count = result.deletedCount, query = null)
     }
+
+    override suspend fun removeAllOfOwner(realm: RealmId, owner: UserId, exceptType: String?): RemoveResult {
+        val coll = driver.database.getCollection<Map<String, Any?>>(name)
+
+        val filters = mutableListOf(
+            Filters.eq(repoExpr.realm.toFieldPath(), realm.value),
+            Filters.eq(repoExpr.ownerId.toFieldPath(), owner.value),
+        )
+        if (exceptType != null) {
+            filters.add(Filters.ne(repoExpr._type.toFieldPath(), exceptType))
+        }
+
+        val result = coll.deleteMany(Filters.and(filters))
+        return RemoveResult(count = result.deletedCount, query = null)
+    }
+
+    override suspend fun findCreatedBefore(
+        realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
+    ): List<Stored<AuthRecord>> {
+        val createdAt = repoExpr.createdAt.ts.toFieldPath()
+        val aged = Filters.lt(createdAt, before.toEpochMillis())
+
+        val filter = Filters.and(
+            listOfNotNull(
+                Filters.eq(repoExpr._type.toFieldPath(), type),
+                Filters.eq(repoExpr.realm.toFieldPath(), realm.value),
+                // `claimedBy` lives on one record type only, so it is addressed by name.
+                orClaimedBy?.let { Filters.or(aged, Filters.eq("claimedBy", it)) } ?: aged,
+                after?.let { Filters.gt(createdAt, it.toEpochMillis()) },
+            )
+        )
+
+        val cursor = find { _ ->
+            filter(filter)
+            sort(Sorts.ascending(createdAt))
+            limit(limit)
+        }
+        return cursor.toList()
+    }
+
+    override suspend fun <T : AuthRecord> replaceIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
+        // As the sealed AuthRecord, so the document carries its `_type` exactly like an inserted one.
+        @Suppress("UNCHECKED_CAST")
+        val document = Document(driver.codec.slumber(kType<AuthRecord>().type, stored.resolve()) as Map<String, Any?>)
+        val bsonId = bsonIdOf(stored._key)
+        document["_id"] = bsonId
+
+        val result = driver.database.getCollection<Document>(name)
+            .replaceOne(claimedBy(bsonId, expected), document, ReplaceOptions().upsert(false))
+
+        return stored.takeIf { result.matchedCount == 1L }
+    }
+
+    override suspend fun removeIfClaimedBy(id: String, expected: String?): RemoveResult {
+        val result = driver.database.getCollection<Document>(name)
+            .deleteOne(claimedBy(bsonIdOf(id.substringAfterLast("/")), expected))
+
+        return RemoveResult(count = result.deletedCount, query = null)
+    }
+
+    /** The document [bsonId] while its `claimedBy` equals [expected]; `eq(null)` also matches a missing field. */
+    private fun claimedBy(bsonId: Any, expected: String?) =
+        Filters.and(Filters.eq("_id", bsonId), Filters.eq("claimedBy", expected))
+
+    /** The same key mapping as removeAllByOwner: an ObjectId when the key is one, else the raw string. */
+    private fun bsonIdOf(key: String): Any = if (ObjectId.isValid(key)) ObjectId(key) else key
 }

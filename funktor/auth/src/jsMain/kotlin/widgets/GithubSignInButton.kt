@@ -51,7 +51,10 @@ class GithubSignInButton(ctx: Ctx<Props>) : Component<GithubSignInButton.Props>(
                 onClick {
                     val id = props.clientId
                     val cbUrl = props.callbackUrl
-                    val url = "https://github.com/login/oauth/authorize?client_id=$id&redirect_uri=$cbUrl"
+                    // `user:email` lets the server read the VERIFIED primary address (`GET /user/emails`),
+                    // which decides whether a pending password account may be activated by GitHub.
+                    val url = "https://github.com/login/oauth/authorize?client_id=$id&redirect_uri=$cbUrl" +
+                            "&scope=user:email"
 
                     // Forward to Github
                     window.location.href = url

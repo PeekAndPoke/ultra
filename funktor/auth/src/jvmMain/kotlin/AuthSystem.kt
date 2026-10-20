@@ -2,6 +2,8 @@ package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
@@ -21,6 +23,7 @@ import io.peekandpoke.ultra.security.jwt.JwtGenerator
 import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * AuthSystem manages and provides access to multiple authentication realms.
@@ -109,6 +112,30 @@ class AuthSystem(
     /** Send a fresh activation mail for [realm] and [request] */
     suspend fun resendActivation(realm: RealmId, request: AuthResendActivationRequest): AuthResendActivationResponse {
         return getRealm(realm).resendActivation(request)
+    }
+
+    /** Retire a never-activated account by [realm] and [request] ("I did not sign up") */
+    suspend fun cancelSignUp(realm: RealmId, request: AuthCancelSignUpRequest): AuthCancelSignUpResponse {
+        return getRealm(realm).cancelSignUp(request)
+    }
+
+    /**
+     * Retires the pending accounts of every realm that outlived `RealmTokenConfig.pendingAccountLifetime`;
+     * returns how many. Run periodically by `funktor/all`'s `PendingAccountsExpiryWorker`. Expiry is also
+     * enforced where an expired account is used: sign-up, SSO, activation and reset retire it, resend refuses
+     * it; a password sign-in still answers `ActivationRequired`. So this frees what nobody touches again.
+     */
+    suspend fun retireExpiredPendingAccounts(): Int {
+        return realms.sumOf { realm ->
+            try {
+                realm.retireExpiredPendingAccounts()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                deps.log.error("Retiring expired pending accounts failed in realm ${realm.id}", e)
+                0
+            }
+        }
     }
 
     /** Sign in a user by [realm] and [request] */

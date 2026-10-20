@@ -30,6 +30,8 @@ val Funktor = module { params: FunktorParams ->
     funktorBroker()
     funktorRest(params.config, params.rest)
     funktorCluster(params.cluster)
+    // Auth's pending-account expiry runs as a cluster worker — this module is the one that sees both.
+    dynamic(PendingAccountsExpiryWorker::class)
     funktorLogging(params.logging)
     funktorStaticWeb()
     funktorMessaging(params.config, params.messaging)

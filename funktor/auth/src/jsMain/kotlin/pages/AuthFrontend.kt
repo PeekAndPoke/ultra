@@ -37,12 +37,22 @@ class AuthFrontendDefault(
                 )
             }
 
-            // The deep-link from the activation mail.
+            // The deep-links from the activation mail. Opening either changes nothing; the page's buttons do.
             mount(routes.activateAccount) {
                 ActivateAccountPage(
                     state = state,
                     provider = it[AuthFrontendRoutes.PROVIDER_PARAM],
                     token = it[AuthFrontendRoutes.TOKEN_PARAM],
+                    mode = ActivateAccountPage.Mode.Activate,
+                )
+            }
+
+            mount(routes.cancelSignUp) {
+                ActivateAccountPage(
+                    state = state,
+                    provider = it[AuthFrontendRoutes.PROVIDER_PARAM],
+                    token = it[AuthFrontendRoutes.TOKEN_PARAM],
+                    mode = ActivateAccountPage.Mode.Cancel,
                 )
             }
 

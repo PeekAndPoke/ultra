@@ -3,10 +3,10 @@ package io.peekandpoke.funktor.auth.emails
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.MinimalTestRealm
 import io.peekandpoke.funktor.auth.MinimalTestUser
@@ -19,6 +19,8 @@ import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.funktor.messaging.templates.EmailLayout
 import io.peekandpoke.ultra.i18n.Locale
 import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.UserId
+import io.peekandpoke.ultra.vault.Stored
 import kotlinx.html.body
 import kotlinx.html.div
 
@@ -43,6 +45,7 @@ class AuthEmailTemplatesSpec : StringSpec({
             senderName = "Sender Name",
             applicationName = "Demo App",
             activationUrl = "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
+            cancelUrl = "https://app.test/auth/email-password/cancel-signup/S3cr3t%2BT0ken",
         ),
         preferred = preferred,
     )
@@ -161,6 +164,7 @@ class AuthEmailTemplatesSpec : StringSpec({
                     senderName = "S",
                     applicationName = "A",
                     activationUrl = "https://app.test/a",
+                    cancelUrl = "https://app.test/c",
                 ),
                 de,
             ),
@@ -278,21 +282,34 @@ class AuthEmailTemplatesSpec : StringSpec({
         }
     }
 
-    "a link-carrying mail carries EXACTLY one link, and it survives rendering intact" {
+    "a link-carrying mail carries EXACTLY its links, and they survive rendering intact" {
         // `hrefs()` is what the e2e specs use to pull the token back out. A base64 token contains
         // `+` and `=` routinely, so a rendering that mangles it produces a dead link while every
         // server-side test still passes.
+        val activationLinks = listOf(
+            "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
+            "https://app.test/auth/email-password/cancel-signup/S3cr3t%2BT0ken",
+        )
+
         listOf(
-            activation(en) to "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
-            activation(de) to "https://app.test/auth/email-password/activate/S3cr3t%2BT0ken",
-            recovery(en) to "https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken",
-            recovery(de) to "https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken",
+            activation(en) to activationLinks,
+            activation(de) to activationLinks,
+            recovery(en) to listOf("https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken"),
+            recovery(de) to listOf("https://app.test/auth/email-password/reset-password/S3cr3t%2BT0ken"),
         ).forEach { (mail, expected) ->
             withClue(mail.subject) {
-                mail.hrefs() shouldHaveSize 1
-                mail.hrefs().single() shouldBe expected
+                // In this order: the activation link comes first, the cancel link is the way out.
+                mail.hrefs() shouldBe expected
             }
         }
+    }
+
+    "the activation mail offers the way out for someone who did not sign up" {
+        // Decision 3 (2026-10-19): a pre-registered victim must be able to free their address from the
+        // mail itself — they do not know the password, so no other screen is open to them.
+        activation(en).body.content shouldContain "Didn't sign up?"
+        activation(en).body.content shouldContain "Cancel this sign-up"
+        activation(de).body.content shouldContain "Registrierung abbrechen"
     }
 
     "the password-changed mail carries NO link" {
@@ -344,6 +361,31 @@ class DefaultMessagingLocaleWiringSpec : StringSpec({
 
         messagingFor(Locale("de")).preferredLocales(germanUser) shouldBe
                 listOf(Locale("fr"), Locale("de"))
+    }
+})
+
+/**
+ * A retired account's address is undeliverable by construction; the framework does not even try. A second
+ * layer behind the reset path's own refusal, so a future flow that reaches a retired account cannot mail it.
+ */
+class DefaultMessagingRetiredRecipientSpec : StringSpec({
+
+    "every auth mail to a RETIRED account is refused before anything is rendered or sent" {
+        // `MinimalTestRealm`'s deps have no mailer: reaching it at all fails this test.
+        val messaging = AuthRealm.DefaultMessaging(
+            senderEmail = "sender@test.com",
+            senderName = "Sender",
+            applicationName = "Demo App",
+            realm = MinimalTestRealm(),
+        )
+
+        val retired = AccountRetirement.of(UserId("users/1")).rename(EmailAddress.of("user@test.com"))
+        val user = Stored(_id = "users/1", value = MinimalTestUser(email = retired))
+
+        messaging.sendAccountActivationEmail(user, activationUrl = "https://a", cancelUrl = "https://c")
+            .success shouldBe false
+        messaging.sendPasswordRecoveryEmil(user, resetUrl = "https://r").success shouldBe false
+        messaging.sendPasswordChangedEmail(user).success shouldBe false
     }
 })
 

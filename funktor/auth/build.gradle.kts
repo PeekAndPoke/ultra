@@ -81,6 +81,10 @@ kotlin {
                 Deps.Test {
                     jsTestDeps()
                 }
+                // Real browser rendering (TestBed.preact) of the auth pages, against a ktor MockEngine as the
+                // server: the server is the one thing a browser test cannot run.
+                implementation(project(":kraft:testing"))
+                implementation(Deps.Ktor.Client.mock)
             }
         }
 

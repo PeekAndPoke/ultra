@@ -4,16 +4,18 @@ import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 
 interface AuthProvider {
@@ -39,6 +41,10 @@ interface AuthProvider {
      * The user will be returned when it is found, and the request was validated successfully.
      *
      * Otherwise [AuthError] will be thrown.
+     *
+     * An SSO-style provider that resolves the user by email MUST pass it through
+     * `AuthRealm.resolveSsoAccount`, in [signUp] too — it is what keeps a pending password account from
+     * being taken over.
      */
     suspend fun <USER : AuthUser> signIn(
         realm: AuthRealm<USER>, request: AuthSignInRequest,
@@ -57,6 +63,8 @@ interface AuthProvider {
 
     /**
      * Sign up a new account for the given request. Providers should check their SignUp capability internally.
+     *
+     * An existing account found by email goes through `AuthRealm.resolveSsoAccount`, as for [signIn].
      */
     suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,
@@ -77,14 +85,27 @@ interface AuthProvider {
     }
 
     /**
-     * Issues a fresh activation token and mails it again.
+     * Issues a fresh activation token for [owner] and mails it again.
      *
-     * Answers the SAME neutral response in every case — unknown address, already-activated account,
-     * inside the cooldown window — because the endpoint is anonymous.
+     * [owner] comes from a resend token the REALM has already found and consumed, so the caller proved
+     * the password moments ago. The provider applies the account's growing delay and its expiry, and
+     * answers honestly — see [AuthResendActivationResponse].
      */
     suspend fun <USER : AuthUser> resendActivation(
-        realm: AuthRealm<USER>, request: AuthResendActivationRequest,
+        realm: AuthRealm<USER>, owner: UserId,
     ): AuthResendActivationResponse {
+        throw AuthError.notSupported()
+    }
+
+    /**
+     * Retires a never-activated account, authorized by the cancel token mailed at sign-up (or by the
+     * activation token, from the activation page's own cancel button).
+     *
+     * Answers `success = false` rather than throwing for an unusable token, as [activateAccount] does.
+     */
+    suspend fun <USER : AuthUser> cancelSignUp(
+        realm: AuthRealm<USER>, request: AuthCancelSignUpRequest,
+    ): AuthCancelSignUpResponse {
         throw AuthError.notSupported()
     }
 

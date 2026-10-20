@@ -2,6 +2,8 @@ package io.peekandpoke.funktor.auth.api
 
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
@@ -63,6 +65,12 @@ class AuthApiClient(private val realm: RealmId, config: Config) : ApiClient(conf
             response = AuthResendActivationResponse.serializer().api(),
         )
 
+        val CancelSignUp = TypedApiEndpoint.Post(
+            uri = "$BASE/{realm}/activate/cancel",
+            body = AuthCancelSignUpRequest.serializer(),
+            response = AuthCancelSignUpResponse.serializer().api(),
+        )
+
         val SetPassword = TypedApiEndpoint.Put(
             uri = "$BASE/{realm}/update",
             body = AuthSetPasswordRequest.serializer(),
@@ -120,6 +128,10 @@ class AuthApiClient(private val realm: RealmId, config: Config) : ApiClient(conf
 
     fun resendActivation(request: AuthResendActivationRequest): Flow<ApiResponse<AuthResendActivationResponse>> = call(
         ResendActivation("realm" to realm.value, body = request)
+    )
+
+    fun cancelSignUp(request: AuthCancelSignUpRequest): Flow<ApiResponse<AuthCancelSignUpResponse>> = call(
+        CancelSignUp("realm" to realm.value, body = request)
     )
 
     fun setPassword(request: AuthSetPasswordRequest): Flow<ApiResponse<AuthSetPasswordResponse>> = call(

@@ -12,6 +12,9 @@ import kotlinx.serialization.json.JsonObject
  * This is the operations seam of the auth system, provided once per realm ([AuthRealm.users]).
  * New user operations (update, GDPR erasure, admin search, ...) are added HERE, so the realm
  * interface stops growing. Intrinsic user DATA is read via the [AuthUser] bound instead.
+ *
+ * NOTE `loadByEmail` and the [retire] contract assume the email is the account's unique key, backed by
+ * a unique index in the realm's repository.
  */
 interface AuthUserAdapter<USER : AuthUser> {
 
@@ -73,6 +76,19 @@ interface AuthUserAdapter<USER : AuthUser> {
 
     /** Creates a new user during sign-up. Providers call this for the given email/displayName. */
     suspend fun createForSignup(params: CreateUserForSignupParams): Stored<USER>
+
+    /**
+     * Retires [user]: renames its email with [retirement] and saves, so the address can sign up again. The row
+     * and the data that references it stay, but no plaintext of the address may: also clear any field derived
+     * from it, e.g. a display name defaulted from its local part. Another unique field needs its own non-
+     * guessable rename.
+     *
+     * Required, with no default: a silent no-op would leave the address taken forever. The framework
+     * calls this only for a never-activated account (expired or cancelled), removes the auth records
+     * itself, and checks afterwards that the address no longer resolves to [user]. A realm without
+     * sign-up throws `AuthError.notSupported()`, as for [createForSignup].
+     */
+    suspend fun retire(user: Stored<USER>, retirement: AccountRetirement): Stored<USER>
 
     /** Serializes the given user for the wire (e.g. the sign-in response payload). */
     suspend fun serialize(user: Stored<USER>): JsonObject
