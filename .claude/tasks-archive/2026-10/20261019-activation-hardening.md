@@ -1,7 +1,10 @@
 # Activation hardening: pre-registration takeover, zero-click activation, resend faucet
 
-**Status:** IMPLEMENTED 2026-10-19 on `wt/auth-activation` (`7826ea5c..`), awaiting `/feature-review` — maintainer
-decisions 2026-10-19 (below); worktree track `auth-activation`
+**Status:** DONE 2026-10-20 — gate PASS in round 4 (`reviewer-top` ×3, clean); round-4 MINORs fixed with a scoped
+delta check (one MAJOR test gap closed, `7780e5dc`); merged to master `ed8d3b38`, full suite green. Ships in 0.114.0.
+**Docs:** NO docs task yet — the sign-up/activation surface changes again in `20261019-email-first-signup.md` (next
+auth task, after 0.114.0), so documenting it now means rewriting it next week. The docs follow-up box below moves into
+that task; the 0.114.0 `CHANGELOG.md` entry carries the breaking API and the upgrade traps meanwhile.
 **Plan:** `.claude/tasks/20261019-insights-auth-parallel-plan.md` → the first auth track, taken ahead of T4 (maintainer:
 "next free slot" — live code with a security hole)
 **Fixes:** the round-2 gate FAIL of `.claude/tasks/20260727-activation-resend-and-frontend.md` (its ledger is the input)

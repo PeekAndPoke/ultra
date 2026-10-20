@@ -2,7 +2,7 @@
 
 **Status:** TODO — recorded 2026-07-27 from the review gate on
 `.claude/tasks/20260727-activation-resend-and-frontend.md`; premise REWRITTEN 2026-10-19 by
-`.claude/tasks/20261019-activation-hardening.md` (the July premise was false, see "What the July version got wrong")
+`.claude/tasks-archive/2026-10/20261019-activation-hardening.md` (the July premise was false, see "What the July version got wrong")
 **Security-critical:** yes (it is a rate limit) → red-team scenario `.claude/tasks/20260727-redteam-account-activation.md` §8
 **Severity:** LOW, bounded by the hardening of 2026-10-19 — see "Why it is bounded now".
 

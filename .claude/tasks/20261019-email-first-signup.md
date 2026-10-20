@@ -2,7 +2,7 @@
 
 **Status:** TODO — AFTER 0.114.0 (maintainer decision 2026-10-19: "B after the release"); the first auth task after it
 **Plan:** `.claude/tasks/20261019-insights-auth-parallel-plan.md` (auth tracks); follows
-`20261019-activation-hardening.md` (its parked row "Activate requires a password" is answered by THIS design instead)
+`.claude/tasks-archive/2026-10/20261019-activation-hardening.md` (merged `ed8d3b38`, ships in 0.114.0; its parked row "Activate requires a password" is answered by THIS design instead)
 **Security-critical:** yes — red-team: `.claude/tasks/20260727-redteam-account-activation.md`
 
 ## Why
@@ -24,13 +24,18 @@ setting it activates the account. The attacker never sees the link, so never hol
 - [ ] Cancel, expiry, retire (hashed key) unchanged.
 - [ ] API break (pre-1.0), stated in the docs follow-up: `SignUp` request, the activate request, the removed resend
       endpoint/token.
+- [ ] **Owns the auth docs follow-up for BOTH changes** — activation hardening deliberately created no docs task (the
+      surface was about to move again). Write ONE docs task when this one is archived, covering: the activation-hardening
+      "Docs follow-up" box (in its archived task: stale `auth.astro:123-134` / `llms/funktor.md:185-190`, the breaking-API
+      list re-checked against the final code, and every upgrade trap with no compile signal), minus what this task
+      removes. The 0.114.0 `CHANGELOG.md` entry is the interim record.
 - [ ] E2e on both backends; frontend via `TestBed.preact`; mutation-checked (a sign-up that stores a password must go
       red; activation without the token must go red).
 
 ## What this REMOVES — the simplification (recorded 2026-10-19 at the maintainer's request)
 
 File references are to the activation-hardening branch (`wt/auth-activation`) as of its round-1 fix batch; re-grep
-before relying on a line — the batch is still moving them.
+before relying on a line — rounds 2–4 moved them (claim-first retire, the sign-in re-read, cancel ordering).
 
 - **The whole resend-token flow.** Today a pending user can only get a new link by signing in with the sign-up password:
   sign-in answers `ActivationRequired` with a short-lived `ActivationResendToken`, which the page then trades for a
