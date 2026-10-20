@@ -506,6 +506,10 @@ cleanly; the sweep passes a realm whose `retire()` throws `AuthError.notSupporte
 (`claimedBy == expected` takeover, `orClaimedBy`); unit sign-up marker-first. `:funktor:all:jvmTest` **234 / 0** — the
 sweep e2e and the partial-retire case hold without the back-dating.
 
+**Full suite** (`console/wt-gradle.sh --full-suite` at `899c411b`, on master `d9016c81`): BUILD SUCCESSFUL in 9m 23s, no
+`^e:`; XMLs **15970 tests, 0 failures, 0 errors, 7 skipped**, 49 modules (jvmTest 7497, test 2670, jsBrowserTest 3454,
+linuxX64Test 2349); `funktor/auth` 261, `funktor/all` 234, `funktor-demo/server` 47.
+
 **Mutation evidence (round 3).** `cp` backups outside the worktree (path in the name), `cp` restore + `cmp`.
 
 | # | Mutant | Result |
