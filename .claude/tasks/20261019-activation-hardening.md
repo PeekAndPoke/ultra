@@ -417,6 +417,30 @@ clean across all 45 files. Serialized types have serializing tests.
 
 **Verdict:** round 3 NOT clean (2 MAJOR). Fix batch proposed to the maintainer; round 4 (`reviewer-top`) after it.
 
+Round 4 (2026-10-20), two-phase, `reviewer-top` ×3, head `0c4c1534` on master `d9016c81`. **No CRITICAL or MAJOR in
+either phase from any charter → CLEAN. Gate PASS.** Every round-3 `fix` row is HOLDING, as judged by all three
+reviewers. The sign-in re-read's premise (password before marker) was verified at SSO `AuthRealm.kt:611→618`, reset
+`EmailAndPasswordAuth.kt:721→730` and retire `AuthRealm.kt:460→489`. All three found no interleaving that needs a
+GlobalLock. Domain judged the open design point: SSO finishing its own claim on an expired account FITS. The claim can
+only exist if the provider verified the address before expiry; the resume re-asks the provider; when SSO races the
+takeover, exactly one wins.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 4 | MINOR | `EmailAndPasswordAuth.kt:707-740` (security) | A reset completion whose marker read lands after a retire FINISHED writes a Password row on the retired owner and answers `success = true` (the "password changed" mail is refused, `AuthRealm.kt:122`). No session: the renamed key is refused everywhere | fix | When `marker == null`, load the owner and refuse on `AccountRetirement.isRetired`; the same guard makes `activateAccount` honest (its false "activated" page on a retired row) |
+| 4 | MINOR | `EmailAndPasswordAuth.kt:573,579`, `AuthRealm.kt:451` (implementation, phase 2) | Cancel consumes its token by count BEFORE knowing whether it may retire. On a stuck `sso` claim the link dies, and the page's "already cancelled, expired or activated" is untrue | fix | Let the retire decide first; consume the token only once it has |
+| 4 | MINOR | `AuthRealm.kt:456` (domain) | An unknown `claimedBy` value is refused everywhere and the sweep skips it with no log line | fix | `log.error` at the branch |
+| 4 | MINOR | `KarangoAuthRecordsRepo.kt:214`, `MonkoAuthRecordsRepo.kt:206` (implementation) | Pre-upgrade markers have NO `claimedBy` key (Slumber writes explicit nulls, so every test marker has it); "absent matches null" is unpinned on the query side | fix | Storage case per backend: strip the key, assert `removeIfUnclaimed`/`replaceIfUnclaimed` succeed and the sweep selects it |
+| 4 | MINOR | `.claude/tasks/20260727-activation-resend-cooldown-atomicity.md:13-14,50-51`, `.claude/tasks/20260727-redteam-account-activation.md:108` (security) | They still say there is no conditional write; `replaceIfUnclaimed` exists (on `claimedBy` only) | fix | Rewrite: the primitive exists; option A extends its filter to `resends`/`updatedAt` |
+| 4 | — | resend × cancel stray mail, false "activated" page, SSO-owner 1 h JWT on a retired row (implementation + security, withdrawn in phase 2) | — | already recorded | Bounded races, no session. Red-team addition: the resend also mints a NEW `SignUpCancelToken` row on the retired account |
+
+Recorded so nobody re-derives it: a `retire`-claimed marker whose `retire()` fails forever is retried and error-logged
+every 15 min (no backoff, by choice); the sweep is never blocked. SURPLUS: the `*IfUnclaimed` aliases stay (they name the
+intent); six copies of the deps-wrapping test helper could share one.
+
+**Verdict:** round 4 CLEAN — **gate PASS**. The MINORs are fixed before the merge (the maintainer's standing direction),
+as one small batch with a scoped check of that delta.
+
 ## Round 2 fix batch (2026-10-19, maintainer-approved design: CLAIM FIRST)
 
 Every round-2 row dispositioned `fix`; the `docs task` row is listed in the docs follow-up box; the `maintainer note`
