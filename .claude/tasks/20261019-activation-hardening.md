@@ -546,3 +546,43 @@ linuxX64Test 2349); `funktor/auth` 261, `funktor/all` 234, `funktor-demo/server`
 | N7 | The retire nets back to `catch (Exception)` | ✅ RED "a realm whose retire() throws an AuthError … does not stop the sweep" (both) |
 | N8 | Sign-up writes the password before the marker | ✅ RED unit "a failing password insert leaves a PENDING (passwordless) account" (+ the sign-up success case's order) |
 
+
+## Round 4 MINOR batch (2026-10-20)
+
+Round 4 was CLEAN (gate PASS); these are its MINOR rows, all dispositioned `fix`.
+
+| Row | What changed | Where |
+|---|---|---|
+| Reset/activation after a FINISHED retire | No marker can mean "active" OR "retired meanwhile" (a leftover token). Both flows now load the owner when the marker is gone and refuse if its address carries a retired key (`AccountRetirement.isRetired`), BEFORE any Password row is written | `EmailAndPasswordAuth.kt:536` (activate), `:711` (reset), helper `isRetiredOwner` `:752` |
+| Cancel burnt its token too early | The up-front `removeAuthRecord(token)` is gone; `cancelSignUp` answers with `retirePendingAccount`'s result. **Ordering choice:** the retire decides. A retire that refuses (an activated account, a live `sso` claim) changes nothing, so the link stays usable and the page tells the truth. A retire that runs deletes every auth row of the owner, this token included, so the link is still single use. Two concurrent cancels both reach the retire, which is claim-first and idempotent: the second one either finds no marker, loses the claim, or resumes the same retire (the `retire` branch, `AuthRealm.kt:441`). Every step of that retire is safe to repeat, and an already-retired row is not renamed again, so two cancels cannot do more than one retire | `EmailAndPasswordAuth.kt:575` |
+| Unknown `claimedBy` | `retirePendingAccount` still refuses, and now logs `deps.log.error` naming the owner, the realm and the value | `AuthRealm.kt:458` |
+| Pre-upgrade marker shape | A storage case per backend strips the `claimedBy` key (Karango `updateDocument(…, {claimedBy: null}, keepNull = false)`, Mongo `$unset`). It then asserts that the aged sweep query (`orClaimedBy = retire`) selects it once, `replaceIfUnclaimed` replaces it, and, after a second strip, `removeIfUnclaimed` removes it. No code change: AQL reads a missing attribute as null, and Mongo `eq(null)` matches a missing field | `AuthRecordStorageBaseSpec.kt:731`, strip helpers in `AuthRecordStorage{Karango,Monko}Spec` |
+| Stale `.claude` text | The cooldown-atomicity task's "no conditional write" is rewritten: the resend's write IS conditional (`replaceIfUnclaimed`), on `claimedBy` only. Option A now names the existing primitive and says it extends the filter to `resends` / `updatedAt`. Red-team §8 is rewritten the same way. Red-team "Resend racing a cancel" adds that the racing resend MINTS a new `SignUpCancelToken` on the retired account | `20260727-activation-resend-cooldown-atomicity.md`, `20260727-redteam-account-activation.md` |
+
+**Tests (fresh `TEST-*.xml`):**
+
+- `:funktor:auth:jvmTest`: **257 / 0** (was 247).
+  - `AuthRealmActivation{Karango,Monko}Spec` 20 each (+4):
+    - a retired owner's leftover reset token answers false and writes no Password;
+    - a leftover activation token answers false;
+    - cancel on a live `sso` claim answers false and the cancel token is still findable;
+    - an unknown claim is refused and logged.
+  - `AuthRecordStorage{Karango,Monko}Spec` 22 each (+1): the pre-upgrade marker.
+  - `EmailAndPasswordAuthSpec` 41: the obsolete "ANOTHER request consumed the token first" unit case is replaced by "the token is NOT consumed up front" (`EmailAndPasswordAuthSpec.kt:1176`). It keeps the exploding `onRemoveAuthRecord` default.
+- `:funktor:all:jvmTest`: **234 / 0**.
+
+**Mutation evidence (round 4).** Each mutant was backed up with `cp` outside the worktree (path in the name), restored with `cp` and verified with `cmp`; md5 of all four main files was checked after the run.
+
+| # | Mutant | Result |
+|---|---|---|
+| R4-1a | Drop the activate guard | ✅ RED "a leftover activation token answers false" (both backends): `success` was true |
+| R4-1b | Drop the reset guard | ✅ RED "a leftover reset token answers false and writes NO password" (both): `success` was true. **First run went red for the wrong reason**: the fixture's `TestMessaging` threw "sendPasswordChangedEmail was not expected" after the password write. The fixture now accepts that mail, so the assertion fires |
+| R4-2 | Cancel consumes the token before the retire (the old order) | ✅ RED realm "cancel on … a LIVE SSO activation" (both): the token was gone. Also RED in the unit "NOT consumed up front" case (exploding `onRemoveAuthRecord`) |
+| R4-3 | Drop the `log.error` | ✅ RED "an UNKNOWN claim is refused AND logged" (both): no error logged |
+| R4-4a / R4-4b | The conditional filter requires the key: Karango `HAS(doc, 'claimedBy') &&`, Mongo `Filters.exists("claimedBy")` | ✅ RED pre-upgrade case on that backend only: `replaceIfUnclaimed` returned null |
+| R4-4c / R4-4d | The sweep query requires the key (same two forms) | ✅ RED pre-upgrade case on that backend only: the sweep selected nothing |
+
+**Full suite** (`console/wt-gradle.sh --full-suite` at `f8fd8744`, on master `d9016c81`): BUILD SUCCESSFUL in 9m 57s,
+no `^e:`. XMLs: **15980 tests, 0 failures, 0 errors, 7 skipped** across 49 modules (jvmTest 7507, test 2670,
+jsBrowserTest 3454, linuxX64Test 2349). Per module: `funktor/auth` 271, `funktor/all` 234, `funktor-demo/server` 47.
+That is +10 over round 3, exactly the new cases.
