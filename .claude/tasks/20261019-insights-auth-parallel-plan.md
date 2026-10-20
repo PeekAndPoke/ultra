@@ -67,7 +67,9 @@ ahead of T4 by the maintainer) (round 2 NOT clean, 3 MAJOR; safety valve → mai
 first:** finish activation hardening, then release 0.114.0; everything else waits until after it. First auth task after the release: `20261019-email-first-signup.md` (maintainer
 2026-10-19; closes the one-click pre-hijack the hardening leaves). Also after the release: answer Mission-Control's
 interview on how other repos' agents learn Kraft/Funktor (llms/*.md as entry point, what is current vs stale, a
-per-library "mistakes agents make" section, common Kraft UI errors from the example bumps) — low priority.
+per-library "mistakes agents make" section, common Kraft UI errors from the example bumps) — low priority. With it, in the same reply round: Mission-Control's RFC on the shared review-loop blueprint
+(`/opt/dev/peekandpoke/missioncontrol/blueprints/skills/review-loop/SKILL.md`: usefulness and adoption, changes marked core vs
+ultra-only, the 7 open questions; do NOT adopt before the maintainer decides).
 
 ## Working rules for a track agent
 
