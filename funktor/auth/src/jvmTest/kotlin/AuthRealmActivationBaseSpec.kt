@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
+import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
 import io.peekandpoke.funktor.messaging.api.EmailResult
@@ -489,6 +490,62 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                     MinimalTestRealm(getDeps = { real }, onLoadUserById = { retiredUser }),
                     AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act"),
                 ).success shouldBe false
+            }
+        }
+
+        "an ACTIVE account (a user row, no marker) is not mistaken for a retired one" - {
+            // The other side of the retired-owner guard: the most common reset in production.
+
+            fun providerOn(deps: AuthSystem.Deps) = EmailAndPasswordAuth(
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                log = NullLog,
+                services = lazy { EmailAndPasswordAuth.Services(deps) },
+            )
+
+            "a reset token answers true, and the new password signs in" {
+                val real = realDeps()
+                real.storage.authRecords.create(
+                    AuthRecord.Password(realm = realmId, ownerId = owner, token = real.passwordHasher.hashAsString("Old-1234!"))
+                )
+                real.storage.authRecords.create(
+                    AuthRecord.PasswordRecoveryToken(
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "reset",
+                    )
+                )
+                val realm = MinimalTestRealm(
+                    getDeps = { real },
+                    onLoadUserById = { user },
+                    onLoadUserByEmail = { user },
+                    getMessaging = { TestMessaging(onSendPasswordChangedEmail = { EmailResult.ofMessageId("m") }) },
+                )
+
+                providerOn(real).recoverAccountSetPasswordWithToken(
+                    realm,
+                    AuthRecoverAccountRequest.SetPasswordWithToken(
+                        provider = EmailAndPasswordAuth.ID, token = "reset", password = "New-1234!",
+                    ),
+                ).success shouldBe true
+
+                providerOn(real).signIn(
+                    realm,
+                    AuthSignInRequest.EmailAndPassword(
+                        provider = EmailAndPasswordAuth.ID, email = email.value, password = "New-1234!",
+                    ),
+                ) shouldBe user
+            }
+
+            "a leftover activation token answers true" {
+                val real = realDeps()
+                real.storage.authRecords.create(
+                    AuthRecord.EmailVerificationToken(
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                    )
+                )
+
+                providerOn(real).activateAccount(
+                    MinimalTestRealm(getDeps = { real }, onLoadUserById = { user }),
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act"),
+                ).success shouldBe true
             }
         }
 

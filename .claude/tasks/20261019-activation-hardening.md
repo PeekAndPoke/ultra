@@ -581,6 +581,22 @@ Round 4 was CLEAN (gate PASS); these are its MINOR rows, all dispositioned `fix`
 | R4-3 | Drop the `log.error` | ✅ RED "an UNKNOWN claim is refused AND logged" (both): no error logged |
 | R4-4a / R4-4b | The conditional filter requires the key: Karango `HAS(doc, 'claimedBy') &&`, Mongo `Filters.exists("claimedBy")` | ✅ RED pre-upgrade case on that backend only: `replaceIfUnclaimed` returned null |
 | R4-4c / R4-4d | The sweep query requires the key (same two forms) | ✅ RED pre-upgrade case on that backend only: the sweep selected nothing |
+| R4-5 | `isRetiredOwner` refuses whenever the owner row exists (delta-check MAJOR: the guard was tested on its refuse side only) | ✅ RED, 6 cases: realm "an ACTIVE account … is not mistaken for a retired one" (both backends: the reset and the leftover activation token both answered false) and both unit ACTIVE cases (`EmailAndPasswordAuthSpec.kt:868`, `:1338`) |
+
+**Delta-check MAJOR (test gap, fixed with tests only):** no test completed a reset, or an activation with a leftover
+token, on an ACTIVE, non-retired account (a user row, no marker), so a guard that over-refused would have shipped green.
+New cases:
+
+- Realm, both backends (`AuthRealmActivationBaseSpec`, "an ACTIVE account (a user row, no marker) is not mistaken for a
+  retired one"):
+  - a reset token answers true, and the new password signs in;
+  - a leftover activation token answers true.
+- Unit (`EmailAndPasswordAuthSpec`): `onFindPendingActivation` returns null and `onLoadUserById` returns a stored,
+  non-retired user. The activation answers true and consumes the token. The reset answers true and writes exactly one
+  Password, while `removePendingActivationIfUnclaimed` keeps its exploding default.
+
+`:funktor:auth:jvmTest` **263 / 0** (`AuthRealmActivation*` 22 each, `EmailAndPasswordAuthSpec` 43). No production code
+changed, so there was no new full suite and no `funktor/all` run.
 
 **Full suite** (`console/wt-gradle.sh --full-suite` at `f8fd8744`, on master `d9016c81`): BUILD SUCCESSFUL in 9m 57s,
 no `^e:`. XMLs: **15980 tests, 0 failures, 0 errors, 7 skipped** across 49 modules (jvmTest 7507, test 2670,

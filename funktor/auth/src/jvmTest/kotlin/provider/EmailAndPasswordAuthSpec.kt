@@ -838,6 +838,40 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 // ... and the marker is the token's OWNER's, not whoever is calling.
                 markerLookedUpFor shouldBe (realm.id to ownerId)
             }
+
+            "a leftover token of an ACTIVE (non-retired) account answers true and is consumed" {
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+                val removedRecordIds = mutableListOf<String>()
+
+                val services = lazy {
+                    TestServices(
+                        onFindPendingActivation = { _, _ -> null },
+                        onFindEmailVerificationToken = { realm, token ->
+                            Stored(
+                                _id = "verification-record",
+                                value = AuthRecord.EmailVerificationToken(
+                                    realm = realm, ownerId = UserId(storedUser._id), token = token, expiresAt = Long.MAX_VALUE,
+                                ),
+                            )
+                        },
+                        onRemoveAuthRecord = { removedRecordIds += it; true },
+                    )
+                }
+
+                val subject = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                    log = NullLog,
+                    services = services,
+                )
+
+                subject.activateAccount(
+                    MinimalTestRealm(onLoadUserById = { storedUser }),
+                    AuthActivateAccountRequest(provider = subject.id, token = "t"),
+                ).success shouldBe true
+
+                removedRecordIds shouldBe listOf("verification-record")
+            }
         }
 
         "resendActivation" - {
@@ -1269,6 +1303,49 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 activatedOwner shouldBe (realm.id to ownerId)
                 removedIds shouldBe listOf("recovery-record", "pending-activation")
+            }
+
+            "on an ACTIVE (non-retired) account — no marker — sets the password" {
+                // The most common reset in production; the retired-owner guard must not catch it.
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+                val created = mutableListOf<AuthRecord>()
+
+                val services = lazy {
+                    TestServices(
+                        onHashPassword = { "hashed-password" },
+                        onFindPasswordRecoveryToken = { realm, token ->
+                            Stored(
+                                _id = "recovery-record",
+                                value = AuthRecord.PasswordRecoveryToken(
+                                    realm = realm, ownerId = UserId(storedUser._id), token = token, expiresAt = Long.MAX_VALUE,
+                                ),
+                            )
+                        },
+                        onRemoveAuthRecord = { true },
+                        onFindPendingActivation = { _, _ -> null },
+                        // `removePendingActivationIfUnclaimed` keeps its exploding default: there is no marker.
+                        onCreateAuthRecord = { create -> create().let { created += it; Stored(_id = "new-password-record", value = it) } },
+                    )
+                }
+
+                val subject = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignIn),
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                    log = NullLog,
+                    services = services,
+                )
+
+                subject.recoverAccountSetPasswordWithToken(
+                    MinimalTestRealm(
+                        onLoadUserById = { storedUser },
+                        getMessaging = { TestMessaging(onSendPasswordChangedEmail = { EmailResult.ofMessageId("message-id") }) },
+                    ),
+                    AuthRecoverAccountRequest.SetPasswordWithToken(
+                        provider = subject.id, token = "the-recovery-token", password = "A-valid-password-123!",
+                    ),
+                ).success shouldBe true
+
+                created.map { it::class } shouldBe listOf(AuthRecord.Password::class)
             }
         }
 
