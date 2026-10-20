@@ -1,5 +1,60 @@
 # Changelog
 
+## 0.114.0
+
+### Breaking changes
+
+- **Account activation hardening (funktor auth)** closes account pre-hijacking: an attacker who pre-registers someone
+  else's address can no longer end up sharing that account.
+  - The activation link opens a page with an **Activate** button; only the click activates. Opening the link changes
+    nothing, so mail scanners no longer activate accounts.
+  - A pending (never-activated) account expires after `RealmTokenConfig.pendingAccountLifetime` (7 days) and can be
+    cancelled from the activation mail. Expiry or cancel **retires** it: its email becomes a key that keeps only a
+    hash of the address, its auth records are deleted, and the address can sign up again. The data stays with the
+    retired row.
+  - A verified SSO sign-in on a pending password account activates it and deletes the sign-up password.
+  - Resends are spaced by growing delays (`RealmTokenConfig.activationResendDelays`, replacing
+    `activationResendCooldown`); `AuthResendActivationResponse.nextResendAt` says when.
+  - **`AuthUserAdapter.retire(user, retirement)` is new and abstract.** Every realm implements it: rename every unique
+    key with the given `AccountRetirement`, or throw `AuthError.notSupported()` in a realm without sign-up.
+  - `AuthRealm.Messaging.sendAccountActivationEmail` and `AccountActivationEmailTemplate.Params` take a `cancelUrl`.
+    `AuthProvider.resendActivation` takes the owner; `AuthProvider.cancelSignUp`, `AuthApiClient.CancelSignUp` and
+    the route `AuthFrontendRoutes.cancelSignUp` are new.
+  - Auth-record storage: `PendingActivation` gains `claimedBy`, `resends` and `lastSentAt`; there is a new
+    `SignUpCancelToken` record. The storage adapter gains conditional writes (`replaceIfClaimedBy`,
+    `removeIfClaimedBy`), `removeAllOfOwner` and `findCreatedBefore`, and loses `save`. There is a new index on
+    (realm, type, createdAt) on both backends. Existing records need no migration.
+- **Upgrading with no compile error to warn you:**
+  - an app's own activation-mail renderer must render `cancelUrl`;
+  - an app's own router must mount `cancel-signup`;
+  - an app's own activation page must not POST on load;
+  - an app's own SSO provider must route existing accounts through `AuthRealm.resolveSsoAccount`;
+  - an app's own `AuthRealm.Messaging` lacks the retired-recipient guard;
+  - `AuthRecordStorage.OnAfterSave` listeners do not see the conditional writes.
+- **What changes for users:**
+  - GitHub sign-in now asks for the `user:email` scope;
+  - the first expiry sweep after upgrading retires every pending account older than the lifetime, and retired rows
+    stay in the user collection;
+  - an account activated by SSO has no password until a reset;
+  - the expiry worker comes with `funktor/all`'s `Funktor` module.
+- **Insights:** the v2 kontainer slice keeps only the instantiated services and drops `numOld` / `numTotal`.
+- **Codegen:** `sdk:ts:generate` refuses packages the app's `package.json` does not list.
+
+### Changes
+
+- **Global locks expire by heartbeat**, not by creation time: a long-running holder keeps its lock, and a dead
+  server's lock lapses after the ttl. Safe across a rolling deploy with old servers. The locks listing shows the last
+  heartbeat.
+- **Insights:** superuser endpoints and Vue views for the kontainer and database graphs. Monko query text is kept,
+  now that it holds typed placeholders instead of values.
+
+### Fixes
+
+- **ultra log:** one dispatch coroutine per appender. An appender that suspends (e.g. a database appender) no longer
+  delays or drops lines for the appenders after it; the insights per-request log slice lost lines this way.
+- **ApiAcl:** the `canFullyAccess` / `canPartiallyAccess` KDoc says what they mean. `forCall` estimates `Granted`
+  unless it is given an `estimateFn`.
+
 ## 0.113.0
 
 ### Breaking changes
