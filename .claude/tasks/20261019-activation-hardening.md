@@ -143,6 +143,8 @@ scanner reason as activation, single-use by delete count.
       passwordless until a reset; an app's own `AuthRealm.Messaging` lacks the retired-recipient guard; and the
       breaking-API list under Implementation notes must be re-checked against the final code (`claimedBy`,
       `replaceIfUnclaimed` / `removeIfUnclaimed`, `SignUpCancelToken`, `retiredKeyPrefix`, `save` removed).
+      Round 3 added: `AuthRecordStorage.OnAfterSave` listeners never see the conditional writes (`replaceIfClaimedBy`,
+      `removeIfClaimedBy`) — a listener auditing auth records misses claims, resend schedules and activations.
 
 ## Out of scope (tracked elsewhere)
 
@@ -478,4 +480,41 @@ linuxX64Test 2349); `funktor/auth` 246, `funktor/all` 234, `funktor-demo/server`
 | MI | A reset losing the marker keeps its password | ✅ RED unit "takes back exactly the password this reset wrote" |
 | MJ / MK | `signIn` accepts a retired key / ignores a claim | ✅ RED the two unit cases |
 | MM | `replaceIfUnclaimed` ignores the claim — Karango / Monko separately | ✅ RED storage + realm + SSO claim cases on that backend |
+
+
+## Round 3 fix batch (2026-10-20, maintainer-approved)
+
+Every round-3 row dispositioned `fix`; the `docs task` row (OnAfterSave listeners never see the conditional writes) is in
+the docs follow-up box; the `keep` row got its KDoc (`AuthRealm.isBeingRetired`, `AuthRealm.kt:409`: refresh pays the
+query as defence in depth for custom providers).
+
+| Ledger row | What changed | Where |
+|---|---|---|
+| MAJOR sign-in race | `validateCurrentPassword` returns the Password record it proved (`EmailAndPasswordAuth.kt:749`); after the marker check, sign-in re-reads the newest Password record and refuses unless its `_id` is the proven one (`:330`). KDoc: every one-way flow changes the password BEFORE it removes the marker, so a missing marker means the change is visible | `EmailAndPasswordAuth.kt:330,749` |
+| MAJOR stuck SSO claim | Conditional writes generalised to `claimedBy == expected` (null = unclaimed), one statement each: Karango `FILTER … && doc.claimedBy == @expected` (`KarangoAuthRecordsRepo.kt:171`), Mongo `and(_id, eq(claimedBy, expected))` (`MonkoAuthRecordsRepo.kt:184`); `AuthRecordStorage.replaceIfClaimedBy` / `removeIfClaimedBy`. The retire takes over an EXPIRED `sso` claim (`sso → retire`, only with `expiredOnly`) (`AuthRealm.kt:450`, `claimForRetire` `:500`); SSO's final marker delete is conditional on its own claim and refuses the session when taken over (`:618`). KDocs rewritten | as listed |
+| MINOR `AuthError` is a Throwable | `Throwable` minus `CancellationException` at the three nets | `AuthRealm.kt:473,541`, `AuthSystem.kt:134` |
+| MINOR sign-up order | The marker is written BEFORE the password | `EmailAndPasswordAuth.kt:372` |
+| MINOR Epoch back-dating | Dropped; `createdAt` stays the sign-up time. The sweep query selects markers created before the cutoff OR claimed by `retire` (any age) — one query, still ordered and paged by `createdAt` (`AuthRealm.kt:531`; Karango hand-written AQL `KarangoAuthRecordsRepo.kt:148`, Mongo `Filters.or` `MonkoAuthRecordsRepo.kt:160`). Expired `sso` claims are selected by age | as listed |
+| MINOR KDocs | Where expiry is enforced: sign-up, SSO, activation, reset retire; resend refuses; a password sign-in answers `ActivationRequired` | `AuthSystem.kt:122`, `RealmTokenConfig.kt:26` |
+| MINOR tidy | `AccountRetirement.userId` dropped (private tag only); the mangled resend-spec formatting fixed; the duplicate `AdminUserRealm` comment merged; the stale half of the activation comment trimmed; dead imports removed | — |
+
+**Tests (fresh `TEST-*.xml`):** `:funktor:auth:jvmTest` **247 / 0** — new `SignInRace{Karango,Monko}Spec` 3 + 3 (real
+storage: a sign-in in flight across a verified SSO activation, across a reset completion, and the plain sign-in);
+`AuthRealmActivation*` 16 each (stuck SSO claim not retired before expiry — by the sweep, a cancel-style or an
+expired-only retire — taken over after it, and an SSO finishing its claim while the sweep takes it over loses
+cleanly; the sweep passes a realm whose `retire()` throws `AuthError.notSupported()`); storage 21 each
+(`claimedBy == expected` takeover, `orClaimedBy`); unit sign-up marker-first. `:funktor:all:jvmTest` **234 / 0** — the
+sweep e2e and the partial-retire case hold without the back-dating.
+
+**Mutation evidence (round 3).** `cp` backups outside the worktree (path in the name), `cp` restore + `cmp`.
+
+| # | Mutant | Result |
+|---|---|---|
+| N1 | Sign-in without the password re-read | ✅ RED `SignInRace*` SSO and reset cases (both backends) |
+| N2 | SSO-claim takeover not gated on expiry | ✅ RED "a stuck SSO claim … is NOT retired before the account expires" — **only after that case also called `retirePendingAccount` directly**: the sweep never selects a fresh `sso` claim, so through the sweep alone the mutant survived; the gate guards cancel and the sign-up's expired-only retire |
+| N3 | SSO's final marker delete unconditional | ✅ RED "an SSO sign-in finishing its claim while the sweep takes it over loses cleanly" (both) |
+| N4 / N5 | Conditional writes ignore `expected` — Karango / Monko separately | ✅ RED storage + realm claim cases on that backend |
+| N6 | The sweep ignores retire claims (`orClaimedBy = null`) | ✅ RED realm "a retire that stops part-way … the next sweep finishes it" (both) |
+| N7 | The retire nets back to `catch (Exception)` | ✅ RED "a realm whose retire() throws an AuthError … does not stop the sweep" (both) |
+| N8 | Sign-up writes the password before the marker | ✅ RED unit "a failing password insert leaves a PENDING (passwordless) account" (+ the sign-up success case's order) |
 

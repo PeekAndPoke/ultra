@@ -394,7 +394,13 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 stuckSsoClaim(real)
                 val renamed = mutableListOf<EmailAddress>()
 
-                realmOn(real, RealmTokenConfig(), renamed).retireExpiredPendingAccounts() shouldBe 0
+                val realm = realmOn(real, RealmTokenConfig(), renamed)
+
+                realm.retireExpiredPendingAccounts() shouldBe 0
+                withClue("nor by a direct retire — a cancel, or a sign-up's expired-only one") {
+                    realm.retirePendingAccount(owner) shouldBe false
+                    realm.retirePendingAccount(owner, expiredOnly = true) shouldBe false
+                }
 
                 renamed shouldBe emptyList()
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner)
