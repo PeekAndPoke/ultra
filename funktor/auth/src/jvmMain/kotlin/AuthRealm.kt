@@ -453,7 +453,11 @@ interface AuthRealm<USER : AuthUser> {
                 claimForRetire(marker, expected = AuthRecord.PendingActivation.CLAIMED_BY_SSO) ?: return false
             }
 
-            else -> return false
+            else -> {
+                // Nothing this framework writes: refused everywhere, so say so rather than skip it silently.
+                deps.log.error("Pending account $userId in realm $id has an unknown claim '${marker.value.claimedBy}'")
+                return false
+            }
         }
 
         // From here the account is ours: credentials and tokens go, then the address.

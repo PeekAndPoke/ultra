@@ -23,6 +23,9 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
     abstract fun FunktorAuthBuilder.configureAuth()
 
+    /** Removes the `claimedBy` key from the stored record [key] — the shape a pre-upgrade marker has. */
+    abstract suspend fun Kontainer.stripClaimedBy(key: String)
+
     suspend fun createKontainer(): Kontainer {
         return createAuthTestContainer(
             configureKontainer = { configureKontainer() },
@@ -722,6 +725,40 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 val other = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner2")))
                 authRecords.removeIfUnclaimed(other._id) shouldBe true
                 authRecords.removeIfUnclaimed(other._id) shouldBe false
+            }
+        }
+
+        "a PRE-UPGRADE marker (no `claimedBy` key at all) counts as unclaimed everywhere" {
+            // Markers written before the claim existed carry no key. A filter that required it would leave them
+            // un-activatable, un-resendable and invisible to the sweep — stuck pending forever.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            val kronos = kontainer.get(Kronos::class)
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+            kontainer.stripClaimedBy(marker._key)
+            delay(5.milliseconds)
+            val cutoff = kronos.instantNow()
+
+            withClue("the sweep selects it once aged") {
+                authRecords.findCreatedBefore(
+                    AuthRecord.PendingActivation, RealmId("realm"), cutoff,
+                    orClaimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE, limit = 10,
+                ).map { it._id } shouldBe listOf(marker._id)
+            }
+
+            withClue("replaceIfUnclaimed takes it") {
+                authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = 1) }).shouldNotBeNull()
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull().value.resends shouldBe 1
+            }
+
+            withClue("removeIfUnclaimed takes it") {
+                kontainer.stripClaimedBy(marker._key)
+                authRecords.removeIfUnclaimed(marker._id) shouldBe true
+                authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1")) shouldBe
+                        emptyList()
             }
         }
 

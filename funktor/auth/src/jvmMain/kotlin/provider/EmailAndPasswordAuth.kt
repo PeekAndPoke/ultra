@@ -532,6 +532,9 @@ class EmailAndPasswordAuth(
         val owner = tokenRecord.value.ownerId
         val marker = services.findPendingActivation(realm = realm.id, owner = owner)
 
+        // No marker: active — or RETIRED meanwhile (a leftover token). A retired row is not "activated".
+        if (marker == null && isRetiredOwner(realm, owner)) return AuthActivateAccountResponse(success = false)
+
         if (marker != null) {
             // Claimed: a retire (or an SSO activation) owns the account now.
             if (marker.value.claimedBy != null) return AuthActivateAccountResponse(success = false)
@@ -569,12 +572,10 @@ class EmailAndPasswordAuth(
             ?: services.findEmailVerificationToken(realm = realm.id, token = request.token)
             ?: return AuthCancelSignUpResponse(success = false)
 
-        // Single-use, by the delete count: of two concurrent cancels only one goes on.
-        if (!services.removeAuthRecord(tokenRecord._id)) {
-            return AuthCancelSignUpResponse(success = false)
-        }
-
-        // Refuses, changing nothing, unless the account is still pending.
+        // The RETIRE decides — the token is not consumed up front. A retire that refuses (an activated account, a
+        // live SSO claim) changes nothing, so the link stays usable and its page tells the truth. A retire that
+        // runs deletes every auth row of the owner, this token included: that is the single use. Two concurrent
+        // cancels both reach the retire, which is claim-first and idempotent, so they cannot do more than one.
         return AuthCancelSignUpResponse(
             success = realm.retirePendingAccount(tokenRecord.value.ownerId),
         )
@@ -706,6 +707,11 @@ class EmailAndPasswordAuth(
         val owner = tokenRecord.value.ownerId
         val marker = services.findPendingActivation(realm = realm.id, owner = owner)
 
+        // No marker: active — or a retire FINISHED meanwhile. A retired row gets no new password.
+        if (marker == null && isRetiredOwner(realm, owner)) {
+            return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
+        }
+
         if (marker != null) {
             // Claimed by a retire or an SSO activation: not this reset's account to finish.
             if (marker.value.claimedBy != null) return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
@@ -741,6 +747,11 @@ class EmailAndPasswordAuth(
             success = true,
         )
     }
+
+    /** True when [owner]'s row exists and carries a retired key. */
+    private suspend fun <USER : AuthUser> isRetiredOwner(realm: AuthRealm<USER>, owner: UserId): Boolean =
+        realm.users.loadById(owner)?.takeIf { it._id == owner.value }
+            ?.let { AccountRetirement.isRetired(it.value.email) } == true
 
     /**
      * Validates the given [password] against the latest password for the given [user] in the [realm]; returns the

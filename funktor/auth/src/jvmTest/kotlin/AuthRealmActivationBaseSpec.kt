@@ -6,26 +6,32 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.karango.config.ArangoDbConfig
 import io.peekandpoke.karango.karango
 import io.peekandpoke.monko.MongoDbConfig
 import io.peekandpoke.monko.monko
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
-import kotlinx.coroutines.delay
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
 
 class AuthRealmActivationKarangoSpec : AuthRealmActivationBaseSpec() {
     override fun KontainerBuilder.configureKontainer() {
@@ -436,6 +442,102 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 renamed.size shouldBe 1
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldBeNull()
             }
+        }
+
+        "after a retire FINISHED (no marker any more)" - {
+
+            val retiredUser = Stored(_id = user._id, value = MinimalTestUser(email = AccountRetirement.of(owner).rename(email)))
+
+            fun providerOn(deps: AuthSystem.Deps) = EmailAndPasswordAuth(
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                log = NullLog,
+                services = lazy { EmailAndPasswordAuth.Services(deps) },
+            )
+
+            "a leftover reset token answers false and writes NO password on the retired row" {
+                val real = realDeps()
+                real.storage.authRecords.create(
+                    AuthRecord.PasswordRecoveryToken(
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "reset",
+                    )
+                )
+
+                providerOn(real).recoverAccountSetPasswordWithToken(
+                    MinimalTestRealm(
+                        getDeps = { real },
+                        onLoadUserById = { retiredUser },
+                        // Accepted, so a missing guard fails on the assertions below rather than on this mail.
+                        getMessaging = { TestMessaging(onSendPasswordChangedEmail = { EmailResult.ofMessageId("m") }) },
+                    ),
+                    AuthRecoverAccountRequest.SetPasswordWithToken(
+                        provider = EmailAndPasswordAuth.ID, token = "reset", password = "New-1234!",
+                    ),
+                ).success shouldBe false
+
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
+            }
+
+            "a leftover activation token answers false — a retired row is not 'activated'" {
+                val real = realDeps()
+                real.storage.authRecords.create(
+                    AuthRecord.EmailVerificationToken(
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                    )
+                )
+
+                providerOn(real).activateAccount(
+                    MinimalTestRealm(getDeps = { real }, onLoadUserById = { retiredUser }),
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act"),
+                ).success shouldBe false
+            }
+        }
+
+        "cancel on an account a LIVE SSO activation has claimed refuses — and leaves the cancel link usable" {
+            val real = realDeps()
+            real.storage.authRecords.create(
+                AuthRecord.PendingActivation(
+                    realm = realmId, ownerId = owner, claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO,
+                )
+            )
+            real.storage.authRecords.create(
+                AuthRecord.SignUpCancelToken(
+                    realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "cancel",
+                )
+            )
+
+            val provider = EmailAndPasswordAuth(
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                log = NullLog,
+                services = lazy { EmailAndPasswordAuth.Services(real) },
+            )
+
+            provider.cancelSignUp(
+                MinimalTestRealm(getDeps = { real }, onLoadUserById = { user }),
+                AuthCancelSignUpRequest(provider = EmailAndPasswordAuth.ID, token = "cancel"),
+            ).success shouldBe false
+
+            real.storage.authRecords.findByToken(AuthRecord.SignUpCancelToken, realmId, "cancel").shouldNotBeNull()
+        }
+
+        "an UNKNOWN claim is refused AND logged, naming the owner and the value" {
+            val real = realDeps()
+            real.storage.authRecords.create(
+                AuthRecord.PendingActivation(realm = realmId, ownerId = owner, claimedBy = "something-else")
+            )
+            val errors = mutableListOf<String>()
+            val logging = object : AuthSystem.Deps by real {
+                override val log: Log = object : Log {
+                    override fun log(level: LogLevel, message: String, error: Throwable?) {
+                        if (level == LogLevel.ERROR) errors += message
+                    }
+                }
+            }
+
+            MinimalTestRealm(getDeps = { logging }, onLoadUserById = { user })
+                .retirePendingAccount(owner) shouldBe false
+
+            errors.single() shouldContain owner.value
+            errors.single() shouldContain "something-else"
         }
 
         "refreshToken refuses a RETIRED account" {

@@ -1173,9 +1173,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 ).success shouldBe false
             }
 
-            "should go no further when ANOTHER request consumed the token first" {
-                // Single-use under concurrency: both requests found the token, only one delete removed it.
-                // The realm's storage is never reached (`onRetire` keeps its exploding default).
+            "the token is NOT consumed up front: the retire decides, and a refused retire leaves it usable" {
+                // `onRemoveAuthRecord` keeps its exploding default; the realm's (empty) store has no marker, so
+                // its retire refuses.
                 val services = lazy {
                     TestServices(
                         onFindSignUpCancelToken = { realm, token ->
@@ -1186,12 +1186,11 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 ),
                             )
                         },
-                        onRemoveAuthRecord = { false },
                     )
                 }
 
                 subjectWith(services).cancelSignUp(
-                    MinimalTestRealm(getDeps = { error("the realm must not be asked to retire anything") }),
+                    MinimalTestRealm(),
                     AuthCancelSignUpRequest(provider = EmailAndPasswordAuth.ID, token = "t"),
                 ).success shouldBe false
             }
