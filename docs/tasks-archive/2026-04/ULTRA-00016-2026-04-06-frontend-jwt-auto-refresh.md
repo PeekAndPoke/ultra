@@ -1,4 +1,4 @@
-# Frontend JWT Auto-Refresh & Session Lifecycle
+# ULTRA-00016: Frontend JWT Auto-Refresh & Session Lifecycle
 
 **Status:** DONE (2026-04-06) — Implemented in the `funktor-apiacl-frontend-integration` branch.
 
@@ -167,3 +167,7 @@ class AuthState<USER>(
 
 **Do not start this until ApiAcl ships.** The token-refresh path wants to refresh the ACL too, so
 having `ApiAcl` available as a concept simplifies the design.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00016 (was `docs/tasks-archive/2026-04/2026-04-06-frontend-jwt-auto-refresh.md`).

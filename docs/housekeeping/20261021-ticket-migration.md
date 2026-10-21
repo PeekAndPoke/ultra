@@ -34,3 +34,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00014 | 2026-04-04 | `.claude/tasks-archive/2026-04/2026-04-04-es2015-migration.md` | `docs/tasks-archive/2026-04/ULTRA-00014-2026-04-04-es2015-migration.md` |
 | ULTRA-00015 | 2026-04-06 | `docs/tasks-archive/2026-04/2026-04-06-api-acl-user-access-matrix.md` | `docs/tasks-archive/2026-04/ULTRA-00015-2026-04-06-api-acl-user-access-matrix.md` |
 | ULTRA-00015 | 2026-04-06 | `.claude/tasks-archive/2026-04/2026-04-06-api-acl-user-access-matrix.md` | `docs/tasks-archive/2026-04/ULTRA-00015-2026-04-06-api-acl-user-access-matrix.md` |
+| ULTRA-00016 | 2026-04-06 | `docs/tasks-archive/2026-04/2026-04-06-frontend-jwt-auto-refresh.md` | `docs/tasks-archive/2026-04/ULTRA-00016-2026-04-06-frontend-jwt-auto-refresh.md` |
+| ULTRA-00016 | 2026-04-06 | `.claude/tasks-archive/2026-04/2026-04-06-frontend-jwt-auto-refresh.md` | `docs/tasks-archive/2026-04/ULTRA-00016-2026-04-06-frontend-jwt-auto-refresh.md` |
