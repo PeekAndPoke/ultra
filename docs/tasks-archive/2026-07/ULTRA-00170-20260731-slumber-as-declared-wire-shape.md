@@ -2,7 +2,7 @@
 
 **Status:** DONE 2026-08-01. Implemented (§1–§5, §9), reviewed and fixed — `/feature-review` gate
 **PASS**, record in §15. Residue split into `docs/tasks/20260801-slumber-as-followups.md`; docs
-tracked in `docs/tasks/20260801-docs-slumber-as.md`, deliberately blocked on the maintainer's own
+tracked in ULTRA-00179 (docs slumber as), deliberately blocked on the maintainer's own
 review since the annotation's KDoc changed twice during the gate.
 **Plan:** none yet. Touches `ultra/slumber`, `karango`, `monko`, `ultra/codegen`.
 **Security-critical:** no.

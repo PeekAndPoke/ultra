@@ -1,4 +1,4 @@
-# DOCS — `@Slumber.As` and the generated datetime query paths
+# ULTRA-00179: DOCS — `@Slumber.As` and the generated datetime query paths
 
 **Status:** TODO — created 2026-08-01 on passing the `/feature-review` gate for
 ULTRA-00170 (slumber as declared wire shape).
@@ -42,3 +42,7 @@ round-trip check becomes public API) changes what there is to document.
 Per the docs-vs-skills split: the KSP internals stay out — `getSlumberAsShape`, the blacklist, the
 per-module generation, the `AqlPathExpr` typealias equivalence. Those are "what will bite me if I change
 this code" and belong in a skill or the task record, not on a docs page.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00179 (was `docs/tasks/20260801-docs-slumber-as.md`).
