@@ -210,7 +210,7 @@ constructor signature).
 ## Dependency on the env-classification task — corrected
 
 The existing note here previously said this task and
-`docs/tasks/20260720-env-classification-allowlist.md` are mutually required for soundness.
+ULTRA-00052 (env classification allowlist) are mutually required for soundness.
 **That is not accurate — verify at implementation time, but as read today this task is
 independent.** The other task's scope (per its own spec) is limited to `isProduction` /
 `isNotProduction` (`KtorConfig.kt:42,44`). It does **not** touch `isDevelopment`.

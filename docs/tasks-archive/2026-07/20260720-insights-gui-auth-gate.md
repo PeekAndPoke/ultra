@@ -46,7 +46,7 @@ incident.
       question in that section must be resolved first, not just the check itself)
 - [ ] Both routes additionally refuse to serve unless the environment is recognised-development —
       written as an allow-list so unknown environments are denied (depends on
-      `docs/tasks/20260720-env-classification-allowlist.md`; `AppConfig.ktor.isDevelopment` at
+      ULTRA-00052 (env classification allowlist); `AppConfig.ktor.isDevelopment` at
       `funktor/core/src/jvmMain/kotlin/config/ktor/KtorConfig.kt:40` is already exactly this
       allow-list and is already reachable from `funktor:insights` — see below)
 - [ ] `detailsUri` / `detailsUrl` are omitted from API responses (`funktor/rest/src/jvmMain/kotlin/respond.kt:84-85`)
@@ -186,7 +186,7 @@ carries a live link to that response's own insights record.
 (Separately, `apiRespondUnauthorized`, `respond.kt:48-69`, already gates its extra `withInfo(...)`
 detail on `appConfig.ktor.isNotProduction` — the same shape of gate this task needs, just applied to
 a different field. That gate is exactly the one flagged as unsound in
-`docs/tasks/20260720-env-classification-allowlist.md`, so don't copy its `isNotProduction` form —
+ULTRA-00052 (env classification allowlist), so don't copy its `isNotProduction` form —
 use the allow-list `isDevelopment` instead, see below.)
 
 ### 4. How to actually gate a non-`ApiRoute` (the crux)
@@ -330,7 +330,7 @@ class InsightsGui(
   blocked on resolving the credential-transport design.
 - **Environment gate**: `AppConfig.ktor.isDevelopment` (`KtorConfig.kt:40`), already an allow-list
   (`isLocalDev || isTest || isQa`), fails closed on unrecognised environment strings. Do **not** use
-  `isNotProduction` (negation, unsound per `docs/tasks/20260720-env-classification-allowlist.md`).
+  `isNotProduction` (negation, unsound per ULTRA-00052 (env classification allowlist)).
 - **Suppress `detailsUri`/`detailsUrl`**: in `enrichApiResponseWithInsights`
   (`respond.kt:72-88`), only populate them when the environment is development (mirrors the pattern
   already used for `apiRespondUnauthorized`'s extra detail at `respond.kt:56-66`, but on

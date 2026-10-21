@@ -123,3 +123,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00051 | 2026-07-20 | `docs/tasks/20260720-auth-error-account-enumeration.md` | `docs/tasks/ULTRA-00051-20260720-auth-error-account-enumeration.md` |
 | ULTRA-00051 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-auth-error-account-enumeration.md` | `docs/tasks/ULTRA-00051-20260720-auth-error-account-enumeration.md` |
 | ULTRA-00051 | 2026-07-20 | `.claude/tasks/20260720-auth-error-account-enumeration.md` | `docs/tasks/ULTRA-00051-20260720-auth-error-account-enumeration.md` |
+| ULTRA-00052 | 2026-07-20 | `docs/tasks/20260720-env-classification-allowlist.md` | `docs/tasks/ULTRA-00052-20260720-env-classification-allowlist.md` |
+| ULTRA-00052 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-env-classification-allowlist.md` | `docs/tasks/ULTRA-00052-20260720-env-classification-allowlist.md` |
+| ULTRA-00052 | 2026-07-20 | `.claude/tasks/20260720-env-classification-allowlist.md` | `docs/tasks/ULTRA-00052-20260720-env-classification-allowlist.md` |

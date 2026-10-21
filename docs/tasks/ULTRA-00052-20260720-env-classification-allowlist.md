@@ -1,4 +1,4 @@
-# Environment classification must fail closed on unknown environments
+# ULTRA-00052: Environment classification must fail closed on unknown environments
 
 **Status:** TODO
 **Plan:** none — from `docs/tasks/20260720-error-response-disclosure-audit.md` (finding 3)
@@ -311,3 +311,7 @@ unilateral decisions here:
 Fixes applied: ...
 
 **Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00052 (was `docs/tasks/20260720-env-classification-allowlist.md`).

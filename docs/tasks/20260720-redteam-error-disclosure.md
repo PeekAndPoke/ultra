@@ -2,7 +2,7 @@
 
 **Status:** COLLECTED — do not execute during normal feature work
 **Origin:** `docs/tasks/20260720-error-response-disclosure-audit.md`
-**Covers:** `20260720-env-classification-allowlist`, `20260720-error-messages-generic-in-production`,
+**Covers:** `ULTRA-00052`, `20260720-error-messages-generic-in-production`,
 `20260720-insights-gui-auth-gate`, `20260720-fixtures-env-gate`,
 `20260720-route-auth-default-deny`, `ULTRA-00051`
 

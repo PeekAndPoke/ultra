@@ -12,9 +12,9 @@ issue?"
 |---|---|
 | (umbrella) exception design | `20260720-exception-disclosure-architecture.md` |
 | 1 + 2 — production returns `cause.message` (full AQL) | `20260720-error-messages-generic-in-production.md` |
-| 3 — `isProduction` allow-list fails open on unknown env | `20260720-env-classification-allowlist.md` |
+| 3 — `isProduction` allow-list fails open on unknown env | ULTRA-00052 (env classification allowlist) |
 | 4 — fixtures install on unknown env | `20260720-fixtures-env-gate.md` |
-| 5 — auth-rule descriptions leak | folded into `20260720-env-classification-allowlist.md` |
+| 5 — auth-rule descriptions leak | folded into ULTRA-00052 (env classification allowlist) |
 | 6 — routes default to public | `20260720-route-auth-default-deny.md` |
 | 7 — auth error account enumeration | ULTRA-00051 (auth error account enumeration) |
 | attack scenarios | `20260720-redteam-error-disclosure.md` |
