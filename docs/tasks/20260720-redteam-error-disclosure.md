@@ -3,7 +3,7 @@
 **Status:** COLLECTED — do not execute during normal feature work
 **Origin:** ULTRA-00054 (error response disclosure audit)
 **Covers:** `ULTRA-00052`, `ULTRA-00053`,
-`20260720-insights-gui-auth-gate`, `ULTRA-00056`,
+`ULTRA-00057`, `ULTRA-00056`,
 `20260720-route-auth-default-deny`, `ULTRA-00051`
 
 Scenarios to attempt in a dedicated penetration-test session, against a disposable environment.

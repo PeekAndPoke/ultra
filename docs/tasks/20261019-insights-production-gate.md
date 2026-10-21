@@ -13,7 +13,7 @@
 - [ ] **The record endpoints answer 404 while insights is disabled too** (maintainer 2026-10-19), consistent with the
       graphs. E2e on both backends; mutation-checked.
 - [ ] **Refuse `enabled = true` in production** (maintainer 2026-10-19). Today nothing does: no environment
-      allow-list, no startup refusal (residue of the archived `2026-07/20260720-insights-gui-auth-gate.md`; red-team
+      allow-list, no startup refusal (residue of the archived ULTRA-00057 (insights gui auth gate); red-team
       scenario 11 presumes one). Decide the mechanism with the existing environment/`AppInfo` signal; startup must fail
       loudly, not silently disable. E2e: a prod-configured app with insights enabled does not boot.
 - [ ] **Redact JVM system properties in `RuntimeCollector`** (`RuntimeCollector.kt:58`, every request, anonymous ones

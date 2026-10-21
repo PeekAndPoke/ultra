@@ -1,4 +1,4 @@
-# Insights GUI must be authenticated and environment-gated
+# ULTRA-00057: Insights GUI must be authenticated and environment-gated
 
 **Status:** SUPERSEDED (2026-07-30/31; archived 2026-10-19). The surface this doc set out to gate no longer exists. On
 2026-07-30 the maintainer decided the static-web insights GUI disappears wholesale rather than being gated
@@ -421,3 +421,7 @@ not a hard refusal.
 Fixes applied: ...
 
 **Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00057 (was `docs/tasks-archive/2026-07/20260720-insights-gui-auth-gate.md`).

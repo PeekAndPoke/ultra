@@ -62,7 +62,7 @@ Superuser gating is a defensible answer for channel B and should be kept. Two pr
 Also on this channel: `karango/core/src/main/kotlin/utils/ArangoDbRequestUtils.kt:39-41` stores
 `"ERROR: ${e.stackTraceToString()}"` into `queryExplained`, which the insights details page renders
 (`funktor/insights/src/jvmMain/kotlin/collectors/VaultCollector.kt:133-141`) — and that page has no
-auth at all (tracked separately in `docs/tasks-archive/2026-07/20260720-insights-gui-auth-gate.md`).
+auth at all (tracked separately in ULTRA-00057 (insights gui auth gate)).
 
 ## Design
 

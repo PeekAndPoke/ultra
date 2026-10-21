@@ -93,7 +93,7 @@ currently implicit. Known groups to sweep (complete during implementation with a
   also admin-app?) — this was flagged as genuinely unclear; do not guess, surface to the user
   if ambiguous during the sweep.
 - `funktor/insights` + `funktor/inspect` (IntrospectionApi etc.) — super-user floors; interacts
-  with `20260720-insights-gui-auth-gate.md` (other agent's task — coordinate, do not modify it).
+  with ULTRA-00057 (insights gui auth gate) (other agent's task — coordinate, do not modify it).
 - `funktor-demo`: OperatorApi (floor = superuser + OperatorUser type), ShowcaseApi,
   FunktorConfApi, AuthShowcaseApi.
 - `funktor/core` broker `Crud`/app routes if they flow through the same mount machinery — verify.
