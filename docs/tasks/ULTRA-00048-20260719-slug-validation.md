@@ -1,4 +1,4 @@
-# Subdomain-safe slug validation (org + branch)
+# ULTRA-00048: Subdomain-safe slug validation (org + branch)
 
 **Status:** IN PROGRESS (2026-07-19)
 **Plan:** (saas foundation — org/branch slug is a future tenant subdomain)
@@ -58,3 +58,7 @@ Layered so the charset/shape rule has ONE definition, shared by UI and server (m
 | 1. Implementation & code style | | |
 | 2. Domain expert | | |
 | 3. Security | | |
+
+## History
+
+- 2026-10-21: numbered ULTRA-00048 (was `docs/tasks/20260719-slug-validation.md`).
