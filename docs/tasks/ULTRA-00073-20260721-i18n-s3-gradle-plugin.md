@@ -1,4 +1,4 @@
-# S3 — i18n Gradle plugin (buildSrc)
+# ULTRA-00073: S3 — i18n Gradle plugin (buildSrc)
 
 **Status:** DONE — gate APPROVE after fixes, fixture green jvm+js (2026-07-21)
 **Plan:** ULTRA-00069 (i18n l10n foundation) → Build step S3
@@ -73,3 +73,7 @@ Also (addressing user friction): **removed the kctfork compile-test** (`Generate
 uses `ExperimentalCompilerApi`/kctfork; the `:tooling:i18n-fixture` module now provides stronger,
 real-multiplatform compile coverage). `Deps` reverted the `compiletesting_core` const; the 0.13.0
 version bump stays (used by the ksp modules).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00073 (was `docs/tasks/20260721-i18n-s3-gradle-plugin.md`).
