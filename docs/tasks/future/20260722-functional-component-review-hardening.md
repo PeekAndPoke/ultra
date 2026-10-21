@@ -34,7 +34,7 @@ follow-up).
 - A short findings write-up (what's solid, what's fragile).
 - Hardening fixes for anything unsound (lifecycle/teardown/identity bugs).
 - Then unblock: functional-component `formController`/`formObserver` DOM tests
-  (`20260722-forms-field-testbed-dom-tests.md`).
+  (ULTRA-00080 (forms field testbed dom tests)).
 
 ## Notes
 
