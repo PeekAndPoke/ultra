@@ -74,7 +74,7 @@ name; the param CLASS is server-side (jvmMain) only. Verify codegen output is by
   (LOW, degenerate misconfig; framework already accepts the identical `OrgAwareParam`-without-saas
   tradeoff). **Resolution (user, 2026-07-23):** don't bolt on a one-off boot check — redesign funktor
   module config as a self-validating composable builder (each builder asserts its own invariants,
-  fails boot actionably). Follow-up: `docs/tasks/future/funktor-module-config-builder.md`. Interim:
+  fails boot actionably). Follow-up: ULTRA-00098 (funktor module config builder). Interim:
   loud KDoc on `OrgsApi.OrgParam`.
 - NO-ACTION (INFO, verified not part-4 regressions): 404 error echoes request-uri (pre-existing part-3
   `ApiStatusPages`); shared read-counter (mirrors accepted `OrgIsolationE2eSpec` pattern, kotest

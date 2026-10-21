@@ -1,4 +1,4 @@
-# Composable builder for funktor module configuration (self-validating, boot-safe)
+# ULTRA-00098: Composable builder for funktor module configuration (self-validating, boot-safe)
 
 **Status:** FUTURE / not scheduled (captured 2026-07-23)
 **Type:** framework DX + boot hardening (funktor)
@@ -73,3 +73,7 @@ degenerate misconfiguration (mirrors the already-accepted `OrgAwareParam`-withou
 - ULTRA-00089 (stored param migration) (part 4) — where the gap surfaced.
 - ULTRA-00094 (route check followups) — the incoming-converter boot check to fold in here.
 - ULTRA-00092 (actionable boot error messages) — the boot-error formatting to reuse.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00098 (was `docs/tasks/future/funktor-module-config-builder.md`).

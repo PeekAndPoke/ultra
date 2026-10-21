@@ -22,7 +22,7 @@ class OrgsApi : ApiRoutes("orgs", authFloor = { isSuperUser() }) {
     // one there is no Organisation repository, so `Stored<Organisation>` cannot convert and this route
     // 500s (a degenerate misconfiguration — writes already fail loudly). A self-validating module
     // builder will turn this into an actionable boot failure — see
-    // `docs/tasks/future/funktor-module-config-builder.md`.
+    // ULTRA-00098 (funktor module config builder).
     data class OrgParam(val id: Stored<Organisation>)
 
     val list = OrgsApiClient.List.mount {

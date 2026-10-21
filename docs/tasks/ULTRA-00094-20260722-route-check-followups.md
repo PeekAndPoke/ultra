@@ -19,7 +19,7 @@ has no registered repository (e.g. saas loaded without `useKarango()`/`useMonko(
 converter (which passes by shape). Rather than ship a standalone incoming-convertibility boot check,
 the user's steer (2026-07-23) is to fix the configuration model: a self-validating composable module
 builder where each builder asserts its own invariants at boot. See
-`docs/tasks/future/funktor-module-config-builder.md`. Fold this check in there.
+ULTRA-00098 (funktor module config builder). Fold this check in there.
 
 ## 1. Migrate `validateUriPattern` onto `RouteBootCheck`
 
