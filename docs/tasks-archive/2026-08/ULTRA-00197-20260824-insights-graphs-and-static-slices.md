@@ -1,4 +1,4 @@
-# Insights — the three graphs, and moving static data off every record
+# ULTRA-00197: Insights — the three graphs, and moving static data off every record
 
 **Status:** DONE (archived 2026-10-19) — Parts A+B (track T2, gate PASS round 1, merged `d9ffbb32`); Parts C+D
 (track T1, gate PASS round 2, merged `a578ef0a`). Created 2026-08-24 from maintainer decisions on
@@ -617,3 +617,7 @@ The MINORs below are handed to the maintainer as a list (review-loop termination
 **Verified clean by the batch review:** every listed fix landed (re-read in the current files); the `collect`/`finish` split keeps
 two independent guards and `finish` cannot throw; the counters are structurally 0 (`DummyTracker`); the record-`ts` offset and
 `codeLocation`-as-string claims hold; nothing outside the diff references the removed fields; no surplus.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00197 (was `docs/tasks-archive/2026-08/20260824-insights-graphs-and-static-slices.md`).

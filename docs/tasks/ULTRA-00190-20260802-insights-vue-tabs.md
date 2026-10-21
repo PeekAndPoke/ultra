@@ -351,7 +351,7 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
       explain output as `text`. `JsonTree` replaces the JSON case and is better (collapsible,
       searchable by eye) — **but query text is now unhighlighted plain `<pre>`.**
 - [x] **Three vis.js graphs** — ported 2026-10-19 (T1), `vis-network` 10.1.2. See
-      `docs/tasks-archive/2026-08/20260824-insights-graphs-and-static-slices.md` Parts C+D.
+      ULTRA-00197 (insights graphs and static slices) Parts C+D.
 - [ ] **The bar's git version and environment id have no home.** The bar is deleted by decision, and
       the list page absorbed status/duration — but `appInfo.version.describeGit()` and
       `appConfig.ktor.application.id` were bar items and are now shown nowhere. Both are in the
@@ -492,7 +492,7 @@ only stops it reaching a screen. The real fix belongs with D1 in the backend.
 - [x] **D1 — DONE 2026-08-24** (`e448c64d`). `VaultCollector.Data` is an explicit `data class`;
       `VaultCollectorSlumberSpec` proves the slice slumbers at all, that the timings survive rather than
       serialising to `{}`, and that no bind value reaches the record. Mutation-tested. The kontainer
-      half of the same reshape is still in `20260824-insights-graphs-and-static-slices.md`.
+      half of the same reshape is still in ULTRA-00197 (insights graphs and static slices).
       *(Ticked 2026-09-28 — the work landed a month ago and this box was never updated.)*
 - [x] **S1 at the source** — DONE 2026-10-19 (T1). Monko records typed `@pN:<type>` placeholders with the
       values in `vars`, under its own label `mongo-bound` (round 1), which `VaultCollector` admits; the Database
@@ -510,7 +510,7 @@ config tab) rather than opening a second file. T1 may not edit that file; its pr
 ## T1 — implementation notes (2026-10-19, branch `wt/insights-vue`)
 
 The gate blockers. The graphs and the kontainer shapes are recorded in
-`docs/tasks-archive/2026-08/20260824-insights-graphs-and-static-slices.md`, Parts C+D.
+ULTRA-00197 (insights graphs and static slices), Parts C+D.
 
 - **S1 at the source.** `monko/core/src/main/kotlin/MonkoDriver.kt:148` `FindQueryBuilder.printQuery()` turns
   every filter value into an `@pN:<type>` placeholder (`placeholderise`) with the values, as plain Java values,
@@ -698,7 +698,7 @@ v2 kontainer slice. Rebased onto master `d9ffbb32` (T3) first, without conflicts
   - `KontainerCollectorFinishSpec`'s two counter tests are gone with the fields.
   - v1 records keep theirs: shown as recorded, marked "not measured" (`KontainerTab.vue:103`, `counts` `:122`).
   - v2 shows none, and a stray field is not read (`slices.ts:593`).
-  - The wire contract in `20260824-insights-graphs-and-static-slices.md` and TAB-SPECS follow.
+  - The wire contract in ULTRA-00197 (insights graphs and static slices) and TAB-SPECS follow.
 
 ### Test evidence (round 1 batch)
 

@@ -90,7 +90,7 @@ The Vue implementation learned these the hard way; a fresh Kraft port will hit e
       emitted; the `_type` discriminator replaces them) — found by the Vue gate, `18046b40`. The Vue task's own to-do is to
       re-derive the spec from a current record, so the other entries (`method`/`status`, `uri`, `userId`) are unverified too.
       The authority for this port is the wire contract track T2 is writing in
-      `20260824-insights-graphs-and-static-slices.md`, where the kontainer slice is being reshaped (that doc had no such
+      ULTRA-00197 (insights graphs and static slices), where the kontainer slice is being reshaped (that doc had no such
       section when this note was written). Build against that and keep this box open until it exists.
 
 ## Sequencing
@@ -103,7 +103,7 @@ what still blocks a PASS is that task's "Blocking the gate" list: S1 at the sour
 record, and a re-run. This port will copy the Vue design decisions — including the security ones above — so it still waits
 for that PASS: reviewing after both would mean finding the same defect twice, in two languages.
 
-**Also after `20260824-insights-graphs-and-static-slices.md`**, or at least aware of it: that task
+**Also after ULTRA-00197 (insights graphs and static slices)**, or at least aware of it: that task
 changes the kontainer slice's wire shape and adds two endpoints. Building this against the fat shape
 means rewriting the kontainer tab twice.
 

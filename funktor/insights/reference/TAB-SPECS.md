@@ -115,7 +115,7 @@ and user name of the server included; the fixtures keep six keys.
 ## `kontainer`
 
 Two shapes. **The full contract** — v1 and v2, the join, the fingerprint, the caveats — is in
-`docs/tasks/20260824-insights-graphs-and-static-slices.md`, "Wire contract"; the reader is `readKontainer`.
+ULTRA-00197 (insights graphs and static slices), "Wire contract"; the reader is `readKontainer`.
 
 - **v2 (since 2026-10-19)** `{ graphFingerprint, services: [{cls, type, instances: [{cls, createdAt}]}] }`
   — marked by the `graphFingerprint` KEY (its value may be `null`); only services with instances; class names
