@@ -39,7 +39,7 @@ propagation to parent components, `isValid`/`numErrors`/`status` reacting to chi
 `VDom.formController()` goes through the remembered-value delegate and could behave differently.
 
 > Dependency: the functional-component side of this depends on the functional-component review &
-> hardening task landing first (see `20260722-functional-component-review-hardening.md`) — don't write
+> hardening task landing first (see ULTRA-00083 (functional component review hardening)) — don't write
 > these against shaky functional-component mechanics.
 
 ## Approach

@@ -1,4 +1,4 @@
-# Functional (VDom) component review & hardening
+# ULTRA-00083: Functional (VDom) component review & hardening
 
 **Status:** FUTURE — not scheduled. **Blocks** the functional-component parts of the forms DOM-tests
 work. Deferred while finishing i18n.
@@ -41,3 +41,7 @@ follow-up).
 - Do this as a focused review (possibly a small agent fan-out over the component/VDom modules) before
   coding fixes.
 - Coordinate with the forms DOM-tests plan — its functional-component coverage depends on this.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00083 (was `docs/tasks/future/20260722-functional-component-review-hardening.md`).
