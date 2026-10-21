@@ -97,7 +97,7 @@ Fixes applied: ...
 ### Star-projected collections NPE on awake — TODO
 
 Found 2026-07-29 during the `ultra/reflection` scan
-(`docs/tasks/20260729-reflection-scan-findings.md`), landing here because two of the three sites
+(ULTRA-00148 (reflection scan findings)), landing here because two of the three sites
 are this task's own code. **Probed, not speculative.**
 
 `CollectionAwaker` reads its element type with `type.arguments[0].type!!` in three places. That

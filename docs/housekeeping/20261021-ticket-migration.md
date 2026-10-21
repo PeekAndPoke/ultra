@@ -364,3 +364,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00146 | 2026-07-29 | `.claude/tasks/20260729-ts-sdk-codegen.md` | `docs/tasks/ULTRA-00146-20260729-ts-sdk-codegen.md` |
 | ULTRA-00147 | 2026-07-29 | `docs/tasks/20260729-slumber-array-support.md` | `docs/tasks/ULTRA-00147-20260729-slumber-array-support.md` |
 | ULTRA-00147 | 2026-07-29 | `.claude/tasks/20260729-slumber-array-support.md` | `docs/tasks/ULTRA-00147-20260729-slumber-array-support.md` |
+| ULTRA-00148 | 2026-07-29 | `docs/tasks/20260729-reflection-scan-findings.md` | `docs/tasks/ULTRA-00148-20260729-reflection-scan-findings.md` |
+| ULTRA-00148 | 2026-07-29 | `.claude/tasks/20260729-reflection-scan-findings.md` | `docs/tasks/ULTRA-00148-20260729-reflection-scan-findings.md` |

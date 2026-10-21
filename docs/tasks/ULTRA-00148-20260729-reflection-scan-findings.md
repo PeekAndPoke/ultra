@@ -1,4 +1,4 @@
-# ultra/reflection scan — findings backlog
+# ULTRA-00148: ultra/reflection scan — findings backlog
 
 **Status:** IN PROGRESS — 8 main files documented, 33 findings collected, first fix round DONE
 **Plan:** none — output of a 6-agent scan of `ultra/reflection`, 2026-07-29
@@ -220,3 +220,7 @@ Three of the agents' doc edits **documented a defect as the contract**, a predic
 
 Worth carrying into the next module's prompt: tell agents to leave a `TODO(scan)` marker instead of
 documenting behaviour they are simultaneously reporting as wrong.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00148 (was `docs/tasks/20260729-reflection-scan-findings.md`).
