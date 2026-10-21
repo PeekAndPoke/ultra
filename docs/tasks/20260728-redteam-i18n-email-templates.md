@@ -1,7 +1,7 @@
 # Red-team — auth email templates (rendered in code)
 
 **Status:** COLLECTED — NOT EXECUTED
-**Feature:** `docs/tasks-archive/2026-07/20260728-auth-email-templates-in-code.md`
+**Feature:** ULTRA-00131 (auth email templates in code)
 **Rule:** these are attack scenarios for a dedicated penetration-test session. Do NOT run them as
 part of normal feature work.
 

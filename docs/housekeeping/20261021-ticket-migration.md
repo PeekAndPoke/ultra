@@ -328,3 +328,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00129 | 2026-07-27 | `.claude/tasks/20260727-activation-resend-and-frontend.md` | `docs/tasks/ULTRA-00129-20260727-activation-resend-and-frontend.md` |
 | ULTRA-00130 | 2026-07-27 | `docs/tasks/20260727-activation-resend-cooldown-atomicity.md` | `docs/tasks/ULTRA-00130-20260727-activation-resend-cooldown-atomicity.md` |
 | ULTRA-00130 | 2026-07-27 | `.claude/tasks/20260727-activation-resend-cooldown-atomicity.md` | `docs/tasks/ULTRA-00130-20260727-activation-resend-cooldown-atomicity.md` |
+| ULTRA-00131 | 2026-07-28 | `docs/tasks-archive/2026-07/20260728-auth-email-templates-in-code.md` | `docs/tasks-archive/2026-07/ULTRA-00131-20260728-auth-email-templates-in-code.md` |
+| ULTRA-00131 | 2026-07-28 | `.claude/tasks-archive/2026-07/20260728-auth-email-templates-in-code.md` | `docs/tasks-archive/2026-07/ULTRA-00131-20260728-auth-email-templates-in-code.md` |
+| ULTRA-00131 | 2026-07-28 | `.claude/tasks/20260728-auth-email-templates-in-code.md` | `docs/tasks-archive/2026-07/ULTRA-00131-20260728-auth-email-templates-in-code.md` |

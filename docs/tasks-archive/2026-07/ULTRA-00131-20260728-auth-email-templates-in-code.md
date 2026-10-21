@@ -1,4 +1,4 @@
-# Auth email templates, rendered in code
+# ULTRA-00131: Auth email templates, rendered in code
 
 **Status:** DONE (2026-07-28; archived 2026-10-19) — gate PASS after fixes; all tests green + `assemble` clean. Archive check
 2026-10-19: every Spec and Test box was already ticked; the code is in the tree (`EmailTemplate.kt` / `EmailLayout.kt` under
@@ -197,3 +197,7 @@ New specs: `LocalizedEmailTemplateSpec` 14, `AuthEmailTemplatesSpec` 19, `AuthEm
 **Red-team follow-up:** `docs/tasks/20260728-redteam-i18n-email-templates.md` — rewritten for this
 design (2026-07-28); the retired Markdown/substitution scenarios are listed there so a tester does not
 re-run them.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00131 (was `docs/tasks-archive/2026-07/20260728-auth-email-templates-in-code.md`).
