@@ -45,4 +45,4 @@ These are the residual/edge scenarios to actively attempt.
 
 - `20260722-two-phase-auth-consistent-params.md` — the feature.
 - `20260722-route-check-followups.md` — the linter/hardening backstops (items 2, 4).
-- `20260718-redteam-saas-orgs.md` — the broader org red-team; fold these in.
+- ULTRA-00039 (redteam saas orgs) — the broader org red-team; fold these in.

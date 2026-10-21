@@ -7,7 +7,7 @@ follow-ups were doc/test-only, applied). The next leaf off the b2b membership ar
 **Plan:** `docs/tasks/20260719-demo-restructure-three-apps.md` (three-apps showcase) +
 `20260719-saas-full-feature-backlog.md` §3 (invites).
 **Security-critical:** YES — a new membership-mutation surface (who can add whom, with what roles).
-Extend `20260718-redteam-saas-orgs.md` at review.
+Extend ULTRA-00039 (redteam saas orgs) at review.
 
 
 
@@ -114,7 +114,7 @@ doc/test-only follow-ups).
   enforced server-side before the existing-check; reactivation scoped by org+userId with `(org,userId)`
   immutable; all writes under the per-org lock; `findByEmail` parameterized; email echoed only in an
   escaped toast. FIXED: added an add-specific cross-org e2e (`single@`→globex → 404). LOW/INFO →
-  red-team collector (`20260718-redteam-saas-orgs.md`): existence-enumeration oracle, reactivation
+  red-team collector (ULTRA-00039 (redteam saas orgs)): existence-enumeration oracle, reactivation
   hijack, ownership laundering, add-role injection, unsolicited membership, add TOCTOU. Deferred
   (pre-existing/backlog): server-side role allowlist (§4), invite/accept consent flow.
 

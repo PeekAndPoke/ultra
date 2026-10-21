@@ -7,7 +7,7 @@ remaining leaves (invite/reactivation, operator cross-realm surface) are deferre
 testbed) + `docs/tasks/20260719-saas-full-feature-backlog.md` §2 (ownership) / §3-§4.
 **Security-critical:** YES — this is the org membership + permission spine (who belongs to an org, in
 what role, and who may manage that). Red-team follow-up required at review (extend
-`20260718-redteam-saas-orgs.md`).
+ULTRA-00039 (redteam saas orgs)).
 
 ## Why this is the "core" starting point (user directive 2026-07-23)
 
@@ -265,7 +265,7 @@ round-trip closes the cross-realm bare-key collision on BOTH backends; all prior
 6. **e2e additions** — mutate-an-already-soft-deleted-member → 404; a b2b admin cannot mutate a
    b2b2c end-user of the org (404); an admin CANNOT grant OWNER / demote-remove an owner (403), an
    OWNER can. (`B2bMembersApiTest`.)
-7. **red-team** (`20260718-redteam-saas-orgs.md`) — add: removed-member resurrection race;
+7. **red-team** (ULTRA-00039 (redteam saas orgs)) — add: removed-member resurrection race;
    admin-takeover-via-OWNER-grant (now blocked by B).
 
 ### Recorded INFO / deferred (not round-1 blockers)
@@ -362,7 +362,7 @@ karango/monko helper tests) → **round 2** (fresh 3-agent gate on `git diff d22
   double-fetch consistency angle is latent-only until Inc-2 and closed by the same threading fix.
 - **Increment 1b (login migration) is DONE** — review loop closed at round 2.
 
-**Red-team follow-up:** extend `docs/tasks/20260718-redteam-saas-orgs.md` — last-owner
+**Red-team follow-up:** extend ULTRA-00039 (redteam saas orgs) — last-owner
 removal RACE (two parallel owner-removals → zero owners); cross-org MOVE via `save` identity mutation;
 ownerless-org lockout (creation without owner seed); orphan `OrgMember` enumeration after user
 deletion; ownership-predicate divergence if Inc-2 re-implements `isOwner` on `OrgMember`.

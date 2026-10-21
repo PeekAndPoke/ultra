@@ -44,4 +44,4 @@ capture the design when shared. Placeholder — do not design speculatively.
   See `20260722-route-check-followups.md` item 4.
 - **Cross-realm authorization boundary** — `../saas-orgs/20260719-cross-realm-authz-and-tests.md`.
 - **Red-team scenarios** — `20260723-redteam-org-isolation.md`,
-  `../saas-orgs/20260718-redteam-saas-orgs.md`.
+  ULTRA-00039 (redteam saas orgs).

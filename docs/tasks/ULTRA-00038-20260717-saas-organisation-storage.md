@@ -66,7 +66,7 @@ persisted to both ArangoDB (karango) and MongoDB (monko), with a unique slug.
 - Archived default-org self-heal (single-tenant lockout) → **O3** login active-org filter.
 - Pre-auth body materialization / body-size cap → framework-wide (`funktor/rest`), not O1-specific.
 
-**Red-team follow-up:** `20260718-redteam-saas-orgs.md` (created).
+**Red-team follow-up:** ULTRA-00039 (redteam saas orgs) (created).
 
 **Gate verdict: PASS** — no open CRITICAL/HIGH exploitable now; e2e tests present (both backends) & green.
 

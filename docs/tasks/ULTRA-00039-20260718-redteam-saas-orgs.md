@@ -1,4 +1,4 @@
-# Red-team: SaaS organisations (Phase O1)
+# ULTRA-00039: Red-team: SaaS organisations (Phase O1)
 
 **Status:** COLLECTED — do NOT execute during feature work; run in a dedicated pentest session
 **Feature task:** ULTRA-00038 (saas organisation storage)
@@ -114,3 +114,7 @@
   cross-org isolation items are pre-registered for after O2/O3 add memberships + org-scoped rules.
 - The OrgMember membership items are pre-registered for after Increment 2 (member-management API)
   lands; collected here, NOT executed during feature work.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00039 (was `docs/tasks/20260718-redteam-saas-orgs.md`).

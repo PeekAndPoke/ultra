@@ -200,4 +200,4 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
   fold the multiline-indent fix here).
 - FOLLOW-UP: `20260722-route-check-followups.md` — migrate `validateUriPattern` onto `RouteBootCheck`,
   the entity-`OrgAware` linter, and branch-level (sub-org) isolation.
-- `20260718-redteam-saas-orgs.md` — org-IDOR scenarios this closes structurally; update its assumptions.
+- ULTRA-00039 (redteam saas orgs) — org-IDOR scenarios this closes structurally; update its assumptions.
