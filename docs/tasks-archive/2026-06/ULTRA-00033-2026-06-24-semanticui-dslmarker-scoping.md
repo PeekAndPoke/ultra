@@ -1,4 +1,4 @@
-# Semantic UI DSL: fix @DslMarker scoping + remove dead code — DONE (2026-06-24)
+# ULTRA-00033: Semantic UI DSL: fix @DslMarker scoping + remove dead code — DONE (2026-06-24)
 
 
 
@@ -102,3 +102,7 @@ Net: 9 files, +2,227 / −2,698 lines.
 
 - Bundle-size work — no meaningful win available from DSL changes.
 - `@JsName` mangling re-introduction — reverted earlier; Terser already mangles.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00033 (was `docs/tasks-archive/2026-06/2026-06-24-semanticui-dslmarker-scoping.md`).
