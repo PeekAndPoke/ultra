@@ -1,4 +1,4 @@
-# Messaging follow-ups from the email review gate
+# ULTRA-00124: Messaging follow-ups from the email review gate
 
 **Status:** TODO — collected 2026-07-27, none started
 **Source:** the 3-agent gate on ULTRA-00123 (framework composed email sender)
@@ -119,3 +119,7 @@ covers the demo's use of it.
   no longer feeds it mail bodies, but the underlying exposure is real and belongs to insights.
 - `SentMessage.Lookup` folds recipient addresses into `refs`, and `findByRefs` is un-tenanted →
   recorded as a red-team scenario in `docs/tasks/20260727-redteam-messaging.md`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00124 (was `docs/tasks/20260727-messaging-followups.md`).

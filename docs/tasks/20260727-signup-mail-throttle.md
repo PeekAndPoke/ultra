@@ -4,7 +4,7 @@
 **Found via:** the security review of `docs/tasks-archive/2026-07/20260727-account-activation.md` (commit
 `31667449`), which is also what introduced the exposure
 **Security-critical:** yes → attack scenarios already recorded, see the bottom
-**Supersedes:** `docs/tasks/20260727-messaging-followups.md` §5 — that item asked for the same
+**Supersedes:** ULTRA-00124 (messaging followups) §5 — that item asked for the same
 mechanism for a different consumer (activation RESEND). This is the same task with a second, already
 shipped, consumer.
 

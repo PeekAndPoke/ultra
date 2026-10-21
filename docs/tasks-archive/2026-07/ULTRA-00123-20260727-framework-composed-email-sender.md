@@ -4,7 +4,7 @@
 chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmailSender` under
 `funktor/messaging/src/jvmMain/kotlin/senders/`, `useSender` / `onAfterSend` in `index_jvm.kt`); the symbols it deleted
 (`canDeliver`, `suppressDeliveryInTestMode`, `TestOutbox`) occur nowhere; its specs are in the tree and green in the last
-recorded run. Residuals live in `docs/tasks/20260727-messaging-followups.md` and
+recorded run. Residuals live in ULTRA-00124 (messaging followups) and
 `docs/tasks/20260727-redteam-messaging.md`; the docs follow-up is ULTRA-00122 (docs messaging test seam).
 **Plan:** `/Users/gerk/.claude/plans/indexed-stargazing-spring.md`
 **Supersedes:** the guard design in ULTRA-00121 (email e2e test seam)
@@ -99,7 +99,7 @@ to ask anything about the sender — no `canDeliver`, no marker interface, no ty
   configured, because it injects `StoringEmailHook`. It holds no state, so this is allocation only.
 - A misconfigured `environment = "test"` in production now silently *captures* mail rather than
   discarding it — i.e. retains bodies in heap. The boot-time warning that would surface this is item 1
-  of `docs/tasks/20260727-messaging-followups.md`.
+  of ULTRA-00124 (messaging followups).
 - `funktor-demo` has no test that triggers a mail flow, so its own composed chain is unproven at the
   app level. Deleting the old registration in the same commit is what prevents double-decoration.
 
@@ -191,7 +191,7 @@ anonymization of uppercase/protocol-relative/custom schemes.
 
 ### Recorded, not fixed
 
-`docs/tasks/20260727-messaging-followups.md` (8 items, incl. the boot warning, `senderName` never
+ULTRA-00124 (messaging followups) (8 items, incl. the boot warning, `senderName` never
 reaching the `From` header, anonymization not covering non-URL secrets, no `OnBeforeSend` hook for
 activation-resend throttling, and zero provider tests) and
 `docs/tasks/20260727-redteam-messaging.md` (6 attack scenarios, led by the un-tenanted

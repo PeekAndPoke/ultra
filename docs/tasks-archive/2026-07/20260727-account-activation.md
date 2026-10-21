@@ -68,7 +68,7 @@ never get one either (`requiresActivation = false`), so SSO sign-in is untouched
 
 ### Scope cut: no resend endpoint in this increment
 
-`docs/tasks/20260727-messaging-followups.md` §5 records "no `OnBeforeSend` hook, so activation
+ULTRA-00124 (messaging followups) §5 records "no `OnBeforeSend` hook, so activation
 resend has nowhere to put a throttle" as a blocker. It blocks RESEND, not activation — so resend is
 out of scope here and the hook is not needed yet.
 
@@ -233,7 +233,7 @@ or per-IP counters, and a suppression point in the send chain).
 
 **Deferred by the user 2026-07-27** → full write-up, options and trade-offs in
 `docs/tasks/20260727-signup-mail-throttle.md`, which supersedes
-`docs/tasks/20260727-messaging-followups.md` §5 (same mechanism, second consumer).
+ULTRA-00124 (messaging followups) §5 (same mechanism, second consumer).
 
 ### 2. The frontend is a separate increment — the mailed link currently lands on nothing
 
