@@ -1,4 +1,4 @@
-# Plan: Mutator Library — Quality & Completeness Improvements
+# ULTRA-00002: Plan: Mutator Library — Quality & Completeness Improvements
 
 
 
@@ -272,3 +272,7 @@ After each phase:
 | New: `mutator/core/src/jvmTest/kotlin/e2e/CollectionPropertiesSpec.kt` | 3.2      |
 | New: `mutator/core/src/jvmTest/kotlin/MutatorBaseSpec.kt`              | 3.3      |
 | `mutator/core/src/jvmTest/kotlin/ListMutatorSpec.kt`                   | 3.4      |
+
+## History
+
+- 2026-10-21: numbered ULTRA-00002 (was `docs/tasks-archive/2026-03/2026-03-25-mutator-quality-improvements.md`).
