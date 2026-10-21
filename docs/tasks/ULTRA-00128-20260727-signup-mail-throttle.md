@@ -1,4 +1,4 @@
-# Sign-up is an unthrottled outbound-mail primitive — needs a suppression point
+# ULTRA-00128: Sign-up is an unthrottled outbound-mail primitive — needs a suppression point
 
 **Status:** TODO — deferred by the user 2026-07-27, to be handled later
 **Found via:** the security review of ULTRA-00126 (account activation) (commit
@@ -107,3 +107,7 @@ Captcha / proof-of-work on sign-up, or not granting `Capability.SignUp` on publi
 
 ULTRA-00127 (redteam account activation) §1 (the amplifier), §3 (enumeration), §4
 (pre-registration DoS). COLLECTED — do not execute during feature work.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00128 (was `docs/tasks/20260727-signup-mail-throttle.md`).

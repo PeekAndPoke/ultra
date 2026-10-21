@@ -1,7 +1,7 @@
 # ULTRA-00126: Account activation (email verification on sign-up)
 
 **Status:** DONE (backend 2026-07-27, gate passed — `b96c2c1c`; archived 2026-10-19). Both scope items at the bottom are
-closed: (1) the sign-up mail throttle stays deferred, as its own task `docs/tasks/20260727-signup-mail-throttle.md`
+closed: (1) the sign-up mail throttle stays deferred, as its own task ULTRA-00128 (signup mail throttle)
 (TODO); (2) the frontend landed the same day in `84fa3b47` — `ActivateAccountPage.kt`, mounted by `AuthFrontendDefault`
 at `AuthFrontend.kt:41` (the mailed deep link) and `:50` (the no-token resend page), and used by the demo `adminapp`
 through `AuthFrontend.default(…)`. Resend, the `ActivationRequired` sign-in response and their gate are carried by
@@ -232,7 +232,7 @@ Not fixed here because a real throttle needs infrastructure this increment does 
 or per-IP counters, and a suppression point in the send chain).
 
 **Deferred by the user 2026-07-27** → full write-up, options and trade-offs in
-`docs/tasks/20260727-signup-mail-throttle.md`, which supersedes
+ULTRA-00128 (signup mail throttle), which supersedes
 ULTRA-00124 (messaging followups) §5 (same mechanism, second consumer).
 
 ### 2. The frontend is a separate increment — the mailed link currently lands on nothing

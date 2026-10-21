@@ -77,7 +77,7 @@ is reachable. Listed for completeness; do not pick it without a distributed lock
 
 ## Related, deliberately NOT in scope
 
-`docs/tasks/20260727-signup-mail-throttle.md` — a different problem with a different shape. That
+ULTRA-00128 (signup mail throttle) — a different problem with a different shape. That
 one is about an ANONYMOUS endpoint with no per-account anchor at all (every aliased address is a new
 user, so no per-user cooldown can bite). Atomicity would not help it, and a suppression point in the
 send chain would not help this one.

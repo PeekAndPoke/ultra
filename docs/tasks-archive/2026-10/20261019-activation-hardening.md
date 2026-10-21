@@ -154,7 +154,7 @@ scanner reason as activation, single-use by delete count.
 - Monko's auth-record TTL never expires anything (plan backlog, `e4076e46`).
 - Session revocation, refresh-token renewal after a reset (`20260728-session-revocation-wiring.md`).
 - The rest of the SSO linking policy for already-active accounts (ULTRA-00118 (sso email verification)).
-- Sign-up mail throttling per recipient (`20260727-signup-mail-throttle.md`).
+- Sign-up mail throttling per recipient (ULTRA-00128 (signup mail throttle)).
 
 ## Implementation notes
 

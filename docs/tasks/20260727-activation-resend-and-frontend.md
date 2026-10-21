@@ -28,7 +28,7 @@ So a demo sign-up produces an account with no self-service way in.
 
 ## The throttle question, resolved
 
-`docs/tasks/20260727-signup-mail-throttle.md` is deferred, and resend does NOT need it. The two
+ULTRA-00128 (signup mail throttle) is deferred, and resend does NOT need it. The two
 cases differ in exactly the way that matters:
 
 - **Sign-up** creates a NEW user per aliased address, so a per-user cooldown never triggers. That is
@@ -149,7 +149,7 @@ cooldown makes resend independent of the deferred sign-up throttle. That bounds 
 the attacker chooses HOW MANY ACCOUNTS EXIST — and `PendingActivation` never expires, so every pending
 account is a permanent tap. As first built, `resendActivation` took a bare email on an anonymous
 route: 12 mails/hour to any pending address, forever, and ×N via the sign-up aliasing already recorded
-in `docs/tasks/20260727-signup-mail-throttle.md`. Before this feature, sign-up was a ONE-SHOT (one
+in ULTRA-00128 (signup mail throttle). Before this feature, sign-up was a ONE-SHOT (one
 mail per address, ever). It would have become a sustained faucet.
 
 The domain reviewer identified the root cause exactly: `ActivationRequired` was modelled on

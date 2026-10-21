@@ -75,7 +75,7 @@ tenant-branded mail.
 
 ## 5. No `OnBeforeSend` hook — activation resend has nowhere to put a throttle
 
-> **SUPERSEDED 2026-07-27 by `docs/tasks/20260727-signup-mail-throttle.md`.** Same mechanism, but
+> **SUPERSEDED 2026-07-27 by ULTRA-00128 (signup mail throttle).** Same mechanism, but
 > it now has a SHIPPED consumer as well as a hypothetical one: account activation made anonymous
 > sign-up send mail to a caller-chosen address, with no throttle anywhere. Work it there.
 
