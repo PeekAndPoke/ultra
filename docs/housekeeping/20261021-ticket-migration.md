@@ -187,3 +187,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00073 | 2026-07-21 | `docs/tasks/20260721-i18n-s3-gradle-plugin.md` | `docs/tasks/ULTRA-00073-20260721-i18n-s3-gradle-plugin.md` |
 | ULTRA-00073 | 2026-07-21 | `.claude/tasks/i18n/20260721-i18n-s3-gradle-plugin.md` | `docs/tasks/ULTRA-00073-20260721-i18n-s3-gradle-plugin.md` |
 | ULTRA-00073 | 2026-07-21 | `.claude/tasks/20260721-i18n-s3-gradle-plugin.md` | `docs/tasks/ULTRA-00073-20260721-i18n-s3-gradle-plugin.md` |
+| ULTRA-00074 | 2026-07-21 | `docs/tasks/20260721-i18n-s4-kraft-glue.md` | `docs/tasks/ULTRA-00074-20260721-i18n-s4-kraft-glue.md` |
+| ULTRA-00074 | 2026-07-21 | `.claude/tasks/i18n/20260721-i18n-s4-kraft-glue.md` | `docs/tasks/ULTRA-00074-20260721-i18n-s4-kraft-glue.md` |
+| ULTRA-00074 | 2026-07-21 | `.claude/tasks/20260721-i18n-s4-kraft-glue.md` | `docs/tasks/ULTRA-00074-20260721-i18n-s4-kraft-glue.md` |

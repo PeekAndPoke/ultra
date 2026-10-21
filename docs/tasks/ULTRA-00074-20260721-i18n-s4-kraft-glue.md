@@ -1,4 +1,4 @@
-# S4 — kraft reactive i18n glue
+# ULTRA-00074: S4 — kraft reactive i18n glue
 
 **Status:** DONE — gate PASS after fixes, `I18nGlueSpec` (5 tests) green in-browser (2026-07-21)
 **Plan:** ULTRA-00069 (i18n l10n foundation) → Build step S4
@@ -58,3 +58,7 @@ Fixes applied:
 - Added tests for persistence/boot precedence, `by Formatting`, and default-degradation; replaced the
   `delay(50)` with a poll-until `awaitText` helper.
 - Functional-component delegates + `navigator.languages` recorded as deferred (above).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00074 (was `docs/tasks/20260721-i18n-s4-kraft-glue.md`).
