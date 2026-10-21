@@ -178,3 +178,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00070 | 2026-07-20 | `docs/tasks/20260720-i18n-s1-runtime-core.md` | `docs/tasks/ULTRA-00070-20260720-i18n-s1-runtime-core.md` |
 | ULTRA-00070 | 2026-07-20 | `.claude/tasks/i18n/20260720-i18n-s1-runtime-core.md` | `docs/tasks/ULTRA-00070-20260720-i18n-s1-runtime-core.md` |
 | ULTRA-00070 | 2026-07-20 | `.claude/tasks/20260720-i18n-s1-runtime-core.md` | `docs/tasks/ULTRA-00070-20260720-i18n-s1-runtime-core.md` |
+| ULTRA-00071 | 2026-07-20 | `docs/tasks/20260720-placeholders-injection-fix.md` | `docs/tasks/ULTRA-00071-20260720-placeholders-injection-fix.md` |
+| ULTRA-00071 | 2026-07-20 | `.claude/tasks/i18n/20260720-placeholders-injection-fix.md` | `docs/tasks/ULTRA-00071-20260720-placeholders-injection-fix.md` |
+| ULTRA-00071 | 2026-07-20 | `.claude/tasks/20260720-placeholders-injection-fix.md` | `docs/tasks/ULTRA-00071-20260720-placeholders-injection-fix.md` |

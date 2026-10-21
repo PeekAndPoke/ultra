@@ -354,7 +354,7 @@ KSP** (input is a resource file, not Kotlin symbols; common-metadata KSP output 
   Was a `fold` that re-scanned substituted text (second-order injection + billion-laughs). Now
   single-pass (one combined literal regex). Adversarial regression tests added. Found in the S1
   security review; fixed proactively (no production callers yet, but shared foundation). See
-  `docs/tasks/20260720-placeholders-injection-fix.md`.
+  ULTRA-00071 (placeholders injection fix).
 
 ## Build steps (dependency order — one task file each, `/feature-review` gate per step)
 

@@ -1,4 +1,4 @@
-# Fix: second-order placeholder injection in `ultra.common.Placeholders`
+# ULTRA-00071: Fix: second-order placeholder injection in `ultra.common.Placeholders`
 
 **Status:** DONE — fixed, adversarial tests green on jvm+js+metadata (2026-07-20)
 **Plan:** prompted by the S1 review (ULTRA-00069 (i18n l10n foundation) Interactions)
@@ -64,3 +64,7 @@ Fixes applied post-gate:
 
 - Adversarial tests double as the red-team scenarios for this fix (bypass attempts on single-pass), so
   no separate red-team task is warranted.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00071 (was `docs/tasks/20260720-placeholders-injection-fix.md`).
