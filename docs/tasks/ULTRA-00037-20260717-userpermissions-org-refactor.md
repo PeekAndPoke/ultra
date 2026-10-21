@@ -1,4 +1,4 @@
-# UserPermissions org refactor (Phase O0)
+# ULTRA-00037: UserPermissions org refactor (Phase O0)
 
 **Status:** IN REVIEW — implementation complete + tests green (2026-07-17)
 **Plan:** ULTRA-00035 (auth orgs foundation) → Phase O0
@@ -45,3 +45,7 @@ unchanged because both helpers were preserved.
 | 3. Security | | |
 
 **Red-team follow-up:** to be created on completion (permission-model tampering, org claim forgery).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00037 (was `docs/tasks/20260717-userpermissions-org-refactor.md`).

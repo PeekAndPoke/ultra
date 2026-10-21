@@ -303,7 +303,7 @@ layer will read — see ULTRA-00036 (saas foundation).)
 
 Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` patterns) before the next.
 
-### Phase O0 — UserPermissions refactor (~½ day) — DONE 2026-07-17 (task `20260717-userpermissions-org-refactor.md`)
+### Phase O0 — UserPermissions refactor (~½ day) — DONE 2026-07-17 (task ULTRA-00037 (userpermissions org refactor))
 - [x] `organisations: Set<String>` → `org: String?` + add `accessibleOrgs: Set<String>`
 - [x] Rewrite organisation helpers (`hasOrganisation` single-valued, `canAccessOrg`); dropped
       `hasAllOrganisations`; **kept** `hasAnyOrganisation` (redefined) so `AuthRule.forAnyOrganisation`
