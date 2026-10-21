@@ -1,4 +1,4 @@
-# Email-first sign-up: the password is chosen when activating
+# ULTRA-00231: Email-first sign-up: the password is chosen when activating
 
 **Status:** TODO — AFTER 0.114.0 (maintainer decision 2026-10-19: "B after the release"); the first auth task after it
 **Plan:** ULTRA-00221 (insights auth parallel plan) (auth tracks); follows
@@ -66,3 +66,7 @@ before relying on a line — rounds 2–4 moved them (claim-first retire, the si
 
 What it ADDS is small: a password field on the activation page (with the realm's policy) and a `Password` record created
 by the activation POST.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00231 (was `docs/tasks/20261019-email-first-signup.md`).

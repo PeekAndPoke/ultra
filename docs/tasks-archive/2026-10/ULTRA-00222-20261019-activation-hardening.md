@@ -2,7 +2,7 @@
 
 **Status:** DONE 2026-10-20 — gate PASS in round 4 (`reviewer-top` ×3, clean); round-4 MINORs fixed with a scoped
 delta check (one MAJOR test gap closed, `7780e5dc`); merged to master `ed8d3b38`, full suite green. Ships in 0.114.0.
-**Docs:** NO docs task yet — the sign-up/activation surface changes again in `20261019-email-first-signup.md` (next
+**Docs:** NO docs task yet — the sign-up/activation surface changes again in ULTRA-00231 (email first signup) (next
 auth task, after 0.114.0), so documenting it now means rewriting it next week. The docs follow-up box below moves into
 that task; the 0.114.0 `CHANGELOG.md` entry carries the breaking API and the upgrade traps meanwhile.
 **Plan:** ULTRA-00221 (insights auth parallel plan) → the first auth track, taken ahead of T4 (maintainer:
@@ -448,7 +448,7 @@ as one small batch with a scoped check of that delta.
 
 Every round-2 row dispositioned `fix`; the `docs task` row is listed in the docs follow-up box; the `maintainer note`
 row (sent-message refs and failed-mail logs keep the plaintext address) is skipped as instructed. Activate stays as
-it is (the password-at-activation question is answered by `20261019-email-first-signup.md`). No GlobalLocks: the
+it is (the password-at-activation question is answered by ULTRA-00231 (email first signup)). No GlobalLocks: the
 commit point is a conditional write on the pending marker itself.
 
 **The claim.** `AuthRecord.PendingActivation.claimedBy` (`AuthRecord.kt:86`) is null until a one-way change takes the

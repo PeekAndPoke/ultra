@@ -64,7 +64,7 @@ slots). Then T6, T7 and the rest as slots free up. Docs follow-ups land only aft
 for its inventory gaps). Activation hardening DONE (gate PASS in round 4, `reviewer-top`; MINORs fixed + delta check; merged `ed8d3b38`;
 archived ULTRA-00222 (activation hardening); docs folded into the email-first task). `insights-minors` DONE (review clean, merged `348c66bc`; follow-ups →
 ULTRA-00228 (insights minors followups)). T4 insights-kraft started, then PAUSED 2026-10-19 (budget precaution; WIP `24e745bf` on its branch). **Stable point
-first:** finish activation hardening, then release 0.114.0; everything else waits until after it. First auth task after the release: `20261019-email-first-signup.md` (maintainer
+first:** finish activation hardening, then release 0.114.0; everything else waits until after it. First auth task after the release: ULTRA-00231 (email first signup) (maintainer
 2026-10-19; closes the one-click pre-hijack the hardening leaves). Also after the release: answer Mission-Control's
 interview on how other repos' agents learn Kraft/Funktor (llms/*.md as entry point, what is current vs stale, a
 per-library "mistakes agents make" section, common Kraft UI errors from the example bumps) — low priority. With it, in the same reply round: Mission-Control's RFC on the shared review-loop blueprint
