@@ -1,4 +1,4 @@
-# Automatic entity mutation tracking — vault hooks + diff worker
+# ULTRA-00101: Automatic entity mutation tracking — vault hooks + diff worker
 
 **Status:** FUTURE — not scheduled. Needs a proper design pass (GDPR question below is open).
 **Area:** ultra:vault hooks, funktor worker infra, storage.
@@ -55,3 +55,7 @@ user must also handle those). Also note: the `actor` attribution itself is perso
 - Existing precedent in-repo: `EmailStoring.withAnonymizedContent` (messaging) already anonymizes
   stored email content — same spirit, study its approach.
 - Red-team/GDPR angle overlaps the auth backlog (user erasure lands as an `AuthUserAdapter` op).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00101 (was `docs/tasks/future/20260723-entity-mutation-tracking.md`).

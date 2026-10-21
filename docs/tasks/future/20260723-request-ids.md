@@ -24,7 +24,7 @@ every log line produced while handling the request.
   wrapped per-request `Log` instance from the kontainer) so every line is correlated.
 - Response: echo our own id as a response header (`X-Request-Id`) so users/support can reference it.
 - Later consumers: funktor:insights/logging UIs can filter by request id; the entity-mutation
-  tracking idea ([[20260723-entity-mutation-tracking]]) attaches these ids to mutation records.
+  tracking idea ([[ULTRA-00101]]) attaches these ids to mutation records.
 
 ## Open questions (for the design pass)
 

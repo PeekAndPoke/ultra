@@ -22,7 +22,7 @@ just never get written, with no error. Two escalation levels:
 
 - A registry of `marker interface → hook factory` pairs (e.g. `Timestamped::class → TimestampedHook`),
   extensible so future hooks join the mechanism — notably the mutation-tracking hook
-  ([[20260723-entity-mutation-tracking]]) and any future `@Pii`/anonymization hooks.
+  ([[ULTRA-00101]]) and any future `@Pii`/anonymization hooks.
 - Detection via the repo's stored type: `storedType.classifier` implements marker?
 - Auto-attach fits the framework's "no magic, but sane defaults" stance IF it is discoverable:
   log at startup what was auto-attached, and keep an explicit opt-out (e.g. repo flag) for the
@@ -42,6 +42,6 @@ just never get written, with no error. Two escalation levels:
 
 ## Related
 
-- [[20260723-entity-mutation-tracking]] — first big beneficiary of auto-attach.
+- [[ULTRA-00101]] — first big beneficiary of auto-attach.
 - Known trap in this area: `kontainer-semidynamic-singleton-trap` (memory) — hook factories with
   ctor deps must mind kontainer semantics.
