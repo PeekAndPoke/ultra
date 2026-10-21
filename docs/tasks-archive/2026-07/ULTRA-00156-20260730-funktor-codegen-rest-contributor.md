@@ -136,7 +136,7 @@ Sketch, to be designed properly rather than assumed:
 surface is still moving, and documenting a shape that changes next week costs a rewrite plus a reader
 who trusted the stale version. Revisit when it settles.
 
-**Defect handed off:** `docs/tasks/20260731-typedrouterenderer-double-encodes-query.md` — found via
+**Defect handed off:** ULTRA-00165 (typedrouterenderer double encodes query) — found via
 this review, lives in `funktor/core`, not fixed here.
 
 ### The two that mattered
