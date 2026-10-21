@@ -1,9 +1,8 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: none**
-**SINCE: 2026-10-20 10:35**
-**STATE: FREE — released by Ultra-Main-Dev after preparing 0.114.0 (commit `04a284da`, tag `v0.114.0`). Paused at
-the stable point; the maintainer publishes. Next holder: take it here before building.**
+**HOLDER: Ultra-Main-Dev**
+**SINCE: 2026-10-21**
+**STATE: HELD — project-layout migration (tasks to docs/) and ticket numbers, on master.**
 
 ## What the last holder changed — Ultra-Main-Dev, 2026-10-19 (flaky addon tests, Gradle DSL deprecations, 0.113.0)
 
