@@ -1,4 +1,4 @@
-# Email end-to-end test seam — capture outgoing mail and follow the token in it
+# ULTRA-00121: Email end-to-end test seam — capture outgoing mail and follow the token in it
 
 **Status:** DONE 2026-07-27 (implemented 2026-07-26, gate passed 2026-07-27)
 
@@ -262,3 +262,7 @@ have persisted its token verbatim into `system_sent_messages`.
 **Red-team follow-up:** covered by the existing
 ULTRA-00117 (redteam value class emailaddress) §5 (enumeration by timing — the work
 asymmetry this seam now makes measurable) — no new red-team doc.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00121 (was `docs/tasks-archive/2026-07/20260726-email-e2e-test-seam.md`).

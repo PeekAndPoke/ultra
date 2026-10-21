@@ -306,3 +306,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00119 | 2026-07-26 | `.claude/tasks/20260726-value-class-emailaddress.md` | `docs/tasks-archive/2026-07/ULTRA-00119-20260726-value-class-emailaddress.md` |
 | ULTRA-00120 | 2026-07-26 | `docs/tasks/future/20260726-vault-test-gap-sweep.md` | `docs/tasks/future/ULTRA-00120-20260726-vault-test-gap-sweep.md` |
 | ULTRA-00120 | 2026-07-26 | `.claude/future-plans/20260726-vault-test-gap-sweep.md` | `docs/tasks/future/ULTRA-00120-20260726-vault-test-gap-sweep.md` |
+| ULTRA-00121 | 2026-07-26 | `docs/tasks-archive/2026-07/20260726-email-e2e-test-seam.md` | `docs/tasks-archive/2026-07/ULTRA-00121-20260726-email-e2e-test-seam.md` |
+| ULTRA-00121 | 2026-07-26 | `.claude/tasks-archive/2026-07/20260726-email-e2e-test-seam.md` | `docs/tasks-archive/2026-07/ULTRA-00121-20260726-email-e2e-test-seam.md` |

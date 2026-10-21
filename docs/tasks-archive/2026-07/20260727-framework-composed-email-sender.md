@@ -7,7 +7,7 @@ chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmail
 recorded run. Residuals live in `docs/tasks/20260727-messaging-followups.md` and
 `docs/tasks/20260727-redteam-messaging.md`; the docs follow-up is `docs/tasks/20260727-docs-messaging-test-seam.md`.
 **Plan:** `/Users/gerk/.claude/plans/indexed-stargazing-spring.md`
-**Supersedes:** the guard design in `docs/tasks-archive/2026-07/20260726-email-e2e-test-seam.md`
+**Supersedes:** the guard design in ULTRA-00121 (email e2e test seam)
 **Security-critical:** yes — this is what makes "a test run never reaches a real provider" true.
 
 ## Why

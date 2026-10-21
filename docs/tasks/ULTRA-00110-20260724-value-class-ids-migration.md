@@ -167,7 +167,7 @@ binding. Surface: user models/entities across realms.
 
 ### OPEN QUESTION to settle in this step: denylist or allowlist?
 
-Raised by the domain reviewer of `docs/tasks-archive/2026-07/20260726-email-e2e-test-seam.md` (2026-07-27), and it
+Raised by the domain reviewer of ULTRA-00121 (email e2e test seam) (2026-07-27), and it
 is a decision for the standing rule below, not a defect in what shipped.
 
 The repo currently has BOTH patterns:

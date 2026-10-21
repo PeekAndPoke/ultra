@@ -1,7 +1,7 @@
 # Docs collector — messaging: framework-composed sender, test capture, id-character predicate
 
 **Status:** TODO
-**Plan:** none — follow-up to `docs/tasks/20260726-email-e2e-test-seam.md`
+**Plan:** none — follow-up to ULTRA-00121 (email e2e test seam)
 **Security-critical:** no (documentation only — but it documents a security guard)
 
 Per the standing rule that every funktor/kraft/ultra change gets a documentation follow-up. Nothing

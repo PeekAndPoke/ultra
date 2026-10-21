@@ -74,7 +74,7 @@ FOR u IN <users> FILTER u.email != LOWER(TRIM(u.email)) RETURN { _id: u._id, ema
 ```
 
 **Extended 2026-07-27** — `init` also rejects control and line-separator characters now (added from
-the security review of `docs/tasks/20260726-email-e2e-test-seam.md`: `trim()` only strips the ends,
+the security review of ULTRA-00121 (email e2e test seam): `trim()` only strips the ends,
 so an interior CR/LF survived canonicalization and would have reached the raw MIME headers). Same
 decode-time consequence, so audit for that too:
 
@@ -122,7 +122,7 @@ Fixes applied:
   DenyAsNotFound" contract stays literally true.
 - ~15 untyped `shouldBe "literal"` assertions on value-class receivers made type-correct.
 
-**Amended 2026-07-27** — the security reviewer of `docs/tasks/20260726-email-e2e-test-seam.md`
+**Amended 2026-07-27** — the security reviewer of ULTRA-00121 (email e2e test seam)
 found the one id-shaped value class not gating on `isForbiddenInId`. `init` now rejects control and
 line-separator characters (interior CR/LF survives `trim()` and reaches raw MIME headers). Not
 reachable today; see the extended rollout audit above.
