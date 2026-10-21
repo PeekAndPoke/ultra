@@ -3,7 +3,7 @@
 **Status:** TODO — AFTER 0.114.0 (maintainer decision 2026-10-19: "B after the release"); the first auth task after it
 **Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` (auth tracks); follows
 `docs/tasks-archive/2026-10/20261019-activation-hardening.md` (merged `ed8d3b38`, ships in 0.114.0; its parked row "Activate requires a password" is answered by THIS design instead)
-**Security-critical:** yes — red-team: `docs/tasks/20260727-redteam-account-activation.md`
+**Security-critical:** yes — red-team: ULTRA-00127 (redteam account activation)
 
 ## Why
 
@@ -61,7 +61,7 @@ before relying on a line — rounds 2–4 moved them (claim-first retire, the si
 - **The attacker's credential never exists**, so the scenarios built around it stop applying: the one-click Activate
   pre-hijack (the residual decision 1 accepted), "reset supersedes the attacker's password" (`findLatest` ordering), and
   the red-team items about the attacker polling sign-in or rotating the token through resends. Re-read
-  `20260727-redteam-account-activation.md` and retire what no longer applies.
+  ULTRA-00127 (redteam account activation) and retire what no longer applies.
 - **Retire gets simpler:** there is no Password record on a pending account to remove.
 
 What it ADDS is small: a password field on the activation page (with the realm's policy) and a `Password` record created

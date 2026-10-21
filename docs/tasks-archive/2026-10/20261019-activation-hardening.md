@@ -9,7 +9,7 @@ that task; the 0.114.0 `CHANGELOG.md` entry carries the breaking API and the upg
 "next free slot" — live code with a security hole)
 **Fixes:** the round-2 gate FAIL of `docs/tasks/20260727-activation-resend-and-frontend.md` (its ledger is the input)
 and the pending-account half of ULTRA-00118 (sso email verification)
-**Security-critical:** yes — red-team: `docs/tasks/20260727-redteam-account-activation.md` (extended 2026-10-19)
+**Security-critical:** yes — red-team: ULTRA-00127 (redteam account activation) (extended 2026-10-19)
 
 ## Why
 
@@ -275,7 +275,7 @@ decided and is untouched. Line references in the sections above are as of `e7910
 | `rename(String)` | Dropped | `AccountRetirement.kt` |
 | Retired address reachable | `resolveSsoAccount` and `refreshToken` refuse a retired key | `AuthRealm.kt:520,602` |
 | Upgrade traps | `AuthProvider` sign-in/sign-up KDoc; the template Params KDoc's false "compile error" claim corrected; all four traps in the docs follow-up box | `AuthProvider.kt:45`, `AccountActivationEmailTemplate.kt:24` |
-| Red-team additions | The four collected scenarios added | `20260727-redteam-account-activation.md` |
+| Red-team additions | The four collected scenarios added | ULTRA-00127 (redteam account activation) |
 | **Maintainer decision: no plaintext** | Key `retired-<sha256(canonical address)>@<id tag>#retired.invalid`; `AccountRetirement.retiredKeyPrefix(email)` for merges; the realm contract also clears address-derived fields — demo and test realms reset the name (defaulted from the local part) | `AccountRetirement.kt:39,50`, `AuthUserAdapter.kt` (`retire`), `AdminUserRealm.kt:95` |
 
 **Tests (fresh XML):** `:funktor:auth:jvmTest` **218 / 0 failures**; `:funktor:auth:jsTest` **13 / 0**;
@@ -434,7 +434,7 @@ takeover, exactly one wins.
 | 4 | MINOR | `EmailAndPasswordAuth.kt:573,579`, `AuthRealm.kt:451` (implementation, phase 2) | Cancel consumes its token by count BEFORE knowing whether it may retire. On a stuck `sso` claim the link dies, and the page's "already cancelled, expired or activated" is untrue | fix | Let the retire decide first; consume the token only once it has |
 | 4 | MINOR | `AuthRealm.kt:456` (domain) | An unknown `claimedBy` value is refused everywhere and the sweep skips it with no log line | fix | `log.error` at the branch |
 | 4 | MINOR | `KarangoAuthRecordsRepo.kt:214`, `MonkoAuthRecordsRepo.kt:206` (implementation) | Pre-upgrade markers have NO `claimedBy` key (Slumber writes explicit nulls, so every test marker has it); "absent matches null" is unpinned on the query side | fix | Storage case per backend: strip the key, assert `removeIfUnclaimed`/`replaceIfUnclaimed` succeed and the sweep selects it |
-| 4 | MINOR | `docs/tasks/20260727-activation-resend-cooldown-atomicity.md:13-14,50-51`, `docs/tasks/20260727-redteam-account-activation.md:108` (security) | They still say there is no conditional write; `replaceIfUnclaimed` exists (on `claimedBy` only) | fix | Rewrite: the primitive exists; option A extends its filter to `resends`/`updatedAt` |
+| 4 | MINOR | `docs/tasks/20260727-activation-resend-cooldown-atomicity.md:13-14,50-51`, `ULTRA-00127 (redteam account activation):108` (security) | They still say there is no conditional write; `replaceIfUnclaimed` exists (on `claimedBy` only) | fix | Rewrite: the primitive exists; option A extends its filter to `resends`/`updatedAt` |
 | 4 | — | resend × cancel stray mail, false "activated" page, SSO-owner 1 h JWT on a retired row (implementation + security, withdrawn in phase 2) | — | already recorded | Bounded races, no session. Red-team addition: the resend also mints a NEW `SignUpCancelToken` row on the retired account |
 
 Recorded so nobody re-derives it: a `retire`-claimed marker whose `retire()` fails forever is retried and error-logged
@@ -560,7 +560,7 @@ Round 4 was CLEAN (gate PASS); these are its MINOR rows, all dispositioned `fix`
 | Cancel burnt its token too early | The up-front `removeAuthRecord(token)` is gone; `cancelSignUp` answers with `retirePendingAccount`'s result. **Ordering choice:** the retire decides. A retire that refuses (an activated account, a live `sso` claim) changes nothing, so the link stays usable and the page tells the truth. A retire that runs deletes every auth row of the owner, this token included, so the link is still single use. Two concurrent cancels both reach the retire, which is claim-first and idempotent: the second one either finds no marker, loses the claim, or resumes the same retire (the `retire` branch, `AuthRealm.kt:441`). Every step of that retire is safe to repeat, and an already-retired row is not renamed again, so two cancels cannot do more than one retire | `EmailAndPasswordAuth.kt:575` |
 | Unknown `claimedBy` | `retirePendingAccount` still refuses, and now logs `deps.log.error` naming the owner, the realm and the value | `AuthRealm.kt:458` |
 | Pre-upgrade marker shape | A storage case per backend strips the `claimedBy` key (Karango `updateDocument(…, {claimedBy: null}, keepNull = false)`, Mongo `$unset`). It then asserts that the aged sweep query (`orClaimedBy = retire`) selects it once, `replaceIfUnclaimed` replaces it, and, after a second strip, `removeIfUnclaimed` removes it. No code change: AQL reads a missing attribute as null, and Mongo `eq(null)` matches a missing field | `AuthRecordStorageBaseSpec.kt:731`, strip helpers in `AuthRecordStorage{Karango,Monko}Spec` |
-| Stale `.claude` text | The cooldown-atomicity task's "no conditional write" is rewritten: the resend's write IS conditional (`replaceIfUnclaimed`), on `claimedBy` only. Option A now names the existing primitive and says it extends the filter to `resends` / `updatedAt`. Red-team §8 is rewritten the same way. Red-team "Resend racing a cancel" adds that the racing resend MINTS a new `SignUpCancelToken` on the retired account | `20260727-activation-resend-cooldown-atomicity.md`, `20260727-redteam-account-activation.md` |
+| Stale `.claude` text | The cooldown-atomicity task's "no conditional write" is rewritten: the resend's write IS conditional (`replaceIfUnclaimed`), on `claimedBy` only. Option A now names the existing primitive and says it extends the filter to `resends` / `updatedAt`. Red-team §8 is rewritten the same way. Red-team "Resend racing a cancel" adds that the racing resend MINTS a new `SignUpCancelToken` on the retired account | `20260727-activation-resend-cooldown-atomicity.md`, ULTRA-00127 (redteam account activation) |
 
 **Tests (fresh `TEST-*.xml`):**
 

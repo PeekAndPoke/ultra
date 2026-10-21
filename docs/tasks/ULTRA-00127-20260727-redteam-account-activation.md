@@ -1,4 +1,4 @@
-# Red-team scenarios: account activation
+# ULTRA-00127: Red-team scenarios: account activation
 
 **Status:** COLLECTED 2026-07-27 — **do NOT execute during feature work.** These are for a dedicated
 penetration-test session.
@@ -192,3 +192,7 @@ Collected, not executed.
   account (`EmailAndPasswordAuth.resendActivation`): check what that orphan token can still reach.
 - **SSO racing the sweep or a cancel** — an SSO sign-in that resolved the user before a retire renamed it: is a session
   issued for the retired row, and does `refreshToken` keep renewing it?
+
+## History
+
+- 2026-10-21: numbered ULTRA-00127 (was `docs/tasks/20260727-redteam-account-activation.md`).

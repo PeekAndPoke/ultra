@@ -105,5 +105,5 @@ Captcha / proof-of-work on sign-up, or not granting `Capability.SignUp` on publi
 
 ## Red-team scenarios
 
-`docs/tasks/20260727-redteam-account-activation.md` §1 (the amplifier), §3 (enumeration), §4
+ULTRA-00127 (redteam account activation) §1 (the amplifier), §3 (enumeration), §4
 (pre-registration DoS). COLLECTED — do not execute during feature work.

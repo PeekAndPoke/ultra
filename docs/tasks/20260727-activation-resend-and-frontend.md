@@ -7,12 +7,12 @@ email-keyed resend) — but neither a PASS verdict nor a second review round ove
 ULTRA-00126 (account activation) got a "gate passed" commit (`b96c2c1c`); this doc never did, and the Status was never
 touched after the fix commit. Archive on the maintainer's word that the gate stands, or after a clean round. Open elsewhere,
 not here: `docs/tasks/20260727-activation-resend-cooldown-atomicity.md` (TODO) and
-`docs/tasks/20260727-redteam-account-activation.md` (collected, not executed).
+ULTRA-00127 (redteam account activation) (collected, not executed).
 **Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4 (verification) + Phase 6 (demo pages)
 **Follows:** ULTRA-00126 (account activation) — the backend guard. This is its open scope
 item 2, plus the resend it deliberately deferred.
 **Security-critical:** yes → red-team scenarios fold into
-`docs/tasks/20260727-redteam-account-activation.md`
+ULTRA-00127 (redteam account activation)
 
 ## Why
 
@@ -239,9 +239,9 @@ missing entries cannot be recovered from this repo.
 | 2 | MINOR | `AuthLoginApi.kt:129-131` (security) | A tenth public site echoing `AuthError.message`, missing from the error-disclosure inventory | fix | Add to ULTRA-00051 (auth error account enumeration) |
 | 2 | MINOR | `docs-site/.../funktor/auth.astro:123-134`, `llms/funktor.md:185-190` (security) | The docs over-claim the token as the fix for the mail faucet, and state a marker-clearing rule `activateAccount` does not meet | after the decisions | Rewrite against the decided design |
 | 2 | MINOR | `MonkoAuthRecordsRepo.kt:57-60` (all three) | Pre-existing: Mongo's TTL index on a `Long` never expires anything | out-of-scope → follow-up | In the parallel plan's backlog (`e4076e46`) |
-| 2 | — | `EmailAndPasswordAuth.kt:573-603` | (July, recorded) the reset path skips the password policy | accepted | Still true; tracked at `20260727-redteam-account-activation.md:97-99` |
+| 2 | — | `EmailAndPasswordAuth.kt:573-603` | (July, recorded) the reset path skips the password policy | accepted | Still true; tracked at `ULTRA-00127 (redteam account activation):97-99` |
 
-**Red-team, to add to `20260727-redteam-account-activation.md`** (collected, not executed): scanner detonation of a
+**Red-team, to add to ULTRA-00127 (redteam account activation)** (collected, not executed): scanner detonation of a
 pre-registered address; a sustained resend stream from an attacker-owned pending account; persistence after the victim's
 reset via `refresh-token`; resend-token row growth; type confusion between resend and verification tokens across
 providers; a custom provider that throws `AccountNotActivated(userId)` before its credential check. §2's "a copy change

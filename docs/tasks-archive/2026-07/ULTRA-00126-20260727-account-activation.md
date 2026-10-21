@@ -6,7 +6,7 @@ closed: (1) the sign-up mail throttle stays deferred, as its own task `docs/task
 at `AuthFrontend.kt:41` (the mailed deep link) and `:50` (the no-token resend page), and used by the demo `adminapp`
 through `AuthFrontend.default(…)`. Resend, the `ActivationRequired` sign-in response and their gate are carried by
 `docs/tasks/20260727-activation-resend-and-frontend.md`. Still open elsewhere, not here:
-`docs/tasks/20260727-redteam-account-activation.md` (collected, not executed).
+ULTRA-00127 (redteam account activation) (collected, not executed).
 **Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4, verification half (§7 "signUp →
 if `requiresActivation`, create `EmailVerificationToken`, send verification email. Don't auto-issue
 session/JWT yet"; §7 "signIn → on unverified user").
@@ -209,10 +209,10 @@ unactivated account that signs in via SSO still cannot use its password until it
 
 ### Recorded, not fixed
 
-`docs/tasks/20260727-redteam-account-activation.md` — 7 scenarios, led by the mail amplifier, the
+ULTRA-00127 (redteam account activation) — 7 scenarios, led by the mail amplifier, the
 pre-registration phishing angle and sign-up's enumeration asymmetry.
 
-**Red-team follow-up** (security-critical): `docs/tasks/20260727-redteam-account-activation.md`
+**Red-team follow-up** (security-critical): ULTRA-00127 (redteam account activation)
 
 ## Open scope items (user decision)
 
