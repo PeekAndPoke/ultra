@@ -95,7 +95,7 @@ gradle summary. Two traps that apply here (see `CLAUDE.md` → Verification trap
 
 Watch for suites that report **0 tests** — `mutator/core`'s `jsBrowserTest` does, because all its
 specs live in `jvmTest`. A zero-count target is not a passing target. See
-`docs/tasks/20260729-mutator-test-coverage-platforms.md`.
+ULTRA-00144 (mutator test coverage platforms).
 
 ### Baseline recorded 2026-07-29 — ALL GREEN
 

@@ -1,4 +1,4 @@
-# Mutator: specs are JVM-only, so JS and native are unverified
+# ULTRA-00144: Mutator: specs are JVM-only, so JS and native are unverified
 
 **Status:** TODO — pick up when the `mutator` package is reviewed
 **Plan:** noticed while simplifying `Observable` in `ultra/common` (2026-07-29)
@@ -56,3 +56,7 @@ from `ultra/common`'s `Observable`. That change is verified by:
   state, i.e. indirect JS cover
 
 No direct JS assertion on mutator behaviour exists. Worth re-checking once the specs move.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00144 (was `docs/tasks/20260729-mutator-test-coverage-platforms.md`).
