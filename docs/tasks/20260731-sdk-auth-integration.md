@@ -4,7 +4,7 @@
 (`eb609f09`). **Outstanding: the Vue binding layer** (§5), and with it the login page and routing.
 Do NOT archive until those land — the runtime is deliberately framework-neutral, so nothing here
 has yet been used from a component.
-**Plan:** `docs/tasks/20260729-ts-sdk-codegen.md` (the generator) and
+**Plan:** ULTRA-00146 (ts sdk codegen) (the generator) and
 `docs/tasks/20260730-frontend-sdk-vue-contributors.md` (where contributors ship more than clients).
 **Security-critical:** yes — sessions, tokens, JWT claims. Red-team follow-up required on completion.
 

@@ -23,7 +23,7 @@ started" until 2026-08-24**, by which point the maintainer had been signing in t
 for three weeks. Exactly the stale-plan failure `CLAUDE.md` warns causes wrong priorities: anyone
 reading the governing plan would have scheduled work that was already done.
 
-**Plan:** `docs/tasks/20260729-ts-sdk-codegen.md` (extends its contributor model)
+**Plan:** ULTRA-00146 (ts sdk codegen) (extends its contributor model)
 **Security-critical:** no (dev-time generator). The insights auth floor it unblocks IS security-critical
 and is tracked separately.
 
@@ -364,7 +364,7 @@ component was never emitted.
 ## The gate — `vue-tsc` over assembled output
 
 Shipping `.vue` files as opaque jar resources is the *"claims are trusted, never verified"* trap from
-`20260729-ts-sdk-codegen.md`, one level up: a resource containing
+ULTRA-00146 (ts sdk codegen), one level up: a resource containing
 `import type { X } from '@sdk/models'` is a claim about generated output that nothing checks.
 
 - [ ] `vue-tsc --noEmit` over a **fully generated** SDK, built exactly like the existing
@@ -657,7 +657,7 @@ work without special handling.
 The strongest finding here. Two invariants collide:
 
 - The codegen contract deliberately makes contributor order **structurally irrelevant** — every operation
-  is a keyed insert (`20260729-ts-sdk-codegen.md`).
+  is a keyed insert (ULTRA-00146 (ts sdk codegen)).
 - Catalog precedence is **order-dependent**: `I18n.Builder.build()` reverses the install list so the
   last-installed wins, which is how an app overrides a framework string (D3,
   `ultra/i18n/src/commonMain/kotlin/I18n.kt:61`).
@@ -768,7 +768,7 @@ The TS resolver will consume the same three declarations rather than adding a fo
 
 ## Ordering
 
-This task depends on `20260729-ts-sdk-codegen.md` Phase 2 (`RestApiTsContributor` + CLI) being done.
+This task depends on ULTRA-00146 (ts sdk codegen) Phase 2 (`RestApiTsContributor` + CLI) being done.
 
 1. **Gate the existing insights GUI** — independent, small, do it now so the Vue rewrite is not on a
    security deadline. Keep the kotlinx.html GUI alive but superuser-gated; deleting it now leaves no
@@ -918,7 +918,7 @@ not fight the app's own palette when only some variables are overridden.
 
 - [ ] Unit: profile filtering; `out.shared` dedupe vs conflict; registry aggregation is order-independent
       (needs **two** root-supplying contributors — one cannot catch order bugs, see
-      `20260729-ts-sdk-codegen.md` "Order-independence had a hole")
+      ULTRA-00146 (ts sdk codegen) "Order-independence had a hole")
 - [ ] Unit: a profile that drops the last root reaching a claimed type produces an SDK that neither
       imports nor ships that claim's runtime module — the property that replaces contributor filtering
 - [ ] Unit: a claim whose relative `importFrom` nobody emits is a validation error naming the claimant

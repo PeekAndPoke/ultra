@@ -1,7 +1,7 @@
 # Phase 2 — `funktor/codegen`: the REST contributor and the generate CLI
 
 **Status:** DONE (archived 2026-07-31)
-**Plan:** `docs/tasks/20260729-ts-sdk-codegen.md` → Phase 2 (§2.1–2.4)
+**Plan:** ULTRA-00146 (ts sdk codegen) → Phase 2 (§2.1–2.4)
 **Security-critical:** no — dev-time code generation, never on a production server's classpath.
 
 ## Decisions taken with the maintainer, 2026-07-30

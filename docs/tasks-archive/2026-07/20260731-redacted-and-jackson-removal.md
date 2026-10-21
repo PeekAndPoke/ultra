@@ -411,7 +411,7 @@ reason the two were one project rather than two.
 ## Handed to the codegen agent (2026-07-31)
 
 **`Redacted<T>` must emit `string`, never the shape of `T`.** Recorded in
-`docs/tasks/20260729-ts-sdk-codegen.md` under "INCOMING". The generator resolves generics by descending
+ULTRA-00146 (ts sdk codegen) under "INCOMING". The generator resolves generics by descending
 into the type argument, and this is the case where the declared argument is deliberately not what travels
 on the wire — descending would generate a zod schema expecting an object where `"REDACTED"` arrives, i.e.
 a browser-side parse failure on the one field guaranteed never to arrive intact. Same precedence rule as

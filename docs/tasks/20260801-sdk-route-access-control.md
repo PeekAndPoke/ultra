@@ -1,7 +1,7 @@
 # Route access control in the generated TypeScript SDK
 
 **Status:** IN REVIEW — implemented 2026-08-01; gate run, findings fixed, awaiting maintainer sign-off
-**Plan:** `docs/tasks/20260729-ts-sdk-codegen.md` → Phase 4 / Vue-contributors family
+**Plan:** ULTRA-00146 (ts sdk codegen) → Phase 4 / Vue-contributors family
 **Security-critical:** yes — see the scope note below, it is narrower than it looks
 
 Companion: `docs/tasks/20260801-kotlin-apiacl-naming-alignment.md` (the Kotlin side of the same

@@ -19,7 +19,7 @@ import kotlin.reflect.typeOf
  *
  * This replaces monomorphization (`PageOf<Talk>` → `PageOfTalk`), whose justification — that `z.infer`
  * cannot see through a function-valued schema — was measured and found false. See the generics spike in
- * `20260729-ts-sdk-codegen.md`.
+ * ULTRA-00146 (ts sdk codegen).
  */
 class GenericsSpec : FreeSpec() {
 

@@ -1,7 +1,7 @@
 # Slumber: array codec support
 
 **Status:** IN REVIEW (implemented 2026-07-29; review gate pending with the SDK work)
-**Plan:** none — raised from `docs/tasks/20260729-ts-sdk-codegen.md` (walker/Slumber parity work)
+**Plan:** none — raised from ULTRA-00146 (ts sdk codegen) (walker/Slumber parity work)
 **Security-critical:** no (serialization shape only; no auth or trust boundary changes)
 
 ## Why
@@ -92,7 +92,7 @@ Fixes applied: ...
 ## Follow-ups
 
 - [x] Revisit `ultra/codegen`'s `isIterableLike()` and the array unresolved-reason once this lands
-      (see spec item above); update `20260729-ts-sdk-codegen.md`'s parity table accordingly.
+      (see spec item above); update ULTRA-00146 (ts sdk codegen)'s parity table accordingly.
 
 ### Star-projected collections NPE on awake — TODO
 

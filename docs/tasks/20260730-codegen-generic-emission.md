@@ -1,7 +1,7 @@
 # Emit real TypeScript generics instead of monomorphizing
 
 **Status:** CODE DONE `63f9f186` — needs `/feature-review` before DONE. Direction and sub-decisions agreed 2026-07-30 — direction and sub-decisions agreed 2026-07-30 (maintainer: "full effort, this is pure foundation")
-**Plan:** `docs/tasks/20260729-ts-sdk-codegen.md` — reverses its "Generics are monomorphized" decision
+**Plan:** ULTRA-00146 (ts sdk codegen) — reverses its "Generics are monomorphized" decision
 **Security-critical:** no (dev-time generator)
 
 ## Why

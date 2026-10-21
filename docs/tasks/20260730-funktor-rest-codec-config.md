@@ -1,7 +1,7 @@
 # Let apps configure the RestCodec via FunktorRestBuilder
 
 **Status:** TODO
-**Plan:** none — raised from `docs/tasks/20260729-ts-sdk-codegen.md` (Phase 2 prerequisite)
+**Plan:** none — raised from ULTRA-00146 (ts sdk codegen) (Phase 2 prerequisite)
 **Security-critical:** no (serialization wiring; no auth or trust boundary change)
 
 ## Why
@@ -72,4 +72,4 @@ Fixes applied: ...
 - [ ] Once this lands, `funktor/codegen`'s `RestApiTsContributor` can honestly claim to handle
       app-specific types: the generator injects `RestCodec`, reads `.config`, and its codec-parity
       check then sees the app's own codecs and demands claims for them. Update
-      `20260729-ts-sdk-codegen.md`'s Phase 2 prerequisite list.
+      ULTRA-00146 (ts sdk codegen)'s Phase 2 prerequisite list.

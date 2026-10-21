@@ -300,7 +300,7 @@ Explicitly deferred:
 3. **Account activation flow** — `AuthSystem.activate()` full email verification
    → absorbed into ULTRA-00035 (auth orgs foundation) Phase F (2026-07-17)
 4. **Dart codegen rewrite** — superseded: Dart gen to be deleted, replaced by a TypeScript SDK generator →
-   `20260729-ts-sdk-codegen.md` (2026-07-29)
+   ULTRA-00146 (ts sdk codegen) (2026-07-29)
 5. **Email template editor** — rich template system for messaging
    → absorbed into ULTRA-00036 (saas foundation) Tracks C/D (2026-07-17)
 6. **API binary compatibility** — `kotlinx-binary-compatibility-validator`

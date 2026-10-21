@@ -6,7 +6,7 @@ log, not a task: every backlog item it drove is finished (§1 regression tests; 
 were decided 2026-08-01 (see "ALL THREE OPEN QUESTIONS ARE DECIDED"). The unchecked boxes left in §2 are not outstanding
 work here: generic sealed hierarchies were fixed by `docs/tasks/20260730-codegen-generic-emission.md` (`63f9f186`);
 `@Slumber.Field` non-ctor props and scalar refinement were decided "leave as-is" (above); the `@Slumber.Field` selection
-re-derivation and the duplicated `readArrayElements` are tracked in `docs/tasks/20260729-ts-sdk-codegen.md` (review
+re-derivation and the duplicated `readArrayElements` are tracked in ULTRA-00146 (ts sdk codegen) (review
 table, lines 1173-1174) and, for `readArrayElements`, `docs/tasks/20260731-slumber-scan-findings.md` (C13). No docs task:
 the generator's public surface was still moving (see "No docs task" below).
 
@@ -21,7 +21,7 @@ the generator's public surface was still moving (see "No docs task" below).
 **Read this file FIRST each iteration. Do the next unchecked item. Update this file LAST, before
 finishing the iteration.** Keep it short — it is read every loop, so it must stay cheap.
 
-Full context lives in `docs/tasks/20260729-ts-sdk-codegen.md` (design, locked decisions, and the
+Full context lives in ULTRA-00146 (ts sdk codegen) (design, locked decisions, and the
 **Review record** listing every confirmed finding). Do NOT read that whole file every iteration —
 grep the section you need. The Vue follow-on is `20260730-frontend-sdk-vue-contributors.md`.
 
@@ -131,7 +131,7 @@ and 4); writing the tests is what found that.
 
 ### 2. Confirmed findings not yet fixed — by severity
 
-See the **Review record** table in `20260729-ts-sdk-codegen.md` for the full list with file:line.
+See the **Review record** table in ULTRA-00146 (ts sdk codegen) for the full list with file:line.
 Suggested order:
 
 - [x] **REPRODUCED and HANDED OFF 2026-07-30** — the `ultra/slumber` round-trip defect is real
@@ -310,7 +310,7 @@ are the best-covered types in the generator — the worst candidates for it.
 This doc is COMPLETE and should be archived to `docs/tasks-archive/2026-07/`. Not done yet: the lock was re-taken by
 the slumber-as agent with uncommitted work in the tree, so no stage and no commit. Whoever archives it must also fix the
 inbound link in
-`docs/tasks/20260729-ts-sdk-codegen.md`.
+ULTRA-00146 (ts sdk codegen).
 
 **No docs task.** The TS SDK generator's public surface is still moving — auth integration and SSE auth are both open —
 and per `CLAUDE.md` docs are written against SETTLED code only.

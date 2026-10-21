@@ -1,4 +1,4 @@
-# TypeScript SDK code generation (`ultra/codegen` + `funktor/codegen`)
+# ULTRA-00146: TypeScript SDK code generation (`ultra/codegen` + `funktor/codegen`)
 
 **Status:** TODO **Plan:** ULTRA-00028 (v1 roadmap) → Post-v1 Backlog item 4 ("Dart codegen rewrite") —
 **superseded by this task**
@@ -1454,3 +1454,7 @@ review rounds, which have not run yet.
 - [ ] **`--package` mode** — package.json/tsconfig emission, when a second SDK consumer appears.
 - [ ] **Dart emitter v2** — if ever needed, build it on the `ultra/codegen` model; it inherits the closure and
   validation for free.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00146 (was `docs/tasks/20260729-ts-sdk-codegen.md`).

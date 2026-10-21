@@ -18,7 +18,7 @@ The arc is: expose insights data through a superuser-only REST API, then have th
 the frontend pages and components from `.vue` files in the module's resources.
 
 This task is the **first half only** — plan steps 4 and 5. The Vue half (steps 6–7) is blocked on codegen
-additions that do not exist yet: aggregation registries and `out.vue` (`20260729-ts-sdk-codegen.md`,
+additions that do not exist yet: aggregation registries and `out.vue` (ULTRA-00146 (ts sdk codegen),
 "Incoming requirements", items 3 and 4). Verified 2026-07-30 — codegen is at Phase 2 complete except Sse,
 and grep finds no emit-phase registry, no profiles, no `out.shared`.
 

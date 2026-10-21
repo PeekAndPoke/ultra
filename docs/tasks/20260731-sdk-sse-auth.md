@@ -1,7 +1,7 @@
 # Generated SSE clients bypass the SDK's auth mechanism
 
 **Status:** TODO
-**Plan:** `docs/tasks/20260729-ts-sdk-codegen.md` → Phase 2 follow-up
+**Plan:** ULTRA-00146 (ts sdk codegen) → Phase 2 follow-up
 **Security-critical:** yes — a stream a developer believes is authenticated is silently anonymous.
 
 ## The problem
