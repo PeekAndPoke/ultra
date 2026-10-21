@@ -260,5 +260,5 @@ have persisted its token verbatim into `system_sent_messages`.
   configured sender; not done here.
 
 **Red-team follow-up:** covered by the existing
-`docs/tasks/20260726-redteam-value-class-emailaddress.md` §5 (enumeration by timing — the work
+ULTRA-00117 (redteam value class emailaddress) §5 (enumeration by timing — the work
 asymmetry this seam now makes measurable) — no new red-team doc.

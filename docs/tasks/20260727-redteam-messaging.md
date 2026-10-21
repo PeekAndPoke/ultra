@@ -56,7 +56,7 @@ There is no `OnBeforeSend` hook, so nothing in the chain can suppress or throttl
 
 ## 5. Enumeration through the send path
 
-Complements §5 of `docs/tasks/20260726-redteam-value-class-emailaddress.md` (timing). New angle:
+Complements §5 of ULTRA-00117 (redteam value class emailaddress) (timing). New angle:
 now that hooks are awaited inside `send`, a persisted-mail write is on the request path for a KNOWN
 address and absent for an unknown one.
 

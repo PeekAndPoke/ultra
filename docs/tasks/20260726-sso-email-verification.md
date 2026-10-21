@@ -67,5 +67,5 @@ address verified?" has no answer today.
 
 ## Red-team scenarios
 
-Recorded in `docs/tasks/20260726-redteam-value-class-emailaddress.md` §1 and §2 — do NOT execute
+Recorded in ULTRA-00117 (redteam value class emailaddress) §1 and §2 — do NOT execute
 during feature work.

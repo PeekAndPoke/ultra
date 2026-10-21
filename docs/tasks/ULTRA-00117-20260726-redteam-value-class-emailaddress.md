@@ -1,4 +1,4 @@
-# Red-team: `EmailAddress` — email as an authentication identifier
+# ULTRA-00117: Red-team: `EmailAddress` — email as an authentication identifier
 
 **Status:** COLLECTED 2026-07-26 — NOT executed. A dedicated penetration-test session runs these.
 **Feature:** `docs/tasks/20260726-value-class-emailaddress.md`
@@ -87,3 +87,7 @@ collapse surface than the current design.
 
 Confirm this is a conscious product decision and write it down. If it should change, note that it
 makes §3 materially more dangerous.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00117 (was `docs/tasks/20260726-redteam-value-class-emailaddress.md`).

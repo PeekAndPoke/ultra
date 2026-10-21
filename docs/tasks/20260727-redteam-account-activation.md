@@ -3,7 +3,7 @@
 **Status:** COLLECTED 2026-07-27 — **do NOT execute during feature work.** These are for a dedicated
 penetration-test session.
 **Feature:** `docs/tasks-archive/2026-07/20260727-account-activation.md` (commit `31667449`)
-**Related:** `docs/tasks/20260726-redteam-value-class-emailaddress.md` §1–2 (SSO auto-link),
+**Related:** ULTRA-00117 (redteam value class emailaddress) §1–2 (SSO auto-link),
 `docs/tasks/20260727-redteam-messaging.md`
 
 Ordered by expected severity. Each was raised or confirmed during the review gate and verified to be

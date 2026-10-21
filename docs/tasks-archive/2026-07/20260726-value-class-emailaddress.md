@@ -127,6 +127,6 @@ found the one id-shaped value class not gating on `isForbiddenInId`. `init` now 
 line-separator characters (interior CR/LF survives `trim()` and reaches raw MIME headers). Not
 reachable today; see the extended rollout audit above.
 
-**Red-team follow-up**: `docs/tasks/20260726-redteam-value-class-emailaddress.md` — covers the
+**Red-team follow-up**: ULTRA-00117 (redteam value class emailaddress) — covers the
 account-takeover-by-canonicalization surface (unicode homoglyphs, dotted gmail aliases, `+tag`
 addressing) plus the pre-existing unverified-SSO-email chain.
