@@ -1,4 +1,4 @@
-# Six Hats Analysis: Making peekandpoke.io Visually Unique
+# ULTRA-00008: Six Hats Analysis: Making peekandpoke.io Visually Unique
 
 **Date:** 2026-03-28
 **Rounds:** 3
@@ -213,3 +213,7 @@ serialized JSON. Educational spectacle that makes the library's power visible.
 
 5. **Defer idea 10 (code X-ray) until a specific library page needs it** — it's most powerful as a one-off showcase for
    Karango's query DSL or Kraft's HTML DSL, not as a generic feature.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00008 (was `docs/tasks-archive/2026-03/2026-03-31-docs-site-visual-ideas.md`).
