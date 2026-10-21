@@ -3,7 +3,7 @@
 **Status:** DONE (archived 2026-10-19) — Parts A+B (track T2, gate PASS round 1, merged `d9ffbb32`); Parts C+D
 (track T1, gate PASS round 2, merged `a578ef0a`). Created 2026-08-24 from maintainer decisions on
 ULTRA-00190 (insights vue tabs)'s gap inventory. No docs follow-up yet: insights is still moving (the
-production gate, T4's Kraft GUI) — revisit when it settles. Round-2 MINORs: `docs/tasks/20261019-insights-vue-round2-minors.md`.
+production gate, T4's Kraft GUI) — revisit when it settles. Round-2 MINORs: ULTRA-00226 (insights vue round2 minors).
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** yes — it adds REST endpoints that expose the service graph and the database
 schema. Both are superuser-only today only because they are inside a record; as endpoints they need

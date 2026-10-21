@@ -109,7 +109,7 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
 32. **Raw AQL under the trusted `aql` label** — a repository passing hand-built text to
     `driver.query(AqlTypedQuery.of(type, "… == \"$token\" …"))` (`AqlTypedQuery.kt:15`, labelled at
     `KarangoDriver.kt:101`): does the token reach the depot and the Database tab? Fix tracked in
-    `20261019-insights-vue-round2-minors.md` item 6.
+    ULTRA-00226 (insights vue round2 minors) item 6.
 33. **A secret as a document KEY at a value position** — `Filters.eq("grants", Document(apiKey, true))`: the
     placeholder-iser keeps keys (`MonkoDriver.kt:73-79`). Item 7 of the same follow-up.
 34. **A failed Mongo query whose server error echoes literal filter values**, logged during the request —

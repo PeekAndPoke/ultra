@@ -1,4 +1,4 @@
-# Insights Vue: the round-2 MINORs of T1's gate
+# ULTRA-00226: Insights Vue: the round-2 MINORs of T1's gate
 
 **Status:** DONE (archived 2026-10-19) — items 1–11 implemented on `wt/insights-minors`; review round 1 (`reviewer-high`
 ×2: implementation + domain fit, security) CLEAN — 0 CRITICAL / 0 MAJOR; its 7 MINORs and one pre-existing product defect
@@ -136,3 +136,7 @@ Red-team (security, collected): 36 raw AQL that fails — `KarangoQueryException
 (`KarangoDriver.kt:130-137`); 37 secrets as field names (both printers keep names by design); 33a — addendum to 33.
 
 **Verdict:** PASS — round 1 clean (0 CRITICAL / 0 MAJOR); module tests green; mutation table above.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00226 (was `docs/tasks-archive/2026-10/20261019-insights-vue-round2-minors.md`).

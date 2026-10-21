@@ -60,7 +60,7 @@ T1 profits from T2's new kontainer shape landing first), then T1. **Wave 2** —
 slots). Then T6, T7 and the rest as slots free up. Docs follow-ups land only after their code has settled.
 
 **Progress (2026-10-19):** T3 DONE (gate PASS, merged `d9ffbb32`). T2 DONE (gate PASS, merged `d9ffbb32`). T1 DONE
-(gate PASS in round 2, merged `a578ef0a`; MINORs → `20261019-insights-vue-round2-minors.md`; the vue-tabs task stays open
+(gate PASS in round 2, merged `a578ef0a`; MINORs → ULTRA-00226 (insights vue round2 minors); the vue-tabs task stays open
 for its inventory gaps). Activation hardening DONE (gate PASS in round 4, `reviewer-top`; MINORs fixed + delta check; merged `ed8d3b38`;
 archived ULTRA-00222 (activation hardening); docs folded into the email-first task). `insights-minors` DONE (review clean, merged `348c66bc`; follow-ups →
 `20261019-insights-minors-followups.md`). T4 insights-kraft started, then PAUSED 2026-10-19 (budget precaution; WIP `24e745bf` on its branch). **Stable point

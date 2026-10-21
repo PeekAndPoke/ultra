@@ -544,3 +544,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00224 | 2026-10-19 | `.claude/tasks/20261019-global-locks-max-hold.md` | `docs/tasks/ULTRA-00224-20261019-global-locks-max-hold.md` |
 | ULTRA-00225 | 2026-10-19 | `docs/tasks/20261019-insights-production-gate.md` | `docs/tasks/ULTRA-00225-20261019-insights-production-gate.md` |
 | ULTRA-00225 | 2026-10-19 | `.claude/tasks/20261019-insights-production-gate.md` | `docs/tasks/ULTRA-00225-20261019-insights-production-gate.md` |
+| ULTRA-00226 | 2026-10-19 | `docs/tasks-archive/2026-10/20261019-insights-vue-round2-minors.md` | `docs/tasks-archive/2026-10/ULTRA-00226-20261019-insights-vue-round2-minors.md` |
+| ULTRA-00226 | 2026-10-19 | `.claude/tasks-archive/2026-10/20261019-insights-vue-round2-minors.md` | `docs/tasks-archive/2026-10/ULTRA-00226-20261019-insights-vue-round2-minors.md` |
+| ULTRA-00226 | 2026-10-19 | `.claude/tasks/20261019-insights-vue-round2-minors.md` | `docs/tasks-archive/2026-10/ULTRA-00226-20261019-insights-vue-round2-minors.md` |
