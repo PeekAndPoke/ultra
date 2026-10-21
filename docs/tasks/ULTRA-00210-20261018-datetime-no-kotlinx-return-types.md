@@ -1,4 +1,4 @@
-# ultra/datetime: no kotlinx types as return values
+# ULTRA-00210: ultra/datetime: no kotlinx types as return values
 
 **Status:** TODO
 **Plan:** none — maintainer decision during the `/feature-review` of ULTRA-00209 (kotlinx datetime js timezones) (2026-10-18): "really eliminate the return of any kotlinx datetime types. This will be a breaking change but it is fine."
@@ -34,3 +34,7 @@ Known return sites (read 2026-10-18; re-grep before starting, treat as a lower b
 |---|---|---|---|---|---|
 
 **Verdict:**
+
+## History
+
+- 2026-10-21: numbered ULTRA-00210 (was `docs/tasks/20261018-datetime-no-kotlinx-return-types.md`).
