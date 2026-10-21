@@ -1,4 +1,4 @@
-# Red-team: error disclosure, environment gating, route auth
+# ULTRA-00058: Red-team: error disclosure, environment gating, route auth
 
 **Status:** COLLECTED — do not execute during normal feature work
 **Origin:** ULTRA-00054 (error response disclosure audit)
@@ -67,3 +67,7 @@ Run these **after** the linked remediation tasks land, to confirm the fixes hold
 
 19. Re-run A1 and B5 against the *pre-fix* commit to confirm each scenario genuinely reproduced —
     a red-team scenario that never reproduced proves nothing about the fix.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00058 (was `docs/tasks/20260720-redteam-error-disclosure.md`).

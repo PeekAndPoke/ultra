@@ -17,7 +17,7 @@ issue?"
 | 5 — auth-rule descriptions leak | folded into ULTRA-00052 (env classification allowlist) |
 | 6 — routes default to public | `20260720-route-auth-default-deny.md` |
 | 7 — auth error account enumeration | ULTRA-00051 (auth error account enumeration) |
-| attack scenarios | `20260720-redteam-error-disclosure.md` |
+| attack scenarios | ULTRA-00058 (redteam error disclosure) |
 
 ## Short answer to the original question
 

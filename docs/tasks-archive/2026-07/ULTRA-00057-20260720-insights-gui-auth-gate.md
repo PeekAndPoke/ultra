@@ -13,7 +13,7 @@ records are now read through `InsightsApi`, an `ApiRoutes` group floored at `isS
 `AppConfig.ktor.isDevelopment`, §5); (2) the startup refusal `RefuseInsightsInProduction` (§6) — nothing stops an app from
 running `InsightsConfig(enabled = true)` in production, where every request is then captured and written to the depot
 (nothing in `funktor/` or the demo checks the environment before honouring the flag). Scenario 11 of the live
-`20260720-redteam-error-disclosure.md` ("Confirm insights cannot be enabled at all in a production environment") presumes that
+ULTRA-00058 (redteam error disclosure) ("Confirm insights cannot be enabled at all in a production environment") presumes that
 refusal and would fail today; its scenarios 8–9 target routes and a field that no longer exist.
 
 **Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 2)
@@ -420,7 +420,7 @@ not a hard refusal.
 
 Fixes applied: ...
 
-**Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: ULTRA-00058 (redteam error disclosure)
 
 ## History
 

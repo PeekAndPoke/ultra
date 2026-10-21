@@ -281,7 +281,7 @@ correctness.
 
 Fixes applied: ...
 
-**Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+**Red-team follow-up**: ULTRA-00058 (redteam error disclosure)
 
 ## History
 
