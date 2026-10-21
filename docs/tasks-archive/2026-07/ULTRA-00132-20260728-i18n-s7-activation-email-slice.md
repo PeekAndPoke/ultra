@@ -1,4 +1,4 @@
-# i18n S7 vertical slice — the account-activation email, localized
+# ULTRA-00132: i18n S7 vertical slice — the account-activation email, localized
 
 **Status:** SUPERSEDED / NOT SHIPPED (2026-07-28) — the code was written, gated, and then reverted.
 Replaced by ULTRA-00131 (auth email templates in code).
@@ -187,3 +187,7 @@ Fixes applied: ...
 
 **Red-team follow-up:** `docs/tasks/20260728-redteam-i18n-email-templates.md` (to be written at the
 end of this task — collected, NOT executed)
+
+## History
+
+- 2026-10-21: numbered ULTRA-00132 (was `docs/tasks-archive/2026-07/20260728-i18n-s7-activation-email-slice.md`).

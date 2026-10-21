@@ -8,7 +8,7 @@
 0 failures in the last recorded run). The API is documented (`messaging.astro:134-160`, `auth.astro:183`, mirror
 `funktor.md:394-455`), so no docs follow-up is owed. Red-team: `docs/tasks/20260728-redteam-i18n-email-templates.md`.
 **Plan:** ULTRA-00085 (i18n s7 emails) → S7, **design replaced** (see below)
-**Supersedes:** `docs/tasks-archive/2026-07/20260728-i18n-s7-activation-email-slice.md` (the Markdown-template slice — built, gated, reverted)
+**Supersedes:** ULTRA-00132 (i18n s7 activation email slice) (the Markdown-template slice — built, gated, reverted)
 **Security-critical:** yes (the activation mail carries a live single-use token) → red-team follow-up
 
 ## Why the Markdown design was dropped
