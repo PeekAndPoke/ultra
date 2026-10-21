@@ -1,4 +1,4 @@
-# Vault test-gap sweep — find untested code in `ultra:vault` and cover it
+# ULTRA-00120: Vault test-gap sweep — find untested code in `ultra:vault` and cover it
 
 **Status:** IDEA / not scheduled. Raised 2026-07-26 by the user while relocating `isForbiddenInId`
 into `ultra:common`.
@@ -45,3 +45,7 @@ surfaces as data corruption several layers away, in code that looks innocent.
 Karango and Monko have their own gaps (see ULTRA-00111 (monko findbyid collection prefix), which is a
 genuine behavioural divergence rather than a coverage hole). Keep this sweep to `ultra:vault`; if the
 same treatment is wanted for the drivers, that is a follow-up doc.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00120 (was `docs/tasks/future/20260726-vault-test-gap-sweep.md`).
