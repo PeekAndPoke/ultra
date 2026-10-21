@@ -1,4 +1,4 @@
-# Kraft addon JS tests fail with IrLinkageError (TestBed.Companion)
+# ULTRA-00218: Kraft addon JS tests fail with IrLinkageError (TestBed.Companion)
 
 **Status:** DONE (archived 2026-10-19) — not flaky tests: poisoned build-cache entries from two overlapping builds
 **Plan:** none — maintainer: fix the flaky tests first, then the full suite green, then prepare 0.113.0
@@ -83,3 +83,7 @@ missing library fails the link (and is never cached as a success) instead of sur
   macosX64 artifacts (30) and their traces in 5 metadata jars / tooling JSONs, and two classes of `cluster-jvm`
   (`AwsS3Repository$DepotS3File` / `$DepotS3Folder`) whose members are the same but ordered differently — Kotlin emits
   interface-delegation members in no fixed order. **0.112.0 as published is sound.**
+
+## History
+
+- 2026-10-21: numbered ULTRA-00218 (was `docs/tasks-archive/2026-10/20261019-flaky-kraft-addon-irlinkageerror.md`).

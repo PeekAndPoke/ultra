@@ -10,7 +10,7 @@
 worktree; one stored test bundles the other had half-deleted (no `ultra-kraft-testing.mjs` → `IrLinkageError`) in the
 SHARED `~/.gradle/caches/build-cache-1`, under correct keys, and every later build — `clean` included — restored them.
 The maintainer wiped the caches; a cold `clean build` is green (15630 tests / 68 targets). Record:
-`docs/tasks-archive/2026-10/20261019-flaky-kraft-addon-irlinkageerror.md`.
+ULTRA-00218 (flaky kraft addon irlinkageerror).
 
 **The build scripts are free of the Gradle 9.6 Kotlin DSL deprecations, and macosX64 is dropped** (`a8cbf052`). Record:
 `docs/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md`.
