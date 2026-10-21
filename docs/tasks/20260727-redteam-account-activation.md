@@ -38,7 +38,7 @@ sign up, ignore this", no requesting IP, no time.
 - **Attempt:** register `victim@corp.com` with a password the attacker chooses; observe whether the
   victim, receiving an unsolicited but entirely affirmative mail from a real vendor domain, activates
   it. Then sign in with the attacker's password.
-- **Chain:** combine with the SSO auto-link gap (`docs/tasks/20260726-sso-email-verification.md`)
+- **Chain:** combine with the SSO auto-link gap (ULTRA-00118 (sso email verification))
   so the victim's later SSO sign-in lands on the same row and the attacker retains co-access.
 - **Note:** the diff still strictly IMPROVES on the previous behaviour, which handed the attacker a
   session with no victim interaction at all. This is residual risk, and it is a copy change to close.

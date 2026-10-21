@@ -9,7 +9,7 @@
 > decorator chain at all — `useSender { provider }` is its whole contribution — which also retired
 > the `TestOutbox` holder and `suppressDeliveryInTestMode`. Read the doc below for WHY the guard
 > exists; read the newer one for how it works now.
-**Plan:** none — prerequisite for account activation (`docs/tasks/20260726-sso-email-verification.md`)
+**Plan:** none — prerequisite for account activation (ULTRA-00118 (sso email verification))
 **Security-critical:** yes — one half is a fail-closed guard on whether a test run can reach a real
 email provider; the other half is the first test that asserts a password-reset mail is sent at all.
 

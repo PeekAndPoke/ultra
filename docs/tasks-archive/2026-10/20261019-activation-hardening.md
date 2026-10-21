@@ -8,7 +8,7 @@ that task; the 0.114.0 `CHANGELOG.md` entry carries the breaking API and the upg
 **Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` → the first auth track, taken ahead of T4 (maintainer:
 "next free slot" — live code with a security hole)
 **Fixes:** the round-2 gate FAIL of `docs/tasks/20260727-activation-resend-and-frontend.md` (its ledger is the input)
-and the pending-account half of `docs/tasks/20260726-sso-email-verification.md`
+and the pending-account half of ULTRA-00118 (sso email verification)
 **Security-critical:** yes — red-team: `docs/tasks/20260727-redteam-account-activation.md` (extended 2026-10-19)
 
 ## Why
@@ -153,7 +153,7 @@ scanner reason as activation, single-use by delete count.
 
 - Monko's auth-record TTL never expires anything (plan backlog, `e4076e46`).
 - Session revocation, refresh-token renewal after a reset (`20260728-session-revocation-wiring.md`).
-- The rest of the SSO linking policy for already-active accounts (`20260726-sso-email-verification.md`).
+- The rest of the SSO linking policy for already-active accounts (ULTRA-00118 (sso email verification)).
 - Sign-up mail throttling per recipient (`20260727-signup-mail-throttle.md`).
 
 ## Implementation notes

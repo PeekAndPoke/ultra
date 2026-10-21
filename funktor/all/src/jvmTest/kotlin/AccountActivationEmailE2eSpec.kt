@@ -45,7 +45,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * The security property being pinned is narrow and load-bearing: **correct credentials are not enough
  * until the address is proven.** Before this feature `AuthRealm.signUp` handed out a session
  * immediately, which is what made the SSO pre-hijack chain in
- * `docs/tasks/20260726-sso-email-verification.md` work.
+ * ULTRA-00118 (sso email verification) work.
  *
  * SCOPE: [TestUserRealm] is org-less, so the closing sign-in leg does not generalize to an
  * `OrgPolicy.Required` realm (there `issueSignIn` answers `OrgSelectionRequired`). The activation half

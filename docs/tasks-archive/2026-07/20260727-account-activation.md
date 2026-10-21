@@ -20,7 +20,7 @@ calls `issueSignIn` regardless. So today an address nobody has proved they own g
 immediately. `AuthRecord.EmailVerificationToken` exists with zero producers and zero consumers, and
 `AuthSystem.activate` is a stub returning `success = false`.
 
-It also composes into a pre-hijack chain recorded in `docs/tasks/20260726-sso-email-verification.md`:
+It also composes into a pre-hijack chain recorded in ULTRA-00118 (sso email verification):
 an attacker registers `victim@corp.com`, is signed in, and keeps co-access when the victim later
 arrives via SSO and is auto-linked to that account. Activation is the half of that fix that does not
 need a policy decision.

@@ -15,7 +15,7 @@
 >
 > ⚠️ Follow-up that came OUT of that work and is NOT closed here: SSO signup links to an existing
 > local account without checking the provider's `email_verified` — see
-> `docs/tasks/20260726-sso-email-verification.md`.
+> ULTRA-00118 (sso email verification).
 **Found via:** the add-member-by-email question (2026-07-24). The leaf bug (`B2bMembersApi` add lookup)
 is already FIXED (`c5398382`); this task is the BROADER framework gap.
 **Type:** framework correctness (auth).

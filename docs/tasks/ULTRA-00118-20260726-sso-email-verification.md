@@ -1,4 +1,4 @@
-# SSO signup links to an existing account without checking `email_verified` (account takeover)
+# ULTRA-00118: SSO signup links to an existing account without checking `email_verified` (account takeover)
 
 **Status:** TODO — needs a POLICY decision from the user before implementing.
 **Found via:** the security review of `docs/tasks/20260726-value-class-emailaddress.md` (Step 4).
@@ -69,3 +69,7 @@ address verified?" has no answer today.
 
 Recorded in ULTRA-00117 (redteam value class emailaddress) §1 and §2 — do NOT execute
 during feature work.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00118 (was `docs/tasks/20260726-sso-email-verification.md`).

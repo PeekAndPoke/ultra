@@ -8,7 +8,7 @@ is how account-takeover bugs are born.
 
 > The security review found no auth bypass introduced by the change. §1 and §2 below are PRE-EXISTING
 > and are the highest-value items here; they are tracked as work in
-> `docs/tasks/20260726-sso-email-verification.md`.
+> ULTRA-00118 (sso email verification).
 
 ## 1. Unverified-provider-email takeover (HIGHEST VALUE)
 
