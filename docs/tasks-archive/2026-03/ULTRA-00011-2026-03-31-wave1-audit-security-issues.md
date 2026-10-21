@@ -1,4 +1,4 @@
-# Audit: ultra:security — Issues Report
+# ULTRA-00011: Audit: ultra:security — Issues Report
 
 **Date:** 2026-03-30
 **Auditor:** Code audit agent (Wave 1)
@@ -164,3 +164,7 @@ git show --stat 5c1f4c9a 3cf75f2d
 
 No tests for: `JwtAnonymous`, `JwtNullClaim`, `UserProvider.Lazy` thread safety, CSRF with empty/blank secrets,
 `UserPermissions` branch/group/role/permission variants (only organisation tested).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00011 (was `docs/tasks-archive/2026-03/2026-03-31-wave1-audit-security-issues.md`).
