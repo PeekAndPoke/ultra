@@ -4,12 +4,12 @@
 the code, with the evidence under each. **Not archived, deliberately:** this doc records ONE gate round — 16 confirmed
 findings (13 fixed, 3 recorded), and the HIGH reshaped the feature (a single-use `ActivationResendToken` replaced the
 email-keyed resend) — but neither a PASS verdict nor a second review round over the reshaped design. Its sibling
-`20260727-account-activation.md` got a "gate passed" commit (`b96c2c1c`); this doc never did, and the Status was never
+ULTRA-00126 (account activation) got a "gate passed" commit (`b96c2c1c`); this doc never did, and the Status was never
 touched after the fix commit. Archive on the maintainer's word that the gate stands, or after a clean round. Open elsewhere,
 not here: `docs/tasks/20260727-activation-resend-cooldown-atomicity.md` (TODO) and
 `docs/tasks/20260727-redteam-account-activation.md` (collected, not executed).
 **Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4 (verification) + Phase 6 (demo pages)
-**Follows:** `docs/tasks-archive/2026-07/20260727-account-activation.md` — the backend guard. This is its open scope
+**Follows:** ULTRA-00126 (account activation) — the backend guard. This is its open scope
 item 2, plus the resend it deliberately deferred.
 **Security-critical:** yes → red-team scenarios fold into
 `docs/tasks/20260727-redteam-account-activation.md`

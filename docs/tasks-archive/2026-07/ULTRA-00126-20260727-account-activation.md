@@ -1,4 +1,4 @@
-# Account activation (email verification on sign-up)
+# ULTRA-00126: Account activation (email verification on sign-up)
 
 **Status:** DONE (backend 2026-07-27, gate passed — `b96c2c1c`; archived 2026-10-19). Both scope items at the bottom are
 closed: (1) the sign-up mail throttle stays deferred, as its own task `docs/tasks/20260727-signup-mail-throttle.md`
@@ -253,3 +253,7 @@ out-of-the-box page vs. embeddable widget; whether activation returns a token or
 the unactivated-login → resend flow) are parked by the user and were not to be decided here. It is
 recorded as a scope cut rather than a finding — but the backend is not USABLE until it lands, and
 `LoginController` currently renders the 403 as a generic "Login failed" rather than "check your mail".
+
+## History
+
+- 2026-10-21: numbered ULTRA-00126 (was `docs/tasks-archive/2026-07/20260727-account-activation.md`).

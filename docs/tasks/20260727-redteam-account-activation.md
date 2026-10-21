@@ -2,7 +2,7 @@
 
 **Status:** COLLECTED 2026-07-27 — **do NOT execute during feature work.** These are for a dedicated
 penetration-test session.
-**Feature:** `docs/tasks-archive/2026-07/20260727-account-activation.md` (commit `31667449`)
+**Feature:** ULTRA-00126 (account activation) (commit `31667449`)
 **Related:** ULTRA-00117 (redteam value class emailaddress) §1–2 (SSO auto-link),
 ULTRA-00125 (redteam messaging)
 
