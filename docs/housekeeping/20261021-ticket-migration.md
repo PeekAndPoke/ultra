@@ -193,3 +193,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00075 | 2026-07-21 | `docs/tasks/20260721-i18n-codegen-home-ide-fix.md` | `docs/tasks/ULTRA-00075-20260721-i18n-codegen-home-ide-fix.md` |
 | ULTRA-00075 | 2026-07-21 | `.claude/tasks/i18n/20260721-i18n-codegen-home-ide-fix.md` | `docs/tasks/ULTRA-00075-20260721-i18n-codegen-home-ide-fix.md` |
 | ULTRA-00075 | 2026-07-21 | `.claude/tasks/20260721-i18n-codegen-home-ide-fix.md` | `docs/tasks/ULTRA-00075-20260721-i18n-codegen-home-ide-fix.md` |
+| ULTRA-00076 | 2026-07-21 | `docs/tasks/20260721-i18n-s5-kraft-forms.md` | `docs/tasks/ULTRA-00076-20260721-i18n-s5-kraft-forms.md` |
+| ULTRA-00076 | 2026-07-21 | `.claude/tasks/i18n/20260721-i18n-s5-kraft-forms.md` | `docs/tasks/ULTRA-00076-20260721-i18n-s5-kraft-forms.md` |
+| ULTRA-00076 | 2026-07-21 | `.claude/tasks/20260721-i18n-s5-kraft-forms.md` | `docs/tasks/ULTRA-00076-20260721-i18n-s5-kraft-forms.md` |

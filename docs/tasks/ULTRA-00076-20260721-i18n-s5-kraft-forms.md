@@ -1,4 +1,4 @@
-# S5 — kraft forms i18n (first vertical slice)
+# ULTRA-00076: S5 — kraft forms i18n (first vertical slice)
 
 **Status:** DONE — gate PASS after fixes, all tests green + downstream compiles (2026-07-21) — effort `xhigh`
 **Plan:** ULTRA-00069 (i18n l10n foundation) → Build step S5
@@ -82,3 +82,7 @@ Fixes applied:
 
 Verification: `FormRulesI18nSpec` (7), `ValidationRulesSpec` (178, unchanged), `I18nGlueSpec` (5),
 `checkI18n` (de parity), downstream (`funktor:auth`, demo apps) compile.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00076 (was `docs/tasks/20260721-i18n-s5-kraft-forms.md`).
