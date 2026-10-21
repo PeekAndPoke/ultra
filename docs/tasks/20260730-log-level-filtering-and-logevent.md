@@ -1,7 +1,7 @@
 # ultra/log: level filtering, LogEvent, and per-class SLF4J loggers
 
 **Status:** IMPLEMENTED 2026-07-30 — awaiting /feature-review
-**Plan:** `docs/tasks/20260729-log-scan-findings.md` → L4, L8, L9, L10, L11
+**Plan:** ULTRA-00149 (log scan findings) → L4, L8, L9, L10, L11
 **Security-critical:** no (L1 log forging is tracked separately in `20260729-redteam-log-forging.md`)
 
 Decisions taken by the maintainer on 2026-07-30, after the scan's mechanical round landed.

@@ -1,7 +1,7 @@
 # Red-team: log forging and log-pipeline abuse via `ultra/log`
 
 **Status:** COLLECTED — do NOT execute as part of normal feature work
-**Plan:** raised from `docs/tasks/20260729-log-scan-findings.md` → L1
+**Plan:** raised from ULTRA-00149 (log scan findings) → L1
 **Security-critical:** yes
 
 Scenarios to attempt in a dedicated penetration-test session. Nothing here has been exploited; the

@@ -38,7 +38,7 @@ class LoggingKontainerModuleSpec : StringSpec() {
             manager.isEnabled(LogLevel.INFO) shouldBe false
         }
 
-        // Pins the promotion described in docs/tasks/20260729-log-scan-findings.md L11. This is
+        // Pins the promotion described in ULTRA-00149 (log scan findings) L11. This is
         // NOT desired behaviour - it is recorded so the surprise is visible rather than silent. The
         // real fix is the `dynamicPrototype` injection type that index_jvm.kt asks for.
         "KNOWN: injecting a Log promotes a singleton to SemiDynamic" {

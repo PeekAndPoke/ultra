@@ -1,4 +1,4 @@
-# ultra/log scan — findings backlog
+# ULTRA-00149: ultra/log scan — findings backlog
 
 **Status:** IN PROGRESS — 9 files documented, 20 findings; mechanical fixes DONE, 5 design questions open
 
@@ -167,3 +167,7 @@ None taken yet. The obvious mechanical fixes (L5 guard, L6 fixed-width formatter
 L2/L3 thread-safe list + per-appender `try/catch`) are separable from the design questions
 (L4 where filtering belongs, L8 changing the `append` signature, L9 per-class SLF4J loggers,
 L10 dispatcher choice, L11 Kontainer scoping) — the latter change a published API or its behaviour.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00149 (was `docs/tasks/20260729-log-scan-findings.md`).
