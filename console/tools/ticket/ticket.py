@@ -255,7 +255,7 @@ def status_of(path):
             m = STATUS_LINE.match(line.rstrip("\n"))
             if m:
                 return m.group(1), parse_word(m.group(2)), m.group(2), i
-            if i > 20:
+            if i > 20 or line.startswith("## "):  # the status is in the header, never in the body
                 break
     return None
 
