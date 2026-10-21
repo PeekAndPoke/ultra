@@ -2,7 +2,7 @@ In this file i will collect observations i saw during reviewing the code.
 
 Resolved items are marked DONE with the date. Keep this file as a live list, not a snapshot.
 
-# Missing imports for referenced types in docs — DONE 2026-07-28
+# ULTRA-00001: Missing imports for referenced types in docs — DONE 2026-07-28
 
 Problem:
 
@@ -124,3 +124,7 @@ deleted, along with the `onSignup` parameter of `OrgPolicy.Required` (which beco
 The storage half IS complete (revoke, revokeAllForUser, listForUser, Null/Vault/Cached, TTL-index
 pruning, device fields). KDocs corrected; the remaining work and your five questions are captured in
 `docs/tasks/20260728-session-revocation-wiring.md`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00001 (was `docs/tasks/code-review-observations.md`).

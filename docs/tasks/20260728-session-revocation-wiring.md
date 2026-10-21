@@ -1,7 +1,7 @@
 # Session revocation — wire the JWT half
 
 **Status:** TODO — the storage half exists; the JWT integration does not
-**Plan:** none (follow-up from `docs/tasks/code-review-observations.md`)
+**Plan:** none (follow-up from ULTRA-00001 (code review observations))
 **Security-critical:** yes → red-team follow-up required
 
 ## What exists today
