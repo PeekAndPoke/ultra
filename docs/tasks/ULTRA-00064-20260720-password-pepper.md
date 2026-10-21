@@ -1,4 +1,4 @@
-# Add an optional server-side pepper to password hashing
+# ULTRA-00064: Add an optional server-side pepper to password hashing
 
 **Status:** TODO — from the password-subsystem review (2026-07-20)
 **Plan:** none — password hashing hardening (finding 2)
@@ -47,3 +47,7 @@ breach bar.
 
 - `20260720-password-rehash-on-login.md` (rotation rides the same upgrade path).
 - Reuses the app secret/config mechanism used for JWT signing keys.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00064 (was `docs/tasks/20260720-password-pepper.md`).

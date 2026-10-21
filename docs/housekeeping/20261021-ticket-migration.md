@@ -158,3 +158,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00063 | 2026-07-20 | `docs/tasks-archive/2026-07/20260720-b2b-realm.md` | `docs/tasks-archive/2026-07/ULTRA-00063-20260720-b2b-realm.md` |
 | ULTRA-00063 | 2026-07-20 | `.claude/tasks-archive/2026-07/20260720-b2b-realm.md` | `docs/tasks-archive/2026-07/ULTRA-00063-20260720-b2b-realm.md` |
 | ULTRA-00063 | 2026-07-20 | `.claude/tasks/20260720-b2b-realm.md` | `docs/tasks-archive/2026-07/ULTRA-00063-20260720-b2b-realm.md` |
+| ULTRA-00064 | 2026-07-20 | `docs/tasks/20260720-password-pepper.md` | `docs/tasks/ULTRA-00064-20260720-password-pepper.md` |
+| ULTRA-00064 | 2026-07-20 | `.claude/tasks/password/20260720-password-pepper.md` | `docs/tasks/ULTRA-00064-20260720-password-pepper.md` |
+| ULTRA-00064 | 2026-07-20 | `.claude/tasks/20260720-password-pepper.md` | `docs/tasks/ULTRA-00064-20260720-password-pepper.md` |
