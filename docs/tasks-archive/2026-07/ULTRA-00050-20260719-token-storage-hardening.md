@@ -211,7 +211,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 
 - ULTRA-00166 (sdk auth integration) §4.1 — the provisional localStorage decision this
   supersedes.
-- `docs/tasks/20260731-auth-module-for-sdk.md` §1 — the four open questions this answers.
+- ULTRA-00168 (auth module for sdk) §1 — the four open questions this answers.
 - ULTRA-00162 (sdk sse auth) — SSE cannot set headers, so cookie mode helps there; it also
   needs `credentials: 'include'` on the stream fetch.
 - ULTRA-00136 (session revocation wiring) — **the only real logout mechanism**, and

@@ -408,3 +408,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00167 | 2026-07-31 | `docs/tasks-archive/2026-07/20260731-config-secrets-in-insights.md` | `docs/tasks-archive/2026-07/ULTRA-00167-20260731-config-secrets-in-insights.md` |
 | ULTRA-00167 | 2026-07-31 | `.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md` | `docs/tasks-archive/2026-07/ULTRA-00167-20260731-config-secrets-in-insights.md` |
 | ULTRA-00167 | 2026-07-31 | `.claude/tasks/20260731-config-secrets-in-insights.md` | `docs/tasks-archive/2026-07/ULTRA-00167-20260731-config-secrets-in-insights.md` |
+| ULTRA-00168 | 2026-07-31 | `docs/tasks/20260731-auth-module-for-sdk.md` | `docs/tasks/ULTRA-00168-20260731-auth-module-for-sdk.md` |
+| ULTRA-00168 | 2026-07-31 | `.claude/tasks/20260731-auth-module-for-sdk.md` | `docs/tasks/ULTRA-00168-20260731-auth-module-for-sdk.md` |

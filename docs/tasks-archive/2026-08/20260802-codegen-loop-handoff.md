@@ -84,7 +84,7 @@ LAST.** Keep it cheap — it is read every loop.
 ## Hands off — the auth agent owns these tonight
 
 `funktor/auth/**`, `ultra/security/**/jwt/**`, and these two task files (they are adding resolution
-notes): `20260731-auth-module-for-sdk.md`, ULTRA-00166 (sdk auth integration).
+notes): ULTRA-00168 (auth module for sdk), ULTRA-00166 (sdk auth integration).
 
 They have committed to touching **no** `ultra/codegen/**` or `funktor/codegen/**`.
 

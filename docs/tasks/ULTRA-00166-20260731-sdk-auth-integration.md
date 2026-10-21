@@ -140,7 +140,7 @@ Beyond the draft, and shipped: the three-way sign-in flow (`login.ts`), `AclLoad
 metadata, and `funktor-demo/sdkgen-app/src/sdkContract.ts` pinning the generated types against the
 hand-written contracts.
 
-## 6. The other side — `docs/tasks/20260731-auth-module-for-sdk.md`
+## 6. The other side — ULTRA-00168 (auth module for sdk)
 
 Seeded for whoever owns `funktor/auth`. Two of the four questions above answered themselves while
 writing it, so they are recorded there as **already done** rather than left as work:
