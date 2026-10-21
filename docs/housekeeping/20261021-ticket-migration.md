@@ -145,3 +145,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00058 | 2026-07-20 | `docs/tasks/20260720-redteam-error-disclosure.md` | `docs/tasks/ULTRA-00058-20260720-redteam-error-disclosure.md` |
 | ULTRA-00058 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-redteam-error-disclosure.md` | `docs/tasks/ULTRA-00058-20260720-redteam-error-disclosure.md` |
 | ULTRA-00058 | 2026-07-20 | `.claude/tasks/20260720-redteam-error-disclosure.md` | `docs/tasks/ULTRA-00058-20260720-redteam-error-disclosure.md` |
+| ULTRA-00059 | 2026-07-20 | `docs/tasks/20260720-route-auth-default-deny.md` | `docs/tasks/ULTRA-00059-20260720-route-auth-default-deny.md` |
+| ULTRA-00059 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-route-auth-default-deny.md` | `docs/tasks/ULTRA-00059-20260720-route-auth-default-deny.md` |
+| ULTRA-00059 | 2026-07-20 | `.claude/tasks/20260720-route-auth-default-deny.md` | `docs/tasks/ULTRA-00059-20260720-route-auth-default-deny.md` |

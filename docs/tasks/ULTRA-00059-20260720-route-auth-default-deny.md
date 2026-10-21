@@ -1,4 +1,4 @@
-# Routes without auth rules must not silently be public
+# ULTRA-00059: Routes without auth rules must not silently be public
 
 **Status:** MECHANISM DONE, TASK STILL OPEN — rechecked 2026-10-19. The finding ("a route with no rules is silently public")
 is closed structurally, but NOT by the startup hook this doc designs. The auth-hardening quartet (archived:
@@ -347,3 +347,7 @@ locator obtainable and is enough to grep for. For SSE routes `method` is hardcod
 Fixes applied: ...
 
 **Red-team follow-up**: ULTRA-00058 (redteam error disclosure)
+
+## History
+
+- 2026-10-21: numbered ULTRA-00059 (was `docs/tasks/20260720-route-auth-default-deny.md`).
