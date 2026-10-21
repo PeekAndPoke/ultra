@@ -1,4 +1,4 @@
-# Client-side JWT claim decoding + the selected org in the session
+# ULTRA-00116: Client-side JWT claim decoding + the selected org in the session
 
 **Status:** **SUPERSEDED 2026-08-02, and its implementation deleted** — see §"What happened to this" at
 the bottom. It shipped and was reviewed as described below; six days later the server started stating
@@ -128,3 +128,7 @@ Full story: ULTRA-00050 (token storage hardening) §"Increment 1".
 `funktor/auth/src/jsTest/kotlin/AuthStateSessionMappingSpec.kt` replaces the deleted spec and pins the
 property that keeps this deleted: a malformed or empty bearer token changes nothing, because nothing
 reads it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00116 (was `docs/tasks-archive/2026-07/20260726-client-jwt-claims.md`).

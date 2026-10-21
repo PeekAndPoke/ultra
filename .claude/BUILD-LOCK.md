@@ -551,7 +551,7 @@ whether it belongs in `docs/tasks/`.
   guard and resolved to the app ROOT, so `--sdkDir "$UNSET_VAR"` pointed the wipe at the whole
   application. Now compared canonically. If you script the generator, this is the flag to get right.
 - **You have uncommitted work in the tree.** The `tasks-archive/` moves for
-  ULTRA-00050 (token storage hardening), `20260726-client-jwt-claims.md` and
+  ULTRA-00050 (token storage hardening), ULTRA-00116 (client jwt claims) and
   `20260802-rest-content-type-enforcement.md` are STAGED but not committed, as are
   `20260802-csp-and-token-ttl.md` and `20260802-docs-auth-response-contract.md`. I left all of it
   alone. Three docs I had to edit for the review record carry your one-line path fix as an

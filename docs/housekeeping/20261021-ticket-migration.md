@@ -294,3 +294,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00115 | 2026-07-25 | `docs/tasks-archive/2026-07/20260725-value-class-orgid.md` | `docs/tasks-archive/2026-07/ULTRA-00115-20260725-value-class-orgid.md` |
 | ULTRA-00115 | 2026-07-25 | `.claude/tasks-archive/2026-07/20260725-value-class-orgid.md` | `docs/tasks-archive/2026-07/ULTRA-00115-20260725-value-class-orgid.md` |
 | ULTRA-00115 | 2026-07-25 | `.claude/tasks/20260725-value-class-orgid.md` | `docs/tasks-archive/2026-07/ULTRA-00115-20260725-value-class-orgid.md` |
+| ULTRA-00116 | 2026-07-26 | `docs/tasks-archive/2026-07/20260726-client-jwt-claims.md` | `docs/tasks-archive/2026-07/ULTRA-00116-20260726-client-jwt-claims.md` |
+| ULTRA-00116 | 2026-07-26 | `.claude/tasks-archive/2026-07/20260726-client-jwt-claims.md` | `docs/tasks-archive/2026-07/ULTRA-00116-20260726-client-jwt-claims.md` |
+| ULTRA-00116 | 2026-07-26 | `.claude/tasks/20260726-client-jwt-claims.md` | `docs/tasks-archive/2026-07/ULTRA-00116-20260726-client-jwt-claims.md` |

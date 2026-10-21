@@ -128,5 +128,5 @@ behaves differently. That distinction is the accurate version and is now what th
   Unreachable today — `TypedApiEndpoint.Post/Put.mount` only ever produce `WithBody`/`WithBodyAndParams`,
   and no `Plain` POST exists in the tree — so the invariant is disciplinary, not structural. Gating on
   METHOD inside `Route.handle` would make it structural.
-- **`docs/tasks-archive/2026-07/20260726-client-jwt-claims.md`** describes `jwtClaims.kt` and `Data.claims`, both
+- **ULTRA-00116 (client jwt claims)** describes `jwtClaims.kt` and `Data.claims`, both
   deleted. Should be closed out and archived.
