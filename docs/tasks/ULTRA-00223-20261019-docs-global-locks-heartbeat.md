@@ -1,4 +1,4 @@
-# Docs: global locks expire by heartbeat
+# ULTRA-00223: Docs: global locks expire by heartbeat
 
 **Status:** TODO — write after `docs/tasks/20261019-global-locks-max-hold.md` lands (it adds the `maxHold` parameter).
 Settled 2026-10-19: lock timing relies on NTP (state it as a requirement)
@@ -18,3 +18,7 @@ Settled 2026-10-19: lock timing relies on NTP (state it as a requirement)
   rule against a freshly booted new server, an old server's boot wipe, an old holder's release by key).
 - API breaks: `GlobalLocksProvider.releaseExpired()` is new and abstract; `VaultGlobalLocksProvider.repository` is a
   `VaultGlobalLocksProvider.Repo`; the listing's `GlobalLockEntryModel.lastHeartbeat`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00223 (was `docs/tasks/20261019-docs-global-locks-heartbeat.md`).
