@@ -1,4 +1,4 @@
-# Remove the useless `@KraftFormsRuleDsl` marker
+# ULTRA-00047: Remove the useless `@KraftFormsRuleDsl` marker
 
 **Status:** DONE (2026-07-22) — completed by `f0abc8a9 refactor(forms): remove the KraftForms* DSL
 markers` (i18n-foundation branch, merged via PR #51). Scope exceeded this task in the right way: all
@@ -60,3 +60,7 @@ from `ultra/semanticui`.
 - Mechanical sweep; do in one pass. New code added meanwhile (e.g. `validSlug`) intentionally keeps
   the marker for file consistency until this runs, then it goes with the rest.
 - Cross-ref: mirrors the earlier `ultra/semanticui` DSL-marker cleanup for precedent/approach.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00047 (was `docs/tasks-archive/2026-07/20260719-kraftformsruledsl-cleanup.md`).
