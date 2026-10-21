@@ -1,4 +1,4 @@
-# Router click interception: respect anchors, route only relative same-host links
+# ULTRA-00204: Router click interception: respect anchors, route only relative same-host links
 
 **Status:** DONE (archived 2026-09-28)
 **Plan:** — (bug report, 2026-09-28)
@@ -111,3 +111,7 @@ have no `href`, unaffected. All other docs claims match the code.
 without re-review, tests green, new guards mutation-checked. Open for the maintainer (MINOR only):
 multi-router click handling, `findClosestAnchor` gaps (SVG `<a>`, interactive content inside `<a>`,
 shadow DOM), `#` in fragments. Follow-up: ULTRA-00203 (backnavtrap fragment navigation).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00204 (was `docs/tasks-archive/2026-09/20260928-router-click-interception.md`).

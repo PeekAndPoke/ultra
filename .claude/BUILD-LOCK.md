@@ -80,7 +80,7 @@ to the browser; in-page `#anchors` are left to the browser and `popstate` with u
 longer re-resolves; `resolveRouteForUri` ignores the fragment. `UrlWithProtocolRegex` (`ultra/common`)
 rewritten — also used by the `validUrlWithProtocol` form rule. New docs page
 `docs-site/src/pages/ultra/kraft/link-clicks.astro`. Record:
-`docs/tasks-archive/2026-09/20260928-router-click-interception.md`.
+ULTRA-00204 (router click interception).
 
 **Worth taking:** a mutant that SURVIVED showed a test proving the wrong guard — a cross-host case
 that also differed by protocol, so the protocol check caught it and the host check was never

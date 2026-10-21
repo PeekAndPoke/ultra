@@ -491,3 +491,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00202 | 2026-08-24 | `.claude/tasks-archive/2026-08/20260824-docs-streams-switchmap.md` | `docs/tasks-archive/2026-08/ULTRA-00202-20260824-docs-streams-switchmap.md` |
 | ULTRA-00203 | 2026-09-28 | `docs/tasks/20260928-backnavtrap-fragment-navigation.md` | `docs/tasks/ULTRA-00203-20260928-backnavtrap-fragment-navigation.md` |
 | ULTRA-00203 | 2026-09-28 | `.claude/tasks/20260928-backnavtrap-fragment-navigation.md` | `docs/tasks/ULTRA-00203-20260928-backnavtrap-fragment-navigation.md` |
+| ULTRA-00204 | 2026-09-28 | `docs/tasks-archive/2026-09/20260928-router-click-interception.md` | `docs/tasks-archive/2026-09/ULTRA-00204-20260928-router-click-interception.md` |
+| ULTRA-00204 | 2026-09-28 | `.claude/tasks-archive/2026-09/20260928-router-click-interception.md` | `docs/tasks-archive/2026-09/ULTRA-00204-20260928-router-click-interception.md` |
