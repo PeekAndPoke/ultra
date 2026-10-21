@@ -521,7 +521,7 @@ every build and every commit, not once per session — the holder changes undern
 never sets it. Nothing of yours changes.
 
 **The `/feature-review` gate ran over the whole SDK batch and found three HIGH defects** (`eb609f09`,
-record in `docs/tasks/20260731-sdk-auth-integration.md`). All three were the same shape — a
+record in ULTRA-00166 (sdk auth integration)). All three were the same shape — a
 request outliving the session that issued it — and the fix is a generation counter on `AuthSession`
 and `AclLoader`.
 

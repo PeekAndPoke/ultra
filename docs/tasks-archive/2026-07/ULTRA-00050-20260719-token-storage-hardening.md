@@ -106,7 +106,7 @@ cookie mode would not need a deployment fork.
 ## Increment 1 — the response contract (COMPLETE 2026-08-02)
 
 Ships **bearer-only**; nothing changes at runtime. It exists as its own step because the SDK work is
-blocked on the contract (`docs/tasks/20260731-sdk-auth-integration.md:121-123`).
+blocked on the contract (`ULTRA-00166 (sdk auth integration):121-123`).
 
 `AuthState.readJwt` (`AuthState.kt:445-487`) currently decodes **four** things out of the JWT, and
 `httpOnly` kills all four: permissions (via `permissionsNs`), `exp` → the auto-refresh timer, `sub` →
@@ -209,7 +209,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 
 ## Cross-references
 
-- `docs/tasks/20260731-sdk-auth-integration.md` §4.1 — the provisional localStorage decision this
+- ULTRA-00166 (sdk auth integration) §4.1 — the provisional localStorage decision this
   supersedes.
 - `docs/tasks/20260731-auth-module-for-sdk.md` §1 — the four open questions this answers.
 - ULTRA-00162 (sdk sse auth) — SSE cannot set headers, so cookie mode helps there; it also
@@ -224,7 +224,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 ## 2026-08-02 — this has TWO call sites, and they must be fixed together
 
 The TypeScript SDK's `runtime/auth.ts` deliberately mirrors `AuthState`'s `localStorage` behaviour
-(maintainer decision, `docs/tasks/20260731-sdk-auth-integration.md` §4.1). The reasoning was that two
+(maintainer decision, ULTRA-00166 (sdk auth integration) §4.1). The reasoning was that two
 clients with different storage strategies would split the threat model and force the fix to be designed
 twice.
 

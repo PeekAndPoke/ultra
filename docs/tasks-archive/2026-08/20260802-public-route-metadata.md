@@ -158,7 +158,7 @@ maintainer described (regenerate, then test the app, before a deployment). Expec
 
 ## Review record — /feature-review, 2026-08-02
 
-Reviewed as part of the batch gate recorded in `docs/tasks/20260731-sdk-auth-integration.md`
+Reviewed as part of the batch gate recorded in ULTRA-00166 (sdk auth integration)
 (base `887f9cd7` → `fb92a54c`). Fixes in `eb609f09`.
 
 | Reviewer | Verdict | Confirmed findings |

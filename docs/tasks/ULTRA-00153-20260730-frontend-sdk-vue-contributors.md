@@ -448,7 +448,7 @@ all five JS/CSS assets under `resources/assets/funktor/insights/`.
 
 ## Auth is the FIRST contributor of this kind — build it first (2026-07-31)
 
-Full write-up: `docs/tasks/20260731-sdk-auth-integration.md`. Why it belongs at the head of this
+Full write-up: ULTRA-00166 (sdk auth integration). Why it belongs at the head of this
 document's queue rather than somewhere in it:
 
 **Auth is the first contributor that ships STATE AND BEHAVIOUR, not just an API client.** Every
@@ -941,7 +941,7 @@ not fight the app's own palette when only some variables are overridden.
 
 The plan as a whole is still open; this records the gate on the parts that have LANDED — the
 aggregation registry, `mountAll`, and the `--out`/`--sdkDir` CLI change. Reviewed inside the batch
-gate in `docs/tasks/20260731-sdk-auth-integration.md` (base `887f9cd7` → `fb92a54c`). Fixes in
+gate in ULTRA-00166 (sdk auth integration) (base `887f9cd7` → `fb92a54c`). Fixes in
 `eb609f09`.
 
 | Reviewer | Verdict | Confirmed findings |

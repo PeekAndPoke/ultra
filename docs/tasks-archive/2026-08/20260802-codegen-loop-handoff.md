@@ -53,7 +53,7 @@ generation counters on `AuthSession` and `AclLoader`.
 **The lesson for the next loop:** every one of these lived in an `await` boundary, and none of the
 existing tests crossed one — they all drained the promise before asserting. `isLoggedIn` is not an
 identity; it is true again for the NEXT user. Full record in
-`docs/tasks/20260731-sdk-auth-integration.md`.
+ULTRA-00166 (sdk auth integration).
 
 ### Nothing unblocked remains. What is left, and who owns it:
 
@@ -84,7 +84,7 @@ LAST.** Keep it cheap — it is read every loop.
 ## Hands off — the auth agent owns these tonight
 
 `funktor/auth/**`, `ultra/security/**/jwt/**`, and these two task files (they are adding resolution
-notes): `20260731-auth-module-for-sdk.md`, `20260731-sdk-auth-integration.md`.
+notes): `20260731-auth-module-for-sdk.md`, ULTRA-00166 (sdk auth integration).
 
 They have committed to touching **no** `ultra/codegen/**` or `funktor/codegen/**`.
 

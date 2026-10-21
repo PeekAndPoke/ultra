@@ -2,7 +2,7 @@
 
 **Status:** SEED — written by the codegen agent for whoever owns `funktor/auth`. Complete it; do not
 assume it is finished.
-**Counterpart:** `docs/tasks/20260731-sdk-auth-integration.md` (the SDK side, same day).
+**Counterpart:** ULTRA-00166 (sdk auth integration) (the SDK side, same day).
 **Security-critical:** yes — sessions, tokens, JWT claims. Red-team follow-up required.
 
 ## Read this first: what you do NOT have to do

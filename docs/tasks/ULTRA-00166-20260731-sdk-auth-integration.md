@@ -1,4 +1,4 @@
-# Ship auth through the SDK builder — the TypeScript counterpart of `AuthState`
+# ULTRA-00166: Ship auth through the SDK builder — the TypeScript counterpart of `AuthState`
 
 **Status:** IN PROGRESS — the session runtime landed and PASSED `/feature-review` 2026-08-02
 (`eb609f09`). **Outstanding: the Vue binding layer** (§5), and with it the login page and routing.
@@ -286,3 +286,7 @@ was deleted outright.
 the wire format and a future transport is additive. `HttpRequest.credentials` / `SseOptions.credentials`
 are harmless to keep — they are general HTTP surface — but the cookie branch in `authTransport` is now
 dead code and is yours to remove or keep.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00166 (was `docs/tasks/20260731-sdk-auth-integration.md`).
