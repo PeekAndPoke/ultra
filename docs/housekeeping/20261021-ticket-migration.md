@@ -76,3 +76,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00035 | 2026-07-17 | `docs/tasks/20260717-auth-orgs-foundation.md` | `docs/tasks/ULTRA-00035-20260717-auth-orgs-foundation.md` |
 | ULTRA-00035 | 2026-07-17 | `.claude/tasks/saas-orgs/20260717-auth-orgs-foundation.md` | `docs/tasks/ULTRA-00035-20260717-auth-orgs-foundation.md` |
 | ULTRA-00035 | 2026-07-17 | `.claude/tasks/20260717-auth-orgs-foundation.md` | `docs/tasks/ULTRA-00035-20260717-auth-orgs-foundation.md` |
+| ULTRA-00036 | 2026-07-17 | `docs/tasks/20260717-saas-foundation.md` | `docs/tasks/ULTRA-00036-20260717-saas-foundation.md` |
+| ULTRA-00036 | 2026-07-17 | `.claude/tasks/saas-orgs/20260717-saas-foundation.md` | `docs/tasks/ULTRA-00036-20260717-saas-foundation.md` |
+| ULTRA-00036 | 2026-07-17 | `.claude/tasks/20260717-saas-foundation.md` | `docs/tasks/ULTRA-00036-20260717-saas-foundation.md` |

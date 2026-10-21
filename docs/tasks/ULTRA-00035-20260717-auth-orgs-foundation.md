@@ -4,7 +4,7 @@
 **Goal:** Get organisations (tenants) and branches (sub-tenants) into users in the database, wire
 the org-aware login flow (0/1/n org selection), and then fully implement all still-open user flows.
 Auth is the center-piece for everything that follows.
-**Supersedes:** Track B of `20260717-saas-foundation.md`. Absorbs the open Phases 2–6 of
+**Supersedes:** Track B of ULTRA-00036 (saas foundation). Absorbs the open Phases 2–6 of
 ULTRA-00030 (v1 email auth and sessions) as Phase F.
 
 ## Decisions from Karsten (2026-07-17)
@@ -286,7 +286,7 @@ No new provider needed. The active org is `user.permissions.org`, already availa
 `currentUserProvider()` (`funktor/rest/.../auth/call.kt:27`) since it's reconstructed from the JWT
 permissions claim. AuthRule: `forOrganisation(id)` checks `permissions.org == id`;
 `forSelectedOrganisation()` checks `permissions.org != null`. (This is the seam the later data-scoping
-layer will read — see `20260717-saas-foundation.md`.)
+layer will read — see ULTRA-00036 (saas foundation).)
 
 ### 7. Frontend (funktor/auth jsMain)
 
@@ -398,7 +398,7 @@ cross-org data access / IDOR on org & branch ids, `OrgSelectionToken` replay or 
 0-org gate bypass, `refreshToken` changing the org, `isSuperUser` escalation from an end-user realm,
 selection-token issued for realm A accepted by realm B.
 
-## Out of scope now (tracked in `20260717-saas-foundation.md`)
+## Out of scope now (tracked in ULTRA-00036 (saas foundation))
 
 Enforced org-scoped repositories (data layer), invitation flows, org-admin management UI,
 per-org email branding, org lifecycle cascades (archive/delete), document layer, starter template.

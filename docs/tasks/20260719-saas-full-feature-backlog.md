@@ -28,7 +28,7 @@ The guiding split, applied throughout:
 3. **Config-driven** (`AppConfig` subtype): Stripe keys, plan definitions, feature flags.
 4. **Post-event hooks** (the `EmailHooks` pattern): `onPaymentSucceeded`, `onSubscriptionChanged`,
    `onOrgCreated`, `onOwnershipTransferred` — apps subscribe without touching core flow.
-5. **Document templates** (the planned document layer, `20260717-saas-foundation.md` Track C/D):
+5. **Document templates** (the planned document layer, ULTRA-00036 (saas foundation) Track C/D):
    apps supply block-based invoice templates; core renders to PDF (incl. ZUGFeRD/XRechnung).
 
 **Proposed module layout (provisional):**
@@ -114,7 +114,7 @@ Never store raw card/IBAN data (PCI/PSD2) — only Stripe tokens/ids + display m
   - **Billing/payment invoice** — mirror Stripe's invoice (status, amount, hosted PDF ref). Cheap.
   - **Legally-compliant invoice** — for EU/German B2B (VAT, sequential legal invoice number,
     **ZUGFeRD/XRechnung** e-invoice) we likely generate our **own** PDF via the planned document
-    layer (`20260717-saas-foundation.md` C/PDF track). This *connects billing ↔ the document tooling*
+    layer (ULTRA-00036 (saas foundation) C/PDF track). This *connects billing ↔ the document tooling*
     and is literally several thebizz product needs.
 - **Data:** sequential invoice number (legally required, gapless per issuer), issue date, seller
   (operator) + buyer (org) details, line items, VAT/tax breakdown, totals, payment status, period.
@@ -200,6 +200,6 @@ Never store raw card/IBAN data (PCI/PSD2) — only Stripe tokens/ids + display m
 
 - Orgs/membership/ownership foundation, plan→permissions wiring: ULTRA-00035 (auth orgs foundation)
   (O1/O2 done; invitations partially sketched).
-- Document/PDF layer for invoices: `20260717-saas-foundation.md` (Tracks C/D).
+- Document/PDF layer for invoices: ULTRA-00036 (saas foundation) (Tracks C/D).
 - Auth completeness (2FA, audit trail, impersonation, GDPR) discussed in-session — overlaps §Operator
   and §Org-lifecycle here; capture into a dedicated auth-features plan when scheduled.

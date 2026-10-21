@@ -1,4 +1,4 @@
-# SaaS Foundation — Multi-Tenancy + Document Tooling
+# ULTRA-00036: SaaS Foundation — Multi-Tenancy + Document Tooling
 
 **Status:** PLANNED 2026-07-17
 **Goal:** Bring funktor to a state where multi-tenant SMB SaaS products (thebizz speedboats) can be
@@ -236,3 +236,7 @@ E1–E3 anytime; E4 needs auth-orgs + D2 minimum
 - **Constraint-solver core** — the combinatorial pool's shared engine is Python/OR-Tools territory;
   products would call it as a service. Repo-boundary decision belongs to thebizz, not here.
 - Depot encryption-at-rest + configurable log appender — already tracked as funktor TODOs.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00036 (was `docs/tasks/20260717-saas-foundation.md`).

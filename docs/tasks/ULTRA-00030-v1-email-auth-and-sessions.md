@@ -4,7 +4,7 @@
 EmailChangeToken,Session}` + `SessionStore` (Vault/Cached) + `RealmTokenConfig` + `funktor:sid` claim
 exist and are tested; `touch()` is a deliberate Phase-1 no-op). Phases 2–6 open.
 **Hard goal for v1.0.0** — full email auth flow with session records.
-**Note (2026-07-17):** This plan is a hard prerequisite of `20260717-saas-foundation.md`. Its open
+**Note (2026-07-17):** This plan is a hard prerequisite of ULTRA-00036 (saas foundation). Its open
 Phases 2–6 are scheduled as Phase F of ULTRA-00035 (auth orgs foundation) (org-aware: sessions must
 carry the selected organisation).
 
