@@ -1,4 +1,4 @@
-# Ship shareable Claude skills alongside the framework (Kraft, ultra, funktor)
+# ULTRA-00096: Ship shareable Claude skills alongside the framework (Kraft, ultra, funktor)
 
 **Status:** IDEA — not yet scheduled (captured 2026-07-23, user request)
 **Type:** developer-experience / distribution
@@ -46,3 +46,7 @@ block-style `authorize {}` DSL, the mandatory `ApiRoutes` floor, two-phase auth,
   structural counterpart) and item 4 (`UserAware` isolation).
 - The docs collectors (`docs-site/src/data/llms/*`) — the LLM-readable mirrors are the closest
   existing thing; a skill is the interactive/review-time complement.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00096 (was `docs/tasks/future/shippable-claude-skills.md`).
