@@ -1,4 +1,4 @@
-# Plan: insights, then auth, in parallel worktrees
+# ULTRA-00221: Plan: insights, then auth, in parallel worktrees
 
 **Status:** IN PROGRESS — maintainer go 2026-10-19: **two tracks at a time**; D3, D8, D9 decided (below)
 **Plan:** none — maintainer request 2026-10-19 ("finish the insights first, then auth"; "consider multiple agents on
@@ -102,3 +102,7 @@ ultra-only, the 7 open questions; do NOT adopt before the maintainer decides).
 - **D7** (T7) Session revocation: the doc's five design questions.
 - **D8** Branch `js-bundle-size`: **left unmerged** (maintainer 2026-10-19).
 - **D9** (E3) **`distributeJsExample` moves out of `build`** (maintainer 2026-10-19).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00221 (was `docs/tasks/20261019-insights-auth-parallel-plan.md`).

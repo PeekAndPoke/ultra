@@ -5,7 +5,7 @@ delta check (one MAJOR test gap closed, `7780e5dc`); merged to master `ed8d3b38`
 **Docs:** NO docs task yet — the sign-up/activation surface changes again in `20261019-email-first-signup.md` (next
 auth task, after 0.114.0), so documenting it now means rewriting it next week. The docs follow-up box below moves into
 that task; the 0.114.0 `CHANGELOG.md` entry carries the breaking API and the upgrade traps meanwhile.
-**Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` → the first auth track, taken ahead of T4 (maintainer:
+**Plan:** ULTRA-00221 (insights auth parallel plan) → the first auth track, taken ahead of T4 (maintainer:
 "next free slot" — live code with a security hole)
 **Fixes:** the round-2 gate FAIL of ULTRA-00129 (activation resend and frontend) (its ledger is the input)
 and the pending-account half of ULTRA-00118 (sso email verification)

@@ -2,7 +2,7 @@
 
 **Status:** TODO — from review round 1 of `docs/tasks-archive/2026-10/20261019-insights-vue-round2-minors.md` (clean,
 merged `348c66bc`); the maintainer's standing direction is to fix MINORs
-**Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` (insights follow-ups)
+**Plan:** ULTRA-00221 (insights auth parallel plan) (insights follow-ups)
 **Security-critical:** item 1 yes (what reaches the depot); red-team ULTRA-00161 (redteam insights api)
 
 ## Spec

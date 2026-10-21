@@ -4,7 +4,7 @@
 ×2: implementation + domain fit, security) CLEAN — 0 CRITICAL / 0 MAJOR; its 7 MINORs and one pre-existing product defect
 go to `docs/tasks/20261019-insights-minors-followups.md`. Originally: 12 MINORs from round 2 of the gate of
 ULTRA-00190 (insights vue tabs) (gate PASS, merged `a578ef0a`); the maintainer's standing direction is to fix MINORs.
-**Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` (insights follow-ups; touches T1's area)
+**Plan:** ULTRA-00221 (insights auth parallel plan) (insights follow-ups; touches T1's area)
 **Security-critical:** partly — items 3, 6 and 7 change what reaches the depot; red-team:
 ULTRA-00161 (redteam insights api) (scenarios 32–35 already added on master, `:109-117`)
 
