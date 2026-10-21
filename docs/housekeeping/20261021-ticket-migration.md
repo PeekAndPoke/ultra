@@ -393,3 +393,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00160 | 2026-07-30 | `docs/tasks-archive/2026-07/20260730-insights-rest-api.md` | `docs/tasks-archive/2026-07/ULTRA-00160-20260730-insights-rest-api.md` |
 | ULTRA-00160 | 2026-07-30 | `.claude/tasks-archive/2026-07/20260730-insights-rest-api.md` | `docs/tasks-archive/2026-07/ULTRA-00160-20260730-insights-rest-api.md` |
 | ULTRA-00160 | 2026-07-30 | `.claude/tasks/20260730-insights-rest-api.md` | `docs/tasks-archive/2026-07/ULTRA-00160-20260730-insights-rest-api.md` |
+| ULTRA-00161 | 2026-07-30 | `docs/tasks/20260730-redteam-insights-api.md` | `docs/tasks/ULTRA-00161-20260730-redteam-insights-api.md` |
+| ULTRA-00161 | 2026-07-30 | `.claude/tasks/20260730-redteam-insights-api.md` | `docs/tasks/ULTRA-00161-20260730-redteam-insights-api.md` |

@@ -6,7 +6,7 @@ go to `docs/tasks/20261019-insights-minors-followups.md`. Originally: 12 MINORs 
 `20260802-insights-vue-tabs.md` (gate PASS, merged `a578ef0a`); the maintainer's standing direction is to fix MINORs.
 **Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` (insights follow-ups; touches T1's area)
 **Security-critical:** partly — items 3, 6 and 7 change what reaches the depot; red-team:
-`docs/tasks/20260730-redteam-insights-api.md` (scenarios 32–35 already added on master, `:109-117`)
+ULTRA-00161 (redteam insights api) (scenarios 32–35 already added on master, `:109-117`)
 
 ## Spec
 

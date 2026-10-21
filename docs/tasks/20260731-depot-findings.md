@@ -24,7 +24,7 @@ remotely through an authenticated admin surface".
 **Fix direction:** `file.canonicalFile.toPath().startsWith(root.canonicalFile.toPath())` before every
 read, or open with `LinkOption.NOFOLLOW_LINKS`.
 
-Also red-team item 22 in `docs/tasks/20260730-redteam-insights-api.md`.
+Also red-team item 22 in ULTRA-00161 (redteam insights api).
 
 ## F2 — `listItems(path, limit)` ignores `path`
 

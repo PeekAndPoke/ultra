@@ -502,7 +502,7 @@ only stops it reaching a screen. The real fix belongs with D1 in the backend.
 - [x] **Re-derive TAB-SPECS from a current record** — DONE 2026-10-19.
 - [x] Re-run the suite, regenerate, and re-verify — DONE 2026-10-19, see "Test evidence (T1)".
 
-**Red-team follow-up:** required — `docs/tasks/20260730-redteam-insights-api.md` already exists for the
+**Red-team follow-up:** required — ULTRA-00161 (redteam insights api) already exists for the
 API half; extend it with the rendering scenarios (stored XSS via header/UA, secret disclosure through the
 config tab) rather than opening a second file. T1 may not edit that file; its proposals are below under
 "Red-team scenarios proposed (T1)" for the coordinator to carry over.
@@ -614,7 +614,7 @@ every mutant, and the ten were re-run clean.
 - **The S1 probe logs two lines**, so `record-vault.json` carries a real log slice — none of the samples had
   one.
 
-## Red-team scenarios proposed (T1) — for `docs/tasks/20260730-redteam-insights-api.md`
+## Red-team scenarios proposed (T1) — for ULTRA-00161 (redteam insights api)
 
 Collected, not run; T1 may not edit that file.
 

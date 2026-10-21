@@ -1,4 +1,4 @@
-# Red team — insights REST API and collector data
+# ULTRA-00161: Red team — insights REST API and collector data
 
 **Status:** COLLECTED — not executed. Sweep in a dedicated penetration-test session.
 **Feature:** ULTRA-00160 (insights rest api)
@@ -137,3 +137,7 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes
     them (maintainer decision, 2026-07-30). Not a finding for this sweep unless it outlives the rewrite —
     but confirm the records it serves are the redacted ones after the fix above.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00161 (was `docs/tasks/20260730-redteam-insights-api.md`).

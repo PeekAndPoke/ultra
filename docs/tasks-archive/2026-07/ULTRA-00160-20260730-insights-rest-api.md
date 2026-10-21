@@ -477,7 +477,7 @@ plus one with a non-default policy proving the override takes effect.
 - **`detailsUri`/`detailsUrl` removal is complete and atomic** across all nine files. It was also a real hardening, not just cleanup: before it, *every* API response — including anonymous ones — carried the depot path of its own record, which would have made `GET /records/{bucket}/{file}` directly addressable without the list endpoint.
 - **No new wildcard imports**; all KDoc `[Reference]` links resolve; `RecordParam` placement and `call.kontainer.get()` in handlers both match existing funktor patterns.
 
-**Red-team follow-up** (required, security-critical): `docs/tasks/20260730-redteam-insights-api.md`
+**Red-team follow-up** (required, security-critical): ULTRA-00161 (redteam insights api)
 
 ## I4: the e2e now runs against a populated depot (2026-07-31)
 

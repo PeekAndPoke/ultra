@@ -45,4 +45,4 @@ legacy and hide ALL query text. Use another key, or change the detection in the 
 
 - ULTRA-00160 (insights rest api) — the API that made records remotely readable
 - `docs/tasks-archive/2026-07/20260731-config-secrets-in-insights.md` — the config half of the same problem
-- `docs/tasks/20260730-redteam-insights-api.md` — attack scenarios against the recorded slices
+- ULTRA-00161 (redteam insights api) — attack scenarios against the recorded slices

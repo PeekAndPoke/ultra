@@ -129,7 +129,7 @@ every consuming app. Do not take this branch without measuring the first.
 
 ## Red-team follow-up
 
-Extend `docs/tasks/20260730-redteam-insights-api.md` rather than opening a new file: the two new
+Extend ULTRA-00161 (redteam insights api) rather than opening a new file: the two new
 endpoints expose the full class graph and the database schema, which is a bigger disclosure surface than
 anything currently under that floor.
 
@@ -561,7 +561,7 @@ The `DynamicOverride` join (round 1's MAJOR), the three-way fingerprint match, t
 "today's schema" note and the dropped `numOld`/`numTotal` are recorded, with `path:line`, evidence and mutants,
 in `docs/tasks/20260802-insights-vue-tabs.md`, "T1 — round 1 fix batch".
 
-### Red-team scenarios proposed (T1) — for `docs/tasks/20260730-redteam-insights-api.md`
+### Red-team scenarios proposed (T1) — for ULTRA-00161 (redteam insights api)
 
 Collected, not run; T1 may not edit that file. The rendering and S1 ones are in the vue-tabs task.
 
@@ -602,7 +602,7 @@ The MINORs below are handed to the maintainer as a list (review-loop termination
 - the DoS cost is bounded and superuser-only (cheaper than `VaultApi.listRepositories`);
 - code style clean (the wildcard imports in `insights_module.kt` and `InsightsFull.kt` predate this change).
 
-**Red-team:** scenarios 24-31 added to `docs/tasks/20260730-redteam-insights-api.md` on master (`e20fd6dc`).
+**Red-team:** scenarios 24-31 added to ULTRA-00161 (redteam insights api) on master (`e20fd6dc`).
 
 **Verdict:** gate PASS for Parts A+B (round 1 clean; e2e present on both backends and green). Parts C+D stay open for T1.
 

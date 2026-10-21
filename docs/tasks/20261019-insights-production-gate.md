@@ -2,7 +2,7 @@
 
 **Status:** TODO — all four items decided by the maintainer 2026-10-19 (relayed by Mission-Control); ready for a slot
 **Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` → the "production gate for insights" row
-**Security-critical:** yes — red-team: `docs/tasks/20260730-redteam-insights-api.md` (scenarios 11, 24-31)
+**Security-critical:** yes — red-team: ULTRA-00161 (redteam insights api) (scenarios 11, 24-31)
 
 ## Decided
 
