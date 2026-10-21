@@ -335,7 +335,7 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
       non-blank already enforced in O1). Revisit when branch-management UX is built.
 - [x] Tests: permissions builder green; auth + saas + full aggregate green (no regression)
 
-### Phase O3 — Org-aware sign-in: 0/1/n — BACKEND DONE 2026-07-18 (task `20260718-o3-org-signin.md`); tests + frontend + demo pending
+### Phase O3 — Org-aware sign-in: 0/1/n — BACKEND DONE 2026-07-18 (task ULTRA-00042 (o3 org signin)); tests + frontend + demo pending
 - [x] `AuthSignInResponse` → sealed (`Success(…, org?)` / `OrgSelectionRequired`); `AuthOrgRef` model.
       `AuthSignUpResponse.signIn` stays nullable — best-effort auto sign-in (0-org case → null).
 - [x] `AuthError.noOrganisationAccess`

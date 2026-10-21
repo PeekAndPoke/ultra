@@ -48,7 +48,7 @@ Consequences:
 - **Common backend API-surface**: factor shared operator/tenant CRUD + a `users-by-org` query into
   reusable `funktor/saas` (or a new module) API features, not per-app copies.
 - **Common frontend auth-state**: the unified `AuthContext` stream (AuthState ⊕ getMyApiAccess/ApiAcl
-  + selected-org) built once, reused by all three apps — see `20260718-o3-org-signin.md`. Also fix
+  + selected-org) built once, reused by all three apps — see ULTRA-00042 (o3 org signin). Also fix
   the missing `jwtDecoder` wiring so client permissions populate.
 
 ## Progress

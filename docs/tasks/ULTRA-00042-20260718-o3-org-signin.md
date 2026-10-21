@@ -1,4 +1,4 @@
-# O3 — Org-aware sign-in (0/1/n)
+# ULTRA-00042: O3 — Org-aware sign-in (0/1/n)
 
 **Status:** IN PROGRESS — backend + frontend-compat done + green (2026-07-18); org-flow tests +
 picker UI + demo realm/fixtures pending
@@ -40,3 +40,7 @@ demo login flow is complete
 - Note: observed a **pre-existing flaky** full-suite failure once (`AuthApiSpec` signup→signin
       `password4j: Invalid hashed value`) — shared ArangoDB test-DB state across specs; passes in
       isolation and on clean re-runs. Not an O3 regression. Worth a separate test-isolation task.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00042 (was `docs/tasks/20260718-o3-org-signin.md`).
