@@ -103,7 +103,7 @@ built-in codec, never both** — and an opt-in codec is the wrong failure mode f
 because an app that forgets to register it writes secrets in the clear and says nothing.
 
 Resolved by moving the annotation instead: the `Slumber` nest goes to `ultra:common`, package
-`io.peekandpoke.ultra.common.slumber` (see `docs/tasks/20260731-slumber-as-declared-wire-shape.md`
+`io.peekandpoke.ultra.common.slumber` (see ULTRA-00170 (slumber as declared wire shape)
 §6). It is annotations only, with no machinery and no slumber dependency, so nothing is dragged along.
 Then `Redacted<T>` lives in `ultra:common` **with** its annotation, and `ultra:slumber` sees both.
 
@@ -188,7 +188,7 @@ does not exist yet. The type works without it; codegen has the explicit rule mea
 
 - **Prerequisite:** move the `Slumber` annotation nest to `ultra:common`, package
   `io.peekandpoke.ultra.common.slumber`. Tracked in
-  `docs/tasks/20260731-slumber-as-declared-wire-shape.md` §6.
+  ULTRA-00170 (slumber as declared wire shape) §6.
 - `Redacted<T>` in `ultra/common/src/commonMain/kotlin/model/`, package
   `io.peekandpoke.ultra.common.model`, carrying `@Slumber.As(String::class)` and a redacting
   `toString()`.

@@ -1,4 +1,4 @@
-# `@Slumber.As` — declare a custom-coded type's wire shape once
+# ULTRA-00170: `@Slumber.As` — declare a custom-coded type's wire shape once
 
 **Status:** DONE 2026-08-01. Implemented (§1–§5, §9), reviewed and fixed — `/feature-review` gate
 **PASS**, record in §15. Residue split into `docs/tasks/20260801-slumber-as-followups.md`; docs
@@ -444,3 +444,7 @@ redaction (`Redacted<T>` is excluded from generation twice over), the awake path
 asymmetric — the karango half is exercised end-to-end (`ClusterApiSpec` → `BackgroundJobsApi`), the
 monko half is not, because `funktor:all` wires `useKarango()` only and no funktor spec uses
 `MatrixTest2d`. That gap is pre-existing and repo-wide, not introduced here. Maintainer's call.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00170 (was `docs/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md`).

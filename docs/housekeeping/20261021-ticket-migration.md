@@ -413,3 +413,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00169 | 2026-07-31 | `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md` | `docs/tasks-archive/2026-07/ULTRA-00169-20260731-redacted-and-jackson-removal.md` |
 | ULTRA-00169 | 2026-07-31 | `.claude/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md` | `docs/tasks-archive/2026-07/ULTRA-00169-20260731-redacted-and-jackson-removal.md` |
 | ULTRA-00169 | 2026-07-31 | `.claude/tasks/20260731-redacted-and-jackson-removal.md` | `docs/tasks-archive/2026-07/ULTRA-00169-20260731-redacted-and-jackson-removal.md` |
+| ULTRA-00170 | 2026-07-31 | `docs/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md` | `docs/tasks-archive/2026-07/ULTRA-00170-20260731-slumber-as-declared-wire-shape.md` |
+| ULTRA-00170 | 2026-07-31 | `.claude/tasks-archive/2026-07/20260731-slumber-as-declared-wire-shape.md` | `docs/tasks-archive/2026-07/ULTRA-00170-20260731-slumber-as-declared-wire-shape.md` |
+| ULTRA-00170 | 2026-07-31 | `.claude/tasks/20260731-slumber-as-declared-wire-shape.md` | `docs/tasks-archive/2026-07/ULTRA-00170-20260731-slumber-as-declared-wire-shape.md` |

@@ -50,7 +50,7 @@ debugging session that looks like a real bug.
 
 ## What is landing from the other agent (`@Slumber.As`)
 
-`docs/tasks/20260731-slumber-as-declared-wire-shape.md`. Two things reach you:
+ULTRA-00170 (slumber as declared wire shape). Two things reach you:
 
 1. **The `Slumber` annotation nest moves** from `io.peekandpoke.ultra.slumber.Slumber` to
    `io.peekandpoke.ultra.common.slumber.Slumber`. **Two files import it, and one is MAIN source**:
