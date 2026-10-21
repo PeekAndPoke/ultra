@@ -28,15 +28,17 @@ a fourth, hold in master:
 
 - (4) Dismiss answers `Cancel` (recommended), or a third `Result.Dismissed`, which would be a breaking change to a
   public enum.
+- Focus on open: none, or Cancel (recommended: an OkCancelModal often confirms a destructive action, so Enter
+  must not confirm by accident), or Ok as an option in `View`.
 
 ## The work
 
-1. Render both buttons with `Button` (type `button`), and focus Ok on open.
+1. Render both buttons with `Button` (type `button`).
 2. `OkCancelModal` answers exactly once: decide the result when the click arrives, ignore later clicks, and
    deliver it through one path for Ok, Cancel and dismiss.
 3. `closeAll()` runs every open handle's `onClose` handlers, like `close()`.
-4. Tests in `kraft/semanticui/src/jsTest/kotlin/` and `kraft/core-tests/` (`TestBed.preact`): Enter on focused
-   Ok; Ok then Cancel answers once; backdrop click answers Cancel; `closeAll` runs the handlers.
+4. Tests in `kraft/semanticui/src/jsTest/kotlin/` and `kraft/core-tests/` (`TestBed.preact`): Enter on a focused
+   button; Ok then Cancel answers once; backdrop click answers Cancel; `closeAll` runs the handlers.
 
 ## Acceptance
 
