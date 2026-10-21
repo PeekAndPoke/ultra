@@ -1,4 +1,4 @@
-# Config secrets are written verbatim into every insights record
+# ULTRA-00167: Config secrets are written verbatim into every insights record
 
 **Status:** FIXED and ARCHIVED (2026-08-01) — closed by `Redacted<T>`, which took fix option 4
 (a type, not an annotation). See "How it was actually fixed" at the bottom; the analysis above is
@@ -144,3 +144,7 @@ vacuous.
 **The related depot finding** (ULTRA-00164 (depot findings)) recorded a `@JsonIgnore` table as "the
 only thing keeping secrets out of records". That table is superseded: the mechanism is now a type,
 and there is no Jackson.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00167 (was `docs/tasks-archive/2026-07/20260731-config-secrets-in-insights.md`).

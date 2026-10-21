@@ -405,3 +405,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00165 | 2026-07-31 | `.claude/tasks/20260731-typedrouterenderer-double-encodes-query.md` | `docs/tasks/ULTRA-00165-20260731-typedrouterenderer-double-encodes-query.md` |
 | ULTRA-00166 | 2026-07-31 | `docs/tasks/20260731-sdk-auth-integration.md` | `docs/tasks/ULTRA-00166-20260731-sdk-auth-integration.md` |
 | ULTRA-00166 | 2026-07-31 | `.claude/tasks/20260731-sdk-auth-integration.md` | `docs/tasks/ULTRA-00166-20260731-sdk-auth-integration.md` |
+| ULTRA-00167 | 2026-07-31 | `docs/tasks-archive/2026-07/20260731-config-secrets-in-insights.md` | `docs/tasks-archive/2026-07/ULTRA-00167-20260731-config-secrets-in-insights.md` |
+| ULTRA-00167 | 2026-07-31 | `.claude/tasks-archive/2026-07/20260731-config-secrets-in-insights.md` | `docs/tasks-archive/2026-07/ULTRA-00167-20260731-config-secrets-in-insights.md` |
+| ULTRA-00167 | 2026-07-31 | `.claude/tasks/20260731-config-secrets-in-insights.md` | `docs/tasks-archive/2026-07/ULTRA-00167-20260731-config-secrets-in-insights.md` |

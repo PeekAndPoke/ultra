@@ -640,7 +640,7 @@ Three defects surfaced only because a mutation refused to fail, and none were vi
 
 - [x] **I4 — the test app never enables insights** — **fixed 2026-07-31**, see "I4: the e2e now runs
       against a populated depot" below.
-- [ ] **Config secrets are in every record** — `docs/tasks-archive/2026-07/20260731-config-secrets-in-insights.md`.
+- [ ] **Config secrets are in every record** — ULTRA-00167 (config secrets in insights).
       The JWT signing key, CSRF secret and DB passwords are serialised verbatim into the `app-config`
       slice. Found 2026-07-31 by reading a real record. **Blocks the `app-config` Vue tab**, and it is
       the reason `reference/TAB-SPECS.md` marks that one STOP.
