@@ -1,4 +1,4 @@
-# User-Specific API Access Matrix (ApiAcl)
+# ULTRA-00015: User-Specific API Access Matrix (ApiAcl)
 
 
 
@@ -823,3 +823,7 @@ All verification steps passed:
 - `./gradlew :funktor:inspect:compileKotlinJvm` — PASS
 - `./gradlew :funktor:rest:jvmTest` — PASS (all unit tests)
 - `./gradlew :funktor:all:jvmTest` — 86/87 PASS (1 pre-existing sign-in ordering failure)
+
+## History
+
+- 2026-10-21: numbered ULTRA-00015 (was `docs/tasks-archive/2026-04/2026-04-06-api-acl-user-access-matrix.md`).
