@@ -1,4 +1,4 @@
-# ultra/log: level filtering, LogEvent, and per-class SLF4J loggers
+# ULTRA-00158: ultra/log: level filtering, LogEvent, and per-class SLF4J loggers
 
 **Status:** IMPLEMENTED 2026-07-30 — awaiting /feature-review
 **Plan:** ULTRA-00149 (log scan findings) → L4, L8, L9, L10, L11
@@ -162,3 +162,7 @@ logic failure, not a build one. `touch` does not invalidate it; the dependent mo
 - [ ] Kontainer `dynamicPrototype` injection type (L11's real fix)
 - [ ] L1 log forging — mitigations listed in ULTRA-00150 (redteam log forging), not yet decided
 - [ ] L14 flush/shutdown path, if the dispatcher ever goes truly async
+
+## History
+
+- 2026-10-21: numbered ULTRA-00158 (was `docs/tasks/20260730-log-level-filtering-and-logevent.md`).

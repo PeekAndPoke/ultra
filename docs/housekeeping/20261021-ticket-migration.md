@@ -386,3 +386,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00156 | 2026-07-30 | `.claude/tasks/20260730-funktor-codegen-rest-contributor.md` | `docs/tasks-archive/2026-07/ULTRA-00156-20260730-funktor-codegen-rest-contributor.md` |
 | ULTRA-00157 | 2026-07-30 | `docs/tasks/20260730-i18n-model-to-ultra-i18n.md` | `docs/tasks/ULTRA-00157-20260730-i18n-model-to-ultra-i18n.md` |
 | ULTRA-00157 | 2026-07-30 | `.claude/tasks/20260730-i18n-model-to-ultra-i18n.md` | `docs/tasks/ULTRA-00157-20260730-i18n-model-to-ultra-i18n.md` |
+| ULTRA-00158 | 2026-07-30 | `docs/tasks/20260730-log-level-filtering-and-logevent.md` | `docs/tasks/ULTRA-00158-20260730-log-level-filtering-and-logevent.md` |
+| ULTRA-00158 | 2026-07-30 | `.claude/tasks/20260730-log-level-filtering-and-logevent.md` | `docs/tasks/ULTRA-00158-20260730-log-level-filtering-and-logevent.md` |
