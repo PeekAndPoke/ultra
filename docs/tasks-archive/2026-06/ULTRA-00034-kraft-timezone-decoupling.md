@@ -1,4 +1,4 @@
-# Kraft bundle size: decouple the js-joda timezone DB (+ native tz spike)
+# ULTRA-00034: Kraft bundle size: decouple the js-joda timezone DB (+ native tz spike)
 
 > **Superseded 2026-10-18** by `docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md`: ultra/datetime
 > now does its own zone math (Intl on JS), so `installNativeTimezones()`, the js-joda Intl provider
@@ -108,3 +108,7 @@ to `kotlin.time` — so a version bump is a separate concern, out of scope here.
   `grep -c "America/Detroit" build/dist/js/productionExecutable/*.js` should be 0; compare gzip size.
 - `./gradlew :ultra:datetime:jsTest` — correctness gate.
 - `./gradlew :kraft:examples:fomanticui:compileKotlinJs :funktor-demo:adminapp:compileKotlinJs`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00034 (was `docs/tasks-archive/2026-06/kraft-timezone-decoupling.md`).

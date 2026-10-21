@@ -117,7 +117,7 @@ jsBrowserTest 1804/0 (no tz data on JS); `:ultra:slumber:jvmTest` 1243/0. Compil
 **C — docs** (follow-up task at archive time, but must land before the release): rewrite
 `docs-site/src/pages/ultra/datetime/js-timezones.astro`, `docs-site/src/data/llms/datetime.md` and
 `kraft/addons/datetime/README.md` (no setup needed; loaders only for raw kotlinx zones), document the kotlinx
-converters; correct `docs/tasks/kraft-timezone-decoupling.md` (Kraft no longer installs zones by default).
+converters; correct ULTRA-00034 (kraft timezone decoupling) (Kraft no longer installs zones by default).
 
 ## Acceptance
 
@@ -152,7 +152,7 @@ S = security.
 | 1 | MINOR | `KotlinxTimeZoneInputSpec.kt:16` | A test that exercises only kotlinx (I) | fixed (MINOR batch) | Removed |
 | 1 | MINOR | `TimezoneEngine.kt:153` | `"Z"` branch unreachable (`MpTimezone.of("Z")` → UTC, constructor private) (I, surplus) | fixed (MINOR batch) | Removed; KDoc says `Z` never arrives |
 | 1 | MINOR | `extensions.kt:27,48` | `offsetAt` still RETURNS kotlinx `UtcOffset` — against the inputs-and-converters rule (D) | out-of-scope → follow-up task | Maintainer: keep for now, eliminate ALL kotlinx return types in `docs/tasks/20261018-datetime-no-kotlinx-return-types.md` (breaking, accepted) |
-| 1 | MINOR | `kraft/addons/datetime/README.md:10-33`, `docs/tasks/kraft-timezone-decoupling.md` | Stale: still recommend the removed `installNativeTimezones()` / say Kraft installs native zones by default (D, I) | fixed (task doc) / follow-up (README) | `kraft-timezone-decoupling.md` marked superseded + archived to `docs/tasks-archive/2026-06/`; README → `docs/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` (done) |
+| 1 | MINOR | `kraft/addons/datetime/README.md:10-33`, ULTRA-00034 (kraft timezone decoupling) | Stale: still recommend the removed `installNativeTimezones()` / say Kraft installs native zones by default (D, I) | fixed (task doc) / follow-up (README) | ULTRA-00034 (kraft timezone decoupling) marked superseded + archived to `docs/tasks-archive/2026-06/`; README → `docs/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` (done) |
 | 1 | MINOR | step B evidence | Kraft suites / js-joda loaders never run on 0.8.0 (D, I) | reject | Final-tree run exists (412/0, 2/0, 9 addon suites green) — was only missing from this file, now recorded; loader mutation RED |
 | 1 | MINOR | `MpInstant.kt:227` | Periods added component by component, resolving after each (≠ java's single resolution) (D) | reject | Documented behaviour: KDoc "Each component is added individually"; pre-existing |
 

@@ -70,3 +70,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00032 | 2026-04-25 | `.claude/tasks-archive/2026-04/2026-04-25-userrecord-sealed-and-caller.md` | `docs/tasks-archive/2026-04/ULTRA-00032-2026-04-25-userrecord-sealed-and-caller.md` |
 | ULTRA-00033 | 2026-06-24 | `docs/tasks-archive/2026-06/2026-06-24-semanticui-dslmarker-scoping.md` | `docs/tasks-archive/2026-06/ULTRA-00033-2026-06-24-semanticui-dslmarker-scoping.md` |
 | ULTRA-00033 | 2026-06-24 | `.claude/tasks-archive/2026-06/2026-06-24-semanticui-dslmarker-scoping.md` | `docs/tasks-archive/2026-06/ULTRA-00033-2026-06-24-semanticui-dslmarker-scoping.md` |
+| ULTRA-00034 | 2026-06-25 | `docs/tasks-archive/2026-06/kraft-timezone-decoupling.md` | `docs/tasks-archive/2026-06/ULTRA-00034-kraft-timezone-decoupling.md` |
+| ULTRA-00034 | 2026-06-25 | `.claude/tasks-archive/2026-06/kraft-timezone-decoupling.md` | `docs/tasks-archive/2026-06/ULTRA-00034-kraft-timezone-decoupling.md` |
+| ULTRA-00034 | 2026-06-25 | `.claude/tasks/kraft-timezone-decoupling.md` | `docs/tasks-archive/2026-06/ULTRA-00034-kraft-timezone-decoupling.md` |
