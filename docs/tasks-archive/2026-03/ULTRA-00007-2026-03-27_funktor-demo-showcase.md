@@ -1,4 +1,4 @@
-# Funktor-Demo: Comprehensive Feature Showcase Plan
+# ULTRA-00007: Funktor-Demo: Comprehensive Feature Showcase Plan
 
 
 
@@ -353,3 +353,7 @@ After each wave:
 4. Test each interactive feature (queue job, upload file, acquire lock, send email, etc.)
 5. Verify SSE connections stay open and stream data
 6. Check authorization: non-superuser should see restricted features as read-only info
+
+## History
+
+- 2026-10-21: numbered ULTRA-00007 (was `docs/tasks-archive/2026-03/2026-03-27_funktor-demo-showcase.md`).
