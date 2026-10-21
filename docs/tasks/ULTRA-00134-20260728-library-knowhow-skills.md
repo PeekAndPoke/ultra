@@ -1,4 +1,4 @@
-# Library know-how skills (kontainer, kraft, karango, slumber, streams, …)
+# ULTRA-00134: Library know-how skills (kontainer, kraft, karango, slumber, streams, …)
 
 **Status:** TODO — proposed 2026-07-28, not started
 **Plan:** none (standalone)
@@ -76,3 +76,7 @@ Real examples already collected, all of which are invisible from a signature and
 
 n/a — documentation work. The check is that a fresh session, given only the skill, can avoid the
 traps listed above.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00134 (was `docs/tasks/20260728-library-knowhow-skills.md`).
