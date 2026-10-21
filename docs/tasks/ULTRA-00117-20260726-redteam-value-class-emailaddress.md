@@ -1,7 +1,7 @@
 # ULTRA-00117: Red-team: `EmailAddress` — email as an authentication identifier
 
 **Status:** COLLECTED 2026-07-26 — NOT executed. A dedicated penetration-test session runs these.
-**Feature:** `docs/tasks/20260726-value-class-emailaddress.md`
+**Feature:** ULTRA-00119 (value class emailaddress)
 **Why:** email is how users are resolved at sign-in, password reset, and SSO login/signup.
 Canonicalization is the fix, but canonicalization also COLLAPSES distinct inputs onto one key — which
 is how account-takeover bugs are born.

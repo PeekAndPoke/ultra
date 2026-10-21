@@ -1,7 +1,7 @@
 # ULTRA-00118: SSO signup links to an existing account without checking `email_verified` (account takeover)
 
 **Status:** TODO — needs a POLICY decision from the user before implementing.
-**Found via:** the security review of `docs/tasks/20260726-value-class-emailaddress.md` (Step 4).
+**Found via:** the security review of ULTRA-00119 (value class emailaddress) (Step 4).
 **Severity:** HIGH. **PRE-EXISTING** — not introduced by the email work, but that work makes it more
 reliably reachable, which is why it was raised there.
 **Security-critical:** yes → red-team scenarios already recorded (see bottom).

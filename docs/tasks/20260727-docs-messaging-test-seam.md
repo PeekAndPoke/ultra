@@ -69,7 +69,7 @@ guidance.
 ### 7. `EmailAddress` rejects control characters
 
 One more line in the type's documented invariants, plus the extended rollout audit query in
-`docs/tasks/20260726-value-class-emailaddress.md`.
+ULTRA-00119 (value class emailaddress).
 
 ### 8. Dependency note
 

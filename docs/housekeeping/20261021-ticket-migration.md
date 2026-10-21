@@ -301,3 +301,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00117 | 2026-07-26 | `.claude/tasks/20260726-redteam-value-class-emailaddress.md` | `docs/tasks/ULTRA-00117-20260726-redteam-value-class-emailaddress.md` |
 | ULTRA-00118 | 2026-07-26 | `docs/tasks/20260726-sso-email-verification.md` | `docs/tasks/ULTRA-00118-20260726-sso-email-verification.md` |
 | ULTRA-00118 | 2026-07-26 | `.claude/tasks/20260726-sso-email-verification.md` | `docs/tasks/ULTRA-00118-20260726-sso-email-verification.md` |
+| ULTRA-00119 | 2026-07-26 | `docs/tasks-archive/2026-07/20260726-value-class-emailaddress.md` | `docs/tasks-archive/2026-07/ULTRA-00119-20260726-value-class-emailaddress.md` |
+| ULTRA-00119 | 2026-07-26 | `.claude/tasks-archive/2026-07/20260726-value-class-emailaddress.md` | `docs/tasks-archive/2026-07/ULTRA-00119-20260726-value-class-emailaddress.md` |
+| ULTRA-00119 | 2026-07-26 | `.claude/tasks/20260726-value-class-emailaddress.md` | `docs/tasks-archive/2026-07/ULTRA-00119-20260726-value-class-emailaddress.md` |

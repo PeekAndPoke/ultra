@@ -1,4 +1,4 @@
-# `EmailAddress` value class (value-class-ids Step 4)
+# ULTRA-00119: `EmailAddress` value class (value-class-ids Step 4)
 
 **Status:** DONE (archived 2026-10-19) — gate passed in two rounds (2026-07-26, looped to zero confirmed findings; amended 2026-07-27). The ROLLOUT STEP below is not needed: the maintainer confirmed (2026-10-19) there are no real deployments with existing user data, and no backward-compatibility concern — the maintainer's own apps are the only users.
 **Plan:** ULTRA-00110 (value class ids migration) → Step 4
@@ -130,3 +130,7 @@ reachable today; see the extended rollout audit above.
 **Red-team follow-up**: ULTRA-00117 (redteam value class emailaddress) — covers the
 account-takeover-by-canonicalization surface (unicode homoglyphs, dotted gmail aliases, `+tag`
 addressing) plus the pre-existing unverified-SSO-email chain.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00119 (was `docs/tasks-archive/2026-07/20260726-value-class-emailaddress.md`).

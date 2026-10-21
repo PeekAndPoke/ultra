@@ -102,7 +102,7 @@ is now stated in KDoc.
 ## Review record
 
 Covered by the round-2 gate over the combined uncommitted diff — see the Review record in
-`docs/tasks/20260726-value-class-emailaddress.md`.
+ULTRA-00119 (value class emailaddress).
 
 ## What happened to this — deleted 2026-08-02 (`5026e436`)
 

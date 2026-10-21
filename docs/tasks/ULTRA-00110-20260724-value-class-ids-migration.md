@@ -4,7 +4,7 @@
 In the tree: `RealmId` (`funktor/auth/src/commonMain/kotlin/model/RealmId.kt:24`), `UserId`
 (`ultra/security/src/commonMain/kotlin/user/UserId.kt:35`), `OrgId` (`OrgId.kt:31`) and `EmailAddress` (`EmailAddress.kt:56`).
 The Step 2/3 task docs are archived in `docs/tasks-archive/2026-07/`; the Step 4 doc,
-`20260726-value-class-emailaddress.md`, is still IN REVIEW, awaiting the maintainer's sign-off. Still open:
+ULTRA-00119 (value class emailaddress), is still IN REVIEW, awaiting the maintainer's sign-off. Still open:
 - **Step 5 `Slug`** — `Organisation.slug` and `Branch.slug` are still `String` (`funktor/saas/src/jvmMain/kotlin/domain/Organisation.kt:17,29`),
   as are the API models (`OrgModel.kt:25,35`, `OrgsApiClient.kt:20`); `Slugs` is only a normalizer. The denylist-vs-allowlist
   question below has to be settled first.
@@ -138,7 +138,7 @@ contract~~ (INVERTED — see above). NOTE: `OrgMember.org` is a `Ref<Organisatio
 `OrgId` — leave it; `OrgId` is the SELECTED-org id on the session/permissions side.
 
 ## Step 4 — `Email` ✅ DONE 2026-07-26 (as `EmailAddress`)
-See `docs/tasks/20260726-value-class-emailaddress.md`. Three corrections to the plan text below:
+See ULTRA-00119 (value class emailaddress). Three corrections to the plan text below:
 
 1. **Named `EmailAddress`**, not `Email` — `funktor/messaging` already owns `Email` (the MESSAGE), and
    `AuthRealm.DefaultMessaging` needs both.
