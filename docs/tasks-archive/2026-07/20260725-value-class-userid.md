@@ -154,7 +154,7 @@ claims (written via `.value`).
 
 - **Monko `findById` silently coerces a foreign-collection `_id` to a bare key; Karango rejects it.**
   Pre-existing backend asymmetry, NOT exploitable today (three independent guards hold). Framework-wide
-  behaviour change → own gated feature: `docs/tasks/future/20260725-monko-findbyid-collection-prefix.md`
+  behaviour change → own gated feature: ULTRA-00111 (monko findbyid collection prefix)
 - **Dart codegen has no value-class case** → a generated client would type `UserId` as `dynamic`.
   Dormant (no app calls `dartProject(...)`). Recorded in the same future-plan doc's neighbourhood; revisit
   if/when Dart codegen is used.

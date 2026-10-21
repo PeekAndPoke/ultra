@@ -1,4 +1,4 @@
-# Monko `findById` silently coerces a foreign-collection `_id` — Karango does not
+# ULTRA-00111: Monko `findById` silently coerces a foreign-collection `_id` — Karango does not
 
 **Status:** IDEA / not scheduled. Surfaced 2026-07-25 by the security review of
 `docs/tasks/20260725-value-class-userid.md`. **Pre-existing** — not introduced by that work, and
@@ -54,3 +54,7 @@ Option 1 and 2 are complementary — 1 fixes the framework, 2 makes the call sit
 
 `ensureKey` uses `split('/')[1]`, i.e. the segment after the FIRST slash — a key that itself contains
 a slash is silently truncated. Decide whether that is a documented constraint or a latent bug.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00111 (was `docs/tasks/future/20260725-monko-findbyid-collection-prefix.md`).

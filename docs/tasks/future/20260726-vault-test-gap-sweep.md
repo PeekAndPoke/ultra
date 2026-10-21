@@ -42,6 +42,6 @@ surfaces as data corruption several layers away, in code that looks innocent.
 
 ## Not in scope
 
-Karango and Monko have their own gaps (see `20260725-monko-findbyid-collection-prefix.md`, which is a
+Karango and Monko have their own gaps (see ULTRA-00111 (monko findbyid collection prefix), which is a
 genuine behavioural divergence rather than a coverage hole). Keep this sweep to `ultra:vault`; if the
 same treatment is wanted for the drivers, that is a follow-up doc.

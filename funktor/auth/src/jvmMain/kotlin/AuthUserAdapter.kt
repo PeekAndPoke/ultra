@@ -59,7 +59,7 @@ interface AuthUserAdapter<USER : AuthUser> {
      * [id] is the realm-qualified Vault `_id` (`<user collection>/<key>`). Implementations should
      * pass `id.value` straight to their repository. NOTE that `Repository.findById` reduces an id to
      * its bare `_key` on the Monko backend, so an `_id` from ANOTHER realm's collection can resolve
-     * a same-key document here — see `docs/tasks/future/20260725-monko-findbyid-collection-prefix.md`.
+     * a same-key document here — see ULTRA-00111 (monko findbyid collection prefix).
      * Callers that use the result as an authorization subject must round-trip it
      * (`?.takeIf { it._id == id.value }`), as `B2bMembersApi.b2bUserOf` does.
      */
