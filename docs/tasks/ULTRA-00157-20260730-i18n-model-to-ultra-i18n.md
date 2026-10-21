@@ -1,4 +1,4 @@
-# Move the i18n catalog model out of `:tooling` into `ultra/i18n`
+# ULTRA-00157: Move the i18n catalog model out of `:tooling` into `ultra/i18n`
 
 **Status:** IN REVIEW — needs `/feature-review`
 **Plan:** ULTRA-00153 (frontend sdk vue contributors) → "i18n in the SDK", prerequisite 2
@@ -143,3 +143,7 @@ now compiles against a newer API.
 - [ ] **No DOCS task.** This adds public API to a published module (`ultra.i18n.model`), but it is
       generator-facing plumbing with no user-facing story yet. Document it with the TS i18n contributor
       that consumes it, not before. The Gradle/buildSrc change is internal and needs no docs.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00157 (was `docs/tasks/20260730-i18n-model-to-ultra-i18n.md`).

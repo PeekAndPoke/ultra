@@ -602,7 +602,7 @@ to every consumer who wanted a TS SDK, and inverts the dependency sense — the 
 nothing to do with the TS generator.
 
 **Move the model into `ultra/i18n`, and only the model.** DONE 2026-07-30 —
-`docs/tasks/20260730-i18n-model-to-ultra-i18n.md`. The dividing line is *is this a fact about i18n, or
+ULTRA-00157 (i18n model to ultra i18n). The dividing line is *is this a fact about i18n, or
 a fact about generating code from it*:
 
 | Moved to `ultra/i18n/…/model/` | Stayed in `:tooling` |
