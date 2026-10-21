@@ -511,3 +511,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00211 | 2026-10-18 | `.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md` | `docs/tasks/ULTRA-00211-20261018-mpzoneddatetime-overlap-offset.md` |
 | ULTRA-00212 | 2026-10-18 | `docs/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` | `docs/tasks-archive/2026-10/ULTRA-00212-20261018-docs-datetime-zone-engine.md` |
 | ULTRA-00212 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` | `docs/tasks-archive/2026-10/ULTRA-00212-20261018-docs-datetime-zone-engine.md` |
+| ULTRA-00213 | 2026-10-18 | `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md` | `docs/tasks-archive/2026-10/ULTRA-00213-20261018-datetime-js-performance.md` |
+| ULTRA-00213 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md` | `docs/tasks-archive/2026-10/ULTRA-00213-20261018-datetime-js-performance.md` |
+| ULTRA-00213 | 2026-10-18 | `.claude/tasks/20261018-datetime-js-performance.md` | `docs/tasks-archive/2026-10/ULTRA-00213-20261018-datetime-js-performance.md` |

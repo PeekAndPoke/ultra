@@ -173,7 +173,7 @@ wraps java.time — not independent evidence; the other ~21 per transition are.
 
 **Follow-ups:** docs ULTRA-00212 (docs datetime zone engine) (done);
 ULTRA-00211 (mpzoneddatetime overlap offset); ULTRA-00210 (datetime no kotlinx return types);
-performance `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md` (from spross, before 0.112.0). No red-team task: not
+performance ULTRA-00213 (datetime js performance) (from spross, before 0.112.0). No red-team task: not
 security-critical. The applied patch is archived next to this file.
 
 ## History

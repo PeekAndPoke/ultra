@@ -1,7 +1,7 @@
 # ultra/datetime: own epoch ↔ local date-time conversion (no emulated Long on JS)
 
 **Status:** DONE (archived 2026-10-19) — gate PASS after 3 rounds (round 3 with the maintainer in the loop)
-**Plan:** follow-up of `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md`; maintainer: before the 0.112.0 release (2026-10-19)
+**Plan:** follow-up of ULTRA-00213 (datetime js performance); maintainer: before the 0.112.0 release (2026-10-19)
 **Security-critical:** no — but every zoned value goes through it, persistence included (mutation-check bar)
 
 ## Why

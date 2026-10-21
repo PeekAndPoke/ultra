@@ -23,7 +23,7 @@ with other projects, so that is the maintainer's call).
 
 **2026-10-19 additions:** JS offset-interval cache (`OffsetIntervalCache.kt`), own epoch ↔ date-time arithmetic
 (`EpochMath.kt`, exact Long beyond 2^52 s), `MpLocalTime` is `Int`-based, pixijs addon registers pixi's extensions
-itself. Records: `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md`,
+itself. Records: ULTRA-00213 (datetime js performance),
 `20261019-datetime-own-epoch-conversions.md`, `20261018-pixijs-addon-contract-tests.md`.
 
 **ultra/datetime does its own zone math** (`ultra/datetime/src/commonMain/kotlin/TimezoneEngine.kt`, java.time

@@ -1,4 +1,4 @@
-# ultra/datetime: performance in the browser (zone offsets, Long)
+# ULTRA-00213: ultra/datetime: performance in the browser (zone offsets, Long)
 
 **Status:** DONE (archived 2026-10-19) — gate PASS after 2 rounds; spross re-profile requested (Spross-Main-Dev)
 **Plan:** none. Reported by spross (2026-10-18) from a CPU profile of its browser dashboard; written by the spross
@@ -236,3 +236,7 @@ rejected CRITICAL/MAJOR exists. **Round 2 CLEAN → loop ends; open MINORs go to
 (2026-10-19); per review-loop a MINOR batch takes no further review round. Each fix was mutation-checked (above).
 Still on the maintainer list from round 1: case variants of ids missing from `supportedIds`; `MpLocalTimeSerializer`
 descriptor kind; JVM `LocalTime.mp` dropping milliseconds; the benchmark running on every `jsBrowserTest`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00213 (was `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md`).
