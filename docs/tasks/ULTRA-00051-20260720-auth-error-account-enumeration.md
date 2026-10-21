@@ -35,7 +35,7 @@ Route gating, read from `AuthApi.kt`:
 | `refreshToken` | 235 | `authenticated()` | `AuthApi.kt:227` |
 | `resendActivation` (the TENTH site, added by the activation-resend feature) | `AuthLoginApi.kt:132` | `public()` (group floor) | `AuthLoginApi.kt:23` |
 
-Added 2026-10-19 by `docs/tasks-archive/2026-10/20261019-activation-hardening.md` (round-2 MINOR of the activation-resend gate). The
+Added 2026-10-19 by ULTRA-00222 (activation hardening) (round-2 MINOR of the activation-resend gate). The
 table above still cites the pre-split `AuthApi.kt`; since the split the public handlers live in `AuthLoginApi.kt` and the
 authenticated ones in `AuthUserApi.kt`. The same change added `cancelSignUp` (`AuthLoginApi.kt:137`, `public()`), which
 deliberately does NOT echo `e.message` — it answers a bare `400 {success: false}` — so it is not an eleventh site.

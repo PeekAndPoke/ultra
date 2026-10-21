@@ -1,4 +1,4 @@
-# Activation hardening: pre-registration takeover, zero-click activation, resend faucet
+# ULTRA-00222: Activation hardening: pre-registration takeover, zero-click activation, resend faucet
 
 **Status:** DONE 2026-10-20 — gate PASS in round 4 (`reviewer-top` ×3, clean); round-4 MINORs fixed with a scoped
 delta check (one MAJOR test gap closed, `7780e5dc`); merged to master `ed8d3b38`, full suite green. Ships in 0.114.0.
@@ -605,3 +605,7 @@ changed, so there was no new full suite and no `funktor/all` run.
 no `^e:`. XMLs: **15980 tests, 0 failures, 0 errors, 7 skipped** across 49 modules (jvmTest 7507, test 2670,
 jsBrowserTest 3454, linuxX64Test 2349). Per module: `funktor/auth` 271, `funktor/all` 234, `funktor-demo/server` 47.
 That is +10 over round 3, exactly the new cases.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00222 (was `docs/tasks-archive/2026-10/20261019-activation-hardening.md`).

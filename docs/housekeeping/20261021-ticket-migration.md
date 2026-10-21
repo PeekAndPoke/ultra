@@ -535,3 +535,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00220 | 2026-10-19 | `.claude/tasks/20261019-gradle-dsl-deprecations-and-macosx64.md` | `docs/tasks-archive/2026-10/ULTRA-00220-20261019-gradle-dsl-deprecations-and-macosx64.md` |
 | ULTRA-00221 | 2026-10-19 | `docs/tasks/20261019-insights-auth-parallel-plan.md` | `docs/tasks/ULTRA-00221-20261019-insights-auth-parallel-plan.md` |
 | ULTRA-00221 | 2026-10-19 | `.claude/tasks/20261019-insights-auth-parallel-plan.md` | `docs/tasks/ULTRA-00221-20261019-insights-auth-parallel-plan.md` |
+| ULTRA-00222 | 2026-10-19 | `docs/tasks-archive/2026-10/20261019-activation-hardening.md` | `docs/tasks-archive/2026-10/ULTRA-00222-20261019-activation-hardening.md` |
+| ULTRA-00222 | 2026-10-19 | `.claude/tasks-archive/2026-10/20261019-activation-hardening.md` | `docs/tasks-archive/2026-10/ULTRA-00222-20261019-activation-hardening.md` |
+| ULTRA-00222 | 2026-10-19 | `.claude/tasks/20261019-activation-hardening.md` | `docs/tasks-archive/2026-10/ULTRA-00222-20261019-activation-hardening.md` |

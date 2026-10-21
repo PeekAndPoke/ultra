@@ -2,7 +2,7 @@
 
 **Status:** TODO — AFTER 0.114.0 (maintainer decision 2026-10-19: "B after the release"); the first auth task after it
 **Plan:** ULTRA-00221 (insights auth parallel plan) (auth tracks); follows
-`docs/tasks-archive/2026-10/20261019-activation-hardening.md` (merged `ed8d3b38`, ships in 0.114.0; its parked row "Activate requires a password" is answered by THIS design instead)
+ULTRA-00222 (activation hardening) (merged `ed8d3b38`, ships in 0.114.0; its parked row "Activate requires a password" is answered by THIS design instead)
 **Security-critical:** yes — red-team: ULTRA-00127 (redteam account activation)
 
 ## Why

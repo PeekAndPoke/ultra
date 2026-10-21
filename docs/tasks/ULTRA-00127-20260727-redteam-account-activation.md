@@ -102,7 +102,7 @@ for a lapsed activation, so it is now the path locked-out users are guaranteed t
 
 ## 8. Resend: the growing delay is a check-then-act
 
-REWRITTEN 2026-10-19 (`docs/tasks-archive/2026-10/20261019-activation-hardening.md`). The July premise — "K concurrent requests must
+REWRITTEN 2026-10-19 (ULTRA-00222 (activation hardening)). The July premise — "K concurrent requests must
 share ONE token" — was false: every refused sign-in minted a fresh token and none was revoked. Now minting revokes the
 owner's earlier tokens, a token is consumed only by the request whose delete removed it (`count == 1`), and the delay
 lives on the `PendingActivation` marker: read, compare, write, send. The write (`replaceIfUnclaimed`) is conditional on
@@ -147,7 +147,7 @@ Collected, not executed. §2's "a copy change to close" is wrong once activation
 
 ## Added by the activation hardening (2026-10-19)
 
-Collected, not executed. The design: `docs/tasks-archive/2026-10/20261019-activation-hardening.md`.
+Collected, not executed. The design: ULTRA-00222 (activation hardening).
 
 - **Scanner detonation, again** — the page now needs a click. Does a sandbox that runs JS and clicks the first primary
   button (some do) activate a pre-registered account? Does any gateway follow the CANCEL link and click it, retiring
