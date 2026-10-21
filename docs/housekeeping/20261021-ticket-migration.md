@@ -42,3 +42,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00018 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-kraft-examples-and-site-vision.md` | `docs/tasks-archive/2026-04/ULTRA-00018-2026-04-13-kraft-examples-and-site-vision.md` |
 | ULTRA-00019 | 2026-04-13 | `docs/tasks-archive/2026-04/2026-04-13-library-maturity-and-promotion.md` | `docs/tasks-archive/2026-04/ULTRA-00019-2026-04-13-library-maturity-and-promotion.md` |
 | ULTRA-00019 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-library-maturity-and-promotion.md` | `docs/tasks-archive/2026-04/ULTRA-00019-2026-04-13-library-maturity-and-promotion.md` |
+| ULTRA-00020 | 2026-04-13 | `docs/tasks-archive/2026-04/2026-04-13-mutator-strategic-direction.md` | `docs/tasks-archive/2026-04/ULTRA-00020-2026-04-13-mutator-strategic-direction.md` |
+| ULTRA-00020 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-mutator-strategic-direction.md` | `docs/tasks-archive/2026-04/ULTRA-00020-2026-04-13-mutator-strategic-direction.md` |

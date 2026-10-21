@@ -1,4 +1,4 @@
-# Mutator Strategic Direction — Six Hats Analysis (Revised)
+# ULTRA-00020: Mutator Strategic Direction — Six Hats Analysis (Revised)
 
 **Date:** 2026-03-25
 **Rounds:** 3 (re-run with corrected facts)
@@ -291,3 +291,7 @@ Only if real usage demands it:
 - **Teach before you extend** — patterns guide and docs before any new features
 - **Honesty earns credibility** — acknowledge where copy() is sufficient
 - **No phase skipping** — quality, then narrative, then Kraft depth, then maybe expansion
+
+## History
+
+- 2026-10-21: numbered ULTRA-00020 (was `docs/tasks-archive/2026-04/2026-04-13-mutator-strategic-direction.md`).
