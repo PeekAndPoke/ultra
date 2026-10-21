@@ -19,7 +19,7 @@
   (`AqlTypedQuery.kt:30`) and withheld.
 - **Old records still hold values on disk**: those written while Jackson serialised the profiler entry whole.
   The Vue tab marks them legacy and hides their text; it renders no `vars` and has no raw-slice dump, for
-  any record. The same constraint stands for the Kraft port (`20260824-insights-kraft-gui.md`).
+  any record. The same constraint stands for the Kraft port (ULTRA-00198 (insights kraft gui)).
 - Not injection: values travel separately to the database. `AqlPrinter.raw` (`printer.kt:70`), which inlines
   them, has no production caller.
 

@@ -424,7 +424,7 @@ amends the plan's "Vue only, no second target", and the amendment is recorded in
 table rather than left implicit. The old *server-rendered kotlinx.html* GUI still stays deleted; the
 Kraft target is an SPA page alongside the rest of `funktor/inspect/src/jsMain`.
 
-**Tracked in `docs/tasks/20260824-insights-kraft-gui.md`**, which also owns the two loose ends above.
+**Tracked in ULTRA-00198 (insights kraft gui)**, which also owns the two loose ends above.
 Sequenced after this task's review gate, so the port does not inherit an unreviewed design — including
 the `vault` `vars` suppression, which it must carry.
 

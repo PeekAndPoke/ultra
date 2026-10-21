@@ -48,7 +48,7 @@ would drag the generator into a production artifact).
 
 | Decision | Note |
 |---|---|
-| Vue only, no second target | **Amended twice.** 2026-08-02: Tailwind applies to APP frontends, not to shipped components — see "Styling". 2026-08-24: **the ops views ship for Kraft AND Vue** while Kraft frontends exist — see `20260824-insights-kraft-gui.md`. The old *server-rendered kotlinx.html* GUI stays deleted; the Kraft target is an SPA page alongside the rest of `funktor/inspect/src/jsMain` |
+| Vue only, no second target | **Amended twice.** 2026-08-02: Tailwind applies to APP frontends, not to shipped components — see "Styling". 2026-08-24: **the ops views ship for Kraft AND Vue** while Kraft frontends exist — see ULTRA-00198 (insights kraft gui). The old *server-rendered kotlinx.html* GUI stays deleted; the Kraft target is an SPA page alongside the rest of `funktor/inspect/src/jsMain` |
 | No npm publishing | Full SDK generated on the fly, per app |
 | No backward compat | Nothing needs to keep working |
 | No design compat | Free to look however Vue allows |

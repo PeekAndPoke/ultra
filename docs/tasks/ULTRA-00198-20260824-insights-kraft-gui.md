@@ -1,4 +1,4 @@
-# Insights — the Kraft (Kotlin/JS) GUI, on par with the Vue one
+# ULTRA-00198: Insights — the Kraft (Kotlin/JS) GUI, on par with the Vue one
 
 **Status:** PAUSED 2026-10-19 (maintainer: budget precaution before the 0.114.0 release) — started as track T4 on
 `wt/insights-kraft` (worktree `/opt/dev/peekandpoke/ultra-wt/insights-kraft`). Done so far, UNVERIFIED, committed as WIP
@@ -115,3 +115,7 @@ means rewriting the kontainer tab twice.
       `<img src=x onerror=…>` must render as text. Mutation-test it.
 - [ ] A `vault` slice carrying `vars` must not put the value on the page — mutation-tested by
       reinstating a dump and confirming it goes red.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00198 (was `docs/tasks/20260824-insights-kraft-gui.md`).
