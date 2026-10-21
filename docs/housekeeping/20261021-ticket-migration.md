@@ -66,3 +66,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00030 | 2026-04-16 | `.claude/tasks/v1-email-auth-and-sessions.md` | `docs/tasks/ULTRA-00030-v1-email-auth-and-sessions.md` |
 | ULTRA-00031 | 2026-04-25 | `docs/tasks-archive/2026-04/2026-04-25-lifecycle-auto-install.md` | `docs/tasks-archive/2026-04/ULTRA-00031-2026-04-25-lifecycle-auto-install.md` |
 | ULTRA-00031 | 2026-04-25 | `.claude/tasks-archive/2026-04/2026-04-25-lifecycle-auto-install.md` | `docs/tasks-archive/2026-04/ULTRA-00031-2026-04-25-lifecycle-auto-install.md` |
+| ULTRA-00032 | 2026-04-25 | `docs/tasks-archive/2026-04/2026-04-25-userrecord-sealed-and-caller.md` | `docs/tasks-archive/2026-04/ULTRA-00032-2026-04-25-userrecord-sealed-and-caller.md` |
+| ULTRA-00032 | 2026-04-25 | `.claude/tasks-archive/2026-04/2026-04-25-userrecord-sealed-and-caller.md` | `docs/tasks-archive/2026-04/ULTRA-00032-2026-04-25-userrecord-sealed-and-caller.md` |

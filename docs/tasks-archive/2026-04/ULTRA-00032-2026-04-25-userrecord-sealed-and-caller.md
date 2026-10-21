@@ -1,4 +1,4 @@
-# UserRecord → sealed interface + Caller dispatcher + ApiKey auth
+# ULTRA-00032: UserRecord → sealed interface + Caller dispatcher + ApiKey auth
 
 **Status:** SHIPPED 2026-04-25 in v0.107.0.
 
@@ -540,3 +540,7 @@ End-to-end checks before declaring done:
   period ends.
 - API-key lifecycle / storage / rotation — explicitly punted to consumers
   via `ApiKeyResolver`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00032 (was `docs/tasks-archive/2026-04/2026-04-25-userrecord-sealed-and-caller.md`).
