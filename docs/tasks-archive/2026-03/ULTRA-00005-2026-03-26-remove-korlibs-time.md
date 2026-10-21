@@ -1,4 +1,4 @@
-# Plan: Remove korlibs-time dependency from ultra/datetime
+# ULTRA-00005: Plan: Remove korlibs-time dependency from ultra/datetime
 
 
 
@@ -231,3 +231,7 @@ Search the entire repo for korlibs imports.
 2. `./gradlew :ultra:datetime:jvmTest` — all existing tests pass
 3. Grep for `korlibs` across entire repo — zero hits
 4. Build kraft examples — format calls still work
+
+## History
+
+- 2026-10-21: numbered ULTRA-00005 (was `docs/tasks-archive/2026-03/2026-03-26-remove-korlibs-time.md`).
