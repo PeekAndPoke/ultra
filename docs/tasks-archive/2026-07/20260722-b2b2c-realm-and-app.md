@@ -91,7 +91,7 @@ plan-permission grant (LOW).
 
 ## Cross-references
 
-- `tasks-archive/2026-07/20260720-b2b-realm.md` — the reviewed template this clones; its review
+- ULTRA-00063 (b2b realm) — the reviewed template this clones; its review
   drove the shared-hooks extraction.
 - ULTRA-00044 (cross realm authz and tests) — role-collision risk (defused here via
   vocabulary) and the pending realm-boundary work for future tenant API surfaces.

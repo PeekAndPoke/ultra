@@ -11,7 +11,7 @@ import io.peekandpoke.ultra.security.user.buildOrgPermissions
 
 /*
  * Shared AuthRealm org-hook implementations over [OrgsStorage] for the OrgPolicy.Required realms
- * (b2b, b2b2c). Encodes the rules confirmed in the b2b review (20260720-b2b-realm.md):
+ * (b2b, b2b2c). Encodes the rules confirmed in the b2b review (ULTRA-00063 (b2b realm)):
  *
  * - ACTIVE ONLY: Suspended/Archived orgs are not sign-in-able, and since resolveSelectedOrg also
  *   guards select-org and token refresh, a mid-session suspension takes effect on the next refresh.

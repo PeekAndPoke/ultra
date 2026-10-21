@@ -12,7 +12,7 @@ There is **no shared secure generator** for random secrets — a repo-wide grep 
 
 This is a latent gap rather than a current bug — today's flows let users choose their own passwords,
 and account recovery uses `AuthRecord` tokens. But the **b2b invite flow** (see
-`docs/tasks-archive/2026-07/20260720-b2b-realm.md` — "users are invited into an organisation", self-signup is
+ULTRA-00063 (b2b realm) — "users are invited into an organisation", self-signup is
 disabled) will need to provision a secret: an invite token or a one-time temp password. Without a
 vetted generator, each call site risks rolling its own with a weak RNG or a biased alphabet.
 
@@ -40,5 +40,5 @@ vetted generator, each call site risks rolling its own with a weak RNG or a bias
 
 ## Cross-references
 
-- Unblocks the b2b/b2b2c **invite** flow (`20260720-b2b-realm.md`, self-signup disabled).
+- Unblocks the b2b/b2b2c **invite** flow (ULTRA-00063 (b2b realm), self-signup disabled).
 - Pairs with `20260720-password-policy-modernization.md` (temp passwords must satisfy the policy).

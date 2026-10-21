@@ -132,6 +132,6 @@ All three reviewers independently confirmed one MEDIUM (stale org-selection). Ve
 
 ## Cross-references
 
-- Builds on `fef14641` (the shared org-selection UI) and `20260720-b2b-realm.md` (the realms whose
+- Builds on `fef14641` (the shared org-selection UI) and ULTRA-00063 (b2b realm) (the realms whose
   frontends this brands).
 - `AuthFrontendRoutes` (commonMain) is the already-shared route contract — extend, don't fork.
