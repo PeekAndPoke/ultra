@@ -189,7 +189,7 @@ does not compile), `kronos.astro:107` ("for persisting" is lossy for fixed clock
 **Verdict: gate PASS** (2026-10-18). Rounds: 1 (1 MAJOR fixed), 2–4 clean. No open CRITICAL/MAJOR. All
 MINORs dispositioned by the maintainer and applied; the last batch (round 4) was mutation-checked but not
 re-reviewed. Not security-critical → no red-team task. Docs follow-up (public API touched: describe shape,
-`set`/`mutate` throw, `from` semantics): `docs/tasks/20261018-docs-kronos.md`.
+`set`/`mutate` throw, `from` semantics): ULTRA-00207 (docs kronos).
 
 ## Related, not in this task
 

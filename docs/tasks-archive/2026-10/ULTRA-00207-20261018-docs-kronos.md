@@ -1,4 +1,4 @@
-# Docs: Kronos after the advanceBy collapse
+# ULTRA-00207: Docs: Kronos after the advanceBy collapse
 
 **Status:** DONE (archived 2026-10-18)
 **Plan:** follow-up of ULTRA-00205 (kronos advanceby collapse) (public API touched)
@@ -60,3 +60,4 @@ reconcile phase. **Verdict: PASS.**
 
 - 2026-10-18: created on archiving the advanceBy-collapse task.
 - 2026-10-18: done together with the chartjs docs; archived.
+- 2026-10-21: numbered ULTRA-00207 (was `docs/tasks-archive/2026-10/20261018-docs-kronos.md`).

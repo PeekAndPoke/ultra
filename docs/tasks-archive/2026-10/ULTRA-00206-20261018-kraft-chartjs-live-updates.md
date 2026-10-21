@@ -182,7 +182,7 @@ by the merge, so a `value: undefined` mutant survives (behaviour-neutral).
 **Verdict: gate PASS** (2026-10-18). Rounds: 1 (1 MAJOR fixed), 2–3 clean; all MINORs dispositioned by the
 maintainer. Not security-critical → no red-team task. **Docs:** written in this session against the settled
 contract — `docs-site/src/pages/ultra/kraft/addons.astro` (chartjs section) and `docs-site/src/data/llms/kraft.md`,
-reviewed together with the Kronos docs (`docs/tasks-archive/2026-10/20261018-docs-kronos.md`); no separate
+reviewed together with the Kronos docs (ULTRA-00207 (docs kronos)); no separate
 docs follow-up.
 
 ## History
