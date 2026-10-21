@@ -1,4 +1,4 @@
-# Library Maturity, Quality & Promotion Assessment
+# ULTRA-00019: Library Maturity, Quality & Promotion Assessment
 
 **Date:** 2026-04-02 (updated)
 **Previous assessment:** 2026-03-31
@@ -357,3 +357,7 @@ sets, strings, strings_mp, WeakReference (JVM+JS), WeakSet (JVM), classes, encod
     StyleSheet, DOM events, KQuery.
 11. **ultra/common KDoc gaps** — WeakRef/WeakSet, numbers, enums, ComparableTo (audit done, ~67% coverage)
 12. **ultra/common test gaps** — dates.kt, files.kt, NetworkUtils.kt, JS WeakSet (audit done, ~72% coverage)
+
+## History
+
+- 2026-10-21: numbered ULTRA-00019 (was `docs/tasks-archive/2026-04/2026-04-13-library-maturity-and-promotion.md`).
