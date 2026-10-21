@@ -218,7 +218,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
   transport-independent. This task cannot deliver logout; that one can.
 - `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` — split out of the dropped cookie work;
   a live hole today, not a cookie concern.
-- `20260719-ktor-client-unification.md`, ULTRA-00044 (cross realm authz and tests),
+- ULTRA-00049 (ktor client unification), ULTRA-00044 (cross realm authz and tests),
   ULTRA-00035 (auth orgs foundation).
 
 ## 2026-08-02 — this has TWO call sites, and they must be fixed together

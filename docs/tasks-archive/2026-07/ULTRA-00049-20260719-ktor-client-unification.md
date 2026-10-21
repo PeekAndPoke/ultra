@@ -1,4 +1,4 @@
-# Unify the HTTP client on Ktor (remove custom fetch/interceptor machinery)
+# ULTRA-00049: Unify the HTTP client on Ktor (remove custom fetch/interceptor machinery)
 
 **Status:** DONE (archived 2026-10-19) — the manual browser check is closed by the maintainer (2026-10-19): the CORS/credentials part is settled from the Ktor 3.6.0 source (below), and the apps have run on it daily since 2026-07-20.
 **Plan:** (infra groundwork — prerequisite for the typed-`ApiResponse`-error work)
@@ -143,3 +143,7 @@ Fixes applied:
   follow-ups. Browser fetch strips it cross-origin (JS apps safe); a future **JVM** `ApiClient`
   could leak the token to an off-origin 3xx target — scope token attachment to the API host, or
   verify `HttpRedirect` cross-host stripping, when/if a JVM ApiClient is introduced. (Red-team note.)
+
+## History
+
+- 2026-10-21: numbered ULTRA-00049 (was `docs/tasks-archive/2026-07/20260719-ktor-client-unification.md`).

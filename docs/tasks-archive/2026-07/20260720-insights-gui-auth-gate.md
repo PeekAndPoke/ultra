@@ -247,7 +247,7 @@ without adding a new Gradle dependency (see options below).
    use cookies for auth anywhere (`grep` across `funktor/auth/src/jsMain/kotlin/AuthState.kt` and the
    rest of the admin frontend found zero cookie usage) — the JWT is attached to `fetch`/`XHR` calls
    by a request interceptor (the deleted `SetBearerRequestInterceptor.kt`, currently being replaced
-   per the in-flight `ultra/remote` refactor on this branch — see `docs/tasks/20260719-ktor-client-unification.md`),
+   per the in-flight `ultra/remote` refactor on this branch — see ULTRA-00049 (ktor client unification)),
    **not** to plain browser navigations. And that's exactly how these two routes are loaded:
    - The bar is fetched by a same-origin `$.ajax` call with no custom headers
      (`funktor/insights/src/jvmMain/resources/assets/funktor/insights/bar.js:15`), triggered by a

@@ -114,3 +114,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00048 | 2026-07-19 | `docs/tasks/20260719-slug-validation.md` | `docs/tasks/ULTRA-00048-20260719-slug-validation.md` |
 | ULTRA-00048 | 2026-07-19 | `.claude/tasks/saas-orgs/20260719-slug-validation.md` | `docs/tasks/ULTRA-00048-20260719-slug-validation.md` |
 | ULTRA-00048 | 2026-07-19 | `.claude/tasks/20260719-slug-validation.md` | `docs/tasks/ULTRA-00048-20260719-slug-validation.md` |
+| ULTRA-00049 | 2026-07-19 | `docs/tasks-archive/2026-07/20260719-ktor-client-unification.md` | `docs/tasks-archive/2026-07/ULTRA-00049-20260719-ktor-client-unification.md` |
+| ULTRA-00049 | 2026-07-19 | `.claude/tasks-archive/2026-07/20260719-ktor-client-unification.md` | `docs/tasks-archive/2026-07/ULTRA-00049-20260719-ktor-client-unification.md` |
+| ULTRA-00049 | 2026-07-19 | `.claude/tasks/20260719-ktor-client-unification.md` | `docs/tasks-archive/2026-07/ULTRA-00049-20260719-ktor-client-unification.md` |
