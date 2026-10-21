@@ -1141,7 +1141,7 @@ more than once. Treat "the suite is green" as meaning nothing until the suite ha
 red. This is now the strongest evidence in the repo for the mutation-testing rule in `CLAUDE.md`.
 
 A defect in `ultra/slumber` was also found and reproduced but deliberately NOT fixed — battle-tested
-code gets its own task and review round. See `docs/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`.
+code gets its own task and review round. See ULTRA-00154 (slumber intermediate sealed roundtrip).
 
 ### Review findings — AUDITED 2026-07-31
 

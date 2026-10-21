@@ -1,4 +1,4 @@
-# Slumber cannot round-trip an intermediate sealed class with a root-level discriminator
+# ULTRA-00154: Slumber cannot round-trip an intermediate sealed class with a root-level discriminator
 
 **Status:** TODO — found and reproduced 2026-07-30, NOT fixed
 **Plan:** none. Found incidentally while testing `ultra/codegen` (ULTRA-00146 (ts sdk codegen))
@@ -84,3 +84,7 @@ Found while writing regression tests for the `ultra/codegen` review round. The c
 correct and needs no change: a generated schema parses what the SERVER WRITES, and the server writes
 through the slumberer, so reading the root's discriminator is right. This task is only about Slumber's
 own read path disagreeing with its write path.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00154 (was `docs/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`).

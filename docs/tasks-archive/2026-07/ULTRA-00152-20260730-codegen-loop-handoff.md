@@ -135,7 +135,7 @@ See the **Review record** table in ULTRA-00146 (ts sdk codegen) for the full lis
 Suggested order:
 
 - [x] **REPRODUCED and HANDED OFF 2026-07-30** — the `ultra/slumber` round-trip defect is real
-      (executed, not read). Written up as `docs/tasks/20260730-slumber-intermediate-sealed-roundtrip.md`.
+      (executed, not read). Written up as ULTRA-00154 (slumber intermediate sealed roundtrip).
       **Do not fix it from this loop** — battle-tested code, needs its own review round. Codegen itself
       needs no change: a generated schema parses what the SERVER WRITES, and that is the slumberer.
 - [x] **DONE `b68d3a61`** — `appendUnion` type-vs-schema position. Reproduced, fixed, mutation-tested
