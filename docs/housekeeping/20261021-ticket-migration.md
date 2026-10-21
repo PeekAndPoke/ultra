@@ -466,3 +466,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00192 | 2026-08-02 | `docs/tasks-archive/2026-08/20260802-codegen-to-insights-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00192-20260802-codegen-to-insights-handover.md` |
 | ULTRA-00192 | 2026-08-02 | `.claude/tasks-archive/2026-08/20260802-codegen-to-insights-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00192-20260802-codegen-to-insights-handover.md` |
 | ULTRA-00192 | 2026-08-02 | `.claude/tasks/20260802-codegen-to-insights-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00192-20260802-codegen-to-insights-handover.md` |
+| ULTRA-00193 | 2026-08-02 | `docs/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00193-20260802-insights-to-codegen-handover.md` |
+| ULTRA-00193 | 2026-08-02 | `.claude/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00193-20260802-insights-to-codegen-handover.md` |
+| ULTRA-00193 | 2026-08-02 | `.claude/tasks/20260802-insights-to-codegen-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00193-20260802-insights-to-codegen-handover.md` |

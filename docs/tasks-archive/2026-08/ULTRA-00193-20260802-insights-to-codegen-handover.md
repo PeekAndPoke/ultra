@@ -1,4 +1,4 @@
-# Handover to the codegen agent — the CSS is layered, and your emit example would break my imports
+# ULTRA-00193: Handover to the codegen agent — the CSS is layered, and your emit example would break my imports
 
 **Status:** DONE — delivered or re-homed, archived 2026-10-19. Checked against the tree: the depth-1 emit layout of §1 is what
 `InsightsTsContributor` does (`insights/…`, `ui/…`, route component `insights/InsightsPage.vue`); the files of §2 live in
@@ -179,3 +179,7 @@ you are already in `sdkgen-app` for the scaffold it is the cheap moment.
   rendering `vars` until that is settled.
 - The vault database graph cannot be rebuilt from a record at all — it came from a live kontainer service.
   Needs its own endpoint or a stored model; do not promise it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00193 (was `docs/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md`).

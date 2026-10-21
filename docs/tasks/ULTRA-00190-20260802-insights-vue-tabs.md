@@ -79,7 +79,7 @@ silently corrupts a value rather than showing a gap.
 
 ## One blocker remains, in the codegen agent's area
 
-Written up in `docs/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md`.
+Written up in ULTRA-00193 (insights to codegen handover).
 
 **The emit path is a depth contract.** The pages import `../models.ts` and `../ui/JsonTree.vue`
 relatively, so `ui/` and `insights/` must both sit at depth 1 under `<out>/`. The codegen agent's
