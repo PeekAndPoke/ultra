@@ -46,3 +46,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00020 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-mutator-strategic-direction.md` | `docs/tasks-archive/2026-04/ULTRA-00020-2026-04-13-mutator-strategic-direction.md` |
 | ULTRA-00021 | 2026-04-13 | `docs/tasks-archive/2026-04/2026-04-13-funktor-v1-roadmap.md` | `docs/tasks-archive/2026-04/ULTRA-00021-2026-04-13-funktor-v1-roadmap.md` |
 | ULTRA-00021 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-funktor-v1-roadmap.md` | `docs/tasks-archive/2026-04/ULTRA-00021-2026-04-13-funktor-v1-roadmap.md` |
+| ULTRA-00022 | 2026-04-13 | `docs/tasks-archive/2026-04/2026-04-13-funktor-issues.md` | `docs/tasks-archive/2026-04/ULTRA-00022-2026-04-13-funktor-issues.md` |
+| ULTRA-00022 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-funktor-issues.md` | `docs/tasks-archive/2026-04/ULTRA-00022-2026-04-13-funktor-issues.md` |

@@ -1,4 +1,4 @@
-# Funktor & Monko — Known Issues
+# ULTRA-00022: Funktor & Monko — Known Issues
 
 **Date:** 2026-03-26 (updated 2026-03-31: VaultScope CRITICAL + HIGH fixed in Wave 1)
 **Source:** Senior engineer, QA engineer, coroutine expert code reviews
@@ -350,3 +350,7 @@ git show --stat 36e0e062 07cb403f b540e6a5 b5a68028
 | Index creation                | No test verifying indexes exist after `ensureIndexes()`      | P2       |
 | Attachments                   | SentMessages tests always pass `emptyList()` for attachments | P2       |
 | Auth findByToken unknown      | No test for `findByToken` with a token that doesn't exist    | P2       |
+
+## History
+
+- 2026-10-21: numbered ULTRA-00022 (was `docs/tasks-archive/2026-04/2026-04-13-funktor-issues.md`).
