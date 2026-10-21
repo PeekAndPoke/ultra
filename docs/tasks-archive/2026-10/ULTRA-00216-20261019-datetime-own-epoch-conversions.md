@@ -128,7 +128,7 @@ from all three charters (reviewer 1 disclosed that a Grep returned nine ledger l
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
-| 3 | MAJOR (pre-existing) | `nativeMain/kotlin/TimezoneEngineNative.kt:10,24-33` | Native zone cache keyed by the raw id; kotlinx native accepts path variants (`Europe/./Berlin`, `Europe//Berlin`) → unbounded growth + O(n) copy per insert from hostile ids (S) | out-of-scope → follow-up task | Introduced by the previous task's MINOR batch, not this change set; JVM/JS unaffected. `docs/tasks/20261019-datetime-native-zone-cache-growth.md` |
+| 3 | MAJOR (pre-existing) | `nativeMain/kotlin/TimezoneEngineNative.kt:10,24-33` | Native zone cache keyed by the raw id; kotlinx native accepts path variants (`Europe/./Berlin`, `Europe//Berlin`) → unbounded growth + O(n) copy per insert from hostile ids (S) | out-of-scope → follow-up task | Introduced by the previous task's MINOR batch, not this change set; JVM/JS unaffected. ULTRA-00217 (datetime native zone cache growth) |
 | 3 | MAJOR (pre-existing) | `MpZonedDateTime.kt:151` | A stored `ts` in the second half of an overlap re-encodes an hour early (I, D, S) | out-of-scope → existing follow-up | Already ULTRA-00211 (mpzoneddatetime overlap offset) |
 | 3 | MINOR (pre-existing) | `TimezoneEngineJs.kt:70-76` | JS: wall time past the Date limit → NaN → offset 0, silently (D) | maintainer list | Year ±275 760 only; noted in the native-cache follow-up task |
 | 3 | MINOR (pre-existing) | `TimezoneEngine.kt:52-53,76-77` + `TimezoneEngineJvm.kt:12` | JVM/native: 999999999-12-31 in a rules zone → +1-day probe → raw `DateTimeException` (D, S) | maintainer list | One day out of ±10^9 years; noted in the follow-up task |
@@ -144,7 +144,7 @@ CRITICAL/MAJOR; both out-of-scope MAJORs have their follow-up tasks. Security ad
 
 **Verdict: gate PASS** (round 3 clean). Open MINORs → maintainer list: `flooredMs` rename; `validBefore` ordering /
 unreachable `offsetAt(0)` arm; JS wall-time NaN at the Date limit; JVM `DateTimeException` on 999999999-12-31; the
-`MpLocalDateTime`/`MpLocalDate` non-UTC decode note. Follow-ups: `docs/tasks/20261019-datetime-native-zone-cache-growth.md`,
+`MpLocalDateTime`/`MpLocalDate` non-UTC decode note. Follow-ups: ULTRA-00217 (datetime native zone cache growth),
 ULTRA-00211 (mpzoneddatetime overlap offset). No docs task: no public API changed (internal engine only).
 
 ## History

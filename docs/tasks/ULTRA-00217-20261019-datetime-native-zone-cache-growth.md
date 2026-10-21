@@ -1,4 +1,4 @@
-# ultra/datetime: native zone cache grows with path variants of zone ids
+# ULTRA-00217: ultra/datetime: native zone cache grows with path variants of zone ids
 
 **Status:** TODO
 **Plan:** none — out-of-scope finding from round 3 of the `/feature-review` of ULTRA-00216 (datetime own epoch conversions) (2026-10-19)
@@ -42,3 +42,7 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
 |---|---|---|---|---|---|
 
 **Verdict:**
+
+## History
+
+- 2026-10-21: numbered ULTRA-00217 (was `docs/tasks/20261019-datetime-native-zone-cache-growth.md`).
