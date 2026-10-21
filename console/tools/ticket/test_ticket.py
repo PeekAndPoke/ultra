@@ -380,6 +380,24 @@ class AdoptAndFixes(Repo):
         self.assertEqual(read(self.root, "docs/research/old.md"),
                          f"See {tid} (04e weather) and {tid} (04e weather).\n")
 
+    def test_adopt_resolves_stale_and_elided_paths_and_commits_only_its_files(self):
+        write(self.root, "docs/tasks-archive/2026-10/20261018-docs-kronos.md",
+              "# Kronos docs\n\n> **Status (2026-10-18): DONE.** Shipped.\n\nBody of the kronos ticket.\n")
+        write(self.root, "README.md", "See `docs/tasks/20261018-docs-kronos.md` and `\u2026/20261018-docs-kronos.md`.\n")
+        write(self.root, ".gitignore", "*.ignored\n")
+        commit(self.root, "add", "2026-10-18T10:00:00")  # with the counter setUp made
+        write(self.root, "notes/scratch.txt", "not this ticket's\n")  # untracked before adopt
+        rc, out = run(self.root, "adopt", "docs/tasks-archive/2026-10/20261018-docs-kronos.md", "--apply", "--commit",
+                      "--trailer", "Co-Authored-By: Test <t@t>")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(read(self.root, "README.md"), "See UL-00001 (docs kronos) and UL-00001 (docs kronos).\n")
+        msg = subprocess.run(["git", "log", "-1", "--format=%B"], cwd=self.root, capture_output=True, text=True).stdout
+        self.assertIn("Co-Authored-By: Test <t@t>", msg)
+        files = subprocess.run(["git", "show", "--name-only", "--format=", "HEAD"], cwd=self.root,
+                               capture_output=True, text=True).stdout
+        self.assertNotIn("notes/scratch.txt", files)
+        self.assertIn("README.md", files)
+
     def test_root_after_the_subcommand(self):
         out = io.StringIO()
         with redirect_stdout(out):

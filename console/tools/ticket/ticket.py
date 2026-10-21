@@ -17,7 +17,8 @@ migrate a repo from file-name references to ticket numbers.
   ticket.py adopt FILE [--apply] [--commit]
                                            or one file at a time: number it, keep its old name behind the
                                            number (20260802-foo.md -> X-00042-20260802-foo.md), replace its
-                                           references, verify none is left, and (--commit) commit it alone
+                                           references, verify none is left, and (--commit) commit it alone,
+                                           only the files it changed (--trailer LINE adds a commit trailer)
   ticket.py sweep [--apply] [--show] [--exclude GLOB ...]
                                            replace references to the old paths with ticket numbers;
                                            .json files get the new path instead (tools read it back)
@@ -65,11 +66,10 @@ COUNTER = "docs/tasks/_next-ticket.txt"
 TASKS, FUTURE, IN_PROGRESS, ARCHIVE = "docs/tasks", "docs/tasks/future", "docs/tasks/in-progress", "docs/tasks-archive"
 PLANS = "docs/plans"
 HOUSEKEEPING = "docs/housekeeping"
-# ultra: where task files lived before docs/ (former_paths keeps only these)
-FORMER_TASK_DIRS = ("docs/tasks/", "docs/tasks-archive/", ".claude/tasks/", ".claude/tasks-archive/",
-                    ".claude/future-plans/")
 NOT_TICKETS = {"README.md", "NEXT-STEPS.md", "TEMPLATE.md"}  # plus every _*.md
 STATUS_LINE = re.compile(r"^> \*\*Status \((\d{4}-\d{2}-\d{2})\):\s*(.*)$")
+TASK_SEGMENT = re.compile(r"(^|/)(tasks|tasks-archive|plans)(/|$)")
+ELIDED = r"(?:\u2026/|\.\.\./)"  # "…/name.md" or ".../name.md": a path shortened in prose
 PART_OF = re.compile(r"^> \*\*Part of:\*\*\s*([A-Z][A-Z0-9]*-\d{5})\b\s*(?:\(([^)]*)\))?")
 BUCKET = {"DONE": "closed", "WON'T IMPLEMENT": "closed", "IDEA": "ideas", "NOT SCHEDULED": "ideas",
           "PAUSED": "paused"}  # everything else is open
@@ -82,8 +82,8 @@ FOLDER_OF = {
 }
 MD_LINK = re.compile(r"(!?)\[((?:[^\]\\]|\\.)*)\]\(\s*<?([^)\s>]+)>?(\s+\"[^\"]*\")?\s*\)")
 WAS = re.compile(r"\(was `[^`]+`\)")
-CODE_PATH = re.compile(r"`((?:\.{1,2}/)*[\w.-]+(?:/[\w.-]+)*\.md)(#[\w-]+)?`")
-MD_PATH = re.compile(r"(?<![\w/.-])((?:\.{1,2}/)*[\w.-]+(?:/[\w.-]+)*\.md)(#[\w-]+)?(?![\w/-])")
+CODE_PATH = re.compile(r"`((?:\u2026/|\.\.\./)?(?:\.{1,2}/)*[\w.-]+(?:/[\w.-]+)*\.md)(#[\w-]+)?`")
+MD_PATH = re.compile(r"(?<![\w/.-])((?:\u2026/|\.\.\./)?(?:\.{1,2}/)*[\w.-]+(?:/[\w.-]+)*\.md)(#[\w-]+)?(?![\w/-])")
 
 
 class Refused(Exception):
@@ -731,14 +731,14 @@ def cmd_migrate(a):
 
 
 def former_paths(root, rel):
-    """Where the file lived before (git's rename history), newest first, without rel itself."""
+    """Where the file lived before (git's rename history), newest first, without rel itself. Only .md
+    files in a task or plan folder count: --follow pairs a small file with unrelated ones (a .gitkeep,
+    a gradle.properties), and such a path would send references to the wrong ticket."""
     out = []
     for line in git(root, "log", "--follow", "--name-only", "--format=", "--", rel).splitlines():
         line = line.strip()
-        # --follow pairs a small file with unrelated ones (.gitkeep, gradle.properties); keep task paths only
-        if not line.endswith(".md") or not line.startswith(FORMER_TASK_DIRS):
-            continue
-        if line and line != rel and line not in out:
+        if line and line != rel and line not in out and line.endswith(".md") \
+                and TASK_SEGMENT.search(os.path.dirname(line)):
             out.append(line)
     return out
 
@@ -791,14 +791,15 @@ def short_title(old_path):
 
 def resolver(old):
     """resolve(file, target) -> (ticket id, new path, short title) for a reference to a migrated file."""
-    by_suffix = {}
+    by_suffix, by_name = {}, {}
     for path in old:
+        by_name.setdefault(os.path.basename(path), set()).add(old[path][0])
         parts = path.split("/")
         for i in range(len(parts)):
             by_suffix.setdefault("/".join(parts[i:]), set()).add(path)
 
     def resolve(file_rel, target):
-        target = target.split("#")[0]
+        target = re.sub(r"^" + ELIDED, "", target.split("#")[0])
         if not target.endswith(".md") or "://" in target:
             return None
         here = os.path.dirname(file_rel)
@@ -811,10 +812,11 @@ def resolver(old):
             hits = by_suffix.get(re.sub(r"^(\.{1,2}/)+", "", target), set())
             # several candidates are fine when they all are one ticket (a file and its former locations)
             hit = sorted(hits)[0] if hits and len({old[h][0] for h in hits}) == 1 else None
-        if not hit and "/" in target:
-            # ultra: a stale path to a file whose name is unique still means that file
-            hits = by_suffix.get(target.rsplit("/", 1)[1], set())
-            hit = sorted(hits)[0] if hits and len({old[h][0] for h in hits}) == 1 else None
+        if not hit:  # a path the file never had (a stale folder): the file name, if it is one ticket's
+            tids = by_name.get(os.path.basename(target), set())
+            if len(tids) == 1:
+                tid = next(iter(tids))
+                hit = sorted(p for p in old if old[p][0] == tid)[0]
         if not hit:
             return None
         tid, new = old[hit]
@@ -908,6 +910,21 @@ def stem_hits(root, stem, exclude=()):
     return hits
 
 
+def changed_files(root):
+    """Paths that differ from HEAD (modified, added, deleted, untracked and not ignored)."""
+    out, parts = set(), git(root, "status", "--porcelain", "-z", "--untracked-files=all").split("\0")
+    i = 0
+    while i < len(parts):
+        entry = parts[i]
+        if len(entry) > 3:
+            out.add(entry[3:])
+            if entry[0] in "RC":  # a rename's old path follows as its own entry
+                i += 1
+                out.add(parts[i])
+        i += 1
+    return out
+
+
 def cmd_adopt(a):
     prefix, _ = read_counter(a.root)
     rel = os.path.relpath(os.path.abspath(a.file), a.root) if os.path.isabs(a.file) or os.path.exists(a.file) \
@@ -927,6 +944,7 @@ def cmd_adopt(a):
         print(f"would number {rel} as the next {prefix} ticket, in {folder}/, as {prefix}-nnnnn-{stem}.md; "
               "--apply to do it")
         return 0
+    before = changed_files(a.root)  # what was already changed is not this ticket's to commit
     tid = f"{prefix}-{take_numbers(a.root, prefix, 1):05d}"
     dst = f"{folder}/{tid}-{stem}.md"
     date = created_key(a.root, rel)[0]
@@ -957,8 +975,11 @@ def cmd_adopt(a):
         print(f"stopped: {len(left)} lines still name {stem}; fix them (or --exclude), then commit by hand")
         return 1
     if a.commit:
-        git(a.root, "add", "-A")
-        git(a.root, "commit", "-q", "-m", f"{tid}: numbered (was {rel})")
+        mine = sorted((changed_files(a.root) - before) | {rel, dst, COUNTER})
+        git(a.root, "add", "-A", "--", *[f for f in mine if os.path.exists(os.path.join(a.root, f)) or
+                                         git(a.root, "ls-files", "--", f).strip()])
+        msg = f"{tid}: numbered (was {rel})" + ("\n\n" + "\n".join(a.trailer) if a.trailer else "")
+        git(a.root, "commit", "-q", "-m", msg)
         print(f"committed {git(a.root, 'rev-parse', '--short', 'HEAD').strip()}")
     return 0
 
@@ -1022,6 +1043,8 @@ def main(argv=None):
     s = sub.add_parser("migrate"); s.add_argument("prefix"); s.add_argument("--apply", action="store_true")
     s = sub.add_parser("adopt"); s.add_argument("file"); s.add_argument("--apply", action="store_true")
     s.add_argument("--commit", action="store_true")
+    s.add_argument("--trailer", action="append", default=[], metavar="LINE",
+                   help='a commit trailer for --commit, e.g. "Co-Authored-By: ..." (repeatable)')
     s.add_argument("--exclude", nargs="+", action="extend", default=[], metavar="GLOB")
     s = sub.add_parser("sweep"); s.add_argument("--apply", action="store_true"); s.add_argument("--show", action="store_true")
     s.add_argument("--exclude", nargs="+", action="extend", default=[], metavar="GLOB")
