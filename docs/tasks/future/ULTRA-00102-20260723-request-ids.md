@@ -1,4 +1,4 @@
-# Request IDs — per-request correlation ids through kontainer + logs
+# ULTRA-00102: Request IDs — per-request correlation ids through kontainer + logs
 
 **Status:** FUTURE — not scheduled.
 **Area:** funktor core (request pipeline, kontainer wiring, logging).
@@ -31,3 +31,7 @@ every log line produced while handling the request.
 - Where exactly in the pipeline does the kontainer get the instance (funktor request lifecycle hook)?
 - One `Log` decoration vs a context mechanism — kraft/funktor logging has no MDC today.
 - Do background jobs/workers get their own "request" ids (job ids) for the same correlation story?
+
+## History
+
+- 2026-10-21: numbered ULTRA-00102 (was `docs/tasks/future/20260723-request-ids.md`).

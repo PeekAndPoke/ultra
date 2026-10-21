@@ -13,7 +13,7 @@ Automatic audit/history for entities:
    compacts storage using **checkpoints / key frames** — a full snapshot every ~100 mutations (or
    similar), diffs in between (video-codec style: key frame + deltas).
 3. **Attribution:** each mutation record carries the **request ids**
-   ([[20260723-request-ids]] — our id + upstream ids like `cf-ray`) and the **acting user**
+   ([[ULTRA-00102]] — our id + upstream ids like `cf-ray`) and the **acting user**
    (id/type/realm from the session), so every change answers "who, when, via which request".
 
 ## Sketch
@@ -51,7 +51,7 @@ user must also handle those). Also note: the `actor` attribution itself is perso
 
 ## Related
 
-- [[20260723-request-ids]] — prerequisite for the request-id attribution.
+- [[ULTRA-00102]] — prerequisite for the request-id attribution.
 - Existing precedent in-repo: `EmailStoring.withAnonymizedContent` (messaging) already anonymizes
   stored email content — same spirit, study its approach.
 - Red-team/GDPR angle overlaps the auth backlog (user erasure lands as an `AuthUserAdapter` op).
