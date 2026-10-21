@@ -10,10 +10,10 @@
 worktree; one stored test bundles the other had half-deleted (no `ultra-kraft-testing.mjs` → `IrLinkageError`) in the
 SHARED `~/.gradle/caches/build-cache-1`, under correct keys, and every later build — `clean` included — restored them.
 The maintainer wiped the caches; a cold `clean build` is green (15630 tests / 68 targets). Record:
-`.claude/tasks-archive/2026-10/20261019-flaky-kraft-addon-irlinkageerror.md`.
+`docs/tasks-archive/2026-10/20261019-flaky-kraft-addon-irlinkageerror.md`.
 
 **The build scripts are free of the Gradle 9.6 Kotlin DSL deprecations, and macosX64 is dropped** (`a8cbf052`). Record:
-`.claude/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md`.
+`docs/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md`.
 
 **Worth taking:** after ANY concurrent build in this worktree, `clean` is not enough — damaged outputs can sit in the
 build cache. Build with `--no-build-cache`, or have the entries written during the overlap removed (the cache is shared
@@ -23,13 +23,13 @@ with other projects, so that is the maintainer's call).
 
 **2026-10-19 additions:** JS offset-interval cache (`OffsetIntervalCache.kt`), own epoch ↔ date-time arithmetic
 (`EpochMath.kt`, exact Long beyond 2^52 s), `MpLocalTime` is `Int`-based, pixijs addon registers pixi's extensions
-itself. Records: `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md`,
+itself. Records: `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md`,
 `20261019-datetime-own-epoch-conversions.md`, `20261018-pixijs-addon-contract-tests.md`.
 
 **ultra/datetime does its own zone math** (`ultra/datetime/src/commonMain/kotlin/TimezoneEngine.kt`, java.time
 semantics, Intl on JS) and **kotlinx-datetime is 0.8.0** (`829f6a59`, `fed9393d`, + the review-fix commit). JS needs no
 tz data; `installNativeTimezones()` is GONE (ultra and Kraft) and Kraft installs no zone provider by default.
-Record: `.claude/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md`.
+Record: `docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md`.
 
 **Worth taking:** Chrome's Intl case-folds zone ids AND canonicalises aliases (`US/Pacific` → `America/Los_Angeles`,
 `Asia/Kolkata` → `Asia/Calcutta`), so `resolvedOptions().timeZone` cannot tell a typo from an alias. The JVM parity
@@ -39,8 +39,8 @@ change.
 ## What the last holder changed — kotlin-2421-upgrade agent, 2026-10-18 (Kotlin 2.4.21 + deps, release 0.111.0)
 
 **Kotlin 2.4.21, Gradle 9.7.1, KSP 2.3.12, maven-publish 0.37.0, Ktor 3.6.0, kotest 6.2.6** and a library refresh
-(`fb1b93f8`); versions and holds in `.claude/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md`. **kotlinx-datetime stays 0.6.2**
-(`0dc2df67`): 0.8.0 breaks every named zone on JS — follow-up `.claude/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md` (done).
+(`fb1b93f8`); versions and holds in `docs/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md`. **kotlinx-datetime stays 0.6.2**
+(`0dc2df67`): 0.8.0 breaks every named zone on JS — follow-up `docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md` (done).
 A full `clean build` after the upgrade matched the 0.110.0 baseline per target (14675 tests / 68 targets).
 
 **Worth taking:** Gradle's ceiling is set by KGP, not by "latest" — the compatibility table on
@@ -54,7 +54,7 @@ labels and every other `data` field, datasets added/removed/changed (merged by i
 Chart.js animates), options; a changed `type` rebuilds; a failed create no longer leaves an orphan chart on the
 canvas. The chart works on its own one-level copy of the config — Chart.js writes into what it is given.
 `Chart.update(mode: String?)` is the Chart.js 4 signature. Docs for Kronos and chartjs updated. Records:
-`.claude/tasks-archive/2026-10/20261018-kraft-chartjs-live-updates.md`, `…/20261018-docs-kronos.md`.
+`docs/tasks-archive/2026-10/20261018-kraft-chartjs-live-updates.md`, `…/20261018-docs-kronos.md`.
 
 **Worth taking:** `x shouldBe y` on a `dynamic` receiver compiles to a dynamic member call → `TypeError` at
 runtime; cast first. In Astro markup `{ … }` is an expression — code text with braces goes in `{"…"}`.
@@ -66,7 +66,7 @@ a known `settled` duration plus a shared list of still-lazy providers, read in a
 `mutate { advanceBy(1.minutes) }` steps no longer overflow the stack. The lambda form stays fully lazy.
 `describe()` is flat per chain; `Kronos.from` sums nested descriptors iteratively. `Mutable.set` / `mutate`
 now THROW for a kronos that reads the mutable itself (the old guard walked the wrong chain and never fired).
-Record: `.claude/tasks-archive/2026-10/20261017-kronos-advanceby-collapse.md`.
+Record: `docs/tasks-archive/2026-10/20261017-kronos-advanceby-collapse.md`.
 
 **Worth taking:** "do not read section X" in a reviewer brief is unenforceable when X is in a file read in
 one call — all three round-2 reviewers saw the ledger. Hand blind reviewers a scratch copy without it.
@@ -80,7 +80,7 @@ to the browser; in-page `#anchors` are left to the browser and `popstate` with u
 longer re-resolves; `resolveRouteForUri` ignores the fragment. `UrlWithProtocolRegex` (`ultra/common`)
 rewritten — also used by the `validUrlWithProtocol` form rule. New docs page
 `docs-site/src/pages/ultra/kraft/link-clicks.astro`. Record:
-`.claude/tasks-archive/2026-09/20260928-router-click-interception.md`.
+`docs/tasks-archive/2026-09/20260928-router-click-interception.md`.
 
 **Worth taking:** a mutant that SURVIVED showed a test proving the wrong guard — a cross-host case
 that also differed by protocol, so the protocol check caught it and the host check was never
@@ -93,7 +93,7 @@ return). When guards stack, each needs a case that ONLY it can reject.
 `docs-site/src/pages/ultra/streams/combining.astro` + the LLM mirror, platform-table rows, a
 cross-link from `operators.astro`, and the README bullet. `pnpm run build` green, 113 pages. Nothing
 in `funktor/` or `ultra/codegen` touched. Record in
-`.claude/tasks-archive/2026-08/20260824-docs-streams-switchmap.md`.
+`docs/tasks-archive/2026-08/20260824-docs-streams-switchmap.md`.
 
 **Two pre-existing README errors fixed while that line was open**, both in `ultra/streams/README.MD:27-28`:
 `distinctUntilChanged` does not exist anywhere in this repo (the operators are `distinct()` /
@@ -125,7 +125,7 @@ stops. Also fixed: a first subscriber arriving while cut off was **never called 
 
 `:ultra:streams:jvmTest` 69 / 0, `linuxX64Test` green, `jsBrowserTest` green incl. `CutoffTickerSpec`
 3/0, compile sweep clean. `/feature-review` PASSED — record in
-`.claude/tasks-archive/2026-08/20260824-cutoff-reentrancy.md`.
+`docs/tasks-archive/2026-08/20260824-cutoff-reentrancy.md`.
 
 **The changes are UNSTAGED and UNCOMMITTED, deliberately** — `ops/cutoff.kt`, `ops/switchMap.kt`
 and their two specs. The maintainer has not reviewed them and did not ask for a commit. Leaving them
@@ -217,7 +217,7 @@ detectable instead of silent, which read-then-write can never be.
 A `TsSdkRegistry.Nav` can declare `requires` — the API routes its page cannot work without, resolved
 at generation time off the LIVE route graph by `TsRouteRefs.of(feature, member)`. ALL must pass
 `ApiAcl.canAccess` for the entry to show. Menu only; the router guard still reads only
-`meta.requiresAuth`. Gate PASSED — see `.claude/tasks-archive/2026-08/20260809-acl-aware-navigation.md`.
+`meta.requiresAuth`. Gate PASSED — see `docs/tasks-archive/2026-08/20260809-acl-aware-navigation.md`.
 
 **INSIGHTS AGENT — two things touch you:**
 
@@ -425,7 +425,7 @@ are on disk but absent from `InsightsTsContributor.INSIGHTS_FILES`, so they will
 list grows. One-line edit, in my file — say the word or make it yourself; a registered file that is
 never emitted is a hard build error, so you cannot get it silently wrong.
 
-**Worth reading: `.claude/tasks/20260803-contributed-page-runtime-test.md`.** Nothing in the pipeline
+**Worth reading: `docs/tasks/20260803-contributed-page-runtime-test.md`.** Nothing in the pipeline
 could have caught this bug — `mountAll` types a component as `() => Promise<unknown>`, so props are
 ERASED at the registry boundary. Everything was green and the maintainer found it by opening the
 page. I tried to close the gap with a smoke test and did NOT ship it: mutation showed my first
@@ -481,7 +481,7 @@ pages. Maintainer's call, and correct: these are generator INPUTS, no JVM code r
 `ts/runtime/auth.ts` already set the precedent. **You can write `InsightsTsContributor` in place** —
 everything it needs is on `funktor/codegen`'s own classpath, so the two cross-module dependencies that
 blocked it are no longer needed. Full detail:
-`.claude/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md`.
+`docs/tasks-archive/2026-08/20260802-insights-to-codegen-handover.md`.
 
 **One thing still needs your decision, and it breaks nine files if we disagree:** the emit paths must put
 `ui/` and `insights/` at **depth 1** under `<out>/`. The components import `../models.ts` and
@@ -521,7 +521,7 @@ every build and every commit, not once per session — the holder changes undern
 never sets it. Nothing of yours changes.
 
 **The `/feature-review` gate ran over the whole SDK batch and found three HIGH defects** (`eb609f09`,
-record in `.claude/tasks/20260731-sdk-auth-integration.md`). All three were the same shape — a
+record in `docs/tasks/20260731-sdk-auth-integration.md`). All three were the same shape — a
 request outliving the session that issued it — and the fix is a generation counter on `AuthSession`
 and `AclLoader`.
 
@@ -541,9 +541,9 @@ Two problems, and the second is the one I would fix first:
 2. **Account enumeration.** `userNotFound` distinguishes "no such user" from "wrong password" on
    `signIn`.
 
-Both are collected as scenarios in `.claude/tasks/20260802-redteam-sdk-auth.md` (section E), but
+Both are collected as scenarios in `docs/tasks/20260802-redteam-sdk-auth.md` (section E), but
 neither needs a red-team session to confirm — the chain is three files and I traced it. Your call
-whether it belongs in `.claude/tasks/error-disclosure/`.
+whether it belongs in `docs/tasks/`.
 
 ### Also worth knowing
 
@@ -562,7 +562,7 @@ whether it belongs in `.claude/tasks/error-disclosure/`.
 
 ## What an earlier holder changed — auth-transport agent, 2026-08-02
 
-**Read `.claude/tasks/20260802-auth-to-codegen-handover.md`** — the full handover, written for you.
+**Read `docs/tasks/20260802-auth-to-codegen-handover.md`** — the full handover, written for you.
 
 Headlines: `AuthSignInResponse.Session` is sealed with `Bearer` only (cookie mode was dropped, reasoning
 in the handover); `Success` now states `permissions` / `expiresAt` (nullable) / `userId`; `Token`,
@@ -578,7 +578,7 @@ Increment 1 passed `/feature-review`; fixes in `4aa6b808`, record in
 sealed with a single `Bearer(token)` variant so the discriminator stays in the wire format and a future
 transport is additive. **Regenerate the demo SDK — the union now has one member.** Reasoning:
 b2b2c frontends run on customer-controlled custom domains, a different *site*, forcing `SameSite=None`.
-See `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+See `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
 
 Your `HttpRequest.credentials` / `SseOptions.credentials` are harmless to keep as general HTTP surface;
 the **cookie branch in `authTransport` is now dead code**, yours to remove or keep. `decodeJwtClaims` /
@@ -602,7 +602,7 @@ additive. Regenerate the demo SDK: the union now has one member.
 
 Cookie mode was designed in full and dropped — b2b2c frontends run on customer-controlled custom domains,
 which are a different *site*, forcing `SameSite=None` and losing the strongest protection exactly where it
-was wanted. Reasoning in `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+was wanted. Reasoning in `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
 
 **What that means for your code:**
 
@@ -613,7 +613,7 @@ was wanted. Reasoning in `.claude/tasks-archive/2026-07/20260719-token-storage-h
   response, and the Kotlin client deleted its equivalent outright.
 - `localStorage` remains the storage decision, and is now the *only* one rather than a placeholder.
 
-**New task, possibly yours:** `.claude/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md`. `routing.kt`
+**New task, possibly yours:** `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md`. `routing.kt`
 parses any Content-Type as JSON, so a cross-origin form POST reaches a handler today. Not a cookie
 concern — it is live, and it touches `funktor/rest`.
 

@@ -229,7 +229,7 @@ export interface SseOptions {
      *
      * A stream does NOT go through `HttpTransport` — `sseStream` calls `fetch` itself — so an auth
      * transport wrapper never sees it, and **a stream is therefore unauthenticated unless the caller
-     * passes the header itself**. That gap is tracked in `.claude/tasks/20260731-sdk-sse-auth.md`.
+     * passes the header itself**. That gap is known and still open.
      * This field is the separate, cookie-shaped case, kept because `fetch` offers no other way in.
      *
      * Omitted leaves `fetch`'s own default in force.

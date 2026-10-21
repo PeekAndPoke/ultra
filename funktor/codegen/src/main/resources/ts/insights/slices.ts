@@ -416,7 +416,7 @@ export function readVault(data: unknown): VaultSlice | null {
 
     const entries: VaultEntry[] = rawEntries.map((raw) => {
         const record = asRecord(raw) ?? {}
-        // Coupled to the collector never writing `vars` (`20260731-query-vars-in-insights.md`): if it ever
+        // Coupled to the collector never writing `vars`: if it ever
         // does, this marks every entry legacy and hides all text.
         const legacy = 'vars' in record || 'queryExplained' in record
         return {

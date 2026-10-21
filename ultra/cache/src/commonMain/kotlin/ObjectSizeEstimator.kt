@@ -12,7 +12,7 @@ import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
  *
  * The result is a rough heuristic, and its error is not uniform across platforms. Measured
  * 2026-07-30; every figure below is reproducible, and the known-wrong cases are recorded in
- * `.claude/tasks/20260730-cache-scan-findings.md` rather than fixed. **Treat
+ * `docs/tasks/20260730-cache-scan-findings.md` rather than fixed. **Treat
  * [FastCache.Builder.maxMemoryUsage] as a relative pressure signal, not a guarantee.**
  *
  * - **Native: no per-object detail at all.** `ObjectSizeEstimatorPlatform.getFieldsOf` returns

@@ -1,6 +1,6 @@
 ---
 name: feature-review
-description: Use after implementing a feature to run the mandatory review gate — the review loop with three charters (implementation & code style, domain expert, security). Also use when someone says "feature-review", "review this feature", "run the review gate", or finishes a task file in .claude/tasks/.
+description: Use after implementing a feature to run the mandatory review gate — the review loop with three charters (implementation & code style, domain expert, security). Also use when someone says "feature-review", "review this feature", "run the review gate", or finishes a task file in docs/tasks/.
 argument-hint: [task-file-or-feature-description]
 ---
 
@@ -28,7 +28,7 @@ This skill adds only what is specific to gating a feature:
 
 ## When to run
 
-After implementing any feature with a task file in `.claude/tasks/`, before marking it DONE. The change
+After implementing any feature with a task file in `docs/tasks/`, before marking it DONE. The change
 should be committed or at least staged so the change set is well defined.
 
 ## Preconditions — check these first
@@ -79,7 +79,7 @@ it silently, and this repo's most-cited gate did report HIGH, for a live session
 ## Security-critical → red-team follow-up
 
 If the feature touches auth, sessions, tenancy, tokens, permissions or any data boundary, create
-`.claude/tasks/YYYYMMDD-redteam-<slug>.md` capturing concrete attack scenarios — cross-org access, token
+`docs/tasks/YYYYMMDD-redteam-<slug>.md` capturing concrete attack scenarios — cross-org access, token
 forgery/replay, privilege escalation, IDOR on org/branch ids, session fixation. **Collect only; never
 execute them here.** Note the created task in the feature's task file. Extend an existing red-team task
 rather than opening a second one for the same surface.
@@ -101,7 +101,7 @@ rather than opening a second one for the same surface.
 The gate is not done when the verdict is written. CLAUDE.md's lifecycle continues, and these steps are
 skipped often enough to be worth naming here:
 
-- [ ] Mark the task **DONE** and move it to `.claude/tasks-archive/<YYYY-MM>/` (the filename is dated).
+- [ ] Mark the task **DONE** and move it to `docs/tasks-archive/<YYYY-MM>/` (the filename is dated).
 - [ ] **Create the follow-up DOCS task if the change touched public API** — unless the code is still in
       flux, in which case say so in the archive note. Docs are written against SETTLED code.
 - [ ] Create or extend the red-team task if the feature is security-critical.

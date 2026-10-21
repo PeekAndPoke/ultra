@@ -14,7 +14,7 @@ import io.peekandpoke.ultra.security.jwt.JwtPayload
  * What DOES exist: [SessionStore] with `revoke` / `revokeAllForUser` / `listForUser`, its `Null`,
  * `Vault` and `Cached` implementations, device fields on `AuthRecord.Session`, and TTL-index pruning
  * of expired rows in both DB backends. The missing half is purely the JWT integration —
- * `.claude/tasks/20260728-session-revocation-wiring.md`.
+ * `docs/tasks/20260728-session-revocation-wiring.md`.
  *
  * Prefixed with the library name to avoid collisions with other claims a caller might add.
  */

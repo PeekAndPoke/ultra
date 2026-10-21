@@ -24,7 +24,7 @@ import kotlinx.serialization.builtins.serializer
 /**
  * Locks the ApiRoutes floor (`authFloor = { ... }`): every route inherits the floor as its
  * initial chain, a per-route `authorize {}` can only strengthen it, and a missing/empty floor
- * aborts group construction. See `.claude/tasks-archive/2026-07/20260722-apiroutes-auth-floor.md`.
+ * aborts group construction. See `docs/tasks-archive/2026-07/20260722-apiroutes-auth-floor.md`.
  */
 class FloorAuthRuleBuilderSpec : StringSpec({
 

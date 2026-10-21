@@ -7,7 +7,7 @@ import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 
 /**
  * Regressions for the defects found by the 2026-07-28 vault scan.
- * See `.claude/tasks-archive/2026-07/20260728-vault-scan-findings.md`.
+ * See `docs/tasks-archive/2026-07/20260728-vault-scan-findings.md`.
  */
 class ScanFixesSpec : StringSpec({
 

@@ -22,7 +22,7 @@ import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
  * as bytes and parsed as JSON whatever the header said.
  *
  * Found while designing (and then dropping) the cookie transport; it is a live hole independent of that.
- * See `.claude/tasks/20260802-rest-content-type-enforcement.md`.
+ * See `docs/tasks/20260802-rest-content-type-enforcement.md`.
  *
  * **Both directions are asserted deliberately.** A test that only shows JSON still works would pass with
  * the gate deleted.

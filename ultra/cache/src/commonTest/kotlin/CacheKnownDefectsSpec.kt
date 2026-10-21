@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Executable statements of the design questions from the ultra/cache scan — written as FAILING
  * tests before the fixes were chosen, green since, and kept as the guards for those fixes. See
- * `.claude/tasks/20260730-cache-scan-findings.md` for what each one measured while red.
+ * `docs/tasks/20260730-cache-scan-findings.md` for what each one measured while red.
  *
  * Each test asserts what the documented contract already promises — none of them invents a new
  * requirement.

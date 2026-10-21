@@ -36,13 +36,13 @@ class CollectionAwaker(
         )
 
         /** Creates a [CollectionAwaker] that produces a [MutableList]. */
-        // TODO(scan): star projection -> NPE, see .claude/tasks/20260729-slumber-array-support.md Follow-ups
+        // TODO(scan): star projection -> NPE, see docs/tasks/20260729-slumber-array-support.md Follow-ups
         fun forList(type: KType) = CollectionAwaker(type.arguments[0].type!!) {
             toMutableList()
         }
 
         /** Creates a [CollectionAwaker] that produces a [MutableSet]. */
-        // TODO(scan): star projection -> NPE, see .claude/tasks/20260729-slumber-array-support.md Follow-ups
+        // TODO(scan): star projection -> NPE, see docs/tasks/20260729-slumber-array-support.md Follow-ups
         fun forSet(type: KType) = CollectionAwaker(type.arguments[0].type!!) {
             toMutableSet()
         }
@@ -75,7 +75,7 @@ class CollectionAwaker(
                 }
             }
 
-            // TODO(scan): star projection -> NPE, see .claude/tasks/20260729-slumber-array-support.md Follow-ups
+            // TODO(scan): star projection -> NPE, see docs/tasks/20260729-slumber-array-support.md Follow-ups
             val element = type.arguments[0].type!!
             val component = (element.classifier as KClass<*>).javaObjectType
 

@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import java.io.File
 
 /**
- * Configuration for the i18n code generator (see `.claude/tasks/20260720-i18n-l10n-foundation.md`).
+ * Configuration for the i18n code generator (see `docs/tasks/20260720-i18n-l10n-foundation.md`).
  *
  * Yaml catalogs live at `src/<sourceSet>/i18n/messages.<locale>.yaml` by convention.
  */

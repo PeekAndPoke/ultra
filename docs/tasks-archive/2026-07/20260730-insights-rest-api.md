@@ -1,0 +1,655 @@
+# Insights: split data from rendering, expose it through a superuser REST API
+
+**Status:** DONE and ARCHIVED (2026-07-31). Rounds 1 and 2 complete, gate PASS, all follow-up
+decisions taken and implemented. The `Redacted<T>` project that came out of it has its own task file,
+now also archived (`docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`).
+
+**No DOCS follow-up — deliberately.** Per CLAUDE.md a public-API change gets a docs task only once
+the surface is SETTLED, and this one is not: the Vue tabs are unbuilt, and D-M6 below is explicitly
+*"decide before the tab registry is built"* — the open-envelope discovery/fallback question can still
+change the shape apps see. Documenting it now would buy a rewrite and a reader who trusted the stale
+version. Revisit when the tab registry lands.
+**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
+**Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
+
+## Scope
+
+The arc is: expose insights data through a superuser-only REST API, then have the SDK generator build
+the frontend pages and components from `.vue` files in the module's resources.
+
+This task is the **first half only** — plan steps 4 and 5. The Vue half (steps 6–7) is blocked on codegen
+additions that do not exist yet: aggregation registries and `out.vue` (`20260729-ts-sdk-codegen.md`,
+"Incoming requirements", items 3 and 4). Verified 2026-07-30 — codegen is at Phase 2 complete except Sse,
+and grep finds no emit-phase registry, no profiles, no `out.shared`.
+
+**Do not restate the plan here.** The envelope shape, the tab-registry-vs-sealed-hierarchy reasoning, the
+Slumber-compat blocker table, the explicit-key decision and what deleting the renderers buys are all in
+the plan's "Insights specifics" section. This file records only what that section does not: findings from
+building it, and decisions that had to be made on contact with the code.
+
+## What the plan already decides (pointers, not copies)
+
+| Decision | Where |
+|---|---|
+| Open envelope `{ collectors: [{ key, data }] }`, `data` opaque | plan → "The tab registry replaces a sealed hierarchy" |
+| `templateKey` must become an **explicit declared string**, not the class FQN | same section, checklist |
+| Six Slumber-compat blockers in the collector DTOs | plan → "Slumber-compat blockers" |
+| Deleting the renderers drops `ultra:semanticui` + `funktor:staticweb` from insights | plan → "What deleting the renderers buys" |
+
+## Findings from contact with the code (2026-07-30)
+
+### The raw GUI route cannot be gated — which is why this is an API, not a patch
+
+`currentUserProvider()` returns an anonymous `User` when no principal is present, because "the route is
+outside any `authenticate { }` block" (`funktor/rest/src/jvmMain/kotlin/auth/call.kt` KDoc), and the demo
+mounts insights under `host("admin.*")` with **no `authenticate { }` block at all**
+(`funktor-demo/server/src/main/kotlin/server.kt:103`). A hand-rolled check on
+`gui/InsightsGui.kt:19` would deny everyone; re-plumbing ktor auth around it would reinvent `ApiRoutes`
+including its boot-time chain validation (`AuthChainBootCheck`).
+
+This retires the plan's step-1 assumption that the GUI could be "kept alive but superuser-gated" cheaply.
+
+**Maintainer decision (2026-07-30): the static-web surface disappears wholesale with the Vue rewrite, so
+nothing there is adjusted — not gated, not partially deleted.** Accepted consequence: the GUI routes stay
+reachable without a credential until then; insights is network-protected only for that window. Recorded
+so the red-team sweep treats it as a known, time-boxed exposure rather than a finding.
+
+### `insights → rest` is not a cycle — no `funktor/insightsapi` module needed
+
+Verified by compiling, not by reading. `rest` depends only on `funktor:core`, and the insights hook it
+uses goes through `RequestMetricsProvider` — an interface **owned by core**
+(`funktor/core/src/jvmMain/kotlin/metrics/RequestMetricsProvider.kt:12`) that `InsightsFull`/
+`InsightsSlim` implement. `rest` never names the insights module.
+
+### No hand-written `ApiClient` — the first funktor module to skip it
+
+`IntrospectionApi` mounts via `IntrospectionApiClient.…mount { }`, with the client in
+`funktor/inspect/src/commonMain`. That pattern exists because Kraft frontends hand-wrote clients, and the
+plan counts exactly those files as deletion payoff. Insights has only `jvmMain`; adding a `commonMain` to
+host a client codegen is meant to replace would be backwards.
+
+So: declare `TypedApiEndpoint`s directly, no client class, no new source set. The TS client comes from
+`RestApiTsContributor`. **This is the decision most worth challenging** — it diverges from every existing
+funktor API module.
+
+## The GUI's fate — decided 2026-07-30
+
+The plan settled that the renderers are deleted; it never said **when**, and its step-1 answer ("keep the
+GUI alive but superuser-gated") died with the finding above. Decided in discussion:
+
+| Question | Decision |
+|---|---|
+| When does the GUI go? | **Now**, in this pass — not deferred to the Vue rewrite |
+| The rendering code itself | **Preserved whole in `funktor/insights/reference/`**, outside the compile path — chosen over commenting in place once the volume was measured: ~1,062 render lines across ten collectors, 714 of them in Kontainer and Vault alone |
+| `detailsUri` / `detailsUrl` | **Removed entirely.** It only ever existed as a cross-domain link to the `admin.*`-mounted staticweb routes; removing it also simplifies how api-responses are built |
+| staticweb / semanticui deps | Removed from `funktor/insights` as a consequence |
+
+Deleting the renderers first is what makes the rest cheap: the collector `Data` classes stop being
+half-DTO-half-view, so the Slumber-compat blockers can be fixed without every shape change rippling into
+kotlinx.html.
+
+**Every live collector carries a `// VUE-REF:` pointer** to its preserved original, so
+`grep -rn VUE-REF` lists what is still outstanding. Removal condition, recorded in
+`reference/README.md`: when a collector's Vue tab ships, delete its reference copy; when every tab is
+done, delete the directory.
+
+### Cross-agent coordination: `detailsUri`/`detailsUrl` is a wire-format change
+
+22 call sites, and two of them belong to the codegen agent's active work:
+
+- `ultra/codegen/src/main/resources/ts/runtime/apiResponse.ts:58-59` — the hand-written TS mirror
+- `ultra/codegen/src/test/kotlin/ts/ApiResponseParitySpec.kt:141-142` — the spec that pins the two together
+
+Plus `ultra/remote/src/commonMain/kotlin/ApiResponse.kt` (published), `funktor/rest/respond.kt:84-85`,
+`RequestMetricsProvider` in `funktor:core`, both insights impls, the Kraft ops page
+(`funktor/inspect/src/jsMain/.../DevtoolsRequestHistoryPage.kt:62`) and two `ultra/remote` specs.
+
+Remove it in ONE commit across Kotlin and TS. `ApiResponseParitySpec` exists precisely to catch this
+drift, so a half-done removal fails loudly rather than silently — but it will also fail for the codegen
+agent if they build mid-change.
+
+## Build list
+
+- [x] `ApiRoutes("insights", authFloor = { isSuperUser() })` + `InsightsApiFeature : ApiFeature`,
+      registered in `insights_module.kt` beside the existing singletons
+- [x] `GET /insights` — recent records: path, ts, method, url, status, durationMs
+- [x] `GET /insights/{bucket}/{file}` — one full record
+- [x] Explicit `key` on the collector data interface, replacing the FQN-derived `templateKey`
+      (`InsightsCollectorData.kt:15`) and the stored `it::class.jvmName` (`impl/InsightsFull.kt:68`)
+- [x] **`InsightsFull`'s hardcoded URI filter (`impl/InsightsFull.kt:33`) must exclude the new API route.**
+      It currently excludes `/insights/bar` and `/insights/details`; miss this and the API collects
+      insights about itself on every call
+- [x] `funktor/insights/build.gradle.kts` — `api(project(":funktor:rest"))` (already added while
+      verifying the cycle question)
+- [x] **Header redaction is broken in both directions** (raised by the maintainer 2026-07-31; see the
+      section below). Shared, extensible denylist; replace values entirely, never truncate
+- [x] Fix `InsightsDataLoader.kt:36` — `Class.forName(it.cls)` runs before the `InsightsCollectorData`
+      subtype check, so reading a stored file runs static initializers of whatever class it names.
+      Resolve the declared key against a registry of known collectors instead
+- [x] Before touching them: check what still calls `getRequestDetailsUrl()` / `getRequestDetailsUri()`
+      (plan checklist item, not yet done)
+
+## Credential capture in the collectors (found 2026-07-31)
+
+Both directions are recorded in full and neither is properly anonymized. This is the most serious thing
+found in insights so far, and it does not wait for the API work.
+
+**Request side** (`collectors/RequestCollector.kt:47-51`) — every incoming header is stored. Exactly one
+is treated specially, and it is **truncated, not redacted**:
+
+```kotlin
+if (k.lowercase() == "authorization") { k to v.map { it.substring(0, 20) + "..." } }
+```
+
+- **Leaks real credential material.** `Basic ` is 6 chars, so 14 base64 chars survive = 10 decoded bytes
+  of `user:password` — for short credentials, all of it. funktor's API keys ride the *same* header
+  (`apiKeyCaller` reads `Authorization: Bearer <token>`, see its KDoc at
+  `funktor/rest/src/jvmMain/kotlin/auth/apiKeyCaller.kt:20`), where 13 surviving chars of a short key is
+  a meaningful fraction.
+- **Throws on short values** — `substring(0, 20)` on `Bearer abc`.
+- **Covers only `authorization`.** `Cookie` is stored verbatim, and a session cookie is directly
+  replayable — a worse leak than a truncated bearer token. Same for `X-Api-Key`, `Proxy-Authorization`,
+  and any app-specific token header.
+
+**Response side** (`collectors/ResponseCollector.kt:31`) — `call.response.headers.allValues()` with **no
+redaction whatsoever**, including **`Set-Cookie`**. The insights record of a successful login therefore
+contains a working session token.
+
+**Why it compounds:** these records land in `./tmp/depot/insights` and are served by the GUI that has no
+auth. Today, anyone reaching the `admin.*` host can lift session cookies out of captured login responses.
+
+**Fix:** one shared redaction step used by both collectors — match a denylist of credential-bearing
+header names (`authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `x-api-key`, `api-key`,
+`x-auth-token`), replace the value **entirely**, never truncate. Denylist rather than allowlist because
+arbitrary custom headers are much of what makes insights useful; the residual risk is an unlisted
+app-specific secret header, so the list must be **extensible by the application**, not hardcoded.
+
+**Checked and CLEAN — do not re-investigate:** the `"$bucket/$file"` path handling is not a traversal
+risk. `FileSystemRepository.getContent` calls `validateName()`, which rejects any `..`
+(`funktor/cluster/.../fs/FileSystemRepository.kt:15`), and `File(root, path)` re-roots absolute children.
+Its comment claims it checks "any slashes and dot-dots" but only checks dot-dots — a comment/code
+mismatch worth one line, not a hole.
+
+## Loop protocol (added 2026-07-31)
+
+Running unattended. Work the queue top-down; each step is done only when its criterion holds.
+
+| # | Step | Done when |
+|---|---|---|
+| 1 ✅ | `HeaderLogging` unit tests | exact + regex rules, last-match-wins, case-insensitivity, `DROP` removes the name, `REDACT` keeps it, the sensitive-name regex catches `x-amz-security-token`, an explicit later `LOG` beats it. **Mutation: flip a default rule to `LOG` and confirm a test fails** |
+| 2 ✅ | API DTOs | Slumber can describe every field; no `Any`, no star projections, no computed properties |
+| 3 ✅ | `InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() })` + `InsightsApiFeature`, registered in `insights_module.kt` | both endpoints answer; boot-time `AuthChainBootCheck` passes |
+| 4 ✅ | E2E via `AppSpec`/`AppUnderTest` | anonymous denied, non-superuser denied, superuser 200. **Mutation: set `authFloor = { public() }` and confirm the denial tests fail** — a gate test that survives the gate's removal is worthless |
+| 5 ✅ | E2E: open envelope | a record with an unknown collector key round-trips instead of failing the response |
+| 6 ✅ | E2E: no self-observation | calling the API produces no insights record of itself |
+| 7 ✅ | Compile sweep + full module tests | `^e:`-free; counts confirmed from `build/test-results/**/TEST-*.xml`, not from console alone |
+| 8 ✅ | `/feature-review` | **run it, record findings, then STOP.** Do not auto-fix security findings unattended — leave them for the maintainer |
+
+### On hitting a wall: park it, do not exit
+
+A blocker stops **one step**, not the loop. Exiting on the first one wastes a night when the wall is a
+single field in a single collector.
+
+1. Append the blocker to "Blockers collected" below — the precise question, what was tried, and what
+   the options are. A blocker recorded without its options is a wake-up call, not a hand-over.
+2. Take the smallest reversible workaround that keeps the rest moving, and mark it in code as
+   provisional. Example: `AppConfigCollector` blocks the DTOs → leave that one collector out of the API
+   and carry on with the other nine, rather than stalling all of step 2.
+3. Move to the next queue item that does not depend on the parked one.
+4. When every queue item is done or parked, work the fallback pool below.
+5. **Stop only when the queue is exhausted AND the fallback pool is empty.** Then report every collected
+   blocker together, so one reply answers all of them.
+
+### Decisions that must NOT be taken alone
+
+- **`AppConfigCollector.Data(val info: Any, val config: Any)`** — `Any` cannot be typed for Slumber or
+  codegen. Typed DTO, `JsonElement`, or drop the collector from the API?
+- **Does the list endpoint page?** It feeds a Vue table that does not exist yet.
+- **No superuser fixture** in the e2e harness that can be reused — do not invent an auth shape.
+- Any step-8 finding rated security-relevant — record it, never auto-fix it unattended.
+- Anything touching a file outside `funktor/insights` beyond those already in flight here.
+
+### Fallback pool — always available, no decisions required
+
+Ordered by value. All of it is genuinely useful and none of it needs the maintainer.
+
+1. **Distil each reference renderer into a tab spec.** For every file in `reference/collectors/`, write
+   down what the old tab actually displayed — fields, groupings, what the graphs plotted, which numbers
+   were derived. This is precisely what `reference/` exists to enable, and it is the input the Vue work
+   needs. Put it in `reference/TAB-SPECS.md`.
+2. **Unit-test what has no auth dependency** — `InsightsDataLoader` prev/next selection at the ends of a
+   list, the open-envelope shape, `HeaderLogging` cases missed the first time.
+3. **Fix the stored-format star projection** — `CollectorData(val key: String, val data: Map<*, *>)`
+   still uses `Map<*, *>`. Jackson does not care, but it is on the plan's blocker list.
+4. **Tidy what the GUI removal left behind** — e.g. `DevtoolsRequestHistoryPage` now has an empty `td { }`
+   whose `th { }` header is also empty; either remove both or leave a comment saying why the column stays.
+5. **Update the plan doc** (`20260730-frontend-sdk-vue-contributors.md`) with what actually landed, so
+   steps 4–5 are marked done rather than pending.
+
+### Blockers collected
+
+**B1 — the list endpoint's shape and cost.** *Parked; provisional implementation in place.*
+
+The old GUI had **no list view at all** — `siblings` existed only to compute prev/next — so this is a
+new surface with no precedent to follow. The cost problem is real: summary columns (method, url, status)
+live inside each record, so a list of N rows means opening N files. `listItems` alone gives only path,
+name, size and `lastModifiedAt`.
+
+Provisional: `InsightsDataLoader.list(limit)` walks day folders newest-first and stops once `limit`
+records are read. Bounded rather than paged, and marked provisional in the KDoc.
+
+Options:
+1. **Keep bounded-limit** (current). Simple, no cursor, no total count. Fine while records are small.
+2. **Cursor paging** on the depot path, which sorts chronologically. Needs a page-size decision and a
+   "has more" signal.
+3. **Cheap list, lazy detail** — return only path + `lastModifiedAt` and let the frontend fetch each row.
+   Fastest endpoint, but a request list without method/url/status is not usable as a table.
+4. **A summary index** written alongside each record, so listing never opens a record. Fastest to read,
+   but adds a second write path and a rebuild story for existing records.
+
+Recommendation: 1 now, 2 when the Vue table exists and its page size is known. Nothing here blocks the
+rest of the queue.
+
+### Findings that REMOVE an anticipated blocker
+
+**`AppConfigCollector.Data(val info: Any, val config: Any)` does not block this task.** The open envelope
+serves every collector slice as a raw `JsonElement`, so the collector `Data` classes never enter the
+API's type graph — Slumber is never asked to describe them, and nor is the walker. The `Any` becomes a
+problem only when someone writes that tab's **codegen contributor** and roots `AppConfigCollector.Data`
+to get a generated schema, i.e. plan steps 6–7.
+
+Two consequences worth carrying forward:
+
+- One of this task's three anticipated walls is not a wall. Do not stop for it.
+- The plan's Slumber-compat blocker table describes the *contributor* stage, not the API stage. The same
+  is true of `HttpMethod`/`HttpStatusCode` and `UserRecord`: they are inside slices, so they are opaque
+  to the API and only matter per-tab later.
+
+**`@Serializable` already enforces "no `Any`, no star projections"** — at compile time. Adding
+`val probe: Any?` to a DTO fails the build, because kotlinx has no serializer for `Any` (verified by
+mutation). The DTO criterion therefore needs no runtime test; `InsightsModelsSlumberSpec` exists to pin
+the complementary property, that the shape Slumber emits is the one a client parses back.
+
+### Guardrails — three agents share this worktree
+
+- **Do not run `:ultra:codegen:check`.** The codegen agent has uncommitted work in `ts/runtime/client.ts`, `sse.ts` and `ts-verify/verifyRuntime.ts`; its result would be about their tree, not this change.
+- **Stage only `funktor/insights` and this task file.** Never `git add -A` at the root — `ultra/slumber`, `ultra/log`, `ultra/vault` and `ultra/codegen` all have other owners.
+- **If a build looks impossibly stale** — a signature error against code that was just fixed, or an `AbstractMethodError` surfacing as an assertion failure — suspect a concurrent build, not the logic. Recovery:
+  `rm -rf funktor/insights/build/classes/kotlin/**/test` and re-run. This is the failure mode recorded in CLAUDE.md's verification traps, and its cause was two builds interleaving in one worktree.
+- Commit per completed step, so a killed loop leaves reviewable work rather than a half-edited tree.
+
+## Test evidence
+
+All counts read from `build/test-results/**/TEST-*.xml`, never from console output.
+
+- [x] E2E via `AppSpec`/`AppUnderTest` (`funktor/all/src/jvmTest/kotlin/InsightsApiSpec.kt`, 8 tests):
+      anonymous → denied, authenticated non-superuser → denied, superuser → 200; a missing record is a
+      404 rather than an error; two different record paths are refused identically, so status cannot be
+      used to probe which files exist; the response never echoes the token that fetched it
+- [x] **Gate mutation** — `authFloor = { public() }` fails **5 of 8** e2e tests and **2 of 6** route
+      tests. Restored and re-verified green
+- [x] E2E/unit: a record naming an unknown collector round-trips with its payload intact
+      (`InsightsDataLoaderSpec`), and arbitrary JSON survives Slumber (`InsightsModelsSlumberSpec`)
+- [x] Unit: `InsightsFull.isExcluded` covers the API's own routes, derived from `InsightsApi.base`
+- [x] Unit: a short Authorization header neither throws nor is partially disclosed; no fragment of a
+      redacted value survives (`HeaderLoggingSpec`)
+- [x] **Redaction mutation** — flipping the sensitive-name rule to `LOG` fails 1 test; dropping `cookie`
+      from the known list fails exactly the Cookie/Set-Cookie test
+- [x] Compile sweep across jvm/js/common — no `^e:`
+- [x] Full commands: `./gradlew :funktor:insights:jvmTest :funktor:all:jvmTest` →
+      **42 tests / 5 specs** in insights and **146 tests / 10 specs** in funktor:all, 0 failures,
+      0 errors
+
+### Defects found by the tests themselves
+
+1. **Redaction rule shadowing** — the sensitive-name heuristic was appended after the known-sensitive
+   list, and last-match-wins meant `.*auth.*` overrode `authorization`'s own rule. Invisible while both
+   said REDACT; it would have surfaced as an un-redacted credential the first time the pattern's action
+   changed. Found by mutation, not by reading.
+2. **Over-broad self-observation filter** — `contains("/insights")` also matched an application's own
+   routes, so `/api/insights-dashboard` would have been silently unrecorded. Now matched against
+   `InsightsApi.base`.
+
+## Review record (/feature-review, 2026-07-31)
+
+Diff reviewed: `b62ab6cd^..HEAD` restricted to this task's 38 files. Every finding below was
+**re-verified against the code by the coordinator** before being recorded; nothing is forwarded on a
+reviewer's word alone.
+
+**GATE: FAIL** — one CRITICAL and four HIGH open. **Nothing was auto-fixed.** The protocol forbids
+unattended security fixes, and every remaining finding needs a design decision or interacts with another.
+
+| Reviewer | Verdict | Confirmed |
+|---|---|---|
+| 1. Implementation & code style | FAIL | 2 HIGH, 4 MEDIUM, 4 LOW |
+| 2. Domain expert | FAIL | 1 CRITICAL, 3 HIGH, 8 MEDIUM, 5 LOW |
+| 3. Security | FAIL (no CRITICAL) | 1 MEDIUM, 5 LOW/latent |
+
+Reviewers 1 and 2 independently found the `limit`/codegen defect, and 1, 2 and 3 all landed on the
+query-string gap from different directions. Convergence, not duplication.
+
+### CRITICAL-1 — every pre-existing record loads as `200 OK` with an empty envelope
+
+`InsightsDataLoader.kt:105`. `slices()` requires `obj["key"]` and `mapNotNull`s the entry away when it
+is absent. Records written before this change carry `cls` — the JVM class name — and never `key`.
+
+**Verified against real data, not inferred:** `funktor-demo/server/tmp/depot/insights` holds **2,116
+records, 536 MB, going back to 2025-11**, and every collector entry has exactly `['cls', 'data']`.
+
+So a superuser opening the list against any existing depot gets one blank row per record — `method`,
+`url`, `status` all null — and `load()` answers `200 OK` with `collectors: []`. No 404, no error, no log
+line. **Silent total data loss presented as success**, and it is indistinguishable from a record that
+genuinely contains nothing.
+
+I changed `CollectorData(cls)` to `CollectorData(key)` (`impl/InsightsFull.kt:76`) without a read path
+for the old shape, and no test caught it because every fixture I wrote uses the new format.
+
+**Options:** map `cls` → key through the known-collector registry (`RequestCollector$Data` → `request`
+is lossless for all ten built-ins); or refuse the record explicitly — `null` → 404, or a sentinel
+`{key: "__unreadable"}` slice. Anything beats success-with-nothing. Interacts with HIGH-5.
+
+### HIGH-3 — "newest first" and prev/next are computed from mtime, which is not request order
+
+`InsightsDataLoader.kt:49,82`. Records are written asynchronously —
+`supervisorScope { launch(Dispatchers.IO) { delay(1) … } }` (`impl/InsightsFull.kt:66-83`) — so mtime is
+*write* time, and under concurrency it reorders.
+
+**Measured on real data** (`records-2026-03-30`): five records whose filenames run
+`…872, …875, …895, …905, …945` have mtimes `.278, .260, .210, .518, .250`, so sorting by mtime yields
+`905, 872, 875, 945, 895`. Nothing like request order. In the same folder, 89 files share 77 distinct
+mtimes — 12 exact ties, where order falls back to arbitrary directory order, so prev/next between tied
+records is undefined.
+
+The record's own timestamp is already in its filename, and lexicographic order of
+`LocalDateTime.toString()` **is** chronological. One-line fix in both places: sort by `name`.
+`recordedAt` is likewise the write time presented under a name that reads as the request time.
+
+### HIGH-5 — the stored format has no version, and CRITICAL-1 is what that costs
+
+`domain.kt:5`. `InsightsData` carries no `formatVersion`. CRITICAL-1 *is* an unversioned format
+migration, silently unhandled — and it recurs per collector: once a tab's zod schema is generated from
+today's `KontainerCollector.Data`, a record from three months ago has the old shape under the same key
+and the tab's `.parse()` fails, with nothing in the envelope to branch on.
+
+Add `formatVersion: Int` now, while the only consumer is still unwritten. One field.
+
+### Additional domain findings
+
+| # | Sev | Where | Claim |
+|---|---|---|---|
+| D-M1 | MEDIUM | `InsightsModels.kt:16,45` vs `InsightsApiFeature.kt:17` | **The record id is returned as one string and consumed as two.** Summaries expose `path = "records-…/x.json"` but `getRecord` takes `RecordParam(bucket, file)`, so every generated call site must `path.split('/')` — depot layout re-implemented in the frontend, wrong the day a repository nests differently |
+| D-M2 | MEDIUM | `InsightsDataLoader.kt:49` | **prev/next never cross a day folder**, but the KDoc says "null at either end". 16 day folders in the demo depot = 16 pairs of false ends |
+| D-M3 | MEDIUM | `InsightsApi.kt:46` | **`MAX_LIMIT = 500` against 236 KB mean record size** — measured. `limit=50` parses 8.3 MB to read five scalars; `limit=500` parses ~83 MB, on a handler thread, since `FsFileContent.getContentBytes()` calls `readBytes()` with no `withContext(Dispatchers.IO)` |
+| D-M4 | MEDIUM | `InsightsCollectorData.kt:21` | **`key` is serialized INTO the payload as well as onto the envelope**, because `override val key = KEY` is a getter and `mapper.convertValue(it)` emits it. **Confirmed on real data:** old records carry `templateKey` inside `data` by exactly this mechanism. This is the same shape-skew I removed `fullUrl` to avoid. Fix: move `key` onto `InsightsCollector`, not its `Data` |
+| D-M5 | MEDIUM | `InsightsDataLoader.kt:126` | **Duplicate collector keys are silently last-wins.** Nothing validates uniqueness at registration, write or read; an app naming its collector `"request"` shadows the framework's. With `key` on the collector (D-M4) a boot check is three lines |
+| D-M6 | MEDIUM | `InsightsModels.kt:44` | **The open envelope has no discovery and no fallback**, so extensibility is half-delivered: an app-defined collector gets a key nobody renders and no way to be enumerated. Decide before the tab registry is built — a generic JSON-tree fallback tab closes it cheaply |
+| D-M8 | MEDIUM | `InsightsApiFeature.kt:22` | **Feature name `"Insights"` is not namespaced** — siblings are `"Funktor Introspection"`, `"Funktor Cluster"`, `"Funktor Logging"`. `TsClientNames.clientFile("Insights")` → `insightsClient.ts`, which an app's own `Insights` feature collides with. Free to fix now, breaking once Vue tabs import from it |
+| D-L2 | LOW | `InsightsModels.kt:29,42` | `durationMs` is `Double?` on the summary and `Double` on the record for the same value, and the loader returns `0.0` for missing timing — "unknown" is indistinguishable from "instant" |
+| D-L5 | LOW | `FileSystemRepository.kt:103` | Outside the diff: `listItems(path, limit)` **ignores `path`** (`listItems().take(limit)` — root, not `path`). My loader avoids it, but it is the obvious optimisation for D-M3 and would silently read the wrong folder |
+
+### Domain questions answered clean
+
+- **The open envelope holds.** The reasoning survives scrutiny; its costs are real but acceptable.
+- **No hand-written `ApiClient` is safe** — verified, not assumed. Mounting is `ApiFeature`-driven, the
+  e2e harness drives `ApiRoute` directly, introspection enumerates features not clients, and the access
+  matrix works off `estimateAccess`. Nothing in funktor requires a client to exist.
+- **Codegen will walk these routes.** `MpInstant` and `JsonElement` are both claimed; path params are
+  bare-identifier strings filling declared placeholders; responses are `ApiResponse<…>` envelopes.
+  Nothing hard-fails the walker.
+- **Back-compat sweep clean** — no live reference to any removed symbol survives outside `reference/`.
+- **Kontainer scoping correct** — `InsightsApiFeature` has zero constructor dependencies and reaches the
+  `dynamic` loader through `call.kontainer`, per the SemiDynamic rule.
+
+### HIGH-1 — the generated TypeScript client can never send `limit`
+
+`api/InsightsApi.kt:55` reads `limit` from `call.request.queryParameters` directly.
+
+**Verified:** codegen derives query params *exclusively* from the route's PARAMS type —
+`RestApiTsContributor.paramsOf()` iterates `typed.reifiedParamsType.ctorParams2Types`
+(`funktor/codegen/src/main/kotlin/RestApiTsContributor.kt:259`). `ListRecords.mount { }` is the
+no-PARAMS overload, so the params type is `Unit` and the emitted client is
+`listRecords = () => request(...)` — no arguments at all.
+
+This is self-inflicted by the very decision this task is proudest of. Having chosen "no hand-written
+client, codegen generates it", an endpoint whose only tuning knob is invisible to codegen is pinned at
+50 rows forever, and `MAX_LIMIT` is unreachable. It is also the only `queryParameters[...]` read in all
+of `funktor/` — every other API uses a typed params class, including GET routes with no path
+placeholders (`LoggingApi.ListParam`, `BackgroundJobsApi.PagingParam`).
+
+**Fix:** `data class ListParam(val limit: Int = DEFAULT_LIMIT)` on the feature, mount with
+`ListRecords.mount(ListParam::class)`, clamp inside the handler. Interacts with blocker B1 — settle the
+paging shape at the same time.
+
+### HIGH-2 — nothing tests that the collectors apply the redaction
+
+`collectors/RequestCollector.kt:42`, `ResponseCollector.kt:30`.
+
+**Verified:** zero test files anywhere reference `RequestCollector`, `ResponseCollector` or
+`headerLogging`. `HeaderLoggingSpec` is a thorough test *of the policy object*, but the policy is only
+worth anything if it is called.
+
+**The mutation that proves it:** restore `headers = call.request.headers.toMap()` — the exact
+pre-change behaviour this whole task exists to fix — and the entire suite stays green. `Set-Cookie` goes
+back into every login record and nothing notices. My own evidence table mutated the *policy* and called
+it covered; it never mutated the *call site*. That is precisely the "right for the wrong reason" trap
+`CLAUDE.md` warns about, and I walked into it.
+
+Also unproven: the task's mandatory "the list must be extensible by the application" — nothing shows
+that replacing the `instance(HeaderLogging.defaults)` binding reaches the collectors.
+
+**Fix:** a spec that builds `RequestCollector(policy)` / `ResponseCollector(policy)` against a ktor
+test call with `Cookie`/`Set-Cookie`/`Authorization` set and asserts `REDACTED` in the produced `Data`;
+plus one with a non-default policy proving the override takes effect.
+
+### Security findings — recorded, NOT fixed (unattended-fix rule)
+
+| # | Sev | Where | Claim |
+|---|---|---|---|
+| S1 | MEDIUM | `RequestCollector.kt:41,43` | **Query strings are stored verbatim, twice.** `queryParams` gets no policy at all, and `uri = call.request.uri` includes the query string, which `InsightsDataLoader.kt:140` rebuilds into `InsightsRecordSummary.url`. An OAuth callback (`?code=`), magic link (`?token=`) or presigned URL (`?X-Amz-Signature=`) is stored and served. `HeaderLogging` exists to keep credentials out of records; the other half of the same request got no policy |
+| S2 | LOW/MED | `HeaderLogging.kt:67-88` | **Deny-list gaps.** `referer` (carries the previous URL — where magic-link and OAuth query strings live), `cookie2`/`set-cookie2` (`cookie` is exact-match only; the regex has no `cookie` alternative, so cookie variants fail open), `stripe-signature`/`x-hub-signature-256`, `x-access-key` |
+| S3 | LOW | `impl/InsightsFull.kt:44` | **Two independent ways to defeat `isExcluded`.** Reviewer 3: `uri` is un-decoded while ktor's router decodes, so `/_/funktor/%69nsights/records` routes but is not excluded. Reviewer 1: `uri` includes the query string, so `GET /api/orders?next=/_/funktor/insights` silently suppresses its own record. Both confirmed. The KDoc I wrote claims precision the code does not have |
+| S4 | LOW, latent | `funktor/cluster/.../fs/FileSystemRepository.kt:76,115,139` | **Depot symlinks are followed; root is not canonicalised.** A symlink planted in the depot resolves outside it and `getContent` reads through. Converts "records on disk are readable with filesystem access" into "any file the app user can read, exfiltrated remotely to an authenticated admin". Pre-existing; this API makes it remotely reachable. Matches the gap already noted as unchecked in the red-team file |
+| S5 | LOW, latent | `api/InsightsModels.kt:58-61` | **An obligation created, not a live bug.** `data` is a pass-through `JsonElement` and `LOG` is the default, so an unauthenticated attacker's `User-Agent: <img src=x onerror=…>` is stored verbatim and returned to whatever renders it. The deleted GUI used kotlinx.html, which escaped; the replacement makes escaping the consumer's problem and nothing says so |
+| S6 | LOW | `InsightsDataLoader.kt:49,80-82` | `MAX_LIMIT` bounds records *parsed*, not directory entries *touched* — `listItems` materialises and stats every entry in a day folder before `limit` is consulted. Superuser-triggered, so not an outsider DoS |
+
+### Other confirmed findings
+
+| # | Sev | Where | Claim |
+|---|---|---|---|
+| I3 | MEDIUM | `InsightsApiRoutesSpec.kt:80` | "the list limit is bounded" asserts two constants against literals. Deleting `.coerceIn(1, MAX_LIMIT)` leaves it green. `?limit=abc/0/-1/99999` are all untested |
+| I4 | MEDIUM | `InsightsApiSpec.kt:45-66` | **The two 200-path e2e tests are vacuous.** The test app never enables insights, so the depot is empty: `shouldNotContain superUserToken` passes because there is no data, and `apiResponseData<List<…>>() shouldNotBe null` passes on an empty list. **No e2e test ever serialises a populated record over HTTP**, and `getRecord`'s 200 branch is never exercised. Worse, `InsightsFileRepository` is rooted at the *relative* `./tmp/depot/insights`, so on a machine where the demo has run these tests read leftover files — different behaviour per machine |
+| I5 | MEDIUM | `funktor/core/.../InsightsConfig.kt:9` | `baseUrl` is now dead — its only reader was the removed `getRequestDetailsUrl()` — but it is still a public field of a published config class, and both demo confs still set it to a route that no longer exists |
+| I6 | LOW | `InsightsDataLoader.kt:132,140` | `port` is excluded from the null guard, so a record without one yields the literal `"https://example.com:null/x"` |
+| I7 | LOW | `InsightsDataLoaderSpec.kt:21` | `java.io.File` — a fully-qualified class name, direct `CLAUDE.md` violation. The only one in the diff |
+| I8 | LOW | `InsightsFull.kt:22`, `respond.kt:12`, `DevtoolsRequestHistoryPage.kt:9` | Three imports left dangling by the deletions; plus three blank lines in `build.gradle.kts` |
+| I9 | LOW | `InsightsDataLoaderSpec.kt:158` | Ordering derives from millisecond mtime and the test forces it with `Thread.sleep(10)`. Record filenames already encode the timestamp and sort chronologically — a better key, needing no `stat`, and immune to the write being async (`InsightsFull.finish` writes inside `launch(Dispatchers.IO) { delay(1) }`, so mtime order can differ from record order under concurrency) |
+
+### Probed and CLEAN — do not re-investigate
+
+- **The floor genuinely covers both routes.** `ApiRoutes.addRoute` is the sole registration path, both `Get.mount` overloads funnel through it, it applies `withFloor` and asserts non-empty. `withFloor` *prepends*, so a per-route `authorize {}` can only strengthen. The floor is caller-only and runs in routing **phase 1**, before parameter conversion — so `bucket`/`file` handling is unreachable for a non-superuser and the 401 is identical whether the record exists or not.
+- **Realm-agnostic `isSuperUser()` is the house convention** — `DepotApi`, `VaultApi`, `OrgsApi`, `LoggingApi`, `IntrospectionApi`, `BackgroundJobsApi` all floor identically. Framework-wide question, not a defect here. Worth noting only that insights is the most valuable of the set, since `AppConfigCollector` serialises the entire `AppConfig`.
+- **No ReDoS** in the sensitive-name regex: `.*(literal|…).*` with one optional `-?`, no nested quantifier over an overlapping alternation. O(n·k).
+- **No path traversal out of the depot root.** Params arrive already decoded, so `%2e%2e` becomes `..` and `validateName()` rejects it; there is no second decode. `%2f` injects a slash but a slash alone cannot leave the root; `File(parent, absoluteChild)` resolves *inside* parent on Unix; a NUL byte makes `exists()` false → 404.
+- **No unsafe deserialization.** `Class.forName` is gone with no equivalent; `InsightsMapper` registers no polymorphic typing; deep nesting raises `StackOverflowError` which `runCatching` turns into a skipped record rather than a downed request.
+- **`limit` parsing leaks nothing** — garbage, negative, zero and oversized all normalise silently.
+- **`HeaderLogging.actionFor` precedence is consistent** with its KDoc and tests; `defaults` places the pattern *before* the exact list so explicit entries win; immutability is real.
+- **prev/next index arithmetic is correct** at both ends and for a not-found path.
+- **`detailsUri`/`detailsUrl` removal is complete and atomic** across all nine files. It was also a real hardening, not just cleanup: before it, *every* API response — including anonymous ones — carried the depot path of its own record, which would have made `GET /records/{bucket}/{file}` directly addressable without the list endpoint.
+- **No new wildcard imports**; all KDoc `[Reference]` links resolve; `RecordParam` placement and `call.kontainer.get()` in handlers both match existing funktor patterns.
+
+**Red-team follow-up** (required, security-critical): `docs/tasks/20260730-redteam-insights-api.md`
+
+## I4: the e2e now runs against a populated depot (2026-07-31)
+
+The finding was that the two 200-path assertions passed on an **empty** depot. It went deeper than
+"insights was not enabled": the funktor:all test server never called `instrumentWithInsights` at all, so
+no config change alone could have produced a record.
+
+| Change | Where | Why this shape |
+|---|---|---|
+| `InsightsFileRepository(dir = DEFAULT_DIR)` | `funktor/insights/.../InsightsFileRepository.kt` | The root was hardcoded to the **relative** `./tmp/depot/insights`, so a suite run on a machine where the demo had run read the demo's leftovers |
+| Depot rooted in a fresh temp dir | `index_testJvm.kt` — `insightsDepotDir` | Makes "the depot holds exactly what this run recorded" a fact the tests may assert on |
+| The API mounted a **second time** under `host("insights.*")`, with recording on | `jvmTest/server.kt` — `mountApi(app, init, insights)` | `instrumentWithInsights` decides at INSTALL time, so one mount would record for **every** spec in the module or for none. A FULL record is ~270 KB — the other ten specs should not pay for records nobody reads |
+| `insightsApp { }` beside `apiApp { }` | `index_testJvm.kt` | Same routes, same auth chain, same handlers; only the host header differs |
+
+`InsightsRecordingSpec` (3 tests) then drives a real request through the app, polls the list endpoint
+until the asynchronous write lands, and asserts on what comes back:
+
+1. **the headline is populated** — `method`/`status`/`url`/`durationMs` off the top level of a real
+   record, so the list endpoint is proven against data rather than against `[]`
+2. **the record loads in full and its credential header is redacted** — `getRecord`'s 200 branch had
+   never run; this walks into the `request` slice and pins `Authorization` to `***redacted***`, then
+   checks no fragment of the token appears anywhere in the body. The first end-to-end proof of
+   redaction: `HeaderLoggingSpec` tests the policy, `CollectorRedactionSpec` tests the collector, and
+   neither proves what a superuser actually receives over HTTP
+3. **the endpoints do not record themselves** — `.noInsights()`, observed as "listing twice does not
+   grow the depot", with a guard that the page is not saturated so the comparison cannot go vacuous
+
+**Mutations — each kills exactly one test, and the right one:**
+
+| Mutation | Fails |
+|---|---|
+| drop `.noInsights()` from `listRecords` | "the insights endpoints do not record themselves" |
+| restore `headers = call.request.headers.toMap()` | "…its credential header is redacted" |
+| write `method = null` into the stored headline | "…is listed with its headline populated" |
+
+Counts from `build/test-results/**/TEST-*.xml`: **funktor:all 149**, **funktor:insights 59**,
+**funktor:rest 102** — 0 failures, 0 errors. Compile sweep clean.
+
+## Review record — round 2 (/feature-review, 2026-07-31)
+
+Diff reviewed: `a012b14d^..HEAD` restricted to this task's 51 files. Every finding was re-verified
+against the code before being acted on.
+
+**GATE: PASS with follow-ups.** No open CRITICAL/HIGH. Counts from `build/test-results/**/TEST-*.xml`:
+**funktor:insights 69**, **funktor:rest 102**, **funktor:all 150** — 0 failures. Compile sweep clean.
+
+### Two round-1 dispositions were WRONG
+
+Recorded prominently because the disposition table is what a future session will trust.
+
+1. **`CollectorKeyUniquenessCheck` never failed a boot.** All three reviewers found it independently.
+   `error()` throws `IllegalStateException`; `AppLifeCycleBuilder.register` runs `OnAppStarting` with
+   `rethrow = { it is AppStartException }` and logs everything else (`AppLifeCycleBuilder.kt:39,91-97`),
+   a behaviour `AppLifeCycleSpec` already pinned. A duplicate key produced one ERROR line and the app
+   served. The class had **zero tests**. Now throws `AppStartException`, with a spec that asserts the
+   exception TYPE — `shouldThrow<Exception>` would have passed against the broken version.
+2. **`formatVersion` prevents nothing.** Written, documented, never read. The KDoc claimed the loader
+   would otherwise "have to guess a record's format from which fields happen to be present" — which is
+   exactly what it still does. KDoc corrected to say so; making it load-bearing is a follow-up.
+
+### Fixed in this round
+
+| Finding | Fix |
+|---|---|
+| Paging **overlapped** on any unreadable record — `seen++` counted files, `result` counted parsed rows, so page 1 walked past `epp` files while page 2 skipped only `page*epp` | A page consumes `epp` **slots**. Regression test with a truncated record mid-page |
+| `insightsOptions()` matched only `RoutingPipelineCall`; inside a handler the call is a **`RoutingCall`**, a different class — so `dropQueryParams` failed open there | Both types handled. **Found by probing the runtime type**, not by review |
+| `dropQueryParams` had no test reaching the branch — deleting the whole `when` left the suite green | `CollectorRedactionSpec` puts the bag on the route and asserts both directions |
+| `Location` / `Content-Location` stored verbatim — `Referer` only *echoes* a token, `Location` is where an OAuth or magic-link grant is **minted** | `STRIP_QUERY`, pinned |
+| `api-?key` matched neither `api_key` nor the example in its own KDoc; the pattern is reused for snake_case query parameters | `api[-_]?key` |
+| `InsightsRecord` dropped the headline, so a `BRIEF` record's detail page was an empty envelope | `method`/`path`/`status` on the record |
+| `durationMs` was nullable in type but never null in fact (round-1 D-L2, half-fixed) | Producer returns null |
+| `page` unclamped and `(page-1)*epp` overflowed to a negative skip → returned page 1 | `MAX_PAGE` + `Long` skip. **Mutation showed the `Long` is not load-bearing** — the slot-based break already neutralises it; kept as intent, and the comment says so |
+| `RouteAttributeBridgeSpec` walked the whole subtree, so putting the bag on the **parent** kept it green while `insightsOptions()` fell back to FULL | Asserts the node `handle` returns; `handle` now returns it |
+| `InsightsRecordingSpec` polled until the depot was non-empty, so later tests raced against an earlier test's pending write | Polls until the count **increases** |
+| Round-1 I3's replacement test was the same shape (constants vs literals) | Real clamp test + an e2e sending `?epp=99999`, `epp=0`, `page=MAX_VALUE` |
+| `AppConfigCollector.static` was an eager `val`, so the boot check's `collectors.all()` serialised the whole `AppConfig` at start-up **even with insights disabled** | `by lazy` |
+| `Route.handle(route, body)` (raw-response overload) did not bridge attributes | Bridged |
+| `url` held a path | Renamed `path`, documented, with the XSS obligation extended to it |
+| Style: FQCN in a new spec, wildcard import, dead import, nine empty `{ }` bodies, empty test dir, temp depot never deleted | All fixed |
+| My own comment claimed the second test host isolates the recording cost | Corrected — `registerTracer()` is application-global |
+
+**Mutations — six of seven kill exactly one test each**, including the two that previously survived
+(`AppStartException`→`error()`, and bag-on-parent). The seventh (Int overflow) is documented above as
+deliberately non-load-bearing.
+
+### Open — decisions, not defects
+
+- **`insightsOptions()` fails OPEN.** No bag → `FULL`. The demo's `fallback { }` catch-all and its
+  `staticResources`/`/ping` under `admin.*` are instrumented, so `POST /_/funktor/insights/records`
+  from an unauthenticated caller writes a full ~270 KB record — which the deleted `isExcluded`
+  suppressed. Options: default `BRIEF` when no bag; keep a cheap URI-prefix layer; add a ktor-level
+  `Route.noInsights()`. **Coverage narrowed versus the code this replaced.**
+All five are now **decided** (2026-07-31):
+
+| Was open | Decision |
+|---|---|
+| `insightsOptions()` fails open | **Keep FULL, restore a URI-prefix suppression for `InsightsApi.base`** as a second layer. Matched on the decoded path only, so neither bypass that killed `isExcluded` applies |
+| No group-level `insights` | **Skipped — YAGNI.** No current caller needs it; build it if one appears. `addRoute` is the hook when that day comes |
+| Bare `List`, not `Paged` | **`Paged<InsightsRecordSummary>`**, matching `BackgroundJobsApi`. `fullItemCount` is exact and costs one `readdir` per day folder with no file reads |
+| `formatVersion` needs a reader | **Deleted.** No back-compat is wanted, so a version nothing consults was decoration |
+| Boot check instantiates every collector | **Accepted.** `AppConfigCollector.static` is lazy now, which was the only real cost; a collector must be boot-constructible |
+
+Plus the config-secrets finding, which was the largest: `Redacted<T>` replaces `@JsonIgnore` wholesale and
+Jackson is to be removed entirely — `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`. An interim
+name-based redaction (`ConfigRedaction`) closes the leak meanwhile and is marked for deletion.
+
+## Why round 2 happened (kept for the record)
+
+Round 1 reviewed `b62ab6cd^..HEAD`. Fixing its findings produced **three further commits** — `a012b14d`,
+`6a208e4d`, `04e85767` — which were new implementation, not patches, and no reviewer had seen them:
+
+- **New public API in `funktor/rest`** that round 1 could not have looked at: `insights { }`, `attr()`,
+  `InsightsOptions`, `InsightsLevel`, `FunktorRouteAttributes`, and the first route attribute ever read
+  at request time.
+- **New security-relevant behaviour**: query-parameter redaction, the `STRIP_QUERY` action, path-only
+  `uri` storage. A security reviewer has seen none of it.
+- **New logic with untested boundaries**: the paging skip loop, `CollectorKeyUniquenessCheck`, the
+  `cls`→`ref` addressing change.
+
+It was scoped to `a012b14d^..HEAD` and found two of round 1's dispositions to be wrong — see the round-2
+record above. That is the argument for reviewing fixes, not just features.
+
+## Disposition of round 1 (2026-07-31)
+
+The gate first came back **FAIL** with 1 CRITICAL, 4 HIGH and ~19 others. All were verified against the
+code before being acted on. Resolution, per finding:
+
+| Finding | Outcome |
+|---|---|
+| **CRITICAL-1** legacy records read back empty | **Closed by the maintainer deleting all 2,116 records** — throw-away data, no back-compat wanted. `formatVersion` now exists so the next format change cannot repeat it silently |
+| **HIGH-1** `limit` invisible to codegen | Fixed — `PagingParam(page, epp)`, with real paging, matching `BackgroundJobsApi` |
+| **HIGH-2** collectors' redaction untested | Fixed — `CollectorRedactionSpec` drives real calls. **Its first version was vacuous** (assertions inside a ktor handler are swallowed into a 500); only mutation exposed that |
+| **HIGH-3** ordering from mtime | Fixed — ordering comes from the filename, which encodes the timestamp. Also retired the `Thread.sleep(10)` (I9) |
+| **HIGH-5** no format version | Fixed |
+| **S1** query strings stored unredacted | Fixed — query parameters go through the same name-based policy as headers, and the stored `uri` is path-only. `dropQueryParams()` is the per-route escalation |
+| **S2** deny-list gaps | Fixed — `cookie` and `signature` joined the alternation; `referer` gets the new `STRIP_QUERY` action |
+| **S3** `isExcluded` bypasses | Fixed — replaced by a route attribute; neither bypass has anywhere to act |
+| **S5** XSS obligation | Documented on `InsightsCollectorSlice`: render with Vue text interpolation, never `v-html` |
+| **S6** `MAX_LIMIT` semantics | Fixed with paging — skipped pages are never opened |
+| **D-M1** id shape | Fixed — `InsightsRecordRef(bucket, file)` in both directions |
+| **D-M2** prev/next KDoc | Corrected; crossing day folders remains unimplemented and is now stated as such |
+| **D-M4** `key` in the payload | Fixed — moved to `InsightsCollector` |
+| **D-M5** duplicate keys | Fixed — `CollectorKeyUniquenessCheck` fails the boot |
+| **D-M8**, **D-L2**, **I3**, **I5**, **I6**, **I7**, **I8**, **L4** | All fixed |
+| **S4**, **D-L5** | Moved to `docs/tasks/20260731-depot-findings.md` — they are `funktor/cluster`, not insights |
+| **I4**, **D-M6** | **Deferred — see Follow-ups.** The only genuinely open items |
+
+### What the mutations caught that reading did not
+
+Three defects surfaced only because a mutation refused to fail, and none were visible by inspection:
+
+1. The redaction heuristic **shadowed the explicit deny-list** (`.*auth.*` matched `authorization`), so
+   changing the pattern's action would silently have un-redacted a credential header.
+2. `CollectorRedactionSpec` was **vacuous** — ktor swallows a handler exception into a 500, so it passed
+   with redaction removed entirely.
+3. The route-attribute **bridge was untested**; deleting it broke nothing while the recorder fell back
+   to `FULL`, which would have put the insights API's own responses back into the depot.
+
+## Follow-ups
+
+- [x] **I4 — the test app never enables insights** — **fixed 2026-07-31**, see "I4: the e2e now runs
+      against a populated depot" below.
+- [ ] **Config secrets are in every record** — `docs/tasks-archive/2026-07/20260731-config-secrets-in-insights.md`.
+      The JWT signing key, CSRF secret and DB passwords are serialised verbatim into the `app-config`
+      slice. Found 2026-07-31 by reading a real record. **Blocks the `app-config` Vue tab**, and it is
+      the reason `reference/TAB-SPECS.md` marks that one STOP.
+- [ ] **D-M6 — no discovery or fallback for unknown collector keys.** An app-defined collector gets a
+      key nobody renders. Decide with the Vue tab registry (plan steps 6–7), not before.
+- [ ] **No DOCS task yet, deliberately.** This adds public API (`InsightsApi`, `InsightsRecordRef`,
+      `insights { }`, `HeaderLogging`), but the Vue phase is likely to reshape the response DTOs, and
+      `CLAUDE.md` is explicit that code still in flux gets no docs task. Revisit when the first Vue tab
+      has consumed this API and the shape has held.
+- [ ] `docs/tasks/20260731-depot-findings.md` carries S4, D-L5 and the **`@JsonIgnore` constraint** —
+      that annotation is the only thing keeping signing keys and AWS credentials out of records, and
+      neither Slumber nor kotlinx honours it. Read it before touching the write path.

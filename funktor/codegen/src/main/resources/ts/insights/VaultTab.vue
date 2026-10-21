@@ -22,7 +22,7 @@
  *
  * Two things are still withheld at the source, and they are not this tab's to reinstate:
  *
- * - **`vars`** — blocked on `.claude/tasks/20260731-query-vars-in-insights.md`. A query is how a session
+ * - **`vars`** — still withheld; the collector does not record query variables. A query is how a session
  *   token or an activation code gets looked up.
  * - **`queryExplained`** — cannot be made safe by placeholder-ising, because the DATABASE substitutes
  *   the values into the plan it returns. Measured against a real Arango server.

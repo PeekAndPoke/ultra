@@ -88,7 +88,7 @@ export interface SessionStorage {
  * origin can read this and replay it. The httpOnly-cookie alternative was designed in full and
  * dropped (2026-08-02): b2b2c frontends run on customer-controlled domains, which are a different
  * *site*, so it would have forced `SameSite=None` and lost its own main protection exactly where it
- * was wanted. Reasoning in `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+ * was wanted.
  *
  * So the mitigations are the ones that actually apply to XSS — CSP and Trusted Types, a short token
  * TTL, session revocation — rather than a different container. Storage stays injected because tests
@@ -273,8 +273,7 @@ export class AuthSession<P = unknown> {
      *
      * The token itself stays valid server-side until it expires — there is no revocation endpoint
      * today. So this ends the session on this device and nowhere else, and a copy taken beforehand
-     * still works. Shortening the TTL is the mitigation; revocation is tracked in
-     * `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+     * still works. Shortening the TTL is the mitigation until server-side revocation exists.
      */
     readonly signOut = (): void => {
         this.gen++

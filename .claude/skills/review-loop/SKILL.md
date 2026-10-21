@@ -83,7 +83,7 @@ red-team follow-up, task-file record).
    **The Reason column is the mechanism, not bookkeeping.** Phase 2 asks a reviewer to name what is
    factually wrong in a rejection; a reviewer who cannot see the reason cannot do that, and per the
    reconcile rule its re-raise counts as a withdrawal — so an empty ledger silences correct findings
-   automatically. `.claude/tasks/TEMPLATE.md` carries this table. Each entry is exactly one of:
+   automatically. `docs/tasks/TEMPLATE.md` carries this table. Each entry is exactly one of:
    - **fix** — apply it. **Only CRITICAL and MAJOR feed the loop.** MINORs are collected and either
      applied once as a single batch with no re-review, or handed to the maintainer as a list;
    - **reject** — with a reason that is CHECKABLE: a named project rule, or a fact someone can verify
@@ -341,7 +341,7 @@ so the same class cannot escape the same way again.
 | brief     | the implementer was not told a constraint or a decided rule | a line in the brief, `/agent-fleet`, or CLAUDE.md                                                     |
 | checklist | no charter asks the question                                | a line in the charter in `/feature-review`, or a Rule above, with the failing scenario as its example |
 | test      | no test could see it (a mutation would have stayed green)   | a mandatory test pattern for that kind of change                                                      |
-| design    | it should have been decided before implementing             | a "decide before implementing" line in `.claude/tasks/TEMPLATE.md` or the plan                        |
+| design    | it should have been decided before implementing             | a "decide before implementing" line in `docs/tasks/TEMPLATE.md` or the plan                        |
 | tooling   | a mechanical check would have caught it                     | a grep or a script, named where it runs                                                               |
 
 **The signal that a rule failed is recurrence, not a rate.** The sample is too small to estimate one.
@@ -429,7 +429,7 @@ in this file:
   maintainer caught, not a review". **That is false, and the record says so.** The round produced a
   mitigation, *labelled it* "a mitigation, not the fix", named the real backend fix, put it on the
   blocking list and FAILED the gate
-  (`.claude/tasks/20260802-insights-vue-tabs.md:487-500`). The maintainer's contribution was a better
+  (`docs/tasks/20260802-insights-vue-tabs.md:487-500`). The maintainer's contribution was a better
   DESIGN — enforce the invariant at the writer instead of the reader — not a catch the review missed.
 
   What that gate actually shows, which argues for the loop without needing the misattribution:

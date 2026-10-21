@@ -17,7 +17,7 @@ import kotlin.reflect.full.withNullability
  *
  * Only types whose wire form is PROVABLE are mapped. Everything else returns `null` and the caller
  * refuses by name — a maintainer decision, recorded in
- * `.claude/tasks/20260730-funktor-codegen-rest-contributor.md` §4. Guessing `string` for anything the
+ * `docs/tasks/20260730-funktor-codegen-rest-contributor.md` §4. Guessing `string` for anything the
  * converter happens to accept would type-check and then send the wrong text.
  *
  * This lives on the funktor side deliberately: "what a Kotlin type looks like in a URL" is a property
