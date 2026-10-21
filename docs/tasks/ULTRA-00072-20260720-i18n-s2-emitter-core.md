@@ -1,4 +1,4 @@
-# S2 — i18n emitter core (`tooling/`)
+# ULTRA-00072: S2 — i18n emitter core (`tooling/`)
 
 **Status:** DONE — gate PASS after fixes, all tests green (2026-07-21) — effort `xhigh`
 **Plan:** ULTRA-00069 (i18n l10n foundation) → Build step S2
@@ -80,3 +80,7 @@ dotted placeholder syntax are documented convention limits; explicit SnakeYAML D
 | 1. Implementation & code style | | |
 | 2. Domain expert | | |
 | 3. Security | | |
+
+## History
+
+- 2026-10-21: numbered ULTRA-00072 (was `docs/tasks/20260720-i18n-s2-emitter-core.md`).
