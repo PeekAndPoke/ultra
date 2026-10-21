@@ -1,4 +1,4 @@
-# Plan: Non-Blocking DBAL — Flow Cursor, Suspend Storable, Ref Unification
+# ULTRA-00017: Plan: Non-Blocking DBAL — Flow Cursor, Suspend Storable, Ref Unification
 
 
 
@@ -517,3 +517,7 @@ class DefaultEntityCache : EntityCache {
 - **Codec.awake()** stays synchronous — RefCodec stores a suspend lambda, doesn't execute it during awake()
 - **MonkoCursor internals** — already list-based, just adds `asFlow()` wrapper
 - **Slumber framework** — no suspend Awaker rewrite needed
+
+## History
+
+- 2026-10-21: numbered ULTRA-00017 (was `docs/tasks-archive/2026-04/2026-04-09-non-blocking-dbal.md`).
