@@ -2,7 +2,7 @@
 
 **Status:** TODO — write after `docs/tasks/20261019-global-locks-max-hold.md` lands (it adds the `maxHold` parameter).
 Settled 2026-10-19: lock timing relies on NTP (state it as a requirement)
-**Plan:** follow-up of `docs/tasks-archive/2026-10/20261019-global-locks-heartbeat.md` (public API changed)
+**Plan:** follow-up of ULTRA-00219 (global locks heartbeat) (public API changed)
 **Security-critical:** no
 
 ## What changed that the docs must say

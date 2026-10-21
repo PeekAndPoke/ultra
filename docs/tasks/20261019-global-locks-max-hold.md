@@ -1,7 +1,7 @@
 # Global locks: an opt-in maximum hold
 
 **Status:** TODO — maintainer decision 2026-10-19 (against the coordinator's "record no max hold")
-**Plan:** follow-up of `docs/tasks-archive/2026-10/20261019-global-locks-heartbeat.md` (ledger row 14)
+**Plan:** follow-up of ULTRA-00219 (global locks heartbeat) (ledger row 14)
 **Security-critical:** no
 
 ## Why

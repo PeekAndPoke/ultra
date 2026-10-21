@@ -1,4 +1,4 @@
-# funktor/cluster: global locks expire by heartbeat, not by creation time
+# ULTRA-00219: funktor/cluster: global locks expire by heartbeat, not by creation time
 
 **Status:** DONE (archived 2026-10-19) — gate PASS (round 1: 2 MAJOR fixed; round 2 clean; MINOR batches reviewed), merged `d9ffbb32`; master full suite green (15769 tests / 0 failures). Maintainer decisions 2026-10-19 on the open rows: clock skew → rely on NTP (all of the lock logic runs on the server; the DB clock is for TTL indexes); stuck handlers → an opt-in `maxHold`, follow-up `docs/tasks/20261019-global-locks-max-hold.md`. Docs follow-up: `docs/tasks/20261019-docs-global-locks-heartbeat.md`
 **Plan:** none — maintainer request, 2026-10-19
@@ -322,3 +322,7 @@ made `internal`; the two heartbeat-failure tests counted every "heartbeat failed
 (same AQL and bind encoding; only the profiler entry and the `KarangoQueryException` wrapping are lost, nothing depends on
 them), the `ttl <= legacyExpiry` boundary, the timeout/`ensureActive` interplay, `isLegacy` in all five places, the log, the
 KDoc constraints, and the saturated-IO test (K1/C1 turn it red on Karango).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00219 (was `docs/tasks-archive/2026-10/20261019-global-locks-heartbeat.md`).

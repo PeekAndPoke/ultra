@@ -527,3 +527,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00218 | 2026-10-19 | `docs/tasks-archive/2026-10/20261019-flaky-kraft-addon-irlinkageerror.md` | `docs/tasks-archive/2026-10/ULTRA-00218-20261019-flaky-kraft-addon-irlinkageerror.md` |
 | ULTRA-00218 | 2026-10-19 | `.claude/tasks-archive/2026-10/20261019-flaky-kraft-addon-irlinkageerror.md` | `docs/tasks-archive/2026-10/ULTRA-00218-20261019-flaky-kraft-addon-irlinkageerror.md` |
 | ULTRA-00218 | 2026-10-19 | `.claude/tasks/20261019-flaky-kraft-addon-irlinkageerror.md` | `docs/tasks-archive/2026-10/ULTRA-00218-20261019-flaky-kraft-addon-irlinkageerror.md` |
+| ULTRA-00219 | 2026-10-19 | `docs/tasks-archive/2026-10/20261019-global-locks-heartbeat.md` | `docs/tasks-archive/2026-10/ULTRA-00219-20261019-global-locks-heartbeat.md` |
+| ULTRA-00219 | 2026-10-19 | `.claude/tasks-archive/2026-10/20261019-global-locks-heartbeat.md` | `docs/tasks-archive/2026-10/ULTRA-00219-20261019-global-locks-heartbeat.md` |
+| ULTRA-00219 | 2026-10-19 | `.claude/tasks/20261019-global-locks-heartbeat.md` | `docs/tasks-archive/2026-10/ULTRA-00219-20261019-global-locks-heartbeat.md` |
