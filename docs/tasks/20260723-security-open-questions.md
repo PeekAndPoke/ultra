@@ -32,7 +32,7 @@ owners, checked at BOTH boot and request time. Pairs with the entity-`OrgAware`/
 
 Entity refs deserialized from a request BODY bypass the URL-param guard (org-isolation covers only
 `findById`-loaded URL params; a body-carried `Stored<OrgAware>` is not checked — noted in
-`20260723-redteam-org-isolation.md` scenario 6). The user has a proven approach to close this;
+ULTRA-00095 (redteam org isolation) scenario 6). The user has a proven approach to close this;
 capture the design when shared. Placeholder — do not design speculatively.
 
 ## 3. Related open items (linked for the security view)
@@ -43,5 +43,5 @@ capture the design when shared. Placeholder — do not design speculatively.
 - **User-level isolation** (`UserAware`/`CallerOwnershipGuard`) — same mechanism as org isolation.
   See ULTRA-00094 (route check followups) item 4.
 - **Cross-realm authorization boundary** — ULTRA-00044 (cross realm authz and tests).
-- **Red-team scenarios** — `20260723-redteam-org-isolation.md`,
+- **Red-team scenarios** — ULTRA-00095 (redteam org isolation),
   ULTRA-00039 (redteam saas orgs).

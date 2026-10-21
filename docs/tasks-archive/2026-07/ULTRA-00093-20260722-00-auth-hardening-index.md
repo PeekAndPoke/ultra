@@ -20,7 +20,7 @@ dependency on the previous one, so land them in order.
 | — | ULTRA-00091 (docs auth dsl and floor) | Docs follow-up (collector) for the DSL rewrite + floor + part-3 checks/guards. Write the prose after 1–4 land | **PARTIAL** (checked 2026-10-19: floor + DSL are documented, two-phase eval / `RouteBootCheck` / `ConsistentParam` / `Stored` params are not) |
 | — | ULTRA-00094 (route check followups) | Part-3 spin-offs: `validateUriPattern`→`RouteBootCheck`, entity-`OrgAware` linter, branch-level isolation | **TODO** |
 | — | `20260723-security-open-questions.md` | Open design questions on owner-in-URI, body-embedded ids, cross-org operations | **OPEN QUESTIONS** (not in this index until 2026-10-19) |
-| — | `20260723-redteam-org-isolation.md` | Red-team attack scenarios for the org-isolation (security-critical follow-up) | **TODO** (collected, not executed) |
+| — | ULTRA-00095 (redteam org isolation) | Red-team attack scenarios for the org-isolation (security-critical follow-up) | **TODO** (collected, not executed) |
 
 Dependency chain: **1 → 2 → 3 → 4**, docs last — the four parts are done; only the follow-up rows above remain.
 

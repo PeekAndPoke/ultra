@@ -1,4 +1,4 @@
-# Red-team: org-isolation (part-3 two-phase auth + OrgAware guard)
+# ULTRA-00095: Red-team: org-isolation (part-3 two-phase auth + OrgAware guard)
 
 **Status:** COLLECTED — not executed (2026-07-23). Run in a dedicated pen-test session.
 **Type:** red-team (security-critical follow-up to ULTRA-00090 (two phase auth consistent params))
@@ -46,3 +46,7 @@ These are the residual/edge scenarios to actively attempt.
 - ULTRA-00090 (two phase auth consistent params) — the feature.
 - ULTRA-00094 (route check followups) — the linter/hardening backstops (items 2, 4).
 - ULTRA-00039 (redteam saas orgs) — the broader org red-team; fold these in.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00095 (was `docs/tasks/20260723-redteam-org-isolation.md`).
