@@ -1,4 +1,4 @@
-# Karango: exclude soft-deleted rows from unique indexes
+# ULTRA-00141: Karango: exclude soft-deleted rows from unique indexes
 
 **Status:** TODO
 **Plan:** follow-up from ULTRA-00140 (vault scan findings) → S2
@@ -105,3 +105,7 @@ real shape).
       rebuild it on a pre-existing collection — this is the regression that proves point 2
 - [ ] Mutation-check both the analyzer change and the index change
 - [ ] `./gradlew :karango:core:test :funktor:saas:jvmTest :funktor-demo:server:test`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00141 (was `docs/tasks/20260729-karango-softdelete-unique-indexes.md`).

@@ -51,7 +51,7 @@ and both halves now say why in the code. `Ref` gains the precise path (`root.own
 
 ### Spun out into their own tasks
 
-- `docs/tasks/20260729-karango-softdelete-unique-indexes.md`
+- ULTRA-00141 (karango softdelete unique indexes)
 - `docs/tasks/20260729-monko-softdelete-unique-indexes.md`
 
 ### Deferred to the driver scans ⏸
