@@ -1,4 +1,4 @@
-# ultra/datetime: own epoch ↔ local date-time conversion (no emulated Long on JS)
+# ULTRA-00216: ultra/datetime: own epoch ↔ local date-time conversion (no emulated Long on JS)
 
 **Status:** DONE (archived 2026-10-19) — gate PASS after 3 rounds (round 3 with the maintainer in the loop)
 **Plan:** follow-up of ULTRA-00213 (datetime js performance); maintainer: before the 0.112.0 release (2026-10-19)
@@ -146,3 +146,7 @@ CRITICAL/MAJOR; both out-of-scope MAJORs have their follow-up tasks. Security ad
 unreachable `offsetAt(0)` arm; JS wall-time NaN at the Date limit; JVM `DateTimeException` on 999999999-12-31; the
 `MpLocalDateTime`/`MpLocalDate` non-UTC decode note. Follow-ups: `docs/tasks/20261019-datetime-native-zone-cache-growth.md`,
 ULTRA-00211 (mpzoneddatetime overlap offset). No docs task: no public API changed (internal engine only).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00216 (was `docs/tasks-archive/2026-10/20261019-datetime-own-epoch-conversions.md`).
