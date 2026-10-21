@@ -173,7 +173,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 
 **G. Docs + hygiene + gate**
 - [x] Update `ConsistentParam.kt` KDoc (opt-in; point to saas `OrgAware` for isolation); saas
-      interface KDoc; the docs collector `20260722-docs-auth-dsl-and-floor.md`.
+      interface KDoc; the docs collector ULTRA-00091 (docs auth dsl and floor).
       *(`ConsistentParam.kt:10,19-25` say opt-in and not-a-tenant-boundary; `OrgIsolation.kt` KDoc; the collector captures
       part 3 — items 1–3 under its "Still undocumented" list, as rewritten 2026-10-19)*
 - [x] Create follow-up task: migrate `validateUriPattern` onto `RouteBootCheck` + the entity-`OrgAware`

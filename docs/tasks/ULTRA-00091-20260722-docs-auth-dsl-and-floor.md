@@ -1,4 +1,4 @@
-# Docs follow-up: authorize DSL + ApiRoutes floor + part-3 checks (auth-hardening quartet)
+# ULTRA-00091: Docs follow-up: authorize DSL + ApiRoutes floor + part-3 checks (auth-hardening quartet)
 
 **Status:** PARTIAL — rechecked against `docs-site/` on 2026-10-19. The floor and the `authorize {}` DSL ARE documented
 (commit `e2d6553b`, 2026-07-28). The part-3 mechanism and part 4 are NOT. COLLECTOR for the remaining documentation pass
@@ -53,3 +53,7 @@ commit since 2026-07-23. The moving part is org isolation: `20260722-route-check
 - Do not edit `docs-site/public/` LLM mirrors — edit the `docs-site/src/data/llms/*.md` templates.
 - Do not write the prose in THIS file — this is the collector; the doc pass writes the pages.
 - Keep it compact (CLAUDE.md "Keep docs compact"): one concept per page, an example only where it earns its place.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00091 (was `docs/tasks/20260722-docs-auth-dsl-and-floor.md`).

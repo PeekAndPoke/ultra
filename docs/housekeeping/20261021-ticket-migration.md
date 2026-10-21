@@ -236,3 +236,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00090 | 2026-07-22 | `.claude/tasks-archive/2026-07/20260722-two-phase-auth-consistent-params.md` | `docs/tasks-archive/2026-07/ULTRA-00090-20260722-two-phase-auth-consistent-params.md` |
 | ULTRA-00090 | 2026-07-22 | `.claude/tasks/auth-hardening/20260722-two-phase-auth-consistent-params.md` | `docs/tasks-archive/2026-07/ULTRA-00090-20260722-two-phase-auth-consistent-params.md` |
 | ULTRA-00090 | 2026-07-22 | `.claude/tasks/20260722-two-phase-auth-consistent-params.md` | `docs/tasks-archive/2026-07/ULTRA-00090-20260722-two-phase-auth-consistent-params.md` |
+| ULTRA-00091 | 2026-07-22 | `docs/tasks/20260722-docs-auth-dsl-and-floor.md` | `docs/tasks/ULTRA-00091-20260722-docs-auth-dsl-and-floor.md` |
+| ULTRA-00091 | 2026-07-22 | `.claude/tasks/auth-hardening/20260722-docs-auth-dsl-and-floor.md` | `docs/tasks/ULTRA-00091-20260722-docs-auth-dsl-and-floor.md` |
+| ULTRA-00091 | 2026-07-22 | `.claude/tasks/20260722-docs-auth-dsl-and-floor.md` | `docs/tasks/ULTRA-00091-20260722-docs-auth-dsl-and-floor.md` |

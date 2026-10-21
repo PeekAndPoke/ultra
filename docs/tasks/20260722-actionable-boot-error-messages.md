@@ -64,4 +64,4 @@ the same pattern to any other aggregated multi-error boot message discovered in 
 
 - Pure message-text changes are low-risk (no behavior change) — proportionate review, not the full
   3-agent gate, unless a message change touches logic.
-- Pairs with the docs follow-up `20260722-docs-auth-dsl-and-floor.md`.
+- Pairs with the docs follow-up ULTRA-00091 (docs auth dsl and floor).
