@@ -1,4 +1,4 @@
-# Docs follow-up: org membership model (OrgMember collection + getMemberships seam)
+# ULTRA-00100: Docs follow-up: org membership model (OrgMember collection + getMemberships seam)
 
 **Status:** TODO — COLLECTOR for a later documentation pass (capture what changed + anchors; do not
 write prose here). Created 2026-07-23 per the "framework change → doc task" standing rule.
@@ -44,3 +44,7 @@ write prose here). Created 2026-07-23 per the "framework change → doc task" st
 - Do not write prose here — this is the collector; the doc pass writes the pages.
 - Docs live in `docs-site/src/pages/ultra/*` + the LLM mirror templates `docs-site/src/data/llms/*.md`
   (never edit `docs-site/public/`).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00100 (was `docs/tasks/20260723-docs-membership-model.md`).

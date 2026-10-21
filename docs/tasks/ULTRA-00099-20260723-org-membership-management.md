@@ -101,7 +101,7 @@ session-org-implicit. With `OrgMember` being `OrgAware`, the guard also auto-che
       default `getMemberships` → `emptySet()`. Fixtures seed `OrgMember` rows via `orgMembers.add`.
       Green: `B2bAuthFlowTest` 7 / `B2b2cAuthFlowTest` 5, `funktor:all` (both backends),
       `ultra:security` / `funktor:auth` / `funktor:saas`. Docs collector:
-      `20260723-docs-membership-model.md`.
+      ULTRA-00100 (docs membership model).
 
 ## Increment 2 (leaf) — member-management API + b2b Members page
 
