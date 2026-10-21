@@ -1,4 +1,4 @@
-# Add a CSPRNG secret/token generator (invites, temp passwords, reset tokens)
+# ULTRA-00067: Add a CSPRNG secret/token generator (invites, temp passwords, reset tokens)
 
 **Status:** TODO — from the password-subsystem review (2026-07-20)
 **Plan:** none — password hashing hardening (finding 4)
@@ -42,3 +42,7 @@ vetted generator, each call site risks rolling its own with a weak RNG or a bias
 
 - Unblocks the b2b/b2b2c **invite** flow (ULTRA-00063 (b2b realm), self-signup disabled).
 - Pairs with ULTRA-00065 (password policy modernization) (temp passwords must satisfy the policy).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00067 (was `docs/tasks/20260720-secure-secret-generator.md`).

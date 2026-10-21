@@ -167,3 +167,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00066 | 2026-07-20 | `docs/tasks/20260720-password-rehash-on-login.md` | `docs/tasks/ULTRA-00066-20260720-password-rehash-on-login.md` |
 | ULTRA-00066 | 2026-07-20 | `.claude/tasks/password/20260720-password-rehash-on-login.md` | `docs/tasks/ULTRA-00066-20260720-password-rehash-on-login.md` |
 | ULTRA-00066 | 2026-07-20 | `.claude/tasks/20260720-password-rehash-on-login.md` | `docs/tasks/ULTRA-00066-20260720-password-rehash-on-login.md` |
+| ULTRA-00067 | 2026-07-20 | `docs/tasks/20260720-secure-secret-generator.md` | `docs/tasks/ULTRA-00067-20260720-secure-secret-generator.md` |
+| ULTRA-00067 | 2026-07-20 | `.claude/tasks/password/20260720-secure-secret-generator.md` | `docs/tasks/ULTRA-00067-20260720-secure-secret-generator.md` |
+| ULTRA-00067 | 2026-07-20 | `.claude/tasks/20260720-secure-secret-generator.md` | `docs/tasks/ULTRA-00067-20260720-secure-secret-generator.md` |
