@@ -76,7 +76,7 @@ Consequences:
       wiring / unified `AuthContext` stream.
 - [x] **operator dashboard stats** DONE 2026-07-20 (reviewed + hardened 2026-07-22) —
       `OperatorApiFeature`; guard is `forAll(isSuperUser(), forUserType(OperatorUser))` after the
-      cross-realm review finding. See `tasks-archive/2026-07/20260720-operator-api-feature.md`.
+      cross-realm review finding. See ULTRA-00062 (operator api feature).
 - [x] **b2b realm + b2b-app** DONE 2026-07-20 (reviewed + hardened 2026-07-22) — first
       `OrgPolicy.Required` realm; org-selection UI in the shared login (`AuthLogin` extraction, POC
       dedicated teal `LoggedOutLayout`); active-only org hooks after the review. See

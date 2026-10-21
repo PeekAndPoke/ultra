@@ -1,4 +1,4 @@
-# OperatorApiFeature — real dashboard stats (+ groundwork for users-by-org)
+# ULTRA-00062: OperatorApiFeature — real dashboard stats (+ groundwork for users-by-org)
 
 **Status:** DONE (2026-07-20) — dashboard stats shipped; users-by-org deferred (see notes)
 **Plan:** ULTRA-00045 (demo restructure three apps) → ops-app "real dashboard stats"
@@ -95,3 +95,7 @@ same HIGH; the security reviewer traced full reachability:
   + all fields defaulted. Handler counts over domain objects (no `asApiModel()`).
 - DashboardPage: `data!!` so non-2xx engages the loader error/retry state; by-status tiles render
   the map additively (known statuses always shown, future ones appended).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00062 (was `docs/tasks-archive/2026-07/20260720-operator-api-feature.md`).
