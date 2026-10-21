@@ -54,7 +54,7 @@ kotlin {
                 implementation(kotlin("reflect"))
 
                 // For `Redacted<T>`, whose kotlinx serializer must sit on the class itself. See
-                // `docs/tasks/20260731-redacted-and-jackson-removal.md`.
+                // ULTRA-00169 (redacted and jackson removal).
                 implementation(Deps.KotlinX.serialization_core)
             }
         }

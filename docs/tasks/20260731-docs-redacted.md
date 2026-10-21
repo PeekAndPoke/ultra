@@ -1,7 +1,7 @@
 # DOCS — `Redacted<T>` (and where `ultra:common` gets documented at all)
 
-**Status:** TODO — created 2026-07-31 on archiving `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`
-**Plan:** `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`
+**Status:** TODO — created 2026-07-31 on archiving ULTRA-00169 (redacted and jackson removal)
+**Plan:** ULTRA-00169 (redacted and jackson removal)
 **Security-critical:** no (documentation), but it documents a security mechanism — accuracy matters more
 than usual, because a reader who misunderstands the round-trip rule can create a real leak.
 

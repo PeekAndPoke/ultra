@@ -2,7 +2,7 @@
 
 **Status:** DONE and ARCHIVED (2026-07-31). Rounds 1 and 2 complete, gate PASS, all follow-up
 decisions taken and implemented. The `Redacted<T>` project that came out of it has its own task file,
-now also archived (`docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`).
+now also archived (ULTRA-00169 (redacted and jackson removal)).
 
 **No DOCS follow-up — deliberately.** Per CLAUDE.md a public-API change gets a docs task only once
 the surface is SETTLED, and this one is not: the Vue tabs are unbuilt, and D-M6 below is explicitly
@@ -581,7 +581,7 @@ All five are now **decided** (2026-07-31):
 | Boot check instantiates every collector | **Accepted.** `AppConfigCollector.static` is lazy now, which was the only real cost; a collector must be boot-constructible |
 
 Plus the config-secrets finding, which was the largest: `Redacted<T>` replaces `@JsonIgnore` wholesale and
-Jackson is to be removed entirely — `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`. An interim
+Jackson is to be removed entirely — ULTRA-00169 (redacted and jackson removal). An interim
 name-based redaction (`ConfigRedaction`) closes the leak meanwhile and is marked for deletion.
 
 ## Why round 2 happened (kept for the record)

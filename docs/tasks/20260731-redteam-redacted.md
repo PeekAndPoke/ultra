@@ -2,7 +2,7 @@
 
 **Status:** COLLECTED — do not execute here. For a dedicated penetration-test session.
 **Created:** 2026-07-31
-**Plan:** `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`
+**Plan:** ULTRA-00169 (redacted and jackson removal)
 **Why:** `Redacted<T>` is now the *single* mechanism keeping secrets out of serialized output — the
 signing key, the CSRF secret, and both database passwords. `ConfigRedaction` was deleted, so there is
 no second net. Its own KDoc says it plainly: *"The type alone protects nothing. Each serializer must be

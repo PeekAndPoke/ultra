@@ -1,4 +1,4 @@
-# `Redacted<T>` and the removal of Jackson
+# ULTRA-00169: `Redacted<T>` and the removal of Jackson
 
 **Status:** DONE and ARCHIVED (2026-07-31). All stages complete, review gate PASSED. **Zero Jackson in Kotlin source, and no first-party module declares it — the coordinates are gone from `Deps.kt` entirely.** What remains on the classpath is internal to third-party libraries; see "Where Jackson still is" below.
 **Security-critical:** yes — this is what finally closes
@@ -436,3 +436,7 @@ individually, including confirming `ultra:slumber`'s guard independently of `ult
   sharp edge (the deliberately broken round trip), so it needs a docs page and an LLM-mirror entry.
   The type is settled: it survived a three-agent gate and two rounds of fixes, and the only change
   since was moving where it is *used*, not what it is.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00169 (was `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`).

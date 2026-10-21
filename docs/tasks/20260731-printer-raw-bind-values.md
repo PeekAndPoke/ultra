@@ -1,7 +1,7 @@
 # AqlPrinter / MongoPrinter render RAW bind values, not slumbered ones
 
 **Status:** FIX LANDED, TESTS STILL MISSING (updated 2026-07-31)
-**Plan:** `docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`
+**Plan:** ULTRA-00169 (redacted and jackson removal)
 **Security-critical:** no — debug-only surface. But see "Why it is not zero-risk".
 
 The code fix from "Fix direction" below shipped in commit `1bb495c8`, in BOTH printers —

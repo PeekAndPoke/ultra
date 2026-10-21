@@ -111,7 +111,7 @@ have caught this on day one.
 
 None of the four options above shipped as stated. The maintainer's position — *"Jackson is a repeat
 security offender and the goal is to remove it entirely"* — turned this into
-`docs/tasks-archive/2026-07/20260731-redacted-and-jackson-removal.md`, which replaced the
+ULTRA-00169 (redacted and jackson removal), which replaced the
 annotation approach with a **type**: `Redacted<T>`, carried by the compiler and stated at the
 declaration site, plus codecs for kotlinx and Slumber. Jackson was then removed outright, so the
 "Jackson never calls toString()" trap at the heart of this file no longer has a Jackson to spring it.
