@@ -1,4 +1,4 @@
-# AqlPrinter / MongoPrinter render RAW bind values, not slumbered ones
+# ULTRA-00173: AqlPrinter / MongoPrinter render RAW bind values, not slumbered ones
 
 **Status:** FIX LANDED, TESTS STILL MISSING (updated 2026-07-31)
 **Plan:** ULTRA-00169 (redacted and jackson removal)
@@ -78,3 +78,7 @@ to extend; karango has no printer spec at all, so that one needs creating.
 - A `Map` with non-String keys does not throw.
 - A `Redacted<String>` bound as a parameter renders as the placeholder — pinning the property that
   currently holds only because `Redacted.toString()` redacts.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00173 (was `docs/tasks/20260731-printer-raw-bind-values.md`).
