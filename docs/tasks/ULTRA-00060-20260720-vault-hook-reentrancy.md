@@ -1,7 +1,7 @@
 # ULTRA-00060: Vault after-save/after-delete hooks: re-entrancy can loop forever
 
 **Status:** TODO — known issue, no fix decided yet
-**Plan:** none — surfaced by `docs/tasks-archive/2026-07/20260720-vault-hook-scope.md`
+**Plan:** none — surfaced by ULTRA-00061 (vault hook scope)
 **Security-critical:** no (availability/DoS risk, not a data-boundary issue)
 
 ## Spec

@@ -1,4 +1,4 @@
-# Vault after-save/after-delete hooks: structured concurrency
+# ULTRA-00061: Vault after-save/after-delete hooks: structured concurrency
 
 Status: DONE — archived 2026-07-20 (review gate passed; open items handed to follow-up tasks)
 Date: 2026-07-20
@@ -187,3 +187,7 @@ findings verified by the coordinator against the code before acceptance.
 Not security-critical (no auth/tenancy/token surface; security review explicitly cleared
 cross-tenant context leakage — identity rides a per-request kontainer in a Ktor `AttributeKey`, not
 coroutine-locals), so no red-team follow-up task created.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00061 (was `docs/tasks-archive/2026-07/20260720-vault-hook-scope.md`).
