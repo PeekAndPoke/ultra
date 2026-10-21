@@ -1,4 +1,4 @@
-# Funktor v1.0 Roadmap — Feature Inventory, Maturity & TODO Analysis
+# ULTRA-00021: Funktor v1.0 Roadmap — Feature Inventory, Maturity & TODO Analysis
 
 **Date:** 2026-03-25 (updated 2026-03-31)
 **Scope:** Funktor framework, Monko (MongoDB), database portability
@@ -504,3 +504,7 @@ Build MongoDB query DSL equivalent to Karango's AQL DSL:
 | Phase 4 | Entire Exposed module | Very Large (new module) |
 | Phase 5 | Funktor polish        | Medium                  |
 | Phase 6 | Demo app              | Small                   |
+
+## History
+
+- 2026-10-21: numbered ULTRA-00021 (was `docs/tasks-archive/2026-04/2026-04-13-funktor-v1-roadmap.md`).
