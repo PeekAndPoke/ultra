@@ -36,7 +36,7 @@ The router intercepts a click only when it is an in-app navigation, else the bro
 - `willOpenNewTab` (public) is unchanged; the listener checks modifiers / button itself.
 - Resolves against `document.baseURI`, not `window.location`, so `<base href>` behaves as in the browser.
 - Regex host labels bounded `{0,126}`: the JVM engine recurses per group repetition (same trap as
-  `EmailRegex`, see `20260729-common-scan-findings.md`).
+  `EmailRegex`, see ULTRA-00143 (common scan findings)).
 - Found while reading, not in the report: `href="#section"` used to push `/#section`, i.e. jump to the
   root route; Shift/Alt clicks and clicks already `defaultPrevented` were intercepted too.
 - Behaviour change worth knowing (round 2, R2): with the `defaultPrevented` check, only the FIRST enabled

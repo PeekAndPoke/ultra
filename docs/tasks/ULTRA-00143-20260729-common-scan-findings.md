@@ -1,4 +1,4 @@
-# ultra/common scan — findings backlog
+# ULTRA-00143: ultra/common scan — findings backlog
 
 **Status:** IN PROGRESS — backlog worked through; two items remain, both minor and listed at the bottom
 **Plan:** none — output of a 7-agent scan of `ultra/common`, 2026-07-29
@@ -271,3 +271,7 @@ survive contact with a probe.
   Several covered functions that had **no** tests at all (`hasSubscriptions` had neither tests nor
   callers; `unsubscribeAll`, `prepend`, `modifyIf` were used but untested). The `pop`/`shift` specs
   were then removed along with the functions themselves — see item 5.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00143 (was `docs/tasks/20260729-common-scan-findings.md`).
