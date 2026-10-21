@@ -333,3 +333,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00131 | 2026-07-28 | `.claude/tasks/20260728-auth-email-templates-in-code.md` | `docs/tasks-archive/2026-07/ULTRA-00131-20260728-auth-email-templates-in-code.md` |
 | ULTRA-00132 | 2026-07-28 | `docs/tasks-archive/2026-07/20260728-i18n-s7-activation-email-slice.md` | `docs/tasks-archive/2026-07/ULTRA-00132-20260728-i18n-s7-activation-email-slice.md` |
 | ULTRA-00132 | 2026-07-28 | `.claude/tasks-archive/2026-07/20260728-i18n-s7-activation-email-slice.md` | `docs/tasks-archive/2026-07/ULTRA-00132-20260728-i18n-s7-activation-email-slice.md` |
+| ULTRA-00133 | 2026-07-28 | `docs/tasks/20260728-redteam-i18n-email-templates.md` | `docs/tasks/ULTRA-00133-20260728-redteam-i18n-email-templates.md` |
+| ULTRA-00133 | 2026-07-28 | `.claude/tasks/20260728-redteam-i18n-email-templates.md` | `docs/tasks/ULTRA-00133-20260728-redteam-i18n-email-templates.md` |

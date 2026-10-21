@@ -6,7 +6,7 @@
 `funktor/auth/src/jvmMain/kotlin/emails/`, no `i18n/emails` resource directory left) and its specs match the counts below
 (`LocalizedEmailTemplateSpec` 14, `AuthEmailTemplatesSpec` 19, `AuthEmailEnvelopeSpec` 5, `DefaultMessagingLocaleWiringSpec` 2;
 0 failures in the last recorded run). The API is documented (`messaging.astro:134-160`, `auth.astro:183`, mirror
-`funktor.md:394-455`), so no docs follow-up is owed. Red-team: `docs/tasks/20260728-redteam-i18n-email-templates.md`.
+`funktor.md:394-455`), so no docs follow-up is owed. Red-team: ULTRA-00133 (redteam i18n email templates).
 **Plan:** ULTRA-00085 (i18n s7 emails) → S7, **design replaced** (see below)
 **Supersedes:** ULTRA-00132 (i18n s7 activation email slice) (the Markdown-template slice — built, gated, reverted)
 **Security-critical:** yes (the activation mail carries a live single-use token) → red-team follow-up
@@ -194,7 +194,7 @@ New specs: `LocalizedEmailTemplateSpec` 14, `AuthEmailTemplatesSpec` 19, `AuthEm
 | `requireAuthEmailEnvelope` neutered to `require(true)` | `AuthEmailEnvelopeSpec` (4) |
 | `DefaultMessaging` hardcodes `Locale("en")` instead of the realm default | `DefaultMessagingLocaleWiringSpec` (2) |
 
-**Red-team follow-up:** `docs/tasks/20260728-redteam-i18n-email-templates.md` — rewritten for this
+**Red-team follow-up:** ULTRA-00133 (redteam i18n email templates) — rewritten for this
 design (2026-07-28); the retired Markdown/substitution scenarios are listed there so a tester does not
 re-run them.
 

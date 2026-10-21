@@ -185,7 +185,7 @@ Decisions made while building — keep short, link code as `path/File.kt:line`.
 
 Fixes applied: ...
 
-**Red-team follow-up:** `docs/tasks/20260728-redteam-i18n-email-templates.md` (to be written at the
+**Red-team follow-up:** ULTRA-00133 (redteam i18n email templates) (to be written at the
 end of this task — collected, NOT executed)
 
 ## History

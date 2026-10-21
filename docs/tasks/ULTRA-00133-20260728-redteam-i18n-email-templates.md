@@ -1,4 +1,4 @@
-# Red-team — auth email templates (rendered in code)
+# ULTRA-00133: Red-team — auth email templates (rendered in code)
 
 **Status:** COLLECTED — NOT EXECUTED
 **Feature:** ULTRA-00131 (auth email templates in code)
@@ -130,3 +130,7 @@ Recorded so a tester spends their time elsewhere. All verified against the shipp
   exception from 500-ing sign-up after the account is written (and from handing
   `recoverAccountInitPasswordReset` an enumeration oracle). Verified by inspection only — a test needs
   a realm with full `AuthSystem.Deps` plus a deliberately throwing template.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00133 (was `docs/tasks/20260728-redteam-i18n-email-templates.md`).
