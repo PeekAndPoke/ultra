@@ -52,7 +52,7 @@ value-class id." **That premise was wrong — Karango already works end-to-end w
   `RealmId("b2b")` → `"b2b"`, matching the stored scalar. So the filter matches with no special code.
 
 (Contrast Monko, whose filter values bypass slumber and DID need a runtime fix —
-`20260724-monko-ksp-value-class.md`.)
+ULTRA-00108 (monko ksp value class).)
 
 ## What was implemented (tests only)
 - `karango/ksp/src/test/kotlin/ValueClassCodeGenSpec.kt` — codegen golden guard: value-class property
@@ -71,13 +71,13 @@ value-class id." **That premise was wrong — Karango already works end-to-end w
       class compares against the underlying number.
 
 ## Review record (3-agent gate, 2026-07-24 — all opus/high)
-- Reviewed together with the Monko diff (see `20260724-monko-ksp-value-class.md` for the full record).
+- Reviewed together with the Monko diff (see ULTRA-00108 (monko ksp value class) for the full record).
 - Karango has ZERO production change — findings all landed on the Monko fix. The Karango test entity
   + live round-trip spec were confirmed as genuine (live ArangoDB store→filter→read, incl. a negative
   and an Int-backed ordered filter). Gate verdict: **PASS**.
 
 ## Cross-ref
-- Monko counterpart: `20260724-monko-ksp-value-class.md` (needed a runtime DSL unwrap).
+- Monko counterpart: ULTRA-00108 (monko ksp value class) (needed a runtime DSL unwrap).
 - Migration that consumes this: `20260724-value-class-ids-migration.md`.
 
 ## History

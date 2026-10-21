@@ -1,4 +1,4 @@
-# Monko: `@JvmInline value class` filter support
+# ULTRA-00108: Monko: `@JvmInline value class` filter support
 
 **Status:** DONE 2026-07-24. **Reframed from the original premise** — see below.
 **Enabled by:** ULTRA-00105 (slumber value class support) (DONE).
@@ -109,3 +109,7 @@ value-class id." **That premise was wrong.** Verified by probe tests against the
 - Karango counterpart: ULTRA-00107 (karango ksp value class) (needed ZERO change — works as-is).
 - Migration that consumes this: `20260724-value-class-ids-migration.md` (KSP-first prerequisite is
   now MOOT — no KSP change; the only prerequisite was this Monko runtime fix, now DONE).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00108 (was `docs/tasks-archive/2026-07/20260724-monko-ksp-value-class.md`).

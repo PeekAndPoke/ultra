@@ -275,3 +275,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00107 | 2026-07-24 | `docs/tasks-archive/2026-07/20260724-karango-ksp-value-class.md` | `docs/tasks-archive/2026-07/ULTRA-00107-20260724-karango-ksp-value-class.md` |
 | ULTRA-00107 | 2026-07-24 | `.claude/tasks-archive/2026-07/20260724-karango-ksp-value-class.md` | `docs/tasks-archive/2026-07/ULTRA-00107-20260724-karango-ksp-value-class.md` |
 | ULTRA-00107 | 2026-07-24 | `.claude/tasks/20260724-karango-ksp-value-class.md` | `docs/tasks-archive/2026-07/ULTRA-00107-20260724-karango-ksp-value-class.md` |
+| ULTRA-00108 | 2026-07-24 | `docs/tasks-archive/2026-07/20260724-monko-ksp-value-class.md` | `docs/tasks-archive/2026-07/ULTRA-00108-20260724-monko-ksp-value-class.md` |
+| ULTRA-00108 | 2026-07-24 | `.claude/tasks-archive/2026-07/20260724-monko-ksp-value-class.md` | `docs/tasks-archive/2026-07/ULTRA-00108-20260724-monko-ksp-value-class.md` |
+| ULTRA-00108 | 2026-07-24 | `.claude/tasks/20260724-monko-ksp-value-class.md` | `docs/tasks-archive/2026-07/ULTRA-00108-20260724-monko-ksp-value-class.md` |

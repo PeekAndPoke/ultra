@@ -26,7 +26,7 @@ could migrate. **Verification-first probes proved that premise wrong:**
   → `"b2b"` matches the stored scalar. Zero production change. (ULTRA-00107 (karango ksp value class), DONE)
 - **Monko needed only a small RUNTIME DSL fix** (filter values bypass slumber and the driver can't
   encode a value class): `unwrapValueClass` in `monko/core/lang/dsl/`, wired into every comparison
-  operator. DONE. (`20260724-monko-ksp-value-class.md`)
+  operator. DONE. (ULTRA-00108 (monko ksp value class))
 
 **→ The stored+queried id migration is NO LONGER BLOCKED.** For `RealmId` concretely: `AuthRecord.realm`
 (`field { realm }`, `FILTER(r.realm EQ realm)` / `r.realm eq realm`) will compile and query correctly

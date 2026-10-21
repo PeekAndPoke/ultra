@@ -7,7 +7,7 @@ the maintainer is the thing this doc was written for — codifying the standing 
 `.claude/skills/code-style/`) and the scope for the rest. The earlier header's "Do NOT migrate anything yet" is void.
 **Enabled by:** ULTRA-00105 (slumber value class support) (DONE — slumber serializes value classes exactly
 like kotlinx). **Was blocked for STORED/queried ids by** the Karango-KSP + Monko-KSP follow-ups
-(ULTRA-00107 (karango ksp value class), `20260724-monko-ksp-value-class.md`) — both DONE and archived; the migration doc
+(ULTRA-00107 (karango ksp value class), ULTRA-00108 (monko ksp value class)) — both DONE and archived; the migration doc
 records that the "KSP-first" premise was falsified.
 **Goal (user):** wrap ids and similar in value classes to prevent accidental assignment/comparison
 (passing a `userId` where an `orgId` is expected — today both are `String` and compile fine).
