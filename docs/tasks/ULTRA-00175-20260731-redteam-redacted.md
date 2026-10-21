@@ -1,4 +1,4 @@
-# RED TEAM — `Redacted<T>`, the one-way secret wrapper
+# ULTRA-00175: RED TEAM — `Redacted<T>`, the one-way secret wrapper
 
 **Status:** COLLECTED — do not execute here. For a dedicated penetration-test session.
 **Created:** 2026-07-31
@@ -81,3 +81,7 @@ taught about it."*
 
 Secrets that never pass through `Redacted<T>` — environment variables, mounted files, anything a
 third-party library holds internally.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00175 (was `docs/tasks/20260731-redteam-redacted.md`).

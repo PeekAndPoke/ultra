@@ -431,7 +431,7 @@ throws, on both the Slumber and kotlinx paths — D1). Mutation-tested; the guar
 individually, including confirming `ultra:slumber`'s guard independently of `ultra:common`'s.
 
 **Follow-ups created:**
-- `docs/tasks/20260731-redteam-redacted.md` — red-team scenarios (collected, not executed).
+- ULTRA-00175 (redteam redacted) — red-team scenarios (collected, not executed).
 - ULTRA-00174 (docs redacted) — DOCS task. `Redacted<T>` is public API with a genuinely
   sharp edge (the deliberately broken round trip), so it needs a docs page and an LLM-mirror entry.
   The type is settled: it survived a three-agent gate and two rounds of fixes, and the only change

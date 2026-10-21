@@ -78,7 +78,7 @@ The KDoc on `Redacted.kt` already carries all of this and is the right place for
 
 ## Related
 
-- `docs/tasks/20260731-redteam-redacted.md` — attack scenarios, collected not executed.
+- ULTRA-00175 (redteam redacted) — attack scenarios, collected not executed.
 - ULTRA-00135 (docs sync remaining) — existing docs-drift backlog; check for overlap
   before starting so this does not duplicate a page someone is already rewriting.
 
