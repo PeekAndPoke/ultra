@@ -16,7 +16,7 @@ Replaced by `docs/tasks-archive/2026-07/20260728-auth-email-templates-in-code.md
 > caught, which is precisely why "the tests pass" was not a good enough reason to keep the design.
 >
 > Do not use the Spec / Implementation notes below as instructions.
-**Plan:** `docs/tasks/20260722-i18n-s7-emails.md` → option (b), chosen by the user 2026-07-28
+**Plan:** ULTRA-00085 (i18n s7 emails) → option (b), chosen by the user 2026-07-28
 **Security-critical:** yes (HTML/attribute escaping of substituted values; a template now sits between
 the framework and the `href` the anonymizer must keep seeing) → red-team follow-up required
 

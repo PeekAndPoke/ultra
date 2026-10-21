@@ -1,7 +1,7 @@
 # ULTRA-00069: i18n / l10n foundation — design decisions
 
 **Status:** IN PROGRESS — S1–S5 DONE (committed + gated, 2026-07-20/21); S6 folded into the
-exception-disclosure task; S7 design agreed → `20260722-i18n-s7-emails.md` (2026-07-22)
+exception-disclosure task; S7 design agreed → ULTRA-00085 (i18n s7 emails) (2026-07-22)
 **Plan:** umbrella; feeds email templates, form validation, and server error channels
 **Security-critical:** no (but interacts with ULTRA-00055 (exception disclosure architecture) — see §Interactions)
 
@@ -375,7 +375,7 @@ cases), **S5** (integration synthesis), **S6** (security) — and run the S6 sec
 | S4 | **kraft reactive glue** (jsMain) — `I18n` stream app-attribute (mirror `ResponsiveController`), `Translations`/`Formatting` delegates (class+functional), `I18nInitializer`, persist lang | `TestBed.preact`: re-render on `suspend setLang`; delegate resolves | impl&style, domain | no |
 | S5 | **kraft forms — first vertical slice** — plugin on kraft/core + yaml (~28 defaults); route `Rule`/`GenericRule`/`FormFieldComponent` through `I18n`; kraft catalog installs by default; kill the two `// TODO: how to translate this?` | `TestBed.preact`: validation msg `en`→`de` on switch (full-stack proof) | **full 3** | no |
 | S6 | **Server error channel** — `Message`/`HasClientMessage` carry key+args (not `String`); AuthApi/OrgsApi emit keys; client resolves. **FOLDED INTO** ULTRA-00055 (exception disclosure architecture) (decided 2026-07-22) — no separate S6 task file; the i18n key+args channel is the transport for that work | Backend e2e (`AppSpec`/`AppUnderTest`, both DB backends where storage); client-resolves test | **full 3, security decisive** | **yes → red-team** |
-| S7 | **Emails** — whole-template-per-locale Markdown (raw-HTML passthrough) + kotlinx.html layout slot; front-matter subject; codegen emails mode; HTML-escaped substitution; recipient locale. Design agreed 2026-07-22 → task file `20260722-i18n-s7-emails.md`. **Prereq DONE 2026-07-22:** auth-user-seams refactor (AuthUser bound + LanguageSettings + AuthUserAdapter, archived) | Backend e2e: render both emails `en`+`de`; escaping adversarial tests | impl&style, domain | no |
+| S7 | **Emails** — whole-template-per-locale Markdown (raw-HTML passthrough) + kotlinx.html layout slot; front-matter subject; codegen emails mode; HTML-escaped substitution; recipient locale. Design agreed 2026-07-22 → task file ULTRA-00085 (i18n s7 emails). **Prereq DONE 2026-07-22:** auth-user-seams refactor (AuthUser bound + LanguageSettings + AuthUserAdapter, archived) | Backend e2e: render both emails `en`+`de`; escaping adversarial tests | impl&style, domain | no |
 
 **Deferred (D9), not in this build:** locale date/number/money formatting + `kotlinx-datetime` bump —
 separate later tasks once the text foundation lands.

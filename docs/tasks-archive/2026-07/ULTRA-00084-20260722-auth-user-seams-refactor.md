@@ -2,7 +2,7 @@
 
 **Status:** DONE (2026-07-22) — review loop closed in round 1 with zero confirmed findings across all
 three reviewers; 1,028 backend tests green
-**Plan:** design agreed in-session 2026-07-22; prerequisite for `20260722-i18n-s7-emails.md` (S7)
+**Plan:** design agreed in-session 2026-07-22; prerequisite for ULTRA-00085 (i18n s7 emails) (S7)
 **Security-critical:** YES (user, 2026-07-22: "this is our security infra and we need this absolutely
 bullet-proof") — even though behavior-preserving, this touches the auth core.
 

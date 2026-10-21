@@ -215,3 +215,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00084 | 2026-07-22 | `docs/tasks-archive/2026-07/20260722-auth-user-seams-refactor.md` | `docs/tasks-archive/2026-07/ULTRA-00084-20260722-auth-user-seams-refactor.md` |
 | ULTRA-00084 | 2026-07-22 | `.claude/tasks-archive/2026-07/20260722-auth-user-seams-refactor.md` | `docs/tasks-archive/2026-07/ULTRA-00084-20260722-auth-user-seams-refactor.md` |
 | ULTRA-00084 | 2026-07-22 | `.claude/tasks/20260722-auth-user-seams-refactor.md` | `docs/tasks-archive/2026-07/ULTRA-00084-20260722-auth-user-seams-refactor.md` |
+| ULTRA-00085 | 2026-07-22 | `docs/tasks/20260722-i18n-s7-emails.md` | `docs/tasks/ULTRA-00085-20260722-i18n-s7-emails.md` |
+| ULTRA-00085 | 2026-07-22 | `.claude/tasks/i18n/20260722-i18n-s7-emails.md` | `docs/tasks/ULTRA-00085-20260722-i18n-s7-emails.md` |
+| ULTRA-00085 | 2026-07-22 | `.claude/tasks/20260722-i18n-s7-emails.md` | `docs/tasks/ULTRA-00085-20260722-i18n-s7-emails.md` |
