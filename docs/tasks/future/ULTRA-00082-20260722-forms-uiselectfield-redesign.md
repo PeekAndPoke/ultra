@@ -1,4 +1,4 @@
-# Forms: deprecate SelectField → new UiSelectField (needs design)
+# ULTRA-00082: Forms: deprecate SelectField → new UiSelectField (needs design)
 
 **Status:** FUTURE — not scheduled. **Requires a proper design/planning pass before implementation.**
 Deferred while finishing i18n.
@@ -42,3 +42,7 @@ interact. Design these together (small doc + agreed API) before coding, then imp
 
 - Keyboard accessibility future-plan (shared a11y/keyboard model).
 - TestBed DOM-tests future-plan (write the new select's tests against the redesigned component).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00082 (was `docs/tasks/future/20260722-forms-uiselectfield-redesign.md`).
