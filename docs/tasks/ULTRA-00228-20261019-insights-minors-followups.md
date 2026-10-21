@@ -1,4 +1,4 @@
-# Insights: follow-ups from the insights-minors review, and the log-order defect
+# ULTRA-00228: Insights: follow-ups from the insights-minors review, and the log-order defect
 
 **Status:** TODO — from review round 1 of ULTRA-00226 (insights vue round2 minors) (clean,
 merged `348c66bc`); the maintainer's standing direction is to fix MINORs
@@ -26,3 +26,7 @@ merged `348c66bc`); the maintainer's standing direction is to fix MINORs
       the record. `LogCollector.Data.Entry` has no timestamp to sort by. Options: run the per-request insights appender
       first/synchronously, launch each appender separately, or record `event.ts` and sort in `finish`. Test: the
       `InsightsVaultBindValuesSpec` log-lines case without its sort, run repeatedly.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00228 (was `docs/tasks/20261019-insights-minors-followups.md`).

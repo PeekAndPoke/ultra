@@ -549,3 +549,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00226 | 2026-10-19 | `.claude/tasks/20261019-insights-vue-round2-minors.md` | `docs/tasks-archive/2026-10/ULTRA-00226-20261019-insights-vue-round2-minors.md` |
 | ULTRA-00227 | 2026-10-19 | `docs/tasks/20261019-adopt-agent-tools.md` | `docs/tasks/ULTRA-00227-20261019-adopt-agent-tools.md` |
 | ULTRA-00227 | 2026-10-19 | `.claude/tasks/20261019-adopt-agent-tools.md` | `docs/tasks/ULTRA-00227-20261019-adopt-agent-tools.md` |
+| ULTRA-00228 | 2026-10-19 | `docs/tasks/20261019-insights-minors-followups.md` | `docs/tasks/ULTRA-00228-20261019-insights-minors-followups.md` |
+| ULTRA-00228 | 2026-10-19 | `.claude/tasks/20261019-insights-minors-followups.md` | `docs/tasks/ULTRA-00228-20261019-insights-minors-followups.md` |
