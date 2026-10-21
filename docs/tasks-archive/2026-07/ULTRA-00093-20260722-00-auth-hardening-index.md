@@ -1,4 +1,4 @@
-# Auth-hardening quartet — index
+# ULTRA-00093: Auth-hardening quartet — index
 
 **Status:** DONE (quartet complete 2026-07-23; archived 2026-10-19). Parts 1–4 are all DONE and archived next to this file in
 `docs/tasks-archive/2026-07/`. The follow-ups in the last four table rows are NOT done and stay open as ordinary tasks in
@@ -38,3 +38,7 @@ Deep review **LOOP**, not a single pass:
    direction before continuing.
 
 Full protocol text lives in ULTRA-00088 (authorize rule builder).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00093 (was `docs/tasks-archive/2026-07/20260722-00-auth-hardening-index.md`).
