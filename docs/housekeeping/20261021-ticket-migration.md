@@ -499,3 +499,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00206 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-kraft-chartjs-live-updates.md` | `docs/tasks-archive/2026-10/ULTRA-00206-20261018-kraft-chartjs-live-updates.md` |
 | ULTRA-00207 | 2026-10-18 | `docs/tasks-archive/2026-10/20261018-docs-kronos.md` | `docs/tasks-archive/2026-10/ULTRA-00207-20261018-docs-kronos.md` |
 | ULTRA-00207 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-docs-kronos.md` | `docs/tasks-archive/2026-10/ULTRA-00207-20261018-docs-kronos.md` |
+| ULTRA-00208 | 2026-10-18 | `docs/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md` | `docs/tasks-archive/2026-10/ULTRA-00208-20261018-kotlin-2421-upgrade.md` |
+| ULTRA-00208 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md` | `docs/tasks-archive/2026-10/ULTRA-00208-20261018-kotlin-2421-upgrade.md` |
+| ULTRA-00208 | 2026-10-18 | `.claude/tasks/20261018-kotlin-2421-upgrade.md` | `docs/tasks-archive/2026-10/ULTRA-00208-20261018-kotlin-2421-upgrade.md` |

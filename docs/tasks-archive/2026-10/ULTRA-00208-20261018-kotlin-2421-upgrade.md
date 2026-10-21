@@ -1,4 +1,4 @@
-# Upgrade to Kotlin 2.4.21, refresh the dependency set, release 0.111.0
+# ULTRA-00208: Upgrade to Kotlin 2.4.21, refresh the dependency set, release 0.111.0
 
 **Status:** DONE (archived 2026-10-18) — `fb1b93f8`, `0dc2df67`, release `54362e3e` / `v0.111.0`
 **Plan:** none — maintainer request, 2026-10-18, right after the 0.110.0 release
@@ -237,3 +237,7 @@ way and fixed in the same session: the Kraft forms docs called `formCtrl.validat
 `@Suppress("DEPRECATION")` in `karango/core/src/main/kotlin/vault/EntityRepository.kt`; everything else is build
 configuration and test fixtures, covered by the full suite matching the baseline per target. Maintainer may still ask
 for it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00208 (was `docs/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md`).

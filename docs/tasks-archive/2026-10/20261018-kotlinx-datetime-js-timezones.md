@@ -1,7 +1,7 @@
 # ultra/datetime: own zone engine, then kotlinx-datetime 0.8
 
 **Status:** DONE (archived 2026-10-18) — A `829f6a59`, B `fed9393d`, gate PASS, maintainer-chosen MINOR batch applied
-**Plan:** none — split out of `docs/tasks-archive/2026-10/20261018-kotlin-2421-upgrade.md` (2026-10-18), where 0.8.0 was attempted and held
+**Plan:** none — split out of ULTRA-00208 (kotlin 2421 upgrade) (2026-10-18), where 0.8.0 was attempted and held
 **Security-critical:** no — but it touches persistence (mutation-check bar, CLAUDE.md)
 
 ## Why
