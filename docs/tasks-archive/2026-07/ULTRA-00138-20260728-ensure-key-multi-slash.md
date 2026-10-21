@@ -1,4 +1,4 @@
-# ensureKey: split at the first slash, not the second
+# ULTRA-00138: ensureKey: split at the first slash, not the second
 
 **Status:** DONE (2026-07-28)
 **Plan:** none — found while writing KDoc for `ultra/vault/src/jvmMain/kotlin/helpers.kt`
@@ -76,3 +76,7 @@ project's verification rules lean on these XML files — see `CLAUDE.md` → Ver
 Not run — the surviving change is a one-line expression simplification with no behaviour change for
 valid input, covered by an existing test and a mutation check. The version that would have needed a
 review gate was reverted.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00138 (was `docs/tasks-archive/2026-07/20260728-ensure-key-multi-slash.md`).
