@@ -1,4 +1,4 @@
-# kraft/addons/pixijs: contract tests that survive version updates
+# ULTRA-00214: kraft/addons/pixijs: contract tests that survive version updates
 
 **Status:** DONE (archived 2026-10-19) — gate PASS after 2 rounds
 **Plan:** none (asked by the maintainer, 2026-10-18, after the Klang playback highlight broke on a dependency bump)
@@ -118,3 +118,7 @@ facade cannot create" WITHDRAWN in phase 2 (scope decision, no factual error). M
 `9883bd6f`" → fixed (this section restated). All FIXED entries confirmed holding.
 
 **Verdict: gate PASS** (round 2 clean).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00214 (was `docs/tasks-archive/2026-10/20261018-pixijs-addon-contract-tests.md`).

@@ -514,3 +514,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00213 | 2026-10-18 | `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md` | `docs/tasks-archive/2026-10/ULTRA-00213-20261018-datetime-js-performance.md` |
 | ULTRA-00213 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-datetime-js-performance.md` | `docs/tasks-archive/2026-10/ULTRA-00213-20261018-datetime-js-performance.md` |
 | ULTRA-00213 | 2026-10-18 | `.claude/tasks/20261018-datetime-js-performance.md` | `docs/tasks-archive/2026-10/ULTRA-00213-20261018-datetime-js-performance.md` |
+| ULTRA-00214 | 2026-10-18 | `docs/tasks-archive/2026-10/20261018-pixijs-addon-contract-tests.md` | `docs/tasks-archive/2026-10/ULTRA-00214-20261018-pixijs-addon-contract-tests.md` |
+| ULTRA-00214 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-pixijs-addon-contract-tests.md` | `docs/tasks-archive/2026-10/ULTRA-00214-20261018-pixijs-addon-contract-tests.md` |
+| ULTRA-00214 | 2026-10-18 | `.claude/tasks/20261018-pixijs-addon-contract-tests.md` | `docs/tasks-archive/2026-10/ULTRA-00214-20261018-pixijs-addon-contract-tests.md` |
