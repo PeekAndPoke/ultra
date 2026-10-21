@@ -1,4 +1,4 @@
-# The activation-resend delay is a check-then-act
+# ULTRA-00130: The activation-resend delay is a check-then-act
 
 **Status:** TODO — recorded 2026-07-27 from the review gate on
 ULTRA-00129 (activation resend and frontend); premise REWRITTEN 2026-10-19 by
@@ -81,3 +81,7 @@ ULTRA-00128 (signup mail throttle) — a different problem with a different shap
 one is about an ANONYMOUS endpoint with no per-account anchor at all (every aliased address is a new
 user, so no per-user cooldown can bite). Atomicity would not help it, and a suppression point in the
 send chain would not help this one.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00130 (was `docs/tasks/20260727-activation-resend-cooldown-atomicity.md`).

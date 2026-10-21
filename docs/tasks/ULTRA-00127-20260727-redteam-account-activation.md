@@ -113,7 +113,7 @@ lives on the `PendingActivation` marker: read, compare, write, send. The write (
 - **Attempt:** K concurrent resends sharing ONE token — expected: exactly one passes the delete count.
 - **Bounding it:** the schedule grows per account and the account expires after 7 days, so a won race adds mail inside
   one window; it does not reset the schedule. Fix if it reproduces: a compare-and-set save of the marker
-  (`20260727-activation-resend-cooldown-atomicity.md`, option A).
+  (ULTRA-00130 (activation resend cooldown atomicity), option A).
 
 ## 9. Resend authorization
 

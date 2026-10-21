@@ -77,7 +77,7 @@ Still the highest-value target. The activation and recovery mails carry live sin
   minted only on the path that proves the password. Read
   ULTRA-00129 (activation resend and frontend) first — several obvious attacks are
   already closed there, and its Review record explains why.
-- `docs/tasks/20260727-activation-resend-cooldown-atomicity.md` records a known check-then-act on
+- ULTRA-00130 (activation resend cooldown atomicity) records a known check-then-act on
   the cooldown.
 
 ## Adjacent, pre-existing, NOT caused by this feature
