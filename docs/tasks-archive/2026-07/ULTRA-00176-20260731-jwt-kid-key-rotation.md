@@ -1,4 +1,4 @@
-# JWT `kid`-based key rotation
+# ULTRA-00176: JWT `kid`-based key rotation
 
 **Status:** DONE and ARCHIVED (2026-08-01) — implemented (`9fe2a21a`), review findings fixed
 (`493423b8`), signing key moved out of the tree (`2397c0a6`)
@@ -284,3 +284,7 @@ ULTRA-00136 (session revocation wiring) outranks it.
 - `docs/tasks/20260801-jwt-rotation-operability.md` — the actionable residue of items 2, 4 and 5.
 - ULTRA-00172 (redteam jwt own verifier) — already open; section F and scenarios 26–27
   were added for this work. Stays open for a dedicated pen-test session.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00176 (was `docs/tasks-archive/2026-07/20260731-jwt-kid-key-rotation.md`).

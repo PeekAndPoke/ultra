@@ -151,7 +151,7 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
     should close — verify.)
 27. **Committed key material.** The demo's dev/test profiles ship a working superuser signing key
     inside `src/main/resources` (pre-existing, commit `6c55d3db`, tracked as OPEN item 1 in
-    `docs/tasks-archive/2026-07/20260731-jwt-kid-key-rotation.md`). Establish exactly which deployment shapes can
+    ULTRA-00176 (jwt kid key rotation)). Establish exactly which deployment shapes can
     end up on that profile — `AppConfig` tries `File(filename)` before the classpath — including CI
     entrypoints and container images that bake a default `-config=`.
 22. **Downgrade between configured keys.** With several keys configured, can a token be made to
