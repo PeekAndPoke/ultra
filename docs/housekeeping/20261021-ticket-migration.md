@@ -357,3 +357,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00143 | 2026-07-29 | `.claude/tasks/20260729-common-scan-findings.md` | `docs/tasks/ULTRA-00143-20260729-common-scan-findings.md` |
 | ULTRA-00144 | 2026-07-29 | `docs/tasks/20260729-mutator-test-coverage-platforms.md` | `docs/tasks/ULTRA-00144-20260729-mutator-test-coverage-platforms.md` |
 | ULTRA-00144 | 2026-07-29 | `.claude/tasks/20260729-mutator-test-coverage-platforms.md` | `docs/tasks/ULTRA-00144-20260729-mutator-test-coverage-platforms.md` |
+| ULTRA-00145 | 2026-07-29 | `docs/tasks-archive/2026-07/20260729-kotlin-24-upgrade.md` | `docs/tasks-archive/2026-07/ULTRA-00145-20260729-kotlin-24-upgrade.md` |
+| ULTRA-00145 | 2026-07-29 | `.claude/tasks-archive/2026-07/20260729-kotlin-24-upgrade.md` | `docs/tasks-archive/2026-07/ULTRA-00145-20260729-kotlin-24-upgrade.md` |
+| ULTRA-00145 | 2026-07-29 | `.claude/tasks/20260729-kotlin-24-upgrade.md` | `docs/tasks-archive/2026-07/ULTRA-00145-20260729-kotlin-24-upgrade.md` |

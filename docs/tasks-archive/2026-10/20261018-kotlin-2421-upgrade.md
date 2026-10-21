@@ -3,7 +3,7 @@
 **Status:** DONE (archived 2026-10-18) — `fb1b93f8`, `0dc2df67`, release `54362e3e` / `v0.111.0`
 **Plan:** none — maintainer request, 2026-10-18, right after the 0.110.0 release
 **Security-critical:** no
-**Previous round:** `docs/tasks-archive/2026-07/20260729-kotlin-24-upgrade.md` — same playbook
+**Previous round:** ULTRA-00145 (kotlin 24 upgrade) — same playbook
 
 ## Spec
 
@@ -233,7 +233,7 @@ way and fixed in the same session: the Kraft forms docs called `formCtrl.validat
 |---|---|---|---|---|---|
 
 **Verdict:** gate NOT RUN — a dependency upgrade, not a feature; the previous one
-(`docs/tasks-archive/2026-07/20260729-kotlin-24-upgrade.md`) ran none either. The only production-code change is one
+(ULTRA-00145 (kotlin 24 upgrade)) ran none either. The only production-code change is one
 `@Suppress("DEPRECATION")` in `karango/core/src/main/kotlin/vault/EntityRepository.kt`; everything else is build
 configuration and test fixtures, covered by the full suite matching the baseline per target. Maintainer may still ask
 for it.

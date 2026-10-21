@@ -1,4 +1,4 @@
-# Upgrade to Kotlin 2.4.10, refresh the dependency set
+# ULTRA-00145: Upgrade to Kotlin 2.4.10, refresh the dependency set
 
 **Status:** DONE (archived 2026-07-29) — landed in `1cdfca9e` and `2726c785`
 **Plan:** none — decided during the `ultra/common` scan, 2026-07-29
@@ -296,3 +296,7 @@ ours tolerates missing padding, `Base64.decode` throws on it.
 
 Also worth a look then: `getOrPutIfMissing` (new in 2.4.0, Experimental) distinguishes a stored `null`
 from an absent key — the exact problem `NullableCache` solves by hand with a `MISSING` sentinel.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00145 (was `docs/tasks-archive/2026-07/20260729-kotlin-24-upgrade.md`).

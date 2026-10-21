@@ -162,7 +162,7 @@ first, and the specs for them removed — the stdlib covers that behaviour now.
 **Identical output but the stdlib API is still Experimental — deliberately not deprecated:**
 `toHex()` vs `toHexString()`, `toBase64()` vs `Base64.encode()`. Adopting them would force an
 `@OptIn` onto every downstream consumer. Tracked in
-`docs/tasks/20260729-kotlin-24-upgrade.md`.
+ULTRA-00145 (kotlin 24 upgrade).
 
 ## DONE — third pass, 2026-07-29 (the remaining backlog, decided item by item)
 
