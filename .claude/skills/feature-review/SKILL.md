@@ -78,8 +78,8 @@ it silently, and this repo's most-cited gate did report HIGH, for a live session
 
 ## Security-critical → red-team follow-up
 
-If the feature touches auth, sessions, tenancy, tokens, permissions or any data boundary, create
-`docs/tasks/YYYYMMDD-redteam-<slug>.md` capturing concrete attack scenarios — cross-org access, token
+If the feature touches auth, sessions, tenancy, tokens, permissions or any data boundary, create a
+ticket "Red team: <feature>" (`console/tools/ticket/ticket.py new`) capturing concrete attack scenarios — cross-org access, token
 forgery/replay, privilege escalation, IDOR on org/branch ids, session fixation. **Collect only; never
 execute them here.** Note the created task in the feature's task file. Extend an existing red-team task
 rather than opening a second one for the same surface.

@@ -173,7 +173,7 @@ the maintainer wrote alone carries none.
 <!-- Each repo records here where it deviates from this layout, and why. -->
 
 - **Ticket prefix `ULTRA-`.** Tickets migrated on 2026-10-21 keep their old dated name behind the number
-  (`ULTRA-00042-20260802-foo.md`), so the creation date stays visible; new tickets have none.
+  (`20260802-foo.md` became `<ID>-20260802-foo.md`), so the creation date stays visible; new tickets have none.
 - **`CHANGELOG.md`** is kept: ultra publishes libraries.
 - **`docs/tasks/TEMPLATE.md` is ultra's ticket shape.** It adds the review record (the ledger of
   `.claude/skills/review-loop/`) to the standard sections. `in-progress/README.md` points to it.
@@ -181,6 +181,13 @@ the maintainer wrote alone carries none.
   Kraft example bundles that `docs-site/public/kraft-examples` links to; they are build output, not docs.
 - **"What will bite me" lives in the library's skill** (CLAUDE.md, "Docs vs skills"), not in a module
   `MEMORY.md`. Ultra has none.
+- **Worktrees:** none by default; when one is needed, `console/worktree-new.sh <track>` puts it in
+  `../ultra-worktrees/<track>`, and `console/wt-gradle.sh` gives it its own test databases
+  (`console/wt-gradle.sh:12`).
+- **`console/tools/ticket/` deviates from the master copy** in two places: `former_paths` keeps task
+  paths only (`git log --follow` paired small files with `.gitkeep` and `gradle.properties`), and a stale
+  path resolves by its unique file name.
+- **Status lines are not converted yet** to `> **Status (date): WORD.**`; `ticket check` reports them.
 - **Not adopted yet:** `TODO.MD` still exists, and there is no `DEV-DIARY.MD`, `CREDITS.MD` or `AUTHORS.MD`.
 
 ## Proposed upstream

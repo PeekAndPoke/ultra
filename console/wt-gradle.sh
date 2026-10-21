@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs ./gradlew in the current git worktree. Inside ../ultra-wt/<track> the tests use that worktree's own
+# Runs ./gradlew in the current git worktree. Inside ../ultra-worktrees/<track> the tests use that worktree's own
 # databases (created by console/worktree-new.sh); the main worktree keeps the defaults.
 #
 #   console/wt-gradle.sh :funktor:cluster:jvmTest
@@ -9,7 +9,7 @@ set -euo pipefail
 root=$(git rev-parse --show-toplevel)
 cd "$root"
 
-if [[ "$root" == */ultra-wt/* ]]; then
+if [[ "$root" == */ultra-worktrees/* ]]; then
   db="ultra_wt_$(basename "$root" | tr -c 'a-zA-Z0-9\n' '_')"
   export ULTRA_TEST_ARANGO_DB="$db" ULTRA_TEST_MONGO_DB="$db" ULTRA_TEST_DEMO_DB="${db}_demo"
   echo "wt-gradle: test databases $db / ${db}_demo" >&2

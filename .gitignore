@@ -27,3 +27,6 @@ publishing.gradle.properties
 
 # Claude Code harness runtime files
 .claude/*.lock
+
+# Python bytecode (console/tools)
+__pycache__/

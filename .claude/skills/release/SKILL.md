@@ -50,11 +50,11 @@ Every string below must move from `$CURRENT` to `$1`. Use the Edit tool, not sed
    `mutator-ksp`, `kontainer`, `slumber`, `streams`, `karango-core`, `kraft:core`). Use `Edit` with `replace_all: true`
    on the old version string, scoped to this file.
 
-4. **ULTRA-00028 (v1 roadmap)** — header line `**Current version:** $CURRENT → **Target:** 1.0.0` and the
+4. **ULTRA-00028 (v1 roadmap)** (path: `console/tools/ticket/ticket.py find ULTRA-00028`) — header line `**Current version:** $CURRENT → **Target:** 1.0.0` and the
    `**Released:**` bullet if present.
 
 **Sanity check after edits:** run
-`grep -rn "$CURRENT" gradle.properties docs-site/src/data/site.ts README.MD ULTRA-00028 (v1 roadmap)` and confirm
+`grep -rn "$CURRENT" gradle.properties docs-site/src/data/site.ts README.MD "$(console/tools/ticket/ticket.py find ULTRA-00028)"` and confirm
 zero hits.
 
 ## Verification (mandatory — blocks publish)

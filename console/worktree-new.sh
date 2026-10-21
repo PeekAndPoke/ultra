@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Creates a track worktree from master: ../ultra-wt/<track> on branch wt/<track>, plus its own test databases.
+# Creates a track worktree from master: ../ultra-worktrees/<track> on branch wt/<track>, plus its own test databases.
 # Build in it with console/wt-gradle.sh, never with a bare ./gradlew (that would use the SHARED test databases).
 set -euo pipefail
 
 track=${1:?usage: console/worktree-new.sh <track>}
 main=$(git rev-parse --show-toplevel)
-dir="$(dirname "$main")/ultra-wt/$track"
+dir="$(dirname "$main")/ultra-worktrees/$track"
 
 git -C "$main" worktree add -b "wt/$track" "$dir" master
 
