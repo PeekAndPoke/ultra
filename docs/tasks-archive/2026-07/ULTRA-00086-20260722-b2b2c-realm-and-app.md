@@ -1,4 +1,4 @@
-# b2b2c realm (end-user tenant users) + b2b2c-app + shared org hooks
+# ULTRA-00086: b2b2c realm (end-user tenant users) + b2b2c-app + shared org hooks
 
 **Status:** DONE (2026-07-22) — reviewed (3-agent gate), all confirmed findings fixed, tests green.
 **Plan:** ULTRA-00045 (demo restructure three apps) → b2b2c realm + app (third of three)
@@ -97,3 +97,7 @@ plan-permission grant (LOW).
   vocabulary) and the pending realm-boundary work for future tenant API surfaces.
 - ULTRA-00068 (auth frontend composability) — b2b2c re-copies the reset-route mount
   (third copy), strengthening the case for the deferred chrome-slot API.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00086 (was `docs/tasks-archive/2026-07/20260722-b2b2c-realm-and-app.md`).

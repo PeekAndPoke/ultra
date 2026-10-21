@@ -89,7 +89,7 @@ Consequences:
       Frontend `b2b2c-app` on dev-server **36592**: violet dedicated `LoggedOutLayout` ("End-user
       portal"), dashboard + reset via default page, wired in `settings.gradle`. CORS/baseUrls were
       pre-wired with the b2b step. Gate: 3-agent review PASS (security: zero findings) — see
-      `tasks-archive/2026-07/20260722-b2b2c-realm-and-app.md`.
+      ULTRA-00086 (b2b2c realm and app).
 
 ## ops-app — first increment scope
 

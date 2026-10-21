@@ -218,3 +218,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00085 | 2026-07-22 | `docs/tasks/20260722-i18n-s7-emails.md` | `docs/tasks/ULTRA-00085-20260722-i18n-s7-emails.md` |
 | ULTRA-00085 | 2026-07-22 | `.claude/tasks/i18n/20260722-i18n-s7-emails.md` | `docs/tasks/ULTRA-00085-20260722-i18n-s7-emails.md` |
 | ULTRA-00085 | 2026-07-22 | `.claude/tasks/20260722-i18n-s7-emails.md` | `docs/tasks/ULTRA-00085-20260722-i18n-s7-emails.md` |
+| ULTRA-00086 | 2026-07-22 | `docs/tasks-archive/2026-07/20260722-b2b2c-realm-and-app.md` | `docs/tasks-archive/2026-07/ULTRA-00086-20260722-b2b2c-realm-and-app.md` |
+| ULTRA-00086 | 2026-07-22 | `.claude/tasks-archive/2026-07/20260722-b2b2c-realm-and-app.md` | `docs/tasks-archive/2026-07/ULTRA-00086-20260722-b2b2c-realm-and-app.md` |
