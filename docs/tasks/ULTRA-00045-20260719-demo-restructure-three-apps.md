@@ -80,7 +80,7 @@ Consequences:
 - [x] **b2b realm + b2b-app** DONE 2026-07-20 (reviewed + hardened 2026-07-22) — first
       `OrgPolicy.Required` realm; org-selection UI in the shared login (`AuthLogin` extraction, POC
       dedicated teal `LoggedOutLayout`); active-only org hooks after the review. See
-      ULTRA-00063 (b2b realm) and `20260720-auth-frontend-composability.md`.
+      ULTRA-00063 (b2b realm) and ULTRA-00068 (auth frontend composability).
 - [x] **b2b2c realm + b2b2c-app** DONE 2026-07-22 — end-user realm (`b2b2c`, `OrgPolicy.Required`),
       `B2b2cUser`/repo (`b2b2c_users`, fixtures noorg/single/multi `@b2b2c.test` over acme/globex,
       distinct `"end-user"` role vocabulary), realm delegating to the SHARED org hooks

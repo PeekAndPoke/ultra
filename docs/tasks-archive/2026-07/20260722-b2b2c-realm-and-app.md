@@ -95,5 +95,5 @@ plan-permission grant (LOW).
   drove the shared-hooks extraction.
 - ULTRA-00044 (cross realm authz and tests) — role-collision risk (defused here via
   vocabulary) and the pending realm-boundary work for future tenant API surfaces.
-- `docs/tasks/20260720-auth-frontend-composability.md` — b2b2c re-copies the reset-route mount
+- ULTRA-00068 (auth frontend composability) — b2b2c re-copies the reset-route mount
   (third copy), strengthening the case for the deferred chrome-slot API.

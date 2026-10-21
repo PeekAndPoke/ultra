@@ -29,7 +29,7 @@ fun RootRouterBuilder.mountNav(authState: AuthState<B2b2cUserModel>) {
     }
 
     // Reset-password still uses the default page (its own chrome). A chrome-less reset widget to
-    // put inside the custom layout is a follow-up (see 20260720-auth-frontend-composability).
+    // put inside the custom layout is a follow-up (see ULTRA-00068).
     mount(Nav.auth.resetPassword) {
         ResetPasswordPage(
             state = authState,

@@ -1,4 +1,4 @@
-# Composable, brandable auth frontend (extract AuthLogin) + single-source the frontend base URL
+# ULTRA-00068: Composable, brandable auth frontend (extract AuthLogin) + single-source the frontend base URL
 
 **Status:** Part 1 DONE (2026-07-20); Part 2 TODO (deferred for discussion) — from the b2b-app review
 **Plan:** ULTRA-00045 (demo restructure three apps) (three apps share the auth frontend)
@@ -135,3 +135,7 @@ All three reviewers independently confirmed one MEDIUM (stale org-selection). Ve
 - Builds on `fef14641` (the shared org-selection UI) and ULTRA-00063 (b2b realm) (the realms whose
   frontends this brands).
 - `AuthFrontendRoutes` (commonMain) is the already-shared route contract — extend, don't fork.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00068 (was `docs/tasks/20260720-auth-frontend-composability.md`).
