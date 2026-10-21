@@ -1,4 +1,4 @@
-# Diagnose why `EnsureRepositoriesOnAppStarting` doesn't fire — via tests
+# ULTRA-00031: Diagnose why `EnsureRepositoriesOnAppStarting` doesn't fire — via tests
 
 
 
@@ -406,3 +406,7 @@ Tests: `./gradlew :funktor:core:jvmTest --tests "io.peekandpoke.funktor.core.lif
 Downstream compilation verified for `:funktor:cluster`, `:funktor:auth`, `:funktor:rest`, `:funktor:messaging`.
 (`:funktor-demo:server` has pre-existing, unrelated JWT compile errors from a concurrent auth refactor — not caused by
 this change.)
+
+## History
+
+- 2026-10-21: numbered ULTRA-00031 (was `docs/tasks-archive/2026-04/2026-04-25-lifecycle-auto-install.md`).
