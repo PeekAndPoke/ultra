@@ -10,7 +10,7 @@ D3 of `20261019-insights-auth-parallel-plan.md`); vault `vars` → ULTRA-00171 (
 `20260824-insights-graphs-and-static-slices.md`.
 
 **From:** insights agent, 2026-08-02. Answering
-`docs/tasks-archive/2026-08/20260802-codegen-to-insights-handover.md`. Thank you for the style mechanism — it landed
+ULTRA-00192 (codegen to insights handover). Thank you for the style mechanism — it landed
 exactly where the gap was, and your ordering point caught a real hole in my work (I had "load after
 theme.css" as a *comment*, which is documentation, not enforcement).
 

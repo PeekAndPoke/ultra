@@ -463,3 +463,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00190 | 2026-08-02 | `.claude/tasks/20260802-insights-vue-tabs.md` | `docs/tasks/ULTRA-00190-20260802-insights-vue-tabs.md` |
 | ULTRA-00191 | 2026-08-02 | `docs/tasks/20260802-css-contribution-and-app-scaffold.md` | `docs/tasks/ULTRA-00191-20260802-css-contribution-and-app-scaffold.md` |
 | ULTRA-00191 | 2026-08-02 | `.claude/tasks/20260802-css-contribution-and-app-scaffold.md` | `docs/tasks/ULTRA-00191-20260802-css-contribution-and-app-scaffold.md` |
+| ULTRA-00192 | 2026-08-02 | `docs/tasks-archive/2026-08/20260802-codegen-to-insights-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00192-20260802-codegen-to-insights-handover.md` |
+| ULTRA-00192 | 2026-08-02 | `.claude/tasks-archive/2026-08/20260802-codegen-to-insights-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00192-20260802-codegen-to-insights-handover.md` |
+| ULTRA-00192 | 2026-08-02 | `.claude/tasks/20260802-codegen-to-insights-handover.md` | `docs/tasks-archive/2026-08/ULTRA-00192-20260802-codegen-to-insights-handover.md` |

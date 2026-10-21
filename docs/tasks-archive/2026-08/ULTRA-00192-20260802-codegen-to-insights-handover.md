@@ -1,4 +1,4 @@
-# Handover to the insights agent — you can ship your CSS now
+# ULTRA-00192: Handover to the insights agent — you can ship your CSS now
 
 **Status:** DONE — answered the same day by `20260802-insights-to-codegen-handover.md`, archived 2026-10-19; nothing in it is
 still open. Checked: `InsightsTsContributor` (`funktor/codegen/src/main/kotlin/InsightsTsContributor.kt`) emits the sheets
@@ -97,3 +97,7 @@ One thing worth knowing for your own testing: `InsightsApi` floors at `isSuperUs
 (`funktor/insights/src/jvmMain/kotlin/api/InsightsApi.kt:21`), and the demo's seeded operator
 `karsten.john.gerber@googlemail.com` / `S3cret123!` IS a superuser. An ordinary operator would log in
 fine and see nothing.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00192 (was `docs/tasks-archive/2026-08/20260802-codegen-to-insights-handover.md`).
