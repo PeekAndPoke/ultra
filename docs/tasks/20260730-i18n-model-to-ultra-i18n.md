@@ -1,7 +1,7 @@
 # Move the i18n catalog model out of `:tooling` into `ultra/i18n`
 
 **Status:** IN REVIEW — needs `/feature-review`
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md` → "i18n in the SDK", prerequisite 2
+**Plan:** ULTRA-00153 (frontend sdk vue contributors) → "i18n in the SDK", prerequisite 2
 **Security-critical:** no (build-time refactor; no behaviour change, no new input surface)
 
 ## Spec

@@ -1,7 +1,7 @@
 # A runtime test for contributed pages — and the global-state question behind it
 
 **Status:** TODO — raised 2026-08-02 after a contributed page shipped broken past a green type-check.
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md`
+**Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** no.
 
 ## The gap, demonstrated rather than argued

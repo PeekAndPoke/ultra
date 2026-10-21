@@ -893,7 +893,7 @@ type-check layer catches a class of sabotage the runtime checks would have to be
 **2026-07-30 — frontend-SDK requirements folded in; two design questions settled.**
 
 The maintainer settled the frontend direction (Vue, generated on the fly, nothing published) in
-`docs/tasks/20260730-frontend-sdk-vue-contributors.md`, then raised two doubts about it. Both are
+ULTRA-00153 (frontend sdk vue contributors), then raised two doubts about it. Both are
 now decided and recorded above and in the design doc:
 
 1. **Config emission → an ownership boundary, not a merge mechanism.** The worry was that regenerating
@@ -1040,7 +1040,7 @@ Run 2026-07-30 over `git diff 8e86aed5..HEAD -- ultra/codegen ultra/slumber funk
 ### One finding did NOT survive verification
 
 **The `.bufferedReader()` platform-charset claim is WRONG** — it originated in
-`20260730-frontend-sdk-vue-contributors.md`, was repeated into this doc, and was handed to the
+ULTRA-00153 (frontend sdk vue contributors), was repeated into this doc, and was handed to the
 reviewers as established fact. `InputStream.bufferedReader(charset: Charset = Charsets.UTF_8)`
 (kotlin-stdlib 2.4.10, `jvmMain/kotlin/io/IOStreams.kt:87`) — the default IS UTF-8. Only
 `InputStreamReader(stream)` without a charset takes the platform default, and that is not what the
@@ -1252,7 +1252,7 @@ work, done once, for six-plus types instead of one.
 
 The maintainer settled the frontend direction: **Vue + Tailwind, nothing published to npm, the framework
 generates the whole frontend SDK on the fly — API clients AND prebuilt components and pages.** Design
-and rationale in `docs/tasks/20260730-frontend-sdk-vue-contributors.md`; only the parts that land in
+and rationale in ULTRA-00153 (frontend sdk vue contributors); only the parts that land in
 `ultra/codegen` are summarised here.
 
 Nothing below contradicts the phased contract — all four additions are keyed inserts, so contributor

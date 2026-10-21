@@ -23,7 +23,7 @@ finishing the iteration.** Keep it short — it is read every loop, so it must s
 
 Full context lives in ULTRA-00146 (ts sdk codegen) (design, locked decisions, and the
 **Review record** listing every confirmed finding). Do NOT read that whole file every iteration —
-grep the section you need. The Vue follow-on is `20260730-frontend-sdk-vue-contributors.md`.
+grep the section you need. The Vue follow-on is ULTRA-00153 (frontend sdk vue contributors).
 
 ## RULE ZERO — the build lock. Read `.claude/BUILD-LOCK.md` BEFORE EVERY GRADLE COMMAND
 

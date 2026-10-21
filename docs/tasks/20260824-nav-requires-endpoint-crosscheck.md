@@ -1,7 +1,7 @@
 # Cross-check nav requirements against the endpoints a profile actually emitted
 
 **Status:** TODO — raised by `/feature-review` 2026-08-24 (reviewers 1 and 2, independently).
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md`
+**Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Source feature:** `docs/tasks/20260809-acl-aware-navigation.md`
 **Security-critical:** no. The gate itself stays CORRECT under a profile — this is a missing build
 guard, not a wrong access decision.

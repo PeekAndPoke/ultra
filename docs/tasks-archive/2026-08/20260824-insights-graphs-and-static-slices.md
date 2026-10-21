@@ -4,7 +4,7 @@
 (track T1, gate PASS round 2, merged `a578ef0a`). Created 2026-08-24 from maintainer decisions on
 `docs/tasks/20260802-insights-vue-tabs.md`'s gap inventory. No docs follow-up yet: insights is still moving (the
 production gate, T4's Kraft GUI) — revisit when it settles. Round-2 MINORs: `docs/tasks/20261019-insights-vue-round2-minors.md`.
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md`
+**Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** yes — it adds REST endpoints that expose the service graph and the database
 schema. Both are superuser-only today only because they are inside a record; as endpoints they need
 their own floor. Red-team follow-up required.

@@ -283,7 +283,7 @@ either, so there is no silent `{"value": …}` fallback.
 `InsightsMapper.kt` and `InsightsFull`'s `convertValue`. Gated on Slumber being able to describe every
 collector `Data` class: `AppConfigCollector`'s two `Any` fields, `HttpMethod`, `HttpStatusCode`,
 `DebugInfo`, `QueryProfiler.Entry.Impl`, `UserRecord`. These are the plan's six Slumber-compat blockers
-(`20260730-frontend-sdk-vue-contributors.md`).
+(ULTRA-00153 (frontend sdk vue contributors)).
 
 **Delete the interim redaction here** — see below.
 

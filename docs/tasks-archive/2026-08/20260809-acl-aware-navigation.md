@@ -1,7 +1,7 @@
 # ACL-aware navigation for contributed pages
 
 **Status:** DONE — 2026-08-24, gate PASSED. Ready to archive.
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md`
+**Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** no. The client-side ACL is ADVISORY — the server is the authority — so this is
 about telling the user the truth, not about enforcement. It is still access-shaped, so it was
 mutation-tested; see below.
@@ -220,5 +220,5 @@ Asked the test question — "would I be surprised if this API changed next week?
 no. Documenting it now buys a rewrite and a reader who trusted the stale version.
 
 The obligation is not lost: the governing plan
-(`docs/tasks/20260730-frontend-sdk-vue-contributors.md`, "Follow-ups") already carries a DOCS task
+(ULTRA-00153 (frontend sdk vue contributors), "Follow-ups") already carries a DOCS task
 for the contributor extension point as a whole, which is the right granularity for it.

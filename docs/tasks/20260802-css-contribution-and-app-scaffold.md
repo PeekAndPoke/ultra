@@ -2,7 +2,7 @@
 
 **Status:** DONE — 2026-08-02. Both parts landed; the app signs in and the insights page is
 reachable. `/feature-review` NOT yet run — see the review record below.
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md` (the contributor model)
+**Plan:** ULTRA-00153 (frontend sdk vue contributors) (the contributor model)
 **Security-critical:** the app scaffold is — it holds a session and gates pages. The CSS mechanism
 is not (dev-time emission).
 

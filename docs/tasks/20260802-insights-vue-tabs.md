@@ -4,7 +4,7 @@
 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
 below (icons, highlighting, sort, FQNs, `vars`) and step 10 (delete `reference/` — kept until T4 ports from it). The
 round-2 MINORs are DONE (`docs/tasks-archive/2026-10/20261019-insights-vue-round2-minors.md`, merged `348c66bc`)
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md` → "Insights specifics"
+**Plan:** ULTRA-00153 (frontend sdk vue contributors) → "Insights specifics"
 **Spec:** `funktor/insights/reference/TAB-SPECS.md` — all ten tabs, wire shapes read from a real record
 **Security-critical:** yes. Superuser-only data, rendered from attacker-controlled strings.
 

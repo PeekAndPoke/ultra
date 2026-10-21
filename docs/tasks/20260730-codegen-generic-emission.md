@@ -21,7 +21,7 @@ Three open problems trace back to monomorphization, so this is not tidiness:
    `createBareType()`, filling parameters with `Any`, so `Storable<Organisation>` and `Storable<Talk>`
    become the SAME TypeScript type, both carrying `unknown`. The schema still parses — `unknown`
    accepts anything — so it is silent.
-2. **`expects<T>(tsName)`** in `20260730-frontend-sdk-vue-contributors.md` exists ONLY because
+2. **`expects<T>(tsName)`** in ULTRA-00153 (frontend sdk vue contributors) exists ONLY because
    `PageOf<Lock>` → `PageOfLock` is a computed name a component author has to guess.
 3. Declaration count grows with instantiation count.
 
@@ -202,6 +202,6 @@ constructed the same top three findings. Fixed in `72937b71` and `caa4cd01`.
 
 - [ ] **`expects<T>(tsName)` now looks unnecessary.** A generated name is the class's simple name and
       nothing else, so a component author no longer has to guess at `PageOfLock`. Confirm and delete the
-      proposal from `20260730-frontend-sdk-vue-contributors.md`.
+      proposal from ULTRA-00153 (frontend sdk vue contributors).
 - [x] Update the plan doc's locked-decisions table and the DOCS follow-up: generic emission changes the
       public shape of every generated SDK.

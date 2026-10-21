@@ -6,7 +6,7 @@
 the server mounts them. Next on resume: re-take the generated-TS baseline FROM MASTER (the implementer's copy was not
 kept), regenerate on the branch, `diff -r` (must be empty or explained), run the module tests, then the pages.
 Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md`
+**Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Counterpart:** `docs/tasks/20260802-insights-vue-tabs.md` — the Vue implementation and its full
 gap inventory against the old kotlinx.html GUI.
 **Security-critical:** yes. Same data, same attacker-controlled strings, same superuser-only floor.

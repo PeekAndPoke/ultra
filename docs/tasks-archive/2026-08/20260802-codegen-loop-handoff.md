@@ -2,7 +2,7 @@
 
 **Status:** DONE — loop ENDED 2026-08-02 ("The SDK side of a login screen is COMPLETE" below), archived 2026-10-19. A loop-state
 log, not a task. What it left open was resolved or re-homed afterwards: both "needs the maintainer" items were decided the
-same day in `docs/tasks/20260730-frontend-sdk-vue-contributors.md` — "DECIDED 2026-08-02 — `--out` is the APP ROOT"
+same day in ULTRA-00153 (frontend sdk vue contributors) — "DECIDED 2026-08-02 — `--out` is the APP ROOT"
 (unblocks `out.scaffold` / `out.requires`; the remaining build work is that doc's unticked boxes, `:153` and `:927`) and
 "DECIDED 2026-08-02 — the CONSUMING APPS are the verification harness" (settles `.vue` verification: no second toolchain).
 Backlog item 4, the insights contributor, exists (`funktor/codegen/src/main/kotlin/InsightsTsContributor.kt`; its pages are

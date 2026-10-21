@@ -14,7 +14,7 @@ package io.peekandpoke.ultra.codegen.ts
  * **This is arithmetic on a path, not a source transform.** The generator builds its own import lines
  * from a module string plus a name list, so the specifier is DATA. That is why this is safe where
  * rewriting `@sdk/…` inside hand-written `.vue` source was rejected as unsound — see
- * `docs/tasks/20260730-frontend-sdk-vue-contributors.md`. A path alias would remove the need
+ * ULTRA-00153 (frontend sdk vue contributors). A path alias would remove the need
  * entirely and remains the long-term answer.
  */
 object TsModulePaths {

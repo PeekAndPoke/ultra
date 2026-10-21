@@ -39,4 +39,4 @@ longer carries. That is the file the Vue work needs; the sources below are the e
 | `InsightsCollectorData.kt` | the interface with its `menu` / `content` / `inlineScript` render helpers |
 | `assets/*` | the JS/CSS the bar and details pages loaded |
 
-Design context: `docs/tasks/20260730-frontend-sdk-vue-contributors.md` → "Insights specifics".
+Design context: ULTRA-00153 (frontend sdk vue contributors) → "Insights specifics".

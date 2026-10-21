@@ -1,4 +1,4 @@
-# Frontend SDK — Vue components and pages via codegen contributors
+# ULTRA-00153: Frontend SDK — Vue components and pages via codegen contributors
 
 **Status:** IN PROGRESS — design agreed 2026-07-30, refined same day (config ownership + profiles),
 amended 2026-08-02 (styling). **The mechanism is built and gated; the port it exists for is not
@@ -978,3 +978,7 @@ without the marker; the sentinel test proving the app root survives regeneration
 
 - [ ] **DOCS task** — required on archive. Adds a public extension point (Vue contributors, profiles,
       registries) and a new consumer-facing wiring step (the alias). Docs-site page + LLM mirror.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00153 (was `docs/tasks/20260730-frontend-sdk-vue-contributors.md`).

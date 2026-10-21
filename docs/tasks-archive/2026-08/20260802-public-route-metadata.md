@@ -9,7 +9,7 @@ runtime still lacks the Vue binding layer, and two design questions about `AuthS
 Writing a page against a surface whose first real consumer has not been built would buy a rewrite and
 a reader who trusted the stale version. **Revisit when the login screen exists** — one TS-SDK page
 then, not a fragment per feature.
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md` → the auth/login family
+**Plan:** ULTRA-00153 (frontend sdk vue contributors) → the auth/login family
 **Security-critical:** yes — it widens what an anonymous client offers to try. See the scope note.
 
 Follows `docs/tasks/20260801-sdk-route-access-control.md` (the `route()` wrapper and `ApiAcl`).

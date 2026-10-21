@@ -9,7 +9,7 @@ the surface is SETTLED, and this one is not: the Vue tabs are unbuilt, and D-M6 
 *"decide before the tab registry is built"* — the open-envelope discovery/fallback question can still
 change the shape apps see. Documenting it now would buy a rewrite and a reader who trusted the stale
 version. Revisit when the tab registry lands.
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md` → Ordering **steps 4 and 5**
+**Plan:** ULTRA-00153 (frontend sdk vue contributors) → Ordering **steps 4 and 5**
 **Security-critical:** yes (superuser-only admin surface) → red-team follow-up task required
 
 ## Scope
@@ -223,7 +223,7 @@ Ordered by value. All of it is genuinely useful and none of it needs the maintai
    still uses `Map<*, *>`. Jackson does not care, but it is on the plan's blocker list.
 4. **Tidy what the GUI removal left behind** — e.g. `DevtoolsRequestHistoryPage` now has an empty `td { }`
    whose `th { }` header is also empty; either remove both or leave a comment saying why the column stays.
-5. **Update the plan doc** (`20260730-frontend-sdk-vue-contributors.md`) with what actually landed, so
+5. **Update the plan doc** (ULTRA-00153 (frontend sdk vue contributors)) with what actually landed, so
    steps 4–5 are marked done rather than pending.
 
 ### Blockers collected

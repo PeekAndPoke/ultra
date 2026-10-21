@@ -1,7 +1,7 @@
 # Group generated API clients under `api/`
 
 **Status:** DONE — 2026-08-09. `/feature-review` not run; see the review record.
-**Plan:** `docs/tasks/20260730-frontend-sdk-vue-contributors.md`
+**Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** no — emitted layout only, no change to what is served or who may call it.
 
 ## Why
