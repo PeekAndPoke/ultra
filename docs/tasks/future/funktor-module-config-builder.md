@@ -51,7 +51,7 @@ funktor(config) {
 - Each `FunktorXBuilder` exposes a `validate(): List<String>` (or contributes a `RouteBootCheck` /
   an app-start hook) that runs during boot and aggregates into one actionable `AppStartException`.
   Reuse the part-3 `ValidateRoutesOnAppStarting` aggregation + the actionable-message formatting
-  (`20260722-actionable-boot-error-messages.md`).
+  (ULTRA-00092 (actionable boot error messages)).
 - **saas invariant:** if `funktorSaas {}` is composed but no backend is selected → boot fails with
   "saas is loaded but no storage backend was selected — call useKarango() or useMonko()".
 - Generalise: this subsumes the **incoming-converter convertibility** boot check (any `Stored<T>`
@@ -72,4 +72,4 @@ degenerate misconfiguration (mirrors the already-accepted `OrgAwareParam`-withou
 
 - ULTRA-00089 (stored param migration) (part 4) — where the gap surfaced.
 - `20260722-route-check-followups.md` — the incoming-converter boot check to fold in here.
-- `20260722-actionable-boot-error-messages.md` — the boot-error formatting to reuse.
+- ULTRA-00092 (actionable boot error messages) — the boot-error formatting to reuse.

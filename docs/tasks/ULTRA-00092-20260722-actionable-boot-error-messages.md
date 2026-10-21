@@ -1,4 +1,4 @@
-# Make all boot-time / startup error messages actionable (framework-wide sweep)
+# ULTRA-00092: Make all boot-time / startup error messages actionable (framework-wide sweep)
 
 **Status:** TODO (created 2026-07-22)
 **Type:** dx / hardening
@@ -65,3 +65,7 @@ the same pattern to any other aggregated multi-error boot message discovered in 
 - Pure message-text changes are low-risk (no behavior change) — proportionate review, not the full
   3-agent gate, unless a message change touches logic.
 - Pairs with the docs follow-up ULTRA-00091 (docs auth dsl and floor).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00092 (was `docs/tasks/20260722-actionable-boot-error-messages.md`).

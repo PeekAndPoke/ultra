@@ -115,7 +115,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 - [x] `AuthChainBootCheck : RouteBootCheck` — the empty-chain + `validateChain` checks. *(`AuthChainBootCheck.kt:14`)*
 - [x] Rewrite `ValidateRoutesOnAppStarting` as a runner injecting `Lazy<List<RouteBootCheck>>`;
       keep the actionable aggregated `AppStartException` header + the multiline-indent formatting fix
-      (see `20260722-actionable-boot-error-messages.md`).
+      (see ULTRA-00092 (actionable boot error messages)).
       *(`ValidateRoutesOnAppStarting.kt:16` runner, `:33` `validateOrThrow`, `:58` `indentEntry`)*
 - [x] Register both checks in the rest module (`funktor/rest/.../index_jvm.kt`). *(`index_jvm.kt:45-46`)*
 
@@ -196,7 +196,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 
 - Depends on parts 1+2 (ULTRA-00088 (authorize rule builder), ULTRA-00087 (apiroutes auth floor)).
 - Prerequisite of part 4 (ULTRA-00089 (stored param migration)) — the oracle goes live without this.
-- Pairs with `20260722-actionable-boot-error-messages.md` (the runner owns the aggregated boot error;
+- Pairs with ULTRA-00092 (actionable boot error messages) (the runner owns the aggregated boot error;
   fold the multiline-indent fix here).
 - FOLLOW-UP: `20260722-route-check-followups.md` — migrate `validateUriPattern` onto `RouteBootCheck`,
   the entity-`OrgAware` linter, and branch-level (sub-org) isolation.
