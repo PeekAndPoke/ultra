@@ -1,4 +1,4 @@
-# Exception architecture: separate client-safe message from diagnostic detail
+# ULTRA-00055: Exception architecture: separate client-safe message from diagnostic detail
 
 **Status:** TODO — design decision first, then implement
 **Plan:** umbrella for ULTRA-00054 (error response disclosure audit)
@@ -203,3 +203,7 @@ identifier looks like the strongest reuse candidate.
 Fixes applied: ...
 
 **Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00055 (was `docs/tasks/20260720-exception-disclosure-architecture.md`).

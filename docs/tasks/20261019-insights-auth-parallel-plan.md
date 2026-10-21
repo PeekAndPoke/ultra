@@ -96,7 +96,7 @@ ultra-only, the 7 open questions; do NOT adopt before the maintainer decides).
 - **D3** (T1) Vue component tests: **add vitest + happy-dom via pnpm** (maintainer 2026-10-19), versions looked up
   online and pinned.
 - **D4** query-vars (`20260731-query-vars-in-insights.md`) — not blocking: both UIs keep not rendering `vars`.
-- **D5** (T5) Error disclosure: choose A/B/C (`error-disclosure/20260720-exception-disclosure-architecture.md` §3 has
+- **D5** (T5) Error disclosure: choose A/B/C (ULTRA-00055 (exception disclosure architecture) §3 has
   a recommendation).
 - **D6** (T6) SSO email verification policy A/B/C.
 - **D7** (T7) Session revocation: the doc's five design questions.

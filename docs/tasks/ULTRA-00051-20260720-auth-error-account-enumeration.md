@@ -2,7 +2,7 @@
 
 **Status:** TODO
 **Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 7).
-Applies the design in `docs/tasks/20260720-exception-disclosure-architecture.md` (default-deny at
+Applies the design in ULTRA-00055 (exception disclosure architecture) (default-deny at
 the render boundary, `HasClientMessage` opt-in) to `AuthError` specifically. That design is settled —
 this task does not re-open it.
 **Security-critical:** yes
