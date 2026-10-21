@@ -1,6 +1,7 @@
 # ULTRA-00107: Karango: `@JvmInline value class` filter support
 
-**Status:** DONE 2026-07-24 — **needed ZERO production change** (works as-is). See below.
+> **Status (2026-07-24): DONE.** 2026-07-24 — **needed ZERO production change** (works as-is). See below.
+
 **Enabled by:** ULTRA-00105 (slumber value class support) (DONE).
 **Type:** framework (verification + regression tests only).
 

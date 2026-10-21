@@ -1,9 +1,10 @@
 # ULTRA-00091: Docs follow-up: authorize DSL + ApiRoutes floor + part-3 checks (auth-hardening quartet)
 
-**Status:** PARTIAL — rechecked against `docs-site/` on 2026-10-19. The floor and the `authorize {}` DSL ARE documented
-(commit `e2d6553b`, 2026-07-28). The part-3 mechanism and part 4 are NOT. COLLECTOR for the remaining documentation pass
-(do not write the prose here, capture what is left + anchors). Created 2026-07-22 per the "framework change → doc task"
-standing rule.
+> **Status (2026-10-19): PAUSED.** PARTIAL — rechecked against `docs-site/` on 2026-10-19. The floor and the `authorize {}` DSL ARE documented
+> (commit `e2d6553b`, 2026-07-28). The part-3 mechanism and part 4 are NOT. COLLECTOR for the remaining documentation pass
+> (do not write the prose here, capture what is left + anchors). Created 2026-07-22 per the "framework change → doc task"
+> standing rule.
+
 **Type:** documentation
 **Triggering changes:** `52512bd4` (part 1: block-style authorize DSL), `2b6d274d` (part 2: mandatory ApiRoutes floor), and
 parts 3–4, which landed 2026-07-23 (two-phase auth + pluggable route checks + org-isolation + opt-in `ConsistentParam`;

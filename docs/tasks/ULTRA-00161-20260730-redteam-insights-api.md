@@ -1,6 +1,7 @@
 # ULTRA-00161: Red team — insights REST API and collector data
 
-**Status:** COLLECTED — not executed. Sweep in a dedicated penetration-test session.
+> **Status (2026-10-19): NOT STARTED.** COLLECTED — not executed. Sweep in a dedicated penetration-test session.
+
 **Feature:** ULTRA-00160 (insights rest api)
 
 Scenarios to attempt against the superuser-gated insights API and the data it exposes. Per the project

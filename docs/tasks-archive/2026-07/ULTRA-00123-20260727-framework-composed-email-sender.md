@@ -1,11 +1,12 @@
 # ULTRA-00123: The framework composes the email sender chain; the app supplies only a provider
 
-**Status:** DONE 2026-07-27 (implemented + gate passed same day; archived 2026-10-19). Archive check 2026-10-19: the composed
-chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmailSender` under
-`funktor/messaging/src/jvmMain/kotlin/senders/`, `useSender` / `onAfterSend` in `index_jvm.kt`); the symbols it deleted
-(`canDeliver`, `suppressDeliveryInTestMode`, `TestOutbox`) occur nowhere; its specs are in the tree and green in the last
-recorded run. Residuals live in ULTRA-00124 (messaging followups) and
-ULTRA-00125 (redteam messaging); the docs follow-up is ULTRA-00122 (docs messaging test seam).
+> **Status (2026-07-27): DONE.** 2026-07-27 (implemented + gate passed same day; archived 2026-10-19). Archive check 2026-10-19: the composed
+> chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmailSender` under
+> `funktor/messaging/src/jvmMain/kotlin/senders/`, `useSender` / `onAfterSend` in `index_jvm.kt`); the symbols it deleted
+> (`canDeliver`, `suppressDeliveryInTestMode`, `TestOutbox`) occur nowhere; its specs are in the tree and green in the last
+> recorded run. Residuals live in ULTRA-00124 (messaging followups) and
+> ULTRA-00125 (redteam messaging); the docs follow-up is ULTRA-00122 (docs messaging test seam).
+
 **Plan:** `/Users/gerk/.claude/plans/indexed-stargazing-spring.md`
 **Supersedes:** the guard design in ULTRA-00121 (email e2e test seam)
 **Security-critical:** yes — this is what makes "a test run never reaches a real provider" true.

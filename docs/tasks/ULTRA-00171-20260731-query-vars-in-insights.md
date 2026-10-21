@@ -1,7 +1,8 @@
 # ULTRA-00171: Query bind VALUES in insights: record them, their shape, or nothing?
 
-**Status:** OPEN — maintainer decision **D4** of ULTRA-00221 (insights auth parallel plan), not blocking. Rewritten
-2026-10-19 (round-2 MINORs): the earlier text predated D1 and T1 and was wrong on four facts.
+> **Status (2026-10-19): NOT STARTED.** OPEN — maintainer decision **D4** of ULTRA-00221 (insights auth parallel plan), not blocking. Rewritten
+> 2026-10-19 (round-2 MINORs): the earlier text predated D1 and T1 and was wrong on four facts.
+
 **Security-critical:** yes — data exposure, not injection
 **Found:** 2026-07-31, while removing Jackson from the query printers
 

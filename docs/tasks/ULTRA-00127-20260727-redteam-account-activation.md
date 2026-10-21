@@ -1,7 +1,8 @@
 # ULTRA-00127: Red-team scenarios: account activation
 
-**Status:** COLLECTED 2026-07-27 — **do NOT execute during feature work.** These are for a dedicated
-penetration-test session.
+> **Status (2026-07-27): NOT STARTED.** COLLECTED 2026-07-27 — **do NOT execute during feature work.** These are for a dedicated
+> penetration-test session.
+
 **Feature:** ULTRA-00126 (account activation) (commit `31667449`)
 **Related:** ULTRA-00117 (redteam value class emailaddress) §1–2 (SSO auto-link),
 ULTRA-00125 (redteam messaging)

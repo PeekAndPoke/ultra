@@ -1,8 +1,6 @@
 # ULTRA-00016: Frontend JWT Auto-Refresh & Session Lifecycle
 
-**Status:** DONE (2026-04-06) — Implemented in the `funktor-apiacl-frontend-integration` branch.
-
-
+> **Status (2026-04-06): DONE.** (2026-04-06) — Implemented in the `funktor-apiacl-frontend-integration` branch.
 
 ## Commits & files changed
 

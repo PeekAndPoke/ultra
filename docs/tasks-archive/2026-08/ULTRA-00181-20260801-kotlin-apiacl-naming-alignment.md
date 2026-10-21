@@ -1,8 +1,9 @@
 # ULTRA-00181: Align the Kotlin `ApiAcl` vocabulary with the TypeScript SDK
 
-**Status:** DONE (archived 2026-10-19) — implemented 2026-08-01 alongside the TypeScript side; one implementation
-reviewer (maintainer, 2026-10-19), its MAJOR and MINORs fixed. Docs were updated in the same change, so no docs
-follow-up task. One design question parked for the maintainer (below).
+> **Status (2026-10-19): DONE.** (archived 2026-10-19) — implemented 2026-08-01 alongside the TypeScript side; one implementation
+> reviewer (maintainer, 2026-10-19), its MAJOR and MINORs fixed. Docs were updated in the same change, so no docs
+> follow-up task. One design question parked for the maintainer (below).
+
 **Plan:** none — a standalone rename that falls out of
 ULTRA-00182 (sdk route access control)
 **Security-critical:** no — a rename of an advisory client-side lookup; nothing here enforces

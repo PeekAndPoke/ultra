@@ -1,6 +1,7 @@
 # ULTRA-00144: Mutator: specs are JVM-only, so JS and native are unverified
 
-**Status:** TODO — pick up when the `mutator` package is reviewed
+> **Status (2026-07-29): NOT STARTED.** pick up when the `mutator` package is reviewed
+
 **Plan:** noticed while simplifying `Observable` in `ultra/common` (2026-07-29)
 **Security-critical:** no
 

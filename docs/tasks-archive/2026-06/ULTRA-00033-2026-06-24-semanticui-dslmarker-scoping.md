@@ -1,6 +1,6 @@
 # ULTRA-00033: Semantic UI DSL: fix @DslMarker scoping + remove dead code — DONE (2026-06-24)
 
-
+> **Status (2026-06-24): DONE.**
 
 ## Commits & files changed
 

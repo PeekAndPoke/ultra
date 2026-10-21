@@ -4,12 +4,12 @@
 route rules can only STRENGTHEN, not an overridable default). This doc's historical references to
 `defaultAuth` describe the API as originally built; the current name is `authFloor`.
 
-**Status:** DONE (2026-07-22; archived 2026-10-19) — review loop terminated on round 3 (zero confirmed findings across
-all three reviewers). Mechanism + full 19→23-group sweep; all rounds' findings fixed; backend suites
-green. Depends on ULTRA-00088 (authorize rule builder) (DONE).
-The Spec and Test-evidence boxes below sat at 0/9 although the work shipped; ticked 2026-10-19 against the code, each with
-the evidence it was ticked on. "Green" means the last recorded run (`build/test-results` XML of 2026-10-19: `funktor:rest`
-116 tests, `funktor:all` 158, `funktor-demo:server` 47, all 0 failures) — not re-run for the archive.
+> **Status (2026-07-22): DONE.** (2026-07-22; archived 2026-10-19) — review loop terminated on round 3 (zero confirmed findings across
+> all three reviewers). Mechanism + full 19→23-group sweep; all rounds' findings fixed; backend suites
+> green. Depends on ULTRA-00088 (authorize rule builder) (DONE).
+> The Spec and Test-evidence boxes below sat at 0/9 although the work shipped; ticked 2026-10-19 against the code, each with
+> the evidence it was ticked on. "Green" means the last recorded run (`build/test-results` XML of 2026-10-19: `funktor:rest`
+> 116 tests, `funktor:all` 158, `funktor-demo:server` 47, all 0 failures) — not re-run for the archive.
 
 ## Review record (review LOOP, 2026-07-22, 3× Opus per round)
 

@@ -1,6 +1,7 @@
 # ULTRA-00139: Database.ensureIndexes / recreateIndexes return the index state
 
-**Status:** DONE (archived 2026-07-28)
+> **Status (2026-07-28): DONE.** (archived 2026-07-28)
+
 **Plan:** none — spotted while writing KDoc for `ultra/vault/src/jvmMain/kotlin/Database.kt`
 **Security-critical:** no
 

@@ -1,7 +1,8 @@
 # ULTRA-00100: Docs follow-up: org membership model (OrgMember collection + getMemberships seam)
 
-**Status:** TODO — COLLECTOR for a later documentation pass (capture what changed + anchors; do not
-write prose here). Created 2026-07-23 per the "framework change → doc task" standing rule.
+> **Status (2026-07-24): NOT STARTED.** COLLECTOR for a later documentation pass (capture what changed + anchors; do not
+> write prose here). Created 2026-07-23 per the "framework change → doc task" standing rule.
+
 **Type:** documentation
 **Triggering change:** the saas org-membership feature (ULTRA-00099 (org membership management)).
 

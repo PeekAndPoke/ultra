@@ -34,15 +34,26 @@
   paths. ultra's copy of the tool now keeps task paths only, and resolves a stale path by its unique
   file name (Repo notes in `.claude/skills/project-layout/`).
 - `ULTRA-00112` and `ULTRA-00114` (red-team value-class tickets) hold a raw NUL byte from before the migration.
-- Follow-up, not done here: convert the 231 status lines to `> **Status (date): WORD.**` (`ticket check`
-  reports them).
+- Status lines converted to `> **Status (date): WORD.** <the old status text>` (Mission-Control's request,
+  so the dashboard can read them). The old word stays in the prose. Mapping:
+  - archive: DONE, SUPERSEDED → WON'T IMPLEMENT.
+  - future/: FUTURE → NOT SCHEDULED, else IDEA.
+  - docs/tasks/: TODO, OPEN, BACKLOG, SEED, COLLECTED (red-team), none → NOT STARTED; PLANNED → DESIGNED.
+    Started but not finished (IN PROGRESS, IN REVIEW, IMPLEMENTED, CODE DONE, PARTIAL, …) → PAUSED, because the
+    project is paused.
+  - The date is the first date in the old line, else the date in an archived file's name, else the file's last
+    commit before the migration.
+  - Archived: ULTRA-00070, 00072, 00073, 00074, 00076, 00077 (DONE with a passed gate) and ULTRA-00085
+    (superseded → WON'T IMPLEMENT).
+  - For the maintainer, left PAUSED: ULTRA-00071 and ULTRA-00191 (DONE, no gate named), ULTRA-00195 (DONE,
+    `/feature-review` not run), ULTRA-00129 and ULTRA-00158 (IMPLEMENTED), ULTRA-00155 (CODE DONE, needs review).
 
 ## Test evidence
 
 - [x] `:ultra:codegen:test` 325/0, `:funktor:codegen:test` 174/0 after the resource edits; the resources
       did not change after that run.
 - [x] Every changed line in `*.kt`, `*.kts`, `*.ts` and `*.vue` is a comment (diff against `e44c28c3`).
-- [x] `ticket check`: 232 tickets, no reference problems; only the 231 status lines.
+- [x] `ticket check`: 232 tickets, 0 problems.
 - [x] docs-lint: the same 5 broken links before and after, all older than the migration.
 - [x] The tool's own tests: 18/18 after both patches.
 

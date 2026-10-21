@@ -1,6 +1,7 @@
 # ULTRA-00204: Router click interception: respect anchors, route only relative same-host links
 
-**Status:** DONE (archived 2026-09-28)
+> **Status (2026-09-28): DONE.** (archived 2026-09-28)
+
 **Plan:** — (bug report, 2026-09-28)
 **Security-critical:** no
 

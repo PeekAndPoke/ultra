@@ -1,5 +1,7 @@
 # ULTRA-00009: Audit: Karango — Issues Report
 
+> **Status (2026-03-31): DONE.**
+
 **Date:** 2026-03-30
 **Auditor:** Code audit agent (Wave 1)
 **Module:** karango/core (~183 source files, 145 test files) + karango/ksp

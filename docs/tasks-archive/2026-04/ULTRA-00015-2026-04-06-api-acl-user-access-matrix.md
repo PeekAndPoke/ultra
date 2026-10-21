@@ -1,6 +1,6 @@
 # ULTRA-00015: User-Specific API Access Matrix (ApiAcl)
 
-
+> **Status (2026-04-06): DONE.**
 
 ## Commits & files changed
 

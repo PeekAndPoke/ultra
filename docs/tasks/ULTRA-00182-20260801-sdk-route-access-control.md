@@ -1,6 +1,7 @@
 # ULTRA-00182: Route access control in the generated TypeScript SDK
 
-**Status:** IN REVIEW — implemented 2026-08-01; gate run, findings fixed, awaiting maintainer sign-off
+> **Status (2026-08-01): PAUSED.** IN REVIEW — implemented 2026-08-01; gate run, findings fixed, awaiting maintainer sign-off
+
 **Plan:** ULTRA-00146 (ts sdk codegen) → Phase 4 / Vue-contributors family
 **Security-critical:** yes — see the scope note below, it is narrower than it looks
 

@@ -1,7 +1,8 @@
 # ULTRA-00083: Functional (VDom) component review & hardening
 
-**Status:** FUTURE — not scheduled. **Blocks** the functional-component parts of the forms DOM-tests
-work. Deferred while finishing i18n.
+> **Status (2026-07-22): NOT SCHEDULED.** FUTURE — not scheduled. **Blocks** the functional-component parts of the forms DOM-tests
+> work. Deferred while finishing i18n.
+
 **Area:** kraft functional/VDom components + their delegates/remembered-value mechanics.
 
 ## Why

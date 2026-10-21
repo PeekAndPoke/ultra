@@ -1,6 +1,7 @@
 # ULTRA-00103: Vault: startup hook-consistency checks / auto-attach hooks
 
-**Status:** FUTURE — not scheduled.
+> **Status (2026-07-27): NOT SCHEDULED.** FUTURE — not scheduled.
+
 **Area:** ultra:vault (repositories, hooks), app startup validation.
 
 ## Idea (user, 2026-07-23)

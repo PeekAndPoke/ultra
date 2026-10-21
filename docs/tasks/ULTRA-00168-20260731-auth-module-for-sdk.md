@@ -1,7 +1,8 @@
 # ULTRA-00168: Auth module — what it must provide for the generated TypeScript SDK
 
-**Status:** SEED — written by the codegen agent for whoever owns `funktor/auth`. Complete it; do not
-assume it is finished.
+> **Status (2026-08-02): NOT STARTED.** SEED — written by the codegen agent for whoever owns `funktor/auth`. Complete it; do not
+> assume it is finished.
+
 **Counterpart:** ULTRA-00166 (sdk auth integration) (the SDK side, same day).
 **Security-critical:** yes — sessions, tokens, JWT claims. Red-team follow-up required.
 

@@ -1,7 +1,8 @@
 # ULTRA-00222: Activation hardening: pre-registration takeover, zero-click activation, resend faucet
 
-**Status:** DONE 2026-10-20 — gate PASS in round 4 (`reviewer-top` ×3, clean); round-4 MINORs fixed with a scoped
-delta check (one MAJOR test gap closed, `7780e5dc`); merged to master `ed8d3b38`, full suite green. Ships in 0.114.0.
+> **Status (2026-10-20): DONE.** 2026-10-20 — gate PASS in round 4 (`reviewer-top` ×3, clean); round-4 MINORs fixed with a scoped
+> delta check (one MAJOR test gap closed, `7780e5dc`); merged to master `ed8d3b38`, full suite green. Ships in 0.114.0.
+
 **Docs:** NO docs task yet — the sign-up/activation surface changes again in ULTRA-00231 (email first signup) (next
 auth task, after 0.114.0), so documenting it now means rewriting it next week. The docs follow-up box below moves into
 that task; the 0.114.0 `CHANGELOG.md` entry carries the breaking API and the upgrade traps meanwhile.

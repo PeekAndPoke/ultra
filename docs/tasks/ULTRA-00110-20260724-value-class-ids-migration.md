@@ -1,10 +1,11 @@
 # ULTRA-00110: Migration: wrap ids in `@JvmInline value class`es (RealmId pilot → the rest)
 
-**Status:** IN PROGRESS — Steps 1–4 DONE (2026-07-25/26), Step 5 (`Slug`) and the standing rule OPEN (rechecked 2026-10-19).
-In the tree: `RealmId` (`funktor/auth/src/commonMain/kotlin/model/RealmId.kt:24`), `UserId`
-(`ultra/security/src/commonMain/kotlin/user/UserId.kt:35`), `OrgId` (`OrgId.kt:31`) and `EmailAddress` (`EmailAddress.kt:56`).
-The Step 2/3 task docs are archived in `docs/tasks-archive/2026-07/`; the Step 4 doc,
-ULTRA-00119 (value class emailaddress), is still IN REVIEW, awaiting the maintainer's sign-off. Still open:
+> **Status (2026-07-25): PAUSED.** IN PROGRESS — Steps 1–4 DONE (2026-07-25/26), Step 5 (`Slug`) and the standing rule OPEN (rechecked 2026-10-19).
+> In the tree: `RealmId` (`funktor/auth/src/commonMain/kotlin/model/RealmId.kt:24`), `UserId`
+> (`ultra/security/src/commonMain/kotlin/user/UserId.kt:35`), `OrgId` (`OrgId.kt:31`) and `EmailAddress` (`EmailAddress.kt:56`).
+> The Step 2/3 task docs are archived in `docs/tasks-archive/2026-07/`; the Step 4 doc,
+> ULTRA-00119 (value class emailaddress), is still IN REVIEW, awaiting the maintainer's sign-off. Still open:
+
 - **Step 5 `Slug`** — `Organisation.slug` and `Branch.slug` are still `String` (`funktor/saas/src/jvmMain/kotlin/domain/Organisation.kt:17,29`),
   as are the API models (`OrgModel.kt:25,35`, `OrgsApiClient.kt:20`); `Slugs` is only a normalizer. The denylist-vs-allowlist
   question below has to be settled first.

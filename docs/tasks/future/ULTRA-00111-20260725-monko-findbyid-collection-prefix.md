@@ -1,8 +1,8 @@
 # ULTRA-00111: Monko `findById` silently coerces a foreign-collection `_id` — Karango does not
 
-**Status:** IDEA / not scheduled. Surfaced 2026-07-25 by the security review of
-ULTRA-00113 (value class userid). **Pre-existing** — not introduced by that work, and
-**not exploitable today** (see the guards below).
+> **Status (2026-07-25): IDEA.** / not scheduled. Surfaced 2026-07-25 by the security review of
+> ULTRA-00113 (value class userid). **Pre-existing** — not introduced by that work, and
+> **not exploitable today** (see the guards below).
 
 ## The asymmetry
 

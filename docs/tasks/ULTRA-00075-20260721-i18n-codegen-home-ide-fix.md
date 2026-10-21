@@ -1,6 +1,7 @@
 # ULTRA-00075: Fix: i18n codegen dual-source-root (IDE unresolved symbols)
 
-**Status:** TODO (diagnosed 2026-07-21) — cosmetic, IDE-only; build is green
+> **Status (2026-07-21): NOT STARTED.** (diagnosed 2026-07-21) — cosmetic, IDE-only; build is green
+
 **Plan:** follow-up to S2/S3 (ULTRA-00069 (i18n l10n foundation))
 **Security-critical:** no
 

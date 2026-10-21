@@ -1,6 +1,7 @@
 # ULTRA-00150: Red-team: log forging and log-pipeline abuse via `ultra/log`
 
-**Status:** COLLECTED — do NOT execute as part of normal feature work
+> **Status (2026-07-30): NOT STARTED.** COLLECTED — do NOT execute as part of normal feature work
+
 **Plan:** raised from ULTRA-00149 (log scan findings) → L1
 **Security-critical:** yes
 

@@ -4,6 +4,8 @@ Resolved items are marked DONE with the date. Keep this file as a live list, not
 
 # ULTRA-00001: Missing imports for referenced types in docs — DONE 2026-07-28
 
+> **Status (2026-07-28): NOT STARTED.**
+
 Problem:
 
 For example in AuthError.kt the docs reference [AuthSignInResponse.ActivationRequired] but AuthSignInResponse was not

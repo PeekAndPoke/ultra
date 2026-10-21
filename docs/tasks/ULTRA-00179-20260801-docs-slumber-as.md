@@ -1,7 +1,8 @@
 # ULTRA-00179: DOCS — `@Slumber.As` and the generated datetime query paths
 
-**Status:** TODO — created 2026-08-01 on passing the `/feature-review` gate for
-ULTRA-00170 (slumber as declared wire shape).
+> **Status (2026-08-01): NOT STARTED.** created 2026-08-01 on passing the `/feature-review` gate for
+> ULTRA-00170 (slumber as declared wire shape).
+
 **Plan:** none.
 **Security-critical:** no.
 

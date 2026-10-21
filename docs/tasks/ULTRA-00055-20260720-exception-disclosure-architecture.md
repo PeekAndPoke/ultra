@@ -1,6 +1,7 @@
 # ULTRA-00055: Exception architecture: separate client-safe message from diagnostic detail
 
-**Status:** TODO — design decision first, then implement
+> **Status (2026-10-19): NOT STARTED.** design decision first, then implement
+
 **Plan:** umbrella for ULTRA-00054 (error response disclosure audit)
 **Security-critical:** yes
 

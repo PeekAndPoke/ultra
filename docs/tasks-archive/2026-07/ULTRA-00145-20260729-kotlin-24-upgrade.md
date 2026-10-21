@@ -1,6 +1,7 @@
 # ULTRA-00145: Upgrade to Kotlin 2.4.10, refresh the dependency set
 
-**Status:** DONE (archived 2026-07-29) — landed in `1cdfca9e` and `2726c785`
+> **Status (2026-07-29): DONE.** (archived 2026-07-29) — landed in `1cdfca9e` and `2726c785`
+
 **Plan:** none — decided during the `ultra/common` scan, 2026-07-29
 **Security-critical:** no
 

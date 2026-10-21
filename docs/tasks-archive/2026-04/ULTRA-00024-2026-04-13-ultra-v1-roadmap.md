@@ -1,5 +1,7 @@
 # ULTRA-00024: Ultra v1.0.0 Roadmap
 
+> **Status (2026-04-13): DONE.**
+
 **Date:** 2026-03-30
 **Scope:** All modules in the Ultra mono-repo
 **Current version:** 0.104.2

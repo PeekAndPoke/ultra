@@ -1,6 +1,7 @@
 # ULTRA-00148: ultra/reflection scan — findings backlog
 
-**Status:** IN PROGRESS — 8 main files documented, 33 findings collected, first fix round DONE
+> **Status (2026-07-29): PAUSED.** IN PROGRESS — 8 main files documented, 33 findings collected, first fix round DONE
+
 **Plan:** none — output of a 6-agent scan of `ultra/reflection`, 2026-07-29
 **Security-critical:** no
 

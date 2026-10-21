@@ -1,6 +1,7 @@
 # ULTRA-00095: Red-team: org-isolation (part-3 two-phase auth + OrgAware guard)
 
-**Status:** COLLECTED — not executed (2026-07-23). Run in a dedicated pen-test session.
+> **Status (2026-07-23): NOT STARTED.** COLLECTED — not executed (2026-07-23). Run in a dedicated pen-test session.
+
 **Type:** red-team (security-critical follow-up to ULTRA-00090 (two phase auth consistent params))
 **Assume:** a hostile AUTHENTICATED user, member of org `acme`, session selected on `acme`, trying to
 read/act on org `globex`.

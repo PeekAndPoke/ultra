@@ -1,6 +1,7 @@
 # ULTRA-00207: Docs: Kronos after the advanceBy collapse
 
-**Status:** DONE (archived 2026-10-18)
+> **Status (2026-10-18): DONE.** (archived 2026-10-18)
+
 **Plan:** follow-up of ULTRA-00205 (kronos advanceby collapse) (public API touched)
 **Security-critical:** no
 

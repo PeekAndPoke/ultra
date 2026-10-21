@@ -1,9 +1,10 @@
 # ULTRA-00050: Frontend token storage — bearer stays; the cookie route was designed and dropped
 
-**Status:** **DONE 2026-08-02.** Increment 1 (the response contract) shipped and passed `/feature-review`
-— record in ULTRA-00185 (rest content type enforcement) §"Review record",
-which covers both diffs. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below; the
-reasoning is kept so it is not re-proposed. Security-critical.
+> **Status (2026-08-02): DONE.** **DONE 2026-08-02.** Increment 1 (the response contract) shipped and passed `/feature-review`
+> — record in ULTRA-00185 (rest content type enforcement) §"Review record",
+> which covers both diffs. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below; the
+> reasoning is kept so it is not re-proposed. Security-critical.
+
 **Residue that outlives this task:** ULTRA-00188 (csp and token ttl) (CSP + Trusted Types,
 shorter TTL) and ULTRA-00136 (session revocation wiring) (the only real logout).
 **Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c).

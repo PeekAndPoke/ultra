@@ -1,6 +1,7 @@
 # ULTRA-00219: funktor/cluster: global locks expire by heartbeat, not by creation time
 
-**Status:** DONE (archived 2026-10-19) — gate PASS (round 1: 2 MAJOR fixed; round 2 clean; MINOR batches reviewed), merged `d9ffbb32`; master full suite green (15769 tests / 0 failures). Maintainer decisions 2026-10-19 on the open rows: clock skew → rely on NTP (all of the lock logic runs on the server; the DB clock is for TTL indexes); stuck handlers → an opt-in `maxHold`, follow-up ULTRA-00224 (global locks max hold). Docs follow-up: ULTRA-00223 (docs global locks heartbeat)
+> **Status (2026-10-19): DONE.** (archived 2026-10-19) — gate PASS (round 1: 2 MAJOR fixed; round 2 clean; MINOR batches reviewed), merged `d9ffbb32`; master full suite green (15769 tests / 0 failures). Maintainer decisions 2026-10-19 on the open rows: clock skew → rely on NTP (all of the lock logic runs on the server; the DB clock is for TTL indexes); stuck handlers → an opt-in `maxHold`, follow-up ULTRA-00224 (global locks max hold). Docs follow-up: ULTRA-00223 (docs global locks heartbeat)
+
 **Plan:** none — maintainer request, 2026-10-19
 **Security-critical:** no (concurrency correctness; no auth or data boundary)
 

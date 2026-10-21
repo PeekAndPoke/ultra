@@ -1,6 +1,7 @@
 # ULTRA-00165: `TypedRouteRenderer` double-encodes query parameter values
 
-**Status:** TODO
+> **Status (2026-07-31): NOT STARTED.**
+
 **Plan:** none — standalone defect, found during the Phase 2 review of the TypeScript SDK generator.
 **Security-critical:** no.
 

@@ -1,6 +1,7 @@
 # ULTRA-00159: ultra/cache: scan findings
 
-**Status:** SCAN IN PROGRESS — 2026-07-30
+> **Status (2026-07-30): PAUSED.** SCAN IN PROGRESS — 2026-07-30
+
 **Plan:** module-by-module review (`cache` is module 5, after `vault`, `common`, `reflection`, `log`)
 **Security-critical:** no
 

@@ -1,10 +1,11 @@
 # ULTRA-00109: Audit: value classes for ids & invariant values (auth / saas / b2b)
 
-**Status:** FINDINGS ACTED ON; STANDING RULE STILL UNDECIDED (rechecked 2026-10-19). The migration this audit asked for ran —
-see ULTRA-00110 (value class ids migration): Tier 1 `RealmId`, `UserId`, `OrgId` and the Tier 2 email value (as
-`EmailAddress`) are DONE and in the tree; Tier 2 `Slug` and all of Tier 3 (`BranchId`, `UserType`) are not. What still waits on
-the maintainer is the thing this doc was written for — codifying the standing rule below (it is in neither `CLAUDE.md` nor
-`.claude/skills/code-style/`) and the scope for the rest. The earlier header's "Do NOT migrate anything yet" is void.
+> **Status (2026-10-19): PAUSED.** FINDINGS ACTED ON; STANDING RULE STILL UNDECIDED (rechecked 2026-10-19). The migration this audit asked for ran —
+> see ULTRA-00110 (value class ids migration): Tier 1 `RealmId`, `UserId`, `OrgId` and the Tier 2 email value (as
+> `EmailAddress`) are DONE and in the tree; Tier 2 `Slug` and all of Tier 3 (`BranchId`, `UserType`) are not. What still waits on
+> the maintainer is the thing this doc was written for — codifying the standing rule below (it is in neither `CLAUDE.md` nor
+> `.claude/skills/code-style/`) and the scope for the rest. The earlier header's "Do NOT migrate anything yet" is void.
+
 **Enabled by:** ULTRA-00105 (slumber value class support) (DONE — slumber serializes value classes exactly
 like kotlinx). **Was blocked for STORED/queried ids by** the Karango-KSP + Monko-KSP follow-ups
 (ULTRA-00107 (karango ksp value class), ULTRA-00108 (monko ksp value class)) — both DONE and archived; the migration doc

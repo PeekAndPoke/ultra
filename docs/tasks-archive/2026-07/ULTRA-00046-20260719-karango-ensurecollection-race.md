@@ -1,6 +1,7 @@
 # ULTRA-00046: Fix: karango collection creation race (async-driver fire-and-forget)
 
-**Status:** DONE (2026-07-19)
+> **Status (2026-07-19): DONE.** (2026-07-19)
+
 **Plan:** — (bug fix)
 **Security-critical:** no
 

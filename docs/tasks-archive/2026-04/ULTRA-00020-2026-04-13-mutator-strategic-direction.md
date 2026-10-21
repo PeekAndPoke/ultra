@@ -1,5 +1,7 @@
 # ULTRA-00020: Mutator Strategic Direction — Six Hats Analysis (Revised)
 
+> **Status (2026-04-13): DONE.**
+
 **Date:** 2026-03-25
 **Rounds:** 3 (re-run with corrected facts)
 **Related:** [mutator-quality-improvements.md](mutator-quality-improvements.md) (execute quality plan first)

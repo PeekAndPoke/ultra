@@ -1,6 +1,7 @@
 # ULTRA-00105: Slumber: `@JvmInline value class` serialization support
 
-**Status:** IN PROGRESS — started 2026-07-24. Framework feature in `ultra/slumber`.
+> **Status (2026-07-24): DONE.** IN PROGRESS — started 2026-07-24. Framework feature in `ultra/slumber`.
+
 **Motivation:** enable canonical value types (e.g. `Email`, `RealmId`) that are stored/read through
 slumber (the DB codec + slumber-based API paths). Blocker was: slumber had no value-class codec, so a
 value-class field failed with "no known way to slumber/awake".

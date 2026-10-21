@@ -1,6 +1,7 @@
 # ULTRA-00221: Plan: insights, then auth, in parallel worktrees
 
-**Status:** IN PROGRESS — maintainer go 2026-10-19: **two tracks at a time**; D3, D8, D9 decided (below)
+> **Status (2026-10-19): PAUSED.** IN PROGRESS — maintainer go 2026-10-19: **two tracks at a time**; D3, D8, D9 decided (below)
+
 **Plan:** none — maintainer request 2026-10-19 ("finish the insights first, then auth"; "consider multiple agents on
 worktrees … which parts can be developed independently and are easy to merge")
 **Security-critical:** the auth tracks are; each gets its own task file and red-team follow-up

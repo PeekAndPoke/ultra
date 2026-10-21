@@ -1,6 +1,7 @@
 # ULTRA-00199: Streams: switchMap / switchMapNotNull operator
 
-**Status:** DONE (archived 2026-08-24)
+> **Status (2026-08-24): DONE.** (archived 2026-08-24)
+
 **Plan:** standalone (user request 2026-08-24; design plan re-confirmed with user before implementation)
 **Security-critical:** no (confirmed by the security review — no trust boundary, no red-team follow-up)
 

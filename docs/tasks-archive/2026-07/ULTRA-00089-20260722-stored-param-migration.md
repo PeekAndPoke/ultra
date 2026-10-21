@@ -1,12 +1,13 @@
 # ULTRA-00089: Migrate framework APIs from handler findById to Stored params
 
-**Status:** DONE (2026-07-23; archived 2026-10-19) — review loop CLOSED at round 3 (zero findings across all three fresh
-reviewers). Archive check 2026-10-19: every Spec box was already ticked; a grep finds no `findById(params.` left in any
-`*.kt`, and the entity-named params are in the tree (`OrgsApi.kt:26` `OrgParam`, `FunktorConfApi.kt:21-23`
-`EventParam`/`SpeakerParam`/`AttendeeParam`); `StoredParamMigrationE2eSpec` (10) and `FunktorConfApiTest` (11) are green in
-the last recorded run. Migration + entity-based param naming + `defaultAuth`→`authFloor` floor rename. Green:
-rest 105, saas 31, all 125 (both DB backends), demo 35. 8 commits on `auth-increments`, all UNPUSHED.
-HARD dependency on ULTRA-00090 (two phase auth consistent params) was met (part 3 DONE).
+> **Status (2026-07-23): DONE.** (2026-07-23; archived 2026-10-19) — review loop CLOSED at round 3 (zero findings across all three fresh
+> reviewers). Archive check 2026-10-19: every Spec box was already ticked; a grep finds no `findById(params.` left in any
+> `*.kt`, and the entity-named params are in the tree (`OrgsApi.kt:26` `OrgParam`, `FunktorConfApi.kt:21-23`
+> `EventParam`/`SpeakerParam`/`AttendeeParam`); `StoredParamMigrationE2eSpec` (10) and `FunktorConfApiTest` (11) are green in
+> the last recorded run. Migration + entity-based param naming + `defaultAuth`→`authFloor` floor rename. Green:
+> rest 105, saas 31, all 125 (both DB backends), demo 35. 8 commits on `auth-increments`, all UNPUSHED.
+> HARD dependency on ULTRA-00090 (two phase auth consistent params) was met (part 3 DONE).
+
 **Plan:** part 4 of the auth-hardening quartet
 **Security-critical:** YES — changes when/where entities load relative to auth on real endpoints.
 

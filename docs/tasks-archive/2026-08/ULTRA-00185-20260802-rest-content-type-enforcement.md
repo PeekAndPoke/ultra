@@ -1,7 +1,8 @@
 # ULTRA-00185: REST routes accept any Content-Type, so a cross-origin form POST reaches a handler
 
-**Status:** **DONE 2026-08-02** — fixed, and through `/feature-review` (gate **PASS**; the record below
-covers this diff *and* increment 1 of ULTRA-00050 (token storage hardening), which was reviewed with it).
+> **Status (2026-08-02): DONE.** **DONE 2026-08-02** — fixed, and through `/feature-review` (gate **PASS**; the record below
+> covers this diff *and* increment 1 of ULTRA-00050 (token storage hardening), which was reviewed with it).
+
 **Security-critical:** yes — it is what makes a JSON API CSRF-resistant, and until this landed nothing did.
 **Found:** while designing the (since dropped) cookie transport in
 ULTRA-00050 (token storage hardening). **It is not a cookie concern** — it is live today.

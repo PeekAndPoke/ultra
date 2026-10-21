@@ -1,5 +1,7 @@
 # ULTRA-00034: Kraft bundle size: decouple the js-joda timezone DB (+ native tz spike)
 
+> **Status (2026-10-18): DONE.**
+
 > **Superseded 2026-10-18** by ULTRA-00209 (kotlinx datetime js timezones): ultra/datetime
 > now does its own zone math (Intl on JS), so `installNativeTimezones()`, the js-joda Intl provider
 > (`NativeTimeZones.kt`), `NativeTimeZoneInitializer` and the addon's `nativeTimezones()` are GONE, and Kraft installs no

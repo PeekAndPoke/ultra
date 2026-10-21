@@ -1,6 +1,6 @@
 # ULTRA-00017: Plan: Non-Blocking DBAL — Flow Cursor, Suspend Storable, Ref Unification
 
-
+> **Status (2026-04-09): DONE.**
 
 ## Commits & files changed
 

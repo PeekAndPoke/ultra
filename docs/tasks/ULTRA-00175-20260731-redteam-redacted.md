@@ -1,6 +1,7 @@
 # ULTRA-00175: RED TEAM — `Redacted<T>`, the one-way secret wrapper
 
-**Status:** COLLECTED — do not execute here. For a dedicated penetration-test session.
+> **Status (2026-07-31): NOT STARTED.** COLLECTED — do not execute here. For a dedicated penetration-test session.
+
 **Created:** 2026-07-31
 **Plan:** ULTRA-00169 (redacted and jackson removal)
 **Why:** `Redacted<T>` is now the *single* mechanism keeping secrets out of serialized output — the

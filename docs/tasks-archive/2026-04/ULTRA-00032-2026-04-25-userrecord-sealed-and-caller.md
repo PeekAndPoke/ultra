@@ -1,8 +1,6 @@
 # ULTRA-00032: UserRecord → sealed interface + Caller dispatcher + ApiKey auth
 
-**Status:** SHIPPED 2026-04-25 in v0.107.0.
-
-
+> **Status (2026-04-25): DONE.** SHIPPED 2026-04-25 in v0.107.0.
 
 ## Commits & files changed
 

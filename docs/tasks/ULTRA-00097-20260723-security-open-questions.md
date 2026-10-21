@@ -1,6 +1,7 @@
 # ULTRA-00097: Open security questions — route ownership / isolation (follow-ups)
 
-**Status:** OPEN QUESTIONS — collected 2026-07-23, not yet designed/scheduled.
+> **Status (2026-07-23): NOT STARTED.** OPEN QUESTIONS — collected 2026-07-23, not yet designed/scheduled.
+
 **Type:** security / design
 **Context:** spun out of part-3 (ULTRA-00090 (two phase auth consistent params) +
 ULTRA-00094 (route check followups)). The auth-hardening folder is the security-tasks home.

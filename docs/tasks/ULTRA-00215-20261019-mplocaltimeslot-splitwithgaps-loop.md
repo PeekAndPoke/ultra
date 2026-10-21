@@ -1,6 +1,7 @@
 # ULTRA-00215: MpLocalTimeSlot.splitWithGaps loops forever across midnight
 
-**Status:** TODO
+> **Status (2026-10-19): NOT STARTED.**
+
 **Plan:** none — out-of-scope finding from the `/feature-review` of ULTRA-00213 (datetime js performance) (round 1, 2026-10-19)
 **Security-critical:** yes, mildly (a caller-controlled duration hangs the thread and fills memory) → red-team note below
 

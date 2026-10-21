@@ -1,6 +1,6 @@
 # ULTRA-00004: Plan: Decompose `:ultra:common` into Focused Modules
 
-
+> **Status (2026-03-26): DONE.**
 
 ## Commits & files changed
 

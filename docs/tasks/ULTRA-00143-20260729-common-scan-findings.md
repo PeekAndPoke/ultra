@@ -1,6 +1,7 @@
 # ULTRA-00143: ultra/common scan — findings backlog
 
-**Status:** IN PROGRESS — backlog worked through; two items remain, both minor and listed at the bottom
+> **Status (2026-07-29): PAUSED.** IN PROGRESS — backlog worked through; two items remain, both minor and listed at the bottom
+
 **Plan:** none — output of a 7-agent scan of `ultra/common`, 2026-07-29
 **Security-critical:** no
 

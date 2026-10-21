@@ -1,5 +1,7 @@
 # ULTRA-00012: Audit: ultra:vault — Issues Report
 
+> **Status (2026-03-31): DONE.**
+
 **Date:** 2026-03-30
 **Auditor:** Code audit agent (Wave 1)
 **Module:** ultra/vault (~45 source files, 8 test files)

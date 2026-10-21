@@ -1,6 +1,7 @@
 # ULTRA-00229: `forCall` estimates `Partial` by default
 
-**Status:** TODO — maintainer decision 2026-10-19 (relayed by Mission-Control): "yes, Partial"
+> **Status (2026-10-19): NOT STARTED.** maintainer decision 2026-10-19 (relayed by Mission-Control): "yes, Partial"
+
 **Plan:** none — follow-up of the apiacl review (ULTRA-00181 (kotlin apiacl naming alignment),
 "Parked for the maintainer")
 **Security-critical:** no — the access matrix is advisory; the server still enforces every rule

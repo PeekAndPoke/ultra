@@ -1,6 +1,7 @@
 # ULTRA-00169: `Redacted<T>` and the removal of Jackson
 
-**Status:** DONE and ARCHIVED (2026-07-31). All stages complete, review gate PASSED. **Zero Jackson in Kotlin source, and no first-party module declares it — the coordinates are gone from `Deps.kt` entirely.** What remains on the classpath is internal to third-party libraries; see "Where Jackson still is" below.
+> **Status (2026-07-31): DONE.** and ARCHIVED (2026-07-31). All stages complete, review gate PASSED. **Zero Jackson in Kotlin source, and no first-party module declares it — the coordinates are gone from `Deps.kt` entirely.** What remains on the classpath is internal to third-party libraries; see "Where Jackson still is" below.
+
 **Security-critical:** yes — this is what finally closes
 ULTRA-00167 (config secrets in insights)
 **Supersedes:** the `@JsonIgnore` constraint recorded in ULTRA-00164 (depot findings)

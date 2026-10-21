@@ -1,6 +1,7 @@
 # ULTRA-00094: Route-check extension-point follow-ups (param-names, entity linter, branch isolation)
 
-**Status:** TODO (created 2026-07-22) — spun out of ULTRA-00090 (two phase auth consistent params)
+> **Status (2026-07-22): NOT STARTED.** (created 2026-07-22) — spun out of ULTRA-00090 (two phase auth consistent params)
+
 **Type:** framework / hardening
 **Depends on:** the `RouteBootCheck` / `RouteParamsGuard` extension points landed in part 3.
 

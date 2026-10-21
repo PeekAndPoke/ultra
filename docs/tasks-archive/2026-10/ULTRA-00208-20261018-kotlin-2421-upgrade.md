@@ -1,6 +1,7 @@
 # ULTRA-00208: Upgrade to Kotlin 2.4.21, refresh the dependency set, release 0.111.0
 
-**Status:** DONE (archived 2026-10-18) — `fb1b93f8`, `0dc2df67`, release `54362e3e` / `v0.111.0`
+> **Status (2026-10-18): DONE.** (archived 2026-10-18) — `fb1b93f8`, `0dc2df67`, release `54362e3e` / `v0.111.0`
+
 **Plan:** none — maintainer request, 2026-10-18, right after the 0.110.0 release
 **Security-critical:** no
 **Previous round:** ULTRA-00145 (kotlin 24 upgrade) — same playbook

@@ -1,7 +1,8 @@
 # ULTRA-00082: Forms: deprecate SelectField → new UiSelectField (needs design)
 
-**Status:** FUTURE — not scheduled. **Requires a proper design/planning pass before implementation.**
-Deferred while finishing i18n.
+> **Status (2026-07-22): NOT SCHEDULED.** FUTURE — not scheduled. **Requires a proper design/planning pass before implementation.**
+> Deferred while finishing i18n.
+
 **Area:** kraft forms select components (semanticui).
 
 ## Goal

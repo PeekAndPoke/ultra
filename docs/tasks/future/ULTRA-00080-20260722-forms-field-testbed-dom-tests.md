@@ -1,6 +1,7 @@
 # ULTRA-00080: Forms: TestBed DOM tests for all input field components
 
-**Status:** FUTURE — not scheduled (large). Deferred while finishing i18n.
+> **Status (2026-07-22): NOT SCHEDULED.** FUTURE — not scheduled (large). Deferred while finishing i18n.
+
 **Area:** kraft forms field components (semanticui) + kraft:core-tests.
 
 ## Goal

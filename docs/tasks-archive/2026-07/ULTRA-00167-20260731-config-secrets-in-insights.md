@@ -1,8 +1,9 @@
 # ULTRA-00167: Config secrets are written verbatim into every insights record
 
-**Status:** FIXED and ARCHIVED (2026-08-01) — closed by `Redacted<T>`, which took fix option 4
-(a type, not an annotation). See "How it was actually fixed" at the bottom; the analysis above is
-kept as written because it is what led to that choice.
+> **Status (2026-08-01): DONE.** FIXED and ARCHIVED (2026-08-01) — closed by `Redacted<T>`, which took fix option 4
+> (a type, not an annotation). See "How it was actually fixed" at the bottom; the analysis above is
+> kept as written because it is what led to that choice.
+
 **Security-critical:** yes
 **Found:** 2026-07-31, while distilling the reference renderers into a Vue tab spec
 **Related:** ULTRA-00164 (depot findings) (the `@JsonIgnore` constraint — now shown incomplete)

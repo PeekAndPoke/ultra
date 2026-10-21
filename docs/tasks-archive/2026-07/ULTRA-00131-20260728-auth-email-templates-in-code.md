@@ -1,12 +1,13 @@
 # ULTRA-00131: Auth email templates, rendered in code
 
-**Status:** DONE (2026-07-28; archived 2026-10-19) — gate PASS after fixes; all tests green + `assemble` clean. Archive check
-2026-10-19: every Spec and Test box was already ticked; the code is in the tree (`EmailTemplate.kt` / `EmailLayout.kt` under
-`funktor/messaging/src/jvmMain/kotlin/templates/`, the three templates + `AuthEmailTemplates.kt` under
-`funktor/auth/src/jvmMain/kotlin/emails/`, no `i18n/emails` resource directory left) and its specs match the counts below
-(`LocalizedEmailTemplateSpec` 14, `AuthEmailTemplatesSpec` 19, `AuthEmailEnvelopeSpec` 5, `DefaultMessagingLocaleWiringSpec` 2;
-0 failures in the last recorded run). The API is documented (`messaging.astro:134-160`, `auth.astro:183`, mirror
-`funktor.md:394-455`), so no docs follow-up is owed. Red-team: ULTRA-00133 (redteam i18n email templates).
+> **Status (2026-07-28): DONE.** (2026-07-28; archived 2026-10-19) — gate PASS after fixes; all tests green + `assemble` clean. Archive check
+> 2026-10-19: every Spec and Test box was already ticked; the code is in the tree (`EmailTemplate.kt` / `EmailLayout.kt` under
+> `funktor/messaging/src/jvmMain/kotlin/templates/`, the three templates + `AuthEmailTemplates.kt` under
+> `funktor/auth/src/jvmMain/kotlin/emails/`, no `i18n/emails` resource directory left) and its specs match the counts below
+> (`LocalizedEmailTemplateSpec` 14, `AuthEmailTemplatesSpec` 19, `AuthEmailEnvelopeSpec` 5, `DefaultMessagingLocaleWiringSpec` 2;
+> 0 failures in the last recorded run). The API is documented (`messaging.astro:134-160`, `auth.astro:183`, mirror
+> `funktor.md:394-455`), so no docs follow-up is owed. Red-team: ULTRA-00133 (redteam i18n email templates).
+
 **Plan:** ULTRA-00085 (i18n s7 emails) → S7, **design replaced** (see below)
 **Supersedes:** ULTRA-00132 (i18n s7 activation email slice) (the Markdown-template slice — built, gated, reverted)
 **Security-critical:** yes (the activation mail carries a live single-use token) → red-team follow-up

@@ -1,6 +1,7 @@
 # ULTRA-00162: Generated SSE clients bypass the SDK's auth mechanism
 
-**Status:** TODO
+> **Status (2026-07-31): NOT STARTED.**
+
 **Plan:** ULTRA-00146 (ts sdk codegen) → Phase 2 follow-up
 **Security-critical:** yes — a stream a developer believes is authenticated is silently anonymous.
 

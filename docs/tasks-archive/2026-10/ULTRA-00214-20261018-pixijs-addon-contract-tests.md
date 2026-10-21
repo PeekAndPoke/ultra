@@ -1,6 +1,7 @@
 # ULTRA-00214: kraft/addons/pixijs: contract tests that survive version updates
 
-**Status:** DONE (archived 2026-10-19) — gate PASS after 2 rounds
+> **Status (2026-10-19): DONE.** (archived 2026-10-19) — gate PASS after 2 rounds
+
 **Plan:** none (asked by the maintainer, 2026-10-18, after the Klang playback highlight broke on a dependency bump)
 **Security-critical:** no
 

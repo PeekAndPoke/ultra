@@ -1,12 +1,13 @@
 # ULTRA-00126: Account activation (email verification on sign-up)
 
-**Status:** DONE (backend 2026-07-27, gate passed — `b96c2c1c`; archived 2026-10-19). Both scope items at the bottom are
-closed: (1) the sign-up mail throttle stays deferred, as its own task ULTRA-00128 (signup mail throttle)
-(TODO); (2) the frontend landed the same day in `84fa3b47` — `ActivateAccountPage.kt`, mounted by `AuthFrontendDefault`
-at `AuthFrontend.kt:41` (the mailed deep link) and `:50` (the no-token resend page), and used by the demo `adminapp`
-through `AuthFrontend.default(…)`. Resend, the `ActivationRequired` sign-in response and their gate are carried by
-ULTRA-00129 (activation resend and frontend). Still open elsewhere, not here:
-ULTRA-00127 (redteam account activation) (collected, not executed).
+> **Status (2026-07-27): DONE.** (backend 2026-07-27, gate passed — `b96c2c1c`; archived 2026-10-19). Both scope items at the bottom are
+> closed: (1) the sign-up mail throttle stays deferred, as its own task ULTRA-00128 (signup mail throttle)
+> (TODO); (2) the frontend landed the same day in `84fa3b47` — `ActivateAccountPage.kt`, mounted by `AuthFrontendDefault`
+> at `AuthFrontend.kt:41` (the mailed deep link) and `:50` (the no-token resend page), and used by the demo `adminapp`
+> through `AuthFrontend.default(…)`. Resend, the `ActivationRequired` sign-in response and their gate are carried by
+> ULTRA-00129 (activation resend and frontend). Still open elsewhere, not here:
+> ULTRA-00127 (redteam account activation) (collected, not executed).
+
 **Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4, verification half (§7 "signUp →
 if `requiresActivation`, create `EmailVerificationToken`, send verification email. Don't auto-issue
 session/JWT yet"; §7 "signIn → on unverified user").

@@ -1,7 +1,8 @@
 # ULTRA-00146: TypeScript SDK code generation (`ultra/codegen` + `funktor/codegen`)
 
-**Status:** TODO **Plan:** ULTRA-00028 (v1 roadmap) → Post-v1 Backlog item 4 ("Dart codegen rewrite") —
-**superseded by this task**
+> **Status (2026-10-19): NOT STARTED.** **Plan:** ULTRA-00028 (v1 roadmap) → Post-v1 Backlog item 4 ("Dart codegen rewrite") —
+> **superseded by this task**
+
 **Security-critical:** no (dev-time generator; no runtime auth path. See "Security notes" for why, and the one thing
 that is worth a conscious decision.)
 

@@ -1,6 +1,7 @@
 # ULTRA-00040: O2 — Membership + permissions plumbing
 
-**Status:** IN REVIEW — implementation complete + green (2026-07-18); review batched with O3
+> **Status (2026-07-18): PAUSED.** IN REVIEW — implementation complete + green (2026-07-18); review batched with O3
+
 **Plan:** ULTRA-00035 (auth orgs foundation) → Phase O2
 **Security-critical:** yes (permission construction) — review with O3, red-team covered by the auth-orgs sweep
 

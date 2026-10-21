@@ -1,5 +1,7 @@
 # ULTRA-00022: Funktor & Monko — Known Issues
 
+> **Status (2026-04-13): DONE.**
+
 **Date:** 2026-03-26 (updated 2026-03-31: VaultScope CRITICAL + HIGH fixed in Wave 1)
 **Source:** Senior engineer, QA engineer, coroutine expert code reviews
 **Related:** [funktor-v1-roadmap.md](funktor-v1-roadmap.md), [monko-query-dsl.md](monko-query-dsl.md)

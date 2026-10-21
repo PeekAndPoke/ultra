@@ -1,13 +1,13 @@
 # ULTRA-00059: Routes without auth rules must not silently be public
 
-**Status:** MECHANISM DONE, TASK STILL OPEN — rechecked 2026-10-19. The finding ("a route with no rules is silently public")
-is closed structurally, but NOT by the startup hook this doc designs. The auth-hardening quartet (archived:
-ULTRA-00087 (apiroutes auth floor) and its index) made `authFloor` a mandatory, default-less
-`ApiRoutes` constructor parameter (`ApiRoutes.kt:50`), so a group cannot be written without a floor; `addRoute`, the single
-registration choke point, prepends it and refuses an empty combined chain (`ApiRoutes.kt:217-238`); and `AuthChainBootCheck`
-(`AuthChainBootCheck.kt:19-25`, run by `ValidateRoutesOnAppStarting`) re-checks every route at boot. Intentionally public
-groups declare `authFloor = { public() }`. The `ValidateRouteAuthOnAppStarting` class sketched in §4 was never built, and §4's
-rejection of option (b) ("compile-time enforcement would need a different shape") is exactly what the floor turned out to be.
+> **Status (2026-10-19): PAUSED.** MECHANISM DONE, TASK STILL OPEN — rechecked 2026-10-19. The finding ("a route with no rules is silently public")
+> is closed structurally, but NOT by the startup hook this doc designs. The auth-hardening quartet (archived:
+> ULTRA-00087 (apiroutes auth floor) and its index) made `authFloor` a mandatory, default-less
+> `ApiRoutes` constructor parameter (`ApiRoutes.kt:50`), so a group cannot be written without a floor; `addRoute`, the single
+> registration choke point, prepends it and refuses an empty combined chain (`ApiRoutes.kt:217-238`); and `AuthChainBootCheck`
+> (`AuthChainBootCheck.kt:19-25`, run by `ValidateRoutesOnAppStarting`) re-checks every route at boot. Intentionally public
+> groups declare `authFloor = { public() }`. The `ValidateRouteAuthOnAppStarting` class sketched in §4 was never built, and §4's
+> rejection of option (b) ("compile-time enforcement would need a different shape") is exactly what the floor turned out to be.
 
 **Still open — why this is not archived:**
 - The acceptance boxes and the Test-evidence list below describe the sketched hook; they were never ticked or rewritten for

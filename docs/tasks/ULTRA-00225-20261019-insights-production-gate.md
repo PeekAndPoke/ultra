@@ -1,6 +1,7 @@
 # ULTRA-00225: Insights: a production gate
 
-**Status:** TODO — all four items decided by the maintainer 2026-10-19 (relayed by Mission-Control); ready for a slot
+> **Status (2026-10-19): NOT STARTED.** all four items decided by the maintainer 2026-10-19 (relayed by Mission-Control); ready for a slot
+
 **Plan:** ULTRA-00221 (insights auth parallel plan) → the "production gate for insights" row
 **Security-critical:** yes — red-team: ULTRA-00161 (redteam insights api) (scenarios 11, 24-31)
 

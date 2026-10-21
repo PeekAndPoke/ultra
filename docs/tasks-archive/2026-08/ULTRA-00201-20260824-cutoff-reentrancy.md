@@ -1,6 +1,7 @@
 # ULTRA-00201: Streams: fix CutoffStream subscription leaks under reentrancy
 
-**Status:** DONE (archived 2026-08-24) — gradle verification completed, all targets green
+> **Status (2026-08-24): DONE.** (archived 2026-08-24) — gradle verification completed, all targets green
+
 **Plan:** standalone — found while building `switchMap`
 (ULTRA-00199 (streams switchmap))
 **Security-critical:** no (confirmed by the security review — no trust boundary, no red-team task)

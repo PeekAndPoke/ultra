@@ -1,6 +1,7 @@
 # ULTRA-00051: Auth API must not echo internal error messages on public routes
 
-**Status:** TODO
+> **Status (2026-10-20): NOT STARTED.**
+
 **Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 7).
 Applies the design in ULTRA-00055 (exception disclosure architecture) (default-deny at
 the render boundary, `HasClientMessage` opt-in) to `AuthError` specifically. That design is settled —

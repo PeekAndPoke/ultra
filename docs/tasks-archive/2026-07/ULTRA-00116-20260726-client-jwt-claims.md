@@ -1,9 +1,10 @@
 # ULTRA-00116: Client-side JWT claim decoding + the selected org in the session
 
-**Status:** **SUPERSEDED 2026-08-02, and its implementation deleted** — see §"What happened to this" at
-the bottom. It shipped and was reviewed as described below; six days later the server started stating
-what the client had been decoding, so there was nothing left to decode. Kept because it records *why*
-each claim was needed, which is what made the deletion provably safe.
+> **Status (2026-08-02): DONE.** **SUPERSEDED 2026-08-02, and its implementation deleted** — see §"What happened to this" at
+> the bottom. It shipped and was reviewed as described below; six days later the server started stating
+> what the client had been decoding, so there was nothing left to decode. Kept because it records *why*
+> each claim was needed, which is what made the deletion provably safe.
+
 **Security-critical:** yes — touches what the client believes about its own permissions, and turns on
 the session-refresh lifecycle. (No authorization decision rests on it; see below.)
 **Why a separate task:** this rode along in the `EmailAddress` review gate, but it is its own framework

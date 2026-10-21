@@ -1,8 +1,8 @@
 # ULTRA-00153: Frontend SDK — Vue components and pages via codegen contributors
 
-**Status:** IN PROGRESS — design agreed 2026-07-30, refined same day (config ownership + profiles),
-amended 2026-08-02 (styling). **The mechanism is built and gated; the port it exists for is not
-finished, and none of the deletion payoff is banked.**
+> **Status (2026-07-30): PAUSED.** IN PROGRESS — design agreed 2026-07-30, refined same day (config ownership + profiles),
+> amended 2026-08-02 (styling). **The mechanism is built and gated; the port it exists for is not
+> finished, and none of the deletion payoff is banked.**
 
 | Piece | State |
 |---|---|

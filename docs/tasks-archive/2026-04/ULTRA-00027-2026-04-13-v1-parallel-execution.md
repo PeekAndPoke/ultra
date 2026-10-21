@@ -1,5 +1,7 @@
 # ULTRA-00027: v1.0.0 Parallel Execution Plan
 
+> **Status (2026-04-13): DONE.**
+
 **Date:** 2026-04-05
 **Current version:** 0.104.2 → **Target:** 1.0.0
 **Approach:** Three independent tracks running in parallel, with one hard sequential bottleneck.

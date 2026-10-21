@@ -1,6 +1,7 @@
 # ULTRA-00200: Cross-check nav requirements against the endpoints a profile actually emitted
 
-**Status:** TODO — raised by `/feature-review` 2026-08-24 (reviewers 1 and 2, independently).
+> **Status (2026-08-24): NOT STARTED.** raised by `/feature-review` 2026-08-24 (reviewers 1 and 2, independently).
+
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Source feature:** ULTRA-00196 (acl aware navigation)
 **Security-critical:** no. The gate itself stays CORRECT under a profile — this is a missing build

@@ -1,6 +1,7 @@
 # ULTRA-00133: Red-team — auth email templates (rendered in code)
 
-**Status:** COLLECTED — NOT EXECUTED
+> **Status (2026-10-19): NOT STARTED.** COLLECTED — NOT EXECUTED
+
 **Feature:** ULTRA-00131 (auth email templates in code)
 **Rule:** these are attack scenarios for a dedicated penetration-test session. Do NOT run them as
 part of normal feature work.

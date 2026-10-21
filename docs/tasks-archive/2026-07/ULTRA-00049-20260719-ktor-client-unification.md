@@ -1,6 +1,7 @@
 # ULTRA-00049: Unify the HTTP client on Ktor (remove custom fetch/interceptor machinery)
 
-**Status:** DONE (archived 2026-10-19) — the manual browser check is closed by the maintainer (2026-10-19): the CORS/credentials part is settled from the Ktor 3.6.0 source (below), and the apps have run on it daily since 2026-07-20.
+> **Status (2026-10-19): DONE.** (archived 2026-10-19) — the manual browser check is closed by the maintainer (2026-10-19): the CORS/credentials part is settled from the Ktor 3.6.0 source (below), and the apps have run on it daily since 2026-07-20.
+
 **Plan:** (infra groundwork — prerequisite for the typed-`ApiResponse`-error work)
 **Security-critical:** no (transport refactor; no authz logic changes — bearer header just moves
 into ktor's `defaultRequest`. Keep an eye on CORS/credentials parity.)

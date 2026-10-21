@@ -1,7 +1,7 @@
 # ULTRA-00061: Vault after-save/after-delete hooks: structured concurrency
 
-Status: DONE — archived 2026-07-20 (review gate passed; open items handed to follow-up tasks)
-Date: 2026-07-20
+> **Status (2026-07-20): DONE.** archived 2026-07-20 (review gate passed; open items handed to follow-up tasks)
+> Date: 2026-07-20
 
 
 

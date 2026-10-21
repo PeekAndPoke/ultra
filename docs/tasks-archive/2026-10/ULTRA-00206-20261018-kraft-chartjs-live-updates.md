@@ -1,7 +1,8 @@
 # ULTRA-00206: kraft chartjs: live updates that keep the whole chart in step
 
-**Status:** DONE (archived 2026-10-18) (requested by the maintainer from the spross project, 2026-10-18, for the release
-that carries ULTRA-00205 (kronos advanceby collapse))
+> **Status (2026-10-18): DONE.** (archived 2026-10-18) (requested by the maintainer from the spross project, 2026-10-18, for the release
+> that carries ULTRA-00205 (kronos advanceby collapse))
+
 **Security-critical:** no (a UI component; no authz, no user input reaches Chart.js unescaped)
 
 ## Background

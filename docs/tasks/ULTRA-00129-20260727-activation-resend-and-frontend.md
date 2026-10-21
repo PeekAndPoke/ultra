@@ -1,13 +1,14 @@
 # ULTRA-00129: Activation resend + the activation frontend
 
-**Status:** IMPLEMENTED 2026-07-27 (`84fa3b47`, reshaped by the gate in `0a5ca8bf`); every Spec box ticked 2026-10-19 against
-the code, with the evidence under each. **Not archived, deliberately:** this doc records ONE gate round — 16 confirmed
-findings (13 fixed, 3 recorded), and the HIGH reshaped the feature (a single-use `ActivationResendToken` replaced the
-email-keyed resend) — but neither a PASS verdict nor a second review round over the reshaped design. Its sibling
-ULTRA-00126 (account activation) got a "gate passed" commit (`b96c2c1c`); this doc never did, and the Status was never
-touched after the fix commit. Archive on the maintainer's word that the gate stands, or after a clean round. Open elsewhere,
-not here: ULTRA-00130 (activation resend cooldown atomicity) (TODO) and
-ULTRA-00127 (redteam account activation) (collected, not executed).
+> **Status (2026-07-27): PAUSED.** IMPLEMENTED 2026-07-27 (`84fa3b47`, reshaped by the gate in `0a5ca8bf`); every Spec box ticked 2026-10-19 against
+> the code, with the evidence under each. **Not archived, deliberately:** this doc records ONE gate round — 16 confirmed
+> findings (13 fixed, 3 recorded), and the HIGH reshaped the feature (a single-use `ActivationResendToken` replaced the
+> email-keyed resend) — but neither a PASS verdict nor a second review round over the reshaped design. Its sibling
+> ULTRA-00126 (account activation) got a "gate passed" commit (`b96c2c1c`); this doc never did, and the Status was never
+> touched after the fix commit. Archive on the maintainer's word that the gate stands, or after a clean round. Open elsewhere,
+> not here: ULTRA-00130 (activation resend cooldown atomicity) (TODO) and
+> ULTRA-00127 (redteam account activation) (collected, not executed).
+
 **Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4 (verification) + Phase 6 (demo pages)
 **Follows:** ULTRA-00126 (account activation) — the backend guard. This is its open scope
 item 2, plus the resend it deliberately deferred.

@@ -1,6 +1,7 @@
 # ULTRA-00058: Red-team: error disclosure, environment gating, route auth
 
-**Status:** COLLECTED — do not execute during normal feature work
+> **Status (2026-07-22): NOT STARTED.** COLLECTED — do not execute during normal feature work
+
 **Origin:** ULTRA-00054 (error response disclosure audit)
 **Covers:** `ULTRA-00052`, `ULTRA-00053`,
 `ULTRA-00057`, `ULTRA-00056`,

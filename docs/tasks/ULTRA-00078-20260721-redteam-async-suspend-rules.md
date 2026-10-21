@@ -1,6 +1,7 @@
 # ULTRA-00078: Red-team: async/suspend form validation rules
 
-**Status:** COLLECTED — not executed. For a dedicated penetration-test session.
+> **Status (2026-07-22): NOT STARTED.** COLLECTED — not executed. For a dedicated penetration-test session.
+
 **Feature:** [[ULTRA-00077]] (async validation, FormController status + double-submit guard).
 
 These are concrete attack scenarios to ATTEMPT later. Do not run them during normal feature work.

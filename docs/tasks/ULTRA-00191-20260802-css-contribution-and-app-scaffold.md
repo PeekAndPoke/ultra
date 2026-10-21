@@ -1,7 +1,8 @@
 # ULTRA-00191: CSS contribution + the demo app scaffold
 
-**Status:** DONE — 2026-08-02. Both parts landed; the app signs in and the insights page is
-reachable. `/feature-review` NOT yet run — see the review record below.
+> **Status (2026-08-02): PAUSED.** DONE — 2026-08-02. Both parts landed; the app signs in and the insights page is
+> reachable. `/feature-review` NOT yet run — see the review record below.
+
 **Plan:** ULTRA-00153 (frontend sdk vue contributors) (the contributor model)
 **Security-critical:** the app scaffold is — it holds a session and gates pages. The CSS mechanism
 is not (dev-time emission).

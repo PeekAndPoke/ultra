@@ -1,9 +1,10 @@
 # ULTRA-00104: Add member to an organisation (b2b leaf) + reactivate soft-deleted slot
 
-**Status:** DONE — 2026-07-24. Review loop closed at round 1 (zero production-code defects; the
-follow-ups were doc/test-only, applied). The next leaf off the b2b membership arc
-(ULTRA-00099 (org membership management)): closes the member-CRUD story with a runtime ADD path
-(memberships were fixture-only).
+> **Status (2026-07-24): DONE.** 2026-07-24. Review loop closed at round 1 (zero production-code defects; the
+> follow-ups were doc/test-only, applied). The next leaf off the b2b membership arc
+> (ULTRA-00099 (org membership management)): closes the member-CRUD story with a runtime ADD path
+> (memberships were fixture-only).
+
 **Plan:** ULTRA-00045 (demo restructure three apps) (three-apps showcase) +
 ULTRA-00043 (saas full feature backlog) §3 (invites).
 **Security-critical:** YES — a new membership-mutation surface (who can add whom, with what roles).

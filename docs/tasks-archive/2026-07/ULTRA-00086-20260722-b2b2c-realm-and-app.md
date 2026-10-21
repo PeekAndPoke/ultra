@@ -1,6 +1,7 @@
 # ULTRA-00086: b2b2c realm (end-user tenant users) + b2b2c-app + shared org hooks
 
-**Status:** DONE (2026-07-22) — reviewed (3-agent gate), all confirmed findings fixed, tests green.
+> **Status (2026-07-22): DONE.** (2026-07-22) — reviewed (3-agent gate), all confirmed findings fixed, tests green.
+
 **Plan:** ULTRA-00045 (demo restructure three apps) → b2b2c realm + app (third of three)
 **Security-critical:** yes (third auth realm; tenant end-user sessions)
 

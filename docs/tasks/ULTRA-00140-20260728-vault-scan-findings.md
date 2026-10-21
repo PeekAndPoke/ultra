@@ -1,6 +1,7 @@
 # ULTRA-00140: Vault module scan — findings backlog
 
-**Status:** IN PROGRESS (triaged 2026-07-28)
+> **Status (2026-07-28): PAUSED.** IN PROGRESS (triaged 2026-07-28)
+
 **Plan:** none — output of a 12-agent scan of `ultra/vault`, 2026-07-28
 **Security-critical:** no (but two findings touch data exposure — see S1, S2)
 

@@ -1,7 +1,8 @@
 # ULTRA-00069: i18n / l10n foundation — design decisions
 
-**Status:** IN PROGRESS — S1–S5 DONE (committed + gated, 2026-07-20/21); S6 folded into the
-exception-disclosure task; S7 design agreed → ULTRA-00085 (i18n s7 emails) (2026-07-22)
+> **Status (2026-07-20): PAUSED.** IN PROGRESS — S1–S5 DONE (committed + gated, 2026-07-20/21); S6 folded into the
+> exception-disclosure task; S7 design agreed → ULTRA-00085 (i18n s7 emails) (2026-07-22)
+
 **Plan:** umbrella; feeds email templates, form validation, and server error channels
 **Security-critical:** no (but interacts with ULTRA-00055 (exception disclosure architecture) — see §Interactions)
 

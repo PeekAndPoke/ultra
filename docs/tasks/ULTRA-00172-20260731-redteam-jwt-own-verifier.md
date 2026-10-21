@@ -1,6 +1,7 @@
 # ULTRA-00172: RED TEAM — our own JWT verifier (post java-jwt removal)
 
-**Status:** COLLECTED — do not execute here. For a dedicated penetration-test session.
+> **Status (2026-08-01): NOT STARTED.** COLLECTED — do not execute here. For a dedicated penetration-test session.
+
 **Created:** 2026-07-31
 **Plan:** ULTRA-00041 (jwt lib consolidation options) (RESOLVED section)
 **Why:** `com.auth0:java-jwt` was removed on 2026-07-31 and this codebase now owns JWT signing,

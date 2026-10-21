@@ -1,6 +1,6 @@
 # ULTRA-00005: Plan: Remove korlibs-time dependency from ultra/datetime
 
-
+> **Status (2026-03-26): DONE.**
 
 ## Commits & files changed
 

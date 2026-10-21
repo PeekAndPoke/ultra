@@ -1,6 +1,7 @@
 # ULTRA-00079: Forms: dynamic (callback) comparison values in rules
 
-**Status:** FUTURE — not scheduled. Deferred while finishing i18n.
+> **Status (2026-07-22): NOT SCHEDULED.** FUTURE — not scheduled. Deferred while finishing i18n.
+
 **Area:** kraft forms validation rules.
 
 ## Problem

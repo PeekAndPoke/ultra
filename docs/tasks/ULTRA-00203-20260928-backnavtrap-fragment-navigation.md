@@ -1,6 +1,7 @@
 # ULTRA-00203: BackNavigationTrap fires on in-page fragment navigation
 
-**Status:** TODO
+> **Status (2026-09-28): NOT STARTED.**
+
 **Plan:** — follow-up of ULTRA-00204 (router click interception) (review round 1, MAJOR)
 **Security-critical:** no
 

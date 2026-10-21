@@ -1,18 +1,19 @@
 # ULTRA-00090: Two-phase auth evaluation + org-isolation — no loads before auth, no cross-org param spoofing
 
-**Status:** DONE (2026-07-23; archived 2026-10-19) — two-phase eval + pluggable route checks + saas org-isolation.
-The Implementation-plan and Test-evidence boxes below sat at 0/23 although the work shipped; ticked 2026-10-19 against the
-code, each with the evidence it was ticked on. "Green" means the last recorded run (`build/test-results` XML of
-2026-10-19: `funktor:rest` 116 tests, `funktor:saas` 50, `funktor:all` 158, `funktor-demo:server` 47, all 0 failures) —
-not re-run for the archive. The counts quoted in the next paragraph are the 2026-07-23 ones.
-**Review LOOP CLOSED at round 5 (zero findings).** Rounds: 1 reworked on 2 HIGH direction findings
-(caller-binding authority + structural forcing); 2 confirmed the idiomatic route airtight, fixed
-edge/DiD (runtime-value org detection, docs, tests); 3 fixed LOW/INFO (guard↔loader reflection
-alignment, no-saas KDoc accuracy, `_key`/`_id` contracts); 4 caught a regression round-3 introduced
-(ctor-NAME filter dropped aliased non-`val` ctor entities) → fixed via backing-field superset +
-regression test; 5 empirically verified the superset closes it — EMPTY. Green: rest 105, saas 31,
-all 115 (both DB backends), demo 24. Commits 551e4364, 625b3d7a, f0038e1b, c5e63d06 (+ docs), all
-UNPUSHED. Depends on ULTRA-00087 (apiroutes auth floor).
+> **Status (2026-07-23): DONE.** (2026-07-23; archived 2026-10-19) — two-phase eval + pluggable route checks + saas org-isolation.
+> The Implementation-plan and Test-evidence boxes below sat at 0/23 although the work shipped; ticked 2026-10-19 against the
+> code, each with the evidence it was ticked on. "Green" means the last recorded run (`build/test-results` XML of
+> 2026-10-19: `funktor:rest` 116 tests, `funktor:saas` 50, `funktor:all` 158, `funktor-demo:server` 47, all 0 failures) —
+> not re-run for the archive. The counts quoted in the next paragraph are the 2026-07-23 ones.
+> **Review LOOP CLOSED at round 5 (zero findings).** Rounds: 1 reworked on 2 HIGH direction findings
+> (caller-binding authority + structural forcing); 2 confirmed the idiomatic route airtight, fixed
+> edge/DiD (runtime-value org detection, docs, tests); 3 fixed LOW/INFO (guard↔loader reflection
+> alignment, no-saas KDoc accuracy, `_key`/`_id` contracts); 4 caught a regression round-3 introduced
+> (ctor-NAME filter dropped aliased non-`val` ctor entities) → fixed via backing-field superset +
+> regression test; 5 empirically verified the superset closes it — EMPTY. Green: rest 105, saas 31,
+> all 115 (both DB backends), demo 24. Commits 551e4364, 625b3d7a, f0038e1b, c5e63d06 (+ docs), all
+> UNPUSHED. Depends on ULTRA-00087 (apiroutes auth floor).
+
 **Plan:** part 3 of the auth-hardening quartet
 **Security-critical:** YES — request-data isolation (IDOR) + pre-auth resource access.
 

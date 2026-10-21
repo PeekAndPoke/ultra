@@ -1,9 +1,10 @@
 # ULTRA-00030: V1 Email Auth Flows + Session Records
 
-**Status:** PLANNED 2026-04-16 — Phase 1 DONE (2026-07-17 scan: `AuthRecord.{EmailVerificationToken,
-EmailChangeToken,Session}` + `SessionStore` (Vault/Cached) + `RealmTokenConfig` + `funktor:sid` claim
-exist and are tested; `touch()` is a deliberate Phase-1 no-op). Phases 2–6 open.
-**Hard goal for v1.0.0** — full email auth flow with session records.
+> **Status (2026-04-16): DESIGNED.** PLANNED 2026-04-16 — Phase 1 DONE (2026-07-17 scan: `AuthRecord.{EmailVerificationToken,
+> EmailChangeToken,Session}` + `SessionStore` (Vault/Cached) + `RealmTokenConfig` + `funktor:sid` claim
+> exist and are tested; `touch()` is a deliberate Phase-1 no-op). Phases 2–6 open.
+> **Hard goal for v1.0.0** — full email auth flow with session records.
+
 **Note (2026-07-17):** This plan is a hard prerequisite of ULTRA-00036 (saas foundation). Its open
 Phases 2–6 are scheduled as Phase F of ULTRA-00035 (auth orgs foundation) (org-aware: sessions must
 carry the selected organisation).

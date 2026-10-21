@@ -1,7 +1,7 @@
 # ULTRA-00120: Vault test-gap sweep — find untested code in `ultra:vault` and cover it
 
-**Status:** IDEA / not scheduled. Raised 2026-07-26 by the user while relocating `isForbiddenInId`
-into `ultra:common`.
+> **Status (2026-07-26): IDEA.** / not scheduled. Raised 2026-07-26 by the user while relocating `isForbiddenInId`
+> into `ultra:common`.
 
 ## Why
 

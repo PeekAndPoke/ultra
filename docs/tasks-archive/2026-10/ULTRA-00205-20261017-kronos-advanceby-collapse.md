@@ -1,7 +1,8 @@
 # ULTRA-00205: Kronos: collapse chained `advanceBy` into one offset
 
-**Status:** DONE (archived 2026-10-18). Started 2026-10-17, requested by the maintainer from the spross
-project, where a simulated clock advances once per simulated minute.
+> **Status (2026-10-18): DONE.** (archived 2026-10-18). Started 2026-10-17, requested by the maintainer from the spross
+> project, where a simulated clock advances once per simulated minute.
+
 **Security-critical:** no (a clock helper; no authz).
 
 ## Background

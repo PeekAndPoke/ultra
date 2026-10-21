@@ -1,13 +1,13 @@
 # ULTRA-00057: Insights GUI must be authenticated and environment-gated
 
-**Status:** SUPERSEDED (2026-07-30/31; archived 2026-10-19). The surface this doc set out to gate no longer exists. On
-2026-07-30 the maintainer decided the static-web insights GUI disappears wholesale rather than being gated
-(ULTRA-00160 (insights rest api), "The raw GUI route cannot be gated — which is why this is an
-API, not a patch"), and `b62ab6cd` (2026-07-31, "strip rendering, redact headers properly, drop staticweb") deleted
-`InsightsGui` with its two routes; `detailsUri` / `detailsUrl` are gone from `ApiResponse.Insights` (`respond.kt`). Insights
-records are now read through `InsightsApi`, an `ApiRoutes` group floored at `isSuperUser()`
-(`funktor/insights/src/jvmMain/kotlin/api/InsightsApi.kt:21`), and `InsightsConfig` still defaults to `Disabled`
-(`insights_module.kt:32`). So the anonymous-GUI exposure described under Spec is closed by removal, not by the gate designed below.
+> **Status (2026-07-30): WON'T IMPLEMENT.** SUPERSEDED (2026-07-30/31; archived 2026-10-19). The surface this doc set out to gate no longer exists. On
+> 2026-07-30 the maintainer decided the static-web insights GUI disappears wholesale rather than being gated
+> (ULTRA-00160 (insights rest api), "The raw GUI route cannot be gated — which is why this is an
+> API, not a patch"), and `b62ab6cd` (2026-07-31, "strip rendering, redact headers properly, drop staticweb") deleted
+> `InsightsGui` with its two routes; `detailsUri` / `detailsUrl` are gone from `ApiResponse.Insights` (`respond.kt`). Insights
+> records are now read through `InsightsApi`, an `ApiRoutes` group floored at `isSuperUser()`
+> (`funktor/insights/src/jvmMain/kotlin/api/InsightsApi.kt:21`), and `InsightsConfig` still defaults to `Disabled`
+> (`insights_module.kt:32`). So the anonymous-GUI exposure described under Spec is closed by removal, not by the gate designed below.
 
 **Residue — never built, and no live task tracks it:** (1) an environment gate on the insights surface (allow-list
 `AppConfig.ktor.isDevelopment`, §5); (2) the startup refusal `RefuseInsightsInProduction` (§6) — nothing stops an app from

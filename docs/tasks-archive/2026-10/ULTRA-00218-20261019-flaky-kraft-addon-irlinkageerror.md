@@ -1,6 +1,7 @@
 # ULTRA-00218: Kraft addon JS tests fail with IrLinkageError (TestBed.Companion)
 
-**Status:** DONE (archived 2026-10-19) — not flaky tests: poisoned build-cache entries from two overlapping builds
+> **Status (2026-10-19): DONE.** (archived 2026-10-19) — not flaky tests: poisoned build-cache entries from two overlapping builds
+
 **Plan:** none — maintainer: fix the flaky tests first, then the full suite green, then prepare 0.113.0
 **Security-critical:** no
 

@@ -1,9 +1,10 @@
 # ULTRA-00190: Insights — the Vue detail page and its collector tabs
 
-**Status:** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE
-2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
-below (icons, highlighting, sort, FQNs, `vars`) and step 10 (delete `reference/` — kept until T4 ports from it). The
-round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
+> **Status (2026-08-02): PAUSED.** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE
+> 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
+> below (icons, highlighting, sort, FQNs, `vars`) and step 10 (delete `reference/` — kept until T4 ports from it). The
+> round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
+
 **Plan:** ULTRA-00153 (frontend sdk vue contributors) → "Insights specifics"
 **Spec:** `funktor/insights/reference/TAB-SPECS.md` — all ten tabs, wire shapes read from a real record
 **Security-critical:** yes. Superuser-only data, rendered from attacker-controlled strings.

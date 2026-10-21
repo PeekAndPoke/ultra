@@ -1,5 +1,7 @@
 # ULTRA-00025: Funktor Docs Improvement Plan
 
+> **Status (2026-04-13): DONE.**
+
 **Date:** 2026-03-31
 **Goal:** Improve 5 thin/stub Funktor doc pages using FunktorConf demo as example source
 

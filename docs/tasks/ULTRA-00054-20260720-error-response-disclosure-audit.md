@@ -1,10 +1,10 @@
 # ULTRA-00054: Error-response information disclosure — audit findings
 
-Status: SPLIT INTO TASKS — this file is now the findings index; no work happens here
-Date: 2026-07-20
-Origin: follow-up to the `ApiStatusPages` fail-open fix in
-ULTRA-00061 (vault hook scope) — "are there other status pages with the same
-issue?"
+> **Status (2026-07-22): NOT STARTED.** SPLIT INTO TASKS — this file is now the findings index; no work happens here
+> Date: 2026-07-20
+> Origin: follow-up to the `ApiStatusPages` fail-open fix in
+> ULTRA-00061 (vault hook scope) — "are there other status pages with the same
+> issue?"
 
 ## Where the work lives
 

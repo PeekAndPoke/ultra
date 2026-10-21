@@ -1,6 +1,6 @@
 # ULTRA-00031: Diagnose why `EnsureRepositoriesOnAppStarting` doesn't fire — via tests
 
-
+> **Status (2026-04-25): DONE.**
 
 ## Commits & files changed
 

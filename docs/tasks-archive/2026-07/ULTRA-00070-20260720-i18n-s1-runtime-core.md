@@ -1,6 +1,7 @@
 # ULTRA-00070: S1 — `ultra/i18n` runtime core
 
-**Status:** DONE — gate PASS, fixes applied, tests green (2026-07-20)
+> **Status (2026-07-20): DONE.** gate PASS, fixes applied, tests green (2026-07-20)
+
 **Plan:** ULTRA-00069 (i18n l10n foundation) → Build step S1
 **Security-critical:** no
 
@@ -68,3 +69,5 @@ Verification: `./gradlew :ultra:i18n:jvmTest :ultra:i18n:jsTest` green on both t
 ## History
 
 - 2026-10-21: numbered ULTRA-00070 (was `docs/tasks/20260720-i18n-s1-runtime-core.md`).
+
+- 2026-10-21: archived as DONE on the status-line conversion (its status said so; it had not been moved).

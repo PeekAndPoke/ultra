@@ -1,6 +1,7 @@
 # ULTRA-00202: Docs: switchMap / switchMapNotNull
 
-**Status:** DONE (archived 2026-08-24)
+> **Status (2026-08-24): DONE.** (archived 2026-08-24)
+
 **Plan:** follow-up of ULTRA-00199 (streams switchmap)
 **Security-critical:** no
 

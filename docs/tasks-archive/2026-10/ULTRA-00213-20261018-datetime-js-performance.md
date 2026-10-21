@@ -1,6 +1,7 @@
 # ULTRA-00213: ultra/datetime: performance in the browser (zone offsets, Long)
 
-**Status:** DONE (archived 2026-10-19) — gate PASS after 2 rounds; spross re-profile requested (Spross-Main-Dev)
+> **Status (2026-10-19): DONE.** (archived 2026-10-19) — gate PASS after 2 rounds; spross re-profile requested (Spross-Main-Dev)
+
 **Plan:** none. Reported by spross (2026-10-18) from a CPU profile of its browser dashboard; written by the spross
 agent at the maintainer's request.
 **Security-critical:** no (it touches time-zone resolution, which persistence relies on: mutation-check bar)

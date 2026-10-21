@@ -1,6 +1,7 @@
 # ULTRA-00066: Password hashes never upgrade — add rehash-on-login
 
-**Status:** TODO — from the password-subsystem review (2026-07-20)
+> **Status (2026-07-20): NOT STARTED.** from the password-subsystem review (2026-07-20)
+
 **Plan:** none — password hashing hardening (finding 1, the headline gap)
 **Security-critical:** yes
 

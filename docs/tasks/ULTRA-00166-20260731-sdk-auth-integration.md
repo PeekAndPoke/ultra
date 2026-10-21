@@ -1,9 +1,10 @@
 # ULTRA-00166: Ship auth through the SDK builder — the TypeScript counterpart of `AuthState`
 
-**Status:** IN PROGRESS — the session runtime landed and PASSED `/feature-review` 2026-08-02
-(`eb609f09`). **Outstanding: the Vue binding layer** (§5), and with it the login page and routing.
-Do NOT archive until those land — the runtime is deliberately framework-neutral, so nothing here
-has yet been used from a component.
+> **Status (2026-08-02): PAUSED.** IN PROGRESS — the session runtime landed and PASSED `/feature-review` 2026-08-02
+> (`eb609f09`). **Outstanding: the Vue binding layer** (§5), and with it the login page and routing.
+> Do NOT archive until those land — the runtime is deliberately framework-neutral, so nothing here
+> has yet been used from a component.
+
 **Plan:** ULTRA-00146 (ts sdk codegen) (the generator) and
 ULTRA-00153 (frontend sdk vue contributors) (where contributors ship more than clients).
 **Security-critical:** yes — sessions, tokens, JWT claims. Red-team follow-up required on completion.

@@ -1,6 +1,7 @@
 # ULTRA-00117: Red-team: `EmailAddress` — email as an authentication identifier
 
-**Status:** COLLECTED 2026-07-26 — NOT executed. A dedicated penetration-test session runs these.
+> **Status (2026-07-26): NOT STARTED.** COLLECTED 2026-07-26 — NOT executed. A dedicated penetration-test session runs these.
+
 **Feature:** ULTRA-00119 (value class emailaddress)
 **Why:** email is how users are resolved at sign-in, password reset, and SSO login/signup.
 Canonicalization is the fix, but canonicalization also COLLAPSES distinct inputs onto one key — which

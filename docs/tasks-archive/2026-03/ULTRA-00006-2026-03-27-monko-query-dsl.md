@@ -1,5 +1,7 @@
 # ULTRA-00006: Monko Query DSL — Design & Implementation Plan
 
+> **Status (2026-03-27): DONE.**
+
 **Date:** 2026-03-25
 **Related:** [funktor-v1-roadmap.md](funktor-v1-roadmap.md)
 

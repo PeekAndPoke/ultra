@@ -1,6 +1,7 @@
 # ULTRA-00035: Auth + Organisations Foundation
 
-**Status:** PLANNED 2026-07-17
+> **Status (2026-07-17): DESIGNED.** PLANNED 2026-07-17
+
 **Goal:** Get organisations (tenants) and branches (sub-tenants) into users in the database, wire
 the org-aware login flow (0/1/n org selection), and then fully implement all still-open user flows.
 Auth is the center-piece for everything that follows.

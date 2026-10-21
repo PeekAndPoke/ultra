@@ -1,6 +1,7 @@
 # ULTRA-00138: ensureKey: split at the first slash, not the second
 
-**Status:** DONE (2026-07-28)
+> **Status (2026-07-28): DONE.** (2026-07-28)
+
 **Plan:** none — found while writing KDoc for `ultra/vault/src/jvmMain/kotlin/helpers.kt`
 **Security-critical:** no
 

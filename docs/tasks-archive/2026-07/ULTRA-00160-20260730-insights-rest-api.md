@@ -1,8 +1,8 @@
 # ULTRA-00160: Insights: split data from rendering, expose it through a superuser REST API
 
-**Status:** DONE and ARCHIVED (2026-07-31). Rounds 1 and 2 complete, gate PASS, all follow-up
-decisions taken and implemented. The `Redacted<T>` project that came out of it has its own task file,
-now also archived (ULTRA-00169 (redacted and jackson removal)).
+> **Status (2026-07-31): DONE.** and ARCHIVED (2026-07-31). Rounds 1 and 2 complete, gate PASS, all follow-up
+> decisions taken and implemented. The `Redacted<T>` project that came out of it has its own task file,
+> now also archived (ULTRA-00169 (redacted and jackson removal)).
 
 **No DOCS follow-up — deliberately.** Per CLAUDE.md a public-API change gets a docs task only once
 the surface is SETTLED, and this one is not: the Vue tabs are unbuilt, and D-M6 below is explicitly

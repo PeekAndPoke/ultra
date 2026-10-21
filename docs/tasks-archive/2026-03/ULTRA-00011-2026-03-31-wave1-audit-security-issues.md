@@ -1,5 +1,7 @@
 # ULTRA-00011: Audit: ultra:security — Issues Report
 
+> **Status (2026-03-31): DONE.**
+
 **Date:** 2026-03-30
 **Auditor:** Code audit agent (Wave 1)
 **Module:** ultra/security (~33 source files, 12 test files)

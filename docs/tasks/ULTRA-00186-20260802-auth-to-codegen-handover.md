@@ -1,5 +1,7 @@
 # ULTRA-00186: Handover to the codegen agent — the auth transport arc, 2026-08-02
 
+> **Status (2026-10-19): NOT STARTED.**
+
 **From:** auth-transport agent. **Status:** increment 1 COMPLETE and through `/feature-review` (PASS).
 Lock is FREE. Nothing is owed to you, and nothing of mine is half-finished.
 

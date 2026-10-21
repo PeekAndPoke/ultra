@@ -1,6 +1,7 @@
 # ULTRA-00196: ACL-aware navigation for contributed pages
 
-**Status:** DONE — 2026-08-24, gate PASSED. Ready to archive.
+> **Status (2026-08-24): DONE.** 2026-08-24, gate PASSED. Ready to archive.
+
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** no. The client-side ACL is ADVISORY — the server is the authority — so this is
 about telling the user the truth, not about enforcement. It is still access-shaped, so it was

@@ -1,6 +1,7 @@
 # ULTRA-00135: Docs/code sync — remaining items from the 2026-07-28 audit
 
-**Status:** TODO — the BROKEN class is fixed; these are the GAPs and DRIFT left over
+> **Status (2026-07-28): NOT STARTED.** the BROKEN class is fixed; these are the GAPs and DRIFT left over
+
 **Plan:** none (follow-up to the docs sync audit)
 **Security-critical:** no
 

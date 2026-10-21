@@ -1,7 +1,8 @@
 # ULTRA-00230: Fixed Karma ports per module (machine-wide browser-test isolation)
 
-**Status:** TODO — maintainer decision 2026-10-19 (relayed by Mission-Control): every module with Kotlin/JS browser tests
-gets a fixed Karma port, coordinated through Mission-Control. Fit into a slot.
+> **Status (2026-10-19): NOT STARTED.** maintainer decision 2026-10-19 (relayed by Mission-Control): every module with Kotlin/JS browser tests
+> gets a fixed Karma port, coordinated through Mission-Control. Fit into a slot.
+
 **Plan:** none — build hygiene; found by Spross-Main-Dev (a spross jsBrowserTest run held two Klang suites: two projects'
 Karma on the default 9876/next-free port, a ChromeHeadless joined the other's server — a run can PASS on foreign tests)
 **Security-critical:** no

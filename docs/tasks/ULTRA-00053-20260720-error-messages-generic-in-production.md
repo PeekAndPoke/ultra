@@ -1,7 +1,8 @@
 # ULTRA-00053: Error responses must not return `cause.message` in production
 
-**Status:** TODO — tactical slice; see
-ULTRA-00055 (exception disclosure architecture) for the umbrella design
+> **Status (2026-07-22): NOT STARTED.** tactical slice; see
+> ULTRA-00055 (exception disclosure architecture) for the umbrella design
+
 **Plan:** none — from ULTRA-00054 (error response disclosure audit) (findings 1 + 2)
 **Security-critical:** yes
 

@@ -1,6 +1,7 @@
 # ULTRA-00141: Karango: exclude soft-deleted rows from unique indexes
 
-**Status:** TODO
+> **Status (2026-07-29): NOT STARTED.**
+
 **Plan:** follow-up from ULTRA-00140 (vault scan findings) → S2
 **Security-critical:** no
 

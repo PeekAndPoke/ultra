@@ -1,6 +1,6 @@
 # ULTRA-00121: Email end-to-end test seam — capture outgoing mail and follow the token in it
 
-**Status:** DONE 2026-07-27 (implemented 2026-07-26, gate passed 2026-07-27)
+> **Status (2026-07-27): DONE.** 2026-07-27 (implemented 2026-07-26, gate passed 2026-07-27)
 
 > **SUPERSEDED 2026-07-27 (same day) by ULTRA-00123 (framework composed email sender).**
 > The seam itself stands, but two things described below no longer exist. `EmailSender.canDeliver`

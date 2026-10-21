@@ -1,6 +1,6 @@
 # ULTRA-00149: ultra/log scan — findings backlog
 
-**Status:** IN PROGRESS — 9 files documented, 20 findings; mechanical fixes DONE, 5 design questions open
+> **Status (2026-07-30): PAUSED.** IN PROGRESS — 9 files documented, 20 findings; mechanical fixes DONE, 5 design questions open
 
 ## DONE — mechanical round, 2026-07-30
 

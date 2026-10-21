@@ -1,6 +1,7 @@
 # ULTRA-00067: Add a CSPRNG secret/token generator (invites, temp passwords, reset tokens)
 
-**Status:** TODO — from the password-subsystem review (2026-07-20)
+> **Status (2026-07-20): NOT STARTED.** from the password-subsystem review (2026-07-20)
+
 **Plan:** none — password hashing hardening (finding 4)
 **Security-critical:** yes (provisioning secrets)
 

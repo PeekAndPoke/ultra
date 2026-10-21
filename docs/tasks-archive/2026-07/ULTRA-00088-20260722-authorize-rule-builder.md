@@ -1,9 +1,10 @@
 # ULTRA-00088: authorize {} builder-accumulator — kill the last-expression-wins footgun
 
-**Status:** DONE (2026-07-22; archived 2026-10-19) — review loop terminated on round 4 (zero confirmed findings across
-all three reviewers). All 4 rounds' findings fixed; 27 funktor:rest specs + full backend suites green.
-Archive check 2026-10-19: every Spec/Test box was already ticked; the builder, `RestDsl` marker and the specs it names
-(`AuthRuleBuilderSpec` 20, `AuthRuleDslCompileSpec` 4) are all still in the tree and green in the last recorded run.
+> **Status (2026-07-22): DONE.** (2026-07-22; archived 2026-10-19) — review loop terminated on round 4 (zero confirmed findings across
+> all three reviewers). All 4 rounds' findings fixed; 27 funktor:rest specs + full backend suites green.
+> Archive check 2026-10-19: every Spec/Test box was already ticked; the builder, `RestDsl` marker and the specs it names
+> (`AuthRuleBuilderSpec` 20, `AuthRuleDslCompileSpec` 4) are all still in the tree and green in the last recorded run.
+
 **Plan:** part 1 of the auth-hardening quartet: this → ULTRA-00087 (apiroutes auth floor) →
 ULTRA-00090 (two phase auth consistent params) → ULTRA-00089 (stored param migration)
 **Security-critical:** YES — this changes how every API auth rule is declared.

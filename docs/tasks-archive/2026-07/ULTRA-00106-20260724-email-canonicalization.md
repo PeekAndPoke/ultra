@@ -1,6 +1,6 @@
 # ULTRA-00106: Email canonicalization on lookup (framework auth gap)
 
-**Status:** ✅ CLOSED 2026-07-26 by **Option C** — see ULTRA-00119 (value class emailaddress).
+> **Status (2026-07-26): DONE.** ✅ CLOSED 2026-07-26 by **Option C** — see ULTRA-00119 (value class emailaddress).
 
 > The decision this task was waiting for was made by scheduling Step 4 of the value-class-ids
 > migration. Option C ("an `EmailAddress` value type … strongest (wrong usage unrepresentable)") was

@@ -1,6 +1,6 @@
 # ULTRA-00183: Public-route metadata in the generated TypeScript SDK
 
-**Status:** DONE — implemented and gated 2026-08-02 (`ceee702a`, doc fix in `eb609f09`). Archived.
+> **Status (2026-08-02): DONE.** implemented and gated 2026-08-02 (`ceee702a`, doc fix in `eb609f09`). Archived.
 
 **No DOCS follow-up, deliberately.** The CLAUDE.md rule asks for one when a change touches public API
 *and the code is settled*. The first half holds — `publicRoute` and `RouteRef.isPublic` are visible to

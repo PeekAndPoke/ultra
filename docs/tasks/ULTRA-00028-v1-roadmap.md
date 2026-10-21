@@ -1,5 +1,7 @@
 # ULTRA-00028: v1.0.0 Roadmap — Single Source of Truth
 
+> **Status (2026-10-20): NOT STARTED.**
+
 **Current version:** 0.114.0 → **Target:** 1.0.0
 **Last updated:** 2026-04-13
 

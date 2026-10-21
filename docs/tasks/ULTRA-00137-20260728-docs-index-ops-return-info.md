@@ -1,6 +1,7 @@
 # ULTRA-00137: DOCS: Database.ensureIndexes / recreateIndexes now return the index report
 
-**Status:** TODO
+> **Status (2026-07-29): NOT STARTED.**
+
 **Plan:** follow-up from ULTRA-00139 (index ops return info)
 **Security-critical:** no
 

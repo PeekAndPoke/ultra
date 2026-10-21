@@ -1,9 +1,10 @@
 # ULTRA-00189: DOCS — the sign-in response contract, and the REST Content-Type requirement
 
-**Status:** TODO — created 2026-08-02 on archiving
-ULTRA-00050 (token storage hardening) and
-ULTRA-00185 (rest content type enforcement), per the CLAUDE.md rule that a
-public-API change gets a docs follow-up once the code is settled.
+> **Status (2026-08-02): NOT STARTED.** created 2026-08-02 on archiving
+> ULTRA-00050 (token storage hardening) and
+> ULTRA-00185 (rest content type enforcement), per the CLAUDE.md rule that a
+> public-API change gets a docs follow-up once the code is settled.
+
 **Plan:** none.
 **Security-critical:** no — but it documents a security boundary, so be precise about what enforces what.
 

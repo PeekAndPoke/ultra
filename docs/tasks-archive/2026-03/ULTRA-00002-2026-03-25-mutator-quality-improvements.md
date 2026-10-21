@@ -1,6 +1,6 @@
 # ULTRA-00002: Plan: Mutator Library — Quality & Completeness Improvements
 
-
+> **Status (2026-03-25): DONE.**
 
 ## Commits & files changed
 

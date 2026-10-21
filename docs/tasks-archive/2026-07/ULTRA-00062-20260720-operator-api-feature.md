@@ -1,6 +1,7 @@
 # ULTRA-00062: OperatorApiFeature — real dashboard stats (+ groundwork for users-by-org)
 
-**Status:** DONE (2026-07-20) — dashboard stats shipped; users-by-org deferred (see notes)
+> **Status (2026-07-20): DONE.** (2026-07-20) — dashboard stats shipped; users-by-org deferred (see notes)
+
 **Plan:** ULTRA-00045 (demo restructure three apps) → ops-app "real dashboard stats"
 **Security-critical:** yes (super-user operator API; new routes guard the operator surface)
 

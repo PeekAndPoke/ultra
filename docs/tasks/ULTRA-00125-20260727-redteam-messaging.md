@@ -1,6 +1,7 @@
 # ULTRA-00125: Red-team: the messaging / sent-messages surface
 
-**Status:** COLLECTED 2026-07-27 — NOT executed. A dedicated penetration-test session runs these.
+> **Status (2026-07-27): NOT STARTED.** COLLECTED 2026-07-27 — NOT executed. A dedicated penetration-test session runs these.
+
 **Feature:** ULTRA-00123 (framework composed email sender)
 **Why:** mail is how password reset and (soon) account activation deliver their tokens, and every mail
 is persisted. The store is the part with a read path.

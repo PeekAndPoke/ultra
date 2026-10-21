@@ -1,6 +1,7 @@
 # ULTRA-00154: Slumber cannot round-trip an intermediate sealed class with a root-level discriminator
 
-**Status:** TODO — found and reproduced 2026-07-30, NOT fixed
+> **Status (2026-07-30): NOT STARTED.** found and reproduced 2026-07-30, NOT fixed
+
 **Plan:** none. Found incidentally while testing `ultra/codegen` (ULTRA-00146 (ts sdk codegen))
 **Security-critical:** no — but it is a silent data-shape mismatch on a serialization path, so it wants
 a careful review rather than a quick patch.

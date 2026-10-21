@@ -1,8 +1,9 @@
 # ULTRA-00093: Auth-hardening quartet — index
 
-**Status:** DONE (quartet complete 2026-07-23; archived 2026-10-19). Parts 1–4 are all DONE and archived next to this file in
-`docs/tasks-archive/2026-07/`. The follow-ups in the last four table rows are NOT done and stay open as ordinary tasks in
-`docs/tasks/` — they no longer have an umbrella.
+> **Status (2026-07-23): DONE.** (quartet complete 2026-07-23; archived 2026-10-19). Parts 1–4 are all DONE and archived next to this file in
+> `docs/tasks-archive/2026-07/`. The follow-ups in the last four table rows are NOT done and stay open as ordinary tasks in
+> `docs/tasks/` — they no longer have an umbrella.
+
 **Plan:** none — this is the umbrella/index for the quartet
 **Security-critical:** yes
 

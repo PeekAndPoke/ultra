@@ -1,6 +1,7 @@
 # ULTRA-00128: Sign-up is an unthrottled outbound-mail primitive — needs a suppression point
 
-**Status:** TODO — deferred by the user 2026-07-27, to be handled later
+> **Status (2026-07-27): NOT STARTED.** deferred by the user 2026-07-27, to be handled later
+
 **Found via:** the security review of ULTRA-00126 (account activation) (commit
 `31667449`), which is also what introduced the exposure
 **Security-critical:** yes → attack scenarios already recorded, see the bottom

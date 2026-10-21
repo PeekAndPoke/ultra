@@ -1,7 +1,8 @@
 # ULTRA-00176: JWT `kid`-based key rotation
 
-**Status:** DONE and ARCHIVED (2026-08-01) — implemented (`9fe2a21a`), review findings fixed
-(`493423b8`), signing key moved out of the tree (`2397c0a6`)
+> **Status (2026-08-01): DONE.** and ARCHIVED (2026-08-01) — implemented (`9fe2a21a`), review findings fixed
+> (`493423b8`), signing key moved out of the tree (`2397c0a6`)
+
 **Plan:** ULTRA-00041 (jwt lib consolidation options) → the AMENDED section
 **Security-critical:** yes → red-team scenarios collected in
 ULTRA-00172 (redteam jwt own verifier) section F

@@ -1,6 +1,7 @@
 # ULTRA-00136: Session revocation — wire the JWT half
 
-**Status:** TODO — the storage half exists; the JWT integration does not
+> **Status (2026-08-01): NOT STARTED.** the storage half exists; the JWT integration does not
+
 **Plan:** none (follow-up from ULTRA-00001 (code review observations))
 **Security-critical:** yes → red-team follow-up required
 

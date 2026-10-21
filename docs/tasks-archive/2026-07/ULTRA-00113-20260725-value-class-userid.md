@@ -1,6 +1,7 @@
 # ULTRA-00113: `UserId` value class (value-class-ids Step 2)
 
-**Status:** DONE 2026-07-25 (gate PASS — all three reviewers, confirmed findings fixed, tests green)
+> **Status (2026-07-25): DONE.** 2026-07-25 (gate PASS — all three reviewers, confirmed findings fixed, tests green)
+
 **Plan:** ULTRA-00110 (value class ids migration) → Step 2
 **Security-critical:** yes (identity field; feeds session lookup, ownership checks, CSRF hash key)
 

@@ -1,8 +1,9 @@
 # ULTRA-00130: The activation-resend delay is a check-then-act
 
-**Status:** TODO — recorded 2026-07-27 from the review gate on
-ULTRA-00129 (activation resend and frontend); premise REWRITTEN 2026-10-19 by
-ULTRA-00222 (activation hardening) (the July premise was false, see "What the July version got wrong")
+> **Status (2026-07-27): NOT STARTED.** recorded 2026-07-27 from the review gate on
+> ULTRA-00129 (activation resend and frontend); premise REWRITTEN 2026-10-19 by
+> ULTRA-00222 (activation hardening) (the July premise was false, see "What the July version got wrong")
+
 **Security-critical:** yes (it is a rate limit) → red-team scenario ULTRA-00127 (redteam account activation) §8
 **Severity:** LOW, bounded by the hardening of 2026-10-19 — see "Why it is bounded now".
 

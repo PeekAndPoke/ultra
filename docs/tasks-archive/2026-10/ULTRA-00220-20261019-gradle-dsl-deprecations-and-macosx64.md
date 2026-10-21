@@ -1,6 +1,7 @@
 # ULTRA-00220: Build: Gradle 9.6 Kotlin DSL deprecations, drop the macosX64 target
 
-**Status:** DONE (archived 2026-10-19)
+> **Status (2026-10-19): DONE.** (archived 2026-10-19)
+
 **Plan:** none — maintainer request, 2026-10-19: after the `~/.gradle` cache wipe the recompiled build scripts printed
 deprecation warnings, "we should fix them too"
 **Security-critical:** no

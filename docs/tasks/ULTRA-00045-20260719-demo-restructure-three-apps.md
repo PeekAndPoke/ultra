@@ -1,8 +1,8 @@
 # ULTRA-00045: Demo restructure: three realms, three apps (ops / b2b / b2b2c)
 
-**Status:** PLANNED 2026-07-19. The current `funktor-demo` was built to *market the framework*; that
-goal is dropped — the framework is now internal. Replace the demo with three real SaaS apps that
-also serve as the reference/testbed for the org+billing features.
+> **Status (2026-07-19): DESIGNED.** PLANNED 2026-07-19. The current `funktor-demo` was built to *market the framework*; that
+> goal is dropped — the framework is now internal. Replace the demo with three real SaaS apps that
+> also serve as the reference/testbed for the org+billing features.
 
 ## Realm / identity architecture (decided)
 

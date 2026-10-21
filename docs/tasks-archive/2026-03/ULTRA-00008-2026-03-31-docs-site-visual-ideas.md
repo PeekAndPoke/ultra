@@ -1,5 +1,7 @@
 # ULTRA-00008: Six Hats Analysis: Making peekandpoke.io Visually Unique
 
+> **Status (2026-03-31): DONE.**
+
 **Date:** 2026-03-28
 **Rounds:** 3
 

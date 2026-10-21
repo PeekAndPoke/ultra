@@ -1,6 +1,6 @@
 # ULTRA-00013: API Endpoint Tests in funktor/all
 
-
+> **Status (2026-04-02): DONE.**
 
 ## Commits & files changed
 

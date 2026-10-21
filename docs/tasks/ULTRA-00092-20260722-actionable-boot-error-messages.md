@@ -1,6 +1,7 @@
 # ULTRA-00092: Make all boot-time / startup error messages actionable (framework-wide sweep)
 
-**Status:** TODO (created 2026-07-22)
+> **Status (2026-07-22): NOT STARTED.** (created 2026-07-22)
+
 **Type:** dx / hardening
 **Standing rule:** boot-blocking errors must state the concrete FIX, not just what is wrong (memory:
 `boot-errors-must-be-actionable`). This task applies that rule across the framework, beyond the auth

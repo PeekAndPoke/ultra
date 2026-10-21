@@ -1,5 +1,7 @@
 # ULTRA-00029: Kotlin 2.3.20 SWC Support — What It Is & Whether We Should Adopt It
 
+> **Status (2026-04-15): IDEA.**
+
 ## Context
 
 The user asked about [KT-80308](https://youtrack.jetbrains.com/issue/KT-80308) /
