@@ -1,4 +1,4 @@
-# Six Hats Analysis: Kraft Examples, Interactive Demos & Site Visual Identity
+# ULTRA-00018: Six Hats Analysis: Kraft Examples, Interactive Demos & Site Visual Identity
 
 **Date:** 2026-03-24
 **Rounds:** 3
@@ -278,3 +278,7 @@ These examples would showcase Kraft's unique strengths beyond what's currently d
 | **Responsive layout**       | Grid that adapts — show mobile/desktop side by side               | SemanticUI DSL  |
 | **Modal + toast workflow**  | Click button → modal → confirm → toast notification               | SemanticUI DSL  |
 | **PDF viewer**              | Embed a PDF in the docs page itself — meta and impressive         | Addons          |
+
+## History
+
+- 2026-10-21: numbered ULTRA-00018 (was `docs/tasks-archive/2026-04/2026-04-13-kraft-examples-and-site-vision.md`).
