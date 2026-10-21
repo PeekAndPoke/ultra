@@ -1,4 +1,4 @@
-# Monko Query DSL — Design & Implementation Plan
+# ULTRA-00006: Monko Query DSL — Design & Implementation Plan
 
 **Date:** 2026-03-25
 **Related:** [funktor-v1-roadmap.md](funktor-v1-roadmap.md)
@@ -342,3 +342,7 @@ All new files under `monko/core/src/main/kotlin/lang/dsl/`:
 - **No lock-in** — Everything returns `Bson`. Drop down to raw MongoDB API anytime.
 - **No new concepts** — Uses existing `MongoPropertyPath` and `FindQueryBuilder`. Just adds ergonomics.
 - **Lowercase operators** — `eq`/`gt`/`desc` feel Kotlin-native, distinct from Karango's `EQ`/`GT`/`DESC`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00006 (was `docs/tasks-archive/2026-03/2026-03-27-monko-query-dsl.md`).

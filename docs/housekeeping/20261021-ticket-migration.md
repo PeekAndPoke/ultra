@@ -14,3 +14,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00004 | 2026-03-26 | `.claude/tasks-archive/2026-03/2026-03-26_decompose-common-module.md` | `docs/tasks-archive/2026-03/ULTRA-00004-2026-03-26_decompose-common-module.md` |
 | ULTRA-00005 | 2026-03-26 | `docs/tasks-archive/2026-03/2026-03-26-remove-korlibs-time.md` | `docs/tasks-archive/2026-03/ULTRA-00005-2026-03-26-remove-korlibs-time.md` |
 | ULTRA-00005 | 2026-03-26 | `.claude/tasks-archive/2026-03/2026-03-26-remove-korlibs-time.md` | `docs/tasks-archive/2026-03/ULTRA-00005-2026-03-26-remove-korlibs-time.md` |
+| ULTRA-00006 | 2026-03-27 | `docs/tasks-archive/2026-03/2026-03-27-monko-query-dsl.md` | `docs/tasks-archive/2026-03/ULTRA-00006-2026-03-27-monko-query-dsl.md` |
+| ULTRA-00006 | 2026-03-27 | `.claude/tasks-archive/2026-03/2026-03-27-monko-query-dsl.md` | `docs/tasks-archive/2026-03/ULTRA-00006-2026-03-27-monko-query-dsl.md` |
