@@ -13,7 +13,7 @@ The maintainer wiped the caches; a cold `clean build` is green (15630 tests / 68
 ULTRA-00218 (flaky kraft addon irlinkageerror).
 
 **The build scripts are free of the Gradle 9.6 Kotlin DSL deprecations, and macosX64 is dropped** (`a8cbf052`). Record:
-`docs/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md`.
+ULTRA-00220 (gradle dsl deprecations and macosx64).
 
 **Worth taking:** after ANY concurrent build in this worktree, `clean` is not enough — damaged outputs can sit in the
 build cache. Build with `--no-build-cache`, or have the entries written during the overlap removed (the cache is shared

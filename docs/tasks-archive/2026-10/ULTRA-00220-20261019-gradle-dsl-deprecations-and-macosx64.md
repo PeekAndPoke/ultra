@@ -1,4 +1,4 @@
-# Build: Gradle 9.6 Kotlin DSL deprecations, drop the macosX64 target
+# ULTRA-00220: Build: Gradle 9.6 Kotlin DSL deprecations, drop the macosX64 target
 
 **Status:** DONE (archived 2026-10-19)
 **Plan:** none — maintainer request, 2026-10-19: after the `~/.gradle` cache wipe the recompiled build scripts printed
@@ -43,3 +43,7 @@ deprecation warnings, "we should fix them too"
 Scoped by risk (review-loop): mechanical build-script changes with no library code touched, verified by the
 warning-free configuration and the cold full build; no reviewer round. The macosX64 removal is a maintainer decision.
 No docs follow-up: the platform lists were updated in this change.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00220 (was `docs/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md`).

@@ -530,3 +530,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00219 | 2026-10-19 | `docs/tasks-archive/2026-10/20261019-global-locks-heartbeat.md` | `docs/tasks-archive/2026-10/ULTRA-00219-20261019-global-locks-heartbeat.md` |
 | ULTRA-00219 | 2026-10-19 | `.claude/tasks-archive/2026-10/20261019-global-locks-heartbeat.md` | `docs/tasks-archive/2026-10/ULTRA-00219-20261019-global-locks-heartbeat.md` |
 | ULTRA-00219 | 2026-10-19 | `.claude/tasks/20261019-global-locks-heartbeat.md` | `docs/tasks-archive/2026-10/ULTRA-00219-20261019-global-locks-heartbeat.md` |
+| ULTRA-00220 | 2026-10-19 | `docs/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md` | `docs/tasks-archive/2026-10/ULTRA-00220-20261019-gradle-dsl-deprecations-and-macosx64.md` |
+| ULTRA-00220 | 2026-10-19 | `.claude/tasks-archive/2026-10/20261019-gradle-dsl-deprecations-and-macosx64.md` | `docs/tasks-archive/2026-10/ULTRA-00220-20261019-gradle-dsl-deprecations-and-macosx64.md` |
+| ULTRA-00220 | 2026-10-19 | `.claude/tasks/20261019-gradle-dsl-deprecations-and-macosx64.md` | `docs/tasks-archive/2026-10/ULTRA-00220-20261019-gradle-dsl-deprecations-and-macosx64.md` |
