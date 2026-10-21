@@ -125,7 +125,7 @@ stores a `Long`; moving it to `Int` is on Ultra-Main-Dev's list.
 - **Biggest remaining ultra-side cost:** `MpZonedDateTime`'s init recomputes its instant from local time + zone
   (`MpZonedDateTime.kt:151`), so `instant.atZone(zone)` resolves the zone twice, and `kotlin.time.Instant`/`Duration`
   arithmetic is emulated-`Long` work. Passing the known instant in is the same redesign as
-  `docs/tasks/20261018-mpzoneddatetime-overlap-offset.md` — do it there.
+  ULTRA-00211 (mpzoneddatetime overlap offset) — do it there.
 
 ## Test evidence
 

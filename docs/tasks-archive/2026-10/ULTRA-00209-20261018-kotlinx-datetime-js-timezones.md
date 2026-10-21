@@ -138,7 +138,7 @@ S = security.
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
-| 1 | MAJOR | `MpZonedDateTime.kt:151` | Instant in the 2nd half of a fall-back overlap does not survive `atZone` / every deserialize (1h early); re-save writes wrong `ts` (D, I) | out-of-scope → follow-up task | Verified real; PRE-EXISTING (kotlinx gave the same earlier offset). `docs/tasks/20261018-mpzoneddatetime-overlap-offset.md` |
+| 1 | MAJOR | `MpZonedDateTime.kt:151` | Instant in the 2nd half of a fall-back overlap does not survive `atZone` / every deserialize (1h early); re-save writes wrong `ts` (D, I) | out-of-scope → follow-up task | Verified real; PRE-EXISTING (kotlinx gave the same earlier offset). ULTRA-00211 (mpzoneddatetime overlap offset) |
 | 1 | MINOR | `MpZonedDateTime.kt:313` | `MpZonedDateTime.atStartOfDay()` (copy) disagrees with `MpLocalDate.atStartOfDay(tz)` in gaps (D) | out-of-scope → same follow-up task | Pre-existing; same root as the row above |
 | 1 | MINOR | `TimezoneEngineJs.kt:14,57` | Cache is a plain `{}`: ids like `constructor` hit `Object.prototype` → JS `TypeError` instead of `IllegalTimeZoneException` (S, D, I) | fixed (MINOR batch) | `js("Object.create(null)")`; mutation → `'constructor' is rejected` RED |
 | 1 | MINOR | `TimezoneEngineJs.kt:65` | Intl accepts ids case-insensitively → `europe/berlin` works in the browser, persists, then throws on JVM; cache grows per case variant (S, D) | fixed — maintainer: REJECT case variants | Chrome probe: Intl case-folds AND canonicalises aliases (`US/Pacific`→`America/Los_Angeles`, `Asia/Kolkata`→`Asia/Calcutta`), so `resolvedOptions()` cannot tell; check against `MpTimezone.supportedIds` (no lowercase collisions, pinned). Mutation → `'europe/berlin' is rejected` RED |
@@ -172,7 +172,7 @@ wraps java.time — not independent evidence; the other ~21 per transition are.
 `:kraft:addons:datetime:jsBrowserTest` 2/0. Every mutation restored + `cmp`-verified.
 
 **Follow-ups:** docs `docs/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` (done);
-`docs/tasks/20261018-mpzoneddatetime-overlap-offset.md`; ULTRA-00210 (datetime no kotlinx return types);
+ULTRA-00211 (mpzoneddatetime overlap offset); ULTRA-00210 (datetime no kotlinx return types);
 performance `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md` (from spross, before 0.112.0). No red-team task: not
 security-critical. The applied patch is archived next to this file.
 

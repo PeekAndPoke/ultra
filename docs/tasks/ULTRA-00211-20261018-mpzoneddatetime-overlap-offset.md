@@ -1,4 +1,4 @@
-# MpZonedDateTime loses the offset in a DST overlap
+# ULTRA-00211: MpZonedDateTime loses the offset in a DST overlap
 
 **Status:** TODO
 **Plan:** none — out-of-scope finding from the `/feature-review` of ULTRA-00209 (kotlinx datetime js timezones) (round 1, 2026-10-18)
@@ -43,3 +43,7 @@ and possibly the wire format (`MpDateTimeRawData` already carries `ts`, so decod
 |---|---|---|---|---|---|
 
 **Verdict:**
+
+## History
+
+- 2026-10-21: numbered ULTRA-00211 (was `docs/tasks/20261018-mpzoneddatetime-overlap-offset.md`).
