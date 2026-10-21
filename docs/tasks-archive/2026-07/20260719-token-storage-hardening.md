@@ -219,7 +219,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 - `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` — split out of the dropped cookie work;
   a live hole today, not a cookie concern.
 - `20260719-ktor-client-unification.md`, `20260719-cross-realm-authz-and-tests.md`,
-  `20260717-auth-orgs-foundation.md`.
+  ULTRA-00035 (auth orgs foundation).
 
 ## 2026-08-02 — this has TWO call sites, and they must be fixed together
 

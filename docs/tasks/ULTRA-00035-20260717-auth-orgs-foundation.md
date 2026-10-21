@@ -1,4 +1,4 @@
-# Auth + Organisations Foundation
+# ULTRA-00035: Auth + Organisations Foundation
 
 **Status:** PLANNED 2026-07-17
 **Goal:** Get organisations (tenants) and branches (sub-tenants) into users in the database, wire
@@ -402,3 +402,7 @@ selection-token issued for realm A accepted by realm B.
 
 Enforced org-scoped repositories (data layer), invitation flows, org-admin management UI,
 per-org email branding, org lifecycle cascades (archive/delete), document layer, starter template.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00035 (was `docs/tasks/20260717-auth-orgs-foundation.md`).

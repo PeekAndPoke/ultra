@@ -73,3 +73,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00034 | 2026-06-25 | `docs/tasks-archive/2026-06/kraft-timezone-decoupling.md` | `docs/tasks-archive/2026-06/ULTRA-00034-kraft-timezone-decoupling.md` |
 | ULTRA-00034 | 2026-06-25 | `.claude/tasks-archive/2026-06/kraft-timezone-decoupling.md` | `docs/tasks-archive/2026-06/ULTRA-00034-kraft-timezone-decoupling.md` |
 | ULTRA-00034 | 2026-06-25 | `.claude/tasks/kraft-timezone-decoupling.md` | `docs/tasks-archive/2026-06/ULTRA-00034-kraft-timezone-decoupling.md` |
+| ULTRA-00035 | 2026-07-17 | `docs/tasks/20260717-auth-orgs-foundation.md` | `docs/tasks/ULTRA-00035-20260717-auth-orgs-foundation.md` |
+| ULTRA-00035 | 2026-07-17 | `.claude/tasks/saas-orgs/20260717-auth-orgs-foundation.md` | `docs/tasks/ULTRA-00035-20260717-auth-orgs-foundation.md` |
+| ULTRA-00035 | 2026-07-17 | `.claude/tasks/20260717-auth-orgs-foundation.md` | `docs/tasks/ULTRA-00035-20260717-auth-orgs-foundation.md` |

@@ -56,5 +56,5 @@ Realms: `operators`, `b2b`, `b2b2c`. For every ordered pair (issuer ≠ target):
 
 - `20260718-redteam-saas-orgs.md` (org IDOR / isSuperUser escalation) — overlaps; this is the
   realm-level superset.
-- `20260717-auth-orgs-foundation.md` (realm ≠ tenant; `type` claim; refresh guard).
+- ULTRA-00035 (auth orgs foundation) (realm ≠ tenant; `type` claim; refresh guard).
 - `20260719-demo-restructure-three-apps.md` (the three realms this suite runs against).

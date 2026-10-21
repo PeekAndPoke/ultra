@@ -10,7 +10,7 @@ templating building-block inventory, thebizz idea extraction) + coordinator synt
 product-platform work layered on top. Post-v1 backlog items #3 (account activation) and #5 (email
 template editor) are absorbed here. ULTRA-00030 (v1 email auth and sessions) is a hard prerequisite (Track A).
 **Update 2026-07-17:** Tracks A+B are superseded by the detailed plan
-`20260717-auth-orgs-foundation.md` (Karsten confirmed: orgs+branches two-level tenancy on
+ULTRA-00035 (auth orgs foundation) (Karsten confirmed: orgs+branches two-level tenancy on
 `UserPermissions`, shared identity, 0/1/n login selection, no back-compat needed; auth is the
 center-piece and goes first — all other tracks wait).
 
@@ -91,7 +91,7 @@ Spin-up DX:
 - **AD1 — Tenant is orthogonal to realm.** ✅ CONFIRMED. Realms divide end-user vs. admin-user vs.
   global management interfaces. Tenancy is two-level: **Organisation** (chain) → **Branch** (site),
   carried by `UserPermissions.organisations`/`branches`. Detailed design:
-  `20260717-auth-orgs-foundation.md`.
+  ULTRA-00035 (auth orgs foundation).
 - **AD2 — Identity vs. membership.** ✅ CONFIRMED. One user account per email (global unique email
   stays); accounts can belong to multiple organisations via embedded `OrgMembership`.
 - **AD3 — Single-selected-org per session (Model C), flat claims preserved.** ✅ CONFIRMED: login
@@ -99,7 +99,7 @@ Spin-up DX:
   `UserPermissions.organisations: Set` → `org: String?` (the one selected org) + `accessibleOrgs:
   Set`; `branches`/`roles`/`permissions` are the selected org's slice, derived from the DB at login.
   No separate org claim (rides in the permissions claim). No live switch — re-login to change org.
-  Full design: `20260717-auth-orgs-foundation.md`.
+  Full design: ULTRA-00035 (auth orgs foundation).
 - **AD4 — Tenant admin is a tenant role,** not `isSuperUser`. `isSuperUser` remains platform-only.
 - **AD5 — Enforced tenant scoping at the data layer.** Entities opt in via a tenant field +
   a base-repo/filter hook that injects `tenant == current` automatically (modeled on the realm
@@ -120,7 +120,7 @@ Spin-up DX:
   (LGPL/MPL). ZUGFeRD/XRechnung (PDF/A-3 + embedded XML, e.g. via Mustang/PDFBox) comes later as a
   vertical addon on the same PDFBox base.
 - **AD9 — Proposed module homes** (follow existing layout conventions):
-  `funktor/saas` (orgs/tenancy + future SaaS features — see `20260717-auth-orgs-foundation.md`),
+  `funktor/saas` (orgs/tenancy + future SaaS features — see ULTRA-00035 (auth orgs foundation)),
   `ultra/document` (block model + HTML renderer, commonMain), `ultra/document-pdf` (JVM PDF
   adapter), `kraft/addons/document-editor` (editor).
 
@@ -128,7 +128,7 @@ Spin-up DX:
 
 ## Tracks A + B — SUPERSEDED (2026-07-17)
 
-Both tracks are replaced by the detailed plan **`20260717-auth-orgs-foundation.md`**:
+Both tracks are replaced by the detailed plan **ULTRA-00035 (auth orgs foundation)**:
 Phases O1–O4 (organisations/branches/membership/login-selection) cover the former Track B core;
 Phase F covers the former Track A (all open user flows, org-aware). Items from Track B that are
 **not** in the detailed plan and remain future work here: invitations (was B3), enforced
@@ -203,7 +203,7 @@ per-org email branding (was B9).
 ## Critical path & parallelization
 
 ```
-20260717-auth-orgs-foundation.md (O1–O4, then F) ── the center-piece, goes FIRST (decided 2026-07-17)
+ULTRA-00035 (auth orgs foundation) (O1–O4, then F) ── the center-piece, goes FIRST (decided 2026-07-17)
 C1–C5 (doc model+email) ─► C6 ──► C7–C8 (PDF)
 D1–D3 need C1–C4          D4–D6 after MVP
 E1–E3 anytime; E4 needs auth-orgs + D2 minimum
@@ -220,7 +220,7 @@ E1–E3 anytime; E4 needs auth-orgs + D2 minimum
 
 1. ~~AD2 identity model~~ — ✅ ANSWERED 2026-07-17: shared identity + multi-org membership.
 2. ~~AD3 JWT approach~~ — ✅ ANSWERED 2026-07-17: selected-org-per-session + re-issue on switch.
-   (Smaller follow-up recommendations are listed in `20260717-auth-orgs-foundation.md`.)
+   (Smaller follow-up recommendations are listed in ULTRA-00035 (auth orgs foundation).)
 3. **PDF engine** — decided after C7 spike; flag now: staged iText5 artifact is AGPL.
 4. **Starter DB backend default** — ties into the open ULTRA-00028 Track E1 decision.
 5. **E1** — implement the documented DSL vs. re-document reality.
