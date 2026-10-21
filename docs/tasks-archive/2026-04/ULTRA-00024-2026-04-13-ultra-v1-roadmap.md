@@ -1,4 +1,4 @@
-# Ultra v1.0.0 Roadmap
+# ULTRA-00024: Ultra v1.0.0 Roadmap
 
 **Date:** 2026-03-30
 **Scope:** All modules in the Ultra mono-repo
@@ -479,3 +479,7 @@ Explicitly deferred to after 1.0.0:
 9. **Device tracking for auth** — device fingerprinting
 10. **Vault Cursor truly async** — make Cursor suspend-based
 11. **NPM dependency updates** — version bumps for JS deps
+
+## History
+
+- 2026-10-21: numbered ULTRA-00024 (was `docs/tasks-archive/2026-04/2026-04-13-ultra-v1-roadmap.md`).
