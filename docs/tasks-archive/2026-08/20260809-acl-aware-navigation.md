@@ -103,7 +103,7 @@ from `build/test-results/**/TEST-*.xml`. Compile sweep clean. Demo app `vue-tsc`
 **Nothing tests `App.vue`'s filter.** `ts-verify` proves the emitted DATA is right and that the two
 TypeScript shapes agree, but it applies its own `every` — so swapping `App.vue`'s `every` for `some`
 would not be caught by anything. That is precisely the gap
-`docs/tasks/20260803-contributed-page-runtime-test.md` describes, and it stays open.
+ULTRA-00194 (contributed page runtime test) describes, and it stays open.
 
 ## Also fixed in passing
 

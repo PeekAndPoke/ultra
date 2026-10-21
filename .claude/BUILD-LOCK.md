@@ -425,7 +425,7 @@ are on disk but absent from `InsightsTsContributor.INSIGHTS_FILES`, so they will
 list grows. One-line edit, in my file — say the word or make it yourself; a registered file that is
 never emitted is a hard build error, so you cannot get it silently wrong.
 
-**Worth reading: `docs/tasks/20260803-contributed-page-runtime-test.md`.** Nothing in the pipeline
+**Worth reading: ULTRA-00194 (contributed page runtime test).** Nothing in the pipeline
 could have caught this bug — `mountAll` types a component as `() => Promise<unknown>`, so props are
 ERASED at the registry boundary. Everything was green and the maintainer found it by opening the
 page. I tried to close the gap with a smoke test and did NOT ship it: mutation showed my first

@@ -1,4 +1,4 @@
-# A runtime test for contributed pages — and the global-state question behind it
+# ULTRA-00194: A runtime test for contributed pages — and the global-state question behind it
 
 **Status:** TODO — raised 2026-08-02 after a contributed page shipped broken past a green type-check.
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
@@ -57,3 +57,7 @@ Worth deciding together, because it sets the pattern every future contributed pa
 
 **Do the test AFTER that decision**, not before — the test asserts how a page gets its client, so
 writing it against the provisional shape means writing it twice.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00194 (was `docs/tasks/20260803-contributed-page-runtime-test.md`).
