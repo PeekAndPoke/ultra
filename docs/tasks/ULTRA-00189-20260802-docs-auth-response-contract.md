@@ -1,4 +1,4 @@
-# DOCS — the sign-in response contract, and the REST Content-Type requirement
+# ULTRA-00189: DOCS — the sign-in response contract, and the REST Content-Type requirement
 
 **Status:** TODO — created 2026-08-02 on archiving
 ULTRA-00050 (token storage hardening) and
@@ -42,3 +42,7 @@ move next week. That is the precondition for writing docs against it.
 Cookie mode, `X-Funktor-Csrf`, or an `Origin` check. All designed, all dropped
 (ULTRA-00050 (token storage hardening) §DROPPED). Documenting a road not taken is how a reader ends up
 implementing it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00189 (was `docs/tasks/20260802-docs-auth-response-contract.md`).

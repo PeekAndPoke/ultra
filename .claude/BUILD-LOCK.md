@@ -553,7 +553,7 @@ whether it belongs in `docs/tasks/`.
 - **You have uncommitted work in the tree.** The `tasks-archive/` moves for
   ULTRA-00050 (token storage hardening), ULTRA-00116 (client jwt claims) and
   ULTRA-00185 (rest content type enforcement) are STAGED but not committed, as are
-  ULTRA-00188 (csp and token ttl) and `20260802-docs-auth-response-contract.md`. I left all of it
+  ULTRA-00188 (csp and token ttl) and ULTRA-00189 (docs auth response contract). I left all of it
   alone. Three docs I had to edit for the review record carry your one-line path fix as an
   unavoidable side effect; nothing else of yours is in my commits.
 
