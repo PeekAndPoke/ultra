@@ -1,4 +1,4 @@
-# Funktor Docs Improvement Plan
+# ULTRA-00025: Funktor Docs Improvement Plan
 
 **Date:** 2026-03-31
 **Goal:** Improve 5 thin/stub Funktor doc pages using FunktorConf demo as example source
@@ -132,3 +132,7 @@ Outside this plan's scope, additional docs-site work has been completed:
 ## Verification
 
 - `cd docs-site && pnpm run build` — zero errors, correct page count
+
+## History
+
+- 2026-10-21: numbered ULTRA-00025 (was `docs/tasks-archive/2026-04/2026-04-13-funktor-docs-improvement.md`).
