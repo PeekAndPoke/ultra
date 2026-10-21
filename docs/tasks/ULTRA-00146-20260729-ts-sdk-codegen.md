@@ -922,7 +922,7 @@ registry, not a special case.** The builder owns it because every contributor fe
 features). Then Phase 2 (`funktor/codegen`: `RestApiTsContributor` + `sdk:ts:generate` CLI) — built
 profile-shaped per 2.1 — then the codegen additions (profiles, shared emission, registries, `out.vue`,
 config emission), then Phase 4. Phase 2's prerequisite is
-`docs/tasks/20260730-funktor-rest-codec-config.md`.
+ULTRA-00151 (funktor rest codec config).
 
 Independent of all of it, and the only item with a deadline shape: **gate the existing insights GUI**
 (step 1 of the design doc's ordering). No codegen dependency.

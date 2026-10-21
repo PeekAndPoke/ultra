@@ -1,4 +1,4 @@
-# Let apps configure the RestCodec via FunktorRestBuilder
+# ULTRA-00151: Let apps configure the RestCodec via FunktorRestBuilder
 
 **Status:** TODO
 **Plan:** none — raised from ULTRA-00146 (ts sdk codegen) (Phase 2 prerequisite)
@@ -73,3 +73,7 @@ Fixes applied: ...
       app-specific types: the generator injects `RestCodec`, reads `.config`, and its codec-parity
       check then sees the app's own codecs and demands claims for them. Update
       ULTRA-00146 (ts sdk codegen)'s Phase 2 prerequisite list.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00151 (was `docs/tasks/20260730-funktor-rest-codec-config.md`).
