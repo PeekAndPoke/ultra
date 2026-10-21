@@ -93,7 +93,7 @@ plan-permission grant (LOW).
 
 - `tasks-archive/2026-07/20260720-b2b-realm.md` — the reviewed template this clones; its review
   drove the shared-hooks extraction.
-- `docs/tasks/20260719-cross-realm-authz-and-tests.md` — role-collision risk (defused here via
+- ULTRA-00044 (cross realm authz and tests) — role-collision risk (defused here via
   vocabulary) and the pending realm-boundary work for future tenant API surfaces.
 - `docs/tasks/20260720-auth-frontend-composability.md` — b2b2c re-copies the reset-route mount
   (third copy), strengthening the case for the deferred chrome-slot API.

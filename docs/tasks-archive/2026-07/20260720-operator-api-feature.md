@@ -86,7 +86,7 @@ same HIGH; the security reviewer traced full reachability:
 
 **All confirmed findings fixed (2026-07-22):**
 - **`forUserType(type)` AuthRule primitive** added to funktor/rest (companion + builder), checking
-  the JWT `user/type` claim — the realm-boundary primitive `20260719-cross-realm-authz-and-tests.md`
+  the JWT `user/type` claim — the realm-boundary primitive ULTRA-00044 (cross realm authz and tests)
   prescribed. Guard is now `forAll(isSuperUser(), forUserType(OperatorUserModel.USER_TYPE))`.
 - e2e extended: operators-realm happy path (200 + counts), admin-realm super-user ⇒ 401,
   b2b user ⇒ 401 — the regression locks for the escalation.

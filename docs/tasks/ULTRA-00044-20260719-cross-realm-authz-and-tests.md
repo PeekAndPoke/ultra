@@ -1,4 +1,4 @@
-# Cross-realm authorization boundary + security tests
+# ULTRA-00044: Cross-realm authorization boundary + security tests
 
 **Status:** IN PROGRESS (2026-07-22) — the near-term primitive is BUILT: `AuthRule.forUserType(type)`
 (+ `AuthRuleBuilder.forUserType`) landed in funktor/rest and guards `OperatorApi`
@@ -58,3 +58,7 @@ Realms: `operators`, `b2b`, `b2b2c`. For every ordered pair (issuer ≠ target):
   realm-level superset.
 - ULTRA-00035 (auth orgs foundation) (realm ≠ tenant; `type` claim; refresh guard).
 - `20260719-demo-restructure-three-apps.md` (the three realms this suite runs against).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00044 (was `docs/tasks/20260719-cross-realm-authz-and-tests.md`).

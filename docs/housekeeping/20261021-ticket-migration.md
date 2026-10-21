@@ -100,3 +100,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00043 | 2026-07-19 | `docs/tasks/20260719-saas-full-feature-backlog.md` | `docs/tasks/ULTRA-00043-20260719-saas-full-feature-backlog.md` |
 | ULTRA-00043 | 2026-07-19 | `.claude/tasks/saas-orgs/20260719-saas-full-feature-backlog.md` | `docs/tasks/ULTRA-00043-20260719-saas-full-feature-backlog.md` |
 | ULTRA-00043 | 2026-07-19 | `.claude/tasks/20260719-saas-full-feature-backlog.md` | `docs/tasks/ULTRA-00043-20260719-saas-full-feature-backlog.md` |
+| ULTRA-00044 | 2026-07-19 | `docs/tasks/20260719-cross-realm-authz-and-tests.md` | `docs/tasks/ULTRA-00044-20260719-cross-realm-authz-and-tests.md` |
+| ULTRA-00044 | 2026-07-19 | `.claude/tasks/saas-orgs/20260719-cross-realm-authz-and-tests.md` | `docs/tasks/ULTRA-00044-20260719-cross-realm-authz-and-tests.md` |
+| ULTRA-00044 | 2026-07-19 | `.claude/tasks/20260719-cross-realm-authz-and-tests.md` | `docs/tasks/ULTRA-00044-20260719-cross-realm-authz-and-tests.md` |

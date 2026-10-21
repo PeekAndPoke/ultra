@@ -28,7 +28,7 @@ the evidence it was ticked on. "Green" means the last recorded run (`build/test-
 
 Deferred (recorded, not part-2 blockers): the framework `{ isSuperUser() }` groups remain
 cross-realm-reachable (byte-identical to pre-floor; no NEW exposure) — per-group realm-scoping +
-an app-level floor-strengthening seam are owned by `20260719-cross-realm-authz-and-tests.md`.
+an app-level floor-strengthening seam are owned by ULTRA-00044 (cross realm authz and tests).
 **Plan:** part 2 of the auth-hardening quartet
 **Security-critical:** YES — this decides the minimal auth of every API endpoint in the framework.
 
@@ -170,7 +170,7 @@ currently implicit. Known groups to sweep (complete during implementation with a
     IntrospectionApi is arguably the higher-value target). Behavior is byte-identical to the
     pre-floor per-route `isSuperUser()`, and framework code genuinely cannot reference an app
     realm's `USER_TYPE` — so this is a documented deployment decision, not a code defect. TWO gaps
-    to resolve (cross-ref `20260719-cross-realm-authz-and-tests.md`): (1) decide per framework group
+    to resolve (cross-ref ULTRA-00044 (cross realm authz and tests)): (1) decide per framework group
     whether it must be realm-scoped; (2) there is currently **no seam** for a mounting app to add
     `forUserType` to a framework-owned group's floor (per-route `authorize` can only strengthen
     within the group's own declarations, and the floor is a hard ctor seed) — either add such a
@@ -195,6 +195,6 @@ login API split by auth level). Names are display-only (routing is by URI), so t
 ## Cross-references
 
 - Builds on `20260722-authorize-rule-builder.md` (the accumulator IS the floor mechanism).
-- `20260719-cross-realm-authz-and-tests.md` — the floor is how forUserType stops being per-route
+- ULTRA-00044 (cross realm authz and tests) — the floor is how forUserType stops being per-route
   opt-in; update that task when this lands.
 - Part 3 (`20260722-two-phase-auth-consistent-params.md`) relies on the floor being caller-only.

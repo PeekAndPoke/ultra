@@ -19,7 +19,7 @@ import io.peekandpoke.funktor.testing.AppSpec
  * The operator console is scoped to super-users OF THE OPERATORS REALM. All realms share one JWT
  * signing key, so the guard must check the user-type claim on top of `isSuperUser` — the admin
  * realm also mints super-user tokens, and those must be rejected here (realm boundary, see
- * `20260719-cross-realm-authz-and-tests.md`).
+ * ULTRA-00044 (cross realm authz and tests)).
  */
 class OperatorApiTest : AppSpec<FunktorDemoConfig>(testApp) {
 

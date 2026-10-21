@@ -42,6 +42,6 @@ capture the design when shared. Placeholder — do not design speculatively.
   `20260722-route-check-followups.md` item 5.
 - **User-level isolation** (`UserAware`/`CallerOwnershipGuard`) — same mechanism as org isolation.
   See `20260722-route-check-followups.md` item 4.
-- **Cross-realm authorization boundary** — `../saas-orgs/20260719-cross-realm-authz-and-tests.md`.
+- **Cross-realm authorization boundary** — ULTRA-00044 (cross realm authz and tests).
 - **Red-team scenarios** — `20260723-redteam-org-isolation.md`,
   ULTRA-00039 (redteam saas orgs).

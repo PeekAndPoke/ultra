@@ -37,7 +37,7 @@ These are the residual/edge scenarios to actively attempt.
    param can't even convert (no `OrgsRepo`) → route non-functional, not a silent leak.
 9. **Super-user cross-realm** — an `isSuperUser` token minted by another realm hitting an org route
    (caller-binding short-circuits on `isSuperUser`); confirm org-consistency still blocks an
-   inconsistent pair even for a super-user. (See `saas-orgs/20260719-cross-realm-authz-and-tests.md`.)
+   inconsistent pair even for a super-user. (See ULTRA-00044 (cross realm authz and tests).)
 10. **Two-phase bypass** — try to trigger a pre-auth `findById` (DoS/oracle) on any route variant
     (Plain/WithParams/WithBody/WithBodyAndParams/Sse) by a floor-denied caller.
 

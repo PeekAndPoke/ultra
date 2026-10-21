@@ -190,7 +190,7 @@ consciously left as-is.
 ## Cross-references
 
 - `20260720-operator-api-feature.md` (archived) — the cross-realm HIGH that motivated structural
-  enforcement; `20260719-cross-realm-authz-and-tests.md` — forUserType primitive this composes with.
+  enforcement; ULTRA-00044 (cross realm authz and tests) — forUserType primitive this composes with.
 - Successor: `20260722-apiroutes-auth-floor.md` builds the mandatory seed ON this builder — it
   INHERITS `validateChain` (whole-chain boot check) as the seam for "public-seeded group must not
   also carry restrictive rules"; the seed pre-populates `authRules` and the user block appends.

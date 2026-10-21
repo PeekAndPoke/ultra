@@ -46,7 +46,7 @@ Layered so the charset/shape rule has ONE definition, shared by UI and server (m
       green.
 - [ ] **Endpoint e2e gap:** create/update rejecting bad slugs via `AppUnderTest` needs a super-user
       auth path in the demo test harness (no funktor-demo test authenticates a real user yet). This
-      harness is a shared prerequisite with `20260719-cross-realm-authz-and-tests.md` — build it
+      harness is a shared prerequisite with ULTRA-00044 (cross realm authz and tests) — build it
       once, then add: create with reserved/invalid/duplicate slug ⇒ 400/409; valid ⇒ 200; branch
       with bad slug ⇒ 400. Until then, coverage is the pure `SlugsSpec` + the server calling the
       same `Slugs.validationError`.

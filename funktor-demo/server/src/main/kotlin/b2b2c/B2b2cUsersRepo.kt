@@ -76,7 +76,7 @@ class B2b2cUsersRepo(
         // Role vocabulary: end-users deliberately do NOT reuse the b2b account roles
         // ("admin"/"member") — both realms resolve the SAME orgs, and the role strings land in the
         // JWT roles claim, so a shared vocabulary would make the two populations indistinguishable
-        // to any role-gated surface (see 20260719-cross-realm-authz-and-tests.md, role collision).
+        // to any role-gated surface (see ULTRA-00044 (cross realm authz and tests), role collision).
         // 1 org → auto-selected on login
         val singleOrg = singleFix {
             val acme = orgs.ensureBySlug("acme", "Acme Inc")
