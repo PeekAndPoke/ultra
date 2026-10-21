@@ -105,3 +105,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00044 | 2026-07-19 | `.claude/tasks/20260719-cross-realm-authz-and-tests.md` | `docs/tasks/ULTRA-00044-20260719-cross-realm-authz-and-tests.md` |
 | ULTRA-00045 | 2026-07-19 | `docs/tasks/20260719-demo-restructure-three-apps.md` | `docs/tasks/ULTRA-00045-20260719-demo-restructure-three-apps.md` |
 | ULTRA-00045 | 2026-07-19 | `.claude/tasks/20260719-demo-restructure-three-apps.md` | `docs/tasks/ULTRA-00045-20260719-demo-restructure-three-apps.md` |
+| ULTRA-00046 | 2026-07-19 | `docs/tasks-archive/2026-07/20260719-karango-ensurecollection-race.md` | `docs/tasks-archive/2026-07/ULTRA-00046-20260719-karango-ensurecollection-race.md` |
+| ULTRA-00046 | 2026-07-19 | `.claude/tasks-archive/2026-07/20260719-karango-ensurecollection-race.md` | `docs/tasks-archive/2026-07/ULTRA-00046-20260719-karango-ensurecollection-race.md` |
+| ULTRA-00046 | 2026-07-19 | `.claude/tasks/20260719-karango-ensurecollection-race.md` | `docs/tasks-archive/2026-07/ULTRA-00046-20260719-karango-ensurecollection-race.md` |

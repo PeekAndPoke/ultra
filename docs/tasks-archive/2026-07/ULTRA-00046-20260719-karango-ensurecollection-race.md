@@ -1,4 +1,4 @@
-# Fix: karango collection creation race (async-driver fire-and-forget)
+# ULTRA-00046: Fix: karango collection creation race (async-driver fire-and-forget)
 
 **Status:** DONE (2026-07-19)
 **Plan:** — (bug fix)
@@ -66,3 +66,7 @@ MongoDB/monko is unaffected — it creates collections implicitly (no explicit `
   moment it returns.
 - Verified the test **fails without the fix** (`failures=1`) and **passes with it** (`failures=0`)
   — it genuinely locks the regression.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00046 (was `docs/tasks-archive/2026-07/20260719-karango-ensurecollection-race.md`).
