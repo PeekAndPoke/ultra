@@ -82,6 +82,6 @@ total/fail-closed), plus end-to-end legacy-salt regression tests and guard tests
 
 ## Cross-references
 
-- Interacts with `20260720-auth-error-account-enumeration.md` (dummy-hash timing fix) — both touch
+- Interacts with ULTRA-00051 (auth error account enumeration) (dummy-hash timing fix) — both touch
   the sign-in verify path; sequence so the rehash write doesn't reopen a timing channel.
 - Depends on the `CompoundPasswordHasher` id-dispatch design (unchanged).

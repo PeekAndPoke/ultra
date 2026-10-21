@@ -148,7 +148,7 @@ identifier looks like the strongest reuse candidate.
       line; reuses an existing request id if one exists
 - [ ] `KarangoQueryException` no longer builds the AQL into `message` (`KarangoDriver.kt:130-138`)
 - [ ] `AuthLoginApi`'s nine `withInfo(e.message)` sites go through the same mechanism
-      (overlaps `docs/tasks/20260720-auth-error-account-enumeration.md`)
+      (overlaps ULTRA-00051 (auth error account enumeration))
 - [ ] Channel-B diagnostic fields are typed distinctly and cannot be serialised by accident
 - [ ] `ClusterShowcaseApi.getWorkers` no longer exposes failure text publicly
 - [ ] A test guard prevents reintroducing `withError(cause.message)` at a render boundary

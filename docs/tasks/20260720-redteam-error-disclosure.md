@@ -4,7 +4,7 @@
 **Origin:** `docs/tasks/20260720-error-response-disclosure-audit.md`
 **Covers:** `20260720-env-classification-allowlist`, `20260720-error-messages-generic-in-production`,
 `20260720-insights-gui-auth-gate`, `20260720-fixtures-env-gate`,
-`20260720-route-auth-default-deny`, `20260720-auth-error-account-enumeration`
+`20260720-route-auth-default-deny`, `ULTRA-00051`
 
 Scenarios to attempt in a dedicated penetration-test session, against a disposable environment.
 Run these **after** the linked remediation tasks land, to confirm the fixes hold.

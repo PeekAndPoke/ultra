@@ -120,3 +120,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00050 | 2026-07-19 | `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md` | `docs/tasks-archive/2026-07/ULTRA-00050-20260719-token-storage-hardening.md` |
 | ULTRA-00050 | 2026-07-19 | `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md` | `docs/tasks-archive/2026-07/ULTRA-00050-20260719-token-storage-hardening.md` |
 | ULTRA-00050 | 2026-07-19 | `.claude/tasks/20260719-token-storage-hardening.md` | `docs/tasks-archive/2026-07/ULTRA-00050-20260719-token-storage-hardening.md` |
+| ULTRA-00051 | 2026-07-20 | `docs/tasks/20260720-auth-error-account-enumeration.md` | `docs/tasks/ULTRA-00051-20260720-auth-error-account-enumeration.md` |
+| ULTRA-00051 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-auth-error-account-enumeration.md` | `docs/tasks/ULTRA-00051-20260720-auth-error-account-enumeration.md` |
+| ULTRA-00051 | 2026-07-20 | `.claude/tasks/20260720-auth-error-account-enumeration.md` | `docs/tasks/ULTRA-00051-20260720-auth-error-account-enumeration.md` |

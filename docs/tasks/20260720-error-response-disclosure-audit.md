@@ -16,7 +16,7 @@ issue?"
 | 4 — fixtures install on unknown env | `20260720-fixtures-env-gate.md` |
 | 5 — auth-rule descriptions leak | folded into `20260720-env-classification-allowlist.md` |
 | 6 — routes default to public | `20260720-route-auth-default-deny.md` |
-| 7 — auth error account enumeration | `20260720-auth-error-account-enumeration.md` |
+| 7 — auth error account enumeration | ULTRA-00051 (auth error account enumeration) |
 | attack scenarios | `20260720-redteam-error-disclosure.md` |
 
 ## Short answer to the original question

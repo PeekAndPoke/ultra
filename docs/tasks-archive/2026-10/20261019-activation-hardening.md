@@ -469,7 +469,7 @@ account: `"retire"` or `"sso"`. Two atomic, conditional storage steps, both back
 | MAJOR Cancel mode activate | Removed; Cancel mode points at the mail's "Activate account" link instead — its token cannot activate | `ActivateAccountPage.kt:245` |
 | MAJOR cancel by activation token | e2e on both backends + page spec (Activate mode's cancel posts the activation token to `/activate/cancel`) | `ActivationHardeningE2eSpec.kt`, `ActivateAccountPageSpec.kt` |
 | Five stale KDocs | `AccountActivationEmailTemplate.Params.cancelUrl`, `AuthProvider.cancelSignUp`, `AuthFrontendRoutes.cancelSignUp`, `AuthCancelSignUpRequest`, `AuthRecord.EmailVerificationToken` (+ `AuthRealm.cancelSignUp`) | — |
-| `e.message` echo | activate and resend no longer echo (as cancel); inventory updated | `AuthLoginApi.kt:112,132`, `error-disclosure/20260720-auth-error-account-enumeration.md` |
+| `e.message` echo | activate and resend no longer echo (as cancel); inventory updated | `AuthLoginApi.kt:112,132`, ULTRA-00051 (auth error account enumeration) |
 | Reset completion / signIn | completion consumes its token by count (`EmailAndPasswordAuth.kt:699`); `signIn` refuses a retired key before any lookup (`:299`) | — |
 | Narrowed delete | a reset that loses the marker takes back exactly the password it wrote (`:728`) | — |
 | Sweep e2e | asserts the retire itself: exact renamed key and every raw auth row DELETED (expired rows included) | `ActivationHardeningE2eSpec.kt` (`rawRowsOf`) |

@@ -54,6 +54,6 @@ The current regex both **over-restricts** (blocks strong passphrases lacking a s
 
 ## Cross-references
 
-- `20260720-auth-error-account-enumeration.md` (the `weakPassword` code + the two enforcement sites).
+- ULTRA-00051 (auth error account enumeration) (the `weakPassword` code + the two enforcement sites).
 - Realm-configurable policy already exists (`AuthRealmModel.passwordPolicy`); this changes defaults +
   adds a screening step, not the plug-in shape.

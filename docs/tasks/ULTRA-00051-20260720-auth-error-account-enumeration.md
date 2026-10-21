@@ -1,4 +1,4 @@
-# Auth API must not echo internal error messages on public routes
+# ULTRA-00051: Auth API must not echo internal error messages on public routes
 
 **Status:** TODO
 **Plan:** none — from `docs/tasks/20260720-error-response-disclosure-audit.md` (finding 7).
@@ -438,3 +438,7 @@ Not verified — do not treat as established.
 Fixes applied: ...
 
 **Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00051 (was `docs/tasks/20260720-auth-error-account-enumeration.md`).
