@@ -95,7 +95,7 @@ ultra-only, the 7 open questions; do NOT adopt before the maintainer decides).
 - **D2** (T4) Graphs in Kraft: a vis-network Kraft addon, or no graphs in the Kraft port for now.
 - **D3** (T1) Vue component tests: **add vitest + happy-dom via pnpm** (maintainer 2026-10-19), versions looked up
   online and pinned.
-- **D4** query-vars (`20260731-query-vars-in-insights.md`) — not blocking: both UIs keep not rendering `vars`.
+- **D4** query-vars (ULTRA-00171 (query vars in insights)) — not blocking: both UIs keep not rendering `vars`.
 - **D5** (T5) Error disclosure: choose A/B/C (ULTRA-00055 (exception disclosure architecture) §3 has
   a recommendation).
 - **D6** (T6) SSO email verification policy A/B/C.

@@ -55,7 +55,7 @@ Tests:
 
 Text:
 
-- [x] 4. `docs/tasks/20260731-query-vars-in-insights.md` rewritten: values not in the depot (count only),
+- [x] 4. ULTRA-00171 (query vars in insights) rewritten: values not in the depot (count only),
       Monko values in `vars`, allowlist in `VaultCollector`, D1, `aql-raw`; the `vars`-key coupling stated
       there and at `slices.ts:419`.
 - [x] 5. Stale notes rewritten: `20260802-insights-vue-tabs.md:549-551` (refresh.mjs makes three rewrites) and

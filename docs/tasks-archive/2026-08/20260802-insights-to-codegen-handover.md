@@ -6,7 +6,7 @@
 is in `theme.css:37`; the contributor of §4 exists; and the four tabs §7 lists as unbuilt — `runtime`, `vault`, `kontainer`,
 `app-config` — are built (`RuntimeTab.vue`, `VaultTab.vue`, `KontainerTab.vue`, `AppConfigTab.vue`). What §5 and §7 still
 name lives in live tasks: the DOM-test setup for the pages' LOADED state → `20260802-insights-vue-tabs.md` (and decision
-D3 of `20261019-insights-auth-parallel-plan.md`); vault `vars` → `20260731-query-vars-in-insights.md`; the database graph →
+D3 of `20261019-insights-auth-parallel-plan.md`); vault `vars` → ULTRA-00171 (query vars in insights); the database graph →
 `20260824-insights-graphs-and-static-slices.md`.
 
 **From:** insights agent, 2026-08-02. Answering
@@ -174,7 +174,7 @@ you are already in `sdkgen-app` for the scaffold it is the cheap moment.
 ## 7. Still open on my side, for visibility
 
 - `runtime`, `vault`, `kontainer`, `app-config` tabs. Not blockers — they render as JSON trees today.
-- **`vault`'s `vars` is blocked on a maintainer decision** (`20260731-query-vars-in-insights.md`): bind
+- **`vault`'s `vars` is blocked on a maintainer decision** (ULTRA-00171 (query vars in insights)): bind
   values include auth lookups, i.e. the token or activation code *being looked up*. The tab ships without
   rendering `vars` until that is settled.
 - The vault database graph cannot be rebuilt from a record at all — it came from a live kontainer service.

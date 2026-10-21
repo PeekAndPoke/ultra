@@ -1,4 +1,4 @@
-# Query bind VALUES in insights: record them, their shape, or nothing?
+# ULTRA-00171: Query bind VALUES in insights: record them, their shape, or nothing?
 
 **Status:** OPEN — maintainer decision **D4** of `20261019-insights-auth-parallel-plan.md`, not blocking. Rewritten
 2026-10-19 (round-2 MINORs): the earlier text predated D1 and T1 and was wrong on four facts.
@@ -46,3 +46,7 @@ legacy and hide ALL query text. Use another key, or change the detection in the 
 - ULTRA-00160 (insights rest api) — the API that made records remotely readable
 - ULTRA-00167 (config secrets in insights) — the config half of the same problem
 - ULTRA-00161 (redteam insights api) — attack scenarios against the recorded slices
+
+## History
+
+- 2026-10-21: numbered ULTRA-00171 (was `docs/tasks/20260731-query-vars-in-insights.md`).

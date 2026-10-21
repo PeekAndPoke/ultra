@@ -69,7 +69,7 @@ The Vue implementation learned these the hard way; a fresh Kraft port will hit e
       `v-html` and must not appear in these pages. The old GUI's `inlineScript` helper used it; do not
       revive that pattern for content.
 - [ ] **`vault`'s `vars` must NOT be rendered.** Bind values include the token or activation code *being
-      looked up*. Blocked on `docs/tasks/20260731-query-vars-in-insights.md` (deferred by the
+      looked up*. Blocked on ULTRA-00171 (query vars in insights) (deferred by the
       maintainer 2026-08-24, still open). **And therefore no raw-slice dump and no JSON fallback on that
       tab either** — a viewer for the object defeats suppressing one field of it.
       **Incomplete since the Vue gate (2026-08-24, `18046b40`):** bind values also reached the Database tab through

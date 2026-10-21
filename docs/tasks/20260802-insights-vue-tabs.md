@@ -125,7 +125,7 @@ bundle. It is safe — the minifier only drops it when the layers are defined la
 
 | Tab | Gate |
 |---|---|
-| `vault` — the `vars` field | **BLOCKED** (D4, not blocking this task). `docs/tasks/20260731-query-vars-in-insights.md` is open and needs a maintainer decision. Bind values include auth lookups — the token or activation code *being looked up*. Build the tab **without rendering `vars`**; everything else in it is fine |
+| `vault` — the `vars` field | **BLOCKED** (D4, not blocking this task). ULTRA-00171 (query vars in insights) is open and needs a maintainer decision. Bind values include auth lookups — the token or activation code *being looked up*. Build the tab **without rendering `vars`**; everything else in it is fine |
 | `vault` — the database graph | **BUILT 2026-10-19** from its own endpoint (T2's `graphs/database`), not from the record |
 | `app-config` | **UNBLOCKED 2026-08-02**, was not on 2026-07-31. `Redacted<T>` closed all four known leaks — verified field by field, see the corrected note in TAB-SPECS. Residual, and it must reach the docs: an *app's own* config secret in a plain `String` is still rendered verbatim |
 | `kontainer` | Graphs **BUILT 2026-10-19**: a full (old) record draws from itself, a slim one joins `graphs/kontainer` |
@@ -377,7 +377,7 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
 
 - [ ] **Query syntax highlighting** — `prism(it.queryLanguage) { it.query }`, and `prism("text")` for the
       explain output. Needs a highlighter the SDK can ship.
-- [ ] **`vars`** — BLOCKED on `docs/tasks/20260731-query-vars-in-insights.md`, deliberately omitted,
+- [ ] **`vars`** — BLOCKED on ULTRA-00171 (query vars in insights), deliberately omitted,
       and the reason the tab has no raw dump or JSON fallback either.
 - [x] **The repository graph** (red "Show Database Graph" button + network) — DONE 2026-10-19, from
       `GET …/graphs/database`, fetched on first click.
@@ -785,7 +785,7 @@ none overlapping a settled row → the follow-up task `docs/tasks-archive/2026-1
 | 2 | MINOR | `graphs.ts:298-307`, `InsightsPage.vue:59`, `KontainerTab.vue:170-174`, `VaultTab.vue:139-141` (domain) | The graph is fetched once per page; after a redeploy the mismatch notice calls the cached old graph "today's", and Vault's "fetched from the server now" is false for every record after the first | follow-up | T2's Part A decision (graphs task `:44-48`): cache by fingerprint, refetch for a record naming another one |
 | 2 | MINOR | `slices.ts:408-410` (domain; reopens round-1 m5 with a fact) | A pre-D1 Monko entry carries text AND `vars: {}` (pre-T1 driver: `query = builder.print()`, `vars = emptyMap()`), so it shows a false "Bind vars 0" | follow-up | m5's "no query" condition assumed the false 0 only where text was dropped — factually incomplete. Drop the `query === null` clause |
 | 2 | MINOR | `MonkoDriver.kt:420-446` (domain) | A failed Mongo query records no text (set after execution); Arango sets it before | follow-up | Compute `printed` before executing. Persistence/security path → mutation-checked |
-| 2 | MINOR | `docs/tasks/20260731-query-vars-in-insights.md:4,13-14`; `slices.ts:418` (domain) | The query-vars task (input to maintainer decision D4) is stale on four facts; any `vars` key marks an entry legacy, so recording vars later would hide all text | follow-up | Rewrite that task; note the coupling |
+| 2 | MINOR | `ULTRA-00171 (query vars in insights):4,13-14`; `slices.ts:418` (domain) | The query-vars task (input to maintainer decision D4) is stale on four facts; any `vars` key marks an entry legacy, so recording vars later would hide all text | follow-up | Rewrite that task; note the coupling |
 | 2 | MINOR | this file `:548`; graphs task `:307-316`, `:336-338`, `:488`, `:492` (domain + implementation) | Notes describe a deleted `OLD_AFTER_SECONDS`, four `finish` sources, "one change" in `refresh.mjs`, and symbols `instanceCountsMeasured` / `graphMismatch` that no longer exist | follow-up | Rewrite the notes |
 | 2 | MINOR | `VaultCollector.kt:103-107`, `KarangoDriver.kt:101`, `AqlTypedQuery.kt:15` (security) | `aql` is stamped on any text, including the public raw `AqlTypedQuery.of(type, query)`; the KDoc "each label names exactly one placeholder-ising printer" is false for it | follow-up | New, not inside round-1 row m7 (Monko-only). No in-repo caller of `of(`. Give raw roots their own label, or correct the KDoc + red-team scenario |
 | 2 | MINOR | `MonkoDriver.kt:73-79` (security) | Keys of a document used as a filter VALUE (embedded-document equality) are kept, so a secret used as a key is recorded | follow-up | Walk a value-position document only if it is an operator document; else bind it as `@pN:object`. Mutation-checked |
