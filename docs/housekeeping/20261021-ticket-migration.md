@@ -88,3 +88,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00039 | 2026-07-18 | `docs/tasks/20260718-redteam-saas-orgs.md` | `docs/tasks/ULTRA-00039-20260718-redteam-saas-orgs.md` |
 | ULTRA-00039 | 2026-07-18 | `.claude/tasks/saas-orgs/20260718-redteam-saas-orgs.md` | `docs/tasks/ULTRA-00039-20260718-redteam-saas-orgs.md` |
 | ULTRA-00039 | 2026-07-18 | `.claude/tasks/20260718-redteam-saas-orgs.md` | `docs/tasks/ULTRA-00039-20260718-redteam-saas-orgs.md` |
+| ULTRA-00040 | 2026-07-18 | `docs/tasks/20260718-o2-membership-permissions.md` | `docs/tasks/ULTRA-00040-20260718-o2-membership-permissions.md` |
+| ULTRA-00040 | 2026-07-18 | `.claude/tasks/saas-orgs/20260718-o2-membership-permissions.md` | `docs/tasks/ULTRA-00040-20260718-o2-membership-permissions.md` |
+| ULTRA-00040 | 2026-07-18 | `.claude/tasks/20260718-o2-membership-permissions.md` | `docs/tasks/ULTRA-00040-20260718-o2-membership-permissions.md` |

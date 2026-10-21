@@ -1,4 +1,4 @@
-# O2 — Membership + permissions plumbing
+# ULTRA-00040: O2 — Membership + permissions plumbing
 
 **Status:** IN REVIEW — implementation complete + green (2026-07-18); review batched with O3
 **Plan:** ULTRA-00035 (auth orgs foundation) → Phase O2
@@ -35,3 +35,7 @@
 
 Batched with O3 `/feature-review` (the permission-building + login-flow form one reviewable unit;
 `buildOrgPermissions` is unit-tested, exercised e2e by O3's sign-in).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00040 (was `docs/tasks/20260718-o2-membership-permissions.md`).

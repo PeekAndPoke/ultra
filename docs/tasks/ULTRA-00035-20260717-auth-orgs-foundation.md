@@ -324,7 +324,7 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
 - [x] Tests: storage both backends (slug uniqueness + ensureBySlug idempotency); `OrgsApiSpec` (7/7,
       incl. ensure-org hook verified e2e); full `funktor/all` suite green
 
-### Phase O2 — Membership + permissions plumbing — DONE 2026-07-18 (task `20260718-o2-membership-permissions.md`, review batched w/ O3)
+### Phase O2 — Membership + permissions plumbing — DONE 2026-07-18 (task ULTRA-00040 (o2 membership permissions), review batched w/ O3)
 - [x] `OrgMembership` + `HasOrgMemberships` — placed in **`ultra/security`** (not `funktor/saas`) to
       avoid an inverted `auth → saas` dep (all layers see `ultra/security` via core)
 - [x] `AuthRealm.getMemberships` hook with `HasOrgMemberships` default

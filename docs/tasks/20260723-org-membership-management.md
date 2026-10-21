@@ -17,7 +17,7 @@ operator surface views memberships. Everything else is a leaf hanging off this. 
 continues here — and, per the user's framing, the value is as much in **surfacing framework gaps** as
 in shipping the feature.
 
-## Current model (as-is, established by O2 `20260718-o2-membership-permissions.md`)
+## Current model (as-is, established by O2 ULTRA-00040 (o2 membership permissions))
 
 - `OrgMembership(orgId, branchIds, roles)` — a `@Serializable` value object in **`ultra/security`**
   (`user/OrgMembership.kt`), embedded on the app user entity via `HasOrgMemberships.memberships`.
@@ -397,6 +397,6 @@ UX chosen with the user: a modal role-editor (not inline, not a separate edit pa
 
 ## Cross-references
 
-- O2 membership/permissions: `20260718-o2-membership-permissions.md`.
+- O2 membership/permissions: ULTRA-00040 (o2 membership permissions).
 - Org isolation (part 3/4): `docs/tasks/` — the isolation machinery this exercises.
 - Backlog framing (core vs app, ownership §2, invites §3, roles §4): `20260719-saas-full-feature-backlog.md`.
