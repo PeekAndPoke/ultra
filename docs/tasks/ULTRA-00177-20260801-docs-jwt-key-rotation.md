@@ -1,4 +1,4 @@
-# DOCS — JWT key configuration and rotation
+# ULTRA-00177: DOCS — JWT key configuration and rotation
 
 **Status:** TODO — created 2026-08-01 on archiving ULTRA-00176 (jwt kid key rotation)
 **Plan:** ULTRA-00041 (jwt lib consolidation options)
@@ -62,3 +62,7 @@ KDoc and in ULTRA-00172 (redteam jwt own verifier).
 
 Also skip the migration note — this repo requires no backward compatibility, and the release notes
 already carry the breaking-change marker.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00177 (was `docs/tasks/20260801-docs-jwt-key-rotation.md`).

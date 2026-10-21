@@ -275,7 +275,7 @@ ULTRA-00136 (session revocation wiring) outranks it.
 
 ## Follow-ups created on archiving
 
-- `docs/tasks/20260801-docs-jwt-key-rotation.md` — DOCS. Public API changed breakingly
+- ULTRA-00177 (docs jwt key rotation) — DOCS. Public API changed breakingly
   (`JwtConfig.signingKey` → `keys`, plus `JwtSigningKey` and `JwtAlgorithm`) and the config shape is
   what every app has to edit. Settled: it survived a three-agent gate, two rounds of fixes and the
   maintainer's own review. Unlike the `Redacted` docs task it needs no scoping decision — the config
