@@ -1,4 +1,4 @@
-# Red-team: the messaging / sent-messages surface
+# ULTRA-00125: Red-team: the messaging / sent-messages surface
 
 **Status:** COLLECTED 2026-07-27 — NOT executed. A dedicated penetration-test session runs these.
 **Feature:** ULTRA-00123 (framework composed email sender)
@@ -71,3 +71,7 @@ a result object.
 - Force provider failures (bad credentials, throttling, a missing `jakarta.activation` on the
   classpath) and confirm what the caller sees, what gets persisted, and whether a user-visible flow
   (password reset) reports success while no mail was sent.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00125 (was `docs/tasks/20260727-redteam-messaging.md`).

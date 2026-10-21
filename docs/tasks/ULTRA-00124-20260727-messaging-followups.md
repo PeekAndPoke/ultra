@@ -118,7 +118,7 @@ covers the demo's use of it.
   auth floor — so any DEBUG line is persisted to disk and served unauthenticated. The messaging change
   no longer feeds it mail bodies, but the underlying exposure is real and belongs to insights.
 - `SentMessage.Lookup` folds recipient addresses into `refs`, and `findByRefs` is un-tenanted →
-  recorded as a red-team scenario in `docs/tasks/20260727-redteam-messaging.md`.
+  recorded as a red-team scenario in ULTRA-00125 (redteam messaging).
 
 ## History
 

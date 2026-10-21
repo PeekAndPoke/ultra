@@ -5,7 +5,7 @@ chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmail
 `funktor/messaging/src/jvmMain/kotlin/senders/`, `useSender` / `onAfterSend` in `index_jvm.kt`); the symbols it deleted
 (`canDeliver`, `suppressDeliveryInTestMode`, `TestOutbox`) occur nowhere; its specs are in the tree and green in the last
 recorded run. Residuals live in ULTRA-00124 (messaging followups) and
-`docs/tasks/20260727-redteam-messaging.md`; the docs follow-up is ULTRA-00122 (docs messaging test seam).
+ULTRA-00125 (redteam messaging); the docs follow-up is ULTRA-00122 (docs messaging test seam).
 **Plan:** `/Users/gerk/.claude/plans/indexed-stargazing-spring.md`
 **Supersedes:** the guard design in ULTRA-00121 (email e2e test seam)
 **Security-critical:** yes — this is what makes "a test run never reaches a real provider" true.
@@ -194,7 +194,7 @@ anonymization of uppercase/protocol-relative/custom schemes.
 ULTRA-00124 (messaging followups) (8 items, incl. the boot warning, `senderName` never
 reaching the `From` header, anonymization not covering non-URL secrets, no `OnBeforeSend` hook for
 activation-resend throttling, and zero provider tests) and
-`docs/tasks/20260727-redteam-messaging.md` (6 attack scenarios, led by the un-tenanted
+ULTRA-00125 (redteam messaging) (6 attack scenarios, led by the un-tenanted
 `findByRefs`).
 
 ## History
