@@ -1,4 +1,4 @@
-# Kronos: collapse chained `advanceBy` into one offset
+# ULTRA-00205: Kronos: collapse chained `advanceBy` into one offset
 
 **Status:** DONE (archived 2026-10-18). Started 2026-10-17, requested by the maintainer from the spross
 project, where a simulated clock advances once per simulated minute.
@@ -209,3 +209,4 @@ re-reviewed. Not security-critical → no red-team task. Docs follow-up (public 
 - 2026-10-17: spec redesigned with the maintainer (settled + pending lambdas); lambda laziness confirmed load-bearing.
 - 2026-10-17: maintainer asked to fix the pre-existing `Mutable.set` cycle guard in this task.
 - 2026-10-18: gate PASS after 4 rounds; archived.
+- 2026-10-21: numbered ULTRA-00205 (was `docs/tasks-archive/2026-10/20261017-kronos-advanceby-collapse.md`).

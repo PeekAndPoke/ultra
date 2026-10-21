@@ -1,7 +1,7 @@
 # Docs: Kronos after the advanceBy collapse
 
 **Status:** DONE (archived 2026-10-18)
-**Plan:** follow-up of `docs/tasks-archive/2026-10/20261017-kronos-advanceby-collapse.md` (public API touched)
+**Plan:** follow-up of ULTRA-00205 (kronos advanceby collapse) (public API touched)
 **Security-critical:** no
 
 ## Spec

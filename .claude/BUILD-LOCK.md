@@ -66,7 +66,7 @@ a known `settled` duration plus a shared list of still-lazy providers, read in a
 `mutate { advanceBy(1.minutes) }` steps no longer overflow the stack. The lambda form stays fully lazy.
 `describe()` is flat per chain; `Kronos.from` sums nested descriptors iteratively. `Mutable.set` / `mutate`
 now THROW for a kronos that reads the mutable itself (the old guard walked the wrong chain and never fired).
-Record: `docs/tasks-archive/2026-10/20261017-kronos-advanceby-collapse.md`.
+Record: ULTRA-00205 (kronos advanceby collapse).
 
 **Worth taking:** "do not read section X" in a reviewer brief is unenforceable when X is in a file read in
 one call — all three round-2 reviewers saw the ledger. Hand blind reviewers a scratch copy without it.
