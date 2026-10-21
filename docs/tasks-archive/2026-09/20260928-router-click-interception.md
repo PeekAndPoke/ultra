@@ -70,7 +70,7 @@ The router intercepts a click only when it is an in-app navigation, else the bro
 |---|---|---|---|---|---|
 | 1 | MAJOR | `Router.kt:196` | `blob:` passes the origin check (R1, R2; R3 as MINOR) | fix | node: `new URL("blob:http://localhost:9876/x").origin` = page origin. Now also requires `http:`/`https:`; test added, mutant red |
 | 1 | MAJOR | `Router.kt:199` + `RouteBase.kt:50` | Browser fragment nav fires `popstate`; route matching keeps `#…` → catch-all / miss, fragment leaks into last param, `RouterComponent` remounts (R2) | fix | `RouteBase.match` splits on `?` only (verified). `resolveRouteForUri` strips the fragment; `popstateListener` ignores fragment-only changes; `RouterComponent` key strips `#`. Tests added; mutants red (confirms Chrome fires `popstate`) |
-| 1 | MAJOR | `BackNavigationTrap.kt:56` | Active trap fires on an in-page anchor click (R2, part of the above) | out-of-scope → `20260928-backnavtrap-fragment-navigation.md` | Trap owns its own `popstate` listener; before this change the same click silently left the page for `/`, bypassing the trap entirely |
+| 1 | MAJOR | `BackNavigationTrap.kt:56` | Active trap fires on an in-page anchor click (R2, part of the above) | out-of-scope → ULTRA-00203 (backnavtrap fragment navigation) | Trap owns its own `popstate` listener; before this change the same click silently left the page for `/`, bypassing the trap entirely |
 | 1 | MAJOR | `Router.kt:197,204` | Absolute same-origin hrefs (`https://app/api/export.csv`) were full navigations, now routed in-app (R2; R1 as MINOR) | maintainer-decision → fix | Maintainer 2026-09-28: keep the old rule — absolute URLs go to the browser. Detected by form (`scheme:` / `//`), not by the regex, so a URL the regex misses cannot slip into the router |
 | 1 | MINOR | `Router.kt:196` | `javascript:` on plain click now runs; old code swallowed it by accident (R3) | maintainer-decision | Router is not a sanitizer; blocking also breaks intentional `javascript:` hrefs. Maintainer 2026-09-28: keep as is for now |
 | 1 | MINOR | `Router.kt:213` | `_top` / `_parent` in an unframed page mean self (R1) | fix | `targetsSelf` checks `window.top` / `window.parent`; test added |
@@ -110,4 +110,4 @@ have no `href`, unaffected. All other docs claims match the code.
 **Verdict: gate PASS.** Round 2 clean (no CRITICAL / MAJOR after reconcile); MINOR batch applied once
 without re-review, tests green, new guards mutation-checked. Open for the maintainer (MINOR only):
 multi-router click handling, `findClosestAnchor` gaps (SVG `<a>`, interactive content inside `<a>`,
-shadow DOM), `#` in fragments. Follow-up: `20260928-backnavtrap-fragment-navigation.md`.
+shadow DOM), `#` in fragments. Follow-up: ULTRA-00203 (backnavtrap fragment navigation).

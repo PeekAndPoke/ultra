@@ -1,4 +1,4 @@
-# BackNavigationTrap fires on in-page fragment navigation
+# ULTRA-00203: BackNavigationTrap fires on in-page fragment navigation
 
 **Status:** TODO
 **Plan:** — follow-up of `docs/tasks-archive/2026-09/20260928-router-click-interception.md` (review round 1, MAJOR)
@@ -31,3 +31,7 @@ Hard part: the trap's own entry has the same URL as the page, so URL comparison 
 |---|---|---|---|---|---|
 
 **Verdict:**
+
+## History
+
+- 2026-10-21: numbered ULTRA-00203 (was `docs/tasks/20260928-backnavtrap-fragment-navigation.md`).
