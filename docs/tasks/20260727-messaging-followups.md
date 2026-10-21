@@ -1,7 +1,7 @@
 # Messaging follow-ups from the email review gate
 
 **Status:** TODO — collected 2026-07-27, none started
-**Source:** the 3-agent gate on `docs/tasks-archive/2026-07/20260727-framework-composed-email-sender.md`
+**Source:** the 3-agent gate on ULTRA-00123 (framework composed email sender)
 **Security-critical:** items 1 and 2 are; the rest are correctness or ergonomics.
 
 Everything here was CONFIRMED against the code during the gate and deliberately not fixed in that

@@ -310,3 +310,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00121 | 2026-07-26 | `.claude/tasks-archive/2026-07/20260726-email-e2e-test-seam.md` | `docs/tasks-archive/2026-07/ULTRA-00121-20260726-email-e2e-test-seam.md` |
 | ULTRA-00122 | 2026-07-27 | `docs/tasks/20260727-docs-messaging-test-seam.md` | `docs/tasks/ULTRA-00122-20260727-docs-messaging-test-seam.md` |
 | ULTRA-00122 | 2026-07-27 | `.claude/tasks/20260727-docs-messaging-test-seam.md` | `docs/tasks/ULTRA-00122-20260727-docs-messaging-test-seam.md` |
+| ULTRA-00123 | 2026-07-27 | `docs/tasks-archive/2026-07/20260727-framework-composed-email-sender.md` | `docs/tasks-archive/2026-07/ULTRA-00123-20260727-framework-composed-email-sender.md` |
+| ULTRA-00123 | 2026-07-27 | `.claude/tasks-archive/2026-07/20260727-framework-composed-email-sender.md` | `docs/tasks-archive/2026-07/ULTRA-00123-20260727-framework-composed-email-sender.md` |
+| ULTRA-00123 | 2026-07-27 | `.claude/tasks/20260727-framework-composed-email-sender.md` | `docs/tasks-archive/2026-07/ULTRA-00123-20260727-framework-composed-email-sender.md` |

@@ -2,7 +2,7 @@
 
 **Status:** DONE 2026-07-27 (implemented 2026-07-26, gate passed 2026-07-27)
 
-> **SUPERSEDED 2026-07-27 (same day) by `docs/tasks-archive/2026-07/20260727-framework-composed-email-sender.md`.**
+> **SUPERSEDED 2026-07-27 (same day) by ULTRA-00123 (framework composed email sender).**
 > The seam itself stands, but two things described below no longer exist. `EmailSender.canDeliver`
 > was removed: instead of asking a chain whether it delivers, the framework now substitutes a
 > capturing sender in test mode, so there is nothing to ask. And the app no longer composes the

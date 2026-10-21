@@ -26,7 +26,7 @@ arrives via SSO and is auto-linked to that account. Activation is the half of th
 need a policy decision.
 
 This is the feature the email test seam
-(`docs/tasks-archive/2026-07/20260727-framework-composed-email-sender.md`) was built for: the flow
+(ULTRA-00123 (framework composed email sender)) was built for: the flow
 is only real if a test can read the mail and follow the link in it.
 
 ## The design

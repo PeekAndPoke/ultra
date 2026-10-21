@@ -1,4 +1,4 @@
-# The framework composes the email sender chain; the app supplies only a provider
+# ULTRA-00123: The framework composes the email sender chain; the app supplies only a provider
 
 **Status:** DONE 2026-07-27 (implemented + gate passed same day; archived 2026-10-19). Archive check 2026-10-19: the composed
 chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmailSender` under
@@ -196,3 +196,7 @@ reaching the `From` header, anonymization not covering non-URL secrets, no `OnBe
 activation-resend throttling, and zero provider tests) and
 `docs/tasks/20260727-redteam-messaging.md` (6 attack scenarios, led by the un-tenanted
 `findByRefs`).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00123 (was `docs/tasks-archive/2026-07/20260727-framework-composed-email-sender.md`).
