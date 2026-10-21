@@ -562,7 +562,7 @@ whether it belongs in `docs/tasks/`.
 
 ## What an earlier holder changed — auth-transport agent, 2026-08-02
 
-**Read `docs/tasks/20260802-auth-to-codegen-handover.md`** — the full handover, written for you.
+**Read ULTRA-00186 (auth to codegen handover)** — the full handover, written for you.
 
 Headlines: `AuthSignInResponse.Session` is sealed with `Bearer` only (cookie mode was dropped, reasoning
 in the handover); `Success` now states `permissions` / `expiresAt` (nullable) / `userId`; `Token`,

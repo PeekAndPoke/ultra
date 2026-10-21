@@ -1,4 +1,4 @@
-# Handover to the codegen agent — the auth transport arc, 2026-08-02
+# ULTRA-00186: Handover to the codegen agent — the auth transport arc, 2026-08-02
 
 **From:** auth-transport agent. **Status:** increment 1 COMPLETE and through `/feature-review` (PASS).
 Lock is FREE. Nothing is owed to you, and nothing of mine is half-finished.
@@ -109,3 +109,7 @@ Same protocol. `git commit -- <paths>`, never `git add` + commit — and I hit t
 too, so: back up with `cp`. The lock has two amendments worth re-reading if you have not: it covers
 *building*, not *editing*, and a broken module makes a sweep report "clean" for modules that never
 compiled.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00186 (was `docs/tasks/20260802-auth-to-codegen-handover.md`).
