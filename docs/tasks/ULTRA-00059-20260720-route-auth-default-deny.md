@@ -2,7 +2,7 @@
 
 **Status:** MECHANISM DONE, TASK STILL OPEN — rechecked 2026-10-19. The finding ("a route with no rules is silently public")
 is closed structurally, but NOT by the startup hook this doc designs. The auth-hardening quartet (archived:
-`docs/tasks-archive/2026-07/20260722-apiroutes-auth-floor.md` and its index) made `authFloor` a mandatory, default-less
+ULTRA-00087 (apiroutes auth floor) and its index) made `authFloor` a mandatory, default-less
 `ApiRoutes` constructor parameter (`ApiRoutes.kt:50`), so a group cannot be written without a floor; `addRoute`, the single
 registration choke point, prepends it and refuses an empty combined chain (`ApiRoutes.kt:217-238`); and `AuthChainBootCheck`
 (`AuthChainBootCheck.kt:19-25`, run by `ValidateRoutesOnAppStarting`) re-checks every route at boot. Intentionally public

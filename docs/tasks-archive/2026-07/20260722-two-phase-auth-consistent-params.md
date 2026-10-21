@@ -12,7 +12,7 @@ alignment, no-saas KDoc accuracy, `_key`/`_id` contracts); 4 caught a regression
 (ctor-NAME filter dropped aliased non-`val` ctor entities) → fixed via backing-field superset +
 regression test; 5 empirically verified the superset closes it — EMPTY. Green: rest 105, saas 31,
 all 115 (both DB backends), demo 24. Commits 551e4364, 625b3d7a, f0038e1b, c5e63d06 (+ docs), all
-UNPUSHED. Depends on `20260722-apiroutes-auth-floor.md`.
+UNPUSHED. Depends on ULTRA-00087 (apiroutes auth floor).
 **Plan:** part 3 of the auth-hardening quartet
 **Security-critical:** YES — request-data isolation (IDOR) + pre-auth resource access.
 
@@ -194,7 +194,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 
 ## Cross-references
 
-- Depends on parts 1+2 (`20260722-authorize-rule-builder.md`, `20260722-apiroutes-auth-floor.md`).
+- Depends on parts 1+2 (`20260722-authorize-rule-builder.md`, ULTRA-00087 (apiroutes auth floor)).
 - Prerequisite of part 4 (`20260722-stored-param-migration.md`) — the oracle goes live without this.
 - Pairs with `20260722-actionable-boot-error-messages.md` (the runner owns the aggregated boot error;
   fold the multiline-indent fix here).

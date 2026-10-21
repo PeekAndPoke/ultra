@@ -4,7 +4,7 @@
 all three reviewers). All 4 rounds' findings fixed; 27 funktor:rest specs + full backend suites green.
 Archive check 2026-10-19: every Spec/Test box was already ticked; the builder, `RestDsl` marker and the specs it names
 (`AuthRuleBuilderSpec` 20, `AuthRuleDslCompileSpec` 4) are all still in the tree and green in the last recorded run.
-**Plan:** part 1 of the auth-hardening quartet: this → `20260722-apiroutes-auth-floor.md` →
+**Plan:** part 1 of the auth-hardening quartet: this → ULTRA-00087 (apiroutes auth floor) →
 `20260722-two-phase-auth-consistent-params.md` → `20260722-stored-param-migration.md`
 **Security-critical:** YES — this changes how every API auth rule is declared.
 
@@ -83,7 +83,7 @@ It *reads* as conjunction and *fails open*. `forAll(...)` exists only to work ar
    rules (and any empty `forAll {}`/`forAny {}` sub-block) aborts app start with a clear message
    ("declare public() explicitly"). NOTE the precise scope: routes that never call `authorize`
    remain legal (and public) in THIS task — closing that gap repo-wide is exactly the mandatory
-   floor of `20260722-apiroutes-auth-floor.md`; flipping it here would front-run part 2's sweep.
+   floor of ULTRA-00087 (apiroutes auth floor); flipping it here would front-run part 2's sweep.
 5. `public()` becomes a **typed marker rule** so later stages (floor suppression checks, docs)
    can recognize it structurally.
 
@@ -191,6 +191,6 @@ consciously left as-is.
 
 - ULTRA-00062 (operator api feature) (archived) — the cross-realm HIGH that motivated structural
   enforcement; ULTRA-00044 (cross realm authz and tests) — forUserType primitive this composes with.
-- Successor: `20260722-apiroutes-auth-floor.md` builds the mandatory seed ON this builder — it
+- Successor: ULTRA-00087 (apiroutes auth floor) builds the mandatory seed ON this builder — it
   INHERITS `validateChain` (whole-chain boot check) as the seam for "public-seeded group must not
   also carry restrictive rules"; the seed pre-populates `authRules` and the user block appends.

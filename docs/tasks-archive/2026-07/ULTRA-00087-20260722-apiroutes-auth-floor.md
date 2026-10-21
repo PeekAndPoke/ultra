@@ -1,4 +1,4 @@
-# Mandatory auth floor on ApiRoutes — structural default-deny
+# ULTRA-00087: Mandatory auth floor on ApiRoutes — structural default-deny
 
 **NOTE (2026-07-23, part 4):** the ctor param was renamed `defaultAuth` → `authFloor` (it is a floor
 route rules can only STRENGTHEN, not an overridable default). This doc's historical references to
@@ -198,3 +198,7 @@ login API split by auth level). Names are display-only (routing is by URI), so t
 - ULTRA-00044 (cross realm authz and tests) — the floor is how forUserType stops being per-route
   opt-in; update that task when this lands.
 - Part 3 (`20260722-two-phase-auth-consistent-params.md`) relies on the floor being caller-only.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00087 (was `docs/tasks-archive/2026-07/20260722-apiroutes-auth-floor.md`).

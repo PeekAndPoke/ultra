@@ -139,6 +139,6 @@ Steps (each builds + commits):
 ## Cross-references
 
 - Depends on: `20260722-two-phase-auth-consistent-params.md` (hard), which depends on
-  `20260722-apiroutes-auth-floor.md` → `20260722-authorize-rule-builder.md`.
+  ULTRA-00087 (apiroutes auth floor) → `20260722-authorize-rule-builder.md`.
 - Proving ground for the whole quartet: after this, a new endpoint gets floor + phase ordering +
   consistency enforcement by construction, with nothing to remember.
