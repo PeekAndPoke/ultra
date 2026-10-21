@@ -65,6 +65,9 @@ COUNTER = "docs/tasks/_next-ticket.txt"
 TASKS, FUTURE, IN_PROGRESS, ARCHIVE = "docs/tasks", "docs/tasks/future", "docs/tasks/in-progress", "docs/tasks-archive"
 PLANS = "docs/plans"
 HOUSEKEEPING = "docs/housekeeping"
+# ultra: where task files lived before docs/ (former_paths keeps only these)
+FORMER_TASK_DIRS = ("docs/tasks/", "docs/tasks-archive/", ".claude/tasks/", ".claude/tasks-archive/",
+                    ".claude/future-plans/")
 NOT_TICKETS = {"README.md", "NEXT-STEPS.md", "TEMPLATE.md"}  # plus every _*.md
 STATUS_LINE = re.compile(r"^> \*\*Status \((\d{4}-\d{2}-\d{2})\):\s*(.*)$")
 PART_OF = re.compile(r"^> \*\*Part of:\*\*\s*([A-Z][A-Z0-9]*-\d{5})\b\s*(?:\(([^)]*)\))?")
@@ -732,6 +735,9 @@ def former_paths(root, rel):
     out = []
     for line in git(root, "log", "--follow", "--name-only", "--format=", "--", rel).splitlines():
         line = line.strip()
+        # --follow pairs a small file with unrelated ones (.gitkeep, gradle.properties); keep task paths only
+        if not line.endswith(".md") or not line.startswith(FORMER_TASK_DIRS):
+            continue
         if line and line != rel and line not in out:
             out.append(line)
     return out
