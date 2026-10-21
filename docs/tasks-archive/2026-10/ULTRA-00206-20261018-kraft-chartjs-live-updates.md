@@ -1,4 +1,4 @@
-# kraft chartjs: live updates that keep the whole chart in step
+# ULTRA-00206: kraft chartjs: live updates that keep the whole chart in step
 
 **Status:** DONE (archived 2026-10-18) (requested by the maintainer from the spross project, 2026-10-18, for the release
 that carries ULTRA-00205 (kronos advanceby collapse))
@@ -190,3 +190,4 @@ docs follow-up.
 - 2026-10-18: written from spross (`spross/app-web/MEMORY.md`, "Known gap in kraft's chart addon").
 - 2026-10-18: implemented, gate PASS after 3 rounds, archived. Consumer note for spross: its dashboard sets no
   `animation = false` while publishing every frame (`DashboardPage.kt:247-251`).
+- 2026-10-21: numbered ULTRA-00206 (was `docs/tasks-archive/2026-10/20261018-kraft-chartjs-live-updates.md`).

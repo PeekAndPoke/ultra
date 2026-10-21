@@ -31,7 +31,7 @@ mirror `docs-site/src/data/llms/datetime.md` against the settled code in
   fixed-clock Aside). Pre-existing errors fixed: `mutable.advanceBy`, `AdvancedBy(millis = …)`, "for persisting",
   `localDateNow()` without a timezone, `println` comments that did not match `MpInstant.toString()`.
 - Mirror `docs-site/src/data/llms/datetime.md` "Kronos — Testable Clock" rewritten, shorter than the page.
-- Same session, chartjs (from `docs/tasks-archive/2026-10/20261018-kraft-chartjs-live-updates.md`):
+- Same session, chartjs (from ULTRA-00206 (kraft chartjs live updates)):
   `docs-site/src/pages/ultra/kraft/addons.astro` chartjs section (update contract; removed an unused
   `subscribingTo`), mirror `docs-site/src/data/llms/kraft.md` chartjs section (cut to the page's example + gotchas),
   `kraft/addons/chartjs/README.md` (its example used a DSL that does not exist).

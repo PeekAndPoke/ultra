@@ -54,7 +54,7 @@ labels and every other `data` field, datasets added/removed/changed (merged by i
 Chart.js animates), options; a changed `type` rebuilds; a failed create no longer leaves an orphan chart on the
 canvas. The chart works on its own one-level copy of the config — Chart.js writes into what it is given.
 `Chart.update(mode: String?)` is the Chart.js 4 signature. Docs for Kronos and chartjs updated. Records:
-`docs/tasks-archive/2026-10/20261018-kraft-chartjs-live-updates.md`, `…/20261018-docs-kronos.md`.
+ULTRA-00206 (kraft chartjs live updates), `…/20261018-docs-kronos.md`.
 
 **Worth taking:** `x shouldBe y` on a `dynamic` receiver compiles to a dynamic member call → `TypeError` at
 runtime; cast first. In Astro markup `{ … }` is an expression — code text with braces goes in `{"…"}`.
