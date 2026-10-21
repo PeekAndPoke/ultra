@@ -1,4 +1,4 @@
-# Audit: value classes for ids & invariant values (auth / saas / b2b)
+# ULTRA-00109: Audit: value classes for ids & invariant values (auth / saas / b2b)
 
 **Status:** FINDINGS ACTED ON; STANDING RULE STILL UNDECIDED (rechecked 2026-10-19). The migration this audit asked for ran —
 see `20260724-value-class-ids-migration.md`: Tier 1 `RealmId`, `UserId`, `OrgId` and the Tier 2 email value (as
@@ -75,3 +75,7 @@ Value classes (`RealmId`, `UserId`, `OrgId`, …) make each of these a distinct 
 ## Next
 - USER decides: adopt the rule? scope (new-code-only vs migrate)? where do the value types live
   (`ultra/security`? a new `ultra/ids`? per-module)? → then a migration plan + the KSP tasks land first.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00109 (was `docs/tasks/20260724-value-class-ids-audit.md`).

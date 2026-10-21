@@ -11,7 +11,7 @@ The Step 2/3 task docs are archived in `docs/tasks-archive/2026-07/`; the Step 4
 - **The standing rule** — "To be codified by the user", and it is in neither `CLAUDE.md` nor `.claude/skills/code-style/`.
 - The optional `BranchId` / `UserType` items under "Later / optional".
 **Was:** PLANNED 2026-07-24 — awaiting go-ahead; `RealmId` the pilot (Step 1) to surface unforeseen complications first.
-**Rationale / candidate survey:** `20260724-value-class-ids-audit.md`.
+**Rationale / candidate survey:** ULTRA-00109 (value class ids audit).
 **Enabled by:** ULTRA-00105 (slumber value class support) (DONE — value classes serialize like kotlinx).
 **User decision:** use SPECIFIC id classes (`RealmId`, `UserId`, `OrgId`, …), not a generic `Id<T>`.
 
