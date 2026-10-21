@@ -1,4 +1,4 @@
-# Adopt the shared agent tools into `console/tools/`
+# ULTRA-00227: Adopt the shared agent tools into `console/tools/`
 
 **Status:** TODO — the maintainer approved the shared first drafts (relayed by Mission-Control, 2026-10-19); fit in when
 a slot allows, never displacing a running track
@@ -62,3 +62,7 @@ reported MISSING (it was `KarangoGlobalLocksE2eSpec`/`MonkoGlobalLocksE2eSpec`).
 
 `stack-merge` (shared, 2026-10-19): not adopted for now — tracks merge one at a time with `merge --no-ff` and a full
 suite each, and two parallel tracks rarely need stacking; revisit if merges start to queue. Merge preflight (#4) is undrafted; the repo-facts snapshot (#5) is Mission-Control's own.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00227 (was `docs/tasks/20261019-adopt-agent-tools.md`).
