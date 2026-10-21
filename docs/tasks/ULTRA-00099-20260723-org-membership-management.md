@@ -1,4 +1,4 @@
-# Org membership management + ownership (saas showcase — core function)
+# ULTRA-00099: Org membership management + ownership (saas showcase — core function)
 
 **Status:** IN PROGRESS — Inc 1a + 1b + 2a + 2b ALL DONE (review loops closed; committed through 2a =
 `e7a9c401`; 2b loop closed round 2, committed 2026-07-24). The b2b membership arc is COMPLETE —
@@ -400,3 +400,7 @@ UX chosen with the user: a modal role-editor (not inline, not a separate edit pa
 - O2 membership/permissions: ULTRA-00040 (o2 membership permissions).
 - Org isolation (part 3/4): `docs/tasks/` — the isolation machinery this exercises.
 - Backlog framing (core vs app, ownership §2, invites §3, roles §4): ULTRA-00043 (saas full feature backlog).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00099 (was `docs/tasks/20260723-org-membership-management.md`).

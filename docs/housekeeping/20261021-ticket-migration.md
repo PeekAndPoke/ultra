@@ -254,3 +254,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00097 | 2026-07-23 | `.claude/tasks/auth-hardening/20260723-security-open-questions.md` | `docs/tasks/ULTRA-00097-20260723-security-open-questions.md` |
 | ULTRA-00098 | 2026-07-23 | `docs/tasks/future/funktor-module-config-builder.md` | `docs/tasks/future/ULTRA-00098-funktor-module-config-builder.md` |
 | ULTRA-00098 | 2026-07-23 | `.claude/future-plans/funktor-module-config-builder.md` | `docs/tasks/future/ULTRA-00098-funktor-module-config-builder.md` |
+| ULTRA-00099 | 2026-07-23 | `docs/tasks/20260723-org-membership-management.md` | `docs/tasks/ULTRA-00099-20260723-org-membership-management.md` |
+| ULTRA-00099 | 2026-07-23 | `.claude/tasks/saas-orgs/20260723-org-membership-management.md` | `docs/tasks/ULTRA-00099-20260723-org-membership-management.md` |

@@ -2,7 +2,7 @@
 
 **Status:** DONE — 2026-07-24. Review loop closed at round 1 (zero production-code defects; the
 follow-ups were doc/test-only, applied). The next leaf off the b2b membership arc
-(`20260723-org-membership-management.md`): closes the member-CRUD story with a runtime ADD path
+(ULTRA-00099 (org membership management)): closes the member-CRUD story with a runtime ADD path
 (memberships were fixture-only).
 **Plan:** ULTRA-00045 (demo restructure three apps) (three-apps showcase) +
 ULTRA-00043 (saas full feature backlog) §3 (invites).

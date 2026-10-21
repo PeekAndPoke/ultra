@@ -3,7 +3,7 @@
 **Status:** TODO — COLLECTOR for a later documentation pass (capture what changed + anchors; do not
 write prose here). Created 2026-07-23 per the "framework change → doc task" standing rule.
 **Type:** documentation
-**Triggering change:** the saas org-membership feature (`docs/tasks/20260723-org-membership-management.md`).
+**Triggering change:** the saas org-membership feature (ULTRA-00099 (org membership management)).
 
 ## What changed (framework surface — document when the feature stabilizes)
 
