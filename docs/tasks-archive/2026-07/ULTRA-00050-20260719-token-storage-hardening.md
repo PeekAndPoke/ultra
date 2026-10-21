@@ -1,7 +1,7 @@
 # ULTRA-00050: Frontend token storage — bearer stays; the cookie route was designed and dropped
 
 **Status:** **DONE 2026-08-02.** Increment 1 (the response contract) shipped and passed `/feature-review`
-— record in `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` §"Review record",
+— record in ULTRA-00185 (rest content type enforcement) §"Review record",
 which covers both diffs. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below; the
 reasoning is kept so it is not re-proposed. Security-critical.
 **Residue that outlives this task:** `docs/tasks/20260802-csp-and-token-ttl.md` (CSP + Trusted Types,
@@ -205,7 +205,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 | CSP with nonces + Trusted Types enforced — the actual XSS mitigation, and the root cause either storage design only bounds | `docs/tasks/20260802-csp-and-token-ttl.md` |
 | A shorter access-token TTL (1h in the demo realms) to narrow the replay window | same |
 | Session revocation, i.e. the only real logout | ULTRA-00136 (session revocation wiring) |
-| `Content-Type` enforcement on REST routes | DONE — `20260802-rest-content-type-enforcement.md` |
+| `Content-Type` enforcement on REST routes | DONE — ULTRA-00185 (rest content type enforcement) |
 
 ## Cross-references
 
@@ -216,7 +216,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
   needs `credentials: 'include'` on the stream fetch.
 - ULTRA-00136 (session revocation wiring) — **the only real logout mechanism**, and
   transport-independent. This task cannot deliver logout; that one can.
-- `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` — split out of the dropped cookie work;
+- ULTRA-00185 (rest content type enforcement) — split out of the dropped cookie work;
   a live hole today, not a cookie concern.
 - ULTRA-00049 (ktor client unification), ULTRA-00044 (cross realm authz and tests),
   ULTRA-00035 (auth orgs foundation).

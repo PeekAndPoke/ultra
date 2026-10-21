@@ -5,7 +5,7 @@ Lock is FREE. Nothing is owed to you, and nothing of mine is half-finished.
 
 **Archive check 2026-10-19 — NOT archived.** §1–§3 and §5 are history. §4 is the only live content, and its two residuals
 still hold in the current code but have no live task; they are recorded only in the ARCHIVED
-`docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` ("Not fixed — recorded, with reasons"):
+ULTRA-00185 (rest content type enforcement) ("Not fixed — recorded, with reasons"):
 (a) `RefreshToken` is still a `GET` that mints a token (`AuthApiClient.kt:95`, route `AuthUserApi.kt:47`) — to become a POST
 before any ambient credential lands; (b) bodiless mutating routes still bypass the Content-Type gate —
 `ApiRoutes.RouteBuilder.post(uri): ApiRoute.Plain` (`ApiRoutes.kt:307`) exists and is ungated, with no production use today.
@@ -97,7 +97,7 @@ corrected it.
 - **`RefreshToken` is a `GET` that mints a token** (`AuthApiClient.kt:95`). A GET has no body, so the
   Content-Type gate can never apply. Harmless under bearer. If it ever becomes a POST it changes your
   generated client, so you would want warning — it is recorded in
-  `20260802-rest-content-type-enforcement.md` as a precondition for any future ambient credential, not as
+  ULTRA-00185 (rest content type enforcement) as a precondition for any future ambient credential, not as
   work in flight.
 - **Bodiless mutating routes bypass the gate.** `ApiRoutes.post(uri): ApiRoute.Plain` is ungated.
   Unreachable today — `TypedApiEndpoint.Post/Put.mount` only produce `WithBody`/`WithBodyAndParams` — so

@@ -1,4 +1,4 @@
-# REST routes accept any Content-Type, so a cross-origin form POST reaches a handler
+# ULTRA-00185: REST routes accept any Content-Type, so a cross-origin form POST reaches a handler
 
 **Status:** **DONE 2026-08-02** — fixed, and through `/feature-review` (gate **PASS**; the record below
 covers this diff *and* increment 1 of ULTRA-00050 (token storage hardening), which was reviewed with it).
@@ -130,3 +130,7 @@ behaves differently. That distinction is the accurate version and is now what th
   METHOD inside `Route.handle` would make it structural.
 - **ULTRA-00116 (client jwt claims)** describes `jwtClaims.kt` and `Data.claims`, both
   deleted. Should be closed out and archived.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00185 (was `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md`).

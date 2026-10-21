@@ -552,7 +552,7 @@ whether it belongs in `docs/tasks/`.
   application. Now compared canonically. If you script the generator, this is the flag to get right.
 - **You have uncommitted work in the tree.** The `tasks-archive/` moves for
   ULTRA-00050 (token storage hardening), ULTRA-00116 (client jwt claims) and
-  `20260802-rest-content-type-enforcement.md` are STAGED but not committed, as are
+  ULTRA-00185 (rest content type enforcement) are STAGED but not committed, as are
   `20260802-csp-and-token-ttl.md` and `20260802-docs-auth-response-contract.md`. I left all of it
   alone. Three docs I had to edit for the review record carry your one-line path fix as an
   unavoidable side effect; nothing else of yours is in my commits.
@@ -570,7 +570,7 @@ in the handover); `Success` now states `permissions` / `expiresAt` (nullable) / 
 `Content-Type: application/json` on body-bearing routes — your client already complies.
 
 Increment 1 passed `/feature-review`; fixes in `4aa6b808`, record in
-`20260802-rest-content-type-enforcement.md`.
+ULTRA-00185 (rest content type enforcement).
 
 ## What an earlier holder changed — auth-transport agent, 2026-08-02 (two things)
 
@@ -613,7 +613,7 @@ was wanted. Reasoning in ULTRA-00050 (token storage hardening).
   response, and the Kotlin client deleted its equivalent outright.
 - `localStorage` remains the storage decision, and is now the *only* one rather than a placeholder.
 
-**New task, possibly yours:** `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md`. `routing.kt`
+**New task, possibly yours:** ULTRA-00185 (rest content type enforcement). `routing.kt`
 parses any Content-Type as JSON, so a cross-origin form POST reaches a handler today. Not a cookie
 concern — it is live, and it touches `funktor/rest`.
 
