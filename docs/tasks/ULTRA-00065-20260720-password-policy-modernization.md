@@ -1,4 +1,4 @@
-# Modernize the password policy (NIST: length + breach-list over composition rules)
+# ULTRA-00065: Modernize the password policy (NIST: length + breach-list over composition rules)
 
 **Status:** TODO — from the password-subsystem review (2026-07-20)
 **Plan:** none — password hashing hardening (finding 3)
@@ -57,3 +57,7 @@ The current regex both **over-restricts** (blocks strong passphrases lacking a s
 - ULTRA-00051 (auth error account enumeration) (the `weakPassword` code + the two enforcement sites).
 - Realm-configurable policy already exists (`AuthRealmModel.passwordPolicy`); this changes defaults +
   adds a screening step, not the plug-in shape.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00065 (was `docs/tasks/20260720-password-policy-modernization.md`).

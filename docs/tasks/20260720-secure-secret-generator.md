@@ -41,4 +41,4 @@ vetted generator, each call site risks rolling its own with a weak RNG or a bias
 ## Cross-references
 
 - Unblocks the b2b/b2b2c **invite** flow (ULTRA-00063 (b2b realm), self-signup disabled).
-- Pairs with `20260720-password-policy-modernization.md` (temp passwords must satisfy the policy).
+- Pairs with ULTRA-00065 (password policy modernization) (temp passwords must satisfy the policy).
