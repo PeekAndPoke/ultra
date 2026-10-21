@@ -397,3 +397,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00161 | 2026-07-30 | `.claude/tasks/20260730-redteam-insights-api.md` | `docs/tasks/ULTRA-00161-20260730-redteam-insights-api.md` |
 | ULTRA-00162 | 2026-07-31 | `docs/tasks/20260731-sdk-sse-auth.md` | `docs/tasks/ULTRA-00162-20260731-sdk-sse-auth.md` |
 | ULTRA-00162 | 2026-07-31 | `.claude/tasks/20260731-sdk-sse-auth.md` | `docs/tasks/ULTRA-00162-20260731-sdk-sse-auth.md` |
+| ULTRA-00163 | 2026-07-31 | `docs/tasks/20260731-slumber-scan-findings.md` | `docs/tasks/ULTRA-00163-20260731-slumber-scan-findings.md` |
+| ULTRA-00163 | 2026-07-31 | `.claude/tasks/20260731-slumber-scan-findings.md` | `docs/tasks/ULTRA-00163-20260731-slumber-scan-findings.md` |

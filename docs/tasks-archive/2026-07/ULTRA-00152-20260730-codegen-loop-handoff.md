@@ -7,7 +7,7 @@ were decided 2026-08-01 (see "ALL THREE OPEN QUESTIONS ARE DECIDED"). The unchec
 work here: generic sealed hierarchies were fixed by ULTRA-00155 (codegen generic emission) (`63f9f186`);
 `@Slumber.Field` non-ctor props and scalar refinement were decided "leave as-is" (above); the `@Slumber.Field` selection
 re-derivation and the duplicated `readArrayElements` are tracked in ULTRA-00146 (ts sdk codegen) (review
-table, lines 1173-1174) and, for `readArrayElements`, `docs/tasks/20260731-slumber-scan-findings.md` (C13). No docs task:
+table, lines 1173-1174) and, for `readArrayElements`, ULTRA-00163 (slumber scan findings) (C13). No docs task:
 the generator's public surface was still moving (see "No docs task" below).
 
 > ## ⛔ BEFORE ANY GRADLE COMMAND OR COMMIT: read `.claude/BUILD-LOCK.md`

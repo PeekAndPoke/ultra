@@ -1,4 +1,4 @@
-# Slumber: module scan — findings & adjudication
+# ULTRA-00163: Slumber: module scan — findings & adjudication
 
 **Status:** SCAN COMPLETE, adjudication IN PROGRESS (2026-07-31). KDoc landed, tests green
 (75 specs, 1232 tests, 0 failures). No fixes applied yet.
@@ -178,3 +178,7 @@ cluster in exactly the places flagged as recent rework, plus two systemic issues
    primitive coercion strictness (G1-G4), polymorphic discriminator hop (E1) + diagnostics (E9).
 3. E13 (ClassIndex allow-list) → new red-team task file when fixes start, per security policy.
 4. F8 feeds the existing ULTRA-00150 (redteam log forging) scenarios.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00163 (was `docs/tasks/20260731-slumber-scan-findings.md`).
