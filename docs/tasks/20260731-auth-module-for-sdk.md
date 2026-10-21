@@ -89,7 +89,7 @@ readonly signIn = (params: { realm: string }, body: AuthSignInRequest) => ...
 
 ## 3. SSE and auth are entangled — decide together
 
-`docs/tasks/20260731-sdk-sse-auth.md`: generated SSE clients bypass the SDK's transport, so a
+ULTRA-00162 (sdk sse auth): generated SSE clients bypass the SDK's transport, so a
 transport-carried bearer token never reaches a stream. The maintainer's steer (2026-07-31) was to send
 the JWT as a header and check it.
 

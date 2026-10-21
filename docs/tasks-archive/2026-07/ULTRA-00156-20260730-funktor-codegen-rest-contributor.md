@@ -170,7 +170,7 @@ places. The double-encode is a real funktor defect, **not** fixed here.
 
 ### Deferred with a decision
 
-- **SSE bypasses transport auth** → own task, `docs/tasks/20260731-sdk-sse-auth.md`. Direction
+- **SSE bypasses transport auth** → own task, ULTRA-00162 (sdk sse auth). Direction
   agreed: a header-carried token.
 - **`ApiProtocolError` retains the full response body**, which a global `Sentry.captureException`
   ships to a third party — on the stale-SDK path, that body is real user data. Explained to the

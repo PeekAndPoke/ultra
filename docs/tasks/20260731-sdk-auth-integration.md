@@ -117,7 +117,7 @@ the server's. That warning must survive the port verbatim, at the point of use.
 
 ### 4.5 SSE intersects this
 
-`docs/tasks/20260731-sdk-sse-auth.md`: streams bypass the transport, so a transport-wrapper token
+ULTRA-00162 (sdk sse auth): streams bypass the transport, so a transport-wrapper token
 never reaches them. Whatever auth mechanism lands here must cover streams, or the two tasks must be
 done together. Doing this one first without deciding that is how the asymmetry becomes permanent.
 

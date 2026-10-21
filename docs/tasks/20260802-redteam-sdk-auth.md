@@ -49,7 +49,7 @@ the interesting question is whether any OTHER async path lacks one.
 7. **`sseStream` carries no credential at all** (it calls `fetch` directly, bypassing the transport).
    Confirm it is absent rather than wrong, and that no generated member silently produces an
    unauthenticated stream for an `authenticated()` route. Tracked separately in
-   `docs/tasks/20260731-sdk-sse-auth.md`.
+   ULTRA-00162 (sdk sse auth).
 8. **Storage tampering.** `restore()` now validates the carrier and drops expired sessions. Attack
    the remainder: a payload with a far-FUTURE `expiresAt` and a dead token (does the client ever
    refresh?), a huge `permissions` object, prototype-pollution keys (`__proto__`, `constructor`) in

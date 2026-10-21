@@ -468,7 +468,7 @@ session — JWT included — to `localStorage`, which is a filed, security-criti
 and replay it off-machine. A faithful port would re-create a known defect in new code. Storage must be
 an injected strategy defaulting to in-memory.
 
-**And it collides with the SSE gap.** `docs/tasks/20260731-sdk-sse-auth.md` — streams bypass the
+**And it collides with the SSE gap.** ULTRA-00162 (sdk sse auth) — streams bypass the
 transport, so a transport-wrapper token never reaches them. Deciding auth here without deciding that
 is how the asymmetry becomes permanent.
 

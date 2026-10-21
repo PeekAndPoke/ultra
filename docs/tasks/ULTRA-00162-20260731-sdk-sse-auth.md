@@ -1,4 +1,4 @@
-# Generated SSE clients bypass the SDK's auth mechanism
+# ULTRA-00162: Generated SSE clients bypass the SDK's auth mechanism
 
 **Status:** TODO
 **Plan:** ULTRA-00146 (ts sdk codegen) → Phase 2 follow-up
@@ -82,3 +82,7 @@ Whatever is chosen, **the asymmetry must stop being silent.**
 | 3. Security | | |
 
 **Red-team follow-up** (required — this is auth): `docs/tasks/YYYYMMDD-redteam-sdk-sse-auth.md`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00162 (was `docs/tasks/20260731-sdk-sse-auth.md`).

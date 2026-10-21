@@ -212,7 +212,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 - `docs/tasks/20260731-sdk-auth-integration.md` §4.1 — the provisional localStorage decision this
   supersedes.
 - `docs/tasks/20260731-auth-module-for-sdk.md` §1 — the four open questions this answers.
-- `docs/tasks/20260731-sdk-sse-auth.md` — SSE cannot set headers, so cookie mode helps there; it also
+- ULTRA-00162 (sdk sse auth) — SSE cannot set headers, so cookie mode helps there; it also
   needs `credentials: 'include'` on the stream fetch.
 - ULTRA-00136 (session revocation wiring) — **the only real logout mechanism**, and
   transport-independent. This task cannot deliver logout; that one can.
