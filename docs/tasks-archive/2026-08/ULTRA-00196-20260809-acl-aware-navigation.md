@@ -176,7 +176,7 @@ until the new matrix lands.
   same function since `route()`/`publicRoute()` shipped. Red-team item 14.
 - **A profile can strip the gated member while the client still emits**, so a page calls a member
   that is not there. Neither side can see the other, so closing it needs a new registration — filed
-  as `docs/tasks/20260824-nav-requires-endpoint-crosscheck.md`.
+  as ULTRA-00200 (nav requires endpoint crosscheck).
 
 ### Clean, recorded so it is not re-trodden
 
@@ -211,7 +211,7 @@ and a rename of `Route.requires`), which normally obliges a docs follow-up on ar
 the "settled is a precondition" rule**, and the evidence is in this change itself:
 
 - `Route.requires` was renamed to `requiresFiles` TODAY, in the review-fix pass.
-- `docs/tasks/20260824-nav-requires-endpoint-crosscheck.md` proposes adding
+- ULTRA-00200 (nav requires endpoint crosscheck) proposes adding
   `TsSdkRegistry.endpoint(...)`, which moves the registry's surface again.
 - `ui/sdkContext.ts`'s `provideSdkConfig` is still marked PROVISIONAL, with a `useClient()`
   composable under discussion that would replace how a contributed page reaches its client.

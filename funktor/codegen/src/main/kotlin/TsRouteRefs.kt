@@ -33,7 +33,7 @@ object TsRouteRefs {
      * this route while keeping others in the feature still resolves here — and the page then calls a
      * member the client does not carry. `Route.requiresFiles` catches a missing client FILE, not a
      * missing member. Raised in the 2026-08-24 gate; the cross-check needs the full output plan and
-     * is tracked as `docs/tasks/20260824-nav-requires-endpoint-crosscheck.md`.
+     * is tracked as ULTRA-00200 (nav requires endpoint crosscheck).
      *
      * @param group narrows the search when two route groups of one feature share a member name. Only
      *   needed when the unqualified lookup reports an ambiguity — it says so, and names the groups.

@@ -483,3 +483,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00198 | 2026-08-24 | `.claude/tasks/20260824-insights-kraft-gui.md` | `docs/tasks/ULTRA-00198-20260824-insights-kraft-gui.md` |
 | ULTRA-00199 | 2026-08-24 | `docs/tasks-archive/2026-08/20260824-streams-switchmap.md` | `docs/tasks-archive/2026-08/ULTRA-00199-20260824-streams-switchmap.md` |
 | ULTRA-00199 | 2026-08-24 | `.claude/tasks-archive/2026-08/20260824-streams-switchmap.md` | `docs/tasks-archive/2026-08/ULTRA-00199-20260824-streams-switchmap.md` |
+| ULTRA-00200 | 2026-08-24 | `docs/tasks/20260824-nav-requires-endpoint-crosscheck.md` | `docs/tasks/ULTRA-00200-20260824-nav-requires-endpoint-crosscheck.md` |
+| ULTRA-00200 | 2026-08-24 | `.claude/tasks/20260824-nav-requires-endpoint-crosscheck.md` | `docs/tasks/ULTRA-00200-20260824-nav-requires-endpoint-crosscheck.md` |

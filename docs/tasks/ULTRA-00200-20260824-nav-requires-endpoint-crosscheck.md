@@ -1,4 +1,4 @@
-# Cross-check nav requirements against the endpoints a profile actually emitted
+# ULTRA-00200: Cross-check nav requirements against the endpoints a profile actually emitted
 
 **Status:** TODO — raised by `/feature-review` 2026-08-24 (reviewers 1 and 2, independently).
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
@@ -53,3 +53,7 @@ That is a mechanism, not a fix, so it was filed rather than bolted on.
 Do not "fix" this by filtering `TsRouteRefs.of` through `include`. The nav gate must reference the
 route the SERVER serves — that is what the matrix is keyed on — and a profile-excluded route is still
 served. Filtering there would silently drop the gate instead of reporting the mismatch.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00200 (was `docs/tasks/20260824-nav-requires-endpoint-crosscheck.md`).
