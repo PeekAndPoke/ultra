@@ -1,4 +1,4 @@
-# Karango: `@JvmInline value class` filter support
+# ULTRA-00107: Karango: `@JvmInline value class` filter support
 
 **Status:** DONE 2026-07-24 — **needed ZERO production change** (works as-is). See below.
 **Enabled by:** ULTRA-00105 (slumber value class support) (DONE).
@@ -79,3 +79,7 @@ value-class id." **That premise was wrong — Karango already works end-to-end w
 ## Cross-ref
 - Monko counterpart: `20260724-monko-ksp-value-class.md` (needed a runtime DSL unwrap).
 - Migration that consumes this: `20260724-value-class-ids-migration.md`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00107 (was `docs/tasks-archive/2026-07/20260724-karango-ksp-value-class.md`).

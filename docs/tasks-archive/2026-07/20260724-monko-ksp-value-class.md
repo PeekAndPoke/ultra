@@ -106,6 +106,6 @@ value-class id." **That premise was wrong.** Verified by probe tests against the
 - Gate verdict: **PASS** (no open CRITICAL/HIGH; unit tests green; live-Mongo proof lands with RealmId).
 
 ## Cross-ref
-- Karango counterpart: `20260724-karango-ksp-value-class.md` (needed ZERO change — works as-is).
+- Karango counterpart: ULTRA-00107 (karango ksp value class) (needed ZERO change — works as-is).
 - Migration that consumes this: `20260724-value-class-ids-migration.md` (KSP-first prerequisite is
   now MOOT — no KSP change; the only prerequisite was this Monko runtime fix, now DONE).

@@ -23,7 +23,7 @@ could migrate. **Verification-first probes proved that premise wrong:**
   (`append<RealmId, RealmId>("realm")`) — the type-safe accessor we want. (`entity.realm EQ RealmId(...)`
   type-checks; a bare `String` is rejected.)
 - **Karango works fully as-is** — the `EQ` bind-var value is slumbered at execution, so `RealmId("b2b")`
-  → `"b2b"` matches the stored scalar. Zero production change. (`20260724-karango-ksp-value-class.md`, DONE)
+  → `"b2b"` matches the stored scalar. Zero production change. (ULTRA-00107 (karango ksp value class), DONE)
 - **Monko needed only a small RUNTIME DSL fix** (filter values bypass slumber and the driver can't
   encode a value class): `unwrapValueClass` in `monko/core/lang/dsl/`, wired into every comparison
   operator. DONE. (`20260724-monko-ksp-value-class.md`)
