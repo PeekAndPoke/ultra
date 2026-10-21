@@ -1,4 +1,4 @@
-# Streams: fix CutoffStream subscription leaks under reentrancy
+# ULTRA-00201: Streams: fix CutoffStream subscription leaks under reentrancy
 
 **Status:** DONE (archived 2026-08-24) — gradle verification completed, all targets green
 **Plan:** standalone — found while building `switchMap`
@@ -121,3 +121,7 @@ resume-path version.
   which recompute. Pre-existing, unchanged, and arguably correct for a "frozen" operator.
 - **Naming**: `sourceCount`/`switchCount` are generation tokens rather than counts of live
   subscriptions. Left as-is for consistency across the two operators.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00201 (was `docs/tasks-archive/2026-08/20260824-cutoff-reentrancy.md`).

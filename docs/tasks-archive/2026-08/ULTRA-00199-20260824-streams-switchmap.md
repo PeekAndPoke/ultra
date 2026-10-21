@@ -124,7 +124,7 @@ All three reviewers independently converged on ONE root cause: an unsubscribe ha
 ## Amendment — 2026-08-24, after the cutoff gate
 
 `switchMap.kt` was changed once more **after** this task was archived. The `/feature-review` gate on
-`docs/tasks-archive/2026-08/20260824-cutoff-reentrancy.md` found that `SwitchMapStream` had the
+ULTRA-00201 (cutoff reentrancy) found that `SwitchMapStream` had the
 same reentrancy hole it was fixing in `CutoffStream`: `subscribeToStream`'s `outerUnsubscribe == null`
 guard is blind while the outer subscription is itself being established, so an outer stream whose
 `subscribeToStream` runs reentrant code starts the operator twice and orphans the first outer

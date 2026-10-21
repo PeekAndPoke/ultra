@@ -125,7 +125,7 @@ stops. Also fixed: a first subscriber arriving while cut off was **never called 
 
 `:ultra:streams:jvmTest` 69 / 0, `linuxX64Test` green, `jsBrowserTest` green incl. `CutoffTickerSpec`
 3/0, compile sweep clean. `/feature-review` PASSED — record in
-`docs/tasks-archive/2026-08/20260824-cutoff-reentrancy.md`.
+ULTRA-00201 (cutoff reentrancy).
 
 **The changes are UNSTAGED and UNCOMMITTED, deliberately** — `ops/cutoff.kt`, `ops/switchMap.kt`
 and their two specs. The maintainer has not reviewed them and did not ask for a commit. Leaving them
