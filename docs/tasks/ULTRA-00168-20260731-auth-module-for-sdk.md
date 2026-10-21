@@ -35,7 +35,7 @@ ULTRA-00050 (token storage hardening) — filed, security-critical, and
 **closed 2026-08-02** with the exposure accepted deliberately: `AuthState` persists the whole session —
 JWT included — to `localStorage`, so any XSS on the origin exfiltrates the token and replays it
 off-machine until expiry. Every alternative container cost more than it bought (below). The mitigations
-that do address it are tracked in `docs/tasks/20260802-csp-and-token-ttl.md`.
+that do address it are tracked in ULTRA-00188 (csp and token ttl).
 
 **The TypeScript client is being written now.** If the hardening lands later, it is written twice; if
 the intended contract is known now, it is written once. So:

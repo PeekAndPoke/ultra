@@ -1,4 +1,4 @@
-# CSP + Trusted Types, and a shorter token TTL
+# ULTRA-00188: CSP + Trusted Types, and a shorter token TTL
 
 **Status:** TODO — created 2026-08-02 on archiving
 ULTRA-00050 (token storage hardening), which declared both of these out of
@@ -36,3 +36,7 @@ what actually ends a session. Neither replaces the other, and only revocation ma
 
 - [ ] Browser smoke test per SPA: inline script blocked, app still functions.
 - [ ] Nothing regresses in the four demo frontends (ops / b2b / b2b2c / admin).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00188 (was `docs/tasks/20260802-csp-and-token-ttl.md`).

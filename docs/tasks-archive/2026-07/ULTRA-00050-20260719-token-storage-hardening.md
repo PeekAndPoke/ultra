@@ -4,7 +4,7 @@
 — record in ULTRA-00185 (rest content type enforcement) §"Review record",
 which covers both diffs. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below; the
 reasoning is kept so it is not re-proposed. Security-critical.
-**Residue that outlives this task:** `docs/tasks/20260802-csp-and-token-ttl.md` (CSP + Trusted Types,
+**Residue that outlives this task:** ULTRA-00188 (csp and token ttl) (CSP + Trusted Types,
 shorter TTL) and ULTRA-00136 (session revocation wiring) (the only real logout).
 **Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c).
 
@@ -202,7 +202,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 
 | Owed | Now lives in |
 |---|---|
-| CSP with nonces + Trusted Types enforced — the actual XSS mitigation, and the root cause either storage design only bounds | `docs/tasks/20260802-csp-and-token-ttl.md` |
+| CSP with nonces + Trusted Types enforced — the actual XSS mitigation, and the root cause either storage design only bounds | ULTRA-00188 (csp and token ttl) |
 | A shorter access-token TTL (1h in the demo realms) to narrow the replay window | same |
 | Session revocation, i.e. the only real logout | ULTRA-00136 (session revocation wiring) |
 | `Content-Type` enforcement on REST routes | DONE — ULTRA-00185 (rest content type enforcement) |
