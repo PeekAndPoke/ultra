@@ -557,3 +557,4 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00230 | 2026-10-19 | `.claude/tasks/20261019-fixed-karma-ports.md` | `docs/tasks/ULTRA-00230-20261019-fixed-karma-ports.md` |
 | ULTRA-00231 | 2026-10-19 | `docs/tasks/20261019-email-first-signup.md` | `docs/tasks/ULTRA-00231-20261019-email-first-signup.md` |
 | ULTRA-00231 | 2026-10-19 | `.claude/tasks/20261019-email-first-signup.md` | `docs/tasks/ULTRA-00231-20261019-email-first-signup.md` |
+| ULTRA-00232 | 2026-10-21 | `docs/tasks/20261021-project-layout-and-tickets.md` | `docs/tasks/in-progress/ULTRA-00232-20261021-project-layout-and-tickets.md` |

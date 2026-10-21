@@ -1,4 +1,4 @@
-# Project layout and ticket numbers
+# ULTRA-00232: Project layout and ticket numbers
 
 > **Status (2026-10-21): IN PROGRESS.** Step 1 (layout) committed; step 2 (numbering) running.
 
@@ -31,3 +31,7 @@
 ## Test evidence
 
 - [x] `:ultra:codegen:test` 325/0, `:funktor:codegen:test` 174/0 after the resource edits.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00232 (was `docs/tasks/20261021-project-layout-and-tickets.md`).
