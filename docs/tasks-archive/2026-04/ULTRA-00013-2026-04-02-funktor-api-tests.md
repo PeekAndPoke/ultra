@@ -1,4 +1,4 @@
-# API Endpoint Tests in funktor/all
+# ULTRA-00013: API Endpoint Tests in funktor/all
 
 
 
@@ -82,3 +82,7 @@ All funktor API endpoints are now covered with integration tests. 92 tests acros
 - **Configurable auth rules** — make `isSuperUser()` / `public()` configurable per test to reduce boilerplate
 - **Non-superUser tests in ClusterApiSpec** — add regularUser tier for consistency with
   IntrospectionApiSpec/LoggingApiSpec
+
+## History
+
+- 2026-10-21: numbered ULTRA-00013 (was `docs/tasks-archive/2026-04/2026-04-02-funktor-api-tests.md`).

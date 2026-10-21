@@ -28,3 +28,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00011 | 2026-03-31 | `.claude/tasks-archive/2026-03/2026-03-31-wave1-audit-security-issues.md` | `docs/tasks-archive/2026-03/ULTRA-00011-2026-03-31-wave1-audit-security-issues.md` |
 | ULTRA-00012 | 2026-03-31 | `docs/tasks-archive/2026-03/2026-03-31-wave1-audit-vault-issues.md` | `docs/tasks-archive/2026-03/ULTRA-00012-2026-03-31-wave1-audit-vault-issues.md` |
 | ULTRA-00012 | 2026-03-31 | `.claude/tasks-archive/2026-03/2026-03-31-wave1-audit-vault-issues.md` | `docs/tasks-archive/2026-03/ULTRA-00012-2026-03-31-wave1-audit-vault-issues.md` |
+| ULTRA-00013 | 2026-04-02 | `docs/tasks-archive/2026-04/2026-04-02-funktor-api-tests.md` | `docs/tasks-archive/2026-04/ULTRA-00013-2026-04-02-funktor-api-tests.md` |
+| ULTRA-00013 | 2026-04-02 | `.claude/tasks-archive/2026-04/2026-04-02-funktor-api-tests.md` | `docs/tasks-archive/2026-04/ULTRA-00013-2026-04-02-funktor-api-tests.md` |
