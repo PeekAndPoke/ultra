@@ -206,3 +206,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00079 | 2026-07-22 | `.claude/future-plans/20260722-forms-dynamic-comparison-values.md` | `docs/tasks/future/ULTRA-00079-20260722-forms-dynamic-comparison-values.md` |
 | ULTRA-00080 | 2026-07-22 | `docs/tasks/future/20260722-forms-field-testbed-dom-tests.md` | `docs/tasks/future/ULTRA-00080-20260722-forms-field-testbed-dom-tests.md` |
 | ULTRA-00080 | 2026-07-22 | `.claude/future-plans/20260722-forms-field-testbed-dom-tests.md` | `docs/tasks/future/ULTRA-00080-20260722-forms-field-testbed-dom-tests.md` |
+| ULTRA-00081 | 2026-07-22 | `docs/tasks/future/20260722-forms-keyboard-accessibility.md` | `docs/tasks/future/ULTRA-00081-20260722-forms-keyboard-accessibility.md` |
+| ULTRA-00081 | 2026-07-22 | `.claude/future-plans/20260722-forms-keyboard-accessibility.md` | `docs/tasks/future/ULTRA-00081-20260722-forms-keyboard-accessibility.md` |

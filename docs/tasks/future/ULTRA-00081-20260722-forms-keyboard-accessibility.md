@@ -1,4 +1,4 @@
-# Forms: full keyboard accessibility (TAB order + keyboard-only operation)
+# ULTRA-00081: Forms: full keyboard accessibility (TAB order + keyboard-only operation)
 
 **Status:** FUTURE — not scheduled. Deferred while finishing i18n.
 **Area:** kraft forms field components (semanticui) + shared a11y.
@@ -39,3 +39,7 @@ All components under `kraft/semanticui/src/jsMain/kotlin/forms/` (`field_input`,
 
 - UiSelectField redesign future-plan (select keyboard nav + groups).
 - TestBed DOM-tests future-plan (keyboard/focus/ARIA assertions).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00081 (was `docs/tasks/future/20260722-forms-keyboard-accessibility.md`).
