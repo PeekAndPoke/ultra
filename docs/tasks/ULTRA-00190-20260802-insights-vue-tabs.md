@@ -1,4 +1,4 @@
-# Insights — the Vue detail page and its collector tabs
+# ULTRA-00190: Insights — the Vue detail page and its collector tabs
 
 **Status:** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE
 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
@@ -802,3 +802,7 @@ responses, the 401 to a non-superuser included (unverified, outside this change)
 
 **Verdict:** gate PASS — round 2 clean, e2e present and green on both backends, full suite green on `ff2a865c`
 (15 864 tests, 0 failures; `f1f5acb3` is task docs only).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00190 (was `docs/tasks/20260802-insights-vue-tabs.md`).

@@ -429,7 +429,7 @@ in this file:
   maintainer caught, not a review". **That is false, and the record says so.** The round produced a
   mitigation, *labelled it* "a mitigation, not the fix", named the real backend fix, put it on the
   blocking list and FAILED the gate
-  (`docs/tasks/20260802-insights-vue-tabs.md:487-500`). The maintainer's contribution was a better
+  (`ULTRA-00190 (insights vue tabs):487-500`). The maintainer's contribution was a better
   DESIGN — enforce the invariant at the writer instead of the reader — not a catch the review missed.
 
   What that gate actually shows, which argues for the loop without needing the misattribution:

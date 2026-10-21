@@ -10,7 +10,7 @@ finished, and none of the deletion payoff is banked.**
 | Styles registry, `styles.ts`/`css-modules.d.ts`, `api/` client grouping, route `requires` | DONE, gated 2026-08-09 — records in `20260802-css-contribution-and-app-scaffold.md` and `20260809-group-clients-under-api.md` |
 | Vue contributors — `AuthTsContributor`, `SdkContextTsContributor`, `InsightsTsContributor` | DONE. 23 `.vue`/`.ts`/`.css` resources ship from `funktor/codegen/src/main/resources/ts/` |
 | `funktor-demo/sdkgen-app` — signs in, loads the access matrix, renders the insights page in a browser | DONE 2026-08-02 |
-| The insights tabs | IN PROGRESS — `docs/tasks/20260802-insights-vue-tabs.md` |
+| The insights tabs | IN PROGRESS — ULTRA-00190 (insights vue tabs) |
 | Steps 8–9 below — delete `funktor/inspect/src/jsMain` (still 51 `.kt` files) and the staticweb cleanup | NOT STARTED |
 
 **Two things this table is deliberately blunt about.** The `.vue` and `.css` content has never been

@@ -7,7 +7,7 @@ the server mounts them. Next on resume: re-take the generated-TS baseline FROM M
 kept), regenerate on the branch, `diff -r` (must be empty or explained), run the module tests, then the pages.
 Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
-**Counterpart:** `docs/tasks/20260802-insights-vue-tabs.md` — the Vue implementation and its full
+**Counterpart:** ULTRA-00190 (insights vue tabs) — the Vue implementation and its full
 gap inventory against the old kotlinx.html GUI.
 **Security-critical:** yes. Same data, same attacker-controlled strings, same superuser-only floor.
 
@@ -75,7 +75,7 @@ The Vue implementation learned these the hard way; a fresh Kraft port will hit e
       **Incomplete since the Vue gate (2026-08-24, `18046b40`):** bind values also reached the Database tab through
       Mongo's `query` text and through Arango's EXPLAIN output (`queryExplained`), not only through `vars`. Treat all three
       as unsafe to render until the Vue task's "S1 at the source" item lands, and follow the shape `VaultCollector` records
-      after it (`20260802-insights-vue-tabs.md`, "Review record").
+      after it (ULTRA-00190 (insights vue tabs), "Review record").
 - [ ] **Every tab degrades rather than throws.** Records outlive the code that wrote them; read
       defensively, exactly as `slices.ts` does, and fall back to a JSON tree.
 - [ ] **`template`'s null render time is the NORMAL case**, not an error — it is null on every API request.
@@ -96,7 +96,7 @@ The Vue implementation learned these the hard way; a fresh Kraft port will hit e
 ## Sequencing
 
 **After the Vue gate PASSES.** The gate has run, and it FAILED: `/feature-review` on the Vue implementation, 2026-08-24
-(record: `20260802-insights-vue-tabs.md`, "Review record"). It found a live secret disclosure — the Database tab rendered a
+(record: ULTRA-00190 (insights vue tabs), "Review record"). It found a live secret disclosure — the Database tab rendered a
 session token through Mongo's `query` text and Arango's EXPLAIN output (`18046b40`) — a backend CRITICAL (the vault slice
 could not be written at all; fixed in `e448c64d`), and stale wire claims. The frontend findings are fixed; as of 2026-10-19
 what still blocks a PASS is that task's "Blocking the gate" list: S1 at the source, I4, re-deriving TAB-SPECS from a current

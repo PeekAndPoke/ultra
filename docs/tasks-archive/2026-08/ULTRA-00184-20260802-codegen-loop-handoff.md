@@ -6,7 +6,7 @@ same day in ULTRA-00153 (frontend sdk vue contributors) — "DECIDED 2026-08-02 
 (unblocks `out.scaffold` / `out.requires`; the remaining build work is that doc's unticked boxes, `:153` and `:927`) and
 "DECIDED 2026-08-02 — the CONSUMING APPS are the verification harness" (settles `.vue` verification: no second toolchain).
 Backlog item 4, the insights contributor, exists (`funktor/codegen/src/main/kotlin/InsightsTsContributor.kt`; its pages are
-`docs/tasks/20260802-insights-vue-tabs.md`). The cookie-mode boot-hydration box and the `whoami` question are moot: cookie
+ULTRA-00190 (insights vue tabs)). The cookie-mode boot-hydration box and the `whoami` question are moot: cookie
 mode was dropped (see "CORRECTION 2026-08-02" at the bottom) and bearer needs no boot call (backlog §5: persisting the
 payload restores the session across a reload).
 

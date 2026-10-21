@@ -459,3 +459,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00188 | 2026-08-02 | `.claude/tasks/20260802-csp-and-token-ttl.md` | `docs/tasks/ULTRA-00188-20260802-csp-and-token-ttl.md` |
 | ULTRA-00189 | 2026-08-02 | `docs/tasks/20260802-docs-auth-response-contract.md` | `docs/tasks/ULTRA-00189-20260802-docs-auth-response-contract.md` |
 | ULTRA-00189 | 2026-08-02 | `.claude/tasks/20260802-docs-auth-response-contract.md` | `docs/tasks/ULTRA-00189-20260802-docs-auth-response-contract.md` |
+| ULTRA-00190 | 2026-08-02 | `docs/tasks/20260802-insights-vue-tabs.md` | `docs/tasks/ULTRA-00190-20260802-insights-vue-tabs.md` |
+| ULTRA-00190 | 2026-08-02 | `.claude/tasks/20260802-insights-vue-tabs.md` | `docs/tasks/ULTRA-00190-20260802-insights-vue-tabs.md` |

@@ -2,7 +2,7 @@
 
 **Status:** DONE (archived 2026-10-19) — Parts A+B (track T2, gate PASS round 1, merged `d9ffbb32`); Parts C+D
 (track T1, gate PASS round 2, merged `a578ef0a`). Created 2026-08-24 from maintainer decisions on
-`docs/tasks/20260802-insights-vue-tabs.md`'s gap inventory. No docs follow-up yet: insights is still moving (the
+ULTRA-00190 (insights vue tabs)'s gap inventory. No docs follow-up yet: insights is still moving (the
 production gate, T4's Kraft GUI) — revisit when it settles. Round-2 MINORs: `docs/tasks/20261019-insights-vue-round2-minors.md`.
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** yes — it adds REST endpoints that expose the service graph and the database
@@ -521,7 +521,7 @@ All under `funktor/codegen/src/main/resources/ts/insights/` unless named otherwi
 
 ### Test evidence (T1)
 
-Module counts are in `docs/tasks/20260802-insights-vue-tabs.md`, "Test evidence (T1)". The graph-specific
+Module counts are in ULTRA-00190 (insights vue tabs), "Test evidence (T1)". The graph-specific
 component tests: `vue-verify/tests/graphs.spec.ts` (17: lazy, once per page across two tabs, 401, HTML 404,
 retry after failure, mismatch said and not said, the fat record drawing with no request, no source; edges,
 dangling count, Lazy dashes, `DynamicOverride` colour; the database graph's fetch, raw view, 401, the
@@ -559,7 +559,7 @@ mutant), vitest run, restored with `cp` + `cmp`. 58 tests per run.
 
 The `DynamicOverride` join (round 1's MAJOR), the three-way fingerprint match, the database graph's
 "today's schema" note and the dropped `numOld`/`numTotal` are recorded, with `path:line`, evidence and mutants,
-in `docs/tasks/20260802-insights-vue-tabs.md`, "T1 — round 1 fix batch".
+in ULTRA-00190 (insights vue tabs), "T1 — round 1 fix batch".
 
 ### Red-team scenarios proposed (T1) — for ULTRA-00161 (redteam insights api)
 

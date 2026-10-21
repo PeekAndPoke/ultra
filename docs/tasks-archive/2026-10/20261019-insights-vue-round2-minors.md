@@ -3,7 +3,7 @@
 **Status:** DONE (archived 2026-10-19) — items 1–11 implemented on `wt/insights-minors`; review round 1 (`reviewer-high`
 ×2: implementation + domain fit, security) CLEAN — 0 CRITICAL / 0 MAJOR; its 7 MINORs and one pre-existing product defect
 go to `docs/tasks/20261019-insights-minors-followups.md`. Originally: 12 MINORs from round 2 of the gate of
-`20260802-insights-vue-tabs.md` (gate PASS, merged `a578ef0a`); the maintainer's standing direction is to fix MINORs.
+ULTRA-00190 (insights vue tabs) (gate PASS, merged `a578ef0a`); the maintainer's standing direction is to fix MINORs.
 **Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` (insights follow-ups; touches T1's area)
 **Security-critical:** partly — items 3, 6 and 7 change what reaches the depot; red-team:
 ULTRA-00161 (redteam insights api) (scenarios 32–35 already added on master, `:109-117`)
@@ -58,7 +58,7 @@ Text:
 - [x] 4. ULTRA-00171 (query vars in insights) rewritten: values not in the depot (count only),
       Monko values in `vars`, allowlist in `VaultCollector`, D1, `aql-raw`; the `vars`-key coupling stated
       there and at `slices.ts:419`.
-- [x] 5. Stale notes rewritten: `20260802-insights-vue-tabs.md:549-551` (refresh.mjs makes three rewrites) and
+- [x] 5. Stale notes rewritten: `ULTRA-00190 (insights vue tabs):549-551` (refresh.mjs makes three rewrites) and
       `:611-613` (cache per fingerprint); archived graphs task `:308-313` (pre-T1 tab check, `OLD_AFTER_SECONDS`
       gone), `:333-336` (two sources, current lines), `:486-491` (`instanceCountsMeasured`, `graphMatch`),
       `:497-503` (graph source).
