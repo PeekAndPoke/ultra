@@ -553,3 +553,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00228 | 2026-10-19 | `.claude/tasks/20261019-insights-minors-followups.md` | `docs/tasks/ULTRA-00228-20261019-insights-minors-followups.md` |
 | ULTRA-00229 | 2026-10-19 | `docs/tasks/20261019-forcall-estimate-partial.md` | `docs/tasks/ULTRA-00229-20261019-forcall-estimate-partial.md` |
 | ULTRA-00229 | 2026-10-19 | `.claude/tasks/20261019-forcall-estimate-partial.md` | `docs/tasks/ULTRA-00229-20261019-forcall-estimate-partial.md` |
+| ULTRA-00230 | 2026-10-19 | `docs/tasks/20261019-fixed-karma-ports.md` | `docs/tasks/ULTRA-00230-20261019-fixed-karma-ports.md` |
+| ULTRA-00230 | 2026-10-19 | `.claude/tasks/20261019-fixed-karma-ports.md` | `docs/tasks/ULTRA-00230-20261019-fixed-karma-ports.md` |

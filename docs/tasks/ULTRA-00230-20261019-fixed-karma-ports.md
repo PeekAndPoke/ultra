@@ -1,4 +1,4 @@
-# Fixed Karma ports per module (machine-wide browser-test isolation)
+# ULTRA-00230: Fixed Karma ports per module (machine-wide browser-test isolation)
 
 **Status:** TODO — maintainer decision 2026-10-19 (relayed by Mission-Control): every module with Kotlin/JS browser tests
 gets a fixed Karma port, coordinated through Mission-Control. Fit into a slot.
@@ -25,3 +25,7 @@ Karma on the default 9876/next-free port, a ChromeHeadless joined the other's se
 - [ ] Same for the three Kraft example repos (10061–10080).
 - [ ] Send Mission-Control the module → port list (ultra and examples).
 - [ ] With the adopted test-digest: `--own-package io.peekandpoke` as the safety net (all ultra roots share it).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00230 (was `docs/tasks/20261019-fixed-karma-ports.md`).
