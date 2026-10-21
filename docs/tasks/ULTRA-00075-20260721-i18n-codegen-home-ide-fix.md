@@ -1,4 +1,4 @@
-# Fix: i18n codegen dual-source-root (IDE unresolved symbols)
+# ULTRA-00075: Fix: i18n codegen dual-source-root (IDE unresolved symbols)
 
 **Status:** TODO (diagnosed 2026-07-21) — cosmetic, IDE-only; build is green
 **Plan:** follow-up to S2/S3 (ULTRA-00069 (i18n l10n foundation))
@@ -29,3 +29,7 @@ compiles both copies fine — every build/test passes; the errors are IDE-only.*
 
 Single source of truth is the goal — pick one home so no file is dual-rooted. No runtime/generated
 code changes; the plugin behavior and the fixture stay identical.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00075 (was `docs/tasks/20260721-i18n-codegen-home-ide-fix.md`).
