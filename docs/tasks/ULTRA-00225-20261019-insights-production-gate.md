@@ -1,4 +1,4 @@
-# Insights: a production gate
+# ULTRA-00225: Insights: a production gate
 
 **Status:** TODO — all four items decided by the maintainer 2026-10-19 (relayed by Mission-Control); ready for a slot
 **Plan:** ULTRA-00221 (insights auth parallel plan) → the "production gate for insights" row
@@ -20,3 +20,7 @@
       too) — maintainer: "redact if easily possible". Easy = reuse the existing redaction (`Redacted`/key-name rules
       the app-config slice uses). If that turns out non-trivial, STOP and raise it with what it would take; dropping
       the properties is the fallback.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00225 (was `docs/tasks/20261019-insights-production-gate.md`).

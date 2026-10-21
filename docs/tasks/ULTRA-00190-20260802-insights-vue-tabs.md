@@ -774,7 +774,7 @@ asked for the MINORs to be fixed too, so they ride in the same batch and round 2
 
 **Clean: 0 CRITICAL / 0 MAJOR.** Phase 2: every round-1 fix HOLDS in the current files (all three reviewers, each
 row checked with `path:line`), including the MAJOR; no rejected CRITICAL/MAJOR existed to audit; the `reference/` and
-RuntimeCollector rows accepted (the follow-up is master's `20261019-insights-production-gate.md`). The domain reviewer
+RuntimeCollector rows accepted (the follow-up is master's ULTRA-00225 (insights production gate)). The domain reviewer
 disclosed a grep that hit two ledger lines in phase 1; nothing it reported came from them. Coordinator spot-checks:
 `RequestTab.vue:64` (the raw tree repeats `uri`), `KarangoDriver.kt:101` (`aql` on any text), the pre-T1 driver
 (`query = builder.print()`, `vars = emptyMap()`), `.npmrc:3` — all as claimed. 12 MINORs, all stand after phase 2,

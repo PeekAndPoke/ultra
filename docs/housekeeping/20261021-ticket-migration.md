@@ -542,3 +542,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00223 | 2026-10-19 | `.claude/tasks/20261019-docs-global-locks-heartbeat.md` | `docs/tasks/ULTRA-00223-20261019-docs-global-locks-heartbeat.md` |
 | ULTRA-00224 | 2026-10-19 | `docs/tasks/20261019-global-locks-max-hold.md` | `docs/tasks/ULTRA-00224-20261019-global-locks-max-hold.md` |
 | ULTRA-00224 | 2026-10-19 | `.claude/tasks/20261019-global-locks-max-hold.md` | `docs/tasks/ULTRA-00224-20261019-global-locks-max-hold.md` |
+| ULTRA-00225 | 2026-10-19 | `docs/tasks/20261019-insights-production-gate.md` | `docs/tasks/ULTRA-00225-20261019-insights-production-gate.md` |
+| ULTRA-00225 | 2026-10-19 | `.claude/tasks/20261019-insights-production-gate.md` | `docs/tasks/ULTRA-00225-20261019-insights-production-gate.md` |
