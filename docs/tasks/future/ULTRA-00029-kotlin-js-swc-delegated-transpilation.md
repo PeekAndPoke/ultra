@@ -1,4 +1,4 @@
-# Kotlin 2.3.20 SWC Support — What It Is & Whether We Should Adopt It
+# ULTRA-00029: Kotlin 2.3.20 SWC Support — What It Is & Whether We Should Adopt It
 
 ## Context
 
@@ -103,3 +103,7 @@ early-adopter risk across 48 JS modules for a marginal speedup.
 - [Kotlin 2.3.20 — What's New (official)](https://kotlinlang.org/docs/whatsnew2320.html)
 - [KT-80308 on YouTrack](https://youtrack.jetbrains.com/issue/KT-80308)
 - [Kotlin 2.3.20 release blog post](https://blog.jetbrains.com/kotlin/2026/03/kotlin-2-3-20-released/)
+
+## History
+
+- 2026-10-21: numbered ULTRA-00029 (was `docs/tasks/future/kotlin-js-swc-delegated-transpilation.md`).
