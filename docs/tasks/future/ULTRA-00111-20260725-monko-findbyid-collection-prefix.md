@@ -45,7 +45,7 @@ fragile way to be safe.
 2. **Type the boundary:** give `AuthUserAdapter.loadById` a `UserId` parameter and have adapters do
    `findById(id.value)?.takeIf { it._id == id.value }`, making the round-trip guard the default
    everywhere instead of a one-off in the demo.
-3. Do nothing; keep it as a red-team probe (`docs/tasks/20260725-redteam-value-class-userid.md`
+3. Do nothing; keep it as a red-team probe (ULTRA-00112 (redteam value class userid)
    §3 and §4 cover it).
 
 Option 1 and 2 are complementary — 1 fixes the framework, 2 makes the call sites self-documenting.

@@ -167,5 +167,5 @@ claims (written via `.value`).
   mint a bogus identity. A narrow `val Stored<out AuthUser>.userId: UserId` is the sound version if the
   repetition ever grates — optional follow-up, not a blocker.
 
-**Red-team follow-up**: `docs/tasks/20260725-redteam-value-class-userid.md` (7 scenarios, COLLECTED
+**Red-team follow-up**: ULTRA-00112 (redteam value class userid) (7 scenarios, COLLECTED
 not executed).
