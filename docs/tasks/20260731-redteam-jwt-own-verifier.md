@@ -2,7 +2,7 @@
 
 **Status:** COLLECTED — do not execute here. For a dedicated penetration-test session.
 **Created:** 2026-07-31
-**Plan:** `docs/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md` (RESOLVED section)
+**Plan:** ULTRA-00041 (jwt lib consolidation options) (RESOLVED section)
 **Why:** `com.auth0:java-jwt` was removed on 2026-07-31 and this codebase now owns JWT signing,
 signature verification and registered-claim validation outright. Every request bearing an
 `Authorization: Bearer` header hits this code, unauthenticated.

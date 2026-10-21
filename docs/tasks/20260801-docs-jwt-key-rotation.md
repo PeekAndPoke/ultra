@@ -1,7 +1,7 @@
 # DOCS — JWT key configuration and rotation
 
 **Status:** TODO — created 2026-08-01 on archiving `docs/tasks-archive/2026-07/20260731-jwt-kid-key-rotation.md`
-**Plan:** `docs/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md`
+**Plan:** ULTRA-00041 (jwt lib consolidation options)
 **Security-critical:** no (documentation), but it documents the authentication path, and one section
 is a runbook someone will follow during an incident. Accuracy matters more than usual.
 

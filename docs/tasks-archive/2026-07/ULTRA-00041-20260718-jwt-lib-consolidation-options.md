@@ -1,4 +1,4 @@
-# JWT library consolidation — options (backlog / not scheduled)
+# ULTRA-00041: JWT library consolidation — options (backlog / not scheduled)
 
 **Status:** DONE and ARCHIVED (2026-08-01). The whole arc shipped: parser hardening, library removal, and `kid` rotation. The one item that was never in scope here — the client-side `jwt-decode` npm dependency, original option 1 — is unchanged and still open.
 **Was:** RESOLVED 2026-07-31 — `com.auth0:java-jwt` fully removed; verify-then-parse implemented in-house. See "RESOLVED" at the bottom, then "AMENDED" below it (`kid` rotation, commit `9fe2a21a`, changed two of the claims made there). Only the client-side `jwt-decode` option (original option 1) remains open.
@@ -259,3 +259,7 @@ key, unique ids, no blank id, each secret at or above its algorithm's RFC 7518 f
   enumeration by timing, rotation races, downgrade between keys, header-parser abuse, boot gaps).
 - Rotation is not yet *operable*: nothing generates a key, and nothing warns that a key is old.
   `issued` is the hook. Worth a task when someone actually has to rotate.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00041 (was `docs/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md`).

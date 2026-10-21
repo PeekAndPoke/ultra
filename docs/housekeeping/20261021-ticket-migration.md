@@ -91,3 +91,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00040 | 2026-07-18 | `docs/tasks/20260718-o2-membership-permissions.md` | `docs/tasks/ULTRA-00040-20260718-o2-membership-permissions.md` |
 | ULTRA-00040 | 2026-07-18 | `.claude/tasks/saas-orgs/20260718-o2-membership-permissions.md` | `docs/tasks/ULTRA-00040-20260718-o2-membership-permissions.md` |
 | ULTRA-00040 | 2026-07-18 | `.claude/tasks/20260718-o2-membership-permissions.md` | `docs/tasks/ULTRA-00040-20260718-o2-membership-permissions.md` |
+| ULTRA-00041 | 2026-07-18 | `docs/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md` | `docs/tasks-archive/2026-07/ULTRA-00041-20260718-jwt-lib-consolidation-options.md` |
+| ULTRA-00041 | 2026-07-18 | `.claude/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md` | `docs/tasks-archive/2026-07/ULTRA-00041-20260718-jwt-lib-consolidation-options.md` |
+| ULTRA-00041 | 2026-07-18 | `.claude/tasks/20260718-jwt-lib-consolidation-options.md` | `docs/tasks-archive/2026-07/ULTRA-00041-20260718-jwt-lib-consolidation-options.md` |

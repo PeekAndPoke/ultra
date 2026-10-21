@@ -2,7 +2,7 @@
 
 **Status:** DONE and ARCHIVED (2026-08-01) — implemented (`9fe2a21a`), review findings fixed
 (`493423b8`), signing key moved out of the tree (`2397c0a6`)
-**Plan:** `docs/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md` → the AMENDED section
+**Plan:** ULTRA-00041 (jwt lib consolidation options) → the AMENDED section
 **Security-critical:** yes → red-team scenarios collected in
 `docs/tasks/20260731-redteam-jwt-own-verifier.md` section F
 

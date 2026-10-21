@@ -341,7 +341,7 @@ deleted from `Deps.kt`** — so re-adding it is now a deliberate act, not a one-
 
 When this section was first written, `com.auth0:java-jwt` was listed here as an irreducible transitive
 source, "cannot be removed without replacing the library". It was then replaced: see
-`docs/tasks-archive/2026-07/20260718-jwt-lib-consolidation-options.md` (RESOLVED 2026-07-31) and commit `004a97fe`.
+ULTRA-00041 (jwt lib consolidation options) (RESOLVED 2026-07-31) and commit `004a97fe`.
 Removing it also took out two ktor artifacts that were carrying Jackson for no first-party user:
 `ktor-server-auth-jwt` (funktor authenticates via `bearer()`; the plugin API had zero imports) and
 `ktor-serialization-jackson` (`SendgridSender` now posts the JSON `sendgrid-java`'s own `Mail.build()`
