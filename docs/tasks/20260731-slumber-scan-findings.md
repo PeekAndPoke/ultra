@@ -121,7 +121,7 @@ cluster in exactly the places flagged as recent rework, plus two systemic issues
 | F5 | `CollectionAwaker.kt:67-99` | Null-safety of primitive-array elements rests on the per-module `wrapIfNonNull` CONVENTION; a module that forgets → bare IAE from `JavaArray.set`, no path (C6/C7) | design |
 | F6 | `CollectionAwaker.kt:79` | `arguments[0]` IOOBE for arg-less array KType; `awake(Array<String>::class, ...)` erases element type → heap pollution (C8) | smell |
 | F7 | `MapAwaker.kt:25-27` | `Map<*, V>` KEY fallback is `String` (silently retypes Int keys), inconsistent with everything else (C9) — settle together with F1/F2 | design |
-| F8 | `MapAwaker/MapSlumberer` paths | Raw map key interpolated into diagnostic path unbounded/unescaped — 1 MB attacker key echoes into exception + logs; `.` in key forges path separators. Relates to `20260729-redteam-log-forging.md` (C10) | smell (security-adjacent) |
+| F8 | `MapAwaker/MapSlumberer` paths | Raw map key interpolated into diagnostic path unbounded/unescaped — 1 MB attacker key echoes into exception + logs; `.` in key forges path separators. Relates to ULTRA-00150 (redteam log forging) (C10) | smell (security-adjacent) |
 | F9 | misc | C11 non-scalar slumbered keys vs JSON transport; C12 null-for-wrong-shape convention (decide once); C13 duplicated `readArrayElements`; C14 ByteArray → List<Byte> boxing + unsigned rejection (base64 candidate); C15 double map copy | design/smell |
 
 ## G. Primitives — agent-verified (Kotlin-semantics claims, matrix in report A6)
@@ -177,4 +177,4 @@ cluster in exactly the places flagged as recent rework, plus two systemic issues
    keying (D3/D4), Lookup thread-safety strategy (A1-A4), datetime wire-format reconciliation (H2/H5),
    primitive coercion strictness (G1-G4), polymorphic discriminator hop (E1) + diagnostics (E9).
 3. E13 (ClassIndex allow-list) → new red-team task file when fixes start, per security policy.
-4. F8 feeds the existing `20260729-redteam-log-forging.md` scenarios.
+4. F8 feeds the existing ULTRA-00150 (redteam log forging) scenarios.

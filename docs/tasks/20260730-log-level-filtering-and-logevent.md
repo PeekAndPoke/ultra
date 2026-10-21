@@ -2,7 +2,7 @@
 
 **Status:** IMPLEMENTED 2026-07-30 — awaiting /feature-review
 **Plan:** ULTRA-00149 (log scan findings) → L4, L8, L9, L10, L11
-**Security-critical:** no (L1 log forging is tracked separately in `20260729-redteam-log-forging.md`)
+**Security-critical:** no (L1 log forging is tracked separately in ULTRA-00150 (redteam log forging))
 
 Decisions taken by the maintainer on 2026-07-30, after the scan's mechanical round landed.
 **No backward compatibility is required** — implementors get a compile error, which is the point.
@@ -160,5 +160,5 @@ logic failure, not a build one. `touch` does not invalidate it; the dependent mo
 ## Follow-ups
 
 - [ ] Kontainer `dynamicPrototype` injection type (L11's real fix)
-- [ ] L1 log forging — mitigations listed in `20260729-redteam-log-forging.md`, not yet decided
+- [ ] L1 log forging — mitigations listed in ULTRA-00150 (redteam log forging), not yet decided
 - [ ] L14 flush/shutdown path, if the dispatcher ever goes truly async

@@ -1,4 +1,4 @@
-# Red-team: log forging and log-pipeline abuse via `ultra/log`
+# ULTRA-00150: Red-team: log forging and log-pipeline abuse via `ultra/log`
 
 **Status:** COLLECTED — do NOT execute as part of normal feature work
 **Plan:** raised from ULTRA-00149 (log scan findings) → L1
@@ -58,3 +58,7 @@ Two properties make this sharper than the usual CWE-117:
   through a dedicated, clearly-delimited channel instead of string concatenation.
 - Carry the `Throwable` on `LogAppender.append` (L8) so structured backends stop parsing text.
 - A fixed-width timestamp (L6) so a real line has a shape a forged one must match.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00150 (was `docs/tasks/20260729-redteam-log-forging.md`).
