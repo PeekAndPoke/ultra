@@ -165,7 +165,7 @@ findings verified by the coordinator against the code before acceptance.
 - **Re-entrancy can loop forever in deferred mode** → `docs/tasks/20260720-vault-hook-reentrancy.md`
 - **Wider error-disclosure audit** (triggered by the `ApiStatusPages` fix; found that production
   still returns `cause.message` containing full AQL, and that the Insights GUI has no auth gate) →
-  `docs/tasks/20260720-error-response-disclosure-audit.md`
+  ULTRA-00054 (error response disclosure audit)
 - **Bulk writes.** `EntityRepository.batchInsert` awaits hooks serially per row in inline mode; a
   slow hook makes large imports very slow.
 - **Binary compatibility.** `KarangoDriver`/`MonkoDriver` gained a constructor parameter. Source

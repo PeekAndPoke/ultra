@@ -1,4 +1,4 @@
-# Error-response information disclosure — audit findings
+# ULTRA-00054: Error-response information disclosure — audit findings
 
 Status: SPLIT INTO TASKS — this file is now the findings index; no work happens here
 Date: 2026-07-20
@@ -152,3 +152,7 @@ on `authRules.isEmpty()` would be cheap and non-breaking for intentionally publi
 
 Finding 3 first — it is a two-line change that closes 3, 4 and 5 at once (and requires inverting
 the two test assertions noted above). Then 1, then 2. Findings 6 and 7 are independent hardening.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00054 (was `docs/tasks/20260720-error-response-disclosure-audit.md`).

@@ -16,7 +16,7 @@ running `InsightsConfig(enabled = true)` in production, where every request is t
 `20260720-redteam-error-disclosure.md` ("Confirm insights cannot be enabled at all in a production environment") presumes that
 refusal and would fail today; its scenarios 8–9 target routes and a field that no longer exist.
 
-**Plan:** none — from `docs/tasks/20260720-error-response-disclosure-audit.md` (finding 2)
+**Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 2)
 **Security-critical:** yes
 
 ## Spec

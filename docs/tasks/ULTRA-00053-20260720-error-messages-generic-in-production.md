@@ -2,7 +2,7 @@
 
 **Status:** TODO — tactical slice; see
 `docs/tasks/20260720-exception-disclosure-architecture.md` for the umbrella design
-**Plan:** none — from `docs/tasks/20260720-error-response-disclosure-audit.md` (findings 1 + 2)
+**Plan:** none — from ULTRA-00054 (error response disclosure audit) (findings 1 + 2)
 **Security-critical:** yes
 
 > This is the first implementable slice of the architecture task (its sequencing step 2 + 3). The

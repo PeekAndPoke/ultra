@@ -1,7 +1,7 @@
 # Red-team: error disclosure, environment gating, route auth
 
 **Status:** COLLECTED — do not execute during normal feature work
-**Origin:** `docs/tasks/20260720-error-response-disclosure-audit.md`
+**Origin:** ULTRA-00054 (error response disclosure audit)
 **Covers:** `ULTRA-00052`, `ULTRA-00053`,
 `20260720-insights-gui-auth-gate`, `20260720-fixtures-env-gate`,
 `20260720-route-auth-default-deny`, `ULTRA-00051`

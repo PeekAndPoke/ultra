@@ -22,7 +22,7 @@ rejection of option (b) ("compile-time enforcement would need a different shape"
 - Unchanged from the audit: the raw Ktor handlers outside `ApiRoutes` (`/_/ping`, `/_/appinfo`, `funktor-demo/server/.../api/ApiApp.kt:41,59`)
   are invisible to the route registry, so none of this covers them.
 
-**Plan:** none — from `docs/tasks/20260720-error-response-disclosure-audit.md` (finding 6)
+**Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 6)
 **Security-critical:** yes
 
 ## Spec

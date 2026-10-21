@@ -1,7 +1,7 @@
 # Fixtures must only install on recognised development environments
 
 **Status:** TODO
-**Plan:** none — from `docs/tasks/20260720-error-response-disclosure-audit.md` (finding 4)
+**Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 4)
 **Security-critical:** yes
 
 ## Spec

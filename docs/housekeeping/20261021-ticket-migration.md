@@ -129,3 +129,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00053 | 2026-07-20 | `docs/tasks/20260720-error-messages-generic-in-production.md` | `docs/tasks/ULTRA-00053-20260720-error-messages-generic-in-production.md` |
 | ULTRA-00053 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-error-messages-generic-in-production.md` | `docs/tasks/ULTRA-00053-20260720-error-messages-generic-in-production.md` |
 | ULTRA-00053 | 2026-07-20 | `.claude/tasks/20260720-error-messages-generic-in-production.md` | `docs/tasks/ULTRA-00053-20260720-error-messages-generic-in-production.md` |
+| ULTRA-00054 | 2026-07-20 | `docs/tasks/20260720-error-response-disclosure-audit.md` | `docs/tasks/ULTRA-00054-20260720-error-response-disclosure-audit.md` |
+| ULTRA-00054 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-error-response-disclosure-audit.md` | `docs/tasks/ULTRA-00054-20260720-error-response-disclosure-audit.md` |
+| ULTRA-00054 | 2026-07-20 | `.claude/tasks/20260720-error-response-disclosure-audit.md` | `docs/tasks/ULTRA-00054-20260720-error-response-disclosure-audit.md` |

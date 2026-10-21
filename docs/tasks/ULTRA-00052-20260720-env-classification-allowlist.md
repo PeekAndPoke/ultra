@@ -1,7 +1,7 @@
 # ULTRA-00052: Environment classification must fail closed on unknown environments
 
 **Status:** TODO
-**Plan:** none — from `docs/tasks/20260720-error-response-disclosure-audit.md` (finding 3)
+**Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 3)
 **Security-critical:** yes
 
 ## Spec

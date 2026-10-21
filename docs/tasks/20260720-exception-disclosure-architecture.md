@@ -1,7 +1,7 @@
 # Exception architecture: separate client-safe message from diagnostic detail
 
 **Status:** TODO — design decision first, then implement
-**Plan:** umbrella for `docs/tasks/20260720-error-response-disclosure-audit.md`
+**Plan:** umbrella for ULTRA-00054 (error response disclosure audit)
 **Security-critical:** yes
 
 ## Problem
