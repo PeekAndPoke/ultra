@@ -1,4 +1,4 @@
-# MpLocalTimeSlot.splitWithGaps loops forever across midnight
+# ULTRA-00215: MpLocalTimeSlot.splitWithGaps loops forever across midnight
 
 **Status:** TODO
 **Plan:** none — out-of-scope finding from the `/feature-review` of ULTRA-00213 (datetime js performance) (round 1, 2026-10-19)
@@ -26,3 +26,7 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
 |---|---|---|---|---|---|
 
 **Verdict:**
+
+## History
+
+- 2026-10-21: numbered ULTRA-00215 (was `docs/tasks/20261019-mplocaltimeslot-splitwithgaps-loop.md`).
