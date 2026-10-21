@@ -1,4 +1,4 @@
-# Audit: ultra:vault — Issues Report
+# ULTRA-00012: Audit: ultra:vault — Issues Report
 
 **Date:** 2026-03-30
 **Auditor:** Code audit agent (Wave 1)
@@ -167,3 +167,7 @@ git show --stat d048f292 5c1f4c9a 3cf75f2d
 
 No tests for: `RefCodec`/`LazyRefCodec`, `StoredAwaker`/`StoredSlumberer`, `DatabaseGraphBuilder`, `Repository.Hooks`,
 `VaultScope`, `SharedRepoClassLookup`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00012 (was `docs/tasks-archive/2026-03/2026-03-31-wave1-audit-vault-issues.md`).
