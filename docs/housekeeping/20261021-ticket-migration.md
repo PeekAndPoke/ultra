@@ -390,3 +390,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00158 | 2026-07-30 | `.claude/tasks/20260730-log-level-filtering-and-logevent.md` | `docs/tasks/ULTRA-00158-20260730-log-level-filtering-and-logevent.md` |
 | ULTRA-00159 | 2026-07-30 | `docs/tasks/20260730-cache-scan-findings.md` | `docs/tasks/ULTRA-00159-20260730-cache-scan-findings.md` |
 | ULTRA-00159 | 2026-07-30 | `.claude/tasks/20260730-cache-scan-findings.md` | `docs/tasks/ULTRA-00159-20260730-cache-scan-findings.md` |
+| ULTRA-00160 | 2026-07-30 | `docs/tasks-archive/2026-07/20260730-insights-rest-api.md` | `docs/tasks-archive/2026-07/ULTRA-00160-20260730-insights-rest-api.md` |
+| ULTRA-00160 | 2026-07-30 | `.claude/tasks-archive/2026-07/20260730-insights-rest-api.md` | `docs/tasks-archive/2026-07/ULTRA-00160-20260730-insights-rest-api.md` |
+| ULTRA-00160 | 2026-07-30 | `.claude/tasks/20260730-insights-rest-api.md` | `docs/tasks-archive/2026-07/ULTRA-00160-20260730-insights-rest-api.md` |

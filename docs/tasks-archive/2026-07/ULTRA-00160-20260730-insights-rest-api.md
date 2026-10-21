@@ -1,4 +1,4 @@
-# Insights: split data from rendering, expose it through a superuser REST API
+# ULTRA-00160: Insights: split data from rendering, expose it through a superuser REST API
 
 **Status:** DONE and ARCHIVED (2026-07-31). Rounds 1 and 2 complete, gate PASS, all follow-up
 decisions taken and implemented. The `Redacted<T>` project that came out of it has its own task file,
@@ -653,3 +653,7 @@ Three defects surfaced only because a mutation refused to fail, and none were vi
 - [ ] `docs/tasks/20260731-depot-findings.md` carries S4, D-L5 and the **`@JsonIgnore` constraint** —
       that annotation is the only thing keeping signing keys and AWS credentials out of records, and
       neither Slumber nor kotlinx honours it. Read it before touching the write path.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00160 (was `docs/tasks-archive/2026-07/20260730-insights-rest-api.md`).

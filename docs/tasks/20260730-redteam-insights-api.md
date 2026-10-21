@@ -1,7 +1,7 @@
 # Red team — insights REST API and collector data
 
 **Status:** COLLECTED — not executed. Sweep in a dedicated penetration-test session.
-**Feature:** `docs/tasks-archive/2026-07/20260730-insights-rest-api.md`
+**Feature:** ULTRA-00160 (insights rest api)
 
 Scenarios to attempt against the superuser-gated insights API and the data it exposes. Per the project
 rules these are collected during feature work and executed separately, never as part of it.
