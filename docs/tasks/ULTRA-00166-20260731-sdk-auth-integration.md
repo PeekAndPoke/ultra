@@ -134,7 +134,7 @@ done together. Doing this one first without deciding that is how the asymmetry b
 - [x] ts-verify: sign-in → token attached → refresh-before-expiry → sign-out, EXECUTED against a real
       transport (the draft said "stub"; a stub was written and rejected in review as not proving
       anything the real one does not).
-- [x] Red-team task collected: `docs/tasks/20260802-redteam-sdk-auth.md`.
+- [x] Red-team task collected: ULTRA-00187 (redteam sdk auth).
 
 Beyond the draft, and shipped: the three-way sign-in flow (`login.ts`), `AclLoader`, public-route
 metadata, and `funktor-demo/sdkgen-app/src/sdkContract.ts` pinning the generated types against the
@@ -209,7 +209,7 @@ segment verbatim into a message returned on a PUBLIC route, and `AuthError.userN
 "never quotes input" was corrected, but the reflection itself is live and is the standing
 error-disclosure requirement. Raised for the auth agent.
 
-**Red-team follow-up** (required — auth): `docs/tasks/20260802-redteam-sdk-auth.md`
+**Red-team follow-up** (required — auth): ULTRA-00187 (redteam sdk auth)
 
 ## Progress — 2026-08-02
 

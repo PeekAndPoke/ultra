@@ -201,7 +201,7 @@ until the new matrix lands.
 
 ### Red-team
 
-Four scenarios collected into `docs/tasks/20260802-redteam-sdk-auth.md` section G (items 14-17).
+Four scenarios collected into ULTRA-00187 (redteam sdk auth) section G (items 14-17).
 COLLECTED, not executed.
 
 ## Archived 2026-08-24 — and deliberately NO docs task

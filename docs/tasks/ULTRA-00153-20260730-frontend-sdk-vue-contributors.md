@@ -966,7 +966,7 @@ of `readResource` left behind when `sharedResource` was added.
 **Deferred, LOW:** Kotlin's `deleteRecursively` walks via `listFiles()` with no symlink check, so a
 symlink inside the owned SDK directory has its TARGET's contents deleted. Not adversarial — a
 developer symlinking shared assets into the SDK dir loses them. Recorded in
-`docs/tasks/20260802-redteam-sdk-auth.md` (section F).
+ULTRA-00187 (redteam sdk auth) (section F).
 
 **Clean, and recorded so it is not re-probed:** `TsSdkOutput.validatePath` and `TsSdkRegistry.add`
 both reject absolute and `..`-bearing contributor paths; `prepare()` refuses a non-empty directory

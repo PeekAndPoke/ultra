@@ -186,7 +186,7 @@ three-way render therefore puts every public route (sign-in, sign-up, recovery) 
 ownership-limited branch. The behaviour is right; the doc was wrong, and this is the one place the
 vocabulary genuinely diverges from the Kotlin `ApiAcl`, which has no `isPublic`.
 
-**Red-team follow-up:** folded into `docs/tasks/20260802-redteam-sdk-auth.md` (section B) rather
+**Red-team follow-up:** folded into ULTRA-00187 (redteam sdk auth) (section B) rather
 than given its own file — the attack surface is the same matrix.
 
 ## History

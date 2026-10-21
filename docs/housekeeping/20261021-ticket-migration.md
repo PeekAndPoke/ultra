@@ -453,3 +453,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00185 | 2026-08-02 | `.claude/tasks/20260802-rest-content-type-enforcement.md` | `docs/tasks-archive/2026-08/ULTRA-00185-20260802-rest-content-type-enforcement.md` |
 | ULTRA-00186 | 2026-08-02 | `docs/tasks/20260802-auth-to-codegen-handover.md` | `docs/tasks/ULTRA-00186-20260802-auth-to-codegen-handover.md` |
 | ULTRA-00186 | 2026-08-02 | `.claude/tasks/20260802-auth-to-codegen-handover.md` | `docs/tasks/ULTRA-00186-20260802-auth-to-codegen-handover.md` |
+| ULTRA-00187 | 2026-08-02 | `docs/tasks/20260802-redteam-sdk-auth.md` | `docs/tasks/ULTRA-00187-20260802-redteam-sdk-auth.md` |
+| ULTRA-00187 | 2026-08-02 | `.claude/tasks/20260802-redteam-sdk-auth.md` | `docs/tasks/ULTRA-00187-20260802-redteam-sdk-auth.md` |

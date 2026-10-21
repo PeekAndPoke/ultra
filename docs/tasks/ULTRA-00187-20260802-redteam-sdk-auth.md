@@ -1,4 +1,4 @@
-# Red team — the TypeScript SDK auth runtime
+# ULTRA-00187: Red team — the TypeScript SDK auth runtime
 
 **Status:** COLLECTED, not executed. **Do NOT run these during feature work.**
 **Source:** the `/feature-review` gate on 2026-08-02 (ULTRA-00166 (sdk auth integration)).
@@ -115,3 +115,7 @@ than "a menu item is visible that should not be".
 - `signOut()` being local-only. There is no revocation endpoint; that is known and tracked.
 - The client-side `ApiAcl` being advisory. The server is the authority by design. A finding here
   needs to show the SERVER trusting client input, not the client being permissive.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00187 (was `docs/tasks/20260802-redteam-sdk-auth.md`).

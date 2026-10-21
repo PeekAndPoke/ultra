@@ -541,7 +541,7 @@ Two problems, and the second is the one I would fix first:
 2. **Account enumeration.** `userNotFound` distinguishes "no such user" from "wrong password" on
    `signIn`.
 
-Both are collected as scenarios in `docs/tasks/20260802-redteam-sdk-auth.md` (section E), but
+Both are collected as scenarios in ULTRA-00187 (redteam sdk auth) (section E), but
 neither needs a red-team session to confirm — the chain is three files and I traced it. Your call
 whether it belongs in `docs/tasks/`.
 
