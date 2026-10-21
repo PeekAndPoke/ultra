@@ -1,4 +1,4 @@
-# `@Slumber.As` — review residue
+# ULTRA-00180: `@Slumber.As` — review residue
 
 **Status:** TODO — created 2026-08-01 from the `/feature-review` gate on
 ULTRA-00170 (slumber as declared wire shape) (§15 is the full record).
@@ -88,3 +88,7 @@ E2E coverage is asymmetric: karango is exercised end-to-end via `ClusterApiSpec`
 monko is not, because `funktor/all/src/jvmTest/kotlin/index_testJvm.kt` wires `useKarango()` exclusively
 and no funktor spec uses `MatrixTest2d` (which exists, in `funktor/testing`). That predates this feature
 and is a repo-wide gap, not one to solve under this task.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00180 (was `docs/tasks/20260801-slumber-as-followups.md`).

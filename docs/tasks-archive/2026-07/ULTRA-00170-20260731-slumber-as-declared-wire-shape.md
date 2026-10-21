@@ -1,7 +1,7 @@
 # ULTRA-00170: `@Slumber.As` — declare a custom-coded type's wire shape once
 
 **Status:** DONE 2026-08-01. Implemented (§1–§5, §9), reviewed and fixed — `/feature-review` gate
-**PASS**, record in §15. Residue split into `docs/tasks/20260801-slumber-as-followups.md`; docs
+**PASS**, record in §15. Residue split into ULTRA-00180 (slumber as followups); docs
 tracked in ULTRA-00179 (docs slumber as), deliberately blocked on the maintainer's own
 review since the annotation's KDoc changed twice during the gate.
 **Plan:** none yet. Touches `ultra/slumber`, `karango`, `monko`, `ultra/codegen`.
@@ -425,7 +425,7 @@ Preconditions: compile sweep 0 errors; 5077 tests green across the seven affecte
 | 9 | MEDIUM | `timezone` is a literal `"UTC"` for three of four types and `human` is debug-only, yet both are now first-class sortable/indexable paths | **CONFIRMED** | Documented on `MpDateTimeRawData`; not removable without breaking "declare the shape" |
 | 10 | LOW | `prependModules` can silently invalidate every generated path for a type; recorded only in a task doc about to be archived | **CONFIRMED** (reviewer verified no live instance in-repo) | Moved onto the `Slumber.As` KDoc |
 | 11 | MEDIUM | Declaration/codec/generator disagree on `human`'s nullability in both directions | **CONFIRMED** | Documented on `MpDateTimeRawData`, incl. the consequence for `ultra:codegen` |
-| 12 | MEDIUM | No behavioural test through the generated accessor on either driver; monko's four were downgraded to `property<Long>("ts")` | **CONFIRMED** | **NOT fixed here** — needs `kspTest` wiring in `monko/core`. See `docs/tasks/20260801-slumber-as-followups.md` |
+| 12 | MEDIUM | No behavioural test through the generated accessor on either driver; monko's four were downgraded to `property<Long>("ts")` | **CONFIRMED** | **NOT fixed here** — needs `kspTest` wiring in `monko/core`. See ULTRA-00180 (slumber as followups) |
 | 13 | MEDIUM | The referenced-type walker still walks Kotlin properties, so a nested declared shape dead-ends | **CONFIRMED**, zero impact today (flat scalar shapes) | Follow-up task |
 | 14 | MEDIUM | Six copies of the generated `MpInstant$$karango.kt` facade across modules | **CONFIRMED but pre-existing**; reviewer 1 verified the one-source-plus-one-binary case resolves fine | Follow-up task |
 | 15 | HIGH (claimed) | The annotation is public API but the round-trip check is not callable by downstream users | **CONFIRMED as a gap, downgraded** — it is a missing feature, not a defect | Follow-up task; needs a maintainer decision |

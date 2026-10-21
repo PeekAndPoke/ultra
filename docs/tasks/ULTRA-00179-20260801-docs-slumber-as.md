@@ -18,7 +18,7 @@ The change is **breaking** and moves public API in three places, so applications
 
 Per CLAUDE.md, docs go against SETTLED code, and the maintainer's own review comes after the gate. The
 review already changed the annotation's KDoc twice. **Do not start until the maintainer has looked at it**
-— and check `docs/tasks/20260801-slumber-as-followups.md` §3 first, because that decision (whether the
+— and check ULTRA-00180 (slumber as followups) §3 first, because that decision (whether the
 round-trip check becomes public API) changes what there is to document.
 
 ## What to write, when it is time
