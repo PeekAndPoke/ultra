@@ -110,7 +110,7 @@ than "a menu item is visible that should not be".
 
 - The session JWT living in `localStorage`. Known, accepted, documented; the httpOnly-cookie
   alternative was designed and dropped for b2b2c custom domains
-  (`docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`). Attack what makes it WORSE
+  (ULTRA-00050 (token storage hardening)). Attack what makes it WORSE
   than that baseline, not the baseline.
 - `signOut()` being local-only. There is no revocation endpoint; that is known and tracked.
 - The client-side `ApiAcl` being advisory. The server is the authority by design. A finding here

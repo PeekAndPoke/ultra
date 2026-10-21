@@ -551,7 +551,7 @@ whether it belongs in `docs/tasks/`.
   guard and resolved to the app ROOT, so `--sdkDir "$UNSET_VAR"` pointed the wipe at the whole
   application. Now compared canonically. If you script the generator, this is the flag to get right.
 - **You have uncommitted work in the tree.** The `tasks-archive/` moves for
-  `20260719-token-storage-hardening.md`, `20260726-client-jwt-claims.md` and
+  ULTRA-00050 (token storage hardening), `20260726-client-jwt-claims.md` and
   `20260802-rest-content-type-enforcement.md` are STAGED but not committed, as are
   `20260802-csp-and-token-ttl.md` and `20260802-docs-auth-response-contract.md`. I left all of it
   alone. Three docs I had to edit for the review record carry your one-line path fix as an
@@ -578,7 +578,7 @@ Increment 1 passed `/feature-review`; fixes in `4aa6b808`, record in
 sealed with a single `Bearer(token)` variant so the discriminator stays in the wire format and a future
 transport is additive. **Regenerate the demo SDK — the union now has one member.** Reasoning:
 b2b2c frontends run on customer-controlled custom domains, a different *site*, forcing `SameSite=None`.
-See `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+See ULTRA-00050 (token storage hardening).
 
 Your `HttpRequest.credentials` / `SseOptions.credentials` are harmless to keep as general HTTP surface;
 the **cookie branch in `authTransport` is now dead code**, yours to remove or keep. `decodeJwtClaims` /
@@ -602,7 +602,7 @@ additive. Regenerate the demo SDK: the union now has one member.
 
 Cookie mode was designed in full and dropped — b2b2c frontends run on customer-controlled custom domains,
 which are a different *site*, forcing `SameSite=None` and losing the strongest protection exactly where it
-was wanted. Reasoning in `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+was wanted. Reasoning in ULTRA-00050 (token storage hardening).
 
 **What that means for your code:**
 

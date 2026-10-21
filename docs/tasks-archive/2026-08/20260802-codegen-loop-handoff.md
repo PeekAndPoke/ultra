@@ -88,7 +88,7 @@ notes): `20260731-auth-module-for-sdk.md`, `20260731-sdk-auth-integration.md`.
 
 They have committed to touching **no** `ultra/codegen/**` or `funktor/codegen/**`.
 
-## What is landing from them — `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`
+## What is landing from them — ULTRA-00050 (token storage hardening)
 
 Increment 1, bearer-only, nothing changes at runtime:
 
@@ -103,7 +103,7 @@ data class Success(
 ```
 
 `Token`, `permissionsNs` and `userNs` are deleted. **There is no increment 2 — the httpOnly cookie
-was designed and DROPPED** (2026-08-02); see `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+was designed and DROPPED** (2026-08-02); see ULTRA-00050 (token storage hardening).
 
 ### VERIFIED, and it contradicts their handover — do NOT act on the other reading
 

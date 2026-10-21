@@ -31,7 +31,7 @@ So this is **not** an "expose more API" task. It is narrower, and mostly about o
 
 ## 1. The one that actually matters: the token-storage contract
 
-`docs/tasks-archive/2026-07/20260719-token-storage-hardening.md` — filed, security-critical, and
+ULTRA-00050 (token storage hardening) — filed, security-critical, and
 **closed 2026-08-02** with the exposure accepted deliberately: `AuthState` persists the whole session —
 JWT included — to `localStorage`, so any XSS on the origin exfiltrates the token and replays it
 off-machine until expiry. Every alternative container cost more than it bought (below). The mitigations
@@ -41,7 +41,7 @@ that do address it are tracked in `docs/tasks/20260802-csp-and-token-ttl.md`.
 the intended contract is known now, it is written once. So:
 
 **ANSWERED 2026-08-02**, and the answer is *no*. Full reasoning in
-`docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+ULTRA-00050 (token storage hardening).
 
 - [x] **Is the cookie design happening?** **No — designed and dropped, same day.** b2b2c frontends run on
       customer-controlled custom domains, which are a different *site*, so the cookie would need

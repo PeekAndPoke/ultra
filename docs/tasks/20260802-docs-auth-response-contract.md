@@ -1,7 +1,7 @@
 # DOCS — the sign-in response contract, and the REST Content-Type requirement
 
 **Status:** TODO — created 2026-08-02 on archiving
-`docs/tasks-archive/2026-07/20260719-token-storage-hardening.md` and
+ULTRA-00050 (token storage hardening) and
 `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md`, per the CLAUDE.md rule that a
 public-API change gets a docs follow-up once the code is settled.
 **Plan:** none.
@@ -40,5 +40,5 @@ move next week. That is the precondition for writing docs against it.
 ## Do not document
 
 Cookie mode, `X-Funktor-Csrf`, or an `Origin` check. All designed, all dropped
-(`20260719-token-storage-hardening.md` §DROPPED). Documenting a road not taken is how a reader ends up
+(ULTRA-00050 (token storage hardening) §DROPPED). Documenting a road not taken is how a reader ends up
 implementing it.

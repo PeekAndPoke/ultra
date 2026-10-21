@@ -1,7 +1,7 @@
 # CSP + Trusted Types, and a shorter token TTL
 
 **Status:** TODO — created 2026-08-02 on archiving
-`docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`, which declared both of these out of
+ULTRA-00050 (token storage hardening), which declared both of these out of
 its own scope (§"Framing") and would otherwise have taken them into the archive with it.
 **Plan:** none.
 **Security-critical:** yes → red-team follow-up required if it lands.

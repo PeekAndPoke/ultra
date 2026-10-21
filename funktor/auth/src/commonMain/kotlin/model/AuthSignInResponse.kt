@@ -99,7 +99,7 @@ sealed interface AuthSignInResponse {
      * than a breaking reshape of every client.
      *
      * An `httpOnly` cookie variant was designed and **dropped** (maintainer, 2026-08-02). The reasoning
-     * is in `docs/tasks/20260719-token-storage-hardening.md`; the short version is that b2b2c
+     * is in ULTRA-00050 (token storage hardening); the short version is that b2b2c
      * frontends run on customer-controlled custom domains, which are a different *site*, so the cookie
      * would need `SameSite=None` — losing the strongest protection precisely where it was wanted.
      */

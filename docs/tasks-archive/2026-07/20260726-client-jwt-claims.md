@@ -124,7 +124,7 @@ KDoc — "a decoded claim comes from a blob the user can rewrite in devtools" �
 permissions arrive from the server over TLS. Still display-only, since the server re-derives everything
 from the verified token on every request, but no longer trivially forgeable for display purposes.
 
-Full story: `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md` §"Increment 1".
+Full story: ULTRA-00050 (token storage hardening) §"Increment 1".
 `funktor/auth/src/jsTest/kotlin/AuthStateSessionMappingSpec.kt` replaces the deleted spec and pins the
 property that keeps this deleted: a malformed or empty bearer token changes nothing, because nothing
 reads it.

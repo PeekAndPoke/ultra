@@ -464,7 +464,7 @@ The gap is the session state machine, i.e. the TypeScript counterpart of `AuthSt
 
 **One finding that changes the design: do NOT port `AuthState`'s persistence.** It writes the whole
 session — JWT included — to `localStorage`, which is a filed, security-critical gap
-(`docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`): any JS on the origin can exfiltrate the token
+(ULTRA-00050 (token storage hardening)): any JS on the origin can exfiltrate the token
 and replay it off-machine. A faithful port would re-create a known defect in new code. Storage must be
 an injected strategy defaulting to in-memory.
 

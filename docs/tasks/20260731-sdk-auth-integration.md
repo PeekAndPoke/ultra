@@ -55,7 +55,7 @@ summary, not a substitute.
 **Use `localStorage`, the same as `AuthState` does today.** This is a deliberate, eyes-open choice,
 not an oversight, and the reasoning is worth keeping:
 
-- The gap is real and filed — `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`. Any script on the
+- The gap is real and filed — ULTRA-00050 (token storage hardening). Any script on the
   origin can read the JWT and replay it off-machine.
 - But **two clients diverging makes the eventual fix harder, not safer.** A TypeScript SDK that is
   in-memory while Kotlin stays on `localStorage` gives a false sense of having solved something,
@@ -75,7 +75,7 @@ When the hardening task lands, it changes the default in two places and nothing 
 
 b2b2c frontends run on customer-controlled custom domains, which are a different *site*: the cookie would
 have needed `SameSite=None`, losing the strongest protection exactly where it was wanted. Reasoning in
-`docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+ULTRA-00050 (token storage hardening).
 
 So `localStorage` + bearer is the design, not a placeholder. Keep storage injected — it is now the only
 storage decision there is. The honest mitigations are CSP + Trusted Types, a shorter token TTL, and
@@ -275,7 +275,7 @@ expiry is what avoids that, and it is still open below.
 
 The cookie transport was designed and then dropped — b2b2c frontends run on customer-controlled custom
 domains, which are a different *site*, forcing `SameSite=None` and losing the strongest protection exactly
-where it was wanted. Reasoning in `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`.
+where it was wanted. Reasoning in ULTRA-00050 (token storage hardening).
 
 So **`localStorage` + bearer stays, and §4.1 stands as written.** What still applies from the increment-1
 contract: `Success` states `permissions`, `expiresAt` and `userId`, so nothing needs to decode the token —

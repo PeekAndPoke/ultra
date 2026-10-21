@@ -79,7 +79,7 @@ Types, a shorter token TTL, and session revocation — not a different container
 **You were right about `_type: z.literal('token')`.** I called it spurious; Slumber genuinely writes it
 (`PolymorphicChildSlumberer.kt:30` plus the `getParent(cls) ?: cls` fallback at `Polymorphic.kt:36`).
 "Fixing" the generator would have broken sign-in. The durable rule — any standalone `@SerialName` class
-silently gains `_type` on the wire — is recorded in `20260719-token-storage-hardening.md` and is already
+silently gains `_type` on the wire — is recorded in ULTRA-00050 (token storage hardening) and is already
 a `TODO(scan)` at `Polymorphic.kt:55-61`.
 
 **You were right about the `expiresAt` drift** between my handover and the committed source. The snippet

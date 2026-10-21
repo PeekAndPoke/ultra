@@ -117,3 +117,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00049 | 2026-07-19 | `docs/tasks-archive/2026-07/20260719-ktor-client-unification.md` | `docs/tasks-archive/2026-07/ULTRA-00049-20260719-ktor-client-unification.md` |
 | ULTRA-00049 | 2026-07-19 | `.claude/tasks-archive/2026-07/20260719-ktor-client-unification.md` | `docs/tasks-archive/2026-07/ULTRA-00049-20260719-ktor-client-unification.md` |
 | ULTRA-00049 | 2026-07-19 | `.claude/tasks/20260719-ktor-client-unification.md` | `docs/tasks-archive/2026-07/ULTRA-00049-20260719-ktor-client-unification.md` |
+| ULTRA-00050 | 2026-07-19 | `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md` | `docs/tasks-archive/2026-07/ULTRA-00050-20260719-token-storage-hardening.md` |
+| ULTRA-00050 | 2026-07-19 | `.claude/tasks-archive/2026-07/20260719-token-storage-hardening.md` | `docs/tasks-archive/2026-07/ULTRA-00050-20260719-token-storage-hardening.md` |
+| ULTRA-00050 | 2026-07-19 | `.claude/tasks/20260719-token-storage-hardening.md` | `docs/tasks-archive/2026-07/ULTRA-00050-20260719-token-storage-hardening.md` |

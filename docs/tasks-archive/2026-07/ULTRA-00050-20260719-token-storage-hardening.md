@@ -1,4 +1,4 @@
-# Frontend token storage — bearer stays; the cookie route was designed and dropped
+# ULTRA-00050: Frontend token storage — bearer stays; the cookie route was designed and dropped
 
 **Status:** **DONE 2026-08-02.** Increment 1 (the response contract) shipped and passed `/feature-review`
 — record in `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` §"Review record",
@@ -235,3 +235,7 @@ So this lands in both:
 
 Both take storage as an injected strategy, so the change is the DEFAULT in two places. Fixing only one is
 worse than fixing neither: it makes the remaining one look intentional.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00050 (was `docs/tasks-archive/2026-07/20260719-token-storage-hardening.md`).
