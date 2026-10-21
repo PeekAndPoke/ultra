@@ -93,7 +93,7 @@ return). When guards stack, each needs a case that ONLY it can reject.
 `docs-site/src/pages/ultra/streams/combining.astro` + the LLM mirror, platform-table rows, a
 cross-link from `operators.astro`, and the README bullet. `pnpm run build` green, 113 pages. Nothing
 in `funktor/` or `ultra/codegen` touched. Record in
-`docs/tasks-archive/2026-08/20260824-docs-streams-switchmap.md`.
+ULTRA-00202 (docs streams switchmap).
 
 **Two pre-existing README errors fixed while that line was open**, both in `ultra/streams/README.MD:27-28`:
 `distinctUntilChanged` does not exist anywhere in this repo (the operators are `distinct()` /

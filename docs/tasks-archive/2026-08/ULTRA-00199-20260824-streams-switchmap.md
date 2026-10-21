@@ -119,7 +119,7 @@ All three reviewers independently converged on ONE root cause: an unsubscribe ha
   (`streams.kt:25`); `notifyHandlers` printing throwables. Each was verified against the existing
   operators before being classified as inherited.
 
-**Follow-up DOCS task:** `docs/tasks/20260824-docs-streams-switchmap.md` (public API touched).
+**Follow-up DOCS task:** ULTRA-00202 (docs streams switchmap) (public API touched).
 
 ## Amendment — 2026-08-24, after the cutoff gate
 

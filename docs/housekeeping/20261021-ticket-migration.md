@@ -487,3 +487,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00200 | 2026-08-24 | `.claude/tasks/20260824-nav-requires-endpoint-crosscheck.md` | `docs/tasks/ULTRA-00200-20260824-nav-requires-endpoint-crosscheck.md` |
 | ULTRA-00201 | 2026-08-24 | `docs/tasks-archive/2026-08/20260824-cutoff-reentrancy.md` | `docs/tasks-archive/2026-08/ULTRA-00201-20260824-cutoff-reentrancy.md` |
 | ULTRA-00201 | 2026-08-24 | `.claude/tasks-archive/2026-08/20260824-cutoff-reentrancy.md` | `docs/tasks-archive/2026-08/ULTRA-00201-20260824-cutoff-reentrancy.md` |
+| ULTRA-00202 | 2026-08-24 | `docs/tasks-archive/2026-08/20260824-docs-streams-switchmap.md` | `docs/tasks-archive/2026-08/ULTRA-00202-20260824-docs-streams-switchmap.md` |
+| ULTRA-00202 | 2026-08-24 | `.claude/tasks-archive/2026-08/20260824-docs-streams-switchmap.md` | `docs/tasks-archive/2026-08/ULTRA-00202-20260824-docs-streams-switchmap.md` |

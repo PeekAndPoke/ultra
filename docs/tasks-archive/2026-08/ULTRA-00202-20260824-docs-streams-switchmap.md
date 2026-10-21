@@ -1,4 +1,4 @@
-# Docs: switchMap / switchMapNotNull
+# ULTRA-00202: Docs: switchMap / switchMapNotNull
 
 **Status:** DONE (archived 2026-08-24)
 **Plan:** follow-up of ULTRA-00199 (streams switchmap)
@@ -83,3 +83,7 @@ change — no code ships from these files. Recorded rather than silently skipped
 `switchMap` is the base operator and leading with the nullable variant inverts the explanation; the
 underlying complaint (the opening example taught nothing observable) was fixed instead by making it
 subscribe and print.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00202 (was `docs/tasks-archive/2026-08/20260824-docs-streams-switchmap.md`).
