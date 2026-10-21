@@ -13,7 +13,7 @@ These three items were deliberately deferred so part 3 stayed reviewable.
 
 ## 0. Incoming-converter convertibility boot check → folded into the module-builder redesign
 
-Surfaced by part 4 (`20260722-stored-param-migration.md`): a `Stored<T>` route param whose entity `T`
+Surfaced by part 4 (ULTRA-00089 (stored param migration)): a `Stored<T>` route param whose entity `T`
 has no registered repository (e.g. saas loaded without `useKarango()`/`useMonko()`) cannot convert and
 500s at request time instead of failing boot. `ConverterCompatBootCheck` only validates the OUTGOING
 converter (which passes by shape). Rather than ship a standalone incoming-convertibility boot check,

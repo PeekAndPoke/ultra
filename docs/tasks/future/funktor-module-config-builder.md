@@ -2,7 +2,7 @@
 
 **Status:** FUTURE / not scheduled (captured 2026-07-23)
 **Type:** framework DX + boot hardening (funktor)
-**Origin:** auth-hardening part 4 (`docs/tasks-archive/2026-07/20260722-stored-param-migration.md`)
+**Origin:** auth-hardening part 4 (ULTRA-00089 (stored param migration))
 review — the "saas loaded but no DB backend selected" misconfiguration surfaced as a confusing
 runtime 500 instead of an actionable boot failure. User's steer: don't bolt on a one-off boot check;
 fix the configuration model so each module validates its own invariants.
@@ -70,6 +70,6 @@ degenerate misconfiguration (mirrors the already-accepted `OrgAwareParam`-withou
 
 ## Cross-references
 
-- `20260722-stored-param-migration.md` (part 4) — where the gap surfaced.
+- ULTRA-00089 (stored param migration) (part 4) — where the gap surfaced.
 - `20260722-route-check-followups.md` — the incoming-converter boot check to fold in here.
 - `20260722-actionable-boot-error-messages.md` — the boot-error formatting to reuse.

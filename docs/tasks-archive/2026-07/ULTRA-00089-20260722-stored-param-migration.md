@@ -1,4 +1,4 @@
-# Migrate framework APIs from handler findById to Stored params
+# ULTRA-00089: Migrate framework APIs from handler findById to Stored params
 
 **Status:** DONE (2026-07-23; archived 2026-10-19) — review loop CLOSED at round 3 (zero findings across all three fresh
 reviewers). Archive check 2026-10-19: every Spec box was already ticked; a grep finds no `findById(params.` left in any
@@ -142,3 +142,7 @@ Steps (each builds + commits):
   ULTRA-00087 (apiroutes auth floor) → ULTRA-00088 (authorize rule builder).
 - Proving ground for the whole quartet: after this, a new endpoint gets floor + phase ordering +
   consistency enforcement by construction, with nothing to remember.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00089 (was `docs/tasks-archive/2026-07/20260722-stored-param-migration.md`).

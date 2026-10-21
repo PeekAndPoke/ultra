@@ -228,3 +228,7 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00088 | 2026-07-22 | `.claude/tasks-archive/2026-07/20260722-authorize-rule-builder.md` | `docs/tasks-archive/2026-07/ULTRA-00088-20260722-authorize-rule-builder.md` |
 | ULTRA-00088 | 2026-07-22 | `.claude/tasks/auth-hardening/20260722-authorize-rule-builder.md` | `docs/tasks-archive/2026-07/ULTRA-00088-20260722-authorize-rule-builder.md` |
 | ULTRA-00088 | 2026-07-22 | `.claude/tasks/20260722-authorize-rule-builder.md` | `docs/tasks-archive/2026-07/ULTRA-00088-20260722-authorize-rule-builder.md` |
+| ULTRA-00089 | 2026-07-22 | `docs/tasks-archive/2026-07/20260722-stored-param-migration.md` | `docs/tasks-archive/2026-07/ULTRA-00089-20260722-stored-param-migration.md` |
+| ULTRA-00089 | 2026-07-22 | `.claude/tasks-archive/2026-07/20260722-stored-param-migration.md` | `docs/tasks-archive/2026-07/ULTRA-00089-20260722-stored-param-migration.md` |
+| ULTRA-00089 | 2026-07-22 | `.claude/tasks/auth-hardening/20260722-stored-param-migration.md` | `docs/tasks-archive/2026-07/ULTRA-00089-20260722-stored-param-migration.md` |
+| ULTRA-00089 | 2026-07-22 | `.claude/tasks/20260722-stored-param-migration.md` | `docs/tasks-archive/2026-07/ULTRA-00089-20260722-stored-param-migration.md` |

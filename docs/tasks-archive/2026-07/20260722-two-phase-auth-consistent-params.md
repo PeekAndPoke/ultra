@@ -195,7 +195,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 ## Cross-references
 
 - Depends on parts 1+2 (ULTRA-00088 (authorize rule builder), ULTRA-00087 (apiroutes auth floor)).
-- Prerequisite of part 4 (`20260722-stored-param-migration.md`) — the oracle goes live without this.
+- Prerequisite of part 4 (ULTRA-00089 (stored param migration)) — the oracle goes live without this.
 - Pairs with `20260722-actionable-boot-error-messages.md` (the runner owns the aggregated boot error;
   fold the multiline-indent fix here).
 - FOLLOW-UP: `20260722-route-check-followups.md` — migrate `validateUriPattern` onto `RouteBootCheck`,
