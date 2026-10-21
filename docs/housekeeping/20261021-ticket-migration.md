@@ -97,3 +97,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00042 | 2026-07-18 | `docs/tasks/20260718-o3-org-signin.md` | `docs/tasks/ULTRA-00042-20260718-o3-org-signin.md` |
 | ULTRA-00042 | 2026-07-18 | `.claude/tasks/saas-orgs/20260718-o3-org-signin.md` | `docs/tasks/ULTRA-00042-20260718-o3-org-signin.md` |
 | ULTRA-00042 | 2026-07-18 | `.claude/tasks/20260718-o3-org-signin.md` | `docs/tasks/ULTRA-00042-20260718-o3-org-signin.md` |
+| ULTRA-00043 | 2026-07-19 | `docs/tasks/20260719-saas-full-feature-backlog.md` | `docs/tasks/ULTRA-00043-20260719-saas-full-feature-backlog.md` |
+| ULTRA-00043 | 2026-07-19 | `.claude/tasks/saas-orgs/20260719-saas-full-feature-backlog.md` | `docs/tasks/ULTRA-00043-20260719-saas-full-feature-backlog.md` |
+| ULTRA-00043 | 2026-07-19 | `.claude/tasks/20260719-saas-full-feature-backlog.md` | `docs/tasks/ULTRA-00043-20260719-saas-full-feature-backlog.md` |

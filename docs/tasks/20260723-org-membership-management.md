@@ -4,7 +4,7 @@
 `e7a9c401`; 2b loop closed round 2, committed 2026-07-24). The b2b membership arc is COMPLETE —
 remaining leaves (invite/reactivation, operator cross-realm surface) are deferred, not scheduled.
 **Plan:** `docs/tasks/20260719-demo-restructure-three-apps.md` (the three-apps saas showcase is the
-testbed) + `docs/tasks/20260719-saas-full-feature-backlog.md` §2 (ownership) / §3-§4.
+testbed) + ULTRA-00043 (saas full feature backlog) §2 (ownership) / §3-§4.
 **Security-critical:** YES — this is the org membership + permission spine (who belongs to an org, in
 what role, and who may manage that). Red-team follow-up required at review (extend
 ULTRA-00039 (redteam saas orgs)).
@@ -399,4 +399,4 @@ UX chosen with the user: a modal role-editor (not inline, not a separate edit pa
 
 - O2 membership/permissions: ULTRA-00040 (o2 membership permissions).
 - Org isolation (part 3/4): `docs/tasks/` — the isolation machinery this exercises.
-- Backlog framing (core vs app, ownership §2, invites §3, roles §4): `20260719-saas-full-feature-backlog.md`.
+- Backlog framing (core vs app, ownership §2, invites §3, roles §4): ULTRA-00043 (saas full feature backlog).

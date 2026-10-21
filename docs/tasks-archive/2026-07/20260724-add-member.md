@@ -5,7 +5,7 @@ follow-ups were doc/test-only, applied). The next leaf off the b2b membership ar
 (`20260723-org-membership-management.md`): closes the member-CRUD story with a runtime ADD path
 (memberships were fixture-only).
 **Plan:** `docs/tasks/20260719-demo-restructure-three-apps.md` (three-apps showcase) +
-`20260719-saas-full-feature-backlog.md` §3 (invites).
+ULTRA-00043 (saas full feature backlog) §3 (invites).
 **Security-critical:** YES — a new membership-mutation surface (who can add whom, with what roles).
 Extend ULTRA-00039 (redteam saas orgs) at review.
 

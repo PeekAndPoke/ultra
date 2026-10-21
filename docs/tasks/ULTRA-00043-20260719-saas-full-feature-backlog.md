@@ -1,4 +1,4 @@
-# Full-SaaS Feature Backlog (org lifecycle, billing, operator surface)
+# ULTRA-00043: Full-SaaS Feature Backlog (org lifecycle, billing, operator surface)
 
 **Status:** BACKLOG — RECORD ONLY (2026-07-19). Provisional working hypotheses, revisable. Nothing
 here is scheduled; the auth-orgs foundation (ULTRA-00035 (auth orgs foundation)) comes first.
@@ -203,3 +203,7 @@ Never store raw card/IBAN data (PCI/PSD2) — only Stripe tokens/ids + display m
 - Document/PDF layer for invoices: ULTRA-00036 (saas foundation) (Tracks C/D).
 - Auth completeness (2FA, audit trail, impersonation, GDPR) discussed in-session — overlaps §Operator
   and §Org-lifecycle here; capture into a dedicated auth-features plan when scheduled.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00043 (was `docs/tasks/20260719-saas-full-feature-backlog.md`).
