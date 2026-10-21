@@ -16,7 +16,7 @@ worktrees … which parts can be developed independently and are easy to merge")
   collections — the same class of damage as today's overlapping builds, at the database instead of the build cache.
 - **Every build rewrites tracked files**: `docs/kraft/examples/**` (`distributeJsExample`, `buildSrc/.../Docs.kt`) and
   `kotlin-js-store/yarn.lock` (`yarnLockAutoReplace`). Committed from several branches, they conflict on every merge.
-- **Shared docs** — `CLAUDE.md`, skills, `v1-roadmap.md`, `CHANGELOG.md`, `BUILD-LOCK.md` — change on master only.
+- **Shared docs** — `CLAUDE.md`, skills, ULTRA-00028 (v1 roadmap), `CHANGELOG.md`, `BUILD-LOCK.md` — change on master only.
 
 ## Wave 0 — coordinator, on master, before any worktree starts
 

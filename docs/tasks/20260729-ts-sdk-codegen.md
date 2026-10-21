@@ -1,6 +1,6 @@
 # TypeScript SDK code generation (`ultra/codegen` + `funktor/codegen`)
 
-**Status:** TODO **Plan:** `docs/tasks/v1-roadmap.md` → Post-v1 Backlog item 4 ("Dart codegen rewrite") —
+**Status:** TODO **Plan:** ULTRA-00028 (v1 roadmap) → Post-v1 Backlog item 4 ("Dart codegen rewrite") —
 **superseded by this task**
 **Security-critical:** no (dev-time generator; no runtime auth path. See "Security notes" for why, and the one thing
 that is worth a conscious decision.)
@@ -92,9 +92,9 @@ funktor server, and the Dart emitter is compiled into all of them.
 
 **Roadmap updates required when this lands:**
 
-- [x] `docs/tasks/v1-roadmap.md:303` — Post-v1 item 4 "Dart codegen rewrite … move to
+- [x] `ULTRA-00028 (v1 roadmap):303` — Post-v1 item 4 "Dart codegen rewrite … move to
   `funktor:dart-codegen` package first" → marked superseded, 2026-07-29.
-- [x] `docs/tasks/v1-roadmap.md:125` — "Dart codegen test TODOs (6)" → removed (resolved by deletion),
+- [x] `ULTRA-00028 (v1 roadmap):125` — "Dart codegen test TODOs (6)" → removed (resolved by deletion),
   2026-07-29.
 
 ---

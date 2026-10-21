@@ -1,4 +1,4 @@
-# v1.0.0 Roadmap — Single Source of Truth
+# ULTRA-00028: v1.0.0 Roadmap — Single Source of Truth
 
 **Current version:** 0.114.0 → **Target:** 1.0.0
 **Last updated:** 2026-04-13
@@ -337,3 +337,7 @@ Explicitly deferred:
 - **Karakum** (TypeScript→Kotlin externals) — alpha-quality, deprioritized
 - **PixiJS addon + Breakout demo** — shipped; template for future heavy-lib addons
 - **Kraft Tailwind Phase 1** — deferred post-v1
+
+## History
+
+- 2026-10-21: numbered ULTRA-00028 (was `docs/tasks/v1-roadmap.md`).

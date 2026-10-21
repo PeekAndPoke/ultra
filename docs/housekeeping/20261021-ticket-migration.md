@@ -58,3 +58,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00026 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-kraft-ecosystem-and-tailwind.md` | `docs/tasks-archive/2026-04/ULTRA-00026-2026-04-13-kraft-ecosystem-and-tailwind.md` |
 | ULTRA-00027 | 2026-04-13 | `docs/tasks-archive/2026-04/2026-04-13-v1-parallel-execution.md` | `docs/tasks-archive/2026-04/ULTRA-00027-2026-04-13-v1-parallel-execution.md` |
 | ULTRA-00027 | 2026-04-13 | `.claude/tasks-archive/2026-04/2026-04-13-v1-parallel-execution.md` | `docs/tasks-archive/2026-04/ULTRA-00027-2026-04-13-v1-parallel-execution.md` |
+| ULTRA-00028 | 2026-04-13 | `docs/tasks/v1-roadmap.md` | `docs/tasks/ULTRA-00028-v1-roadmap.md` |
+| ULTRA-00028 | 2026-04-13 | `.claude/tasks/v1-roadmap.md` | `docs/tasks/ULTRA-00028-v1-roadmap.md` |

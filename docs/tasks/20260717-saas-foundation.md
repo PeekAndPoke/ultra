@@ -6,7 +6,7 @@ spun up quickly, and build a reusable document layer: Kotlin content data model 
 editor (kraft) + email/PDF renderers with app-specific extension points.
 **Method:** Deep scan via 4-agent fleet (funktor module map, Opus auth/tenancy deep-dive,
 templating building-block inventory, thebizz idea extraction) + coordinator synthesis.
-**Relationship to `v1-roadmap.md`:** v1 hardening/release continues unchanged. This plan is the
+**Relationship to ULTRA-00028 (v1 roadmap):** v1 hardening/release continues unchanged. This plan is the
 product-platform work layered on top. Post-v1 backlog items #3 (account activation) and #5 (email
 template editor) are absorbed here. `v1-email-auth-and-sessions.md` is a hard prerequisite (Track A).
 **Update 2026-07-17:** Tracks A+B are superseded by the detailed plan
@@ -181,7 +181,7 @@ per-org email branding (was B9).
 - [ ] **D5** Custom-block demo: register one app-specific block end-to-end (model + renderer +
       editor) in funktor-demo — this is the acceptance test for the extension-point story.
 - [ ] **D6** Template management screens in funktor-demo: list/edit/preview/send-test-email
-      against C6 storage. (Absorbs v1-roadmap post-v1 item #5 "Email template editor".)
+      against C6 storage. (Absorbs ULTRA-00028 post-v1 item #5 "Email template editor".)
 
 ## Track E — Spin-up DX (starter + deployment)
 
@@ -193,7 +193,7 @@ per-org email branding (was B9).
 - [ ] **E3** Config-driven host/subdomain + CORS helper (replaces hand-rolled
       `host("api.*".toRegex())` + hardcoded `allowHost` lists).
 - [ ] **E4** `funktor-starter` template: minimal multi-tenant SaaS skeleton — server + common +
-      kraft SPA, ONE db backend (align with v1-roadmap Track E1 decision), default realm (E2),
+      kraft SPA, ONE db backend (align with ULTRA-00028 Track E1 decision), default realm (E2),
       tenants module (Track B), document editor page (Track D), fixtures, Dockerfile +
       docker-compose + SPA→server bundling task. "Clone → rename → runs" is the acceptance test.
 - [ ] **E5** (defer) Project generator CLI (`funktor new <name>`) once E4 stabilizes as a template.
@@ -222,7 +222,7 @@ E1–E3 anytime; E4 needs auth-orgs + D2 minimum
 2. ~~AD3 JWT approach~~ — ✅ ANSWERED 2026-07-17: selected-org-per-session + re-issue on switch.
    (Smaller follow-up recommendations are listed in `20260717-auth-orgs-foundation.md`.)
 3. **PDF engine** — decided after C7 spike; flag now: staged iText5 artifact is AGPL.
-4. **Starter DB backend default** — ties into the open v1-roadmap Track E1 decision.
+4. **Starter DB backend default** — ties into the open ULTRA-00028 Track E1 decision.
 5. **E1** — implement the documented DSL vs. re-document reality.
 
 ## Explicitly deferred (observed needs, not scheduled)

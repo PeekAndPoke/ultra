@@ -327,7 +327,7 @@ properties kraft/funktor already publish; none of that touches the app's build.
 Gradle `DefaultTask` generating Kotlin into `build/generated/i18n`, on `commonMain` srcDir — **not
 KSP** (input is a resource file, not Kotlin symbols; common-metadata KSP output is unproven here —
 `mutator/core/build.gradle.kts:76` produces zero files). Build the emitter as a fresh, clean printer
-(the roadmap already wants a codegen package extracted, `v1-roadmap.md:303`).
+(the roadmap already wants a codegen package extracted, `ULTRA-00028 (v1 roadmap):303`).
 
 **Avoid the two `ExtractExampleCodePlugin.kt` defects:**
 - Declare `@InputFiles` (the yaml) + `@OutputDirectory` properly — up-to-date is content-hash based
