@@ -1,4 +1,4 @@
-# Vault module scan — findings backlog
+# ULTRA-00140: Vault module scan — findings backlog
 
 **Status:** IN PROGRESS (triaged 2026-07-28)
 **Plan:** none — output of a 12-agent scan of `ultra/vault`, 2026-07-28
@@ -283,3 +283,7 @@ Agents pushed back on four things during the documentation pass. All four checke
 - `OrgMembersStorage`'s three filtering reads DO apply `notDeleted` on both backends.
 - Graph-builder recursion terminates on cyclic and mutually-recursive type graphs.
 - Clock injection for the timestamp hooks is sound; no stale clock captured at boot.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00140 (was `docs/tasks/20260728-vault-scan-findings.md`).

@@ -1,7 +1,7 @@
 # Monko: exclude soft-deleted rows from unique indexes
 
 **Status:** TODO
-**Plan:** follow-up from `docs/tasks/20260728-vault-scan-findings.md` → S2
+**Plan:** follow-up from ULTRA-00140 (vault scan findings) → S2
 **Security-critical:** no
 
 ## Problem
