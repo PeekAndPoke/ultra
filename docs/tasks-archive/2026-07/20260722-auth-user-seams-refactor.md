@@ -124,7 +124,7 @@ relocate accessor-per-need and lose the compile-time guarantee.
 | Account status (locked/disabled/verified) | future `status` value object on `AuthUser` |
 | Notification preferences | settings value object |
 | Consent/legal (ToS version, GDPR) | value object |
-| Save/update user (needed by `20260720-password-rehash-on-login.md`, profile UI) | adapter method |
+| Save/update user (needed by ULTRA-00066 (password rehash on login), profile UI) | adapter method |
 | GDPR delete/anonymize | adapter method |
 | Admin listing/search | adapter method |
 | Permissions/roles | `Has*` capability |

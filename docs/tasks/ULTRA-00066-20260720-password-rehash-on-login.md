@@ -1,4 +1,4 @@
-# Password hashes never upgrade — add rehash-on-login
+# ULTRA-00066: Password hashes never upgrade — add rehash-on-login
 
 **Status:** TODO — from the password-subsystem review (2026-07-20)
 **Plan:** none — password hashing hardening (finding 1, the headline gap)
@@ -85,3 +85,7 @@ total/fail-closed), plus end-to-end legacy-salt regression tests and guard tests
 - Interacts with ULTRA-00051 (auth error account enumeration) (dummy-hash timing fix) — both touch
   the sign-in verify path; sequence so the rehash write doesn't reopen a timing channel.
 - Depends on the `CompoundPasswordHasher` id-dispatch design (unchanged).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00066 (was `docs/tasks/20260720-password-rehash-on-login.md`).

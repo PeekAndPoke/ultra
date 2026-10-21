@@ -22,7 +22,7 @@ breach bar.
   `funktor.auth.jwt.signingKey`), never persisted with the hash.
 - Apply it as a keyed pre-hash (HMAC the password with the pepper before the KDF) or via
   password4j's native pepper support. Keep it hasher-agnostic so it composes with the compound
-  design and the rehash-on-login upgrade path (`20260720-password-rehash-on-login.md`).
+  design and the rehash-on-login upgrade path (ULTRA-00066 (password rehash on login)).
 - **Rotation:** peppers must be rotatable. Store a pepper key-id with the hash (or version the
   format) so old and new peppers can both verify, and let rehash-on-login migrate to the current
   pepper. Decide the storage shape up front — retrofitting rotation later is painful.
@@ -45,7 +45,7 @@ breach bar.
 
 ## Cross-references
 
-- `20260720-password-rehash-on-login.md` (rotation rides the same upgrade path).
+- ULTRA-00066 (password rehash on login) (rotation rides the same upgrade path).
 - Reuses the app secret/config mechanism used for JWT signing keys.
 
 ## History
