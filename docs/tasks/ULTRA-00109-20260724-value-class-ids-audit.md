@@ -1,7 +1,7 @@
 # ULTRA-00109: Audit: value classes for ids & invariant values (auth / saas / b2b)
 
 **Status:** FINDINGS ACTED ON; STANDING RULE STILL UNDECIDED (rechecked 2026-10-19). The migration this audit asked for ran —
-see `20260724-value-class-ids-migration.md`: Tier 1 `RealmId`, `UserId`, `OrgId` and the Tier 2 email value (as
+see ULTRA-00110 (value class ids migration): Tier 1 `RealmId`, `UserId`, `OrgId` and the Tier 2 email value (as
 `EmailAddress`) are DONE and in the tree; Tier 2 `Slug` and all of Tier 3 (`BranchId`, `UserType`) are not. What still waits on
 the maintainer is the thing this doc was written for — codifying the standing rule below (it is in neither `CLAUDE.md` nor
 `.claude/skills/code-style/`) and the scope for the rest. The earlier header's "Do NOT migrate anything yet" is void.

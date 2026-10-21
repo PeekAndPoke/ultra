@@ -110,7 +110,7 @@ covers the demo's use of it.
 - **`RealmId` does not use `isForbiddenInId`**, though the relocated KDoc in `ultra:common` now claims
   every id type does. `RealmId` uses a stricter allowlist, so this is a doc inaccuracy, not a hole —
   and it is the concrete case behind the denylist-vs-allowlist question parked in
-  `docs/tasks/20260724-value-class-ids-migration.md` Step 5.
+  ULTRA-00110 (value class ids migration) Step 5.
 
 ## Out of scope here, recorded elsewhere
 

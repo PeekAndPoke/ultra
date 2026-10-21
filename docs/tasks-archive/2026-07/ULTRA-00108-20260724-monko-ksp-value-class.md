@@ -107,7 +107,7 @@ value-class id." **That premise was wrong.** Verified by probe tests against the
 
 ## Cross-ref
 - Karango counterpart: ULTRA-00107 (karango ksp value class) (needed ZERO change — works as-is).
-- Migration that consumes this: `20260724-value-class-ids-migration.md` (KSP-first prerequisite is
+- Migration that consumes this: ULTRA-00110 (value class ids migration) (KSP-first prerequisite is
   now MOOT — no KSP change; the only prerequisite was this Monko runtime fix, now DONE).
 
 ## History

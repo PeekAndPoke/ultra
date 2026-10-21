@@ -1,7 +1,7 @@
 # `OrgId` value class + session org id → coll/key (value-class-ids Step 3)
 
 **Status:** DONE 2026-07-25 (gate PASS — all three reviewers; confirmed findings fixed; tests green)
-**Plan:** `docs/tasks/20260724-value-class-ids-migration.md` → Step 3
+**Plan:** ULTRA-00110 (value class ids migration) → Step 3
 **Security-critical:** YES — the org-isolation caller-binding boundary. Three producers and one
 consumer must flip ATOMICALLY; miss the consumer and every org-scoped request 404s.
 

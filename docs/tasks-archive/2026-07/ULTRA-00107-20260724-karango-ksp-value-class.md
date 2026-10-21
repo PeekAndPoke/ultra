@@ -78,7 +78,7 @@ ULTRA-00108 (monko ksp value class).)
 
 ## Cross-ref
 - Monko counterpart: ULTRA-00108 (monko ksp value class) (needed a runtime DSL unwrap).
-- Migration that consumes this: `20260724-value-class-ids-migration.md`.
+- Migration that consumes this: ULTRA-00110 (value class ids migration).
 
 ## History
 

@@ -280,3 +280,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00108 | 2026-07-24 | `.claude/tasks/20260724-monko-ksp-value-class.md` | `docs/tasks-archive/2026-07/ULTRA-00108-20260724-monko-ksp-value-class.md` |
 | ULTRA-00109 | 2026-07-24 | `docs/tasks/20260724-value-class-ids-audit.md` | `docs/tasks/ULTRA-00109-20260724-value-class-ids-audit.md` |
 | ULTRA-00109 | 2026-07-24 | `.claude/tasks/20260724-value-class-ids-audit.md` | `docs/tasks/ULTRA-00109-20260724-value-class-ids-audit.md` |
+| ULTRA-00110 | 2026-07-24 | `docs/tasks/20260724-value-class-ids-migration.md` | `docs/tasks/ULTRA-00110-20260724-value-class-ids-migration.md` |
+| ULTRA-00110 | 2026-07-24 | `.claude/tasks/20260724-value-class-ids-migration.md` | `docs/tasks/ULTRA-00110-20260724-value-class-ids-migration.md` |

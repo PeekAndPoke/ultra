@@ -63,7 +63,7 @@ replaced with `#anonymized`.
 
 Was `internal` in `ultra:security`; now public in `ultra/common/.../strings.kt` next to `isEmail` /
 `isSlug`. Mention it in the id/value-class docs — and note the open denylist-vs-allowlist question
-recorded in `docs/tasks/20260724-value-class-ids-migration.md` Step 5 before writing it up as
+recorded in ULTRA-00110 (value class ids migration) Step 5 before writing it up as
 guidance.
 
 ### 7. `EmailAddress` rejects control characters

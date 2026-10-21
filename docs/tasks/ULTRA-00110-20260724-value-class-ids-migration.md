@@ -1,4 +1,4 @@
-# Migration: wrap ids in `@JvmInline value class`es (RealmId pilot → the rest)
+# ULTRA-00110: Migration: wrap ids in `@JvmInline value class`es (RealmId pilot → the rest)
 
 **Status:** IN PROGRESS — Steps 1–4 DONE (2026-07-25/26), Step 5 (`Slug`) and the standing rule OPEN (rechecked 2026-10-19).
 In the tree: `RealmId` (`funktor/auth/src/commonMain/kotlin/model/RealmId.kt:24`), `UserId`
@@ -202,3 +202,7 @@ ctor / on deserialize → REJECTS bad values); do transforming normalization in 
 
 ## Standing rule
 To be codified by the user AFTER the RealmId pilot validates the approach (per the audit doc).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00110 (was `docs/tasks/20260724-value-class-ids-migration.md`).
