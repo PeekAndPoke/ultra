@@ -1,4 +1,4 @@
-# Route access control in the generated TypeScript SDK
+# ULTRA-00182: Route access control in the generated TypeScript SDK
 
 **Status:** IN REVIEW — implemented 2026-08-01; gate run, findings fixed, awaiting maintainer sign-off
 **Plan:** ULTRA-00146 (ts sdk codegen) → Phase 4 / Vue-contributors family
@@ -277,3 +277,7 @@ not bypass: does anything in the SDK or its docs invite a developer to treat `Ap
 enforcement; can a tampered matrix response cause the client to reveal anything it would not
 otherwise; does `canAccess`'s permissive default surface an affordance that leaks the existence of
 data the user cannot read.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00182 (was `docs/tasks/20260801-sdk-route-access-control.md`).

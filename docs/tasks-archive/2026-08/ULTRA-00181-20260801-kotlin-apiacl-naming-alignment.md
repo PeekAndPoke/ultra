@@ -4,7 +4,7 @@
 reviewer (maintainer, 2026-10-19), its MAJOR and MINORs fixed. Docs were updated in the same change, so no docs
 follow-up task. One design question parked for the maintainer (below).
 **Plan:** none — a standalone rename that falls out of
-`docs/tasks/20260801-sdk-route-access-control.md`
+ULTRA-00182 (sdk route access control)
 **Security-critical:** no — a rename of an advisory client-side lookup; nothing here enforces
 anything, and no call site changes meaning
 

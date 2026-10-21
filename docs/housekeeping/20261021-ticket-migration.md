@@ -440,3 +440,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00181 | 2026-08-01 | `docs/tasks-archive/2026-08/20260801-kotlin-apiacl-naming-alignment.md` | `docs/tasks-archive/2026-08/ULTRA-00181-20260801-kotlin-apiacl-naming-alignment.md` |
 | ULTRA-00181 | 2026-08-01 | `.claude/tasks-archive/2026-08/20260801-kotlin-apiacl-naming-alignment.md` | `docs/tasks-archive/2026-08/ULTRA-00181-20260801-kotlin-apiacl-naming-alignment.md` |
 | ULTRA-00181 | 2026-08-01 | `.claude/tasks/20260801-kotlin-apiacl-naming-alignment.md` | `docs/tasks-archive/2026-08/ULTRA-00181-20260801-kotlin-apiacl-naming-alignment.md` |
+| ULTRA-00182 | 2026-08-01 | `docs/tasks/20260801-sdk-route-access-control.md` | `docs/tasks/ULTRA-00182-20260801-sdk-route-access-control.md` |
+| ULTRA-00182 | 2026-08-01 | `.claude/tasks/20260801-sdk-route-access-control.md` | `docs/tasks/ULTRA-00182-20260801-sdk-route-access-control.md` |

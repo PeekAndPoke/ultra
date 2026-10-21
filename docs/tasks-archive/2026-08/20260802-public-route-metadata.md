@@ -12,7 +12,7 @@ then, not a fragment per feature.
 **Plan:** ULTRA-00153 (frontend sdk vue contributors) → the auth/login family
 **Security-critical:** yes — it widens what an anonymous client offers to try. See the scope note.
 
-Follows `docs/tasks/20260801-sdk-route-access-control.md` (the `route()` wrapper and `ApiAcl`).
+Follows ULTRA-00182 (sdk route access control) (the `route()` wrapper and `ApiAcl`).
 Precedes the aggregation registry and `AuthTsContributor`.
 
 ## Why

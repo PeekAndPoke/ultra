@@ -474,7 +474,7 @@ is how the asymmetry becomes permanent.
 
 ## Route access control — pairs with auth (2026-08-01)
 
-`docs/tasks/20260801-sdk-route-access-control.md`, and its Kotlin counterpart
+ULTRA-00182 (sdk route access control), and its Kotlin counterpart
 ULTRA-00181 (kotlin apiacl naming alignment).
 
 Generated client members become **callable AND self-describing** — `route()` wraps each one so it
