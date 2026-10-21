@@ -1,7 +1,7 @@
 # Red-team: async/suspend form validation rules
 
 **Status:** COLLECTED — not executed. For a dedicated penetration-test session.
-**Feature:** [[20260721-async-suspend-rules]] (async validation, FormController status + double-submit guard).
+**Feature:** [[ULTRA-00077]] (async validation, FormController status + double-submit guard).
 
 These are concrete attack scenarios to ATTEMPT later. Do not run them during normal feature work.
 

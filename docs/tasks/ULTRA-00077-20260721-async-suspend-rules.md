@@ -1,4 +1,4 @@
-# Async / suspend form validation rules
+# ULTRA-00077: Async / suspend form validation rules
 
 **Status:** DONE — `/feature-review` gate PASS (2026-07-21)
 **Plan:** i18n/l10n foundation umbrella (ULTRA-00069 (i18n l10n foundation)) — sibling
@@ -96,3 +96,7 @@ unit-tested because no concrete `FormField` exists in `core-tests` (all fields a
 
 - [x] `/feature-review` gate (impl+style, domain, security) — PASS.
 - [x] Red-team follow-up collected: [[20260721-redteam-async-suspend-rules]].
+
+## History
+
+- 2026-10-21: numbered ULTRA-00077 (was `docs/tasks/20260721-async-suspend-rules.md`).
