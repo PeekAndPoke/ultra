@@ -1,4 +1,4 @@
-# CSS contribution + the demo app scaffold
+# ULTRA-00191: CSS contribution + the demo app scaffold
 
 **Status:** DONE — 2026-08-02. Both parts landed; the app signs in and the insights page is
 reachable. `/feature-review` NOT yet run — see the review record below.
@@ -188,3 +188,7 @@ that never existed, and the drift guard in `InsightsTsContributorSpec` made recu
   `docs/tasks/20260809-acl-aware-navigation.md`.
 - **Barrel scope** — contributed page helpers stay in the barrel, so it can require `vue` and shares
   an export namespace with generated models. Accepted and documented in `TsBarrelEmitter`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00191 (was `docs/tasks/20260802-css-contribution-and-app-scaffold.md`).

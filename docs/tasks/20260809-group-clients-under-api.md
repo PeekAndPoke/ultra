@@ -64,7 +64,7 @@ a green first run on a new code path is the signal to check the fixture, not to 
 ## Review record — /feature-review, 2026-08-09
 
 Reviewed inside the batch gate recorded in
-`docs/tasks/20260802-css-contribution-and-app-scaffold.md` (base `920bcd9b` -> `08833836`).
+ULTRA-00191 (css contribution and app scaffold) (base `920bcd9b` -> `08833836`).
 
 | Reviewer | Verdict | Confirmed findings against THIS change |
 |---|---|---|

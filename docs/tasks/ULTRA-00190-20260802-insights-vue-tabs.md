@@ -99,7 +99,7 @@ bundle. It is safe — the minifier only drops it when the layers are defined la
 ## The stylesheets cannot ship yet — and a comment is not a mechanism
 
 `theme.css` and `insights.css` are written but **inert**. The codegen agent is building the mechanism in
-`docs/tasks/20260802-css-contribution-and-app-scaffold.md`; two of their findings land on this task:
+ULTRA-00191 (css contribution and app scaffold); two of their findings land on this task:
 
 - **Nothing imports a `.css` in the SDK dir.** Emission is not the gap — `validatePath` is
   extension-agnostic — but Vite bundles only what something imports, so the file is dead weight until a

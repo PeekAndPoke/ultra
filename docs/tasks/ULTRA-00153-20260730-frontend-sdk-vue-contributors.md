@@ -7,7 +7,7 @@ finished, and none of the deletion payoff is banked.**
 | Piece | State |
 |---|---|
 | Aggregation registry, `mountAll`, the `--out`/`--sdkDir` CLI boundary | DONE, gated 2026-08-02 — review record below |
-| Styles registry, `styles.ts`/`css-modules.d.ts`, `api/` client grouping, route `requires` | DONE, gated 2026-08-09 — records in `20260802-css-contribution-and-app-scaffold.md` and `20260809-group-clients-under-api.md` |
+| Styles registry, `styles.ts`/`css-modules.d.ts`, `api/` client grouping, route `requires` | DONE, gated 2026-08-09 — records in ULTRA-00191 (css contribution and app scaffold) and `20260809-group-clients-under-api.md` |
 | Vue contributors — `AuthTsContributor`, `SdkContextTsContributor`, `InsightsTsContributor` | DONE. 23 `.vue`/`.ts`/`.css` resources ship from `funktor/codegen/src/main/resources/ts/` |
 | `funktor-demo/sdkgen-app` — signs in, loads the access matrix, renders the insights page in a browser | DONE 2026-08-02 |
 | The insights tabs | IN PROGRESS — ULTRA-00190 (insights vue tabs) |
