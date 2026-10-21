@@ -13,7 +13,7 @@ dependency on the previous one, so land them in order.
 
 | # | Task | What it does | Status |
 |---|------|--------------|--------|
-| 1 | `20260722-authorize-rule-builder.md` | `authorize {}` becomes a builder-accumulator — kills the last-expression-wins footgun where only the final rule expression counted | **DONE** (2026-07-22, review loop ended round 4, zero findings) |
+| 1 | ULTRA-00088 (authorize rule builder) | `authorize {}` becomes a builder-accumulator — kills the last-expression-wins footgun where only the final rule expression counted | **DONE** (2026-07-22, review loop ended round 4, zero findings) |
 | 2 | ULTRA-00087 (apiroutes auth floor) | Mandatory `authFloor` floor on `ApiRoutes` (renamed from `defaultAuth`, part 4) — structural default-deny; a route with no rule is denied, not public | **DONE** (2026-07-22, review loop ended round 3, zero findings) |
 | 3 | `20260722-two-phase-auth-consistent-params.md` | Two-phase auth eval + pluggable `RouteBootCheck`/`RouteParamsGuard` + saas org-isolation (`OrgAware`/`OrgAwareParam`) — no entity loads before auth passes, structural cross-org isolation | **DONE** (2026-07-23, review loop: round-1 reworked on 2 HIGH direction findings, round-2 confirmed mechanism airtight, edge findings fixed) |
 | 4 | `20260722-stored-param-migration.md` | Migrate framework APIs from in-handler `findById` to `Stored` params + entity-based param naming + `defaultAuth`→`authFloor` rename | **DONE** (2026-07-23, review loop ended round 3, zero findings) |
@@ -37,4 +37,4 @@ Deep review **LOOP**, not a single pass:
    not a fixable finding but "the design judgement itself was wrong" — STOP and consult the user on
    direction before continuing.
 
-Full protocol text lives in `20260722-authorize-rule-builder.md`.
+Full protocol text lives in ULTRA-00088 (authorize rule builder).

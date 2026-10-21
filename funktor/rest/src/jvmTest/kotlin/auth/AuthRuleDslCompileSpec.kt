@@ -14,7 +14,7 @@ import java.io.ByteArrayOutputStream
 /**
  * Locks the compile-time guarantees of the auth-rule DSL: the shared @DslMarker on the builder
  * family makes wrong-level and cross-family implicit access a COMPILE ERROR, not a silent append
- * at the wrong nesting level. See `docs/tasks-archive/2026-07/20260722-authorize-rule-builder.md`, inventory #3.
+ * at the wrong nesting level. See ULTRA-00088 (authorize rule builder), inventory #3.
  */
 class AuthRuleDslCompileSpec : StringSpec({
 

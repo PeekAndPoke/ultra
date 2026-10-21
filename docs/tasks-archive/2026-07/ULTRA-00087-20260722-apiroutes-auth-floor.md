@@ -6,7 +6,7 @@ route rules can only STRENGTHEN, not an overridable default). This doc's histori
 
 **Status:** DONE (2026-07-22; archived 2026-10-19) — review loop terminated on round 3 (zero confirmed findings across
 all three reviewers). Mechanism + full 19→23-group sweep; all rounds' findings fixed; backend suites
-green. Depends on `20260722-authorize-rule-builder.md` (DONE).
+green. Depends on ULTRA-00088 (authorize rule builder) (DONE).
 The Spec and Test-evidence boxes below sat at 0/9 although the work shipped; ticked 2026-10-19 against the code, each with
 the evidence it was ticked on. "Green" means the last recorded run (`build/test-results` XML of 2026-10-19: `funktor:rest`
 116 tests, `funktor:all` 158, `funktor-demo:server` 47, all 0 failures) — not re-run for the archive.
@@ -34,7 +34,7 @@ an app-level floor-strengthening seam are owned by ULTRA-00044 (cross realm auth
 
 ## Review protocol (user directive, 2026-07-22)
 
-Same LOOP as `20260722-authorize-rule-builder.md`: full 3-agent gate → fix ALL confirmed findings
+Same LOOP as ULTRA-00088 (authorize rule builder): full 3-agent gate → fix ALL confirmed findings
 → FULL re-review with fresh reviewers → repeat until a zero-findings round. One pass is not
 enough. ESCALATION: if a round shows the direction itself is wrong, stop and consult the user.
 
@@ -194,7 +194,7 @@ login API split by auth level). Names are display-only (routing is by URI), so t
 
 ## Cross-references
 
-- Builds on `20260722-authorize-rule-builder.md` (the accumulator IS the floor mechanism).
+- Builds on ULTRA-00088 (authorize rule builder) (the accumulator IS the floor mechanism).
 - ULTRA-00044 (cross realm authz and tests) — the floor is how forUserType stops being per-route
   opt-in; update that task when this lands.
 - Part 3 (`20260722-two-phase-auth-consistent-params.md`) relies on the floor being caller-only.

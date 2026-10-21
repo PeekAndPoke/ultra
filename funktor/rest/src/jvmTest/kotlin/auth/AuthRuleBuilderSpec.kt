@@ -19,7 +19,7 @@ import io.peekandpoke.ultra.security.user.UserRecord
 
 /**
  * Locks the accumulator semantics of the authorize {} DSL — see
- * `docs/tasks-archive/2026-07/20260722-authorize-rule-builder.md`, ambiguity inventory.
+ * ULTRA-00088 (authorize rule builder), ambiguity inventory.
  */
 class AuthRuleBuilderSpec : StringSpec({
 

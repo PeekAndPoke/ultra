@@ -18,7 +18,7 @@ UNPUSHED. Depends on ULTRA-00087 (apiroutes auth floor).
 
 ## Review protocol (user directive, 2026-07-22)
 
-Same LOOP as `20260722-authorize-rule-builder.md`: full 3-agent gate → fix ALL confirmed findings
+Same LOOP as ULTRA-00088 (authorize rule builder): full 3-agent gate → fix ALL confirmed findings
 → FULL re-review with fresh reviewers → repeat until a zero-findings round. One pass is not
 enough. ESCALATION: if a round shows the direction itself is wrong, stop and consult the user.
 
@@ -194,7 +194,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 
 ## Cross-references
 
-- Depends on parts 1+2 (`20260722-authorize-rule-builder.md`, ULTRA-00087 (apiroutes auth floor)).
+- Depends on parts 1+2 (ULTRA-00088 (authorize rule builder), ULTRA-00087 (apiroutes auth floor)).
 - Prerequisite of part 4 (`20260722-stored-param-migration.md`) — the oracle goes live without this.
 - Pairs with `20260722-actionable-boot-error-messages.md` (the runner owns the aggregated boot error;
   fold the multiline-indent fix here).

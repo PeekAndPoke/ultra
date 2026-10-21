@@ -12,7 +12,7 @@ HARD dependency on `20260722-two-phase-auth-consistent-params.md` was met (part 
 
 ## Review protocol (user directive, 2026-07-22)
 
-Same LOOP as `20260722-authorize-rule-builder.md`: full 3-agent gate → fix ALL confirmed findings
+Same LOOP as ULTRA-00088 (authorize rule builder): full 3-agent gate → fix ALL confirmed findings
 → FULL re-review with fresh reviewers → repeat until a zero-findings round. One pass is not
 enough. ESCALATION: if a round shows the direction itself is wrong, stop and consult the user.
 
@@ -139,6 +139,6 @@ Steps (each builds + commits):
 ## Cross-references
 
 - Depends on: `20260722-two-phase-auth-consistent-params.md` (hard), which depends on
-  ULTRA-00087 (apiroutes auth floor) → `20260722-authorize-rule-builder.md`.
+  ULTRA-00087 (apiroutes auth floor) → ULTRA-00088 (authorize rule builder).
 - Proving ground for the whole quartet: after this, a new endpoint gets floor + phase ordering +
   consistency enforcement by construction, with nothing to remember.

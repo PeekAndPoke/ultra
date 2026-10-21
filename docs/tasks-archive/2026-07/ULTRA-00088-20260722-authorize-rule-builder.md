@@ -1,4 +1,4 @@
-# authorize {} builder-accumulator — kill the last-expression-wins footgun
+# ULTRA-00088: authorize {} builder-accumulator — kill the last-expression-wins footgun
 
 **Status:** DONE (2026-07-22; archived 2026-10-19) — review loop terminated on round 4 (zero confirmed findings across
 all three reviewers). All 4 rounds' findings fixed; 27 funktor:rest specs + full backend suites green.
@@ -194,3 +194,7 @@ consciously left as-is.
 - Successor: ULTRA-00087 (apiroutes auth floor) builds the mandatory seed ON this builder — it
   INHERITS `validateChain` (whole-chain boot check) as the seam for "public-seeded group must not
   also carry restrictive rules"; the seed pre-populates `authRules` and the user block appends.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00088 (was `docs/tasks-archive/2026-07/20260722-authorize-rule-builder.md`).
