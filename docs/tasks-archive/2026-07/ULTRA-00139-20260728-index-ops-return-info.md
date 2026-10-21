@@ -1,4 +1,4 @@
-# Database.ensureIndexes / recreateIndexes return the index state
+# ULTRA-00139: Database.ensureIndexes / recreateIndexes return the index state
 
 **Status:** DONE (archived 2026-07-28)
 **Plan:** none — spotted while writing KDoc for `ultra/vault/src/jvmMain/kotlin/Database.kt`
@@ -122,3 +122,7 @@ which this diff does not touch and which sits behind `authFloor = { isSuperUser(
 already compiled against the published vault artifact (`NoSuchMethodError`). Source-compatible for
 every in-repo caller. Fine per the project's no-migration-support stance, but vault is a released
 library — worth a line in the release notes.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00139 (was `docs/tasks-archive/2026-07/20260728-index-ops-return-info.md`).

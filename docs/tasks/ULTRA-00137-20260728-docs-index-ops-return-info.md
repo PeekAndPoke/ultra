@@ -1,7 +1,7 @@
 # ULTRA-00137: DOCS: Database.ensureIndexes / recreateIndexes now return the index report
 
 **Status:** TODO
-**Plan:** follow-up from `docs/tasks-archive/2026-07/20260728-index-ops-return-info.md`
+**Plan:** follow-up from ULTRA-00139 (index ops return info)
 **Security-critical:** no
 
 ## Spec

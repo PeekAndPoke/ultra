@@ -345,3 +345,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00137 | 2026-07-28 | `.claude/tasks/20260728-docs-index-ops-return-info.md` | `docs/tasks/ULTRA-00137-20260728-docs-index-ops-return-info.md` |
 | ULTRA-00138 | 2026-07-28 | `docs/tasks-archive/2026-07/20260728-ensure-key-multi-slash.md` | `docs/tasks-archive/2026-07/ULTRA-00138-20260728-ensure-key-multi-slash.md` |
 | ULTRA-00138 | 2026-07-28 | `.claude/tasks-archive/2026-07/20260728-ensure-key-multi-slash.md` | `docs/tasks-archive/2026-07/ULTRA-00138-20260728-ensure-key-multi-slash.md` |
+| ULTRA-00139 | 2026-07-28 | `docs/tasks-archive/2026-07/20260728-index-ops-return-info.md` | `docs/tasks-archive/2026-07/ULTRA-00139-20260728-index-ops-return-info.md` |
+| ULTRA-00139 | 2026-07-28 | `.claude/tasks-archive/2026-07/20260728-index-ops-return-info.md` | `docs/tasks-archive/2026-07/ULTRA-00139-20260728-index-ops-return-info.md` |
