@@ -1,4 +1,4 @@
-# Slumber: `@JvmInline value class` serialization support
+# ULTRA-00105: Slumber: `@JvmInline value class` serialization support
 
 **Status:** IN PROGRESS — started 2026-07-24. Framework feature in `ultra/slumber`.
 **Motivation:** enable canonical value types (e.g. `Email`, `RealmId`) that are stored/read through
@@ -108,3 +108,7 @@ untrusted input through slumber decode, confirm the invalid instance is construc
 ## Status
 DONE 2026-07-24 — review loop closed round 2; committing + archiving. Follow-ups (KSP tasks + the ids
 audit) tracked in their own docs.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00105 (was `docs/tasks-archive/2026-07/20260724-slumber-value-class-support.md`).

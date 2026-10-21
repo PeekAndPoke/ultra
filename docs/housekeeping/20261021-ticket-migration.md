@@ -267,3 +267,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00104 | 2026-07-24 | `docs/tasks-archive/2026-07/20260724-add-member.md` | `docs/tasks-archive/2026-07/ULTRA-00104-20260724-add-member.md` |
 | ULTRA-00104 | 2026-07-24 | `.claude/tasks-archive/2026-07/20260724-add-member.md` | `docs/tasks-archive/2026-07/ULTRA-00104-20260724-add-member.md` |
 | ULTRA-00104 | 2026-07-24 | `.claude/tasks/saas-orgs/20260724-add-member.md` | `docs/tasks-archive/2026-07/ULTRA-00104-20260724-add-member.md` |
+| ULTRA-00105 | 2026-07-24 | `docs/tasks-archive/2026-07/20260724-slumber-value-class-support.md` | `docs/tasks-archive/2026-07/ULTRA-00105-20260724-slumber-value-class-support.md` |
+| ULTRA-00105 | 2026-07-24 | `.claude/tasks-archive/2026-07/20260724-slumber-value-class-support.md` | `docs/tasks-archive/2026-07/ULTRA-00105-20260724-slumber-value-class-support.md` |
