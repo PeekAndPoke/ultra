@@ -432,7 +432,7 @@ individually, including confirming `ultra:slumber`'s guard independently of `ult
 
 **Follow-ups created:**
 - `docs/tasks/20260731-redteam-redacted.md` — red-team scenarios (collected, not executed).
-- `docs/tasks/20260731-docs-redacted.md` — DOCS task. `Redacted<T>` is public API with a genuinely
+- ULTRA-00174 (docs redacted) — DOCS task. `Redacted<T>` is public API with a genuinely
   sharp edge (the deliberately broken round trip), so it needs a docs page and an LLM-mirror entry.
   The type is settled: it survived a three-agent gate and two rounds of fixes, and the only change
   since was moving where it is *used*, not what it is.

@@ -18,7 +18,7 @@ review (which found the sharpest defect of all, see below). No further change is
 
 ## Where it goes — no scoping decision needed
 
-Unlike `docs/tasks/20260731-docs-redacted.md`, which is blocked on "where does `ultra:common` get
+Unlike ULTRA-00174 (docs redacted), which is blocked on "where does `ultra:common` get
 documented at all", this one has an obvious home. The config is consumed through funktor:
 
 - `docs-site/src/pages/ultra/funktor/auth.astro`

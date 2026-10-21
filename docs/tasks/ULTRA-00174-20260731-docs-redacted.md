@@ -1,4 +1,4 @@
-# DOCS — `Redacted<T>` (and where `ultra:common` gets documented at all)
+# ULTRA-00174: DOCS — `Redacted<T>` (and where `ultra:common` gets documented at all)
 
 **Status:** TODO — created 2026-07-31 on archiving ULTRA-00169 (redacted and jackson removal)
 **Plan:** ULTRA-00169 (redacted and jackson removal)
@@ -81,3 +81,7 @@ The KDoc on `Redacted.kt` already carries all of this and is the right place for
 - `docs/tasks/20260731-redteam-redacted.md` — attack scenarios, collected not executed.
 - ULTRA-00135 (docs sync remaining) — existing docs-drift backlog; check for overlap
   before starting so this does not duplicate a page someone is already rewriting.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00174 (was `docs/tasks/20260731-docs-redacted.md`).
