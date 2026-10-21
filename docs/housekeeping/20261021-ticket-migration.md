@@ -473,3 +473,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00194 | 2026-08-03 | `.claude/tasks/20260803-contributed-page-runtime-test.md` | `docs/tasks/ULTRA-00194-20260803-contributed-page-runtime-test.md` |
 | ULTRA-00195 | 2026-08-09 | `docs/tasks/20260809-group-clients-under-api.md` | `docs/tasks/ULTRA-00195-20260809-group-clients-under-api.md` |
 | ULTRA-00195 | 2026-08-09 | `.claude/tasks/20260809-group-clients-under-api.md` | `docs/tasks/ULTRA-00195-20260809-group-clients-under-api.md` |
+| ULTRA-00196 | 2026-08-09 | `docs/tasks-archive/2026-08/20260809-acl-aware-navigation.md` | `docs/tasks-archive/2026-08/ULTRA-00196-20260809-acl-aware-navigation.md` |
+| ULTRA-00196 | 2026-08-09 | `.claude/tasks-archive/2026-08/20260809-acl-aware-navigation.md` | `docs/tasks-archive/2026-08/ULTRA-00196-20260809-acl-aware-navigation.md` |
+| ULTRA-00196 | 2026-08-09 | `.claude/tasks/20260809-acl-aware-navigation.md` | `docs/tasks-archive/2026-08/ULTRA-00196-20260809-acl-aware-navigation.md` |

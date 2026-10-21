@@ -1,4 +1,4 @@
-# ACL-aware navigation for contributed pages
+# ULTRA-00196: ACL-aware navigation for contributed pages
 
 **Status:** DONE — 2026-08-24, gate PASSED. Ready to archive.
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
@@ -222,3 +222,7 @@ no. Documenting it now buys a rewrite and a reader who trusted the stale version
 The obligation is not lost: the governing plan
 (ULTRA-00153 (frontend sdk vue contributors), "Follow-ups") already carries a DOCS task
 for the contributor extension point as a whole, which is the right granularity for it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00196 (was `docs/tasks-archive/2026-08/20260809-acl-aware-navigation.md`).

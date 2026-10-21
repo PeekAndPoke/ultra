@@ -185,7 +185,7 @@ that never existed, and the drift guard in `InsightsTsContributorSpec` made recu
 
 - **ACL-aware navigation** — the menu never reads the matrix and cannot, because `SdkNavItem` carries
   no route reference. The false claim is corrected; the feature is
-  `docs/tasks/20260809-acl-aware-navigation.md`.
+  ULTRA-00196 (acl aware navigation).
 - **Barrel scope** — contributed page helpers stay in the barrel, so it can require `vue` and shares
   an export namespace with generated models. Accepted and documented in `TsBarrelEmitter`.
 

@@ -2,7 +2,7 @@
 
 **Status:** TODO — raised by `/feature-review` 2026-08-24 (reviewers 1 and 2, independently).
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
-**Source feature:** `docs/tasks/20260809-acl-aware-navigation.md`
+**Source feature:** ULTRA-00196 (acl aware navigation)
 **Security-critical:** no. The gate itself stays CORRECT under a profile — this is a missing build
 guard, not a wrong access decision.
 

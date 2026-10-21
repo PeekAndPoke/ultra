@@ -217,7 +217,7 @@ detectable instead of silent, which read-then-write can never be.
 A `TsSdkRegistry.Nav` can declare `requires` — the API routes its page cannot work without, resolved
 at generation time off the LIVE route graph by `TsRouteRefs.of(feature, member)`. ALL must pass
 `ApiAcl.canAccess` for the entry to show. Menu only; the router guard still reads only
-`meta.requiresAuth`. Gate PASSED — see `docs/tasks-archive/2026-08/20260809-acl-aware-navigation.md`.
+`meta.requiresAuth`. Gate PASSED — see ULTRA-00196 (acl aware navigation).
 
 **INSIGHTS AGENT — two things touch you:**
 
@@ -335,7 +335,7 @@ have missed a tab added under `ts/insights/tabs/` — the same 2026-08-02 drift 
 
 Deferred by the maintainer, so do not treat either as a defect: the menu does not consult the access
 matrix and cannot (`SdkNavItem` carries no route reference) — filed as
-`20260809-acl-aware-navigation.md`; and contributed helpers stay in the barrel, so it can require
+ULTRA-00196 (acl aware navigation); and contributed helpers stay in the barrel, so it can require
 `vue` and shares a namespace with generated models.
 
 `ultra:codegen` 316, `funktor:codegen` 77, `funktor:rest` 116, 0 failures. Sweep clean, demo app
