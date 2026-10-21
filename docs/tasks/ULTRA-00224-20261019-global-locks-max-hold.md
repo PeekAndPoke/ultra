@@ -1,4 +1,4 @@
-# Global locks: an opt-in maximum hold
+# ULTRA-00224: Global locks: an opt-in maximum hold
 
 **Status:** TODO — maintainer decision 2026-10-19 (against the coordinator's "record no max hold")
 **Plan:** follow-up of ULTRA-00219 (global locks heartbeat) (ledger row 14)
@@ -19,3 +19,7 @@ the server stops or `funktor:cluster:release-locks` frees it.
 - [ ] Tests on all three backends (in-memory, Karango, Monko): a handler beyond `maxHold` loses its lock after ttl, a
       contender then acquires it, exactly one warning; `maxHold = null` keeps today's behaviour. Mutation-checked.
 - [ ] KDoc on the provider; the docs follow-up covers it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00224 (was `docs/tasks/20261019-global-locks-max-hold.md`).

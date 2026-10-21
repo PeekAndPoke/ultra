@@ -1,6 +1,6 @@
 # ULTRA-00223: Docs: global locks expire by heartbeat
 
-**Status:** TODO — write after `docs/tasks/20261019-global-locks-max-hold.md` lands (it adds the `maxHold` parameter).
+**Status:** TODO — write after ULTRA-00224 (global locks max hold) lands (it adds the `maxHold` parameter).
 Settled 2026-10-19: lock timing relies on NTP (state it as a requirement)
 **Plan:** follow-up of ULTRA-00219 (global locks heartbeat) (public API changed)
 **Security-critical:** no
