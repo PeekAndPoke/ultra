@@ -208,5 +208,5 @@ sessions must re-login.** Acceptable: this repo carries no back-compat requireme
 - Kotlin prohibits a `vararg` of a value class, so `hasAnyOrganisation(vararg)` is gone. No production
   caller existed; documented in place.
 
-**Red-team follow-up**: `docs/tasks/20260725-redteam-value-class-orgid.md` (8 scenarios, COLLECTED
+**Red-team follow-up**: ULTRA-00114 (redteam value class orgid) (8 scenarios, COLLECTED
 not executed).
