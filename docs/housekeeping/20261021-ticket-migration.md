@@ -20,3 +20,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00007 | 2026-03-27 | `.claude/tasks-archive/2026-03/2026-03-27_funktor-demo-showcase.md` | `docs/tasks-archive/2026-03/ULTRA-00007-2026-03-27_funktor-demo-showcase.md` |
 | ULTRA-00008 | 2026-03-31 | `docs/tasks-archive/2026-03/2026-03-31-docs-site-visual-ideas.md` | `docs/tasks-archive/2026-03/ULTRA-00008-2026-03-31-docs-site-visual-ideas.md` |
 | ULTRA-00008 | 2026-03-31 | `.claude/tasks-archive/2026-03/2026-03-31-docs-site-visual-ideas.md` | `docs/tasks-archive/2026-03/ULTRA-00008-2026-03-31-docs-site-visual-ideas.md` |
+| ULTRA-00009 | 2026-03-31 | `docs/tasks-archive/2026-03/2026-03-31-wave1-audit-karango-issues.md` | `docs/tasks-archive/2026-03/ULTRA-00009-2026-03-31-wave1-audit-karango-issues.md` |
+| ULTRA-00009 | 2026-03-31 | `.claude/tasks-archive/2026-03/2026-03-31-wave1-audit-karango-issues.md` | `docs/tasks-archive/2026-03/ULTRA-00009-2026-03-31-wave1-audit-karango-issues.md` |

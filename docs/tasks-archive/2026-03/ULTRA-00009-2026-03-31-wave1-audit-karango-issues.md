@@ -1,4 +1,4 @@
-# Audit: Karango — Issues Report
+# ULTRA-00009: Audit: Karango — Issues Report
 
 **Date:** 2026-03-30
 **Auditor:** Code audit agent (Wave 1)
@@ -181,3 +181,7 @@ git show --stat d048f292 5c1f4c9a 3cf75f2d
 
 Strong test coverage (145 tests). Gaps: cursor thread-safety scenarios, UPSERT with special characters in `_key`,
 multi-index `ensureIndexes()`, error message content verification.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00009 (was `docs/tasks-archive/2026-03/2026-03-31-wave1-audit-karango-issues.md`).
