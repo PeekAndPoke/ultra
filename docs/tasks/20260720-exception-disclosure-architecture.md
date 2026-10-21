@@ -175,7 +175,7 @@ identifier looks like the strongest reuse candidate.
 1. ULTRA-00052 (env classification allowlist) — two lines, closes several fail-opens,
    independent of this design.
 2. Channel A default-deny + correlation id (the tactical slice is
-   `docs/tasks/20260720-error-messages-generic-in-production.md` — fold it in if this lands first).
+   ULTRA-00053 (error messages generic in production) — fold it in if this lands first).
 3. `KarangoQueryException` restructuring.
 4. Channel B typing discipline + the public `getWorkers` fix.
 

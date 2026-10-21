@@ -11,7 +11,7 @@ issue?"
 | Finding | Task |
 |---|---|
 | (umbrella) exception design | `20260720-exception-disclosure-architecture.md` |
-| 1 + 2 — production returns `cause.message` (full AQL) | `20260720-error-messages-generic-in-production.md` |
+| 1 + 2 — production returns `cause.message` (full AQL) | ULTRA-00053 (error messages generic in production) |
 | 3 — `isProduction` allow-list fails open on unknown env | ULTRA-00052 (env classification allowlist) |
 | 4 — fixtures install on unknown env | `20260720-fixtures-env-gate.md` |
 | 5 — auth-rule descriptions leak | folded into ULTRA-00052 (env classification allowlist) |

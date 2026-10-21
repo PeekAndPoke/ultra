@@ -1,4 +1,4 @@
-# Error responses must not return `cause.message` in production
+# ULTRA-00053: Error responses must not return `cause.message` in production
 
 **Status:** TODO — tactical slice; see
 `docs/tasks/20260720-exception-disclosure-architecture.md` for the umbrella design
@@ -378,3 +378,7 @@ Commands:
 Fixes applied: ...
 
 **Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00053 (was `docs/tasks/20260720-error-messages-generic-in-production.md`).
