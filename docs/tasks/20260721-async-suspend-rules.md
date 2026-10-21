@@ -1,7 +1,7 @@
 # Async / suspend form validation rules
 
 **Status:** DONE — `/feature-review` gate PASS (2026-07-21)
-**Plan:** i18n/l10n foundation umbrella (`docs/tasks/20260720-i18n-l10n-foundation.md`) — sibling
+**Plan:** i18n/l10n foundation umbrella (ULTRA-00069 (i18n l10n foundation)) — sibling
 feature; validation seam originally opened in S5.
 
 ## Goal

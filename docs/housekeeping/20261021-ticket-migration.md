@@ -172,3 +172,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00067 | 2026-07-20 | `.claude/tasks/20260720-secure-secret-generator.md` | `docs/tasks/ULTRA-00067-20260720-secure-secret-generator.md` |
 | ULTRA-00068 | 2026-07-20 | `docs/tasks/20260720-auth-frontend-composability.md` | `docs/tasks/ULTRA-00068-20260720-auth-frontend-composability.md` |
 | ULTRA-00068 | 2026-07-20 | `.claude/tasks/20260720-auth-frontend-composability.md` | `docs/tasks/ULTRA-00068-20260720-auth-frontend-composability.md` |
+| ULTRA-00069 | 2026-07-20 | `docs/tasks/20260720-i18n-l10n-foundation.md` | `docs/tasks/ULTRA-00069-20260720-i18n-l10n-foundation.md` |
+| ULTRA-00069 | 2026-07-20 | `.claude/tasks/i18n/20260720-i18n-l10n-foundation.md` | `docs/tasks/ULTRA-00069-20260720-i18n-l10n-foundation.md` |
+| ULTRA-00069 | 2026-07-20 | `.claude/tasks/20260720-i18n-l10n-foundation.md` | `docs/tasks/ULTRA-00069-20260720-i18n-l10n-foundation.md` |

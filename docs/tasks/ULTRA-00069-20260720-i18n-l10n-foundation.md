@@ -1,4 +1,4 @@
-# i18n / l10n foundation — design decisions
+# ULTRA-00069: i18n / l10n foundation — design decisions
 
 **Status:** IN PROGRESS — S1–S5 DONE (committed + gated, 2026-07-20/21); S6 folded into the
 exception-disclosure task; S7 design agreed → `20260722-i18n-s7-emails.md` (2026-07-22)
@@ -398,3 +398,7 @@ separate later tasks once the text foundation lands.
 - [ ] `TestBed.preact { }` — a component re-renders on `setLang`
 - [ ] Checker unit tests: missing / superfluous / placeholder-mismatch detection
 - [ ] Full: `./gradlew :funktor:i18n:jvmTest :funktor:i18n:jsTest <codegen module>:check`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00069 (was `docs/tasks/20260720-i18n-l10n-foundation.md`).

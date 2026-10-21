@@ -1,7 +1,7 @@
 # S4 — kraft reactive i18n glue
 
 **Status:** DONE — gate PASS after fixes, `I18nGlueSpec` (5 tests) green in-browser (2026-07-21)
-**Plan:** `docs/tasks/20260720-i18n-l10n-foundation.md` → Build step S4
+**Plan:** ULTRA-00069 (i18n l10n foundation) → Build step S4
 **Security-critical:** no
 
 ## Spec
