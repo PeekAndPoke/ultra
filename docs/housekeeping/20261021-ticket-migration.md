@@ -437,3 +437,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00179 | 2026-08-01 | `.claude/tasks/20260801-docs-slumber-as.md` | `docs/tasks/ULTRA-00179-20260801-docs-slumber-as.md` |
 | ULTRA-00180 | 2026-08-01 | `docs/tasks/20260801-slumber-as-followups.md` | `docs/tasks/ULTRA-00180-20260801-slumber-as-followups.md` |
 | ULTRA-00180 | 2026-08-01 | `.claude/tasks/20260801-slumber-as-followups.md` | `docs/tasks/ULTRA-00180-20260801-slumber-as-followups.md` |
+| ULTRA-00181 | 2026-08-01 | `docs/tasks-archive/2026-08/20260801-kotlin-apiacl-naming-alignment.md` | `docs/tasks-archive/2026-08/ULTRA-00181-20260801-kotlin-apiacl-naming-alignment.md` |
+| ULTRA-00181 | 2026-08-01 | `.claude/tasks-archive/2026-08/20260801-kotlin-apiacl-naming-alignment.md` | `docs/tasks-archive/2026-08/ULTRA-00181-20260801-kotlin-apiacl-naming-alignment.md` |
+| ULTRA-00181 | 2026-08-01 | `.claude/tasks/20260801-kotlin-apiacl-naming-alignment.md` | `docs/tasks-archive/2026-08/ULTRA-00181-20260801-kotlin-apiacl-naming-alignment.md` |

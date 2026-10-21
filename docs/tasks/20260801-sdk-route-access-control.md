@@ -4,7 +4,7 @@
 **Plan:** ULTRA-00146 (ts sdk codegen) → Phase 4 / Vue-contributors family
 **Security-critical:** yes — see the scope note below, it is narrower than it looks
 
-Companion: `docs/tasks/20260801-kotlin-apiacl-naming-alignment.md` (the Kotlin side of the same
+Companion: ULTRA-00181 (kotlin apiacl naming alignment) (the Kotlin side of the same
 vocabulary). The two can land in either order and neither blocks the other.
 
 ## Why

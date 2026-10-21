@@ -475,7 +475,7 @@ is how the asymmetry becomes permanent.
 ## Route access control — pairs with auth (2026-08-01)
 
 `docs/tasks/20260801-sdk-route-access-control.md`, and its Kotlin counterpart
-`docs/tasks/20260801-kotlin-apiacl-naming-alignment.md`.
+ULTRA-00181 (kotlin apiacl naming alignment).
 
 Generated client members become **callable AND self-describing** — `route()` wraps each one so it
 carries its own `method` and `uri`, which is exactly the key `UserApiAccessMatrix` is indexed by. A

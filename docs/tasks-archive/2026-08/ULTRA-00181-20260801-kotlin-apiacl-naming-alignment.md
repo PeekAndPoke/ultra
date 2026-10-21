@@ -1,4 +1,4 @@
-# Align the Kotlin `ApiAcl` vocabulary with the TypeScript SDK
+# ULTRA-00181: Align the Kotlin `ApiAcl` vocabulary with the TypeScript SDK
 
 **Status:** DONE (archived 2026-10-19) — implemented 2026-08-01 alongside the TypeScript side; one implementation
 reviewer (maintainer, 2026-10-19), its MAJOR and MINORs fixed. Docs were updated in the same change, so no docs
@@ -120,3 +120,7 @@ ownership checks. `canAccess` is unaffected either way (both levels are access);
 "is admin") would then under-report as `Partial`. Behaviour change → not made here.
 
 **Verdict:** PASS (no open CRITICAL/MAJOR).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00181 (was `docs/tasks-archive/2026-08/20260801-kotlin-apiacl-naming-alignment.md`).
