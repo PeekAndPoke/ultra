@@ -1,7 +1,7 @@
 # Docs: switchMap / switchMapNotNull
 
 **Status:** DONE (archived 2026-08-24)
-**Plan:** follow-up of `docs/tasks-archive/2026-08/20260824-streams-switchmap.md`
+**Plan:** follow-up of ULTRA-00199 (streams switchmap)
 **Security-critical:** no
 
 ## Spec

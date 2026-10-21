@@ -1,4 +1,4 @@
-# Streams: switchMap / switchMapNotNull operator
+# ULTRA-00199: Streams: switchMap / switchMapNotNull operator
 
 **Status:** DONE (archived 2026-08-24)
 **Plan:** standalone (user request 2026-08-24; design plan re-confirmed with user before implementation)
@@ -135,3 +135,7 @@ the flag fails exactly that case.
 Note this file's own commit history is misleading — the operator and spec were swept into
 `5ab46234` ("take the build lock for ACL-aware navigation") by another agent committing a shared
 index. Nothing was lost; the content is just under the wrong message.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00199 (was `docs/tasks-archive/2026-08/20260824-streams-switchmap.md`).

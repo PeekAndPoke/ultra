@@ -2,7 +2,7 @@
 
 **Status:** DONE (archived 2026-08-24) — gradle verification completed, all targets green
 **Plan:** standalone — found while building `switchMap`
-(`docs/tasks-archive/2026-08/20260824-streams-switchmap.md`)
+(ULTRA-00199 (streams switchmap))
 **Security-critical:** no (confirmed by the security review — no trust boundary, no red-team task)
 
 ## Spec
