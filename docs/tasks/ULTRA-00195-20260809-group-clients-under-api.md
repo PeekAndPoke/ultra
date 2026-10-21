@@ -1,4 +1,4 @@
-# Group generated API clients under `api/`
+# ULTRA-00195: Group generated API clients under `api/`
 
 **Status:** DONE — 2026-08-09. `/feature-review` not run; see the review record.
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
@@ -78,3 +78,7 @@ specifiers such as `zod` correctly bypass it, and `TsClientEmitter` is the only 
 file below the root. The one adjacent finding — that a contributor's `importFrom` is stored
 unvalidated and could name an escaping relative path — predates this change; recorded in the batch
 record rather than here.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00195 (was `docs/tasks/20260809-group-clients-under-api.md`).
