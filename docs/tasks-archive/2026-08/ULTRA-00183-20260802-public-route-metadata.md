@@ -1,4 +1,4 @@
-# Public-route metadata in the generated TypeScript SDK
+# ULTRA-00183: Public-route metadata in the generated TypeScript SDK
 
 **Status:** DONE — implemented and gated 2026-08-02 (`ceee702a`, doc fix in `eb609f09`). Archived.
 
@@ -188,3 +188,7 @@ vocabulary genuinely diverges from the Kotlin `ApiAcl`, which has no `isPublic`.
 
 **Red-team follow-up:** folded into `docs/tasks/20260802-redteam-sdk-auth.md` (section B) rather
 than given its own file — the attack surface is the same matrix.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00183 (was `docs/tasks-archive/2026-08/20260802-public-route-metadata.md`).
