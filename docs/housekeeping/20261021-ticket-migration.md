@@ -337,3 +337,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00133 | 2026-07-28 | `.claude/tasks/20260728-redteam-i18n-email-templates.md` | `docs/tasks/ULTRA-00133-20260728-redteam-i18n-email-templates.md` |
 | ULTRA-00134 | 2026-07-28 | `docs/tasks/20260728-library-knowhow-skills.md` | `docs/tasks/ULTRA-00134-20260728-library-knowhow-skills.md` |
 | ULTRA-00134 | 2026-07-28 | `.claude/tasks/20260728-library-knowhow-skills.md` | `docs/tasks/ULTRA-00134-20260728-library-knowhow-skills.md` |
+| ULTRA-00135 | 2026-07-28 | `docs/tasks/20260728-docs-sync-remaining.md` | `docs/tasks/ULTRA-00135-20260728-docs-sync-remaining.md` |
+| ULTRA-00135 | 2026-07-28 | `.claude/tasks/20260728-docs-sync-remaining.md` | `docs/tasks/ULTRA-00135-20260728-docs-sync-remaining.md` |

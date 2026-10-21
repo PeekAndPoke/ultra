@@ -1,4 +1,4 @@
-# Docs/code sync — remaining items from the 2026-07-28 audit
+# ULTRA-00135: Docs/code sync — remaining items from the 2026-07-28 audit
 
 **Status:** TODO — the BROKEN class is fixed; these are the GAPs and DRIFT left over
 **Plan:** none (follow-up to the docs sync audit)
@@ -73,3 +73,7 @@ Two findings are worth remembering as evidence, not just history:
   `buildSrc/src/main/kotlin/ExtractExampleCodePlugin.kt` — it already extracts `<CodeBlock>` regions
   from real compiled Kotlin, but only for the `kraft/examples/*` apps to display their own source, and
   docs-site cannot consume its Kotlin-object output. A JSON emit would be needed to bridge it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00135 (was `docs/tasks/20260728-docs-sync-remaining.md`).

@@ -8,7 +8,7 @@ standing rule.
 **Triggering changes:** `52512bd4` (part 1: block-style authorize DSL), `2b6d274d` (part 2: mandatory ApiRoutes floor), and
 parts 3–4, which landed 2026-07-23 (two-phase auth + pluggable route checks + org-isolation + opt-in `ConsistentParam`;
 `findById` → `Stored` route params). All four parts are DONE and archived in `docs/tasks-archive/2026-07/`.
-**Overlap:** `20260728-docs-sync-remaining.md` §2 lists the same part-3 gap ("`ConsistentParam` / caller-binding, two-phase auth
+**Overlap:** ULTRA-00135 (docs sync remaining) §2 lists the same part-3 gap ("`ConsistentParam` / caller-binding, two-phase auth
 evaluation, `RouteBootCheck`, `RouteParamsGuard`"). One docs pass should close both; decide which doc owns it then.
 **Settled?** Yes for the extension points — `RouteBootCheck.kt`, `RouteParamsGuard.kt` and `auth/AuthPhase.kt` have had no
 commit since 2026-07-23. The moving part is org isolation: ULTRA-00094 (route check followups) item 5 may add a

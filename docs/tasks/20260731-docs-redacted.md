@@ -79,5 +79,5 @@ The KDoc on `Redacted.kt` already carries all of this and is the right place for
 ## Related
 
 - `docs/tasks/20260731-redteam-redacted.md` — attack scenarios, collected not executed.
-- `docs/tasks/20260728-docs-sync-remaining.md` — existing docs-drift backlog; check for overlap
+- ULTRA-00135 (docs sync remaining) — existing docs-drift backlog; check for overlap
   before starting so this does not duplicate a page someone is already rewriting.
