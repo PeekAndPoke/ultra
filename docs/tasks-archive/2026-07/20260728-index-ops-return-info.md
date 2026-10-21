@@ -95,7 +95,7 @@ session does not re-tread it.
 2. This task file's follow-up note claimed the CLI could exit non-zero on `hasErrors`. Wrong —
    `hasErrors` is on `VaultModels.RepositoryInfo` (`VaultModels.kt:14`), not on `IndexesInfo`.
    Corrected, so the follow-up does not start from a false premise.
-3. Created `docs/tasks/20260728-docs-index-ops-return-info.md` — public API changed and the docs
+3. Created ULTRA-00137 (docs index ops return info) — public API changed and the docs
    still present ensure and validate as alternatives (`docs-site/src/pages/ultra/karango/kontainer-integration.astro:119`
    and its mirror `docs-site/src/data/llms/karango.md:900`).
 

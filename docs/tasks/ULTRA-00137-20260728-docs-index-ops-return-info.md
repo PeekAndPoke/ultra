@@ -1,4 +1,4 @@
-# DOCS: Database.ensureIndexes / recreateIndexes now return the index report
+# ULTRA-00137: DOCS: Database.ensureIndexes / recreateIndexes now return the index report
 
 **Status:** TODO
 **Plan:** follow-up from `docs/tasks-archive/2026-07/20260728-index-ops-return-info.md`
@@ -40,3 +40,7 @@ Keep it compact per the docs rules: this is one signature change plus two gotcha
 ## Test evidence
 
 n/a — docs only. Verify the docs site builds.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00137 (was `docs/tasks/20260728-docs-index-ops-return-info.md`).
