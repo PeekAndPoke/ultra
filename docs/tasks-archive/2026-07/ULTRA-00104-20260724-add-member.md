@@ -1,4 +1,4 @@
-# Add member to an organisation (b2b leaf) + reactivate soft-deleted slot
+# ULTRA-00104: Add member to an organisation (b2b leaf) + reactivate soft-deleted slot
 
 **Status:** DONE — 2026-07-24. Review loop closed at round 1 (zero production-code defects; the
 follow-ups were doc/test-only, applied). The next leaf off the b2b membership arc
@@ -122,3 +122,7 @@ doc/test-only follow-ups).
 - Invite/accept CONSENT flow + new-user (no account yet) invites; server-side role allowlist
   (`getKnownRoles`, backlog §4); append-only membership-event log if audit/tenure matters; promoting the
   reactivation orchestration to `OrgMembersStorage` only if a 2nd app (b2b2c/ops) needs it.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00104 (was `docs/tasks-archive/2026-07/20260724-add-member.md`).
