@@ -29,7 +29,7 @@ itself. Records: `docs/tasks-archive/2026-10/20261018-datetime-js-performance.md
 **ultra/datetime does its own zone math** (`ultra/datetime/src/commonMain/kotlin/TimezoneEngine.kt`, java.time
 semantics, Intl on JS) and **kotlinx-datetime is 0.8.0** (`829f6a59`, `fed9393d`, + the review-fix commit). JS needs no
 tz data; `installNativeTimezones()` is GONE (ultra and Kraft) and Kraft installs no zone provider by default.
-Record: `docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md`.
+Record: ULTRA-00209 (kotlinx datetime js timezones).
 
 **Worth taking:** Chrome's Intl case-folds zone ids AND canonicalises aliases (`US/Pacific` → `America/Los_Angeles`,
 `Asia/Kolkata` → `Asia/Calcutta`), so `resolvedOptions().timeZone` cannot tell a typo from an alias. The JVM parity
@@ -40,7 +40,7 @@ change.
 
 **Kotlin 2.4.21, Gradle 9.7.1, KSP 2.3.12, maven-publish 0.37.0, Ktor 3.6.0, kotest 6.2.6** and a library refresh
 (`fb1b93f8`); versions and holds in ULTRA-00208 (kotlin 2421 upgrade). **kotlinx-datetime stays 0.6.2**
-(`0dc2df67`): 0.8.0 breaks every named zone on JS — follow-up `docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md` (done).
+(`0dc2df67`): 0.8.0 breaks every named zone on JS — follow-up ULTRA-00209 (kotlinx datetime js timezones) (done).
 A full `clean build` after the upgrade matched the 0.110.0 baseline per target (14675 tests / 68 targets).
 
 **Worth taking:** Gradle's ceiling is set by KGP, not by "latest" — the compatibility table on

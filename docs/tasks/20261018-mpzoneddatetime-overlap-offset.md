@@ -1,7 +1,7 @@
 # MpZonedDateTime loses the offset in a DST overlap
 
 **Status:** TODO
-**Plan:** none — out-of-scope finding from the `/feature-review` of `docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md` (round 1, 2026-10-18)
+**Plan:** none — out-of-scope finding from the `/feature-review` of ULTRA-00209 (kotlinx datetime js timezones) (round 1, 2026-10-18)
 **Security-critical:** no — but persistence (mutation-check bar)
 
 ## Spec

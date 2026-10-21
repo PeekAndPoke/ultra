@@ -1,7 +1,7 @@
 # Docs: ultra/datetime zone engine and kotlinx converters
 
 **Status:** DONE (archived 2026-10-18)
-**Plan:** follow-up DOCS task of `docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md` (public API changed)
+**Plan:** follow-up DOCS task of ULTRA-00209 (kotlinx datetime js timezones) (public API changed)
 **Security-critical:** no
 
 ## Spec

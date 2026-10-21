@@ -7,7 +7,7 @@
 ## Spec
 
 **Pre-existing**, introduced by the round-1 MINOR batch of
-`docs/tasks-archive/2026-10/20261018-kotlinx-datetime-js-timezones.md` (the native per-id `TimeZone` cache; its
+ULTRA-00209 (kotlinx datetime js timezones) (the native per-id `TimeZone` cache; its
 ledger row says "NOT measured, NOT independently verified").
 
 `ultra/datetime/src/nativeMain/kotlin/TimezoneEngineNative.kt` caches every zone id that `TimeZone.of(id)` resolves,
