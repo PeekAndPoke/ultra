@@ -1,4 +1,4 @@
-# `UserId` value class (value-class-ids Step 2)
+# ULTRA-00113: `UserId` value class (value-class-ids Step 2)
 
 **Status:** DONE 2026-07-25 (gate PASS — all three reviewers, confirmed findings fixed, tests green)
 **Plan:** ULTRA-00110 (value class ids migration) → Step 2
@@ -169,3 +169,7 @@ claims (written via `.value`).
 
 **Red-team follow-up**: ULTRA-00112 (redteam value class userid) (7 scenarios, COLLECTED
 not executed).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00113 (was `docs/tasks-archive/2026-07/20260725-value-class-userid.md`).

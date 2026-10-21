@@ -286,3 +286,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00111 | 2026-07-25 | `.claude/future-plans/20260725-monko-findbyid-collection-prefix.md` | `docs/tasks/future/ULTRA-00111-20260725-monko-findbyid-collection-prefix.md` |
 | ULTRA-00112 | 2026-07-25 | `docs/tasks/20260725-redteam-value-class-userid.md` | `docs/tasks/ULTRA-00112-20260725-redteam-value-class-userid.md` |
 | ULTRA-00112 | 2026-07-25 | `.claude/tasks/20260725-redteam-value-class-userid.md` | `docs/tasks/ULTRA-00112-20260725-redteam-value-class-userid.md` |
+| ULTRA-00113 | 2026-07-25 | `docs/tasks-archive/2026-07/20260725-value-class-userid.md` | `docs/tasks-archive/2026-07/ULTRA-00113-20260725-value-class-userid.md` |
+| ULTRA-00113 | 2026-07-25 | `.claude/tasks-archive/2026-07/20260725-value-class-userid.md` | `docs/tasks-archive/2026-07/ULTRA-00113-20260725-value-class-userid.md` |
+| ULTRA-00113 | 2026-07-25 | `.claude/tasks/20260725-value-class-userid.md` | `docs/tasks-archive/2026-07/ULTRA-00113-20260725-value-class-userid.md` |

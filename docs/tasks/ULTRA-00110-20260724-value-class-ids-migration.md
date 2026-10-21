@@ -92,7 +92,7 @@ planned id (`RealmId`/`UserId`/`OrgId`/`Email`/`Slug`) is `String`-backed → fi
 non-primitive (date/UUID/nested VC) would fail loudly at bind time — acceptable, documented.
 
 ## Step 2 — `UserId` ✅ DONE 2026-07-25
-See `docs/tasks-archive/2026-07/20260725-value-class-userid.md` (gate PASS). Two corrections to the plan below:
+See ULTRA-00113 (value class userid) (gate PASS). Two corrections to the plan below:
 **placement is `ultra/security` commonMain, NOT `funktor/auth`** (`OrgMember` lives in funktor/saas,
 which has no dependency on funktor:auth — ultra:security is the lowest common module and already owns
 `UserRecord.userId`/`JwtUserData`/the CSRF key); and **the invariant is STRUCTURAL, not coll/key**,
