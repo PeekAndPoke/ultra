@@ -1,4 +1,4 @@
-# Vault: startup hook-consistency checks / auto-attach hooks
+# ULTRA-00103: Vault: startup hook-consistency checks / auto-attach hooks
 
 **Status:** FUTURE — not scheduled.
 **Area:** ultra:vault (repositories, hooks), app startup validation.
@@ -45,3 +45,7 @@ just never get written, with no error. Two escalation levels:
 - [[ULTRA-00101]] — first big beneficiary of auto-attach.
 - Known trap in this area: `kontainer-semidynamic-singleton-trap` (memory) — hook factories with
   ctor deps must mind kontainer semantics.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00103 (was `docs/tasks/future/20260723-vault-hook-consistency-checks.md`).

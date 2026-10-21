@@ -262,3 +262,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00101 | 2026-07-23 | `.claude/future-plans/20260723-entity-mutation-tracking.md` | `docs/tasks/future/ULTRA-00101-20260723-entity-mutation-tracking.md` |
 | ULTRA-00102 | 2026-07-23 | `docs/tasks/future/20260723-request-ids.md` | `docs/tasks/future/ULTRA-00102-20260723-request-ids.md` |
 | ULTRA-00102 | 2026-07-23 | `.claude/future-plans/20260723-request-ids.md` | `docs/tasks/future/ULTRA-00102-20260723-request-ids.md` |
+| ULTRA-00103 | 2026-07-23 | `docs/tasks/future/20260723-vault-hook-consistency-checks.md` | `docs/tasks/future/ULTRA-00103-20260723-vault-hook-consistency-checks.md` |
+| ULTRA-00103 | 2026-07-23 | `.claude/future-plans/20260723-vault-hook-consistency-checks.md` | `docs/tasks/future/ULTRA-00103-20260723-vault-hook-consistency-checks.md` |
