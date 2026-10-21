@@ -1,4 +1,4 @@
-# Forms: dynamic (callback) comparison values in rules
+# ULTRA-00079: Forms: dynamic (callback) comparison values in rules
 
 **Status:** FUTURE — not scheduled. Deferred while finishing i18n.
 **Area:** kraft forms validation rules.
@@ -69,3 +69,7 @@ Interactions to keep in mind: async rules (option 2 amplifies server calls; debo
 ## Related
 
 - Keyboard accessibility, select redesign, and per-field DOM tests are separate future-plans in this dir.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00079 (was `docs/tasks/future/20260722-forms-dynamic-comparison-values.md`).

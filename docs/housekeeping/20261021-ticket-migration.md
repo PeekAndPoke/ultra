@@ -202,3 +202,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00078 | 2026-07-21 | `docs/tasks/20260721-redteam-async-suspend-rules.md` | `docs/tasks/ULTRA-00078-20260721-redteam-async-suspend-rules.md` |
 | ULTRA-00078 | 2026-07-21 | `.claude/tasks/i18n/20260721-redteam-async-suspend-rules.md` | `docs/tasks/ULTRA-00078-20260721-redteam-async-suspend-rules.md` |
 | ULTRA-00078 | 2026-07-21 | `.claude/tasks/20260721-redteam-async-suspend-rules.md` | `docs/tasks/ULTRA-00078-20260721-redteam-async-suspend-rules.md` |
+| ULTRA-00079 | 2026-07-22 | `docs/tasks/future/20260722-forms-dynamic-comparison-values.md` | `docs/tasks/future/ULTRA-00079-20260722-forms-dynamic-comparison-values.md` |
+| ULTRA-00079 | 2026-07-22 | `.claude/future-plans/20260722-forms-dynamic-comparison-values.md` | `docs/tasks/future/ULTRA-00079-20260722-forms-dynamic-comparison-values.md` |
