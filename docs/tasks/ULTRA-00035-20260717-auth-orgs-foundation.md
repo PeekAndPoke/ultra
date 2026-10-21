@@ -313,7 +313,7 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
 - [x] Green: `:ultra:security:jvmTest`, `:funktor:rest:jvmTest`, `:funktor:auth:jvmTest`, JS + demo compile
 - [ ] `/feature-review` gate + red-team follow-up task (pending — see note below)
 
-### Phase O1 — `funktor/saas` module — DONE 2026-07-18 (task `20260717-saas-organisation-storage.md`, pending /feature-review)
+### Phase O1 — `funktor/saas` module — DONE 2026-07-18 (task ULTRA-00038 (saas organisation storage), pending /feature-review)
 - [x] `Organisation` entity (embedded branches) + `OrgModel`/`BranchModel` common models
       (note: org `plan`/feature-switch model deferred to O2 where permissions are built)
 - [x] `OrgsStorage` + Karango/Monko repos (unique slug index) + builder DSL + kontainer module

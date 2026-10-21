@@ -82,3 +82,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00037 | 2026-07-17 | `docs/tasks/20260717-userpermissions-org-refactor.md` | `docs/tasks/ULTRA-00037-20260717-userpermissions-org-refactor.md` |
 | ULTRA-00037 | 2026-07-17 | `.claude/tasks/saas-orgs/20260717-userpermissions-org-refactor.md` | `docs/tasks/ULTRA-00037-20260717-userpermissions-org-refactor.md` |
 | ULTRA-00037 | 2026-07-17 | `.claude/tasks/20260717-userpermissions-org-refactor.md` | `docs/tasks/ULTRA-00037-20260717-userpermissions-org-refactor.md` |
+| ULTRA-00038 | 2026-07-17 | `docs/tasks/20260717-saas-organisation-storage.md` | `docs/tasks/ULTRA-00038-20260717-saas-organisation-storage.md` |
+| ULTRA-00038 | 2026-07-17 | `.claude/tasks/saas-orgs/20260717-saas-organisation-storage.md` | `docs/tasks/ULTRA-00038-20260717-saas-organisation-storage.md` |
+| ULTRA-00038 | 2026-07-17 | `.claude/tasks/20260717-saas-organisation-storage.md` | `docs/tasks/ULTRA-00038-20260717-saas-organisation-storage.md` |

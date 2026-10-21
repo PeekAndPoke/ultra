@@ -1,7 +1,7 @@
 # Red-team: SaaS organisations (Phase O1)
 
 **Status:** COLLECTED — do NOT execute during feature work; run in a dedicated pentest session
-**Feature task:** `20260717-saas-organisation-storage.md`
+**Feature task:** ULTRA-00038 (saas organisation storage)
 **Scope:** `funktor/saas` — `Organisation`/`Branch` entity, `OrgsStorage`, `OrgsApiFeature`,
 `ensureOrganisation` startup hook.
 

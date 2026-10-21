@@ -1,4 +1,4 @@
-# funktor/saas module + Organisation storage (Phase O1)
+# ULTRA-00038: funktor/saas module + Organisation storage (Phase O1)
 
 **Status:** IN REVIEW — implementation complete + green (2026-07-18); pending `/feature-review` gate
 **Plan:** ULTRA-00035 (auth orgs foundation) → Phase O1
@@ -69,3 +69,7 @@ persisted to both ArangoDB (karango) and MongoDB (monko), with a unique slug.
 **Red-team follow-up:** `20260718-redteam-saas-orgs.md` (created).
 
 **Gate verdict: PASS** — no open CRITICAL/HIGH exploitable now; e2e tests present (both backends) & green.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00038 (was `docs/tasks/20260717-saas-organisation-storage.md`).
