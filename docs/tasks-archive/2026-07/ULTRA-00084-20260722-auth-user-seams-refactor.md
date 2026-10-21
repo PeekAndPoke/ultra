@@ -1,4 +1,4 @@
-# Auth USER seams refactor — AuthUser bound + AuthUserAdapter
+# ULTRA-00084: Auth USER seams refactor — AuthUser bound + AuthUserAdapter
 
 **Status:** DONE (2026-07-22) — review loop closed in round 1 with zero confirmed findings across all
 three reviewers; 1,028 backend tests green
@@ -175,3 +175,7 @@ all modules compile jvm+js.
 - Pre-existing (NOT introduced here), recorded for the security backlog: recovery/SSO email lookups
   are un-normalized (fails closed); recovery-init has a timing side-channel (email send only when
   user exists).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00084 (was `docs/tasks-archive/2026-07/20260722-auth-user-seams-refactor.md`).

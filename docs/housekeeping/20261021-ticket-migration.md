@@ -212,3 +212,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00082 | 2026-07-22 | `.claude/future-plans/20260722-forms-uiselectfield-redesign.md` | `docs/tasks/future/ULTRA-00082-20260722-forms-uiselectfield-redesign.md` |
 | ULTRA-00083 | 2026-07-22 | `docs/tasks/future/20260722-functional-component-review-hardening.md` | `docs/tasks/future/ULTRA-00083-20260722-functional-component-review-hardening.md` |
 | ULTRA-00083 | 2026-07-22 | `.claude/future-plans/20260722-functional-component-review-hardening.md` | `docs/tasks/future/ULTRA-00083-20260722-functional-component-review-hardening.md` |
+| ULTRA-00084 | 2026-07-22 | `docs/tasks-archive/2026-07/20260722-auth-user-seams-refactor.md` | `docs/tasks-archive/2026-07/ULTRA-00084-20260722-auth-user-seams-refactor.md` |
+| ULTRA-00084 | 2026-07-22 | `.claude/tasks-archive/2026-07/20260722-auth-user-seams-refactor.md` | `docs/tasks-archive/2026-07/ULTRA-00084-20260722-auth-user-seams-refactor.md` |
+| ULTRA-00084 | 2026-07-22 | `.claude/tasks/20260722-auth-user-seams-refactor.md` | `docs/tasks-archive/2026-07/ULTRA-00084-20260722-auth-user-seams-refactor.md` |
