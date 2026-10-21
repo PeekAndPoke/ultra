@@ -47,7 +47,7 @@ and can be written today. The page that calls the client cannot. So build leaves
 
 ### D-2. Ownership overlaps the codegen agent
 
-Their backlog (`docs/tasks-archive/2026-08/20260802-codegen-loop-handoff.md` §4) has "an insights contributor — the registry's
+Their backlog (ULTRA-00184 (codegen loop handoff) §4) has "an insights contributor — the registry's
 SECOND consumer". Proposed split, to be confirmed with them via `.claude/BUILD-LOCK.md`:
 
 - **Them:** the mechanism — import-specifier resolution, registry, emission.

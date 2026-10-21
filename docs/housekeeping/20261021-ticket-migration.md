@@ -445,3 +445,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00183 | 2026-08-02 | `docs/tasks-archive/2026-08/20260802-public-route-metadata.md` | `docs/tasks-archive/2026-08/ULTRA-00183-20260802-public-route-metadata.md` |
 | ULTRA-00183 | 2026-08-02 | `.claude/tasks-archive/2026-08/20260802-public-route-metadata.md` | `docs/tasks-archive/2026-08/ULTRA-00183-20260802-public-route-metadata.md` |
 | ULTRA-00183 | 2026-08-02 | `.claude/tasks/20260802-public-route-metadata.md` | `docs/tasks-archive/2026-08/ULTRA-00183-20260802-public-route-metadata.md` |
+| ULTRA-00184 | 2026-08-02 | `docs/tasks-archive/2026-08/20260802-codegen-loop-handoff.md` | `docs/tasks-archive/2026-08/ULTRA-00184-20260802-codegen-loop-handoff.md` |
+| ULTRA-00184 | 2026-08-02 | `.claude/tasks-archive/2026-08/20260802-codegen-loop-handoff.md` | `docs/tasks-archive/2026-08/ULTRA-00184-20260802-codegen-loop-handoff.md` |
+| ULTRA-00184 | 2026-08-02 | `.claude/tasks/20260802-codegen-loop-handoff.md` | `docs/tasks-archive/2026-08/ULTRA-00184-20260802-codegen-loop-handoff.md` |

@@ -1,4 +1,4 @@
-# Loop handoff — TS SDK codegen, nightly run 2026-08-02
+# ULTRA-00184: Loop handoff — TS SDK codegen, nightly run 2026-08-02
 
 **Status:** DONE — loop ENDED 2026-08-02 ("The SDK side of a login screen is COMPLETE" below), archived 2026-10-19. A loop-state
 log, not a task. What it left open was resolved or re-homed afterwards: both "needs the maintainer" items were decided the
@@ -468,3 +468,7 @@ is additive.
 
 Also landed since: `funktor/rest` now requires `Content-Type: application/json` on body-bearing routes
 (415 otherwise). Your generated client already complies (`runtime/client.ts:151-154`).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00184 (was `docs/tasks-archive/2026-08/20260802-codegen-loop-handoff.md`).
