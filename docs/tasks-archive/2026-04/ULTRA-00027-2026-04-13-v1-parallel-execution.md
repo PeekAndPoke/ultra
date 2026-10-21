@@ -1,4 +1,4 @@
-# v1.0.0 Parallel Execution Plan
+# ULTRA-00027: v1.0.0 Parallel Execution Plan
 
 **Date:** 2026-04-05
 **Current version:** 0.104.2 → **Target:** 1.0.0
@@ -310,3 +310,7 @@ With Track B mostly shipped, the remaining work is pure parallelism — no criti
   `.claude/skills/karakum-setup/`. Retry for simpler libraries post-v1.
 - **Kraft Tailwind Phase 1** — not started. Explicitly deferred to post-v1.
 - **PixiJS addon + Breakout demo** — shipped; template for future heavy-lib addons.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00027 (was `docs/tasks-archive/2026-04/2026-04-13-v1-parallel-execution.md`).
