@@ -5,7 +5,7 @@
 which covers both diffs. **Increment 2 (the cookie transport) DROPPED 2026-08-02** — see below; the
 reasoning is kept so it is not re-proposed. Security-critical.
 **Residue that outlives this task:** `docs/tasks/20260802-csp-and-token-ttl.md` (CSP + Trusted Types,
-shorter TTL) and `docs/tasks/20260728-session-revocation-wiring.md` (the only real logout).
+shorter TTL) and ULTRA-00136 (session revocation wiring) (the only real logout).
 **Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c).
 
 ## The gap (current behaviour)
@@ -84,7 +84,7 @@ the bundle, so it is a speed bump measured in minutes.
 
 - **Real logout.** Neither transport gives it. `logout()` drops local state and the JWT stays valid until
   `exp`; clearing a cookie would not have invalidated it either. The fix is
-  `docs/tasks/20260728-session-revocation-wiring.md` — storage half built, unwired — and it is
+  ULTRA-00136 (session revocation wiring) — storage half built, unwired — and it is
   transport-independent.
 - **Content-Type enforcement.** Split out as its own task: it is a live hole today, not a cookie concern.
 - **CSP + Trusted Types.** Still the real XSS mitigation, still unowned.
@@ -204,7 +204,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 |---|---|
 | CSP with nonces + Trusted Types enforced — the actual XSS mitigation, and the root cause either storage design only bounds | `docs/tasks/20260802-csp-and-token-ttl.md` |
 | A shorter access-token TTL (1h in the demo realms) to narrow the replay window | same |
-| Session revocation, i.e. the only real logout | `docs/tasks/20260728-session-revocation-wiring.md` |
+| Session revocation, i.e. the only real logout | ULTRA-00136 (session revocation wiring) |
 | `Content-Type` enforcement on REST routes | DONE — `20260802-rest-content-type-enforcement.md` |
 
 ## Cross-references
@@ -214,7 +214,7 @@ a task about *which transport*. Re-homed on archiving so nothing depends on anyo
 - `docs/tasks/20260731-auth-module-for-sdk.md` §1 — the four open questions this answers.
 - `docs/tasks/20260731-sdk-sse-auth.md` — SSE cannot set headers, so cookie mode helps there; it also
   needs `credentials: 'include'` on the stream fetch.
-- `docs/tasks/20260728-session-revocation-wiring.md` — **the only real logout mechanism**, and
+- ULTRA-00136 (session revocation wiring) — **the only real logout mechanism**, and
   transport-independent. This task cannot deliver logout; that one can.
 - `docs/tasks-archive/2026-08/20260802-rest-content-type-enforcement.md` — split out of the dropped cookie work;
   a live hole today, not a cookie concern.

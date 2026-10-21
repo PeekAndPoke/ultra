@@ -108,7 +108,7 @@ I found none, but I was reading from the outside. Check:
       `AuthSessionConfig.onTokenRefreshed`. Is the matrix expected to change on refresh, or is that
       belt-and-braces?
 - [ ] Session expiry: the client derives expiry from the JWT `exp` claim. Is there a server-side
-      revocation path (`20260728-session-revocation-wiring.md`) the client should notice, and how
+      revocation path (ULTRA-00136 (session revocation wiring)) the client should notice, and how
       would it find out — a 401 on the next call, or something better?
 
 ## 5. What to hand back

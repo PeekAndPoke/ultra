@@ -47,7 +47,7 @@ under time pressure.
       three reviewers did, and it is the most important sentence on the page: refresh launders a
       forged token onto the new key, so any grace period hands containment away entirely. **Remove the
       key at once and accept that everyone is logged out.** Say why a `verifyOnly` flag would not
-      help. Link `docs/tasks/20260728-session-revocation-wiring.md` as the real fix.
+      help. Link ULTRA-00136 (session revocation wiring) as the real fix.
 
 The source of truth for all of the above is the KDoc on `JwtConfig.keys`
 (`ultra/security/src/commonMain/kotlin/jwt/JwtConfig.kt`), which is already written and reviewed.

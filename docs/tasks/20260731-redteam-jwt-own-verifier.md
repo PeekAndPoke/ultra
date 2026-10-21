@@ -104,7 +104,7 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
     `issuer`/`audience` — confirm claim validation is what separates them and that neither accepts
     the other's tokens. Then the inverse: same issuer/audience, different key.
 18. **Replay.** Tokens carry no `jti` and there is no revocation (`SessionJwtClaims` is NOT WIRED —
-    `docs/tasks/20260728-session-revocation-wiring.md`). Confirm the practical window: a stolen
+    ULTRA-00136 (session revocation wiring)). Confirm the practical window: a stolen
     token is valid until `exp`, and a token minted without `exp` is valid forever. Quantify it.
 
 ### F. `kid` selection and key rotation  *(new — commit `9fe2a21a`)*

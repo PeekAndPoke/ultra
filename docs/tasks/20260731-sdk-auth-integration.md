@@ -79,7 +79,7 @@ ULTRA-00050 (token storage hardening).
 
 So `localStorage` + bearer is the design, not a placeholder. Keep storage injected — it is now the only
 storage decision there is. The honest mitigations are CSP + Trusted Types, a shorter token TTL, and
-session revocation (`docs/tasks/20260728-session-revocation-wiring.md`), not a different container.
+session revocation (ULTRA-00136 (session revocation wiring)), not a different container.
 
 What DID land from increment 1, and it affects this file: `AuthSignInResponse.Success` states
 `permissions`, `expiresAt` and `userId`, and `Success.token: Token` became a sealed `Success.session:

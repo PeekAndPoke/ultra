@@ -55,7 +55,7 @@ data class JwtConfig(
      *
      * **The real fix is session revocation, not key rotation** — a per-session id in the token,
      * checked against a store, so individual sessions die without touching the keys. The storage half
-     * already exists and is unwired; see `docs/tasks/20260728-session-revocation-wiring.md`. Until
+     * already exists and is unwired; see ULTRA-00136 (session revocation wiring). Until
      * it lands, key removal is the only revocation this system has, and its granularity is "everyone".
      *
      * Validated at boot by `JwtGenerator.requireUsableConfig` — non-empty, unique ids, no blank id,

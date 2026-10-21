@@ -1,4 +1,4 @@
-# Session revocation — wire the JWT half
+# ULTRA-00136: Session revocation — wire the JWT half
 
 **Status:** TODO — the storage half exists; the JWT integration does not
 **Plan:** none (follow-up from ULTRA-00001 (code review observations))
@@ -79,3 +79,7 @@ These are design decisions, not implementation details. Settle them before build
   described this feature in the present tense as though it were wired.
 - The `Cached` layer means a revocation is not instant: worst case is one cache TTL. That is a
   deliberate trade and should be documented wherever revocation is exposed to users.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00136 (was `docs/tasks/20260728-session-revocation-wiring.md`).

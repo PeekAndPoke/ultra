@@ -29,7 +29,7 @@ which design won, and it is currently unowned.
 
 ## Not a substitute for
 
-`docs/tasks/20260728-session-revocation-wiring.md`. A shorter TTL narrows the window; revocation is
+ULTRA-00136 (session revocation wiring). A shorter TTL narrows the window; revocation is
 what actually ends a session. Neither replaces the other, and only revocation makes `logout()` real.
 
 ## Test evidence

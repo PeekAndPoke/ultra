@@ -244,7 +244,7 @@ the user and re-derives permissions from the DB, but never asks whether this ses
 
 So **a compromise always means logging everyone out.** There is no graceful variant. Documented in
 `JwtConfig.keys`, added to the red-team doc as scenario 26, and recorded in
-`docs/tasks/20260728-session-revocation-wiring.md` — which is the actual fix, and now the
+ULTRA-00136 (session revocation wiring) — which is the actual fix, and now the
 highest-value item in this area. Rotation is hygiene on a schedule, not incident response.
 
 ### 3. The unknown-kid timing oracle *(reviewer 3 F5, LOW)*
@@ -271,7 +271,7 @@ mis-ordered rotation is invisible until someone decodes a fresh token. `issued` 
 above, which are the other two loose ends.
 
 Its priority dropped once 2b landed: rotation is hygiene on a schedule, not incident response, so
-`docs/tasks/20260728-session-revocation-wiring.md` outranks it.
+ULTRA-00136 (session revocation wiring) outranks it.
 
 ## Follow-ups created on archiving
 

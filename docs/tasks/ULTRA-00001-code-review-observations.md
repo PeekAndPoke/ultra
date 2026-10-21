@@ -123,7 +123,7 @@ deleted, along with the `onSignup` parameter of `OrgPolicy.Required` (which beco
 `withSessionId`/`sessionIdClaim()` have no callers and no production code registers a `SessionStore`.
 The storage half IS complete (revoke, revokeAllForUser, listForUser, Null/Vault/Cached, TTL-index
 pruning, device fields). KDocs corrected; the remaining work and your five questions are captured in
-`docs/tasks/20260728-session-revocation-wiring.md`.
+ULTRA-00136 (session revocation wiring).
 
 ## History
 

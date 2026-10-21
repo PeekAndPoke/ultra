@@ -230,7 +230,7 @@ sealed interface AuthRecord : Timestamped {
      * one, the JWT carries its id as a `sessionId` claim, and the middleware validates the session on
      * each request (cached) so revoking the row logs the user out. Today nothing creates these rows in
      * production and no JWT carries the claim — see `SESSION_ID_CLAIM` and
-     * `docs/tasks/20260728-session-revocation-wiring.md`.
+     * ULTRA-00136 (session revocation wiring).
      */
     data class Session(
         override val realm: RealmId,

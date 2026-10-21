@@ -5,7 +5,7 @@
 **Security-critical:** partly — nothing here changes the verify path; the value is in making a
 misconfiguration visible instead of silent.
 
-**Priority: below `docs/tasks/20260728-session-revocation-wiring.md`.** Rotation turned out to be
+**Priority: below ULTRA-00136 (session revocation wiring).** Rotation turned out to be
 hygiene on a schedule, not incident response — it cannot contain a compromised key, because refresh
 launders a forged token onto the new one. Session revocation is what actually fixes that.
 
