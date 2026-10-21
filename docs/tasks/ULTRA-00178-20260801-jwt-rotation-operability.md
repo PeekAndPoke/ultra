@@ -1,4 +1,4 @@
-# JWT rotation: make it operable, plus two config loose ends
+# ULTRA-00178: JWT rotation: make it operable, plus two config loose ends
 
 **Status:** TODO — created 2026-08-01 on archiving ULTRA-00176 (jwt kid key rotation)
 **Plan:** none — this is the actionable residue of that task's OPEN section (items 2, 4, 5)
@@ -62,3 +62,7 @@ The `kid` timing oracle (an unknown `kid` returns before the MAC, a known one af
 accepted, reasoning recorded in `JwtSignatureGate`'s KDoc, and the attack is collected in
 ULTRA-00172 (redteam jwt own verifier) scenario 20 for measurement in a pen-test
 session rather than speculative hardening here.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00178 (was `docs/tasks/20260801-jwt-rotation-operability.md`).

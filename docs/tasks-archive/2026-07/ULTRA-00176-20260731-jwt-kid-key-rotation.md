@@ -267,7 +267,7 @@ would, however, overturn a policy decision taken deliberately in the previous se
 
 Nothing generates a key, nothing warns that one is old, and nothing logs which key is signing — so a
 mis-ordered rotation is invisible until someone decodes a fresh token. `issued` is the hook.
-**Carried forward:** `docs/tasks/20260801-jwt-rotation-operability.md`, together with items 2 and 4
+**Carried forward:** ULTRA-00178 (jwt rotation operability), together with items 2 and 4
 above, which are the other two loose ends.
 
 Its priority dropped once 2b landed: rotation is hygiene on a schedule, not incident response, so
@@ -281,7 +281,7 @@ ULTRA-00136 (session revocation wiring) outranks it.
   maintainer's own review. Unlike the `Redacted` docs task it needs no scoping decision — the config
   is consumed through funktor, which already has `docs-site/src/pages/ultra/funktor/auth.astro` and a
   `funktor.md` mirror section.
-- `docs/tasks/20260801-jwt-rotation-operability.md` — the actionable residue of items 2, 4 and 5.
+- ULTRA-00178 (jwt rotation operability) — the actionable residue of items 2, 4 and 5.
 - ULTRA-00172 (redteam jwt own verifier) — already open; section F and scenarios 26–27
   were added for this work. Stays open for a dedicated pen-test session.
 

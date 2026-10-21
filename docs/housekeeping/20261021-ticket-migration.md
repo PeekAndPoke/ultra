@@ -431,3 +431,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00176 | 2026-07-31 | `.claude/tasks/20260731-jwt-kid-key-rotation.md` | `docs/tasks-archive/2026-07/ULTRA-00176-20260731-jwt-kid-key-rotation.md` |
 | ULTRA-00177 | 2026-08-01 | `docs/tasks/20260801-docs-jwt-key-rotation.md` | `docs/tasks/ULTRA-00177-20260801-docs-jwt-key-rotation.md` |
 | ULTRA-00177 | 2026-08-01 | `.claude/tasks/20260801-docs-jwt-key-rotation.md` | `docs/tasks/ULTRA-00177-20260801-docs-jwt-key-rotation.md` |
+| ULTRA-00178 | 2026-08-01 | `docs/tasks/20260801-jwt-rotation-operability.md` | `docs/tasks/ULTRA-00178-20260801-jwt-rotation-operability.md` |
+| ULTRA-00178 | 2026-08-01 | `.claude/tasks/20260801-jwt-rotation-operability.md` | `docs/tasks/ULTRA-00178-20260801-jwt-rotation-operability.md` |
