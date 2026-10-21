@@ -1,4 +1,4 @@
-# `forCall` estimates `Partial` by default
+# ULTRA-00229: `forCall` estimates `Partial` by default
 
 **Status:** TODO — maintainer decision 2026-10-19 (relayed by Mission-Control): "yes, Partial"
 **Plan:** none — follow-up of the apiacl review (ULTRA-00181 (kotlin apiacl naming alignment),
@@ -23,3 +23,7 @@ ownership check written with it therefore reads as full access: `canFullyAccess`
       built-in rules never produce `Partial`" stops being true.
 - [ ] Tests: `ApiRouteEstimateAccessSpec` pins the default; the access-matrix e2e shows an ownership route as
       `Partial`. Mutation: the default back to `Granted` must go red.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00229 (was `docs/tasks/20261019-forcall-estimate-partial.md`).
