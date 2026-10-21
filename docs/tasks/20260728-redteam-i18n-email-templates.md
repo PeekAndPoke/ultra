@@ -75,7 +75,7 @@ Still the highest-value target. The activation and recovery mails carry live sin
 
 - The activation-resend endpoint is authorized by a single-use `AuthRecord.ActivationResendToken`
   minted only on the path that proves the password. Read
-  `docs/tasks/20260727-activation-resend-and-frontend.md` first — several obvious attacks are
+  ULTRA-00129 (activation resend and frontend) first — several obvious attacks are
   already closed there, and its Review record explains why.
 - `docs/tasks/20260727-activation-resend-cooldown-atomicity.md` records a known check-then-act on
   the cooldown.

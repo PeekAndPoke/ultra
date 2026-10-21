@@ -1,4 +1,4 @@
-# Activation resend + the activation frontend
+# ULTRA-00129: Activation resend + the activation frontend
 
 **Status:** IMPLEMENTED 2026-07-27 (`84fa3b47`, reshaped by the gate in `0a5ca8bf`); every Spec box ticked 2026-10-19 against
 the code, with the evidence under each. **Not archived, deliberately:** this doc records ONE gate round — 16 confirmed
@@ -249,3 +249,7 @@ to close" is wrong once activation is zero-click.
 
 **Verdict:** gate FAIL — 3 MAJOR await the maintainer (pre-registration takeover, zero-click activation, mail faucet);
 2 MAJOR are fixable now (Mongo coverage; revoke-on-mint and conditional consumption). Not archived.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00129 (was `docs/tasks/20260727-activation-resend-and-frontend.md`).

@@ -1,7 +1,7 @@
 # The activation-resend delay is a check-then-act
 
 **Status:** TODO — recorded 2026-07-27 from the review gate on
-`docs/tasks/20260727-activation-resend-and-frontend.md`; premise REWRITTEN 2026-10-19 by
+ULTRA-00129 (activation resend and frontend); premise REWRITTEN 2026-10-19 by
 `docs/tasks-archive/2026-10/20261019-activation-hardening.md` (the July premise was false, see "What the July version got wrong")
 **Security-critical:** yes (it is a rate limit) → red-team scenario ULTRA-00127 (redteam account activation) §8
 **Severity:** LOW, bounded by the hardening of 2026-10-19 — see "Why it is bounded now".
@@ -18,7 +18,7 @@ and both send.
 
 It called this LOW because "K concurrent requests must share one token". That was false: every refused sign-in minted a
 fresh `ActivationResendToken` and none was ever revoked, so K parallel sign-ins gave K tokens and K resends raced the
-check (round-2 MAJOR, `20260727-activation-resend-and-frontend.md`). Token consumption also ignored the delete count, so
+check (round-2 MAJOR, ULTRA-00129 (activation resend and frontend)). Token consumption also ignored the delete count, so
 even one token was single-use only under sequential access.
 
 ## Why it is bounded now (2026-10-19)

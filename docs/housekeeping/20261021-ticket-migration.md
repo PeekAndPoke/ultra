@@ -324,3 +324,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00127 | 2026-07-27 | `.claude/tasks/20260727-redteam-account-activation.md` | `docs/tasks/ULTRA-00127-20260727-redteam-account-activation.md` |
 | ULTRA-00128 | 2026-07-27 | `docs/tasks/20260727-signup-mail-throttle.md` | `docs/tasks/ULTRA-00128-20260727-signup-mail-throttle.md` |
 | ULTRA-00128 | 2026-07-27 | `.claude/tasks/20260727-signup-mail-throttle.md` | `docs/tasks/ULTRA-00128-20260727-signup-mail-throttle.md` |
+| ULTRA-00129 | 2026-07-27 | `docs/tasks/20260727-activation-resend-and-frontend.md` | `docs/tasks/ULTRA-00129-20260727-activation-resend-and-frontend.md` |
+| ULTRA-00129 | 2026-07-27 | `.claude/tasks/20260727-activation-resend-and-frontend.md` | `docs/tasks/ULTRA-00129-20260727-activation-resend-and-frontend.md` |

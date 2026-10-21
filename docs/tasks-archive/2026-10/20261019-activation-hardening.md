@@ -7,7 +7,7 @@ auth task, after 0.114.0), so documenting it now means rewriting it next week. T
 that task; the 0.114.0 `CHANGELOG.md` entry carries the breaking API and the upgrade traps meanwhile.
 **Plan:** `docs/tasks/20261019-insights-auth-parallel-plan.md` → the first auth track, taken ahead of T4 (maintainer:
 "next free slot" — live code with a security hole)
-**Fixes:** the round-2 gate FAIL of `docs/tasks/20260727-activation-resend-and-frontend.md` (its ledger is the input)
+**Fixes:** the round-2 gate FAIL of ULTRA-00129 (activation resend and frontend) (its ledger is the input)
 and the pending-account half of ULTRA-00118 (sso email verification)
 **Security-critical:** yes — red-team: ULTRA-00127 (redteam account activation) (extended 2026-10-19)
 
