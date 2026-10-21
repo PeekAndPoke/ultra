@@ -1,4 +1,4 @@
-# Depot — findings parked for the next visit
+# ULTRA-00164: Depot — findings parked for the next visit
 
 **Status:** COLLECTED — not scheduled
 **Found by:** `/feature-review` of the insights REST API (2026-07-31) and the discussion after it
@@ -93,3 +93,7 @@ kotlinx on 2026-07-31, which makes moving the *write* path look like tidy-up. It
 silently start writing signing keys and AWS credentials into every record — no error, no warning. If the
 write path is ever migrated, each `@JsonIgnore` needs an equivalent in the new serializer **first**, and
 a test that asserts a known secret does not appear in the written record.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00164 (was `docs/tasks/20260731-depot-findings.md`).

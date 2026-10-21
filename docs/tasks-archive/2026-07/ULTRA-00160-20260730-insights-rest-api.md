@@ -622,7 +622,7 @@ code before being acted on. Resolution, per finding:
 | **D-M4** `key` in the payload | Fixed — moved to `InsightsCollector` |
 | **D-M5** duplicate keys | Fixed — `CollectorKeyUniquenessCheck` fails the boot |
 | **D-M8**, **D-L2**, **I3**, **I5**, **I6**, **I7**, **I8**, **L4** | All fixed |
-| **S4**, **D-L5** | Moved to `docs/tasks/20260731-depot-findings.md` — they are `funktor/cluster`, not insights |
+| **S4**, **D-L5** | Moved to ULTRA-00164 (depot findings) — they are `funktor/cluster`, not insights |
 | **I4**, **D-M6** | **Deferred — see Follow-ups.** The only genuinely open items |
 
 ### What the mutations caught that reading did not
@@ -650,7 +650,7 @@ Three defects surfaced only because a mutation refused to fail, and none were vi
       `insights { }`, `HeaderLogging`), but the Vue phase is likely to reshape the response DTOs, and
       `CLAUDE.md` is explicit that code still in flux gets no docs task. Revisit when the first Vue tab
       has consumed this API and the shape has held.
-- [ ] `docs/tasks/20260731-depot-findings.md` carries S4, D-L5 and the **`@JsonIgnore` constraint** —
+- [ ] ULTRA-00164 (depot findings) carries S4, D-L5 and the **`@JsonIgnore` constraint** —
       that annotation is the only thing keeping signing keys and AWS credentials out of records, and
       neither Slumber nor kotlinx honours it. Read it before touching the write path.
 

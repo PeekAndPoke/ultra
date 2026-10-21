@@ -5,7 +5,7 @@
 kept as written because it is what led to that choice.
 **Security-critical:** yes
 **Found:** 2026-07-31, while distilling the reference renderers into a Vue tab spec
-**Related:** `docs/tasks/20260731-depot-findings.md` (the `@JsonIgnore` constraint — now shown incomplete)
+**Related:** ULTRA-00164 (depot findings) (the `@JsonIgnore` constraint — now shown incomplete)
 
 ## What was observed
 
@@ -97,7 +97,7 @@ have caught this on day one.
 - The KDoc on `JwtConfig.toString()` and `UltraSecurityConfig.toString()` claims protection it does not
   provide. Either state the narrow truth ("logs and error messages only — Jackson and Slumber both
   serialise this field in full") or the sentence keeps misleading the next reader.
-- `docs/tasks/20260731-depot-findings.md`'s `@JsonIgnore` table needs the rows above, or it reads as
+- ULTRA-00164 (depot findings)'s `@JsonIgnore` table needs the rows above, or it reads as
   a complete inventory.
 
 ## Not in scope
@@ -141,6 +141,6 @@ reads the running app's own signing key out of its config and asserts it never a
 served by `getRecord` — the same "policy never invoked" trap that made the first redaction spec
 vacuous.
 
-**The related depot finding** (`20260731-depot-findings.md`) recorded a `@JsonIgnore` table as "the
+**The related depot finding** (ULTRA-00164 (depot findings)) recorded a `@JsonIgnore` table as "the
 only thing keeping secrets out of records". That table is superseded: the mechanism is now a type,
 and there is no Jackson.
