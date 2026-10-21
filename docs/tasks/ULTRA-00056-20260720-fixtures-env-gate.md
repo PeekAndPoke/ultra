@@ -1,4 +1,4 @@
-# Fixtures must only install on recognised development environments
+# ULTRA-00056: Fixtures must only install on recognised development environments
 
 **Status:** TODO
 **Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 4)
@@ -282,3 +282,7 @@ correctness.
 Fixes applied: ...
 
 **Red-team follow-up**: `docs/tasks/20260720-redteam-error-disclosure.md`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00056 (was `docs/tasks/20260720-fixtures-env-gate.md`).

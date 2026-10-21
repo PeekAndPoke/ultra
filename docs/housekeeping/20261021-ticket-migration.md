@@ -135,3 +135,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00055 | 2026-07-20 | `docs/tasks/20260720-exception-disclosure-architecture.md` | `docs/tasks/ULTRA-00055-20260720-exception-disclosure-architecture.md` |
 | ULTRA-00055 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-exception-disclosure-architecture.md` | `docs/tasks/ULTRA-00055-20260720-exception-disclosure-architecture.md` |
 | ULTRA-00055 | 2026-07-20 | `.claude/tasks/20260720-exception-disclosure-architecture.md` | `docs/tasks/ULTRA-00055-20260720-exception-disclosure-architecture.md` |
+| ULTRA-00056 | 2026-07-20 | `docs/tasks/20260720-fixtures-env-gate.md` | `docs/tasks/ULTRA-00056-20260720-fixtures-env-gate.md` |
+| ULTRA-00056 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-fixtures-env-gate.md` | `docs/tasks/ULTRA-00056-20260720-fixtures-env-gate.md` |
+| ULTRA-00056 | 2026-07-20 | `.claude/tasks/20260720-fixtures-env-gate.md` | `docs/tasks/ULTRA-00056-20260720-fixtures-env-gate.md` |

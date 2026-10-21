@@ -13,7 +13,7 @@ issue?"
 | (umbrella) exception design | ULTRA-00055 (exception disclosure architecture) |
 | 1 + 2 — production returns `cause.message` (full AQL) | ULTRA-00053 (error messages generic in production) |
 | 3 — `isProduction` allow-list fails open on unknown env | ULTRA-00052 (env classification allowlist) |
-| 4 — fixtures install on unknown env | `20260720-fixtures-env-gate.md` |
+| 4 — fixtures install on unknown env | ULTRA-00056 (fixtures env gate) |
 | 5 — auth-rule descriptions leak | folded into ULTRA-00052 (env classification allowlist) |
 | 6 — routes default to public | `20260720-route-auth-default-deny.md` |
 | 7 — auth error account enumeration | ULTRA-00051 (auth error account enumeration) |
