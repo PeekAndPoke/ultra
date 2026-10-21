@@ -1,4 +1,4 @@
-# Slumber: array codec support
+# ULTRA-00147: Slumber: array codec support
 
 **Status:** IN REVIEW (implemented 2026-07-29; review gate pending with the SDK work)
 **Plan:** none — raised from ULTRA-00146 (ts sdk codegen) (walker/Slumber parity work)
@@ -158,3 +158,7 @@ property has a genuinely different `KType`, even though the `KClass` is shared.
 — probed as data-class fields, as top-level types, and round-tripping back out. Slumber always builds
 mutable instances (`ArrayList`, `LinkedHashSet`, `LinkedHashMap`) and `add`/`put` succeed on them.
 `MapAwaker` and `CollectionSlumberer` contain no `!!` of this kind.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00147 (was `docs/tasks/20260729-slumber-array-support.md`).

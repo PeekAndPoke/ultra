@@ -221,7 +221,7 @@ value class FxIdList(val values: List<String>)
 /** Holds kotlin stdlib value classes, which Slumber refuses rather than serializing generically. */
 data class FxHoldsStdlibValueClass(val count: UInt)
 
-/** Holds an object array — supported by Slumber since 20260729-slumber-array-support. */
+/** Holds an object array — supported by Slumber since ULTRA-00147. */
 data class FxHoldsArray(val items: Array<String>) {
     override fun equals(other: Any?): Boolean = this === other
     override fun hashCode(): Int = items.contentHashCode()

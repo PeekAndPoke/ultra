@@ -58,7 +58,7 @@ re-walking shared subtrees. It was chosen to fix the cause rather than the sympt
 - #6, #7, #8 — judged design consequences; see the tables below.
 
 **Handed off to slumber**, written up in full (with probe output and suggested fixes) under
-"Follow-ups" in `docs/tasks/20260729-slumber-array-support.md`:
+"Follow-ups" in ULTRA-00147 (slumber array support):
 
 - the same `!!`-on-a-star bug at `CollectionAwaker.kt:39/:44/:73`, so `List<*>`, `Set<*>` and
   `Array<*>` NPE on awake — `:73` was added by the array work in `305d7c45`;
