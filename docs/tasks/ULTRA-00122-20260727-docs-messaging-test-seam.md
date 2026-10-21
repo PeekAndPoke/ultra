@@ -1,4 +1,4 @@
-# Docs collector — messaging: framework-composed sender, test capture, id-character predicate
+# ULTRA-00122: Docs collector — messaging: framework-composed sender, test capture, id-character predicate
 
 **Status:** TODO
 **Plan:** none — follow-up to ULTRA-00121 (email e2e test seam)
@@ -82,3 +82,7 @@ mail libraries themselves.
 - `docs-site/src/pages/ultra/*` for the reference prose.
 - `docs-site/src/data/llms/*.md` templates for the LLM mirror — never `docs-site/public/`.
 - See `.claude/skills/docs-site/`.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00122 (was `docs/tasks/20260727-docs-messaging-test-seam.md`).

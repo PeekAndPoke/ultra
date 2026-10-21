@@ -5,7 +5,7 @@ chain is in the tree (`ConfiguredEmailSender`, `CapturedEmails`, `CapturingEmail
 `funktor/messaging/src/jvmMain/kotlin/senders/`, `useSender` / `onAfterSend` in `index_jvm.kt`); the symbols it deleted
 (`canDeliver`, `suppressDeliveryInTestMode`, `TestOutbox`) occur nowhere; its specs are in the tree and green in the last
 recorded run. Residuals live in `docs/tasks/20260727-messaging-followups.md` and
-`docs/tasks/20260727-redteam-messaging.md`; the docs follow-up is `docs/tasks/20260727-docs-messaging-test-seam.md`.
+`docs/tasks/20260727-redteam-messaging.md`; the docs follow-up is ULTRA-00122 (docs messaging test seam).
 **Plan:** `/Users/gerk/.claude/plans/indexed-stargazing-spring.md`
 **Supersedes:** the guard design in ULTRA-00121 (email e2e test seam)
 **Security-critical:** yes — this is what makes "a test run never reaches a real provider" true.
