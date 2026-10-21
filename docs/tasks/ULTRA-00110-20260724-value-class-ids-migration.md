@@ -109,7 +109,7 @@ queried → KSP), `AuthSystem`. Vault `Stored<T>._id` stays a generic `String`; 
 auth/domain layer with conversion at the vault boundary (or a KSP helper). `init { require non-blank }`.
 
 ## Step 3 — `OrgId` ✅ DONE 2026-07-25
-See `docs/tasks-archive/2026-07/20260725-value-class-orgid.md` (gate PASS; atomic flip verified complete, and
+See ULTRA-00115 (value class orgid) (gate PASS; atomic flip verified complete, and
 mutation-tested — reverting the guard to `._key` is caught by 7 tests).
 
 > ⚠️ **THE ORIGINAL PLAN TEXT BELOW WAS INVERTED AND IS NO LONGER THE CONTRACT.** It said

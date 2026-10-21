@@ -1,4 +1,4 @@
-# `OrgId` value class + session org id → coll/key (value-class-ids Step 3)
+# ULTRA-00115: `OrgId` value class + session org id → coll/key (value-class-ids Step 3)
 
 **Status:** DONE 2026-07-25 (gate PASS — all three reviewers; confirmed findings fixed; tests green)
 **Plan:** ULTRA-00110 (value class ids migration) → Step 3
@@ -210,3 +210,7 @@ sessions must re-login.** Acceptable: this repo carries no back-compat requireme
 
 **Red-team follow-up**: ULTRA-00114 (redteam value class orgid) (8 scenarios, COLLECTED
 not executed).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00115 (was `docs/tasks-archive/2026-07/20260725-value-class-orgid.md`).

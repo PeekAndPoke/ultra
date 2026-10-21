@@ -28,7 +28,7 @@ Value classes (`RealmId`, `UserId`, `OrgId`, …) make each of these a distinct 
 - **`UserId`** — `userId`/`ownerId: String` on `AuthRecord` (all subtypes), `SessionStore`,
   `OrgMembersStorage`, `AuthSystem`. NOTE: realm-qualified `_id` (`b2b_users/x`) — wrap the full string.
 - **`OrgId`** — `orgId: String` on `AuthSelectOrgRequest`, `OrgMembership.orgId`, `UserPermissions.org`,
-  `AuthSystem`. ✅ DONE 2026-07-25 (`20260725-value-class-orgid.md`).
+  `AuthSystem`. ✅ DONE 2026-07-25 (ULTRA-00115 (value class orgid)).
   ⚠️ **This entry's original NOTE was WRONG and has been superseded.** It said the contract was the
   bare `_key` and that a single `OrgId` type could not prevent `_key`/`_id` confusion. The user's
   2026-07-25 decision standardized the session org id on the FULL `collection/key` `_id`, and a single
