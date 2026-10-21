@@ -381,3 +381,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00154 | 2026-07-30 | `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md` | `docs/tasks/ULTRA-00154-20260730-slumber-intermediate-sealed-roundtrip.md` |
 | ULTRA-00155 | 2026-07-30 | `docs/tasks/20260730-codegen-generic-emission.md` | `docs/tasks/ULTRA-00155-20260730-codegen-generic-emission.md` |
 | ULTRA-00155 | 2026-07-30 | `.claude/tasks/20260730-codegen-generic-emission.md` | `docs/tasks/ULTRA-00155-20260730-codegen-generic-emission.md` |
+| ULTRA-00156 | 2026-07-30 | `docs/tasks-archive/2026-07/20260730-funktor-codegen-rest-contributor.md` | `docs/tasks-archive/2026-07/ULTRA-00156-20260730-funktor-codegen-rest-contributor.md` |
+| ULTRA-00156 | 2026-07-30 | `.claude/tasks-archive/2026-07/20260730-funktor-codegen-rest-contributor.md` | `docs/tasks-archive/2026-07/ULTRA-00156-20260730-funktor-codegen-rest-contributor.md` |
+| ULTRA-00156 | 2026-07-30 | `.claude/tasks/20260730-funktor-codegen-rest-contributor.md` | `docs/tasks-archive/2026-07/ULTRA-00156-20260730-funktor-codegen-rest-contributor.md` |

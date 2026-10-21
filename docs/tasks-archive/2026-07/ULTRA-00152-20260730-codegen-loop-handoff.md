@@ -181,7 +181,7 @@ Suggested order:
 
 ### 3. Phase 2 — `funktor/codegen`. IN PROGRESS, first slice landed 2026-07-30
 
-Task file: `docs/tasks/20260730-funktor-codegen-rest-contributor.md`. **Read its "Decisions taken
+Task file: ULTRA-00156 (funktor codegen rest contributor). **Read its "Decisions taken
 with the maintainer" section before touching any of this** — four decisions are settled there and each
 one touches every emitted file.
 
@@ -590,7 +590,7 @@ loop has nothing left to take.
 0 failures, 10 ts-verify fixtures (7 `@ts-expect-error` sites), compile sweep clean.
 
 **Next, and NOT in this file:** the mandatory `/feature-review` gate on
-`docs/tasks/20260730-funktor-codegen-rest-contributor.md`, then a DOCS follow-up — this added two
+ULTRA-00156 (funktor codegen rest contributor), then a DOCS follow-up — this added two
 public modules and a public extension point, and CLAUDE.md requires a tracked docs task on archive.
 
 **Known limitation, deliberately not fixed:** a feature whose routes are ALL streams contributes no

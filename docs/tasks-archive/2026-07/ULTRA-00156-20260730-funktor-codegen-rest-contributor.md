@@ -1,4 +1,4 @@
-# Phase 2 — `funktor/codegen`: the REST contributor and the generate CLI
+# ULTRA-00156: Phase 2 — `funktor/codegen`: the REST contributor and the generate CLI
 
 **Status:** DONE (archived 2026-07-31)
 **Plan:** ULTRA-00146 (ts sdk codegen) → Phase 2 (§2.1–2.4)
@@ -259,3 +259,7 @@ imports them, it does not re-export them.
 | 3. Security | | |
 
 Fixes applied: ...
+
+## History
+
+- 2026-10-21: numbered ULTRA-00156 (was `docs/tasks-archive/2026-07/20260730-funktor-codegen-rest-contributor.md`).
