@@ -60,5 +60,5 @@ So the fix is visibility, not validation:
 
 The `kid` timing oracle (an unknown `kid` returns before the MAC, a known one after it). Deliberately
 accepted, reasoning recorded in `JwtSignatureGate`'s KDoc, and the attack is collected in
-`docs/tasks/20260731-redteam-jwt-own-verifier.md` scenario 20 for measurement in a pen-test
+ULTRA-00172 (redteam jwt own verifier) scenario 20 for measurement in a pen-test
 session rather than speculative hardening here.

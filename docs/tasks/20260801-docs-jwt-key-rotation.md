@@ -58,7 +58,7 @@ This is largely a matter of moving it to where an application developer will fin
 Per the docs-vs-skills split in CLAUDE.md, the internals stay out: the pre-MAC header parse, the
 `alg`-compare-not-select rule, `MAX_HEADER_LENGTH`, canonical base64url, the `kid` timing oracle.
 Those are "what will bite me if I change this code", not "how do I use this", and they live in the
-KDoc and in `docs/tasks/20260731-redteam-jwt-own-verifier.md`.
+KDoc and in ULTRA-00172 (redteam jwt own verifier).
 
 Also skip the migration note — this repo requires no backward compatibility, and the release notes
 already carry the breaking-change marker.

@@ -418,3 +418,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00170 | 2026-07-31 | `.claude/tasks/20260731-slumber-as-declared-wire-shape.md` | `docs/tasks-archive/2026-07/ULTRA-00170-20260731-slumber-as-declared-wire-shape.md` |
 | ULTRA-00171 | 2026-07-31 | `docs/tasks/20260731-query-vars-in-insights.md` | `docs/tasks/ULTRA-00171-20260731-query-vars-in-insights.md` |
 | ULTRA-00171 | 2026-07-31 | `.claude/tasks/20260731-query-vars-in-insights.md` | `docs/tasks/ULTRA-00171-20260731-query-vars-in-insights.md` |
+| ULTRA-00172 | 2026-07-31 | `docs/tasks/20260731-redteam-jwt-own-verifier.md` | `docs/tasks/ULTRA-00172-20260731-redteam-jwt-own-verifier.md` |
+| ULTRA-00172 | 2026-07-31 | `.claude/tasks/20260731-redteam-jwt-own-verifier.md` | `docs/tasks/ULTRA-00172-20260731-redteam-jwt-own-verifier.md` |

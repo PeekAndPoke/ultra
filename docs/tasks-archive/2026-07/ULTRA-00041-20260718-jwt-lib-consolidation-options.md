@@ -176,7 +176,7 @@ removed, parse-before-MAC reorder, numericDate fail-open. Not test-observable (r
   the auth path.
 
 **Follow-ups:**
-- Red-team task collected per CLAUDE.md: `docs/tasks/20260731-redteam-jwt-own-verifier.md`.
+- Red-team task collected per CLAUDE.md: ULTRA-00172 (redteam jwt own verifier).
 - Client `jwt-decode` npm dep (original option 1) — still the one to do eventually. Unchanged.
 - Optional: replace sendgrid-java's helper POJOs with kotlinx DTOs for `/v3/mail/send` to evict
   Jackson from `funktor:messaging` entirely. Small, but it re-specifies an external wire format —
@@ -255,7 +255,7 @@ lives in `FunktorRestBuilder.jwt()` and is eager, because the kontainer binding 
 key, unique ids, no blank id, each secret at or above its algorithm's RFC 7518 floor.
 
 **Follow-ups from this amendment:**
-- `docs/tasks/20260731-redteam-jwt-own-verifier.md` gained section F (kid injection, key
+- ULTRA-00172 (redteam jwt own verifier) gained section F (kid injection, key
   enumeration by timing, rotation races, downgrade between keys, header-parser abuse, boot gaps).
 - Rotation is not yet *operable*: nothing generates a key, and nothing warns that a key is old.
   `issued` is the hook. Worth a task when someone actually has to rotate.

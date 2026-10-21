@@ -4,7 +4,7 @@
 (`493423b8`), signing key moved out of the tree (`2397c0a6`)
 **Plan:** ULTRA-00041 (jwt lib consolidation options) → the AMENDED section
 **Security-critical:** yes → red-team scenarios collected in
-`docs/tasks/20260731-redteam-jwt-own-verifier.md` section F
+ULTRA-00172 (redteam jwt own verifier) section F
 
 ## Spec
 
@@ -155,7 +155,7 @@ verified against the code before acting.
   with why a `verifyOnly` flag would not help.
 - **The committed key is pre-existing** (commit `6c55d3db`), not introduced here.
 
-**Red-team follow-up:** `docs/tasks/20260731-redteam-jwt-own-verifier.md` — section F was added for
+**Red-team follow-up:** ULTRA-00172 (redteam jwt own verifier) — section F was added for
 this change (kid injection, key enumeration by timing, rotation races, downgrade between configured
 keys, pre-auth header-parser abuse, boot-validation gaps).
 
@@ -282,5 +282,5 @@ ULTRA-00136 (session revocation wiring) outranks it.
   is consumed through funktor, which already has `docs-site/src/pages/ultra/funktor/auth.astro` and a
   `funktor.md` mirror section.
 - `docs/tasks/20260801-jwt-rotation-operability.md` — the actionable residue of items 2, 4 and 5.
-- `docs/tasks/20260731-redteam-jwt-own-verifier.md` — already open; section F and scenarios 26–27
+- ULTRA-00172 (redteam jwt own verifier) — already open; section F and scenarios 26–27
   were added for this work. Stays open for a dedicated pen-test session.

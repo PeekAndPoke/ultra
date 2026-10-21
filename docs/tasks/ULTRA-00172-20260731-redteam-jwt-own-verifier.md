@@ -1,4 +1,4 @@
-# RED TEAM — our own JWT verifier (post java-jwt removal)
+# ULTRA-00172: RED TEAM — our own JWT verifier (post java-jwt removal)
 
 **Status:** COLLECTED — do not execute here. For a dedicated penetration-test session.
 **Created:** 2026-07-31
@@ -197,3 +197,7 @@ Assume an attacker who holds a **legitimately issued** token for a low-privilege
 Google SSO's Gson parse of unauthenticated JSON (`google-api-client`, reachable via `AuthLoginApi`'s
 `public()` floor). Verify-then-parse cannot apply — RS256 needs `kid` before key selection. Its own
 task; maintainer decision pending.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00172 (was `docs/tasks/20260731-redteam-jwt-own-verifier.md`).
