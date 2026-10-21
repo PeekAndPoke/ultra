@@ -1,4 +1,4 @@
-# Plan: Decompose `:ultra:common` into Focused Modules
+# ULTRA-00004: Plan: Decompose `:ultra:common` into Focused Modules
 
 
 
@@ -275,3 +275,7 @@ of `Kronos` to break this coupling entirely.
   or is one grab-bag sufficient?
 - **`kotlin-reflect` in `:ultra:common`:** The slimmed-down common still needs `kotlin-reflect` for
   `Lookup` and `KType.isPrimitive`. Worth keeping, or move those to `:ultra:reflection`?
+
+## History
+
+- 2026-10-21: numbered ULTRA-00004 (was `docs/tasks-archive/2026-03/2026-03-26_decompose-common-module.md`).
