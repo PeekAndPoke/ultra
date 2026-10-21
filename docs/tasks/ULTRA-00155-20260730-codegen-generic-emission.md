@@ -1,4 +1,4 @@
-# Emit real TypeScript generics instead of monomorphizing
+# ULTRA-00155: Emit real TypeScript generics instead of monomorphizing
 
 **Status:** CODE DONE `63f9f186` — needs `/feature-review` before DONE. Direction and sub-decisions agreed 2026-07-30 — direction and sub-decisions agreed 2026-07-30 (maintainer: "full effort, this is pure foundation")
 **Plan:** ULTRA-00146 (ts sdk codegen) — reverses its "Generics are monomorphized" decision
@@ -205,3 +205,7 @@ constructed the same top three findings. Fixed in `72937b71` and `caa4cd01`.
       proposal from ULTRA-00153 (frontend sdk vue contributors).
 - [x] Update the plan doc's locked-decisions table and the DOCS follow-up: generic emission changes the
       public shape of every generated SDK.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00155 (was `docs/tasks/20260730-codegen-generic-emission.md`).

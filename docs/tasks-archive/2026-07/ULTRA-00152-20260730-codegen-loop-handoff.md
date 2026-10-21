@@ -4,7 +4,7 @@
 log, not a task: every backlog item it drove is finished (§1 regression tests; the four 2026-08-01 items; Phase 2
 `funktor/codegen`, `2a3df280`; the first half of the `@Slumber.As` follow-on, `3d874a83`), and the questions it stopped on
 were decided 2026-08-01 (see "ALL THREE OPEN QUESTIONS ARE DECIDED"). The unchecked boxes left in §2 are not outstanding
-work here: generic sealed hierarchies were fixed by `docs/tasks/20260730-codegen-generic-emission.md` (`63f9f186`);
+work here: generic sealed hierarchies were fixed by ULTRA-00155 (codegen generic emission) (`63f9f186`);
 `@Slumber.Field` non-ctor props and scalar refinement were decided "leave as-is" (above); the `@Slumber.Field` selection
 re-derivation and the duplicated `readArrayElements` are tracked in ULTRA-00146 (ts sdk codegen) (review
 table, lines 1173-1174) and, for `readArrayElements`, `docs/tasks/20260731-slumber-scan-findings.md` (C13). No docs task:

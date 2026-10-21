@@ -379,3 +379,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00153 | 2026-07-30 | `.claude/tasks/20260730-frontend-sdk-vue-contributors.md` | `docs/tasks/ULTRA-00153-20260730-frontend-sdk-vue-contributors.md` |
 | ULTRA-00154 | 2026-07-30 | `docs/tasks/20260730-slumber-intermediate-sealed-roundtrip.md` | `docs/tasks/ULTRA-00154-20260730-slumber-intermediate-sealed-roundtrip.md` |
 | ULTRA-00154 | 2026-07-30 | `.claude/tasks/20260730-slumber-intermediate-sealed-roundtrip.md` | `docs/tasks/ULTRA-00154-20260730-slumber-intermediate-sealed-roundtrip.md` |
+| ULTRA-00155 | 2026-07-30 | `docs/tasks/20260730-codegen-generic-emission.md` | `docs/tasks/ULTRA-00155-20260730-codegen-generic-emission.md` |
+| ULTRA-00155 | 2026-07-30 | `.claude/tasks/20260730-codegen-generic-emission.md` | `docs/tasks/ULTRA-00155-20260730-codegen-generic-emission.md` |

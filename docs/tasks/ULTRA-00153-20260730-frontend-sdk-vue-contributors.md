@@ -494,7 +494,7 @@ including "Sign in", reads as denied. Both currently want route auth metadata th
 ## WITHDRAWN: `expects<T>(tsName)`
 
 Proposed and deferred 2026-07-30, then made unnecessary the same day: **real TypeScript generics are
-emitted** (`docs/tasks/20260730-codegen-generic-emission.md`, code done `63f9f186`). The proposal
+emitted** (ULTRA-00155 (codegen generic emission), code done `63f9f186`). The proposal
 existed solely because monomorphization turned `PageOf<Lock>` into the computed name `PageOfLock`, which a
 component author had to guess. With generics the author writes `PageOf<Lock>` — the same text as the
 Kotlin — so there is nothing left to guess and nothing to verify. The `vue-tsc` gate remains the backstop

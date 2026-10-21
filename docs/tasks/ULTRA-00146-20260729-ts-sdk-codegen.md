@@ -587,7 +587,7 @@ Tests: `CodePrinterSpec` 11, `TypeWalkerSpec` 24 — all green, counts confirmed
   Reversible if the instantiation count gets unpleasant.
   **⚠ REVERSED 2026-07-30 (`63f9f186`).** The second reason was measured and found false. Generics are
   now emitted GENERICALLY: one declaration per class, arguments on the reference — `PageOf<Talk>` in
-  type position, `PageOf(Talk)` in schema position. See `20260730-codegen-generic-emission.md`.
+  type position, `PageOf(Talk)` in schema position. See ULTRA-00155 (codegen generic emission).
 - **`Set` and `List` share one reference shape** (`ArrayOf`) — both slumber to a JSON array. `Map` becomes
   `RecordOf` with a `string` key, since JSON object keys are always strings regardless of the Kotlin key type.
 - **Optional = constructor parameter has a default.** Deliberately loose and direction-dependent: responses
@@ -1341,7 +1341,7 @@ found is real and general.
 **`claims.expects<T>(tsName)` is WITHDRAWN, not deferred.** It was proposed as the inverse of a claim, to
 verify that a hand-written component's assumed TS name matches what the model emits — but its only
 motivation was monomorphization's computed names (`PageOf<Lock>` → `PageOfLock`). Real generics landed the
-same day (`20260730-codegen-generic-emission.md`, `63f9f186`), so a component author writes `PageOf<Lock>`
+same day (ULTRA-00155 (codegen generic emission), `63f9f186`), so a component author writes `PageOf<Lock>`
 verbatim and there is nothing left to guess. Do not build it.
 
 ### i18n also lands here (analysed 2026-07-30)
