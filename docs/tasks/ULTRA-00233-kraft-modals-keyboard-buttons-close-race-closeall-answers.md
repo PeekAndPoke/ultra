@@ -40,6 +40,14 @@ a fourth, hold in master:
 4. Tests in `kraft/semanticui/src/jsTest/kotlin/` and `kraft/core-tests/` (`TestBed.preact`): Enter on a focused
    button; Ok then Cancel answers once; backdrop click answers Cancel; `closeAll` runs the handlers.
 
+**A tested model of steps 2 and 3:** Klang's `klangui/src/jsMain/kotlin/comp/YesNoModal.kt:110-128` (klang repo).
+- The first click decides. `close()` is overridden to decide "no" before `super.close()`, so a later click,
+  Esc or a dismissal can't change the answer.
+- The answer is delivered once, when the modal is gone: from `handle.onClose`, with `onUnmount` as the
+  fallback for `closeAll()`.
+- Delivering after the fade is deliberate: a second Enter during the fade stays in the modal and doesn't
+  reach the page.
+
 ## Acceptance
 
 - The four tests above are green and were red before the fix (mutation-check the "answers once" guard).
