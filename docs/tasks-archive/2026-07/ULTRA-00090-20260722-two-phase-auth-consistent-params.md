@@ -1,4 +1,4 @@
-# Two-phase auth evaluation + org-isolation — no loads before auth, no cross-org param spoofing
+# ULTRA-00090: Two-phase auth evaluation + org-isolation — no loads before auth, no cross-org param spoofing
 
 **Status:** DONE (2026-07-23; archived 2026-10-19) — two-phase eval + pluggable route checks + saas org-isolation.
 The Implementation-plan and Test-evidence boxes below sat at 0/23 although the work shipped; ticked 2026-10-19 against the
@@ -201,3 +201,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 - FOLLOW-UP: `20260722-route-check-followups.md` — migrate `validateUriPattern` onto `RouteBootCheck`,
   the entity-`OrgAware` linter, and branch-level (sub-org) isolation.
 - ULTRA-00039 (redteam saas orgs) — org-IDOR scenarios this closes structurally; update its assumptions.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00090 (was `docs/tasks-archive/2026-07/20260722-two-phase-auth-consistent-params.md`).

@@ -1,7 +1,7 @@
 # Red-team: org-isolation (part-3 two-phase auth + OrgAware guard)
 
 **Status:** COLLECTED — not executed (2026-07-23). Run in a dedicated pen-test session.
-**Type:** red-team (security-critical follow-up to `20260722-two-phase-auth-consistent-params.md`)
+**Type:** red-team (security-critical follow-up to ULTRA-00090 (two phase auth consistent params))
 **Assume:** a hostile AUTHENTICATED user, member of org `acme`, session selected on `acme`, trying to
 read/act on org `globex`.
 
@@ -43,6 +43,6 @@ These are the residual/edge scenarios to actively attempt.
 
 ## Cross-references
 
-- `20260722-two-phase-auth-consistent-params.md` — the feature.
+- ULTRA-00090 (two phase auth consistent params) — the feature.
 - `20260722-route-check-followups.md` — the linter/hardening backstops (items 2, 4).
 - ULTRA-00039 (redteam saas orgs) — the broader org red-team; fold these in.

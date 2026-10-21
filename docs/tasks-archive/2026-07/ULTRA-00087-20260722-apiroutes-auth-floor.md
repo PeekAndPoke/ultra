@@ -197,7 +197,7 @@ login API split by auth level). Names are display-only (routing is by URI), so t
 - Builds on ULTRA-00088 (authorize rule builder) (the accumulator IS the floor mechanism).
 - ULTRA-00044 (cross realm authz and tests) — the floor is how forUserType stops being per-route
   opt-in; update that task when this lands.
-- Part 3 (`20260722-two-phase-auth-consistent-params.md`) relies on the floor being caller-only.
+- Part 3 (ULTRA-00090 (two phase auth consistent params)) relies on the floor being caller-only.
 
 ## History
 

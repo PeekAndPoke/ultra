@@ -1,6 +1,6 @@
 # Route-check extension-point follow-ups (param-names, entity linter, branch isolation)
 
-**Status:** TODO (created 2026-07-22) — spun out of `20260722-two-phase-auth-consistent-params.md`
+**Status:** TODO (created 2026-07-22) — spun out of ULTRA-00090 (two phase auth consistent params)
 **Type:** framework / hardening
 **Depends on:** the `RouteBootCheck` / `RouteParamsGuard` extension points landed in part 3.
 

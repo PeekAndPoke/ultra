@@ -6,7 +6,7 @@ reviewers). Archive check 2026-10-19: every Spec box was already ticked; a grep 
 `EventParam`/`SpeakerParam`/`AttendeeParam`); `StoredParamMigrationE2eSpec` (10) and `FunktorConfApiTest` (11) are green in
 the last recorded run. Migration + entity-based param naming + `defaultAuth`→`authFloor` floor rename. Green:
 rest 105, saas 31, all 125 (both DB backends), demo 35. 8 commits on `auth-increments`, all UNPUSHED.
-HARD dependency on `20260722-two-phase-auth-consistent-params.md` was met (part 3 DONE).
+HARD dependency on ULTRA-00090 (two phase auth consistent params) was met (part 3 DONE).
 **Plan:** part 4 of the auth-hardening quartet
 **Security-critical:** YES — changes when/where entities load relative to auth on real endpoints.
 
@@ -138,7 +138,7 @@ Steps (each builds + commits):
 
 ## Cross-references
 
-- Depends on: `20260722-two-phase-auth-consistent-params.md` (hard), which depends on
+- Depends on: ULTRA-00090 (two phase auth consistent params) (hard), which depends on
   ULTRA-00087 (apiroutes auth floor) → ULTRA-00088 (authorize rule builder).
 - Proving ground for the whole quartet: after this, a new endpoint gets floor + phase ordering +
   consistency enforcement by construction, with nothing to remember.

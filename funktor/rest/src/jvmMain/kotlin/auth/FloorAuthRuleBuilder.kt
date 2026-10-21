@@ -14,7 +14,7 @@ import io.peekandpoke.funktor.rest.auth.AuthRuleBuilder.Companion.validateChain
  * - **Type-agnostic replay.** The floor is declared once, before any route type is known, then
  *   applied to every route of the group regardless of its params/body types. Caller-only rules
  *   ignore the request payload, so a single materialized floor is safe to prepend to any route.
- * - **Phase-1 by construction** (see `20260722-two-phase-auth-consistent-params.md`). Because the
+ * - **Phase-1 by construction** (see ULTRA-00090 (two phase auth consistent params)). Because the
  *   floor cannot read request data, it can be evaluated BEFORE param conversion / DB loads — an
  *   unauthenticated or wrong-realm caller is rejected without touching storage.
  *

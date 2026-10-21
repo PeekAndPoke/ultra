@@ -2,7 +2,7 @@
 
 **Status:** OPEN QUESTIONS — collected 2026-07-23, not yet designed/scheduled.
 **Type:** security / design
-**Context:** spun out of part-3 (`20260722-two-phase-auth-consistent-params.md` +
+**Context:** spun out of part-3 (ULTRA-00090 (two phase auth consistent params) +
 `20260722-route-check-followups.md`). The auth-hardening folder is the security-tasks home.
 
 ## 1. "Owner must be in the URI" — generalize the org rule to a structural rule (user, 2026-07-23)
