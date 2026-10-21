@@ -1,4 +1,4 @@
-# Funktor-Demo Showcase: FunktorConf
+# ULTRA-00023: Funktor-Demo Showcase: FunktorConf
 
 
 
@@ -142,3 +142,7 @@ will reference it:
 - After Wave 1: Can a docs page walk a reader through the showcase code and it makes sense?
 - After Wave 2: Does every naturally-fitting Monko repo have a touchpoint in the domain?
 - After Wave 4: Does the user-app consume the same API and share models via common module?
+
+## History
+
+- 2026-10-21: numbered ULTRA-00023 (was `docs/tasks-archive/2026-04/2026-04-13-funktor-demo-showcase.md`).
