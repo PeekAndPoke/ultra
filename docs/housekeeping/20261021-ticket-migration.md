@@ -351,3 +351,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00140 | 2026-07-28 | `.claude/tasks/20260728-vault-scan-findings.md` | `docs/tasks/ULTRA-00140-20260728-vault-scan-findings.md` |
 | ULTRA-00141 | 2026-07-29 | `docs/tasks/20260729-karango-softdelete-unique-indexes.md` | `docs/tasks/ULTRA-00141-20260729-karango-softdelete-unique-indexes.md` |
 | ULTRA-00141 | 2026-07-29 | `.claude/tasks/20260729-karango-softdelete-unique-indexes.md` | `docs/tasks/ULTRA-00141-20260729-karango-softdelete-unique-indexes.md` |
+| ULTRA-00142 | 2026-07-29 | `docs/tasks/20260729-monko-softdelete-unique-indexes.md` | `docs/tasks/ULTRA-00142-20260729-monko-softdelete-unique-indexes.md` |
+| ULTRA-00142 | 2026-07-29 | `.claude/tasks/20260729-monko-softdelete-unique-indexes.md` | `docs/tasks/ULTRA-00142-20260729-monko-softdelete-unique-indexes.md` |

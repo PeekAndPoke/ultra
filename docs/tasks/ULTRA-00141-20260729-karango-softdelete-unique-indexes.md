@@ -4,7 +4,7 @@
 **Plan:** follow-up from ULTRA-00140 (vault scan findings) → S2
 **Security-critical:** no
 
-Sibling task: `docs/tasks/20260729-monko-softdelete-unique-indexes.md`. **This one is the harder
+Sibling task: ULTRA-00142 (monko softdelete unique indexes). **This one is the harder
 of the two** — Monko's builder already supports partial filters; Karango's does not, and the index
 analyzer cannot currently see the difference.
 

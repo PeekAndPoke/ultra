@@ -1,4 +1,4 @@
-# Monko: exclude soft-deleted rows from unique indexes
+# ULTRA-00142: Monko: exclude soft-deleted rows from unique indexes
 
 **Status:** TODO
 **Plan:** follow-up from ULTRA-00140 (vault scan findings) → S2
@@ -60,3 +60,7 @@ or a louder failure.
       duplicate of a LIVE member still fails
 - [ ] Mutation-check: drop the partial filter → the re-add test must fail
 - [ ] `./gradlew :monko:core:test :funktor:saas:jvmTest :funktor-demo:server:test`
+
+## History
+
+- 2026-10-21: numbered ULTRA-00142 (was `docs/tasks/20260729-monko-softdelete-unique-indexes.md`).
