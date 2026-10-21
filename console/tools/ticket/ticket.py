@@ -811,6 +811,10 @@ def resolver(old):
             hits = by_suffix.get(re.sub(r"^(\.{1,2}/)+", "", target), set())
             # several candidates are fine when they all are one ticket (a file and its former locations)
             hit = sorted(hits)[0] if hits and len({old[h][0] for h in hits}) == 1 else None
+        if not hit and "/" in target:
+            # ultra: a stale path to a file whose name is unique still means that file
+            hits = by_suffix.get(target.rsplit("/", 1)[1], set())
+            hit = sorted(hits)[0] if hits and len({old[h][0] for h in hits}) == 1 else None
         if not hit:
             return None
         tid, new = old[hit]
