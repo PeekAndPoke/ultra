@@ -1,4 +1,4 @@
-# Open security questions — route ownership / isolation (follow-ups)
+# ULTRA-00097: Open security questions — route ownership / isolation (follow-ups)
 
 **Status:** OPEN QUESTIONS — collected 2026-07-23, not yet designed/scheduled.
 **Type:** security / design
@@ -45,3 +45,7 @@ capture the design when shared. Placeholder — do not design speculatively.
 - **Cross-realm authorization boundary** — ULTRA-00044 (cross realm authz and tests).
 - **Red-team scenarios** — ULTRA-00095 (redteam org isolation),
   ULTRA-00039 (redteam saas orgs).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00097 (was `docs/tasks/20260723-security-open-questions.md`).
