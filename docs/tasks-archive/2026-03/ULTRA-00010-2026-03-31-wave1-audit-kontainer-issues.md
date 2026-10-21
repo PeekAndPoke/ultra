@@ -1,4 +1,4 @@
-# Audit: Kontainer — Issues Report
+# ULTRA-00010: Audit: Kontainer — Issues Report
 
 **Date:** 2026-03-30
 **Auditor:** Code audit agent (Wave 1)
@@ -191,3 +191,7 @@ git show --stat d048f292 5c1f4c9a 3cf75f2d
 
 No tests for: circular dependency error messages, star projection handling, extension blueprint config propagation,
 classes without primary constructor.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00010 (was `docs/tasks-archive/2026-03/2026-03-31-wave1-audit-kontainer-issues.md`).
