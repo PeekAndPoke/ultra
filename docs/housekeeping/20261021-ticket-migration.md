@@ -509,3 +509,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00210 | 2026-10-18 | `.claude/tasks/20261018-datetime-no-kotlinx-return-types.md` | `docs/tasks/ULTRA-00210-20261018-datetime-no-kotlinx-return-types.md` |
 | ULTRA-00211 | 2026-10-18 | `docs/tasks/20261018-mpzoneddatetime-overlap-offset.md` | `docs/tasks/ULTRA-00211-20261018-mpzoneddatetime-overlap-offset.md` |
 | ULTRA-00211 | 2026-10-18 | `.claude/tasks/20261018-mpzoneddatetime-overlap-offset.md` | `docs/tasks/ULTRA-00211-20261018-mpzoneddatetime-overlap-offset.md` |
+| ULTRA-00212 | 2026-10-18 | `docs/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` | `docs/tasks-archive/2026-10/ULTRA-00212-20261018-docs-datetime-zone-engine.md` |
+| ULTRA-00212 | 2026-10-18 | `.claude/tasks-archive/2026-10/20261018-docs-datetime-zone-engine.md` | `docs/tasks-archive/2026-10/ULTRA-00212-20261018-docs-datetime-zone-engine.md` |
