@@ -1,7 +1,7 @@
 # b2b2c realm (end-user tenant users) + b2b2c-app + shared org hooks
 
 **Status:** DONE (2026-07-22) — reviewed (3-agent gate), all confirmed findings fixed, tests green.
-**Plan:** `docs/tasks/20260719-demo-restructure-three-apps.md` → b2b2c realm + app (third of three)
+**Plan:** ULTRA-00045 (demo restructure three apps) → b2b2c realm + app (third of three)
 **Security-critical:** yes (third auth realm; tenant end-user sessions)
 
 

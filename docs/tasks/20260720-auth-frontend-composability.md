@@ -1,7 +1,7 @@
 # Composable, brandable auth frontend (extract AuthLogin) + single-source the frontend base URL
 
 **Status:** Part 1 DONE (2026-07-20); Part 2 TODO (deferred for discussion) — from the b2b-app review
-**Plan:** `.claude/plans/20260719-demo-restructure-three-apps.md` (three apps share the auth frontend)
+**Plan:** ULTRA-00045 (demo restructure three apps) (three apps share the auth frontend)
 **Security-critical:** yes — Part 2 (a password-reset link pointing at the wrong origin leaks reset
 tokens). Part 1 is presentation only.
 

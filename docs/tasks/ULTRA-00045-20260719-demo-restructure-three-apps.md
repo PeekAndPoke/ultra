@@ -1,4 +1,4 @@
-# Demo restructure: three realms, three apps (ops / b2b / b2b2c)
+# ULTRA-00045: Demo restructure: three realms, three apps (ops / b2b / b2b2c)
 
 **Status:** PLANNED 2026-07-19. The current `funktor-demo` was built to *market the framework*; that
 goal is dropped — the framework is now internal. Replace the demo with three real SaaS apps that
@@ -108,3 +108,7 @@ Consequences:
 - Whether the three apps share one server or split later.
 - "users by org" — operators view b2b/b2b2c users of an org; needs cross-realm user lookup by org
   membership (design when we get there).
+
+## History
+
+- 2026-10-21: numbered ULTRA-00045 (was `docs/tasks/20260719-demo-restructure-three-apps.md`).

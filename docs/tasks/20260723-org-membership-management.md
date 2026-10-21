@@ -3,7 +3,7 @@
 **Status:** IN PROGRESS — Inc 1a + 1b + 2a + 2b ALL DONE (review loops closed; committed through 2a =
 `e7a9c401`; 2b loop closed round 2, committed 2026-07-24). The b2b membership arc is COMPLETE —
 remaining leaves (invite/reactivation, operator cross-realm surface) are deferred, not scheduled.
-**Plan:** `docs/tasks/20260719-demo-restructure-three-apps.md` (the three-apps saas showcase is the
+**Plan:** ULTRA-00045 (demo restructure three apps) (the three-apps saas showcase is the
 testbed) + ULTRA-00043 (saas full feature backlog) §2 (ownership) / §3-§4.
 **Security-critical:** YES — this is the org membership + permission spine (who belongs to an org, in
 what role, and who may manage that). Red-team follow-up required at review (extend
