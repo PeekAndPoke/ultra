@@ -1,4 +1,4 @@
-# ultra/cache: scan findings
+# ULTRA-00159: ultra/cache: scan findings
 
 **Status:** SCAN IN PROGRESS — 2026-07-30
 **Plan:** module-by-module review (`cache` is module 5, after `vault`, `common`, `reflection`, `log`)
@@ -555,3 +555,7 @@ compile sweep clean.
       memoization (C9), the blanket `catch (_: Throwable)` in JVM `getFieldsOf` (C6).
 - [ ] Test-suite hygiene: two filename/class mismatches, and re-enable
       `FastCacheMaxMemoryUsageSpec.kt:188` once `totalSize` is correct.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00159 (was `docs/tasks/20260730-cache-scan-findings.md`).

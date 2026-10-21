@@ -2,7 +2,7 @@
 
 **Status:** SCAN COMPLETE, adjudication IN PROGRESS (2026-07-31). KDoc landed, tests green
 (75 specs, 1232 tests, 0 failures). No fixes applied yet.
-**Plan:** module-by-module review (method model: `20260730-cache-scan-findings.md`, archived)
+**Plan:** module-by-module review (method model: ULTRA-00159 (cache scan findings), archived)
 **Security-critical:** partially — polymorphic awaking is a deserialization surface. Security
 findings are COLLECTED (→ red-team task), never executed.
 
