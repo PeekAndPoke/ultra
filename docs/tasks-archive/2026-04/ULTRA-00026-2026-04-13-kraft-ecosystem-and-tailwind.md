@@ -1,4 +1,4 @@
-# Kraft Ecosystem & Tailwind Strategy
+# ULTRA-00026: Kraft Ecosystem & Tailwind Strategy
 
 **Date:** 2026-04-03
 **Scope:** Two strategic initiatives — JS library ecosystem + Tailwind CSS integration
@@ -322,3 +322,7 @@ The fix is a plain JS function bridge that works under both ES5 and ES2015. Enab
 - Addon protocol specification — still open
 - Revisit Karakum if it matures, or commit to hand-written externals as the canonical pattern
 - More addon candidates (date-fns, Framer Motion, Recharts) — evaluate against the hand-written-externals approach
+
+## History
+
+- 2026-10-21: numbered ULTRA-00026 (was `docs/tasks-archive/2026-04/2026-04-13-kraft-ecosystem-and-tailwind.md`).
