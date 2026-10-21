@@ -11,7 +11,7 @@ parts 3–4, which landed 2026-07-23 (two-phase auth + pluggable route checks + 
 **Overlap:** `20260728-docs-sync-remaining.md` §2 lists the same part-3 gap ("`ConsistentParam` / caller-binding, two-phase auth
 evaluation, `RouteBootCheck`, `RouteParamsGuard`"). One docs pass should close both; decide which doc owns it then.
 **Settled?** Yes for the extension points — `RouteBootCheck.kt`, `RouteParamsGuard.kt` and `auth/AuthPhase.kt` have had no
-commit since 2026-07-23. The moving part is org isolation: `20260722-route-check-followups.md` item 5 may add a
+commit since 2026-07-23. The moving part is org isolation: ULTRA-00094 (route check followups) item 5 may add a
 `CrossOrgParam` opt-out beside `OrgAwareParam`, so keep the org-isolation prose to what is already on `saas.astro`.
 
 ## Already documented — do not redo (audited 2026-10-19)

@@ -3,7 +3,7 @@
 **Status:** OPEN QUESTIONS — collected 2026-07-23, not yet designed/scheduled.
 **Type:** security / design
 **Context:** spun out of part-3 (ULTRA-00090 (two phase auth consistent params) +
-`20260722-route-check-followups.md`). The auth-hardening folder is the security-tasks home.
+ULTRA-00094 (route check followups)). The auth-hardening folder is the security-tasks home.
 
 ## 1. "Owner must be in the URI" — generalize the org rule to a structural rule (user, 2026-07-23)
 
@@ -26,7 +26,7 @@ one check instead of an org-specific interface rule.
 
 Value: one clear structural law ("owned resource ⟹ owner in path"), covering org + user + future
 owners, checked at BOTH boot and request time. Pairs with the entity-`OrgAware`/`UserAware` linter
-(`20260722-route-check-followups.md` item 2) and a shippable review skill.
+(ULTRA-00094 (route check followups) item 2) and a shippable review skill.
 
 ## 2. Body-embedded id smuggling (user has a PROVEN approach — details pending)
 
@@ -39,9 +39,9 @@ capture the design when shared. Placeholder — do not design speculatively.
 
 - **Cross-org operations over-protected** (move A→B, both ids in uri) — the single-org model has no
   vocabulary for it. Direction: a `CrossOrgParam` opt-out, operator-scoped. See
-  `20260722-route-check-followups.md` item 5.
+  ULTRA-00094 (route check followups) item 5.
 - **User-level isolation** (`UserAware`/`CallerOwnershipGuard`) — same mechanism as org isolation.
-  See `20260722-route-check-followups.md` item 4.
+  See ULTRA-00094 (route check followups) item 4.
 - **Cross-realm authorization boundary** — ULTRA-00044 (cross realm authz and tests).
 - **Red-team scenarios** — `20260723-redteam-org-isolation.md`,
   ULTRA-00039 (redteam saas orgs).

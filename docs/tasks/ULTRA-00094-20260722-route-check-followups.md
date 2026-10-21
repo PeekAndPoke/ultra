@@ -1,4 +1,4 @@
-# Route-check extension-point follow-ups (param-names, entity linter, branch isolation)
+# ULTRA-00094: Route-check extension-point follow-ups (param-names, entity linter, branch isolation)
 
 **Status:** TODO (created 2026-07-22) — spun out of ULTRA-00090 (two phase auth consistent params)
 **Type:** framework / hardening
@@ -104,3 +104,7 @@ Documented inline in the code KDoc; tracked here for hardening + red-team follow
 
 - Each item is its own reviewed change (they are independent). Reference this doc from the part-3
   index when scheduling.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00094 (was `docs/tasks/20260722-route-check-followups.md`).

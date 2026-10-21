@@ -244,3 +244,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00093 | 2026-07-22 | `docs/tasks-archive/2026-07/20260722-00-auth-hardening-index.md` | `docs/tasks-archive/2026-07/ULTRA-00093-20260722-00-auth-hardening-index.md` |
 | ULTRA-00093 | 2026-07-22 | `.claude/tasks-archive/2026-07/20260722-00-auth-hardening-index.md` | `docs/tasks-archive/2026-07/ULTRA-00093-20260722-00-auth-hardening-index.md` |
 | ULTRA-00093 | 2026-07-22 | `.claude/tasks/auth-hardening/20260722-00-auth-hardening-index.md` | `docs/tasks-archive/2026-07/ULTRA-00093-20260722-00-auth-hardening-index.md` |
+| ULTRA-00094 | 2026-07-22 | `docs/tasks/20260722-route-check-followups.md` | `docs/tasks/ULTRA-00094-20260722-route-check-followups.md` |
+| ULTRA-00094 | 2026-07-22 | `.claude/tasks/auth-hardening/20260722-route-check-followups.md` | `docs/tasks/ULTRA-00094-20260722-route-check-followups.md` |

@@ -21,7 +21,7 @@ auth-hardening work:
   should implement `UserAware`** (orders, payments, profile) — the exact gap the boot check CANNOT
   catch (an unmarked entity). Not a 100% guarantee, but a strong good-practice net.
 - Complements the structural backstops: the boot check + the entity-`OrgAware` **linter**
-  (`auth-hardening/20260722-route-check-followups.md` item 2) enforce at build time; the **skill**
+  (ULTRA-00094 (route check followups) item 2) enforce at build time; the **skill**
   aids at authoring/review time. Different failure surfaces, both wanted.
 
 More broadly, skills can teach the current idioms so reviews stop accepting stale patterns: the
@@ -42,7 +42,7 @@ block-style `authorize {}` DSL, the mandatory `ApiRoutes` floor, two-phase auth,
 
 ## Cross-references
 
-- `auth-hardening/20260722-route-check-followups.md` (item 2: the entity-`OrgAware` linter — the
+- ULTRA-00094 (route check followups) (item 2: the entity-`OrgAware` linter — the
   structural counterpart) and item 4 (`UserAware` isolation).
 - The docs collectors (`docs-site/src/data/llms/*`) — the LLM-readable mirrors are the closest
   existing thing; a skill is the interactive/review-time complement.

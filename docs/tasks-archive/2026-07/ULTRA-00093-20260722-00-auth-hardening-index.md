@@ -18,7 +18,7 @@ dependency on the previous one, so land them in order.
 | 3 | ULTRA-00090 (two phase auth consistent params) | Two-phase auth eval + pluggable `RouteBootCheck`/`RouteParamsGuard` + saas org-isolation (`OrgAware`/`OrgAwareParam`) — no entity loads before auth passes, structural cross-org isolation | **DONE** (2026-07-23, review loop: round-1 reworked on 2 HIGH direction findings, round-2 confirmed mechanism airtight, edge findings fixed) |
 | 4 | ULTRA-00089 (stored param migration) | Migrate framework APIs from in-handler `findById` to `Stored` params + entity-based param naming + `defaultAuth`→`authFloor` rename | **DONE** (2026-07-23, review loop ended round 3, zero findings) |
 | — | ULTRA-00091 (docs auth dsl and floor) | Docs follow-up (collector) for the DSL rewrite + floor + part-3 checks/guards. Write the prose after 1–4 land | **PARTIAL** (checked 2026-10-19: floor + DSL are documented, two-phase eval / `RouteBootCheck` / `ConsistentParam` / `Stored` params are not) |
-| — | `20260722-route-check-followups.md` | Part-3 spin-offs: `validateUriPattern`→`RouteBootCheck`, entity-`OrgAware` linter, branch-level isolation | **TODO** |
+| — | ULTRA-00094 (route check followups) | Part-3 spin-offs: `validateUriPattern`→`RouteBootCheck`, entity-`OrgAware` linter, branch-level isolation | **TODO** |
 | — | `20260723-security-open-questions.md` | Open design questions on owner-in-URI, body-embedded ids, cross-org operations | **OPEN QUESTIONS** (not in this index until 2026-10-19) |
 | — | `20260723-redteam-org-isolation.md` | Red-team attack scenarios for the org-isolation (security-critical follow-up) | **TODO** (collected, not executed) |
 

@@ -57,7 +57,7 @@ funktor(config) {
 - Generalise: this subsumes the **incoming-converter convertibility** boot check (any `Stored<T>`
   route param whose entity `T` has no registered repository → fail boot with "no repository stores T
   — did you select a backend?"). That check is otherwise tracked in
-  `docs/tasks/20260722-route-check-followups.md`; fold it here rather than shipping
+  ULTRA-00094 (route check followups); fold it here rather than shipping
   it standalone.
 - Keep backward-compat: the current named-param `funktor(...)` can delegate to the new builder, or be
   deprecated in favour of it.
@@ -71,5 +71,5 @@ degenerate misconfiguration (mirrors the already-accepted `OrgAwareParam`-withou
 ## Cross-references
 
 - ULTRA-00089 (stored param migration) (part 4) — where the gap surfaced.
-- `20260722-route-check-followups.md` — the incoming-converter boot check to fold in here.
+- ULTRA-00094 (route check followups) — the incoming-converter boot check to fold in here.
 - ULTRA-00092 (actionable boot error messages) — the boot-error formatting to reuse.

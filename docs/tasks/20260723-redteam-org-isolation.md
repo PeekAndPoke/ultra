@@ -44,5 +44,5 @@ These are the residual/edge scenarios to actively attempt.
 ## Cross-references
 
 - ULTRA-00090 (two phase auth consistent params) — the feature.
-- `20260722-route-check-followups.md` — the linter/hardening backstops (items 2, 4).
+- ULTRA-00094 (route check followups) — the linter/hardening backstops (items 2, 4).
 - ULTRA-00039 (redteam saas orgs) — the broader org red-team; fold these in.

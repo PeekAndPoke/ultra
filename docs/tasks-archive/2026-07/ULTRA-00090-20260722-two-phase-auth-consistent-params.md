@@ -177,7 +177,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
       *(`ConsistentParam.kt:10,19-25` say opt-in and not-a-tenant-boundary; `OrgIsolation.kt` KDoc; the collector captures
       part 3 — items 1–3 under its "Still undocumented" list, as rewritten 2026-10-19)*
 - [x] Create follow-up task: migrate `validateUriPattern` onto `RouteBootCheck` + the entity-`OrgAware`
-      linter (see Cross-references). *(`20260722-route-check-followups.md`, items 1 and 2)*
+      linter (see Cross-references). *(ULTRA-00094 (route check followups), items 1 and 2)*
 - [x] Run the FULL round-2 gate over the whole reworked diff; loop to zero findings.
       *(Status above: loop closed at round 5; the fix commits exist — `625b3d7a` round 2, `f0038e1b` round 3,
       `c5e63d06` round 4. The round-by-round findings are summarised in the Status above; they were not re-derived
@@ -198,7 +198,7 @@ class OrgIsolationGuard     : RouteParamsGuard // caller-binding + org-consisten
 - Prerequisite of part 4 (ULTRA-00089 (stored param migration)) — the oracle goes live without this.
 - Pairs with ULTRA-00092 (actionable boot error messages) (the runner owns the aggregated boot error;
   fold the multiline-indent fix here).
-- FOLLOW-UP: `20260722-route-check-followups.md` — migrate `validateUriPattern` onto `RouteBootCheck`,
+- FOLLOW-UP: ULTRA-00094 (route check followups) — migrate `validateUriPattern` onto `RouteBootCheck`,
   the entity-`OrgAware` linter, and branch-level (sub-org) isolation.
 - ULTRA-00039 (redteam saas orgs) — org-IDOR scenarios this closes structurally; update its assumptions.
 
