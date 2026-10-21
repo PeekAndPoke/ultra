@@ -1,4 +1,4 @@
-# V1 Email Auth Flows + Session Records
+# ULTRA-00030: V1 Email Auth Flows + Session Records
 
 **Status:** PLANNED 2026-04-16 — Phase 1 DONE (2026-07-17 scan: `AuthRecord.{EmailVerificationToken,
 EmailChangeToken,Session}` + `SessionStore` (Vault/Cached) + `RealmTokenConfig` + `funktor:sid` claim
@@ -297,3 +297,7 @@ Each phase: `./gradlew :funktor:auth:jvmTest` + integration via funktor-demo wit
 
 Final: full manual click-through of all demo pages on a fresh database for each of: sign-up → verify → login → change
 password → email change → revoke session → logout.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00030 (was `docs/tasks/v1-email-auth-and-sessions.md`).

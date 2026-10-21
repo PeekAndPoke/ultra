@@ -193,7 +193,7 @@ Never store raw card/IBAN data (PCI/PSD2) — only Stripe tokens/ids + display m
 3. **Legal invoice issuer** = operator (single entity, all tenants) vs. per-app — sets numbering.
 4. **How much billing is core vs. app** — recommend: data model + Stripe + webhooks + emails +
    invoice pipeline are core; plan catalog + invoice templates + operator metrics are app.
-5. Sequencing vs. the auth backlog (`v1-email-auth-and-sessions.md` Phase F, 2FA, audit trail) — most
+5. Sequencing vs. the auth backlog (ULTRA-00030 (v1 email auth and sessions) Phase F, 2FA, audit trail) — most
    of this depends on Phase F sessions + the document layer landing first.
 
 ## Cross-references

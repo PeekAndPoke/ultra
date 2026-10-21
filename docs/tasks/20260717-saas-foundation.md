@@ -8,7 +8,7 @@ editor (kraft) + email/PDF renderers with app-specific extension points.
 templating building-block inventory, thebizz idea extraction) + coordinator synthesis.
 **Relationship to ULTRA-00028 (v1 roadmap):** v1 hardening/release continues unchanged. This plan is the
 product-platform work layered on top. Post-v1 backlog items #3 (account activation) and #5 (email
-template editor) are absorbed here. `v1-email-auth-and-sessions.md` is a hard prerequisite (Track A).
+template editor) are absorbed here. ULTRA-00030 (v1 email auth and sessions) is a hard prerequisite (Track A).
 **Update 2026-07-17:** Tracks A+B are superseded by the detailed plan
 `20260717-auth-orgs-foundation.md` (Karsten confirmed: orgs+branches two-level tenancy on
 `UserPermissions`, shared identity, 0/1/n login selection, no back-compat needed; auth is the

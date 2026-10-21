@@ -8,7 +8,7 @@ email-keyed resend) — but neither a PASS verdict nor a second review round ove
 touched after the fix commit. Archive on the maintainer's word that the gate stands, or after a clean round. Open elsewhere,
 not here: `docs/tasks/20260727-activation-resend-cooldown-atomicity.md` (TODO) and
 `docs/tasks/20260727-redteam-account-activation.md` (collected, not executed).
-**Plan:** `docs/tasks/v1-email-auth-and-sessions.md` → Phase 4 (verification) + Phase 6 (demo pages)
+**Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4 (verification) + Phase 6 (demo pages)
 **Follows:** `docs/tasks-archive/2026-07/20260727-account-activation.md` — the backend guard. This is its open scope
 item 2, plus the resend it deliberately deferred.
 **Security-critical:** yes → red-team scenarios fold into

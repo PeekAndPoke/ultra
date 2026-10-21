@@ -7,7 +7,7 @@ at `AuthFrontend.kt:41` (the mailed deep link) and `:50` (the no-token resend pa
 through `AuthFrontend.default(…)`. Resend, the `ActivationRequired` sign-in response and their gate are carried by
 `docs/tasks/20260727-activation-resend-and-frontend.md`. Still open elsewhere, not here:
 `docs/tasks/20260727-redteam-account-activation.md` (collected, not executed).
-**Plan:** `docs/tasks/v1-email-auth-and-sessions.md` → Phase 4, verification half (§7 "signUp →
+**Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4, verification half (§7 "signUp →
 if `requiresActivation`, create `EmailVerificationToken`, send verification email. Don't auto-issue
 session/JWT yet"; §7 "signIn → on unverified user").
 **Security-critical:** yes → red-team follow-up required.

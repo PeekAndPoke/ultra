@@ -62,3 +62,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00028 | 2026-04-13 | `.claude/tasks/v1-roadmap.md` | `docs/tasks/ULTRA-00028-v1-roadmap.md` |
 | ULTRA-00029 | 2026-04-15 | `docs/tasks/future/kotlin-js-swc-delegated-transpilation.md` | `docs/tasks/future/ULTRA-00029-kotlin-js-swc-delegated-transpilation.md` |
 | ULTRA-00029 | 2026-04-15 | `.claude/future-plans/kotlin-js-swc-delegated-transpilation.md` | `docs/tasks/future/ULTRA-00029-kotlin-js-swc-delegated-transpilation.md` |
+| ULTRA-00030 | 2026-04-16 | `docs/tasks/v1-email-auth-and-sessions.md` | `docs/tasks/ULTRA-00030-v1-email-auth-and-sessions.md` |
+| ULTRA-00030 | 2026-04-16 | `.claude/tasks/v1-email-auth-and-sessions.md` | `docs/tasks/ULTRA-00030-v1-email-auth-and-sessions.md` |

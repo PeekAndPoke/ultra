@@ -5,7 +5,7 @@
 the org-aware login flow (0/1/n org selection), and then fully implement all still-open user flows.
 Auth is the center-piece for everything that follows.
 **Supersedes:** Track B of `20260717-saas-foundation.md`. Absorbs the open Phases 2–6 of
-`v1-email-auth-and-sessions.md` as Phase F.
+ULTRA-00030 (v1 email auth and sessions) as Phase F.
 
 ## Decisions from Karsten (2026-07-17)
 
@@ -360,7 +360,7 @@ Each phase green + tested (both DB backends via the `MatrixTest2d`/`AppSpec` pat
 - [ ] Manual click-through: all three login shapes + re-login-to-switch
 
 ### Phase F — Complete all open user flows (~4–5 days)
-Execute `v1-email-auth-and-sessions.md` Phases 2–6 as specified there, org-aware on top:
+Execute ULTRA-00030 (v1 email auth and sessions) Phases 2–6 as specified there, org-aware on top:
 - [ ] **F1** Session-auth middleware; sign-in creates `Session` rows (with `org`) via the
       `issueSignIn` seam; `touch()` wired (its Phase 2)
 - [ ] **F2** Sign-up verification tokens + `AuthSystem.activate()` implemented + activation email
