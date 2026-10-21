@@ -1,4 +1,4 @@
-# Email canonicalization on lookup (framework auth gap)
+# ULTRA-00106: Email canonicalization on lookup (framework auth gap)
 
 **Status:** ✅ CLOSED 2026-07-26 by **Option C** — see `docs/tasks/20260726-value-class-emailaddress.md`.
 
@@ -153,3 +153,7 @@ own 3-agent review + a doc-collector note.
   lowercase-on-store, so lookups MUST match that — this is about internal consistency, not RFC nuance.
 - The unique-email index is per-realm repo; canonical storage + canonical lookup together are what make
   it reliable.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00106 (was `docs/tasks-archive/2026-07/20260724-email-canonicalization.md`).

@@ -151,14 +151,14 @@ See `docs/tasks/20260726-value-class-emailaddress.md`. Three corrections to the 
 3. `of()` also rejects non-ASCII raw input before lowercasing, so U+212A (which lowercases to `k`)
    cannot canonicalize onto a different existing address.
 
-**Closes `docs/tasks-archive/2026-07/20260724-email-canonicalization.md`** as its Option C — the 5 documented
+**Closes ULTRA-00106 (email canonicalization)** as its Option C — the 5 documented
 lookup gaps are now fixed structurally.
 
 ### Original plan text
 `email: String` → `Email`. `init { require(value == value.trim().lowercase()) }` + `of(raw) =
 Email(raw.trim().lowercase())`. `of()` normalizes; a non-canonical value is REJECTED on construction
 (incl. deserialize). CONSEQUENCE: `Email` is a DOMAIN/stored type — the API takes raw `String` and
-normalizes at the handler (as `20260724-email-canonicalization.md` already does), NOT direct raw-body
+normalizes at the handler (as ULTRA-00106 (email canonicalization) already does), NOT direct raw-body
 binding. Surface: user models/entities across realms.
 
 ## Step 5 — `Slug`

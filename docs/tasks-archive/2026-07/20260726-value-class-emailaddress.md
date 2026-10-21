@@ -2,7 +2,7 @@
 
 **Status:** DONE (archived 2026-10-19) — gate passed in two rounds (2026-07-26, looped to zero confirmed findings; amended 2026-07-27). The ROLLOUT STEP below is not needed: the maintainer confirmed (2026-10-19) there are no real deployments with existing user data, and no backward-compatibility concern — the maintainer's own apps are the only users.
 **Plan:** `docs/tasks/20260724-value-class-ids-migration.md` → Step 4
-**Closes:** `docs/tasks/20260724-email-canonicalization.md` — this IS that task's **Option C**
+**Closes:** ULTRA-00106 (email canonicalization) — this IS that task's **Option C**
 ("an `EmailAddress` value type … strongest (wrong usage unrepresentable)"), which was deferred at the
 time as likely premature. It is now scheduled, so the 5 documented lookup gaps get fixed BY
 CONSTRUCTION rather than by remembering to call `.trim().lowercase()`.

@@ -55,7 +55,7 @@ Value classes (`RealmId`, `UserId`, `OrgId`, …) make each of these a distinct 
 1. **Type-safety ≠ canonicalization.** slumber AND kotlinx construct a value class via its CTOR on
    deserialize, BYPASSING an `of()` factory. An `init {}` block can VALIDATE (throw) but cannot
    TRANSFORM (can't trim/lowercase). So `Email.of()` canonicalization does NOT survive deserialization
-   of untrusted input — canonicalize/validate at the boundary (as `20260724-email-canonicalization.md`
+   of untrusted input — canonicalize/validate at the boundary (as ULTRA-00106 (email canonicalization)
    already does for add-member/login), and put any hard invariant in `init {}`. (Red-team item recorded
    in that task.)
 2. **Stored/queried ids need KSP first.** A value-class FIELD serializes/reads through slumber already,
