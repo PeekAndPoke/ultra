@@ -1,4 +1,4 @@
-# Red-team: async/suspend form validation rules
+# ULTRA-00078: Red-team: async/suspend form validation rules
 
 **Status:** COLLECTED — not executed. For a dedicated penetration-test session.
 **Feature:** [[ULTRA-00077]] (async validation, FormController status + double-submit guard).
@@ -42,3 +42,7 @@ These are concrete attack scenarios to ATTEMPT later. Do not run them during nor
   authoritative, `equalTo` still never echoes its operand.
 - Mandatory server-side controls regardless of client behavior: idempotent writes, uniqueness at write
   time, rate limiting on rule-reachable endpoints.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00078 (was `docs/tasks/20260721-redteam-async-suspend-rules.md`).

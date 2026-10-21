@@ -95,7 +95,7 @@ unit-tested because no concrete `FormField` exists in `core-tests` (all fields a
 `field.validate()`. Same-tick guard + status + ERROR paths ARE tested via real TestBed browser runs.
 
 - [x] `/feature-review` gate (impl+style, domain, security) — PASS.
-- [x] Red-team follow-up collected: [[20260721-redteam-async-suspend-rules]].
+- [x] Red-team follow-up collected: [[ULTRA-00078]].
 
 ## History
 
