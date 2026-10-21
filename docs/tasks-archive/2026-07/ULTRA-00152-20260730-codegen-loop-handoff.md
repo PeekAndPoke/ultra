@@ -1,4 +1,4 @@
-# Loop handoff — ts-sdk-codegen autonomous run
+# ULTRA-00152: Loop handoff — ts-sdk-codegen autonomous run
 
 **Status:** DONE — loop COMPLETE 2026-08-01 (the "PENDING" note below says so), archived 2026-10-19. This is a loop-state
 log, not a task: every backlog item it drove is finished (§1 regression tests; the four 2026-08-01 items; Phase 2
@@ -716,3 +716,7 @@ watched it go red.**
 states its question. Phase 2 (`funktor/codegen`) is authorized but was deliberately NOT started
 unattended: it is a large new surface, and beginning it straight after a run that found this many
 defects in reviewed code is the wrong trade. A clean green tree with decisions queued is worth more.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00152 (was `docs/tasks-archive/2026-07/20260730-codegen-loop-handoff.md`).

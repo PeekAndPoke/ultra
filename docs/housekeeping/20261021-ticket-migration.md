@@ -372,3 +372,6 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00150 | 2026-07-29 | `.claude/tasks/20260729-redteam-log-forging.md` | `docs/tasks/ULTRA-00150-20260729-redteam-log-forging.md` |
 | ULTRA-00151 | 2026-07-30 | `docs/tasks/20260730-funktor-rest-codec-config.md` | `docs/tasks/ULTRA-00151-20260730-funktor-rest-codec-config.md` |
 | ULTRA-00151 | 2026-07-30 | `.claude/tasks/20260730-funktor-rest-codec-config.md` | `docs/tasks/ULTRA-00151-20260730-funktor-rest-codec-config.md` |
+| ULTRA-00152 | 2026-07-30 | `docs/tasks-archive/2026-07/20260730-codegen-loop-handoff.md` | `docs/tasks-archive/2026-07/ULTRA-00152-20260730-codegen-loop-handoff.md` |
+| ULTRA-00152 | 2026-07-30 | `.claude/tasks-archive/2026-07/20260730-codegen-loop-handoff.md` | `docs/tasks-archive/2026-07/ULTRA-00152-20260730-codegen-loop-handoff.md` |
+| ULTRA-00152 | 2026-07-30 | `.claude/tasks/20260730-codegen-loop-handoff.md` | `docs/tasks-archive/2026-07/ULTRA-00152-20260730-codegen-loop-handoff.md` |
