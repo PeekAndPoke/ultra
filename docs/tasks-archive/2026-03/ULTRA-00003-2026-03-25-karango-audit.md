@@ -1,4 +1,4 @@
-# Karango Library Audit: Code Fixes, KDoc, Missing Tests — COMPLETED
+# ULTRA-00003: Karango Library Audit: Code Fixes, KDoc, Missing Tests — COMPLETED
 
 
 
@@ -109,3 +109,7 @@ Identified 11 public functions with zero test coverage, then wrote tests for all
 ## Verification
 
 All tests pass: `./gradlew :karango:core:test` — 1644+ tests, 0 failures.
+
+## History
+
+- 2026-10-21: numbered ULTRA-00003 (was `docs/tasks-archive/2026-03/2026-03-25-karango-audit.md`).
