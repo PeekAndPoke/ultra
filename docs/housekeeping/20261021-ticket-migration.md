@@ -148,3 +148,5 @@ Old path to ticket; `ticket.py sweep` and `find` read this table. Former locatio
 | ULTRA-00059 | 2026-07-20 | `docs/tasks/20260720-route-auth-default-deny.md` | `docs/tasks/ULTRA-00059-20260720-route-auth-default-deny.md` |
 | ULTRA-00059 | 2026-07-20 | `.claude/tasks/error-disclosure/20260720-route-auth-default-deny.md` | `docs/tasks/ULTRA-00059-20260720-route-auth-default-deny.md` |
 | ULTRA-00059 | 2026-07-20 | `.claude/tasks/20260720-route-auth-default-deny.md` | `docs/tasks/ULTRA-00059-20260720-route-auth-default-deny.md` |
+| ULTRA-00060 | 2026-07-20 | `docs/tasks/20260720-vault-hook-reentrancy.md` | `docs/tasks/ULTRA-00060-20260720-vault-hook-reentrancy.md` |
+| ULTRA-00060 | 2026-07-20 | `.claude/tasks/20260720-vault-hook-reentrancy.md` | `docs/tasks/ULTRA-00060-20260720-vault-hook-reentrancy.md` |

@@ -162,7 +162,7 @@ findings verified by the coordinator against the code before acceptance.
 
 ### Open — handed off to follow-up tasks
 
-- **Re-entrancy can loop forever in deferred mode** → `docs/tasks/20260720-vault-hook-reentrancy.md`
+- **Re-entrancy can loop forever in deferred mode** → ULTRA-00060 (vault hook reentrancy)
 - **Wider error-disclosure audit** (triggered by the `ApiStatusPages` fix; found that production
   still returns `cause.message` containing full AQL, and that the Insights GUI has no auth gate) →
   ULTRA-00054 (error response disclosure audit)
