@@ -85,14 +85,11 @@ fun main() {
 
 ## Example Projects
 
-Clone and run these standalone example repos to see Kraft in action:
+Clone https://github.com/PeekAndPoke/kraft-examples and run one with `./gradlew :<example>:jsBrowserDevelopmentRun`:
 
-- **Hello World** — Minimal project — mount a component, see it
-  render. https://github.com/PeekAndPoke/kraft-example-helloworld
-- **Router Demo** — Multi-page app with parameterized routes and form handling with
-  Mutator. https://github.com/PeekAndPoke/kraft-example-router
-- **Remote API** — Consume REST APIs and display results with routing and
-  SemanticUI. https://github.com/PeekAndPoke/kraft-example-remote
+- **helloworld** — Minimal project — mount a component, see it render.
+- **router** — Multi-page app with parameterized routes and form handling with Mutator.
+- **remote** — Consume REST APIs and display results with routing and SemanticUI.
 
 ---
 

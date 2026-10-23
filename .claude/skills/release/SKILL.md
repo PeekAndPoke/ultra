@@ -106,9 +106,8 @@ overwritten.
 
 ## Post-publish
 
-Once the new version is live on Maven Central, the three external Kraft example projects (`kraft-example-helloworld`,
-`kraft-example-router`, `kraft-example-remote`) need their dependency versions bumped. That's a separate repo, not in
-this monorepo. Use the `update-kraft-examples` skill — it handles those projects end-to-end.
+Once the new version is live on Maven Central, the Kraft examples repo (`kraft-examples`, a separate repo, not in
+this monorepo) needs its versions bumped. Use the `update-kraft-examples` skill — it handles it end-to-end.
 
 ## Shipping Checklist (mirrors ULTRA-00028 (v1 roadmap))
 

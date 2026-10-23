@@ -2,7 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import {kraftSidebar} from '../../../data/kraft-sidebar';
 import ExampleEmbed from '../../../components/ExampleEmbed.astro';
-import {githubRepo, kraftLiveExamples, kraftExamples} from '../../../data/site';
+import {githubRepo, kraftLiveExamples, kraftExamples, kraftExamplesRepo} from '../../../data/site';
 
 const exampleSourceBase = `${githubRepo}/tree/master/kraft/examples`;
 ---
@@ -42,13 +42,13 @@ const exampleSourceBase = `${githubRepo}/tree/master/kraft/examples`;
 
     <h2>Source Code</h2>
 
-    <p>Want to dig into the code? Check out the standalone example repositories:</p>
+    <p>Want to dig into the code? All examples live in one repository, <a href={kraftExamplesRepo} target="_blank" rel="noopener">kraft-examples</a>, one folder each:</p>
 
     <div class="not-prose grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
         <a href={kraftExamples.helloworld} target="_blank" rel="noopener"
            class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">
             <h3 class="text-white font-semibold mb-1">Hello World</h3>
-            <p class="text-sm text-gray-400">Minimal project on GitHub</p>
+            <p class="text-sm text-gray-400">Minimal project</p>
         </a>
         <a href={kraftExamples.router} target="_blank" rel="noopener"
            class="block p-4 rounded-lg border border-white/10 bg-white/[0.02] hover:border-brand-400/40 transition-all">

@@ -22,11 +22,12 @@ export const githubRepo = 'https://github.com/PeekAndPoke/ultra';
 export const mavenCentralUrl = 'https://central.sonatype.com/namespace/io.peekandpoke.ultra';
 export const fomanticCdnUrl = `https://cdn.jsdelivr.net/npm/fomantic-ui@${fomanticVersion}/dist/semantic.min.css`;
 
-// Example project repos
+// Example projects: one repo, one folder per example
+export const kraftExamplesRepo = 'https://github.com/PeekAndPoke/kraft-examples';
 export const kraftExamples = {
-    helloworld: 'https://github.com/PeekAndPoke/kraft-example-helloworld',
-    router: 'https://github.com/PeekAndPoke/kraft-example-router',
-    remote: 'https://github.com/PeekAndPoke/kraft-example-remote',
+    helloworld: `${kraftExamplesRepo}/tree/master/helloworld`,
+    router: `${kraftExamplesRepo}/tree/master/router`,
+    remote: `${kraftExamplesRepo}/tree/master/remote`,
 };
 
 // Live example paths (served from public/kraft-examples via symlinks)
