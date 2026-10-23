@@ -25,9 +25,9 @@ export const fomanticCdnUrl = `https://cdn.jsdelivr.net/npm/fomantic-ui@${fomant
 // Example projects: one repo, one folder per example
 export const kraftExamplesRepo = 'https://github.com/PeekAndPoke/kraft-examples';
 export const kraftExamples = {
-    helloworld: `${kraftExamplesRepo}/tree/master/helloworld`,
-    router: `${kraftExamplesRepo}/tree/master/router`,
-    remote: `${kraftExamplesRepo}/tree/master/remote`,
+    helloworld: `${kraftExamplesRepo}/tree/main/helloworld`,
+    router: `${kraftExamplesRepo}/tree/main/router`,
+    remote: `${kraftExamplesRepo}/tree/main/remote`,
 };
 
 // Live example paths (served from public/kraft-examples via symlinks)
