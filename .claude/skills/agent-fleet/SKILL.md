@@ -113,49 +113,16 @@ real `flock` wrapper (`klang/console/with-build-lock.sh`); port it if ultra star
 
 ## Concurrency & fan-out safety
 
-Cost isn't the only failure mode — in one run, several heavy agents launched at once **stalled or
-disconnected mid-response**, and a failed agent writes nothing. **Causation is not proven:** the
-observed run also happened over a flaky network connection, which could equally explain the
-stalls. So treat the limits below as prudent defaults, not hard evidence-backed ceilings — they
-cost little and remove one variable. If future runs show heavy concurrency is reliable, **broaden
-it back in small increments** (e.g. 2–3 → 4 → 5 heavy agents) and note what held. Two rules:
+A failed agent writes nothing, and a worker's own sub-fleet dies with it. Three rules:
 
 - **Workers must not fan out.** A sub-agent that spawns its own sub-fleet compounds load
   invisibly and, if it dies, orphans its children — their finished results are discarded with the
   parent. When a worker's task might tempt it to delegate, tell it explicitly in the prompt:
   *"Do NOT spawn sub-agents. Work sequentially yourself; read files in small batches."* Keep
   fan-out one level deep: the coordinator fans out, workers do not.
-- **Cap concurrent heavy-tier agents at ~2–3.** `opus`/inherit-tier agents are the ones that
-  stall under simultaneous load. `sonnet`/`haiku` workers parallelise fine (run 5–6+). If a phase
-  needs many heavy agents, batch them or run the heaviest synchronously
-  (`run_in_background: false`) so a stall surfaces immediately instead of after a 10-min watchdog.
 - **On failure, retry the one agent** — synchronously, sub-fan-out forbidden — rather than
   relaunching the whole fleet. Check what already landed on disk first; partial work may survive.
-- **No two workers edit the same file.** Partition by file, or use `isolation: "worktree"`.
-
-## Every brief opens with the bar (adopted from klang 2026-09-28, a theory under observation)
-
-Every agent in the fleet, whatever its role, is told in the first line of its brief that it is
-world-class at that role, and right after it the other half of the bar from the top of `CLAUDE.md`:
-mistakes are fine, a defect found is a good day, hiding or brushing over one is what would hurt. Then
-the constraints and the task. Where it helps, state the bar for the work itself too ("the e2e must run
-against both DB backends", "only CRITICAL and MAJOR force a round, so be precise about severity").
-
-**Why (klang's maintainer):** the training data holds work of every quality, and an agent not told
-otherwise reaches for the middle of it — the ordinary fix, the test that restates the implementation,
-the review that files whitespace. The second half matters as much: an agent told it is world-class
-must also be told that reporting a weakness in its own work is part of that, or the line invites
-arrogance.
-
-**Status: a theory.** It might tip an agent into arrogance, or do nothing (every sub-agent already reads
-`CLAUDE.md`). Signs it went wrong: a finding dismissed without a scenario, a mutation check reported
-as "obviously red", a recorded decision "corrected", a brief's scope widened because the agent knew
-better. Signs it worked: unsettled decisions named, weak tests called weak by their own author, an
-asymmetry reported rather than papered over. Klang's first observations (2026-09-18, nine reports):
-no arrogance signal, candid self-reports. The numbers live in
-[`defect-density-ledger.md`](defect-density-ledger.md); record observations in the changelog, dated.
-If the density does not move, the line goes and `CLAUDE.md`'s opening stays the one place the bar is
-stated.
+- **No two workers edit the same file.** Partition by file.
 
 ## Notes
 
@@ -191,3 +158,8 @@ stated.
   `BUILD-LOCK.md`; klang's `flock` wrapper not ported); no two workers on one file; give workers the
   constraints; the opening-line bar and its defect-density ledger (started empty). Left in klang: the
   audio-reviewer tiering, the sprudel KSP cache, the "no Agent tool unless requested" project rule.
+- **2026-10-23** — Rules Retro (MC-00021, topic 4), all four agents agreed: removed the heavy-agent cap
+  (Spross ran a builder plus 2–3 reviewers all day without a failure; the build lock is the real
+  guard), the "world-class" opening line of briefs and its defect-density ledger (no rows here; klang's
+  showed no failure it prevents), and the `isolation: "worktree"` half of "no two workers on one file"
+  (CLAUDE.md forbids it).
