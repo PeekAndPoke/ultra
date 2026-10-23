@@ -184,7 +184,13 @@ the maintainer wrote alone carries none.
 - **Worktrees:** none by default; when one is needed, `console/worktree-new.sh <track>` puts it in
   `../ultra-worktrees/<track>`, and `console/wt-gradle.sh` gives it its own test databases
   (`console/wt-gradle.sh:12`).
-- **Status lines are not converted yet** to `> **Status (date): WORD.**`; `ticket check` reports them.
+- **IntelliJ has this checkout open**, so work goes here, in sequence (maintainer, 2026-10-20: "a steady
+  sequential workload rather than spikes"). Read-only `mcp__idea__*` queries (symbol search, call graphs,
+  structural search, inspections) are allowed; write and build IDE tools (apply_patch, rename_refactoring,
+  reformat, build_project, run configurations) stay off until the maintainer approves them one by one.
+- **`docs/tasks/_incidents.md` replaces the review-loop escape ledger:** a review escape is one class of
+  incident (MC-00028). `.claude/skills/review-loop/escape-ledger.md` goes when the review-loop core is taken
+  from the blueprint (MC-00012).
 - **Not adopted yet:** `TODO.MD` still exists, and there is no `DEV-DIARY.MD`, `CREDITS.MD` or `AUTHORS.MD`.
 
 ## Proposed upstream

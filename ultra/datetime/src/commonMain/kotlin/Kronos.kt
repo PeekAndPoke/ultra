@@ -217,7 +217,8 @@ interface Kronos {
      * The created dates and times will be advances by the given [duration].
      *
      * The provider [duration] is called once, the first time the clock is read, never while chaining.
-     * A provider that throws is called again on the next read.
+     * A provider that throws is called again on the next read. Apps rely on this laziness: an offset read
+     * from the database must not be fetched when the chain is built.
      */
     fun advanceBy(duration: () -> Duration): Kronos = AdvancedBy(
         inner = this,
