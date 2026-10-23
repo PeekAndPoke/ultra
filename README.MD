@@ -86,10 +86,10 @@ class Counter(ctx: NoProps) : PureComponent(ctx) {
 }
 ```
 
-**Example projects:**
-[Hello World](https://github.com/PeekAndPoke/kraft-example-helloworld) |
-[Router Demo](https://github.com/PeekAndPoke/kraft-example-router) |
-[Remote API](https://github.com/PeekAndPoke/kraft-example-remote)
+**Example projects** ([kraft-examples](https://github.com/PeekAndPoke/kraft-examples)):
+[Hello World](https://github.com/PeekAndPoke/kraft-examples/tree/main/helloworld) |
+[Router Demo](https://github.com/PeekAndPoke/kraft-examples/tree/main/router) |
+[Remote API](https://github.com/PeekAndPoke/kraft-examples/tree/main/remote)
 
 ### [Mutator](https://peekandpoke.io/ultra/mutator/) — Mutate the Immutable
 
