@@ -14,6 +14,16 @@ going. No hedging, no apologising, no bracing for impact.
 - **Show a before/after of `CLAUDE.md`** (line counts and the changed lines) and get the maintainer's OK in this
   session before committing it (2026-10-19). A peer's word is not that OK.
 
+## Current experiments
+
+One line each: what, until when, the ticket. Notes go into the ticket, never here; the meeting deletes the line or
+turns it into a rule.
+
+- **Top review rung: one Opus 5.5 max and one Fable reviewer per charter**, same brief, blind; record who found what
+  and each one's tokens. Until 2026-10-30. ULTRA-00236.
+- **Tool look-out:** note each case where an IntelliJ tool (Optimize Imports, Auto-Format, Rename, Move) would have
+  beaten a hand edit, and every IntelliJ call that lands wrong or fails. Until 2026-10-30. ULTRA-00237.
+
 ## Tickets
 
 Plans and tasks are tickets in `docs/tasks/`, numbered `ULTRA-nnnnn` (layout: `.claude/skills/project-layout/`). A
