@@ -62,20 +62,16 @@ after each, a script checked every changed line was an import line and no wildca
 outside the 89 files changed. IntelliJ re-indexed during the run and showed its progress bar on the maintainer's
 screen.
 
-**PARKED 2026-10-23 for a machine reboot (Mission Control's request). Resume here:**
+**Result:** committed as `59431271`.
 
-- The 89 changed files are in the working tree, UNCOMMITTED on purpose (`git diff --name-only -- '*.kt'`).
-- Compile: green, 0 errors over the 17 touched modules. Tests: NOT proven. The run was stopped. Every failure
-  traced to the databases being unreachable (`ArangoDBException`, `MongoTimeoutException`, then
-  `NoClassDefFoundError` cascades from a failed class initialiser), none to imports.
-- Next: check Arango and Mongo are up, take the build lock, rerun `console/wt-gradle.sh :ultra:common:jvmTest
-  :ultra:kontainer:test :ultra:remote:check :ultra:slumber:jvmTest :karango:core:test :mutator:ksp:test
-  :funktor:auth:jvmTest :funktor:logging:jvmTest :funktor:messaging:jvmTest :funktor:testing:jvmTest
-  :funktor:all:jvmTest :funktor:staticweb:test :funktor:cluster:jvmTest :funktor:rest:jvmTest
-  :funktor:insights:jvmTest :funktor:core:jvmTest :funktor-demo:server:test --continue`. On green, commit the
-  89 files on their own, then this ticket.
-- Tally so far: 11 calls, 10 succeeded, 1 denied (classifier), 1 early return; 89 of 102 files; 13 left in
-  `funktor/insights/reference/`.
+- **Tally:** 11 calls. 10 succeeded, 1 was denied by the classifier, and 1 returned early. 89 of 102 files done;
+  13 left in `funktor/insights/reference/`.
+- **Compile:** green over the 17 modules.
+- **Tests:** 5948 green, 16 test tasks run fresh. Remote's JS tests were UP-TO-DATE from the earlier run, which had
+  the same changes. mutator/ksp, funktor/testing and funktor/staticweb have no tests.
+- **The first test run had no databases.** The `arangodb` and `mongodb` containers had exited hours before it
+  started. Every failure was a DB timeout followed by `NoClassDefFoundError` cascades; none came from imports. The
+  run was parked across a reboot, then rerun once the maintainer started the containers.
 
 ## Acceptance
 
