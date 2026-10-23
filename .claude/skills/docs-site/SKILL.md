@@ -127,6 +127,25 @@ When adding a new library, add its dependency string to `site.ts` first.
 - **Dependencies in code examples:** Always use constants from `site.ts`, e.g., `${dep.kontainer}`.
 - **External links:** Use `target="_blank" rel="noopener"` on external links.
 
+## Docs vs skills — the split
+
+Three places could describe a library. Only two are allowed to, or they drift.
+
+| Question | Lives in |
+|---|---|
+| "How do I use this?" — concepts, API, examples | docs site (`docs-site/src/pages/ultra/*`) and its LLM mirror (`docs-site/src/data/llms/*.md`) |
+| "What will bite me?" — traps, invariants, scoping rules, known defects, repo-specific patterns | the library's skill in `.claude/skills/` |
+
+- **Skills reference the docs; they never restate them.** For API reference, link
+  `docs-site/src/data/llms/<lib>.md` instead of copying it.
+- **Acceptance test for a line in a skill:** if it would be equally at home on a docs page, it belongs
+  on the docs page, not in the skill.
+- Skills therefore drift with CODE changes only, never with docs edits — a much smaller surface.
+- **Cite `path/File.kt:line` for every concrete claim in a skill**, so a reader can verify it in one
+  jump. Uncited claims are how these rot.
+- The LLM mirror is a reference, not a transcript: signatures, defaults, gotchas, one good example
+  each. It should be shorter than the pages it mirrors, not longer.
+
 ## Notes
 
 - Use **pnpm** for all package management, never npm.
