@@ -1,9 +1,20 @@
 package io.peekandpoke.funktor.demo.server.api
 
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.plugins.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
+import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingHandler
+import io.ktor.server.routing.application
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
+import io.ktor.server.routing.head
+import io.ktor.server.routing.options
+import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
+import io.ktor.server.routing.put
+import io.ktor.server.routing.route
 import io.peekandpoke.funktor.core.appInfo
 import io.peekandpoke.funktor.core.broker.fallback
 import io.peekandpoke.funktor.core.methodAndUrl

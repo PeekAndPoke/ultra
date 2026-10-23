@@ -5,6 +5,15 @@ import io.peekandpoke.funktor.messaging.EmailSender
 import io.peekandpoke.funktor.messaging.api.EmailBody
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.ultra.common.fromBase64OrNull
+import jakarta.activation.DataHandler
+import jakarta.activation.DataSource
+import jakarta.mail.Message
+import jakarta.mail.Session
+import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeBodyPart
+import jakarta.mail.internet.MimeMessage
+import jakarta.mail.internet.MimeMultipart
+import jakarta.mail.util.ByteArrayDataSource
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.core.SdkBytes
@@ -18,16 +27,7 @@ import software.amazon.awssdk.services.ses.model.SendRawEmailRequest
 import software.amazon.awssdk.services.ses.model.SendRawEmailResponse
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-import java.util.*
-import jakarta.activation.DataHandler
-import jakarta.activation.DataSource
-import jakarta.mail.Message
-import jakarta.mail.Session
-import jakarta.mail.internet.InternetAddress
-import jakarta.mail.internet.MimeBodyPart
-import jakarta.mail.internet.MimeMessage
-import jakarta.mail.internet.MimeMultipart
-import jakarta.mail.util.ByteArrayDataSource
+import java.util.Properties
 
 /** Sends emails via AWS SES, supporting HTML/text bodies and attachments (via raw email). */
 class AwsSesSender(private val client: SesAsyncClient) : EmailSender {

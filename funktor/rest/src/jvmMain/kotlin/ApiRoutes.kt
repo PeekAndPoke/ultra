@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.rest
 
-import io.ktor.http.*
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Delete
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
@@ -16,8 +16,8 @@ import io.peekandpoke.funktor.rest.auth.FloorAuthRuleBuilder
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint
-import kotlin.reflect.KClass
 import java.util.Collections
+import kotlin.reflect.KClass
 
 /**
  * The single DSL marker for the route-building DSL receivers: [ApiRoute] (the mount-chain

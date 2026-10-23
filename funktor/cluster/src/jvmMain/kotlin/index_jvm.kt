@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.cluster
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
 import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler01
 import io.peekandpoke.funktor.cluster.backgroundjobs.example.ExampleBackgroundJobHandler02

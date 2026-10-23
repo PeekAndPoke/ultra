@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.staticweb.semanticui.templates
 
-import io.ktor.server.html.*
+import io.ktor.server.html.each
+import io.ktor.server.html.insert
 import io.peekandpoke.funktor.staticweb.templating.SimpleTemplateBase
 import io.peekandpoke.funktor.staticweb.templating.TemplateTools
 import kotlinx.html.HTML

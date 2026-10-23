@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.backgroundjobs.api
 
-import io.ktor.server.routing.*
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobArchived
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobExecutionResult
 import io.peekandpoke.funktor.cluster.backgroundjobs.domain.BackgroundJobQueued

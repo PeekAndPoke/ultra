@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.auth
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.cli.AuthGenerateJwtSigningSecretCliCommand
 import io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo

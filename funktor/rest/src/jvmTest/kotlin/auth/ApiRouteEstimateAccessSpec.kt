@@ -2,7 +2,7 @@ package io.peekandpoke.funktor.rest.auth
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.http.*
+import io.ktor.http.HttpMethod
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.rest.ApiRoute

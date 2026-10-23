@@ -4,7 +4,7 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
-import io.ktor.http.*
+import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.demo.common.showcase.AuthRuleCheckResult
 import io.peekandpoke.funktor.demo.common.showcase.EchoResponse
 import io.peekandpoke.funktor.demo.common.showcase.ItemResponse

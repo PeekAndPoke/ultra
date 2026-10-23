@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.insights.collectors
 
-import io.ktor.server.application.*
+import io.ktor.server.application.ApplicationCall
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData

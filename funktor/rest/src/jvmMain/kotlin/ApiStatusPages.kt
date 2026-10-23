@@ -1,13 +1,15 @@
 package io.peekandpoke.funktor.rest
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.application.hooks.*
-import io.ktor.server.plugins.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
-import io.ktor.util.cio.*
-import io.ktor.utils.io.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.application.hooks.CallFailed
+import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.request.uri
+import io.ktor.server.routing.Route
+import io.ktor.util.cio.ChannelWriteException
+import io.ktor.utils.io.CancellationException
+import io.ktor.utils.io.ClosedByteChannelException
 import io.peekandpoke.funktor.core.broker.CouldNotConvertException
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.kontainerOrNull

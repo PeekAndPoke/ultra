@@ -1,8 +1,11 @@
 package io.peekandpoke.funktor
 
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.host
+import io.ktor.server.routing.routing
 import io.peekandpoke.funktor.core.App
 import io.peekandpoke.funktor.core.installKontainer
 import io.peekandpoke.funktor.core.model.InsightsConfig

@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
-import io.ktor.sse.*
+import io.ktor.sse.ServerSentEvent
 import io.peekandpoke.funktor.demo.common.showcase.ShowcaseApiClient
 import io.peekandpoke.funktor.demo.common.showcase.SseClockEvent
 import io.peekandpoke.funktor.demo.common.showcase.SseMetricsEvent

@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.vault
 
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.peekandpoke.ultra.vault.Database
 

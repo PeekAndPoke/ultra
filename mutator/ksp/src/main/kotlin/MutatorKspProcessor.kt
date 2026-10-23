@@ -14,7 +14,7 @@ import io.peekandpoke.mutator.Mutable
 import io.peekandpoke.mutator.NotMutable
 import io.peekandpoke.mutator.ksp.builtin.BuiltInMutableObjectsPlugin
 import io.peekandpoke.mutator.ksp.builtin.BuiltInPlatformTypesVetoingPlugin
-import java.util.*
+import java.util.ServiceLoader
 import kotlin.reflect.KClass
 
 class MutatorKspProcessor(

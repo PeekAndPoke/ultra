@@ -1,8 +1,10 @@
 package io.peekandpoke.funktor.core
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
-import io.ktor.util.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
+import io.ktor.util.AttributeKey
+import io.ktor.util.Attributes
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.kontainer.Kontainer
 

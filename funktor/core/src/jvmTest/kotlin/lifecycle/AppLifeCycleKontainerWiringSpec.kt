@@ -2,9 +2,14 @@ package io.peekandpoke.funktor.core.lifecycle
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.application.*
-import io.ktor.server.testing.*
-import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationEnvironment
+import io.ktor.server.testing.testApplication
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.OnAppStarted
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.OnAppStarting
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.OnAppStopPreparing
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.OnAppStopped
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.OnAppStopping
 import io.peekandpoke.ultra.kontainer.kontainer
 import java.util.concurrent.atomic.AtomicInteger
 

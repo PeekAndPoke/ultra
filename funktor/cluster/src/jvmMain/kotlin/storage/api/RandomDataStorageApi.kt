@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.storage.api
 
-import io.ktor.server.routing.*
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.cluster.cluster
 import io.peekandpoke.funktor.cluster.storage.domain.RawRandomData
 import io.peekandpoke.funktor.core.jsonPrinter

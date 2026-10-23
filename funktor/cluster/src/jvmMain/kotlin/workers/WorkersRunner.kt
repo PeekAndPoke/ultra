@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.workers
 
-import io.ktor.server.application.*
+import io.ktor.server.application.log
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleBuilder
 import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlinx.coroutines.Dispatchers

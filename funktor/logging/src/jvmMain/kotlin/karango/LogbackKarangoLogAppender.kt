@@ -4,7 +4,8 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.classic.spi.ThrowableProxy
 import ch.qos.logback.core.UnsynchronizedAppenderBase
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.log
 import io.peekandpoke.funktor.logging.FunktorLoggingBuilder
 import io.peekandpoke.karango.config.ArangoDbConfig
 import io.peekandpoke.karango.getKarangoDefaultSlumberConfig

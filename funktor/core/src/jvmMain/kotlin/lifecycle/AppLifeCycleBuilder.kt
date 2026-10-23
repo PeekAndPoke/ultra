@@ -2,7 +2,13 @@ package io.peekandpoke.funktor.core.lifecycle
 
 import io.ktor.events.EventDefinition
 import io.ktor.events.EventHandler
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationEnvironment
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopPreparing
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.log
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.ExecutionOrder
 import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlinx.coroutines.runBlocking

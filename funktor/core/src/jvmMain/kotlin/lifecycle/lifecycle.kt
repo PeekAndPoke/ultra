@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.core.lifecycle
 
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.log
 import io.peekandpoke.ultra.kontainer.Kontainer
 import kotlinx.coroutines.runBlocking
 

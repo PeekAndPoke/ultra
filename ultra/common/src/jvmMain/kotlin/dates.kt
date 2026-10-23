@@ -1,6 +1,6 @@
 package io.peekandpoke.ultra.common
 
-import java.util.*
+import java.util.Date
 
 /**
  * Returns a new [Date] that is [minutes] minutes after this date.

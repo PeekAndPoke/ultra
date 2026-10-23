@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.awake
 import io.peekandpoke.ultra.slumber.slumber
-import java.util.*
+import java.util.Date
 
 class DateCodecSpec : StringSpec({
 

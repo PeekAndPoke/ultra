@@ -1,9 +1,9 @@
 package io.peekandpoke.funktor.insights
 
-import impl.InsightsFull
 import impl.InsightsDisabled
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
+import impl.InsightsFull
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.kontainerOrNull
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.api.InsightsApiFeature

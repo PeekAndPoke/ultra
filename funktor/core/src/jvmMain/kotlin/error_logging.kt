@@ -1,7 +1,8 @@
 package io.peekandpoke.funktor.core
 
-import io.ktor.server.application.*
-import io.ktor.server.plugins.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.log
+import io.ktor.server.plugins.origin
 import io.peekandpoke.ultra.log.Log
 
 /** Logs a 404 not-found event with request details, optional hint, and cause. */

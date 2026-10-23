@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.kontainer
 
 import java.time.Instant
-import java.util.*
+import java.util.WeakHashMap
 
 /**
  * Keeps track of instantiated kontainers and services

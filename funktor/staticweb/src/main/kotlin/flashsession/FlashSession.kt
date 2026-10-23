@@ -1,6 +1,11 @@
 package io.peekandpoke.funktor.staticweb.flashsession
 
-import io.ktor.server.sessions.*
+import io.ktor.server.sessions.CurrentSession
+import io.ktor.server.sessions.SessionSerializer
+import io.ktor.server.sessions.SessionsConfig
+import io.ktor.server.sessions.cookie
+import io.ktor.server.sessions.get
+import io.ktor.server.sessions.set
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 

@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.staticweb.resources
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.staticweb.resources.common.funktorCommonWebResources
 import io.peekandpoke.funktor.staticweb.resources.prismjs.funktorPrismJs

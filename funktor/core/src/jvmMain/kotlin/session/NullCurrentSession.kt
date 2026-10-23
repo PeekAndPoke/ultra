@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.core.session
 
-import io.ktor.server.sessions.*
+import io.ktor.server.sessions.CurrentSession
 import kotlin.reflect.KClass
 
 /** No-op [CurrentSession] implementation used when no session is active. */

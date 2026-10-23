@@ -1,8 +1,8 @@
 package io.peekandpoke.funktor.rest.auth
 
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.plugins.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.principal
+import io.ktor.server.plugins.origin
 import io.peekandpoke.funktor.core.jwtGenerator
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.ultra.security.user.User

@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.rest
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.rest.codec.RestCodec

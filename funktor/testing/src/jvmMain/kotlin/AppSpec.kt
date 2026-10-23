@@ -5,7 +5,8 @@ import io.kotest.core.listeners.BeforeSpecListener
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.core.spec.style.scopes.FreeSpecContainerScope
-import io.ktor.server.testing.*
+import io.ktor.server.testing.TestApplication
+import io.ktor.server.testing.TestApplicationEngine
 import io.peekandpoke.funktor.core.App
 import io.peekandpoke.funktor.core.KontainerKey
 import io.peekandpoke.funktor.core.config.AppConfig

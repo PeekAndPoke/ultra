@@ -1,9 +1,11 @@
 package io.peekandpoke.funktor.staticweb.templating
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.html.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.html.Template
+import io.ktor.server.html.respondHtml
+import io.ktor.server.html.respondHtmlTemplate
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module

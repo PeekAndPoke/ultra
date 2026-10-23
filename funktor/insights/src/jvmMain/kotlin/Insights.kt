@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.insights
 
-import io.ktor.server.application.*
+import io.ktor.server.application.ApplicationCall
 import io.peekandpoke.funktor.core.metrics.RequestMetricsProvider
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.rest.InsightsOptions

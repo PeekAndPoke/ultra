@@ -1,8 +1,8 @@
 package io.peekandpoke.funktor.staticweb.flashsession
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.sessions.CurrentSession
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module

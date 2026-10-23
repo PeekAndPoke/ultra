@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.core.cli
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.cli.cmd.AppConfigCliCommand
 import io.peekandpoke.funktor.core.cli.cmd.AppInfoCliCommand
 import io.peekandpoke.funktor.core.kontainer

@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.logging
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.logging.api.LoggingApiFeature
 import io.peekandpoke.funktor.logging.karango.KarangoLogAppender

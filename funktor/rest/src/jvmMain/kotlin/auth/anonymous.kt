@@ -1,6 +1,8 @@
 package io.peekandpoke.funktor.rest.auth
 
-import io.ktor.server.auth.*
+import io.ktor.server.auth.AuthenticationConfig
+import io.ktor.server.auth.AuthenticationContext
+import io.ktor.server.auth.AuthenticationProvider
 
 /**
  * A Ktor auth provider that always succeeds with [Caller.AnonymousCaller] as the principal.

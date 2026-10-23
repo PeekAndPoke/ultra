@@ -2,7 +2,9 @@ package io.peekandpoke.funktor.core.lifecycle
 
 import io.ktor.events.EventDefinition
 import io.ktor.events.EventHandler
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.log
 
 internal class AppLifeCycle(val app: Application) {
 

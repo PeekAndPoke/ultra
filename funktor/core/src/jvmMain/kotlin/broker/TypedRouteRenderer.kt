@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.core.broker
 
-import io.ktor.http.*
+import io.ktor.http.encodeURLQueryComponent
 import io.peekandpoke.ultra.common.toUri
 import io.peekandpoke.ultra.security.csrf.CsrfProtection
 import kotlin.reflect.full.declaredMemberProperties

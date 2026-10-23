@@ -1,8 +1,8 @@
 package io.peekandpoke.funktor.core
 
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.sessions.CurrentSession
 import io.peekandpoke.funktor.core.cli.funktorCli
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.fixtures.funktorFixtures

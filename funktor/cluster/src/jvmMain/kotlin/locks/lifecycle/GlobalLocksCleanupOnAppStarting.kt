@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.cluster.locks.lifecycle
 
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
 import io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
 import io.peekandpoke.funktor.cluster.locks.GlobalServerId
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks

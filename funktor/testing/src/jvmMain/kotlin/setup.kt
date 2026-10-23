@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.testing
 
-import io.ktor.server.config.*
-import io.ktor.server.testing.*
+import io.ktor.server.config.HoconApplicationConfig
+import io.ktor.server.testing.TestApplication
 import io.peekandpoke.funktor.core.App
 import io.peekandpoke.funktor.core.AppArgs
 import io.peekandpoke.funktor.core.config.AppConfig

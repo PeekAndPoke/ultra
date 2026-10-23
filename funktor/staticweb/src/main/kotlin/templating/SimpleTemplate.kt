@@ -1,6 +1,8 @@
 package io.peekandpoke.funktor.staticweb.templating
 
-import io.ktor.server.html.*
+import io.ktor.server.html.Placeholder
+import io.ktor.server.html.PlaceholderList
+import io.ktor.server.html.Template
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.staticweb.flashsession.FlashSession
 import io.peekandpoke.funktor.staticweb.resources.WebResources

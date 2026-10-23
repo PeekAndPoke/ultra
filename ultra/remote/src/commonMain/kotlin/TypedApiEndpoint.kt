@@ -1,6 +1,6 @@
 package io.peekandpoke.ultra.remote
 
-import io.ktor.client.plugins.sse.*
+import io.ktor.client.plugins.sse.ClientSSESession
 import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.model.EmptyObject

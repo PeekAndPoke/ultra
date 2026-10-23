@@ -1,10 +1,14 @@
 package io.peekandpoke.funktor.core
 
-import io.ktor.server.application.*
-import io.ktor.server.application.hooks.*
-import io.ktor.server.plugins.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.application.hooks.CallSetup
+import io.ktor.server.plugins.origin
+import io.ktor.server.request.ApplicationRequest
+import io.ktor.server.request.host
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
+import io.ktor.server.routing.Route
 import io.peekandpoke.ultra.kontainer.Kontainer
 
 /** Returns the full request URL including scheme, host, port (if non-80), and path. */

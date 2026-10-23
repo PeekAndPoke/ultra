@@ -2,7 +2,7 @@ package io.peekandpoke.funktor
 
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.ktor.http.*
+import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
 import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.api.LoggingApi

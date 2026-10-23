@@ -1,8 +1,8 @@
 package io.peekandpoke.funktor.rest
 
-import io.ktor.http.*
-import io.ktor.server.routing.*
-import io.ktor.server.sse.*
+import io.ktor.http.HttpMethod
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.sse.ServerSSESession
 import io.peekandpoke.funktor.core.broker.TypedRoute
 import io.peekandpoke.funktor.core.broker.UriPattern
 import io.peekandpoke.funktor.rest.auth.AuthResult

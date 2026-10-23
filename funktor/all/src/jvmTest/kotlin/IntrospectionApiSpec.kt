@@ -1,12 +1,12 @@
 package io.peekandpoke.funktor
 
+import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
-import io.ktor.http.*
-import io.kotest.assertions.withClue
-import io.kotest.matchers.collections.shouldContain
+import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.inspect.introspection.api.ApiAccessMatrixModel
 import io.peekandpoke.funktor.inspect.introspection.api.AppLifecycleInfo
 import io.peekandpoke.funktor.inspect.introspection.api.AuthRealmInfo

@@ -4,8 +4,8 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.http.*
-import io.ktor.server.plugins.*
+import io.ktor.http.parametersOf
+import io.ktor.server.plugins.NotFoundException
 import io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter
 import io.peekandpoke.ultra.common.SimpleLookup
 import io.peekandpoke.ultra.reflection.TypeRef

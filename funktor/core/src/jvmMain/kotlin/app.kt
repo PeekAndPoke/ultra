@@ -1,8 +1,8 @@
 package io.peekandpoke.funktor.core
 
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
+import io.ktor.server.application.Application
+import io.ktor.server.engine.CommandLineConfig
+import io.ktor.server.netty.EngineMain
 import io.peekandpoke.funktor.core.cli.CliRunner
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.lifecycle.setupLifecycle

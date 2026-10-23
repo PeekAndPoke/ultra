@@ -1,10 +1,14 @@
 package io.peekandpoke.funktor.rest
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.plugins.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.withCharset
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.plugins.origin
+import io.ktor.server.request.httpMethod
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.peekandpoke.funktor.core.appConfig
 import io.peekandpoke.funktor.core.kontainerOrNull
 import io.peekandpoke.funktor.core.metrics.RequestMetricsProvider

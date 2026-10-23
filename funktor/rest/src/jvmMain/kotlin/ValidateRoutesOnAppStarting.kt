@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.rest
 
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.ExecutionOrder
 import io.peekandpoke.funktor.core.lifecycle.AppStartException

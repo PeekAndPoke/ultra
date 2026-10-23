@@ -3,9 +3,11 @@ package io.peekandpoke.funktor.core.lifecycle
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.application.*
-import io.ktor.server.testing.*
-import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.*
+import io.ktor.server.application.Application
+import io.ktor.server.testing.testApplication
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.ExecutionOrder
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.OnAppStarted
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks.OnAppStarting
 import io.peekandpoke.ultra.kontainer.kontainer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.yield

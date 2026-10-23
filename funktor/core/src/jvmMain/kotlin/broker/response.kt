@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.core.broker
 
-import io.ktor.server.application.*
-import io.ktor.server.response.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.response.respondRedirect
 
 /**
  * Helper to redirect to the referer

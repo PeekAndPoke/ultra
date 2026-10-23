@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.rest.auth
 
-import io.ktor.server.application.*
+import io.ktor.server.application.ApplicationCall
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.rest.auth.AuthRule.CheckCtx
 import io.peekandpoke.funktor.rest.auth.AuthRule.EstimateCtx

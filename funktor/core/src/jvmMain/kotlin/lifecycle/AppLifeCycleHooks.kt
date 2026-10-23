@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.core.lifecycle
 
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationEnvironment
 
 /** Container for application lifecycle hook implementations, grouped by lifecycle phase. */
 class AppLifeCycleHooks(
