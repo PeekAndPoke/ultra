@@ -1,5 +1,5 @@
 {
-  "$comment": "Command baseline from the nexus (missioncontrol blueprints/settings f4d8729, MC-00024, revision 2), then ultra's own entries at the end of deny. Deny always wins over allow, including over settings.local.json.",
+  "$comment": "Command baseline from the nexus (missioncontrol blueprints/settings b251163, MC-00024, revision 3), then ultra's own entries at the end of deny. Deny always wins over allow, including over settings.local.json.",
   "permissions": {
     "deny": [
       "Bash(git stash)",
@@ -48,6 +48,12 @@
       "Bash(git -C * commit*--no-verify*)",
       "Bash(git -C * clean *)",
       "Bash(git -C * rebase*)",
+      "Bash(git add * -A*)",
+      "Bash(git add * --all*)",
+      "Bash(git reset * --hard*)",
+      "Bash(git -C * add * -A*)",
+      "Bash(git -C * add * --all*)",
+      "Bash(git -C * reset * --hard*)",
       "Bash(git -C * checkout *)",
       "Bash(./gradlew *publish*)",
       "Bash(console/wt-gradle.sh *publish*)",
