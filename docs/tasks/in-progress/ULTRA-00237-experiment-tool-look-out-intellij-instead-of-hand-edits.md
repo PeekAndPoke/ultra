@@ -50,6 +50,7 @@ wildcards: 102 tracked Kotlin files have one (`git grep -l -E "^import [a-zA-Z0-
 
 | date | tool | projectPath | what happened |
 |---|---|---|---|
+| 2026-10-23 | `invoke_ide_action` `OptimizeImports` on `ultra/common/src/jvmMain/kotlin/dates.kt` (probe, maintainer's go in session) | `/opt/dev/peekandpoke/ultra` (`get_repositories` listed ultra's root) | never reached IntelliJ: Claude Code's auto-mode classifier denied the call ("Modify Shared Resources"); no file changed. Needs a permission rule for `mcp__idea__invoke_ide_action`, which only the maintainer can add |
 
 ## Acceptance
 
