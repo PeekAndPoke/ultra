@@ -88,20 +88,21 @@ If any step fails, stop. Do NOT proceed to publish. Report the failure and wait 
 Once verification passes:
 
 1. `git diff` — show the bump diff to the user for final review.
-2. `git add -A && git commit -m "Release $1"` — single atomic commit, version-bump only.
+2. `git add` the bumped files by name, then `git commit -m "Release $1"` — single atomic commit, version-bump only.
 3. `git tag -a v$1 -m "Release $1"` — annotated tag.
-4. **Do NOT push** yet. Ask the user to confirm before `git push && git push --tags`.
+4. **Do NOT push.** The maintainer pushes the commit and the tag.
 
 ## Publish to Maven Central
 
 Prerequisites (one-time per dev machine): Maven Central credentials in `~/.gradle/gradle.properties` —
 `mavenCentralUsername`, `mavenCentralPassword`, `signing.password`. See `publish.md` at the repo root.
 
-1. Ask the user for explicit go-ahead before publishing. Publishing to Maven Central is **irreversible** — artifacts
-   cannot be overwritten.
-2. `./gradlew publishAllPublicationsToMavenCentralRepository` — publishes all 5 library roots (ultra, kraft, karango,
+**The maintainer publishes, not the agent.** Publishing to Maven Central is **irreversible** — artifacts cannot be
+overwritten.
+
+1. The maintainer runs `./gradlew publishAllPublicationsToMavenCentralRepository` — publishes all 5 library roots (ultra, kraft, karango,
    monko, funktor).
-3. Verify appearance at https://central.sonatype.com/namespace/io.peekandpoke.ultra (may take 10–30 min to index).
+2. Once told it is published, verify appearance at https://central.sonatype.com/namespace/io.peekandpoke.ultra (may take 10–30 min to index).
 
 ## Post-publish
 
@@ -128,8 +129,7 @@ landed), skip items marked *(major/minor only)*.
 - [ ] `gradle.properties`, `docs-site/src/data/site.ts`, `README.MD`, ULTRA-00028 (v1 roadmap) all bumped
 - [ ] funktor-demo runs end-to-end on both ArangoDB and MongoDB *(major/minor only)*
 - [ ] Release commit + annotated git tag created (not yet pushed)
-- [ ] User has given explicit go-ahead for `git push --tags`
-- [ ] User has given explicit go-ahead for `publishAllPublicationsToMavenCentralRepository`
+- [ ] Handed to the maintainer for `git push --tags` and `publishAllPublicationsToMavenCentralRepository`
 
 ## Output Format
 
@@ -152,14 +152,16 @@ At the end of a successful release, report to the user:
 - Release commit: <short sha>
 - Annotated tag: v$1
 
-**Next (needs your go-ahead):**
+**Next (yours):**
 1. git push && git push --tags
 2. ./gradlew publishAllPublicationsToMavenCentralRepository
 ```
 
 ## Guardrails — what NOT to do
 
-- **Never push or publish without explicit user confirmation.** Publishing to Maven Central is irreversible.
+- **Never publish.** The maintainer (2026-10-18): "Let me do the publishing please." Prepare the release; the
+  maintainer runs `publishAllPublicationsToMavenCentralRepository`. Publishing to Maven Central is irreversible.
+- **Never push.** The maintainer (2026-10-19): "You merge all things that are done into master and i push."
 - **Never edit `docs-site/public/`** for version bumps — that directory is no longer authoritative for LLM mirrors.
   Everything routes through `src/data/site.ts`.
 - **Never edit `docs-site/src/data/llms/*`** to change versions — those templates use `{{ultraVersion}}` /
