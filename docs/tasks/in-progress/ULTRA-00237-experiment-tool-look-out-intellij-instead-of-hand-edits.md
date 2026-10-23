@@ -12,9 +12,10 @@ need to make sure that these tool uses really land in the correct project. Not s
 
 ## Decide before implementing
 
-- **The wildcard setting does not forbid them all** (found 2026-10-23, below). Fix `.idea/codeStyles/Project.xml`
-  (an empty `PACKAGES_TO_USE_STAR_IMPORTS`, and `NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS` = MAX), then clean the
-  102 files with an Optimize Imports run? The maintainer's IDE config and their open editor: their call.
+- **Setting fixed 2026-10-23** (maintainer: "yes add the no wildcard to the .idea/codeStyles/"): an empty
+  `PACKAGES_TO_USE_STAR_IMPORTS` and `NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS` = MAX in the tracked
+  `.idea/codeStyles/Project.xml`. Open: clean the 102 files with an Optimize Imports run — a write action, the
+  maintainer's call.
 - Write actions stay off this week unless the maintainer allows one (the IntelliJ Repo note in
   `.claude/skills/project-layout/`).
 
@@ -57,3 +58,4 @@ wildcards: 102 tracked Kotlin files have one (`git grep -l -E "^import [a-zA-Z0-
 ## History
 
 - 2026-10-23: created.
+- 2026-10-23: wildcard settings fixed in `.idea/codeStyles/Project.xml` (maintainer's go).
