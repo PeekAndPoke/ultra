@@ -39,6 +39,12 @@ can do its task well.
 (`reviewer-high`, then `reviewer-xhigh`, then `reviewer-top`). Security and domain review is
 correctness-critical: never `sonnet`.
 
+**Until the meeting of 2026-10-30, the top rung runs two reviewers per charter** (maintainer, 2026-10-23: "For
+the max tier review rounds we always run 1 Opus and 1 Fable for the next week"): `reviewer-top` and
+`reviewer-xhigh` spawned with effort `max`, the same brief, blind to each other. The round's findings record per
+finding who found it (both, Opus only, Fable only) and each reviewer's tokens; the meeting tallies them and
+decides how many reviewers are enough.
+
 ## Effort tiers
 
 | Stage                         | Effort                                                                                           |
