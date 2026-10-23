@@ -51,6 +51,31 @@ wildcards: 102 tracked Kotlin files have one (`git grep -l -E "^import [a-zA-Z0-
 | date | tool | projectPath | what happened |
 |---|---|---|---|
 | 2026-10-23 | `invoke_ide_action` `OptimizeImports` on `ultra/common/src/jvmMain/kotlin/dates.kt` (probe, maintainer's go in session) | `/opt/dev/peekandpoke/ultra` (`get_repositories` listed ultra's root) | never reached IntelliJ: Claude Code's auto-mode classifier denied the call ("Modify Shared Resources"); no file changed. Needs a permission rule for `mcp__idea__invoke_ide_action`, which only the maintainer can add |
+| 2026-10-23 | `invoke_ide_action` `OptimizeImports`, funktor/core batch (22 files) | `/opt/dev/peekandpoke/ultra` | returned OK before the files were on disk: a `git diff` right after showed all 22 unchanged, one re-check later all 22 changed. Check the diff a moment after a big batch, and never read UNCHANGED as "did nothing" until re-checked |
+| 2026-10-23 | `OptimizeImports`, deliberately NOT run on `funktor/insights/reference/` (13 files) | — | the folder is no source set, so IntelliJ cannot resolve its names and would drop imports as unused; those 13 wildcards stay until someone decides what the folder is |
+
+### The Optimize Imports run (2026-10-23, the maintainer's go in session)
+
+After the permission rule for `mcp__idea__invoke_ide_action` (maintainer, in `.claude/settings.local.json`): one probe
+file, then a call per module, 89 files across 17 modules. Before each, `get_repositories` listed ultra's root only;
+after each, a script checked every changed line was an import line and no wildcard was left: 0 problems, and nothing
+outside the 89 files changed. IntelliJ re-indexed during the run and showed its progress bar on the maintainer's
+screen.
+
+**PARKED 2026-10-23 for a machine reboot (Mission Control's request). Resume here:**
+
+- The 89 changed files are in the working tree, UNCOMMITTED on purpose (`git diff --name-only -- '*.kt'`).
+- Compile: green, 0 errors over the 17 touched modules. Tests: NOT proven. The run was stopped. Every failure
+  traced to the databases being unreachable (`ArangoDBException`, `MongoTimeoutException`, then
+  `NoClassDefFoundError` cascades from a failed class initialiser), none to imports.
+- Next: check Arango and Mongo are up, take the build lock, rerun `console/wt-gradle.sh :ultra:common:jvmTest
+  :ultra:kontainer:test :ultra:remote:check :ultra:slumber:jvmTest :karango:core:test :mutator:ksp:test
+  :funktor:auth:jvmTest :funktor:logging:jvmTest :funktor:messaging:jvmTest :funktor:testing:jvmTest
+  :funktor:all:jvmTest :funktor:staticweb:test :funktor:cluster:jvmTest :funktor:rest:jvmTest
+  :funktor:insights:jvmTest :funktor:core:jvmTest :funktor-demo:server:test --continue`. On green, commit the
+  89 files on their own, then this ticket.
+- Tally so far: 11 calls, 10 succeeded, 1 denied (classifier), 1 early return; 89 of 102 files; 13 left in
+  `funktor/insights/reference/`.
 
 ## Acceptance
 
