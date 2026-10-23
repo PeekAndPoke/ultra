@@ -1,5 +1,6 @@
 {
   "$comment": "Command baseline from the nexus (missioncontrol blueprints/settings b251163, MC-00024, revision 3), then ultra's own entries at the end of deny. Deny always wins over allow, including over settings.local.json.",
+  "autoMemoryEnabled": false,
   "permissions": {
     "deny": [
       "Bash(git stash)",
