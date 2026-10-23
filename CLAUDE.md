@@ -12,17 +12,18 @@ the project's working rules.
 
 ## Plan & task maintenance
 
-Plans and tasks live together in `.claude/tasks/`. A plan is just a longer-lived task doc that
-other tasks reference from their `**Plan:**` header.
+Plans and tasks are tickets in `docs/tasks/`, numbered `ULTRA-nnnnn` (layout:
+`.claude/skills/project-layout/`). A plan is just a longer-lived ticket that other tickets reference
+from their `**Plan:**` header. **Reference a ticket by its number, never by path or file name** —
+"ULTRA-00221 (insights auth parallel plan)". `console/tools/ticket/ticket.py` takes numbers, moves
+tickets and finds them (also by an old file name).
 
-**When you complete work that matches an item in `.claude/tasks/*.md`, update that doc before
-finishing the task.**
+**When you complete work that matches an item in a ticket, update that ticket before finishing the task.**
 
 - Update status markers (TODO → DONE, add dates).
 - Update gate status tables if present.
 - Update the critical path section if an item unblocks.
-- Archive completed docs to `.claude/tasks-archive/<YYYY-MM>/` — one folder per month, based on the
-  date in the filename. Create the month folder if it does not exist.
+- Archive a finished ticket with `ticket.py move <ID> DONE` — it goes to `docs/tasks-archive/<yyyy-mm>/`.
 - Do NOT create new plan docs unless explicitly asked — just update existing ones.
 
 The goal is that anyone (human or agent) reading a doc sees the current state, not an outdated
@@ -53,17 +54,19 @@ snapshot. Stale plans are worse than no plans because they cause wrong prioritie
   retrieval/mechanical work, strong tiers for coding/verification; the coordinator stays on the
   user-selected model. See `.claude/skills/agent-fleet/` (provisional).
 
-## Parallel worktrees
+## Worktrees
 
-Tracks run in their own git worktrees (`.claude/tasks/20261019-insights-auth-parallel-plan.md`).
-`console/worktree-new.sh <track>` creates `../ultra-wt/<track>` on branch `wt/<track>` from master, with its own
-test databases.
+**Work goes sequentially on this checkout** — the one IntelliJ has open, so its index sees the work
+(maintainer, 2026-10-20: "a steady sequential workload rather than spikes"). A worktree only when a task
+really needs one: `console/worktree-new.sh <track>` creates `../ultra-worktrees/<track>` on branch
+`wt/<track>` from master, with its own test databases. Never spawn sub-agents with
+`isolation: "worktree"`. Remove a finished worktree together with its merged branch.
 
 - **In a worktree, build only through `console/wt-gradle.sh`.** It points the tests at that worktree's own Arango and
   Mongo databases (`ULTRA_TEST_ARANGO_DB`, `ULTRA_TEST_MONGO_DB`, `ULTRA_TEST_DEMO_DB`). A bare `./gradlew` uses the
   SHARED test databases and wipes another worktree's data mid-run.
 - **One full suite at a time, machine-wide:** `console/wt-gradle.sh --full-suite`. Memory allows 2–3 builds at once.
-- A track edits its own area and its own task file. `CLAUDE.md`, skills, `v1-roadmap.md`, `CHANGELOG.md` and
+- A track edits its own area and its own ticket. `CLAUDE.md`, skills, ULTRA-00028 (v1 roadmap), `CHANGELOG.md` and
   `BUILD-LOCK.md` change on master only, by the coordinator. Never push; the coordinator merges.
 
 ## Development workflow
@@ -72,11 +75,10 @@ test databases.
   especially decisions that would be expensive to reverse — and get agreement before writing code.
   Detail is not agreement: a fully-designed plan was implemented and then thrown away on 2026-07-28
   because nobody re-checked whether its core premise was still wanted.
-- **Every feature gets a task file** in `.claude/tasks/`, named `YYYYMMDD-<slug>.md` (copy
-  `.claude/tasks/TEMPLATE.md`). Features usually come from plan phases — link the plan in the task.
+- **Every feature gets a ticket:** `ticket.py new "Title" --status DESIGNED`, then give it the sections of
+  `docs/tasks/TEMPLATE.md`. Features usually come from plan phases — link the plan in the ticket.
 - Lifecycle: implement → run `/feature-review` (mandatory: three charters — implementation & code
-  style, domain expert, security) → fix confirmed findings → tests green → mark DONE and move the task
-  file to `.claude/tasks-archive/<YYYY-MM>/` (filename is already dated).
+  style, domain expert, security) → fix confirmed findings → tests green → `ticket.py move <ID> DONE`.
 - **The gate LOOPS — see `.claude/skills/review-loop/`.** A fix produced by a review is itself an
   unreviewed change, so rounds repeat until a clean one. The loop is built so it cannot flip-flop: round
   1 is blind, later rounds review BEFORE seeing the previous findings and then reconcile against them,
@@ -92,9 +94,8 @@ test databases.
   Documenting a shape that changes next week produces two costs and no benefit: the rewrite, and a
   reader who trusted the stale version. Ask "would I be surprised if this API changed next week?" —
   if not, skip the docs task and say so in the archive note. Revisit when it stabilises.
-- **Security-critical features** get a follow-up red-team task (`YYYYMMDD-redteam-<slug>.md`) in
-  `.claude/tasks/`, describing concrete break-in/attack scenarios to attempt. These are COLLECTED,
-  not executed — dedicated penetration-test sessions sweep them later. Never run attack scenarios
+- **Security-critical features** get a follow-up red-team ticket ("Red team: <feature>"), describing
+  concrete break-in/attack scenarios to attempt. These are COLLECTED, not executed — dedicated penetration-test sessions sweep them later. Never run attack scenarios
   as part of normal feature work.
 - **Adversarially verify every review finding against the code before acting on it**, and say when one
   does not survive. Reviewers have been confidently wrong; so has the coordinator. Where a one-command
@@ -241,8 +242,10 @@ Three places could describe a library. Only two are allowed to, or they drift.
 
 ## Key locations
 
-- Active tasks and plans: `.claude/tasks/` (task template: `.claude/tasks/TEMPLATE.md`)
-- Completed tasks and plans: `.claude/tasks-archive/<YYYY-MM>/` (grouped by month)
-- Not-yet-scheduled ideas: `.claude/future-plans/`
+- Tickets (tasks and plans): `docs/tasks/`; in progress: `docs/tasks/in-progress/`; template:
+  `docs/tasks/TEMPLATE.md`
+- Finished tickets: `docs/tasks-archive/<yyyy-mm>/` (grouped by month)
+- Not-yet-scheduled ideas: `docs/tasks/future/`
+- Ticket tool: `console/tools/ticket/ticket.py`
 - Skills: `.claude/skills/`
 - Agents: `.claude/agents/`
