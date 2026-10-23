@@ -1,6 +1,6 @@
 # ULTRA-00232: Project layout and ticket numbers
 
-> **Status (2026-10-21): IN PROGRESS.** Both steps done; CLAUDE.md waits for the maintainer's OK.
+> **Status (2026-10-23): DONE.** Both steps done; CLAUDE.md approved by the maintainer and committed (8d55fd8a).
 
 **Plan:** Mission-Control's project-layout blueprint (missioncontrol MC-00009); maintainer go 2026-10-21.
 **Security-critical:** no
@@ -60,3 +60,5 @@
 ## History
 
 - 2026-10-21: numbered ULTRA-00232 (was `docs/tasks/20261021-project-layout-and-tickets.md`).
+- 2026-10-23: CLAUDE.md migration committed (8d55fd8a) after the maintainer's OK; the slim version followed (34111f65).
+- 2026-10-23: DONE.

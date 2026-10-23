@@ -1,8 +1,14 @@
 # BUILD LOCK — one agent builds this worktree at a time
 
-**HOLDER: Ultra-Main-Dev**
-**SINCE: 2026-10-21**
-**STATE: HELD — project-layout migration (tasks to docs/) and ticket numbers, on master.**
+**HOLDER: none**
+**SINCE: 2026-10-23**
+**STATE: FREE**
+
+## What the last holder changed — Ultra-Main-Dev, 2026-10-21..23 (project layout, ticket numbers, CLAUDE.md)
+
+Tickets moved to `docs/tasks/` and numbered ULTRA-00001..00235 (ULTRA-00232); CLAUDE.md slimmed to 96 lines, the
+verification traps now in `.claude/skills/testing/`. Source files changed in comments only (old ticket paths renamed,
+one Kronos KDoc line); no Gradle run was needed.
 
 ## What the last holder changed — Ultra-Main-Dev, 2026-10-19 (flaky addon tests, Gradle DSL deprecations, 0.113.0)
 
