@@ -1,6 +1,6 @@
 # ULTRA-00235: Unified kraft examples repo
 
-> **Status (2026-10-23): IN PROGRESS.** Built and committed locally; waits for the maintainer to create the GitHub repo and push.
+> **Status (2026-10-23): DONE.** Built and committed locally; waits for the maintainer to create the GitHub repo and push.
 
 ## Why this exists
 
@@ -44,11 +44,15 @@ work; `kraft/examples/` in this repo builds against source and cannot show that.
 - [x] Docs-site links and the LLM mirror point to the new repo; `pnpm astro build` green (114 pages, no old link in `dist`).
 - [x] `update-kraft-examples` covers the combined repo only; `/release` points to it.
 - [x] Old repos' pointer READMEs committed locally (helloworld 3abd046, router 53615ef, remote b28b047) for the maintainer to push before archiving.
-- [ ] The maintainer creates `PeekAndPoke/kraft-examples` on GitHub and pushes `/opt/dev/peekandpoke/kraft-examples` (c8105c1).
+- [x] The maintainer creates `PeekAndPoke/kraft-examples` on GitHub and pushes `/opt/dev/peekandpoke/kraft-examples` (c8105c1, branch `main`; ultra's links follow, f726ac42).
+- [x] Old repos pushed (GitHub heads 3abd046, 53615ef, b28b047); their `tree/master/` links redirect to `main`. Archiving them on GitHub is the maintainer's step; the local copies are deleted.
 
 ## History
+
+- 2026-10-23: ultra `README.MD` example links moved to the new repo too (a5f580c4; the first pass had covered only the docs site). Docs site deployed by the maintainer. DONE.
 
 - 2026-10-23: created.
 - 2026-10-23: the maintainer's three decisions; started.
 - 2026-10-23: IN PROGRESS.
 - 2026-10-23: combined repo built and committed locally; docs links, LLM mirror and skills updated.
+- 2026-10-23: DONE.
