@@ -29,7 +29,9 @@
   - `awaitCss` fails with an `AssertionError` naming the selector on timeout, where it returned an empty query.
   - `KQuery.first()`, `last()` and `nth()` are members: without an import they used to resolve to the stdlib's
     `List.first()` (an `Element`); now they always return a `KQuery`. For the element use `[0]` or `single()`.
-    Imports of `io.peekandpoke.kraft.testing.first` / `last` / `nth` must go.
+    Imports of `io.peekandpoke.kraft.testing.first` / `last` / `nth` must go. These still compile and now see a
+    KQuery: `.first()` followed by `as`, `unsafeCast`, `shouldBe`, `shouldBeInstanceOf`, `shouldNotBeNull()` or a
+    string template.
   - New: `awaitGone(css)`, `eventually { }` (retries suspending assertions), `KQuery.hasFocus()`.
 
 ### Fixes

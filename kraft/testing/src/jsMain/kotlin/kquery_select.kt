@@ -56,6 +56,7 @@ suspend fun KQuery<Element>.awaitCss(
     timeoutMs: Int = 2000,
     intervalMs: Int = 50,
 ): KQuery<Element> {
+    require(intervalMs > 0) { "intervalMs must be > 0" }
     var remaining = timeoutMs
 
     while (true) {
@@ -77,6 +78,7 @@ suspend fun KQuery<Element>.awaitGone(
     timeoutMs: Int = 2000,
     intervalMs: Int = 50,
 ) {
+    require(intervalMs > 0) { "intervalMs must be > 0" }
     var remaining = timeoutMs
 
     while (true) {

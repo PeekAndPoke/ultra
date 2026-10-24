@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.coretests
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.kraft.components.NoProps
@@ -40,6 +41,20 @@ class TestBedSpec : StringSpec({
             lifecycleLog shouldBe listOf("mount")
         }
 
+        lifecycleLog shouldBe listOf("mount", "unmount")
+        document.getElementById("kraft-testbed") shouldBe null
+    }
+
+    "TestBed unmounts the app after a failing test too" {
+        lifecycleLog.clear()
+
+        val error = shouldThrow<IllegalStateException> {
+            TestBed.preact({ LifecycleProbe() }) {
+                error("the test fails")
+            }
+        }
+
+        error.message shouldBe "the test fails"
         lifecycleLog shouldBe listOf("mount", "unmount")
         document.getElementById("kraft-testbed") shouldBe null
     }

@@ -9,6 +9,7 @@ import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.dom.appendElement
 import org.w3c.dom.Element
@@ -16,17 +17,19 @@ import org.w3c.dom.HTMLBodyElement
 import org.w3c.dom.HTMLDivElement
 import kotlin.coroutines.resume
 
-/**
- * Test harness for rendering Kraft components in a real browser DOM.
- *
- * Creates a temporary `<div>` in the document body, mounts a Kraft app into it,
- * and provides a [KQuery] handle for assertions. After the test the app is unmounted, so every component runs its
- * unmount hooks (listeners, history traps, body classes), and the test element is removed.
- */
 /** Suspends until the next browser animation frame. */
 private suspend fun awaitAnimationFrame() = suspendCancellableCoroutine { cont ->
     window.requestAnimationFrame { cont.resume(Unit) }
 }
+
+/**
+ * Test harness for rendering Kraft components in a real browser DOM.
+ *
+ * Creates a temporary `<div>` in the document body, mounts a Kraft app into it,
+ * and provides a [KQuery] handle for assertions. After the test, passed or failed, the app is unmounted, so every
+ * component runs its unmount hooks (listeners, history traps, body classes), and the test element is removed. An
+ * error thrown while unmounting fails a test that passed.
+ */
 
 class TestBed<E : VDomEngine> private constructor(
     private val engine: E,
@@ -96,6 +99,7 @@ class TestBed<E : VDomEngine> private constructor(
         } as HTMLDivElement
 
         val app = kraftApp(appSetup)
+        var failure: Throwable? = null
 
         try {
             app.mount(element = testBed, engine = engine, view = view)
@@ -109,12 +113,24 @@ class TestBed<E : VDomEngine> private constructor(
             awaitAnimationFrame()
         } catch (e: Throwable) {
             console.error("[TestBed] Caught exception:", e)
+            failure = e
             throw e
         } finally {
-            runCatching { engine.unmount(testBed) }
-                .onFailure { console.error("[TestBed] Unmount failed:", it) }
+            val unmountError = runCatching { engine.unmount(testBed) }.exceptionOrNull()
 
             testBed.remove()
+
+            // Let work the unmount hooks started in the background (e.g. a trap's history.back()) settle here,
+            // not in the next test
+            delay(1)
+            awaitAnimationFrame()
+            awaitAnimationFrame()
+
+            if (unmountError != null) {
+                console.error("[TestBed] Unmount failed:", unmountError)
+
+                failure?.addSuppressed(unmountError) ?: throw unmountError
+            }
         }
     }
 }

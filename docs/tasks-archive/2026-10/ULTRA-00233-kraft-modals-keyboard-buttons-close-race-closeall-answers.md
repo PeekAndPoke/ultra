@@ -1,6 +1,6 @@
 # ULTRA-00233: Kraft modals: every modal answers exactly once (Handle<RESULT>)
 
-> **Status (2026-10-24): IN PROGRESS.** Plan confirmed by the maintainer on 2026-10-24 (decisions below). One design review round done (record below).
+> **Status (2026-10-24): DONE.** Plan confirmed by the maintainer on 2026-10-24 (decisions below). One design review round done (record below).
 
 **Security-critical:** no
 
@@ -404,3 +404,6 @@ Verdict: **gate PASS.**
 - 2026-10-24: implemented (core, semanticui, migration, docs, CHANGELOG); defect 8 found and fixed; tests and
   mutation checks green. Next: /feature-review.
 - 2026-10-24: feature review round 1 clean (gate PASS); 6 MINORs applied, tests 22 and 23 added.
+- 2026-10-24: DONE. Docs were updated in the change itself (overlays, semantic-ui, LLM mirror), so no separate DOCS
+  follow-up. Open: tell Klang and Spross once the release is on Maven Central (maintainer).
+- 2026-10-24: DONE.
