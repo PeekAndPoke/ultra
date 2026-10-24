@@ -187,7 +187,11 @@ the maintainer wrote alone carries none.
 - **IntelliJ has this checkout open**, so work goes here, in sequence (maintainer, 2026-10-20: "a steady
   sequential workload rather than spikes"). Read-only `mcp__idea__*` queries (symbol search, call graphs,
   structural search, inspections) are allowed; write and build IDE tools (apply_patch, rename_refactoring,
-  reformat, build_project, run configurations) stay off until the maintainer approves them one by one.
+  reformat, build_project, run configurations) stay off until the maintainer approves them one by one. IDE
+  actions go through `.claude/hooks/idea-action-gate.py`; ultra's `idea-actions.allow` holds only
+  `OptimizeImports` (the blueprint also lists `ReformatCode`, not approved here).
+- **Git hooks (MC-00018):** `console/tools/hooks/hooks.json` switches the three dash checks off (ultra has no
+  dash rule); control bytes and the Claude trailer stay on. Installed 2026-10-24 by the maintainer.
 - **`docs/tasks/_incidents.md` replaces the review-loop escape ledger:** a review escape is one class of
   incident (MC-00028). `.claude/skills/review-loop/escape-ledger.md` goes when the review-loop core is taken
   from the blueprint (MC-00012).
