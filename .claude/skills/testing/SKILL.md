@@ -16,7 +16,8 @@ These make a suite look green while the feature is broken. Treat them as precond
 
 - **kotest ignores `--tests` — sometimes**, e.g. for test names written in quotes (maintainer, 2026-10-23:
   watch this rule and pin the condition when it next shows). Confirm a spec actually ran via
-  `build/test-results/**/TEST-*.xml`, never by trusting a filtered gradle invocation. Avoid `--rerun-tasks`
+  `build/test-results/**/TEST-*.xml` (as user claude: `.build-claude/<project path>/test-results/`, MC-00031), never by
+  trusting a filtered gradle invocation. Avoid `--rerun-tasks`
   (kapt flakiness). MPP modules use `:jvmTest`; `funktor-demo:server` uses `:test`.
 - **…but that XML mis-attributes WHICH test failed.** Counts (`tests`/`failures`/`errors`) are
   reliable; the `<testcase name>` a `<failure>` is nested under is not — it can name a test that

@@ -87,3 +87,17 @@ include(
         ":mutator:ksp"
 )
 
+
+// Per-user build outputs (MC-00031, missioncontrol blueprints/settings/per-user-build.settings.gradle.kts, translated
+// to Groovy). Two users build in this checkout (the maintainer's IDE as gerk, the agents as claude); only a file's owner
+// may chmod it, so shared build/ folders break whichever user did not create a file. Active only where the gradle
+// property buildRoot is set (user claude's ~/.gradle/gradle.properties): the agents then build into
+// <root>/.build-claude/<project path>, while the IDE keeps build/. buildSrc/settings.gradle.kts carries the same block.
+def perUserBuildRoot = providers.gradleProperty("buildRoot").getOrNull()
+if (perUserBuildRoot != null) {
+    def outRoot = new File(settings.rootDir, perUserBuildRoot)
+    gradle.lifecycle.beforeProject { project ->
+        def rel = project.path == ":" ? "_root" : project.path.substring(1).replace(':', '/')
+        project.layout.buildDirectory.set(new File(outRoot, rel))
+    }
+}

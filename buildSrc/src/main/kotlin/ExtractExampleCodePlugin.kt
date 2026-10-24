@@ -23,7 +23,8 @@ class ExtractExampleCodePlugin : Plugin<Project> {
 //        );
 
         val sourcesDir = "/src/main/kotlin"
-        val outputDir = "/build/generated/extracted-code-blocks"
+        // Under the build directory, so it follows a per-user buildRoot (MC-00031)
+        val outputDir = project.layout.buildDirectory.dir("generated/extracted-code-blocks").get().asFile
         val outputFileName = "extracted-code-blocks.kt"
 
         project.extensions.configure<KotlinProjectExtension>() {
@@ -37,9 +38,7 @@ class ExtractExampleCodePlugin : Plugin<Project> {
             val sets = listOfNotNull(mainSet)
 
             sets.forEach {
-                val dir = File(project.projectDir, outputDir.trim('/'))
-
-                it.kotlin.srcDir(dir)
+                it.kotlin.srcDir(outputDir)
             }
         }
 
@@ -64,13 +63,16 @@ class ExtractExampleCodePlugin : Plugin<Project> {
 
     private fun Task.implementExtractCodeBlocks(
         sourcesDir: String,
-        outputDir: String,
+        outputDir: File,
         outputFileName: String,
     ) {
         group = "extractCodeBlocks"
 
         val projectDir = project.projectDir.absoluteFile
-        val ktFiles = projectDir.walkTopDown().filter { it.isFile && it.extension == "kt" }
+        // Sources only: skip build output (the IDE's build/, any per-user build root) and node_modules
+        val ktFiles = projectDir.walkTopDown()
+            .onEnter { it.name != "build" && !it.name.startsWith(".build-") && it.name != "node_modules" }
+            .filter { it.isFile && it.extension == "kt" }
 
         doFirst {
 
@@ -142,7 +144,7 @@ class ExtractExampleCodePlugin : Plugin<Project> {
 
             val exampleFileContent = examplesCodeFile.toString()
 
-            val targetDir = File(projectDir, outputDir).also {
+            val targetDir = outputDir.also {
                 if (!it.exists()) {
                     it.mkdirs()
                 }

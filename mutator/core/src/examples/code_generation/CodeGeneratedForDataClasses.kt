@@ -39,7 +39,8 @@ class CodeGeneratedForDataClasses : SimpleExample() {
     """.trimIndent()
 
     override fun run() {
-        val dir = File("build/generated/ksp/jvm/jvmTest/kotlin/io/peekandpoke/mutator/examples/code_generation/")
+        val buildDir = System.getProperty("mutator.buildDir") ?: "build"
+        val dir = File(buildDir, "generated/ksp/jvm/jvmTest/kotlin/io/peekandpoke/mutator/examples/code_generation/")
 
         val personCode = File(dir, "CodeGeneratedForDataClasses.Person${"$$"}mutator.kt").readText()
 

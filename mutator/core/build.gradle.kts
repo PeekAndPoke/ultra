@@ -95,6 +95,8 @@ tasks {
     register<JavaExec>("generateDocs") {
         mainClass.set("io.peekandpoke.mutator.examples.GenerateDocsKt")
         classpath = sourceSets.getByName("jvmTest").runtimeClasspath
+        // The examples read KSP output from the build directory, which differs per user (MC-00031)
+        systemProperty("mutator.buildDir", layout.buildDirectory.get().asFile.absolutePath)
     }
 }
 

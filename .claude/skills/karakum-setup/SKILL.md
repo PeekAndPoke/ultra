@@ -27,7 +27,8 @@ exposes `configFile` and `extensionSource` — all real settings live in the JSO
 
 **Token replacements use angle brackets:**
 
-- `<nodeModules>` → `<project-root>/build/js/node_modules` (Kotlin/JS centralized node_modules)
+- `<nodeModules>` → `<project-root>/build/js/node_modules` (Kotlin/JS centralized node_modules; as user claude
+  `<project-root>/.build-claude/_root/js/node_modules`, MC-00031)
 - `<buildSrc>` → the Gradle buildSrc directory (NOT useful for output paths)
 - `<packageNodeModules>` → per-package node_modules
 

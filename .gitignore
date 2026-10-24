@@ -30,3 +30,7 @@ publishing.gradle.properties
 
 # Python bytecode (console/tools)
 __pycache__/
+
+# Per-user build outputs of the agents (MC-00031)
+.build-claude/
+.gradle-claude/
