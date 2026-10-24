@@ -1,8 +1,6 @@
 # ULTRA-00233: Kraft modals: every modal answers exactly once (Handle<RESULT>)
 
-> **Status (2026-10-23): DESIGNED.** Redesigned with the maintainer on 2026-10-23, prompted by Spross's question
-> about the OkCancel return value. One design review round done (record below); the maintainer confirms the plan
-> before it is built.
+> **Status (2026-10-24): IN PROGRESS.** Plan confirmed by the maintainer on 2026-10-24 (decisions below). One design review round done (record below).
 
 **Security-critical:** no
 
@@ -130,8 +128,8 @@ suspend fun <RESULT : Any> ModalsManager.showAndAwait(view: ModalRenderer<RESULT
   `close(Result.Ok)`, Cancel calls `close(Result.Cancel)`, and `init` wires `props.handle.onResult { props.onResult(it) }`.
   Both buttons render as `SemanticTag.Button` with `type = ButtonType.button` set explicitly; Cancel gets the focus
   in `onMount`.
-- **Esc is not part of this change.** No Kraft modal handles Esc today (Klang's subclass does). Adding it to
-  `FadingModal` is a separate decision (below).
+- **Esc is not part of this change.** No Kraft modal handles Esc today (Klang's subclass does). It is ULTRA-00239,
+  through a reusable key-binding mechanism.
 
 **Breaking, and the compiler finds the type changes:** every `ModalsManager.Handle` becomes `Handle<RESULT>`, every
 `FadingModal<P>` becomes `FadingModal<P, RESULT>`, and `ModalRenderer` gains a type parameter. Sites:
@@ -150,12 +148,12 @@ suspend fun <RESULT : Any> ModalsManager.showAndAwait(view: ModalRenderer<RESULT
   `CodeToolModal`, `CodeSongPage.kt:204`, `KlangCodeEditorComp.kt:276`, `SprudelMiniNotationEditorTool.kt:207`;
   Spross's `PictureGallery` and `_picture_helpers.kt:44`.
 
-## Decide before implementing
+## Decided (maintainer, 2026-10-24: "confirmed")
 
-- `AddMemberModal` / `MemberRolesModal` keep their `onAdd`-style callbacks with `RESULT = Unit`, or move their data
-  into `RESULT`? Proposal: move it; they are the demo of the pattern.
-- Esc closes a `FadingModal` (as a dismissal)? Proposal: yes, as a follow-up ticket after this one; it is testable
-  (a synthetic `keyDown("Escape")` reaches Kraft's listeners), but it changes behaviour for every subclass.
+- `AddMemberModal` / `MemberRolesModal` move their data into `RESULT` ("yes return"); they are the demo of the
+  pattern.
+- Esc is a follow-up, ULTRA-00239, implemented through a reusable key-binding mechanism (Klang is building
+  generalized key bindings), not a listener hard-wired into `FadingModal`.
 
 ## The work
 
@@ -318,3 +316,5 @@ is a valid bound; no `allWarningsAsErrors`, so the deprecation only warns.
 - 2026-10-21: created from Klang's KLANG-00323 findings.
 - 2026-10-23: redesigned as one contract in the handle (`Handle<RESULT>`, answer `RESULT?`), with the maintainer;
   testing plan added; design review round 1 (7 MAJOR, 9 MINOR, all applied but one surplus suggestion).
+- 2026-10-24: plan confirmed; member modals return their data; Esc filed as ULTRA-00239.
+- 2026-10-24: IN PROGRESS.
