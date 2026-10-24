@@ -67,6 +67,22 @@ tasks {
 val vueVerifyDir = layout.projectDirectory.dir("vue-verify")
 val vueVerifySdkDir = layout.buildDirectory.dir("vue-verify-sdk")
 
+// The harness runs from a copy under the build directory, so node_modules, dist/ and src/funktorsdk/ belong to one
+// build root and are never shared between the IDE's build/ and an agent's .build-claude/ (MC-00031).
+val vueVerifyWorkDir = layout.buildDirectory.dir("vue-verify-work")
+
+val vueVerifyStage = tasks.register<Sync>("vueVerifyStage") {
+    group = "verification"
+    description = "Copies the Vue verification harness into the build directory"
+
+    from(vueVerifyDir) {
+        exclude("node_modules/**", "dist/**", "src/funktorsdk/**")
+    }
+    into(vueVerifyWorkDir)
+    // The installed toolchain stays between runs; vueVerifyInstall owns it
+    preserve { include("node_modules/**") }
+}
+
 val generateVueVerifySdk = tasks.register<JavaExec>("generateVueVerifySdk") {
     group = "verification"
     description = "Generates the SDK of an app with the real insights feature, for the vue-verify harness"
@@ -84,7 +100,9 @@ val vueVerifyInstall = tasks.register<Exec>("vueVerifyInstall") {
     group = "verification"
     description = "Installs the pinned Vue verification toolchain"
 
-    workingDir = vueVerifyDir.asFile
+    dependsOn(vueVerifyStage)
+
+    workingDir = vueVerifyWorkDir.get().asFile
 
     // --frozen-lockfile: fail rather than silently resolving different versions.
     commandLine("pnpm", "install", "--frozen-lockfile")
@@ -92,7 +110,7 @@ val vueVerifyInstall = tasks.register<Exec>("vueVerifyInstall") {
     inputs.file(vueVerifyDir.file("package.json"))
     inputs.file(vueVerifyDir.file("pnpm-lock.yaml"))
     inputs.file(vueVerifyDir.file(".npmrc"))
-    outputs.dir(vueVerifyDir.dir("node_modules"))
+    outputs.dir(vueVerifyWorkDir.map { it.dir("node_modules") })
 }
 
 val vueVerify = tasks.register<Exec>("vueVerify") {
@@ -101,7 +119,7 @@ val vueVerify = tasks.register<Exec>("vueVerify") {
 
     dependsOn(generateVueVerifySdk, vueVerifyInstall)
 
-    workingDir = vueVerifyDir.asFile
+    workingDir = vueVerifyWorkDir.get().asFile
 
     commandLine("pnpm", "run", "--silent", "verify")
 
@@ -109,8 +127,8 @@ val vueVerify = tasks.register<Exec>("vueVerify") {
     outputs.upToDateWhen { false }
 
     doFirst {
-        // The SDK is generated under build/; copy it where the harness app imports it from.
-        val linked = vueVerifyDir.dir("src/funktorsdk").asFile
+        // The SDK is generated under the build directory; copy it where the harness app imports it from.
+        val linked = vueVerifyWorkDir.get().dir("src/funktorsdk").asFile
         linked.deleteRecursively()
         vueVerifySdkDir.get().asFile.copyRecursively(linked, overwrite = true)
     }

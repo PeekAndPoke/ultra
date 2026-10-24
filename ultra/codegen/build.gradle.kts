@@ -69,6 +69,22 @@ tasks {
 val tsVerifyDir = layout.projectDirectory.dir("ts-verify")
 val tsGeneratedDir = layout.buildDirectory.dir("ts-verify-generated")
 
+// The harness runs from a copy under the build directory, so node_modules and generated/ belong to one build root
+// and are never shared between the IDE's build/ and an agent's .build-claude/ (MC-00031).
+val tsVerifyWorkDir = layout.buildDirectory.dir("ts-verify-work")
+
+val tsVerifyStage = tasks.register<Sync>("tsVerifyStage") {
+    group = "verification"
+    description = "Copies the TypeScript verification harness into the build directory"
+
+    from(tsVerifyDir) {
+        exclude("node_modules/**", "generated/**")
+    }
+    into(tsVerifyWorkDir)
+    // The installed toolchain stays between runs; tsVerifyInstall owns it
+    preserve { include("node_modules/**") }
+}
+
 val generateTsFixtures = tasks.register<JavaExec>("generateTsFixtures") {
     group = "verification"
     description = "Emits TypeScript fixtures plus real Slumber output for the ts-verify harness"
@@ -86,7 +102,9 @@ val tsVerifyInstall = tasks.register<Exec>("tsVerifyInstall") {
     group = "verification"
     description = "Installs the pinned TypeScript verification toolchain"
 
-    workingDir = tsVerifyDir.asFile
+    dependsOn(tsVerifyStage)
+
+    workingDir = tsVerifyWorkDir.get().asFile
 
     // --frozen-lockfile: fail rather than silently resolving different versions. Without it a stale
     // lockfile would be "fixed" on the fly and the gate would stop being reproducible.
@@ -95,7 +113,7 @@ val tsVerifyInstall = tasks.register<Exec>("tsVerifyInstall") {
     inputs.file(tsVerifyDir.file("package.json"))
     inputs.file(tsVerifyDir.file("pnpm-lock.yaml"))
     inputs.file(tsVerifyDir.file(".npmrc"))
-    outputs.dir(tsVerifyDir.dir("node_modules"))
+    outputs.dir(tsVerifyWorkDir.map { it.dir("node_modules") })
 }
 
 val tsVerify = tasks.register<Exec>("tsVerify") {
@@ -104,7 +122,7 @@ val tsVerify = tasks.register<Exec>("tsVerify") {
 
     dependsOn(generateTsFixtures, tsVerifyInstall)
 
-    workingDir = tsVerifyDir.asFile
+    workingDir = tsVerifyWorkDir.get().asFile
 
     // Plain pnpm, NOT corepack: pnpm enforces the `packageManager` field itself via
     // manage-package-manager-versions in .npmrc. See the note there for why corepack is avoided.
@@ -118,8 +136,8 @@ val tsVerify = tasks.register<Exec>("tsVerify") {
     outputs.upToDateWhen { false }
 
     doFirst {
-        // The generated sources live under build/, so link them in where tsconfig expects them.
-        val linked = tsVerifyDir.dir("generated").asFile
+        // The generated sources live under the build directory; copy them in where tsconfig expects them.
+        val linked = tsVerifyWorkDir.get().dir("generated").asFile
         linked.deleteRecursively()
         tsGeneratedDir.get().asFile.copyRecursively(linked, overwrite = true)
     }
