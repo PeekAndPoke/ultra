@@ -4,6 +4,7 @@ import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.key
 import kotlinx.html.Tag
 import kotlinx.html.div
 
@@ -28,14 +29,19 @@ class ModalsStage(ctx: Ctx<Props>) : Component<ModalsStage.Props>(ctx) {
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private val current: List<ModalsManager.Handle> by subscribingTo(props.modals)
+    private val current: List<ModalsManager.Handle<*>> by subscribingTo(props.modals)
 
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     override fun VDom.render() {
         div(classes = "modal-stage") {
             current.forEach {
-                it.view(this, it)
+                // Keyed, so a new modal never reuses the component instance of one that just closed
+                div {
+                    key = "modal-${it.id}"
+
+                    it.render(this)
+                }
             }
         }
     }

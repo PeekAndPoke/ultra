@@ -207,8 +207,9 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
                 handle = handle,
                 editableRoles = editableRoles,
                 callerIsOwner = callerIsOwner,
-                onAdd = { email, roles -> addMember(email, roles) },
             )
+        }.onResult { result ->
+            result?.let { addMember(it.email, it.roles) }
         }
     }
 
@@ -229,8 +230,9 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
                 editableRoles = editableRoles,
                 callerIsOwner = callerIsOwner,
                 isLastOwner = isLastOwner,
-                onSave = { newRoles -> saveRoles(member, newRoles) },
             )
+        }.onResult { newRoles ->
+            newRoles?.let { saveRoles(member, it) }
         }
     }
 
@@ -249,7 +251,7 @@ class MembersPage(ctx: NoProps) : PureComponent(ctx) {
                 okText = { +"Remove" },
                 cancelText = { +"Cancel" },
             ) { result ->
-                result.ifOk { removeMember(member) }
+                result?.ifOk { removeMember(member) }
             }
         }
     }

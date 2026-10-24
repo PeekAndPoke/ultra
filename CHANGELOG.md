@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased
+
+### Breaking changes
+
+- **Kraft modals: every modal answers exactly once (ULTRA-00233).** `ModalsManager.Handle` becomes
+  `Handle<RESULT : Any>`, `FadingModal<P>` becomes `FadingModal<P, RESULT>`, `FadingModal.Props` becomes
+  `FadingModal.Props<RESULT>`, and `ModalRenderer` takes the type parameter. The compiler finds these.
+  - `handle.resolve(result)` decides the answer (the first call wins), `handle.onResult { result: RESULT? -> }` gets
+    it once the modal is gone, `null` meaning dismissed. `onClose` runs after `onResult`.
+  - `closeAll()` now runs the handlers (each modal answers what it resolved, else `null`); it used to run none.
+  - `OkCancelModal`'s `onResult` takes `Result?`: `null` when dismissed by the backdrop, back navigation or
+    `closeAll()`, which used to give no answer at all. Its default is `{}`.
+  - `FadingModal.close(result)` answers and closes, `close()` dismisses. `close(onClose)` is deprecated; for this
+    release `close()` and `close(result)` still call through it, so overrides keep running.
+  - New: `ModalsManager.showAndAwait { }` returns the answer in a coroutine.
+- **Upgrading with no compile error to warn you:**
+  - `if (result == Cancel) ... else delete()`, `when (result) { Cancel -> ...; else -> delete() }` and string
+    templates compile unchanged and now see `null` on a dismissal: treat `null` like Cancel;
+  - handlers registered inside a modal's render function run once per render of the modal stage: register them on
+    the handle `show` returns, or once in a component's `init`.
+
+### Fixes
+
+- **Kraft modals:** OkCancel's buttons are real `<button type="button">`s and Cancel has the focus on open; Ok then
+  Cancel within the fade no longer answers twice; a modal opened from a modal's answer no longer reuses the closed
+  one's component (the stage keys modals by id); `<body>` scrolls again after `closeAll()`; closing the top of two
+  stacked modals no longer closes the one below (`BackNavigationTrap` ignores a step back onto its own entry).
+
 ## 0.114.0
 
 ### Breaking changes

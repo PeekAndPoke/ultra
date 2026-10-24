@@ -53,22 +53,14 @@ class BackNavigationTrap(
         }
     }
 
-    private val onPopState: (PopStateEvent) -> Unit = { event: PopStateEvent ->
+    private val onPopState: (PopStateEvent) -> Unit = handler@{ event: PopStateEvent ->
+
+        // Landed on our own entry: a trap stacked above us went back (e.g. a modal on top closed). Not a back past us.
+        if (event.state == data) return@handler
 
         when (block()) {
-            // Can we continue to go back?
-            TrapResult.Continue -> {
-                // Are we navigating away or are we navigating back?
-                if (event.state != data) {
-                    // user navigated away
-                    deactivateInternal {
-                        // deactivate immediately without going back ...
-                    }
-                } else {
-                    // user navigated back
-                    deactivate()
-                }
-            }
+            // The user navigated away: deactivate immediately without going back
+            TrapResult.Continue -> deactivateInternal { }
             // If not we have to push the state again
             TrapResult.Stop -> pushState()
         }

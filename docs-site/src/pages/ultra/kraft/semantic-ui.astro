@@ -239,7 +239,7 @@ icon.download()`} lang="kotlin" theme="vitesse-dark" />
                 ) { result ->
                     when (result) {
                         OkCancelModal.Result.Ok -> deleteItem()
-                        OkCancelModal.Result.Cancel -> { /* do nothing */ }
+                        OkCancelModal.Result.Cancel, null -> { /* do nothing */ }
                     }
                 }
             }

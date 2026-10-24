@@ -1865,7 +1865,7 @@ ui.button {
                 ) { result ->
                     when (result) {
                         OkCancelModal.Result.Ok -> deleteItem()
-                        OkCancelModal.Result.Cancel -> { /* do nothing */ }
+                        OkCancelModal.Result.Cancel, null -> { /* do nothing */ }
                     }
                 }
             }
@@ -1968,40 +1968,51 @@ class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
 
 ## Modals
 
-Show a modal by calling `modals.show` with a render function. You receive a `Handle` that lets you close the modal and
-register close callbacks:
+Show a modal by calling `modals.show` with a render function. You receive a typed `Handle<RESULT>`: `resolve(result)`
+decides the answer, `close()` removes the modal. Every modal answers exactly once, after it is gone: the decided
+result, or `null` when it was dismissed without one.
 
 ```kotlin
-modals.show { handle ->
+modals.show<Boolean> { handle ->
     div {
         h2 { +"Confirm deletion" }
-        p { +"This cannot be undone." }
         ui.red.button {
             onClick {
-                performDelete()
+                handle.resolve(true)
                 handle.close()
             }
             +"Delete"
         }
         ui.button {
-            onClick { handle.close() }
+            onClick { handle.close() }  // no resolve: answers null
             +"Cancel"
         }
     }
+}.onResult { confirmed ->
+    if (confirmed == true) performDelete()
 }.onClose {
-    // called after the modal closes, regardless of how
+    // runs after onResult, however the modal went away
 }
 ```
 
-Close all open modals at once:
+**Never register handlers inside the render function:** it runs on every render of the modal stage. Register
+`onResult` and `onClose` on the handle that `show` returns, or once in a component's `init`.
+
+The first `resolve` wins. `modals.closeAll()` closes every modal; each one answers what it resolved, else `null`. In a
+coroutine, `showAndAwait` returns the answer directly; cancelling the coroutine closes the modal:
 
 ```kotlin
-modals.closeAll()
+launch {
+    val result = modals.showAndAwait { handle -> OkCancelModal.mini(handle = handle, header = { +"Delete?" }, content = {}) }
+    if (result == OkCancelModal.Result.Ok) performDelete()
+}
 ```
 
 ### OkCancelModal
 
-For the common confirm/cancel pattern, use the built-in `OkCancelModal`. It comes in three sizes:
+For the common confirm/cancel pattern, use the built-in `OkCancelModal`. It answers `Ok`, `Cancel`, or `null` when
+dismissed (backdrop, back navigation, `closeAll()`). Its buttons are real `<button>`s and Cancel has the focus, so
+Enter never confirms by accident. It comes in three sizes:
 
 ```kotlin
 modals.show { handle ->
@@ -2014,7 +2025,7 @@ modals.show { handle ->
     ) { result ->
         when (result) {
             OkCancelModal.Result.Ok -> performDelete()
-            OkCancelModal.Result.Cancel -> { /* nothing */ }
+            OkCancelModal.Result.Cancel, null -> { /* nothing */ }
         }
     }
 }
@@ -2022,6 +2033,31 @@ modals.show { handle ->
 // Also available:
 // OkCancelModal.tiny(...)
 // OkCancelModal.small(...)
+```
+
+**Treat `null` like Cancel:** `if (result == Cancel) ... else delete()` compiles, and deletes on a dismissal.
+
+### Your own modal
+
+Extend `FadingModal<Props, RESULT>` for a Semantic UI modal with fade transitions: `close(result)` answers and closes,
+`close()` dismisses. The backdrop and back navigation dismiss too.
+
+```kotlin
+class RenameModal(ctx: Ctx<Props>) : FadingModal<RenameModal.Props, String>(ctx) {
+    class Props(override val handle: ModalsManager.Handle<String>) : FadingModal.Props<String>()
+
+    private var name by value("")
+
+    override fun FlowContent.renderContent() {
+        ui.mini.modal.transition.visible.active.front {
+            ui.content { UiInputField(name, { name = it }) }
+            noui.actions {
+                ui.button Button { onClick { close() }; +"Cancel" }
+                ui.primary.button Button { onClick { close(name) }; +"Rename" }
+            }
+        }
+    }
+}
 ```
 
 ## Toasts

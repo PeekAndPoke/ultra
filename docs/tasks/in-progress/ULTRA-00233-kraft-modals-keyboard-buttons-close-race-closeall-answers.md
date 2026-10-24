@@ -173,6 +173,50 @@ suspend fun <RESULT : Any> ModalsManager.showAndAwait(view: ModalRenderer<RESULT
 6. **Tell Klang and Spross** (through Mission Control) the version, the migration list, the `close(onClose)`
    deprecation and the silent patterns of Decided 2.
 
+## Implementation notes (2026-10-24)
+
+Step 0, the compile spike: every call shape infers (`show { h -> mini(handle = h) { } }` without a type,
+a subclass factory taking `Handle<X>`, a generic factory); only a plain `div` needs `show<Unit> { }`. The API stayed as
+designed. Deviations from the design, each found while building:
+
+- **`resolve(result: RESULT?)` instead of an internal `closing` state.** `FadingModal` is in another module, so an
+  `internal` flag cannot be set from it. `resolve(null)` decides a dismissal, the first call wins, and delivery marks
+  the handle decided. `FadingModal.close()` calls `resolve(null)`. Same behaviour, one public mechanism
+  (`kraft/core/src/jsMain/kotlin/modals/ModalsManager.kt`).
+- **Defect 8, found by test 15b:** closing the top of two stacked modals dismissed the one below. B's trap goes back
+  in history, the popstate lands on A's own entry, and A's trap took that for a back past it. Also in master (there A
+  closed silently). Fix: a trap ignores a popstate that lands on its own entry
+  (`kraft/core/src/jsMain/kotlin/routing/BackNavigationTrap.kt`), pinned by 15c. A user's back still dismisses (18).
+- **The body class goes when the last FadingModal unmounts**, no longer at the start of a fade, so scrolling comes
+  back after the fade.
+- **OkCancel's `onResult` defaults to `{}`**, so `showAndAwait` callers need not pass one.
+- **Focus on Cancel** uses `dom.querySelector(".actions button.negative")`, not the debug id.
+- **The example bundles** under `docs/kraft/examples/` are rebuilt by the release (release skill step 4,
+  `distributeJsExample`), not in this change.
+- The member modals answer their data: `AddMemberModal.Result(email, roles)` and `Set<String>`; `MembersPage`
+  registers `onResult` on the returned handle. `LogsBulkActionPopup` is `RESULT = Unit`, its `onClose` moved to the
+  returned handle.
+
+## Test evidence (2026-10-24)
+
+- Layer 1: `ModalsManagerSpec`, 13 tests (1-9b plus 3b). Layer 2: `OkCancelModalSpec`, 16 tests (10-21 plus 12c,
+  15c). Both green; `:kraft:core-tests:jsTest` 425, `:kraft:semanticui:jsTest` 21, `:kraft:core:jsTest` 216, all 0
+  failed, result files fresh; `:funktor:inspect`, `:funktor-demo:b2b-app` and the fomanticui example compile.
+- Mutation checks (script `tmp/ultra-00233/mutate.py`, each restored and the tree hash checked after):
+
+| mutation | RED | note |
+|---|---|---|
+| deliver to a handle not on the stack | 4, 6 | as planned |
+| `resolve` last-wins | 3, 3b | 12 stays green: `FadingModal` ignores clicks once fading, a second guard |
+| handlers before removal | 6, 7a | as planned |
+| `closeAll()` without delivering | 5, 7b, 8, 15 | as planned |
+| no `runCatching` | 8 | as planned |
+| `close(result)` skips `resolve` | 10, 11, 12, 15c, 19, 20 | as planned |
+| stage key removed | 19 | as planned |
+| `onUnmount` keeps the body class | 15, 15b, 21 | as planned |
+| trap reacts to its own entry | 15b, 15c | defect 8 |
+| the dismissal does not `resolve(null)` | 12c | survived until 12c was added: 12b is guarded by the fade too |
+
 ## Testing plan
 
 Two layers: plain unit tests of the manager (no DOM), and browser tests with `TestBed.preact` and KQuery for what
@@ -269,13 +313,21 @@ Checked against the code by the review; confirm each while writing the tests, th
 
 | date | tool | what was cumbersome | proposal |
 |---|---|---|---|
+| 2026-10-24 | TestBed | Never unmounts the app: `onUnmount` never runs, so `FadingModal`'s body-class count, back-navigation traps and listeners leak into later specs. Every layer-2 test needs `closeAll()` plus a wait in a `finally` (`withModals` in `OkCancelModalSpec.kt`) | unmount the app in `render`'s `finally` (Preact `render(null, root)`), then remove the div |
+| 2026-10-24 | KQuery | `awaitCss` returns an empty query on timeout, so the failure shows up later as an unrelated `single()` or click on nothing; there is no "await gone" | `awaitCss` fails with the selector on timeout; add `awaitGone(css)` |
+| 2026-10-24 | KQuery | `select*` are `suspend`, so they cannot be used inside a polling condition; the spec counts with `document.querySelectorAll` instead | non-suspending `query(css)`, or a polling helper that takes a suspend condition |
+| 2026-10-24 | kraft tests | `eventually` now exists as a FIFTH private copy (`until` in `OkCancelModalSpec.kt`) | one shared `eventually(timeout) { }` in kraft/testing |
+| 2026-10-24 | KQuery | Without an explicit import, `first()` / `last()` resolve to the stdlib's `List.first()` (KQuery is a List), so `selectDebugId(..).last().click()` fails to compile with a confusing receiver mismatch | make `first` / `last` / `nth` members of `KQuery`, so they win without an import |
+| 2026-10-24 | KQuery | No focus assertion; the spec compares `document.activeElement` | `isFocused()` |
+| 2026-10-24 | KQuery | Keyboard activation (Enter on a button) cannot be simulated: synthetic events are untrusted. Tested through its parts (16, 17) | none in KQuery; real key presses need CDP `Input.dispatchKeyEvent`. Not worth it for now |
+| 2026-10-24 | Karma page | `window.history` is shared by every spec; 18 depends on the trap's entry being on top | follows from the TestBed unmount fix (traps deactivate on unmount) |
 
 ## Acceptance
 
-- [ ] Tests 1-21 green, and the mutation checks above each RED for the named tests.
-- [ ] No `ModalsManager.Handle` without a type argument left in this repo; the demo and the fomanticui example
-      build; the example bundles under `docs/kraft/examples/` rebuilt.
-- [ ] Docs and LLM mirror updated; CHANGELOG notes the breaking change and the silent `else`-branch pattern.
+- [x] Tests 1-21 green, and the mutation checks above each RED for the named tests.
+- [x] No `ModalsManager.Handle` without a type argument left in this repo; the demo and the fomanticui example
+      build. The example bundles are rebuilt by the release (implementation notes).
+- [x] Docs and LLM mirror updated; CHANGELOG notes the breaking change and the silent `else`-branch pattern.
 - [ ] Klang and Spross told the version and the migration list, through Mission Control.
 - [ ] The TestBed/KQuery friction that held is in the findings table, each with a follow-up ticket or a reason not to.
 
@@ -318,3 +370,5 @@ is a valid bound; no `allWarningsAsErrors`, so the deprecation only warns.
   testing plan added; design review round 1 (7 MAJOR, 9 MINOR, all applied but one surplus suggestion).
 - 2026-10-24: plan confirmed; member modals return their data; Esc filed as ULTRA-00239.
 - 2026-10-24: IN PROGRESS.
+- 2026-10-24: implemented (core, semanticui, migration, docs, CHANGELOG); defect 8 found and fixed; tests and
+  mutation checks green. Next: /feature-review.

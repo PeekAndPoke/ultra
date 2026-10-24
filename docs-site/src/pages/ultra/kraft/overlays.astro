@@ -39,36 +39,51 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
 
     <h2>Modals</h2>
 
-    <p>Show a modal by calling <code>modals.show</code> with a render function. You receive a <code>Handle</code> that
-        lets you close the modal and register close callbacks:</p>
+    <p>Show a modal by calling <code>modals.show</code> with a render function. You receive a typed
+        <code>Handle&lt;RESULT&gt;</code>: <code>resolve(result)</code> decides the answer, <code>close()</code> removes
+        the modal. Every modal answers exactly once, after it is gone: the decided result, or <code>null</code> when it
+        was dismissed without one.</p>
 
-    <Code code={`modals.show { handle ->
+    <Code code={`modals.show<Boolean> { handle ->
     div {
         h2 { +"Confirm deletion" }
-        p { +"This cannot be undone." }
         ui.red.button {
             onClick {
-                performDelete()
+                handle.resolve(true)
                 handle.close()
             }
             +"Delete"
         }
         ui.button {
-            onClick { handle.close() }
+            onClick { handle.close() }  // no resolve: answers null
             +"Cancel"
         }
     }
+}.onResult { confirmed ->
+    if (confirmed == true) performDelete()
 }.onClose {
-    // called after the modal closes, regardless of how
+    // runs after onResult, however the modal went away
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Close all open modals at once:</p>
+    <p><strong>Never register handlers inside the render function:</strong> it runs on every render of the modal
+        stage. Register <code>onResult</code> and <code>onClose</code> on the handle that <code>show</code> returns, or
+        once in a component's <code>init</code>.</p>
 
-    <Code code={`modals.closeAll()`} lang="kotlin" theme="vitesse-dark"/>
+    <p>The first <code>resolve</code> wins. <code>modals.closeAll()</code> closes every modal; each one answers what it
+        resolved, else <code>null</code>. In a coroutine, <code>showAndAwait</code> returns the answer directly;
+        cancelling the coroutine closes the modal:</p>
+
+    <Code code={`launch {
+    val result = modals.showAndAwait { handle -> OkCancelModal.mini(handle = handle, header = { +"Delete?" }, content = {}) }
+    if (result == OkCancelModal.Result.Ok) performDelete()
+}`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>OkCancelModal</h3>
 
-    <p>For the common confirm/cancel pattern, use the built-in <code>OkCancelModal</code>. It comes in three sizes:</p>
+    <p>For the common confirm/cancel pattern, use the built-in <code>OkCancelModal</code>. It answers
+        <code>Ok</code>, <code>Cancel</code>, or <code>null</code> when dismissed (backdrop, back navigation,
+        <code>closeAll()</code>). Its buttons are real <code>&lt;button&gt;</code>s and Cancel has the focus, so Enter
+        never confirms by accident. It comes in three sizes:</p>
 
     <Code code={`modals.show { handle ->
     OkCancelModal.mini(
@@ -80,7 +95,7 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
     ) { result ->
         when (result) {
             OkCancelModal.Result.Ok -> performDelete()
-            OkCancelModal.Result.Cancel -> { /* nothing */ }
+            OkCancelModal.Result.Cancel, null -> { /* nothing */ }
         }
     }
 }
@@ -88,6 +103,31 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
 // Also available:
 // OkCancelModal.tiny(...)
 // OkCancelModal.small(...)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><strong>Treat <code>null</code> like Cancel:</strong> <code>if (result == Cancel) ... else delete()</code>
+        compiles, and deletes on a dismissal.</p>
+
+    <h3>Your own modal</h3>
+
+    <p>Extend <code>FadingModal&lt;Props, RESULT&gt;</code> for a Semantic UI modal with fade transitions:
+        <code>close(result)</code> answers and closes, <code>close()</code> dismisses. The backdrop and back navigation
+        dismiss too.</p>
+
+    <Code code={`class RenameModal(ctx: Ctx<Props>) : FadingModal<RenameModal.Props, String>(ctx) {
+    class Props(override val handle: ModalsManager.Handle<String>) : FadingModal.Props<String>()
+
+    private var name by value("")
+
+    override fun FlowContent.renderContent() {
+        ui.mini.modal.transition.visible.active.front {
+            ui.content { UiInputField(name, { name = it }) }
+            noui.actions {
+                ui.button Button { onClick { close() }; +"Cancel" }
+                ui.primary.button Button { onClick { close(name) }; +"Rename" }
+            }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Toasts</h2>
 

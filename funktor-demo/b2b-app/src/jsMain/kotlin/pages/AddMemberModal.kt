@@ -20,36 +20,36 @@ import kotlinx.html.Tag
  * server's owner-only ownership rule). The server resolves the email to a b2b user — an unknown email
  * is rejected there (404, surfaced as a toast) — and reactivates a previously-removed member.
  *
- * [onAdd] is invoked with the entered email + chosen roles AFTER the modal closes (the parent page
- * performs the API call, toasts the outcome, and reloads).
+ * The modal answers with the entered email + chosen roles ([AddMemberModal.Result]) after it closes, or
+ * `null` when cancelled (the parent page performs the API call, toasts the outcome, and reloads).
  */
 @Suppress("FunctionName")
 fun Tag.AddMemberModal(
-    handle: ModalsManager.Handle,
+    handle: ModalsManager.Handle<AddMemberModal.Result>,
     editableRoles: List<String>,
     callerIsOwner: Boolean,
-    onAdd: (email: String, roles: Set<String>) -> Unit,
 ) = comp(
     AddMemberModal.Props(
         handle = handle,
         editableRoles = editableRoles,
         callerIsOwner = callerIsOwner,
-        onAdd = onAdd,
     )
 ) {
     AddMemberModal(it)
 }
 
-class AddMemberModal(ctx: Ctx<Props>) : FadingModal<AddMemberModal.Props>(ctx) {
+class AddMemberModal(ctx: Ctx<Props>) : FadingModal<AddMemberModal.Props, AddMemberModal.Result>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     class Props(
-        override val handle: ModalsManager.Handle,
+        override val handle: ModalsManager.Handle<Result>,
         val editableRoles: List<String>,
         val callerIsOwner: Boolean,
-        val onAdd: (email: String, roles: Set<String>) -> Unit,
-    ) : FadingModal.Props()
+    ) : FadingModal.Props<Result>()
+
+    /** The answer: the member to add. */
+    data class Result(val email: String, val roles: Set<String>)
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -101,7 +101,7 @@ class AddMemberModal(ctx: Ctx<Props>) : FadingModal<AddMemberModal.Props>(ctx) {
                 }
                 ui.primary.givenNot(canAdd) { disabled }.button {
                     debugId("add-button")
-                    onClick { if (canAdd) close { props.onAdd(email.trim(), roles) } }
+                    onClick { if (canAdd) close(Result(email = email.trim(), roles = roles)) }
                     icon.plus()
                     +"Add"
                 }

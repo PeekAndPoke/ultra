@@ -25,16 +25,13 @@ import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 
 fun <T> Component<T>.showLogsBulkActionPopup(ui: LoggingUi, onClose: (() -> Unit)? = null) {
-    modals.show { handle ->
-        handle.onClose { onClose?.invoke() }
-
-        LogsBulkActionPopup(handle, ui)
-    }
+    modals.show { handle -> LogsBulkActionPopup(handle, ui) }
+        .onClose { onClose?.invoke() }
 }
 
 @Suppress("FunctionName")
 fun Tag.LogsBulkActionPopup(
-    handle: ModalsManager.Handle,
+    handle: ModalsManager.Handle<Unit>,
     ui: LoggingUi,
 ) = comp(
     LogsBulkActionPopup.Props(
@@ -45,14 +42,14 @@ fun Tag.LogsBulkActionPopup(
     LogsBulkActionPopup(it)
 }
 
-class LogsBulkActionPopup(ctx: Ctx<Props>) : FadingModal<LogsBulkActionPopup.Props>(ctx) {
+class LogsBulkActionPopup(ctx: Ctx<Props>) : FadingModal<LogsBulkActionPopup.Props, Unit>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     data class Props(
-        override val handle: ModalsManager.Handle,
+        override val handle: ModalsManager.Handle<Unit>,
         val ui: LoggingUi,
-    ) : FadingModal.Props()
+    ) : FadingModal.Props<Unit>()
 
     private sealed class Result {
         data class Success(

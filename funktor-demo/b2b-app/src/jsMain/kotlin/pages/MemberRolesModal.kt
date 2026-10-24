@@ -27,17 +27,16 @@ import kotlinx.html.label
  * can't be demoted, or the org would have no owner). Both gates are a convenience; the server is
  * authoritative and still rejects an illegal ownership change (403) or a last-owner demotion (400).
  *
- * [onSave] is invoked with the chosen role set AFTER the modal closes (the parent page performs the
- * API call, toasts the outcome, and reloads).
+ * The modal answers with the chosen role set after it closes, or `null` when cancelled (the parent page
+ * performs the API call, toasts the outcome, and reloads).
  */
 @Suppress("FunctionName")
 fun Tag.MemberRolesModal(
-    handle: ModalsManager.Handle,
+    handle: ModalsManager.Handle<Set<String>>,
     member: OrgMemberModel,
     editableRoles: List<String>,
     callerIsOwner: Boolean,
     isLastOwner: Boolean,
-    onSave: (Set<String>) -> Unit,
 ) = comp(
     MemberRolesModal.Props(
         handle = handle,
@@ -45,24 +44,22 @@ fun Tag.MemberRolesModal(
         editableRoles = editableRoles,
         callerIsOwner = callerIsOwner,
         isLastOwner = isLastOwner,
-        onSave = onSave,
     )
 ) {
     MemberRolesModal(it)
 }
 
-class MemberRolesModal(ctx: Ctx<Props>) : FadingModal<MemberRolesModal.Props>(ctx) {
+class MemberRolesModal(ctx: Ctx<Props>) : FadingModal<MemberRolesModal.Props, Set<String>>(ctx) {
 
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     class Props(
-        override val handle: ModalsManager.Handle,
+        override val handle: ModalsManager.Handle<Set<String>>,
         val member: OrgMemberModel,
         val editableRoles: List<String>,
         val callerIsOwner: Boolean,
         val isLastOwner: Boolean,
-        val onSave: (Set<String>) -> Unit,
-    ) : FadingModal.Props()
+    ) : FadingModal.Props<Set<String>>()
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -102,7 +99,7 @@ class MemberRolesModal(ctx: Ctx<Props>) : FadingModal<MemberRolesModal.Props>(ct
                 }
                 ui.primary.button {
                     debugId("save-button")
-                    onClick { close { props.onSave(draft) } }
+                    onClick { close(draft) }
                     icon.check()
                     +"Save"
                 }

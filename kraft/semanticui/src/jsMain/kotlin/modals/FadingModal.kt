@@ -20,12 +20,13 @@ import kotlinx.html.FlowContent
 import kotlinx.html.style
 
 /**
- * Abstract base class for Semantic UI modals with fade-in/fade-out transitions.
+ * Abstract base class for Semantic UI modals with fade-in/fade-out transitions, answering with a [RESULT].
  *
- * Subclasses implement [renderContent] to define the modal body. The modal automatically
- * traps back-navigation, disables body scrolling while open, and animates in/out.
+ * Subclasses implement [renderContent] and answer through [close] with a result; [close] without one (also the
+ * backdrop and back navigation) is a dismissal. The answer reaches the handle's `onResult` after the fade-out.
+ * The modal traps back-navigation and disables body scrolling while any FadingModal is open.
  */
-abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ctx) {
+abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx<P>) : Component<P>(ctx) {
 
     companion object {
 
@@ -36,6 +37,9 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
             }
         }
 
+        /** Open FadingModals; the body class goes when the last one unmounts. */
+        private var openCount = 0
+
         init {
             StyleSheets.mount(Style)
         }
@@ -44,8 +48,8 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
     ////  PROPS  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     /** Base props for [FadingModal] subclasses. */
-    abstract class Props {
-        abstract val handle: ModalsManager.Handle
+    abstract class Props<RESULT : Any> {
+        abstract val handle: ModalsManager.Handle<RESULT>
         open val transition: Transition = Transition()
     }
 
@@ -59,6 +63,7 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
 
     private var fadingIn by value(true)
     private var fadingOut by value(false)
+    private var countedOpen = false
 
     private val navTrap = trapBackNavigation {
         close()
@@ -71,11 +76,24 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
     init {
         lifecycle {
             onMount {
-                window.document.body?.classList?.add(Style.noScroll())
+                countedOpen = true
+                if (openCount++ == 0) {
+                    window.document.body?.classList?.add(Style.noScroll())
+                }
 
                 launch {
                     delay(props.transition.fadeInTimeMs.toLong())
                     fadingIn = false
+                }
+            }
+
+            onUnmount {
+                // Also covers an unmount without a fade: closeAll(), a cancelled showAndAwait, handle.close()
+                if (countedOpen) {
+                    countedOpen = false
+                    if (--openCount == 0) {
+                        window.document.body?.classList?.remove(Style.noScroll())
+                    }
                 }
             }
         }
@@ -102,7 +120,29 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
             }
     }
 
-    /** Closes the modal with a fade-out animation, optionally running [onClose] after a short delay. */
+    /** Answers [result] and closes with a fade-out. Ignored once the modal is fading out. */
+    fun close(result: RESULT) {
+        if (fadingOut) return
+
+        props.handle.resolve(result)
+
+        @Suppress("DEPRECATION")
+        close(onClose = null)
+    }
+
+    /** Dismisses the modal (it answers `null`) and closes it with a fade-out. Ignored once fading out. */
+    fun close() {
+        if (fadingOut) return
+
+        props.handle.resolve(null)
+
+        // Funnels through the deprecated overload, so subclasses overriding it keep running for one release
+        @Suppress("DEPRECATION")
+        close(onClose = null)
+    }
+
+    /** Closes the modal with a fade-out, optionally running [onClose] after a short delay. */
+    @Deprecated("Answer through close(result) or close(), and register onResult on the handle.")
     open fun close(onClose: (suspend () -> Unit)? = null) {
         doClose(onClose)
     }
@@ -127,9 +167,6 @@ abstract class FadingModal<P : FadingModal.Props>(ctx: Ctx<P>) : Component<P>(ct
 
     private fun fadeOut() {
         if (!fadingOut) {
-            // Make the body no longer scrollable as long as the popup is shown
-            window.document.body?.classList?.remove(Style.noScroll())
-
             fadingOut = true
 
             launch {
