@@ -1,6 +1,9 @@
 # ULTRA-00236: Experiment: Opus and Fable on the top review rung
 
-> **Status (2026-10-23): IN PROGRESS.** Until the meeting on 2026-10-30, which deletes the CLAUDE.md line or turns it into a rule.
+> **Status (2026-10-24): PAUSED.** Suspended by the maintainer for the token budget (2026-10-24, via Mission Control):
+> "No more Fable reviewers, instead we will use Opus reviewers on max effort", clarified: "Opus max on the highest
+> review tier. The two lower ones stay as they are." `reviewer-top` is now Opus at max; the CLAUDE.md line is removed.
+> No top-rung round ran in ultra, so there are no samples (reported to MC-00026).
 
 ## Why this exists
 
@@ -30,3 +33,5 @@ for debate next friday." Follows the blind run of MC-00026 (`docs/housekeeping/2
 ## History
 
 - 2026-10-23: created.
+- 2026-10-24: PAUSED.
+- 2026-10-24: paused (maintainer, token budget); no samples collected.

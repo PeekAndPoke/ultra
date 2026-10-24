@@ -212,7 +212,7 @@ red-team follow-up, task-file record).
     |---|---|---|
   | 1 (blind) | `opus`, high | `subagent_type: reviewer-high` |
   | 2 | `opus`, xhigh | `subagent_type: reviewer-xhigh` (opus, not the strongest tier: maintainer, 2026-09-28) |
-  | 3 and later | strongest tier (`fable`), xhigh | `subagent_type: reviewer-top` (the safety valve has fired; the maintainer is in the loop; xhigh, not max: maintainer, 2026-09-28) |
+  | 3 and later | `opus`, max | `subagent_type: reviewer-top` (the safety valve has fired; the maintainer is in the loop; Fable dropped for the token budget, maintainer, 2026-10-24: "Opus max on the highest review tier. The two lower ones stay as they are") |
 
   Why a ladder and not the top rung from the start: a round that is not clean means the previous tier missed
   something or the fix delta introduced something, and both call for more scrutiny of a SMALLER
