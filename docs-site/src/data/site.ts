@@ -2,8 +2,8 @@
 // Update these when releasing — all pages reference this file.
 
 // Versions
-export const ultraVersion = '0.114.0';
-export const kraftVersion = '0.114.0';
+export const ultraVersion = '0.115.0';
+export const kraftVersion = '0.115.0';
 export const kotlinVersion = '2.4.21';
 export const fomanticVersion = '2.8.8';
 
