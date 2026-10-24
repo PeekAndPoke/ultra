@@ -1,0 +1,3 @@
+# IDE actions invoke_ide_action may run without a prompt (one id per line). Everything else asks the maintainer.
+OptimizeImports
+# ReformatCode: in the blueprint, off in ultra until the maintainer allows it (ULTRA-00237 only records Auto-Format differences)
