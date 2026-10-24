@@ -9,7 +9,8 @@ argument-hint: [ target version, e.g. 0.107.0 or 1.0.0 ]
 
 Executes a full release for the PeekAndPoke monorepo. The canonical version lives in `gradle.properties` (
 `VERSION_NAME`); a release additionally requires bumping the docs-site constants and the README dependency snippet,
-verifying the build, and optionally publishing to Maven Central + tagging.
+verifying the docs site, a release commit and tag. The maintainer runs the full build (with the example bundles) and
+publishes to Maven Central.
 
 The operator (the human) must approve each destructive step explicitly. This skill prepares the changes — it does not
 auto-publish or auto-push.
@@ -57,31 +58,26 @@ Every string below must move from `$CURRENT` to `$1`. Use the Edit tool, not sed
 `grep -rn "$CURRENT" gradle.properties docs-site/src/data/site.ts README.MD "$(console/tools/ticket/ticket.py find ULTRA-00028)"` and confirm
 zero hits.
 
-## Verification (mandatory — blocks publish)
+## Verification (blocks the release commit)
 
-1. **Full Gradle build.** `./gradlew clean build` — runs across all ~79 modules. Must be green. No warnings count as
-   green per the Shipping Checklist.
+**No full Gradle build here.** The maintainer's publish build runs `clean build` with every test anyway (maintainer,
+2026-10-24: "I anyway have to do the full build (which runs all tests) in order to get the artifacts for publishing").
+That build is also where the Kraft example bundles get refreshed (see Build and publish).
 
-2. **Docs-site build.** `cd docs-site && pnpm astro build`. After building, verify the new version landed in the
-   generated LLM files:
+1. **Docs-site build.** `cd docs-site && pnpm astro build`. As user claude, add `--outDir ../.build-claude/docs-site-dist`
+   so the maintainer's `dist/` stays his. After building, verify the new version landed in the generated LLM files
+   (`<dist>` is the output folder):
    ```
-   grep "Version: $1" docs-site/dist/llms.txt
-   grep -c "$1" docs-site/dist/llms-full.txt   # expect ≥ 12
-   grep -c "$CURRENT" docs-site/dist/llms.txt docs-site/dist/llms-full.txt docs-site/dist/llms/*.md
+   grep "Version: $1" <dist>/llms.txt
+   grep -c "$1" <dist>/llms-full.txt   # expect ≥ 12
+   grep -c "$CURRENT" <dist>/llms.txt <dist>/llms-full.txt <dist>/llms/*.md
    ```
    The last grep must return all zeroes — no stale version strings.
 
-3. **funktor-demo smoke** (optional but recommended for major/minor releases): `./gradlew :funktor-demo:server:run`
+2. **funktor-demo smoke** (optional but recommended for major/minor releases): `./gradlew :funktor-demo:server:run`
    against both ArangoDB and MongoDB configurations. Skip for patch releases unless the user asks.
 
-4. **Kraft example bundles.** `./gradlew distributeJsExample` refreshes `docs/kraft/examples/` from the verified
-   build. It is deliberately NOT part of `build` (since 2026-10-19), so branches and worktrees never fight over the
-   tracked bundles. Commit them on their own — `build files: Kraft examples rebuilt for $1` — before the release commit.
-
-While worktree tracks are active, run step 1 as `console/wt-gradle.sh --full-suite`: it waits for the machine-wide
-full-suite slot, so the release build never races another worktree's suite for memory.
-
-If any step fails, stop. Do NOT proceed to publish. Report the failure and wait for the user.
+If any step fails, stop. Report the failure and wait for the user.
 
 ## Commit + tag
 
@@ -92,17 +88,23 @@ Once verification passes:
 3. `git tag -a v$1 -m "Release $1"` — annotated tag.
 4. **Do NOT push.** The maintainer pushes the commit and the tag.
 
-## Publish to Maven Central
+## Build and publish (the maintainer)
 
 Prerequisites (one-time per dev machine): Maven Central credentials in `~/.gradle/gradle.properties` —
 `mavenCentralUsername`, `mavenCentralPassword`, `signing.password`. See `publish.md` at the repo root.
 
-**The maintainer publishes, not the agent.** Publishing to Maven Central is **irreversible** — artifacts cannot be
-overwritten.
+**The maintainer builds and publishes, not the agent.** Publishing to Maven Central is **irreversible** — artifacts
+cannot be overwritten.
 
-1. The maintainer runs `./gradlew publishAllPublicationsToMavenCentralRepository` — publishes all 5 library roots (ultra, kraft, karango,
+1. `./gradlew clean build distributeJsExample` — every test, and the Kraft example bundles in `docs/kraft/examples/`.
+   `distributeJsExample` is NOT part of `build` (since 2026-10-19), so it is named here. Must be green.
+2. `./gradlew publishAllPublicationsToMavenCentralRepository` — publishes all 5 library roots (ultra, kraft, karango,
    monko, funktor).
-2. Once told it is published, verify appearance at https://central.sonatype.com/namespace/io.peekandpoke.ultra (may take 10–30 min to index).
+3. Afterwards the agent commits the refreshed bundles on their own: `build files: Kraft examples rebuilt for $1`.
+   **Agents never run `distributeJsExample` themselves:** it writes tracked files, and files written by user claude
+   break the maintainer's next run ("Could not set file mode"; MC-00031, open until the maintainer decides).
+4. Once told it is published, verify appearance at https://central.sonatype.com/namespace/io.peekandpoke.ultra (may
+   take 10–30 min to index).
 
 ## Post-publish
 
@@ -119,16 +121,15 @@ landed), skip items marked *(major/minor only)*.
 - [ ] Every shippable module has test coverage ≥25% *(major/minor only)*
 - [ ] Zero unresolved TODOs without `// TODO(post-v1)` justification *(major/minor only)*
 - [ ] Every public API has KDoc *(major only)*
-- [ ] `./gradlew clean build` green, no warnings
 - [ ] `cd docs-site && pnpm astro build` green; LLM mirrors show the new version
-- [ ] Kraft example bundles refreshed (`./gradlew distributeJsExample`) and committed on their own
+- [ ] The maintainer's `./gradlew clean build distributeJsExample` green, no warnings; bundles committed on their own
 - [ ] Every library has a README
 - [ ] CHANGELOG.md updated with release notes *(major/minor only)*
 - [ ] Root README points at the new version
 - [ ] `gradle.properties`, `docs-site/src/data/site.ts`, `README.MD`, ULTRA-00028 (v1 roadmap) all bumped
 - [ ] funktor-demo runs end-to-end on both ArangoDB and MongoDB *(major/minor only)*
 - [ ] Release commit + annotated git tag created (not yet pushed)
-- [ ] Handed to the maintainer for `git push --tags` and `publishAllPublicationsToMavenCentralRepository`
+- [ ] Handed to the maintainer for the build, `git push --tags` and `publishAllPublicationsToMavenCentralRepository`
 
 ## Output Format
 
@@ -144,7 +145,6 @@ At the end of a successful release, report to the user:
 - ULTRA-00028 (v1 roadmap): header
 
 **Verified:**
-- ./gradlew clean build — green
 - docs-site astro build — green, LLM mirrors carry $1
 
 **Committed:**
@@ -152,8 +152,9 @@ At the end of a successful release, report to the user:
 - Annotated tag: v$1
 
 **Next (yours):**
-1. git push && git push --tags
+1. ./gradlew clean build distributeJsExample
 2. ./gradlew publishAllPublicationsToMavenCentralRepository
+3. git push && git push --tags (then I commit the refreshed bundles)
 ```
 
 ## Guardrails — what NOT to do
@@ -165,8 +166,8 @@ At the end of a successful release, report to the user:
   Everything routes through `src/data/site.ts`.
 - **Never edit `docs-site/src/data/llms/*`** to change versions — those templates use `{{ultraVersion}}` /
   `{{kraftVersion}}` placeholders on purpose. Only edit them to update actual content.
-- **Never skip the build verification step.** A failing build after version bump means something references the old
-  version in a way you didn't anticipate.
+- **Never skip the docs-site verification.** A stale version string in the LLM mirrors means something references
+  the old version in a way you didn't anticipate. The full Gradle build is the maintainer's, before publishing.
 - **Don't amend the release commit** once the tag exists — create a follow-up commit if changes are needed.
 - **Don't use `--no-verify` or skip signing** — Maven Central requires signed artifacts.
 
