@@ -2963,6 +2963,17 @@ buttons.containsText("Save")   // true if any match contains "Save"
 
 // Simulate clicks
 buttons.click()
+
+// Traversal returns a KQuery; [index] or single() gives the element itself
+buttons.first().click()
+buttons[0].textContent
+
+// Waiting: awaitCss / awaitGone fail with the selector on timeout; eventually retries assertions
+root.awaitCss(".item-list")
+root.awaitGone(".spinner")
+eventually { root.selectCss(".item").size shouldBe 3 }
 ```
+
+After each test, TestBed unmounts the app, so every component runs its unmount hooks before the next test.
 
 ---

@@ -18,7 +18,7 @@ class SemanticUiFoundationSpec : StringSpec({
         ) {
             val found = it.selectCss("div.ui.header")
             found shouldHaveSize 1
-            found.first().textContent shouldBe "Hello Semantic!"
+            found[0].textContent shouldBe "Hello Semantic!"
         }
     }
 })

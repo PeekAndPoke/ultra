@@ -11,6 +11,17 @@ import org.w3c.dom.asList
  */
 class KQuery<out E : Element>(internal val elements: List<E>) : List<E> by elements {
 
+    // Members, not extensions: an extension would lose to the stdlib's List.first() / last() without an import
+
+    /** Returns a KQuery wrapping only the first matched element, or empty. */
+    fun first(): KQuery<E> = KQuery(listOfNotNull(elements.firstOrNull()))
+
+    /** Returns a KQuery wrapping only the last matched element, or empty. */
+    fun last(): KQuery<E> = KQuery(listOfNotNull(elements.lastOrNull()))
+
+    /** Returns a KQuery wrapping the element at the given [index], or empty. */
+    fun nth(index: Int): KQuery<E> = KQuery(listOfNotNull(elements.getOrNull(index)))
+
     /** Strategy for selecting elements from a [KQuery]. */
     interface Selector<out T : Element> {
 

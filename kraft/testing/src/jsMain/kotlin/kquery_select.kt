@@ -1,6 +1,7 @@
 package io.peekandpoke.kraft.testing
 
 import io.peekandpoke.kraft.testing.KQuery.Selector.Companion.cssSelector
+import kotlinx.coroutines.delay
 import org.w3c.dom.Element
 
 // =====================================================================================================================
@@ -47,8 +48,8 @@ suspend inline fun <reified T : Element> KQuery<Element>.selectDebugId(id: Strin
 /**
  * Waits for elements matching [css] to appear inside the current query.
  *
- * Polls every [intervalMs] milliseconds up to [timeoutMs]. Returns the matching query
- * once found, or an empty query if the timeout is reached.
+ * Polls every [intervalMs] milliseconds up to [timeoutMs]. Returns the matching query once found; fails with an
+ * [AssertionError] naming [css] when the timeout is reached.
  */
 suspend fun KQuery<Element>.awaitCss(
     css: String,
@@ -57,12 +58,32 @@ suspend fun KQuery<Element>.awaitCss(
 ): KQuery<Element> {
     var remaining = timeoutMs
 
-    while (remaining > 0) {
+    while (true) {
         val result = selectCss(css)
         if (result.isNotEmpty()) return result
-        kotlinx.coroutines.delay(intervalMs.toLong())
+        if (remaining <= 0) throw AssertionError("awaitCss: nothing matched '$css' within $timeoutMs ms")
+        delay(intervalMs.toLong())
         remaining -= intervalMs
     }
+}
 
-    return selectCss(css)
+/**
+ * Waits until no element matches [css] inside the current query.
+ *
+ * Polls every [intervalMs] milliseconds; fails with an [AssertionError] naming [css] after [timeoutMs].
+ */
+suspend fun KQuery<Element>.awaitGone(
+    css: String,
+    timeoutMs: Int = 2000,
+    intervalMs: Int = 50,
+) {
+    var remaining = timeoutMs
+
+    while (true) {
+        val found = selectCss(css).size
+        if (found == 0) return
+        if (remaining <= 0) throw AssertionError("awaitGone: '$css' still matched $found element(s) after $timeoutMs ms")
+        delay(intervalMs.toLong())
+        remaining -= intervalMs
+    }
 }

@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.testing
 
+import kotlinx.browser.document
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
@@ -102,6 +103,9 @@ fun <E : Element> KQuery<E>.keyUp(key: String = "", code: String = ""): KQuery<E
 fun <E : Element> KQuery<E>.focus(): KQuery<E> = apply {
     filterIsInstance<HTMLElement>().forEach { it.focus() }
 }
+
+/** Returns true when one of the matched elements has the focus (`document.activeElement`). */
+fun <E : Element> KQuery<E>.hasFocus(): Boolean = any { it == document.activeElement }
 
 /** Calls [HTMLElement.blur] on all matched elements. */
 fun <E : Element> KQuery<E>.blur(): KQuery<E> = apply {

@@ -6,13 +6,13 @@ import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.coroutines.delay
 import kotlinx.html.Tag
 import kotlinx.html.div
-import kotlin.time.Clock
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test scaffolding — errors collected here so nested components can report to the test
@@ -147,23 +147,6 @@ private class OuterBoundary(ctx: NoProps) : PureComponent(ctx) {
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Polls until check passes or timeout
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-private suspend fun eventually(
-    timeout: kotlin.time.Duration = kotlin.time.Duration.parse("2s"),
-    poll: kotlin.time.Duration = kotlin.time.Duration.parse("25ms"),
-    check: suspend () -> Unit,
-) {
-    val deadline = Clock.System.now().plus(timeout)
-    while (true) {
-        try {
-            check()
-            return
-        } catch (e: Throwable) {
-            if (Clock.System.now() > deadline) throw e
-            delay(poll)
-        }
-    }
-}
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Specs

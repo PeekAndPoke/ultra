@@ -8,35 +8,12 @@ import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.vdom.VDom
-import kotlinx.coroutines.delay
 import kotlinx.html.Tag
 import kotlinx.html.div
-import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-
-/** Polls until [check] passes or [timeout] is reached. */
-private suspend fun eventually(
-    timeout: Duration = 2.seconds,
-    poll: Duration = 25.milliseconds,
-    check: suspend () -> Unit,
-) {
-    val deadline = Clock.System.now().plus(timeout)
-
-    while (true) {
-        try {
-            check()
-            return
-        } catch (e: Throwable) {
-            if (Clock.System.now() > deadline) throw e
-            delay(poll)
-        }
-    }
-}
 
 // Component that subscribes to the prismjs addon and renders loading/ready status
 @Suppress("TestFunctionName")

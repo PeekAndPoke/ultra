@@ -220,18 +220,6 @@ fun <E : Element> KQuery<E>.parents(): KQuery<Element> =
 fun <E : Element> KQuery<E>.children(): KQuery<Element> =
     KQuery(flatMap { it.children.asList() })
 
-/** Returns a KQuery wrapping only the first matched element, or empty. */
-fun <E : Element> KQuery<E>.first(): KQuery<E> =
-    KQuery(listOfNotNull(firstOrNull()))
-
-/** Returns a KQuery wrapping only the last matched element, or empty. */
-fun <E : Element> KQuery<E>.last(): KQuery<E> =
-    KQuery(listOfNotNull(lastOrNull()))
-
-/** Returns a KQuery wrapping the element at the given [index], or empty. */
-fun <E : Element> KQuery<E>.nth(index: Int): KQuery<E> =
-    KQuery(listOfNotNull(getOrNull(index)))
-
 /** Filters matched elements by a predicate, returning a new KQuery. */
 fun <E : Element> KQuery<E>.filterElements(predicate: (E) -> Boolean): KQuery<E> =
     KQuery(filter(predicate))

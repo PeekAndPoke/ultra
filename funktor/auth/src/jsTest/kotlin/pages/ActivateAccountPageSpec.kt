@@ -98,7 +98,7 @@ class ActivateAccountPageSpec : StringSpec({
             if (containsText(text)) return
             delay(50)
         }
-        withClue("expected the page to show '$text', it shows: ${first().textContent}") { containsText(text) shouldBe true }
+        withClue("expected the page to show '$text', it shows: ${firstOrNull()?.textContent}") { containsText(text) shouldBe true }
     }
 
     val activatePath = "/auth/test/activate"

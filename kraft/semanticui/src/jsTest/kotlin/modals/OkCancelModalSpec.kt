@@ -4,7 +4,9 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.modals.DefaultModalsManager
@@ -13,10 +15,11 @@ import io.peekandpoke.kraft.modals.showAndAwait
 import io.peekandpoke.kraft.testing.KQuery
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.awaitCss
+import io.peekandpoke.kraft.testing.awaitGone
 import io.peekandpoke.kraft.testing.click
-import io.peekandpoke.kraft.testing.first
-import io.peekandpoke.kraft.testing.last
+import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.selectCss
+import io.peekandpoke.kraft.testing.hasFocus
 import io.peekandpoke.kraft.testing.selectDebugId
 import io.peekandpoke.ultra.html.debugId
 import io.peekandpoke.ultra.html.onClick
@@ -93,36 +96,18 @@ private class FunnelModal(ctx: Ctx<Props>) : FadingModal<FunnelModal.Props, Stri
 private fun Tag.funnelModal(handle: ModalsManager.Handle<String>, calls: MutableList<String>, vetoFirst: Boolean = false) =
     comp(FunnelModal.Props(handle = handle, calls = calls, vetoFirst = vetoFirst)) { FunnelModal(it) }
 
-/** Polls [condition] until it holds; fails the test after [timeoutMs]. */
-private suspend fun until(clue: String, timeoutMs: Int = 2000, condition: () -> Boolean) {
-    var remaining = timeoutMs
-    while (!condition()) {
-        if (remaining <= 0) {
-            withClue(clue) { condition() shouldBe true }
-        }
-        delay(10)
-        remaining -= 10
-    }
-}
-
 private fun bodyHasNoScroll(): Boolean =
     document.body?.classList?.contains(FadingModal.Companion.Style.noScroll()) == true
 
-/** Counts the open OkCancelModals in the DOM, without suspending (usable in [until]). */
-private fun modalsInDom(): Int = document.querySelectorAll("[debug-id='ok-cancel-modal']").length
+private suspend fun KQuery<Element>.modalCount(): Int = selectDebugId("ok-cancel-modal").size
 
-/** Renders a TestBed with [m] injected and always closes every modal at the end. */
+/** Renders a TestBed with [m] injected. TestBed unmounts the app at the end, so no modal outlives its test. */
 private suspend fun withModals(m: DefaultModalsManager, test: suspend (KQuery<Element>) -> Unit) {
     TestBed.preact(
         appSetup = { setAttribute(ModalsManager.key, m) },
         view = { },
     ) { root ->
-        try {
-            test(root)
-        } finally {
-            m.closeAll()
-            until("all modals unmounted at the end") { document.querySelectorAll(".ui.dimmer").length == 0 }
-        }
+        test(root)
     }
 }
 
@@ -138,9 +123,9 @@ class OkCancelModalSpec : StringSpec({
             root.awaitCss("[debug-id='ok-button']").click()
 
             answers.shouldBeEmpty()
-            until("answered") { answers.isNotEmpty() }
+            eventually { answers.shouldNotBeEmpty() }
             answers shouldBe listOf(OkCancelModal.Result.Ok)
-            until("modal gone") { m().isEmpty() }
+            eventually { m().shouldBeEmpty() }
         }
     }
 
@@ -152,7 +137,7 @@ class OkCancelModalSpec : StringSpec({
             m.show { h -> testModal(h) { answers += it } }
             root.awaitCss("[debug-id='cancel-button']").click()
 
-            until("answered") { answers.isNotEmpty() }
+            eventually { answers.shouldNotBeEmpty() }
             answers shouldBe listOf(OkCancelModal.Result.Cancel)
         }
     }
@@ -166,7 +151,7 @@ class OkCancelModalSpec : StringSpec({
             root.awaitCss("[debug-id='ok-button']").click()
             root.selectDebugId("cancel-button").click()
 
-            until("modal gone") { m().isEmpty() }
+            eventually { m().shouldBeEmpty() }
             answers shouldBe listOf(OkCancelModal.Result.Ok)
         }
     }
@@ -180,7 +165,7 @@ class OkCancelModalSpec : StringSpec({
             root.awaitCss(".ui.dimmer").click()
             root.selectDebugId("ok-button").click()
 
-            until("modal gone") { m().isEmpty() }
+            eventually { m().shouldBeEmpty() }
             answers shouldBe listOf(null)
         }
     }
@@ -194,7 +179,7 @@ class OkCancelModalSpec : StringSpec({
             root.awaitCss(".ui.dimmer").click()
             handle.resolve(OkCancelModal.Result.Ok)
 
-            until("modal gone") { m().isEmpty() }
+            eventually { m().shouldBeEmpty() }
             answers shouldBe listOf(null)
         }
     }
@@ -207,7 +192,7 @@ class OkCancelModalSpec : StringSpec({
             m.show { h -> testModal(h) { answers += it } }
             root.awaitCss(".ui.dimmer").click()
 
-            until("answered") { answers.isNotEmpty() }
+            eventually { answers.shouldNotBeEmpty() }
             answers shouldBe listOf(null)
         }
     }
@@ -223,7 +208,7 @@ class OkCancelModalSpec : StringSpec({
             delay(250)
             answers.shouldBeEmpty()
             m() shouldHaveSize 1
-            modalsInDom() shouldBe 1
+            root.modalCount() shouldBe 1
         }
     }
 
@@ -239,7 +224,7 @@ class OkCancelModalSpec : StringSpec({
             m.closeAll()
 
             answers shouldBe listOf(null)
-            until("modal unmounted") { modalsInDom() == 0 }
+            root.awaitGone("[debug-id=\'ok-cancel-modal\']")
             bodyHasNoScroll() shouldBe false
         }
     }
@@ -250,14 +235,14 @@ class OkCancelModalSpec : StringSpec({
         withModals(m) { root ->
             m.show { h -> testModal(h, "a") { } }
             m.show { h -> testModal(h, "b") { } }
-            until("both rendered") { modalsInDom() == 2 }
+            eventually { root.modalCount() shouldBe 2 }
 
             root.selectDebugId("cancel-button").last().click()
-            until("top one gone") { modalsInDom() == 1 }
+            eventually { root.modalCount() shouldBe 1 }
             bodyHasNoScroll() shouldBe true
 
             root.selectDebugId("cancel-button").click()
-            until("second one gone") { modalsInDom() == 0 }
+            root.awaitGone("[debug-id=\'ok-cancel-modal\']")
             bodyHasNoScroll() shouldBe false
         }
     }
@@ -269,16 +254,16 @@ class OkCancelModalSpec : StringSpec({
         withModals(m) { root ->
             m.show { h -> testModal(h, "a") { answers += "a:$it" } }
             m.show { h -> testModal(h, "b") { answers += "b:$it" } }
-            until("both rendered") { modalsInDom() == 2 }
+            eventually { root.modalCount() shouldBe 2 }
 
             root.selectDebugId("cancel-button").last().click()
-            until("b answered") { answers.isNotEmpty() }
+            eventually { answers.shouldNotBeEmpty() }
             // the back navigation of b's trap must not reach a's trap
             delay(300)
 
             answers shouldBe listOf("b:Cancel")
             m() shouldHaveSize 1
-            modalsInDom() shouldBe 1
+            root.modalCount() shouldBe 1
         }
     }
 
@@ -304,9 +289,9 @@ class OkCancelModalSpec : StringSpec({
 
         withModals(m) { root ->
             m.show { h -> testModal(h) { } }
-            val cancel = root.awaitCss("[debug-id='cancel-button']").single()
+            root.awaitCss("[debug-id='cancel-button']")
 
-            document.activeElement shouldBe cancel
+            root.selectDebugId("cancel-button").hasFocus() shouldBe true
         }
     }
 
@@ -318,11 +303,11 @@ class OkCancelModalSpec : StringSpec({
             m.show { h -> testModal(h) { answers += it } }
             root.awaitCss("[debug-id='ok-cancel-modal']")
             // The trap pushes its history entry on mount
-            until("trap active") { window.history.state != null }
+            eventually { window.history.state shouldNotBe null }
 
             window.history.back()
 
-            until("answered") { answers.isNotEmpty() }
+            eventually { answers.shouldNotBeEmpty() }
             answers shouldBe listOf(null)
         }
     }
@@ -340,8 +325,10 @@ class OkCancelModalSpec : StringSpec({
             }
             root.awaitCss("[debug-id='ok-button']").click()
 
-            until("second rendered") {
-                answers.size == 1 && modalsInDom() == 1 && m().size == 1
+            eventually {
+                answers.size shouldBe 1
+                root.modalCount() shouldBe 1
+                m().size shouldBe 1
             }
             delay(50)
 
@@ -349,10 +336,10 @@ class OkCancelModalSpec : StringSpec({
                 root.selectCss(".ui.dimmer.out").size shouldBe 0
             }
             root.selectDebugId("ok-cancel-modal").single().textContent shouldBe "Header secondContent secondNoYes"
-            document.activeElement shouldBe root.selectDebugId("cancel-button").single()
+            root.selectDebugId("cancel-button").hasFocus() shouldBe true
 
             root.selectDebugId("ok-button").click()
-            until("second answered") { answers.size == 2 }
+            eventually { answers shouldHaveSize 2 }
             delay(150)
 
             answers shouldBe listOf("first:Ok", "second:Ok")
@@ -367,10 +354,10 @@ class OkCancelModalSpec : StringSpec({
             m.show { h -> testModal(h, "a") { answers += it } }
             root.awaitCss("[debug-id='ok-cancel-modal']")
             m.show { h -> testModal(h, "b") { } }
-            until("both rendered") { modalsInDom() == 2 }
+            eventually { root.modalCount() shouldBe 2 }
 
             root.selectDebugId("ok-button").first().click()
-            until("a answered") { answers.isNotEmpty() }
+            eventually { answers.shouldNotBeEmpty() }
             delay(150)
 
             answers shouldBe listOf(OkCancelModal.Result.Ok)
@@ -391,7 +378,7 @@ class OkCancelModalSpec : StringSpec({
             job.join()
 
             m().shouldBeEmpty()
-            until("modal unmounted") { modalsInDom() == 0 }
+            root.awaitGone("[debug-id=\'ok-cancel-modal\']")
             bodyHasNoScroll() shouldBe false
         }
     }
@@ -410,12 +397,12 @@ class OkCancelModalSpec : StringSpec({
                     "answer" -> root.selectDebugId("answer-button").click()
                     "backdrop" -> root.selectCss(".ui.dimmer").click()
                     else -> {
-                        until("trap active") { window.history.state != null }
+                        eventually { window.history.state shouldNotBe null }
                         window.history.back()
                     }
                 }
 
-                until("$how: answered") { answers.isNotEmpty() }
+                eventually { answers.shouldNotBeEmpty() }
                 withClue(how) {
                     calls shouldBe listOf("override")
                     answers shouldBe listOf(if (how == "answer") "A" else null)
@@ -438,7 +425,7 @@ class OkCancelModalSpec : StringSpec({
             answers.shouldBeEmpty()
 
             root.selectDebugId("answer-button").click()
-            until("answered") { answers.isNotEmpty() }
+            eventually { answers.shouldNotBeEmpty() }
 
             calls shouldBe listOf("override", "override")
             answers shouldBe listOf("A")

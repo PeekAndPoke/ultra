@@ -20,7 +20,8 @@ import kotlin.coroutines.resume
  * Test harness for rendering Kraft components in a real browser DOM.
  *
  * Creates a temporary `<div>` in the document body, mounts a Kraft app into it,
- * and provides a [KQuery] handle for assertions. The test element is removed after the test.
+ * and provides a [KQuery] handle for assertions. After the test the app is unmounted, so every component runs its
+ * unmount hooks (listeners, history traps, body classes), and the test element is removed.
  */
 /** Suspends until the next browser animation frame. */
 private suspend fun awaitAnimationFrame() = suspendCancellableCoroutine { cont ->
@@ -110,6 +111,9 @@ class TestBed<E : VDomEngine> private constructor(
             console.error("[TestBed] Caught exception:", e)
             throw e
         } finally {
+            runCatching { engine.unmount(testBed) }
+                .onFailure { console.error("[TestBed] Unmount failed:", it) }
+
             testBed.remove()
         }
     }

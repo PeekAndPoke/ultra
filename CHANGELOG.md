@@ -23,6 +23,15 @@
   - answers arrive after the fade-out (`fadeOutTimeMs`, 500 ms by default), where OkCancel's Cancel used to answer on
     the click and Ok after 150 ms; `<body>` scrolls again when the last modal unmounts.
 
+- **Kraft testing (ULTRA-00240):**
+  - `TestBed` now unmounts the app after each test, so components run their unmount hooks; `VDomEngine` gains
+    `unmount(element)` (a custom engine must implement it).
+  - `awaitCss` fails with an `AssertionError` naming the selector on timeout, where it returned an empty query.
+  - `KQuery.first()`, `last()` and `nth()` are members: without an import they used to resolve to the stdlib's
+    `List.first()` (an `Element`); now they always return a `KQuery`. For the element use `[0]` or `single()`.
+    Imports of `io.peekandpoke.kraft.testing.first` / `last` / `nth` must go.
+  - New: `awaitGone(css)`, `eventually { }` (retries suspending assertions), `KQuery.hasFocus()`.
+
 ### Fixes
 
 - **Kraft modals:** OkCancel's buttons are real `<button type="button">`s and Cancel has the focus on open; Ok then

@@ -76,7 +76,7 @@ private class Harness {
     }
 
     suspend fun click(root: KQuery<Element>, css: String, init: (dynamic) -> Unit = {}): Boolean {
-        return click(root.selectCss(css).first(), init)
+        return click(root.selectCss(css)[0], init)
     }
 }
 
@@ -343,7 +343,7 @@ class RouterClickInterceptionSpec : StringSpec() {
         "A click already handled by the page is not routed again" {
             withLinks({ a(href = "/app/page", classes = "l") { +"go" } }) { root ->
                 val before = window.location.href
-                val anchor = root.selectCss(".l").first()
+                val anchor = root.selectCss(".l")[0]
                 anchor.addEventListener("click", { it.preventDefault() })
 
                 click(anchor) shouldBe true

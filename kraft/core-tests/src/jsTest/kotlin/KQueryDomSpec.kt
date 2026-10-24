@@ -1,9 +1,11 @@
 package io.peekandpoke.kraft.coretests
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.kraft.testing.KQuery
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.allChecked
 import io.peekandpoke.kraft.testing.allDisabled
@@ -19,6 +21,7 @@ import io.peekandpoke.kraft.testing.anyHasClass
 import io.peekandpoke.kraft.testing.anyVisible
 import io.peekandpoke.kraft.testing.attr
 import io.peekandpoke.kraft.testing.awaitCss
+import io.peekandpoke.kraft.testing.awaitGone
 import io.peekandpoke.kraft.testing.check
 import io.peekandpoke.kraft.testing.checkedStates
 import io.peekandpoke.kraft.testing.children
@@ -26,11 +29,11 @@ import io.peekandpoke.kraft.testing.classes
 import io.peekandpoke.kraft.testing.click
 import io.peekandpoke.kraft.testing.containsText
 import io.peekandpoke.kraft.testing.disabledStates
+import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.filterElements
-import io.peekandpoke.kraft.testing.first
+import io.peekandpoke.kraft.testing.focus
+import io.peekandpoke.kraft.testing.hasFocus
 import io.peekandpoke.kraft.testing.innerHTML
-import io.peekandpoke.kraft.testing.last
-import io.peekandpoke.kraft.testing.nth
 import io.peekandpoke.kraft.testing.outerHTML
 import io.peekandpoke.kraft.testing.parents
 import io.peekandpoke.kraft.testing.selectCss
@@ -53,7 +56,9 @@ import kotlinx.html.li
 import kotlinx.html.span
 import kotlinx.html.textArea
 import kotlinx.html.ul
+import org.w3c.dom.Element
 import org.w3c.dom.HTMLInputElement
+import kotlin.time.Duration
 
 class KQueryDomSpec : StringSpec({
 
@@ -418,12 +423,72 @@ class KQueryDomSpec : StringSpec({
     // awaitCss
     // =========================================================================================================
 
-    "awaitCss() returns empty on timeout" {
+    "awaitCss() fails on timeout, naming the selector" {
         TestBed.preact({
             div { +"static" }
         }) { root ->
-            val result = root.awaitCss(".never-appears", timeoutMs = 100, intervalMs = 20)
-            result.size shouldBe 0
+            val error = shouldThrow<AssertionError> {
+                root.awaitCss(".never-appears", timeoutMs = 100, intervalMs = 20)
+            }
+            error.message shouldBe "awaitCss: nothing matched '.never-appears' within 100 ms"
+        }
+    }
+
+    "awaitGone() returns once nothing matches" {
+        TestBed.preact({
+            div(classes = "stays") { +"here" }
+        }) { root ->
+            root.awaitGone(".never-there", timeoutMs = 100)
+        }
+    }
+
+    "awaitGone() fails while something still matches" {
+        TestBed.preact({
+            div(classes = "stays") { +"here" }
+        }) { root ->
+            val error = shouldThrow<AssertionError> {
+                root.awaitGone(".stays", timeoutMs = 100, intervalMs = 20)
+            }
+            error.message shouldBe "awaitGone: '.stays' still matched 1 element(s) after 100 ms"
+        }
+    }
+
+    "eventually() retries a suspending check until it passes" {
+        var calls = 0
+
+        eventually {
+            calls++
+            calls shouldBe 3
+        }
+
+        calls shouldBe 3
+    }
+
+    "eventually() rethrows the last failure after the timeout" {
+        shouldThrow<AssertionError> {
+            eventually(timeout = Duration.ZERO) { 1 shouldBe 2 }
+        }
+    }
+
+    "hasFocus() is true only for the focused element" {
+        TestBed.preact({
+            input(classes = "a") { }
+            input(classes = "b") { }
+        }) { root ->
+            root.selectCss(".a").focus()
+
+            root.selectCss(".a").hasFocus() shouldBe true
+            root.selectCss(".b").hasFocus() shouldBe false
+        }
+    }
+
+    "first(), last() and nth() are members: they return a KQuery without an import" {
+        TestBed.preact({
+            div(classes = "item") { +"Zero" }
+            div(classes = "item") { +"One" }
+        }) { root ->
+            val first: KQuery<Element> = root.selectCss(".item").first()
+            first.textContent() shouldBe "Zero"
         }
     }
 

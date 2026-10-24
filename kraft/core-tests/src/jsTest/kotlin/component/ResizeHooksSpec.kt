@@ -8,6 +8,7 @@ import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.testing.TestBed
+import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.utils.Vector2D
@@ -23,27 +24,6 @@ import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.div
 import org.w3c.dom.events.Event
-import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-
-private suspend fun eventually(
-    timeout: Duration = 2.seconds,
-    poll: Duration = 25.milliseconds,
-    check: suspend () -> Unit,
-) {
-    val deadline = Clock.System.now().plus(timeout)
-    while (true) {
-        try {
-            check()
-            return
-        } catch (e: Throwable) {
-            if (Clock.System.now() > deadline) throw e
-            delay(poll)
-        }
-    }
-}
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // onResize — uses ResizeObserver on the component's DOM element

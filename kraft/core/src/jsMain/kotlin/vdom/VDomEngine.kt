@@ -18,6 +18,9 @@ interface VDomEngine {
 
     fun mount(app: KraftApp, element: HTMLElement, view: VDom.() -> Any?)
 
+    /** Unmounts what [mount] rendered into [element]; every component runs its unmount hooks. */
+    fun unmount(element: HTMLElement)
+
     fun createTagConsumer(host: Component<*>): VDomTagConsumer
 
     fun triggerRedraw(component: Component<*>)

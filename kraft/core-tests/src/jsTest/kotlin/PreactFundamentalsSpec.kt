@@ -33,7 +33,7 @@ class PreactFundamentalsSpec : StringSpec({
 
             h1.textContent() shouldContain "Hello Mars!"
 
-            h1.first().let {
+            h1[0].let {
                 it.tagName shouldBe "H1"
                 it.shouldBeInstanceOf<HTMLHeadingElement>()
             }
