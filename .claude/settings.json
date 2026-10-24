@@ -1,5 +1,5 @@
 {
-  "$comment": "Command baseline from the nexus (missioncontrol blueprints/settings b251163, MC-00024, revision 3), then ultra's own entries at the end of deny. Deny always wins over allow, including over settings.local.json.",
+  "$comment": "Command baseline from the nexus (missioncontrol blueprints/settings daf6110, MC-00024, revision 5: IntelliJ MCP per-tool rules, MC-00031), then ultra's own entries at the end of deny. Deny always wins over allow, including over settings.local.json. invoke_ide_action has no rule: the PreToolUse hook .claude/hooks/idea-action-gate.py decides (actions on .claude/hooks/idea-actions.allow run, others ask). Hooks load at session start: restart the session after changing this file.",
   "autoMemoryEnabled": false,
   "permissions": {
     "deny": [
@@ -24,6 +24,10 @@
       "Bash(git commit * --amend*)",
       "Bash(git commit --no-verify*)",
       "Bash(git commit * --no-verify*)",
+      "Bash(git commit -n*)",
+      "Bash(git commit * -n*)",
+      "Bash(git -c core.hooksPath*)",
+      "Bash(git * core.hooksPath*)",
       "Bash(git clean *)",
       "Bash(git rebase)",
       "Bash(git rebase *)",
@@ -47,6 +51,8 @@
       "Bash(git -C * reset HEAD~*)",
       "Bash(git -C * commit*--amend*)",
       "Bash(git -C * commit*--no-verify*)",
+      "Bash(git -C * commit -n*)",
+      "Bash(git -C * commit * -n*)",
       "Bash(git -C * clean *)",
       "Bash(git -C * rebase*)",
       "Bash(git add * -A*)",
@@ -55,6 +61,36 @@
       "Bash(git -C * add * -A*)",
       "Bash(git -C * add * --all*)",
       "Bash(git -C * reset * --hard*)",
+      "mcp__idea__execute_terminal_command",
+      "mcp__idea__execute_run_configuration",
+      "mcp__idea__execute_tool",
+      "mcp__idea__execute_code_on_kernel",
+      "mcp__idea__run_notebook_cell",
+      "mcp__idea__create_notebook",
+      "mcp__idea__edit_notebook",
+      "mcp__idea__kill_notebook",
+      "mcp__idea__interrupt_notebook",
+      "mcp__idea__configure_python_interpreter",
+      "mcp__idea__xdebug_control_session",
+      "mcp__idea__xdebug_disassemble",
+      "mcp__idea__xdebug_evaluate_expression",
+      "mcp__idea__xdebug_get_debugger_status",
+      "mcp__idea__xdebug_get_frame_values",
+      "mcp__idea__xdebug_get_registers",
+      "mcp__idea__xdebug_get_stack",
+      "mcp__idea__xdebug_get_threads",
+      "mcp__idea__xdebug_get_value_by_path",
+      "mcp__idea__xdebug_list_breakpoints",
+      "mcp__idea__xdebug_read_memory",
+      "mcp__idea__xdebug_remove_breakpoint",
+      "mcp__idea__xdebug_run_to_line",
+      "mcp__idea__xdebug_set_breakpoint",
+      "mcp__idea__xdebug_set_variable",
+      "mcp__idea__xdebug_start_debugger_session",
+      "mcp__idea__create_database_connection",
+      "mcp__idea__edit_database_connection",
+      "mcp__idea__test_database_connection",
+      "mcp__idea__execute_sql_query",
       "Bash(git -C * checkout *)",
       "Bash(./gradlew *publish*)",
       "Bash(console/wt-gradle.sh *publish*)",
@@ -70,6 +106,19 @@
       "Bash(git add -- *)",
       "Bash(git mv *)",
       "Bash(pnpm *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__idea__invoke_ide_action",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/idea-action-gate.py"
+          }
+        ]
+      }
     ]
   }
 }
