@@ -19,7 +19,9 @@
   - `if (result == Cancel) ... else delete()`, `when (result) { Cancel -> ...; else -> delete() }` and string
     templates compile unchanged and now see `null` on a dismissal: treat `null` like Cancel;
   - handlers registered inside a modal's render function run once per render of the modal stage: register them on
-    the handle `show` returns, or once in a component's `init`.
+    the handle `show` returns, or once in a component's `init`;
+  - answers arrive after the fade-out (`fadeOutTimeMs`, 500 ms by default), where OkCancel's Cancel used to answer on
+    the click and Ok after 150 ms; `<body>` scrolls again when the last modal unmounts.
 
 ### Fixes
 

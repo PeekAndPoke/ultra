@@ -11,6 +11,8 @@ import org.w3c.dom.events.Event
  *
  * Pushes a dummy history state and listens for popstate events. The [block] callback
  * decides whether to [TrapResult.Stop] the navigation or [TrapResult.Continue].
+ *
+ * A popstate that lands on the trap's own entry is ignored: it comes from a trap or route stacked above going back.
  */
 class BackNavigationTrap(
     private val component: Component<*>,

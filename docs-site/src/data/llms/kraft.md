@@ -1957,9 +1957,9 @@ Each system is accessible from any component via a delegated property:
 
 ```kotlin
 class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
-    override fun VDom.render() {
-        // modals, toasts, and popups are available on every component
-        modals.show { handle -> /* ... */ }
+    // modals, toasts, and popups are available on every component, e.g. in an event handler
+    private fun onAction(event: MouseEvent) {
+        modals.show<Unit> { handle -> /* ... */ }
         toasts.info("Saved")
         popups.showContextMenu(event) { handle -> /* ... */ }
     }
@@ -2003,7 +2003,9 @@ coroutine, `showAndAwait` returns the answer directly; cancelling the coroutine 
 
 ```kotlin
 launch {
-    val result = modals.showAndAwait { handle -> OkCancelModal.mini(handle = handle, header = { +"Delete?" }, content = {}) }
+    val result = modals.showAndAwait { handle ->
+        OkCancelModal { mini(handle = handle, header = { +"Delete?" }, content = {}) }
+    }
     if (result == OkCancelModal.Result.Ok) performDelete()
 }
 ```
@@ -2016,23 +2018,23 @@ Enter never confirms by accident. It comes in three sizes:
 
 ```kotlin
 modals.show { handle ->
-    OkCancelModal.mini(
-        handle = handle,
-        header = { ui.header { +"Are you sure?" } },
-        content = { +"This action cannot be undone." },
-        okText = { +"Delete" },
-        cancelText = { +"Cancel" },
-    ) { result ->
-        when (result) {
-            OkCancelModal.Result.Ok -> performDelete()
-            OkCancelModal.Result.Cancel, null -> { /* nothing */ }
+    OkCancelModal {
+        mini(
+            handle = handle,
+            header = { ui.header { +"Are you sure?" } },
+            content = { +"This action cannot be undone." },
+            okText = { +"Delete" },
+            cancelText = { +"Cancel" },
+        ) { result ->
+            when (result) {
+                OkCancelModal.Result.Ok -> performDelete()
+                OkCancelModal.Result.Cancel, null -> { /* nothing */ }
+            }
         }
     }
 }
 
-// Also available:
-// OkCancelModal.tiny(...)
-// OkCancelModal.small(...)
+// Also available inside OkCancelModal { }: tiny(...), small(...)
 ```
 
 **Treat `null` like Cancel:** `if (result == Cancel) ... else delete()` compiles, and deletes on a dismissal.

@@ -21,7 +21,8 @@ import org.w3c.dom.HTMLElement
  * @param transition Fade-in/out transition timing.
  * @param view Defines the modal's appearance, header, content, and button labels.
  * @param onResult Called once after the modal is gone: [OkCancelModal.Result.Ok], [OkCancelModal.Result.Cancel],
- *   or `null` when it was dismissed (backdrop, back navigation, `closeAll()`).
+ *   or `null` when it was dismissed (backdrop, back navigation, `closeAll()`). It is wired when the modal first
+ *   renders; for an answer even when the modal closes before that, register `onResult` on the handle `show` returns.
  */
 @Suppress("FunctionName")
 fun Tag.OkCancelModal(

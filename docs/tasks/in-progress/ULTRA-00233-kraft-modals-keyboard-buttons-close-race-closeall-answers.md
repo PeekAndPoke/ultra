@@ -363,6 +363,35 @@ idempotent (`BackNavigationTrap.kt:56-75`); Ok-then-Cancel fixed by first-resolv
 Klang's model; the four original defects match master; the stage mounts inside the TestBed root; `P : Props<RESULT>`
 is a valid bound; no `allWarningsAsErrors`, so the deprecation only warns.
 
+### Feature review (gate), 2026-10-24, against commit 832608fc
+
+Round 1, blind, two `reviewer-high` reviewers: implementation & code style (C) and domain (D). Security not run: no
+auth, session or data boundary. Neither found a CRITICAL or MAJOR, so round 1 is clean and the gate PASSES; the
+MINORs were applied anyway. The doc-snippet claim was settled by compiling the snippet (it failed: "Unresolved
+reference 'mini'"; the nested `OkCancelModal { mini() }` form compiled and inferred `RESULT`).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR | `overlays.astro:32,77,89`, `kraft.md` mirror | (C, D) `OkCancelModal.mini(...)` does not compile; the overview `show { }` cannot infer `RESULT` and sits in `render()` | fix: `OkCancelModal { mini() }`, `show<Unit>` in a handler | Confirmed by compiling |
+| 1 | MINOR | `FadingModal.kt` funnel | (C) No test pins the funnel to the deprecated `close(onClose)` | fix: tests 22, 23 with an overriding subclass; mutation "funnel bypassed" RED 22, 23 | |
+| 1 | MINOR | `FadingModal.kt` funnel | (D) `resolve` ran before the overridable close: an override that vetoes a dismissal locks the answer at `null` | fix: funnel first, `resolve` only once the fade started; test 23, mutation "resolve before the funnel" RED 23 | No known override vetoes (Klang, Spross call `super`), but cheap to fix |
+| 1 | MINOR | `CHANGELOG.md` | (C, D) Answers now arrive after the fade (500 ms) instead of on the click / after 150 ms | fix: one upgrade line | |
+| 1 | MINOR | `OkCancelModal.kt:23` | (D) A callback passed into the renderer is wired on first render: a `closeAll()` in the same tick skips it | fix: KDoc says to register on the returned handle for that case | Fixing it in code needs the callback on the handle at `show` time; out of proportion |
+| 1 | MINOR | `BackNavigationTrap.kt:59` | (C) The early return also ignores a user's back from a route pushed on top of a trap, so it needs a second back | fix: stated in the trap's KDoc | Only `FadingModal` uses the trap; a counter of programmatic backs adds shared state for a case no caller has |
+| 1 | SURPLUS | `FadingModal.kt`, `ModalsManager.kt:141` | (C) `countedOpen`, `closeAll`'s `filterNot` vs `emptyList()`, two close bodies | partly fix: one `closeAnswering` helper; the guards stay | They cost nothing and guard re-entrant `show` from handlers |
+
+Maintainer note from D (not a defect): once the deprecated `close(onClose)` goes, subclasses have no hook on every
+close; Spross's focus restore would move to `onUnmount`. Goes into the migration note.
+
+CLEAN (probed, held), from both: every exit answers once; route changes never closed modals (unchanged); overload
+resolution of `close()`, `close(result)`, `close { }`, `close(null)`, `RESULT = Unit` or a function type; OkCancel
+wiring reads props at delivery; stage key and the extra wrapper break no CSS (ultra, klang, spross); noScroll count
+pairs mount and unmount; trap change for stacked modals, back twice, a `Stop` page trap below, reload; migrated
+callers; code style (imports, no FQCN, KDoc links); tests not vacuous. Pre-existing, unchanged: `closeAll()` over
+stacked modals leaves a stale history entry.
+
+Verdict: **gate PASS.**
+
 ## History
 
 - 2026-10-21: created from Klang's KLANG-00323 findings.
@@ -372,3 +401,4 @@ is a valid bound; no `allWarningsAsErrors`, so the deprecation only warns.
 - 2026-10-24: IN PROGRESS.
 - 2026-10-24: implemented (core, semanticui, migration, docs, CHANGELOG); defect 8 found and fixed; tests and
   mutation checks green. Next: /feature-review.
+- 2026-10-24: feature review round 1 clean (gate PASS); 6 MINORs applied, tests 22 and 23 added.

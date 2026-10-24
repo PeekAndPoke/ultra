@@ -5,6 +5,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.modals.DefaultModalsManager
 import io.peekandpoke.kraft.modals.ModalsManager
 import io.peekandpoke.kraft.modals.showAndAwait
@@ -16,6 +18,9 @@ import io.peekandpoke.kraft.testing.first
 import io.peekandpoke.kraft.testing.last
 import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.selectDebugId
+import io.peekandpoke.ultra.html.debugId
+import io.peekandpoke.ultra.html.onClick
+import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineStart
@@ -23,6 +28,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLButtonElement
@@ -45,6 +51,47 @@ private fun Tag.testModal(
     ),
     onResult = onResult,
 )
+
+/** A FadingModal subclass that overrides the deprecated close(onClose), as Klang's and Spross's modals do. */
+private class FunnelModal(ctx: Ctx<Props>) : FadingModal<FunnelModal.Props, String>(ctx) {
+
+    class Props(
+        override val handle: ModalsManager.Handle<String>,
+        val calls: MutableList<String>,
+        val vetoFirst: Boolean,
+    ) : FadingModal.Props<String>() {
+        override val transition: Transition = fastFade
+    }
+
+    private var vetoed = false
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun close(onClose: (suspend () -> Unit)?) {
+        props.calls += "override"
+
+        if (props.vetoFirst && !vetoed) {
+            vetoed = true
+            return
+        }
+
+        @Suppress("DEPRECATION")
+        super.close(onClose)
+    }
+
+    override fun FlowContent.renderContent() {
+        ui.modal.transition.visible.active.front {
+            debugId("funnel-modal")
+            ui.button Button {
+                debugId("answer-button")
+                onClick { close("A") }
+                +"Answer"
+            }
+        }
+    }
+}
+
+private fun Tag.funnelModal(handle: ModalsManager.Handle<String>, calls: MutableList<String>, vetoFirst: Boolean = false) =
+    comp(FunnelModal.Props(handle = handle, calls = calls, vetoFirst = vetoFirst)) { FunnelModal(it) }
 
 /** Polls [condition] until it holds; fails the test after [timeoutMs]. */
 private suspend fun until(clue: String, timeoutMs: Int = 2000, condition: () -> Boolean) {
@@ -74,7 +121,7 @@ private suspend fun withModals(m: DefaultModalsManager, test: suspend (KQuery<El
             test(root)
         } finally {
             m.closeAll()
-            until("all modals unmounted at the end") { modalsInDom() == 0 }
+            until("all modals unmounted at the end") { document.querySelectorAll(".ui.dimmer").length == 0 }
         }
     }
 }
@@ -346,6 +393,55 @@ class OkCancelModalSpec : StringSpec({
             m().shouldBeEmpty()
             until("modal unmounted") { modalsInDom() == 0 }
             bodyHasNoScroll() shouldBe false
+        }
+    }
+
+    "22: close(result), the backdrop and back navigation each reach an override of the deprecated close once" {
+        listOf("answer", "backdrop", "back").forEach { how ->
+            val m = DefaultModalsManager()
+            val calls = mutableListOf<String>()
+            val answers = mutableListOf<String?>()
+
+            withModals(m) { root ->
+                m.show { h -> funnelModal(h, calls) }.onResult { answers += it }
+                root.awaitCss("[debug-id='funnel-modal']")
+
+                when (how) {
+                    "answer" -> root.selectDebugId("answer-button").click()
+                    "backdrop" -> root.selectCss(".ui.dimmer").click()
+                    else -> {
+                        until("trap active") { window.history.state != null }
+                        window.history.back()
+                    }
+                }
+
+                until("$how: answered") { answers.isNotEmpty() }
+                withClue(how) {
+                    calls shouldBe listOf("override")
+                    answers shouldBe listOf(if (how == "answer") "A" else null)
+                }
+            }
+        }
+    }
+
+    "23: an override that vetoes a dismissal leaves the answer open" {
+        val m = DefaultModalsManager()
+        val calls = mutableListOf<String>()
+        val answers = mutableListOf<String?>()
+
+        withModals(m) { root ->
+            m.show { h -> funnelModal(h, calls, vetoFirst = true) }.onResult { answers += it }
+            root.awaitCss(".ui.dimmer").click()
+
+            delay(200)
+            m() shouldHaveSize 1
+            answers.shouldBeEmpty()
+
+            root.selectDebugId("answer-button").click()
+            until("answered") { answers.isNotEmpty() }
+
+            calls shouldBe listOf("override", "override")
+            answers shouldBe listOf("A")
         }
     }
 })

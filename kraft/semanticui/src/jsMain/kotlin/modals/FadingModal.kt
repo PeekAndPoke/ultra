@@ -121,24 +121,22 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
     }
 
     /** Answers [result] and closes with a fade-out. Ignored once the modal is fading out. */
-    fun close(result: RESULT) {
-        if (fadingOut) return
-
-        props.handle.resolve(result)
-
-        @Suppress("DEPRECATION")
-        close(onClose = null)
-    }
+    fun close(result: RESULT) = closeAnswering(result)
 
     /** Dismisses the modal (it answers `null`) and closes it with a fade-out. Ignored once fading out. */
-    fun close() {
-        if (fadingOut) return
+    fun close() = closeAnswering(null)
 
-        props.handle.resolve(null)
+    private fun closeAnswering(result: RESULT?) {
+        if (fadingOut) return
 
         // Funnels through the deprecated overload, so subclasses overriding it keep running for one release
         @Suppress("DEPRECATION")
         close(onClose = null)
+
+        // Decide only when the fade started: an override that vetoed the close leaves the answer open
+        if (fadingOut) {
+            props.handle.resolve(result)
+        }
     }
 
     /** Closes the modal with a fade-out, optionally running [onClose] after a short delay. */
