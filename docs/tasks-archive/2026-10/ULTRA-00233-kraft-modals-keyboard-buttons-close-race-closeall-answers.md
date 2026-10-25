@@ -328,8 +328,9 @@ Checked against the code by the review; confirm each while writing the tests, th
 - [x] No `ModalsManager.Handle` without a type argument left in this repo; the demo and the fomanticui example
       build. The example bundles are rebuilt by the release (implementation notes).
 - [x] Docs and LLM mirror updated; CHANGELOG notes the breaking change and the silent `else`-branch pattern.
-- [ ] Klang and Spross told the version and the migration list, through Mission Control, once the release is on
-      Maven Central (maintainer, 2026-10-24).
+- [x] Klang and Spross told the version and the migration list, through Mission Control, once the release is on
+      Maven Central (maintainer, 2026-10-24). Done 2026-10-25 directly: both sessions asked at the maintainer's
+      request while 0.115.0 was publishing; they were told to wait for his word that it is on Central.
 - [x] The TestBed/KQuery friction that held is in the findings table; all but the keyboard one are ULTRA-00240
       (kraft testing improvements), the keyboard one has its reason in the table.
 
@@ -407,3 +408,4 @@ Verdict: **gate PASS.**
 - 2026-10-24: DONE. Docs were updated in the change itself (overlays, semantic-ui, LLM mirror), so no separate DOCS
   follow-up. Open: tell Klang and Spross once the release is on Maven Central (maintainer).
 - 2026-10-24: DONE.
+- 2026-10-25: migration note and call sites sent to Klang and Spross (they asked directly).
