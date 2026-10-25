@@ -48,7 +48,7 @@ correctness-critical: never `sonnet`.
 | Mechanical / bulk stages      | `low`                                                                                            |
 | Standard work                 | omit (inherit session effort)                                                                    |
 | Hardest verify / judge stages | `high` or `xhigh`                                                                                |
-| Review rounds 1, 2, 3+        | `high`, `xhigh`, `xhigh` (round 3+ on the strongest tier) via the `reviewer-*` agent definitions |
+| Review levels 1, 2, 3         | `high`, `xhigh`, `max` via the `reviewer-*` agent definitions (the level follows the findings) |
 
 ## Where the dials live
 

@@ -80,6 +80,8 @@ red-team follow-up, task-file record).
 
    | Round | Sev | `path:line` | Claim | Disposition | Reason |
 
+   Note each round's level with its rows (the ladder, Rules): the next round and the next step start from it.
+
    **The Reason column is the mechanism, not bookkeeping.** Phase 2 asks a reviewer to name what is
    factually wrong in a rejection; a reviewer who cannot see the reason cannot do that, and per the
    reconcile rule its re-raise counts as a withdrawal — so an empty ledger silences correct findings
@@ -136,8 +138,8 @@ red-team follow-up, task-file record).
    sole mechanism by which a reviewer can show a rejection was wrong — would never run against it.
    Rejecting would be strictly cheaper than fixing, and a coordinator could close a gate in one round on
    their own say-so. When a round produced only rejections, round 2 may be **reconcile-only**: a fresh
-   agent receives each finding with its rejection reason and must accept or refute it. MINOR-only rounds
-   do not loop.
+   agent receives each finding with its rejection reason and must accept or refute it, one level up (the
+   ladder, Rules). MINOR-only rounds do not loop.
 
 ### Termination — the loop stops ONLY on
 
@@ -152,8 +154,8 @@ red-team follow-up, task-file record).
   STOP and present the state honestly. (Oscillation is also a wall, but it needs three rounds to
   observe, so it is only reachable past the valve.)
 - **Safety valve — 2 rounds** without a clean round: STOP and consult the maintainer with the open
-  findings. **Both rounds count, the blind round 1 included**, which is why the ladder puts
-  `reviewer-top` at "round 3 and later — the safety valve has fired". **It re-arms**: consult again
+  findings. **Both rounds count, the blind round 1 included**, whatever their level: the valve counts
+  rounds that were not clean and no longer lines up with a rung. **It re-arms**: consult again
   after each further non-clean round, rather than running unbounded at the most expensive tier once
   waved past. (Klang cut it from 5 to 2 on 2026-08-28: five rounds let fix-churn feed itself.)
 
@@ -204,23 +206,37 @@ red-team follow-up, task-file record).
   current state and a small regression hides in it.
 - **Every "green" names its run** — made on the final tree, exercising the changed path. A run that
   predates the last edit, or a suite that never reaches the changed code, backs nothing.
-- **The effort ladder: every round that is not clean escalates one level.** The Agent tool has no
-  per-call effort dial, so the levels are agent definitions in `.claude/agents/` with model and effort
-  pinned:
+- **The effort ladder: the level follows the findings, not the round number** (maintainer,
+  2026-10-25, MC-00033). The Agent tool has no per-call effort dial, so the levels are agent
+  definitions in `.claude/agents/` with model and effort pinned:
 
-  | round | reviewers | spawn with |
+  | level | reviewers | spawn with |
     |---|---|---|
-  | 1 (blind) | `opus`, high | `subagent_type: reviewer-high` |
+  | 1 (the floor, every gate) | `opus`, high | `subagent_type: reviewer-high` |
   | 2 | `opus`, xhigh | `subagent_type: reviewer-xhigh` (opus, not the strongest tier: maintainer, 2026-09-28) |
-  | 3 and later | `opus`, max | `subagent_type: reviewer-top` (the safety valve has fired; the maintainer is in the loop; Fable dropped for the token budget, maintainer, 2026-10-24: "Opus max on the highest review tier. The two lower ones stay as they are") |
+  | 3 | `opus`, max | `subagent_type: reviewer-top` (Fable dropped for the token budget, maintainer, 2026-10-24: "Opus max on the highest review tier. The two lower ones stay as they are") |
 
-  Why a ladder and not the top rung from the start: a round that is not clean means the previous tier missed
+  - **A round with any CRITICAL or MAJOR, fixed or rejected, raises the next round one level**, to 3 at
+    most. A reconcile-only round after rejections is such a round and goes UP: rejecting must never be
+    cheaper than fixing (step 7), so a rejection is judged by a stronger reviewer than the one who raised it.
+  - **A MINOR/NIT-only round is clean and the loop stops** (Termination). Only a round that runs after a
+    clean round anyway (a MINOR batch the maintainer asked to have applied and re-reviewed) goes one
+    level DOWN, never below the floor.
+  - **The level belongs to the loop, not to a charter**: a MAJOR from any of the three charters raises
+    all three, since the fix delta is shared.
+  - **The ledger records each round's level** (step 3). The next step of the same task starts one level
+    below where the last loop ended if it ended clean, at that level if it stopped without a clean round
+    (valve, wall, maintainer decision), and at the floor if it touches none of the previous step's modules.
+  - Round 1 stays blind whatever its level.
+
+  Why a ladder and not the top rung from the start: a round that is not clean means the previous level missed
   something or the fix delta introduced something, and both call for more scrutiny of a SMALLER
-  target. **Ultra starts one rung higher than klang** (klang's round 1 is `opus` at session effort):
-  this repo already specified `opus`/high for round 1, and `reviewer-high` is what makes that
-  enforceable. Tiering a round DOWN to save tokens is allowed when the brief says so (klang does it
-  for prose-only deltas). Watch it with the defect-density ledger in `/agent-fleet`: if round 2 keeps
-  finding what round 1 missed, the ladder earns its cost.
+  target; a clean round means the target is calm, and paying the top rung for it is waste. **Ultra's
+  floor is one rung higher than klang's** (klang's level 1 is `opus` at session effort): this repo
+  already specified `opus`/high for round 1, and `reviewer-high` is what makes that enforceable.
+  Tiering a round DOWN to save tokens is allowed when the brief says so (klang does it for prose-only
+  deltas). Watch it with the defect-density ledger in `/agent-fleet`: if level 2 keeps finding what
+  level 1 missed, the ladder earns its cost.
 - **Final report** lists rounds run, each round's findings and outcomes, parked decisions on top.
 
 ### The reviewer charters
@@ -235,6 +251,9 @@ not downgrade them to save tokens without saying so in the brief.
 Give every reviewer: the change set, the task file, the plan link, its charter, and these constraints —
 findings must use the severity scale **CRITICAL / MAJOR / MINOR**; cite `path/File.kt:line`; give a
 concrete failure scenario; "NO FINDINGS" is a valid answer; do not pad; do NOT spawn sub-agents.
+**The verdict line is fixed text, never improvised:** "a round is clean when it has zero CRITICAL and
+zero MAJOR findings; MINORs and NITs do not make it unclean." (klang, 2026-10-25: a brief that said
+"clean if nothing above NIT" ran a third round, on the top rung, after a MINOR-only round.)
 And ask every charter the **SURPLUS** question: what does this change add that the need did not ask
 for (a helper nothing calls yet, a parameter, a branch, a mapping), and could it be removed or
 deferred? A removal is a valid finding. (In klang that question alone shrank a step by a
@@ -373,6 +392,12 @@ in this file:
   that also matches your own shell's command line.
 
 ## Changelog
+
+- **2026-10-25** — Mission Control's blueprint update MC-00033 (maintainer: the ladder should follow
+  the findings): the ladder is keyed by level, not round; CRITICAL/MAJOR, fixed or rejected, raises the
+  level, reconcile-only rounds included (ultra's point); a round after a clean round goes one down; the
+  level is per loop, not per charter; the ledger records it and the next step starts from it; the brief's
+  verdict line is fixed text. Ultra's floor stays `reviewer-high` for every gate.
 
 - **2026-09-28 — round 2 of this document reviewing itself. Safety valve FIRED; the maintainer decided.**
   7 MAJOR, 6 MINOR, 0 CRITICAL, plus a duty-(b) audit of round 1's twelve fixes. Eight held completely;
