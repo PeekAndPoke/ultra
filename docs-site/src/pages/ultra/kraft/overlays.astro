@@ -42,7 +42,8 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
     <p>Show a modal by calling <code>modals.show</code> with a render function. You receive a typed
         <code>Handle&lt;RESULT&gt;</code>: <code>resolve(result)</code> decides the answer, <code>close()</code> removes
         the modal. Every modal answers exactly once, after it is gone: the decided result, or <code>null</code> when it
-        was dismissed without one.</p>
+        was dismissed without one. <code>RESULT</code> is inferred when the content takes a typed handle, like
+        <code>OkCancelModal</code>; for your own modal class, spell it out: <code>modals.show&lt;Unit&gt; { }</code>.</p>
 
     <Code code={`modals.show<Boolean> { handle ->
     div {

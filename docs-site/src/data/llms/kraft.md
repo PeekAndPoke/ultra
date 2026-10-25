@@ -1970,7 +1970,8 @@ class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
 
 Show a modal by calling `modals.show` with a render function. You receive a typed `Handle<RESULT>`: `resolve(result)`
 decides the answer, `close()` removes the modal. Every modal answers exactly once, after it is gone: the decided
-result, or `null` when it was dismissed without one.
+result, or `null` when it was dismissed without one. `RESULT` is inferred when the content takes a typed handle, like
+`OkCancelModal`; for your own modal class, spell it out: `modals.show<Unit> { }`.
 
 ```kotlin
 modals.show<Boolean> { handle ->
