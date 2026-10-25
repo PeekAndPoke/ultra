@@ -214,7 +214,7 @@ red-team follow-up, task-file record).
     |---|---|---|
   | 1 (the floor, every gate) | `opus`, high | `subagent_type: reviewer-high` |
   | 2 | `opus`, xhigh | `subagent_type: reviewer-xhigh` (opus, not the strongest tier: maintainer, 2026-09-28) |
-  | 3 | `opus`, max | `subagent_type: reviewer-top` (Fable dropped for the token budget, maintainer, 2026-10-24: "Opus max on the highest review tier. The two lower ones stay as they are") |
+  | 3 | `opus`, max | `subagent_type: reviewer-top` (maintainer, 2026-10-24: "Opus max on the highest review tier. The two lower ones stay as they are"). **No Fable at any rung, also not as an extra reviewer beside Opus** (maintainer, 2026-10-25: "we are burning through credits") |
 
   - **A round with any CRITICAL or MAJOR, fixed or rejected, raises the next round one level**, to 3 at
     most. A reconcile-only round after rejections is such a round and goes UP: rejecting must never be

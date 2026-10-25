@@ -1,9 +1,6 @@
 # ULTRA-00236: Experiment: Opus and Fable on the top review rung
 
-> **Status (2026-10-24): PAUSED.** Suspended by the maintainer for the token budget (2026-10-24, via Mission Control):
-> "No more Fable reviewers, instead we will use Opus reviewers on max effort", clarified: "Opus max on the highest
-> review tier. The two lower ones stay as they are." `reviewer-top` is now Opus at max; the CLAUDE.md line is removed.
-> No top-rung round ran in ultra, so there are no samples (reported to MC-00026).
+> **Status (2026-10-25): WON'T IMPLEMENT.** stopped by the maintainer, no Fable in reviews (credits); no samples in ultra
 
 ## Why this exists
 
@@ -26,12 +23,24 @@ for debate next friday." Follows the blind run of MC-00026 (`docs/housekeeping/2
 | date | ticket, round | charter | both | Opus only | Fable only | Opus tokens | Fable tokens |
 |---|---|---|---|---|---|---|---|
 
+## Result (2026-10-25, stopped)
+
+Stopped for good by the maintainer (2026-10-25, via Mission Control): "Let us not use fable anymore but the newest
+Opus (5.5) on max instead... we are burning through credits." No Fable reviewer at any rung, also not as an extra
+voice beside Opus; the top rung is `reviewer-top` (opus, max) alone.
+
+What ultra found: nothing to tally. No top-rung round ran in ultra between 2026-10-23 and the stop (the only gates,
+ULTRA-00233 and ULTRA-00240, were clean in round 1), so the table stays empty. The one data point ultra has is still
+MC-00026's blind run (`docs/housekeeping/2026-10-23-fable-experiment-ultra-00222.md`).
+
 ## Acceptance
 
-- [ ] The tally is ready for the 2026-10-30 meeting (no top-rung round this week is also a result).
+- [x] The tally is ready for the 2026-10-30 meeting (no top-rung round this week is also a result): empty, stopped 2026-10-25.
 
 ## History
 
 - 2026-10-23: created.
 - 2026-10-24: PAUSED.
 - 2026-10-24: paused (maintainer, token budget); no samples collected.
+- 2026-10-25: stopped for good (maintainer, credits); no samples in ultra.
+- 2026-10-25: WON'T IMPLEMENT. stopped by the maintainer, no Fable in reviews (credits); no samples in ultra

@@ -39,7 +39,9 @@ can do its task well.
 (`reviewer-high`, then `reviewer-xhigh`, then `reviewer-top`). Security and domain review is
 correctness-critical: never `sonnet`.
 
-**Until 2026-10-30 the top rung runs one Opus 5.5 max and one Fable reviewer per charter** — ULTRA-00236.
+**No Fable in reviews, at any rung, also not as an extra reviewer beside Opus** (maintainer, 2026-10-25: "Let us not
+use fable anymore but the newest Opus (5.5) on max instead... we are burning through credits."). The top rung is
+`reviewer-top` (opus, max) alone; ULTRA-00236's pairing is stopped.
 
 ## Effort tiers
 
