@@ -11,8 +11,31 @@
   `Stream<Any?>`. Watch for `filterIsInstance(X::class)` there today: it compiles as `initial` and filters for
   `KClass` values.
 
+- **Streams: `smooth()`, `quantize()` and `FrameClock` (ULTRA-00242, from Klang's KLANG-00345).**
+  `Stream<Double?>.smooth(sharePer10Ms)` approaches each new value a step per frame, exponentially, at the same pace at
+  any frame rate; `smooth(smoothing)` takes any law. Within `near` it lands exactly and stops asking for frames.
+  `quantize(size, offset)` snaps to a grid. `FrameClock` is the clock they run on: animation frames on JS, a 60 Hz
+  coroutine ticker elsewhere, a hand-driven one in tests.
+- **Maths: `Smoothing` laws and `Double.quantize` (ULTRA-00242).** `Exponential`, `Linear`, `AttackRelease` and
+  `Spring`, each a pure `step(motion, goal, elapsedMs)` exact for any elapsed time, with `isSettled(motion, goal,
+  near)`.
+
+### Changed
+
+- **`ultra:streams` depends on `ultra:maths`** (and so on `ultra:datetime`), for `smooth()`'s laws. Kraft apps get
+  both through `kraft:core`.
+- **`ticker()` and `animTicker()` run on `FrameClock`.** `TickerFrame` times are in milliseconds with fractions (were
+  whole milliseconds on `ticker()`); `animTicker()`'s first frame is timed like the rest (`performance.now()`, was
+  `Date.now()`). `ticker(clock)` is new. On the JVM and native, `ticker()` still calls back on `Dispatchers.Default`;
+  `FrameClock.ticker(context = ...)` picks the thread. Streams are not thread-safe: subscribing from another thread
+  while a frame emits can, rarely, start a second chain of frames, which the old coroutine loop could not.
+
 ### Docs
 
+- The maths docs said "no dependencies"; maths depends on `ultra:datetime` and kotlinx.serialization.
+- The streams `filter` examples read an operator nobody listened to and printed values it never had; they subscribe
+  now, and say that a filter sees values only while someone listens. `filterNotNull`'s result is `Stream<T>`, not
+  nullable.
 - The streams `filterIsInstance` examples wrote one type argument, which does not compile; they now show both forms.
 
 ## 0.115.0

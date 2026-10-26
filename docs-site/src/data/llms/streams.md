@@ -179,6 +179,7 @@ println(doubled())  // 10
 
 // filter — only pass values matching a predicate
 val big = source.filter(initial = 0) { it > 10 }
+big.subscribeToStream { }  // a filter sees values only while someone listens
 println(big())  // 0 (initial, since 5 doesn't match)
 
 source(20)
@@ -279,12 +280,14 @@ val indexed = source.indexed()
 ## filter
 
 Only pass values matching a predicate. Since streams always have a value, you provide an initial value for when nothing
-matches yet:
+matches yet. A filter sees values only while someone listens; unsubscribed it keeps what it had:
 
 ```kotlin
 val source = StreamSource(3)
 
 val big = source.filter(initial = 0) { it > 10 }
+big.subscribeToStream { }
+
 println(big())  // 0
 
 source(20)
@@ -509,7 +512,36 @@ val unsub = tick.subscribeToStream { frame ->
 unsub()  // stops the ticker
 ```
 
-Also accepts a `Duration`: `ticker(1.seconds)`.
+Also accepts a `Duration`: `ticker(1.seconds)`, or any `FrameClock`: `ticker(clock)` (its initial frame
+carries 0.0, the next ones the clock's times). Times are in ms, with fractions.
+
+## FrameClock
+
+`fun interface FrameClock { fun next(onFrame: (timeMs: Double) -> Unit): () -> Unit }`: one callback on the next
+frame, returns the cancel. `FrameClock.default` is `FrameClock.animationFrames` on JS, a 60 Hz `FrameClock.ticker()`
+elsewhere. Tests pass their own clock. On the JVM and native, `FrameClock.ticker(context = ...)` calls back on that context's
+threads: use the one the source emits on (streams are not thread-safe).
+
+## smooth
+
+```kotlin
+import io.peekandpoke.ultra.maths.Smoothing
+import io.peekandpoke.ultra.streams.ops.smooth
+
+val needle = level.smooth(sharePer10Ms = 0.9)  // exponential: keeps 90% of the way left per 10 ms
+val analog = level.smooth(Smoothing.Spring(stiffness = 200.0, damping = 10.0), rest = 0.0, near = 0.001)
+```
+
+On `Stream<Double?>`, a step per frame of `clock` until there, by a `Smoothing` law (maths). The first value after
+someone starts listening is taken as it is; `null`/NaN/infinity pass at once as `null`, and after a `null` the motion
+starts from `rest`; a value on the way becomes the new goal, keeping the speed; within `near` (value units) it lands
+exactly and stops asking for frames. Upstream only while listened to.
+
+## quantize
+
+`level.quantize(size = 0.1, offset = 0.05)`: snaps to the nearest `offset + k * size` (the offset shifts the grid);
+`null` passes. On `Stream<Double>` and `Stream<Double?>`. After `smooth()` it repeats the grid value each frame:
+add `.distinct()`.
 
 ## mapAsync
 
@@ -644,7 +676,7 @@ unsub()  // stops requesting animation frames
 ```
 
 Unlike `ticker(intervalMs)` (available on all platforms), `animTicker()` synchronizes with the browser's display refresh
-rate.
+rate. It is built on `FrameClock.animationFrames` and timed like `performance.now()`, its first frame included.
 
 ## persistInLocalStorage()
 
@@ -743,6 +775,7 @@ unsubscribes automatically.
 |---------------------------------------------------------------------------------|-----------------------------------|
 | map, filter, combine, fold, distinct, fallback, history, indexed, onEach, cutoff, switchMap | All platforms          |
 | ticker, debounce, mapAsync, asFlow                                              | All platforms (coroutine-based)   |
+| smooth, quantize, `FrameClock`                                                  | All platforms (animation frames on JS) |
 | `animTicker()`                                                                  | JS only (`requestAnimationFrame`) |
 | `persistInLocalStorage()`                                                       | JS only (`localStorage`)          |
 | `debouncedFunc()`, `debouncedFuncExceptFirst()`                                 | JS only (`setTimeout`)            |

@@ -51,6 +51,8 @@ kotlin {
 
         commonMain {
             dependencies {
+                api(project(":ultra:maths"))
+
                 implementation(Deps.KotlinX.coroutines_core)
                 implementation(Deps.KotlinX.serialization_json)
             }

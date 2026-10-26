@@ -1,7 +1,7 @@
-# Maths — Easing & Distributions
+# Maths — Easing, Smoothing & Distributions
 
-Easing functions and bucketed probability distributions for Kotlin Multiplatform. No dependencies,
-no global state.
+Easing functions, smoothing laws and bucketed probability distributions for Kotlin Multiplatform. Depends on
+`ultra:datetime` (for `Ease.timed`) and kotlinx.serialization; no global state.
 
 - Package: `io.peekandpoke.ultra:maths`
 - Version: {{ultraVersion}}
@@ -37,6 +37,29 @@ the explicit `Ease.bindFromTo` / `Ease.timed` imports shown above.
 
 `timed` takes an optional `kronos: Kronos = Kronos.systemUtc`, which is how you make an animation
 deterministic in a test.
+
+## Smoothing
+
+Laws that move a value towards a goal that may move, a step at a time, exact for any elapsed time (the pace does not
+depend on the frame rate). The streams operator `smooth()` runs them on frames.
+
+```kotlin
+import io.peekandpoke.ultra.maths.Smoothing
+import io.peekandpoke.ultra.maths.Smoothing.Motion
+
+val needle = Smoothing.Spring(stiffness = 200.0, damping = 10.0)
+val next = needle.step(Motion(position = 0.0), goal = 1.0, elapsedMs = 16.7)  // position, velocity (units/s)
+needle.isSettled(next, goal = 1.0, near = 0.001)
+```
+
+`Exponential(keepPer10Ms)` (no overshoot), `Linear(unitsPerSecond)` (slew limit), `AttackRelease(up, down)`
+(exponential, one share rising, one falling), `Spring(stiffness, damping)` (overshoots below `2 * sqrt(stiffness)`).
+`isSettled` is the minimum delta: within `near` the motion may land (keep `near` above 0); a spring only once its
+energy can no longer carry it out of `near`. Parameters of 0,
+negative or NaN land at once; an `Exponential` share of 1 or more counts as 0.999.
+
+`Double.quantize(size, offset = 0.0)` snaps to the nearest `offset + k * size`; halfway goes up; a size of 0 or less,
+or a non-finite size, offset or value, returns the value as it is.
 
 ## Distributions
 

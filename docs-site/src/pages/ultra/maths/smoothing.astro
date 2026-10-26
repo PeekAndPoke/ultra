@@ -1,0 +1,82 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import {mathsSidebar} from '../../../data/maths-sidebar';
+import {Code} from 'astro:components';
+---
+
+<DocsLayout title="Smoothing" sidebar={mathsSidebar}
+            description="Laws that move a value towards a goal over time, and quantize">
+
+    <h1>Smoothing</h1>
+
+    <p class="text-xl text-gray-400 !mt-2 !mb-8">
+        Four laws that move a value towards a goal, step by step, at the same pace at any frame rate.
+    </p>
+
+    <p>Easing runs from a start to an end over a fixed time. Smoothing has no end time: it follows a goal that may move,
+        like a gauge needle following a reading. Each law is a pure step, testable without a clock; the streams operator
+        <a href="/ultra/streams/control"><code>smooth()</code></a> runs one on a <code>FrameClock</code> (animation
+        frames on JS).</p>
+
+    <h2>The laws</h2>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-gray-700">
+                <th class="py-2 pr-4">Law</th>
+                <th class="py-2">Moves like</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-b border-gray-800">
+                <td class="py-2 pr-4"><code>Exponential(keepPer10Ms)</code></td>
+                <td class="py-2">keeps a share of the way left per 10 ms: a quick start, a gentle arrival, no overshoot</td>
+            </tr>
+            <tr class="border-b border-gray-800">
+                <td class="py-2 pr-4"><code>Linear(unitsPerSecond)</code></td>
+                <td class="py-2">constant speed, never past the goal: a slew limit</td>
+            </tr>
+            <tr class="border-b border-gray-800">
+                <td class="py-2 pr-4"><code>AttackRelease(up, down)</code></td>
+                <td class="py-2">exponential, with one share for rising and one for falling: a VU meter rises fast, falls slowly</td>
+            </tr>
+            <tr class="border-b border-gray-800">
+                <td class="py-2 pr-4"><code>Spring(stiffness, damping)</code></td>
+                <td class="py-2">a damped spring with inertia; below critical damping (<code>2 * sqrt(stiffness)</code>) it overshoots and settles like an analog needle</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Code code={`import io.peekandpoke.ultra.maths.Smoothing
+import io.peekandpoke.ultra.maths.Smoothing.Motion
+
+val needle = Smoothing.Spring(stiffness = 200.0, damping = 10.0)
+
+var motion = Motion(position = 0.0)
+motion = needle.step(motion, goal = 1.0, elapsedMs = 16.7)  // position and velocity (units per second)
+
+needle.isSettled(motion, goal = 1.0, near = 0.001)  // false: still on its way`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Each <code>step</code> is exact for any elapsed time, so two 10 ms steps land where one 20 ms step does.
+        <code>isSettled</code> is the minimum delta: within <code>near</code> of the goal (in the value's units) the
+        motion may land exactly on it. A spring is settled only once its energy is too small to leave <code>near</code>
+        again, so it does not stop while swinging through the goal. Keep <code>near</code> above 0. Parameters that make no sense (0, negative, NaN) land on the goal at once; an
+        <code>Exponential</code> share of 1 or more counts as 0.999, the slowest.</p>
+
+    <h2>quantize</h2>
+
+    <p>Snaps a value to the nearest <code>offset + k * size</code>. The offset shifts the grid, not the value; halfway
+        goes up:</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.quantize
+
+0.26.quantize(0.1)                 // 0.3 (with the usual floating-point error: 0.30000000000000004)
+0.26.quantize(0.1, offset = 0.05)  // 0.25
+0.25.quantize(0.5)                 // 0.5`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>A size of 0 or less, a size or offset that is not finite, and a value that is not finite return the value as it
+        is.</p>
+
+</DocsLayout>

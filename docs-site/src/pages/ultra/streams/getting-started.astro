@@ -98,6 +98,7 @@ println(doubled())  // 10
 
 // filter — only pass values matching a predicate
 val big = source.filter(initial = 0) { it > 10 }
+big.subscribeToStream { }  // a filter sees values only while someone listens
 println(big())  // 0 (initial, since 5 doesn't match)
 
 source(20)

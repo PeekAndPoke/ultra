@@ -28,7 +28,7 @@ val unsub = tick.subscribeToStream { frame ->
 
 unsub()  // stops requesting animation frames`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Unlike <code>ticker(intervalMs)</code> (available on all platforms), <code>animTicker()</code> synchronizes with the browser's display refresh rate.</p>
+<p>Unlike <code>ticker(intervalMs)</code> (available on all platforms), <code>animTicker()</code> synchronizes with the browser's display refresh rate. It is built on <code>FrameClock.animationFrames</code> and timed like <code>performance.now()</code>, its first frame included.</p>
 
 <h2>persistInLocalStorage()</h2>
 

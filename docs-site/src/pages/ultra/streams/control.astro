@@ -56,7 +56,64 @@ val unsub = tick.subscribeToStream { frame ->
 // ... later
 unsub()  // stops the ticker`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Also accepts a <code>Duration</code>: <code>ticker(1.seconds)</code>.</p>
+<p>Also accepts a <code>Duration</code>: <code>ticker(1.seconds)</code>, or any <code>FrameClock</code>:
+    <code>ticker(clock)</code>, whose initial frame carries the time 0.0 and the next ones the clock's times. Times are
+    in milliseconds, with fractions.</p>
+
+<h2>FrameClock</h2>
+
+<p>The clock a motion runs on: <code>next(onFrame)</code> calls back once, on the next frame, with the frame's time
+    in milliseconds, and returns the way to cancel. <code>FrameClock.default</code> is the browser's animation frames
+    on JS (<code>FrameClock.animationFrames</code>) and a 60 Hz <code>FrameClock.ticker()</code> elsewhere. A test
+    passes its own clock and drives it frame by frame:</p>
+
+    <Code code={`import io.peekandpoke.ultra.streams.ops.FrameClock
+
+val handClock = FrameClock { onFrame ->
+    pending = onFrame        // run it when the test says so
+    ({ pending = null })     // cancel
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>On the JVM and native, <code>FrameClock.ticker(context = ...)</code> calls back on that context's threads: pick the one the
+    source emits on, since streams are not thread-safe.</p>
+
+<h2>smooth</h2>
+
+<p>Smooths a <code>Stream&lt;Double?&gt;</code>: each new value is approached a step per frame, also while the source
+    holds still, by one of the <a href="/ultra/maths/smoothing">Smoothing laws</a>. The default is exponential:</p>
+
+    <Code code={`import io.peekandpoke.ultra.maths.Smoothing
+import io.peekandpoke.ultra.streams.ops.smooth
+
+// Keeps 90% of the way left per 10 ms
+val needle = level.smooth(sharePer10Ms = 0.9)
+
+// Any law: an analog needle that overshoots and settles
+val analog = level.smooth(Smoothing.Spring(stiffness = 200.0, damping = 10.0), rest = 0.0, near = 0.001)`} lang="kotlin" theme="vitesse-dark" />
+
+<ul>
+    <li>The first value after someone starts listening is taken as it is: a needle shown anew starts at its
+        reading.</li>
+    <li><code>null</code>, NaN and infinity pass at once as <code>null</code>; after a <code>null</code> the motion
+        starts from <code>rest</code>.</li>
+    <li>A value on the way becomes the new goal; the motion keeps its speed.</li>
+    <li>Within <code>near</code> (in the value's units) it lands exactly on the value and stops asking for frames: no
+        endless trickle of values.</li>
+    <li>The source is listened to only while someone listens; no frame is asked for while nothing moves.</li>
+</ul>
+
+<h2>quantize</h2>
+
+<p>Snaps every value to the nearest <code>offset + k * size</code>; the offset shifts the grid, not the value.
+    <code>null</code> passes:</p>
+
+    <Code code={`import io.peekandpoke.ultra.streams.ops.quantize
+
+val stepped = level.smooth(sharePer10Ms = 0.9).quantize(size = 0.1)              // 0.0, 0.1, 0.2, ...
+val shifted = level.quantize(size = 0.1, offset = 0.05)                          // 0.05, 0.15, ...`} lang="kotlin" theme="vitesse-dark" />
+
+<p>While a smoothed motion runs, <code>quantize</code> passes the same grid value on every frame; add
+    <code>.distinct()</code> to publish only the changes.</p>
 
 <h2>mapAsync</h2>
 

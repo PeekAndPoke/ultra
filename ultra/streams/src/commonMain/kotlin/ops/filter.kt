@@ -14,7 +14,7 @@ fun <T> Stream<T>.filter(predicate: (T) -> Boolean): Stream<T?> {
 /**
  * Filter the incoming values and publish only the ones that match the [predicate].
  *
- * The [initial] value is published as long as only null values are published by the stream.
+ * The [initial] value is published until a value matches the [predicate].
  */
 fun <T> Stream<T>.filter(initial: T, predicate: (T) -> Boolean): Stream<T> {
     return StreamFilterWithInitialValueOperator(wrapped = this, initial = initial, predicate = predicate)

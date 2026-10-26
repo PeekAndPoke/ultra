@@ -74,9 +74,13 @@ val indexed = source.indexed()
         worth it.
     </Aside>
 
+<p>A filter sees values only while someone listens: read without a subscriber, it keeps what it had.</p>
+
 <Code code={`val source = StreamSource(3)
 
 val big = source.filter(initial = 0) { it > 10 }
+big.subscribeToStream { }  // listening, so the filter sees the source's values
+
 println(big())  // 0
 
 source(20)
@@ -92,6 +96,7 @@ println(big())  // 20 (keeps last matching value)`} lang="kotlin" theme="vitesse
 
     <Code code={`val source = StreamSource(3)
 val big = source.filter { it > 10 }  // Stream<Int?>
+big.subscribeToStream { }
 
 println(big())  // null (nothing matched yet)
 
@@ -100,13 +105,14 @@ println(big())  // 20`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>filterNotNull</h3>
 
-    <p>Remove nulls from a nullable stream. The result is still <code>Stream&lt;String?&gt;</code> because the current
-        value may be null if no non-null value has arrived yet:</p>
+    <p>Remove nulls from a nullable stream. The result is a <code>Stream&lt;String&gt;</code>: until a non-null value
+        arrives it holds the initial value:</p>
 
     <Code code={`val source = StreamSource<String?>(null)
 val safe = source.filterNotNull(initial = "")  // Stream<String>
+safe.subscribeToStream { }
 
-println(safe())  // null (no non-null value yet)
+println(safe())  // "" (no non-null value yet)
 
 source("hello")
 println(safe())  // "hello"
