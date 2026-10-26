@@ -15,6 +15,20 @@ agent commits the bundles and tags; then the maintainer publishes to Maven Centr
 The operator (the human) must approve each destructive step explicitly. This skill prepares the changes — it does not
 auto-publish or auto-push.
 
+## Maven Central limits — release rarely (maintainer, 2026-10-26)
+
+Maven Central caps each namespace per month. `io.peekandpoke` (raised limits, October 2026): **200 MB release size,
+88,350 files, 17 releases**. One ultra release costs about **18 MB and 3,900 files**, so size is the cap: about 11
+releases a month at most. October 2026 used 127 MB in 7 releases.
+
+- **Do not propose a release for every finished ticket.** Batch the work; a release needs a reason in
+  `## Unreleased` worth the budget. The maintainer: "at max one more release this month."
+- **New features grow in the projects' `workshop` modules first** and move into ultra once they are stable there
+  (maintainer: "Everything else we need to develop in the projects on 'workshop' modules and shift it over once these
+  things are stable there"), as Klang's `smooth()` did (ULTRA-00242).
+- The agent cannot see the usage page (web tools are blocked): before step 4 of Preflight, ask the maintainer for this
+  month's size and release count.
+
 ## Inputs
 
 - `$1` — target version string, e.g. `0.107.0` (semver, no leading `v`). If omitted, ask the user.
@@ -26,7 +40,8 @@ auto-publish or auto-push.
 2. **On the right branch.** Confirm `git branch --show-current` is the release branch (usually `master`). If not, ask
    the user.
 3. **Read the current version.** Grep `gradle.properties` for `VERSION_NAME=` and store as `$CURRENT`.
-4. **Confirm the bump.** Show the user "`$CURRENT` → `$1`" and ask for go/no-go before editing files.
+4. **Confirm the bump.** Show the user "`$CURRENT` → `$1`" and ask for go/no-go before editing files, together with
+   this month's Maven Central budget (see the limits above).
 
 ## Locations to bump (every release)
 
