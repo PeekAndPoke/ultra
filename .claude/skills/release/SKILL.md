@@ -9,8 +9,8 @@ argument-hint: [ target version, e.g. 0.107.0 or 1.0.0 ]
 
 Executes a full release for the PeekAndPoke monorepo. The canonical version lives in `gradle.properties` (
 `VERSION_NAME`); a release additionally requires bumping the docs-site constants and the README dependency snippet,
-verifying the docs site, a release commit and tag. The maintainer runs the full build (with the example bundles) and
-publishes to Maven Central.
+verifying the docs site and a release commit. The maintainer runs the full build (with the example bundles); then the
+agent commits the bundles and tags; then the maintainer publishes to Maven Central and pushes.
 
 The operator (the human) must approve each destructive step explicitly. This skill prepares the changes — it does not
 auto-publish or auto-push.
@@ -54,6 +54,9 @@ Every string below must move from `$CURRENT` to `$1`. Use the Edit tool, not sed
 4. **ULTRA-00028 (v1 roadmap)** (path: `console/tools/ticket/ticket.py find ULTRA-00028`) — header line `**Current version:** $CURRENT → **Target:** 1.0.0` and the
    `**Released:**` bullet if present.
 
+5. **`CHANGELOG.md`** — the heading `## Unreleased` becomes `## $1`. If there is no `## Unreleased` section, stop and
+   ask: a release without notes is the maintainer's call.
+
 **Sanity check after edits:** run
 `grep -rn "$CURRENT" gradle.properties docs-site/src/data/site.ts README.MD "$(console/tools/ticket/ticket.py find ULTRA-00028)"` and confirm
 zero hits.
@@ -79,16 +82,16 @@ That build is also where the Kraft example bundles get refreshed (see Build and 
 
 If any step fails, stop. Report the failure and wait for the user.
 
-## Commit + tag
+## Release commit (no tag yet)
 
 Once verification passes:
 
 1. `git diff` — show the bump diff to the user for final review.
 2. `git add` the bumped files by name, then `git commit -m "Release $1"` — single atomic commit, version-bump only.
-3. `git tag -a v$1 -m "Release $1"` — annotated tag.
-4. **Do NOT push.** The maintainer pushes the commit and the tag.
+3. **No tag yet, and do NOT push.** The tag comes after the maintainer's build (maintainer, 2026-10-26): a tag made
+   before it would point at a commit nobody has built, and at the previous release's example bundles.
 
-## Build and publish (the maintainer)
+## Build, bundles, tag, publish
 
 Prerequisites (one-time per dev machine): Maven Central credentials in `~/.gradle/gradle.properties` —
 `mavenCentralUsername`, `mavenCentralPassword`, `signing.password`. See `publish.md` at the repo root.
@@ -96,14 +99,18 @@ Prerequisites (one-time per dev machine): Maven Central credentials in `~/.gradl
 **The maintainer builds and publishes, not the agent.** Publishing to Maven Central is **irreversible** — artifacts
 cannot be overwritten.
 
-1. `./gradlew clean build distributeJsExample` — every test, and the Kraft example bundles in `docs/kraft/examples/`.
-   `distributeJsExample` is NOT part of `build` (since 2026-10-19), so it is named here. Must be green.
-2. `./gradlew publishAllPublicationsToMavenCentralRepository` — publishes all 5 library roots (ultra, kraft, karango,
-   monko, funktor).
-3. Afterwards the agent commits the refreshed bundles on their own: `build files: Kraft examples rebuilt for $1`.
-   **Agents never run `distributeJsExample` themselves:** it writes tracked files, and files written by user claude
-   break the maintainer's next run ("Could not set file mode"; MC-00031, open until the maintainer decides).
-4. Once told it is published, verify appearance at https://central.sonatype.com/namespace/io.peekandpoke.ultra (may
+1. **The maintainer:** `./gradlew clean build distributeJsExample` — every test, and the Kraft example bundles in
+   `docs/kraft/examples/`. `distributeJsExample` is NOT part of `build` (since 2026-10-19), so it is named here. Must
+   be green. If it fails: fix it in follow-up commits on top of the release commit (never amend), and the maintainer
+   builds again.
+2. **The agent, once told the build is green:** commit the refreshed bundles on their own,
+   `build files: Kraft examples rebuilt for $1` (skip if `git status` shows none). **Agents never run
+   `distributeJsExample` themselves:** it writes tracked files, and files written by user claude break the
+   maintainer's next run ("Could not set file mode"; MC-00031, open until the maintainer decides).
+3. **The agent:** `git tag -a v$1 -m "Release $1"` on that last commit (the bundles commit, else the release commit).
+4. **The maintainer:** `./gradlew publishAllPublicationsToMavenCentralRepository` — publishes all 5 library roots
+   (ultra, kraft, karango, monko, funktor) — then `git push && git push --tags`.
+5. Once told it is published, verify appearance at https://central.sonatype.com/namespace/io.peekandpoke.ultra (may
    take 10–30 min to index).
 
 ## Post-publish
@@ -128,8 +135,10 @@ landed), skip items marked *(major/minor only)*.
 - [ ] Root README points at the new version
 - [ ] `gradle.properties`, `docs-site/src/data/site.ts`, `README.MD`, ULTRA-00028 (v1 roadmap) all bumped
 - [ ] funktor-demo runs end-to-end on both ArangoDB and MongoDB *(major/minor only)*
-- [ ] Release commit + annotated git tag created (not yet pushed)
-- [ ] Handed to the maintainer for the build, `git push --tags` and `publishAllPublicationsToMavenCentralRepository`
+- [ ] `CHANGELOG.md`: `## Unreleased` → `## $1`
+- [ ] Release commit created (no tag yet, not pushed); handed to the maintainer for the build
+- [ ] After the green build: bundles committed, annotated tag `v$1` on that commit
+- [ ] Handed to the maintainer for `publishAllPublicationsToMavenCentralRepository` and `git push && git push --tags`
 
 ## Output Format
 
@@ -143,18 +152,18 @@ At the end of a successful release, report to the user:
 - docs-site/src/data/site.ts: ultraVersion, kraftVersion
 - README.MD: 7 dependency strings
 - ULTRA-00028 (v1 roadmap): header
+- CHANGELOG.md: ## $1
 
 **Verified:**
 - docs-site astro build — green, LLM mirrors carry $1
 
 **Committed:**
-- Release commit: <short sha>
-- Annotated tag: v$1
+- Release commit: <short sha> (no tag yet)
 
-**Next (yours):**
-1. ./gradlew clean build distributeJsExample
-2. ./gradlew publishAllPublicationsToMavenCentralRepository
-3. git push && git push --tags (then I commit the refreshed bundles)
+**Next:**
+1. Yours: ./gradlew clean build distributeJsExample — tell me when it is green
+2. Mine: commit the refreshed bundles, tag v$1
+3. Yours: ./gradlew publishAllPublicationsToMavenCentralRepository, then git push && git push --tags
 ```
 
 ## Guardrails — what NOT to do
@@ -168,7 +177,7 @@ At the end of a successful release, report to the user:
   `{{kraftVersion}}` placeholders on purpose. Only edit them to update actual content.
 - **Never skip the docs-site verification.** A stale version string in the LLM mirrors means something references
   the old version in a way you didn't anticipate. The full Gradle build is the maintainer's, before publishing.
-- **Don't amend the release commit** once the tag exists — create a follow-up commit if changes are needed.
+- **Don't amend the release commit** — create a follow-up commit if changes are needed; the tag goes on the last one.
 - **Don't use `--no-verify` or skip signing** — Maven Central requires signed artifacts.
 
 ## Notes
