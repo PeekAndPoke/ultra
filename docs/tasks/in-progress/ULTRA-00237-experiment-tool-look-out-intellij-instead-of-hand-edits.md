@@ -40,6 +40,8 @@ wildcards: 102 tracked Kotlin files have one (`git grep -l -E "^import [a-zA-Z0-
 | date | what | tool | what it would have saved |
 |---|---|---|---|
 | 2026-10-23 | 102 files with wildcard imports against the CLAUDE.md rule | Optimize Imports (after the setting fix) | a hand edit per file; a compiler-checked result |
+| 2026-10-26 | ULTRA-00242: `HandClock` cut out of `SmoothSpec.kt` into its own test file, by a script | Move (extract the class to a file) | little: the tests compiled at once; Move would have adjusted visibility and imports by itself |
+| 2026-10-26 | ULTRA-00242: `@JvmName` in common code without `import kotlin.jvm.JvmName`, found by a failed JS/native compile | `get_file_problems` on the new file before the build | one failed 30 s Gradle run |
 
 ### Auto-Format differences from ultra's code style
 
@@ -81,3 +83,4 @@ screen.
 
 - 2026-10-23: created.
 - 2026-10-23: wildcard settings fixed in `.idea/codeStyles/Project.xml` (maintainer's go).
+- 2026-10-26: two cases from ULTRA-00241/00242; no IntelliJ call this session, none landed wrong.
