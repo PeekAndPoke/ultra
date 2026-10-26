@@ -6,12 +6,12 @@ import io.peekandpoke.kraft.vdom.VDom
 
 /** Creates a [FormController] that stops form events from propagating. */
 fun <T> Component<T>.formController(): FormController {
-    return FormController(component = this, stopEvents = true)
+    return FormController.controller(component = this)
 }
 
 /** Creates a [FormController] that observes form events without stopping them. */
 fun <T> Component<T>.formObserver(): FormController {
-    return FormController(component = this, stopEvents = false)
+    return FormController.observer(component = this)
 }
 
 /** Creates a [FormController] as a remembered value in a VDom render scope. */

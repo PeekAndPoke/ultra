@@ -13,12 +13,14 @@ import kotlinx.coroutines.Job
  * Listens for form field mount/unmount/change messages and tracks all registered fields.
  * When [stopEvents] is true, form events are consumed and not propagated to parent components.
  */
-open class FormController(private val component: Component<*>, val stopEvents: Boolean = true) {
+class FormController private constructor(private val component: Component<*>, val stopEvents: Boolean = true) {
 
     companion object {
+        /** Creates a form controller that stops all form events it receives. */
+        fun controller(component: Component<*>) = FormController(component = component, stopEvents = true)
+
         /** Creates a form controller that observes but does not stop form events. */
-        fun watcher(component: Component<*>) =
-            FormController(component = component, stopEvents = false)
+        fun observer(component: Component<*>) = FormController(component = component, stopEvents = false)
     }
 
     /** Lifecycle status of the controller's validate/process pipeline (for spinners / guards). */
