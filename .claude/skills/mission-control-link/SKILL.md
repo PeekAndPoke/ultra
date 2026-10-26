@@ -105,15 +105,20 @@ browser tests. Ask it before picking one, and report back what you assigned.
 
 ## 5. Requests to Ultra, the toolmaker
 
-Ultra (with Kraft inside it) is the toolmaker (maintainer, 2026-10-26). When you use one of its features and miss
-something, or see something worth improving, file a request with Ultra directly:
+Ultra (with Kraft inside it) is the toolmaker, and every project that uses it makes it better (maintainer,
+2026-10-26). **Whenever you stumble on something in Ultra or Kraft, tell Ultra:** a feature you wish you had, a
+bug, an API that made you write a workaround, a name that misled you, a missing example or doc. Small things
+count, and so do half-formed ideas. You need nobody's OK to send one, and a request that Ultra declines costs
+little. What one project needs, the others often need next: that is the point.
 
-1. **Send Ultra-Main-Dev one message:** the feature, what you missed or would change, the use that showed it
-   (file, ticket), and the API you would like if you have one. One concrete use beats a wish list.
+1. **Send Ultra-Main-Dev a message** when you notice it, not at the end of the task: what you were doing, what
+   you missed, hit or would change, the use that showed it (file, ticket), and the API you'd like if you have an
+   idea. A concrete use helps Ultra most; a fix you already wrote in your repo helps even more.
 2. Ultra files it as an `ULTRA-` ticket and replies with the number; note the number in your own ticket. If Ultra
    isn't running (ListAgents), send it to Mission Control, which passes it on.
-3. Until Ultra has released it, build what you need in your `workshop/` (`/project-layout`). Maven Central limits
-   how often Ultra can publish, so Ultra gathers requests into releases.
+3. Don't wait for it: build what you need in your `workshop/` (`/project-layout`), or work around it with a
+   comment naming the ULTRA ticket. Maven Central limits how often Ultra can publish, so Ultra gathers requests
+   into releases.
 
 Ultra decides what goes in and how; the maintainer decides when it matters. A finding about a shared skill or
 tool still goes through Mission Control (section 2).
@@ -136,7 +141,10 @@ replaces the home-directory memory that held it until today (MC-00023).
 2. **File it:** `ticket.py new "<Area>: <wish>" --status IDEA`, with the sender, their ticket and commit, and the
    check. If an epic covers the area, `--part-of` it (Kraft testing: ULTRA-00244); a new epic only with the
    maintainer's word.
-3. **Reply with the number** to the sender (or "no reply needed" if they said so), and commit the ticket.
+3. **Every request gets its number back**, also one declined (`WON'T IMPLEMENT`, with the reason) or parked as an
+   IDEA, even when the sender said no reply is needed: the reply keeps requests coming (maintainer: agents should
+   feel encouraged, "nice synergies between the projects"). **When two projects ask for the same thing, say so in
+   both replies** and file it once. Commit the ticket.
 4. **Releases gather requests** (release skill, Maven Central limits): a request is built when the maintainer
    schedules it, and a piece battle-tested in a project's `workshop/` arrives as a request too: port it with its
    tests (as ULTRA-00242 did with Klang's `smooth()`), and tell the project when it is released, unless the
@@ -151,7 +159,7 @@ replaces the home-directory memory that held it until today (MC-00023).
 ## Changes
 
 <!-- Kept by the nexus, newest first. Tells a repo what an update brought. -->
-- 2026-10-26: requests to Ultra, the toolmaker: send them to Ultra-Main-Dev directly; until released, build in `workshop/` (maintainer).
+- 2026-10-26: requests to Ultra, the toolmaker: whenever you stumble on something in Ultra or Kraft (a wish, a bug, an improvement), tell Ultra-Main-Dev directly, small things included; meanwhile build in `workshop/` (maintainer: agents should feel encouraged, for synergies between the projects).
 - 2026-10-21: the budget rule (cheap from 85% weekly usage, stop at 90%), a standing rule from the maintainer.
 - 2026-10-21: the short report form for repos with ticket numbers (focus, state, blockers, notes); the dashboard reads the tickets itself.
 - 2026-10-19: first version.
