@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.streams.ops
 
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamWrapperBase
+import kotlin.reflect.KClass
 
 /**
  * Filter the incoming values and publish only the ones that match the [predicate].
@@ -43,6 +44,27 @@ inline fun <reified I : T, T> Stream<T>.filterIsInstance(): Stream<I?> {
 inline fun <reified I : T, T> Stream<T>.filterIsInstance(initial: I): Stream<I> {
     @Suppress("UNCHECKED_CAST")
     return filter(initial) { it is I } as Stream<I>
+}
+
+/**
+ * Filters the incoming values and publish only the ones that are an instance of [cls].
+ *
+ * Needs no type arguments: `filterIsInstanceOf(B::class)`. Named apart from [filterIsInstance]: on a `Stream<Any?>`
+ * its `initial` overload accepts a `KClass` too, as the initial value.
+ */
+fun <T, I : T & Any> Stream<T>.filterIsInstanceOf(cls: KClass<I>): Stream<I?> {
+    @Suppress("UNCHECKED_CAST")
+    return filter { cls.isInstance(it) } as Stream<I?>
+}
+
+/**
+ * Filters the incoming values and publish only the ones that are an instance of [cls].
+ *
+ * The [initial] value is published as long as no value of [cls] was published by the stream.
+ */
+fun <T, I : T & Any> Stream<T>.filterIsInstanceOf(cls: KClass<I>, initial: I): Stream<I> {
+    @Suppress("UNCHECKED_CAST")
+    return filter(initial) { cls.isInstance(it) } as Stream<I>
 }
 
 /**

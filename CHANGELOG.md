@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### New
+
+- **Streams: `filterIsInstanceOf(cls)` (ULTRA-00241).** Filters by a `KClass`, so the call needs no type arguments:
+  `stream.filterIsInstanceOf(Diagnostics::class)` instead of `stream.filterIsInstance<Diagnostics, _>()`. The class
+  must still be a subtype of the stream's type. With `initial`, it returns a non-null `Stream<I>`. It has a name of
+  its own because a `KClass` also fits `filterIsInstance(initial)`: as an overload the call would be ambiguous on a
+  `Stream<Any?>`. Watch for `filterIsInstance(X::class)` there today: it compiles as `initial` and filters for
+  `KClass` values.
+
+### Docs
+
+- The streams `filterIsInstance` examples wrote one type argument, which does not compile; they now show both forms.
+
 ## 0.115.0
 
 ### Breaking changes

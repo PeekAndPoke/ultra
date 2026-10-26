@@ -114,20 +114,26 @@ println(safe())  // "hello"
 source(null)
 println(safe())  // "hello" (keeps last non-null)`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h3>filterIsInstance</h3>
+    <h3>filterIsInstance and filterIsInstanceOf</h3>
 
-    <p>Filter by type, using Kotlin's reified type parameter:</p>
+    <p>Filter by type. <code>filterIsInstance</code> takes the type and the stream's own type as type arguments
+        (<code>&lt;String, _&gt;</code>); <code>filterIsInstanceOf</code> takes a <code>KClass</code> and needs none.
+        Both reject a type that is not a subtype of the stream's. <strong>Never pass a class to
+        <code>filterIsInstance</code>:</strong> on a <code>Stream&lt;Any?&gt;</code>,
+        <code>filterIsInstance(String::class)</code> compiles as the <code>initial</code> overload, a
+        <code>Stream&lt;KClass&lt;String&gt;&gt;</code> that never lets a string through.</p>
 
-    <Code code={`val source = StreamSource<Any>("text")
-val strings = source.filterIsInstance<String>()  // Stream<String?>
+    <Code code={`val source = StreamSource<Any?>("text")
+val strings = source.filterIsInstanceOf(String::class)  // Stream<String?>
+// the same: source.filterIsInstance<String, _>()
 
-println(strings())  // "text"
+strings.subscribeToStream { println(it) }  // "text"
 
-source(42)
-println(strings())  // "text" (42 is not a String, keeps last match)
+source(42)          // not a String: nothing published, strings() stays "text"
+source("new text")  // "new text"
 
-source("new text")
-println(strings())  // "new text"`} lang="kotlin" theme="vitesse-dark"/>
+// With an initial value, published until the first match: Stream<String>
+val labels = source.filterIsInstanceOf(String::class, initial = "")`} lang="kotlin" theme="vitesse-dark"/>
 
 <h2>distinct</h2>
 

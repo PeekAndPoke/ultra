@@ -303,8 +303,10 @@ val nullable = source.filter { it > 10 }  // Stream<Int?>
 // Filter nulls out of a nullable stream
 val nonNull = nullableStream.filterNotNull(initial = "")
 
-// Filter by type
-val strings = mixedStream.filterIsInstance<String>()
+// Filter by type: a KClass needs no type arguments; the reified form takes both
+val strings = mixedStream.filterIsInstanceOf(String::class)  // Stream<String?>
+val same = mixedStream.filterIsInstance<String, _>()
+// Not filterIsInstance(String::class): on a Stream<Any?> that compiles as the `initial` overload
 ```
 
 ## distinct
