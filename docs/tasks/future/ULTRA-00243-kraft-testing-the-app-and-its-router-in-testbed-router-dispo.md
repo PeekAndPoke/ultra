@@ -1,6 +1,8 @@
 # ULTRA-00243: Kraft testing: the app and its router in TestBed, Router.dispose, awaiting a route
 
 > **Status (2026-10-26): IDEA.** Collected from Klang's first app-module browser tests (KLANG-00343, klang `38ef6dd6`, `src/jsTest/kotlin/comp/RouterWithTransitionsSpec.kt`); the maintainer asked Klang to send TestBed/KQuery findings to ultra "for you to collect". Not scheduled. Releases are rare now (Maven Central limits): when it is picked up, consider growing it in a workshop module first.
+>
+> **Part of:** ULTRA-00244 (Kraft testing epic)
 
 **Security-critical:** no
 

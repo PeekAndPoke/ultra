@@ -1,6 +1,8 @@
 # ULTRA-00240: Kraft testing: TestBed unmounts, failing awaits, shared eventually, KQuery members
 
 > **Status (2026-10-24): DONE.** From the TestBed/KQuery findings of ULTRA-00233 (every modal answers once). The maintainer (2026-10-24): "do the testbed ticket first. When this is done we will prepare a release."
+>
+> **Part of:** ULTRA-00244 (Kraft testing epic)
 
 **Security-critical:** no
 
