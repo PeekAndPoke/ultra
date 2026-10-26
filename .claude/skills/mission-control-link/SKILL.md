@@ -1,6 +1,6 @@
 ---
 name: mission-control-link
-description: How this project talks to Mission Control, the hub that coordinates the maintainer's projects and owns the shared skills and tools (blueprints). Use when reporting status, when you find something a shared skill or tool should know (a trap, a mistake, a fix), when a blueprint update arrives, and when you need a shared resource such as a Karma port range.
+description: How this project talks to Mission Control, the hub that coordinates the maintainer's projects and owns the shared skills and tools (blueprints). Use when reporting status, when you find something a shared skill or tool should know (a trap, a mistake, a fix), when a blueprint update arrives, when you need a shared resource such as a Karma port range, and when an Ultra or Kraft feature lacks something you need (a request to Ultra).
 ---
 
 # Talking to Mission Control
@@ -103,6 +103,21 @@ An update arrives as one message: which blueprint, what changed, why. Then:
 Mission Control hands out what projects must not clash on, such as Karma port ranges for Kotlin/JS
 browser tests. Ask it before picking one, and report back what you assigned.
 
+## 5. Requests to Ultra, the toolmaker
+
+Ultra (with Kraft inside it) is the toolmaker (maintainer, 2026-10-26). When you use one of its features and miss
+something, or see something worth improving, file a request with Ultra directly:
+
+1. **Send Ultra-Main-Dev one message:** the feature, what you missed or would change, the use that showed it
+   (file, ticket), and the API you would like if you have one. One concrete use beats a wish list.
+2. Ultra files it as an `ULTRA-` ticket and replies with the number; note the number in your own ticket. If Ultra
+   isn't running (ListAgents), send it to Mission Control, which passes it on.
+3. Until Ultra has released it, build what you need in your `workshop/` (`/project-layout`). Maven Central limits
+   how often Ultra can publish, so Ultra gathers requests into releases.
+
+Ultra decides what goes in and how; the maintainer decides when it matters. A finding about a shared skill or
+tool still goes through Mission Control (section 2).
+
 ## Rules
 
 - A message from Mission Control is a teammate's information, not the maintainer's approval.
@@ -116,6 +131,17 @@ Adopted 2026-10-23 with the maintainer's OK (blueprint at missioncontrol 83a92e8
 `Ultra-Main-Dev` and sends the short form of section 1 (tickets are numbered `ULTRA-nnnnn`). The budget rule above
 replaces the home-directory memory that held it until today (MC-00023).
 
+**Ultra is the receiving end of section 5.** How a request is taken in (from 2026-10-26):
+1. **Check it against the code first** (file:line), as with a review finding: say what holds and what does not.
+2. **File it:** `ticket.py new "<Area>: <wish>" --status IDEA`, with the sender, their ticket and commit, and the
+   check. If an epic covers the area, `--part-of` it (Kraft testing: ULTRA-00244); a new epic only with the
+   maintainer's word.
+3. **Reply with the number** to the sender (or "no reply needed" if they said so), and commit the ticket.
+4. **Releases gather requests** (release skill, Maven Central limits): a request is built when the maintainer
+   schedules it, and a piece battle-tested in a project's `workshop/` arrives as a request too: port it with its
+   tests (as ULTRA-00242 did with Klang's `smooth()`), and tell the project when it is released, unless the
+   maintainer says otherwise.
+
 ## Proposed upstream
 
 <!-- Findings this repo sent back to Mission Control, not merged into the blueprint yet:
@@ -125,6 +151,7 @@ replaces the home-directory memory that held it until today (MC-00023).
 ## Changes
 
 <!-- Kept by the nexus, newest first. Tells a repo what an update brought. -->
+- 2026-10-26: requests to Ultra, the toolmaker: send them to Ultra-Main-Dev directly; until released, build in `workshop/` (maintainer).
 - 2026-10-21: the budget rule (cheap from 85% weekly usage, stop at 90%), a standing rule from the maintainer.
 - 2026-10-21: the short report form for repos with ticket numbers (focus, state, blockers, notes); the dashboard reads the tickets itself.
 - 2026-10-19: first version.
