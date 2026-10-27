@@ -56,3 +56,7 @@ Checked against the code, 2026-10-28:
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
+- 2026-10-28: the maintainer, in the Klang-Research session (relayed by Klang-Research, not yet confirmed in ultra's
+  session): "The streams should be like patterns ... when there is something to be configured on a stream the config
+  value itself needs to be a stream ..." ("like patterns": sprudel, where every argument of a pattern function is a
+  pattern). It backs option (b), and reads wider: `rest` and `near` as streams too, and the other operators' config.
