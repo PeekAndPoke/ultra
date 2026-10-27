@@ -139,8 +139,8 @@ replaces the home-directory memory that held it until today (MC-00023).
 **Ultra is the receiving end of section 5.** How a request is taken in (from 2026-10-26):
 1. **Check it against the code first** (file:line), as with a review finding: say what holds and what does not.
 2. **File it:** `ticket.py new "<Area>: <wish>" --status IDEA`, with the sender, their ticket and commit, and the
-   check. If an epic covers the area, `--part-of` it (Kraft testing: ULTRA-00244); a new epic only with the
-   maintainer's word.
+   check. If an epic covers the area, `--part-of` it (`ticket.py epics` lists them; Kraft testing: ULTRA-00244, Kraft addons:
+   ULTRA-00258); a new epic only with the maintainer's word.
 3. **Every request gets its number back**, also one declined (`WON'T IMPLEMENT`, with the reason) or parked as an
    IDEA, even when the sender said no reply is needed: the reply keeps requests coming (maintainer: agents should
    feel encouraged, "nice synergies between the projects"). **When two projects ask for the same thing, say so in
