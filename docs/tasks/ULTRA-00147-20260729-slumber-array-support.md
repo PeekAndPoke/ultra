@@ -1,6 +1,8 @@
 # ULTRA-00147: Slumber: array codec support
 
 > **Status (2026-07-29): PAUSED.** IN REVIEW (implemented 2026-07-29; review gate pending with the SDK work)
+>
+> **Part of:** ULTRA-00255 (Ultra libraries epic)
 
 **Plan:** none — raised from ULTRA-00146 (ts sdk codegen) (walker/Slumber parity work)
 **Security-critical:** no (serialization shape only; no auth or trust boundary changes)

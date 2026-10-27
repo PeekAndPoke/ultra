@@ -1,6 +1,8 @@
 # ULTRA-00187: Red team — the TypeScript SDK auth runtime
 
 > **Status (2026-08-24): NOT STARTED.** COLLECTED, not executed. **Do NOT run these during feature work.**
+>
+> **Part of:** ULTRA-00259 (Red-team sessions epic)
 
 **Source:** the `/feature-review` gate on 2026-08-02 (ULTRA-00166 (sdk auth integration)).
 **Target:** `ultra/codegen/src/main/resources/ts/runtime/{auth,login,refresh,acl,acl-loader}.ts` and

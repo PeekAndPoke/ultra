@@ -4,6 +4,8 @@
 > (`eb609f09`). **Outstanding: the Vue binding layer** (§5), and with it the login page and routing.
 > Do NOT archive until those land — the runtime is deliberately framework-neutral, so nothing here
 > has yet been used from a component.
+>
+> **Part of:** ULTRA-00252 (TypeScript SDK and codegen epic)
 
 **Plan:** ULTRA-00146 (ts sdk codegen) (the generator) and
 ULTRA-00153 (frontend sdk vue contributors) (where contributors ship more than clients).

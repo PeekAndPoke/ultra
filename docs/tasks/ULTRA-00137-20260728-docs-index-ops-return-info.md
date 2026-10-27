@@ -1,6 +1,8 @@
 # ULTRA-00137: DOCS: Database.ensureIndexes / recreateIndexes now return the index report
 
 > **Status (2026-07-29): NOT STARTED.**
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Plan:** follow-up from ULTRA-00139 (index ops return info)
 **Security-critical:** no

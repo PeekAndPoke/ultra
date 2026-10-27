@@ -1,6 +1,8 @@
 # ULTRA-00048: Subdomain-safe slug validation (org + branch)
 
 > **Status (2026-07-19): PAUSED.** IN PROGRESS (2026-07-19)
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 **Plan:** (saas foundation — org/branch slug is a future tenant subdomain)
 **Security-critical:** low (input validation; the slug will later drive subdomain→org auto-select, so

@@ -3,6 +3,8 @@
 > **Status (2026-07-25): IDEA.** / not scheduled. Surfaced 2026-07-25 by the security review of
 > ULTRA-00113 (value class userid). **Pre-existing** — not introduced by that work, and
 > **not exploitable today** (see the guards below).
+>
+> **Part of:** ULTRA-00254 (Persistence epic)
 
 ## The asymmetry
 

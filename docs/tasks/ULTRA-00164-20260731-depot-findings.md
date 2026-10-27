@@ -1,6 +1,8 @@
 # ULTRA-00164: Depot — findings parked for the next visit
 
 > **Status (2026-08-01): NOT STARTED.** COLLECTED — not scheduled
+>
+> **Part of:** ULTRA-00251 (Funktor framework epic)
 
 **Found by:** `/feature-review` of the insights REST API (2026-07-31) and the discussion after it
 **Security-critical:** partly — F1 is remotely exploitable through an authenticated admin

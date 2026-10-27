@@ -1,6 +1,8 @@
 # ULTRA-00098: Composable builder for funktor module configuration (self-validating, boot-safe)
 
 > **Status (2026-07-23): NOT SCHEDULED.** FUTURE / not scheduled (captured 2026-07-23)
+>
+> **Part of:** ULTRA-00251 (Funktor framework epic)
 
 **Type:** framework DX + boot hardening (funktor)
 **Origin:** auth-hardening part 4 (ULTRA-00089 (stored param migration))

@@ -1,6 +1,8 @@
 # ULTRA-00161: Red team — insights REST API and collector data
 
 > **Status (2026-10-19): NOT STARTED.** COLLECTED — not executed. Sweep in a dedicated penetration-test session.
+>
+> **Part of:** ULTRA-00259 (Red-team sessions epic)
 
 **Feature:** ULTRA-00160 (insights rest api)
 

@@ -1,6 +1,8 @@
 # ULTRA-00231: Email-first sign-up: the password is chosen when activating
 
 > **Status (2026-10-19): NOT STARTED.** AFTER 0.114.0 (maintainer decision 2026-10-19: "B after the release"); the first auth task after it
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** ULTRA-00221 (insights auth parallel plan) (auth tracks); follows
 ULTRA-00222 (activation hardening) (merged `ed8d3b38`, ships in 0.114.0; its parked row "Activate requires a password" is answered by THIS design instead)

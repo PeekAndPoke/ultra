@@ -1,6 +1,8 @@
 # ULTRA-00065: Modernize the password policy (NIST: length + breach-list over composition rules)
 
 > **Status (2026-07-20): NOT STARTED.** from the password-subsystem review (2026-07-20)
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** none — password hashing hardening (finding 3)
 **Security-critical:** yes (credential strength)

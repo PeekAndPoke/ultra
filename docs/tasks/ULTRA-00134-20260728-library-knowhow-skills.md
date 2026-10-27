@@ -1,6 +1,8 @@
 # ULTRA-00134: Library know-how skills (kontainer, kraft, karango, slumber, streams, …)
 
 > **Status (2026-07-28): NOT STARTED.** proposed 2026-07-28, not started
+>
+> **Part of:** ULTRA-00261 (Build, tooling and skills epic)
 
 **Plan:** none (standalone)
 **Security-critical:** no

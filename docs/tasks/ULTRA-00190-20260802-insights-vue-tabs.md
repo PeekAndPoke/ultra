@@ -4,6 +4,8 @@
 > 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
 > below (icons, highlighting, sort, FQNs, `vars`) and step 10 (delete `reference/` — kept until T4 ports from it). The
 > round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
+>
+> **Part of:** ULTRA-00253 (Insights epic)
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors) → "Insights specifics"
 **Spec:** `funktor/insights/reference/TAB-SPECS.md` — all ten tabs, wire shapes read from a real record

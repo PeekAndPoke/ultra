@@ -1,6 +1,8 @@
 # ULTRA-00195: Group generated API clients under `api/`
 
 > **Status (2026-08-09): PAUSED.** DONE — 2026-08-09. `/feature-review` not run; see the review record.
+>
+> **Part of:** ULTRA-00252 (TypeScript SDK and codegen epic)
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** no — emitted layout only, no change to what is served or who may call it.

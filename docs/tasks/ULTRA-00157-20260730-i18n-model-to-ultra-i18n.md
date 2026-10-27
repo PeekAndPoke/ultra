@@ -1,6 +1,8 @@
 # ULTRA-00157: Move the i18n catalog model out of `:tooling` into `ultra/i18n`
 
 > **Status (2026-07-30): PAUSED.** IN REVIEW — needs `/feature-review`
+>
+> **Part of:** ULTRA-00256 (i18n and l10n epic)
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors) → "i18n in the SDK", prerequisite 2
 **Security-critical:** no (build-time refactor; no behaviour change, no new input surface)

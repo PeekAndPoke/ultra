@@ -7,6 +7,8 @@
 > exploit that forced this: the seeded admin fixture (`isSuperUser=true`, shared signing key) could
 > read the operators-only dashboard. Remaining: apply the rule to the other realm-specific surfaces,
 > the full pair matrix below, and the per-realm-key decision. (2026-07-19: design gap flagged.)
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 **Test bed:** the three-realm `funktor-demo` (operators / b2b / b2b2c) — write these as `AppUnderTest`
 e2e tests that authenticate as one realm and assert rejection at another realm's endpoints.

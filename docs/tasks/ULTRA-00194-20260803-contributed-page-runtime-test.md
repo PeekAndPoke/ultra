@@ -1,6 +1,8 @@
 # ULTRA-00194: A runtime test for contributed pages — and the global-state question behind it
 
 > **Status (2026-08-02): NOT STARTED.** raised 2026-08-02 after a contributed page shipped broken past a green type-check.
+>
+> **Part of:** ULTRA-00252 (TypeScript SDK and codegen epic)
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Security-critical:** no.

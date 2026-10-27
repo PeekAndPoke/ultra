@@ -1,6 +1,8 @@
 # ULTRA-00037: UserPermissions org refactor (Phase O0)
 
 > **Status (2026-07-17): PAUSED.** IN REVIEW — implementation complete + tests green (2026-07-17)
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 **Plan:** ULTRA-00035 (auth orgs foundation) → Phase O0
 **Security-critical:** yes (auth permission model — red-team follow-up required)

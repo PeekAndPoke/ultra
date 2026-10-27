@@ -1,6 +1,8 @@
 # ULTRA-00245: Kraft pixijs addon: raw module, Container constructor, zIndex and the missing members
 
 > **Status (2026-10-26): IDEA.** Request from Spross (Spross-Main-Dev, 2026-10-26), found building the workshop's declarative scenes (SPROSS-00023, "Kulisse", SPROSS-00069). Spross fills every gap in its `workshop/` today as extensions on Kraft's types, so the code is there to take.
+>
+> **Part of:** ULTRA-00258 (Kraft addons epic)
 
 **Security-critical:** no
 

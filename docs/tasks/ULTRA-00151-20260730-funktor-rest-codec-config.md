@@ -1,6 +1,8 @@
 # ULTRA-00151: Let apps configure the RestCodec via FunktorRestBuilder
 
 > **Status (2026-07-29): NOT STARTED.**
+>
+> **Part of:** ULTRA-00252 (TypeScript SDK and codegen epic)
 
 **Plan:** none — raised from ULTRA-00146 (ts sdk codegen) (Phase 2 prerequisite)
 **Security-critical:** no (serialization wiring; no auth or trust boundary change)

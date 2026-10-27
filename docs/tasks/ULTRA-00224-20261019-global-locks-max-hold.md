@@ -1,6 +1,8 @@
 # ULTRA-00224: Global locks: an opt-in maximum hold
 
 > **Status (2026-10-19): NOT STARTED.** maintainer decision 2026-10-19 (against the coordinator's "record no max hold")
+>
+> **Part of:** ULTRA-00251 (Funktor framework epic)
 
 **Plan:** follow-up of ULTRA-00219 (global locks heartbeat) (ledger row 14)
 **Security-critical:** no

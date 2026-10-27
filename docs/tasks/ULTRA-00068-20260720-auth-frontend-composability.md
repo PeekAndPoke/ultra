@@ -1,6 +1,8 @@
 # ULTRA-00068: Composable, brandable auth frontend (extract AuthLogin) + single-source the frontend base URL
 
 > **Status (2026-07-20): PAUSED.** Part 1 DONE (2026-07-20); Part 2 TODO (deferred for discussion) — from the b2b-app review
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** ULTRA-00045 (demo restructure three apps) (three apps share the auth frontend)
 **Security-critical:** yes — Part 2 (a password-reset link pointing at the wrong origin leaks reset

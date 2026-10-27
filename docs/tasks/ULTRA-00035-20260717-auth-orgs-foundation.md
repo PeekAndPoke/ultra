@@ -1,6 +1,8 @@
 # ULTRA-00035: Auth + Organisations Foundation
 
 > **Status (2026-07-17): DESIGNED.** PLANNED 2026-07-17
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 **Goal:** Get organisations (tenants) and branches (sub-tenants) into users in the database, wire
 the org-aware login flow (0/1/n org selection), and then fully implement all still-open user flows.

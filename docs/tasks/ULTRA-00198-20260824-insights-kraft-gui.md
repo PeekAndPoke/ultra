@@ -6,6 +6,8 @@
 > the server mounts them. Next on resume: re-take the generated-TS baseline FROM MASTER (the implementer's copy was not
 > kept), regenerate on the branch, `diff -r` (must be empty or explained), run the module tests, then the pages.
 > Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
+>
+> **Part of:** ULTRA-00253 (Insights epic)
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Counterpart:** ULTRA-00190 (insights vue tabs) — the Vue implementation and its full

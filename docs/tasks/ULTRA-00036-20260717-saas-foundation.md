@@ -1,6 +1,8 @@
 # ULTRA-00036: SaaS Foundation — Multi-Tenancy + Document Tooling
 
 > **Status (2026-07-17): DESIGNED.** PLANNED 2026-07-17
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 **Goal:** Bring funktor to a state where multi-tenant SMB SaaS products (thebizz speedboats) can be
 spun up quickly, and build a reusable document layer: Kotlin content data model + pluggable WYSIWYG

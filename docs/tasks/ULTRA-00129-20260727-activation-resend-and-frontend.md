@@ -8,6 +8,8 @@
 > touched after the fix commit. Archive on the maintainer's word that the gate stands, or after a clean round. Open elsewhere,
 > not here: ULTRA-00130 (activation resend cooldown atomicity) (TODO) and
 > ULTRA-00127 (redteam account activation) (collected, not executed).
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4 (verification) + Phase 6 (demo pages)
 **Follows:** ULTRA-00126 (account activation) — the backend guard. This is its open scope

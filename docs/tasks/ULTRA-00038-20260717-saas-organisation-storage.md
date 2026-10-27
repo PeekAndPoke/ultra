@@ -1,6 +1,8 @@
 # ULTRA-00038: funktor/saas module + Organisation storage (Phase O1)
 
 > **Status (2026-07-18): PAUSED.** IN REVIEW — implementation complete + green (2026-07-18); pending `/feature-review` gate
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 **Plan:** ULTRA-00035 (auth orgs foundation) → Phase O1
 **Security-critical:** yes (tenant entity + isolation — red-team follow-up required)

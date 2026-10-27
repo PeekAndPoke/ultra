@@ -1,6 +1,8 @@
 # ULTRA-00067: Add a CSPRNG secret/token generator (invites, temp passwords, reset tokens)
 
 > **Status (2026-07-20): NOT STARTED.** from the password-subsystem review (2026-07-20)
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** none — password hashing hardening (finding 4)
 **Security-critical:** yes (provisioning secrets)

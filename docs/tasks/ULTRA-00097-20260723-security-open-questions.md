@@ -1,6 +1,8 @@
 # ULTRA-00097: Open security questions — route ownership / isolation (follow-ups)
 
 > **Status (2026-07-23): NOT STARTED.** OPEN QUESTIONS — collected 2026-07-23, not yet designed/scheduled.
+>
+> **Part of:** ULTRA-00250 (Route auth and error disclosure epic)
 
 **Type:** security / design
 **Context:** spun out of part-3 (ULTRA-00090 (two phase auth consistent params) +

@@ -2,6 +2,8 @@
 
 > **Status (2026-07-22): NOT SCHEDULED.** FUTURE — not scheduled. **Requires a proper design/planning pass before implementation.**
 > Deferred while finishing i18n.
+>
+> **Part of:** ULTRA-00257 (Kraft forms and components epic)
 
 **Area:** kraft forms select components (semanticui).
 

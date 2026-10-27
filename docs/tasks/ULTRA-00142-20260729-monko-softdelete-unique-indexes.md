@@ -1,6 +1,8 @@
 # ULTRA-00142: Monko: exclude soft-deleted rows from unique indexes
 
 > **Status (2026-07-29): NOT STARTED.**
+>
+> **Part of:** ULTRA-00254 (Persistence epic)
 
 **Plan:** follow-up from ULTRA-00140 (vault scan findings) → S2
 **Security-critical:** no

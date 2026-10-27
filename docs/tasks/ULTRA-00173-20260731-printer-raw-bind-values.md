@@ -1,6 +1,8 @@
 # ULTRA-00173: AqlPrinter / MongoPrinter render RAW bind values, not slumbered ones
 
 > **Status (2026-07-31): PAUSED.** FIX LANDED, TESTS STILL MISSING (updated 2026-07-31)
+>
+> **Part of:** ULTRA-00254 (Persistence epic)
 
 **Plan:** ULTRA-00169 (redacted and jackson removal)
 **Security-critical:** no — debug-only surface. But see "Why it is not zero-risk".

@@ -1,6 +1,8 @@
 # ULTRA-00158: ultra/log: level filtering, LogEvent, and per-class SLF4J loggers
 
 > **Status (2026-07-30): PAUSED.** IMPLEMENTED 2026-07-30 — awaiting /feature-review
+>
+> **Part of:** ULTRA-00255 (Ultra libraries epic)
 
 **Plan:** ULTRA-00149 (log scan findings) → L4, L8, L9, L10, L11
 **Security-critical:** no (L1 log forging is tracked separately in ULTRA-00150 (redteam log forging))

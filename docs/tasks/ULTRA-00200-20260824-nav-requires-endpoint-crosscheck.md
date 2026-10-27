@@ -1,6 +1,8 @@
 # ULTRA-00200: Cross-check nav requirements against the endpoints a profile actually emitted
 
 > **Status (2026-08-24): NOT STARTED.** raised by `/feature-review` 2026-08-24 (reviewers 1 and 2, independently).
+>
+> **Part of:** ULTRA-00252 (TypeScript SDK and codegen epic)
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Source feature:** ULTRA-00196 (acl aware navigation)

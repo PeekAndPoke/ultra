@@ -2,6 +2,8 @@
 
 > **Status (2026-07-31): PAUSED.** SCAN COMPLETE, adjudication IN PROGRESS (2026-07-31). KDoc landed, tests green
 > (75 specs, 1232 tests, 0 failures). No fixes applied yet.
+>
+> **Part of:** ULTRA-00255 (Ultra libraries epic)
 
 **Plan:** module-by-module review (method model: ULTRA-00159 (cache scan findings), archived)
 **Security-critical:** partially — polymorphic awaking is a deserialization surface. Security

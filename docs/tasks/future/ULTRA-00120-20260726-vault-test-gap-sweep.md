@@ -2,6 +2,8 @@
 
 > **Status (2026-07-26): IDEA.** / not scheduled. Raised 2026-07-26 by the user while relocating `isForbiddenInId`
 > into `ultra:common`.
+>
+> **Part of:** ULTRA-00254 (Persistence epic)
 
 ## Why
 

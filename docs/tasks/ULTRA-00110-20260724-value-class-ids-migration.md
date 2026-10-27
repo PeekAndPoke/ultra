@@ -5,6 +5,8 @@
 > (`ultra/security/src/commonMain/kotlin/user/UserId.kt:35`), `OrgId` (`OrgId.kt:31`) and `EmailAddress` (`EmailAddress.kt:56`).
 > The Step 2/3 task docs are archived in `docs/tasks-archive/2026-07/`; the Step 4 doc,
 > ULTRA-00119 (value class emailaddress), is still IN REVIEW, awaiting the maintainer's sign-off. Still open:
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 - **Step 5 `Slug`** — `Organisation.slug` and `Branch.slug` are still `String` (`funktor/saas/src/jvmMain/kotlin/domain/Organisation.kt:17,29`),
   as are the API models (`OrgModel.kt:25,35`, `OrgsApiClient.kt:20`); `Slugs` is only a normalizer. The denylist-vs-allowlist

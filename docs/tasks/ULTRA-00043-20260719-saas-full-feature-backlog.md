@@ -2,6 +2,8 @@
 
 > **Status (2026-07-19): NOT STARTED.** BACKLOG — RECORD ONLY (2026-07-19). Provisional working hypotheses, revisable. Nothing
 > here is scheduled; the auth-orgs foundation (ULTRA-00035 (auth orgs foundation)) comes first.
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 **Purpose:** capture everything a full multi-tenant SaaS needs beyond the org/auth foundation, and
 decide the core-vs-app boundary + extension-point strategy.

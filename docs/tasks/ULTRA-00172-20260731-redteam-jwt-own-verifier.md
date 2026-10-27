@@ -1,6 +1,8 @@
 # ULTRA-00172: RED TEAM — our own JWT verifier (post java-jwt removal)
 
 > **Status (2026-08-01): NOT STARTED.** COLLECTED — do not execute here. For a dedicated penetration-test session.
+>
+> **Part of:** ULTRA-00259 (Red-team sessions epic)
 
 **Created:** 2026-07-31
 **Plan:** ULTRA-00041 (jwt lib consolidation options) (RESOLVED section)

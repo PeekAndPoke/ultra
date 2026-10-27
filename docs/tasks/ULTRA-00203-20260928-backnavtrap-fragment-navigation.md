@@ -1,6 +1,8 @@
 # ULTRA-00203: BackNavigationTrap fires on in-page fragment navigation
 
 > **Status (2026-09-28): NOT STARTED.**
+>
+> **Part of:** ULTRA-00257 (Kraft forms and components epic)
 
 **Plan:** — follow-up of ULTRA-00204 (router click interception) (review round 1, MAJOR)
 **Security-critical:** no

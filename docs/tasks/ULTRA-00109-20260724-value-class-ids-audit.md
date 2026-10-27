@@ -5,6 +5,8 @@
 > `EmailAddress`) are DONE and in the tree; Tier 2 `Slug` and all of Tier 3 (`BranchId`, `UserType`) are not. What still waits on
 > the maintainer is the thing this doc was written for — codifying the standing rule below (it is in neither `CLAUDE.md` nor
 > `.claude/skills/code-style/`) and the scope for the rest. The earlier header's "Do NOT migrate anything yet" is void.
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Enabled by:** ULTRA-00105 (slumber value class support) (DONE — slumber serializes value classes exactly
 like kotlinx). **Was blocked for STORED/queried ids by** the Karango-KSP + Monko-KSP follow-ups

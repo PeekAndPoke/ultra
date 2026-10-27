@@ -1,6 +1,8 @@
 # ULTRA-00039: Red-team: SaaS organisations (Phase O1)
 
 > **Status (2026-07-24): NOT STARTED.** COLLECTED — do NOT execute during feature work; run in a dedicated pentest session
+>
+> **Part of:** ULTRA-00259 (Red-team sessions epic)
 
 **Feature task:** ULTRA-00038 (saas organisation storage)
 **Scope:** `funktor/saas` — `Organisation`/`Branch` entity, `OrgsStorage`, `OrgsApiFeature`,

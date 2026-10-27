@@ -1,6 +1,8 @@
 # ULTRA-00102: Request IDs — per-request correlation ids through kontainer + logs
 
 > **Status (2026-07-27): NOT SCHEDULED.** FUTURE — not scheduled.
+>
+> **Part of:** ULTRA-00251 (Funktor framework epic)
 
 **Area:** funktor core (request pipeline, kontainer wiring, logging).
 

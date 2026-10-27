@@ -1,6 +1,8 @@
 # ULTRA-00174: DOCS — `Redacted<T>` (and where `ultra:common` gets documented at all)
 
 > **Status (2026-07-31): NOT STARTED.** created 2026-07-31 on archiving ULTRA-00169 (redacted and jackson removal)
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Plan:** ULTRA-00169 (redacted and jackson removal)
 **Security-critical:** no (documentation), but it documents a security mechanism — accuracy matters more

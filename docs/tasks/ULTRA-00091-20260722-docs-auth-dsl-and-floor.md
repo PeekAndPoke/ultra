@@ -4,6 +4,8 @@
 > (commit `e2d6553b`, 2026-07-28). The part-3 mechanism and part 4 are NOT. COLLECTOR for the remaining documentation pass
 > (do not write the prose here, capture what is left + anchors). Created 2026-07-22 per the "framework change → doc task"
 > standing rule.
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Type:** documentation
 **Triggering changes:** `52512bd4` (part 1: block-style authorize DSL), `2b6d274d` (part 2: mandatory ApiRoutes floor), and

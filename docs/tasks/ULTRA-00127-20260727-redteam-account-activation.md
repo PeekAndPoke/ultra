@@ -2,6 +2,8 @@
 
 > **Status (2026-07-27): NOT STARTED.** COLLECTED 2026-07-27 — **do NOT execute during feature work.** These are for a dedicated
 > penetration-test session.
+>
+> **Part of:** ULTRA-00259 (Red-team sessions epic)
 
 **Feature:** ULTRA-00126 (account activation) (commit `31667449`)
 **Related:** ULTRA-00117 (redteam value class emailaddress) §1–2 (SSO auto-link),

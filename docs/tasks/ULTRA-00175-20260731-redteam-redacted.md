@@ -1,6 +1,8 @@
 # ULTRA-00175: RED TEAM — `Redacted<T>`, the one-way secret wrapper
 
 > **Status (2026-07-31): NOT STARTED.** COLLECTED — do not execute here. For a dedicated penetration-test session.
+>
+> **Part of:** ULTRA-00259 (Red-team sessions epic)
 
 **Created:** 2026-07-31
 **Plan:** ULTRA-00169 (redacted and jackson removal)

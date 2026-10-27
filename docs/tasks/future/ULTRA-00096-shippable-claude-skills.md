@@ -1,6 +1,8 @@
 # ULTRA-00096: Ship shareable Claude skills alongside the framework (Kraft, ultra, funktor)
 
 > **Status (2026-07-23): IDEA.** not yet scheduled (captured 2026-07-23, user request)
+>
+> **Part of:** ULTRA-00261 (Build, tooling and skills epic)
 
 **Type:** developer-experience / distribution
 

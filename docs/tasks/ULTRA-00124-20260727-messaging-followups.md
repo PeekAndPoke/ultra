@@ -1,6 +1,8 @@
 # ULTRA-00124: Messaging follow-ups from the email review gate
 
 > **Status (2026-07-27): NOT STARTED.** collected 2026-07-27, none started
+>
+> **Part of:** ULTRA-00251 (Funktor framework epic)
 
 **Source:** the 3-agent gate on ULTRA-00123 (framework composed email sender)
 **Security-critical:** items 1 and 2 are; the rest are correctness or ergonomics.

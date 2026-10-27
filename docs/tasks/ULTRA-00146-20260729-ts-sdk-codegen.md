@@ -2,6 +2,8 @@
 
 > **Status (2026-10-19): NOT STARTED.** **Plan:** ULTRA-00028 (v1 roadmap) → Post-v1 Backlog item 4 ("Dart codegen rewrite") —
 > **superseded by this task**
+>
+> **Part of:** ULTRA-00252 (TypeScript SDK and codegen epic)
 
 **Security-critical:** no (dev-time generator; no runtime auth path. See "Security notes" for why, and the one thing
 that is worth a conscious decision.)

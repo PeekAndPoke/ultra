@@ -5,6 +5,8 @@
 > Origin: follow-up to the `ApiStatusPages` fail-open fix in
 > ULTRA-00061 (vault hook scope) — "are there other status pages with the same
 > issue?"
+>
+> **Part of:** ULTRA-00250 (Route auth and error disclosure epic)
 
 ## Where the work lives
 

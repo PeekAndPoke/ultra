@@ -4,6 +4,8 @@
 > ULTRA-00050 (token storage hardening) and
 > ULTRA-00185 (rest content type enforcement), per the CLAUDE.md rule that a
 > public-API change gets a docs follow-up once the code is settled.
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Plan:** none.
 **Security-critical:** no — but it documents a security boundary, so be precise about what enforces what.

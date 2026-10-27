@@ -1,6 +1,8 @@
 # ULTRA-00101: Automatic entity mutation tracking — vault hooks + diff worker
 
 > **Status (2026-07-27): NOT SCHEDULED.** FUTURE — not scheduled. Needs a proper design pass (GDPR question below is open).
+>
+> **Part of:** ULTRA-00254 (Persistence epic)
 
 **Area:** ultra:vault hooks, funktor worker infra, storage.
 

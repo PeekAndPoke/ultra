@@ -1,6 +1,8 @@
 # ULTRA-00118: SSO signup links to an existing account without checking `email_verified` (account takeover)
 
 > **Status (2026-07-26): NOT STARTED.** needs a POLICY decision from the user before implementing.
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Found via:** the security review of ULTRA-00119 (value class emailaddress) (Step 4).
 **Severity:** HIGH. **PRE-EXISTING** — not introduced by the email work, but that work makes it more

@@ -1,6 +1,8 @@
 # ULTRA-00064: Add an optional server-side pepper to password hashing
 
 > **Status (2026-07-20): NOT STARTED.** from the password-subsystem review (2026-07-20)
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** none — password hashing hardening (finding 2)
 **Security-critical:** yes (defence-in-depth for a DB-only compromise)

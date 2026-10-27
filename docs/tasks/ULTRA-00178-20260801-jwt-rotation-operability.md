@@ -1,6 +1,8 @@
 # ULTRA-00178: JWT rotation: make it operable, plus two config loose ends
 
 > **Status (2026-08-01): NOT STARTED.** created 2026-08-01 on archiving ULTRA-00176 (jwt kid key rotation)
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** none — this is the actionable residue of that task's OPEN section (items 2, 4, 5)
 **Security-critical:** partly — nothing here changes the verify path; the value is in making a

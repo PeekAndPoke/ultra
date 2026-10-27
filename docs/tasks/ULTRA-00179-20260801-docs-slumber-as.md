@@ -2,6 +2,8 @@
 
 > **Status (2026-08-01): NOT STARTED.** created 2026-08-01 on passing the `/feature-review` gate for
 > ULTRA-00170 (slumber as declared wire shape).
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Plan:** none.
 **Security-critical:** no.

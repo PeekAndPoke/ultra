@@ -1,6 +1,8 @@
 # ULTRA-00071: Fix: second-order placeholder injection in `ultra.common.Placeholders`
 
 > **Status (2026-07-20): PAUSED.** DONE — fixed, adversarial tests green on jvm+js+metadata (2026-07-20)
+>
+> **Part of:** ULTRA-00256 (i18n and l10n epic)
 
 **Plan:** prompted by the S1 review (ULTRA-00069 (i18n l10n foundation) Interactions)
 **Security-critical:** yes (injection / information disclosure in a shared utility)

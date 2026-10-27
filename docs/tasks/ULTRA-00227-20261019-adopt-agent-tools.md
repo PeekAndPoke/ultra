@@ -2,6 +2,8 @@
 
 > **Status (2026-10-19): NOT STARTED.** the maintainer approved the shared first drafts (relayed by Mission-Control, 2026-10-19); fit in when
 > a slot allows, never displacing a running track
+>
+> **Part of:** ULTRA-00261 (Build, tooling and skills epic)
 
 **Plan:** none — coordinator tooling. Source drafts: `/opt/dev/peekandpoke/agent-tools/` (README there)
 **Security-critical:** no — but `mutate` edits and restores source files, so its restore path is the risk

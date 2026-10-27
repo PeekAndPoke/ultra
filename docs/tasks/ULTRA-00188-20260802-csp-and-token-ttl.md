@@ -3,6 +3,8 @@
 > **Status (2026-08-02): NOT STARTED.** created 2026-08-02 on archiving
 > ULTRA-00050 (token storage hardening), which declared both of these out of
 > its own scope (§"Framing") and would otherwise have taken them into the archive with it.
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** none.
 **Security-critical:** yes → red-team follow-up required if it lands.

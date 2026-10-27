@@ -1,6 +1,8 @@
 # ULTRA-00159: ultra/cache: scan findings
 
 > **Status (2026-07-30): PAUSED.** SCAN IN PROGRESS — 2026-07-30
+>
+> **Part of:** ULTRA-00255 (Ultra libraries epic)
 
 **Plan:** module-by-module review (`cache` is module 5, after `vault`, `common`, `reflection`, `log`)
 **Security-critical:** no

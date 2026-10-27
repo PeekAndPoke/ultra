@@ -1,6 +1,8 @@
 # ULTRA-00052: Environment classification must fail closed on unknown environments
 
 > **Status (2026-07-22): NOT STARTED.**
+>
+> **Part of:** ULTRA-00250 (Route auth and error disclosure epic)
 
 **Plan:** none — from ULTRA-00054 (error response disclosure audit) (finding 3)
 **Security-critical:** yes

@@ -2,6 +2,8 @@
 
 > **Status (2026-08-02): NOT STARTED.** SEED — written by the codegen agent for whoever owns `funktor/auth`. Complete it; do not
 > assume it is finished.
+>
+> **Part of:** ULTRA-00252 (TypeScript SDK and codegen epic)
 
 **Counterpart:** ULTRA-00166 (sdk auth integration) (the SDK side, same day).
 **Security-critical:** yes — sessions, tokens, JWT claims. Red-team follow-up required.

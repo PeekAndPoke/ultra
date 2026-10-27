@@ -2,6 +2,8 @@
 
 > **Status (2026-10-19): NOT STARTED.** write after ULTRA-00224 (global locks max hold) lands (it adds the `maxHold` parameter).
 > Settled 2026-10-19: lock timing relies on NTP (state it as a requirement)
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Plan:** follow-up of ULTRA-00219 (global locks heartbeat) (public API changed)
 **Security-critical:** no

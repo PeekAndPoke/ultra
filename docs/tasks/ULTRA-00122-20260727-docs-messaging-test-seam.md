@@ -1,6 +1,8 @@
 # ULTRA-00122: Docs collector — messaging: framework-composed sender, test capture, id-character predicate
 
 > **Status (2026-07-27): NOT STARTED.**
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Plan:** none — follow-up to ULTRA-00121 (email e2e test seam)
 **Security-critical:** no (documentation only — but it documents a security guard)

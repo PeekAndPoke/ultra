@@ -1,6 +1,8 @@
 # ULTRA-00066: Password hashes never upgrade — add rehash-on-login
 
 > **Status (2026-07-20): NOT STARTED.** from the password-subsystem review (2026-07-20)
+>
+> **Part of:** ULTRA-00248 (Auth and sessions epic)
 
 **Plan:** none — password hashing hardening (finding 1, the headline gap)
 **Security-critical:** yes

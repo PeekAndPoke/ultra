@@ -3,6 +3,8 @@
 > **Status (2026-10-23): DESIGNED.** Starts after the current work. Ultra pilots it; raise it with Mission Control as
 > a cross-project topic afterwards, with what the pilot showed (maintainer, 2026-10-23: "Let us pilot it here. We can
 > raise this to MC later").
+>
+> **Part of:** ULTRA-00261 (Build, tooling and skills epic)
 
 ## Why this exists
 

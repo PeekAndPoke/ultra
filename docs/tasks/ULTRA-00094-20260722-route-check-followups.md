@@ -1,6 +1,8 @@
 # ULTRA-00094: Route-check extension-point follow-ups (param-names, entity linter, branch isolation)
 
 > **Status (2026-07-22): NOT STARTED.** (created 2026-07-22) — spun out of ULTRA-00090 (two phase auth consistent params)
+>
+> **Part of:** ULTRA-00250 (Route auth and error disclosure epic)
 
 **Type:** framework / hardening
 **Depends on:** the `RouteBootCheck` / `RouteParamsGuard` extension points landed in part 3.

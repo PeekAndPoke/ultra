@@ -1,6 +1,8 @@
 # ULTRA-00117: Red-team: `EmailAddress` — email as an authentication identifier
 
 > **Status (2026-07-26): NOT STARTED.** COLLECTED 2026-07-26 — NOT executed. A dedicated penetration-test session runs these.
+>
+> **Part of:** ULTRA-00259 (Red-team sessions epic)
 
 **Feature:** ULTRA-00119 (value class emailaddress)
 **Why:** email is how users are resolved at sign-in, password reset, and SSO login/signup.

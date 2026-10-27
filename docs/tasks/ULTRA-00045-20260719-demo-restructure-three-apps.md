@@ -3,6 +3,8 @@
 > **Status (2026-07-19): DESIGNED.** PLANNED 2026-07-19. The current `funktor-demo` was built to *market the framework*; that
 > goal is dropped — the framework is now internal. Replace the demo with three real SaaS apps that
 > also serve as the reference/testbed for the org+billing features.
+>
+> **Part of:** ULTRA-00249 (SaaS organisations epic)
 
 ## Realm / identity architecture (decided)
 

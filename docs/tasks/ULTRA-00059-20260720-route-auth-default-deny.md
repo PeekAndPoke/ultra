@@ -8,6 +8,8 @@
 > (`AuthChainBootCheck.kt:19-25`, run by `ValidateRoutesOnAppStarting`) re-checks every route at boot. Intentionally public
 > groups declare `authFloor = { public() }`. The `ValidateRouteAuthOnAppStarting` class sketched in §4 was never built, and §4's
 > rejection of option (b) ("compile-time enforcement would need a different shape") is exactly what the floor turned out to be.
+>
+> **Part of:** ULTRA-00250 (Route auth and error disclosure epic)
 
 **Still open — why this is not archived:**
 - The acceptance boxes and the Test-evidence list below describe the sketched hook; they were never ticked or rewritten for

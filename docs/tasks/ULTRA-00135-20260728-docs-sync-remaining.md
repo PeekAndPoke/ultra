@@ -1,6 +1,8 @@
 # ULTRA-00135: Docs/code sync — remaining items from the 2026-07-28 audit
 
 > **Status (2026-07-28): NOT STARTED.** the BROKEN class is fixed; these are the GAPs and DRIFT left over
+>
+> **Part of:** ULTRA-00260 (Docs backlog epic)
 
 **Plan:** none (follow-up to the docs sync audit)
 **Security-critical:** no

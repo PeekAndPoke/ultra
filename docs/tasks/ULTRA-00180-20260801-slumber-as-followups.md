@@ -2,6 +2,8 @@
 
 > **Status (2026-08-01): NOT STARTED.** created 2026-08-01 from the `/feature-review` gate on
 > ULTRA-00170 (slumber as declared wire shape) (§15 is the full record).
+>
+> **Part of:** ULTRA-00255 (Ultra libraries epic)
 
 **Plan:** none. These are the findings that were confirmed but deliberately not fixed in the gate,
 because each is either a separate change or needs a decision.

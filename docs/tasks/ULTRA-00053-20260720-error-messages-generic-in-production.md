@@ -2,6 +2,8 @@
 
 > **Status (2026-07-22): NOT STARTED.** tactical slice; see
 > ULTRA-00055 (exception disclosure architecture) for the umbrella design
+>
+> **Part of:** ULTRA-00250 (Route auth and error disclosure epic)
 
 **Plan:** none — from ULTRA-00054 (error response disclosure audit) (findings 1 + 2)
 **Security-critical:** yes
