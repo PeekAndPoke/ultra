@@ -64,3 +64,5 @@ Not tested: no spec touches `DndDragHandle` or `DndDropTarget`; the only user is
 ## History
 
 - 2026-10-28: created from Klang's requests; checked against the code the same day.
+- 2026-10-28: Klang noted it in KLANG-00382 (klang `53d228ab3`) and builds its own pick-and-place first; nothing waits on
+  this. Growing the rework in Klang's `workshop/` is the maintainer's call (decision 1).
