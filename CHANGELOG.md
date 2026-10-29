@@ -35,6 +35,11 @@
   .history(capacity = 480)`. `every` may be a `Stream<Duration>` that changes while listening; `everyMs` and
   `sampled(clock: FrameClock)` too. `history()`'s KDoc names its copy per value.
 
+- **Kraft three.js: pause the render loop (ULTRA-00270, from Klang).** `ThreeJs(paused = ...)` takes a
+  `Stream<Boolean>`: while true no frame is asked for, and the scene, camera and WebGL context stay
+  (`paused = windowCtrl.hasFocus.map { !it }`). After a resume the first `deltaMs` is 0 and `elapsedMs` counts
+  running time only. The loop runs on `clock` (default `FrameClock.animationFrames`, shared with the streams).
+
 ### Changed
 
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its

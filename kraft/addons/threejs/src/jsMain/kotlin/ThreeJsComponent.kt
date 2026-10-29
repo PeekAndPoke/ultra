@@ -9,6 +9,11 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.utils.jsObject
 import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.streams.Stream
+import io.peekandpoke.ultra.streams.Unsubscribe
+import io.peekandpoke.ultra.streams.ops.FrameClock
+import io.peekandpoke.ultra.streams.ops.animationFrames
+import io.peekandpoke.ultra.streams.steady
 import kotlinx.browser.window
 import kotlinx.html.Tag
 import kotlinx.html.canvas
@@ -27,9 +32,9 @@ class ThreeJsFrame(
     val scene: Scene,
     val camera: Camera,
     val renderer: WebGLRenderer,
-    /** Milliseconds since the previous frame. */
+    /** Milliseconds since the previous frame; 0 on the first frame and on the first after a pause. */
     val deltaMs: Double,
-    /** Milliseconds since the first frame. */
+    /** Milliseconds of running time since the first frame: a pause does not count. */
     val elapsedMs: Double,
 )
 
@@ -38,6 +43,10 @@ class ThreeJsFrame(
  *
  * Build the scene in [onReady]; advance animation state in [onFrame]; the component
  * calls `renderer.render(scene, camera)` automatically each frame.
+ *
+ * While [paused] holds true no frame is asked for at all (the scene, the camera and the WebGL context stay), e.g.
+ * `paused = windowCtrl.hasFocus.map { !it }`. The frames come from [clock], by default the browser's animation frames,
+ * shared with every other user of [FrameClock.animationFrames].
  */
 @Suppress("FunctionName")
 fun Tag.ThreeJs(
@@ -49,6 +58,8 @@ fun Tag.ThreeJs(
     clearColor: Int? = null,
     width: Int? = null,
     height: Int? = null,
+    paused: Stream<Boolean> = steady(false),
+    clock: FrameClock = FrameClock.animationFrames,
 ) = comp(
     ThreeJsComponent.Props(
         onReady = onReady,
@@ -59,6 +70,8 @@ fun Tag.ThreeJs(
         clearColor = clearColor,
         width = width,
         height = height,
+        paused = paused,
+        clock = clock,
     )
 ) {
     ThreeJsComponent(it)
@@ -78,6 +91,8 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
         val clearColor: Int?,
         val width: Int?,
         val height: Int?,
+        val paused: Stream<Boolean>,
+        val clock: FrameClock,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,9 +102,8 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
     private var scene: Scene? = null
     private var camera: Camera? = null
     private var renderer: WebGLRenderer? = null
-    private var rafHandle: Int? = null
-    private var firstFrameTs: Double = 0.0
-    private var lastFrameTs: Double = 0.0
+    private var loop: RenderLoop? = null
+    private var unsubscribePaused: Unsubscribe? = null
 
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -97,6 +111,9 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
         lifecycle {
             onMount { tryStart() }
             onUpdate { tryStart() }
+            onNextProps { new, old ->
+                if (new.paused !== old.paused) loop?.let { followPaused(it, new.paused) }
+            }
             onUnmount { stop() }
         }
     }
@@ -146,31 +163,33 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
     }
 
     private fun startLoop() {
-        firstFrameTs = 0.0
-        lastFrameTs = 0.0
-
-        fun frame(ts: Double) {
+        val newLoop = RenderLoop(clock = props.clock) { delta, elapsed ->
             val s = scene
             val c = camera
             val r = renderer
-            if (s == null || c == null || r == null) return
 
-            if (firstFrameTs == 0.0) firstFrameTs = ts
-            val delta = if (lastFrameTs == 0.0) 0.0 else ts - lastFrameTs
-            lastFrameTs = ts
-
-            props.onFrame(ThreeJsFrame(s, c, r, deltaMs = delta, elapsedMs = ts - firstFrameTs))
-            r.render(s, c)
-
-            rafHandle = window.requestAnimationFrame(::frame)
+            if (s != null && c != null && r != null) {
+                props.onFrame(ThreeJsFrame(s, c, r, deltaMs = delta, elapsedMs = elapsed))
+                r.render(s, c)
+            }
         }
 
-        rafHandle = window.requestAnimationFrame(::frame)
+        loop = newLoop
+        // Before the start, so a scene mounted paused asks for no frame at all
+        followPaused(newLoop, props.paused)
+        newLoop.start()
+    }
+
+    private fun followPaused(loop: RenderLoop, paused: Stream<Boolean>) {
+        unsubscribePaused?.invoke()
+        unsubscribePaused = paused.subscribeToStream { if (it) loop.pause() else loop.resume() }
     }
 
     private fun stop() {
-        rafHandle?.let { window.cancelAnimationFrame(it) }
-        rafHandle = null
+        unsubscribePaused?.invoke()
+        unsubscribePaused = null
+        loop?.stop()
+        loop = null
         renderer?.dispose()
         renderer = null
         scene = null
