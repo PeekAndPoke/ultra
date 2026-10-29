@@ -1234,6 +1234,23 @@ class BreadCrumb(ctx: NoProps) : PureComponent(ctx) {
 }
 ```
 
+## Guarding a page against leaving
+
+```kotlin
+init {
+    guardLeaving(beforeUnload = true) { target ->
+        if (!draft.isDirty) LeaveResult.Proceed
+        else LeaveResult.Ask { modals.showAndAwait<Boolean> { YesNo("Leave without applying?") } == true }
+    }
+}
+```
+
+Asked before each navigation away while the component is mounted (`navToUri`, intercepted links, `replaceUri`,
+Back/Forward, a typed hash). `Proceed` / `Stop` / `Ask(confirm)` (true goes on; navigations while asking are dropped).
+Leaving = another matched route (pattern or route params); a query-only or fragment change never asks. A held Back is
+undone by putting the address back as a new entry. `beforeUnload = true` arms the browser's prompt (target `null`).
+Low level: `router.addLeaveGuard(LeaveGuard { target -> ... })` returns the `Unsubscribe`.
+
 ## Setting the page title
 
 Kraft provides a `PageTitle` component:

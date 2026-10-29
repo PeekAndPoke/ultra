@@ -57,6 +57,12 @@
   element also when layout alone resizes it (a `ResizeObserver` through `queueResize()`); `resizeTo` follows the
   window's resize event only. Spross's code is taken from its Apache-2.0 workshop.
 
+- **Kraft router: guard a page against leaving (ULTRA-00266, from Klang).** `guardLeaving { target -> ... }` in a
+  component answers `LeaveResult.Proceed`, `Stop` or `Ask(confirm)`, asked before every navigation away while it is
+  mounted: `navToUri`, intercepted links, `replaceUri`, Back/Forward and a typed hash (undone by putting the address
+  back). Leaving means another matched route; a query-only change (every `urlParam`) never asks. `beforeUnload = true`
+  arms the browser's prompt. `RouterStrategy` gains `normalize(uri)` and `restoreUri(uri)`, with defaults.
+
 ### Changed
 
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its

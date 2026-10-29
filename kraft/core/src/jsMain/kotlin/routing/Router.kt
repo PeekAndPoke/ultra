@@ -3,10 +3,12 @@ package io.peekandpoke.kraft.routing
 import io.peekandpoke.kraft.KraftApp
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.getAttributeRecursive
+import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.routing.Router.RouterStrategy.Companion.HASH_PREFIX
 import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.Document
@@ -72,6 +74,15 @@ class Router(
 
         /** Removes the browser event listeners [init] installed. */
         fun dispose() {}
+
+        /** The [uri] as [getUriFromWindowLocation] would read it back once it is the address. */
+        fun normalize(uri: String): String = uri
+
+        /**
+         * Puts [uri] back as the address, as a new entry and without telling the router: a [LeaveGuard] that stops a
+         * Back or a typed address undoes the browser's move with it. The default does nothing.
+         */
+        fun restoreUri(uri: String) {}
     }
 
     /** Hash-based routing strategy using the URL fragment (e.g. `#/path`). */
@@ -112,6 +123,12 @@ class Router(
             return window.location.hash.cleanUri()
         }
 
+        override fun normalize(uri: String): String = uri.cleanUri()
+
+        override fun restoreUri(uri: String) {
+            window.history.pushState(data = null, title = "", url = HASH_PREFIX + uri.cleanUri())
+        }
+
         private fun String.cleanUri(): String {
             return removePrefix(HASH_PREFIX).trim()
         }
@@ -123,7 +140,9 @@ class Router(
             if (router.enabled) {
                 event.preventDefault()
 
-                router.navigateToWindowUri()
+                if (router.browserNavigationAllowed()) {
+                    router.navigateToWindowUri()
+                }
             }
         }
     }
@@ -169,6 +188,12 @@ class Router(
             return window.location.pathname + window.location.search + window.location.hash
         }
 
+        override fun normalize(uri: String): String = uri.cleanUri()
+
+        override fun restoreUri(uri: String) {
+            window.history.pushState(null, "", uri.cleanUri())
+        }
+
         private fun String.cleanUri(): String {
             return "/" + trim().trimStart('/')
         }
@@ -185,7 +210,10 @@ class Router(
             if (uri.substringBefore('#') == router.current().uri.substringBefore('#')) return
 
             event.preventDefault()
-            router.navigateToWindowUri()
+
+            if (router.browserNavigationAllowed()) {
+                router.navigateToWindowUri()
+            }
         }
 
         /**
@@ -325,6 +353,15 @@ class Router(
     /** Stream that emits the navigation history whenever it changes. */
     val history: Stream<History> = _history
 
+    /** The registered [LeaveGuard]s, in mount order. */
+    private val leaveGuards = mutableListOf<LeaveGuard>()
+
+    /** An [LeaveResult.Ask] is waiting for its answer: further navigations away are dropped meanwhile. */
+    private var askingToLeave = false
+
+    /** A navigation the guards already let through: its own address change (a hashchange) is not asked again. */
+    private var letThrough: String? = null
+
     init {
         strategy.init()
 
@@ -354,7 +391,7 @@ class Router(
      * Navigates to the given uri.
      */
     fun navToUri(uri: String) {
-        strategy.navigateToUri(uri)
+        guarded(uri) { strategy.navigateToUri(uri) }
     }
 
     /**
@@ -442,16 +479,114 @@ class Router(
      * Replaces the current uri with changing the history
      */
     fun replaceUri(uri: String) {
-        val before = strategy.getUriFromWindowLocation()
+        guarded(uri) {
+            val before = strategy.getUriFromWindowLocation()
 
-        strategy.replaceUri(uri)
+            strategy.replaceUri(uri)
 
-        // Compared as the strategy reads the address back, so "#/x" and "/x" are the same under hash routing
-        if (strategy.getUriFromWindowLocation() != before) {
-            // The replaced route leaves the history
-            _historyEntries.removeLastOrNull()
-            // Resolve the next route, once
-            navigateToWindowUri()
+            // Compared as the strategy reads the address back, so "#/x" and "/x" are the same under hash routing
+            if (strategy.getUriFromWindowLocation() != before) {
+                // The replaced route leaves the history
+                _historyEntries.removeLastOrNull()
+                // Resolve the next route, once
+                navigateToWindowUri()
+            }
+        }
+    }
+
+    /**
+     * Registers a [LeaveGuard], asked before each navigation away from the current route until the returned
+     * [Unsubscribe] is called. Components use [guardLeaving], which registers for as long as they are mounted.
+     */
+    fun addLeaveGuard(guard: LeaveGuard): Unsubscribe {
+        leaveGuards += guard
+
+        return { leaveGuards.remove(guard) }
+    }
+
+    /** Runs [go] if no guard holds the navigation to [uri]; with an [LeaveResult.Ask], once it is answered yes. */
+    private fun guarded(uri: String, go: () -> Unit) {
+        val target = strategy.normalize(uri)
+
+        if (leaveGuards.isEmpty() || !isLeaving(target)) return go()
+        if (askingToLeave) return
+
+        val pass = {
+            letThrough = target
+            go()
+        }
+
+        when (val answer = askGuards(target)) {
+            LeaveResult.Proceed -> pass()
+            LeaveResult.Stop -> Unit
+            is LeaveResult.Ask -> ask(answer, pass)
+        }
+    }
+
+    /**
+     * For the strategies, when the browser moved the address itself (Back, Forward, a typed hash): true when the
+     * router may follow; otherwise the guards held it and the address was put back.
+     */
+    internal fun browserNavigationAllowed(): Boolean {
+        val target = strategy.getUriFromWindowLocation()
+
+        if (target == letThrough) {
+            letThrough = null
+            return true
+        }
+
+        if (leaveGuards.isEmpty() || !isLeaving(target)) return true
+
+        val stay = current().uri
+
+        if (askingToLeave) {
+            strategy.restoreUri(stay)
+            return false
+        }
+
+        return when (val answer = askGuards(target)) {
+            LeaveResult.Proceed -> true
+
+            LeaveResult.Stop -> {
+                strategy.restoreUri(stay)
+                false
+            }
+
+            is LeaveResult.Ask -> {
+                strategy.restoreUri(stay)
+                ask(answer) {
+                    letThrough = target
+                    strategy.navigateToUri(target)
+                }
+                false
+            }
+        }
+    }
+
+    /** Leaving: the [target] matches another route, or the same with other route params, or none. */
+    private fun isLeaving(target: String): Boolean {
+        val here = current()
+        val (mounted, match) = resolveRouteForUri(target) ?: return true
+
+        return mounted != here.mountedRoute || match.routeParams != here.matchedRoute.routeParams
+    }
+
+    /** The first answer that does not proceed, in mount order. */
+    private fun askGuards(target: String): LeaveResult =
+        leaveGuards.toList().asSequence()
+            .map { it.onLeave(target) }
+            .firstOrNull { it != LeaveResult.Proceed }
+            ?: LeaveResult.Proceed
+
+    private fun ask(answer: LeaveResult.Ask, go: () -> Unit) {
+        askingToLeave = true
+
+        launch {
+            try {
+                if (answer.confirm()) go()
+            } finally {
+                askingToLeave = false
+            }
         }
     }
 
@@ -502,6 +637,9 @@ class Router(
      * If a route is resolved then the [current] stream will be updated.
      */
     fun navigateToWindowUri() {
+        // A let-through navigation has arrived (or never comes as its own event, under the path strategy)
+        letThrough = null
+
         // get the location from the browser
         val uri = strategy.getUriFromWindowLocation()
 

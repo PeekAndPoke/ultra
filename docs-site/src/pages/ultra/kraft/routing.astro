@@ -195,6 +195,33 @@ fun A.href(route: Route.Bound) {
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
+<h2>Guarding a page against leaving</h2>
+
+<p>A page with unsaved work asks before the router leaves it. <code>guardLeaving</code> registers while the component
+    is mounted; its block is asked before each navigation away (<code>navToUri</code>, an intercepted link,
+    <code>replaceUri</code>, Back and Forward, a typed hash) and decides by the state at that moment:</p>
+
+<Code code={`class LookEditor(ctx: NoProps) : PureComponent(ctx) {
+    private var draft by value(Draft.empty)
+
+    init {
+        guardLeaving(beforeUnload = true) { target ->
+            if (!draft.isDirty) LeaveResult.Proceed
+            else LeaveResult.Ask { modals.showAndAwait<Boolean> { YesNo("Leave without applying?") } == true }
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<ul>
+    <li><code>Proceed</code> leaves, <code>Stop</code> stays, <code>Ask</code> stays until its block answers: true goes
+        on to the target. Navigations while asking are dropped.</li>
+    <li>Leaving means another matched route: another pattern or other route params. A change of query or fragment alone
+        never asks, so <code>urlParam</code> filters do not.</li>
+    <li>A held Back or typed address is undone: the router puts the page's address back as a new entry.</li>
+    <li><code>beforeUnload = true</code> also arms the browser's own prompt for a reload or a tab close while the block
+        does not proceed (there the block gets <code>null</code> as the target, and an <code>Ask</code> cannot run).</li>
+</ul>
+
 <h2>Setting the page title</h2>
 
 <p>Kraft provides a <code>PageTitle</code> component:</p>
