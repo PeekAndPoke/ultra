@@ -3,15 +3,15 @@ package io.peekandpoke.kraft.routing
 import io.peekandpoke.kraft.KraftApp
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.getAttributeRecursive
-import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.routing.Router.RouterStrategy.Companion.HASH_PREFIX
+import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
 import io.peekandpoke.ultra.streams.Unsubscribe
-import kotlinx.coroutines.Job
 import kotlinx.browser.document
 import kotlinx.browser.window
+import kotlinx.coroutines.Job
 import org.w3c.dom.Document
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.Node
@@ -19,6 +19,7 @@ import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
 import org.w3c.dom.events.MouseEvent
 import org.w3c.dom.url.URL
+import kotlin.js.Date
 
 /**
  * The Router
@@ -32,6 +33,11 @@ class Router(
     companion object {
         /** Typed attribute key used to store the router on components. */
         val key = TypedKey<Router>("router")
+
+        /** How long after [withoutLeaveGuards] a beforeunload still counts as started inside it. */
+        private const val UNLOAD_APPROVAL_MS = 3000
+
+        private var restoredCounter = 0
 
         /** Gets the [Router] from a [KraftApp]. */
         val KraftApp.router: Router get() = appAttributes[key]!!
@@ -76,13 +82,17 @@ class Router(
         /** Removes the browser event listeners [init] installed. */
         fun dispose() {}
 
-        /** The [uri] as [getUriFromWindowLocation] would read it back once it is the address. */
+        /**
+         * The [uri] as [getUriFromWindowLocation] would read it back once it is the address, in the browser's encoding.
+         * The default returns it unchanged: a strategy whose [render] output differs from what it reads back (a `#!`
+         * prefix) overrides it, or every navigation counts as leaving the page.
+         */
         fun normalize(uri: String): String = uri
 
         /**
          * Puts [uri] back as the address, as a new entry and without telling the router: a [LeaveGuard] that stops a
-         * Back or a typed address undoes the browser's move with it. Returns whether it did; the default does nothing
-         * and returns false, and the router then leaves the address where the browser moved it.
+         * Back, a Forward or a typed hash undoes the browser's move with it. Returns whether it did; the default does
+         * nothing and returns false, and the router then leaves the address where the browser moved it.
          */
         fun restoreUri(uri: String): Boolean = false
     }
@@ -130,7 +140,12 @@ class Router(
             return window.location.hash.cleanUri()
         }
 
-        override fun normalize(uri: String): String = uri.cleanUri()
+        override fun normalize(uri: String): String = try {
+            // The fragment as location.hash will hold it: percent-encoded by the browser's URL parser
+            URL(HASH_PREFIX + uri.cleanUri(), window.location.href).hash.cleanUri()
+        } catch (_: Throwable) {
+            uri.cleanUri()
+        }
 
         override fun restoreUri(uri: String): Boolean {
             window.history.pushState(data = null, title = "", url = hashUrl(uri))
@@ -157,6 +172,7 @@ class Router(
         }
 
         /** Plain clicks on route links (`href="#/..."`) go through the router; in-page anchors stay the browser's. */
+        @Suppress("detekt:ReturnCount")
         private fun clickListener(event: Event) {
             if (!router.enabled) return
 
@@ -170,7 +186,7 @@ class Router(
             if (!href.startsWith(HASH_PREFIX + "/")) return
             if (!anchor.targetsSelf() || anchor.hasAttribute("download")) return
             // Already the address (an onClick of the link navigated first): the browser does nothing either
-            if (href.cleanUri() == getUriFromWindowLocation()) return
+            if (normalize(href) == getUriFromWindowLocation()) return
 
             event.preventDefault()
             router.navToUri(href)
@@ -219,7 +235,12 @@ class Router(
             return window.location.pathname + window.location.search + window.location.hash
         }
 
-        override fun normalize(uri: String): String = uri.cleanUri()
+        override fun normalize(uri: String): String = try {
+            // As location will hold it: percent-encoded by the browser's URL parser
+            URL(uri.cleanUri(), window.location.href).let { it.pathname + it.search + it.hash }
+        } catch (_: Throwable) {
+            uri.cleanUri()
+        }
 
         override fun restoreUri(uri: String): Boolean {
             window.history.pushState(null, "", uri.cleanUri())
@@ -344,12 +365,11 @@ class Router(
     /** The registered [LeaveGuard]s, in mount order. */
     private val leaveGuards = mutableListOf<RegisteredGuard>()
 
-    /** A guard with the page it was registered on: it protects leaving that page only. */
-    private class RegisteredGuard(
-        val guard: LeaveGuard,
-        val mounted: MountedRoute,
-        val routeParams: Map<String, String>,
-    )
+    /** A guard with the page (its path) it was registered on: it protects leaving that page only. */
+    private class RegisteredGuard(val guard: LeaveGuard, val page: String)
+
+    /** `history.scrollRestoration` before the first guard set it to "manual". */
+    private var scrollRestorationBefore: dynamic = null
 
     /** An [LeaveResult.Ask] is waiting for its answer: further navigations away are dropped meanwhile. */
     private var askingToLeave = false
@@ -360,8 +380,12 @@ class Router(
     /** A navigation the guards let through is running: what it leads to (a middleware redirect) follows unasked. */
     private var approved = false
 
-    /** True while [withoutLeaveGuards] runs: `guardLeaving`'s beforeunload prompt stays quiet then too. */
-    internal val passingLeaveGuards: Boolean get() = approved
+    /** Until when a page load counts as started inside [withoutLeaveGuards]: browsers may fire beforeunload later. */
+    private var unloadApprovedUntil = 0.0
+
+    /** True while [withoutLeaveGuards] runs, and shortly after: `guardLeaving`'s beforeunload prompt stays quiet. */
+    internal val passingLeaveGuards: Boolean get() = approved || Date.now() < unloadApprovedUntil
+
 
     /** The pending [LeaveResult.Ask], cancelled when the router is disposed. */
     private var asking: Job? = null
@@ -504,16 +528,32 @@ class Router(
     }
 
     /**
-     * Registers a [LeaveGuard], asked before each navigation away from the current route until the returned
-     * [Unsubscribe] is called. Components use [guardLeaving], which registers for as long as they are mounted.
+     * Registers a [LeaveGuard] for the page the router is on, asked before each navigation away from it until the
+     * returned [Unsubscribe] is called; [guardLeaving] registers for as long as its component is mounted.
      */
-    fun addLeaveGuard(guard: LeaveGuard): Unsubscribe {
-        val here = current()
-        val registered = RegisteredGuard(guard, here.mountedRoute, here.matchedRoute.routeParams)
+    internal fun addLeaveGuard(guard: LeaveGuard): Unsubscribe {
+        if (current().mountedRoute == MountedRoute.default) {
+            console.warn(
+                "guardLeaving registered before the router is on a route (outside the routed page?): " +
+                    "it is never asked about navigations, only its beforeunload prompt works"
+            )
+        }
+
+        val registered = RegisteredGuard(guard, pagePath(current().uri))
+
+        if (leaveGuards.isEmpty()) {
+            // A held Back or Forward must not scroll the page to the other entry's position
+            scrollRestorationBefore = window.history.asDynamic().scrollRestoration
+            window.history.asDynamic().scrollRestoration = "manual"
+        }
 
         leaveGuards += registered
 
-        return { leaveGuards.remove(registered) }
+        return {
+            if (leaveGuards.remove(registered) && leaveGuards.isEmpty()) {
+                window.history.asDynamic().scrollRestoration = scrollRestorationBefore ?: "auto"
+            }
+        }
     }
 
     /**
@@ -528,6 +568,8 @@ class Router(
             return block()
         } finally {
             approved = was
+            // A page load the block started (a form submit, location.href) may fire beforeunload a little later
+            unloadApprovedUntil = Date.now() + UNLOAD_APPROVAL_MS
         }
     }
 
@@ -554,7 +596,11 @@ class Router(
         when (val answer = askGuards(target)) {
             LeaveResult.Proceed -> pass()
             LeaveResult.Stop -> Unit
-            is LeaveResult.Ask -> ask(answer, pass)
+            is LeaveResult.Ask -> {
+                // A yes still goes, after a query-only move meanwhile (a urlParam): the same page asked
+                val fromPage = pagePath(current().uri)
+                ask(answer, stillThere = { pagePath(current().uri) == fromPage }, go = pass)
+            }
         }
     }
 
@@ -591,15 +637,23 @@ class Router(
 
             is LeaveResult.Ask -> {
                 val restored = strategy.restoreUri(stay)
+                val marker = if (restored) markRestoredEntry() else null
+                val from = current()
 
-                ask(answer) {
-                    if (restored) {
-                        // The restore pushed the page's address on top of the target's entry: back is the move itself
-                        letThrough = target
-                        window.history.back()
-                    } else {
+                // Any move meanwhile (also a query change) means the restored entry is no longer where back starts
+                ask(answer, stillThere = { current() === from }) {
+                    when {
+                        // On the restored entry, pushed on top of the target's: back is the move itself
+                        marker != null && window.history.state == marker -> {
+                            letThrough = target
+                            window.history.back()
+                        }
+
+                        // Restored, but something stands on top of it (a confirm UI's own entry): go there instead
+                        marker != null -> withoutLeaveGuards { strategy.navigateToUri(target) }
+
                         // Nothing was put back: the browser is still at the target
-                        withoutLeaveGuards { navigateToWindowUri() }
+                        else -> withoutLeaveGuards { navigateToWindowUri() }
                     }
                 }
             }
@@ -615,12 +669,20 @@ class Router(
         uri
     }
 
-    /** Leaving: the [target] matches another route, or the same with other route params, or none. */
-    private fun isLeaving(target: String): Boolean {
-        val here = current()
-        val (mounted, match) = resolveRouteForUri(target) ?: return true
+    /**
+     * Leaving: the [target] (normalized) is on another path. The path is what RouterComponent keys the page on, so a
+     * guard is asked exactly when the page would be remounted; a change of query or fragment alone never asks.
+     */
+    private fun isLeaving(target: String): Boolean = pagePath(target) != pagePath(current().uri)
 
-        return mounted != here.mountedRoute || match.routeParams != here.matchedRoute.routeParams
+    /** The path of [uri], before `?` and `#`: the identity of a page. */
+    private fun pagePath(uri: String): String = uri.substringBefore('#').substringBefore('?')
+
+    /** Marks the current history entry (a restored one) and returns the marker. */
+    private fun markRestoredEntry(): String {
+        val marker = "--kraft-leave-restored-${restoredCounter++}--"
+        window.history.replaceState(marker, "", window.location.href)
+        return marker
     }
 
     /**
@@ -628,10 +690,9 @@ class Router(
      * unmounts a render after the route changed) is not asked about the next navigation.
      */
     private fun pageGuards(): List<LeaveGuard> {
-        val here = current()
+        val page = pagePath(current().uri)
 
-        return leaveGuards.filter { it.mounted == here.mountedRoute && it.routeParams == here.matchedRoute.routeParams }
-            .map { it.guard }
+        return leaveGuards.filter { it.page == page }.map { it.guard }
     }
 
     /** The first answer that does not proceed, in mount order. */
@@ -642,12 +703,11 @@ class Router(
             ?: LeaveResult.Proceed
 
     /**
-     * Asks [answer], and runs [go] on a yes, but only if the router is still where it asked from: a navigation past
-     * the guards meanwhile (a logout) or a disposed router drops the answer.
+     * Asks [answer], and runs [go] on a yes, but only if the router is [stillThere]: a navigation past the guards
+     * meanwhile (a logout) or a disposed router drops the answer.
      */
-    private fun ask(answer: LeaveResult.Ask, go: () -> Unit) {
+    private fun ask(answer: LeaveResult.Ask, stillThere: () -> Boolean, go: () -> Unit) {
         askingToLeave = true
-        val from = current()
 
         asking = launch {
             val yes = try {
@@ -657,7 +717,7 @@ class Router(
                 asking = null
             }
 
-            if (yes && !disposed && current() === from) go()
+            if (yes && !disposed && stillThere()) go()
         }
     }
 

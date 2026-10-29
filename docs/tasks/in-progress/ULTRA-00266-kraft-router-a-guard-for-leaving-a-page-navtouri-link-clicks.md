@@ -162,3 +162,4 @@ Group A NOT clean: 1 MAJOR, kept by both A charters in phase 2. Safety valve (2 
 - 2026-10-29: implemented and through two review rounds (record in ULTRA-00266); round 2 not clean (one MAJOR on replaceUri keeping history.state): stopped at the safety valve for the maintainer.
 - 2026-10-29: IN PROGRESS.
 - 2026-10-29: maintainer at the valve: the trap checks the URL (keep the state, the trap clears its marker instead of going back when the address changed); round 3 at level 3; all round-2 MINORs applied in the same batch.
+- 2026-10-29: maintainer after round 3: leaving = another path (before ? and #), what RouterComponent remounts for; replaces "another matched route". Both round-3 MAJORs and all MINORs fixed in one batch, then round 4 at level 3.

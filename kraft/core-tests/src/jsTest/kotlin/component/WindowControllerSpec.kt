@@ -56,11 +56,11 @@ class WindowControllerSpec : StringSpec({
         val defineProperty = js("Object.defineProperty")
 
         try {
-            defineProperty(document, "visibilityState", js("({ configurable: true, get: function() { return 'hidden'; } })"))
+            defineProperty(document, "visibilityState", js("({ configurable: true, get: () => 'hidden' })"))
             document.dispatchEvent(Event("visibilitychange"))
             controller.isVisible() shouldBe false
 
-            defineProperty(document, "visibilityState", js("({ configurable: true, get: function() { return 'visible'; } })"))
+            defineProperty(document, "visibilityState", js("({ configurable: true, get: () => 'visible' })"))
             document.dispatchEvent(Event("visibilitychange"))
             controller.isVisible() shouldBe true
         } finally {

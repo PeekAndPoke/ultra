@@ -62,12 +62,14 @@
 - **Kraft router: guard a page against leaving (ULTRA-00266, from Klang).** `guardLeaving { target -> ... }` in a
   component answers `LeaveResult.Proceed`, `Stop` or `Ask(confirm)`, asked before every navigation away while it is
   mounted: `navToUri`, intercepted links, `replaceUri`, Back/Forward and a typed hash (undone by putting the address
-  back). Leaving means another matched route; a query-only change (every `urlParam`) never asks. `beforeUnload = true`
+  back). Leaving means another path (before `?` and `#`), when RouterComponent remounts the page; a query-only change
+  (every `urlParam`) never asks. `beforeUnload = true`
   arms the browser's prompt. A confirmed `Ask` on a Back replays the Back; a middleware redirect inside an approved
   navigation is not asked again. `router.withoutLeaveGuards { navToUri("/login") }` passes every guard (logout).
   `navBack()` and `clearHistoryAndNavTo()` change the router's history only once no guard holds them. A custom
   `RouterStrategy` calls `router.followBrowserNavigation()` from its listeners to take part; `RouterStrategy` gains
-  `normalize(uri)` and `restoreUri(uri)`, with defaults. Not covered: a hash typed into the address bar under hash
+  `normalize(uri)` (the URI in the browser's encoding; a strategy whose `render` adds a prefix overrides it) and
+  `restoreUri(uri): Boolean`, with defaults. Not covered: a hash typed into the address bar under hash
   routing is held, but leaves one extra history entry, and so does a held Forward; a held Back drops the forward
   history, as any new entry does.
 

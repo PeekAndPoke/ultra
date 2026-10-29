@@ -86,7 +86,7 @@ private suspend fun withEditor(
             router.awaitUri("/a")
             router.navToUri("/edit/1")
             router.awaitUri("/edit/1")
-            // The guard registers when the editor mounts, a render after the route changed (at once on the path strategy)
+            // The guard registers when the editor mounts, a render after the route changed
             eventually { (document.querySelector(".editor") != null) shouldBe true }
             control.asked.clear()
 
@@ -103,8 +103,8 @@ private suspend fun settle() = delay(60)
 /** Marks the current history entry: still marked after an action means no entry was pushed. */
 private fun markEntry() = window.history.replaceState("marked", "", window.location.href)
 
-/** A plain primary click on a link to [href], as a user's. */
-private fun clickLink(href: String) {
+/** A plain primary click on a link to [href], as a user's: true when the router took it (prevented the default). */
+private fun clickLink(href: String): Boolean {
     val anchor = (document.createElement("a") as HTMLAnchorElement).apply { setAttribute("href", href) }
     document.body!!.appendChild(anchor)
 
@@ -113,14 +113,22 @@ private fun clickLink(href: String) {
     options.cancelable = true
     options.button = 0
 
-    // Stops the page from really following the link when the router does not take it
-    val stopper: (Event) -> Unit = { it.preventDefault() }
-    window.addEventListener("click", stopper)
+    var taken = false
 
+    // Records whether the router took the click, then stops the page from really following the link
+    val stopper: (Event) -> Unit = {
+        taken = it.defaultPrevented
+        it.preventDefault()
+    }
+
+    // Registered after the router's own listener, so it sees what the router did
+    window.addEventListener("click", stopper)
     anchor.dispatchEvent(MouseEvent("click", options))
 
     window.removeEventListener("click", stopper)
     anchor.remove()
+
+    return taken
 }
 
 /** `guardLeaving` (ULTRA-00266, from Klang): a page holds a navigation away from it. */
@@ -147,7 +155,7 @@ class LeaveGuardSpec : StringSpec({
 
             withEditor(control, strategy) {
                 markEntry()
-                clickLink(if (strategy == Strategy.Hash) "#/other" else "/other")
+                clickLink(if (strategy == Strategy.Hash) "#/other" else "/other") shouldBe true
                 settle()
 
                 router.current().uri shouldBe "/edit/1"
@@ -330,6 +338,88 @@ class LeaveGuardSpec : StringSpec({
                 control.asked shouldBe emptyList()
             }
         }
+
+        "$strategy: the same params on another path (%31 for 1) is another page: the guard is asked" {
+            val control = GuardControl().apply { answer = { LeaveResult.Stop } }
+
+            withEditor(control, strategy) {
+                clickLink(if (strategy == Strategy.Hash) "#/edit/%31" else "/edit/%31") shouldBe true
+                settle()
+
+                router.current().uri shouldBe "/edit/1"
+                (document.querySelector(".editor") != null) shouldBe true
+                control.asked shouldBe listOf("/edit/%31")
+            }
+        }
+
+        "$strategy: a query-only change while asking keeps the question; a yes still goes" {
+            val control = GuardControl()
+            val answer = CompletableDeferred<Boolean>()
+            control.answer = { LeaveResult.Ask { answer.await() } }
+
+            withEditor(control, strategy) {
+                router.navToUri("/other")
+                settle()
+
+                // A urlParam written while the modal is open
+                router.replaceUri("/edit/1?tab=2")
+                router.awaitUri("/edit/1?tab=2")
+
+                answer.complete(true)
+                router.awaitUri("/other")
+            }
+        }
+
+        "$strategy: an Ask on a Back answered while something stands on the restored entry still leaves" {
+            val control = GuardControl()
+            val answer = CompletableDeferred<Boolean>()
+            control.answer = { LeaveResult.Ask { answer.await() } }
+
+            withEditor(control, strategy) {
+                window.history.back()
+                eventually { control.asked shouldBe listOf("/a") }
+                settle()
+
+                // A confirm UI's own history entry on top of the restored one, still there when the user answers
+                window.history.pushState("confirm-ui", "", window.location.href)
+                answer.complete(true)
+
+                router.awaitUri("/a")
+            }
+        }
+
+        "$strategy: an unmounted guard is not asked again when its page is opened anew" {
+            val control = GuardControl()
+
+            withEditor(control, strategy) {
+                router.navToUri("/other")
+                router.awaitUri("/other")
+                router.navToUri("/edit/1")
+                router.awaitUri("/edit/1")
+                control.asked.clear()
+
+                router.navToUri("/a")
+                router.awaitUri("/a")
+                settle()
+
+                // One editor mounted, one guard asked: the first editor's guard went with it
+                control.asked shouldBe listOf("/a")
+            }
+        }
+
+        "$strategy: scroll restoration is manual while a guard is registered, and back after" {
+            val control = GuardControl()
+
+            withEditor(control, strategy) {
+                (window.history.asDynamic().scrollRestoration as String) shouldBe "manual"
+
+                router.navToUri("/a")
+                router.awaitUri("/a")
+                settle()
+
+                (window.history.asDynamic().scrollRestoration as String) shouldBe "auto"
+            }
+        }
     }
 
     "a query-only change is not leaving; other route params are" {
@@ -391,6 +481,12 @@ class LeaveGuardSpec : StringSpec({
         }
 
         val control = GuardControl().apply { answer = { LeaveResult.Stop } }
+        val removed = mutableListOf<String>()
+        val remove = win.removeEventListener
+        win.removeEventListener = { type: String, handler: dynamic, options: dynamic ->
+            if (type == "beforeunload") removed.add(type)
+            remove.call(window, type, handler, options)
+        }
 
         try {
             withEditor(control) {
@@ -407,14 +503,21 @@ class LeaveGuardSpec : StringSpec({
                 unload() shouldBe true
                 control.asked shouldBe listOf(null)
 
-                // A page load inside withoutLeaveGuards (a logout through the server) leaves without the prompt
+                // A page load inside withoutLeaveGuards (a logout through the server) leaves without the prompt,
+                // also when the browser fires beforeunload a little later
                 router.withoutLeaveGuards { unload() } shouldBe false
+                router.withoutLeaveGuards { }
+                unload() shouldBe false
 
                 control.answer = { LeaveResult.Proceed }
                 unload() shouldBe false
             }
         } finally {
             win.addEventListener = add
+            win.removeEventListener = remove
         }
+
+        // The editor unmounted with the TestBed: its beforeunload listener went with it
+        removed shouldBe listOf("beforeunload")
     }
 })

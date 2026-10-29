@@ -83,7 +83,10 @@ class BackNavigationTrap(
         }
     }
 
-    /** Deactivates the trap and navigates back to remove the dummy history entry. */
+    /**
+     * Deactivates the trap and goes back over its entry, while that entry still has the address the trap pushed; after
+     * a change of address (a replaceUri while the trap was up) it stays and only takes its marker off the entry.
+     */
     fun deactivate() {
         deactivateInternal {
             goBack()

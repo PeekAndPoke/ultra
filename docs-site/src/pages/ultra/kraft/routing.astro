@@ -219,11 +219,14 @@ fun A.href(route: Route.Bound) {
 
 <ul>
     <li><code>Proceed</code> leaves, <code>Stop</code> stays, <code>Ask</code> stays until its block answers: true goes
-        on to the target. Navigations while asking are dropped.</li>
-    <li>Leaving means another matched route: another pattern or other route params. A change of query or fragment alone
-        never asks, so <code>urlParam</code> filters do not.</li>
-    <li>A held Back or typed address is undone: the router puts the page's address back as a new entry.</li>
-    <li><code>beforeUnload = true</code> also arms the browser's own prompt for a reload or a tab close while the block
+        on to the target. Navigations away while asking are dropped; a query-only change meanwhile keeps the question.</li>
+    <li>Leaving means another path (before <code>?</code> and <code>#</code>), exactly when <code>RouterComponent</code>
+        remounts the page. A change of query or fragment alone never asks, so <code>urlParam</code> filters do not.</li>
+    <li>Use it inside the routed page: it binds to the page the router is on when its component mounts.</li>
+    <li>A held Back, Forward or typed hash (hash routing) is undone: the router puts the page's address back as a new
+        entry.</li>
+    <li>A page load is not the router's: reload, tab close, a typed address under path routing, an external link, a
+        Back out of the app. <code>beforeUnload = true</code> arms the browser's own prompt for those while the block
         does not proceed (there the block gets <code>null</code> as the target, and an <code>Ask</code> cannot run).</li>
     <li>A confirmed <code>Ask</code> on a Back replays the Back. A middleware redirect on the way is not asked again.</li>
     <li>A leave that must happen whatever a page holds, like a logout:
