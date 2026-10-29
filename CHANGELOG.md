@@ -17,6 +17,10 @@
 
 ### Fixes
 
+- **Kraft router: `replaceUri` under hash routing (ULTRA-00263, from Klang).** It pushed the route as a path, which
+  dropped the fragment, so the router never saw the new route: every `urlParam` change under hash routing was lost to
+  the other subscribers of `router.current`. It now replaces the fragment in place. Under path routing `replaceUri`
+  resolved the route twice and emitted twice; it now emits once. A `uri` given with its `#` counts as the same address.
 - **Kraft core tests compile again:** two form specs called `FormController(this)`, private since 0.116.0; they use
   `FormController.controller(this)`.
 

@@ -61,7 +61,10 @@ class Router(
         /** Navigates to the given [uri], updating the browser location. */
         fun navigateToUri(uri: String)
 
-        /** Replaces the current URI in the browser history without adding a new entry. */
+        /**
+         * Writes [uri] into the browser's address in place of the current entry, without adding one. Only writes:
+         * [Router.replaceUri] resolves the route afterwards.
+         */
         fun replaceUri(uri: String)
 
         /** Returns the current URI from the browser's location. */
@@ -101,7 +104,8 @@ class Router(
         }
 
         override fun replaceUri(uri: String) {
-            window.history.pushState(data = null, title = "", url = uri.cleanUri())
+            // Into the fragment, where this strategy keeps its routes; a bare path would drop the fragment
+            window.history.replaceState(data = null, title = "", url = HASH_PREFIX + uri.cleanUri())
         }
 
         override fun getUriFromWindowLocation(): String {
@@ -158,9 +162,7 @@ class Router(
         }
 
         override fun replaceUri(uri: String) {
-            val cleanUri = uri.cleanUri()
-            window.history.replaceState(null, "", cleanUri)
-            router.navigateToWindowUri()
+            window.history.replaceState(null, "", uri.cleanUri())
         }
 
         override fun getUriFromWindowLocation(): String {
@@ -440,13 +442,15 @@ class Router(
      * Replaces the current uri with changing the history
      */
     fun replaceUri(uri: String) {
-        val currentUri = strategy.getUriFromWindowLocation()
+        val before = strategy.getUriFromWindowLocation()
 
-        if (currentUri != uri) {
-            strategy.replaceUri(uri)
-            // Remove the last from the history
-            _historyEntries.removeLast()
-            // Resolve the next route
+        strategy.replaceUri(uri)
+
+        // Compared as the strategy reads the address back, so "#/x" and "/x" are the same under hash routing
+        if (strategy.getUriFromWindowLocation() != before) {
+            // The replaced route leaves the history
+            _historyEntries.removeLastOrNull()
+            // Resolve the next route, once
             navigateToWindowUri()
         }
     }
