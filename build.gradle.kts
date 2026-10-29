@@ -42,9 +42,14 @@ allprojects {
 // The per-user build outputs (MC-00031) are a second copy of every build: keep IntelliJ from indexing them
 idea {
     module {
+        excludeDirs.add(file(".claude"))
         excludeDirs.add(file(".build-claude"))
         excludeDirs.add(file(".gradle-claude"))
+        excludeDirs.add(file(".gradle"))
+        excludeDirs.add(file(".kotlin"))
         excludeDirs.add(file("buildSrc/.build-claude"))
+        excludeDirs.add(file("buildSrc/.gradle"))
+        excludeDirs.add(file("tmp"))
     }
 }
 
