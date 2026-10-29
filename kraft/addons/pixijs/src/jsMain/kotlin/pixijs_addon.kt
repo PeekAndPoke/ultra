@@ -1,6 +1,7 @@
 package io.peekandpoke.kraft.addons.pixijs
 
 import io.peekandpoke.kraft.addons.pixijs.js.Application
+import io.peekandpoke.kraft.addons.pixijs.js.Container
 import io.peekandpoke.kraft.addons.pixijs.js.Graphics
 import io.peekandpoke.kraft.addons.pixijs.js.Text
 import io.peekandpoke.kraft.addons.pixijs.js.TextOptions
@@ -19,6 +20,24 @@ import kotlin.js.Promise
 class PixiJsAddon internal constructor(
     private val pixiModule: dynamic,
 ) {
+    /** Raw module handle — escape hatch for APIs not covered by the curated externals. */
+    val raw: dynamic get() = pixiModule
+
+    /** Creates a new, empty [Container]. */
+    fun createContainer(): Container = create("Container")
+
+    /**
+     * A new instance of pixi's class [className], made with [args]: for a class the addon has no constructor for.
+     * [T] is not checked; fails with the name when pixi has no such class.
+     */
+    fun <T> create(className: String, vararg args: Any?): T {
+        val ctor: dynamic = pixiModule[className]
+
+        require(ctor != null && ctor != undefined) { "pixi.js has no class '$className'" }
+
+        return js("Reflect").construct(ctor, args).unsafeCast<T>()
+    }
+
     /** Creates a new, uninitialized [Application]. Call `.init(options).await()` before use. */
     fun createApplication(): Application {
         @Suppress("UnusedVariable", "unused")

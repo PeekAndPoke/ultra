@@ -50,6 +50,13 @@
   `WebGLRenderer.shadowMap`. Spross's are taken from its Apache-2.0 workshop; Klang's AGPL files were rewritten from
   three.js's API, not copied.
 
+- **Kraft pixi.js: the members the projects filled in themselves (ULTRA-00245 from Spross, ULTRA-00262 from
+  Klang).** `raw`, `createContainer()`, `create<T>(className, args...)`; `Container.zIndex`, `sortableChildren`,
+  `addChildAt`, `sortChildren()`, `scale: ObservablePoint`; `Text.anchor`; `Graphics.poly(points, close)`;
+  `Application.resize()` and `queueResize()`. New: `app.followElementSize(element)` keeps the app the size of an
+  element also when layout alone resizes it (a `ResizeObserver` through `queueResize()`); `resizeTo` follows the
+  window's resize event only. Spross's code is taken from its Apache-2.0 workshop.
+
 ### Changed
 
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its

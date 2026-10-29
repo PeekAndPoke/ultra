@@ -68,3 +68,4 @@
 - 2026-10-26: created from Spross's request.
 - 2026-10-29: plan written (maintainer: "write a detailed plan into each ticket").
 - 2026-10-29: DESIGNED.
+- 2026-10-29: the zIndex trap checked in pixi 8.22's source and a contract row: `addChild` of a child with a zIndex does turn the parent's `sortableChildren` on (`Container.mjs`, `depthOfChildModified`); `addChildAt` does not. The KDoc says so.

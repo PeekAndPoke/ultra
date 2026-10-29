@@ -1,15 +1,18 @@
 package io.peekandpoke.kraft.addons.pixijs
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.kraft.addons.pixijs.js.Application
 import io.peekandpoke.kraft.addons.pixijs.js.ApplicationOptions
 import io.peekandpoke.kraft.addons.pixijs.js.Container
 import io.peekandpoke.kraft.addons.pixijs.js.Ticker
 import io.peekandpoke.kraft.addons.registry.AddonRegistryBuilder
+import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.utils.jsObject
 import kotlinx.browser.document
 import kotlinx.coroutines.await
@@ -137,7 +140,7 @@ class PixiJsContractSpec : StringSpec({
         app.destroy(rendererDestroy = true)
     }
 
-    "resizeTo follows the element (ResizePlugin)" {
+    "resize() takes the resizeTo element's size (ResizePlugin adds it)" {
         val host = (document.createElement("div") as HTMLDivElement).apply {
             style.width = "100px"
             style.height = "60px"
@@ -147,14 +150,106 @@ class PixiJsContractSpec : StringSpec({
 
         host.style.width = "200px"
         host.style.height = "150px"
-        // the ResizePlugin adds resize() to the application
-        app.asDynamic().resize()
+        app.resize()
 
         app.screen.width shouldBe 200.0
         app.screen.height shouldBe 150.0
 
         app.destroy(rendererDestroy = true)
         host.remove()
+    }
+
+    "followElementSize follows a resize by layout alone, with no window event, until stopped" {
+        val host = (document.createElement("div") as HTMLDivElement).apply {
+            style.width = "100px"
+            style.height = "60px"
+            document.body!!.appendChild(this)
+        }
+        val app = initializedApp()
+        val stop = app.followElementSize(host)
+
+        host.style.width = "220px"
+        host.style.height = "140px"
+
+        eventually {
+            app.screen.width shouldBe 220.0
+            app.screen.height shouldBe 140.0
+        }
+
+        stop()
+        host.style.width = "300px"
+        delay(100.milliseconds)
+        app.screen.width shouldBe 220.0
+
+        app.destroy(rendererDestroy = true)
+        host.remove()
+    }
+
+    "createContainer and create(className) give pixi instances; create names a missing class" {
+        val pixi = loadAddon()
+        val isContainer: (Any) -> Boolean = { obj ->
+            val ctor = pixi.raw.Container
+            js("obj instanceof ctor").unsafeCast<Boolean>()
+        }
+
+        isContainer(pixi.createContainer()) shouldBe true
+        isContainer(pixi.create<Container>("Container")) shouldBe true
+
+        shouldThrow<IllegalArgumentException> { pixi.create<Any>("NoSuchThing") }.message shouldContain "NoSuchThing"
+    }
+
+    "Container: zIndex sorts with sortableChildren, addChildAt places, scale sets both" {
+        val pixi = loadAddon()
+        val parent = pixi.createContainer()
+        val a = pixi.createContainer()
+        val b = pixi.createContainer()
+        val c = pixi.createContainer()
+
+        parent.addChild(a)
+        parent.addChild(b)
+        parent.addChildAt(c, 0)
+        parent.children.toList() shouldBe listOf(c, a, b)
+
+        parent.sortableChildren = true
+        a.zIndex = 3.0
+        b.zIndex = 2.0
+        c.zIndex = 1.0
+        parent.sortChildren()
+        parent.children.toList() shouldBe listOf(c, b, a)
+
+        a.scale.set(2.0)
+        a.scale.x shouldBe 2.0
+        a.scale.y shouldBe 2.0
+    }
+
+    "the zIndex trap: a zIndex set before addChildAt does not turn on the parent's sortableChildren" {
+        val pixi = loadAddon()
+
+        // addChild and a zIndex set while in the parent turn it on
+        val viaAddChild = pixi.createContainer().apply { addChild(pixi.createContainer().apply { zIndex = 5.0 }) }
+        viaAddChild.sortableChildren shouldBe true
+
+        val late = pixi.createContainer()
+        val child = pixi.createContainer().also { late.addChild(it) }
+        child.zIndex = 5.0
+        late.sortableChildren shouldBe true
+
+        // addChildAt does not
+        val viaAddChildAt = pixi.createContainer()
+        viaAddChildAt.addChildAt(pixi.createContainer().apply { zIndex = 5.0 }, 0)
+        viaAddChildAt.sortableChildren shouldBe false
+    }
+
+    "Text.anchor and Graphics.poly" {
+        val pixi = loadAddon()
+
+        val text = pixi.createText(jsObject { this.text = "hi" })
+        text.anchor.set(0.5)
+        text.anchor.x shouldBe 0.5
+        text.anchor.y shouldBe 0.5
+
+        val graphics = pixi.createGraphics()
+        graphics.poly(arrayOf(0.0, 0.0, 10.0, 0.0, 5.0, 8.0)) shouldBe graphics
     }
 
     "the init options Klang uses are accepted" {

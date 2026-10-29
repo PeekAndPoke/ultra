@@ -47,6 +47,16 @@ external class Application {
     /** Renders the current stage. */
     fun render()
 
+    /**
+     * Resizes the renderer to the `resizeTo` target's size now. Added by pixi's ResizePlugin in [init], only when
+     * `resizeTo` is set: `resizeTo` follows the window's `resize` event alone, so an element resized by layout needs
+     * this, or `followElementSize(element)` from the addon package.
+     */
+    fun resize()
+
+    /** Like [resize], on the next animation frame; several calls in one frame resize once. */
+    fun queueResize()
+
     /** Destroys the application and frees resources. */
     fun destroy(rendererDestroy: Boolean = definedExternally, options: dynamic = definedExternally)
 }
@@ -89,8 +99,30 @@ open external class Container {
     var rotation: Double
     val children: Array<Container>
 
+    /** The scale along x and y: `scale.set(2.0)` doubles both. */
+    val scale: ObservablePoint
+
+    /**
+     * The draw order among siblings: a higher one draws later, on top, once the parent sorts by it. Set while the node
+     * sits in its parent, or before an [addChild], it turns the parent's [sortableChildren] on. Before an [addChildAt]
+     * it does not (pixi 8.22): then set [sortableChildren] on the parent yourself.
+     */
+    var zIndex: Double
+
+    /** Whether the container sorts its children by [zIndex] before it renders (stable: equal ones keep their order). */
+    var sortableChildren: Boolean
+
     /** Adds a child to this container. */
     fun addChild(child: Container): Container
+
+    /**
+     * Puts [child] at [index] among the children: a child of this one moves there, a child of another leaves that
+     * first. Unlike [addChild] it does not turn [sortableChildren] on for a child that has a [zIndex] already.
+     */
+    fun addChildAt(child: Container, index: Int): Container
+
+    /** Sorts the children by [zIndex] now. */
+    fun sortChildren()
 
     /** Removes a child from this container. */
     fun removeChild(child: Container): Container
@@ -113,6 +145,9 @@ external class Graphics : Container {
     /** Draws a circle. */
     fun circle(x: Double, y: Double, radius: Double): Graphics
 
+    /** Adds a polygon through [points] (x0, y0, x1, y1, ...) to the path, closed unless [close] is false. */
+    fun poly(points: Array<Double>, close: Boolean = definedExternally): Graphics
+
     /** Draws a rounded rectangle. */
     fun roundRect(x: Double, y: Double, width: Double, height: Double, radius: Double): Graphics
 
@@ -130,6 +165,18 @@ external class Graphics : Container {
 external class Text(options: TextOptions = definedExternally) : Container {
     var text: String
     val style: dynamic
+
+    /** Where the text's position sits in it: (0, 0) its top left, (0.5, 0.5) its center. */
+    val anchor: ObservablePoint
+}
+
+/** A point whose change updates its owner's transform (`scale`, `anchor`). */
+external interface ObservablePoint {
+    var x: Double
+    var y: Double
+
+    /** Sets both; with [y] left out, both are [x]. */
+    fun set(x: Double, y: Double = definedExternally)
 }
 
 /** Options for creating a [Text] object. */

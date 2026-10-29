@@ -2603,6 +2603,14 @@ while it holds true, e.g. `paused = windowCtrl.hasFocus.map { !it }`. After a re
 `elapsedMs` counts running time only, so the scene goes on where it rested. The frames come from `clock`
 (default `FrameClock.animationFrames`, one `requestAnimationFrame` shared with `smooth()` and `animTicker()`).
 
+### pixi.js extras
+
+`pixi.createContainer()`, `pixi.create<T>("ClassName", args...)` for any other class, `pixi.raw` for the module.
+`Container.zIndex` with `sortableChildren` (a zIndex set before `addChildAt` does not turn sorting on; before
+`addChild` it does), `addChildAt`, `sortChildren()`, `scale: ObservablePoint`; `Text.anchor`; `Graphics.poly(points)`.
+`Application.resize()` / `queueResize()` (with `resizeTo` set); `app.followElementSize(element)` also follows a resize
+by layout alone, which `resizeTo` misses (it listens to the window only), and returns the stop.
+
 ## Signature Pad — Capture signatures
 
 ```kotlin
