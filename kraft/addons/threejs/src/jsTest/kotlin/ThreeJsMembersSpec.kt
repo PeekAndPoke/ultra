@@ -105,7 +105,7 @@ class ThreeJsMembersSpec : StringSpec({
             val mesh: Mesh = three.createMesh(three.createBoxGeometry(), three.createMeshBasicMaterial(js("({})")))
             // Facing straight up turns the mesh by -PI/2 around x; a no-op lookAt would leave 0
             mesh.lookAt(three.createVector3(0.0, 10.0, 0.0))
-            // three.js nudges a target along the up axis by 1e-4, so not exactly -PI/2
+            // Looking along the up axis, three.js nudges the view direction off it by 1e-4: not exactly -PI/2
             mesh.rotation.x shouldBe (-PI / 2 plusOrMinus 1e-3)
         }
     }

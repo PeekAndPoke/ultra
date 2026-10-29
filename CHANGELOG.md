@@ -26,19 +26,21 @@
   order, with the same time. Klang measured about 9 rAF callbacks per frame before. A callback that throws is reported
   as uncaught on its own task, and the others still run.
 
-- **Streams: `smooth()`'s law as a stream (ULTRA-00264, from Klang).** `smooth(smoothing: Stream<Smoothing?>)`: a new
+- **Streams: `smooth()`'s law as a stream (ULTRA-00264, from Klang).** `smooth(smoothing: Stream<out Smoothing?>)`: a new
   law takes the next step from the current position and velocity, so the motion is not restarted; `null` passes
   values at once and lands a moving stream. The constant overloads delegate to it.
 
 - **Streams: `sampled(every)` (ULTRA-00267, from Klang; named by the maintainer).** The latest value at every tick,
   also unchanged and `null`, so a graph's time axis is the clock's: `level.sampled(every = 250.milliseconds)
-  .history(capacity = 480)`. `every` may be a `Stream<Duration>` that changes while listening; `everyMs` and
+  .history(capacity = 480)`. `every` may be a `Stream<Duration>` that changes while listening (a new interval applies
+  from the next tick); `everyMs` and
   `sampled(clock: FrameClock)` too. `history()`'s KDoc names its copy per value.
 
 - **Kraft three.js: pause the render loop (ULTRA-00270, from Klang).** `ThreeJs(paused = ...)` takes a
   `Stream<Boolean>`: while true no frame is asked for, and the scene, camera and WebGL context stay
   (`paused = windowCtrl.hasFocus.map { !it }`). After a resume the first `deltaMs` is 0 and `elapsedMs` counts
-  running time only. The loop runs on `clock` (default `FrameClock.animationFrames`, shared with the streams).
+  running time only. The loop runs on `clock` (default `FrameClock.animationFrames`, shared with the streams); a new
+  clock restarts it. The scene is drawn once after `onReady`, also when mounted paused.
 
 - **Kraft three.js: the members the projects filled in themselves (ULTRA-00246, from Spross and Klang).** Constructors
   `createObject3D()`, `createGroup()`, `createSpotLight(...)`, `createRaycaster()`, `createVector2(x, y)`,
@@ -98,6 +100,8 @@
 
 ### Fixes
 
+- **Streams: `ticker(interval: Duration)` with a very long or infinite interval** wrapped to a negative delay and
+  ticked back to back (`Duration.INFINITE` became -1 ms); it is clamped to `Int.MAX_VALUE` ms now.
 - **Kraft router: `replaceUri` under hash routing (ULTRA-00263, from Klang).** It pushed the route as a path, which
   dropped the fragment, so the router never saw the new route: every `urlParam` change under hash routing was lost to
   the other subscribers of `router.current`. It now replaces the fragment in place. Under path routing `replaceUri`

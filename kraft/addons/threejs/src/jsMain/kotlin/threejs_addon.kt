@@ -239,9 +239,12 @@ class ThreeJsAddon internal constructor(
      * [T] is not checked; fails with the name when three.js has no such class.
      */
     fun <T> create(className: String, vararg args: Any?): T {
+        // An own export that is a function: inherited names ("constructor", "toString") are not classes of the module
+        val module: dynamic = threeModule
+        val own = js("Object.prototype.hasOwnProperty").call(module, className).unsafeCast<Boolean>()
         val ctor: dynamic = threeModule[className]
 
-        require(ctor != null && ctor != undefined) { "three.js has no class '$className'" }
+        require(own && jsTypeOf(ctor) == "function") { "three.js has no class '$className'" }
 
         return js("Reflect").construct(ctor, args).unsafeCast<T>()
     }

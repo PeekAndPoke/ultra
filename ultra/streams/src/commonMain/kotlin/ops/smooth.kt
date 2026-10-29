@@ -61,7 +61,7 @@ fun Stream<Double?>.smooth(
  * only while someone listens here.
  */
 fun Stream<Double?>.smooth(
-    smoothing: Stream<Smoothing?>,
+    smoothing: Stream<out Smoothing?>,
     rest: Double = 0.0,
     near: Double = 0.001,
     clock: FrameClock = FrameClock.default,
@@ -70,7 +70,7 @@ fun Stream<Double?>.smooth(
 /** The smooth operator; a law of `null` passes every value at once. */
 private class StreamSmoothOperator(
     private val source: Stream<Double?>,
-    private val smoothing: Stream<Smoothing?>,
+    private val smoothing: Stream<out Smoothing?>,
     private val rest: Double,
     private val near: Double,
     private val clock: FrameClock,

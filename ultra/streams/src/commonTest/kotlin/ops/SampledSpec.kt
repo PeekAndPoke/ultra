@@ -2,7 +2,9 @@ package io.peekandpoke.ultra.streams.ops
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
+import io.peekandpoke.ultra.streams.Unsubscribe
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
@@ -76,7 +78,7 @@ class SampledSpec : StringSpec({
         clock.waiting shouldBe false
     }
 
-    "a new interval re-times the ticks on a clock of its own; an infinite one stops them" {
+    "a new interval applies from the next tick, on a clock of its own; an infinite one stops them at once" {
         val clocks = mutableMapOf<Duration, HandClock>()
         val every = StreamSource(100.milliseconds)
         val source = StreamSource(1)
@@ -90,16 +92,22 @@ class SampledSpec : StringSpec({
         seen shouldBe listOf(1)
 
         every(250.milliseconds)
-        clocks.getValue(100.milliseconds).waiting shouldBe false
-        clocks.getValue(250.milliseconds).requests shouldBe 1
+        // The tick due keeps its time; nothing is asked of the new clock yet
+        clocks.getValue(100.milliseconds).waiting shouldBe true
+        clocks.getValue(250.milliseconds).requests shouldBe 0
 
         source(2)
-        clocks.getValue(250.milliseconds).frame()
+        clocks.getValue(100.milliseconds).frame()
         seen shouldBe listOf(1, 2)
+        clocks.getValue(250.milliseconds).requests shouldBe 1
+
+        source(3)
+        clocks.getValue(250.milliseconds).frame()
+        seen shouldBe listOf(1, 2, 3)
 
         every(Duration.INFINITE)
         clocks.getValue(250.milliseconds).waiting shouldBe false
-        seen shouldBe listOf(1, 2)
+        seen shouldBe listOf(1, 2, 3)
     }
 
     "a config stream repeating the same interval keeps the tick that is due, on the same clock" {
@@ -117,6 +125,62 @@ class SampledSpec : StringSpec({
 
         clocks[0].frame()
         seen shouldBe listOf(1)
+    }
+
+    "an interval changing faster than it ticks still ticks" {
+        val clocks = mutableListOf<HandClock>()
+        val every = StreamSource(100.milliseconds)
+        val source = StreamSource(1)
+        val seen = mutableListOf<Int>()
+
+        source.sampled(every = every, clockFor = { HandClock().also { clocks.add(it) } })
+            .subscribeToStream { seen.add(it) }
+        seen.clear()
+
+        // A slider: distinct values, faster than any tick
+        (101..110).forEach { every(it.milliseconds) }
+        clocks.first().frame()
+
+        seen shouldBe listOf(1)
+    }
+
+    "a tick whose source throws does not end the ticks" {
+        val clock = HandClock()
+        var throwNext = false
+        // Handlers are guarded by the streams themselves; the source's own read is what can throw out of a tick
+        val source = object : Stream<Int> {
+            override fun invoke(): Int {
+                if (throwNext) {
+                    throwNext = false
+                    error("a source fails once")
+                }
+                return 1
+            }
+
+            override fun subscribeToStream(sub: (Int) -> Unit): Unsubscribe {
+                sub(invoke())
+                return {}
+            }
+        }
+
+        source.sampled(clock).subscribeToStream { }
+
+        throwNext = true
+        runCatching { clock.frame() }
+
+        clock.requests shouldBe 1
+    }
+
+    "a subscriber is told the source's value as it is once the source is listened to" {
+        val base = StreamSource(0)
+        // fold computes only while listened to: read before subscribing it gives its initial value
+        val sum = base.fold(0) { acc, n -> acc + n }
+        base(7)
+
+        var first: Int? = null
+        sum.sampled(HandClock()).subscribeToStream { if (first == null) first = it }
+
+        first shouldBe 7
     }
 
     "an interval longer than Int.MAX_VALUE ms is clamped, not wrapped to a negative one" {

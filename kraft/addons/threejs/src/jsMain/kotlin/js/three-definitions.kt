@@ -71,8 +71,9 @@ open external class Object3D {
     var receiveShadow: Boolean
 
     /**
-     * The draw order: a higher one draws later. On a mesh it orders the mesh among the others; on a [Group] it orders
-     * the group's whole subtree as one, and a [Group] inside it starts an order of its own.
+     * The draw order: a higher one draws later, within the opaque and within the transparent objects (three.js draws
+     * all opaque ones first). On a mesh it orders the mesh among the others; on a [Group] it orders the group's whole
+     * subtree as one, and a [Group] inside it starts an order of its own.
      */
     var renderOrder: Int
 
@@ -84,7 +85,10 @@ open external class Object3D {
     fun clear(): Object3D
     fun lookAt(x: Double, y: Double, z: Double)
 
-    /** Turns the node to face [target], a point in world coordinates (a camera or a light looks along it). */
+    /**
+     * Turns the node to face [target], a point in world coordinates. A directional or spot light shines at its own
+     * `target` object instead, not along its rotation.
+     */
     fun lookAt(target: Vector3)
 
     fun traverse(callback: (Object3D) -> Unit)
@@ -175,7 +179,10 @@ external interface ShadowMap {
     /** Whether the renderer draws shadows at all. */
     var enabled: Boolean
 
-    /** The filtering: three.js's `BasicShadowMap` (0), `PCFShadowMap` (1), `PCFSoftShadowMap` (2), `VSMShadowMap` (3). */
+    /**
+     * The filtering: three.js's `BasicShadowMap` (0), `PCFShadowMap` (1), `PCFSoftShadowMap` (2, deprecated since
+     * r186), `VSMShadowMap` (3).
+     */
     var type: Int
 }
 

@@ -16,6 +16,8 @@ fun <T> Stream<T>.history(capacity: Int): Stream<List<T>> {
 
 /**
  * Records the latest incoming values that are not null up to the given [capacity].
+ *
+ * Each value copies the list, as [history] does: sample a fast producer first.
  */
 fun <T> Stream<T?>.historyOfNonNull(capacity: Int): Stream<List<T>> {
     return foldNotNull(emptyList()) { acc, next ->

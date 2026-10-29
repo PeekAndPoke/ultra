@@ -97,6 +97,19 @@ class SmoothLawStreamSpec : StringSpec({
         smooth()!! shouldBe (6.0 plusOrMinus 1e-9)
     }
 
+    "a stream of a narrower law type is a law stream too (Stream<out Smoothing?>)" {
+        val clock = HandClock()
+        val source = StreamSource<Double?>(0.0)
+        val springs: StreamSource<Smoothing.Spring> = StreamSource(Smoothing.Spring(stiffness = 100.0, damping = 5.0))
+        val smooth = source.smooth(smoothing = springs, clock = clock)
+
+        smooth.subscribeToStream { }
+        source(1.0)
+        clock.frame(frame)
+
+        smooth()!! shouldBeLessThan 1.0
+    }
+
     "the law is listened to only while someone listens" {
         val source = StreamSource<Double?>(0.0)
         val law = StreamSource<Smoothing?>(Smoothing.Exponential(keepPer10Ms = 0.5))

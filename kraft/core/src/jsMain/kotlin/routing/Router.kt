@@ -156,7 +156,7 @@ class Router(
             }
         }
 
-        /** Plain clicks on route links (`href="#/..."`) navigate through the router; in-page anchors stay the browser's. */
+        /** Plain clicks on route links (`href="#/..."`) go through the router; in-page anchors stay the browser's. */
         private fun clickListener(event: Event) {
             if (!router.enabled) return
 
@@ -345,7 +345,11 @@ class Router(
     private val leaveGuards = mutableListOf<RegisteredGuard>()
 
     /** A guard with the page it was registered on: it protects leaving that page only. */
-    private class RegisteredGuard(val guard: LeaveGuard, val mounted: MountedRoute, val routeParams: Map<String, String>)
+    private class RegisteredGuard(
+        val guard: LeaveGuard,
+        val mounted: MountedRoute,
+        val routeParams: Map<String, String>,
+    )
 
     /** An [LeaveResult.Ask] is waiting for its answer: further navigations away are dropped meanwhile. */
     private var askingToLeave = false

@@ -13,11 +13,11 @@ import kotlin.time.Duration.Companion.milliseconds
  * `level.sampled(every = 250.milliseconds).history(capacity = 480)` keeps two minutes at four values a second, with
  * gaps where the source had none.
  *
- * [every] may change while listening: the next tick comes [every] after the change; a repeat of the same interval
- * changes nothing. An interval of zero or less counts as 1 ms, one beyond `Int.MAX_VALUE` ms as that; an infinite one
- * stops the ticks. The source and [every] are listened to only while someone listens here, which also keeps a source
- * fresh that is computed only while listened to. The ticks run on [FrameClock.ticker], on the JVM and native on a pool
- * thread: to tick on the thread the source emits on, pass `sampled(clock = FrameClock.ticker(intervalMs, context))`.
+ * [every] may change while listening: a new interval applies from the next tick (the one due keeps its time, so a
+ * slider moving the interval does not hold the ticks off); a repeat of the same interval changes nothing. An interval
+ * of zero or less counts as 1 ms, one beyond `Int.MAX_VALUE` ms as that; an infinite one stops the ticks at once.
+ * The source and [every] are listened to only while someone listens here, which also keeps a source fresh that is
+ * computed only while listened to. The ticks run on [FrameClock.ticker], on the JVM and native on a pool thread: to tick on the thread the source emits on, pass `sampled(clock = FrameClock.ticker(intervalMs, context))`.
  */
 fun <T> Stream<T>.sampled(every: Stream<Duration>): Stream<T> =
     sampled(every = every, clockFor = { FrameClock.ticker(intervalMs = it.inWholeIntervalMs()) })
@@ -90,7 +90,6 @@ private class StreamSampledOperator<T>(
         if (next == interval) return
 
         interval = next
-        stopTicks()
 
         clock = when {
             next.isInfinite() -> null
@@ -98,7 +97,13 @@ private class StreamSampledOperator<T>(
             else -> clockFor(next.coerceAtLeast(1.milliseconds))
         }
 
-        tickNext()
+        when {
+            // Infinite: no more ticks, not even the one due
+            clock == null -> stopTicks()
+            // Nothing due (the first interval, or after an infinite one): start
+            cancelTick == null -> tickNext()
+            // Otherwise the due tick keeps its time, and the next one is asked of the new clock
+        }
     }
 
     private fun tickNext() {
@@ -116,12 +121,15 @@ private class StreamSampledOperator<T>(
         // This tick's handle stays set while it emits: a subscribe meanwhile asks for no second tick
         val handle = cancelTick
 
-        invoke(source())
-
-        // Stopped or re-timed during the emit: then that decides
-        if (cancelTick === handle) {
-            cancelTick = null
-            tickNext()
+        try {
+            invoke(source())
+        } finally {
+            // Stopped or re-timed during the emit: then that decides. Also after a throw: one bad tick must not end
+            // the ticks
+            if (cancelTick === handle) {
+                cancelTick = null
+                tickNext()
+            }
         }
     }
 }

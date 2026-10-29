@@ -45,9 +45,10 @@ class ThreeJsFrame(
  * calls `renderer.render(scene, camera)` automatically each frame.
  *
  * While [paused] holds true no frame is asked for at all (the scene, the camera and the WebGL context stay), e.g.
- * `paused = windowCtrl.hasFocus.map { !it }`. Nothing draws meanwhile: a `renderer.setSize` while paused leaves the
- * canvas cleared until the next frame, so render once by hand after resizing a paused scene. The frames come from [clock], by default the browser's animation frames,
- * shared with every other user of [FrameClock.animationFrames].
+ * `paused = windowCtrl.hasFocus.map { !it }`. The scene is drawn once after [onReady] also when mounted paused.
+ * Nothing else draws while paused: a `renderer.setSize` then leaves the canvas cleared until the next frame, so render
+ * once by hand after resizing a paused scene. The frames come from [clock], by default the browser's animation frames,
+ * shared with every other user of [FrameClock.animationFrames]; a new clock restarts the loop.
  */
 @Suppress("FunctionName")
 fun Tag.ThreeJs(
@@ -92,8 +93,8 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
         val clearColor: Int?,
         val width: Int?,
         val height: Int?,
-        val paused: Stream<Boolean>,
-        val clock: FrameClock,
+        val paused: Stream<Boolean> = steady(false),
+        val clock: FrameClock = FrameClock.animationFrames,
     )
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +114,15 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
             onMount { tryStart() }
             onUpdate { tryStart() }
             onNextProps { new, old ->
-                if (new.paused !== old.paused) loop?.let { followPaused(it, new.paused) }
+                when {
+                    // A new clock: a new loop on it (the props are the new ones here)
+                    new.clock !== old.clock -> loop?.let {
+                        it.stop()
+                        startLoop()
+                    }
+
+                    new.paused !== old.paused -> loop?.let { followPaused(it, new.paused) }
+                }
             }
             onUnmount { stop() }
         }
@@ -159,6 +168,9 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
         renderer = newRenderer
 
         props.onReady(ThreeJsContext(newScene, newCamera, newRenderer))
+
+        // Drawn once at once, so a scene mounted paused is not left a blank canvas
+        newRenderer.render(newScene, newCamera)
 
         startLoop()
     }

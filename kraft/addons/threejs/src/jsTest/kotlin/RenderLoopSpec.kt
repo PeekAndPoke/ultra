@@ -107,6 +107,53 @@ class RenderLoopSpec : StringSpec({
         frames shouldBe 0
     }
 
+    "stop alone cancels the pending frame" {
+        val clock = HandClock()
+        var frames = 0
+        val loop = RenderLoop(clock) { _, _ -> frames++ }
+
+        loop.start()
+        clock.requests shouldBe 1
+        loop.stop()
+
+        clock.requests shouldBe 0
+        clock.frame()
+        frames shouldBe 0
+    }
+
+    "a pause and a resume from inside a frame keep one chain of frames" {
+        val clock = HandClock()
+        lateinit var loop: RenderLoop
+        var frames = 0
+        loop = RenderLoop(clock) { _, _ ->
+            frames++
+            if (frames == 1) {
+                loop.pause()
+                loop.resume()
+            }
+        }
+
+        loop.start()
+        clock.frame()
+
+        clock.requests shouldBe 1
+    }
+
+    "a frame that throws does not end the loop" {
+        val clock = HandClock()
+        var frames = 0
+        val loop = RenderLoop(clock) { _, _ ->
+            frames++
+            if (frames == 1) error("a bad frame")
+        }
+
+        loop.start()
+        runCatching { clock.frame() }
+        clock.frame()
+
+        frames shouldBe 2
+    }
+
     "a pause from inside a frame asks for no next frame" {
         val clock = HandClock()
         lateinit var loop: RenderLoop
