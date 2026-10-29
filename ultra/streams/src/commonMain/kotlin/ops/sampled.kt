@@ -4,6 +4,8 @@ import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSourceImpl
 import io.peekandpoke.ultra.streams.Unsubscribe
 import io.peekandpoke.ultra.streams.steady
+import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -17,16 +19,24 @@ import kotlin.time.Duration.Companion.milliseconds
  * slider moving the interval does not hold the ticks off); a repeat of the same interval changes nothing. An interval
  * of zero or less counts as 1 ms, one beyond `Int.MAX_VALUE` ms as that; an infinite one stops the ticks at once.
  * The source and [every] are listened to only while someone listens here, which also keeps a source fresh that is
- * computed only while listened to. The ticks run on [FrameClock.ticker], on the JVM and native on a pool thread: to tick on the thread the source emits on, pass `sampled(clock = FrameClock.ticker(intervalMs, context))`.
+ * computed only while listened to. The ticks run on [FrameClock.ticker] in [context]: on the JVM and native pass the
+ * context the source emits on, so ticks and subscribers stay on one thread (default: a pool thread).
  */
-fun <T> Stream<T>.sampled(every: Stream<Duration>): Stream<T> =
-    sampled(every = every, clockFor = { FrameClock.ticker(intervalMs = it.inWholeIntervalMs()) })
+fun <T> Stream<T>.sampled(
+    every: Stream<Duration>,
+    context: CoroutineContext = Dispatchers.Default,
+): Stream<T> = sampled(
+    every = every,
+    clockFor = { FrameClock.ticker(intervalMs = it.inWholeIntervalMs(), context = context) },
+)
 
 /** Takes the stream's latest value at every tick, [every] apart; see the overload with a `Stream<Duration>`. */
-fun <T> Stream<T>.sampled(every: Duration): Stream<T> = sampled(every = steady(every))
+fun <T> Stream<T>.sampled(every: Duration, context: CoroutineContext = Dispatchers.Default): Stream<T> =
+    sampled(every = steady(every), context = context)
 
 /** Takes the stream's latest value at every tick, [everyMs] apart; see the overload with a `Stream<Duration>`. */
-fun <T> Stream<T>.sampled(everyMs: Int): Stream<T> = sampled(every = everyMs.milliseconds)
+fun <T> Stream<T>.sampled(everyMs: Int, context: CoroutineContext = Dispatchers.Default): Stream<T> =
+    sampled(every = everyMs.milliseconds, context = context)
 
 /** Takes the stream's latest value at every frame of [clock] (animation frames, or a test's hand clock). */
 fun <T> Stream<T>.sampled(clock: FrameClock): Stream<T> = sampled(every = steady(Duration.ZERO), clockFor = { clock })
@@ -66,7 +76,9 @@ private class StreamSampledOperator<T>(
         if (!listening) {
             listening = true
             // Values are taken at the ticks only; the subscription keeps the source fresh
-            unsubscribeSource = source.subscribeToStream { }
+            // A handler of this operator's own: a lambda capturing nothing is one shared instance, and two samplers of
+            // one source would then hold a single entry in its handler set, the first to leave unsubscribing both
+            unsubscribeSource = source.subscribeToStream { keepFresh(it) }
             // A subscriber is told the value as it is at this moment, once the source is listened to
             current = source()
             unsubscribeEvery = every.subscribeToStream { interval(it) }
@@ -83,6 +95,11 @@ private class StreamSampledOperator<T>(
             unsubscribeSource?.invoke()
             unsubscribeSource = null
         }
+    }
+
+    /** Values are taken at the ticks only: the subscription just keeps the source fresh. */
+    @Suppress("UNUSED_PARAMETER")
+    private fun keepFresh(value: T) {
     }
 
     private fun interval(next: Duration) {

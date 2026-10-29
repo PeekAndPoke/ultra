@@ -20,6 +20,9 @@ import kotlinx.html.canvas
 import kotlinx.html.style
 import org.w3c.dom.HTMLCanvasElement
 
+/** The default of `paused`: one instance, so props stay equal across renders. */
+private val NotPaused: Stream<Boolean> = steady(false)
+
 /** Callback data passed to [ThreeJsComponent.Props.onReady]. */
 class ThreeJsContext(
     val scene: Scene,
@@ -60,7 +63,7 @@ fun Tag.ThreeJs(
     clearColor: Int? = null,
     width: Int? = null,
     height: Int? = null,
-    paused: Stream<Boolean> = steady(false),
+    paused: Stream<Boolean> = NotPaused,
     clock: FrameClock = FrameClock.animationFrames,
 ) = comp(
     ThreeJsComponent.Props(
@@ -93,7 +96,7 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
         val clearColor: Int?,
         val width: Int?,
         val height: Int?,
-        val paused: Stream<Boolean> = steady(false),
+        val paused: Stream<Boolean> = NotPaused,
         val clock: FrameClock = FrameClock.animationFrames,
     )
 
@@ -169,10 +172,13 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
 
         props.onReady(ThreeJsContext(newScene, newCamera, newRenderer))
 
-        // Drawn once at once, so a scene mounted paused is not left a blank canvas
-        newRenderer.render(newScene, newCamera)
-
-        startLoop()
+        try {
+            // Drawn once at once, so a scene mounted paused is not left a blank canvas
+            newRenderer.render(newScene, newCamera)
+        } finally {
+            // Also after a throwing first render: the loop must run, as one bad frame does not stop it either
+            startLoop()
+        }
     }
 
     private fun startLoop() {

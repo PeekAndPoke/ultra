@@ -304,6 +304,9 @@ open external class Light : Object3D {
 
     /** Frees the light's shadow map, if it has one. */
     fun dispose()
+
+    /** The light's shadow: directional, point and spot lights have one, the others none. */
+    open val shadow: LightShadow?
 }
 
 /** A light's shadow: the size of its map in texels, and the map itself once a frame rendered it. */
@@ -326,7 +329,7 @@ external class DirectionalLight(
     intensity: Double = definedExternally,
 ) : Light {
     val target: Object3D
-    val shadow: LightShadow
+    override val shadow: LightShadow
 }
 
 /** Point light — emits in all directions from a point. */
@@ -338,7 +341,7 @@ external class PointLight(
 ) : Light {
     var distance: Double
     var decay: Double
-    val shadow: LightShadow
+    override val shadow: LightShadow
 }
 
 /** Spot light — a cone from its position towards its [target]. */
@@ -355,7 +358,7 @@ external class SpotLight(
     var angle: Double
     var penumbra: Double
     val target: Object3D
-    val shadow: LightShadow
+    override val shadow: LightShadow
 }
 
 /** Hemisphere light — gradient from sky to ground. */

@@ -92,3 +92,4 @@ In ULTRA-00264's Review record (the batch's gate, both groups).
 - 2026-10-29: DESIGNED.
 - 2026-10-29: gate PASS in round 2 (record in ULTRA-00264); open MINORs handed to the maintainer as a list. Docs written with the change, so no DOCS follow-up.
 - 2026-10-29: DONE.
+- 2026-10-29: the planned CREDITS line is not written: ultra has not adopted CREDITS.MD (project-layout repo note). Spross's workshop code is credited in the CHANGELOG entry and the commit message instead.

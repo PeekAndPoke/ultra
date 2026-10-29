@@ -110,6 +110,29 @@ class SmoothLawStreamSpec : StringSpec({
         smooth()!! shouldBeLessThan 1.0
     }
 
+    "a law that throws ends the frame, and the next value moves the stream again" {
+        val clock = HandClock()
+        val source = StreamSource<Double?>(0.0)
+        var throwNext = true
+        val failing = object : Smoothing {
+            override fun step(motion: Motion, goal: Double, elapsedMs: Double): Motion {
+                if (throwNext) {
+                    throwNext = false
+                    error("a law fails once")
+                }
+                return Smoothing.Linear(unitsPerSecond = 60.0).step(motion, goal, elapsedMs)
+            }
+        }
+        val smooth = source.smooth(smoothing = StreamSource<Smoothing?>(failing), clock = clock)
+
+        smooth.subscribeToStream { }
+        source(10.0)
+        runCatching { clock.frame(frame) }
+
+        source(20.0)
+        clock.waiting shouldBe true
+    }
+
     "the law is listened to only while someone listens" {
         val source = StreamSource<Double?>(0.0)
         val law = StreamSource<Smoothing?>(Smoothing.Exponential(keepPer10Ms = 0.5))

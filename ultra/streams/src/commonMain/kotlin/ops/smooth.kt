@@ -188,12 +188,24 @@ private class StreamSmoothOperator(
 
         // NaN-guard: the first step, or a clock that stands or goes backwards, counts as one usual frame
         val elapsed = lastFrameAt?.let { at - it }?.takeIf { it > 0.0 } ?: FRAME_MS
-        val next = law.step(from, goal, elapsed)
-        // There: settled within [near], or a step that changes nothing any more (the floating-point floor)
-        val done = law.isSettled(next, goal, near) || next == from
+        var done = false
+        var stepped = false
 
-        lastFrameAt = at
-        emit(if (done) Motion(goal) else next)
+        try {
+            val next = law.step(from, goal, elapsed)
+            // There: settled within [near], or a step that changes nothing any more (the floating-point floor)
+            done = law.isSettled(next, goal, near) || next == from
+
+            lastFrameAt = at
+            emit(if (done) Motion(goal) else next)
+            stepped = true
+        } finally {
+            // A law or a listener threw: the frame is spent, so the next value starts the motion again
+            if (!stepped && cancelFrame === handle) {
+                cancelFrame = null
+                lastFrameAt = null
+            }
+        }
 
         // Stopped during the emit (the last listener left, a null came): then that decides
         if (cancelFrame !== handle) {

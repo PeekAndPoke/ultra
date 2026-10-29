@@ -183,6 +183,24 @@ class SampledSpec : StringSpec({
         first shouldBe 7
     }
 
+    "two samplers of one source: the first leaving keeps the source live for the other" {
+        val base = StreamSource(0)
+        // fold computes only while listened to: a source stopped under the second sampler would stay at its old sum
+        val sum = base.fold(0) { acc, n -> acc + n }
+        val clockB = HandClock()
+        val seen = mutableListOf<Int>()
+
+        val leaveA = sum.sampled(HandClock()).subscribeToStream { }
+        sum.sampled(clockB).subscribeToStream { seen.add(it) }
+        seen.clear()
+
+        leaveA()
+        base(5)
+        clockB.frame()
+
+        seen shouldBe listOf(5)
+    }
+
     "an interval longer than Int.MAX_VALUE ms is clamped, not wrapped to a negative one" {
         30.days.inWholeIntervalMs() shouldBe Int.MAX_VALUE
         (-5).milliseconds.inWholeIntervalMs() shouldBe 0

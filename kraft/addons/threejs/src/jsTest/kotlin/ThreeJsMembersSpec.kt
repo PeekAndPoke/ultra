@@ -9,6 +9,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
 import io.peekandpoke.kraft.addons.registry.addons
+import io.peekandpoke.kraft.addons.threejs.js.Light
 import io.peekandpoke.kraft.addons.threejs.js.Mesh
 import io.peekandpoke.kraft.addons.threejs.js.Object3D
 import io.peekandpoke.kraft.addons.threejs.js.TextureFilter
@@ -121,6 +122,12 @@ class ThreeJsMembersSpec : StringSpec({
 
             three.createDirectionalLight().shadow.mapSize.x shouldBe 512.0
             three.createPointLight().shadow.mapSize.y shouldBe 512.0
+
+            // Through the base type: the shadow of a light that has one, none for one that has none
+            val asLight: Light = three.createSpotLight()
+            asLight.shadow?.mapSize?.x shouldBe 512.0
+            val ambient: Light = three.createAmbientLight()
+            (ambient.shadow == null) shouldBe true
 
             three.createHemisphereLight(groundColor = 0x00ff00).groundColor.g shouldBe 1.0
 

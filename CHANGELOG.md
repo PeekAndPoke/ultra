@@ -33,7 +33,7 @@
 - **Streams: `sampled(every)` (ULTRA-00267, from Klang; named by the maintainer).** The latest value at every tick,
   also unchanged and `null`, so a graph's time axis is the clock's: `level.sampled(every = 250.milliseconds)
   .history(capacity = 480)`. `every` may be a `Stream<Duration>` that changes while listening (a new interval applies
-  from the next tick); `everyMs` and
+  from the next tick) and `context` sets the coroutine context the ticks run in (JVM/native); `everyMs` and
   `sampled(clock: FrameClock)` too. `history()`'s KDoc names its copy per value.
 
 - **Kraft three.js: pause the render loop (ULTRA-00270, from Klang).** `ThreeJs(paused = ...)` takes a
@@ -45,7 +45,8 @@
 - **Kraft three.js: the members the projects filled in themselves (ULTRA-00246, from Spross and Klang).** Constructors
   `createObject3D()`, `createGroup()`, `createSpotLight(...)`, `createRaycaster()`, `createVector2(x, y)`,
   `createCanvasTexture(canvas)`, and `create<T>(className, args...)` for any other class. New types `Group`,
-  `SpotLight`, `Raycaster` (with `Intersection`), `Vector2`, `Texture`, `CanvasTexture`, `LightShadow`, `ShadowMap`,
+  `SpotLight`, `Raycaster` (with `Intersection`), `Vector2`, `Texture`, `CanvasTexture`, `LightShadow` (`Light.shadow`,
+  non-null on directional, point and spot lights), `ShadowMap`,
   and the constants `TextureWrapping` / `TextureFilter`. New members: `Object3D.renderOrder`, `parent`,
   `removeFromParent()`, `updateWorldMatrix(...)`, `localToWorld(v)`, `lookAt(Vector3)`; `Light.dispose()`, `shadow` on
   directional, point and spot lights; `HemisphereLight.groundColor`; `Material.needsUpdate`;

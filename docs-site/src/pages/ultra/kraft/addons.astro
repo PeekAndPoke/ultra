@@ -296,6 +296,51 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
         Applications before the first finishes.
     </Aside>
 
+    <h3>More of pixi</h3>
+
+    <ul>
+        <li><code>pixi.createContainer()</code>; any other class by name with
+            <code>pixi.create&lt;T&gt;("ClassName", args...)</code> (fails with the name if pixi has none);
+            <code>pixi.raw</code> is the module.</li>
+        <li><code>Container.zIndex</code> with <code>sortableChildren</code>: a zIndex set before <code>addChildAt</code>
+            does not turn sorting on (before <code>addChild</code> it does), so set <code>sortableChildren</code> on the
+            parent first. Also <code>addChildAt</code>, <code>sortChildren()</code>, <code>scale</code>;
+            <code>Text.anchor</code>; <code>Graphics.poly(points)</code>.</li>
+        <li><code>app.resize()</code> / <code>queueResize()</code> follow <code>resizeTo</code>, which listens to the
+            window only. <code>app.followElementSize(element)</code>, called after <code>init</code>, also follows a
+            resize by layout alone (a docked panel, a splitter) and returns the stop.</li>
+    </ul>
+
+    <Code code={`val stop = app.followElementSize(host)   // after app.init(...).await()
+// ... on unmount
+stop()
+app.destroy(rendererDestroy = true)`} lang="kotlin" theme="vitesse-dark" />
+
+    <h2>threejs — 3D WebGL</h2>
+
+    <p>The <code>ThreeJs</code> component wraps a canvas and runs the render loop: build the scene in
+        <code>onReady</code>, advance it in <code>onFrame</code>. It is drawn once after <code>onReady</code>, then on
+        every animation frame, shared with the streams' <code>FrameClock.animationFrames</code>.</p>
+
+    <Code code={`ThreeJs(
+    clearColor = 0x1a1a2e,
+    // Rest while the window has no focus: no frames at all, the scene and the WebGL context stay
+    paused = windowCtrl.hasFocus.map { !it },
+    onReady = { ctx -> ctx.scene.add(three.createAmbientLight(0xffffff, 0.6)) },
+    onFrame = { f -> cube.rotation.y += 0.9 * f.deltaMs / 1000.0 },
+)`} lang="kotlin" theme="vitesse-dark" />
+
+    <ul>
+        <li>After a pause the first <code>deltaMs</code> is 0, and <code>elapsedMs</code> counts running time only, so
+            the scene goes on where it rested. A <code>renderer.setSize</code> while paused leaves the canvas cleared
+            until the next frame: render once by hand after resizing a paused scene.</li>
+        <li>Constructors on the addon for the scene, cameras, renderer, geometries, materials, meshes, lights (ambient,
+            directional, point, hemisphere, spot), <code>createObject3D()</code>, <code>createGroup()</code>,
+            <code>createVector2/3</code>, <code>createRaycaster()</code>, <code>createCanvasTexture(canvas)</code>; any
+            other class with <code>three.create&lt;T&gt;("ClassName", args...)</code>; <code>three.raw</code> is the
+            module. Texture constants: <code>TextureWrapping</code>, <code>TextureFilter</code>.</li>
+    </ul>
+
     <h2>pdfjs — PDF viewer</h2>
 
     <Code code={`class DocumentView(ctx: NoProps) : PureComponent(ctx) {
