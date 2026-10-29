@@ -40,6 +40,16 @@
   (`paused = windowCtrl.hasFocus.map { !it }`). After a resume the first `deltaMs` is 0 and `elapsedMs` counts
   running time only. The loop runs on `clock` (default `FrameClock.animationFrames`, shared with the streams).
 
+- **Kraft three.js: the members the projects filled in themselves (ULTRA-00246, from Spross and Klang).** Constructors
+  `createObject3D()`, `createGroup()`, `createSpotLight(...)`, `createRaycaster()`, `createVector2(x, y)`,
+  `createCanvasTexture(canvas)`, and `create<T>(className, args...)` for any other class. New types `Group`,
+  `SpotLight`, `Raycaster` (with `Intersection`), `Vector2`, `Texture`, `CanvasTexture`, `LightShadow`, `ShadowMap`,
+  and the constants `TextureWrapping` / `TextureFilter`. New members: `Object3D.renderOrder`, `parent`,
+  `removeFromParent()`, `updateWorldMatrix(...)`, `localToWorld(v)`, `lookAt(Vector3)`; `Light.dispose()`, `shadow` on
+  directional, point and spot lights; `HemisphereLight.groundColor`; `Material.needsUpdate`;
+  `WebGLRenderer.shadowMap`. Spross's are taken from its Apache-2.0 workshop; Klang's AGPL files were rewritten from
+  three.js's API, not copied.
+
 ### Changed
 
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its

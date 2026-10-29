@@ -6,26 +6,34 @@ import io.peekandpoke.kraft.addons.registry.AddonRegistry
 import io.peekandpoke.kraft.addons.registry.AddonRegistryBuilder
 import io.peekandpoke.kraft.addons.threejs.js.AmbientLight
 import io.peekandpoke.kraft.addons.threejs.js.BoxGeometry
+import io.peekandpoke.kraft.addons.threejs.js.CanvasTexture
 import io.peekandpoke.kraft.addons.threejs.js.CylinderGeometry
 import io.peekandpoke.kraft.addons.threejs.js.DirectionalLight
+import io.peekandpoke.kraft.addons.threejs.js.Group
 import io.peekandpoke.kraft.addons.threejs.js.HemisphereLight
 import io.peekandpoke.kraft.addons.threejs.js.MaterialParameters
 import io.peekandpoke.kraft.addons.threejs.js.Mesh
 import io.peekandpoke.kraft.addons.threejs.js.MeshBasicMaterial
 import io.peekandpoke.kraft.addons.threejs.js.MeshLambertMaterial
 import io.peekandpoke.kraft.addons.threejs.js.MeshStandardMaterial
+import io.peekandpoke.kraft.addons.threejs.js.Object3D
 import io.peekandpoke.kraft.addons.threejs.js.OrthographicCamera
 import io.peekandpoke.kraft.addons.threejs.js.PerspectiveCamera
 import io.peekandpoke.kraft.addons.threejs.js.PlaneGeometry
 import io.peekandpoke.kraft.addons.threejs.js.PointLight
+import io.peekandpoke.kraft.addons.threejs.js.Raycaster
 import io.peekandpoke.kraft.addons.threejs.js.Scene
 import io.peekandpoke.kraft.addons.threejs.js.SphereGeometry
+import io.peekandpoke.kraft.addons.threejs.js.SpotLight
 import io.peekandpoke.kraft.addons.threejs.js.TorusGeometry
+import io.peekandpoke.kraft.addons.threejs.js.Vector2
 import io.peekandpoke.kraft.addons.threejs.js.Vector3
 import io.peekandpoke.kraft.addons.threejs.js.WebGLRenderer
 import io.peekandpoke.kraft.addons.threejs.js.WebGLRendererParameters
 import kotlinx.coroutines.await
+import org.w3c.dom.HTMLCanvasElement
 import kotlin.js.Promise
+import kotlin.math.PI
 
 /**
  * Facade for the lazily-loaded three.js addon.
@@ -190,6 +198,52 @@ class ThreeJsAddon internal constructor(
         @Suppress("UnusedVariable", "unused")
         val ctor = threeModule.Vector3
         return js("new ctor(x, y, z)").unsafeCast<Vector3>()
+    }
+
+    @Suppress("unused")
+    fun createVector2(x: Double = 0.0, y: Double = 0.0): Vector2 = create("Vector2", x, y)
+
+    @Suppress("unused")
+    fun createRaycaster(): Raycaster = create("Raycaster")
+
+    //  Scene graph  ///////////////////////////////////////////////////////////////////////////////////
+
+    @Suppress("unused")
+    fun createObject3D(): Object3D = create("Object3D")
+
+    @Suppress("unused")
+    fun createGroup(): Group = create("Group")
+
+    //  More lights  ///////////////////////////////////////////////////////////////////////////////////
+
+    /** A spot light; [angle] in radians (at most PI / 2), [penumbra] from 0 (hard edge) to 1. */
+    @Suppress("unused")
+    fun createSpotLight(
+        color: dynamic = 0xffffff,
+        intensity: Double = 1.0,
+        distance: Double = 0.0,
+        angle: Double = PI / 3.0,
+        penumbra: Double = 0.0,
+        decay: Double = 2.0,
+    ): SpotLight = create("SpotLight", color, intensity, distance, angle, penumbra, decay)
+
+    //  Textures  //////////////////////////////////////////////////////////////////////////////////////
+
+    @Suppress("unused")
+    fun createCanvasTexture(canvas: HTMLCanvasElement): CanvasTexture = create("CanvasTexture", canvas)
+
+    //  Any class  /////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * A new instance of three.js's class [className], made with [args]: for a class the addon has no constructor for.
+     * [T] is not checked; fails with the name when three.js has no such class.
+     */
+    fun <T> create(className: String, vararg args: Any?): T {
+        val ctor: dynamic = threeModule[className]
+
+        require(ctor != null && ctor != undefined) { "three.js has no class '$className'" }
+
+        return js("Reflect").construct(ctor, args).unsafeCast<T>()
     }
 }
 

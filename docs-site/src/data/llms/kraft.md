@@ -2593,6 +2593,11 @@ class SpinningCube(ctx: NoProps) : PureComponent(ctx) {
 The component creates a default `PerspectiveCamera` at `z = 5`. Override via `createCamera = { aspect -> ... }` if you
 need an orthographic or repositioned camera.
 
+Constructors on the addon: scene, cameras, renderer, geometries, materials, mesh, lights (ambient, directional, point,
+hemisphere, spot), `createObject3D()`, `createGroup()`, `createVector2/3`, `createRaycaster()`,
+`createCanvasTexture(canvas)`; any other class by name: `three.create<T>("ClassName", args...)` (fails with the name if
+three.js has none), and `three.raw` is the module. Texture constants: `TextureWrapping`, `TextureFilter`.
+
 `paused: Stream<Boolean>` stops the loop without unmounting (scene, camera and WebGL context stay): no frame is asked for
 while it holds true, e.g. `paused = windowCtrl.hasFocus.map { !it }`. After a resume the first `deltaMs` is 0 and
 `elapsedMs` counts running time only, so the scene goes on where it rested. The frames come from `clock`
