@@ -90,13 +90,17 @@ class Router(
 
         // One reference per listener: each `::x` is a new function object, and removal needs the one that was added
         private val onHashChange: (Event) -> Unit = ::windowListener
+        private val onClick: (Event) -> Unit = ::clickListener
 
         override fun init() {
             window.addEventListener("hashchange", onHashChange)
+            // Route links ("#/...") go through the router, so a leave guard holds them before the browser writes
+            window.addEventListener("click", onClick)
         }
 
         override fun dispose() {
             window.removeEventListener("hashchange", onHashChange)
+            window.removeEventListener("click", onClick)
         }
 
         override fun render(bound: Route.Bound): String {
@@ -115,8 +119,9 @@ class Router(
         }
 
         override fun replaceUri(uri: String) {
-            // Into the fragment, where this strategy keeps its routes; a bare path would drop the fragment
-            window.history.replaceState(data = null, title = "", url = HASH_PREFIX + uri.cleanUri())
+            // Into the fragment, where this strategy keeps its routes; a bare path would drop the fragment. The entry's
+            // state stays: a BackNavigationTrap marks its entry with it
+            window.history.replaceState(data = window.history.state, title = "", url = HASH_PREFIX + uri.cleanUri())
         }
 
         override fun getUriFromWindowLocation(): String {
@@ -140,10 +145,26 @@ class Router(
             if (router.enabled) {
                 event.preventDefault()
 
-                if (router.browserNavigationAllowed()) {
-                    router.navigateToWindowUri()
-                }
+                router.followBrowserNavigation()
             }
+        }
+
+        /** Plain clicks on route links (`href="#/..."`) navigate through the router; in-page anchors stay the browser's. */
+        private fun clickListener(event: Event) {
+            if (!router.enabled) return
+
+            val mouseEvent = event as? MouseEvent ?: return
+
+            if (!mouseEvent.isPlainPrimaryClick()) return
+
+            val anchor = findClosestAnchor(mouseEvent.target) ?: return
+            val href = anchor.getAttribute("href") ?: return
+
+            if (!href.startsWith(HASH_PREFIX + "/")) return
+            if (!anchor.targetsSelf() || anchor.hasAttribute("download")) return
+
+            event.preventDefault()
+            router.navToUri(href)
         }
     }
 
@@ -181,7 +202,8 @@ class Router(
         }
 
         override fun replaceUri(uri: String) {
-            window.history.replaceState(null, "", uri.cleanUri())
+            // The entry's state stays: a BackNavigationTrap marks its entry with it
+            window.history.replaceState(window.history.state, "", uri.cleanUri())
         }
 
         override fun getUriFromWindowLocation(): String {
@@ -211,9 +233,7 @@ class Router(
 
             event.preventDefault()
 
-            if (router.browserNavigationAllowed()) {
-                router.navigateToWindowUri()
-            }
+            router.followBrowserNavigation()
         }
 
         /**
@@ -227,12 +247,8 @@ class Router(
 
             val mouseEvent = event as? MouseEvent ?: return
 
-            // Someone else already handled it
-            if (mouseEvent.defaultPrevented) return
-
-            // Not a plain primary click: new tab, new window, download, ...
-            if (mouseEvent.button != 0.toShort()) return
-            if (mouseEvent.ctrlKey || mouseEvent.metaKey || mouseEvent.shiftKey || mouseEvent.altKey) return
+            // Someone else already handled it, or not a plain primary click: new tab, new window, download, ...
+            if (!mouseEvent.isPlainPrimaryClick()) return
 
             // Find the closest anchor element by traversing up the DOM tree
             val anchor = findClosestAnchor(mouseEvent.target) ?: return
@@ -268,21 +284,6 @@ class Router(
             router.navToUri(uri = url.pathname + url.search + url.hash)
         }
 
-        /** True when the link opens in the current browsing context, honouring `<base target>`. */
-        private fun HTMLAnchorElement.targetsSelf(): Boolean {
-            val target = (getAttribute("target") ?: document.querySelector("base[target]")?.getAttribute("target"))
-                ?.lowercase()
-
-            return when (target) {
-                null, "", "_self" -> true
-                // Both name the current context when it is not framed
-                "_top" -> window.top === window
-                "_parent" -> window.parent === window
-                // Any other value, even whitespace, names another browsing context
-                else -> false
-            }
-        }
-
         /** True for `scheme:…` and `//host…` hrefs, after the clean-up the browser's URL parser applies. */
         private fun String.isAbsoluteUrl(): Boolean {
             // C0 controls and spaces at both ends, tab / LF / CR anywhere, and '\' read as '/'
@@ -298,29 +299,6 @@ class Router(
             return (getAttribute("rel") ?: "").lowercase().split(' ', '\t', '\n', '\r').filter { it.isNotEmpty() }
         }
 
-        /**
-         * Traverses up the DOM tree to find the closest anchor element
-         */
-        private fun findClosestAnchor(target: EventTarget?): HTMLAnchorElement? {
-            var current: Node? = target as? Node
-
-            while (current != null) {
-                // Check if current node is an anchor element
-                if (current is HTMLAnchorElement) {
-                    return current
-                }
-
-                // Move up to parent node
-                current = current.parentNode
-
-                // Stop at document level to avoid infinite loops
-                if (current is Document) {
-                    break
-                }
-            }
-
-            return null
-        }
     }
 
     /** Represents the navigation history of the router. */
@@ -361,6 +339,9 @@ class Router(
 
     /** A navigation the guards already let through: its own address change (a hashchange) is not asked again. */
     private var letThrough: String? = null
+
+    /** A navigation the guards let through is running: what it leads to (a middleware redirect) follows unasked. */
+    private var approved = false
 
     init {
         strategy.init()
@@ -504,16 +485,39 @@ class Router(
         return { leaveGuards.remove(guard) }
     }
 
+    /**
+     * Runs [block] past every [LeaveGuard]: the navigations it starts, and what they lead to, are not asked. For a
+     * leave that must happen whatever a page holds, e.g. a logout: `router.withoutLeaveGuards { navToUri("/login") }`.
+     */
+    fun <R> withoutLeaveGuards(block: () -> R): R {
+        val was = approved
+        approved = true
+
+        try {
+            return block()
+        } finally {
+            approved = was
+        }
+    }
+
     /** Runs [go] if no guard holds the navigation to [uri]; with an [LeaveResult.Ask], once it is answered yes. */
     private fun guarded(uri: String, go: () -> Unit) {
         val target = strategy.normalize(uri)
+
+        // Within a navigation already let through (a middleware redirect), or past the guards on purpose
+        if (approved) {
+            letThrough = target
+            return go()
+        }
 
         if (leaveGuards.isEmpty() || !isLeaving(target)) return go()
         if (askingToLeave) return
 
         val pass = {
-            letThrough = target
-            go()
+            withoutLeaveGuards {
+                letThrough = target
+                go()
+            }
         }
 
         when (val answer = askGuards(target)) {
@@ -524,43 +528,54 @@ class Router(
     }
 
     /**
-     * For the strategies, when the browser moved the address itself (Back, Forward, a typed hash): true when the
-     * router may follow; otherwise the guards held it and the address was put back.
+     * Follows an address the browser moved itself (Back, Forward, a typed hash), unless a [LeaveGuard] holds it: then
+     * the page's address is put back with [RouterStrategy.restoreUri], and an [LeaveResult.Ask] answered yes replays
+     * the move by going back from that restored entry. The built-in strategies call it from their `popstate` /
+     * `hashchange` listeners; a custom strategy does the same to take part in the guards.
      */
-    internal fun browserNavigationAllowed(): Boolean {
+    fun followBrowserNavigation() {
         val target = strategy.getUriFromWindowLocation()
 
-        if (target == letThrough) {
-            letThrough = null
-            return true
+        letThrough?.let { through ->
+            if (sameUri(target, through)) {
+                letThrough = null
+                withoutLeaveGuards { navigateToWindowUri() }
+                return
+            }
         }
 
-        if (leaveGuards.isEmpty() || !isLeaving(target)) return true
+        if (approved || leaveGuards.isEmpty() || !isLeaving(target)) return navigateToWindowUri()
 
         val stay = current().uri
 
         if (askingToLeave) {
             strategy.restoreUri(stay)
-            return false
+            return
         }
 
-        return when (val answer = askGuards(target)) {
-            LeaveResult.Proceed -> true
+        when (val answer = askGuards(target)) {
+            LeaveResult.Proceed -> withoutLeaveGuards { navigateToWindowUri() }
 
-            LeaveResult.Stop -> {
-                strategy.restoreUri(stay)
-                false
-            }
+            LeaveResult.Stop -> strategy.restoreUri(stay)
 
             is LeaveResult.Ask -> {
                 strategy.restoreUri(stay)
                 ask(answer) {
+                    // The restore pushed the page's address on top of the target's entry: back is the move itself
                     letThrough = target
-                    strategy.navigateToUri(target)
+                    window.history.back()
                 }
-                false
             }
         }
+    }
+
+    /** The same address, also when the browser percent-encoded one of them (`location.hash` does). */
+    private fun sameUri(a: String, b: String): Boolean = a == b || decoded(a) == decoded(b)
+
+    private fun decoded(uri: String): String = try {
+        js("decodeURI")(uri).unsafeCast<String>()
+    } catch (_: Throwable) {
+        uri
     }
 
     /** Leaving: the [target] matches another route, or the same with other route params, or none. */
@@ -582,11 +597,13 @@ class Router(
         askingToLeave = true
 
         launch {
-            try {
-                if (answer.confirm()) go()
+            val yes = try {
+                answer.confirm()
             } finally {
                 askingToLeave = false
             }
+
+            if (yes) go()
         }
     }
 
@@ -613,8 +630,11 @@ class Router(
      * Navigates to the given uri while clearing the navigation history.
      */
     fun clearHistoryAndNavTo(uri: String) {
-        _historyEntries.clear()
-        navToUri(uri)
+        // Cleared only once no guard holds the navigation
+        guarded(uri) {
+            _historyEntries.clear()
+            strategy.navigateToUri(uri)
+        }
     }
 
     /**
@@ -622,10 +642,16 @@ class Router(
      */
     fun navBack() {
         if (history().canGoBack) {
-            // remove the current active route
-            _historyEntries.removeLast()
-            // remove the previous active route and go back to it
-            navToUri(_historyEntries.removeLast().uri)
+            val previous = _historyEntries[_historyEntries.lastIndex - 1]
+
+            // The entries go only once no guard holds the navigation
+            guarded(previous.uri) {
+                // remove the current active route
+                _historyEntries.removeLast()
+                // remove the previous active route and go back to it
+                _historyEntries.removeLast()
+                strategy.navigateToUri(previous.uri)
+            }
         }
     }
 
@@ -700,3 +726,46 @@ class Router(
         return resolveRouteForUri(uri) != null
     }
 }
+
+/** True when the link opens in the current browsing context, honouring `<base target>`. */
+private fun HTMLAnchorElement.targetsSelf(): Boolean {
+    val target = (getAttribute("target") ?: document.querySelector("base[target]")?.getAttribute("target"))
+        ?.lowercase()
+
+    return when (target) {
+        null, "", "_self" -> true
+        // Both name the current context when it is not framed
+        "_top" -> window.top === window
+        "_parent" -> window.parent === window
+        // Any other value, even whitespace, names another browsing context
+        else -> false
+    }
+}
+
+/**
+ * Traverses up the DOM tree to find the closest anchor element
+ */
+private fun findClosestAnchor(target: EventTarget?): HTMLAnchorElement? {
+    var current: Node? = target as? Node
+
+    while (current != null) {
+        // Check if current node is an anchor element
+        if (current is HTMLAnchorElement) {
+            return current
+        }
+
+        // Move up to parent node
+        current = current.parentNode
+
+        // Stop at document level to avoid infinite loops
+        if (current is Document) {
+            break
+        }
+    }
+
+    return null
+}
+
+/** Not handled yet, the primary button, no modifier key: a click the router may take over. */
+private fun MouseEvent.isPlainPrimaryClick(): Boolean =
+    !defaultPrevented && button == 0.toShort() && !(ctrlKey || metaKey || shiftKey || altKey)

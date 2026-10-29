@@ -61,10 +61,25 @@
   component answers `LeaveResult.Proceed`, `Stop` or `Ask(confirm)`, asked before every navigation away while it is
   mounted: `navToUri`, intercepted links, `replaceUri`, Back/Forward and a typed hash (undone by putting the address
   back). Leaving means another matched route; a query-only change (every `urlParam`) never asks. `beforeUnload = true`
-  arms the browser's prompt. `RouterStrategy` gains `normalize(uri)` and `restoreUri(uri)`, with defaults.
+  arms the browser's prompt. A confirmed `Ask` on a Back replays the Back; a middleware redirect inside an approved
+  navigation is not asked again. `router.withoutLeaveGuards { navToUri("/login") }` passes every guard (logout).
+  `navBack()` and `clearHistoryAndNavTo()` change the router's history only once no guard holds them. A custom
+  `RouterStrategy` calls `router.followBrowserNavigation()` from its listeners to take part; `RouterStrategy` gains
+  `normalize(uri)` and `restoreUri(uri)`, with defaults. Not covered: a hash typed into the address bar under hash
+  routing is held, but leaves one extra history entry.
 
 ### Changed
 
+- **Kraft router, hash strategy: plain clicks on route links (`href="#/..."`) now go through the router** (ULTRA-00266),
+  as the path strategy's links already did, so a leave guard holds them before the browser writes the address. Other
+  fragment links (`#section`) stay the browser's.
+- **Kraft router: `replaceUri` keeps the history entry's state** (both strategies), so a `BackNavigationTrap`'s marker
+  survives a `urlParam` change inside an open modal.
+- **Kraft testing: the `TestBed` block's receiver** (ULTRA-00243) has `app` and `router`: inside the block they win
+  over a file-level `val router`, so a spec that built its own router at file level and named it `router` now gets the
+  app's. Rename it, or use the app's.
+- **`ResponsiveController` is a `KraftApp.Disposable`:** disposing the app (TestBed does after each test) removes its
+  window `resize` listener.
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its
   own controller (klang's `UiWork.window`) gets the shared one and can switch to `WindowController.default`.
 

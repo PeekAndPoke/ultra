@@ -9,6 +9,7 @@ import io.peekandpoke.kraft.routing.Static
 import io.peekandpoke.kraft.routing.router
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.awaitUri
+import io.peekandpoke.kraft.utils.ResponsiveController
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.delay
@@ -72,6 +73,8 @@ class RouterDisposeSpec : StringSpec({
             router.awaitUri("/a")
         }
 
+        // Enabled again, only a removed listener stays silent: disable() alone would also pass the check below
+        appRouter.enable()
         window.location.hash = "/b"
         // hashchange is dispatched as a task of its own
         delay(50)
@@ -91,38 +94,60 @@ class RouterDisposeSpec : StringSpec({
             catchAll {}
         }
 
-        // Listening before dispose: a popstate to another route is followed
-        window.history.pushState(null, "", "/app/one")
-        window.dispatchEvent(Event("popstate"))
-        pathRouter.current().uri shouldBe "/app/one"
-
-        pathRouter.dispose()
-
-        window.history.pushState(null, "", "/app/two")
-        window.dispatchEvent(Event("popstate"))
-        pathRouter.current().uri shouldBe "/app/one"
-
-        // A plain click on a relative link is no longer intercepted
         val anchor = (document.createElement("a") as HTMLAnchorElement).apply { href = "/app/two" }
-        document.body!!.appendChild(anchor)
-
         var prevented: Boolean? = null
         val recorder: (Event) -> Unit = { event ->
             prevented = event.defaultPrevented
             event.preventDefault()
         }
-        window.addEventListener("click", recorder)
 
-        val options: dynamic = js("{}")
-        options.bubbles = true
-        options.cancelable = true
-        options.button = 0
-        anchor.dispatchEvent(MouseEvent("click", options))
+        try {
+            // Listening before dispose: a popstate to another route is followed
+            window.history.pushState(null, "", "/app/one")
+            window.dispatchEvent(Event("popstate"))
+            pathRouter.current().uri shouldBe "/app/one"
 
-        window.removeEventListener("click", recorder)
-        anchor.remove()
-        window.history.replaceState(null, "", originalHref)
+            pathRouter.dispose()
+            // Enabled again, only a removed listener stays silent: disable() alone would also pass these checks
+            pathRouter.enable()
 
-        prevented shouldBe false
+            window.history.pushState(null, "", "/app/two")
+            window.dispatchEvent(Event("popstate"))
+            pathRouter.current().uri shouldBe "/app/one"
+
+            // A plain click on a relative link is no longer intercepted
+            document.body!!.appendChild(anchor)
+            window.addEventListener("click", recorder)
+
+            val options: dynamic = js("{}")
+            options.bubbles = true
+            options.cancelable = true
+            options.button = 0
+            anchor.dispatchEvent(MouseEvent("click", options))
+
+            prevented shouldBe false
+        } finally {
+            window.removeEventListener("click", recorder)
+            anchor.remove()
+            pathRouter.dispose()
+            window.history.replaceState(null, "", originalHref)
+        }
+    }
+
+    "KraftApp.dispose() removes the ResponsiveController's resize listener" {
+        lateinit var responsive: ResponsiveController
+
+        TestBed.preact(view = { div { } }) {
+            responsive = app.appAttributes[ResponsiveController.key]!!
+        }
+
+        var emissions = 0
+        val unsubscribe = responsive.subscribeToStream { emissions++ }
+        emissions = 0
+
+        window.dispatchEvent(Event("resize"))
+        unsubscribe()
+
+        emissions shouldBe 0
     }
 })

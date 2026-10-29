@@ -1253,7 +1253,10 @@ init {
 Asked before each navigation away while the component is mounted (`navToUri`, intercepted links, `replaceUri`,
 Back/Forward, a typed hash). `Proceed` / `Stop` / `Ask(confirm)` (true goes on; navigations while asking are dropped).
 Leaving = another matched route (pattern or route params); a query-only or fragment change never asks. A held Back is
-undone by putting the address back as a new entry. `beforeUnload = true` arms the browser's prompt (target `null`).
+undone by putting the address back as a new entry; a confirmed Ask on a Back replays the Back; a middleware redirect on
+the way is not asked again. `beforeUnload = true` arms the browser's prompt (target `null`). Logout past every guard:
+`router.withoutLeaveGuards { router.navToUri("/login") }`. Hash routing: `#/...` link clicks go through the router; a
+typed hash is held but leaves one extra history entry.
 Low level: `router.addLeaveGuard(LeaveGuard { target -> ... })` returns the `Unsubscribe`.
 
 ## Setting the page title

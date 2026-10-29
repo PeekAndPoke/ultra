@@ -11,7 +11,7 @@ data class TickerFrame(val count: Int, val currentTime: Double, val deltaTime: D
 fun ticker(intervalMs: Int): Stream<TickerFrame> = ticker(FrameClock.ticker(intervalMs))
 
 /** Creates a ticker stream that emits a [TickerFrame] at the given [interval] */
-fun ticker(interval: Duration): Stream<TickerFrame> = ticker(interval.inWholeMilliseconds.toInt())
+fun ticker(interval: Duration): Stream<TickerFrame> = ticker(interval.inWholeIntervalMs())
 
 /**
  * Creates a ticker stream that emits a [TickerFrame] on every frame of the [clock] (ULTRA-00242). The initial frame,

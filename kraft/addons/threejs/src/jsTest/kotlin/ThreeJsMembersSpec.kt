@@ -2,6 +2,7 @@ package io.peekandpoke.kraft.addons.threejs
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -23,6 +24,7 @@ import kotlinx.browser.document
 import kotlinx.html.Tag
 import kotlinx.html.div
 import org.w3c.dom.HTMLCanvasElement
+import kotlin.math.PI
 import kotlin.time.Duration.Companion.seconds
 
 private var loaded: ThreeJsAddon? = null
@@ -88,6 +90,8 @@ class ThreeJsMembersSpec : StringSpec({
             child.parent shouldBe null
             group.children.size shouldBe 0
 
+            // The three.js default first: a misspelt binding would read undefined
+            child.renderOrder shouldBe 0
             child.renderOrder = 7
             child.renderOrder shouldBe 7
 
@@ -99,8 +103,10 @@ class ThreeJsMembersSpec : StringSpec({
             listOf(world.x, world.y, world.z) shouldBe listOf(1.0, 2.0, 3.0)
 
             val mesh: Mesh = three.createMesh(three.createBoxGeometry(), three.createMeshBasicMaterial(js("({})")))
-            mesh.lookAt(three.createVector3(0.0, 0.0, 10.0))
-            mesh.rotation.x shouldBe 0.0
+            // Facing straight up turns the mesh by -PI/2 around x; a no-op lookAt would leave 0
+            mesh.lookAt(three.createVector3(0.0, 10.0, 0.0))
+            // three.js nudges a target along the up axis by 1e-4, so not exactly -PI/2
+            mesh.rotation.x shouldBe (-PI / 2 plusOrMinus 1e-3)
         }
     }
 
@@ -124,6 +130,7 @@ class ThreeJsMembersSpec : StringSpec({
             (material.asDynamic().version.unsafeCast<Int>() > versionBefore) shouldBe true
 
             val texture = three.createCanvasTexture(document.createElement("canvas") as HTMLCanvasElement)
+            texture.wrapS shouldBe TextureWrapping.ClampToEdgeWrapping
             texture.wrapS = TextureWrapping.RepeatWrapping
             texture.minFilter = TextureFilter.NearestFilter
             texture.wrapS shouldBe 1000

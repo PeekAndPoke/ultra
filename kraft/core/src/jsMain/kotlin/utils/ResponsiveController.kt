@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.utils
 
+import io.peekandpoke.kraft.KraftApp
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.getAttributeRecursive
 import io.peekandpoke.ultra.common.TypedKey
@@ -16,11 +17,12 @@ val Component<*>.responsiveCtrl: ResponsiveController get() = getAttributeRecurs
 /**
  * Tracks the browser window size and determines the current [DisplayType] based on configurable [Breakpoints].
  *
- * Emits a new [State] whenever the window is resized.
+ * Emits a new [State] whenever the window is resized. One per app; [dispose] (called by [KraftApp.dispose]) removes its
+ * window listener.
  */
 class ResponsiveController(
     private val breakpoints: Breakpoints = Breakpoints.default,
-) : Stream<ResponsiveController.State> {
+) : Stream<ResponsiveController.State>, KraftApp.Disposable {
 
     companion object {
         val key = TypedKey<ResponsiveController>("ResponsiveCtrl")
@@ -77,8 +79,15 @@ class ResponsiveController(
 
     override fun subscribeToStream(sub: (State) -> Unit): Unsubscribe = stream.subscribeToStream(sub)
 
+    // One reference: each `::x` is a new function object, and removal needs the one that was added
+    private val onResize: (Event) -> Unit = ::onWindowResize
+
     init {
-        window.addEventListener("resize", ::onWindowResize)
+        window.addEventListener("resize", onResize)
+    }
+
+    override fun dispose() {
+        window.removeEventListener("resize", onResize)
     }
 
     private fun createState(): State {

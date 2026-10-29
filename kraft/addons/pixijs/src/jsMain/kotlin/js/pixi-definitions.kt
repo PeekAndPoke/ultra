@@ -48,9 +48,9 @@ external class Application {
     fun render()
 
     /**
-     * Resizes the renderer to the `resizeTo` target's size now. Added by pixi's ResizePlugin in [init], only when
-     * `resizeTo` is set: `resizeTo` follows the window's `resize` event alone, so an element resized by layout needs
-     * this, or `followElementSize(element)` from the addon package.
+     * Resizes the renderer to the `resizeTo` target's size now; does nothing while `resizeTo` is not set. Added by
+     * pixi's ResizePlugin in [init]. `resizeTo` follows the window's `resize` event alone, so an element resized by
+     * layout needs this, or `followElementSize(element)` from the addon package.
      */
     fun resize()
 
@@ -104,8 +104,9 @@ open external class Container {
 
     /**
      * The draw order among siblings: a higher one draws later, on top, once the parent sorts by it. Set while the node
-     * sits in its parent, or before an [addChild], it turns the parent's [sortableChildren] on. Before an [addChildAt]
-     * it does not (pixi 8.22): then set [sortableChildren] on the parent yourself.
+     * sits in its parent, or before an [addChild], it turns the parent's [sortableChildren] on and marks the order to
+     * be sorted. Before an [addChildAt] it does neither (pixi 8.22): set the parent's [sortableChildren] before the
+     * [addChildAt], or set the zIndex after it. Turning [sortableChildren] on afterwards does not mark the order.
      */
     var zIndex: Double
 
@@ -121,7 +122,10 @@ open external class Container {
      */
     fun addChildAt(child: Container, index: Int): Container
 
-    /** Sorts the children by [zIndex] now. */
+    /**
+     * Sorts the children by [zIndex] now, if a zIndex change or an add to a sortable container marked the order;
+     * otherwise does nothing. The renderer calls it on its own; a test or a layout that reads [children] may.
+     */
     fun sortChildren()
 
     /** Removes a child from this container. */

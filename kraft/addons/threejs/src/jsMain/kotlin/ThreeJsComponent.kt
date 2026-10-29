@@ -45,7 +45,8 @@ class ThreeJsFrame(
  * calls `renderer.render(scene, camera)` automatically each frame.
  *
  * While [paused] holds true no frame is asked for at all (the scene, the camera and the WebGL context stay), e.g.
- * `paused = windowCtrl.hasFocus.map { !it }`. The frames come from [clock], by default the browser's animation frames,
+ * `paused = windowCtrl.hasFocus.map { !it }`. Nothing draws meanwhile: a `renderer.setSize` while paused leaves the
+ * canvas cleared until the next frame, so render once by hand after resizing a paused scene. The frames come from [clock], by default the browser's animation frames,
  * shared with every other user of [FrameClock.animationFrames].
  */
 @Suppress("FunctionName")

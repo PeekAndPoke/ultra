@@ -232,7 +232,10 @@ open external class Material {
     var visible: Boolean
     var side: Int
 
-    /** Whether the material is rebuilt before it draws next: needed after a change of `transparent` or `side`. */
+    /**
+     * Set true to rebuild the material before it draws next: needed after a change of `transparent` or `side`.
+     * Write-only in three.js: reading it gives undefined.
+     */
     var needsUpdate: Boolean
 
     fun dispose()
@@ -368,7 +371,10 @@ open external class Texture {
     var magFilter: Int
     var minFilter: Int
 
-    /** Whether the image is uploaded again before the next draw: set it after drawing into a canvas texture's canvas. */
+    /**
+     * Set true to upload the image again before the next draw, after drawing into a canvas texture's canvas.
+     * Write-only in three.js: reading it gives undefined.
+     */
     var needsUpdate: Boolean
 
     var anisotropy: Int

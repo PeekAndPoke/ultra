@@ -185,6 +185,27 @@ class PixiJsContractSpec : StringSpec({
         host.remove()
     }
 
+    "followElementSize needs an initialized app, and a destroyed app stops it" {
+        val pixi = loadAddon()
+        val host = (document.createElement("div") as HTMLDivElement).apply {
+            style.width = "100px"
+            style.height = "60px"
+            document.body!!.appendChild(this)
+        }
+
+        shouldThrow<IllegalArgumentException> { pixi.createApplication().followElementSize(host) }
+            .message shouldContain "after init()"
+
+        val app = initializedApp()
+        app.followElementSize(host)
+        app.destroy(rendererDestroy = true)
+
+        // The observer's next callback finds no queueResize and disconnects: resizing the host must not throw
+        host.style.width = "180px"
+        delay(100.milliseconds)
+        host.remove()
+    }
+
     "createContainer and create(className) give pixi instances; create names a missing class" {
         val pixi = loadAddon()
         val isContainer: (Any) -> Boolean = { obj ->
@@ -238,6 +259,31 @@ class PixiJsContractSpec : StringSpec({
         val viaAddChildAt = pixi.createContainer()
         viaAddChildAt.addChildAt(pixi.createContainer().apply { zIndex = 5.0 }, 0)
         viaAddChildAt.sortableChildren shouldBe false
+    }
+
+    "the zIndex trap's remedy: sortableChildren before addChildAt sorts; turned on afterwards it does not" {
+        val pixi = loadAddon()
+
+        fun twoChildren(sortableFirst: Boolean): Pair<Container, List<Container>> {
+            val parent = pixi.createContainer()
+            val high = pixi.createContainer().apply { zIndex = 2.0 }
+            val low = pixi.createContainer().apply { zIndex = 1.0 }
+
+            if (sortableFirst) parent.sortableChildren = true
+            parent.addChildAt(high, 0)
+            parent.addChildAt(low, 0)
+            parent.addChildAt(high, 0)
+            if (!sortableFirst) parent.sortableChildren = true
+
+            parent.sortChildren()
+            return parent to listOf(low, high)
+        }
+
+        val (sorted, sortedOrder) = twoChildren(sortableFirst = true)
+        sorted.children.toList() shouldBe sortedOrder
+
+        val (unsorted, wouldBe) = twoChildren(sortableFirst = false)
+        unsorted.children.toList() shouldBe wouldBe.reversed()
     }
 
     "Text.anchor and Graphics.poly" {

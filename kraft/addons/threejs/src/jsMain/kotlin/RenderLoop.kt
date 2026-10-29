@@ -74,11 +74,14 @@ internal class RenderLoop(
         lastFrameAt = at
         elapsedMs += delta
 
-        onFrame(delta, elapsedMs)
-
-        if (cancelFrame === handle) {
-            cancelFrame = null
-            requestFrame()
+        try {
+            onFrame(delta, elapsedMs)
+        } finally {
+            // Also after a throw: one bad frame must not stop the scene for good
+            if (cancelFrame === handle) {
+                cancelFrame = null
+                requestFrame()
+            }
         }
     }
 }

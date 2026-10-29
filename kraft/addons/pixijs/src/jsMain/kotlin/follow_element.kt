@@ -8,16 +8,21 @@ import org.w3c.dom.HTMLElement
  * Keeps the app the size of [element], also when layout alone resizes it (a panel docked under it, a splitter drag),
  * which `resizeTo` does not notice: it follows the window's `resize` event only (ULTRA-00262, from Klang). A
  * `ResizeObserver` asks for [Application.queueResize], so several changes in one frame resize once. Sets `resizeTo` to
- * [element]. Returns the stop; call it before `destroy`.
+ * [element]. Call it after `init` (before, pixi's ResizePlugin is not there yet). Returns the stop; a destroyed app
+ * stops it too.
  */
 fun Application.followElementSize(element: HTMLElement): () -> Unit {
+    require(asDynamic().queueResize != null) { "followElementSize needs an initialized Application: call it after init()" }
+
     if (asDynamic().resizeTo !== element) {
         asDynamic().resizeTo = element
     }
 
-    val observer = ResizeObserver { _, _ ->
-        // Gone with a destroyed app: the plugin clears it
-        if (asDynamic().queueResize != null) queueResize()
+    lateinit var observer: ResizeObserver
+
+    observer = ResizeObserver { _, _ ->
+        // A destroyed app: the plugin cleared queueResize
+        if (asDynamic().queueResize == null) observer.disconnect() else queueResize()
     }
 
     observer.observe(element)

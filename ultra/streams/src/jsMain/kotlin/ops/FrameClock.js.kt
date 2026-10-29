@@ -58,7 +58,8 @@ private object AnimationFrameClock : FrameClock {
 
                 try {
                     entry.onFrame(timeMs)
-                } catch (e: Throwable) {
+                } catch (e: dynamic) {
+                    // dynamic: JS code may throw what is not an Error, and the batch must still go on
                     // Reported on a task of its own, as an uncaught error with its stack, after the others ran
                     window.setTimeout({ throw e }, 0)
                 }

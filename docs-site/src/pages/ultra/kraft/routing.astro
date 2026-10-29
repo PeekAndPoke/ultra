@@ -225,6 +225,10 @@ fun A.href(route: Route.Bound) {
     <li>A held Back or typed address is undone: the router puts the page's address back as a new entry.</li>
     <li><code>beforeUnload = true</code> also arms the browser's own prompt for a reload or a tab close while the block
         does not proceed (there the block gets <code>null</code> as the target, and an <code>Ask</code> cannot run).</li>
+    <li>A confirmed <code>Ask</code> on a Back replays the Back. A middleware redirect on the way is not asked again.</li>
+    <li>A leave that must happen whatever a page holds, like a logout:
+        <code>router.withoutLeaveGuards &#123; router.navToUri("/login") &#125;</code>.</li>
+    <li>Under hash routing a hash typed into the address bar is held too, but leaves one extra history entry.</li>
 </ul>
 
 <h2>Setting the page title</h2>

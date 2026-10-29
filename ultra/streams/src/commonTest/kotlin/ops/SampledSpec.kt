@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.streams.StreamSource
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
 /** `sampled(...)` (ULTRA-00267, from Klang): the latest value at every tick of a clock. */
@@ -99,6 +100,28 @@ class SampledSpec : StringSpec({
         every(Duration.INFINITE)
         clocks.getValue(250.milliseconds).waiting shouldBe false
         seen shouldBe listOf(1, 2)
+    }
+
+    "a config stream repeating the same interval keeps the tick that is due, on the same clock" {
+        val clocks = mutableListOf<HandClock>()
+        val every = StreamSource(250.milliseconds)
+        val source = StreamSource(1)
+        val seen = mutableListOf<Int>()
+
+        source.sampled(every = every, clockFor = { HandClock().also { clocks.add(it) } })
+            .subscribeToStream { seen.add(it) }
+        seen.clear()
+
+        repeat(5) { every(250.milliseconds) }
+        clocks.size shouldBe 1
+
+        clocks[0].frame()
+        seen shouldBe listOf(1)
+    }
+
+    "an interval longer than Int.MAX_VALUE ms is clamped, not wrapped to a negative one" {
+        30.days.inWholeIntervalMs() shouldBe Int.MAX_VALUE
+        (-5).milliseconds.inWholeIntervalMs() shouldBe 0
     }
 
     "an interval of zero or less counts as 1 ms" {

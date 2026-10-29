@@ -13,12 +13,14 @@ import kotlin.time.Duration.Companion.milliseconds
  * `level.sampled(every = 250.milliseconds).history(capacity = 480)` keeps two minutes at four values a second, with
  * gaps where the source had none.
  *
- * [every] may change while listening: the next tick comes [every] after the change. An interval of zero or less counts
- * as 1 ms; an infinite one stops the ticks. The source and [every] are listened to only while someone listens here,
- * which also keeps a source fresh that is computed only while listened to. The ticks run on [FrameClock.ticker].
+ * [every] may change while listening: the next tick comes [every] after the change; a repeat of the same interval
+ * changes nothing. An interval of zero or less counts as 1 ms, one beyond `Int.MAX_VALUE` ms as that; an infinite one
+ * stops the ticks. The source and [every] are listened to only while someone listens here, which also keeps a source
+ * fresh that is computed only while listened to. The ticks run on [FrameClock.ticker], on the JVM and native on a pool
+ * thread: to tick on the thread the source emits on, pass `sampled(clock = FrameClock.ticker(intervalMs, context))`.
  */
 fun <T> Stream<T>.sampled(every: Stream<Duration>): Stream<T> =
-    sampled(every = every, clockFor = { FrameClock.ticker(intervalMs = it.inWholeMilliseconds.toInt()) })
+    sampled(every = every, clockFor = { FrameClock.ticker(intervalMs = it.inWholeIntervalMs()) })
 
 /** Takes the stream's latest value at every tick, [every] apart; see the overload with a `Stream<Duration>`. */
 fun <T> Stream<T>.sampled(every: Duration): Stream<T> = sampled(every = steady(every))
@@ -28,6 +30,9 @@ fun <T> Stream<T>.sampled(everyMs: Int): Stream<T> = sampled(every = everyMs.mil
 
 /** Takes the stream's latest value at every frame of [clock] (animation frames, or a test's hand clock). */
 fun <T> Stream<T>.sampled(clock: FrameClock): Stream<T> = sampled(every = steady(Duration.ZERO), clockFor = { clock })
+
+/** Whole milliseconds as an `Int`, clamped: a longer interval would wrap to a negative one and tick back to back. */
+internal fun Duration.inWholeIntervalMs(): Int = inWholeMilliseconds.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
 
 /** The sampling operator, with the clock for an interval injectable for tests. */
 internal fun <T> Stream<T>.sampled(every: Stream<Duration>, clockFor: (Duration) -> FrameClock): Stream<T> =
@@ -48,6 +53,9 @@ private class StreamSampledOperator<T>(
     /** The clock of the current interval; null for an infinite one. */
     private var clock: FrameClock? = null
 
+    /** The interval [clock] ticks at; null before the first. */
+    private var interval: Duration? = null
+
     /** The pending tick's cancel. */
     private var cancelTick: (() -> Unit)? = null
 
@@ -57,10 +65,10 @@ private class StreamSampledOperator<T>(
     override fun onSub() {
         if (!listening) {
             listening = true
-            // A subscriber is told the value as it is at this moment, not from when the operator was built
-            current = source()
             // Values are taken at the ticks only; the subscription keeps the source fresh
             unsubscribeSource = source.subscribeToStream { }
+            // A subscriber is told the value as it is at this moment, once the source is listened to
+            current = source()
             unsubscribeEvery = every.subscribeToStream { interval(it) }
         }
     }
@@ -71,12 +79,17 @@ private class StreamSampledOperator<T>(
             stopTicks()
             unsubscribeEvery?.invoke()
             unsubscribeEvery = null
+            interval = null
             unsubscribeSource?.invoke()
             unsubscribeSource = null
         }
     }
 
     private fun interval(next: Duration) {
+        // A config stream may repeat its value (no stream dedupes): the same interval keeps the tick that is due
+        if (next == interval) return
+
+        interval = next
         stopTicks()
 
         clock = when {
