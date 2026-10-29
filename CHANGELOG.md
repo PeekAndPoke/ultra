@@ -30,6 +30,11 @@
   law takes the next step from the current position and velocity, so the motion is not restarted; `null` passes
   values at once and lands a moving stream. The constant overloads delegate to it.
 
+- **Streams: `sampled(every)` (ULTRA-00267, from Klang; named by the maintainer).** The latest value at every tick,
+  also unchanged and `null`, so a graph's time axis is the clock's: `level.sampled(every = 250.milliseconds)
+  .history(capacity = 480)`. `every` may be a `Stream<Duration>` that changes while listening; `everyMs` and
+  `sampled(clock: FrameClock)` too. `history()`'s KDoc names its copy per value.
+
 ### Changed
 
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its

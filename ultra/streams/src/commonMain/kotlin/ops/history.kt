@@ -4,6 +4,9 @@ import io.peekandpoke.ultra.streams.Stream
 
 /**
  * Records the latest incoming values up to the given [capacity].
+ *
+ * Each value copies the list (up to [capacity] entries), so a producer emitting many times a second pays that each
+ * time: sample it first, `source.sampled(every = 250.milliseconds).history(480)`, which also gives a time axis.
  */
 fun <T> Stream<T>.history(capacity: Int): Stream<List<T>> {
     return fold(emptyList()) { acc, next ->

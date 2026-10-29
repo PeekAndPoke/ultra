@@ -452,7 +452,14 @@ source(4)
 println(recent())  // [2, 3, 4] — oldest values dropped
 ```
 
-`historyOfNonNull(capacity)` only keeps non-null values.
+`historyOfNonNull(capacity)` only keeps non-null values. Each value copies the window: for a fast producer, or a
+window over time, sample first: `diagnostics.sampled(every = 250.milliseconds).history(capacity = 480)`.
+
+## sampled
+
+`source.sampled(every = 250.milliseconds)`: the latest value at every tick, also unchanged and `null` (gaps show).
+`every`: `Duration`, `everyMs: Int`, or `Stream<Duration>` (may change while listening); `sampled(clock: FrameClock)`
+for animation frames or tests. Source held only while listened to.
 
 ---
 
@@ -778,7 +785,7 @@ unsubscribes automatically.
 | Operator                                                                        | Platform                          |
 |---------------------------------------------------------------------------------|-----------------------------------|
 | map, filter, combine, fold, distinct, fallback, history, indexed, onEach, cutoff, switchMap | All platforms          |
-| ticker, debounce, mapAsync, asFlow                                              | All platforms (coroutine-based)   |
+| ticker, debounce, mapAsync, asFlow, sampled                                     | All platforms (coroutine-based)   |
 | smooth, quantize, `FrameClock`                                                  | All platforms (animation frames on JS) |
 | `animTicker()`                                                                  | JS only (`requestAnimationFrame`) |
 | `persistInLocalStorage()`                                                       | JS only (`localStorage`)          |

@@ -151,6 +151,19 @@ source(4)
 
 println(recent())  // [2, 3, 4] — oldest values dropped`} lang="kotlin" theme="vitesse-dark" />
 
+<p>Each value copies the window. For a fast producer, or a window over time rather than over values, sample first:</p>
+
+<Code code={`// The latest value every 250 ms, also when unchanged or null: two minutes, with gaps where there was nothing
+val graph = diagnostics.sampled(every = 250.milliseconds).history(capacity = 480)`} lang="kotlin" theme="vitesse-dark" />
+
+<h2>sampled</h2>
+
+<p><code>sampled(every)</code> takes the stream's latest value at every tick, also when it did not change and also
+    when it is <code>null</code>. <code>every</code> is a <code>Duration</code>, milliseconds
+    (<code>everyMs</code>), or a <code>Stream&lt;Duration&gt;</code> that may change while listening;
+    <code>sampled(clock)</code> ticks on a <code>FrameClock</code>. The source is held only while someone listens,
+    which keeps a source fresh that is computed only while listened to.</p>
+
     <h3>historyOfNonNull</h3>
 
     <p>Like <code>history</code>, but only keeps non-null values in the window:</p>
