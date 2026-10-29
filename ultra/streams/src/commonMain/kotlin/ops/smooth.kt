@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.maths.Smoothing.Motion
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSourceImpl
 import io.peekandpoke.ultra.streams.Unsubscribe
+import io.peekandpoke.ultra.streams.steady
 
 /**
  * Smooths a stream of numbers exponentially: a new value is approached a step each frame of [clock], until the stream
@@ -22,7 +23,7 @@ fun Stream<Double?>.smooth(
 ): Stream<Double?> = StreamSmoothOperator(
     source = this,
     // NaN-guard: a share that is not a number counts as none
-    smoothing = if (sharePer10Ms > 0.0) Smoothing.Exponential(sharePer10Ms) else null,
+    smoothing = steady(if (sharePer10Ms > 0.0) Smoothing.Exponential(sharePer10Ms) else null),
     rest = rest,
     near = near,
     clock = clock,
@@ -47,12 +48,29 @@ fun Stream<Double?>.smooth(
     rest: Double = 0.0,
     near: Double = 0.001,
     clock: FrameClock = FrameClock.default,
+): Stream<Double?> = smooth(smoothing = steady(smoothing), rest = rest, near = near, clock = clock)
+
+/**
+ * Smooths a stream of numbers by the law [smoothing] holds now, which may change while the stream moves (ULTRA-00264,
+ * from Klang): the next step goes from the current position and velocity by the new law, over the real time since the
+ * last frame, so a [Smoothing.Spring] taking over from a [Smoothing.Exponential] swings on at the speed it had. A law
+ * of `null` passes every value at once and lands a stream that is on its way. A new law while the stream rests moves
+ * nothing.
+ *
+ * See the overload with a [Smoothing] for `null` values, [rest], [near] and the lifecycle; [smoothing] is listened to
+ * only while someone listens here.
+ */
+fun Stream<Double?>.smooth(
+    smoothing: Stream<Smoothing?>,
+    rest: Double = 0.0,
+    near: Double = 0.001,
+    clock: FrameClock = FrameClock.default,
 ): Stream<Double?> = StreamSmoothOperator(source = this, smoothing = smoothing, rest = rest, near = near, clock = clock)
 
-/** The smooth operator; a [smoothing] of `null` passes every value at once. */
+/** The smooth operator; a law of `null` passes every value at once. */
 private class StreamSmoothOperator(
     private val source: Stream<Double?>,
-    private val smoothing: Smoothing?,
+    private val smoothing: Stream<Smoothing?>,
     private val rest: Double,
     private val near: Double,
     private val clock: FrameClock,
@@ -66,6 +84,11 @@ private class StreamSmoothOperator(
     }
 
     private var unsubscribe: Unsubscribe? = null
+
+    private var unsubscribeLaw: Unsubscribe? = null
+
+    /** The law the next step goes by: [smoothing]'s latest while someone listens. */
+    private var law: Smoothing? = null
 
     /** Someone listens: the source is subscribed, frames may be asked for. */
     private var listening = false
@@ -92,6 +115,8 @@ private class StreamSmoothOperator(
         if (!listening) {
             listening = true
             settledIn = false
+            // The law first, so the source's first value already knows it
+            unsubscribeLaw = smoothing.subscribeToStream { lawChanged(it) }
             unsubscribe = source.subscribeToStream { incoming(it) }
         }
     }
@@ -101,6 +126,8 @@ private class StreamSmoothOperator(
             listening = false
             unsubscribe?.invoke()
             unsubscribe = null
+            unsubscribeLaw?.invoke()
+            unsubscribeLaw = null
             stop()
         }
     }
@@ -112,7 +139,7 @@ private class StreamSmoothOperator(
 
         when {
             // The first value of a listening, nothing (offline), or no smoothing: at once
-            !settledIn || next == null || smoothing == null -> {
+            !settledIn || next == null || law == null -> {
                 settledIn = true
                 stop()
                 emit(next?.let { Motion(it) })
@@ -151,13 +178,14 @@ private class StreamSmoothOperator(
         val goal = target
         val from = motion
 
-        if (smoothing == null || goal == null || from == null) {
+        val law = law
+
+        if (law == null || goal == null || from == null) {
             cancelFrame = null
             lastFrameAt = null
             return
         }
 
-        val law = smoothing
         // NaN-guard: the first step, or a clock that stands or goes backwards, counts as one usual frame
         val elapsed = lastFrameAt?.let { at - it }?.takeIf { it > 0.0 } ?: FRAME_MS
         val next = law.step(from, goal, elapsed)
@@ -178,6 +206,16 @@ private class StreamSmoothOperator(
             lastFrameAt = null
         } else {
             cancelFrame = clock.next { nextAt -> frame(nextAt) }
+        }
+    }
+
+    private fun lawChanged(next: Smoothing?) {
+        law = next
+
+        // No law any more: a stream on its way lands at once
+        if (next == null && cancelFrame != null) {
+            stop()
+            emit(target?.let { Motion(it) })
         }
     }
 

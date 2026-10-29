@@ -537,6 +537,9 @@ someone starts listening is taken as it is; `null`/NaN/infinity pass at once as 
 starts from `rest`; a value on the way becomes the new goal, keeping the speed; within `near` (value units) it lands
 exactly and stops asking for frames. Upstream only while listened to.
 
+The law may be a `Stream<Smoothing?>` and change mid-motion: `brightness.smooth(smoothing = law)`, then
+`law(Smoothing.Spring(...))`; the next step goes on from the current position and speed. `null` passes values at once.
+
 ## quantize
 
 `level.quantize(size = 0.1, offset = 0.05)`: snaps to the nearest `offset + k * size` (the offset shifts the grid);

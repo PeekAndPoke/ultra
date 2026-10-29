@@ -102,6 +102,15 @@ val analog = level.smooth(Smoothing.Spring(stiffness = 200.0, damping = 10.0), r
     <li>The source is listened to only while someone listens; no frame is asked for while nothing moves.</li>
 </ul>
 
+<p>The law can be a stream too, and change while the stream moves: the next step goes from the current position and
+    speed by the new law, so a spring taking over swings on. A law of <code>null</code> passes values at once.</p>
+
+    <Code code={`val law = StreamSource<Smoothing?>(Smoothing.Exponential(keepPer10Ms = 0.5))
+val bulb = brightness.smooth(smoothing = law)
+
+// A stutter: a new law, no restart of the motion
+law(Smoothing.Spring(stiffness = 300.0, damping = 4.0))`} lang="kotlin" theme="vitesse-dark" />
+
 <h2>quantize</h2>
 
 <p>Snaps every value to the nearest <code>offset + k * size</code>; the offset shifts the grid, not the value.

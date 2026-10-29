@@ -26,6 +26,10 @@
   order, with the same time. Klang measured about 9 rAF callbacks per frame before. A callback that throws is reported
   as uncaught on its own task, and the others still run.
 
+- **Streams: `smooth()`'s law as a stream (ULTRA-00264, from Klang).** `smooth(smoothing: Stream<Smoothing?>)`: a new
+  law takes the next step from the current position and velocity, so the motion is not restarted; `null` passes
+  values at once and lands a moving stream. The constant overloads delegate to it.
+
 ### Changed
 
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its
