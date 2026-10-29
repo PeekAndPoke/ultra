@@ -233,6 +233,18 @@ init {
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
+    <p>The same controller has the state as streams: <code>windowCtrl.hasFocus</code> and <code>windowCtrl.isVisible</code>
+        (false while the tab is hidden). One controller serves the page, <code>WindowController.default</code>, so code
+        outside a component reads it too. A test drives a <code>TestWindowController</code> from
+        <code>kraft:testing</code> by hand: <code>appSetup = {'{'} windowCtrl(ctrl) {'}'}</code>, then
+        <code>ctrl.blur()</code>.</p>
+
+    <Code code={`// Rest while the window has no focus
+private val working by subscribingTo(windowCtrl.hasFocus)
+
+// Outside a component
+val resting: Stream<Boolean> = WindowController.default.hasFocus.map { !it }`} lang="kotlin" theme="vitesse-dark"/>
+
     <Aside><strong>When to use which?</strong> Use <code>onResize</code> for layout-aware components that need to react
         to
         <em>their own</em> element changing size. Use <code>onWindowResize</code> for global concerns like

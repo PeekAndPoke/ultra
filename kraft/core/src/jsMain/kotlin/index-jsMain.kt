@@ -78,7 +78,7 @@ class KraftApp internal constructor(
             // We always have the default responsive controller
             responsive(ResponsiveController())
             // We always have the default window controller
-            windowCtrl(WindowController())
+            windowCtrl(WindowController.default)
             // Default English i18n with kraft's built-in form catalog, so form errors translate and
             // `by Translations` never crashes; override with i18n(...)
             i18n(I18nController.default())

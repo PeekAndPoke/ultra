@@ -3,6 +3,7 @@ package io.peekandpoke.kraft.utils
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.getAttributeRecursive
 import io.peekandpoke.ultra.common.TypedKey
+import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
 import io.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.document
@@ -53,39 +54,31 @@ fun <T> Component.LifeCycle<T>.onWindowBlur(callback: () -> Unit): Unsubscribe {
  *
  * Exposes:
  * - [hasFocus] — stream of document focus state (visibilitychange, window focus/blur)
+ * - [isVisible] — stream of the page's visibility (`document.visibilityState`): false for a hidden tab
  * - [onWindowResize] — subscribe to browser window resize events
  * - [onWindowFocus] / [onWindowBlur] — subscribe to window focus/blur events
  *
- * Registered by default in every [io.peekandpoke.kraft.KraftApp].
+ * The state is the browser's, so one instance serves every app on the page: [default], registered in every
+ * [io.peekandpoke.kraft.KraftApp] and readable outside components. A test passes its own implementation via
+ * `KraftApp.Builder.windowCtrl(...)`.
  */
-class WindowController {
+interface WindowController {
 
     companion object {
         val key = TypedKey<WindowController>("WindowController")
+
+        /** The browser-backed controller, created on first use; its listeners stay for the page's lifetime. */
+        val default: WindowController by lazy { BrowserWindowController() }
 
         /** Current window inner size as a [Vector2D]. */
         fun windowSize(): Vector2D = Vector2D(window.innerWidth.toDouble(), window.innerHeight.toDouble())
     }
 
-    private val hasFocusSource = StreamSource(document.hasFocus())
-
     /** Stream that emits true when the document has focus, false otherwise. */
-    val hasFocus = hasFocusSource.readonly
+    val hasFocus: Stream<Boolean>
 
-    private val resizeListeners = mutableListOf<(Vector2D) -> Unit>()
-    private val focusListeners = mutableListOf<() -> Unit>()
-    private val blurListeners = mutableListOf<() -> Unit>()
-
-    init {
-        val onFocusChange: (dynamic) -> Unit = {
-            hasFocusSource(document.hasFocus())
-        }
-
-        document.addEventListener("visibilitychange", onFocusChange)
-        window.addEventListener("focus", ::onWindowFocusEvent)
-        window.addEventListener("blur", ::onWindowBlurEvent)
-        window.addEventListener("resize", ::onWindowResizeEvent)
-    }
+    /** Stream that emits true while the page is visible, false while its tab is hidden or minimised. */
+    val isVisible: Stream<Boolean>
 
     /**
      * Registers a [callback] to be invoked on window resize events.
@@ -95,38 +88,80 @@ class WindowController {
      *
      * @return an [Unsubscribe] function to remove the callback
      */
-    fun onWindowResize(callback: (Vector2D) -> Unit): Unsubscribe {
+    fun onWindowResize(callback: (Vector2D) -> Unit): Unsubscribe
+
+    /** Registers a [callback] to be invoked when the window gains focus. */
+    fun onWindowFocus(callback: () -> Unit): Unsubscribe
+
+    /** Registers a [callback] to be invoked when the window loses focus. */
+    fun onWindowBlur(callback: () -> Unit): Unsubscribe
+}
+
+/** Kraft before ULTRA-00268 created one controller per app; the state is the browser's, so they share one now. */
+@Deprecated("One controller serves the page", ReplaceWith("WindowController.default"))
+@Suppress("FunctionName")
+fun WindowController(): WindowController = WindowController.default
+
+/** `document.visibilityState` is missing from Kotlin's `Document` binding. */
+private fun isPageVisible(): Boolean = document.asDynamic().visibilityState != "hidden"
+
+/** The [WindowController] backed by the browser's window and document events. */
+private class BrowserWindowController : WindowController {
+
+    private val hasFocusSource = StreamSource(document.hasFocus())
+
+    override val hasFocus: Stream<Boolean> = hasFocusSource.readonly
+
+    private val isVisibleSource = StreamSource(isPageVisible())
+
+    override val isVisible: Stream<Boolean> = isVisibleSource.readonly
+
+    private val resizeListeners = mutableListOf<(Vector2D) -> Unit>()
+    private val focusListeners = mutableListOf<() -> Unit>()
+    private val blurListeners = mutableListOf<() -> Unit>()
+
+    init {
+        val onVisibilityChange: (dynamic) -> Unit = {
+            hasFocusSource(document.hasFocus())
+            isVisibleSource(isPageVisible())
+        }
+
+        document.addEventListener("visibilitychange", onVisibilityChange)
+        window.addEventListener("focus", ::onWindowFocusEvent)
+        window.addEventListener("blur", ::onWindowBlurEvent)
+        window.addEventListener("resize", ::onWindowResizeEvent)
+    }
+
+    override fun onWindowResize(callback: (Vector2D) -> Unit): Unsubscribe {
         resizeListeners += callback
         return { resizeListeners.remove(callback) }
     }
 
-    /** Registers a [callback] to be invoked when the window gains focus. */
-    fun onWindowFocus(callback: () -> Unit): Unsubscribe {
+    override fun onWindowFocus(callback: () -> Unit): Unsubscribe {
         focusListeners += callback
         return { focusListeners.remove(callback) }
     }
 
-    /** Registers a [callback] to be invoked when the window loses focus. */
-    fun onWindowBlur(callback: () -> Unit): Unsubscribe {
+    override fun onWindowBlur(callback: () -> Unit): Unsubscribe {
         blurListeners += callback
         return { blurListeners.remove(callback) }
     }
 
     @Suppress("UNUSED_PARAMETER")
     private fun onWindowResizeEvent(evt: Event) {
-        val size = windowSize()
-        resizeListeners.forEach { it(size) }
+        val size = WindowController.windowSize()
+        resizeListeners.toList().forEach { it(size) }
     }
 
     @Suppress("UNUSED_PARAMETER")
     private fun onWindowFocusEvent(evt: Event) {
         hasFocusSource(document.hasFocus())
-        focusListeners.forEach { it() }
+        focusListeners.toList().forEach { it() }
     }
 
     @Suppress("UNUSED_PARAMETER")
     private fun onWindowBlurEvent(evt: Event) {
         hasFocusSource(document.hasFocus())
-        blurListeners.forEach { it() }
+        blurListeners.toList().forEach { it() }
     }
 }

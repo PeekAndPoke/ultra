@@ -15,6 +15,17 @@
   render left its router listening to the window for the rest of the run. `RouterStrategy.dispose()` has an empty
   default, so custom strategies keep compiling.
 
+- **Kraft: one `WindowController` for the page (ULTRA-00268).** `WindowController` is now an interface;
+  `WindowController.default` is the browser-backed one, registered in every app and readable outside components
+  (`WindowController.default.hasFocus`). New: `isVisible` (false while the tab is hidden). `TestWindowController` in
+  kraft:testing is driven by hand (`blur()`, `focus()`, `visibility(false)`, `resize(size)`). Until now every app,
+  so every TestBed render, created its own controller whose four listeners stayed on the window.
+
+### Changed
+
+- **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its
+  own controller (klang's `UiWork.window`) gets the shared one and can switch to `WindowController.default`.
+
 ### Fixes
 
 - **Kraft router: `replaceUri` under hash routing (ULTRA-00263, from Klang).** It pushed the route as a path, which

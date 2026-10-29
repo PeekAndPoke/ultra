@@ -444,6 +444,13 @@ init {
 }
 ```
 
+### Window state
+
+`lifecycle { onWindowResize { v -> }; onWindowFocus { }; onWindowBlur { } }` subscribe through the app's
+`WindowController` and unsubscribe on unmount. The state is a stream too: `windowCtrl.hasFocus`, `windowCtrl.isVisible`
+(false while the tab is hidden). One controller serves the page, `WindowController.default`, readable outside
+components. Tests drive a `TestWindowController` (kraft:testing): `appSetup = { windowCtrl(ctrl) }`, then `ctrl.blur()`.
+
 ## Component references
 
 Sometimes a parent needs to call methods on a child. Use `ComponentRef`:
