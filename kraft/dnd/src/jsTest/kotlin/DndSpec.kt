@@ -128,6 +128,27 @@ private class Board(ctx: Ctx<Props>) : Component<Board.Props>(ctx) {
     }
 }
 
+@Suppress("TestFunctionName")
+private fun Tag.StackedZone(probe: Probe) = comp(StackedZone.Props(probe)) { StackedZone(it) }
+
+/** A zone at (100, 0) whose handlers are registered twice, as a helper and the component would. */
+private class StackedZone(ctx: Ctx<Props>) : Component<StackedZone.Props>(ctx) {
+    data class Props(val probe: Probe)
+
+    init {
+        dropZone<Look> {
+            onEnter { props.probe.events.add("helper:enter") }
+            onEnter { props.probe.events.add("own:enter") }
+            onDrop { props.probe.events.add("helper:drop") }
+            onDrop { props.probe.events.add("own:drop") }
+        }
+    }
+
+    override fun VDom.render() {
+        div(classes = "stacked") { style = box(100, 0, 100, 100) }
+    }
+}
+
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Pointer helpers
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -324,6 +345,18 @@ class DndSpec : StringSpec({
             up(150, 60)
             eventually { (document.querySelector(".kraft-dnd-stage") == null) shouldBe true }
         }
+    }
+
+    "handlers stack: every one added runs, in the order added" {
+        val probe = Probe()
+
+        TestBed.preact(appSetup = { dnd() }, view = { Source(probe); StackedZone(probe) }) { root ->
+            root.down()
+            move(150, 50)
+            up(150, 50)
+        }
+
+        probe.events.filter { !it.startsWith("dropped") } shouldBe listOf("helper:enter", "own:enter", "helper:drop", "own:drop")
     }
 
     "the click after a drag is swallowed; a plain click is not" {

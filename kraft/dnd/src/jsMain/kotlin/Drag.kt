@@ -50,55 +50,62 @@ class DropZone<T : Any> internal constructor(
     private val accepts: (Drag<T>) -> Boolean,
     private val handlers: Handlers<T>,
 ) {
-    /** The zone's event handlers, set in the builder of `dropZone { }`. */
+    /**
+     * The zone's event handlers, set in the builder of `dropZone { }`. Handlers stack, as lifecycle hooks do: each call
+     * adds one, so a helper's handlers and the component's own all run, in the order they were added.
+     */
     class Handlers<T : Any> {
-        internal var dragStart: (Drag<T>) -> Unit = {}
-        internal var dragStop: (Drag<T>) -> Unit = {}
-        internal var enter: (Drag<T>) -> Unit = {}
-        internal var over: (Drag<T>) -> Unit = {}
-        internal var leave: (Drag<T>) -> Unit = {}
-        internal var drop: (Drag<T>) -> Unit = {}
+        internal val dragStart = mutableListOf<(Drag<T>) -> Unit>()
+        internal val dragStop = mutableListOf<(Drag<T>) -> Unit>()
+        internal val enter = mutableListOf<(Drag<T>) -> Unit>()
+        internal val over = mutableListOf<(Drag<T>) -> Unit>()
+        internal val leave = mutableListOf<(Drag<T>) -> Unit>()
+        internal val drop = mutableListOf<(Drag<T>) -> Unit>()
 
         /** A drag this zone accepts has started, anywhere: e.g. highlight that it can take it. */
         fun onDragStart(handler: (Drag<T>) -> Unit) {
-            dragStart = handler
+            dragStart.add(handler)
         }
 
         /** A drag that [onDragStart] announced has ended, dropped here, elsewhere or cancelled. */
         fun onDragStop(handler: (Drag<T>) -> Unit) {
-            dragStop = handler
+            dragStop.add(handler)
         }
 
         /** The pointer of an accepted drag came over this zone. */
         fun onEnter(handler: (Drag<T>) -> Unit) {
-            enter = handler
+            enter.add(handler)
         }
 
         /** The pointer moved within this zone. */
         fun onOver(handler: (Drag<T>) -> Unit) {
-            over = handler
+            over.add(handler)
         }
 
         /** The pointer left this zone, or the drag ended over it without a drop here (Esc). */
         fun onLeave(handler: (Drag<T>) -> Unit) {
-            leave = handler
+            leave.add(handler)
         }
 
         /** The drag was dropped on this zone. */
         fun onDrop(handler: (Drag<T>) -> Unit) {
-            drop = handler
+            drop.add(handler)
         }
     }
 
     /** True when [drag] is of the zone's type and its predicate takes it. */
     internal fun takes(drag: Drag<*>): Boolean = typed(drag)?.let(accepts) ?: false
 
-    internal fun dragStart(drag: Drag<*>) = typed(drag)?.let(handlers.dragStart)
-    internal fun dragStop(drag: Drag<*>) = typed(drag)?.let(handlers.dragStop)
-    internal fun enter(drag: Drag<*>) = typed(drag)?.let(handlers.enter)
-    internal fun over(drag: Drag<*>) = typed(drag)?.let(handlers.over)
-    internal fun leave(drag: Drag<*>) = typed(drag)?.let(handlers.leave)
-    internal fun drop(drag: Drag<*>) = typed(drag)?.let(handlers.drop)
+    internal fun dragStart(drag: Drag<*>) = notify(handlers.dragStart, drag)
+    internal fun dragStop(drag: Drag<*>) = notify(handlers.dragStop, drag)
+    internal fun enter(drag: Drag<*>) = notify(handlers.enter, drag)
+    internal fun over(drag: Drag<*>) = notify(handlers.over, drag)
+    internal fun leave(drag: Drag<*>) = notify(handlers.leave, drag)
+    internal fun drop(drag: Drag<*>) = notify(handlers.drop, drag)
+
+    private fun notify(list: List<(Drag<T>) -> Unit>, drag: Drag<*>) {
+        typed(drag)?.let { typedDrag -> list.toList().forEach { it(typedDrag) } }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun typed(drag: Drag<*>): Drag<T>? = if (type.isInstance(drag.payload)) drag as Drag<T> else null

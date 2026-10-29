@@ -2203,141 +2203,36 @@ popups.closeAll()
 
 # Drag & Drop
 
-Type-safe drag and drop with typed payloads and accept predicates.
-
-Kraft's DnD system uses two components: a `DndDragHandle` that makes an element draggable, and a `DndDropTarget` that
-accepts drops. Both are generic over a payload type, so the compiler ensures you only drop compatible items.
-
-DnD is part of the `kraft-semanticui` module.
-
-## Drag handles
-
-Wrap any element in a `DndDragHandle` to make it draggable. The `payload` parameter is the data object that travels with
-the drag:
+Module `kraft-dnd` (registered by `semanticUI()`, or `kraftApp { dnd() }`): a `DndManager` with an auto-mounted stage
+that draws only the drag preview, above the modals. Mouse, touch and pen (pointer events). The manager writes nothing to
+the zones' DOM: each zone keeps its own UI state.
 
 ```kotlin
-data class Task(val id: String, val title: String)
+// Start a drag from the source's pointerdown; it begins after a 4 px threshold, the click after it is swallowed
+ui.segment {
+    style = "touch-action: none;"   // needed for touch
+    onPointerDown { event ->
+        dnd.startDrag(event, payload = look, source = slot, preview = { ui.compact.segment { +look.name } })
+            .onDropped { zone -> }
+            .onCancelled { }        // released outside every zone, Esc, pointercancel
+    }
+}
 
-// Inside your component's render:
-val task = Task("1", "Write docs")
-
-DndDragHandle(payload = task) {
-    ui.segment {
-        icon.bars.render()
-        +task.title
+// A drop zone, registered while the component is mounted; handlers stack
+init {
+    dropZone<Look>(accepts = { it.payload.kind == props.slot.kind }) {
+        onDragStart { canTake = true }          // every accepting zone, at the start
+        onDragStop { canTake = false; hovered = false }
+        onEnter { hovered = true }              // the innermost accepting zone under the pointer
+        onLeave { hovered = false }
+        onDrop { drag -> swap(drag.payload, drag.source) }
     }
 }
 ```
 
-When the user starts dragging, a visual clone follows the cursor. The payload type (`Task`) is inferred from the
-argument.
-
-## Drop targets
-
-Define a drop zone with `DndDropTarget`. The type parameter must match the drag handle's payload type:
-
-```kotlin
-DndDropTarget<Task> {
-    accepts = { task -> task.id != currentTask.id }  // filter what's accepted
-    onDrop = { task ->
-        // handle the dropped task
-        moveTask(task, targetColumn)
-    }
-}
-```
-
-The `accepts` predicate controls which payloads this target will highlight for and accept. If it returns `false`, the
-target ignores the drag.
-
-## Visual feedback
-
-Use the built-in highlight helpers for standard visual feedback during drag operations:
-
-```kotlin
-DndDropTarget<Task> {
-    greenHighlights()  // green border on valid hover
-    onDrop = { task -> moveTask(task) }
-}
-
-// Or blue:
-DndDropTarget<Task> {
-    blueHighlights()
-    onDrop = { task -> moveTask(task) }
-}
-```
-
-For custom feedback, use the individual callbacks:
-
-```kotlin
-DndDropTarget<Task> {
-    onDragStart = { target ->
-        // a compatible drag started somewhere — highlight this zone
-    }
-    onDragEnd = { target ->
-        // drag ended (dropped or cancelled) — remove highlight
-    }
-    onMouseOver = { target ->
-        // dragged item is hovering over this target
-    }
-    onMouseOut = { target ->
-        // dragged item left this target
-    }
-    onDrop = { task ->
-        // item was dropped here
-    }
-}
-```
-
-## Full example
-
-A Kanban-style board with draggable cards and two columns:
-
-```kotlin
-data class Card(val id: String, val title: String)
-
-class KanbanBoard(ctx: NoProps) : PureComponent(ctx) {
-
-    private var todo by value(listOf(Card("1", "Design"), Card("2", "Implement")))
-    private var done by value(listOf<Card>())
-
-    override fun VDom.render() {
-        ui.two.column.grid {
-            noui.column {
-                h3 { +"To Do" }
-                DndDropTarget<Card> {
-                    greenHighlights()
-                    accepts = { card -> card !in todo }
-                    onDrop = { card ->
-                        done = done - card
-                        todo = todo + card
-                    }
-                }
-                todo.forEach { card ->
-                    DndDragHandle(payload = card) {
-                        ui.segment { +card.title }
-                    }
-                }
-            }
-            noui.column {
-                h3 { +"Done" }
-                DndDropTarget<Card> {
-                    blueHighlights()
-                    accepts = { card -> card !in done }
-                    onDrop = { card ->
-                        todo = todo - card
-                        done = done + card
-                    }
-                }
-                done.forEach { card ->
-                    DndDragHandle(payload = card) {
-                        ui.segment { +card.title }
-                    }
-                }
-            }
-        }
-    }
-}
-```
+`Drag` carries `payload`, `source`, `position`, `pointerType`. `dropZone(element = { ... })` names another area than
+the component's element. `dnd.current` is a `Stream<Drag<*>?>`; `dnd.cancel()` ends a drag. Semantic UI helper:
+`DropZoneState` with `track(state) { triggerRedraw() }` and `ui.with(*state.semanticClasses)`.
 
 ---
 

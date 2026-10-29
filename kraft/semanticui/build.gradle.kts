@@ -57,6 +57,7 @@ kotlin {
 
         jsMain {
             dependencies {
+                api(project(":kraft:dnd"))
             }
         }
 

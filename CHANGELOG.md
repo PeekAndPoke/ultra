@@ -68,6 +68,18 @@
   `normalize(uri)` and `restoreUri(uri)`, with defaults. Not covered: a hash typed into the address bar under hash
   routing is held, but leaves one extra history entry.
 
+- **Kraft: drag and drop rebuilt as `kraft:dnd` (ULTRA-00265, from Klang's look editor; the maintainer's design).**
+  A `DndManager` with an auto-mounted stage that draws only the drag preview (z-index above modals and popups), drags
+  started from a component's `pointerdown` (`dnd.startDrag(event, payload, source, preview)`, a threshold before it
+  begins), and drop zones components register while mounted (`dropZone<T> { onDragStart / onDragStop / onEnter /
+  onOver / onLeave / onDrop }`). Mouse, touch and pen; Esc cancels; the drop knows its source. `semanticUI()`
+  registers it; `DropZoneState` in kraft-semanticui is an optional helper.
+
+### Breaking changes
+
+- **The old Semantic UI drag and drop is gone** (`DndDragHandle`, `DndDropTarget`, `greenHighlights`,
+  `blueHighlights`): it had no users outside the examples. Port to `kraft:dnd` (see above and the docs page).
+
 ### Changed
 
 - **Kraft router, hash strategy: plain clicks on route links (`href="#/..."`) now go through the router** (ULTRA-00266),

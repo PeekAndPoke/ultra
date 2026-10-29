@@ -30,6 +30,7 @@ include(
         // KRAFT ////////////////////////////////////////////////////////////////////////////////
         ":kraft:core",
         ":kraft:core-tests",
+        ":kraft:dnd",
         ":kraft:semanticui",
         ":kraft:testing",
         // Addons

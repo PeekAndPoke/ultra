@@ -7,138 +7,92 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
 ---
 
 <DocsLayout title="Drag & Drop" sidebar={kraftSidebar}
-            description="Type-safe drag and drop with typed payloads in Kraft">
+            description="Drag and drop in Kraft: typed payloads, drop zones registered by components, mouse, touch and pen">
 
     <h1>Drag &amp; Drop</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        Type-safe drag and drop with typed payloads and accept predicates.
+        Typed payloads, drop zones that components register, mouse, touch and pen alike.
     </p>
 
-    <p>Kraft's DnD system uses two components: a <code>DndDragHandle</code> that makes an element draggable, and a
-        <code>DndDropTarget</code> that accepts drops. Both are generic over a payload type, so the compiler ensures you
-        only drop compatible items.</p>
+    <p>The <code>kraft-dnd</code> module has a <code>DndManager</code> and a stage that the app mounts by itself, like
+        the modals. A component starts a drag from a pointer event; other components register drop zones and hear
+        what happens. The zones keep their own UI state and render from it: the manager writes nothing to their DOM.
+        The stage draws only the drag preview, above the modals, so a drag works inside a modal too.</p>
 
-    <p>DnD is part of the <code>kraft-semanticui</code> module.</p>
+    <Code code={`kraftApp {
+    semanticUI()   // registers dnd(); without Semantic UI: dnd()
+}`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h2>Drag handles</h2>
+    <h2>Starting a drag</h2>
 
-    <p>Wrap any element in a <code>DndDragHandle</code> to make it draggable. The <code>payload</code> parameter is the
-        data object that travels with the drag:</p>
+    <p>From the source component's <code>onPointerDown</code>. The drag begins once the pointer moved past a
+        threshold (4 px by default), so a click stays a click; the click after a drag is swallowed.</p>
 
-    <Code code={`data class Task(val id: String, val title: String)
+    <Code code={`ui.segment {
+    // For touch, the browser must leave the pointer to the drag
+    style = "touch-action: none; cursor: grab;"
 
-// Inside your component's render:
-val task = Task("1", "Write docs")
-
-DndDragHandle(payload = task) {
-    ui.segment {
-        icon.bars.render()
-        +task.title
+    onPointerDown { event ->
+        dnd.startDrag(
+            event = event,
+            payload = look,
+            source = slot,                               // where the drag came from, for the zone
+            preview = { ui.compact.segment { +look.name } },
+        )
+            .onDropped { zone -> /* dropped on zone */ }
+            .onCancelled { /* released outside every zone, Esc, pointercancel */ }
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>When the user starts dragging, a visual clone follows the cursor. The payload type (<code>Task</code>) is
-        inferred from the argument.</p>
+    <h2>Drop zones</h2>
 
-    <h2>Drop targets</h2>
+    <p>A component registers a zone for a payload type while it is mounted. Every accepting zone hears
+        <code>onDragStart</code> when a drag starts and <code>onDragStop</code> when it ends; the zone under the
+        pointer (the innermost one, found with <code>elementFromPoint</code>) hears <code>onEnter</code>,
+        <code>onOver</code>, <code>onLeave</code> and <code>onDrop</code>. Handlers stack: each call adds one.</p>
 
-    <p>Define a drop zone with <code>DndDropTarget</code>. The type parameter must match the drag handle's payload type:
-    </p>
+    <Code code={`class SlotView(ctx: Ctx<Props>) : Component<SlotView.Props>(ctx) {
+    private var canTake by value(false)
+    private var hovered by value(false)
 
-    <Code code={`DndDropTarget<Task> {
-    accepts = { task -> task.id != currentTask.id }  // filter what's accepted
-    onDrop = { task ->
-        // handle the dropped task
-        moveTask(task, targetColumn)
-    }
-}`} lang="kotlin" theme="vitesse-dark"/>
-
-    <p>The <code>accepts</code> predicate controls which payloads this target will highlight for and accept. If it
-        returns <code>false</code>, the target ignores the drag.</p>
-
-    <h2>Visual feedback</h2>
-
-    <p>Use the built-in highlight helpers for standard visual feedback during drag operations:</p>
-
-    <Code code={`DndDropTarget<Task> {
-    greenHighlights()  // green border on valid hover
-    onDrop = { task -> moveTask(task) }
-}
-
-// Or blue:
-DndDropTarget<Task> {
-    blueHighlights()
-    onDrop = { task -> moveTask(task) }
-}`} lang="kotlin" theme="vitesse-dark"/>
-
-    <p>For custom feedback, use the individual callbacks:</p>
-
-    <Code code={`DndDropTarget<Task> {
-    onDragStart = { target ->
-        // a compatible drag started somewhere — highlight this zone
-    }
-    onDragEnd = { target ->
-        // drag ended (dropped or cancelled) — remove highlight
-    }
-    onMouseOver = { target ->
-        // dragged item is hovering over this target
-    }
-    onMouseOut = { target ->
-        // dragged item left this target
-    }
-    onDrop = { task ->
-        // item was dropped here
-    }
-}`} lang="kotlin" theme="vitesse-dark"/>
-
-    <h2>Full example</h2>
-
-    <p>A Kanban-style board with draggable cards and two columns:</p>
-
-    <Code code={`data class Card(val id: String, val title: String)
-
-class KanbanBoard(ctx: NoProps) : PureComponent(ctx) {
-
-    private var todo by value(listOf(Card("1", "Design"), Card("2", "Implement")))
-    private var done by value(listOf<Card>())
-
-    override fun VDom.render() {
-        ui.two.column.grid {
-            noui.column {
-                h3 { +"To Do" }
-                DndDropTarget<Card> {
-                    greenHighlights()
-                    accepts = { card -> card !in todo }
-                    onDrop = { card ->
-                        done = done - card
-                        todo = todo + card
-                    }
-                }
-                todo.forEach { card ->
-                    DndDragHandle(payload = card) {
-                        ui.segment { +card.title }
-                    }
-                }
-            }
-            noui.column {
-                h3 { +"Done" }
-                DndDropTarget<Card> {
-                    blueHighlights()
-                    accepts = { card -> card !in done }
-                    onDrop = { card ->
-                        todo = todo - card
-                        done = done + card
-                    }
-                }
-                done.forEach { card ->
-                    DndDragHandle(payload = card) {
-                        ui.segment { +card.title }
-                    }
-                }
+    init {
+        dropZone<Look>(accepts = { it.payload.kind == props.slot.kind }) {
+            onDragStart { canTake = true }
+            onDragStop { canTake = false; hovered = false }
+            onEnter { hovered = true }
+            onLeave { hovered = false }
+            onDrop { drag ->
+                if (drag.source is Slot) swap(drag.payload, drag.source) else equip(drag.payload)
             }
         }
     }
+
+    override fun VDom.render() {
+        ui.given(hovered) { green }.given(canTake && !hovered) { secondary }.segment { /* ... */ }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The zone's area is the component's own element by default; <code>dropZone(element = &#123; ... &#125;)</code>
+        names another. A drag carries <code>payload</code>, <code>source</code>, the pointer's <code>position</code>
+        and its <code>pointerType</code>.</p>
+
+    <h2>Semantic UI helpers</h2>
+
+    <p><code>DropZoneState</code> from <code>kraft-semanticui</code> keeps <code>canTake</code> and
+        <code>hovered</code> for you and gives Fomantic classes; nothing requires it.</p>
+
+    <Code code={`private val zone = DropZoneState()
+
+init {
+    dropZone<Number>(accepts = { props.accepts(it.payload) }) {
+        track(zone) { triggerRedraw() }
+        onDrop { counter += it.payload.toDouble() }
+    }
+}
+
+override fun VDom.render() {
+    ui.with(*zone.semanticClasses).segment { /* ... */ }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>See it in action</h2>
