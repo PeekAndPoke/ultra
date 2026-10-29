@@ -1,6 +1,6 @@
 # ULTRA-00265: Kraft dnd: pointer events, keyboard and pick-and-place, hover state, drop source, auto-scroll, preview
 
-> **Status (2026-10-28): IDEA.** Requests from Klang (Klang-Research, 2026-10-28) for its look editor's equip grid; the maintainer asked Klang to file what it would like. Not scheduled; Klang can build pick-and-place itself meanwhile. The dnd has no tests today.
+> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Requests from Klang (Klang-Research, 2026-10-28) for its look editor's equip grid; the maintainer asked Klang to file what it would like. Not scheduled; Klang can build pick-and-place itself meanwhile. The dnd has no tests today.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -44,7 +44,9 @@ Not tested: no spec touches `DndDragHandle` or `DndDropTarget`; the only user is
    place behind the same `DndDragHandle` / `DndDropTarget` names, after TestBed specs pin today's behaviour; or grow it
    in Klang's `workshop/` first (releases are rare) and port it with its tests.
 2. **Keyboard semantics** (arrows by grid position, or Tab order) and the announcement texts: per the WAI-ARIA drag
-   guidance; needs a short design pass.
+   guidance; needs a short design pass. The keys run on Klang's key manager once it is in Kraft (KLANG-00325, see
+   ULTRA-00239): a drag session opens a key layer, so Esc cancels the drag and nothing below answers (Klang-Research,
+   2026-10-29). So step 3 waits for ULTRA-00239.
 3. **Scope of one release.** Recommendation: 1, 3 and 4 first (they change the API), 2 next, 5 and 6 later.
 
 ## The work
@@ -66,3 +68,5 @@ Not tested: no spec touches `DndDragHandle` or `DndDropTarget`; the only user is
 - 2026-10-28: created from Klang's requests; checked against the code the same day.
 - 2026-10-28: Klang noted it in KLANG-00382 (klang `53d228ab3`) and builds its own pick-and-place first; nothing waits on
   this. Growing the rework in Klang's `workshop/` is the maintainer's call (decision 1).
+- 2026-10-29: plan reviewed; the keyboard path (step 3) builds on the key manager of ULTRA-00239.
+- 2026-10-29: DESIGNED.

@@ -1,6 +1,6 @@
 # ULTRA-00264: Streams: change a smooth() stream's law without losing its motion
 
-> **Status (2026-10-28): IDEA.** Request from Klang (Klang-Research, 2026-10-28), from its start-page lamp (klang 04af853dd). Not scheduled; Klang works with a local SwappableSmoothing. No epic fits: ULTRA-00255 (Ultra libraries) holds scans and defects, not wishes.
+> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Request from Klang (Klang-Research, 2026-10-28), from its start-page lamp (klang 04af853dd). Not scheduled; Klang works with a local SwappableSmoothing. No epic fits: ULTRA-00255 (Ultra libraries) holds scans and defects, not wishes.
 
 **Security-critical:** no
 
@@ -60,3 +60,4 @@ Checked against the code, 2026-10-28:
   session): "The streams should be like patterns ... when there is something to be configured on a stream the config
   value itself needs to be a stream ..." ("like patterns": sprudel, where every argument of a pattern function is a
   pattern). It backs option (b), and reads wider: `rest` and `near` as streams too, and the other operators' config.
+- 2026-10-29: DESIGNED.

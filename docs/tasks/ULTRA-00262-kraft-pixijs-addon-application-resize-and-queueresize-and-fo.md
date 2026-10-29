@@ -1,6 +1,6 @@
 # ULTRA-00262: Kraft pixijs addon: Application.resize() and queueResize(), and following the element itself
 
-> **Status (2026-10-27): IDEA.** Request from Klang (Klang-Research, 2026-10-27), found in KLANG-00349. Not scheduled; Klang is unblocked with a workaround. Releases are rare (Maven Central limits): when picked up, consider growing it in a workshop module first.
+> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Request from Klang (Klang-Research, 2026-10-27), found in KLANG-00349. Not scheduled; Klang is unblocked with a workaround. Releases are rare (Maven Central limits): when picked up, consider growing it in a workshop module first.
 >
 > **Part of:** ULTRA-00258 (Epic: Kraft addons)
 
@@ -49,3 +49,4 @@ Checked against the code, 2026-10-27:
 ## History
 
 - 2026-10-27: created from Klang's request; checked against the code the same day.
+- 2026-10-29: DESIGNED.

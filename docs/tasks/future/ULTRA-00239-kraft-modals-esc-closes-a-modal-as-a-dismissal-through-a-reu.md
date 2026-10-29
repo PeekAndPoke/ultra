@@ -15,28 +15,44 @@ not a `keydown` listener hard-wired into `FadingModal`.
 
 Klang's own modal subclass handles Esc today; it is the reference for the expected behaviour.
 
+## The mechanism (Klang-Research, 2026-10-29)
+
+Klang's key manager is KLANG-00325 (IN PROGRESS, epic KLANG-00332), in `klang/workshop/src/jsMain/kotlin/keys/`
+(package `io.peekandpoke.klang.workshop.keys`), depending on Kraft and Ultra only. Commits `836e6c2d6` (manager),
+`2fd36e596` (layers, YesNoModal on it), latest `18a8533ad`. Steps 1-2 done and reviewed (core, `OnKey` with hints,
+layers, priorities, chord sequences, the Esc chain); step 3 (CodeMirror keys) in progress; the maintainer's Mac test
+pending. Its step 5 is "the move into Kraft when it has proven itself; ULTRA-00239 built on it there".
+
+Shape: actions, not keys (`KeyAction(id, title, keys, macKeys, scope, priority)`, rebindable), defined in bags
+(`manager.define(bindings)`, duplicate ids throw); letters match by typed character, digits and shifted symbols by
+`event.code`; start-up checks for clashes and keys Chrome keeps; `KraftApp.Builder.keys(...)` sets `KeysManager.key`
+and a `KeyHintStage`; `Tag.OnKey(action, ...)` registers on mount; layers form a stack, only the top answers,
+`Component.openKeyLayer()` in `init`; within a layer the highest priority, then the newest registration answers.
+The modal plan agreed with the maintainer 2026-10-25: `FadingModal` opens a key layer in its init; Esc dismisses,
+OkCancel answers Ctrl+Enter through actions.
+
 ## Decide before implementing
 
-- **Where the mechanism lives:** take Klang's key-binding feature into Kraft (core or an addon) once it has settled
-  there, or design Kraft's own with Klang as its first user. Ask Klang (through Mission Control) for its state first.
-- **Scoping:** only the topmost modal reacts to Esc; a binding registered by a modal is removed when it unmounts.
-- **Opt-out:** a modal that must not be dismissed by Esc (an unsaved form) can switch it off.
+1. **The go for the move** is the maintainer's (KLANG-00325 step 5), after the Mac test. Until then this ticket waits.
+2. **Open points for the move** (Klang's list): layers follow the component tree, not the screen stack (a popup from
+   a modal lands in the root layer, so it waits while the modal is open; do popups and toasts open layers?); naming
+   and shape (`KeysManager` adds document listeners in its constructor, which piles up per app as ULTRA-00268 found
+   for `WindowController`; `Component.keys` is a generic name on every component); held keys never repeat (opt-in
+   planned); the hint stage's clipping cases.
+3. **Where in Kraft:** `kraft/core` (`io.peekandpoke.kraft.keys`), since modals in `kraft/semanticui` build on it.
 
 ## The work
 
-- [ ] Agree the mechanism with Klang's key-binding work.
-- [ ] Esc on the topmost `FadingModal` calls `close()` (a dismissal: `onResult(null)`), through that mechanism.
-- [ ] Docs: the overlays page and the LLM mirror.
-
-## Acceptance
-
-- [ ] A browser test: `keyDown("Escape")` dismisses the topmost of two stacked modals only, and delivers
-  `onResult(null)` once (a synthetic key event reaches Kraft's listeners, ULTRA-00233's friction list).
-- [ ] A modal with Esc switched off stays open.
-- [ ] No listener is left behind after the modal unmounts.
+1. Port KLANG-00325 from Klang's workshop (Apache-2.0) with its tests into `kraft/core/src/jsMain/kotlin/keys/`,
+   applying the decisions of point 2; specs into `kraft/core-tests/src/jsTest/kotlin/keys/`.
+2. `kraft/semanticui/.../modals/FadingModal.kt`: `openKeyLayer()` in init; actions `kraft.modal.dismiss` (Esc) and
+   `kraft.modal.confirm` (Mod-Enter, OkCancel); an opt-out per modal (`dismissOnEsc = false`).
+3. Specs as in Acceptance, in `kraft/semanticui/src/jsTest/kotlin/modals/`.
+4. Docs: a keys page, the overlays page, LLM mirrors; CHANGELOG.
 
 ## History
 
 - 2026-10-24: created as the Esc follow-up of ULTRA-00233 (maintainer: through a reusable mechanism, Klang is
   working on generalized key bindings).
 - 2026-10-24: NOT SCHEDULED.
+- 2026-10-29: plan written from Klang-Research's report on KLANG-00325; waits for the maintainer's go to move it into Kraft.

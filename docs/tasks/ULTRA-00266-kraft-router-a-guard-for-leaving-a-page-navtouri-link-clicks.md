@@ -1,6 +1,6 @@
 # ULTRA-00266: Kraft router: a guard for leaving a page (navToUri, link clicks, Back)
 
-> **Status (2026-10-28): IDEA.** Request from Klang (Klang-Research, 2026-10-28), from its look editor (KLANG-00382). Not scheduled; Klang keeps unapplied drafts in memory and arms beforeunload meanwhile.
+> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Request from Klang (Klang-Research, 2026-10-28), from its look editor (KLANG-00382). Not scheduled; Klang keeps unapplied drafts in memory and arms beforeunload meanwhile.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -58,3 +58,4 @@ Checked against the code, 2026-10-28 (`kraft/core/src/jsMain/kotlin/routing/`):
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
+- 2026-10-29: DESIGNED.
