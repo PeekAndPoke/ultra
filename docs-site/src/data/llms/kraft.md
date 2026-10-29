@@ -2538,6 +2538,14 @@ class Scene(ctx: NoProps) : PureComponent(ctx) {
 The `starting` flag prevents a race: `onMount` and `onUpdate` both call `tryStart()`, but the `launch { }` is async.
 Without a sync flag, you'd create two Applications before the first finishes.
 
+### More of pixi
+
+`pixi.createContainer()`, `pixi.create<T>("ClassName", args...)` for any other class, `pixi.raw` for the module.
+`Container.zIndex` with `sortableChildren` (a zIndex set before `addChildAt` does not turn sorting on; before
+`addChild` it does), `addChildAt`, `sortChildren()`, `scale: ObservablePoint`; `Text.anchor`; `Graphics.poly(points)`.
+`Application.resize()` / `queueResize()` (with `resizeTo` set); `app.followElementSize(element)` also follows a resize
+by layout alone, which `resizeTo` misses (it listens to the window only), and returns the stop.
+
 ## threejs — 3D WebGL
 
 Three.js is the standard 3D engine for the web. Register it as lazy — it's a large library and usually only needed on
@@ -2602,14 +2610,6 @@ three.js has none), and `three.raw` is the module. Texture constants: `TextureWr
 while it holds true, e.g. `paused = windowCtrl.hasFocus.map { !it }`. After a resume the first `deltaMs` is 0 and
 `elapsedMs` counts running time only, so the scene goes on where it rested. The frames come from `clock`
 (default `FrameClock.animationFrames`, one `requestAnimationFrame` shared with `smooth()` and `animTicker()`).
-
-### pixi.js extras
-
-`pixi.createContainer()`, `pixi.create<T>("ClassName", args...)` for any other class, `pixi.raw` for the module.
-`Container.zIndex` with `sortableChildren` (a zIndex set before `addChildAt` does not turn sorting on; before
-`addChild` it does), `addChildAt`, `sortChildren()`, `scale: ObservablePoint`; `Text.anchor`; `Graphics.poly(points)`.
-`Application.resize()` / `queueResize()` (with `resizeTo` set); `app.followElementSize(element)` also follows a resize
-by layout alone, which `resizeTo` misses (it listens to the window only), and returns the stop.
 
 ## Signature Pad — Capture signatures
 
