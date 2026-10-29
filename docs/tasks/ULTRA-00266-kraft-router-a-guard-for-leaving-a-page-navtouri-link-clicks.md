@@ -37,8 +37,24 @@ Checked against the code, 2026-10-28 (`kraft/core/src/jsMain/kotlin/routing/`):
    use; the trap keeps its "Back closes a modal" use. Decide once ULTRA-00203 (trap fires on fragment navigation) and
    ULTRA-00263 (replaceUri under hash routing) are settled, since all three touch the same listeners.
 3. **`beforeunload`.** Optional flag: armed while the guard would say Stop or Ask. Browsers show only their own text.
-4. **What counts as leaving:** a change of path or query (as `popstateListener` does at `Router.kt:163`), not a
-   fragment. Recommendation: same rule.
+4. **What counts as leaving:** a change of the matched route (another route pattern or other route params), never a
+   change of query or fragment alone. A query change must not count: every `urlParam` filter change goes through
+   `replaceUri` and would otherwise ask "leave this page?". Recommendation: this rule.
+
+## How the router knows a guard is active (maintainer's question, 2026-10-29)
+
+By registration, as `trapBackNavigation` does today (`BackNavigationTrap.kt:25-55`, registered in the component's
+`lifecycle { onMount / onUnmount }`):
+
+- `Component.guardLeaving { target -> ... }` finds the router through the component tree
+  (`getAttributeRecursive(Router.key)`), and in `onMount` calls `router.addLeaveGuard(guard)`, which returns an
+  `Unsubscribe` called in `onUnmount`. The router holds a plain list; "a guard is active" means "registered".
+- The block is asked **at the moment of each navigation**, with the target, so a guard needs no "dirty" flag of its
+  own in the router: `guardLeaving { if (draft.isDirty) Ask { confirmLeave() } else Proceed }`. A page without unsaved
+  work says `Proceed` and nothing happens.
+- `beforeunload` (the optional flag) asks the same blocks synchronously with no target; any `Stop` or `Ask` arms the
+  browser's prompt (browsers show only their own text, and `Ask`'s modal cannot run there).
+- No guards registered: the router does exactly what it does today (one empty-list check per navigation).
 
 ## The work
 
@@ -59,3 +75,4 @@ Checked against the code, 2026-10-28 (`kraft/core/src/jsMain/kotlin/routing/`):
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
 - 2026-10-29: DESIGNED.
+- 2026-10-29: the maintainer asked how the router knows a guard is active: by registration from the component's lifecycle; answered in the ticket. "Leaving" narrowed to a change of matched route (a query change from `urlParam` must not ask).

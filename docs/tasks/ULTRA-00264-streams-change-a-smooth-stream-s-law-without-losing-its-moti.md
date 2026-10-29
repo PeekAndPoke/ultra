@@ -61,3 +61,4 @@ Checked against the code, 2026-10-28:
   value itself needs to be a stream ..." ("like patterns": sprudel, where every argument of a pattern function is a
   pattern). It backs option (b), and reads wider: `rest` and `near` as streams too, and the other operators' config.
 - 2026-10-29: DESIGNED.
+- 2026-10-29: maintainer: "config is a stream" is a rule, with stream overloads beside the constant ones (answer "Rule + stream overloads"); option (b) decided.

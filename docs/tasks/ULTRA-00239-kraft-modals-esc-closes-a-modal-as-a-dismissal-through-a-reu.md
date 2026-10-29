@@ -1,6 +1,6 @@
 # ULTRA-00239: Kraft modals: Esc closes a modal as a dismissal, through a reusable key-binding mechanism
 
-> **Status (2026-10-29): PAUSED.** Follow-up of ULTRA-00233 (every modal answers exactly once). Waits for ULTRA-00233 and for Klang's generalized key-binding feature.
+> **Status (2026-10-29): PAUSED.** Parked by the maintainer 2026-10-29: Klang's key manager (KLANG-00325) is not stable yet and stays in Klang. Follow-up of ULTRA-00233 (every modal answers exactly once). Waits for ULTRA-00233 and for Klang's generalized key-binding feature.
 >
 > **Part of:** ULTRA-00257 (Kraft forms and components epic)
 

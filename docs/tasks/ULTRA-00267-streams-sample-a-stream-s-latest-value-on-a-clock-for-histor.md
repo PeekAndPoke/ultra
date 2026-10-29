@@ -61,3 +61,4 @@ Checked against the code, 2026-10-28 (`ultra/streams/src/commonMain/kotlin/ops/`
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
 - 2026-10-29: DESIGNED.
+- 2026-10-29: maintainer: name `sampled(every = ...)`; the interval is a stream too (the config-is-a-stream rule).

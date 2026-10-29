@@ -72,3 +72,4 @@ What worked well for Klang: `eventually()`, KQuery as a List, TestBed's cleanup 
 - 2026-10-26: created from Klang's KLANG-00343 feedback.
 - 2026-10-29: plan written (maintainer: "write a detailed plan into each ticket").
 - 2026-10-29: DESIGNED.
+- 2026-10-29: maintainer: option (a), the receiver `TestBedScope` (with `app` and `router`); `dispose()` public as planned.

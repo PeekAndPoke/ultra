@@ -33,8 +33,8 @@ Checked against the code, 2026-10-29 (`kraft/addons/threejs/src/jsMain/kotlin/Th
    returning "render this frame", still ticks. Recommendation: the stream, default a constant `false`; it fits the
    maintainer's "config is a stream" principle.
 2. **Time across a pause.** Recommendation: the first frame after a resume has `deltaMs = 0`, and `elapsedMs` counts
-   only running time (the sum of deltas), so a scene resumes where it rested instead of jumping. **Needs the
-   maintainer's OK** (the alternative: wall-clock `elapsedMs`).
+   only running time (the sum of deltas), so a scene resumes where it rested instead of jumping. **Decided by the
+   maintainer 2026-10-29: running time.**
 3. **A frame clock prop.** `clock: FrameClock = FrameClock.animationFrames`, so the loop joins the shared frame and a
    spec drives it with a hand clock. Recommendation: yes.
 
@@ -60,3 +60,4 @@ Checked against the code, 2026-10-29 (`kraft/addons/threejs/src/jsMain/kotlin/Th
 
 - 2026-10-29: request received, parked for the budget brake.
 - 2026-10-29: created with its plan on the maintainer's go ("Start fully now").
+- 2026-10-29: maintainer: across a pause `elapsedMs` counts running time only, the first frame after a resume has `deltaMs = 0`.

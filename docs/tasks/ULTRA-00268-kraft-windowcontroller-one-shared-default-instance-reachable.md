@@ -51,3 +51,4 @@ Checked against the code the same day:
 
 - 2026-10-29: created on the maintainer's word; checked against the code the same day.
 - 2026-10-29: DESIGNED.
+- 2026-10-29: maintainer: option (a), a shared default `WindowController.default`; the interface for test fakes and `isVisible` as planned.
