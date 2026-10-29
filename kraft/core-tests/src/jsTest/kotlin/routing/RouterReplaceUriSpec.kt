@@ -12,6 +12,9 @@ import kotlinx.html.div
 
 class RouterReplaceUriSpec : StringSpec({
 
+    // A hash left by a row, also a failing one, must not reach the next spec
+    afterTest { window.history.replaceState(null, "", window.location.pathname + window.location.search) }
+
     "hash strategy: replaceUri writes the fragment in place, and the router follows once" {
         TestBed.preact(
             appSetup = { routing { mount(Static("/a")) {} } },
@@ -21,7 +24,8 @@ class RouterReplaceUriSpec : StringSpec({
             router.awaitUri("/a?x=1")
 
             val path = window.location.pathname
-            val entries = window.history.length
+            // Marked: still marked afterwards means the entry was replaced, not a new one pushed (and its state kept)
+            window.history.replaceState("marked", "", window.location.href)
             var emissions = 0
             val unsubscribe = router.current.subscribeToStream { emissions++ }
             emissions = 0
@@ -33,12 +37,10 @@ class RouterReplaceUriSpec : StringSpec({
 
             window.location.hash shouldBe "#/a?x=2"
             window.location.pathname shouldBe path
-            window.history.length shouldBe entries
+            window.history.state shouldBe "marked"
             router.current().uri shouldBe "/a?x=2"
             emissions shouldBe 1
         }
-
-        window.history.replaceState(null, "", window.location.pathname + window.location.search)
     }
 
     "hash strategy: a replaceUri given with the '#' is the same address" {
@@ -59,8 +61,6 @@ class RouterReplaceUriSpec : StringSpec({
 
             emissions shouldBe 0
         }
-
-        window.history.replaceState(null, "", window.location.pathname + window.location.search)
     }
 
     "path strategy: replaceUri replaces the entry and the router emits once" {
@@ -76,7 +76,7 @@ class RouterReplaceUriSpec : StringSpec({
             pathRouter.navToUri("/app/list?page=1")
             pathRouter.current().uri shouldBe "/app/list?page=1"
 
-            val entries = window.history.length
+            window.history.replaceState("marked", "", window.location.href)
             var emissions = 0
             val unsubscribe = pathRouter.current.subscribeToStream { emissions++ }
             emissions = 0
@@ -85,7 +85,7 @@ class RouterReplaceUriSpec : StringSpec({
             unsubscribe()
 
             window.location.pathname + window.location.search shouldBe "/app/list?page=2"
-            window.history.length shouldBe entries
+            window.history.state shouldBe "marked"
             pathRouter.current().uri shouldBe "/app/list?page=2"
             emissions shouldBe 1
         } finally {

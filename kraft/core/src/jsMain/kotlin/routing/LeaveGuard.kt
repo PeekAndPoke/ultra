@@ -37,15 +37,16 @@ fun interface LeaveGuard {
  *
  * The block is asked at the moment of navigation, so it decides by the state then. With [beforeUnload] a reload or a
  * tab close shows the browser's own prompt while the block answers anything but [LeaveResult.Proceed] (an
- * [LeaveResult.Ask] cannot run its modal there). Several guards are asked in mount order; the first that does not
- * proceed decides.
+ * [LeaveResult.Ask] cannot run its modal there), unless the page load starts inside `router.withoutLeaveGuards { }`.
+ * Several guards are asked in mount order; the first that does not proceed decides.
  */
 fun Component<*>.guardLeaving(beforeUnload: Boolean = false, block: (target: String?) -> LeaveResult) {
     val guard = LeaveGuard(block)
     var unsubscribe: Unsubscribe? = null
 
     val onBeforeUnload: (Event) -> Unit = { event ->
-        if (block(null) != LeaveResult.Proceed) {
+        // A page load inside withoutLeaveGuards (a logout through the server) leaves without the prompt
+        if (!router.passingLeaveGuards && block(null) != LeaveResult.Proceed) {
             event.preventDefault()
             // Older browsers only show the prompt with a returnValue
             event.asDynamic().returnValue = ""

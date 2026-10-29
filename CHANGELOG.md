@@ -66,7 +66,8 @@
   `navBack()` and `clearHistoryAndNavTo()` change the router's history only once no guard holds them. A custom
   `RouterStrategy` calls `router.followBrowserNavigation()` from its listeners to take part; `RouterStrategy` gains
   `normalize(uri)` and `restoreUri(uri)`, with defaults. Not covered: a hash typed into the address bar under hash
-  routing is held, but leaves one extra history entry.
+  routing is held, but leaves one extra history entry, and so does a held Forward; a held Back drops the forward
+  history, as any new entry does.
 
 - **Kraft: drag and drop rebuilt as `kraft:dnd` (ULTRA-00265, from Klang's look editor; the maintainer's design).**
   A `DndManager` with an auto-mounted stage that draws only the drag preview (z-index above modals and popups), drags

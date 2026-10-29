@@ -75,8 +75,7 @@ class KraftApp internal constructor(
             toasts()
             // We always add the default Popups manager
             popups()
-            // We always have the default responsive controller
-            responsive(ResponsiveController())
+            // The default responsive controller is made in build(), only if none was set: it holds a window listener
             // We always have the default window controller
             windowCtrl(WindowController.default)
             // Default English i18n with kraft's built-in form catalog, so form errors translate and
@@ -111,6 +110,11 @@ class KraftApp internal constructor(
 
         internal fun build(): KraftApp {
             appAttributes[Router.key] = router.build()
+
+            // We always have a responsive controller; the default only when the app set none
+            if (!appAttributes.has(ResponsiveController.key)) {
+                responsive(ResponsiveController())
+            }
 
             return KraftApp(
                 appAttributes = appAttributes.asImmutable(),

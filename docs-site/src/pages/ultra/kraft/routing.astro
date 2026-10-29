@@ -228,7 +228,8 @@ fun A.href(route: Route.Bound) {
     <li>A confirmed <code>Ask</code> on a Back replays the Back. A middleware redirect on the way is not asked again.</li>
     <li>A leave that must happen whatever a page holds, like a logout:
         <code>router.withoutLeaveGuards &#123; router.navToUri("/login") &#125;</code>.</li>
-    <li>Under hash routing a hash typed into the address bar is held too, but leaves one extra history entry.</li>
+    <li>A hash typed into the address bar (hash routing) and a Forward are held too, but leave one extra history entry; a
+        held Back drops the forward history.</li>
 </ul>
 
 <h2>Setting the page title</h2>

@@ -9,6 +9,7 @@ import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
 import io.peekandpoke.ultra.streams.Unsubscribe
+import kotlinx.coroutines.Job
 import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.Document
@@ -80,9 +81,10 @@ class Router(
 
         /**
          * Puts [uri] back as the address, as a new entry and without telling the router: a [LeaveGuard] that stops a
-         * Back or a typed address undoes the browser's move with it. The default does nothing.
+         * Back or a typed address undoes the browser's move with it. Returns whether it did; the default does nothing
+         * and returns false, and the router then leaves the address where the browser moved it.
          */
-        fun restoreUri(uri: String) {}
+        fun restoreUri(uri: String): Boolean = false
     }
 
     /** Hash-based routing strategy using the URL fragment (e.g. `#/path`). */
@@ -121,7 +123,7 @@ class Router(
         override fun replaceUri(uri: String) {
             // Into the fragment, where this strategy keeps its routes; a bare path would drop the fragment. The entry's
             // state stays: a BackNavigationTrap marks its entry with it
-            window.history.replaceState(data = window.history.state, title = "", url = HASH_PREFIX + uri.cleanUri())
+            window.history.replaceState(data = window.history.state, title = "", url = hashUrl(uri))
         }
 
         override fun getUriFromWindowLocation(): String {
@@ -130,9 +132,14 @@ class Router(
 
         override fun normalize(uri: String): String = uri.cleanUri()
 
-        override fun restoreUri(uri: String) {
-            window.history.pushState(data = null, title = "", url = HASH_PREFIX + uri.cleanUri())
+        override fun restoreUri(uri: String): Boolean {
+            window.history.pushState(data = null, title = "", url = hashUrl(uri))
+            return true
         }
+
+        /** The document's own URL with [uri] as its fragment: a bare "#/x" would resolve against a `<base href>`. */
+        private fun hashUrl(uri: String): String =
+            window.location.href.substringBefore(HASH_PREFIX) + HASH_PREFIX + uri.cleanUri()
 
         private fun String.cleanUri(): String {
             return removePrefix(HASH_PREFIX).trim()
@@ -162,6 +169,8 @@ class Router(
 
             if (!href.startsWith(HASH_PREFIX + "/")) return
             if (!anchor.targetsSelf() || anchor.hasAttribute("download")) return
+            // Already the address (an onClick of the link navigated first): the browser does nothing either
+            if (href.cleanUri() == getUriFromWindowLocation()) return
 
             event.preventDefault()
             router.navToUri(href)
@@ -212,8 +221,9 @@ class Router(
 
         override fun normalize(uri: String): String = uri.cleanUri()
 
-        override fun restoreUri(uri: String) {
+        override fun restoreUri(uri: String): Boolean {
             window.history.pushState(null, "", uri.cleanUri())
+            return true
         }
 
         private fun String.cleanUri(): String {
@@ -332,7 +342,10 @@ class Router(
     val history: Stream<History> = _history
 
     /** The registered [LeaveGuard]s, in mount order. */
-    private val leaveGuards = mutableListOf<LeaveGuard>()
+    private val leaveGuards = mutableListOf<RegisteredGuard>()
+
+    /** A guard with the page it was registered on: it protects leaving that page only. */
+    private class RegisteredGuard(val guard: LeaveGuard, val mounted: MountedRoute, val routeParams: Map<String, String>)
 
     /** An [LeaveResult.Ask] is waiting for its answer: further navigations away are dropped meanwhile. */
     private var askingToLeave = false
@@ -342,6 +355,14 @@ class Router(
 
     /** A navigation the guards let through is running: what it leads to (a middleware redirect) follows unasked. */
     private var approved = false
+
+    /** True while [withoutLeaveGuards] runs: `guardLeaving`'s beforeunload prompt stays quiet then too. */
+    internal val passingLeaveGuards: Boolean get() = approved
+
+    /** The pending [LeaveResult.Ask], cancelled when the router is disposed. */
+    private var asking: Job? = null
+
+    private var disposed = false
 
     init {
         strategy.init()
@@ -364,8 +385,11 @@ class Router(
 
     /** Disables the router for good and removes its browser event listeners; for an app that is torn down. */
     fun dispose() {
+        disposed = true
         disable()
         strategy.dispose()
+        // An unanswered Ask must not navigate a torn-down app later; cancelling also closes its modal
+        asking?.cancel()
     }
 
     /**
@@ -480,9 +504,12 @@ class Router(
      * [Unsubscribe] is called. Components use [guardLeaving], which registers for as long as they are mounted.
      */
     fun addLeaveGuard(guard: LeaveGuard): Unsubscribe {
-        leaveGuards += guard
+        val here = current()
+        val registered = RegisteredGuard(guard, here.mountedRoute, here.matchedRoute.routeParams)
 
-        return { leaveGuards.remove(guard) }
+        leaveGuards += registered
+
+        return { leaveGuards.remove(registered) }
     }
 
     /**
@@ -510,7 +537,7 @@ class Router(
             return go()
         }
 
-        if (leaveGuards.isEmpty() || !isLeaving(target)) return go()
+        if (pageGuards().isEmpty() || !isLeaving(target)) return go()
         if (askingToLeave) return
 
         val pass = {
@@ -544,7 +571,7 @@ class Router(
             }
         }
 
-        if (approved || leaveGuards.isEmpty() || !isLeaving(target)) return navigateToWindowUri()
+        if (approved || pageGuards().isEmpty() || !isLeaving(target)) return navigateToWindowUri()
 
         val stay = current().uri
 
@@ -559,11 +586,17 @@ class Router(
             LeaveResult.Stop -> strategy.restoreUri(stay)
 
             is LeaveResult.Ask -> {
-                strategy.restoreUri(stay)
+                val restored = strategy.restoreUri(stay)
+
                 ask(answer) {
-                    // The restore pushed the page's address on top of the target's entry: back is the move itself
-                    letThrough = target
-                    window.history.back()
+                    if (restored) {
+                        // The restore pushed the page's address on top of the target's entry: back is the move itself
+                        letThrough = target
+                        window.history.back()
+                    } else {
+                        // Nothing was put back: the browser is still at the target
+                        withoutLeaveGuards { navigateToWindowUri() }
+                    }
                 }
             }
         }
@@ -586,24 +619,41 @@ class Router(
         return mounted != here.mountedRoute || match.routeParams != here.matchedRoute.routeParams
     }
 
+    /**
+     * The guards of the current page, in mount order. A guard still registered for the page just left (its component
+     * unmounts a render after the route changed) is not asked about the next navigation.
+     */
+    private fun pageGuards(): List<LeaveGuard> {
+        val here = current()
+
+        return leaveGuards.filter { it.mounted == here.mountedRoute && it.routeParams == here.matchedRoute.routeParams }
+            .map { it.guard }
+    }
+
     /** The first answer that does not proceed, in mount order. */
     private fun askGuards(target: String): LeaveResult =
-        leaveGuards.toList().asSequence()
+        pageGuards().asSequence()
             .map { it.onLeave(target) }
             .firstOrNull { it != LeaveResult.Proceed }
             ?: LeaveResult.Proceed
 
+    /**
+     * Asks [answer], and runs [go] on a yes, but only if the router is still where it asked from: a navigation past
+     * the guards meanwhile (a logout) or a disposed router drops the answer.
+     */
     private fun ask(answer: LeaveResult.Ask, go: () -> Unit) {
         askingToLeave = true
+        val from = current()
 
-        launch {
+        asking = launch {
             val yes = try {
                 answer.confirm()
             } finally {
                 askingToLeave = false
+                asking = null
             }
 
-            if (yes) go()
+            if (yes && !disposed && current() === from) go()
         }
     }
 

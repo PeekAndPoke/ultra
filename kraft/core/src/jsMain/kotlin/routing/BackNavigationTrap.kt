@@ -43,6 +43,9 @@ class BackNavigationTrap(
 
     private val data = "--navigation-trap-${counter++}--"
 
+    /** The address of the entry the trap pushed. */
+    private var pushedHref: String? = null
+
     init {
         component.lifecycle {
             onMount {
@@ -100,6 +103,8 @@ class BackNavigationTrap(
 
     private fun pushState() {
         if (window.history.state != data) {
+            pushedHref = window.location.href
+
             @Suppress("UnsafeCastFromDynamic")
             window.history.pushState(
                 data = data,
@@ -114,17 +119,15 @@ class BackNavigationTrap(
     }
 
     private fun doGoBack() {
-        val shouldGoBack = window.history.state == data
-//        console.log(window.history.state, data, window.location.href, shouldGoBack)
+        // Still on the trap's own entry?
+        if (window.history.state != data) return
 
-        // Are we still on the same navigation state?
-        if (shouldGoBack) {
+        if (window.location.href == pushedHref) {
             window.history.back()
-            console.log("going back")
-
-            // Wait for the browser to catch up, as the history.back() is async itself
-//            delay(100)
-//            console.log(window.history.state, data, window.location.href, shouldGoBack)
+        } else {
+            // The address changed while the trap was up (a replaceUri, e.g. a urlParam inside a modal): going back
+            // would land on the entry before that change and undo it. Stay, and only take the trap's marker off.
+            window.history.replaceState(null, "", window.location.href)
         }
     }
 }

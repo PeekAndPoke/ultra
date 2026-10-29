@@ -227,17 +227,108 @@ class LeaveGuardSpec : StringSpec({
                 control.asked shouldBe listOf("/a", "/a")
             }
         }
-    }
 
-    "Proceed lets it through, asked once with the target" {
-        val control = GuardControl()
+        "$strategy: Proceed lets it through, asked once with the target" {
+            val control = GuardControl()
 
-        withEditor(control) {
-            router.navToUri("/other")
-            router.awaitUri("/other")
-            settle()
+            withEditor(control, strategy) {
+                router.navToUri("/other")
+                router.awaitUri("/other")
+                settle()
 
-            control.asked shouldBe listOf("/other")
+                control.asked shouldBe listOf("/other")
+            }
+        }
+
+        "$strategy: Ask: nothing moves while asking; yes goes on to the target" {
+            val control = GuardControl()
+            val answer = CompletableDeferred<Boolean>()
+            control.answer = { LeaveResult.Ask { answer.await() } }
+
+            withEditor(control, strategy) {
+                router.navToUri("/other")
+                settle()
+                router.current().uri shouldBe "/edit/1"
+
+                // Further navigations while asking are dropped, and not asked
+                router.navToUri("/a")
+                settle()
+                control.asked shouldBe listOf("/other")
+
+                answer.complete(true)
+                router.awaitUri("/other")
+                settle()
+
+                control.asked shouldBe listOf("/other")
+            }
+        }
+
+        "$strategy: Ask: no stays" {
+            val control = GuardControl().apply { answer = { LeaveResult.Ask { false } } }
+
+            withEditor(control, strategy) {
+                markEntry()
+                router.navToUri("/other")
+                settle()
+
+                router.current().uri shouldBe "/edit/1"
+                window.history.state shouldBe "marked"
+            }
+        }
+
+        "$strategy: an Ask answered after a navigation past the guards is dropped" {
+            val control = GuardControl()
+            val answer = CompletableDeferred<Boolean>()
+            control.answer = { LeaveResult.Ask { answer.await() } }
+
+            withEditor(control, strategy) {
+                router.navToUri("/other")
+                settle()
+
+                // A logout while the modal is open
+                router.withoutLeaveGuards { router.navToUri("/login") }
+                router.awaitUri("/login")
+
+                answer.complete(true)
+                settle()
+
+                router.current().uri shouldBe "/login"
+            }
+        }
+
+        "$strategy: Stop holds a leaving replaceUri and clearHistoryAndNavTo" {
+            val control = GuardControl().apply { answer = { LeaveResult.Stop } }
+
+            withEditor(control, strategy) {
+                val entries = router.history().entries.size
+
+                router.replaceUri("/other")
+                settle()
+                router.current().uri shouldBe "/edit/1"
+
+                router.clearHistoryAndNavTo("/a")
+                settle()
+                router.current().uri shouldBe "/edit/1"
+                router.history().entries.size shouldBe entries
+
+                control.asked shouldBe listOf("/other", "/a")
+            }
+        }
+
+        "$strategy: the guard goes with its component: after leaving, nothing asks" {
+            val control = GuardControl()
+
+            withEditor(control, strategy) {
+                router.navToUri("/other")
+                router.awaitUri("/other")
+                control.asked.clear()
+
+                router.navToUri("/a")
+                router.awaitUri("/a")
+                settle()
+
+                control.asked shouldBe emptyList()
+            }
         }
     }
 
@@ -256,34 +347,12 @@ class LeaveGuardSpec : StringSpec({
         }
     }
 
-    "Ask: nothing moves while asking; yes goes on to the target" {
-        val control = GuardControl()
-        val answer = CompletableDeferred<Boolean>()
-        control.answer = { LeaveResult.Ask { answer.await() } }
+    "Hash: a typed hash is held, and the page's address put back" {
+        val control = GuardControl().apply { answer = { LeaveResult.Stop } }
 
         withEditor(control) {
-            router.navToUri("/other")
-            settle()
-            router.current().uri shouldBe "/edit/1"
-
-            // Further navigations while asking are dropped, and not asked
-            router.navToUri("/a")
-            settle()
-            control.asked shouldBe listOf("/other")
-
-            answer.complete(true)
-            router.awaitUri("/other")
-            settle()
-
-            control.asked shouldBe listOf("/other")
-        }
-    }
-
-    "Ask: no stays" {
-        val control = GuardControl().apply { answer = { LeaveResult.Ask { false } } }
-
-        withEditor(control) {
-            router.navToUri("/other")
+            window.location.hash = "/other"
+            eventually { control.asked shouldBe listOf("/other") }
             settle()
 
             router.current().uri shouldBe "/edit/1"
@@ -291,30 +360,23 @@ class LeaveGuardSpec : StringSpec({
         }
     }
 
-    "a Back that the guard lets through follows the browser" {
+    "Hash: a route link whose own onClick navigated first navigates once" {
         val control = GuardControl()
 
         withEditor(control) {
-            window.history.back()
-            router.awaitUri("/a")
+            var emissions = 0
+            val unsubscribe = router.current.subscribeToStream { emissions++ }
+            emissions = 0
 
-            control.asked shouldBe listOf("/a")
-        }
-    }
-
-    "the guard goes with its component: after leaving, nothing asks" {
-        val control = GuardControl()
-
-        withEditor(control) {
+            // The link's own handler navigated: the address is already the link's
             router.navToUri("/other")
+            clickLink("#/other")
             router.awaitUri("/other")
-            control.asked.clear()
-
-            router.navToUri("/a")
-            router.awaitUri("/a")
             settle()
+            unsubscribe()
 
-            control.asked shouldBe emptyList()
+            emissions shouldBe 1
+            control.asked shouldBe listOf("/other")
         }
     }
 
@@ -344,6 +406,9 @@ class LeaveGuardSpec : StringSpec({
 
                 unload() shouldBe true
                 control.asked shouldBe listOf(null)
+
+                // A page load inside withoutLeaveGuards (a logout through the server) leaves without the prompt
+                router.withoutLeaveGuards { unload() } shouldBe false
 
                 control.answer = { LeaveResult.Proceed }
                 unload() shouldBe false

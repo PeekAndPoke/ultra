@@ -17,6 +17,7 @@ import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.browser.document
 import kotlinx.html.Tag
 import kotlinx.html.div
+import org.w3c.dom.events.Event
 
 @Suppress("TestFunctionName")
 private fun Tag.FocusShowcase() = comp { FocusShowcase(it) }
@@ -47,6 +48,25 @@ class WindowControllerSpec : StringSpec({
 
     "the default is readable outside any component" {
         WindowController.default.hasFocus() shouldBe document.hasFocus()
+    }
+
+    "the default follows visibilitychange into isVisible" {
+        val doc = document.asDynamic()
+        val controller = WindowController.default
+        val defineProperty = js("Object.defineProperty")
+
+        try {
+            defineProperty(document, "visibilityState", js("({ configurable: true, get: function() { return 'hidden'; } })"))
+            document.dispatchEvent(Event("visibilitychange"))
+            controller.isVisible() shouldBe false
+
+            defineProperty(document, "visibilityState", js("({ configurable: true, get: function() { return 'visible'; } })"))
+            document.dispatchEvent(Event("visibilitychange"))
+            controller.isVisible() shouldBe true
+        } finally {
+            // Back to the prototype's getter
+            js("delete doc.visibilityState")
+        }
     }
 
     "a TestWindowController drives the components by hand" {

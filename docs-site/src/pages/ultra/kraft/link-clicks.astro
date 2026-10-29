@@ -149,9 +149,12 @@ a {
 <h2>Hash strategy</h2>
 
 <p>
-  With <code>useHashStrategy()</code> the router does not listen for clicks at all. <code>A.href(route)</code> renders
-  <code>#/about</code>, the browser changes the hash, and the router follows the hash change. Everything in the tables
-  above is then plain browser behaviour.
+  With <code>useHashStrategy()</code> the router takes plain primary clicks on route links only:
+  <code>A.href(route)</code> renders <code>#/about</code>, and a click on a link whose <code>href</code> starts with
+  <code>#/</code> goes through <code>router.navToUri</code>, so a leave guard can hold it before the browser writes the
+  address. Modifier keys, other buttons, <code>target</code> and <code>download</code> are honoured as above; any other
+  link stays plain browser behaviour. A link whose own handler already navigated is left alone, so it does not
+  navigate twice.
 </p>
 
 <p>

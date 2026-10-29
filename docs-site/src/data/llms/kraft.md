@@ -1154,8 +1154,8 @@ The router listens for clicks on `window` and handles one only if ALL hold, else
 
 Relative hrefs resolve like the browser: `settings` on `/users/alice` → `/users/settings`. The fragment never takes part
 in route matching. A same-origin path without a SPA route still goes to `catchAll`; mark backend URLs with
-`rel="external"` or `download`. With `useHashStrategy()` there is no click listener at all, and `#intro` would navigate
-to the route `intro`. Docs: https://peekandpoke.io/ultra/kraft/link-clicks
+`rel="external"` or `download`. With `useHashStrategy()` only plain clicks on `#/...` links go through the router (so
+a leave guard holds them); other links stay the browser's, and `#intro` would navigate to the route `intro`. Docs: https://peekandpoke.io/ultra/kraft/link-clicks
 
 ## Layouts
 

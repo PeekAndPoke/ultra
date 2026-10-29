@@ -129,7 +129,7 @@ class TestBed<E : VDomEngine> private constructor(
         } finally {
             val unmountError = runCatching { engine.unmount(testBed) }.exceptionOrNull()
             // The router's window listeners would otherwise outlive the test and answer every later test's navigation
-            app.dispose()
+            val disposeError = runCatching { app.dispose() }.exceptionOrNull()
 
             testBed.remove()
 
@@ -139,10 +139,15 @@ class TestBed<E : VDomEngine> private constructor(
             awaitAnimationFrame()
             awaitAnimationFrame()
 
-            if (unmountError != null) {
-                console.error("[TestBed] Unmount failed:", unmountError)
+            unmountError?.let { console.error("[TestBed] Unmount failed:", it) }
+            disposeError?.let { console.error("[TestBed] Dispose failed:", it) }
 
-                failure?.addSuppressed(unmountError) ?: throw unmountError
+            // The test's own failure stays the one thrown; an unmount or dispose error fails a test that passed
+            val cleanupError = unmountError ?: disposeError
+            if (unmountError != null && disposeError != null) unmountError.addSuppressed(disposeError)
+
+            if (cleanupError != null) {
+                failure?.addSuppressed(cleanupError) ?: throw cleanupError
             }
         }
     }
