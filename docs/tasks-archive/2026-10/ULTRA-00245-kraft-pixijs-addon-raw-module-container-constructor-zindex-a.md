@@ -1,6 +1,6 @@
 # ULTRA-00245: Kraft pixijs addon: raw module, Container constructor, zIndex and the missing members
 
-> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Spross (Spross-Main-Dev, 2026-10-26), found building the workshop's declarative scenes (SPROSS-00023, "Kulisse", SPROSS-00069). Spross fills every gap in its `workshop/` today as extensions on Kraft's types, so the code is there to take.
+> **Status (2026-10-29): DONE.** Done 2026-10-29: gate PASS in round 2 (ULTRA-00264 Review record). Request from Spross (Spross-Main-Dev, 2026-10-26), found building the workshop's declarative scenes (SPROSS-00023, "Kulisse", SPROSS-00069). Spross fills every gap in its `workshop/` today as extensions on Kraft's types, so the code is there to take.
 >
 > **Part of:** ULTRA-00258 (Kraft addons epic)
 
@@ -63,9 +63,15 @@
 - Spross's `_pixi_gaps.kt` and `PixiNatives.kt` have a typed Ultra equivalent for every member.
 - `:kraft:addons:pixijs:jsTest` green.
 
+## Review record
+
+In ULTRA-00264's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-26: created from Spross's request.
 - 2026-10-29: plan written (maintainer: "write a detailed plan into each ticket").
 - 2026-10-29: DESIGNED.
 - 2026-10-29: the zIndex trap checked in pixi 8.22's source and a contract row: `addChild` of a child with a zIndex does turn the parent's `sortableChildren` on (`Container.mjs`, `depthOfChildModified`); `addChildAt` does not. The KDoc says so.
+- 2026-10-29: gate PASS in round 2 (record in ULTRA-00264); open MINORs handed to the maintainer as a list. Docs written with the change, so no DOCS follow-up.
+- 2026-10-29: DONE.

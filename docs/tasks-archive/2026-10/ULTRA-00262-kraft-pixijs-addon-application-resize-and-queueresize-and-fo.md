@@ -1,6 +1,6 @@
 # ULTRA-00262: Kraft pixijs addon: Application.resize() and queueResize(), and following the element itself
 
-> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Klang (Klang-Research, 2026-10-27), found in KLANG-00349. Not scheduled; Klang is unblocked with a workaround. Releases are rare (Maven Central limits): when picked up, consider growing it in a workshop module first.
+> **Status (2026-10-29): DONE.** Done 2026-10-29: gate PASS in round 2 (ULTRA-00264 Review record). Request from Klang (Klang-Research, 2026-10-27), found in KLANG-00349. Not scheduled; Klang is unblocked with a workaround. Releases are rare (Maven Central limits): when picked up, consider growing it in a workshop module first.
 >
 > **Part of:** ULTRA-00258 (Epic: Kraft addons)
 
@@ -46,7 +46,13 @@ Checked against the code, 2026-10-27:
 - `app.resize()` compiles without `asDynamic()`; the contract spec renamed to say what it checks.
 - The follower spec is RED without the observer.
 
+## Review record
+
+In ULTRA-00264's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-27: created from Klang's request; checked against the code the same day.
 - 2026-10-29: DESIGNED.
+- 2026-10-29: gate PASS in round 2 (record in ULTRA-00264); open MINORs handed to the maintainer as a list. Docs written with the change, so no DOCS follow-up.
+- 2026-10-29: DONE.

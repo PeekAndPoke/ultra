@@ -1,6 +1,6 @@
 # ULTRA-00270: Kraft threejs addon: pause the render loop (paused stream), on the shared frame clock
 
-> **Status (2026-10-29): DESIGNED.** Request from Klang (Klang-Research, 2026-10-29, KLANG-00389). Plan written 2026-10-29; part of the frame-and-focus batch with ULTRA-00264, ULTRA-00267, ULTRA-00268 and ULTRA-00269.
+> **Status (2026-10-29): DONE.** Request from Klang (Klang-Research, 2026-10-29, KLANG-00389). Plan written 2026-10-29; part of the frame-and-focus batch with ULTRA-00264, ULTRA-00267, ULTRA-00268 and ULTRA-00269.
 >
 > **Part of:** ULTRA-00258 (Epic: Kraft addons)
 
@@ -56,8 +56,14 @@ Checked against the code, 2026-10-29 (`kraft/addons/threejs/src/jsMain/kotlin/Th
 - `RenderLoopSpec` green, its pause row RED without the pause.
 - The existing `ThreeJsAddonSpec` still green.
 
+## Review record
+
+In ULTRA-00264's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-29: request received, parked for the budget brake.
 - 2026-10-29: created with its plan on the maintainer's go ("Start fully now").
 - 2026-10-29: maintainer: across a pause `elapsedMs` counts running time only, the first frame after a resume has `deltaMs = 0`.
+- 2026-10-29: gate PASS in round 2 (record in ULTRA-00264); open MINORs handed to the maintainer as a list. Docs written with the change, so no DOCS follow-up.
+- 2026-10-29: DONE.

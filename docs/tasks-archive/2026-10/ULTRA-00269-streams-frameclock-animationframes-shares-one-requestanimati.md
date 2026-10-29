@@ -1,6 +1,6 @@
 # ULTRA-00269: Streams: FrameClock.animationFrames shares one requestAnimationFrame per frame
 
-> **Status (2026-10-29): DESIGNED.** Request from Klang (Klang-Research, 2026-10-29, KLANG-00388). Plan written 2026-10-29; part of the frame-and-focus batch with ULTRA-00264, ULTRA-00267, ULTRA-00268 and ULTRA-00270.
+> **Status (2026-10-29): DONE.** Request from Klang (Klang-Research, 2026-10-29, KLANG-00388). Plan written 2026-10-29; part of the frame-and-focus batch with ULTRA-00264, ULTRA-00267, ULTRA-00268 and ULTRA-00270.
 
 **Security-critical:** no
 
@@ -52,7 +52,13 @@ Checked against the code, 2026-10-29: `AnimationFrameClock`
 
 - Merging other code's own rAF loops (threejs: ULTRA-00270; pixi's own ticker stays pixi's).
 
+## Review record
+
+In ULTRA-00264's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-29: request received, parked for the budget brake.
 - 2026-10-29: created with its plan on the maintainer's go ("Start fully now").
+- 2026-10-29: gate PASS in round 2 (record in ULTRA-00264); open MINORs handed to the maintainer as a list. Docs written with the change, so no DOCS follow-up.
+- 2026-10-29: DONE.

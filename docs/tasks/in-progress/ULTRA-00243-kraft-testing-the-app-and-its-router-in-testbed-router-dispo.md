@@ -1,6 +1,6 @@
 # ULTRA-00243: Kraft testing: the app and its router in TestBed, Router.dispose, awaiting a route
 
-> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Collected from Klang's first app-module browser tests (KLANG-00343, klang `38ef6dd6`, `src/jsTest/kotlin/comp/RouterWithTransitionsSpec.kt`); the maintainer asked Klang to send TestBed/KQuery findings to ultra "for you to collect". Not scheduled. Releases are rare now (Maven Central limits): when it is picked up, consider growing it in a workshop module first.
+> **Status (2026-10-29): IN PROGRESS.** Implemented 2026-10-29; the review stopped at the safety valve (round 2, one MAJOR; ULTRA-00266 Review record), waiting for the maintainer. Collected from Klang's first app-module browser tests (KLANG-00343, klang `38ef6dd6`, `src/jsTest/kotlin/comp/RouterWithTransitionsSpec.kt`); the maintainer asked Klang to send TestBed/KQuery findings to ultra "for you to collect". Not scheduled. Releases are rare now (Maven Central limits): when it is picked up, consider growing it in a workshop module first.
 >
 > **Part of:** ULTRA-00244 (Kraft testing epic)
 
@@ -67,9 +67,15 @@ What worked well for Klang: `eventually()`, KQuery as a List, TestBed's cleanup 
 - [ ] A spec navigates the app's own router; no listener is left on `window` after a TestBed render.
 - [ ] All `kraft/**/jsTest` suites green with the receiver lambda (no call site edited).
 
+## Review record
+
+In ULTRA-00266's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-26: created from Klang's KLANG-00343 feedback.
 - 2026-10-29: plan written (maintainer: "write a detailed plan into each ticket").
 - 2026-10-29: DESIGNED.
 - 2026-10-29: maintainer: option (a), the receiver `TestBedScope` (with `app` and `router`); `dispose()` public as planned.
+- 2026-10-29: implemented and through two review rounds (record in ULTRA-00266); round 2 not clean (one MAJOR on replaceUri keeping history.state): stopped at the safety valve for the maintainer.
+- 2026-10-29: IN PROGRESS.

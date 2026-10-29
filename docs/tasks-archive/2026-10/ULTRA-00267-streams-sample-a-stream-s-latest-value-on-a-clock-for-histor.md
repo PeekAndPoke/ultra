@@ -1,6 +1,6 @@
 # ULTRA-00267: Streams: sample a stream's latest value on a clock (for history graphs), and history's copy cost
 
-> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Klang (Klang-Research, 2026-10-28; the maintainer's idea), from the Motor window's task-manager graphs. Not scheduled; Klang uses ticker().map { online() } meanwhile. No epic fits (as ULTRA-00264).
+> **Status (2026-10-29): DONE.** Done 2026-10-29: gate PASS in round 2 (ULTRA-00264 Review record). Request from Klang (Klang-Research, 2026-10-28; the maintainer's idea), from the Motor window's task-manager graphs. Not scheduled; Klang uses ticker().map { online() } meanwhile. No epic fits (as ULTRA-00264).
 
 **Security-critical:** no
 
@@ -57,8 +57,14 @@ Checked against the code, 2026-10-28 (`ultra/streams/src/commonMain/kotlin/ops/`
 - `source.sampled(clock).history(n)` with a `HandClock` gives exactly one entry per tick whatever the source's rate.
 - All three platforms green.
 
+## Review record
+
+In ULTRA-00264's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
 - 2026-10-29: DESIGNED.
 - 2026-10-29: maintainer: name `sampled(every = ...)`; the interval is a stream too (the config-is-a-stream rule).
+- 2026-10-29: gate PASS in round 2 (record in ULTRA-00264); open MINORs handed to the maintainer as a list. Docs written with the change, so no DOCS follow-up.
+- 2026-10-29: DONE.

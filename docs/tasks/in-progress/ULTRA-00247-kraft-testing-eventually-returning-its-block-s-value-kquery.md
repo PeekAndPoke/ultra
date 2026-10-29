@@ -1,6 +1,6 @@
 # ULTRA-00247: Kraft testing: eventually returning its block's value; KQuery.elements
 
-> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Spross (Spross-Main-Dev, 2026-10-26), found writing the workshop's scene specs (SPROSS-00023).
+> **Status (2026-10-29): IN PROGRESS.** Implemented 2026-10-29; the review stopped at the safety valve (round 2, one MAJOR; ULTRA-00266 Review record), waiting for the maintainer. Request from Spross (Spross-Main-Dev, 2026-10-26), found writing the workshop's scene specs (SPROSS-00023).
 >
 > **Part of:** ULTRA-00244 (Epic: Kraft testing (TestBed, KQuery and friends))
 
@@ -39,8 +39,14 @@
 
 - [ ] `val x: Int = eventually { 42 }` compiles and returns 42; all kraft jsTest suites green unchanged.
 
+## Review record
+
+In ULTRA-00266's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-26: created from Spross's request.
 - 2026-10-29: plan written (maintainer: "write a detailed plan into each ticket").
 - 2026-10-29: DESIGNED.
+- 2026-10-29: implemented and through two review rounds (record in ULTRA-00266); round 2 not clean (one MAJOR on replaceUri keeping history.state): stopped at the safety valve for the maintainer.
+- 2026-10-29: IN PROGRESS.

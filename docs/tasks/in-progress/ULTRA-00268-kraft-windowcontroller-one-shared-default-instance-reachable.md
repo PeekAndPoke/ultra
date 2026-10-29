@@ -1,6 +1,6 @@
 # ULTRA-00268: Kraft WindowController: one shared default instance, reachable outside components, and steerable in tests
 
-> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. From the maintainer's question (2026-10-29) whether WindowController should be a singleton, prompted by Klang's resting-while-unfocused work (KLANG-00389). Not scheduled.
+> **Status (2026-10-29): IN PROGRESS.** Implemented 2026-10-29; the review stopped at the safety valve (round 2, one MAJOR; ULTRA-00266 Review record), waiting for the maintainer. From the maintainer's question (2026-10-29) whether WindowController should be a singleton, prompted by Klang's resting-while-unfocused work (KLANG-00389). Not scheduled.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -47,8 +47,14 @@ Checked against the code the same day:
 - Mounting 20 TestBeds and firing one `focus` runs the controller's handler once (RED today).
 - `WindowController.default.hasFocus` is readable outside any component.
 
+## Review record
+
+In ULTRA-00266's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-29: created on the maintainer's word; checked against the code the same day.
 - 2026-10-29: DESIGNED.
 - 2026-10-29: maintainer: option (a), a shared default `WindowController.default`; the interface for test fakes and `isVisible` as planned.
+- 2026-10-29: implemented and through two review rounds (record in ULTRA-00266); round 2 not clean (one MAJOR on replaceUri keeping history.state): stopped at the safety valve for the maintainer.
+- 2026-10-29: IN PROGRESS.

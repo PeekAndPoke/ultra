@@ -1,6 +1,6 @@
 # ULTRA-00246: Kraft threejs addon: Object3D/Group/SpotLight/Raycaster constructors, missing members, a generic create
 
-> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Spross (Spross-Main-Dev, 2026-10-26), found building the workshop's declarative scenes (SPROSS-00023, "Kulisse", SPROSS-00069). Klang fills other gaps of the same addon (`klang/src/jsMain/kotlin/externals/kraftThreejsExt/`): one ticket for both.
+> **Status (2026-10-29): DONE.** Done 2026-10-29: gate PASS in round 2 (ULTRA-00264 Review record). Request from Spross (Spross-Main-Dev, 2026-10-26), found building the workshop's declarative scenes (SPROSS-00023, "Kulisse", SPROSS-00069). Klang fills other gaps of the same addon (`klang/src/jsMain/kotlin/externals/kraftThreejsExt/`): one ticket for both.
 >
 > **Part of:** ULTRA-00258 (Kraft addons epic)
 
@@ -80,9 +80,15 @@ WebGL; Spross's `ThreeStageSpec` uses a fake renderer through an internal prop. 
   for them.
 - `:kraft:addons:threejs:jsTest` green.
 
+## Review record
+
+In ULTRA-00264's Review record (the batch's gate, both groups).
+
 ## History
 
 - 2026-10-26: created from Spross's request; Klang's extensions noted (the same addon).
 - 2026-10-26: Klang confirmed its three.js extensions as part of the request; AGPL header noted.
 - 2026-10-29: plan written (maintainer: "write a detailed plan into each ticket").
 - 2026-10-29: DESIGNED.
+- 2026-10-29: gate PASS in round 2 (record in ULTRA-00264); open MINORs handed to the maintainer as a list. Docs written with the change, so no DOCS follow-up.
+- 2026-10-29: DONE.
