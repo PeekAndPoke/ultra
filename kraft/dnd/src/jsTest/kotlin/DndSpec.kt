@@ -321,6 +321,26 @@ class DndSpec : StringSpec({
         }
     }
 
+    "a press still pending when the app goes ends with it: no listener outlives the app" {
+        val probe = Probe()
+
+        withBoard { p, _ ->
+            down()
+            // The app is torn down with the pointer still down
+            p.events.clear()
+        }
+
+        // The old press must not start on this pointer's moves: a started drag would take the page's text selection
+        withBoard { p, _ ->
+            move(150, 50)
+            (document.documentElement!!.asDynamic().style.getPropertyValue("user-select") as String) shouldBe ""
+            up(150, 50)
+            p.events shouldBe emptyList()
+        }
+
+        probe.events shouldBe emptyList()
+    }
+
     "another pointer does not move the drag" {
         withBoard { probe, _ ->
             down(id = 1)
@@ -337,8 +357,10 @@ class DndSpec : StringSpec({
             move(150, 60)
 
             val stage = eventually { document.querySelector(".kraft-dnd-stage") as HTMLElement? ?: error("no stage") }
-            stage.style.left shouldBe "140px"
-            stage.style.top shouldBe "50px"
+            // At the pointer, shifted by the grabbed share (10 of 40 px: a quarter) of the preview's own size
+            stage.style.left shouldBe "150px"
+            stage.style.top shouldBe "60px"
+            stage.style.transform shouldBe "translate(-25%, -25%)"
             stage.style.zIndex shouldBe "20000"
             stage.textContent shouldBe "red"
 
@@ -357,6 +379,26 @@ class DndSpec : StringSpec({
         }
 
         probe.events.filter { !it.startsWith("dropped") } shouldBe listOf("helper:enter", "own:enter", "helper:drop", "own:drop")
+    }
+
+    "no text selection on the page while a drag runs, and back after it" {
+        withBoard { _, _ ->
+            val style = document.documentElement!!.asDynamic().style
+
+            fun userSelect() = style.getPropertyValue("user-select") as String
+            val seen = mutableListOf<String>()
+
+            seen.add(userSelect())
+            down()
+            move(12, 12)
+            seen.add(userSelect())
+            move(150, 50)
+            seen.add(userSelect())
+            up(150, 50)
+            seen.add(userSelect())
+
+            seen shouldBe listOf("", "", "none", "")
+        }
     }
 
     "the click after a drag is swallowed; a plain click is not" {

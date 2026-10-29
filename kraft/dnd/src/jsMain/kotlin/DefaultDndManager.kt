@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.dnd
 
+import io.peekandpoke.kraft.KraftApp
 import io.peekandpoke.kraft.utils.Vector2D
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamSource
@@ -15,11 +16,21 @@ import org.w3c.dom.pointerevents.PointerEvent
 import kotlin.math.hypot
 import kotlin.reflect.KClass
 
-/** The [DndManager] that `kraftApp { dnd() }` registers. */
-class DefaultDndManager : DndManager {
+/** The [DndManager] that `kraftApp { dnd() }` registers; disposing the app ends a drag in progress or pending. */
+class DefaultDndManager : DndManager, KraftApp.Disposable {
 
-    /** What the stage draws: the preview's renderer at its place in the viewport. */
-    internal class Preview(val render: DragPreview, val left: Double, val top: Double)
+    /**
+     * What the stage draws: the preview's renderer at the pointer ([left], [top]), shifted by [grabX] / [grabY] of its
+     * own size, so the spot of the source the pointer grabbed (as a share of its size) sits under the pointer whatever
+     * the preview's size.
+     */
+    internal class Preview(
+        val render: DragPreview,
+        val left: Double,
+        val top: Double,
+        val grabX: Double,
+        val grabY: Double,
+    )
 
     private val currentSource = StreamSource<Drag<*>?>(null)
 
@@ -57,6 +68,11 @@ class DefaultDndManager : DndManager {
         session?.end(drop = false)
     }
 
+    override fun dispose() {
+        // A pending press too: its window listeners would otherwise outlive the app
+        session?.end(drop = false)
+    }
+
     override fun register(zone: DropZone<*>): Unsubscribe {
         zones.add(zone)
         session?.zoneAdded(zone)
@@ -82,11 +98,23 @@ class DefaultDndManager : DndManager {
         private val startAt = Vector2D(event.clientX.toDouble(), event.clientY.toDouble())
         private val captured: Element? = event.target as? Element
 
-        /** Where the pointer grabbed the element, so the preview keeps that spot under the pointer. */
+        /**
+         * Where the pointer grabbed the element, as a share of its width and height (0..1): the preview may be smaller
+         * than the source (a tile for a whole row), and the same share of it goes under the pointer.
+         */
         private val grab: Vector2D = (event.currentTarget as? Element ?: captured)
             ?.getBoundingClientRect()
-            ?.let { Vector2D(startAt.x - it.left, startAt.y - it.top) }
+            ?.takeIf { it.width > 0.0 && it.height > 0.0 }
+            ?.let {
+                Vector2D(
+                    ((startAt.x - it.left) / it.width).coerceIn(0.0, 1.0),
+                    ((startAt.y - it.top) / it.height).coerceIn(0.0, 1.0),
+                )
+            }
             ?: Vector2D.zero
+
+        /** The page's user-select before the drag took it over. */
+        private var userSelectBefore: String? = null
 
         private var drag = Drag(payload = payload, type = type, source = source, position = startAt, pointerType = pointerType)
 
@@ -143,13 +171,20 @@ class DefaultDndManager : DndManager {
             }
 
             currentSource(drag)
-            render?.let { preview(Preview(render = it, left = at.x - grab.x, top = at.y - grab.y)) }
+            render?.let { preview(Preview(render = it, left = at.x, top = at.y, grabX = grab.x, grabY = grab.y)) }
 
             hitTest(at)
         }
 
         private fun start() {
             started = true
+
+            // No text selection while the pointer drags across the page
+            val style = document.documentElement?.asDynamic()?.style
+            userSelectBefore = style?.getPropertyValue("user-select")?.unsafeCast<String>()
+            style?.setProperty("user-select", "none")
+            style?.setProperty("-webkit-user-select", "none")
+            window.asDynamic().getSelection()?.removeAllRanges()
 
             zones.toList().filter { it.takes(drag) }.forEach { zone ->
                 told.add(zone)
@@ -216,6 +251,15 @@ class DefaultDndManager : DndManager {
             preview(null)
             currentSource(null)
             swallowNextClick()
+
+            val style = document.documentElement?.asDynamic()?.style
+            if (userSelectBefore.isNullOrEmpty()) {
+                style?.removeProperty("user-select")
+                style?.removeProperty("-webkit-user-select")
+            } else {
+                style?.setProperty("user-select", userSelectBefore)
+                style?.setProperty("-webkit-user-select", userSelectBefore)
+            }
 
             val target = hovered?.takeIf { drop }
 

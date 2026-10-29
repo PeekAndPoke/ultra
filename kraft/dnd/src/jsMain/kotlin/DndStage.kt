@@ -38,6 +38,8 @@ internal class DndStage(ctx: Ctx<Props>) : Component<DndStage.Props>(ctx) {
                 position = Position.fixed
                 left = current.left.px
                 top = current.top.px
+                // The grabbed share of the preview's own size goes under the pointer
+                put("transform", "translate(${-current.grabX * 100}%, ${-current.grabY * 100}%)")
                 zIndex = DND_STAGE_Z_INDEX
                 pointerEvents = PointerEvents.none
             }

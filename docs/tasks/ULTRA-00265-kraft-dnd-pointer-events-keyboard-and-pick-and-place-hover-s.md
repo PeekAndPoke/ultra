@@ -145,3 +145,4 @@ the CHANGELOG ("the old dnd is gone; it had no users outside the examples").
 - 2026-10-29: maintainer: throw the old dnd away; a new `kraft/dnd` module with a manager, an auto-mounted stage and lifecycle-registered drop zones; UI state in the components, helpers in semanticui. Design written, to confirm.
 - 2026-10-29: maintainer: build it as designed.
 - 2026-10-29: maintainer: `semanticui()` registers dnd by default; the dnd stage's z-index sits above the modals' stage, so dnd works in modals.
+- 2026-10-29: from the maintainer trying the example: no text selection on the page while a drag runs; the preview keeps the grabbed share of its own size under the pointer (it may be smaller than the source). Found on the way: a press still pending at app teardown kept its window listeners; DefaultDndManager is KraftApp.Disposable and ends it.
