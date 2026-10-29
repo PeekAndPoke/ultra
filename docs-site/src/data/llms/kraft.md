@@ -1240,7 +1240,12 @@ class BreadCrumb(ctx: NoProps) : PureComponent(ctx) {
 init {
     guardLeaving(beforeUnload = true) { target ->
         if (!draft.isDirty) LeaveResult.Proceed
-        else LeaveResult.Ask { modals.showAndAwait<Boolean> { YesNo("Leave without applying?") } == true }
+        else LeaveResult.Ask {
+            val answer = modals.showAndAwait { handle ->
+                OkCancelModal { mini(handle = handle, header = { +"Leave without applying?" }, content = {}) }
+            }
+            answer == OkCancelModal.Result.Ok
+        }
     }
 }
 ```
