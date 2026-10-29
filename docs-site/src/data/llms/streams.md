@@ -676,7 +676,8 @@ unsub()  // stops requesting animation frames
 ```
 
 Unlike `ticker(intervalMs)` (available on all platforms), `animTicker()` synchronizes with the browser's display refresh
-rate. It is built on `FrameClock.animationFrames` and timed like `performance.now()`, its first frame included.
+rate. It is built on `FrameClock.animationFrames` and timed like `performance.now()`, its first frame included. Every caller of
+`FrameClock.animationFrames` (each `animTicker()`, each `smooth()`) shares one `requestAnimationFrame` per frame.
 
 ## persistInLocalStorage()
 

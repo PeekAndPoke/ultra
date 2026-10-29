@@ -21,6 +21,11 @@
   kraft:testing is driven by hand (`blur()`, `focus()`, `visibility(false)`, `resize(size)`). Until now every app,
   so every TestBed render, created its own controller whose four listeners stayed on the window.
 
+- **Streams: one `requestAnimationFrame` per frame (ULTRA-00269, from Klang).** `FrameClock.animationFrames` (the JS
+  default clock of `smooth()` and `animTicker()`) batches its callers: one browser frame request runs them all, in
+  order, with the same time. Klang measured about 9 rAF callbacks per frame before. A callback that throws is reported
+  as uncaught on its own task, and the others still run.
+
 ### Changed
 
 - **`WindowController()` is deprecated** (ULTRA-00268): it returns `WindowController.default`. Code that created its
