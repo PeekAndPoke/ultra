@@ -2,6 +2,7 @@ package io.peekandpoke.kraft.testing
 
 import io.peekandpoke.kraft.KraftApp
 import io.peekandpoke.kraft.kraftApp
+import io.peekandpoke.kraft.routing.Router
 import io.peekandpoke.kraft.testing.TestBed.Companion.preact
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.kraft.vdom.VDomEngine
@@ -22,12 +23,22 @@ private suspend fun awaitAnimationFrame() = suspendCancellableCoroutine { cont -
     window.requestAnimationFrame { cont.resume(Unit) }
 }
 
+/** What a TestBed test reaches besides the root element: the app it rendered, and that app's router. */
+class TestBedScope internal constructor(
+    /** The app the view is mounted in. */
+    val app: KraftApp,
+) {
+    /** The app's router: `router.navToUri("/x")`, then `router.awaitUri("/x")`. */
+    val router: Router get() = app.appAttributes[Router.key]!!
+}
+
 /**
  * Test harness for rendering Kraft components in a real browser DOM.
  *
  * Creates a temporary `<div>` in the document body, mounts a Kraft app into it,
- * and provides a [KQuery] handle for assertions. After the test, passed or failed, the app is unmounted, so every
- * component runs its unmount hooks (listeners, history traps, body classes), and the test element is removed. An
+ * and provides a [KQuery] handle for assertions; the test runs in a [TestBedScope] (the app and its router). After the
+ * test, passed or failed, the app is unmounted, so every component runs its unmount hooks (listeners, history traps,
+ * body classes), the app is disposed (its router stops listening to the window), and the test element is removed. An
  * error thrown while unmounting fails a test that passed.
  */
 
@@ -54,7 +65,7 @@ class TestBed<E : VDomEngine> private constructor(
         suspend fun preact(
             view: VDom.() -> Any?,
             options: VDomEngine.Options = defaultVDomEngineOptions,
-            test: suspend (element: KQuery<Element>) -> Unit,
+            test: suspend TestBedScope.(element: KQuery<Element>) -> Unit,
         ) {
             preact(options = options).render(view = view, test = test)
         }
@@ -79,7 +90,7 @@ class TestBed<E : VDomEngine> private constructor(
             appSetup: KraftApp.Builder.() -> Unit,
             view: VDom.() -> Any?,
             options: VDomEngine.Options = defaultVDomEngineOptions,
-            test: suspend (element: KQuery<Element>) -> Unit,
+            test: suspend TestBedScope.(element: KQuery<Element>) -> Unit,
         ) {
             preact(options = options).render(appSetup = appSetup, view = view, test = test)
         }
@@ -89,7 +100,7 @@ class TestBed<E : VDomEngine> private constructor(
     suspend fun render(
         appSetup: KraftApp.Builder.() -> Unit = {},
         view: VDom.() -> Any?,
-        test: suspend (element: KQuery<Element>) -> Unit,
+        test: suspend TestBedScope.(element: KQuery<Element>) -> Unit,
     ) {
 
         val body = document.querySelector("body") as HTMLBodyElement
@@ -107,7 +118,7 @@ class TestBed<E : VDomEngine> private constructor(
             awaitAnimationFrame()
 
             coroutineScope {
-                test(KQuery(listOf(testBed)))
+                TestBedScope(app).test(KQuery(listOf(testBed)))
             }
 
             awaitAnimationFrame()
@@ -117,6 +128,8 @@ class TestBed<E : VDomEngine> private constructor(
             throw e
         } finally {
             val unmountError = runCatching { engine.unmount(testBed) }.exceptionOrNull()
+            // The router's window listeners would otherwise outlive the test and answer every later test's navigation
+            app.dispose()
 
             testBed.remove()
 

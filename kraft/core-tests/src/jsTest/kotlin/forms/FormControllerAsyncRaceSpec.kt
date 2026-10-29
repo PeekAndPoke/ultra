@@ -68,7 +68,7 @@ private fun Tag.RaceForm() = comp { RaceForm(it) }
  */
 private class RaceForm(ctx: NoProps) : PureComponent(ctx) {
 
-    private val formCtrl = FormController(this)
+    private val formCtrl = FormController.controller(this)
     private var submitCount by value(0)
     private val gateB = CompletableDeferred<Unit>()
 

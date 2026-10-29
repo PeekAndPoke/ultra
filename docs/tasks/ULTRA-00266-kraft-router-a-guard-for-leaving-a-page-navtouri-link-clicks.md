@@ -1,6 +1,6 @@
 # ULTRA-00266: Kraft router: a guard for leaving a page (navToUri, link clicks, Back)
 
-> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Request from Klang (Klang-Research, 2026-10-28), from its look editor (KLANG-00382). Not scheduled; Klang keeps unapplied drafts in memory and arms beforeunload meanwhile.
+> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Klang (Klang-Research, 2026-10-28), from its look editor (KLANG-00382). Not scheduled; Klang keeps unapplied drafts in memory and arms beforeunload meanwhile.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -76,3 +76,4 @@ By registration, as `trapBackNavigation` does today (`BackNavigationTrap.kt:25-5
 - 2026-10-28: created from Klang's request; checked against the code the same day.
 - 2026-10-29: DESIGNED.
 - 2026-10-29: the maintainer asked how the router knows a guard is active: by registration from the component's lifecycle; answered in the ticket. "Leaving" narrowed to a change of matched route (a query change from `urlParam` must not ask).
+- 2026-10-29: maintainer: leaving = another matched route (pattern or route params); a query-only or fragment change never asks.

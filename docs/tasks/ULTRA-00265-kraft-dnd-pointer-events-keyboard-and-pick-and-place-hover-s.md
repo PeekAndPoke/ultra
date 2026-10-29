@@ -1,6 +1,6 @@
 # ULTRA-00265: Kraft dnd: pointer events, keyboard and pick-and-place, hover state, drop source, auto-scroll, preview
 
-> **Status (2026-10-29): DESIGNED.** Redesigned 2026-10-29 as a new `kraft/dnd` module (maintainer); the design waits for confirmation. Requests from Klang (Klang-Research, 2026-10-28) for its look editor's equip grid; the maintainer asked Klang to file what it would like. Not scheduled; Klang can build pick-and-place itself meanwhile. The dnd has no tests today.
+> **Status (2026-10-29): DESIGNED.** Redesigned 2026-10-29 as a new `kraft/dnd` module (maintainer); design confirmed the same day. Requests from Klang (Klang-Research, 2026-10-28) for its look editor's equip grid; the maintainer asked Klang to file what it would like. Not scheduled; Klang can build pick-and-place itself meanwhile. The dnd has no tests today.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -55,7 +55,10 @@ ULTRA-00239 (the key manager stays in Klang).
 ## The design (proposed, to confirm)
 
 **Module** `:kraft:dnd` (`kraft/dnd/`, package `io.peekandpoke.kraft.dnd`), depending on `:kraft:core` only.
-`kraftApp { dnd() }` registers it (opt-in: a separate module cannot be added by core's builder).
+`kraftApp { dnd() }` registers it (a separate module cannot be added by core's builder), and the default
+`KraftApp.Builder.semanticui()` builder function calls it, so every semanticui app has dnd (maintainer, 2026-10-29).
+The dnd stage's z-index is above the modals' stage, so a drag works inside a modal and its preview is never hidden by
+one.
 
 **Manager**, like `ModalsManager` (`kraft/core/src/jsMain/kotlin/modals/ModalsManager.kt:20`): `interface DndManager :
 AutoMountedUi` with a default implementation, `DndManager.key`, `val Component<*>.dnd: DndManager get() =
@@ -140,3 +143,5 @@ the CHANGELOG ("the old dnd is gone; it had no users outside the examples").
 - 2026-10-29: DESIGNED.
 - 2026-10-29: the keyboard path (step 3) is parked with ULTRA-00239: the maintainer keeps the key manager in Klang for now ("not stable yet").
 - 2026-10-29: maintainer: throw the old dnd away; a new `kraft/dnd` module with a manager, an auto-mounted stage and lifecycle-registered drop zones; UI state in the components, helpers in semanticui. Design written, to confirm.
+- 2026-10-29: maintainer: build it as designed.
+- 2026-10-29: maintainer: `semanticui()` registers dnd by default; the dnd stage's z-index sits above the modals' stage, so dnd works in modals.

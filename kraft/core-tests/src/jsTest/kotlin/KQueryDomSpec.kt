@@ -464,6 +464,18 @@ class KQueryDomSpec : StringSpec({
         calls shouldBe 3
     }
 
+    "eventually() returns the value of the passing run" {
+        var calls = 0
+
+        val found: Int = eventually {
+            calls++
+            calls shouldBe 3
+            calls * 10
+        }
+
+        found shouldBe 30
+    }
+
     "eventually() rethrows the last failure after the timeout" {
         shouldThrow<AssertionError> {
             eventually(timeout = Duration.ZERO) { 1 shouldBe 2 }

@@ -1,6 +1,6 @@
 # ULTRA-00267: Streams: sample a stream's latest value on a clock (for history graphs), and history's copy cost
 
-> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Request from Klang (Klang-Research, 2026-10-28; the maintainer's idea), from the Motor window's task-manager graphs. Not scheduled; Klang uses ticker().map { online() } meanwhile. No epic fits (as ULTRA-00264).
+> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Klang (Klang-Research, 2026-10-28; the maintainer's idea), from the Motor window's task-manager graphs. Not scheduled; Klang uses ticker().map { online() } meanwhile. No epic fits (as ULTRA-00264).
 
 **Security-critical:** no
 

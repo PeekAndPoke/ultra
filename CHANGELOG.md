@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### New
+
+- **Kraft testing: the test reaches the app (ULTRA-00243, from Klang).** The `TestBed` block runs in a
+  `TestBedScope` with `app` and `router`, so a spec navigates the app's own router: `router.navToUri("/x")`, then
+  `router.awaitUri("/x")`, which fails with where the router is. Existing `{ root -> }` blocks compile unchanged.
+- **Kraft testing: `eventually` returns its block's value (ULTRA-00247, from Spross):**
+  `val stage = eventually { findStage().shouldNotBeNull() }`.
+- **Kraft: `Router.dispose()` and `KraftApp.dispose()` (ULTRA-00243).** The router's window listeners
+  (`hashchange`, `popstate`, `click`) can now be removed; `KraftApp.dispose()` disposes the router and every app
+  attribute that implements `KraftApp.Disposable`. TestBed disposes the app after each test: until now every TestBed
+  render left its router listening to the window for the rest of the run. `RouterStrategy.dispose()` has an empty
+  default, so custom strategies keep compiling.
+
+### Fixes
+
+- **Kraft core tests compile again:** two form specs called `FormController(this)`, private since 0.116.0; they use
+  `FormController.controller(this)`.
+
 ## 0.116.0
 
 ### New

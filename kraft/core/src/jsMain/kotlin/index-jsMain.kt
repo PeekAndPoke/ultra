@@ -57,6 +57,12 @@ class KraftApp internal constructor(
         fun initialize()
     }
 
+    /** An app attribute that holds browser resources (listeners, timers); [KraftApp.dispose] releases it. */
+    interface Disposable {
+        /** Releases what the attribute holds. */
+        fun dispose()
+    }
+
     @KraftDsl
     class Builder internal constructor() {
         private val appAttributes = MutableTypedAttributes.empty()
@@ -141,5 +147,17 @@ class KraftApp internal constructor(
 
         // Navigate to the current URI, if there is a router present
         appAttributes[Router.key]?.navigateToWindowUri()
+    }
+
+    /**
+     * Tears the app down after it was unmounted: the router stops listening to the browser, and every [Disposable]
+     * app attribute is released. TestBed calls it after each render.
+     */
+    fun dispose() {
+        appAttributes[Router.key]?.dispose()
+
+        appAttributes.entries
+            .mapNotNull { (_, v) -> v as? Disposable }
+            .forEach { it.dispose() }
     }
 }

@@ -66,13 +66,23 @@ class Router(
 
         /** Returns the current URI from the browser's location. */
         fun getUriFromWindowLocation(): String
+
+        /** Removes the browser event listeners [init] installed. */
+        fun dispose() {}
     }
 
     /** Hash-based routing strategy using the URL fragment (e.g. `#/path`). */
     class HashRoutingStrategy(private val router: Router) : RouterStrategy {
 
+        // One reference per listener: each `::x` is a new function object, and removal needs the one that was added
+        private val onHashChange: (Event) -> Unit = ::windowListener
+
         override fun init() {
-            window.addEventListener("hashchange", ::windowListener)
+            window.addEventListener("hashchange", onHashChange)
+        }
+
+        override fun dispose() {
+            window.removeEventListener("hashchange", onHashChange)
         }
 
         override fun render(bound: Route.Bound): String {
@@ -121,10 +131,19 @@ class Router(
             val AbsoluteUrlSchemeRegex = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:")
         }
 
+        // One reference per listener: each `::x` is a new function object, and removal needs the one that was added
+        private val onPopState: (Event) -> Unit = ::popstateListener
+        private val onClick: (Event) -> Unit = ::clickListener
+
         override fun init() {
-            window.addEventListener("popstate", ::popstateListener)
+            window.addEventListener("popstate", onPopState)
             // Intercept clicks on links to prevent page reloads
-            window.addEventListener("click", ::clickListener)
+            window.addEventListener("click", onClick)
+        }
+
+        override fun dispose() {
+            window.removeEventListener("popstate", onPopState)
+            window.removeEventListener("click", onClick)
         }
 
         override fun navigateToUri(uri: String) {
@@ -321,6 +340,12 @@ class Router(
     /** Enables the router, allowing it to react to browser navigation events. */
     fun enable() {
         enabled = true
+    }
+
+    /** Disables the router for good and removes its browser event listeners; for an app that is torn down. */
+    fun dispose() {
+        disable()
+        strategy.dispose()
     }
 
     /**

@@ -1,6 +1,6 @@
 # ULTRA-00247: Kraft testing: eventually returning its block's value; KQuery.elements
 
-> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Request from Spross (Spross-Main-Dev, 2026-10-26), found writing the workshop's scene specs (SPROSS-00023).
+> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Spross (Spross-Main-Dev, 2026-10-26), found writing the workshop's scene specs (SPROSS-00023).
 >
 > **Part of:** ULTRA-00244 (Epic: Kraft testing (TestBed, KQuery and friends))
 

@@ -1,6 +1,6 @@
 # ULTRA-00263: Kraft router: replaceUri under the hash strategy writes a path, so the route never changes
 
-> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Bug report from Klang (Klang-Research, 2026-10-27); checked against the code the same day. Not scheduled; Klang is unblocked (navToUri in its Learn filters). A small fix with a TestBed spec under hash routing.
+> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Bug report from Klang (Klang-Research, 2026-10-27); checked against the code the same day. Not scheduled; Klang is unblocked (navToUri in its Learn filters). A small fix with a TestBed spec under hash routing.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 

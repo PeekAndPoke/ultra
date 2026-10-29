@@ -2973,8 +2973,19 @@ buttons[0].textContent
 root.awaitCss(".item-list")
 root.awaitGone(".spinner")
 eventually { root.selectCss(".item").size shouldBe 3 }
+val stage = eventually { findStage().shouldNotBeNull() }   // returns the passing run's value
 ```
 
-After each test, TestBed unmounts the app, so every component runs its unmount hooks before the next test.
+The test block runs in a `TestBedScope`: `app` (the rendered app) and `router` (its router).
+
+```kotlin
+TestBed.preact(appSetup = { routing { mount(Static("/details")) { DetailsPage() } } }, view = { RouterComponent() }) { root ->
+    router.navToUri("/details")
+    router.awaitUri("/details")   // fails with where the router is
+}
+```
+
+After each test, TestBed unmounts the app, so every component runs its unmount hooks, and disposes it, so its router
+stops listening to the window before the next test.
 
 ---

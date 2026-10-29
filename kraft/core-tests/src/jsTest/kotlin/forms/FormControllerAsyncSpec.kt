@@ -27,7 +27,7 @@ private fun Tag.AsyncSubmitForm() = comp { AsyncSubmitForm(it) }
  */
 private class AsyncSubmitForm(ctx: NoProps) : PureComponent(ctx) {
 
-    private val formCtrl = FormController(this)
+    private val formCtrl = FormController.controller(this)
 
     private var submitCount by value(0)
 

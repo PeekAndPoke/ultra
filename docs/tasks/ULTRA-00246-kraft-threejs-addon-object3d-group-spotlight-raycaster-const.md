@@ -1,6 +1,6 @@
 # ULTRA-00246: Kraft threejs addon: Object3D/Group/SpotLight/Raycaster constructors, missing members, a generic create
 
-> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). Request from Spross (Spross-Main-Dev, 2026-10-26), found building the workshop's declarative scenes (SPROSS-00023, "Kulisse", SPROSS-00069). Klang fills other gaps of the same addon (`klang/src/jsMain/kotlin/externals/kraftThreejsExt/`): one ticket for both.
+> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. Request from Spross (Spross-Main-Dev, 2026-10-26), found building the workshop's declarative scenes (SPROSS-00023, "Kulisse", SPROSS-00069). Klang fills other gaps of the same addon (`klang/src/jsMain/kotlin/externals/kraftThreejsExt/`): one ticket for both.
 >
 > **Part of:** ULTRA-00258 (Kraft addons epic)
 

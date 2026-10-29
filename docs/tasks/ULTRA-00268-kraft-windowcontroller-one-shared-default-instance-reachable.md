@@ -1,6 +1,6 @@
 # ULTRA-00268: Kraft WindowController: one shared default instance, reachable outside components, and steerable in tests
 
-> **Status (2026-10-29): DESIGNED.** Plan written 2026-10-29, waiting for the maintainer's choices (Decide section). From the maintainer's question (2026-10-29) whether WindowController should be a singleton, prompted by Klang's resting-while-unfocused work (KLANG-00389). Not scheduled.
+> **Status (2026-10-29): DESIGNED.** Plan written and decided 2026-10-29. From the maintainer's question (2026-10-29) whether WindowController should be a singleton, prompted by Klang's resting-while-unfocused work (KLANG-00389). Not scheduled.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 

@@ -9,18 +9,18 @@ import org.w3c.dom.asList
  * Wraps a list of DOM [Element]s and provides querying via extension functions in kquery_select.kt.
  * Implements [List] by delegation so standard collection operations work directly.
  */
-class KQuery<out E : Element>(internal val elements: List<E>) : List<E> by elements {
+class KQuery<out E : Element>(private val items: List<E>) : List<E> by items {
 
     // Members, not extensions: an extension would lose to the stdlib's List.first() / last() without an import
 
     /** Returns a KQuery wrapping only the first matched element, or empty. */
-    fun first(): KQuery<E> = KQuery(listOfNotNull(elements.firstOrNull()))
+    fun first(): KQuery<E> = KQuery(listOfNotNull(items.firstOrNull()))
 
     /** Returns a KQuery wrapping only the last matched element, or empty. */
-    fun last(): KQuery<E> = KQuery(listOfNotNull(elements.lastOrNull()))
+    fun last(): KQuery<E> = KQuery(listOfNotNull(items.lastOrNull()))
 
     /** Returns a KQuery wrapping the element at the given [index], or empty. */
-    fun nth(index: Int): KQuery<E> = KQuery(listOfNotNull(elements.getOrNull(index)))
+    fun nth(index: Int): KQuery<E> = KQuery(listOfNotNull(items.getOrNull(index)))
 
     /** Strategy for selecting elements from a [KQuery]. */
     interface Selector<out T : Element> {
@@ -43,11 +43,11 @@ class KQuery<out E : Element>(internal val elements: List<E>) : List<E> by eleme
         ) : Selector<T> {
 
             override suspend fun applyTo(input: KQuery<Element>): KQuery<T> {
-                val found = input.elements
+                val found = input.items
                     .flatMap { it.querySelectorAll(selector).asList().filter() }
                     .distinct()
 
-                return KQuery(elements = found)
+                return KQuery(items = found)
             }
         }
     }

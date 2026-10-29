@@ -41,8 +41,22 @@ fun counter_shows_initial_value() = TestBed.preact(
 
     <p>The <code>root</code> parameter is a <code>KQuery&lt;Element&gt;</code> wrapping the rendered DOM tree. The test
         block is a suspend function — you can use <code>delay()</code> to wait for async state changes. After the
-        test, TestBed unmounts the app, so every component runs its unmount hooks (listeners, modals, body classes)
-        before the next test starts.</p>
+        test, TestBed unmounts the app, so every component runs its unmount hooks (listeners, modals, body classes),
+        and disposes it, so its router stops listening to the window before the next test starts.</p>
+
+    <p>The block runs in a <code>TestBedScope</code>: <code>app</code> is the app it rendered, <code>router</code> that
+        app's router. <code>awaitUri</code> waits for a route and fails with where the router is:</p>
+
+    <Code code={`@Test
+fun opens_the_details_page() = TestBed.preact(
+    appSetup = { routing { mount(Static("/list")) { ListPage() }; mount(Static("/details")) { DetailsPage() } } },
+    view = { RouterComponent() },
+) { root ->
+    router.navToUri("/details")
+    router.awaitUri("/details")
+
+    root.selectCss(".details").size shouldBe 1
+}`} lang="kotlin" theme="vitesse-dark"/>
 
     <Code code={`@Test
 fun clicking_plus_increments() = TestBed.preact(
@@ -343,7 +357,10 @@ root.awaitGone(".spinner")
 // Retry assertions until they pass (default: 2 seconds, polling every 25 ms)
 eventually {
     root.selectCss(".item").size shouldBe 3
-}`} lang="kotlin" theme="vitesse-dark"/>
+}
+
+// eventually returns the value of the passing run
+val stage = eventually { findStage().shouldNotBeNull() }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Full example</h2>
 
