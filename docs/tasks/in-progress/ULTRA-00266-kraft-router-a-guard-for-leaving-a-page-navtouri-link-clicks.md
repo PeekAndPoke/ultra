@@ -353,6 +353,17 @@ navigation ... stays open": red. Rounds 7 and 8 not clean: safety valve, maintai
 | 8 | NIT/SURPLUS | various | StreamSource.subscriptions KDoc, heldJustNow private, a blank line, copied ownEntry comments, ResponsiveControllerSpec custom-set row | list | |
 | 8 | withdrawn | various | keepFresh (both), holderCount, TestWindowController focus/resize, custom-strategy surface, page-binding row | withdrawn | Phase 2 |
 
+## After round 8: what was done (c786e871)
+
+All round-8 rows FIXED as the maintainer decided ("Fix all, delta rounds"): FadingModal takes its page from the
+address and ignores the page the router is still on (the immediate first emission closed it; row: hash, a modal shown
+with a navigation stays); the query-only wording per strategy; `Router.takeLinkClick` (modals and menus stop clicks
+again and hand links to the router; rows: a clickable row around a menu, path-routing links in a modal and a menu);
+`Router.pageOf` the one page rule; DisplayType getters; identity-checked removal rows; hasFocus row; the smooth row;
+the custom landscape row; NITs. ULTRA-00280 filed for the trap entry left behind (pre-existing under hash).
+Mutants red: page from the router, no still-on, no stopPropagation, initializer form, fresh-reference removals (two),
+blur without update; no takeLinkClick reloads the test page (the path rows follow the link).
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
