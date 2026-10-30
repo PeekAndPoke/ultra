@@ -1,7 +1,8 @@
 # ULTRA-00276: Kraft ResponsiveController: breakpoints for portrait and landscape, and the orientation in its state
 
-> **Status (2026-10-30): DESIGNED.** The maintainer asked for it on 2026-10-30, for the next release (Klang's mobile
-> browser version). Breaking changes are fine. The plan below waits for the maintainer to confirm it.
+> **Status (2026-10-30): IN PROGRESS.** Built and tested (6 rows, 6 mutants red); the review gate runs with round 5
+> of the UI batch. The maintainer asked for it on 2026-10-30, for the next release (Klang's mobile browser version),
+> and confirmed the plan the same day: "1. ok 2. ok for now 3. ok 4. yes please fix".
 
 ## Why this exists
 
@@ -48,16 +49,27 @@ What the code does today (`kraft/core/src/jsMain/kotlin/utils/ResponsiveControll
   line in `CHANGELOG.md`.
 - Update the fomanticui example and `FieldOptionsBase.autofocusOnDesktop` if their use changes.
 
+## Implementation notes
+
+- `kraft/core/src/jsMain/kotlin/utils/ResponsiveController.kt`. The orientation comes from the same measuring as the
+  size (portrait when height ≥ width, the media query's rule), so the two never disagree. The media query and
+  `screen.orientation` are triggers only. A third constructor parameter, `measure`, is the test seam.
+- `RouterDisposeSpec`'s row "KraftApp.dispose() removes the resize listener" became vacuous once unchanged states stop
+  emitting. It now changes the measured size before the resize.
+
 ## Acceptance
 
-- [ ] The spec (`TestBed`, a measuring seam for size and orientation) covers:
+- [x] The spec (`TestBed`, a measuring seam for size and orientation) covers:
   - portrait and landscape choose their own breakpoints;
   - a rotation emits once, with the new size, orientation and display type;
   - an unchanged state does not emit;
   - `dispose()` removes every listener.
-- [ ] Mutation check: swap the two breakpoint sets, and drop the change listener. The spec must fail for both.
+- [x] Mutation check: swap the two breakpoint sets, and drop the change listener. The spec must fail for both.
 - [ ] `/feature-review`.
 
 ## History
 
 - 2026-10-30: created from the maintainer's request; plan written, waiting for confirmation.
+- 2026-10-30: plan confirmed; built. `ResponsiveControllerSpec` has 6 rows, and core-tests are green (508). Six
+  mutants all turned red: the breakpoint sets swapped, no next-frame measuring, the query listener kept, no dedupe,
+  the resize listener kept, no `screen.orientation` listener.

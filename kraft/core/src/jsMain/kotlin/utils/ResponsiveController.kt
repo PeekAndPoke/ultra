@@ -9,19 +9,29 @@ import io.peekandpoke.ultra.streams.StreamSource
 import io.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.document
 import kotlinx.browser.window
+import org.w3c.dom.MediaQueryList
 import org.w3c.dom.events.Event
 
 /** Retrieves the [ResponsiveController] from the component's attribute hierarchy. */
 val Component<*>.responsiveCtrl: ResponsiveController get() = getAttributeRecursive(ResponsiveController.key)
 
 /**
- * Tracks the browser window size and determines the current [DisplayType] based on configurable [Breakpoints].
+ * Tracks the viewport's size and [Orientation], and determines the current [DisplayType] with the [Breakpoints] of
+ * that orientation (ULTRA-00276).
  *
- * Emits a new [State] whenever the window is resized. One per app; [dispose] (called by [KraftApp.dispose]) removes its
- * window listener.
+ * Emits a new [State] when the viewport is resized or rotated and the state changed. One per app; [dispose] (called by
+ * [KraftApp.dispose]) removes its listeners.
  */
 class ResponsiveController(
-    private val breakpoints: Breakpoints = Breakpoints.default,
+    /** The breakpoints while the viewport is at least as high as it is wide. */
+    private val portrait: Breakpoints = Breakpoints.portrait,
+    /** The breakpoints while the viewport is wider than it is high: a phone held sideways stays [DisplayType.Mobile]. */
+    private val landscape: Breakpoints = Breakpoints.landscape,
+    /** Measures the viewport's width and height; a test passes its own. */
+    private val measure: () -> Vector2D = {
+        val root = document.documentElement
+        Vector2D((root?.clientWidth ?: 1200).toDouble(), (root?.clientHeight ?: 768).toDouble())
+    },
 ) : Stream<ResponsiveController.State>, KraftApp.Disposable {
 
     companion object {
@@ -43,6 +53,15 @@ class ResponsiveController(
         val isNotMobile = !isMobile
     }
 
+    /** The viewport's orientation, as the CSS media query `orientation` has it: portrait when height ≥ width. */
+    enum class Orientation {
+        Portrait,
+        Landscape;
+
+        val isPortrait get() = this == Portrait
+        val isLandscape get() = this == Landscape
+    }
+
     /**
      * Width breakpoints for determining the [DisplayType].
      *
@@ -54,15 +73,17 @@ class ResponsiveController(
         val desktop: Int,
     ) {
         companion object {
-            val default = Breakpoints(tablet = 768, desktop = 1200)
+            val portrait = Breakpoints(tablet = 768, desktop = 1200)
+            val landscape = Breakpoints(tablet = 960, desktop = 1200)
         }
     }
 
     /**
-     * Snapshot of the current window dimensions and resolved [DisplayType].
+     * Snapshot of the current viewport dimensions, its [Orientation] and the resolved [DisplayType].
      */
     data class State(
         val windowSize: Vector2D,
+        val orientation: Orientation,
         val displayType: DisplayType,
     ) {
         val isDesktop = displayType.isDesktop
@@ -70,6 +91,9 @@ class ResponsiveController(
 
         val isMobile = displayType.isMobile
         val isNotMobile = !isMobile
+
+        val isPortrait = orientation.isPortrait
+        val isLandscape = orientation.isLandscape
     }
 
     private val stream = StreamSource(createState())
@@ -79,34 +103,65 @@ class ResponsiveController(
 
     override fun subscribeToStream(sub: (State) -> Unit): Unsubscribe = stream.subscribeToStream(sub)
 
-    // One reference: each `::x` is a new function object, and removal needs the one that was added
-    private val onResize: (Event) -> Unit = ::onWindowResize
+    // One reference each: removal needs the function object that was added
+    private val onResize: (Event) -> Unit = { update() }
+
+    private val onRotate: (Event) -> Unit = {
+        update()
+        // iOS reports the old size inside the rotation event: measure again on the next frame
+        window.cancelAnimationFrame(pendingFrame)
+        pendingFrame = window.requestAnimationFrame { update() }
+    }
+
+    private var pendingFrame = 0
+
+    private val portraitQuery: MediaQueryList = window.matchMedia("(orientation: portrait)")
+
+    private val screenOrientation: dynamic = window.screen.asDynamic().orientation
 
     init {
         window.addEventListener("resize", onResize)
+        portraitQuery.addEventListener("change", onRotate)
+
+        if (screenOrientation != null) {
+            screenOrientation.addEventListener("change", onRotate)
+        } else {
+            window.addEventListener("orientationchange", onRotate)
+        }
     }
 
     override fun dispose() {
         window.removeEventListener("resize", onResize)
+        portraitQuery.removeEventListener("change", onRotate)
+
+        if (screenOrientation != null) {
+            screenOrientation.removeEventListener("change", onRotate)
+        } else {
+            window.removeEventListener("orientationchange", onRotate)
+        }
+
+        window.cancelAnimationFrame(pendingFrame)
     }
 
     private fun createState(): State {
-        val w = document.body?.clientWidth ?: 1200
-        val h = document.body?.clientHeight ?: 768
+        val size = measure()
+        val orientation = if (size.y >= size.x) Orientation.Portrait else Orientation.Landscape
+        val breakpoints = if (orientation.isPortrait) portrait else landscape
 
         return State(
-            windowSize = Vector2D(w.toDouble(), h.toDouble()),
+            windowSize = size,
+            orientation = orientation,
             displayType = when {
-                w >= breakpoints.desktop -> DisplayType.Desktop
-                w >= breakpoints.tablet -> DisplayType.Tablet
+                size.x >= breakpoints.desktop -> DisplayType.Desktop
+                size.x >= breakpoints.tablet -> DisplayType.Tablet
                 else -> DisplayType.Mobile
             }
         )
     }
 
-    private fun onWindowResize(@Suppress("UNUSED_PARAMETER") evt: Event) {
-        stream.modify {
-            createState()
-        }
+    private fun update() {
+        val next = createState()
+
+        if (next != stream()) stream(next)
     }
 }

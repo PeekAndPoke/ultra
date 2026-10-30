@@ -88,7 +88,18 @@
   against the original: no leaked listener, no lock kept after an unmount during a pending request, one request at a
   time.
 
+- **Kraft: `ResponsiveController` knows portrait and landscape (ULTRA-00276, for Klang's mobile version).** `State`
+  has `orientation` (`Portrait` when height ≥ width, as the CSS media query; `isPortrait`, `isLandscape`), and each
+  orientation has its own `Breakpoints`: a phone held sideways (up to 959 px wide) stays `Mobile`. It follows rotation
+  (`screen.orientation`, the orientation media query) as well as resize, and measures again on the next frame for
+  browsers that report the old size in the rotation event.
+
 ### Breaking changes
+
+- **`ResponsiveController(breakpoints = ...)` is now `ResponsiveController(portrait = ..., landscape = ...)`**
+  (ULTRA-00276); `Breakpoints.default` is now `Breakpoints.portrait` (768 / 1200, as before) and
+  `Breakpoints.landscape` (960 / 1200). A desktop window 768 to 959 px wide is now `Mobile`, not `Tablet`.
+  `State` has a new constructor parameter, `orientation`.
 
 - **The old Semantic UI drag and drop is gone** (`DndDragHandle`, `DndDropTarget`, `greenHighlights`,
   `blueHighlights`): it had no users outside the examples. Port to `kraft:dnd` (see above and the docs page).
@@ -109,6 +120,10 @@
   own controller (klang's `UiWork.window`) gets the shared one and can switch to `WindowController.default`.
 
 ### Fixes
+
+- **Kraft: `ResponsiveController` measured the page, not the viewport** (ULTRA-00276): the height came from
+  `document.body`, so on a long page it was the content's height. It now reads `document.documentElement`, and it
+  emits only when the state changed (it emitted on every resize event).
 
 - **Streams: `ticker(interval: Duration)` with a very long or infinite interval** wrapped to a negative delay and
   ticked back to back (`Duration.INFINITE` became -1 ms); it is clamped to `Int.MAX_VALUE` ms now.

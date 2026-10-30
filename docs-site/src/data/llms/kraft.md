@@ -2728,8 +2728,8 @@ Tests: `kraftApp { wakeLockCtrl(WakeLockController(requestLock, isPageVisible)) 
 
 ## Responsive design
 
-The `ResponsiveController` tracks the browser window size and exposes the current display type as a reactive Stream.
-Access it from any component:
+The `ResponsiveController` tracks the viewport's size and orientation and exposes the current display type as a
+reactive Stream; it follows resizes and rotations and emits only on a change. Access it from any component:
 
 ```kotlin
 class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
@@ -2747,24 +2747,27 @@ class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
 
 ### Breakpoints
 
-Default breakpoints:
+Default breakpoints, one set per orientation (portrait: height >= width, as the CSS media query):
 
-| Display type | Window width    |
-|--------------|-----------------|
-| `Mobile`     | < 768px         |
-| `Tablet`     | 768px -- 1199px |
-| `Desktop`    | >= 1200px       |
+| Display type | Width, portrait | Width, landscape |
+|--------------|-----------------|------------------|
+| `Mobile`     | < 768px         | < 960px          |
+| `Tablet`     | 768px -- 1199px | 960px -- 1199px  |
+| `Desktop`    | >= 1200px       | >= 1200px        |
+
+Custom: `responsive(ResponsiveController(portrait = Breakpoints(600, 1024), landscape = Breakpoints(1000, 1280)))`.
 
 Convenience checks on the state:
 
 ```kotlin
 val state = responsiveCtrl()
 
-state.isDesktop      // true when >= 1200px
-state.isMobile       // true when < 768px
+state.isDesktop      // the display type is Desktop
+state.isMobile       // the display type is Mobile
 state.isNotDesktop   // tablet or mobile
 state.isNotMobile    // tablet or desktop
-state.windowSize     // Vector2D with current width and height
+state.isPortrait     // height >= width; also isLandscape, orientation
+state.windowSize     // Vector2D with the viewport's width and height
 ```
 
 ## CSS & Styling

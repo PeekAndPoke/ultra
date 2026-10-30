@@ -15,8 +15,9 @@ import {Code} from 'astro:components';
 
     <h2>Responsive design</h2>
 
-    <p>The <code>ResponsiveController</code> tracks the browser window size and exposes the current display type as a
-        reactive <a href="/ultra/streams/">Stream</a>. Access it from any component:</p>
+    <p>The <code>ResponsiveController</code> tracks the viewport's size and orientation and exposes the current display
+        type as a reactive <a href="/ultra/streams/">Stream</a>. It follows resizes and rotations, and emits only when
+        the state changes. Access it from any component:</p>
 
     <Code code={`class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
 
@@ -34,16 +35,20 @@ import {Code} from 'astro:components';
 
     <h3>Custom breakpoints</h3>
 
-    <p>By default, Kraft registers a <code>ResponsiveController</code> with standard breakpoints.
-        You can override it in the app builder:</p>
+    <p>By default, Kraft registers a <code>ResponsiveController</code> with standard breakpoints, one set for each
+        orientation. You can override them in the app builder:</p>
 
     <Code code={`val app = kraftApp {
     responsive(
         ResponsiveController(
-            breakpoints = ResponsiveController.Breakpoints(
+            portrait = ResponsiveController.Breakpoints(
                 tablet = 600,   // default: 768
                 desktop = 1024, // default: 1200
-            )
+            ),
+            landscape = ResponsiveController.Breakpoints(
+                tablet = 1000,  // default: 960
+                desktop = 1280, // default: 1200
+            ),
         )
     )
 
@@ -52,27 +57,33 @@ import {Code} from 'astro:components';
 
     <h3>Default breakpoints</h3>
 
-    <p>If you don't configure anything, the defaults are:</p>
+    <p>If you don't configure anything, the defaults are below. The viewport is portrait when it is at least as high as
+        it is wide, as in the CSS media query; in landscape the tablet breakpoint is 960px, so a phone held sideways
+        stays <code>Mobile</code>.</p>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
             <thead>
             <tr class="border-b border-white/10">
                 <th class="py-2 text-gray-400">Display type</th>
-                <th class="py-2 text-gray-400">Window width</th>
+                <th class="py-2 text-gray-400">Width, portrait</th>
+                <th class="py-2 text-gray-400">Width, landscape</th>
             </tr>
             </thead>
             <tbody class="text-gray-300">
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>Mobile</code></td>
                 <td>&lt; 768px</td>
+                <td>&lt; 960px</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>Tablet</code></td>
                 <td>768px – 1199px</td>
+                <td>960px – 1199px</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>Desktop</code></td>
+                <td>&ge; 1200px</td>
                 <td>&ge; 1200px</td>
             </tr>
             </tbody>
@@ -81,11 +92,14 @@ import {Code} from 'astro:components';
 
     <p>Convenience checks on the state:</p>
 
-    <Code code={`responsive.isDesktop      // true when >= 1200px
-responsive.isMobile       // true when < 768px
+    <Code code={`responsive.isDesktop      // the display type is Desktop
+responsive.isMobile       // the display type is Mobile
 responsive.isNotDesktop   // tablet or mobile
 responsive.isNotMobile    // tablet or desktop
-responsive.windowSize     // Vector2D with current width and height`} lang="kotlin" theme="vitesse-dark"/>
+responsive.isPortrait     // height >= width
+responsive.isLandscape    // width > height
+responsive.orientation    // Orientation.Portrait or Orientation.Landscape
+responsive.windowSize     // Vector2D with the viewport's width and height`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>CSS &amp; Styling</h2>
 

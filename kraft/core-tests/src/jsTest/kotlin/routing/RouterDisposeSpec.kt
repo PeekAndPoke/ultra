@@ -10,6 +10,7 @@ import io.peekandpoke.kraft.routing.router
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.awaitUri
 import io.peekandpoke.kraft.utils.ResponsiveController
+import io.peekandpoke.kraft.utils.Vector2D
 import io.peekandpoke.kraft.utils.WindowController
 import kotlinx.browser.document
 import kotlinx.browser.window
@@ -159,16 +160,17 @@ class RouterDisposeSpec : StringSpec({
     }
 
     "KraftApp.dispose() removes the ResponsiveController's resize listener" {
-        lateinit var responsive: ResponsiveController
+        var size = Vector2D(1300.0, 800.0)
+        val responsive = ResponsiveController(measure = { size })
 
-        TestBed.preact(view = { div { } }) {
-            responsive = app.appAttributes[ResponsiveController.key]!!
-        }
+        TestBed.preact(appSetup = { responsive(responsive) }, view = { div { } }) {}
 
         var emissions = 0
         val unsubscribe = responsive.subscribeToStream { emissions++ }
         emissions = 0
 
+        // A changed size: a listener still in place would emit it
+        size = Vector2D(700.0, 800.0)
         window.dispatchEvent(Event("resize"))
         unsubscribe()
 
