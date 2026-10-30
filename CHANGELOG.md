@@ -83,7 +83,8 @@
 
 - **Kraft: `WakeLockComponent` (ULTRA-00275, from gfx-playground).** Keeps the screen awake while mounted. Several
   share one lock (a counter: the last unmount releases it); the lock is taken again when the page becomes visible; no
-  API, no error. `WakeLockController` (`wakeLock.acquire()`, `isActive`) for code outside a component. Hardened
+  API, no error. `WakeLockController` (`wakeLockCtrl.acquire()`, `isActive`), registered in every app like
+  `windowCtrl` (`kraftApp { wakeLockCtrl(...) }` to replace it; `WakeLockController.default` outside components). Hardened
   against the original: no leaked listener, no lock kept after an unmount during a pending request, one request at a
   time.
 

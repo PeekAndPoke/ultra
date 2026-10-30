@@ -7,6 +7,7 @@ import io.peekandpoke.kraft.routing.RootRouterBuilder
 import io.peekandpoke.kraft.routing.Router
 import io.peekandpoke.kraft.toasts.toasts
 import io.peekandpoke.kraft.utils.ResponsiveController
+import io.peekandpoke.kraft.utils.WakeLockController
 import io.peekandpoke.kraft.utils.WindowController
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.kraft.vdom.VDomEngine
@@ -78,6 +79,8 @@ class KraftApp internal constructor(
             // The default responsive controller is made in build(), only if none was set: it holds a window listener
             // We always have the default window controller
             windowCtrl(WindowController.default)
+            // We always have the default wake lock controller (one lock for the page)
+            wakeLockCtrl(WakeLockController.default)
             // Default English i18n with kraft's built-in form catalog, so form errors translate and
             // `by Translations` never crashes; override with i18n(...)
             i18n(I18nController.default())
@@ -93,6 +96,9 @@ class KraftApp internal constructor(
 
         /** Sets the window controller for the app. */
         fun windowCtrl(ctrl: WindowController) = setAttribute(WindowController.key, ctrl)
+
+        /** Sets the wake lock controller for the app. */
+        fun wakeLockCtrl(ctrl: WakeLockController) = setAttribute(WakeLockController.key, ctrl)
 
         /** Sets the i18n controller for the app. Default: English with kraft's built-in form catalog. */
         fun i18n(controller: I18nController) = setAttribute(I18nController.key, controller)

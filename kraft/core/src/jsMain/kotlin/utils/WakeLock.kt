@@ -4,7 +4,7 @@ import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
-import io.peekandpoke.kraft.components.getAttributeRecursiveOrNull
+import io.peekandpoke.kraft.components.getAttributeRecursive
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.common.TypedKey
 import io.peekandpoke.ultra.html.css
@@ -30,8 +30,8 @@ external interface WakeLockSentinel {
  * it. The browser drops the lock when the page is hidden; it is requested again when the page is visible and someone
  * still holds it. Without the API (an old browser, an insecure context) nothing happens.
  *
- * One lock serves the page: [default]. Another API (a test's fake) goes into the constructor, and the app gets it via
- * the attribute [key].
+ * One lock serves the page: [default], registered in every app; components reach it as [wakeLockCtrl]. Another API
+ * (a test's fake) goes into the constructor, and into the app with `kraftApp { wakeLockCtrl(...) }`.
  */
 class WakeLockController(
     /** Asks for a screen lock; null when the API is missing. */
@@ -176,9 +176,8 @@ class WakeLockController(
     }
 }
 
-/** The app's [WakeLockController]: the one set as an app attribute, else [WakeLockController.default]. */
-val Component<*>.wakeLock: WakeLockController
-    get() = getAttributeRecursiveOrNull(WakeLockController.key) ?: WakeLockController.default
+/** Retrieves the app's [WakeLockController] from the component's attribute hierarchy. */
+val Component<*>.wakeLockCtrl: WakeLockController get() = getAttributeRecursive(WakeLockController.key)
 
 /**
  * Keeps the screen awake while it is mounted (ULTRA-00275): it holds the app's [WakeLockController] from mount to
@@ -194,7 +193,7 @@ class WakeLockComponent(ctx: NoProps) : PureComponent(ctx) {
 
     init {
         lifecycle {
-            onMount { release = wakeLock.acquire() }
+            onMount { release = wakeLockCtrl.acquire() }
 
             onUnmount {
                 release?.invoke()

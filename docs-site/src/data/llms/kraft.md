@@ -2722,9 +2722,9 @@ Responsive design, CSS-in-Kotlin, file handling, and component testing.
 ## Keeping the screen awake
 
 `WakeLockComponent()` keeps the screen on while mounted (Screen Wake Lock API). Stacked components share one lock,
-released when the last unmounts; it is re-taken when the page becomes visible again. By hand: `val release =
-wakeLock.acquire()`, `wakeLock.isActive` (Stream<Boolean>), `release()`. Tests: `WakeLockController(requestLock,
-isPageVisible)` as the app attribute `WakeLockController.key`.
+released when the last unmounts; it is re-taken when the page becomes visible again. In a component: `val release =
+wakeLockCtrl.acquire()`, `wakeLockCtrl.isActive` (Stream<Boolean>), `release()`; outside: `WakeLockController.default`.
+Tests: `kraftApp { wakeLockCtrl(WakeLockController(requestLock, isPageVisible)) }`.
 
 ## Responsive design
 

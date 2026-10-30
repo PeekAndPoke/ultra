@@ -89,7 +89,7 @@ class WakeLockSpec : StringSpec({
         val count = StreamSource(2)
 
         TestBed.preact(
-            appSetup = { setAttribute(WakeLockController.key, api.controller) },
+            appSetup = { wakeLockCtrl(api.controller) },
             view = { Locks(count) },
         ) {
             eventually { api.controller.holderCount shouldBe 2 }
@@ -105,6 +105,12 @@ class WakeLockSpec : StringSpec({
             eventually { api.controller.holderCount shouldBe 0 }
             lock.released shouldBe true
             api.controller.isActive() shouldBe false
+        }
+    }
+
+    "every app has the default controller; components reach it as wakeLockCtrl" {
+        TestBed.preact(view = { div { } }) {
+            (app.appAttributes[WakeLockController.key] === WakeLockController.default) shouldBe true
         }
     }
 

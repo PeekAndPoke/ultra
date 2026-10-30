@@ -192,8 +192,8 @@ val externalCss = StyleSheetTag {
 }
 
 // The same counter by hand, and the state
-val release = wakeLock.acquire()
-val awake by subscribingTo(wakeLock.isActive)
+val release = wakeLockCtrl.acquire()
+val awake by subscribingTo(wakeLockCtrl.isActive)
 release()`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>File handling</h2>
