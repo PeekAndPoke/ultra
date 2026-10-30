@@ -168,6 +168,26 @@ After round 1: 29 rows green. Mutants, each red on its row: no hit test at the r
 for the innermost, an untyped zone, the hit test over all zones; unguarded handlers crash the run (the throwing-handler
 row).
 
+Round 2 (level 2, reviewer-xhigh, two-phase), base c8251d14..aa3cbd86. Verdict: **CLEAN** (all three charters, 0
+CRITICAL, 0 MAJOR). Gate PASS. Open MINORs go to the maintainer as a list.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 sec, impl, dom | MINOR | Drag.kt:95, DefaultDndManager.kt:220, :256 | `accepts` and `element()` run unguarded; a throw at the release skips end(): listeners, user-select, preview stay (touch: until the next drag) | list | |
+| 2 all | MINOR | DefaultDndManager.kt:358-372, :75-78 | The after-Esc release waiter has no bound, outlives dispose, and a cancel() during the release hit test arms it for a later click | list | |
+| 2 impl | MINOR | DefaultDndManager.kt:267, :328 | An onLeave that cancels hears onLeave twice | list | |
+| 2 dom | MINOR | DefaultDndManager.kt:195-200 | A chorded release (primary up, another button held; a pen tip lifted with the barrel held) does not end the drag | list | |
+| 2 dom | MINOR | DefaultDndManager.kt:172-178 | contextmenu not held off during a press (Android long press on an img or link cancels) | list | |
+| 2 dom, sec | MINOR | DefaultDndManager.kt:343-355 | The 0 ms click swallow misses a touch tap's later click, and swallows a drop handler's own element.click() | list | |
+| 2 dom | MINOR | DefaultDndManager.kt:51-69 | The old guard against dragging from input/textarea was dropped without a decision | list | |
+| 2 dom, impl | MINOR | DraggableNumberComponent.kt:32 | The live example lacks the touch styles the docs require | list | |
+| 2 sec | MINOR | Drag.kt:109 | Generic payload types are matched by erased class (Pair<A,B> vs Pair<C,D>) | list | |
+| 2 impl, dom | MINOR | DndSpec | No rows: nested sources, onOver, current while running, a zone mounted mid-drag, isPrimary, DropZoneState; two rows cannot fail for their reason | list | |
+| 2 impl | MINOR | Drag.kt:31 | KDoc `[zone]` does not resolve | list | |
+| 2 dom | MINOR | kraft/testing kquery_events.kt:161-167 | kraft:testing's pointer helpers dispatch plain Events: they cannot drive dnd | out-of-scope -> follow-up task | |
+| 2 | SURPLUS | onOver, cancel(), DropZone.type, dropZone(KClass), Drag.pointerType | onOver and cancel() are not in the confirmed design's event set (domain sticks, no severity); others could be internal | list | |
+| 2 | withdrawn | various | PopupsStage `get()` (a mutant in the working tree at that moment), right-click mid-drag, `current` | withdrawn | Phase 2 |
+
 ## History
 
 - 2026-10-28: created from Klang's requests; checked against the code the same day.
@@ -182,3 +202,4 @@ row).
 - 2026-10-29: from the maintainer trying the example: no text selection on the page while a drag runs; the preview keeps the grabbed share of its own size under the pointer (it may be smaller than the source). Found on the way: a press still pending at app teardown kept its window listeners; DefaultDndManager is KraftApp.Disposable and ends it.
 - 2026-10-30: IN PROGRESS.
 - 2026-10-30: review round 1 (level 1): 4 MAJOR, all fixed with the MINORs; round 2 next at level 2.
+- 2026-10-30: review round 2 (level 2): clean. Gate PASS; the MINORs to the maintainer.

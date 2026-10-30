@@ -282,6 +282,28 @@ Mutants, each red on its row: both Ask resets, approved in passingLeaveGuards, n
 click listener kept, hidden keeps focus, WakeLock listener never added, first-call handler kept (source, wrapper),
 null law not landing, sampled no unwind, no followPaused, new paused ignored.
 
+## Round 6 (level 3, reviewer-top, two-phase), base c8251d14..aa3cbd86
+
+Verdict: **CLEAN** (all three charters, 0 CRITICAL, 0 MAJOR, after phase 2). Gate PASS for group A, ULTRA-00275 and
+ULTRA-00276. Open MINORs go to the maintainer as a list (below). Process incident during this round: a reviewer read a
+mutant (PopupsStage) applied for a mutation check; withdrawn in phase 2; `_incidents.md`.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 6 impl, dom | MINOR | Router.kt:561, CHANGELOG.md:69 | The sample `router.withoutLeaveGuards { navToUri("/login") }` does not compile (block has no Router receiver) | list | |
+| 6 dom | MINOR | ResponsiveController.kt:126 | Safari <= 13: MediaQueryList has no addEventListener; every kraftApp throws at start | list | |
+| 6 dom | MINOR | ResponsiveController.kt:27-31, CHANGELOG | Positional `ResponsiveController(Breakpoints(...))` compiles and silently means portrait only | list | |
+| 6 sec, dom, impl | MINOR | StreamCombinator.kt:53-55, ops/cutoff.kt:60-61, ops/switchMap.kt:97-98 | The round-5 first-value-throw rollback did not reach these three; CHANGELOG headline overclaims | list | |
+| 6 impl | MINOR | Router.kt:613, :650, :554 | A pending Ask whose guard unmounted in-page is not cancelled when the page is left through a plain branch: askingToLeave stays true | list | |
+| 6 impl | MINOR | LeaveGuardSpec.kt:353 | The page-binding row cannot fail for its reason (awaitUri waits a frame); a same-turn path-strategy row would | list | |
+| 6 impl | MINOR | ThreeJsComponent.kt:123-126 | The clock-change branch has no row | list | |
+| 6 sec | MINOR | LeaveGuard.kt:43 | KDoc: "unless the page load starts in withoutLeaveGuards": also within 3 s after | list | |
+| 6 sec, dom | note | ULTRA-00275 decision 1 | The ticket still says "no change to the app builder" | list (record) | |
+| 6 dom | NIT | three-definitions.kt:183 | PCFSoftShadowMap: removed in r186.1's renderer (constants.js says deprecated) | list | |
+| 6 sec, impl | NIT | routing.astro, llms/kraft.md; CHANGELOG.md:67 | Server logout via withoutLeaveGuards not in the docs; "every urlParam never asks" vs ULTRA-00278 | list | |
+| 6 | SURPLUS | ResponsiveController(measure), TestWindowController.focus/resize | Test seam in the public constructor; uncalled helpers | list | |
+| 6 | withdrawn | various | DropdownMenu propagation (same class as ULTRA-00277: extend that ticket), holderCount, public followBrowserNavigation, 3 s window, PopupsStage `get()` (a mutant) | withdrawn | Withdrawn in phase 2 against settled rows or the file at HEAD |
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
