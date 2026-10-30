@@ -125,6 +125,9 @@
 
 ### Fixes
 
+- **Kraft: `ResponsiveController.DisplayType.isNotDesktop` / `isNotMobile` were `true` for `Desktop` / `Mobile`**
+  (an initializer in the enum's constructor read entries not yet assigned; `State.isNotDesktop` was right).
+
 - **Streams: one handler given twice is two subscriptions** (ULTRA-00274). A stream kept its subscribers in a set of
   handlers, so the same handler (and every lambda that captures nothing, such as the default of
   `subscribeToStream()`, which is one shared instance) subscribed twice held one entry: the first to leave ended the
@@ -140,8 +143,10 @@
   handlers stopped every click, so route links were followed by the browser (a page reload under path routing); they
   now hand link clicks to the router (`Router.takeLinkClick(event)`, for any component that stops click propagation).
   A navigation to another page now dismisses an open FadingModal under both strategies (it answers `null`); a
-  `replaceUri` (a `urlParam`) does not, while under hash routing a pushed move, also a query-only one, is a Back for
-  its trap and dismisses it, as before. A modal shown together with a navigation belongs to the new page.
+  query-only `replaceUri` (a `urlParam`) does not, while under hash routing a pushed move, also a query-only one, is
+  a Back for its trap and dismisses it, as before. A modal shown in the same handler as a navigation belongs to the
+  new page. `RouterStrategy.linkClicked(event)` is the hook: a custom strategy with its own click listener overrides
+  it, or links inside modals and menus are left to the browser.
 - **Kraft: the popups stage removes its own document listeners** (ULTRA-00272); each app left two behind.
 
 - **Streams: a subscribe that throws leaves nothing behind.** When `onSub()` throws, or the handler throws on its first

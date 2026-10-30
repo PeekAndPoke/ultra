@@ -29,7 +29,8 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
     <p>From the source component's <code>onPointerDown</code>. The drag begins once the pointer moved past a
         threshold (4 px by default), so a click stays a click; the click after a drag is swallowed. Only the primary
         button drags; a press in a text field selects text. The browser's own drag of an image or a link inside the
-        source, and its context menu, are held off while the press lasts. With nested sources the innermost one drags.</p>
+        source is held off while the press lasts, and so is its context menu for a touch or pen press and once the drag
+        runs; a mouse press that is still a click keeps its menu (a ctrl+click on macOS). With nested sources the innermost one drags.</p>
 
     <Code code={`ui.segment {
     // For touch: the browser must leave the pointer to the drag, and a long press must not select text

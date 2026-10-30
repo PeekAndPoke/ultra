@@ -1,6 +1,6 @@
 # ULTRA-00274: Streams: a no-op handler that captures nothing is one shared instance, so two such subscriptions share one entry
 
-> **Status (2026-10-30): IN PROGRESS.** Fixed 2026-10-30 (the maintainer: bugs into this release): every subscription gets a handler entry of its own (`ownEntry`, in StreamSourceImpl, StreamWrapperBase, StreamCombinator, cutoff, switchMap), so the same handler twice is two subscriptions. `CutoffSpec`'s row that pinned the old one-entry meaning is updated; `HandlerResilienceSpec` row for the same handler and the default `subscribeToStream()`. Review gate next.
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: the UI batch's review, clean in round 9 (record in ULTRA-00266). Found by the review of the batch; a behaviour change (one handler given twice is two subscriptions), in the CHANGELOG.
 
 **Security-critical:** no
 
@@ -24,3 +24,4 @@ predates it in `Stream.subscribeToStream(sub = {})` (`Stream.kt:19`) and `perman
 - 2026-10-29: created from the round-3 review of the UI batch.
 - 2026-10-30: IN PROGRESS.
 - 2026-10-30: fixed; spec added and mutation-checked.
+- 2026-10-30: DONE.

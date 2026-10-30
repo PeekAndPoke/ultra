@@ -1,6 +1,6 @@
 # ULTRA-00278: Kraft urlParam: writing a parameter re-renders the path from the route pattern
 
-> **Status (2026-10-30): IN PROGRESS.** Fixed 2026-10-30 (the maintainer: bugs into this release): `urlParams` keeps the path as the address has it and replaces only the query; `RouterReplaceUriSpec` row on `/p/a@b` with a Stop guard on the page. Review gate next.
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: the UI batch's review, clean in round 9 (record in ULTRA-00266). Found by the review of the batch.
 
 ## Why this exists
 
@@ -29,3 +29,4 @@ Checked against the code on 2026-10-30.
 - 2026-10-30: created from the round-4 review ledger of the UI batch (ULTRA-00266 gate).
 - 2026-10-30: IN PROGRESS.
 - 2026-10-30: fixed; spec added and mutation-checked.
+- 2026-10-30: DONE.

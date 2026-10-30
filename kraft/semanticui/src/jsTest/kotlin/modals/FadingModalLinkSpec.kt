@@ -69,7 +69,7 @@ class FadingModalLinkSpec : StringSpec({
                 val click = MouseEvent("click", js("({bubbles: true, cancelable: true, button: 0})"))
                 link.dispatchEvent(click)
 
-                // The router's window listener took it (prevented the browser's own follow) and navigated
+                // The router took it (prevented the browser's own follow) and navigated
                 click.defaultPrevented shouldBe true
                 router.awaitUri("/b")
             } finally {

@@ -1,6 +1,6 @@
 # ULTRA-00247: Kraft testing: eventually returning its block's value; KQuery.elements
 
-> **Status (2026-10-29): IN PROGRESS.** Implemented 2026-10-29; the review stopped at the safety valve (round 2, one MAJOR; ULTRA-00266 Review record), waiting for the maintainer. Request from Spross (Spross-Main-Dev, 2026-10-26), found writing the workshop's scene specs (SPROSS-00023).
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: the UI batch's review, clean in round 9 (record in ULTRA-00266). Request from Spross.
 >
 > **Part of:** ULTRA-00244 (Epic: Kraft testing (TestBed, KQuery and friends))
 
@@ -50,3 +50,4 @@ In ULTRA-00266's Review record (the batch's gate, both groups).
 - 2026-10-29: DESIGNED.
 - 2026-10-29: implemented and through two review rounds (record in ULTRA-00266); round 2 not clean (one MAJOR on replaceUri keeping history.state): stopped at the safety valve for the maintainer.
 - 2026-10-29: IN PROGRESS.
+- 2026-10-30: DONE.

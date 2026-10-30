@@ -88,7 +88,10 @@ class Router(
         /** Removes the browser event listeners [init] installed. */
         fun dispose() {}
 
-        /** Takes a click on a route link as the strategy's own window listener does; see [Router.takeLinkClick]. */
+        /**
+         * Takes a click on a route link as the strategy's own window listener does; see [Router.takeLinkClick]. A
+         * custom strategy with a click listener of its own overrides it; the default leaves such links to the browser.
+         */
         fun linkClicked(event: Event) {}
 
         /**
@@ -722,7 +725,6 @@ class Router(
      * guard is asked exactly when the page would be remounted; a change of query or fragment alone never asks.
      */
     private fun isLeaving(target: String): Boolean = pageOf(target) != pageOf(current().uri)
-
 
     /** Marks the current history entry (a restored one) and returns the marker. */
     private fun markRestoredEntry(): String {

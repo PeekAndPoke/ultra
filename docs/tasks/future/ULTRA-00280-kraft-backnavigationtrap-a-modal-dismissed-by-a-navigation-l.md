@@ -10,6 +10,11 @@ the current entry's state is no longer the trap's: the trap entry stays in the h
 later Back on that page is spent on it (it lands on the old page's address a second time). Under hash routing this was
 so before the change too.
 
+Also (round 9, domain): a route link in a FadingModal whose own `onClick` answers the modal (`close(result)`)
+loses its navigation on a real click: the trap's `doGoBack` runs at the click's microtask checkpoint
+(`Dispatchers.Main` schedules with `Promise.then`), calls `history.back()` after the router's push, and undoes it.
+Same `doGoBack`; synthetic specs cannot see it.
+
 ## The work
 
 - Decide: leave the entry (a harmless duplicate) or replace it when the trap closes on a navigation.

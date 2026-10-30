@@ -2212,7 +2212,7 @@ the zones' DOM: each zone keeps its own UI state.
 
 ```kotlin
 // Start a drag from the source's pointerdown; it begins after a 4 px threshold, the click after it is swallowed.
-// Primary button only; not from text fields; the native image/link drag and context menu are held off;
+// Primary button only; not from text fields; the native image/link drag is held off, and the context menu for touch/pen presses and running drags;
 // nested sources: the innermost drags.
 ui.segment {
     style = "touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"   // needed for touch

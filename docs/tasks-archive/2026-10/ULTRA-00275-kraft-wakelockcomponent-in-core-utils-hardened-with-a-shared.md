@@ -1,6 +1,6 @@
 # ULTRA-00275: Kraft: WakeLockComponent in core/utils, hardened, with a shared counter for stacked components
 
-> **Status (2026-10-30): IN PROGRESS.** The maintainer, 2026-10-30: move gfx-playground's WakeLockComponent into Kraft core utils, harden it, and let several be mounted at once (a shared counter: the lock is released when it is down to 0). For the next release.
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: the UI batch's review, clean in round 9 (record in ULTRA-00266). Request from gfx-playground (the maintainer); in the app builder as wakeLockCtrl.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -65,3 +65,4 @@ Checked, 2026-10-30. What the hardening has to fix:
 - 2026-10-30: created on the maintainer's request; the original checked the same day.
 - 2026-10-30: IN PROGRESS.
 - 2026-10-30: maintainer: "Build it like that" (controller with a shared default, acquire() as the counter, isActive, the component).
+- 2026-10-30: DONE.

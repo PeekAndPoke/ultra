@@ -490,7 +490,8 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             if (menuHolder === stop) menuHolder = null
         }
 
-        // The menu's mouseup comes before this pointerup; a new press or a cancel ends the wait as well
+        // Windows: pointerup, then mouseup, then the menu, in one task: the hold ends a task after the pointerup. A new
+        // press or a cancel ends it as well
         onEnd = { event -> if ((event as? PointerEvent)?.pointerId == pointerId) window.setTimeout({ stop() }, 0) }
 
         window.addEventListener("contextmenu", onMenu, true)

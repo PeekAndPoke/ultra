@@ -1152,9 +1152,9 @@ class DndSpec : StringSpec({
             pointer("pointermove", at(150, 50), 150, 50, buttons = 2)
             probe.events.contains("a:drop") shouldBe true
 
-            // Windows opens the right button's menu at its mouseup, before its pointerup
-            contextMenu() shouldBe true
+            // Windows: the right button's pointerup, its mouseup, then the menu, in the same task
             up(150, 50)
+            contextMenu() shouldBe true
             delay(10)
             contextMenu() shouldBe false
         }

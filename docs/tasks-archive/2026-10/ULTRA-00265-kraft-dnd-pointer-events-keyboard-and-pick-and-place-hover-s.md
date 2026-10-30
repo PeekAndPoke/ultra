@@ -1,6 +1,6 @@
 # ULTRA-00265: Kraft dnd: pointer events, keyboard and pick-and-place, hover state, drop source, auto-scroll, preview
 
-> **Status (2026-10-30): IN PROGRESS.** Built as the new `kraft/dnd` module (redesign by the maintainer, 2026-10-29), registered by `semanticUI()`, with `DndSpec` (16 rows); the maintainer checked the position and the text selection in the browser. The review gate (round 1) is next. Requests from Klang (Klang-Research, 2026-10-28) for its look editor's equip grid.
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: clean in rounds 2 to 5 (Review record below). Built as the new kraft:dnd module, registered by semanticUI(). Follow-ups: ULTRA-00279 (kraft:testing pointer helpers), ULTRA-00282 (round-5 MINORs), ULTRA-00283 (docs). Request from Klang.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -218,6 +218,12 @@ MINORs to the maintainer as a list.
 | 4 impl | MINOR | DndSpec | Untested guards: contenteditable=true, `if (!ended)` in start with two zones, a cancelling `current` subscriber, onLeave-cancel onto another zone, a non-empty user-select restored | list | |
 | 4 | SURPLUS | onOver, Drag.pointerType, the same-pointer PointerGone branch, site.ts kraftDnd | Unused or unreachable | list | |
 
+Round 5 (level 1, reviewer-high, two-phase, a delta: 8af2dac5..c786e871). Verdict: **CLEAN** (all three charters):
+the fourth clean round in a row. **Gate PASS.** Prose fixed before the release (the context-menu sentence in the docs
+and the mirror; the Windows event order in the chord comment, with the chord row now in that order: a deferred stop's
+mutant goes red). Follow-up ULTRA-00282: the chord menu hold's bounds, a hold armed after a disposing handler, the
+listener-balance and dispose rows.
+
 ## History
 
 - 2026-10-28: created from Klang's requests; checked against the code the same day.
@@ -235,3 +241,5 @@ MINORs to the maintainer as a list.
 - 2026-10-30: review round 2 (level 2): clean. Gate PASS; the MINORs to the maintainer.
 - 2026-10-30: review round 3 (level 1): clean; maintainer: apply its MINORs, document the grip pattern; round 4 next.
 - 2026-10-30: review round 4 (level 1): clean; its MINORs to the maintainer.
+- 2026-10-30: review round 5 (level 1, delta): clean. Gate PASS; MINORs to ULTRA-00282.
+- 2026-10-30: DONE.

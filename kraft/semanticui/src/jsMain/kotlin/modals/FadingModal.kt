@@ -29,7 +29,7 @@ import kotlinx.html.style
  * Subclasses implement [renderContent] and answer through [close] with a result; [close] without one (also the
  * backdrop and back navigation) is a dismissal. The answer reaches the handle's `onResult` after the fade-out.
  * The modal traps back-navigation and disables body scrolling while any FadingModal is open. A navigation to another
- * page (a link inside the modal, a logout) dismisses it; a `replaceUri` (a `urlParam`) does not. Under hash routing a
+ * page (a link inside the modal, a logout) dismisses it; a query-only `replaceUri` (a `urlParam`) does not. Under hash routing a
  * pushed move, also a query-only one, is a Back for the trap and dismisses it too.
  */
 abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx<P>) : Component<P>(ctx) {
@@ -95,7 +95,7 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
                     fadingIn = false
                 }
 
-                // A navigation to another page dismisses the modal; a replaceUri (a urlParam) does not. The page is the
+                // A navigation to another page dismisses the modal; a query-only replaceUri (a urlParam) does not. The page is the
                 // address's: under hash routing the router follows a written address a task later, and a modal shown
                 // with that navigation belongs to the new page. Until the router arrives, the page it is still on is no
                 // reason to close

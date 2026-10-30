@@ -1,6 +1,6 @@
 # ULTRA-00268: Kraft WindowController: one shared default instance, reachable outside components, and steerable in tests
 
-> **Status (2026-10-29): IN PROGRESS.** Implemented 2026-10-29; the review stopped at the safety valve (round 2, one MAJOR; ULTRA-00266 Review record), waiting for the maintainer. From the maintainer's question (2026-10-29) whether WindowController should be a singleton, prompted by Klang's resting-while-unfocused work (KLANG-00389). Not scheduled.
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: the UI batch's review, clean in round 9 (record in ULTRA-00266). Request from Klang.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -58,3 +58,4 @@ In ULTRA-00266's Review record (the batch's gate, both groups).
 - 2026-10-29: maintainer: option (a), a shared default `WindowController.default`; the interface for test fakes and `isVisible` as planned.
 - 2026-10-29: implemented and through two review rounds (record in ULTRA-00266); round 2 not clean (one MAJOR on replaceUri keeping history.state): stopped at the safety valve for the maintainer.
 - 2026-10-29: IN PROGRESS.
+- 2026-10-30: DONE.

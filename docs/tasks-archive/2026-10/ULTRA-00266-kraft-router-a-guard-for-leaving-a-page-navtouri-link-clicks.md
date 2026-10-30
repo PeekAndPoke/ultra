@@ -1,6 +1,6 @@
 # ULTRA-00266: Kraft router: a guard for leaving a page (navToUri, link clicks, Back)
 
-> **Status (2026-10-29): IN PROGRESS.** Implemented 2026-10-29; the review stopped at the safety valve (round 2, one MAJOR; ULTRA-00266 Review record), waiting for the maintainer. Request from Klang (Klang-Research, 2026-10-28), from its look editor (KLANG-00382). Not scheduled; Klang keeps unapplied drafts in memory and arms beforeunload meanwhile.
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: the UI batch's review, clean in round 9 (record in ULTRA-00266). Nine rounds, the valve four times (the maintainer's decisions recorded below). Follow-ups: ULTRA-00280 (the trap entry), ULTRA-00281 (round-9 MINORs), ULTRA-00283 (docs). Request from Klang (KLANG-00382).
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -364,6 +364,23 @@ the custom landscape row; NITs. ULTRA-00280 filed for the trap entry left behind
 Mutants red: page from the router, no still-on, no stopPropagation, initializer form, fresh-reference removals (two),
 blur without update; no takeLinkClick reloads the test page (the path rows follow the link).
 
+## Round 9 (level 3, reviewer-top, two-phase, a delta: 8af2dac5..c786e871)
+
+Verdict: **CLEAN** (all three charters, 0 CRITICAL, 0 MAJOR, after phase 2). **Gate PASS** for group A (ULTRA-00243,
+00247, 00263, 00266, 00268), ULTRA-00275, ULTRA-00276 and the bug tickets ULTRA-00272, 00273, 00274, 00277, 00278
+(group B passed in rounds 2, 4 and 6). Full suite on c786e871: 16514 tests, 0 failures.
+
+The MINORs, as the maintainer's plan had it (a follow-up by default after a clean round, prose that is wrong fixed):
+- **Fixed before the release (prose, factually wrong):** "a query-only replaceUri" in the FadingModal KDoc and the
+  CHANGELOG; "shown in the same handler"; `RouterStrategy.linkClicked` documented for custom strategies (KDoc,
+  CHANGELOG); the DisplayType fix under Fixes; the ULTRA-00277 status line; the two spec comments ("the router took
+  it"); a double blank line in Router.kt.
+- **Follow-up ULTRA-00281:** a guard inside a modal shown with a hash navigation binds to the page being left
+  (security, data loss path); "shown together" across two listeners; the stillOn row; the Safari row counting calls;
+  custom strategies and the no-op `linkClicked`.
+- **Into ULTRA-00280:** a link whose own onClick answers the modal loses its navigation (the trap's doGoBack).
+- **Withdrawn in phase 2:** the WindowController hasFocus row's start state.
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
@@ -374,3 +391,4 @@ blur without update; no takeLinkClick reloads the test page (the path rows follo
 - 2026-10-29: IN PROGRESS.
 - 2026-10-29: maintainer at the valve: the trap checks the URL (keep the state, the trap clears its marker instead of going back when the address changed); round 3 at level 3; all round-2 MINORs applied in the same batch.
 - 2026-10-29: maintainer after round 3: leaving = another path (before ? and #), what RouterComponent remounts for; replaces "another matched route". Both round-3 MAJORs and all MINORs fixed in one batch, then round 4 at level 3.
+- 2026-10-30: DONE.

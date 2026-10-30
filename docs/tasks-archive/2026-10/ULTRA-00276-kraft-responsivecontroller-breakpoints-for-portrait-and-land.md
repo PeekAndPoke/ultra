@@ -1,8 +1,6 @@
 # ULTRA-00276: Kraft ResponsiveController: breakpoints for portrait and landscape, and the orientation in its state
 
-> **Status (2026-10-30): IN PROGRESS.** Built and tested (6 rows, 6 mutants red); the review gate runs with round 5
-> of the UI batch. The maintainer asked for it on 2026-10-30, for the next release (Klang's mobile browser version),
-> and confirmed the plan the same day: "1. ok 2. ok for now 3. ok 4. yes please fix".
+> **Status (2026-10-30): DONE.** Gate PASS 2026-10-30: the UI batch's review, clean in round 9 (record in ULTRA-00266). The maintainer's request, for Klang's mobile version.
 
 ## Why this exists
 
@@ -73,3 +71,4 @@ What the code does today (`kraft/core/src/jsMain/kotlin/utils/ResponsiveControll
 - 2026-10-30: plan confirmed; built. `ResponsiveControllerSpec` has 6 rows, and core-tests are green (508). Six
   mutants all turned red: the breakpoint sets swapped, no next-frame measuring, the query listener kept, no dedupe,
   the resize listener kept, no `screen.orientation` listener.
+- 2026-10-30: DONE.
