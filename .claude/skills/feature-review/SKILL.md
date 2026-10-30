@@ -59,7 +59,7 @@ MINORs and NITs do not make it unclean."
 | Reviewer | Charter |
 |---|---|
 | **1. Implementation & code style** | Correctness vs the task spec; edge cases; reuse and simplification; test quality — do the e2e tests exercise the real flow, both DB backends? Plus `.claude/skills/code-style/`: explicit imports, no FQCN, no wildcards, resolvable KDoc links, branding, pnpm |
-| **2. Domain expert** | Is it correct *for the domain*? Auth/tenancy/org invariants, data-model soundness, API contract fit, consistency with existing funktor patterns. Migration expectations — this repo requires none, so verify nothing silently depends on that. Judge design fit, not lint |
+| **2. Domain expert** | Is it correct *for the domain*? Auth/tenancy/org invariants, data-model soundness, API contract fit, consistency with existing funktor patterns. Migration expectations — this repo requires none, so verify nothing silently depends on that. Objects handed to a third-party library: does it keep and mutate them (ULTRA-00206)? Judge design fit, not lint |
 | **3. Security** | Authn/authz gaps, tenant isolation (can org A read org B?), injection, secrets, token/session handling, unsafe deserialization, privilege escalation (`isSuperUser` bypass), input validation, error-message leakage. Assume a hostile authenticated user of another org |
 
 **Scope by risk** (review-loop rule): a doc-only or test-only feature does not need all three.
@@ -122,6 +122,8 @@ skipped often enough to be worth naming here:
 
 ## Changelog
 
+- **2026-10-30** — The domain charter asks who owns objects handed to a third-party library (ULTRA-00206;
+  the weekly meeting).
 - **2026-08-28** — Loop mechanics extracted to `.claude/skills/review-loop/`, adopted from the Klang
   project. This skill was previously a ONE-SHOT gate. The insights review of 2026-08-24 shows the cost:
   it confirmed a CRITICAL it could not fix and had nowhere to put it, left three findings

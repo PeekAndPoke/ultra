@@ -163,6 +163,8 @@ red-team follow-up, task-file record).
 
 - **Fresh agents every round.** A reviewer that saw round N is anchored for N+1. Fresh AGENT, informed
   PROMPT — the round context of step 2 travels to the new agent.
+- **No mutation check and no edit in the working tree while a review round reads it.** Reviewers read
+  files, not a commit: a mutant applied mid-round was reported as a finding (2026-10-30, meeting).
 - **Comment/KDoc findings only when the text is factually WRONG** — never for completeness or style.
   Prose churn is this loop's documented failure mode: each round's fixes write new text, the next
   round critiques it, and the loop feeds itself.
@@ -286,6 +288,8 @@ condition under which a green test is worth nothing.
 
 1. **GREEN** — write it, run it, confirm it passes.
 2. **MUTATE** — introduce ONE targeted mutation that should break the behaviour under test.
+   **A branch on cached or lazy state** (`isInitialized()`, a memo hit) **gets one mutant per arm**:
+   the arm a fresh fixture never takes is the one left untested (ULTRA-00205, meeting 2026-10-30).
    **Prefer mutating the code under test** (flip an operator, off-by-one a constant, drop a term,
    swap a branch); mutating the test's inputs is the fallback.
 3. **RED** — run it. It MUST fail, **and you must confirm the failure is the test you mutated for.**
@@ -392,6 +396,10 @@ in this file:
   that also matches your own shell's command line.
 
 ## Changelog
+
+- **2026-10-30** — The weekly meeting's ultra rules: one mutant per arm of a cached-state branch
+  (Standard 2, ULTRA-00205); no mutation check or edit while a round reads the tree (Rules). The fixer's
+  level, two charters at the top, stop and simplify, and reviewers reading a snapshot arrive with MC-00036.
 
 - **2026-10-25** — Mission Control's blueprint update MC-00033 (maintainer: the ladder should follow
   the findings): the ladder is keyed by level, not round; CRITICAL/MAJOR, fixed or rejected, raises the
