@@ -265,6 +265,23 @@ Safety valve re-armed: maintainer.
 "Fix all, round 6": the MAJOR and every MINOR in one batch, then round 6 at level 3; the dnd gate's round 2 runs in
 parallel.
 
+## After round 5: what was done (commit below)
+
+All round-5 rows FIXED, as the maintainer decided ("Fix all, round 6"):
+- MAJOR: the Ask's state is reset on the job's completion (identity-checked, also for a job cancelled before it ran)
+  and at once in cancelAskIfLeaving. Row "an Ask dropped before it ran" under both strategies.
+- beforeunload: only withoutLeaveGuards approves a page load (its own flag); the router's own approvals no longer do.
+  Row: a page load started inside an approved navigation is prompted.
+- The let-through arrival cancels a pending Ask (Hash row). TestWindowController: hidden blurs (row). Rows: urlParam
+  under hash, the hash click listener's dispose, Stop holds a Forward. Mirror: held Forward / Back history shape.
+- Streams: a handler that throws on its first value is dropped and what onSub started released (StreamSourceImpl,
+  StreamWrapperBase); a null law lands a stalled smooth; the sampled half-subscribe row throws after the source
+  subscribed. ThreeJs: ThreeJsComponentSpec mounts the component on a fake three module (paused, a new paused).
+- WakeLock: the visibility listener only while held (row). ResponsiveController: the height dependence documented.
+Mutants, each red on its row: both Ask resets, approved in passingLeaveGuards, no let-through cancel, `##` hash URL,
+click listener kept, hidden keeps focus, WakeLock listener never added, first-call handler kept (source, wrapper),
+null law not landing, sampled no unwind, no followPaused, new paused ignored.
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.

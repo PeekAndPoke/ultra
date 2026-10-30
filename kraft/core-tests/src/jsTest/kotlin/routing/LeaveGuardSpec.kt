@@ -182,6 +182,32 @@ class LeaveGuardSpec : StringSpec({
             }
         }
 
+        "$strategy: Stop holds a Forward, and the page's address is put back" {
+            val control = GuardControl().apply { answer = { LeaveResult.Proceed } }
+
+            withEditor(control, strategy) {
+                // A forward entry to come back to: off to /other, then Back onto the editor (/other has no guard)
+                router.navToUri("/other")
+                router.awaitUri("/other")
+                window.history.back()
+                router.awaitUri("/edit/1")
+                eventually { (document.querySelector(".editor") != null) shouldBe true }
+                control.asked.clear()
+                control.answer = { LeaveResult.Stop }
+
+                window.history.forward()
+                eventually { control.asked shouldBe listOf("/other") }
+                settle()
+
+                router.current().uri shouldBe "/edit/1"
+                if (strategy == Strategy.Hash) {
+                    window.location.hash shouldBe "#/edit/1"
+                } else {
+                    window.location.pathname shouldBe "/edit/1"
+                }
+            }
+        }
+
         "$strategy: Ask answered yes on a Back replays the Back: the next Back goes on to the page before" {
             val control = GuardControl().apply { answer = { LeaveResult.Ask { true } } }
 
@@ -455,6 +481,26 @@ class LeaveGuardSpec : StringSpec({
                 cancelled shouldBe true
             }
         }
+
+        "$strategy: an Ask dropped before it ran (the same turn) does not leave the router asking" {
+            val control = GuardControl()
+            control.answer = { LeaveResult.Ask { CompletableDeferred<Boolean>().await() } }
+
+            withEditor(control, strategy) {
+                // The Ask and the logout past the guards in one synchronous run: the Ask's coroutine never starts
+                router.navToUri("/other")
+                router.withoutLeaveGuards { router.navToUri("/login") }
+                router.awaitUri("/login")
+
+                router.navToUri("/edit/2")
+                router.awaitUri("/edit/2")
+                eventually { (document.querySelector(".editor") != null) shouldBe true }
+
+                control.answer = { LeaveResult.Proceed }
+                router.navToUri("/a")
+                router.awaitUri("/a")
+            }
+        }
     }
 
     "a query-only change is not leaving; other route params are" {
@@ -482,6 +528,36 @@ class LeaveGuardSpec : StringSpec({
 
             router.current().uri shouldBe "/edit/1"
             window.location.hash shouldBe "#/edit/1"
+        }
+    }
+
+    "Hash: a pending Ask is dropped also when the page is left by a navigation let through earlier" {
+        val control = GuardControl()
+        var cancelled = false
+        control.answer = {
+            LeaveResult.Ask {
+                try {
+                    CompletableDeferred<Boolean>().await()
+                } catch (e: CancellationException) {
+                    cancelled = true
+                    throw e
+                }
+            }
+        }
+
+        withEditor(control) {
+            // The logout writes the hash; the router follows on the hashchange, a task later
+            router.withoutLeaveGuards { router.navToUri("/login") }
+            // Still on the editor meanwhile: this one asks
+            router.navToUri("/other")
+            router.awaitUri("/login")
+            settle()
+
+            cancelled shouldBe true
+
+            // And nothing is left asking: the next page's navigations go
+            router.navToUri("/a")
+            router.awaitUri("/a")
         }
     }
 
@@ -592,6 +668,16 @@ class LeaveGuardSpec : StringSpec({
                 eventually { handlers.size shouldBe 2 }
                 control.answer = { LeaveResult.Stop }
                 unload() shouldBe true
+
+                // Nor while one runs: a page load started inside it (by a subscriber of the router) is still prompted
+                control.answer = { if (control.asked.last() == null) LeaveResult.Stop else LeaveResult.Proceed }
+                var prompted: Boolean? = null
+                val unsubscribe = router.current.subscribeToStream { if (it.uri == "/other") prompted = unload() }
+                router.navToUri("/other")
+                router.awaitUri("/other")
+                unsubscribe()
+                prompted shouldBe true
+                control.answer = { LeaveResult.Stop }
 
                 // A page load inside withoutLeaveGuards (a logout through the server) leaves without the prompt,
                 // also when the browser fires beforeunload a little later

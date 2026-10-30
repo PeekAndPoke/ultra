@@ -1258,7 +1258,7 @@ or fragment change never asks. A held Back is
 undone by putting the address back as a new entry; a confirmed Ask on a Back replays the Back; a middleware redirect on
 the way is not asked again. `beforeUnload = true` arms the browser's prompt (target `null`). Logout past every guard:
 `router.withoutLeaveGuards { router.navToUri("/login") }`. Hash routing: `#/...` link clicks go through the router; a
-typed hash is held but leaves one extra history entry. Page loads (reload, typed address under path routing, external
+typed hash and a Forward are held but leave one extra history entry; a held Back drops the forward history. Page loads (reload, typed address under path routing, external
 links, Back out of the app) only see the `beforeUnload` prompt.
 
 ## Setting the page title
@@ -2761,6 +2761,7 @@ Default breakpoints, one set per orientation (portrait: height >= width, as the 
 | `Desktop`    | >= 1200px       | >= 1200px        |
 
 Custom: `responsive(ResponsiveController(portrait = Breakpoints(600, 1024), landscape = Breakpoints(1000, 1280)))`.
+A change of height alone can change the display type (768-959 px wide turning landscape, e.g. a resizing keyboard).
 
 Convenience checks on the state:
 

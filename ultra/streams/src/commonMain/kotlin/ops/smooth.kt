@@ -234,14 +234,17 @@ private class StreamSmoothOperator(
     private fun lawChanged(next: Smoothing?) {
         law = next
 
+        // On its way: moving, or stalled short of the target (its law threw)
+        val underway = cancelFrame != null || (settledIn && target != null && motion?.position != target)
+
         when {
             // No law any more: a stream on its way lands at once
-            next == null -> if (cancelFrame != null) {
+            next == null -> if (underway) {
                 stop()
                 emit(target?.let { Motion(it) })
             }
-            // A motion that stalled (its law threw) goes on with the new law
-            settledIn && target != null && motion?.position != target -> start()
+            // A motion that stalled goes on with the new law
+            underway -> start()
         }
     }
 

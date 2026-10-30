@@ -16,6 +16,7 @@ import kotlinx.css.Display
 import kotlinx.css.display
 import kotlinx.html.Tag
 import kotlinx.html.div
+import org.w3c.dom.events.Event
 import kotlin.js.Promise
 
 /** A held screen wake lock of the Screen Wake Lock API; the browser releases it by itself when the page is hidden. */
@@ -78,19 +79,18 @@ class WakeLockController(
     /** How many hold the lock now. */
     val holderCount: Int get() = holders
 
-    init {
-        // A visible page that is held asks for the lock again (the browser dropped it when the page was hidden)
-        document.addEventListener("visibilitychange", {
-            if (isPageVisible()) {
-                retries = 0
-                request()
-            }
-        })
+    // A visible page that is held asks for the lock again (the browser dropped it when the page was hidden). Listened
+    // to only while someone holds the lock: a controller nobody holds (a test's fake) leaves nothing on the document.
+    private val onVisibility: (Event) -> Unit = {
+        if (isPageVisible()) {
+            retries = 0
+            request()
+        }
     }
 
     /** Holds the lock until the returned release is called; calling it again does nothing. */
     fun acquire(): () -> Unit {
-        holders++
+        if (holders++ == 0) document.addEventListener("visibilitychange", onVisibility)
         retries = 0
         request()
 
@@ -101,7 +101,10 @@ class WakeLockController(
                 released = true
                 holders--
 
-                if (holders == 0) letGo()
+                if (holders == 0) {
+                    document.removeEventListener("visibilitychange", onVisibility)
+                    letGo()
+                }
             }
         }
     }

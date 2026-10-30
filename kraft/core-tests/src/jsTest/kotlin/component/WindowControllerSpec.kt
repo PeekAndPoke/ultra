@@ -69,6 +69,17 @@ class WindowControllerSpec : StringSpec({
         }
     }
 
+    "a hidden TestWindowController has no focus, as a hidden browser tab" {
+        val ctrl = TestWindowController()
+        var blurred = 0
+        ctrl.onWindowBlur { blurred++ }
+
+        ctrl.visibility(false)
+
+        ctrl.hasFocus() shouldBe false
+        blurred shouldBe 1
+    }
+
     "a TestWindowController drives the components by hand" {
         val ctrl = TestWindowController()
 

@@ -171,38 +171,50 @@ class SampledSpec : StringSpec({
         clock.requests shouldBe 1
     }
 
-    "a source that throws on subscribe leaves nothing half subscribed" {
+    "an interval stream that throws on subscribe leaves nothing half subscribed" {
         val clock = HandClock()
-        val inner = StreamSource(1)
+        val source = StreamSource(1)
+        val inner = StreamSource(100.milliseconds)
         var failNext = true
-        val source = object : Stream<Int> {
-            override fun invoke(): Int = inner()
+        // Subscribed after the source: its throw finds the source already subscribed
+        val every = object : Stream<Duration> {
+            override fun invoke(): Duration = inner()
 
-            override fun subscribeToStream(sub: (Int) -> Unit): Unsubscribe {
+            override fun subscribeToStream(sub: (Duration) -> Unit): Unsubscribe {
                 if (failNext) {
                     failNext = false
-                    error("a source fails once")
+                    error("an interval stream fails once")
                 }
                 return inner.subscribeToStream(sub)
             }
         }
-        val every = StreamSource(100.milliseconds)
         val sampled = source.sampled(every = every, clockFor = { clock })
 
         // The failed subscriber got no unsubscribe: it must not be told anything later
         var leaked = 0
         runCatching { sampled.subscribeToStream { leaked++ } }.isFailure shouldBe true
-        every.subscriptions.size shouldBe 0
+        source.subscriptions.size shouldBe 0
 
         val seen = mutableListOf<Int>()
         sampled.subscribeToStream { seen.add(it) }
         seen.clear()
-        inner(2)
+        source(2)
         clock.frame()
 
         seen shouldBe listOf(2)
         leaked shouldBe 0
-        every.subscriptions.size shouldBe 1
+        source.subscriptions.size shouldBe 1
+        inner.subscriptions.size shouldBe 1
+    }
+
+    "a handler that throws on its first value is not kept, and the ticks stop" {
+        val clock = HandClock()
+        val source = StreamSource(1)
+
+        runCatching { source.sampled(clock).subscribeToStream { error("a handler fails") } }.isFailure shouldBe true
+
+        source.subscriptions.size shouldBe 0
+        clock.waiting shouldBe false
     }
 
     "a subscriber is told the source's value as it is once the source is listened to" {

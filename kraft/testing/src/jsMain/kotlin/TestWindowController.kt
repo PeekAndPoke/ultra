@@ -53,9 +53,10 @@ class TestWindowController(
         blurListeners.toList().forEach { it() }
     }
 
-    /** The tab is shown ([visible] true) or hidden. */
+    /** The tab is shown ([visible] true) or hidden; a hidden tab has no focus, as in the browser. */
     fun visibility(visible: Boolean) {
         isVisibleSource(visible)
+        if (!visible && hasFocusSource()) blur()
     }
 
     /** The window takes [size]. */

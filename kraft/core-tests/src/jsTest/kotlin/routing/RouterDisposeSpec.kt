@@ -57,7 +57,7 @@ class RouterDisposeSpec : StringSpec({
         }
     }
 
-    "after a TestBed render the app's router no longer answers hashchange" {
+    "after a TestBed render the app's router no longer answers hashchange, nor a route link's click" {
         lateinit var appRouter: Router
 
         TestBed.preact(
@@ -76,12 +76,31 @@ class RouterDisposeSpec : StringSpec({
 
         // Enabled again, only a removed listener stays silent: disable() alone would also pass the check below
         appRouter.enable()
+
         window.location.hash = "/b"
         // hashchange is dispatched as a task of its own
         delay(50)
 
         appRouter.current().uri shouldBe "/a"
 
+        // The hash strategy's click listener takes route links (not the current address, #/b): a removed one leaves
+        // the click to the browser
+        val anchor = document.createElement("a") as HTMLAnchorElement
+        anchor.href = "#/a"
+        document.body!!.appendChild(anchor)
+        var prevented = true
+        val recorder: (Event) -> Unit = { prevented = it.defaultPrevented }
+        window.addEventListener("click", recorder)
+
+        try {
+            val options: dynamic = js("({bubbles: true, cancelable: true, button: 0})")
+            anchor.dispatchEvent(MouseEvent("click", options))
+        } finally {
+            window.removeEventListener("click", recorder)
+            anchor.remove()
+        }
+
+        prevented shouldBe false
     }
 
     "Router.dispose() removes the path strategy's popstate and click listeners" {

@@ -46,7 +46,19 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
 
         this.subscriptions.add(sub)
 
-        sub(invoke())
+        try {
+            sub(invoke())
+        } catch (e: Throwable) {
+            // No unsubscribe reaches the caller: the handler must not stay behind, nor the wrapped subscription
+            subscriptions.remove(sub)
+
+            if (subscriptions.isEmpty()) {
+                wrappedUnsubscribe?.invoke()
+                wrappedUnsubscribe = null
+            }
+
+            throw e
+        }
 
         return {
             subscriptions.remove(sub)

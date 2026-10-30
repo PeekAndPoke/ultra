@@ -177,6 +177,36 @@ class WakeLockSpec : StringSpec({
         release()
     }
 
+    "the visibility listener is on the document only while someone holds the lock" {
+        val doc = document.asDynamic()
+        val add = doc.addEventListener
+        val remove = doc.removeEventListener
+        val counts = js("({ added: 0, removed: 0 })")
+        // A plain function: the patched method needs its own `this`, the document
+        val counting = js(
+            "(function (orig, counts, field) { return function (type, h, o) { " +
+                "if (type === 'visibilitychange') counts[field]++; return orig.call(this, type, h, o); }; })"
+        )
+        doc.addEventListener = counting(add, counts, "added")
+        doc.removeEventListener = counting(remove, counts, "removed")
+
+        try {
+            val api = FakeLockApi()
+            (counts.added as Int) shouldBe 0
+
+            val first = api.controller.acquire()
+            val second = api.controller.acquire()
+            (counts.added as Int) shouldBe 1
+
+            first()
+            second()
+            (counts.removed as Int) shouldBe 1
+        } finally {
+            doc.addEventListener = add
+            doc.removeEventListener = remove
+        }
+    }
+
     "without the API nothing is asked and nothing fails" {
         val api = FakeLockApi(supported = false)
 

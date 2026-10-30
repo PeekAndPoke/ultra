@@ -6,6 +6,24 @@ import io.peekandpoke.ultra.streams.ops.map
 
 class HandlerResilienceSpec : StringSpec({
 
+    "A handler that throws on its first value is not kept: neither by a source nor by a wrapper, nor upstream" {
+        val source = StreamSource(10)
+        var called = 0
+
+        runCatching { source.subscribeToStream { called++; error("I fail at once") } }.isFailure shouldBe true
+        source(20)
+        called shouldBe 1
+        source.subscriptions.size shouldBe 0
+
+        val mapped = source.map { it * 2 }
+        var mappedCalls = 0
+        runCatching { mapped.subscribeToStream { mappedCalls++; error("I fail at once") } }.isFailure shouldBe true
+        source(30)
+        mappedCalls shouldBe 1
+        // The wrapper let go of its source too: nobody listens to it any more
+        source.subscriptions.size shouldBe 0
+    }
+
     "A failing handler on StreamSource must not prevent other handlers from being notified" {
 
         val source = StreamSource(10)

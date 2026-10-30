@@ -156,6 +156,37 @@ class SmoothLawStreamSpec : StringSpec({
         smooth()!! shouldBeGreaterThan 0.0
     }
 
+    "a law of null lands a motion that a throwing law stalled" {
+        val clock = HandClock()
+        val source = StreamSource<Double?>(0.0)
+        val failing = object : Smoothing {
+            override fun step(motion: Motion, goal: Double, elapsedMs: Double): Motion = error("a law fails")
+        }
+        val law = StreamSource<Smoothing?>(failing)
+        val smooth = source.smooth(smoothing = law, clock = clock)
+
+        smooth.subscribeToStream { }
+        source(10.0)
+        runCatching { clock.frame(frame) }
+
+        law(null)
+
+        smooth() shouldBe 10.0
+        clock.waiting shouldBe false
+    }
+
+    "a handler that throws on its first value is not kept, and nothing is left listening" {
+        val clock = HandClock()
+        val source = StreamSource<Double?>(0.0)
+        val law = StreamSource<Smoothing?>(Smoothing.Exponential(keepPer10Ms = 0.5))
+        val smooth = source.smooth(smoothing = law, clock = clock)
+
+        runCatching { smooth.subscribeToStream { error("a handler fails") } }.isFailure shouldBe true
+
+        source.subscriptions.size shouldBe 0
+        law.subscriptions.size shouldBe 0
+    }
+
     "a source that throws on subscribe leaves nothing half subscribed" {
         val inner = StreamSource<Double?>(0.0)
         var failNext = true

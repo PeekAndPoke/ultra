@@ -44,7 +44,14 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
             throw e
         }
 
-        sub(current)
+        try {
+            sub(current)
+        } catch (e: Throwable) {
+            // The handler threw on its first value: nor here, and what onSub started is released with it
+            subscriptions.remove(sub)
+            onUnSub()
+            throw e
+        }
 
         return {
             subscriptions.remove(sub)

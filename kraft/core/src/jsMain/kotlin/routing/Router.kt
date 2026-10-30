@@ -380,11 +380,14 @@ class Router(
     /** A navigation the guards let through is running: what it leads to (a middleware redirect) follows unasked. */
     private var approved = false
 
+    /** [withoutLeaveGuards] runs: unlike the router's own approvals, it also approves a page load. */
+    private var unloadApproved = false
+
     /** Until when a page load counts as started inside [withoutLeaveGuards]: browsers may fire beforeunload later. */
     private var unloadApprovedUntil = 0.0
 
     /** True while [withoutLeaveGuards] runs, and shortly after: `guardLeaving`'s beforeunload prompt stays quiet. */
-    internal val passingLeaveGuards: Boolean get() = approved || Date.now() < unloadApprovedUntil
+    internal val passingLeaveGuards: Boolean get() = unloadApproved || Date.now() < unloadApprovedUntil
 
 
     /** The pending [LeaveResult.Ask], cancelled when the router is disposed or leaves its page past the guards. */
@@ -559,9 +562,13 @@ class Router(
      * use `navBack()`.
      */
     fun <R> withoutLeaveGuards(block: () -> R): R {
+        val was = unloadApproved
+        unloadApproved = true
+
         try {
             return approving(block)
         } finally {
+            unloadApproved = was
             // A page load the block started may fire beforeunload a little later
             unloadApprovedUntil = Date.now() + UNLOAD_APPROVAL_MS
         }
@@ -633,6 +640,8 @@ class Router(
         letThrough?.let { through ->
             if (sameUri(target, through)) {
                 letThrough = null
+                // Arriving past the guards: a pending Ask about the page left this way is moot
+                cancelAskIfLeaving(target)
                 approving { navigateToWindowUri() }
                 return
             }
@@ -719,6 +728,8 @@ class Router(
 
         if (pagePath(target) != askingFromPage) {
             pending.cancel()
+            // At once: a job cancelled before it ran never reaches its own finally
+            stopAsking(pending)
         }
     }
 
@@ -737,17 +748,30 @@ class Router(
         askingToLeave = true
         askingFromPage = pagePath(current().uri)
 
-        asking = launch {
+        lateinit var job: Job
+
+        job = launch {
             val yes = try {
                 answer.confirm()
             } finally {
-                askingToLeave = false
-                asking = null
-                askingFromPage = null
+                stopAsking(job)
             }
 
             if (yes && !disposed && stillThere()) go()
         }
+
+        asking = job
+        // Also for a job cancelled before it ran: its body, and its finally, never run
+        job.invokeOnCompletion { stopAsking(job) }
+    }
+
+    /** The Ask [job] is over; a newer Ask keeps its own state. */
+    private fun stopAsking(job: Job) {
+        if (asking !== job) return
+
+        askingToLeave = false
+        asking = null
+        askingFromPage = null
     }
 
     /**

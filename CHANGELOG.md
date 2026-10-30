@@ -98,7 +98,9 @@
 
 - **`ResponsiveController(breakpoints = ...)` is now `ResponsiveController(portrait = ..., landscape = ...)`**
   (ULTRA-00276); `Breakpoints.default` is now `Breakpoints.portrait` (768 / 1200, as before) and
-  `Breakpoints.landscape` (960 / 1200). A desktop window 768 to 959 px wide is now `Mobile`, not `Tablet`.
+  `Breakpoints.landscape` (960 / 1200). A desktop window 768 to 959 px wide is now `Mobile`, not `Tablet`, and a
+  change of height alone can now change the display type (a viewport of that width that turns landscape: an on-screen
+  keyboard that resizes the layout, a DevTools panel docked below).
   `State` has a new constructor parameter, `orientation`.
 
 - **The old Semantic UI drag and drop is gone** (`DndDragHandle`, `DndDropTarget`, `greenHighlights`,
@@ -121,9 +123,10 @@
 
 ### Fixes
 
-- **Streams: a subscribe that throws leaves nothing behind.** `StreamSourceImpl` drops the handler when `onSub()`
-  throws (the caller got no unsubscribe), and `smooth()` and `sampled()` undo a half-made subscription, so the next
-  subscriber starts afresh. A `smooth()` motion that a throwing law stalled goes on when the law changes.
+- **Streams: a subscribe that throws leaves nothing behind.** When `onSub()` throws, or the handler throws on its first
+  value, `StreamSourceImpl` and `StreamWrapperBase` drop the handler (the caller got no unsubscribe) and release what
+  the subscription started; `smooth()` and `sampled()` undo a half-made subscription, so the next subscriber starts
+  afresh. A `smooth()` motion that a throwing law stalled goes on when the law changes, and lands on a `null` law.
 
 - **Kraft: `ResponsiveController` measured the page, not the viewport** (ULTRA-00276): the height came from
   `document.body`, so on a long page it was the content's height. It now reads `document.documentElement`, and it

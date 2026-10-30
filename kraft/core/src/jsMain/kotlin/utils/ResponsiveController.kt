@@ -20,7 +20,9 @@ val Component<*>.responsiveCtrl: ResponsiveController get() = getAttributeRecurs
  * that orientation (ULTRA-00276).
  *
  * Emits a new [State] when the viewport is resized or rotated and the state changed. One per app; [dispose] (called by
- * [KraftApp.dispose]) removes its listeners.
+ * [KraftApp.dispose]) removes its listeners. As the orientation picks the breakpoints, a change of height alone can
+ * change the display type: a viewport 768 to 959 px wide that turns landscape (an on-screen keyboard that resizes the
+ * layout, a DevTools panel docked below) goes from Tablet to Mobile.
  */
 class ResponsiveController(
     /** The breakpoints while the viewport is at least as high as it is wide. */

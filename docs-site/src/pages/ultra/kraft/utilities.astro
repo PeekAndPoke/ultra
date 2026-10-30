@@ -59,7 +59,8 @@ import {Code} from 'astro:components';
 
     <p>If you don't configure anything, the defaults are below. The viewport is portrait when it is at least as high as
         it is wide, as in the CSS media query; in landscape the tablet breakpoint is 960px, so a phone held sideways
-        stays <code>Mobile</code>.</p>
+        stays <code>Mobile</code>. A change of height alone can therefore change the display type: a viewport 768 to
+        959px wide that turns landscape (an on-screen keyboard that resizes the layout) goes from Tablet to Mobile.</p>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
