@@ -40,6 +40,8 @@ internal class DndStage(ctx: Ctx<Props>) : Component<DndStage.Props>(ctx) {
                 top = current.top.px
                 // The grabbed share of the preview's own size goes under the pointer
                 put("transform", "translate(${-current.grabX * 100}%, ${-current.grabY * 100}%)")
+                // Its own width, also near the viewport's right edge, where a fixed box would shrink to the space left
+                put("width", "max-content")
                 zIndex = DND_STAGE_Z_INDEX
                 pointerEvents = PointerEvents.none
             }

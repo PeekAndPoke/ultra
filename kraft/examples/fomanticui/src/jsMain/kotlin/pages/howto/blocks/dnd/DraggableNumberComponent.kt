@@ -4,7 +4,6 @@ import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.dnd.DndManager.Companion.dnd
-import io.peekandpoke.kraft.dnd.startDrag
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onPointerDown
 import io.peekandpoke.ultra.semanticui.icon

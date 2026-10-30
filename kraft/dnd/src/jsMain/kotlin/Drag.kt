@@ -17,8 +17,6 @@ typealias DragPreview = FlowContent.() -> Unit
 class Drag<out T : Any> internal constructor(
     /** What is dragged. */
     val payload: T,
-    /** The payload's type, which drop zones filter by. */
-    val type: KClass<out T>,
     /** Where the drag came from, as the starter said; null if it said nothing. */
     val source: Any?,
     /** The pointer's position in viewport coordinates (`clientX`, `clientY`). */
@@ -104,9 +102,18 @@ class DropZone<T : Any> internal constructor(
     internal fun drop(drag: Drag<*>) = notify(handlers.drop, drag)
 
     private fun notify(list: List<(Drag<T>) -> Unit>, drag: Drag<*>) {
-        typed(drag)?.let { typedDrag -> list.toList().forEach { it(typedDrag) } }
+        typed(drag)?.let { typedDrag -> list.toList().forEach { handler -> guarded { handler(typedDrag) } } }
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun typed(drag: Drag<*>): Drag<T>? = if (type.isInstance(drag.payload)) drag as Drag<T> else null
+}
+
+/** Runs a handler of the app's: one that throws is reported and does not keep the drag from ending cleanly. */
+internal fun guarded(handler: () -> Unit) {
+    try {
+        handler()
+    } catch (e: Throwable) {
+        console.error("[kraft:dnd] a handler failed", e)
+    }
 }

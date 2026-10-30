@@ -14,7 +14,6 @@ import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
 import org.w3c.dom.pointerevents.PointerEvent
 import kotlin.math.hypot
-import kotlin.reflect.KClass
 
 /** The [DndManager] that `kraftApp { dnd() }` registers; disposing the app ends a drag in progress or pending. */
 class DefaultDndManager : DndManager, KraftApp.Disposable {
@@ -52,25 +51,48 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
     override fun <T : Any> startDrag(
         event: PointerEvent,
         payload: T,
-        type: KClass<T>,
         source: Any?,
         preview: DragPreview?,
         threshold: Double,
     ): DragHandle {
-        // One drag at a time
-        session?.end(drop = false)
+        // The primary button only: a right press opens a context menu, which takes the release
+        if (!event.isPrimary || event.button.toInt() != 0) return NoDrag
 
-        return Session(event = event, payload = payload, type = type, source = source, render = preview, threshold = threshold)
+        // A nested source: the first start for this event wins, the innermost one as the event bubbles
+        if (session?.startedBy === event) return NoDrag
+
+        // One drag at a time
+        session?.end(drop = false, ending = Ending.PointerGone)
+
+        return Session(event = event, payload = payload, source = source, render = preview, threshold = threshold)
             .also { session = it }
     }
 
     override fun cancel() {
-        session?.end(drop = false)
+        session?.end(drop = false, ending = Ending.PointerStillDown)
     }
 
     override fun dispose() {
         // A pending press too: its window listeners would otherwise outlive the app
-        session?.end(drop = false)
+        session?.end(drop = false, ending = Ending.PointerGone)
+    }
+
+    /** How a drag ends, for the click the browser may fire after the release. */
+    private enum class Ending {
+        /** Released here: the click follows at once. */
+        Released,
+
+        /** Ended while the pointer is still down (Esc, [cancel]): the click follows its release. */
+        PointerStillDown,
+
+        /** No click follows (pointercancel, no button held any more, a new press, dispose). */
+        PointerGone,
+    }
+
+    /** The handle of a press that does not drag. */
+    private object NoDrag : DragHandle {
+        override fun onDropped(callback: (zone: DropZone<*>) -> Unit): DragHandle = this
+        override fun onCancelled(callback: () -> Unit): DragHandle = this
     }
 
     override fun register(zone: DropZone<*>): Unsubscribe {
@@ -87,11 +109,13 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
     private inner class Session<T : Any>(
         event: PointerEvent,
         private val payload: T,
-        private val type: KClass<T>,
         private val source: Any?,
         private val render: DragPreview?,
         private val threshold: Double,
     ) : DragHandle {
+
+        /** The pointerdown that started it. */
+        val startedBy: Event = event
 
         private val pointerId = event.pointerId
         private val pointerType = event.pointerType
@@ -113,10 +137,11 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             }
             ?: Vector2D.zero
 
-        /** The page's user-select before the drag took it over. */
+        /** The page's user-select (and its -webkit- twin) before the drag took it over. */
         private var userSelectBefore: String? = null
+        private var webkitUserSelectBefore: String? = null
 
-        private var drag = Drag(payload = payload, type = type, source = source, position = startAt, pointerType = pointerType)
+        private var drag = Drag(payload = payload, source = source, position = startAt, pointerType = pointerType)
 
         private var started = false
         private var ended = false
@@ -128,16 +153,21 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         private val droppedCallbacks = mutableListOf<(DropZone<*>) -> Unit>()
         private val cancelledCallbacks = mutableListOf<() -> Unit>()
 
-        private val onMove: (Event) -> Unit = { (it as? PointerEvent)?.takeIf { e -> e.pointerId == pointerId }?.let(::moved) }
-        private val onUp: (Event) -> Unit = { (it as? PointerEvent)?.takeIf { e -> e.pointerId == pointerId }?.let { end(drop = true) } }
-        private val onCancel: (Event) -> Unit = { (it as? PointerEvent)?.takeIf { e -> e.pointerId == pointerId }?.let { end(drop = false) } }
+        private val onMove: (Event) -> Unit = { ours(it)?.let(::moved) }
+        private val onUp: (Event) -> Unit = { ours(it)?.let(::released) }
+        private val onCancel: (Event) -> Unit = { ours(it)?.let { end(drop = false, ending = Ending.PointerGone) } }
         private val onKey: (Event) -> Unit = { evt ->
             if (started && (evt as? KeyboardEvent)?.key == "Escape") {
                 evt.preventDefault()
                 evt.stopPropagation()
-                end(drop = false)
+                end(drop = false, ending = Ending.PointerStillDown)
             }
         }
+
+        // The browser's own drag (an image, a link, selected text) would cancel ours with a pointercancel
+        private val onNativeDrag: (Event) -> Unit = { it.preventDefault() }
+
+        private fun ours(event: Event): PointerEvent? = (event as? PointerEvent)?.takeIf { it.pointerId == pointerId }
 
         init {
             // Listened to on the window in the capture phase: the events reach it wherever the pointer is
@@ -145,6 +175,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             window.addEventListener("pointerup", onUp, true)
             window.addEventListener("pointercancel", onCancel, true)
             window.addEventListener("keydown", onKey, true)
+            window.addEventListener("dragstart", onNativeDrag, true)
 
             // Best effort: a synthetic or already released pointer cannot be captured, and the window still hears it
             try {
@@ -162,19 +193,38 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         }
 
         private fun moved(event: PointerEvent) {
-            val at = Vector2D(event.clientX.toDouble(), event.clientY.toDouble())
-            drag = Drag(payload = payload, type = type, source = source, position = at, pointerType = pointerType)
+            // A mouse that moves with no button held lost its release (a context menu, a window switch)
+            if (event.pointerType == "mouse" && event.buttons.toInt() == 0) {
+                end(drop = false, ending = Ending.PointerGone)
+                return
+            }
+
+            val at = at(event)
 
             if (!started) {
                 if (hypot(at.x - startAt.x, at.y - startAt.y) < threshold) return
                 start()
             }
 
+            // A handler may have ended the drag (dnd.cancel()), after any of these steps
+            if (ended) return
             currentSource(drag)
+            if (ended) return
             render?.let { preview(Preview(render = it, left = at.x, top = at.y, grabX = grab.x, grabY = grab.y)) }
 
             hitTest(at)
         }
+
+        private fun released(event: PointerEvent) {
+            // The layout may have moved under a still pointer (a wheel scroll, a re-render): the drop goes where it is now
+            if (started) hitTest(at(event))
+
+            end(drop = true, ending = Ending.Released)
+        }
+
+        private fun at(event: PointerEvent): Vector2D =
+            Vector2D(event.clientX.toDouble(), event.clientY.toDouble())
+                .also { drag = Drag(payload = payload, source = source, position = it, pointerType = pointerType) }
 
         private fun start() {
             started = true
@@ -182,13 +232,16 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             // No text selection while the pointer drags across the page
             val style = document.documentElement?.asDynamic()?.style
             userSelectBefore = style?.getPropertyValue("user-select")?.unsafeCast<String>()
+            webkitUserSelectBefore = style?.getPropertyValue("-webkit-user-select")?.unsafeCast<String>()
             style?.setProperty("user-select", "none")
             style?.setProperty("-webkit-user-select", "none")
             window.asDynamic().getSelection()?.removeAllRanges()
 
             zones.toList().filter { it.takes(drag) }.forEach { zone ->
-                told.add(zone)
-                zone.dragStart(drag)
+                if (!ended) {
+                    told.add(zone)
+                    zone.dragStart(drag)
+                }
             }
         }
 
@@ -196,8 +249,9 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         private fun hitTest(at: Vector2D) {
             val hit: Node? = document.elementFromPoint(at.x, at.y)
 
+            // Only zones told of the start: they are the ones that hear the stop
             val next = hit?.let { node ->
-                zones.toList()
+                told.toList()
                     .filter { it.takes(drag) }
                     .mapNotNull { zone -> zone.element()?.takeIf { it.contains(node) }?.let { zone to it } }
                     // Innermost: the zone whose element lies inside all the others'
@@ -212,7 +266,9 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
 
             hovered?.leave(drag)
             hovered = next
+            if (ended) return
             next?.enter(drag)
+            if (ended) return
             next?.over(drag)
         }
 
@@ -229,7 +285,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         }
 
         /** Ends the drag, dropped on the hovered zone if [drop] and there is one. */
-        fun end(drop: Boolean) {
+        fun end(drop: Boolean, ending: Ending) {
             if (ended) return
             ended = true
 
@@ -237,6 +293,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             window.removeEventListener("pointerup", onUp, true)
             window.removeEventListener("pointercancel", onCancel, true)
             window.removeEventListener("keydown", onKey, true)
+            window.removeEventListener("dragstart", onNativeDrag, true)
 
             try {
                 captured?.releasePointerCapture(pointerId)
@@ -250,30 +307,35 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
 
             preview(null)
             currentSource(null)
-            swallowNextClick()
+
+            when (ending) {
+                Ending.Released -> swallowNextClick()
+                Ending.PointerStillDown -> swallowClickAfterRelease(pointerId)
+                Ending.PointerGone -> Unit
+            }
 
             val style = document.documentElement?.asDynamic()?.style
-            if (userSelectBefore.isNullOrEmpty()) {
-                style?.removeProperty("user-select")
-                style?.removeProperty("-webkit-user-select")
-            } else {
-                style?.setProperty("user-select", userSelectBefore)
-                style?.setProperty("-webkit-user-select", userSelectBefore)
-            }
+            restore(style, "user-select", userSelectBefore)
+            restore(style, "-webkit-user-select", webkitUserSelectBefore)
 
             val target = hovered?.takeIf { drop }
 
+            // The app's handlers are guarded: one that throws does not keep the others, and the stops, from running
             if (target != null) {
                 target.drop(drag)
-                droppedCallbacks.forEach { it(target) }
+                droppedCallbacks.forEach { guarded { it(target) } }
             } else {
                 hovered?.leave(drag)
-                cancelledCallbacks.forEach { it() }
+                cancelledCallbacks.forEach { guarded { it() } }
             }
 
             hovered = null
             told.toList().forEach { it.dragStop(drag) }
             told.clear()
+        }
+
+        private fun restore(style: dynamic, property: String, before: String?) {
+            if (before.isNullOrEmpty()) style?.removeProperty(property) else style?.setProperty(property, before)
         }
     }
 
@@ -290,6 +352,23 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         window.addEventListener("click", swallow, true)
         // No click came (released elsewhere, touch): stop waiting after this task
         window.setTimeout({ window.removeEventListener("click", swallow, true) }, 0)
+    }
+
+    /** A drag ended with the pointer still down: the click after its release must not reach the element either. */
+    private fun swallowClickAfterRelease(pointerId: Int) {
+        lateinit var onRelease: (Event) -> Unit
+
+        onRelease = { event ->
+            if ((event as? PointerEvent)?.pointerId == pointerId) {
+                window.removeEventListener("pointerup", onRelease, true)
+                window.removeEventListener("pointercancel", onRelease, true)
+
+                if (event.type == "pointerup") swallowNextClick()
+            }
+        }
+
+        window.addEventListener("pointerup", onRelease, true)
+        window.addEventListener("pointercancel", onRelease, true)
     }
 }
 

@@ -234,6 +234,37 @@ All round-4 rows FIXED, as the maintainer decided ("Fix all, round 5"):
 Added to the change set for round 5 (new features, their round 1): ULTRA-00275 (WakeLock: d540e896, ae7bb1cb),
 ULTRA-00276 (ResponsiveController portrait/landscape: b855d9e6).
 
+## Round 5 (level 3, reviewer-top, two-phase), base c8251d14..55424e5d
+
+Scope: group A, group B's round-4 MINOR batch, and the first round of ULTRA-00275 (WakeLock) and ULTRA-00276
+(ResponsiveController). Verdict: NOT clean: 1 MAJOR (impl, kept in phase 2; domain and security found the same and
+graded it MINOR: the reviewer's MAJOR stands). Coordinator experiment: the row is red under both strategies.
+Safety valve re-armed: maintainer.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 5 A impl (+dom, sec) | MAJOR | Router.kt:736-751, :717-723 | An Ask cancelled before its coroutine starts never runs its finally: askingToLeave stays true, every leaving navigation from a guarded page is dropped, every Back undone, until reload | fix | Experiment: LeaveGuardSpec "an Ask dropped before it ran" red under Hash and Path |
+| 5 A sec | MINOR | Router.kt:387, :570; LeaveGuard.kt:52 | passingLeaveGuards reads `approved`, set by every internal approval: a page load during one gets no beforeunload prompt; KDoc "no page load is approved by them" wrong | fix | Verified: approving() sets approved |
+| 5 A sec | MINOR | Router.kt:633-639 | The let-through arrival leaves the page past the guards without cancelAskIfLeaving | fix | |
+| 5 A dom | MINOR | TestWindowController.kt:57-59 | visibility(false) leaves hasFocus true; the browser never has that state | fix | |
+| 5 A impl | MINOR | Router.kt:156-157 | urlParam under hash routing (`replaceUri("#/...")` changed) has no row; a `##` mutant survives | fix | |
+| 5 A impl | MINOR | Router.kt:113-116 | The hash click listener's removal on dispose is untested | fix | |
+| 5 A impl | MINOR | LeaveGuardSpec | No Forward row (round-2 MINOR listed typed hash and Forward) | fix | |
+| 5 A impl/sec | MINOR | llms/kraft.md:1253-1262 | The mirror lacks the history shape of held Forward / held Back | fix | |
+| 5 B dom/impl/sec | MINOR | StreamSourceImpl.kt:47; CHANGELOG | A handler that throws on its first value stays subscribed; the CHANGELOG headline overclaims | fix | |
+| 5 B dom | MINOR | smooth.kt:239-244 | A null law does not land a motion a throwing law stalled | fix | |
+| 5 B impl | MINOR | SampledSpec.kt:174 | The half-subscribe row cannot catch a missing unwind (source throws first) | fix | |
+| 5 B impl | MINOR | ThreeJsComponent.kt:120-130, 193-202 | The paused wiring has no component-level row | fix | |
+| 5 00275 impl | MINOR | WakeLock.kt:81-89 | Every controller adds a visibilitychange listener nothing removes (a test fake per test) | fix | |
+| 5 00276 dom | MINOR | ResponsiveController.kt:146-159 | A height-only change (a resizing on-screen keyboard, a docked DevTools) can flip 768-959 px between Tablet and Mobile; not said | fix (document) | |
+| 5 | SURPLUS | WakeLock.kt:79, index-jsMain.kt | holderCount public; the builder method deviates from ULTRA-00275 decision 1 | reject | The builder registration is the maintainer's request of 2026-10-30 ("Add the wakelock to the kraftApp builder like windowCtrl()"), recorded in ULTRA-00275; holderCount is the counter's state for apps (cheap) |
+| 5 | withdrawn | various | ShadowMap KDoc; an Ask-yes passing a later Stop; the 3 s window; public followBrowserNavigation; intersectObject; the ThreeJs clock param; the RouterReplaceUriSpec comment | withdrawn | Withdrawn in phase 2 against settled rows |
+
+## Maintainer, 2026-10-30, at the valve after round 5
+
+"Fix all, round 6": the MAJOR and every MINOR in one batch, then round 6 at level 3; the dnd gate's round 2 runs in
+parallel.
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.

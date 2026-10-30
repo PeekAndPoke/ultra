@@ -132,7 +132,41 @@ the CHANGELOG ("the old dnd is gone; it had no users outside the examples").
 
 - The whole equip flow of Klang's look editor (drag to a slot swaps, drag to the bench moves) written against the new
   API in a spec, with mouse, touch and pen pointer types.
-- No DOM writes by the manager outside its stage.
+- No DOM writes by the manager to the zones' DOM; on the page only `user-select` while a drag runs (the maintainer's
+  request of 2026-10-29).
+
+Auto-scroll (work item 5) is deferred: not in this round.
+
+## Review record
+
+Round 1 (level 1, reviewer-high, blind), base c8251d14..55424e5d, the dnd diff (module, semanticui registration,
+example, docs). Verdict: NOT clean (4 MAJOR). All rows fixed in one batch; round 2 runs at level 2.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 sec (impl MINOR) | MAJOR | DefaultDndManager.kt:132, :264 | The drop goes to the zone of the last pointermove, not the one under the pointer at the release (wheel scroll, re-render, hidden zone) | fix | Verified by reading; row "the drop goes to the zone under the pointer at the release" |
+| 1 impl, dom (sec MINOR) | MAJOR | DefaultDndManager.kt:52-65, :164-171 | No button / primary check, no `buttons == 0` check: a right press whose release a context menu took starts a drag with no button held, the next click drops | fix | Primary button only (else a handle that never calls back); a mouse move with no button held ends the drag; rows for both |
+| 1 impl, dom | MAJOR | DefaultDndManager.kt:142-154 | An img or link inside the source starts the browser's native drag, whose pointercancel ends ours | fix | dragstart prevented (capture) while a session lives; row with a synthetic dragstart (a real native drag cannot be scripted) |
+| 1 impl | MAJOR | ULTRA-00265 Acceptance vs DndSpec | The equip flow (slot swap, bench move, mouse/touch/pen) has no row | fix | Row "Klang's equip grid" (slots as source and zone, bench, a drop onto itself), all three pointer types |
+| 1 impl, dom | MINOR | DefaultDndManager.kt:200-201 | Hit test over all zones: a zone that refused at the start can be entered and dropped on, and never hears the stop | fix | Hit test over the zones told of the start; row "a zone that refused at the start" |
+| 1 impl, dom | MINOR | DefaultDndManager.kt:168-176, :264-276 | A throwing handler, or `cancel()` from one, leaves the drag half done (preview, highlights) | fix | Each handler guarded (logged); `ended` checked after every step; two rows |
+| 1 impl, dom | MINOR | DefaultDndManager.kt:134-139, :280-293 | After Esc the button is still down: the click after its release reaches the source | fix | The click after that pointer's release is swallowed; row |
+| 1 impl | MINOR | DndSpec.kt:231, :404, :325, :282, typed | Rows that cannot fail for their reason: innermost by mount order, a below-threshold click, the vacuous probe, leaked listeners, the typed filter | fix | Rows: inner zone registered after the outer, a below-threshold click reaches the element, the probe removed, a listener balance row, a zone of another type |
+| 1 impl, dom, sec | MINOR | DndManager.kt:16-17, Drag.kt:19-21 | KDoc: "writes nothing else to the DOM" (it sets user-select); "Drag.type, which zones filter by" (nothing reads it) | fix | KDoc corrected; `Drag.type` and the `type` parameter removed (SURPLUS, below) |
+| 1 impl | MINOR | DefaultDndManager.kt:184, :260-261 | -webkit-user-select restored from the user-select value | fix | Saved separately |
+| 1 dom | MINOR | DefaultDndManager.kt:183-187, docs | A touch long-press selects text or shows the callout before the drag starts | fix (docs) | Docs and KDoc: `user-select: none; -webkit-touch-callout: none` with `touch-action: none` |
+| 1 dom | MINOR | DndStage.kt:37-45 | The fixed stage shrinks near the right edge: the preview wraps | fix | `width: max-content` |
+| 1 dom | MINOR | drag-and-drop.astro:66 | The sample needs a smart cast across modules: does not compile | fix | `when (val from = drag.source)`; the mirror with `as?` |
+| 1 impl | note | DefaultDndManager.kt startDrag | A nested source loses its drag to the outer one (the event bubbles) | fix | The first startDrag for an event wins: the innermost source (the outer gets a handle that never calls back) |
+| 1 impl, dom | SURPLUS | Drag.type, startDrag(type) | Nothing reads them | fix | Removed; the reified extension went with them |
+| 1 impl, dom | SURPLUS | kraft/dnd/build.gradle.kts | ksp plugin and an empty testTask | reject | Every Kraft module's build file has both (kraft/core, semanticui, pixijs) |
+| 1 impl, dom | SURPLUS | build.gradle.kts excludeDirs | Unrelated to the dnd | reject | A commit of its own, 3543d6c7 (MC-00031), not part of this change |
+| 1 | SURPLUS | current, cancel(), onOver | Unused yet | reject | Part of the confirmed design; Klang's look editor |
+
+After round 1: 29 rows green. Mutants, each red on its row: no hit test at the release, no button check, no
+`buttons == 0` check, no dragstart listener / listener kept, no `ended` check, no swallow after Esc, `firstOrNull`
+for the innermost, an untyped zone, the hit test over all zones; unguarded handlers crash the run (the throwing-handler
+row).
 
 ## History
 
@@ -147,3 +181,4 @@ the CHANGELOG ("the old dnd is gone; it had no users outside the examples").
 - 2026-10-29: maintainer: `semanticui()` registers dnd by default; the dnd stage's z-index sits above the modals' stage, so dnd works in modals.
 - 2026-10-29: from the maintainer trying the example: no text selection on the page while a drag runs; the preview keeps the grabbed share of its own size under the pointer (it may be smaller than the source). Found on the way: a press still pending at app teardown kept its window listeners; DefaultDndManager is KraftApp.Disposable and ends it.
 - 2026-10-30: IN PROGRESS.
+- 2026-10-30: review round 1 (level 1): 4 MAJOR, all fixed with the MINORs; round 2 next at level 2.

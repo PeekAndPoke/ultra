@@ -14,7 +14,8 @@ import kotlin.reflect.KClass
 /**
  * Drag and drop for a Kraft app (ULTRA-00265): one drag at a time, started by a component's pointer event, dropped on
  * zones that components register. Mouse, touch and pen alike (pointer events). Its [DndStage] is mounted with the
- * app and draws only the drag preview, above the modals; the manager writes nothing else to the DOM.
+ * app and draws only the drag preview, above the modals. The manager never writes to the zones' DOM; on the page it
+ * only turns text selection off while a drag runs.
  *
  * Register it with `kraftApp { dnd() }`; `semanticUI()` does.
  */
@@ -33,12 +34,14 @@ interface DndManager : KraftApp.AutoMountedUi {
     /**
      * Starts a drag from a `pointerdown` [event]: it begins once the pointer moved [threshold] pixels, so a click
      * stays a click. [preview] is drawn at the pointer, where the pointer grabbed the event's element; no preview
-     * draws nothing but the cursor. For touch, the element needs `touch-action: none` before the pointer goes down.
+     * draws nothing but the cursor. Only the primary button of the primary pointer drags; another press gets a handle
+     * that never calls back. Nested sources: the first `startDrag` for an event wins, the innermost one as the event
+     * bubbles. For touch, the element needs `touch-action: none` before the pointer goes down (and `user-select: none`,
+     * `-webkit-touch-callout: none` against a long-press selection).
      */
     fun <T : Any> startDrag(
         event: PointerEvent,
         payload: T,
-        type: KClass<T>,
         source: Any? = null,
         preview: DragPreview? = null,
         threshold: Double = 4.0,
@@ -50,22 +53,6 @@ interface DndManager : KraftApp.AutoMountedUi {
     /** Registers [zone] until the returned [Unsubscribe] is called. A zone removed mid-drag gets no more events. */
     fun register(zone: DropZone<*>): Unsubscribe
 }
-
-/** Starts a drag of [payload]; see [DndManager.startDrag]. */
-inline fun <reified T : Any> DndManager.startDrag(
-    event: PointerEvent,
-    payload: T,
-    source: Any? = null,
-    noinline preview: DragPreview? = null,
-    threshold: Double = 4.0,
-): DragHandle = startDrag(
-    event = event,
-    payload = payload,
-    type = T::class,
-    source = source,
-    preview = preview,
-    threshold = threshold,
-)
 
 /** Registers a [DefaultDndManager] in the Kraft application. */
 fun KraftApp.Builder.dnd() = apply {

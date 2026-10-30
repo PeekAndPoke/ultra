@@ -2210,9 +2210,10 @@ that draws only the drag preview, above the modals. Mouse, touch and pen (pointe
 the zones' DOM: each zone keeps its own UI state.
 
 ```kotlin
-// Start a drag from the source's pointerdown; it begins after a 4 px threshold, the click after it is swallowed
+// Start a drag from the source's pointerdown; it begins after a 4 px threshold, the click after it is swallowed.
+// Primary button only; the browser's native image/link drag is held off; nested sources: the innermost drags.
 ui.segment {
-    style = "touch-action: none;"   // needed for touch
+    style = "touch-action: none; user-select: none; -webkit-touch-callout: none;"   // needed for touch
     onPointerDown { event ->
         dnd.startDrag(event, payload = look, source = slot, preview = { ui.compact.segment { +look.name } })
             .onDropped { zone -> }
@@ -2227,12 +2228,13 @@ init {
         onDragStop { canTake = false; hovered = false }
         onEnter { hovered = true }              // the innermost accepting zone under the pointer
         onLeave { hovered = false }
-        onDrop { drag -> swap(drag.payload, drag.source) }
+        onDrop { drag -> (drag.source as? Slot)?.let { swap(drag.payload, it) } }
     }
 }
 ```
 
-`Drag` carries `payload`, `source`, `position`, `pointerType`. `dropZone(element = { ... })` names another area than
+`Drag` carries `payload`, `source`, `position`, `pointerType`. The drop goes to the zone under the pointer at the
+release; a throwing handler is logged and the others still run. `dropZone(element = { ... })` names another area than
 the component's element. `dnd.current` is a `Stream<Drag<*>?>`; `dnd.cancel()` ends a drag. Semantic UI helper:
 `DropZoneState` with `track(state) { triggerRedraw() }` and `ui.with(*state.semanticClasses)`.
 
