@@ -81,6 +81,12 @@
   onOver / onLeave / onDrop }`). Mouse, touch and pen; Esc cancels; the drop knows its source. `semanticUI()`
   registers it; `DropZoneState` in kraft-semanticui is an optional helper.
 
+- **Kraft: `WakeLockComponent` (ULTRA-00275, from gfx-playground).** Keeps the screen awake while mounted. Several
+  share one lock (a counter: the last unmount releases it); the lock is taken again when the page becomes visible; no
+  API, no error. `WakeLockController` (`wakeLock.acquire()`, `isActive`) for code outside a component. Hardened
+  against the original: no leaked listener, no lock kept after an unmount during a pending request, one request at a
+  time.
+
 ### Breaking changes
 
 - **The old Semantic UI drag and drop is gone** (`DndDragHandle`, `DndDropTarget`, `greenHighlights`,

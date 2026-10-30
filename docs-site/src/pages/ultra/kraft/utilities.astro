@@ -179,6 +179,23 @@ val externalCss = StyleSheetTag {
     href = "https://cdn.example.com/styles.css"
 }`} lang="kotlin" theme="vitesse-dark"/>
 
+    <h2>Keeping the screen awake</h2>
+
+    <p><code>WakeLockComponent()</code> keeps the screen from dimming while it is mounted, through the Screen Wake
+        Lock API. Several may be mounted at once: they share one lock, released when the last one unmounts. The browser
+        drops the lock when the page is hidden; it is taken again when the page is visible. Without the API nothing
+        happens.</p>
+
+    <Code code={`override fun VDom.render() {
+    // A slideshow, a game, a running timer: the screen stays on while this page is shown
+    WakeLockComponent()
+}
+
+// The same counter by hand, and the state
+val release = wakeLock.acquire()
+val awake by subscribingTo(wakeLock.isActive)
+release()`} lang="kotlin" theme="vitesse-dark"/>
+
     <h2>File handling</h2>
 
     <p>Read files from a file input as Base64-encoded data:</p>

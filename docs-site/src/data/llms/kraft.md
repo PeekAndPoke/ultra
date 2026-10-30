@@ -2719,6 +2719,13 @@ val module = ScriptLoader.load(
 
 Responsive design, CSS-in-Kotlin, file handling, and component testing.
 
+## Keeping the screen awake
+
+`WakeLockComponent()` keeps the screen on while mounted (Screen Wake Lock API). Stacked components share one lock,
+released when the last unmounts; it is re-taken when the page becomes visible again. By hand: `val release =
+wakeLock.acquire()`, `wakeLock.isActive` (Stream<Boolean>), `release()`. Tests: `WakeLockController(requestLock,
+isPageVisible)` as the app attribute `WakeLockController.key`.
+
 ## Responsive design
 
 The `ResponsiveController` tracks the browser window size and exposes the current display type as a reactive Stream.
