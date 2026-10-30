@@ -18,6 +18,7 @@ import kotlinx.css.overflowX
 import kotlinx.css.overflowY
 import kotlinx.html.FlowContent
 import kotlinx.html.style
+import org.w3c.dom.Element
 
 /**
  * Abstract base class for Semantic UI modals with fade-in/fade-out transitions, answering with a [RESULT].
@@ -109,10 +110,11 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
             .given(fadingOut) { animating.fade.out }.then {
                 style = "display: flex !important;"
                 onClick {
-                    if (it.target == it.currentTarget) {
-                        close()
-                    } else {
-                        it.stopPropagation()
+                    when {
+                        it.target == it.currentTarget -> close()
+                        // A link bubbles on: the router listens on the window for route links (ULTRA-00277)
+                        (it.target as? Element)?.closest("a[href]") != null -> Unit
+                        else -> it.stopPropagation()
                     }
                 }
 

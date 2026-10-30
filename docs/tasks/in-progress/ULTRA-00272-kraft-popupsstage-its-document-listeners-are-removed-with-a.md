@@ -1,6 +1,6 @@
 # ULTRA-00272: Kraft PopupsStage: its document listeners are removed with a fresh reference and leak per app
 
-> **Status (2026-10-29): IDEA.** Found by the review gate of the UI batch (ULTRA-00266 Review record, round 2), pre-existing. Not scheduled.
+> **Status (2026-10-30): IN PROGRESS.** Fixed 2026-10-30 (the maintainer: bugs into this release): one stored listener reference; `PopupsStageSpec` checks the very handlers added are removed (red on a fresh reference). Review gate with the follow-up bugs next.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -20,3 +20,5 @@ document listeners behind. The same bug ULTRA-00243 fixed in the router and Resp
 ## History
 
 - 2026-10-29: created from the review gate of the UI batch.
+- 2026-10-30: IN PROGRESS.
+- 2026-10-30: fixed; spec added and mutation-checked.
