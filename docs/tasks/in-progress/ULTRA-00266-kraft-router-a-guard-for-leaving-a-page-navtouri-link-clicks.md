@@ -325,6 +325,16 @@ clean): round 8 at level 3. Full suite on 2a31958a: 16489 tests, 0 failures.
 | 7 impl | SURPLUS | pixijs_addon.kt:33, threejs_addon.kt:241 | Duplicate `create` bodies | reject | Two addons, two modules with no shared dependency below kraft core; a core helper for two callers is not worth the API |
 | 7 | withdrawn | various | the 3 s window (sec), keepFresh (sec, own correction), holderCount, TestWindowController focus/resize, restoreUri branch | withdrawn | Phase 2 |
 
+## After round 7: what was done (8af2dac5)
+
+All round-7 rows FIXED (the MAJOR, the MINORs and the NITs), the FadingModal row as the maintainer decided ("Close
+it"): DropdownMenu ignores clicks from its own menu (row: the menu opened by a click, inside a `ui menu`, closed after
+the link); FadingModal dismisses on a page change (path-routing row: under hash a popstate already closed it through
+the trap); a hash link to the current address is preventDefaulted; a guard's hold in this task is not asked again by
+the link's click (rows under both strategies); ownEntry pinned for six operators; CHANGELOG and KDoc notes; NITs.
+Mutants, each red on its row: menu always opens, outer `.menu` match, no page watch, close on any emission, held
+ignored, current-address left to the browser, shared entry at switchMap / StreamCombinator / StreamSourceImpl.
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
