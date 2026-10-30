@@ -230,7 +230,9 @@ fun A.href(route: Route.Bound) {
         does not proceed (there the block gets <code>null</code> as the target, and an <code>Ask</code> cannot run).</li>
     <li>A confirmed <code>Ask</code> on a Back replays the Back. A middleware redirect on the way is not asked again.</li>
     <li>A leave that must happen whatever a page holds, like a logout:
-        <code>router.withoutLeaveGuards &#123; router.navToUri("/login") &#125;</code>.</li>
+        <code>router.withoutLeaveGuards &#123; router.navToUri("/login") &#125;</code>. A page load started in the
+        block, or within 3 s after it (a logout through the server, <code>location.href = ...</code>), gets no
+        <code>beforeUnload</code> prompt.</li>
     <li>A hash typed into the address bar (hash routing) and a Forward are held too, but leave one extra history entry; a
         held Back drops the forward history.</li>
 </ul>

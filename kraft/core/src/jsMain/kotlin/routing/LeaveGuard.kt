@@ -40,7 +40,8 @@ internal fun interface LeaveGuard {
  * The block is asked at the moment of navigation, so it decides by the state then. A page load is not the router's:
  * reload, tab close, a typed address or bookmark under path routing, an external link, a Back out of the app. With
  * [beforeUnload] those show the browser's own prompt while the block answers anything but [LeaveResult.Proceed] (an
- * [LeaveResult.Ask] cannot run its modal there), unless the page load starts in `router.withoutLeaveGuards { }`.
+ * [LeaveResult.Ask] cannot run its modal there), unless the page load starts in, or within 3 s after,
+ * `router.withoutLeaveGuards { }`.
  * Several guards are asked in mount order; the first that does not proceed decides.
  */
 fun Component<*>.guardLeaving(beforeUnload: Boolean = false, block: (target: String?) -> LeaveResult) {

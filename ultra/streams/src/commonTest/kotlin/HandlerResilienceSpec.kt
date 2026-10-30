@@ -1,8 +1,12 @@
 package io.peekandpoke.ultra.streams
 
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.streams.ops.combinedWith
+import io.peekandpoke.ultra.streams.ops.cutoffWhen
 import io.peekandpoke.ultra.streams.ops.map
+import io.peekandpoke.ultra.streams.ops.switchMap
 
 class HandlerResilienceSpec : StringSpec({
 
@@ -22,6 +26,27 @@ class HandlerResilienceSpec : StringSpec({
         mappedCalls shouldBe 1
         // The wrapper let go of its source too: nobody listens to it any more
         source.subscriptions.size shouldBe 0
+    }
+
+    "A handler that throws on its first value is not kept by combinedWith, cutoffWhen or switchMap either" {
+        val operators: List<Pair<String, (Stream<Int>) -> Stream<Int>>> = listOf(
+            "combinedWith" to { s -> s.combinedWith(StreamSource(0)) { a, b -> a + b } },
+            "cutoffWhen" to { s -> s.cutoffWhen(StreamSource(false)) },
+            "switchMap" to { s -> s.switchMap { StreamSource(it) } },
+        )
+
+        operators.forEach { (name, op) ->
+            val source = StreamSource(1)
+            var calls = 0
+
+            runCatching { op(source).subscribeToStream { calls++; error("I fail at once") } }.isFailure shouldBe true
+            source(2)
+
+            withClue(name) {
+                calls shouldBe 1
+                source.subscriptions.size shouldBe 0
+            }
+        }
     }
 
     "A failing handler on StreamSource must not prevent other handlers from being notified" {

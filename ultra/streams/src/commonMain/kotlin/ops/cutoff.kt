@@ -58,7 +58,15 @@ private class CutoffStream<T>(
         }
 
         subscriptions.add(sub)
-        sub(lastValue)
+
+        try {
+            sub(lastValue)
+        } catch (e: Throwable) {
+            // No unsubscribe reaches the caller: the handler must not stay behind, nor the upstream subscriptions
+            subscriptions.remove(sub)
+            if (subscriptions.isEmpty()) stop()
+            throw e
+        }
 
         return {
             subscriptions.remove(sub)

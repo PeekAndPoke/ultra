@@ -558,7 +558,7 @@ class Router(
      * Runs [block] past every [LeaveGuard]: the router navigations it starts (`navToUri`, `replaceUri`, `navBack`),
      * and what they lead to, are not asked, and a pending Ask is dropped. A page load it starts (a form submit,
      * `location.href`) gets no beforeunload prompt. For a leave that must happen whatever a page holds, e.g. a logout:
-     * `router.withoutLeaveGuards { navToUri("/login") }`. A `history.back()` inside is the browser's and still asked:
+     * `router.withoutLeaveGuards { router.navToUri("/login") }`. A `history.back()` inside is the browser's and still asked:
      * use `navBack()`.
      */
     fun <R> withoutLeaveGuards(block: () -> R): R {
@@ -835,6 +835,9 @@ class Router(
 
         // get the location from the browser
         val uri = strategy.getUriFromWindowLocation()
+
+        // On another page by any way (also one whose guard unmounted while it asked): its pending Ask is moot
+        cancelAskIfLeaving(uri)
 
         val resolved = resolveRouteForUri(uri)
 

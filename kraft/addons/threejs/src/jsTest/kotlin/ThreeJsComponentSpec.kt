@@ -59,6 +59,20 @@ private class FakeThree {
 private fun Tag.PausableScene(paused: StreamSource<Stream<Boolean>>, clock: FrameClock) =
     comp(PausableScene.Props(paused, clock)) { PausableScene(it) }
 
+@Suppress("TestFunctionName")
+private fun Tag.ClockedScene(clock: StreamSource<FrameClock>) = comp(ClockedScene.Props(clock)) { ClockedScene(it) }
+
+/** Renders a ThreeJs on the current value of [Props.clock]: a new clock is a new prop. */
+private class ClockedScene(ctx: Ctx<Props>) : Component<ClockedScene.Props>(ctx) {
+    data class Props(val clock: StreamSource<FrameClock>)
+
+    private val clock by subscribingTo(props.clock)
+
+    override fun VDom.render() {
+        ThreeJs(onReady = {}, clock = clock, width = 100, height = 100)
+    }
+}
+
 /** Renders a ThreeJs whose `paused` stream is the current value of [Props.paused]: a new stream is a new prop. */
 private class PausableScene(ctx: Ctx<Props>) : Component<PausableScene.Props>(ctx) {
     data class Props(val paused: StreamSource<Stream<Boolean>>, val clock: FrameClock)
@@ -125,6 +139,29 @@ class ThreeJsComponentSpec : StringSpec({
 
             second(false)
             clock.requests shouldBe 1
+        }
+    }
+
+    "a new clock given after mount restarts the loop on it; the old one is asked for no more frames" {
+        val three = FakeThree()
+        val first = ComponentClock()
+        val second = ComponentClock()
+        val clock = StreamSource<FrameClock>(first)
+
+        TestBed.preact(
+            appSetup = { addons { register(key = threeJsAddonKey, name = "threejs-fake") { ThreeJsAddon(three.module) } } },
+            view = { ClockedScene(clock) },
+        ) {
+            eventually { three.draws shouldBe 1 }
+            first.requests shouldBe 1
+
+            clock(second)
+            delay(20)
+
+            first.requests shouldBe 0
+            second.requests shouldBe 1
+            second.frame()
+            three.draws shouldBe 2
         }
     }
 })

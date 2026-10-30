@@ -1257,7 +1257,8 @@ are dropped). Leaving = another path (before `?` and `#`), exactly when RouterCo
 or fragment change never asks. A held Back is
 undone by putting the address back as a new entry; a confirmed Ask on a Back replays the Back; a middleware redirect on
 the way is not asked again. `beforeUnload = true` arms the browser's prompt (target `null`). Logout past every guard:
-`router.withoutLeaveGuards { router.navToUri("/login") }`. Hash routing: `#/...` link clicks go through the router; a
+`router.withoutLeaveGuards { router.navToUri("/login") }`; a page load started in it or within 3 s after (a server
+logout) gets no prompt. Hash routing: `#/...` link clicks go through the router; a
 typed hash and a Forward are held but leave one extra history entry; a held Back drops the forward history. Page loads (reload, typed address under path routing, external
 links, Back out of the app) only see the `beforeUnload` prompt.
 

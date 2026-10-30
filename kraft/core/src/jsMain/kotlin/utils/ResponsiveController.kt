@@ -123,7 +123,7 @@ class ResponsiveController(
 
     init {
         window.addEventListener("resize", onResize)
-        portraitQuery.addEventListener("change", onRotate)
+        listenToQuery(add = true)
 
         if (screenOrientation != null) {
             screenOrientation.addEventListener("change", onRotate)
@@ -134,7 +134,7 @@ class ResponsiveController(
 
     override fun dispose() {
         window.removeEventListener("resize", onResize)
-        portraitQuery.removeEventListener("change", onRotate)
+        listenToQuery(add = false)
 
         if (screenOrientation != null) {
             screenOrientation.removeEventListener("change", onRotate)
@@ -143,6 +143,18 @@ class ResponsiveController(
         }
 
         window.cancelAnimationFrame(pendingFrame)
+    }
+
+    /** Safari before 14 has no `addEventListener` on a MediaQueryList, only the older `addListener`. */
+    private fun listenToQuery(add: Boolean) {
+        val query = portraitQuery.asDynamic()
+
+        when {
+            query.addEventListener != null && add -> portraitQuery.addEventListener("change", onRotate)
+            query.addEventListener != null -> portraitQuery.removeEventListener("change", onRotate)
+            add -> query.addListener(onRotate)
+            else -> query.removeListener(onRotate)
+        }
     }
 
     private fun createState(): State {

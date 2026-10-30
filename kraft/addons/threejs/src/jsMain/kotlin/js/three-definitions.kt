@@ -180,8 +180,8 @@ external interface ShadowMap {
     var enabled: Boolean
 
     /**
-     * The filtering: three.js's `BasicShadowMap` (0), `PCFShadowMap` (1), `PCFSoftShadowMap` (2, deprecated since
-     * r186), `VSMShadowMap` (3).
+     * The filtering: three.js's `BasicShadowMap` (0), `PCFShadowMap` (1), `PCFSoftShadowMap` (2: removed in r186, the
+     * renderer warns and uses PCF), `VSMShadowMap` (3).
      */
     var type: Int
 }

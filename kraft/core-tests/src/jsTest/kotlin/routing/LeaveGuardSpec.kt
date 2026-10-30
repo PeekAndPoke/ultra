@@ -16,6 +16,7 @@ import io.peekandpoke.kraft.testing.TestBedScope
 import io.peekandpoke.kraft.testing.awaitUri
 import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.CancellationException
@@ -52,6 +53,21 @@ private class Editor(ctx: Ctx<Props>) : Component<Editor.Props>(ctx) {
 }
 
 private enum class Strategy { Hash, Path }
+
+@Suppress("TestFunctionName")
+private fun Tag.ToggledEditor(control: GuardControl, show: StreamSource<Boolean>) =
+    comp(ToggledEditor.Props(control, show)) { ToggledEditor(it) }
+
+/** The editor inside a page that can take it away while the page stays (a closed side panel). */
+private class ToggledEditor(ctx: Ctx<Props>) : Component<ToggledEditor.Props>(ctx) {
+    data class Props(val control: GuardControl, val show: StreamSource<Boolean>)
+
+    private val show by subscribingTo(props.show)
+
+    override fun VDom.render() {
+        div(classes = "panel") { if (show) Editor(props.control) }
+    }
+}
 
 /**
  * An app on [strategy] with "/other", "/a", "/edit/{id}" (the guarded editor), "/admin" (its middleware redirects to
@@ -500,6 +516,61 @@ class LeaveGuardSpec : StringSpec({
                 router.navToUri("/a")
                 router.awaitUri("/a")
             }
+        }
+    }
+
+    "Path: a guard is bound to its page: a second navigation in the same turn, from the next page, does not ask it" {
+        val control = GuardControl().apply { answer = { LeaveResult.Proceed } }
+
+        withEditor(control, Strategy.Path) {
+            // The path strategy follows at once: the router is on /other while the editor still waits to unmount
+            router.navToUri("/other")
+            router.navToUri("/a")
+            router.awaitUri("/a")
+
+            control.asked shouldBe listOf("/other")
+        }
+    }
+
+    "a pending Ask whose guard went from its page (the page stays) is dropped when the page is left" {
+        val originalHref = window.location.href
+        val control = GuardControl()
+        val show = StreamSource(true)
+        control.answer = { LeaveResult.Ask { CompletableDeferred<Boolean>().await() } }
+
+        try {
+            TestBed.preact(
+                appSetup = {
+                    routing {
+                        mount(Static("/a")) { div(classes = "a") { } }
+                        mount(Static("/page")) { ToggledEditor(control, show) }
+                        mount(Route1("/edit/{id}")) { Editor(control) }
+                    }
+                },
+                view = { RouterComponent() },
+            ) {
+                router.navToUri("/page")
+                router.awaitUri("/page")
+                eventually { (document.querySelector(".editor") != null) shouldBe true }
+
+                router.navToUri("/a")
+                settle()
+                // The panel closes while its question is open: the page has no guard any more, so /a goes
+                show(false)
+                eventually { (document.querySelector(".editor") == null) shouldBe true }
+                router.navToUri("/a")
+                router.awaitUri("/a")
+
+                // On a guarded page again, nothing is left asking
+                control.answer = { LeaveResult.Proceed }
+                router.navToUri("/edit/2")
+                router.awaitUri("/edit/2")
+                eventually { (document.querySelector(".editor") != null) shouldBe true }
+                router.navToUri("/a")
+                router.awaitUri("/a")
+            }
+        } finally {
+            window.history.replaceState(null, "", originalHref.substringBefore('#'))
         }
     }
 

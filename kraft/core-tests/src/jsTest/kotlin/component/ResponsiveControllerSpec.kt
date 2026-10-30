@@ -162,4 +162,31 @@ class ResponsiveControllerSpec : StringSpec({
 
         emissions shouldBe 0
     }
+
+    "a browser whose MediaQueryList has no addEventListener (Safari before 14) uses addListener" {
+        val proto = js("MediaQueryList.prototype")
+        val add = proto.addEventListener
+        val remove = proto.removeEventListener
+        val counts = js("({ added: 0, removed: 0 })")
+        val oldAdd = proto.addListener
+        val oldRemove = proto.removeListener
+        val counting = js("(function (orig, counts, field) { return function (l) { counts[field]++; return orig.call(this, l); }; })")
+
+        proto.addEventListener = undefined
+        proto.removeEventListener = undefined
+        proto.addListener = counting(oldAdd, counts, "added")
+        proto.removeListener = counting(oldRemove, counts, "removed")
+
+        try {
+            val ctrl = ResponsiveController(measure = { Vector2D(400.0, 800.0) })
+            ctrl.dispose()
+        } finally {
+            proto.addEventListener = add
+            proto.removeEventListener = remove
+            proto.addListener = oldAdd
+            proto.removeListener = oldRemove
+        }
+
+        (counts.added as Int to counts.removed as Int) shouldBe (1 to 1)
+    }
 })

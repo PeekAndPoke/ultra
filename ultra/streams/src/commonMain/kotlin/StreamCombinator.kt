@@ -37,42 +37,50 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
     override fun subscribeToStream(sub: StreamHandler<RESULT>): Unsubscribe {
 
         // Subscribe to the first wrapped stream if necessary
-        if (firstUnsubscribe == null) {
-            firstUnsubscribe = first.subscribeToStream {
-                handleInComing()
+        try {
+            if (firstUnsubscribe == null) {
+                firstUnsubscribe = first.subscribeToStream {
+                    handleInComing()
+                }
             }
-        }
 
-        // Subscribe to the second wrapped stream if necessary
-        if (secondUnsubscribe == null) {
-            secondUnsubscribe = second.subscribeToStream {
-                handleInComing()
+            // Subscribe to the second wrapped stream if necessary
+            if (secondUnsubscribe == null) {
+                secondUnsubscribe = second.subscribeToStream {
+                    handleInComing()
+                }
             }
+
+            this.subscriptions.add(sub)
+
+            sub(invoke())
+        } catch (e: Throwable) {
+            // No unsubscribe reaches the caller: the handler must not stay behind, nor the wrapped subscriptions
+            subscriptions.remove(sub)
+            releaseIfUnused()
+            throw e
         }
-
-        this.subscriptions.add(sub)
-
-        sub(invoke())
 
         return {
             subscriptions.remove(sub)
-
-            // When there are no subscriptions left we unsubscribe from the wrapped streams
-            if (subscriptions.isEmpty()) {
-                // Unsubscribe from the first stream
-                firstUnsubscribe?.invoke()
-                firstUnsubscribe = null
-
-                // Unsubscribe from the second stream
-                secondUnsubscribe?.invoke()
-                secondUnsubscribe = null
-            }
+            releaseIfUnused()
         }
     }
 
     /**
      * Handles new incoming data
      */
+    /** When there are no subscriptions left we unsubscribe from the wrapped streams. */
+    private fun releaseIfUnused() {
+        if (subscriptions.isEmpty()) {
+            firstUnsubscribe?.invoke()
+            firstUnsubscribe = null
+
+            secondUnsubscribe?.invoke()
+            secondUnsubscribe = null
+        }
+    }
+
     private fun handleInComing() {
         publish(
             invoke()

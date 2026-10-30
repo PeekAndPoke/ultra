@@ -66,7 +66,7 @@
   back). Leaving means another path (before `?` and `#`), when RouterComponent remounts the page; a query-only change
   (every `urlParam`) never asks. `beforeUnload = true`
   arms the browser's prompt. A confirmed `Ask` on a Back replays the Back; a middleware redirect inside an approved
-  navigation is not asked again. `router.withoutLeaveGuards { navToUri("/login") }` passes every guard (logout).
+  navigation is not asked again. `router.withoutLeaveGuards { router.navToUri("/login") }` passes every guard (logout).
   `navBack()` and `clearHistoryAndNavTo()` change the router's history only once no guard holds them. A custom
   `RouterStrategy` calls `router.followBrowserNavigation()` from its listeners to take part; `RouterStrategy` gains
   `normalize(uri)` (the URI in the browser's encoding; a strategy whose `render` adds a prefix overrides it) and
@@ -101,7 +101,9 @@
   `Breakpoints.landscape` (960 / 1200). A desktop window 768 to 959 px wide is now `Mobile`, not `Tablet`, and a
   change of height alone can now change the display type (a viewport of that width that turns landscape: an on-screen
   keyboard that resizes the layout, a DevTools panel docked below).
-  `State` has a new constructor parameter, `orientation`.
+  `State` has a new constructor parameter, `orientation`. A positional `ResponsiveController(Breakpoints(...))` still
+  compiles and now sets the portrait breakpoints only: landscape viewports (most desktop windows) use the landscape
+  default; pass both.
 
 - **The old Semantic UI drag and drop is gone** (`DndDragHandle`, `DndDropTarget`, `greenHighlights`,
   `blueHighlights`): it had no users outside the examples. Port to `kraft:dnd` (see above and the docs page).

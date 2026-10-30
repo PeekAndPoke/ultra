@@ -35,8 +35,10 @@ Checked, 2026-10-30. What the hardening has to fix:
 1. **Shape.** Recommendation: a `WakeLockController` with a shared `WakeLockController.default` (the lock is the
    page's, as `WindowController.default` is), and `acquire(): () -> Unit` as the counter: the first holder requests the
    lock, the last release lets it go; the returned release is idempotent. `isActive: Stream<Boolean>`. The component
-   `Tag.WakeLockComponent()` acquires on mount and releases on unmount. It looks the controller up as an app attribute
-   and falls back to the default, so a test passes a fake: no change to the app builder.
+   `Tag.WakeLockComponent()` acquires on mount and releases on unmount. Built (the maintainer, 2026-10-30: "Add the
+   wakelock to the kraftApp builder like windowCtrl() and setup a default. Make it also available to components
+   through val Component<*>.wakeLockCtrl"): `kraftApp { wakeLockCtrl(...) }` with the default registered in every app,
+   read as `Component<*>.wakeLockCtrl`; a test passes its fake through the builder.
 2. **Name.** Keep `WakeLockComponent` (gfx-playground's), in `io.peekandpoke.kraft.utils`. Recommendation: yes.
 3. **Retries.** Recommendation: after a failed request (NotAllowedError when the page is not visible, or no
    permission) up to three retries a second apart while someone holds it and the page is visible; otherwise the next
