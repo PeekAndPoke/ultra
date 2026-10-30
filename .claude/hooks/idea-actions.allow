@@ -1,3 +1,8 @@
 # IDE actions invoke_ide_action may run without a prompt (one id per line). Everything else asks the maintainer.
 OptimizeImports
+# Refactor Move (classes and members) and Safe Delete, plus mcp__idea__rename_refactoring in settings.json: maintainer
+# 2026-10-30 (weekly meeting, topic 6), with its safeguards: pass the project path, never in a worktree; VFS refresh
+# first; afterwards git diff, a repo-wide grep for the old name (prose, docs, tickets) and a compile.
+Move
+SafeDelete
 # ReformatCode: in the blueprint, off in ultra until the maintainer allows it (ULTRA-00237 only records Auto-Format differences)

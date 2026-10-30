@@ -19,8 +19,7 @@ going. No hedging, no apologising, no bracing for impact.
 One line each: what, until when, the ticket. Notes go into the ticket, never here; the meeting deletes the line or
 turns it into a rule.
 
-- **Tool look-out:** note each case where an IntelliJ tool (Optimize Imports, Auto-Format, Rename, Move) would have
-  beaten a hand edit, and every IntelliJ call that lands wrong or fails. Until 2026-10-30. ULTRA-00237.
+- None running.
 
 ## Tickets
 

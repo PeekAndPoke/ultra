@@ -1,6 +1,6 @@
 # ULTRA-00237: Experiment: tool look-out (IntelliJ instead of hand edits)
 
-> **Status (2026-10-23): IN PROGRESS.** Until the meeting on 2026-10-30 (MC-00029), which decides which IntelliJ write actions become allowed, one by one.
+> **Status (2026-10-30): DONE.** The meeting of 2026-10-30 (MC-00029, topic 6) decided: Refactor Rename, Move, Move Members and Safe Delete allowed with safeguards; Reformat Code stays off.
 
 ## Why this exists
 
@@ -84,3 +84,5 @@ screen.
 - 2026-10-23: created.
 - 2026-10-23: wildcard settings fixed in `.idea/codeStyles/Project.xml` (maintainer's go).
 - 2026-10-26: two cases from ULTRA-00241/00242; no IntelliJ call this session, none landed wrong.
+- 2026-10-30: the week's cases in the meeting prep (`docs/housekeeping/2026-10-30-meeting-prep-Ultra-Main-Dev.md`); no IntelliJ write call this week. Decided at the meeting; the maintainer's OK in session: `mcp__idea__rename_refactoring` allowed in `.claude/settings.json`, `Move` and `SafeDelete` on `.claude/hooks/idea-actions.allow` with the safeguards; the CLAUDE.md experiment line removed. DONE.
+- 2026-10-30: DONE.

@@ -105,7 +105,8 @@
       "Bash(git worktree list*)",
       "Bash(git add -- *)",
       "Bash(git mv *)",
-      "Bash(pnpm *)"
+      "Bash(pnpm *)",
+      "mcp__idea__rename_refactoring"
     ]
   },
   "hooks": {
