@@ -7,6 +7,7 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.modals.ModalsManager
 import io.peekandpoke.kraft.routing.BackNavigationTrap
 import io.peekandpoke.kraft.routing.BackNavigationTrap.Companion.trapBackNavigation
+import io.peekandpoke.kraft.semanticui.isOnLink
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
@@ -18,7 +19,6 @@ import kotlinx.css.overflowX
 import kotlinx.css.overflowY
 import kotlinx.html.FlowContent
 import kotlinx.html.style
-import org.w3c.dom.Element
 
 /**
  * Abstract base class for Semantic UI modals with fade-in/fade-out transitions, answering with a [RESULT].
@@ -113,7 +113,7 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
                     when {
                         it.target == it.currentTarget -> close()
                         // A link bubbles on: the router listens on the window for route links (ULTRA-00277)
-                        (it.target as? Element)?.closest("a[href]") != null -> Unit
+                        it.isOnLink() -> Unit
                         else -> it.stopPropagation()
                     }
                 }

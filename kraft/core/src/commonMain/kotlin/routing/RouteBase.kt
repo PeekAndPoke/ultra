@@ -65,7 +65,7 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
 //        console.log(match.groupValues)
 
         val routeParams = placeholderNames
-            .zip(match.groupValues.drop(1).map { it.decodeUriComponent() })
+            .zip(match.groupValues.drop(1).map { it.decodedOrRaw() })
             .toMap()
 
         val queryParams = when (query.isEmpty()) {
@@ -75,7 +75,7 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
                     -1 -> Pair(it, "")
                     else -> Pair(
                         it.substring(0, equalsIdx),
-                        it.substring(equalsIdx + 1).decodeUriComponent(),
+                        it.substring(equalsIdx + 1).decodedOrRaw(),
                     )
                 }
             }
@@ -105,4 +105,11 @@ abstract class RouteBase(final override val pattern: String, numParams: Int) : R
             queryParams = queryParams.removeNullValues(),
         )
     }
+}
+
+/** Decoded; a malformed escape (a lone `%`, `%E0`) stays as it is written, so a crafted link cannot make matching throw. */
+private fun String.decodedOrRaw(): String = try {
+    decodeUriComponent()
+} catch (_: Throwable) {
+    this
 }

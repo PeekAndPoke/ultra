@@ -35,6 +35,10 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
      * NOTICE: It is the callers' obligation to unsubscribe from the stream.
      */
     override fun subscribeToStream(sub: StreamHandler<RESULT>): Unsubscribe {
+        // An entry of this subscription's own: one handler given twice (a lambda that captures nothing is one shared
+        // instance) is two subscriptions, and the first to leave must not take the other's entry with it
+        val entry = ownEntry(sub)
+
 
         // Subscribe to the first wrapped stream if necessary
         try {
@@ -51,18 +55,18 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
                 }
             }
 
-            this.subscriptions.add(sub)
+            this.subscriptions.add(entry)
 
             sub(invoke())
         } catch (e: Throwable) {
             // No unsubscribe reaches the caller: the handler must not stay behind, nor the wrapped subscriptions
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
             releaseIfUnused()
             throw e
         }
 
         return {
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
             releaseIfUnused()
         }
     }

@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamHandler
 import io.peekandpoke.ultra.streams.Unsubscribe
 import io.peekandpoke.ultra.streams.notifyHandlers
+import io.peekandpoke.ultra.streams.ownEntry
 
 /**
  * Cuts off the stream when the [predicate] is true.
@@ -52,24 +53,28 @@ private class CutoffStream<T>(
     override fun invoke(): T = lastValue
 
     override fun subscribeToStream(sub: (T) -> Unit): Unsubscribe {
+        // An entry of this subscription's own: one handler given twice (a lambda that captures nothing is one shared
+        // instance) is two subscriptions, and the first to leave must not take the other's entry with it
+        val entry = ownEntry(sub)
+
         // Start before adding the subscriber, so that no subscriber runs while we are wiring up
         if (!starting && predicateUnsubscribe == null) {
             start()
         }
 
-        subscriptions.add(sub)
+        subscriptions.add(entry)
 
         try {
             sub(lastValue)
         } catch (e: Throwable) {
             // No unsubscribe reaches the caller: the handler must not stay behind, nor the upstream subscriptions
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
             if (subscriptions.isEmpty()) stop()
             throw e
         }
 
         return {
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
             if (subscriptions.isEmpty()) {
                 stop()
             }

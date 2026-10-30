@@ -1,6 +1,6 @@
 # ULTRA-00273: Kraft routing: a malformed percent-escape makes route matching throw
 
-> **Status (2026-10-29): IDEA.** Found by the security review of the UI batch (ULTRA-00266 Review record, round 2), pre-existing. Fails closed. Not scheduled.
+> **Status (2026-10-30): IN PROGRESS.** Fixed 2026-10-30 (the maintainer: bugs into this release): route matching decodes with a fallback to the raw text (`RouteBase.kt` `decodedOrRaw`); `RouteMatchingSpec` (3 rows). Review gate next.
 >
 > **Part of:** ULTRA-00250 (Epic: Route auth and error disclosure)
 
@@ -21,3 +21,5 @@ navigates and no guard is bypassed.
 ## History
 
 - 2026-10-29: created from the review gate of the UI batch.
+- 2026-10-30: IN PROGRESS.
+- 2026-10-30: fixed; spec added and mutation-checked.

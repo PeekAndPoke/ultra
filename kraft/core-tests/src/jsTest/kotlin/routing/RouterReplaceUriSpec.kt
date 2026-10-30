@@ -5,8 +5,11 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.routing.LeaveResult
+import io.peekandpoke.kraft.routing.Route1
 import io.peekandpoke.kraft.routing.RouterComponent
 import io.peekandpoke.kraft.routing.Static
+import io.peekandpoke.kraft.routing.guardLeaving
 import io.peekandpoke.kraft.routing.router
 import io.peekandpoke.kraft.routing.urlParam
 import io.peekandpoke.kraft.testing.TestBed
@@ -19,7 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.html.Tag
 import kotlinx.html.div
 
-/** The page of the urlParam row, reachable from the test. */
+/** The page of the urlParam rows, reachable from the test. */
 private var paramPage: ParamPage? = null
 
 @Suppress("TestFunctionName")
@@ -29,6 +32,9 @@ private class ParamPage(ctx: NoProps) : PureComponent(ctx) {
     var x by urlParam("x", 1)
 
     init {
+        // A page that holds every leave: a urlParam write must never count as one
+        guardLeaving { LeaveResult.Stop }
+
         lifecycle {
             onMount { paramPage = this@ParamPage }
             onUnmount { paramPage = null }
@@ -114,6 +120,24 @@ class RouterReplaceUriSpec : StringSpec({
             router.current().uri shouldBe "/a?x=2"
             seen shouldBe listOf("/a?x=2")
             eventually { document.querySelector(".param")?.textContent shouldBe "2" }
+        }
+    }
+
+    "hash strategy: a urlParam change keeps the path as the address has it (a param written unencoded)" {
+        TestBed.preact(
+            appSetup = { routing { mount(Route1("/p/{id}")) { ParamPage() } } },
+            view = { RouterComponent() },
+        ) {
+            // "@" is written as it is here; rendered from the route it would be "%40": another path, a leave
+            router.navToUri("/p/a@b?x=1")
+            router.awaitUri("/p/a@b?x=1")
+            val page = eventually { paramPage ?: error("not mounted") }
+
+            page.x = 2
+            delay(50)
+
+            router.current().uri shouldBe "/p/a@b?x=2"
+            window.location.hash shouldBe "#/p/a@b?x=2"
         }
     }
 

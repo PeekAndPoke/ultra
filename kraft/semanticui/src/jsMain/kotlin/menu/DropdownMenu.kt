@@ -3,6 +3,7 @@ package io.peekandpoke.kraft.semanticui.menu
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.semanticui.isOnLink
 import io.peekandpoke.kraft.utils.async
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.RenderFn
@@ -179,7 +180,8 @@ class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
 
             ui.dropdown.item {
                 onClick { evt ->
-                    evt.stopPropagation()
+                    // A link bubbles on: the router listens on the window for route links (ULTRA-00277)
+                    if (!evt.isOnLink()) evt.stopPropagation()
                     opened = true
                 }
 
@@ -190,7 +192,7 @@ class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
                         zIndex = 2000
                     }
                     onClick { evt ->
-                        evt.stopPropagation()
+                        if (!evt.isOnLink()) evt.stopPropagation()
                         opened = false
                     }
                     renderItems(emptyList(), props.items)

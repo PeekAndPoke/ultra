@@ -34,13 +34,17 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
      * @see StreamSource.subscribeToStream
      */
     override fun subscribeToStream(sub: StreamHandler<T>): Unsubscribe {
-        this.subscriptions.add(sub)
+        // An entry of this subscription's own: one handler given twice (a lambda that captures nothing is one shared
+        // instance) is two subscriptions, and the first to leave must not take the other's entry with it
+        val entry = ownEntry(sub)
+
+        this.subscriptions.add(entry)
 
         try {
             onSub()
         } catch (e: Throwable) {
             // No unsubscribe reaches the caller: the handler must not stay behind
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
             throw e
         }
 
@@ -48,13 +52,13 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
             sub(current)
         } catch (e: Throwable) {
             // The handler threw on its first value: nor here, and what onSub started is released with it
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
             onUnSub()
             throw e
         }
 
         return {
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
             onUnSub()
         }
     }

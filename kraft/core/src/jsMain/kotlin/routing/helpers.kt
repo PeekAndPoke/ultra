@@ -106,7 +106,12 @@ fun <C, T> Component<C>.urlParams(
             // Keep the current value
             current = fromParams(updatedParams)
 
-            router.replaceUri(route = currentRoute.withQueryParams(updatedParams))
+            // Only the query changes: the path stays as the address has it. Rendered anew from the route it may be written
+            // differently (`@` as `%40`), and another path is leaving the page (ULTRA-00278)
+            val path = router.current().uri.substringBefore('#').substringBefore('?')
+            val uri = Route.Renderer.Default.render(pattern = path, routeParams = emptyMap(), queryParams = updatedParams)
+
+            router.replaceUri(uri)
 
             triggerRedraw()
         }

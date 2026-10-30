@@ -12,6 +12,9 @@ typealias Unsubscribe = () -> Unit
  */
 typealias StreamHandler<T> = (T) -> Unit
 
+/** A handler entry of one subscription's own, for a stream's set of handlers (ULTRA-00274). */
+internal fun <T> ownEntry(handler: StreamHandler<T>): StreamHandler<T> = { handler(it) }
+
 /**
  * Notifies all [handlers] with the given [value].
  *

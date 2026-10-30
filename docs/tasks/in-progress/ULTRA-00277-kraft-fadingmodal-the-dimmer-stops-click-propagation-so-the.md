@@ -1,6 +1,6 @@
 # ULTRA-00277: Kraft FadingModal: the dimmer stops click propagation, so the router never sees a link inside a modal
 
-> **Status (2026-10-30): IN PROGRESS.** Fixed 2026-10-30 (the maintainer: bugs into this release): a click on a link (`a[href]`) inside a FadingModal bubbles on, so the router's window listener takes route links; other clicks still stop at the modal (why they stop is not recorded; kept). `FadingModalLinkSpec` under hash routing (path routing would navigate the test page away). Review gate with the follow-up bugs next.
+> **Status (2026-10-30): IN PROGRESS.** Fixed 2026-10-30 (the maintainer: bugs into this release): a click on a link (`a[href]`) inside a FadingModal or a DropdownMenu bubbles on (`Event.isOnLink`), so the router's window listener takes route links; other clicks still stop. Specs under hash routing (path routing would navigate the test page away): `FadingModalLinkSpec`, `DropdownMenuLinkSpec`. Review gate next.
 
 ## Why this exists
 

@@ -265,15 +265,15 @@ class CutoffSpec : StringSpec({
         source.subscriptions.size shouldBe 1
         received shouldBe listOf(1, 1)
 
-        // Subscribers are a set of handlers, not of handles: the same instance is ONE subscriber,
-        // so it is notified once per value and the first release tears the operator down.
+        // Each subscription is its own (ULTRA-00274): the same handler twice is notified twice, and the first release
+        // keeps the operator up for the second
         source(2)
-        received shouldBe listOf(1, 1, 2)
+        received shouldBe listOf(1, 1, 2, 2)
 
         unsubscribe1()
 
-        predicate.subscriptions.size shouldBe 0
-        source.subscriptions.size shouldBe 0
+        predicate.subscriptions.size shouldBe 1
+        source.subscriptions.size shouldBe 1
 
         unsubscribe2()
 

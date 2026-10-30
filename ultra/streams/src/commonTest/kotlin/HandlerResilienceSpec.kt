@@ -5,10 +5,33 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.streams.ops.combinedWith
 import io.peekandpoke.ultra.streams.ops.cutoffWhen
+import io.peekandpoke.ultra.streams.ops.fold
 import io.peekandpoke.ultra.streams.ops.map
 import io.peekandpoke.ultra.streams.ops.switchMap
 
 class HandlerResilienceSpec : StringSpec({
+
+    "One handler given twice is two subscriptions: the first to leave does not end the other (ULTRA-00274)" {
+        val noop: (Int) -> Unit = {}
+        val subscribeTwice: List<Pair<String, (Stream<Int>) -> Pair<Unsubscribe, Unsubscribe>>> = listOf(
+            "the same handler" to { s -> s.subscribeToStream(noop) to s.subscribeToStream(noop) },
+            "the default handler" to { s -> s.subscribeToStream() to s.subscribeToStream() },
+        )
+
+        subscribeTwice.forEach { (name, twice) ->
+            val base = StreamSource(0)
+            // Computed only while listened to: once nobody listens, it stops summing
+            val sum = base.fold(0) { acc, n -> acc + n }
+            val mapped = sum.map { it }
+
+            val (first, second) = twice(mapped)
+            first()
+            base(5)
+
+            withClue(name) { mapped() shouldBe 5 }
+            second()
+        }
+    }
 
     "A handler that throws on its first value is not kept: neither by a source nor by a wrapper, nor upstream" {
         val source = StreamSource(10)

@@ -125,6 +125,20 @@
 
 ### Fixes
 
+- **Streams: one handler given twice is two subscriptions** (ULTRA-00274). A stream kept its subscribers in a set of
+  handlers, so the same handler (and every lambda that captures nothing, such as the default of
+  `subscribeToStream()`, which is one shared instance) subscribed twice held one entry: the first to leave ended the
+  other, and a source computed only while listened to (fold, smooth, ticker) stopped under it. Each subscription now
+  has an entry of its own; the same handler twice is notified twice.
+- **Kraft routing: a malformed percent-escape no longer makes route matching throw** (ULTRA-00273): `#/edit/1?q=%`
+  routes, with the text as written.
+- **Kraft: `urlParam` keeps the path as the address has it** (ULTRA-00278): it rendered the whole address anew from
+  the route, which could write the path differently (`@` as `%40`), and a leave guard took the param change for
+  leaving the page.
+- **Kraft Semantic UI: a link inside a FadingModal or a DropdownMenu reaches the router** (ULTRA-00277): their click
+  handlers stopped every click, so route links were followed by the browser (a page reload under path routing).
+- **Kraft: the popups stage removes its own document listeners** (ULTRA-00272); each app left two behind.
+
 - **Streams: a subscribe that throws leaves nothing behind.** When `onSub()` throws, or the handler throws on its first
   value, `StreamSourceImpl` and `StreamWrapperBase` drop the handler (the caller got no unsubscribe) and release what
   the subscription started; `smooth()` and `sampled()` undo a half-made subscription, so the next subscriber starts

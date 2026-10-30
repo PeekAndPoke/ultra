@@ -36,6 +36,10 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
      * NOTICE: It is the callers' obligation to unsubscribe from the stream.
      */
     override fun subscribeToStream(sub: StreamHandler<RESULT>): Unsubscribe {
+        // An entry of this subscription's own: one handler given twice (a lambda that captures nothing is one shared
+        // instance) is two subscriptions, and the first to leave must not take the other's entry with it
+        val entry = ownEntry(sub)
+
 
         // Subscribe to the wrapped stream if necessary
         if (wrappedUnsubscribe == null) {
@@ -44,13 +48,13 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
             }
         }
 
-        this.subscriptions.add(sub)
+        this.subscriptions.add(entry)
 
         try {
             sub(invoke())
         } catch (e: Throwable) {
             // No unsubscribe reaches the caller: the handler must not stay behind, nor the wrapped subscription
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
 
             if (subscriptions.isEmpty()) {
                 wrappedUnsubscribe?.invoke()
@@ -61,7 +65,7 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
         }
 
         return {
-            subscriptions.remove(sub)
+            subscriptions.remove(entry)
 
             // Unsubscribe from the wrapped stream if necessary
             if (subscriptions.isEmpty()) {
