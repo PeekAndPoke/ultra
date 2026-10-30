@@ -47,6 +47,18 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
+    <p>In a list that scrolls, a whole tile with <code>touch-action: none</code> cannot be swiped on touch. Start the
+        drag from a grip inside the tile instead, and give the touch styles to the grip only:</p>
+
+    <Code code={`ui.segment {
+    span {
+        style = "touch-action: none; user-select: none; -webkit-touch-callout: none; cursor: grab;"
+        onPointerDown { event -> dnd.startDrag(event = event, payload = look) }
+        icon.grip_vertical()
+    }
+    +look.name   // a swipe here scrolls the list
+}`} lang="kotlin" theme="vitesse-dark"/>
+
     <h2>Drop zones</h2>
 
     <p>A component registers a zone for a payload type while it is mounted. Every accepting zone hears

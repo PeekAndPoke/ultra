@@ -40,7 +40,6 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
         // instance) is two subscriptions, and the first to leave must not take the other's entry with it
         val entry = ownEntry(sub)
 
-
         // Subscribe to the wrapped stream if necessary
         if (wrappedUnsubscribe == null) {
             wrappedUnsubscribe = wrapped.subscribeToStream {

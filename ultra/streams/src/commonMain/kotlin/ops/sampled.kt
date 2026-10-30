@@ -13,7 +13,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * Takes the stream's latest value at every tick, [every] apart, also when it did not change and also when it is
  * `null` (ULTRA-00267, from Klang): the time axis is the clock's, not the producer's, so
  * `level.sampled(every = 250.milliseconds).history(capacity = 480)` keeps two minutes at four values a second, with
- * gaps where the source had none.
+ * gaps where the source had none. In the browser a hidden tab's timers are slowed (to once a second and less), so
+ * there the same capacity spans more time.
  *
  * [every] may change while listening: a new interval applies from the next tick (the one due keeps its time, so a
  * slider moving the interval does not hold the ticks off); a repeat of the same interval changes nothing. An interval

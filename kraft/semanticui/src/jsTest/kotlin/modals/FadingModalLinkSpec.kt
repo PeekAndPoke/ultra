@@ -8,7 +8,9 @@ import io.peekandpoke.kraft.routing.Static
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.awaitCss
 import io.peekandpoke.kraft.testing.awaitUri
+import io.peekandpoke.kraft.testing.eventually
 import kotlinx.browser.window
+import kotlinx.coroutines.delay
 import kotlinx.html.a
 import kotlinx.html.div
 import org.w3c.dom.events.Event
@@ -73,6 +75,58 @@ class FadingModalLinkSpec : StringSpec({
             } finally {
                 window.removeEventListener("click", counter)
             }
+        }
+    }
+
+    // Path routing: its navigation fires no popstate, which under hash routing closes the modal through its back trap
+    "path routing: a navigation to another page dismisses an open modal; a query-only move does not" {
+        val m = DefaultModalsManager()
+        val answers = mutableListOf<OkCancelModal.Result?>()
+        val originalHref = window.location.href
+
+        try {
+            TestBed.preact(
+                appSetup = {
+                    setAttribute(ModalsManager.key, m)
+                    routing {
+                        usePathStrategy()
+                        mount(Static("/a")) {}
+                        mount(Static("/b")) {}
+                    }
+                },
+                view = { },
+            ) { root ->
+                router.navToUri("/a")
+                router.awaitUri("/a")
+
+                m.show { h ->
+                    OkCancelModal(
+                        handle = h,
+                        transition = FadingModal.Transition(fadeInTimeMs = 0, fadeOutTimeMs = 0),
+                        view = OkCancelModal.View(
+                            appearance = { mini },
+                            header = { +"Header" },
+                            content = { +"content" },
+                            okText = { +"Yes" },
+                            cancelText = { +"No" },
+                        ),
+                        onResult = { answers += it },
+                    )
+                }
+                root.awaitCss(".dimmer")
+
+                router.replaceUri("/a?tab=2")
+                router.awaitUri("/a?tab=2")
+                delay(50)
+                m().size shouldBe 1
+
+                router.navToUri("/b")
+                router.awaitUri("/b")
+                eventually { m().size shouldBe 0 }
+                answers shouldBe listOf(null)
+            }
+        } finally {
+            window.history.replaceState(null, "", originalHref)
         }
     }
 })

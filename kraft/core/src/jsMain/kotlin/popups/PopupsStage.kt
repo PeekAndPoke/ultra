@@ -83,7 +83,6 @@ class PopupsStage(ctx: Ctx<Props>) : Component<PopupsStage.Props>(ctx) {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
     // One reference: each `::x` is a new function object, and removal needs the one that was added (ULTRA-00272)
     private val closeAllListener: (Event) -> Unit = { props.popups.closeAll() }
 }

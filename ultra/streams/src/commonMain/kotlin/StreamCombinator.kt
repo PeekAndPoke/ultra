@@ -39,7 +39,6 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
         // instance) is two subscriptions, and the first to leave must not take the other's entry with it
         val entry = ownEntry(sub)
 
-
         // Subscribe to the first wrapped stream if necessary
         try {
             if (firstUnsubscribe == null) {
@@ -71,9 +70,6 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
         }
     }
 
-    /**
-     * Handles new incoming data
-     */
     /** When there are no subscriptions left we unsubscribe from the wrapped streams. */
     private fun releaseIfUnused() {
         if (subscriptions.isEmpty()) {
@@ -85,6 +81,7 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
         }
     }
 
+    /** Handles new incoming data. */
     private fun handleInComing() {
         publish(
             invoke()

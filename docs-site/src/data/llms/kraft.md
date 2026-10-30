@@ -2235,7 +2235,8 @@ init {
 }
 ```
 
-`Drag` carries `payload`, `source`, `position`, `pointerType`. The drop goes to the zone under the pointer at the
+In a scrolling list put the touch styles and `onPointerDown` on a grip inside the tile, so a swipe on the rest still
+scrolls. `Drag` carries `payload`, `source`, `position`, `pointerType`. The drop goes to the zone under the pointer at the
 release; a throwing handler is logged and the others still run. Payloads match by class (generics are erased: use
 a payload class of your own). `dropZone(element = { ... })` names another area than
 the component's element. `dnd.current` is a `Stream<Drag<*>?>`; `dnd.cancel()` ends a drag. Semantic UI helper:

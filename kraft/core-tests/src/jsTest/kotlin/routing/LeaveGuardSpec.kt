@@ -224,6 +224,31 @@ class LeaveGuardSpec : StringSpec({
             }
         }
 
+        "$strategy: a link whose own onClick navigates is asked once when the guard holds it" {
+            val control = GuardControl().apply { answer = { LeaveResult.Stop } }
+
+            withEditor(control, strategy) {
+                val href = if (strategy == Strategy.Hash) "#/other" else "/other"
+                val anchor = (document.createElement("a") as HTMLAnchorElement).apply { setAttribute("href", href) }
+                // Kraft's navToUri(evt, ...) pattern: the link navigates itself, and does not prevent the default
+                anchor.addEventListener("click", { router.navToUri("/other") })
+                document.body!!.appendChild(anchor)
+                val stopper: (Event) -> Unit = { it.preventDefault() }
+                window.addEventListener("click", stopper)
+
+                try {
+                    anchor.dispatchEvent(MouseEvent("click", js("({bubbles: true, cancelable: true, button: 0})")))
+                } finally {
+                    window.removeEventListener("click", stopper)
+                    anchor.remove()
+                }
+                settle()
+
+                control.asked shouldBe listOf("/other")
+                router.current().uri shouldBe "/edit/1"
+            }
+        }
+
         "$strategy: Ask answered yes on a Back replays the Back: the next Back goes on to the page before" {
             val control = GuardControl().apply { answer = { LeaveResult.Ask { true } } }
 
@@ -629,6 +654,15 @@ class LeaveGuardSpec : StringSpec({
             // And nothing is left asking: the next page's navigations go
             router.navToUri("/a")
             router.awaitUri("/a")
+        }
+    }
+
+    "Hash: a route link to the current address is the router's too (a foreign <base href> would load another page)" {
+        val control = GuardControl().apply { answer = { LeaveResult.Stop } }
+
+        withEditor(control) {
+            clickLink("#/edit/1") shouldBe true
+            control.asked shouldBe emptyList()
         }
     }
 

@@ -48,7 +48,7 @@ class WakeLockController(
             WakeLockController(
                 requestLock = {
                     val api = window.navigator.asDynamic().wakeLock
-                    if (api == null || api == undefined) {
+                    if (api == null) {
                         null
                     } else {
                         api.request("screen").unsafeCast<Promise<WakeLockSentinel>>()

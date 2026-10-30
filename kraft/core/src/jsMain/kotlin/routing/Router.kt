@@ -185,10 +185,15 @@ class Router(
 
             if (!href.startsWith(HASH_PREFIX + "/")) return
             if (!anchor.targetsSelf() || anchor.hasAttribute("download")) return
-            // Already the address (an onClick of the link navigated first): the browser does nothing either
-            if (normalize(href) == getUriFromWindowLocation()) return
 
+            // Ours from here: the browser does not follow it (under a <base href> of another directory it would load
+            // that document, past the guards)
             event.preventDefault()
+
+            val target = normalize(href)
+            // Already the address (an onClick of the link navigated first), or just held by a guard for this click
+            if (target == getUriFromWindowLocation() || router.heldJustNow(target)) return
+
             router.navToUri(href)
         }
     }
@@ -312,7 +317,12 @@ class Router(
             }
 
             event.preventDefault()
-            router.navToUri(uri = url.pathname + url.search + url.hash)
+
+            val target = url.pathname + url.search + url.hash
+            // A guard held this very navigation a moment ago (the link's own onClick asked it): not twice
+            if (router.heldJustNow(normalize(target))) return
+
+            router.navToUri(uri = target)
         }
 
         /** True for `scheme:…` and `//host…` hrefs, after the clean-up the browser's URL parser applies. */
@@ -388,7 +398,6 @@ class Router(
 
     /** True while [withoutLeaveGuards] runs, and shortly after: `guardLeaving`'s beforeunload prompt stays quiet. */
     internal val passingLeaveGuards: Boolean get() = unloadApproved || Date.now() < unloadApprovedUntil
-
 
     /** The pending [LeaveResult.Ask], cancelled when the router is disposed or leaves its page past the guards. */
     private var asking: Job? = null
@@ -619,7 +628,7 @@ class Router(
 
         when (val answer = askGuards(target)) {
             LeaveResult.Proceed -> pass()
-            LeaveResult.Stop -> Unit
+            LeaveResult.Stop -> holdJustNow(target)
             is LeaveResult.Ask -> {
                 // A yes still goes, after a query-only move meanwhile (a urlParam): the same page asked
                 val fromPage = pagePath(current().uri)
@@ -721,6 +730,17 @@ class Router(
 
         return leaveGuards.filter { it.page != null && it.page == page }.map { it.guard }
     }
+
+    /** The target a guard held in this task (a link's own onClick asked first): its click is not asked again. */
+    private var heldTarget: String? = null
+
+    private fun holdJustNow(target: String) {
+        heldTarget = target
+        window.setTimeout({ if (heldTarget == target) heldTarget = null }, 0)
+    }
+
+    /** True when a guard held a navigation to [target] in this task. */
+    internal fun heldJustNow(target: String): Boolean = heldTarget == target
 
     /** A pending Ask protects its page: a navigation past the guards to another path drops it (and closes its modal). */
     private fun cancelAskIfLeaving(target: String) {

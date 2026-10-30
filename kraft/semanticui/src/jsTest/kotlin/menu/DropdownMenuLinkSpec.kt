@@ -10,6 +10,7 @@ import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.selectCss
 import kotlinx.browser.window
 import kotlinx.html.a
+import kotlinx.html.div
 import org.w3c.dom.events.MouseEvent
 
 /** A DropdownMenu and the router (ULTRA-00277): a route link in the menu goes through the router. */
@@ -27,15 +28,22 @@ class DropdownMenuLinkSpec : StringSpec({
                 }
             },
             view = {
-                DropdownMenu {
-                    text {
-                        item { render { a(href = "#/b", classes = "go") { +"go" } } }
+                // Inside a Fomantic menu, as a dropdown usually is: its own `.menu` is the one that counts
+                div(classes = "ui menu") {
+                    DropdownMenu {
+                        text {
+                            item { render { a(href = "#/b", classes = "go") { +"go" } } }
+                        }
                     }
                 }
             },
         ) { root ->
             router.navToUri("/a")
             router.awaitUri("/a")
+
+            // Opened by a click on the trigger, as a user does
+            root.awaitCss(".dropdown.item")[0].dispatchEvent(MouseEvent("click", js("({bubbles: true, cancelable: true})")))
+            eventually { root.selectCss(".menu.visible").size shouldBe 1 }
 
             val click = MouseEvent("click", js("({bubbles: true, cancelable: true, button: 0})"))
             root.awaitCss(".go")[0].dispatchEvent(click)

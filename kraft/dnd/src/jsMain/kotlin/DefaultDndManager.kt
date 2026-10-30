@@ -9,6 +9,7 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.html.FlowContent
 import org.w3c.dom.Element
+import org.w3c.dom.HTMLElement
 import org.w3c.dom.Node
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
@@ -58,14 +59,15 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         // The primary button only: a right press opens a context menu, which takes the release
         if (!event.isPrimary || event.button.toInt() != 0) return NoDrag
 
-        // A press in a text field selects text; it does not drag
-        if ((event.target as? Element)?.closest(EDITABLE) != null) return NoDrag
+        // A press in a text field selects text; it does not drag (isContentEditable minds a contenteditable="false" island)
+        val target = event.target as? Element
+        if (target?.closest(FORM_FIELDS) != null || (target as? HTMLElement)?.isContentEditable == true) return NoDrag
 
         // A nested source: the first start for this event wins, the innermost one as the event bubbles
         if (session?.startedBy === event) return NoDrag
 
-        // One drag at a time
-        session?.end(drop = false, ending = Ending.PointerGone)
+        // One drag at a time; one of another pointer is still down, and its release's click must not land
+        session?.let { it.end(drop = false, ending = if (it.pointerId == event.pointerId) Ending.PointerGone else Ending.PointerStillDown) }
 
         return Session(event = event, payload = payload, source = source, render = preview, threshold = threshold)
             .also { session = it }
@@ -133,7 +135,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         var releasing = false
             private set
 
-        private val pointerId = event.pointerId
+        val pointerId = event.pointerId
         private val pointerType = event.pointerType
         private val startAt = Vector2D(event.clientX.toDouble(), event.clientY.toDouble())
         private val captured: Element? = event.target as? Element
@@ -186,6 +188,18 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
 
         private fun ours(event: Event): PointerEvent? = (event as? PointerEvent)?.takeIf { it.pointerId == pointerId }
 
+        // A press while this drag runs means its release was lost: a press of this pointer, or (touch) a new primary
+        // touch, which only a finger on an empty screen is
+        private val onPress: (Event) -> Unit = { evt ->
+            val press = evt as? PointerEvent
+            val lost = press != null && (
+                press.pointerId == pointerId ||
+                    (pointerType == "touch" && press.pointerType == "touch" && press.isPrimary)
+                )
+
+            if (lost) end(drop = false, ending = Ending.PointerGone)
+        }
+
         init {
             // Listened to on the window in the capture phase: the events reach it wherever the pointer is
             window.addEventListener("pointermove", onMove, true)
@@ -194,6 +208,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             window.addEventListener("keydown", onKey, true)
             window.addEventListener("dragstart", onNativeDrag, true)
             window.addEventListener("contextmenu", onNativeDrag, true)
+            window.addEventListener("pointerdown", onPress, true)
 
             // Best effort: a synthetic or already released pointer cannot be captured, and the window still hears it
             try {
@@ -280,7 +295,8 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
 
         /** The innermost accepting zone under [at] gets enter / over; the one it replaces gets leave. */
         private fun hitTest(at: Vector2D) {
-            val hit: Node? = document.elementFromPoint(at.x, at.y)
+            // The topmost element there that is not the stage's: a preview part with pointer-events of its own is no zone
+            val hit: Node? = document.elementsFromPoint(at.x, at.y).firstOrNull { it.closest(".kraft-dnd-stage") == null }
 
             // Only zones told of the start: they are the ones that hear the stop
             val next = hit?.let { node ->
@@ -331,6 +347,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             window.removeEventListener("keydown", onKey, true)
             window.removeEventListener("dragstart", onNativeDrag, true)
             window.removeEventListener("contextmenu", onNativeDrag, true)
+            window.removeEventListener("pointerdown", onPress, true)
 
             try {
                 captured?.releasePointerCapture(pointerId)
@@ -386,10 +403,12 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         clickSwallower?.invoke()
 
         lateinit var swallow: (Event) -> Unit
+        lateinit var onPress: (Event) -> Unit
         lateinit var stop: () -> Unit
 
         stop = {
             window.removeEventListener("click", swallow, true)
+            window.removeEventListener("pointerdown", onPress, true)
             if (clickSwallower === stop) clickSwallower = null
         }
 
@@ -399,7 +418,11 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             stop()
         }
 
+        // A new press: the release's click did not come (a moved touch is no tap), and the next click is the user's
+        onPress = { stop() }
+
         window.addEventListener("click", swallow, true)
+        window.addEventListener("pointerdown", onPress, true)
         clickSwallower = stop
         // No click came (released elsewhere): stop waiting
         window.setTimeout({ stop() }, if (pointerType == "mouse") 0 else TAP_CLICK_WAIT_MS)
@@ -437,8 +460,8 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
     }
 
     private companion object {
-        /** Where a press selects text or edits, and does not drag. */
-        const val EDITABLE = "input, textarea, select, [contenteditable]:not([contenteditable='false'])"
+        /** Form fields, where a press selects text or edits, and does not drag. */
+        const val FORM_FIELDS = "input, textarea, select"
 
         /** How long the click of a touch or pen tap may come after its release. */
         const val TAP_CLICK_WAIT_MS = 400

@@ -6,7 +6,10 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.streams.ops.combinedWith
 import io.peekandpoke.ultra.streams.ops.cutoffWhen
 import io.peekandpoke.ultra.streams.ops.fold
+import io.peekandpoke.ultra.streams.ops.HandClock
 import io.peekandpoke.ultra.streams.ops.map
+import io.peekandpoke.ultra.streams.ops.sampled
+import io.peekandpoke.ultra.streams.ops.smooth
 import io.peekandpoke.ultra.streams.ops.switchMap
 
 class HandlerResilienceSpec : StringSpec({
@@ -30,6 +33,33 @@ class HandlerResilienceSpec : StringSpec({
 
             withClue(name) { mapped() shouldBe 5 }
             second()
+        }
+    }
+
+    "One handler given twice keeps every operator up until both leave" {
+        val noop: (Int) -> Unit = {}
+        val operators: List<Pair<String, (Stream<Int>) -> Stream<Int>>> = listOf(
+            "map" to { s -> s.map { it } },
+            "combinedWith" to { s -> s.combinedWith(StreamSource(0)) { a, b -> a + b } },
+            "switchMap" to { s -> s.switchMap { StreamSource(it) } },
+            "cutoffWhen" to { s -> s.cutoffWhen(StreamSource(false)) },
+            "sampled" to { s -> s.sampled(HandClock()) },
+            "smooth" to { s ->
+                s.map<Int, Double?> { it.toDouble() }.smooth(smoothing = StreamSource(null), clock = HandClock()).map { 0 }
+            },
+        )
+
+        operators.forEach { (name, op) ->
+            val source = StreamSource(1)
+            val stream = op(source)
+
+            val first = stream.subscribeToStream(noop)
+            val second = stream.subscribeToStream(noop)
+            first()
+
+            withClue("$name after the first left") { source.subscriptions.size shouldBe 1 }
+            second()
+            withClue("$name after both left") { source.subscriptions.size shouldBe 0 }
         }
     }
 

@@ -266,6 +266,47 @@ private class LateZoneHost(ctx: Ctx<Props>) : Component<LateZoneHost.Props>(ctx)
 }
 
 @Suppress("TestFunctionName")
+private fun Tag.IslandSource(probe: Probe) = comp(IslandSource.Props(probe)) { IslandSource(it) }
+
+/** A source in a contenteditable="false" island of an editable region (a widget in a rich-text editor). */
+private class IslandSource(ctx: Ctx<Props>) : Component<IslandSource.Props>(ctx) {
+    data class Props(val probe: Probe)
+
+    override fun VDom.render() {
+        div {
+            attributes["contenteditable"] = "true"
+
+            div(classes = "source") {
+                attributes["contenteditable"] = "false"
+                style = box(0, 0, 40, 40)
+                onPointerDown { event -> dnd.startDrag(event = event, payload = Look("red")) }
+            }
+        }
+    }
+}
+
+@Suppress("TestFunctionName")
+private fun Tag.HitPreviewSource(probe: Probe) = comp(HitPreviewSource.Props(probe)) { HitPreviewSource(it) }
+
+/** A source whose preview has a part that takes pointer events of its own, right under the pointer. */
+private class HitPreviewSource(ctx: Ctx<Props>) : Component<HitPreviewSource.Props>(ctx) {
+    data class Props(val probe: Probe)
+
+    override fun VDom.render() {
+        div(classes = "source") {
+            style = box(0, 0, 40, 40)
+            onPointerDown { event ->
+                dnd.startDrag(
+                    event = event,
+                    payload = Look("red"),
+                    preview = { div(classes = "hit-preview") { style = "pointer-events: auto; width: 40px; height: 40px;" } },
+                )
+            }
+        }
+    }
+}
+
+@Suppress("TestFunctionName")
 private fun Tag.NumberZone(probe: Probe) = comp(NumberZone.Props(probe)) { NumberZone(it) }
 
 /** A zone at (100, 0) for numbers: a Look must pass it by. */
@@ -910,7 +951,7 @@ class DndSpec : StringSpec({
         probe.events.contains("cancelled") shouldBe true
     }
 
-    "a zone whose element lookup throws is not hit, and the drag goes on" {
+    "a zone whose element lookup throws is not hit, and the others still are" {
         val probe = Probe()
         var failing = false
 
@@ -919,15 +960,18 @@ class DndSpec : StringSpec({
             view = {
                 Source(probe)
                 Zone("a", probe, takes = true, style = box(100, 0, 100, 100), options = ZoneOptions(elementFails = { failing }))
+                Zone("c", probe, takes = true, style = box(100, 300, 50, 50))
             },
         ) { root ->
             failing = true
             root.down()
             move(150, 50)
-            up(150, 50)
+            move(120, 320)
+            up(120, 320)
         }
 
-        probe.events shouldBe listOf("a:start", "cancelled", "a:stop")
+        probe.events.filter { it.startsWith("a:") } shouldBe listOf("a:start", "a:stop")
+        probe.events.contains("c:drop") shouldBe true
     }
 
     "what waits after a drag goes with the app: the release after an Esc, a tap's late click" {
@@ -1098,9 +1142,13 @@ class DndSpec : StringSpec({
             root.down()
             move(150, 50)
             up(150, 50)
+            // The handler's own click went through
+            probe.clicks shouldBe 1
+
             click(root.selectCss(".source")[0])
         }
 
+        // The release's click did not
         probe.clicks shouldBe 1
     }
 
@@ -1181,5 +1229,82 @@ class DndSpec : StringSpec({
         }
 
         probe.events.filter { it.startsWith("a:") } shouldBe listOf("a:start", "a:enter", "a:drop", "a:stop")
+    }
+
+    "after a touch drag the next press ends the wait for a tap's click: its own click is the user's" {
+        withBoard { probe, _ ->
+            down(pointerType = "touch")
+            move(150, 50, pointerType = "touch")
+            up(150, 50, pointerType = "touch")
+
+            // A moved touch is no tap: no click comes. The user taps the source at once
+            delay(100)
+            down(pointerType = "touch")
+            up(10, 10, pointerType = "touch")
+            click(selectCss(".source")[0])
+
+            probe.clicks shouldBe 1
+        }
+    }
+
+    "a press of another pointer ends a running drag; the first one's release click is still swallowed" {
+        withBoard { probe, _ ->
+            down()
+            move(150, 50)
+            // A finger on a touch laptop presses a source while the mouse still drags
+            down(pointerType = "touch", id = 2)
+            up(10, 10, id = 2, pointerType = "touch")
+
+            up(150, 50)
+            click(selectCss(".source")[0])
+
+            probe.clicks shouldBe 0
+            probe.events.contains("cancelled") shouldBe true
+        }
+    }
+
+    "a touch drag whose release was lost ends at the next touch" {
+        val probe = Probe()
+
+        TestBed.preact(appSetup = { dnd() }, view = { Source(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100)) }) { root ->
+            val dnd = app.appAttributes[DndManager.key]!!
+
+            root.down(pointerType = "touch")
+            move(150, 50, pointerType = "touch")
+            (dnd.current() != null) shouldBe true
+
+            // The release never came; a new finger on the screen is the primary touch
+            pointer("pointerdown", at(300, 300), 300, 300, id = 2, pointerType = "touch")
+
+            (dnd.current() == null) shouldBe true
+        }
+
+        probe.events.contains("cancelled") shouldBe true
+    }
+
+    "a source in a contenteditable=false island of an editable region drags" {
+        val probe = Probe()
+
+        TestBed.preact(appSetup = { dnd() }, view = { IslandSource(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100)) }) { root ->
+            pointer("pointerdown", root.selectCss(".source")[0], 10, 10)
+            move(150, 50)
+            up(150, 50)
+        }
+
+        probe.events.contains("a:drop") shouldBe true
+    }
+
+    "a preview part with pointer events of its own is not taken for a zone" {
+        val probe = Probe()
+
+        TestBed.preact(appSetup = { dnd() }, view = { HitPreviewSource(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100)) }) { root ->
+            pointer("pointerdown", root.selectCss(".source")[0], 10, 10)
+            move(150, 50)
+            eventually { (document.querySelector(".hit-preview") != null) shouldBe true }
+            move(155, 55)
+            up(155, 55)
+        }
+
+        probe.events.contains("a:drop") shouldBe true
     }
 })

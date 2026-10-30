@@ -4,14 +4,17 @@ import io.peekandpoke.kraft.addons.styling.StyleSheet
 import io.peekandpoke.kraft.addons.styling.StyleSheets
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
+import io.peekandpoke.kraft.components.getAttributeRecursiveOrNull
 import io.peekandpoke.kraft.modals.ModalsManager
 import io.peekandpoke.kraft.routing.BackNavigationTrap
 import io.peekandpoke.kraft.routing.BackNavigationTrap.Companion.trapBackNavigation
+import io.peekandpoke.kraft.routing.Router
 import io.peekandpoke.kraft.semanticui.isOnLink
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.ui
+import io.peekandpoke.ultra.streams.Unsubscribe
 import kotlinx.browser.window
 import kotlinx.coroutines.delay
 import kotlinx.css.Overflow
@@ -25,7 +28,8 @@ import kotlinx.html.style
  *
  * Subclasses implement [renderContent] and answer through [close] with a result; [close] without one (also the
  * backdrop and back navigation) is a dismissal. The answer reaches the handle's `onResult` after the fade-out.
- * The modal traps back-navigation and disables body scrolling while any FadingModal is open.
+ * The modal traps back-navigation and disables body scrolling while any FadingModal is open. A navigation to another
+ * page (a link inside the modal, a logout) dismisses it; a query-only move does not.
  */
 abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx<P>) : Component<P>(ctx) {
 
@@ -72,6 +76,9 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
         BackNavigationTrap.TrapResult.Continue
     }
 
+    /** Ends the watch on the router's page, while mounted. */
+    private var unwatchPage: Unsubscribe? = null
+
     ////  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     init {
@@ -86,9 +93,18 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
                     delay(props.transition.fadeInTimeMs.toLong())
                     fadingIn = false
                 }
+
+                // A navigation to another page dismisses the modal; a query-only move (a urlParam) does not
+                getAttributeRecursiveOrNull(Router.key)?.let { router ->
+                    val page = pagePath(router.current().uri)
+                    unwatchPage = router.current.subscribeToStream { if (pagePath(it.uri) != page) close() }
+                }
             }
 
             onUnmount {
+                unwatchPage?.invoke()
+                unwatchPage = null
+
                 // Also covers an unmount without a fade: closeAll(), a cancelled showAndAwait, handle.close()
                 if (countedOpen) {
                     countedOpen = false
@@ -176,3 +192,6 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
         }
     }
 }
+
+/** The path of a router uri, before `?` and `#`: the page. */
+private fun pagePath(uri: String): String = uri.substringBefore('#').substringBefore('?')

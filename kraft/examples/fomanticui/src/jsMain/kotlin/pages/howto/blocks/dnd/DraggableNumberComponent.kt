@@ -9,6 +9,7 @@ import io.peekandpoke.ultra.html.onPointerDown
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.Tag
+import kotlinx.html.span
 import kotlinx.html.style
 
 @Suppress("FunctionName")
@@ -28,18 +29,21 @@ class DraggableNumberComponent(ctx: Ctx<Props>) : Component<DraggableNumberCompo
 
     override fun VDom.render() {
         ui.segment {
-            // For touch: no scrolling, and a long press must not select text or open the callout
-            style = "touch-action: none; user-select: none; -webkit-touch-callout: none; cursor: grab;"
+            // The grip drags; the rest of the tile scrolls a list on touch as usual
+            span {
+                // For touch: no scrolling from here, and a long press must not select text or open the callout
+                style = "touch-action: none; user-select: none; -webkit-touch-callout: none; cursor: grab;"
 
-            onPointerDown { event ->
-                dnd.startDrag<Number>(
-                    event = event,
-                    payload = props.value,
-                    preview = { ui.compact.inverted.segment { +"${props.value}" } },
-                )
+                onPointerDown { event ->
+                    dnd.startDrag<Number>(
+                        event = event,
+                        payload = props.value,
+                        preview = { ui.compact.inverted.segment { +"${props.value}" } },
+                    )
+                }
+
+                icon.grip_vertical()
             }
-
-            icon.grip_vertical()
 
             +"Value: ${props.value} (${props.value::class.simpleName})"
         }

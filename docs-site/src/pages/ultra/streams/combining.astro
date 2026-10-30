@@ -153,7 +153,7 @@ println(recent())  // [2, 3, 4] — oldest values dropped`} lang="kotlin" theme=
 
 <p>Each value copies the window. For a fast producer, or a window over time rather than over values, sample first:</p>
 
-<Code code={`// The latest value every 250 ms, also when unchanged or null: two minutes, with gaps where there was nothing
+<Code code={`// The latest value every 250 ms, also when unchanged or null: two minutes (in a visible tab), with gaps where there was nothing
 val graph = diagnostics.sampled(every = 250.milliseconds).history(capacity = 480)`} lang="kotlin" theme="vitesse-dark" />
 
     <h3>historyOfNonNull</h3>
