@@ -6,6 +6,8 @@ import io.peekandpoke.kraft.routing.Static
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.awaitCss
 import io.peekandpoke.kraft.testing.awaitUri
+import io.peekandpoke.kraft.testing.eventually
+import io.peekandpoke.kraft.testing.selectCss
 import kotlinx.browser.window
 import kotlinx.html.a
 import org.w3c.dom.events.MouseEvent
@@ -41,6 +43,9 @@ class DropdownMenuLinkSpec : StringSpec({
             // The router's window listener took it (prevented the browser's own follow) and navigated
             click.defaultPrevented shouldBe true
             router.awaitUri("/b")
+
+            // And the menu closed, as for any choice in it: the trigger around it must not open it again
+            eventually { root.selectCss(".menu.visible").size shouldBe 0 }
         }
     }
 })

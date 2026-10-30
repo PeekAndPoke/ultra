@@ -184,9 +184,26 @@ CRITICAL, 0 MAJOR). Gate PASS. Open MINORs go to the maintainer as a list.
 | 2 sec | MINOR | Drag.kt:109 | Generic payload types are matched by erased class (Pair<A,B> vs Pair<C,D>) | list | |
 | 2 impl, dom | MINOR | DndSpec | No rows: nested sources, onOver, current while running, a zone mounted mid-drag, isPrimary, DropZoneState; two rows cannot fail for their reason | list | |
 | 2 impl | MINOR | Drag.kt:31 | KDoc `[zone]` does not resolve | list | |
-| 2 dom | MINOR | kraft/testing kquery_events.kt:161-167 | kraft:testing's pointer helpers dispatch plain Events: they cannot drive dnd | out-of-scope -> follow-up task | |
+| 2 dom | MINOR | kraft/testing kquery_events.kt:161-167 | kraft:testing's pointer helpers dispatch plain Events: they cannot drive dnd | out-of-scope -> follow-up task | ULTRA-00279 |
 | 2 | SURPLUS | onOver, cancel(), DropZone.type, dropZone(KClass), Drag.pointerType | onOver and cancel() are not in the confirmed design's event set (domain sticks, no severity); others could be internal | list | |
 | 2 | withdrawn | various | PopupsStage `get()` (a mutant in the working tree at that moment), right-click mid-drag, `current` | withdrawn | Phase 2 |
+
+Round 3 (level 1, reviewer-high, two-phase), base c8251d14..2a31958a, after the round-2 MINORs (8bbf6700). Verdict:
+**CLEAN** (all three charters). The maintainer had its MINORs applied ("Apply all, grip docs"), with a round 4 at
+level 1.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 sec, dom, impl | MINOR | DefaultDndManager.kt:385-406 | The 400 ms touch/pen click swallow eats the user's next real tap when the drag fired no click | fix | Stop it at the next pointerdown |
+| 3 sec, impl | MINOR | DefaultDndManager.kt:67-68, :100 | A press of another primary pointer ends a running drag as PointerGone: the first pointer's release click gets through; the KDoc says "same pointer" | fix | |
+| 3 dom | MINOR | DefaultDndManager.kt:172-174 | A touch drag cannot recover a lost release | fix | A new primary touch press of another id ends it |
+| 3 impl | MINOR | DefaultDndManager.kt:62, :441 | A source in a contenteditable="false" island of an editable root never drags | fix | isContentEditable |
+| 3 dom | MINOR | DndStage.kt:26, :46 | A preview child with pointer-events:auto is hit; every drop cancels | fix | Skip the stage in the hit test |
+| 3 impl | MINOR | DndSpec.kt:1084-1105, :913-931 | Two rows cannot fail for their reason (drop-handler click; element lookup with one zone) | fix | |
+| 3 dom | MINOR | DndManager.kt:39-40, docs, example | No dragHandle(): a scrolling bench of sources cannot scroll by touch (decision 2 recommended the helper) | fix (docs) | Maintainer 2026-10-30: document the grip pattern; the helper later |
+| 3 dom, impl | SURPLUS | DndManager.kt:89-90 | Unused defaults on the internal dropZone(KClass) | fix | |
+| 3 impl | SURPLUS | DndManager.register public | Unusable from outside (DropZone has an internal constructor) | reject | It is the interface's contract for its stage and zones; an alternative DndManager in the module, or a test double, implements it |
+| 3 | note | ledger row 2 (kraft:testing) | The follow-up was not linked | fix | ULTRA-00279 |
 
 ## History
 
@@ -203,3 +220,4 @@ CRITICAL, 0 MAJOR). Gate PASS. Open MINORs go to the maintainer as a list.
 - 2026-10-30: IN PROGRESS.
 - 2026-10-30: review round 1 (level 1): 4 MAJOR, all fixed with the MINORs; round 2 next at level 2.
 - 2026-10-30: review round 2 (level 2): clean. Gate PASS; the MINORs to the maintainer.
+- 2026-10-30: review round 3 (level 1): clean; maintainer: apply its MINORs, document the grip pattern; round 4 next.

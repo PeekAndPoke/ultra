@@ -304,6 +304,27 @@ mutant (PopupsStage) applied for a mutation check; withdrawn in phase 2; `_incid
 | 6 | SURPLUS | ResponsiveController(measure), TestWindowController.focus/resize | Test seam in the public constructor; uncalled helpers | list | |
 | 6 | withdrawn | various | DropdownMenu propagation (same class as ULTRA-00277: extend that ticket), holderCount, public followBrowserNavigation, 3 s window, PopupsStage `get()` (a mutant) | withdrawn | Withdrawn in phase 2 against settled rows or the file at HEAD |
 
+## Round 7 (level 2, reviewer-xhigh, two-phase), base c8251d14..2a31958a
+
+Scope: the round-6 MINOR batch (7bdd659d) and the first review of ULTRA-00272, 00273, 00274, 00277, 00278. Verdict:
+NOT clean: 1 MAJOR (impl and domain; security graded the same MINOR: the reviewer's MAJOR stands). Coordinator
+experiment: `DropdownMenuLinkSpec` with `.menu.visible` gone after the click: red. Not at the valve (round 6 was
+clean): round 8 at level 3. Full suite on 2a31958a: 16489 tests, 0 failures.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 7 impl, dom (sec MINOR) | MAJOR | DropdownMenu.kt:182-186, :194-197 | A link click now bubbles from the menu to the trigger around it, which opens the menu again: it stays open over the next page | fix | Experiment red (above) |
+| 7 impl, dom | MINOR | Router.kt:189-192, :314-315 | A link whose own onClick navigates is asked twice when the guard says Stop (the address did not move) | fix | |
+| 7 sec | MINOR | Router.kt:188-189 | A hash link to the current address is left to the browser; under a foreign `<base href>` that loads another document past the guards; the comment says the browser does nothing | fix | |
+| 7 impl | MINOR | FadingModal.kt:112-119 | Under path routing a link in a modal now navigates in-app; the modal stays open and its trap swallows the first Back | maintainer-decision -> fix | Maintainer 2026-10-30: "Close it": a navigation to another page dismisses an open FadingModal |
+| 7 dom | MINOR | StreamSourceImpl.kt:18, streams.kt:16 | `subscriptions` now holds wrapper entries: contains(h) is false, a manual remove(h) unsubscribes nothing | fix (CHANGELOG) | |
+| 7 dom | MINOR | sampled.kt:15, combining.astro, CHANGELOG | "two minutes at four values a second" holds only in a visible tab (hidden-tab timer throttling) | fix | |
+| 7 impl | MINOR | switchMap.kt:95, StreamCombinator.kt:40, StreamSourceImpl.kt:39 | ownEntry unpinned at three of five sites | fix | |
+| 7 impl | NIT | StreamCombinator.kt:74-77, PopupsStage.kt:86, double blank lines | Dangling KDoc, a stale @Suppress | fix | |
+| 7 impl | SURPLUS | WakeLock.kt:51 | `api == null \|\| api == undefined`: `== null` covers undefined | fix | |
+| 7 impl | SURPLUS | pixijs_addon.kt:33, threejs_addon.kt:241 | Duplicate `create` bodies | reject | Two addons, two modules with no shared dependency below kraft core; a core helper for two callers is not worth the API |
+| 7 | withdrawn | various | the 3 s window (sec), keepFresh (sec, own correction), holderCount, TestWindowController focus/resize, restoreUri branch | withdrawn | Phase 2 |
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
