@@ -153,6 +153,87 @@ Group A NOT clean: 1 MAJOR, kept by both A charters in phase 2. Safety valve (2 
 | 2 B | MINOR | ThreeJsMembersSpec.kt:108, ThreeJsComponent.kt:49, history.kt historyOfNonNull, follow_element lateinit, combining.astro order, CHANGELOG ticker clamp, SampledSpec order row | Comment wording, line length, a missing note, a simplification, section after the page nav, a missing Fixes line, an unguarded order | list | |
 | 2 | withdrawn | various | The phase-1 SURPLUS remarks on intersectObject, the ThreeJs clock param, RenderLoop after a throw, the ticker clamp, public withoutLeaveGuards / followBrowserNavigation; the history.length part and the replay-wording MINOR | withdrawn | Withdrawn in phase 2 against settled rows |
 
+## Round 3 (level 3, reviewer-top), base c8251d14..1fa45f21, phase 1 only (valve)
+
+Note: two reviewers (A impl, B domain) read the earlier record through the tickets named in the brief; both disclosed it.
+Verdict: NOT clean in either group. Phase 2 not run: both MAJORs verified by the coordinator (B by a one-off experiment,
+red on JVM and JS) and neither overlaps a settled row. Safety valve re-armed: maintainer.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 A sec | MAJOR | Router.kt isLeaving vs RouterComponent.kt key | The guard calls "the same page" equal mounted route + decoded params; RouterComponent remounts on any raw-path change. `#/edit/%31`, a urlParam re-encoding a param, or another catchAll/RoutePattern path remounts the guarded page and loses its draft, unasked | maintainer-decision (valve) | Verified by reading RouterComponent.kt:37-56 and RouteBase.kt:67-69. Touches the recorded rule "leaving = another matched route" |
+| 3 B impl | MAJOR | sampled.kt:69 | The keep-fresh handler captures nothing: one shared instance; two samplers on one source share one subscription in the source's handler set; the first to leave unsubscribes both | fix (pending) | Experiment: fold source, two samplers, leave the first: the second sees no new value (JVM and JS red) |
+| 3 A | MINOR ×14 | (see the round-3 reports) | stale-Ask check too strict for same-page moves; awaitUri before render; link-click row cannot fail on preventDefault; guard removal untested; BackNavigationTrap KDoc; style (line length, import order, ReturnCount); withoutLeaveGuards vs async beforeunload; replay without checking the entry; normalize default for prefixed custom strategies; guards outside routed pages inert; "typed address" wording under path routing; scroll restoration on a held move; letThrough outliving a replay; public addLeaveGuard | pending | |
+| 3 B | MINOR ×8 | (see the round-3 reports) | Light.shadow for base-typed callers; addons.astro not updated (pixi/three); sampled thread context; sampled.kt:20 line length; a throwing first render kills the scene; steady(false) default per call; CREDITS line not written; smooth frame without finally | pending | |
+
+## Maintainer, 2026-10-29, at the valve after round 3
+
+- Same page: "Leaving = path changes": the guard asks whenever RouterComponent would remount (another path before `?`
+  and `#`); query-only and fragment changes still never ask. Replaces the rule "another matched route".
+- Fix both MAJORs and all round-3 MINORs in one batch, then round 4 at level 3.
+
+## After round 3: what was done (6273cbc2 group A, 6ae6b9f6 group B)
+
+All round-3 rows FIXED, as the maintainer decided:
+- A MAJOR: leaving = another path (pagePath: before ? and #), RouterComponent's key; targets normalized by URL parsing
+  (browser encoding) in both strategies; guards bind to the page path. Spec: `%31` under both strategies.
+- B MAJOR: sampled subscribes its source with a handler of its own (keepFresh). Spec: two samplers, fold source.
+  The same trap in Stream.subscribeToStream's default and permanent(): ULTRA-00274 (out of scope, pre-existing).
+- A MINORs: page-scoped stale check for guarded Asks (identity for the Back replay); restored entry marked, replay
+  only from it (else navigate to the target); 3 s unload window after withoutLeaveGuards; scroll restoration manual
+  while guards are registered; warning for guards registered on the placeholder route; addLeaveGuard/LeaveGuard
+  internal; awaitUri waits a frame; link-click row checks defaultPrevented; unmount removal and beforeunload removal
+  rows; KDoc: page loads vs router navigations, trap deactivate, normalize for prefixed strategies; style.
+- B MINORs: sampled context parameter; smooth frame cleanup on a throw; Light.shadow on the base; ThreeJs loop starts
+  after a throwing first render; one NotPaused default; addons.astro pixi extras and three.js section; CREDITS plan
+  change recorded (ultra has not adopted CREDITS.MD); line wraps.
+
+## Round 4 (level 3, reviewer-top, phase 1 blind), base c8251d14..6ae6b9f6
+
+Group B: CLEAN (all three charters). Group A: NOT clean, 1 MAJOR, verified by the reviewer's one-line experiment
+(red under Hash). Phase 2 not run (valve; the MAJOR overlaps no settled row).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 4 A impl | MAJOR | Router.kt:653 | The "restored, but something stands on top" branch navigates without setting letThrough: under hash routing its hashchange asks the guards again (a second "Leave?") | fix (pending maintainer) | Experiment: `control.asked shouldBe listOf("/a")` in the row: red under Hash |
+| 4 A | MINOR | Router.kt:641-644 (2 charters) | A Back-started Ask drops a yes after any emission (urlParam), contradicting the docs | pending | |
+| 4 A | MINOR | Router.kt:544-556 (2 charters) | scrollRestoration is per entry: the toggle does not keep a held Back from scrolling, and restores the wrong entry | pending | |
+| 4 A | MINOR | Router.kt:571-572 (sec + domain) | Internal approvals open the 3 s unload window: the next page's beforeunload is muted | pending | |
+| 4 A | MINOR | Router.kt:559-562 (impl + domain) | withoutLeaveGuards KDoc: history.back() inside it is still asked | pending | |
+| 4 A | MINOR | Router.kt:535-542 (all three) | An app-shell guard binds to page "", the hash home page: asked there | pending | |
+| 4 A sec | MINOR | Router.kt:581-594 | letThrough left set when go() throws (cross-origin pushState): a later Back passes unasked | pending | |
+| 4 A dom | MINOR | Router.kt:709-722 | A stale Ask keeps askingToLeave after a navigation past the guards | pending | |
+| 4 A dom | MINOR | helpers.kt:99-111 | urlParam re-renders the path: a non-canonical address makes a tab switch "leaving" | pending (follow-up?) | |
+| 4 A dom | MINOR | FadingModal.kt:111-117 | Pre-existing: the dimmer stops click propagation, no router intercepts links in a modal | out-of-scope → follow-up task | |
+| 4 A impl | MINOR | LeaveGuardSpec.kt:509-513, :326-340 | Proceed check inside the unload window is vacuous; the "goes with its component" row cannot fail for its reason | pending | |
+| 4 B | MINOR ×10 | (reports) | zIndex KDoc remedy (equal value is a no-op, 2 charters); smooth law change does not resume a motion stalled by a throw; long→short interval waits out the long tick (decided); inline clock restarts the loop (KDoc); first draw before onFrame (decided); mirror/page notes; contract row lacks the new names; onSub half-subscribed after a throw (sampled, smooth); first-render throw inside the Preact commit; no needsUpdate row on Texture | pending | |
+
+## Maintainer, 2026-10-29, at the valve after round 4
+
+- Group A: "Fix all, round 5": the MAJOR and the MINORs; the ineffective scrollRestoration toggle dropped; round 5 at
+  level 3.
+- Group B: its MINORs applied in the same batch. Kept as decided, not changed: a long-to-short interval waits out the
+  tick due (ULTRA-00267 KDoc); the first draw before any onFrame (ULTRA-00270 KDoc).
+
+## After round 4: what was done (3ae0b38f group A, 6da0b366 group B; 5d18de10 follow-ups)
+
+All round-4 rows FIXED, as the maintainer decided ("Fix all, round 5"):
+- A MAJOR: the "restored, but something stands on top" branch navigates via navToUri inside the approved scope, so
+  its hashchange is let through and not asked again. Spec: `control.asked shouldBe listOf("/a")` under both.
+- A MINORs: Back-started Ask keeps its question over a query-only move (page check); internal approvals no longer open
+  the beforeunload window (public withoutLeaveGuards only); app-shell guards bind to no page (null); letThrough
+  cleared when go() throws; a navigation past the guards to another path cancels a pending Ask; the scrollRestoration
+  toggle removed (per entry, ineffective); withoutLeaveGuards KDoc names history.back(); spec rows strengthened.
+- A out-of-scope: ULTRA-00277 (FadingModal stops click propagation), ULTRA-00278 (urlParam re-renders the path).
+- B MINORs: zIndex KDoc (an equal value is a no-op, verified sortMixin.mjs set zIndex); smooth's lawChanged resumes a
+  stalled motion; inline-clock KDoc (keep a clock in a field); mirror notes (first draw, setSize while paused, clock,
+  sampled context); contract row names the new members; onSub unwinds on a throw (sampled, smooth) and
+  StreamSourceImpl drops the handler when onSub throws; first ThreeJs draw reported on its own task
+  (drawOnceThenStart); Texture needsUpdate row. Kept as decided: long-to-short interval, first draw before onFrame.
+
+Added to the change set for round 5 (new features, their round 1): ULTRA-00275 (WakeLock: d540e896, ae7bb1cb),
+ULTRA-00276 (ResponsiveController portrait/landscape: b855d9e6).
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.

@@ -1,6 +1,6 @@
 # ULTRA-00265: Kraft dnd: pointer events, keyboard and pick-and-place, hover state, drop source, auto-scroll, preview
 
-> **Status (2026-10-29): DESIGNED.** Redesigned 2026-10-29 as a new `kraft/dnd` module (maintainer); design confirmed the same day. Requests from Klang (Klang-Research, 2026-10-28) for its look editor's equip grid; the maintainer asked Klang to file what it would like. Not scheduled; Klang can build pick-and-place itself meanwhile. The dnd has no tests today.
+> **Status (2026-10-30): IN PROGRESS.** Built as the new `kraft/dnd` module (redesign by the maintainer, 2026-10-29), registered by `semanticUI()`, with `DndSpec` (16 rows); the maintainer checked the position and the text selection in the browser. The review gate (round 1) is next. Requests from Klang (Klang-Research, 2026-10-28) for its look editor's equip grid.
 >
 > **Part of:** ULTRA-00257 (Epic: Kraft forms and components)
 
@@ -146,3 +146,4 @@ the CHANGELOG ("the old dnd is gone; it had no users outside the examples").
 - 2026-10-29: maintainer: build it as designed.
 - 2026-10-29: maintainer: `semanticui()` registers dnd by default; the dnd stage's z-index sits above the modals' stage, so dnd works in modals.
 - 2026-10-29: from the maintainer trying the example: no text selection on the page while a drag runs; the preview keeps the grabbed share of its own size under the pointer (it may be smaller than the source). Found on the way: a press still pending at app teardown kept its window listeners; DefaultDndManager is KraftApp.Disposable and ends it.
+- 2026-10-30: IN PROGRESS.
