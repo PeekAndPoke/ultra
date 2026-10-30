@@ -10,8 +10,8 @@ streams combining, and their LLM mirrors). Left for after the release, when the 
 1. **link-clicks page:** a recipe for a component that stops click propagation and keeps the router:
    `Router.takeLinkClick(event)`; `RouterStrategy.linkClicked` for a custom strategy; `Router.pageOf(uri)` as the one
    rule of "the same page" (guards, RouterComponent, FadingModal).
-2. **drag-and-drop page:** the Gradle dependency of `kraft-dnd` for an app without Semantic UI (`site.ts` has
-   `kraftDnd`, unused), and the grip pattern next to the equip-grid sample.
+2. **drag-and-drop page:** the grip pattern next to the equip-grid sample. (The Gradle dependency item is moot: drag
+   and drop moved into Kraft core before 0.117.0 was published, registered in every app.)
 3. **testing page:** pointer helpers once ULTRA-00279 exists.
 
 ## Decide before implementing

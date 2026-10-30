@@ -1,7 +1,6 @@
 package io.peekandpoke.kraft.semanticui
 
 import io.peekandpoke.kraft.KraftApp
-import io.peekandpoke.kraft.dnd.dnd
 import io.peekandpoke.kraft.modals.modals
 import io.peekandpoke.kraft.popups.popups
 import io.peekandpoke.kraft.semanticui.popups.SemanticUiPopupComponent
@@ -10,8 +9,7 @@ import io.peekandpoke.kraft.toasts.ToastsStage
 import io.peekandpoke.kraft.toasts.toasts
 
 /**
- * Configures a Kraft application to use Semantic UI for modals, popups, and toasts, and registers drag and drop
- * (kraft:dnd), whose stage draws above the modals.
+ * Configures a Kraft application to use Semantic UI for modals, popups, and toasts.
  *
  * Call this in the [KraftApp.Builder] to wire up [SemanticUiPopupComponent] as the popup factory
  * and [SemanticUiToastsRenderer] as the default toast renderer.
@@ -22,7 +20,6 @@ fun KraftApp.Builder.semanticUI(
     toasts: ToastsManager.Builder.() -> Unit = {},
 ) = apply {
     modals()
-    dnd()
 
     // Configure popups to work with Semantic UI
     popups {

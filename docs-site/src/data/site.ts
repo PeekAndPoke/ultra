@@ -106,7 +106,6 @@ export const dep = {
     maths: `${ultraGroup}:maths:${ultraVersion}`,
     kraftCore: `${kraftGroup}:core:${kraftVersion}`,
     kraftSemanticUi: `${kraftGroup}:semanticui:${kraftVersion}`,
-    kraftDnd: `${kraftGroup}:dnd:${kraftVersion}`,
     kraftAddonDatetime: `${kraftGroup}:addons-datetime:${kraftVersion}`,
     kraftAddonChartJs: `${kraftGroup}:addons-chartjs:${kraftVersion}`,
     kraftAddonPrismJs: `${kraftGroup}:addons-prismjs:${kraftVersion}`,

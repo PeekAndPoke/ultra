@@ -119,6 +119,6 @@ internal fun guarded(handler: () -> Unit) = guardedOr(Unit, handler)
 internal fun <R> guardedOr(fallback: R, block: () -> R): R = try {
     block()
 } catch (e: Throwable) {
-    console.error("[kraft:dnd] a handler failed", e)
+    console.error("[kraft dnd] a handler failed", e)
     fallback
 }

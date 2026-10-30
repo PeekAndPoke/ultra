@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft
 
+import io.peekandpoke.kraft.dnd.dnd
 import io.peekandpoke.kraft.i18n.I18nController
 import io.peekandpoke.kraft.modals.modals
 import io.peekandpoke.kraft.popups.popups
@@ -76,6 +77,8 @@ class KraftApp internal constructor(
             toasts()
             // We always add the default Popups manager
             popups()
+            // We always add the default drag and drop manager (it listens to the window only while a drag runs)
+            dnd()
             // The default responsive controller is made in build(), only if none was set: it holds a window listener
             // We always have the default window controller
             windowCtrl(WindowController.default)

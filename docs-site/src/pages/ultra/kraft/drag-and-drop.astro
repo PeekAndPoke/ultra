@@ -15,14 +15,10 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
         Typed payloads, drop zones that components register, mouse, touch and pen alike.
     </p>
 
-    <p>The <code>kraft-dnd</code> module has a <code>DndManager</code> and a stage that the app mounts by itself, like
-        the modals. A component starts a drag from a pointer event; other components register drop zones and hear
+    <p>Kraft core has a <code>DndManager</code> (<code>io.peekandpoke.kraft.dnd</code>) and a stage that every app
+        mounts by itself, like the modals: nothing to register. A component starts a drag from a pointer event; other components register drop zones and hear
         what happens. The zones keep their own UI state and render from it: the manager writes nothing to their DOM.
         The stage draws only the drag preview, above the modals, so a drag works inside a modal too.</p>
-
-    <Code code={`kraftApp {
-    semanticUI()   // registers dnd(); without Semantic UI: dnd()
-}`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Starting a drag</h2>
 

@@ -2206,8 +2206,8 @@ popups.closeAll()
 
 # Drag & Drop
 
-Module `kraft-dnd` (registered by `semanticUI()`, or `kraftApp { dnd() }`): a `DndManager` with an auto-mounted stage
-that draws only the drag preview, above the modals. Mouse, touch and pen (pointer events). The manager writes nothing to
+Part of Kraft core (`io.peekandpoke.kraft.dnd`), registered in every app: a `DndManager` with an auto-mounted stage that
+draws only the drag preview, above the modals. Mouse, touch and pen (pointer events). The manager writes nothing to
 the zones' DOM: each zone keeps its own UI state.
 
 ```kotlin

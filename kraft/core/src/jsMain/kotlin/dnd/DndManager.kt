@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  * app and draws only the drag preview, above the modals. The manager never writes to the zones' DOM; on the page it
  * only turns text selection off while a drag runs.
  *
- * Register it with `kraftApp { dnd() }`; `semanticUI()` does.
+ * Every Kraft app registers one; `dnd()` registers a fresh [DefaultDndManager].
  */
 interface DndManager : KraftApp.AutoMountedUi {
 

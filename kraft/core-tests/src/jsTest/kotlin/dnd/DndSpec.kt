@@ -1,11 +1,14 @@
-package io.peekandpoke.kraft.dnd
+package io.peekandpoke.kraft.coretests.dnd
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.dnd.DndManager
 import io.peekandpoke.kraft.dnd.DndManager.Companion.dnd
+import io.peekandpoke.kraft.dnd.dnd
+import io.peekandpoke.kraft.dnd.dropZone
 import io.peekandpoke.kraft.testing.KQuery
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.eventually
@@ -506,8 +509,23 @@ private suspend fun withBoard(
     }
 }
 
-/** `kraft:dnd` (ULTRA-00265): the manager, its stage and drop zones registered by components. */
+/** Kraft drag and drop (ULTRA-00265): the manager, its stage and drop zones registered by components. */
 class DndSpec : StringSpec({
+
+    "every app has drag and drop: a drag onto a zone works without dnd()" {
+        val probe = Probe()
+
+        TestBed.preact(view = { Board(probe, StreamSource(true), StreamSource(true)) }) { root ->
+            with(root) {
+                down()
+                move(50, 50)
+                move(150, 50)
+                up(150, 50)
+            }
+
+            probe.events.contains("dropped:zone-a") shouldBe true
+        }
+    }
 
     "a press that moves less than the threshold is a click: no zone hears anything" {
         withBoard { probe, _ ->

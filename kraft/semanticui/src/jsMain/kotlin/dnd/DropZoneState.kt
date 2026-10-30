@@ -3,7 +3,7 @@ package io.peekandpoke.kraft.semanticui.dnd
 import io.peekandpoke.kraft.dnd.DropZone
 
 /**
- * The UI state of a drop zone, for a component to render from (kraft:dnd leaves the zone's look to the component):
+ * The UI state of a drop zone, for a component to render from (Kraft's drag and drop leaves the zone's look to the component):
  * [canTake] while a drag the zone accepts runs, [hovered] while that drag is over it.
  *
  * ```

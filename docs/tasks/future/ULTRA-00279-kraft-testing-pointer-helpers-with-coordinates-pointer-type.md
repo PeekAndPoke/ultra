@@ -1,4 +1,4 @@
-# ULTRA-00279: Kraft testing: pointer helpers with coordinates, pointer type and buttons, to drive kraft:dnd
+# ULTRA-00279: Kraft testing: pointer helpers with coordinates, pointer type and buttons, to drive drag and drop
 
 > **Status (2026-10-30): IDEA.** From the ULTRA-00265 review gate. Not scheduled.
 >

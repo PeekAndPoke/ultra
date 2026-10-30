@@ -16,7 +16,7 @@ import org.w3c.dom.events.KeyboardEvent
 import org.w3c.dom.pointerevents.PointerEvent
 import kotlin.math.hypot
 
-/** The [DndManager] that `kraftApp { dnd() }` registers; disposing the app ends a drag in progress or pending. */
+/** The [DndManager] every Kraft app registers (`dnd()`); disposing the app ends a drag in progress or pending. */
 class DefaultDndManager : DndManager, KraftApp.Disposable {
 
     /**
