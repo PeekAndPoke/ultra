@@ -90,8 +90,7 @@ private class SwitchMapStream<OUTER, INNER, RESULT>(
     }
 
     override fun subscribeToStream(sub: (RESULT) -> Unit): Unsubscribe {
-        // An entry of this subscription's own: one handler given twice (a lambda that captures nothing is one shared
-        // instance) is two subscriptions, and the first to leave must not take the other's entry with it
+        // An entry of this subscription's own (see ownEntry)
         val entry = ownEntry(sub)
 
         // Start before adding the subscriber, so that no subscriber runs while we are wiring up

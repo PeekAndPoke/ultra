@@ -48,11 +48,13 @@ class ResponsiveController(
 
         /** True when the display type is [Desktop]. */
         val isDesktop get() = this == Desktop
-        val isNotDesktop = !isDesktop
+
+        // A getter: in the enum's constructor the entries are not assigned yet, so an initializer read them as null
+        val isNotDesktop get() = !isDesktop
 
         /** True when the display type is [Mobile]. */
         val isMobile get() = this == Mobile
-        val isNotMobile = !isMobile
+        val isNotMobile get() = !isMobile
     }
 
     /** The viewport's orientation, as the CSS media query `orientation` has it: portrait when height ≥ width. */

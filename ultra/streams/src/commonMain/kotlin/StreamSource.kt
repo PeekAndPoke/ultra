@@ -20,7 +20,8 @@ interface StreamSource<T> : Stream<T> {
     val readonly get() = this as Stream<T>
 
     /**
-     * The subscription the stream source has.
+     * The subscriptions the stream source has: one entry per subscription, not the handlers given (one handler
+     * subscribed twice is two entries); unsubscribe with the [Unsubscribe] that subscribing returned.
      */
     val subscriptions: Set<StreamHandler<T>>
 

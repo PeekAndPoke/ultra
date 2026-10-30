@@ -42,6 +42,12 @@ class Router(
         /** Gets the [Router] from a [KraftApp]. */
         val KraftApp.router: Router get() = appAttributes[key]!!
 
+        /**
+         * The page of a router [uri]: its path, before `?` and `#`. The one rule for "the same page": what
+         * RouterComponent remounts for, what a leave guard calls leaving, what a FadingModal closes on.
+         */
+        fun pageOf(uri: String): String = uri.substringBefore('#').substringBefore('?')
+
         /** Gets the [Router] by looking up the component tree. */
         val Component<*>.router get() = getAttributeRecursive(key)
 
@@ -81,6 +87,9 @@ class Router(
 
         /** Removes the browser event listeners [init] installed. */
         fun dispose() {}
+
+        /** Takes a click on a route link as the strategy's own window listener does; see [Router.takeLinkClick]. */
+        fun linkClicked(event: Event) {}
 
         /**
          * The [uri] as [getUriFromWindowLocation] would read it back once it is the address, in the browser's encoding.
@@ -170,6 +179,8 @@ class Router(
                 router.followBrowserNavigation()
             }
         }
+
+        override fun linkClicked(event: Event) = clickListener(event)
 
         /** Plain clicks on route links (`href="#/..."`) go through the router; in-page anchors stay the browser's. */
         @Suppress("detekt:ReturnCount")
@@ -272,6 +283,8 @@ class Router(
             router.followBrowserNavigation()
         }
 
+        override fun linkClicked(event: Event) = clickListener(event)
+
         /**
          * Private listener for click events to intercept navigation (history-based routing)
          *
@@ -339,7 +352,6 @@ class Router(
         private fun HTMLAnchorElement.relTokens(): List<String> {
             return (getAttribute("rel") ?: "").lowercase().split(' ', '\t', '\n', '\r').filter { it.isNotEmpty() }
         }
-
     }
 
     /** Represents the navigation history of the router. */
@@ -556,7 +568,7 @@ class Router(
             )
         }
 
-        val registered = RegisteredGuard(guard, if (onNoPage) null else pagePath(current().uri))
+        val registered = RegisteredGuard(guard, if (onNoPage) null else pageOf(current().uri))
 
         leaveGuards += registered
 
@@ -631,8 +643,8 @@ class Router(
             LeaveResult.Stop -> holdJustNow(target)
             is LeaveResult.Ask -> {
                 // A yes still goes, after a query-only move meanwhile (a urlParam): the same page asked
-                val fromPage = pagePath(current().uri)
-                ask(answer, stillThere = { pagePath(current().uri) == fromPage }, go = pass)
+                val fromPage = pageOf(current().uri)
+                ask(answer, stillThere = { pageOf(current().uri) == fromPage }, go = pass)
             }
         }
     }
@@ -673,10 +685,10 @@ class Router(
             is LeaveResult.Ask -> {
                 val restored = strategy.restoreUri(stay)
                 val marker = if (restored) markRestoredEntry() else null
-                val fromPage = pagePath(current().uri)
+                val fromPage = pageOf(current().uri)
 
                 // A yes still goes after a query-only move meanwhile; the marker says where back would start
-                ask(answer, stillThere = { pagePath(current().uri) == fromPage }) {
+                ask(answer, stillThere = { pageOf(current().uri) == fromPage }) {
                     when {
                         // On the restored entry, pushed on top of the target's: back is the move itself
                         marker != null && window.history.state == marker -> {
@@ -709,10 +721,8 @@ class Router(
      * Leaving: the [target] (normalized) is on another path. The path is what RouterComponent keys the page on, so a
      * guard is asked exactly when the page would be remounted; a change of query or fragment alone never asks.
      */
-    private fun isLeaving(target: String): Boolean = pagePath(target) != pagePath(current().uri)
+    private fun isLeaving(target: String): Boolean = pageOf(target) != pageOf(current().uri)
 
-    /** The path of [uri], before `?` and `#`: the identity of a page. */
-    private fun pagePath(uri: String): String = uri.substringBefore('#').substringBefore('?')
 
     /** Marks the current history entry (a restored one) and returns the marker. */
     private fun markRestoredEntry(): String {
@@ -726,10 +736,16 @@ class Router(
      * unmounts a render after the route changed) is not asked about the next navigation.
      */
     private fun pageGuards(): List<LeaveGuard> {
-        val page = pagePath(current().uri)
+        val page = pageOf(current().uri)
 
         return leaveGuards.filter { it.page != null && it.page == page }.map { it.guard }
     }
+
+    /**
+     * Hands a click on a route link to the router, as its window listener would take it: for a component that stops
+     * click propagation (a modal, a menu), so that its links still go through the router and the guards.
+     */
+    fun takeLinkClick(event: Event) = strategy.linkClicked(event)
 
     /** The target a guard held in this task (a link's own onClick asked first): its click is not asked again. */
     private var heldTarget: String? = null
@@ -740,13 +756,13 @@ class Router(
     }
 
     /** True when a guard held a navigation to [target] in this task. */
-    internal fun heldJustNow(target: String): Boolean = heldTarget == target
+    private fun heldJustNow(target: String): Boolean = heldTarget == target
 
     /** A pending Ask protects its page: a navigation past the guards to another path drops it (and closes its modal). */
     private fun cancelAskIfLeaving(target: String) {
         val pending = asking ?: return
 
-        if (pagePath(target) != askingFromPage) {
+        if (pageOf(target) != askingFromPage) {
             pending.cancel()
             // At once: a job cancelled before it ran never reaches its own finally
             stopAsking(pending)
@@ -766,7 +782,7 @@ class Router(
      */
     private fun ask(answer: LeaveResult.Ask, stillThere: () -> Boolean, go: () -> Unit) {
         askingToLeave = true
-        askingFromPage = pagePath(current().uri)
+        askingFromPage = pageOf(current().uri)
 
         lateinit var job: Job
 

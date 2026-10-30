@@ -83,6 +83,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         session?.end(drop = false, ending = Ending.PointerGone)
         releaseWaiter?.invoke()
         clickSwallower?.invoke()
+        menuHolder?.invoke()
     }
 
     /** Stops waiting for the release after an Esc or [cancel], while one is waited for. */
@@ -90,6 +91,9 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
 
     /** Stops waiting for the click after a release, while one is waited for (a tap's comes late). */
     private var clickSwallower: (() -> Unit)? = null
+
+    /** Stops holding off the context menu after a chord release, while it is held off. */
+    private var menuHolder: (() -> Unit)? = null
 
     /** How a drag ends, for the click the browser may fire after the release. */
     private enum class Ending {
@@ -182,19 +186,26 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             }
         }
 
-        // The browser's own drag (an image, a link, selected text) would cancel ours with a pointercancel, and so would a
-        // long press's context menu (Android) on an image or a link
+        // The browser's own drag (an image, a link, selected text) would cancel ours with a pointercancel
         private val onNativeDrag: (Event) -> Unit = { it.preventDefault() }
+
+        // The context menu, which would cancel ours as well: a long press's (touch, pen; Android on an image or a link)
+        // while pressed, any once the drag runs; a mouse press that is still a click keeps its menu (a ctrl+click on
+        // macOS opens it on mousedown)
+        private val onContextMenu: (Event) -> Unit = { if (started || pointerType != "mouse") it.preventDefault() }
+
+        /** The release was a chord (another button is still held): the menu of that button's release is held off. */
+        private var chord = false
 
         private fun ours(event: Event): PointerEvent? = (event as? PointerEvent)?.takeIf { it.pointerId == pointerId }
 
-        // A press while this drag runs means its release was lost: a press of this pointer, or (touch) a new primary
-        // touch, which only a finger on an empty screen is
+        // A press while this drag runs means its release was lost: a press of this pointer, or (touch, pen) a new
+        // primary press of that type, which only a contact on an empty screen is
         private val onPress: (Event) -> Unit = { evt ->
             val press = evt as? PointerEvent
             val lost = press != null && (
                 press.pointerId == pointerId ||
-                    (pointerType == "touch" && press.pointerType == "touch" && press.isPrimary)
+                    (pointerType != "mouse" && press.pointerType == pointerType && press.isPrimary)
                 )
 
             if (lost) end(drop = false, ending = Ending.PointerGone)
@@ -207,7 +218,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             window.addEventListener("pointercancel", onCancel, true)
             window.addEventListener("keydown", onKey, true)
             window.addEventListener("dragstart", onNativeDrag, true)
-            window.addEventListener("contextmenu", onNativeDrag, true)
+            window.addEventListener("contextmenu", onContextMenu, true)
             window.addEventListener("pointerdown", onPress, true)
 
             // Best effort: a synthetic or already released pointer cannot be captured, and the window still hears it
@@ -237,6 +248,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
 
                 // The primary button let go while another is held (a chord: no pointerup comes): that is the release
                 if (buttons and 1 == 0) {
+                    chord = true
                     released(event)
                     return
                 }
@@ -346,7 +358,7 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             window.removeEventListener("pointercancel", onCancel, true)
             window.removeEventListener("keydown", onKey, true)
             window.removeEventListener("dragstart", onNativeDrag, true)
-            window.removeEventListener("contextmenu", onNativeDrag, true)
+            window.removeEventListener("contextmenu", onContextMenu, true)
             window.removeEventListener("pointerdown", onPress, true)
 
             try {
@@ -382,6 +394,9 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
             told.clear()
 
             // After the handlers: a drop handler's own element.click() (a file picker) is not taken for the release's
+            // On Windows the held button's menu opens at its release, after this drop
+            if (chord) holdOffMenuUntilRelease(pointerId)
+
             when (ending) {
                 Ending.Released -> swallowNextClick(pointerType)
                 Ending.PointerStillDown -> swallowClickAfterRelease(pointerId, pointerType)
@@ -457,6 +472,32 @@ class DefaultDndManager : DndManager, KraftApp.Disposable {
         window.addEventListener("pointercancel", onRelease, true)
         window.addEventListener("pointerdown", onRelease, true)
         releaseWaiter = stop
+    }
+
+    /** After a chord release: the context menu is held off until that pointer's last button is let go. */
+    private fun holdOffMenuUntilRelease(pointerId: Int) {
+        menuHolder?.invoke()
+
+        val onMenu: (Event) -> Unit = { it.preventDefault() }
+        lateinit var onEnd: (Event) -> Unit
+        lateinit var stop: () -> Unit
+
+        stop = {
+            window.removeEventListener("contextmenu", onMenu, true)
+            window.removeEventListener("pointerup", onEnd, true)
+            window.removeEventListener("pointercancel", onEnd, true)
+            window.removeEventListener("pointerdown", onEnd, true)
+            if (menuHolder === stop) menuHolder = null
+        }
+
+        // The menu's mouseup comes before this pointerup; a new press or a cancel ends the wait as well
+        onEnd = { event -> if ((event as? PointerEvent)?.pointerId == pointerId) window.setTimeout({ stop() }, 0) }
+
+        window.addEventListener("contextmenu", onMenu, true)
+        window.addEventListener("pointerup", onEnd, true)
+        window.addEventListener("pointercancel", onEnd, true)
+        window.addEventListener("pointerdown", onEnd, true)
+        menuHolder = stop
     }
 
     private companion object {

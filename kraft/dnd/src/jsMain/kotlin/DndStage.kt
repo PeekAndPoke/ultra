@@ -23,7 +23,10 @@ internal const val DND_STAGE_Z_INDEX = 20000
 @Suppress("FunctionName")
 internal fun Tag.DndStage(manager: DefaultDndManager) = comp(DndStage.Props(manager)) { DndStage(it) }
 
-/** Draws the preview of the drag in progress at the pointer, and nothing else. It never takes a pointer event. */
+/**
+ * Draws the preview of the drag in progress at the pointer, and nothing else. The stage takes no pointer events, and
+ * the hit test looks past a preview part that sets its own.
+ */
 internal class DndStage(ctx: Ctx<Props>) : Component<DndStage.Props>(ctx) {
 
     data class Props(val manager: DefaultDndManager)

@@ -12,7 +12,11 @@ typealias Unsubscribe = () -> Unit
  */
 typealias StreamHandler<T> = (T) -> Unit
 
-/** A handler entry of one subscription's own, for a stream's set of handlers (ULTRA-00274). */
+/**
+ * A handler entry of one subscription's own, for a stream's set of handlers (ULTRA-00274): one handler given twice (a
+ * lambda that captures nothing is one shared instance) is two subscriptions, and the first to leave must not take the
+ * other's entry with it.
+ */
 internal fun <T> ownEntry(handler: StreamHandler<T>): StreamHandler<T> = { handler(it) }
 
 /**

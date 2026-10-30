@@ -3,7 +3,7 @@ package io.peekandpoke.kraft.semanticui.menu
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
-import io.peekandpoke.kraft.semanticui.isOnLink
+import io.peekandpoke.kraft.semanticui.stopClick
 import io.peekandpoke.kraft.utils.async
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.RenderFn
@@ -24,8 +24,6 @@ import kotlinx.css.zIndex
 import kotlinx.html.DIV
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
-import org.w3c.dom.Element
-import org.w3c.dom.Node
 import org.w3c.dom.events.Event
 
 /** Convenience factory that renders a text-style [DropdownMenu]. */
@@ -182,13 +180,8 @@ class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
 
             ui.dropdown.item {
                 onClick { evt ->
-                    // A link bubbles on: the router listens on the window for route links (ULTRA-00277)
-                    if (!evt.isOnLink()) evt.stopPropagation()
-                    // A choice in this item's own menu (it lies inside the item) closed it: it must not open again
-                    val ownMenu = (evt.currentTarget as? Element)?.querySelector(":scope > .menu")
-                    val fromMenu = ownMenu != null && (evt.target as? Node)?.let { ownMenu.contains(it) } == true
-
-                    if (!fromMenu) opened = true
+                    stopClick(evt)
+                    opened = true
                 }
 
                 props.content(this)
@@ -198,7 +191,8 @@ class DropdownMenu(ctx: Ctx<Props>) : Component<DropdownMenu.Props>(ctx) {
                         zIndex = 2000
                     }
                     onClick { evt ->
-                        if (!evt.isOnLink()) evt.stopPropagation()
+                        // Stopped here, so the item around (the trigger) does not open it again
+                        stopClick(evt)
                         opened = false
                     }
                     renderItems(emptyList(), props.items)

@@ -44,10 +44,18 @@ class HandlerResilienceSpec : StringSpec({
             "switchMap" to { s -> s.switchMap { StreamSource(it) } },
             "cutoffWhen" to { s -> s.cutoffWhen(StreamSource(false)) },
             "sampled" to { s -> s.sampled(HandClock()) },
-            "smooth" to { s ->
-                s.map<Int, Double?> { it.toDouble() }.smooth(smoothing = StreamSource(null), clock = HandClock()).map { 0 }
-            },
         )
+
+        // smooth is a Stream<Double?>: the same check, with a handler of that type
+        val smoothSource = StreamSource(1)
+        val smooth = smoothSource.map<Int, Double?> { it.toDouble() }.smooth(smoothing = StreamSource(null), clock = HandClock())
+        val noopDouble: (Double?) -> Unit = {}
+        val firstSmooth = smooth.subscribeToStream(noopDouble)
+        val secondSmooth = smooth.subscribeToStream(noopDouble)
+        firstSmooth()
+        withClue("smooth after the first left") { smoothSource.subscriptions.size shouldBe 1 }
+        secondSmooth()
+        withClue("smooth after both left") { smoothSource.subscriptions.size shouldBe 0 }
 
         operators.forEach { (name, op) ->
             val source = StreamSource(1)

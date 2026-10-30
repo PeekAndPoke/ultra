@@ -8,6 +8,7 @@ import io.peekandpoke.kraft.testing.awaitCss
 import io.peekandpoke.kraft.testing.awaitUri
 import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.selectCss
+import io.peekandpoke.ultra.html.onClick
 import kotlinx.browser.window
 import kotlinx.html.a
 import kotlinx.html.div
@@ -54,6 +55,71 @@ class DropdownMenuLinkSpec : StringSpec({
 
             // And the menu closed, as for any choice in it: the trigger around it must not open it again
             eventually { root.selectCss(".menu.visible").size shouldBe 0 }
+        }
+    }
+
+    "a link chosen in the menu does not reach click handlers around the menu (a clickable row)" {
+        var outer = 0
+
+        TestBed.preact(
+            appSetup = {
+                routing {
+                    mount(Static("/a")) {}
+                    mount(Static("/b")) {}
+                }
+            },
+            view = {
+                div(classes = "row") {
+                    onClick { outer++ }
+                    DropdownMenu {
+                        text {
+                            item { render { a(href = "#/b", classes = "go") { +"go" } } }
+                        }
+                    }
+                }
+            },
+        ) { root ->
+            router.navToUri("/a")
+            router.awaitUri("/a")
+
+            root.awaitCss(".go")[0].dispatchEvent(MouseEvent("click", js("({bubbles: true, cancelable: true, button: 0})")))
+            router.awaitUri("/b")
+
+            outer shouldBe 0
+        }
+    }
+
+    "path routing: a route link in the menu goes through the router (no page load)" {
+        val originalHref = window.location.href
+
+        try {
+            TestBed.preact(
+                appSetup = {
+                    routing {
+                        usePathStrategy()
+                        mount(Static("/a")) {}
+                        mount(Static("/b")) {}
+                    }
+                },
+                view = {
+                    DropdownMenu {
+                        text {
+                            item { render { a(href = "/b", classes = "go") { +"go" } } }
+                        }
+                    }
+                },
+            ) { root ->
+                router.navToUri("/a")
+                router.awaitUri("/a")
+
+                val click = MouseEvent("click", js("({bubbles: true, cancelable: true, button: 0})"))
+                root.awaitCss(".go")[0].dispatchEvent(click)
+
+                click.defaultPrevented shouldBe true
+                router.awaitUri("/b")
+            }
+        } finally {
+            window.history.replaceState(null, "", originalHref)
         }
     }
 })

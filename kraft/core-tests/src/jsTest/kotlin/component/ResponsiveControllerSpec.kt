@@ -53,12 +53,13 @@ class ResponsiveControllerSpec : StringSpec({
     "custom breakpoints per orientation" {
         val ctrl = ResponsiveController(
             portrait = ResponsiveController.Breakpoints(tablet = 500, desktop = 2000),
-            landscape = ResponsiveController.Breakpoints(tablet = 1100, desktop = 1500),
+            landscape = ResponsiveController.Breakpoints(tablet = 1300, desktop = 1500),
             measure = { Vector2D(1200.0, 600.0) },
         )
 
         try {
-            ctrl().displayType shouldBe DisplayType.Tablet
+            // Landscape's set: below its tablet width (the portrait set would say Tablet)
+            ctrl().displayType shouldBe DisplayType.Mobile
             ctrl().isLandscape shouldBe true
         } finally {
             ctrl.dispose()
@@ -128,27 +129,32 @@ class ResponsiveControllerSpec : StringSpec({
         val proto = js("MediaQueryList.prototype")
         val add = proto.addEventListener
         val remove = proto.removeEventListener
-        val counts = js("({ added: 0, removed: 0 })")
-        // A plain function: the patched method needs its own `this`, the query it is called on
-        val counting = js(
-            "(function (orig, counts, field) { return function (type, h, o) { " +
-                "if (type === 'change') counts[field]++; return orig.call(this, type, h, o); }; })"
+        // The handlers on now, by identity: a removal of another function object (a fresh `::x`) removes nothing
+        val live = js("([])")
+        val tracking = js(
+            "(function (add, remove, live, type) { return [" +
+                "function (t, h, o) { if (t === type) live.push(h); return add.call(this, t, h, o); }, " +
+                "function (t, h, o) { var i = live.indexOf(h); if (t === type && i >= 0) live.splice(i, 1); " +
+                "return remove.call(this, t, h, o); }]; })"
         )
-        proto.addEventListener = counting(add, counts, "added")
-        proto.removeEventListener = counting(remove, counts, "removed")
+        val patched = tracking(add, remove, live, "change")
+        proto.addEventListener = patched[0]
+        proto.removeEventListener = patched[1]
+        var addedDuring = 0
 
         var size = Vector2D(390.0, 844.0)
         lateinit var ctrl: ResponsiveController
 
         try {
             ctrl = ResponsiveController(measure = { size })
+            addedDuring = live.length as Int
             ctrl.dispose()
         } finally {
             proto.addEventListener = add
             proto.removeEventListener = remove
         }
 
-        (counts.added as Int to counts.removed as Int) shouldBe (1 to 1)
+        (addedDuring to live.length as Int) shouldBe (1 to 0)
 
         var emissions = 0
         val unsubscribe = ctrl.subscribeToStream { emissions++ }
@@ -188,5 +194,13 @@ class ResponsiveControllerSpec : StringSpec({
         }
 
         (counts.added as Int to counts.removed as Int) shouldBe (1 to 1)
+    }
+
+    "isNotDesktop and isNotMobile of a display type are the opposites" {
+        DisplayType.entries.map { it to (it.isNotDesktop to it.isNotMobile) } shouldBe listOf(
+            DisplayType.Desktop to (false to true),
+            DisplayType.Tablet to (true to true),
+            DisplayType.Mobile to (true to false),
+        )
     }
 })

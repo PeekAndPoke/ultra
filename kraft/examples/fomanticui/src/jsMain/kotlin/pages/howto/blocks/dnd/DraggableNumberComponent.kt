@@ -32,7 +32,7 @@ class DraggableNumberComponent(ctx: Ctx<Props>) : Component<DraggableNumberCompo
             // The grip drags; the rest of the tile scrolls a list on touch as usual
             span {
                 // For touch: no scrolling from here, and a long press must not select text or open the callout
-                style = "touch-action: none; user-select: none; -webkit-touch-callout: none; cursor: grab;"
+                style = "touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab;"
 
                 onPointerDown { event ->
                     dnd.startDrag<Number>(

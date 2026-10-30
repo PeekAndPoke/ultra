@@ -168,4 +168,50 @@ class FadingModalLinkSpec : StringSpec({
             m().size shouldBe 1
         }
     }
+
+    "path routing: a route link inside a modal goes through the router (no page load), and the modal closes" {
+        val m = DefaultModalsManager()
+        val originalHref = window.location.href
+
+        try {
+            TestBed.preact(
+                appSetup = {
+                    setAttribute(ModalsManager.key, m)
+                    routing {
+                        usePathStrategy()
+                        mount(Static("/a")) {}
+                        mount(Static("/b")) {}
+                    }
+                },
+                view = { },
+            ) { root ->
+                router.navToUri("/a")
+                router.awaitUri("/a")
+
+                m.show { h ->
+                    OkCancelModal(
+                        handle = h,
+                        transition = FadingModal.Transition(fadeInTimeMs = 0, fadeOutTimeMs = 0),
+                        view = OkCancelModal.View(
+                            appearance = { mini },
+                            header = { +"Header" },
+                            content = { a(href = "/b", classes = "go") { +"go" } },
+                            okText = { +"Yes" },
+                            cancelText = { +"No" },
+                        ),
+                        onResult = {},
+                    )
+                }
+
+                val click = MouseEvent("click", js("({bubbles: true, cancelable: true, button: 0})"))
+                root.awaitCss(".go")[0].dispatchEvent(click)
+
+                click.defaultPrevented shouldBe true
+                router.awaitUri("/b")
+                eventually { m().size shouldBe 0 }
+            }
+        } finally {
+            window.history.replaceState(null, "", originalHref)
+        }
+    }
 })

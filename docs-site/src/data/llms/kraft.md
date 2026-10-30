@@ -2215,7 +2215,7 @@ the zones' DOM: each zone keeps its own UI state.
 // Primary button only; not from text fields; the native image/link drag and context menu are held off;
 // nested sources: the innermost drags.
 ui.segment {
-    style = "touch-action: none; user-select: none; -webkit-touch-callout: none;"   // needed for touch
+    style = "touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"   // needed for touch
     onPointerDown { event ->
         dnd.startDrag(event, payload = look, source = slot, preview = { ui.compact.segment { +look.name } })
             .onDropped { zone -> }

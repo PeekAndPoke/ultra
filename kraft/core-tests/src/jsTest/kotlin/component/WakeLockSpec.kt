@@ -147,7 +147,7 @@ class WakeLockSpec : StringSpec({
     "the browser drops the lock when the page is hidden; visible again and held, it is asked for again" {
         val api = FakeLockApi()
 
-        api.controller.acquire()
+        val release = api.controller.acquire()
         val lock = api.grant()
 
         api.visible = false
@@ -162,6 +162,9 @@ class WakeLockSpec : StringSpec({
 
         api.grant()
         api.controller.isActive() shouldBe true
+
+        // Let go: its visibility listener must not stay on the document for the rest of the run
+        release()
     }
 
     "a refused request is retried while held and visible" {
@@ -181,26 +184,29 @@ class WakeLockSpec : StringSpec({
         val doc = document.asDynamic()
         val add = doc.addEventListener
         val remove = doc.removeEventListener
-        val counts = js("({ added: 0, removed: 0 })")
-        // A plain function: the patched method needs its own `this`, the document
-        val counting = js(
-            "(function (orig, counts, field) { return function (type, h, o) { " +
-                "if (type === 'visibilitychange') counts[field]++; return orig.call(this, type, h, o); }; })"
+        // The handlers on now, by identity: a removal of another function object (a fresh `::x`) removes nothing
+        val live = js("([])")
+        val tracking = js(
+            "(function (add, remove, live, type) { return [" +
+                "function (t, h, o) { if (t === type) live.push(h); return add.call(this, t, h, o); }, " +
+                "function (t, h, o) { var i = live.indexOf(h); if (t === type && i >= 0) live.splice(i, 1); " +
+                "return remove.call(this, t, h, o); }]; })"
         )
-        doc.addEventListener = counting(add, counts, "added")
-        doc.removeEventListener = counting(remove, counts, "removed")
+        val patched = tracking(add, remove, live, "visibilitychange")
+        doc.addEventListener = patched[0]
+        doc.removeEventListener = patched[1]
 
         try {
             val api = FakeLockApi()
-            (counts.added as Int) shouldBe 0
+            (live.length as Int) shouldBe 0
 
             val first = api.controller.acquire()
             val second = api.controller.acquire()
-            (counts.added as Int) shouldBe 1
+            (live.length as Int) shouldBe 1
 
             first()
             second()
-            (counts.removed as Int) shouldBe 1
+            (live.length as Int) shouldBe 0
         } finally {
             doc.addEventListener = add
             doc.removeEventListener = remove

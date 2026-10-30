@@ -9,7 +9,7 @@ import io.peekandpoke.kraft.modals.ModalsManager
 import io.peekandpoke.kraft.routing.BackNavigationTrap
 import io.peekandpoke.kraft.routing.BackNavigationTrap.Companion.trapBackNavigation
 import io.peekandpoke.kraft.routing.Router
-import io.peekandpoke.kraft.semanticui.isOnLink
+import io.peekandpoke.kraft.semanticui.stopClick
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.onClick
@@ -29,7 +29,8 @@ import kotlinx.html.style
  * Subclasses implement [renderContent] and answer through [close] with a result; [close] without one (also the
  * backdrop and back navigation) is a dismissal. The answer reaches the handle's `onResult` after the fade-out.
  * The modal traps back-navigation and disables body scrolling while any FadingModal is open. A navigation to another
- * page (a link inside the modal, a logout) dismisses it; a query-only move does not.
+ * page (a link inside the modal, a logout) dismisses it; a `replaceUri` (a `urlParam`) does not. Under hash routing a
+ * pushed move, also a query-only one, is a Back for the trap and dismisses it too.
  */
 abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx<P>) : Component<P>(ctx) {
 
@@ -94,10 +95,23 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
                     fadingIn = false
                 }
 
-                // A navigation to another page dismisses the modal; a query-only move (a urlParam) does not
+                // A navigation to another page dismisses the modal; a replaceUri (a urlParam) does not. The page is the
+                // address's: under hash routing the router follows a written address a task later, and a modal shown
+                // with that navigation belongs to the new page. Until the router arrives, the page it is still on is no
+                // reason to close
                 getAttributeRecursiveOrNull(Router.key)?.let { router ->
-                    val page = pagePath(router.current().uri)
-                    unwatchPage = router.current.subscribeToStream { if (pagePath(it.uri) != page) close() }
+                    val page = Router.pageOf(router.strategy.getUriFromWindowLocation())
+                    var stillOn = Router.pageOf(router.current().uri)
+
+                    unwatchPage = router.current.subscribeToStream {
+                        val now = Router.pageOf(it.uri)
+
+                        when (now) {
+                            page -> stillOn = page
+                            stillOn -> Unit
+                            else -> close()
+                        }
+                    }
                 }
             }
 
@@ -126,12 +140,7 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
             .given(fadingOut) { animating.fade.out }.then {
                 style = "display: flex !important;"
                 onClick {
-                    when {
-                        it.target == it.currentTarget -> close()
-                        // A link bubbles on: the router listens on the window for route links (ULTRA-00277)
-                        it.isOnLink() -> Unit
-                        else -> it.stopPropagation()
-                    }
+                    if (it.target == it.currentTarget) close() else stopClick(it)
                 }
 
                 renderContent()
@@ -192,6 +201,3 @@ abstract class FadingModal<P : FadingModal.Props<RESULT>, RESULT : Any>(ctx: Ctx
         }
     }
 }
-
-/** The path of a router uri, before `?` and `#`: the page. */
-private fun pagePath(uri: String): String = uri.substringBefore('#').substringBefore('?')

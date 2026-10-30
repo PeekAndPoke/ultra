@@ -307,6 +307,26 @@ private class HitPreviewSource(ctx: Ctx<Props>) : Component<HitPreviewSource.Pro
 }
 
 @Suppress("TestFunctionName")
+private fun Tag.EditableRegionSource(probe: Probe) = comp(EditableRegionSource.Props(probe)) { EditableRegionSource(it) }
+
+/** A source at (0, 0) 40x40 holding an editable region over all of it (an inline rename). */
+private class EditableRegionSource(ctx: Ctx<Props>) : Component<EditableRegionSource.Props>(ctx) {
+    data class Props(val probe: Probe)
+
+    override fun VDom.render() {
+        div(classes = "source") {
+            style = box(0, 0, 40, 40)
+            onPointerDown { event -> dnd.startDrag(event = event, payload = Look("red")) }
+
+            div(classes = "editable") {
+                attributes["contenteditable"] = "true"
+                style = box(0, 0, 40, 40)
+            }
+        }
+    }
+}
+
+@Suppress("TestFunctionName")
 private fun Tag.NumberZone(probe: Probe) = comp(NumberZone.Props(probe)) { NumberZone(it) }
 
 /** A zone at (100, 0) for numbers: a Look must pass it by. */
@@ -1092,7 +1112,7 @@ class DndSpec : StringSpec({
         }
     }
 
-    "the context menu is held off while a press is held, and only then" {
+    "the context menu: held off for a touch press and a running drag; a mouse press that is a click keeps it" {
         withBoard { _, _ ->
             suspend fun contextMenu(): Boolean {
                 val event = Event("contextmenu", js("({bubbles: true, cancelable: true})"))
@@ -1100,10 +1120,42 @@ class DndSpec : StringSpec({
                 return event.defaultPrevented
             }
 
-            down()
+            // A long press on touch would open it and cancel the drag
+            down(pointerType = "touch")
             contextMenu() shouldBe true
-            up(10, 10)
+            up(10, 10, pointerType = "touch")
+            contextMenu() shouldBe false
 
+            // A mouse press that is still a click: a ctrl+click on macOS opens the menu on mousedown
+            down()
+            contextMenu() shouldBe false
+
+            // Once it drags
+            move(150, 50)
+            contextMenu() shouldBe true
+            up(150, 50)
+            contextMenu() shouldBe false
+        }
+    }
+
+    "after a chord drop the held button's context menu is held off until its release (Windows)" {
+        withBoard { probe, _ ->
+            suspend fun contextMenu(): Boolean {
+                val event = Event("contextmenu", js("({bubbles: true, cancelable: true})"))
+                selectCss(".source")[0].dispatchEvent(event)
+                return event.defaultPrevented
+            }
+
+            down()
+            move(150, 50)
+            pointer("pointermove", at(150, 50), 150, 50, buttons = 3)
+            pointer("pointermove", at(150, 50), 150, 50, buttons = 2)
+            probe.events.contains("a:drop") shouldBe true
+
+            // Windows opens the right button's menu at its mouseup, before its pointerup
+            contextMenu() shouldBe true
+            up(150, 50)
+            delay(10)
             contextMenu() shouldBe false
         }
     }
@@ -1306,5 +1358,113 @@ class DndSpec : StringSpec({
         }
 
         probe.events.contains("a:drop") shouldBe true
+    }
+
+    "a pen drag whose release was lost ends at the next primary pen press" {
+        val probe = Probe()
+
+        TestBed.preact(appSetup = { dnd() }, view = { Source(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100)) }) { root ->
+            val dnd = app.appAttributes[DndManager.key]!!
+
+            root.down(pointerType = "pen", id = 5)
+            move(150, 50, id = 5, pointerType = "pen")
+            (dnd.current() != null) shouldBe true
+
+            // Some browsers give the pen a new id per contact
+            pointer("pointerdown", at(300, 300), 300, 300, id = 6, pointerType = "pen")
+
+            (dnd.current() == null) shouldBe true
+        }
+
+        probe.events.contains("cancelled") shouldBe true
+    }
+
+    "a press in an editable region of a source selects text; it does not drag" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = { EditableRegionSource(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100)) },
+        ) { root ->
+            pointer("pointerdown", root.selectCss(".editable")[0], 10, 10)
+            move(150, 50)
+            up(150, 50)
+        }
+
+        probe.events shouldBe emptyList()
+    }
+
+    "a cancel from one zone's start: the zones after it hear no start without a stop" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = {
+                Source(probe)
+                Zone("a", probe, takes = true, style = box(100, 0, 100, 100), cancelOnStart = true)
+                Zone("c", probe, takes = true, style = box(100, 300, 50, 50))
+            },
+        ) { root ->
+            root.down()
+            move(150, 50)
+            up(150, 50)
+        }
+
+        val c = probe.events.filter { it.startsWith("c:") }
+        (c.isEmpty() || c == listOf("c:start", "c:stop")) shouldBe true
+    }
+
+    "a current subscriber that cancels leaves no preview on the stage" {
+        val probe = Probe()
+
+        TestBed.preact(appSetup = { dnd() }, view = { Source(probe) }) { root ->
+            val dnd = app.appAttributes[DndManager.key]!!
+            val unsubscribe = dnd.current.subscribeToStream { if (it != null) dnd.cancel() }
+
+            root.down()
+            move(150, 50)
+            delay(20)
+
+            (document.querySelector(".kraft-dnd-stage") == null) shouldBe true
+            unsubscribe()
+            up(150, 50)
+        }
+    }
+
+    "an onLeave that cancels as the pointer moves onto another zone: that zone is not entered" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = {
+                Source(probe)
+                Zone("a", probe, takes = true, style = box(100, 0, 100, 100), options = ZoneOptions(cancelOnLeave = true))
+                Zone("c", probe, takes = true, style = box(200, 0, 100, 100))
+            },
+        ) { root ->
+            root.down()
+            move(150, 50)
+            move(250, 50)
+        }
+
+        probe.events.contains("c:enter") shouldBe false
+    }
+
+    "the page's own user-select comes back after a drag" {
+        val style = document.documentElement!!.asDynamic().style
+        style.setProperty("user-select", "text")
+
+        try {
+            withBoard { _, _ ->
+                down()
+                move(150, 50)
+                (style.getPropertyValue("user-select") as String) shouldBe "none"
+                up(150, 50)
+            }
+
+            (style.getPropertyValue("user-select") as String) shouldBe "text"
+        } finally {
+            style.removeProperty("user-select")
+        }
     }
 })

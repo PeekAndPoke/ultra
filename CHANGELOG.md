@@ -137,9 +137,11 @@
   the route, which could write the path differently (`@` as `%40`), and a leave guard took the param change for
   leaving the page.
 - **Kraft Semantic UI: a link inside a FadingModal or a DropdownMenu reaches the router** (ULTRA-00277): their click
-  handlers stopped every click, so route links were followed by the browser (a page reload under path routing). A
-  navigation to another page now dismisses an open FadingModal under both strategies (it answers `null`); a
-  query-only move does not. The menu closes after a link in it was chosen.
+  handlers stopped every click, so route links were followed by the browser (a page reload under path routing); they
+  now hand link clicks to the router (`Router.takeLinkClick(event)`, for any component that stops click propagation).
+  A navigation to another page now dismisses an open FadingModal under both strategies (it answers `null`); a
+  `replaceUri` (a `urlParam`) does not, while under hash routing a pushed move, also a query-only one, is a Back for
+  its trap and dismisses it, as before. A modal shown together with a navigation belongs to the new page.
 - **Kraft: the popups stage removes its own document listeners** (ULTRA-00272); each app left two behind.
 
 - **Streams: a subscribe that throws leaves nothing behind.** When `onSub()` throws, or the handler throws on its first

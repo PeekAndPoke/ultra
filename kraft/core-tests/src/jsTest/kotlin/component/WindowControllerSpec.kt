@@ -15,6 +15,7 @@ import io.peekandpoke.kraft.utils.WindowController
 import io.peekandpoke.kraft.utils.windowCtrl
 import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.browser.document
+import kotlinx.browser.window
 import kotlinx.html.Tag
 import kotlinx.html.div
 import org.w3c.dom.events.Event
@@ -97,6 +98,27 @@ class WindowControllerSpec : StringSpec({
                 root.selectCss(".focus").textContent() shouldBe "resting"
                 root.selectCss(".visible").textContent() shouldBe "hidden"
             }
+        }
+    }
+
+    "the default controller's hasFocus follows the window's blur and focus" {
+        val doc = document.asDynamic()
+        val realHasFocus = doc.hasFocus
+        var focused = true
+        doc.hasFocus = { focused }
+
+        try {
+            val ctrl = WindowController.default
+
+            focused = false
+            window.dispatchEvent(Event("blur"))
+            ctrl.hasFocus() shouldBe false
+
+            focused = true
+            window.dispatchEvent(Event("focus"))
+            ctrl.hasFocus() shouldBe true
+        } finally {
+            doc.hasFocus = realHasFocus
         }
     }
 })

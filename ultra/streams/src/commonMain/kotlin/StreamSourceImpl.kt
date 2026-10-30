@@ -34,8 +34,7 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
      * @see StreamSource.subscribeToStream
      */
     override fun subscribeToStream(sub: StreamHandler<T>): Unsubscribe {
-        // An entry of this subscription's own: one handler given twice (a lambda that captures nothing is one shared
-        // instance) is two subscriptions, and the first to leave must not take the other's entry with it
+        // An entry of this subscription's own (see ownEntry)
         val entry = ownEntry(sub)
 
         this.subscriptions.add(entry)

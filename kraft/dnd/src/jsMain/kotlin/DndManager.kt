@@ -37,8 +37,8 @@ interface DndManager : KraftApp.AutoMountedUi {
      * draws nothing but the cursor. Only the primary button of the primary pointer drags; another press gets a handle
      * that never calls back. Nested sources: the first `startDrag` for an event wins, the innermost one as the event
      * bubbles. For touch, the element needs `touch-action: none` before the pointer goes down (and `user-select: none`,
-     * `-webkit-touch-callout: none` against a long-press selection); in a list that scrolls, give those and the
-     * `pointerdown` to a grip inside the tile, so a swipe on the rest still scrolls.
+     * `-webkit-user-select: none`, `-webkit-touch-callout: none` against a long-press selection); in a list that
+     * scrolls, give those and the `pointerdown` to a grip inside the tile, so a swipe on the rest still scrolls.
      */
     fun <T : Any> startDrag(
         event: PointerEvent,
