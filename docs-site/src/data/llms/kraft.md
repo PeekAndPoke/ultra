@@ -2212,7 +2212,8 @@ the zones' DOM: each zone keeps its own UI state.
 
 ```kotlin
 // Start a drag from the source's pointerdown; it begins after a 4 px threshold, the click after it is swallowed.
-// Primary button only; the browser's native image/link drag is held off; nested sources: the innermost drags.
+// Primary button only; not from text fields; the native image/link drag and context menu are held off;
+// nested sources: the innermost drags.
 ui.segment {
     style = "touch-action: none; user-select: none; -webkit-touch-callout: none;"   // needed for touch
     onPointerDown { event ->
@@ -2235,7 +2236,8 @@ init {
 ```
 
 `Drag` carries `payload`, `source`, `position`, `pointerType`. The drop goes to the zone under the pointer at the
-release; a throwing handler is logged and the others still run. `dropZone(element = { ... })` names another area than
+release; a throwing handler is logged and the others still run. Payloads match by class (generics are erased: use
+a payload class of your own). `dropZone(element = { ... })` names another area than
 the component's element. `dnd.current` is a `Stream<Drag<*>?>`; `dnd.cancel()` ends a drag. Semantic UI helper:
 `DropZoneState` with `track(state) { triggerRedraw() }` and `ui.with(*state.semanticClasses)`.
 

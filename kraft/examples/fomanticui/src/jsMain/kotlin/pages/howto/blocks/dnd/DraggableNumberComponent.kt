@@ -28,8 +28,8 @@ class DraggableNumberComponent(ctx: Ctx<Props>) : Component<DraggableNumberCompo
 
     override fun VDom.render() {
         ui.segment {
-            // No scrolling on touch: the browser must leave the pointer to the drag
-            style = "touch-action: none; cursor: grab;"
+            // For touch: no scrolling, and a long press must not select text or open the callout
+            style = "touch-action: none; user-select: none; -webkit-touch-callout: none; cursor: grab;"
 
             onPointerDown { event ->
                 dnd.startDrag<Number>(

@@ -27,7 +27,7 @@ class Drag<out T : Any> internal constructor(
 
 /** What the starter of a drag learns about its end. A press that never moved past the threshold is a click: neither is called. */
 interface DragHandle {
-    /** Called once, when the drag was dropped on [zone]. */
+    /** Called once, when the drag was dropped on a zone, given to the callback. */
     fun onDropped(callback: (zone: DropZone<*>) -> Unit): DragHandle
 
     /** Called once, when the drag ended without a drop: released outside every zone, Esc, or cancelled. */
@@ -41,8 +41,8 @@ interface DragHandle {
  * from it. The manager never writes to the zone's DOM.
  */
 class DropZone<T : Any> internal constructor(
-    /** The payload type the zone takes. */
-    val type: KClass<T>,
+    /** The payload type the zone takes, matched by class (generic arguments are erased: give a payload a class of its own). */
+    internal val type: KClass<T>,
     /** The element whose area is the zone; read at every hit test, so it may change. Null: the zone is not hit. */
     val element: () -> Element?,
     private val accepts: (Drag<T>) -> Boolean,
@@ -91,8 +91,11 @@ class DropZone<T : Any> internal constructor(
         }
     }
 
-    /** True when [drag] is of the zone's type and its predicate takes it. */
-    internal fun takes(drag: Drag<*>): Boolean = typed(drag)?.let(accepts) ?: false
+    /** True when [drag] is of the zone's type and its predicate takes it; a predicate that throws takes nothing. */
+    internal fun takes(drag: Drag<*>): Boolean = typed(drag)?.let { typedDrag -> guardedOr(false) { accepts(typedDrag) } } ?: false
+
+    /** The zone's element now; one whose lookup throws is not hit. */
+    internal fun area(): Element? = guardedOr(null) { element() }
 
     internal fun dragStart(drag: Drag<*>) = notify(handlers.dragStart, drag)
     internal fun dragStop(drag: Drag<*>) = notify(handlers.dragStop, drag)
@@ -110,10 +113,12 @@ class DropZone<T : Any> internal constructor(
 }
 
 /** Runs a handler of the app's: one that throws is reported and does not keep the drag from ending cleanly. */
-internal fun guarded(handler: () -> Unit) {
-    try {
-        handler()
-    } catch (e: Throwable) {
-        console.error("[kraft:dnd] a handler failed", e)
-    }
+internal fun guarded(handler: () -> Unit) = guardedOr(Unit, handler)
+
+/** Runs [block], code of the app's; one that throws is reported and gives [fallback]. */
+internal fun <R> guardedOr(fallback: R, block: () -> R): R = try {
+    block()
+} catch (e: Throwable) {
+    console.error("[kraft:dnd] a handler failed", e)
+    fallback
 }

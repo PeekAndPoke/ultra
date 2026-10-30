@@ -73,7 +73,8 @@ fun KraftApp.Builder.dnd() = apply {
  * ```
  *
  * [element] is the zone's area, by default the component's own DOM element. The handlers keep the component's UI
- * state; the component renders from it (a state change by `value()` redraws by itself).
+ * state; the component renders from it (a state change by `value()` redraws by itself). Payloads are matched by class:
+ * generic arguments are erased, so a `dropZone<Pair<Look, Int>>` takes any `Pair`; give a payload a class of its own.
  */
 inline fun <reified T : Any> Component<*>.dropZone(
     noinline element: () -> Element? = { dom },
@@ -82,7 +83,8 @@ inline fun <reified T : Any> Component<*>.dropZone(
 ) = dropZone(type = T::class, element = element, accepts = accepts, handlers = handlers)
 
 /** A drop zone for payloads of [type]; see the reified overload. */
-fun <T : Any> Component<*>.dropZone(
+@PublishedApi
+internal fun <T : Any> Component<*>.dropZone(
     type: KClass<T>,
     element: () -> Element? = { dom },
     accepts: (Drag<T>) -> Boolean = { true },

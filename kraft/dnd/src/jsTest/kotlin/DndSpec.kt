@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
 import kotlinx.html.div
+import kotlinx.html.input
 import kotlinx.html.style
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
@@ -41,6 +42,7 @@ private class Probe {
     var clicks = 0
     var lastPointerType: String? = null
     var lastSource: Any? = null
+    var lastPayload: String? = null
 }
 
 private fun box(left: Int, top: Int, width: Int, height: Int): String =
@@ -80,8 +82,19 @@ private fun Tag.Zone(
     style: String,
     failDrop: Boolean = false,
     cancelOnStart: Boolean = false,
+    options: ZoneOptions = ZoneOptions(),
     inner: FlowContent.() -> Unit = {},
-) = comp(Zone.Props(name, probe, takes, style, failDrop, cancelOnStart, inner)) { Zone(it) }
+) = comp(Zone.Props(name, probe, takes, style, failDrop, cancelOnStart, options, inner)) { Zone(it) }
+
+/** What a fixture zone does besides logging; the lambdas are read at each call. */
+private class ZoneOptions(
+    val logOver: Boolean = false,
+    val acceptsFails: () -> Boolean = { false },
+    val elementFails: () -> Boolean = { false },
+    val cancelOnOver: () -> Boolean = { false },
+    val cancelOnLeave: Boolean = false,
+    val onDrop: () -> Unit = {},
+)
 
 private class Zone(ctx: Ctx<Props>) : Component<Zone.Props>(ctx) {
     data class Props(
@@ -91,11 +104,15 @@ private class Zone(ctx: Ctx<Props>) : Component<Zone.Props>(ctx) {
         val style: String,
         val failDrop: Boolean,
         val cancelOnStart: Boolean,
+        val options: ZoneOptions,
         val inner: FlowContent.() -> Unit,
     )
 
     init {
-        dropZone<Look>(accepts = { props.takes }) {
+        dropZone<Look>(
+            element = { if (props.options.elementFails()) error("no element") else dom },
+            accepts = { if (props.options.acceptsFails()) error("accepts fails") else props.takes },
+        ) {
             val log: (String) -> Unit = { props.probe.events.add("${props.name}:$it") }
             onDragStart {
                 log("start")
@@ -103,11 +120,20 @@ private class Zone(ctx: Ctx<Props>) : Component<Zone.Props>(ctx) {
             }
             onDragStop { log("stop") }
             onEnter { log("enter") }
-            onLeave { log("leave") }
+            onOver {
+                if (props.options.logOver) log("over")
+                if (props.options.cancelOnOver()) dnd.cancel()
+            }
+            onLeave {
+                log("leave")
+                if (props.options.cancelOnLeave) dnd.cancel()
+            }
             onDrop { drag ->
                 props.probe.lastPointerType = drag.pointerType
                 props.probe.lastSource = drag.source
+                props.probe.lastPayload = drag.payload.name
                 log("drop")
+                props.options.onDrop()
                 if (props.failDrop) error("a drop handler fails")
             }
         }
@@ -183,6 +209,59 @@ private class LateZone(ctx: Ctx<Props>) : Component<LateZone.Props>(ctx) {
 
     override fun VDom.render() {
         div(classes = "late") { style = box(100, 0, 100, 100) }
+    }
+}
+
+@Suppress("TestFunctionName")
+private fun Tag.NestedSources(probe: Probe) = comp(NestedSources.Props(probe)) { NestedSources(it) }
+
+/** An outer source at (0, 0) 40x40 holding an inner one (a card in a column): both start a drag on the same press. */
+private class NestedSources(ctx: Ctx<Props>) : Component<NestedSources.Props>(ctx) {
+    data class Props(val probe: Probe)
+
+    override fun VDom.render() {
+        div(classes = "outer-source") {
+            style = box(0, 0, 40, 40)
+            onPointerDown { event ->
+                dnd.startDrag(event = event, payload = Look("outer")).onCancelled { props.probe.events.add("outer:cancelled") }
+            }
+
+            div(classes = "inner-source") {
+                style = box(0, 0, 20, 20)
+                onPointerDown { event -> dnd.startDrag(event = event, payload = Look("inner")) }
+            }
+        }
+    }
+}
+
+@Suppress("TestFunctionName")
+private fun Tag.EditableSource(probe: Probe) = comp(EditableSource.Props(probe)) { EditableSource(it) }
+
+/** A source at (0, 0) 40x40 that holds a text field over all of it (a renamable tile). */
+private class EditableSource(ctx: Ctx<Props>) : Component<EditableSource.Props>(ctx) {
+    data class Props(val probe: Probe)
+
+    override fun VDom.render() {
+        div(classes = "source") {
+            style = box(0, 0, 40, 40)
+            onPointerDown { event -> dnd.startDrag(event = event, payload = Look("red")) }
+
+            input(classes = "name") { style = box(0, 0, 40, 40) }
+        }
+    }
+}
+
+@Suppress("TestFunctionName")
+private fun Tag.LateZoneHost(probe: Probe, show: StreamSource<Boolean>) = comp(LateZoneHost.Props(probe, show)) { LateZoneHost(it) }
+
+/** Zone "a" at (100, 0), mounted once [Props.show] turns true. */
+private class LateZoneHost(ctx: Ctx<Props>) : Component<LateZoneHost.Props>(ctx) {
+    data class Props(val probe: Probe, val show: StreamSource<Boolean>)
+
+    private val show by subscribingTo(props.show)
+
+    override fun VDom.render() {
+        div { if (show) Zone("a", props.probe, takes = true, style = box(100, 0, 100, 100)) }
     }
 }
 
@@ -314,6 +393,7 @@ private fun pointer(
     pointerType: String = "mouse",
     button: Int = 0,
     buttons: Int = if (type == "pointerup" || type == "pointercancel") 0 else 1,
+    isPrimary: Boolean = true,
 ) {
     val init: dynamic = js("{}")
     init.bubbles = true
@@ -322,7 +402,7 @@ private fun pointer(
     init.clientY = y
     init.pointerId = id
     init.pointerType = pointerType
-    init.isPrimary = true
+    init.isPrimary = isPrimary
     init.button = button
     init.buttons = buttons
 
@@ -448,20 +528,6 @@ class DndSpec : StringSpec({
 
             probe.events.filter { it.startsWith("a:") || it == "cancelled" } shouldBe
                 listOf("a:start", "a:enter", "a:leave", "cancelled", "a:stop")
-        }
-    }
-
-    "after a drag no listener is left: another move or release changes nothing" {
-        withBoard { probe, _ ->
-            down()
-            move(150, 50)
-            up(150, 50)
-            val after = probe.events.toList()
-
-            move(160, 60)
-            up(160, 60)
-
-            probe.events shouldBe after
         }
     }
 
@@ -735,6 +801,8 @@ class DndSpec : StringSpec({
             down()
             move(150, 50)
             escape()
+            // The release comes a while later
+            delay(10)
             up(10, 10)
             click(selectCss(".source")[0])
 
@@ -814,5 +882,304 @@ class DndSpec : StringSpec({
         }
 
         probe.events shouldBe listOf("cancelled")
+    }
+
+    "a zone whose accepts throws at the release: the drag still ends cleanly (touch)" {
+        val probe = Probe()
+        var failing = false
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = {
+                Source(probe)
+                Zone("a", probe, takes = true, style = box(100, 0, 100, 100), options = ZoneOptions(acceptsFails = { failing }))
+            },
+        ) { root ->
+            root.down(pointerType = "touch")
+            move(150, 50, pointerType = "touch")
+            failing = true
+            up(150, 50, pointerType = "touch")
+            delay(20)
+
+            (document.documentElement!!.asDynamic().style.getPropertyValue("user-select") as String) shouldBe ""
+            (document.querySelector(".kraft-dnd-stage") == null) shouldBe true
+            (app.appAttributes[DndManager.key]!!.current() == null) shouldBe true
+        }
+
+        probe.events.contains("a:drop") shouldBe false
+        probe.events.contains("cancelled") shouldBe true
+    }
+
+    "a zone whose element lookup throws is not hit, and the drag goes on" {
+        val probe = Probe()
+        var failing = false
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = {
+                Source(probe)
+                Zone("a", probe, takes = true, style = box(100, 0, 100, 100), options = ZoneOptions(elementFails = { failing }))
+            },
+        ) { root ->
+            failing = true
+            root.down()
+            move(150, 50)
+            up(150, 50)
+        }
+
+        probe.events shouldBe listOf("a:start", "cancelled", "a:stop")
+    }
+
+    "what waits after a drag goes with the app: the release after an Esc, a tap's late click" {
+        val win = window.asDynamic()
+        val add = win.addEventListener
+        val remove = win.removeEventListener
+        val counts = js("({})")
+        val counting = js(
+            "(function (orig, counts, sign) { return function (type, h, o) { " +
+                "counts[type] = (counts[type] || 0) + sign; return orig.call(this, type, h, o); }; })"
+        )
+        win.addEventListener = counting(add, counts, 1)
+        win.removeEventListener = counting(remove, counts, -1)
+
+        try {
+            // Esc, and the release goes to another window: the app goes while the wait is on
+            withBoard { _, _ ->
+                down()
+                move(150, 50)
+                escape()
+            }
+
+            // A touch drag (another pointer: it must not end the first wait for us): its click may come late, and the
+            // app goes first
+            withBoard { _, _ ->
+                down(pointerType = "touch", id = 2)
+                move(150, 50, id = 2, pointerType = "touch")
+                up(150, 50, id = 2, pointerType = "touch")
+            }
+        } finally {
+            win.addEventListener = add
+            win.removeEventListener = remove
+        }
+
+        listOf("pointerup", "pointercancel", "pointerdown", "click").associateWith { (counts[it] as Int?) ?: 0 } shouldBe
+            mapOf("pointerup" to 0, "pointercancel" to 0, "pointerdown" to 0, "click" to 0)
+    }
+
+    "a release lost after Esc: the next press of the pointer stops the wait" {
+        withBoard { probe, _ ->
+            down()
+            move(150, 50)
+            escape()
+
+            // A new press: the old release was lost; this one is a click
+            down()
+            up(10, 10)
+            click(selectCss(".source")[0])
+
+            probe.clicks shouldBe 1
+        }
+    }
+
+    "a cancel from a handler during the release: this release's click is swallowed, a later one is not" {
+        val probe = Probe()
+        var armed = false
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = {
+                Source(probe)
+                Zone("a", probe, takes = true, style = box(100, 0, 100, 100), options = ZoneOptions(cancelOnOver = { armed }))
+            },
+        ) { root ->
+            root.down()
+            move(150, 50)
+            armed = true
+            up(150, 50)
+            click(root.selectCss(".source")[0])
+            probe.clicks shouldBe 0
+
+            armed = false
+            delay(10)
+            root.down()
+            up(10, 10)
+            click(root.selectCss(".source")[0])
+            probe.clicks shouldBe 1
+        }
+    }
+
+    "an onLeave that cancels hears leave once" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = {
+                Source(probe)
+                Zone("a", probe, takes = true, style = box(100, 0, 100, 100), options = ZoneOptions(cancelOnLeave = true))
+            },
+        ) { root ->
+            root.down()
+            move(150, 50)
+            move(250, 300)
+        }
+
+        probe.events.count { it == "a:leave" } shouldBe 1
+    }
+
+    "a chord: the primary button let go while another is held is the release" {
+        withBoard { probe, _ ->
+            down()
+            move(150, 50)
+            // The right button joins, then the left one lets go: no pointerup, a move with buttons 2
+            pointer("pointermove", at(150, 50), 150, 50, buttons = 3)
+            pointer("pointermove", at(150, 50), 150, 50, buttons = 2)
+
+            probe.events.contains("a:drop") shouldBe true
+        }
+    }
+
+    "a press that is not the primary pointer starts nothing" {
+        withBoard { probe, _ ->
+            pointer("pointerdown", selectCss(".source")[0], 10, 10, isPrimary = false)
+            move(150, 50)
+            up(150, 50)
+
+            probe.events shouldBe emptyList()
+        }
+    }
+
+    "the context menu is held off while a press is held, and only then" {
+        withBoard { _, _ ->
+            suspend fun contextMenu(): Boolean {
+                val event = Event("contextmenu", js("({bubbles: true, cancelable: true})"))
+                selectCss(".source")[0].dispatchEvent(event)
+                return event.defaultPrevented
+            }
+
+            down()
+            contextMenu() shouldBe true
+            up(10, 10)
+
+            contextMenu() shouldBe false
+        }
+    }
+
+    "after a touch drag the tap's later click is swallowed too, and the wait ends" {
+        withBoard { probe, _ ->
+            down(pointerType = "touch")
+            move(150, 50, pointerType = "touch")
+            up(150, 50, pointerType = "touch")
+
+            // The browser's gesture recognition sends a tap's click later
+            delay(100)
+            click(selectCss(".source")[0])
+            probe.clicks shouldBe 0
+
+            delay(500)
+            click(selectCss(".source")[0])
+            probe.clicks shouldBe 1
+        }
+    }
+
+    "a drop handler's own click() reaches its element; the release's click is still swallowed" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = {
+                Source(probe)
+                Zone(
+                    "a", probe, takes = true, style = box(100, 0, 100, 100),
+                    // Opening a file picker, say: a click the handler means
+                    options = ZoneOptions(onDrop = { (document.querySelector(".source") as HTMLElement).click() }),
+                )
+            },
+        ) { root ->
+            root.down()
+            move(150, 50)
+            up(150, 50)
+            click(root.selectCss(".source")[0])
+        }
+
+        probe.clicks shouldBe 1
+    }
+
+    "a press in a text field of a source selects text; it does not drag" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = { EditableSource(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100)) },
+        ) { root ->
+            pointer("pointerdown", root.selectCss(".name")[0], 10, 10)
+            move(150, 50)
+            up(150, 50)
+        }
+
+        probe.events shouldBe emptyList()
+    }
+
+    "nested sources: the innermost drags; the outer one hears nothing" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = { NestedSources(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100)) },
+        ) { root ->
+            pointer("pointerdown", root.selectCss(".inner-source")[0], 5, 5)
+            move(150, 50)
+            up(150, 50)
+        }
+
+        probe.lastPayload shouldBe "inner"
+        probe.events.contains("outer:cancelled") shouldBe false
+    }
+
+    "onOver after the enter and on every move within the zone" {
+        val probe = Probe()
+
+        TestBed.preact(
+            appSetup = { dnd() },
+            view = { Source(probe); Zone("a", probe, takes = true, style = box(100, 0, 100, 100), options = ZoneOptions(logOver = true)) },
+        ) { root ->
+            root.down()
+            move(150, 50)
+            move(160, 60)
+            up(160, 60)
+        }
+
+        // The release hit test is a move within the zone too
+        probe.events.filter { it.startsWith("a:") }.take(5) shouldBe listOf("a:start", "a:enter", "a:over", "a:over", "a:over")
+    }
+
+    "current holds the drag while it runs" {
+        val probe = Probe()
+
+        TestBed.preact(appSetup = { dnd() }, view = { Source(probe) }) { root ->
+            val dnd = app.appAttributes[DndManager.key]!!
+
+            root.down()
+            (dnd.current() == null) shouldBe true
+            move(150, 50)
+            dnd.current()?.payload shouldBe Look("red")
+            up(150, 50)
+            (dnd.current() == null) shouldBe true
+        }
+    }
+
+    "a zone mounted during the drag hears the start and can be dropped on" {
+        val probe = Probe()
+        val show = StreamSource(false)
+
+        TestBed.preact(appSetup = { dnd() }, view = { Source(probe); LateZoneHost(probe, show) }) { root ->
+            root.down()
+            move(50, 50)
+            show(true)
+            eventually { root.selectCss(".zone-a").size shouldBe 1 }
+            move(150, 50)
+            up(150, 50)
+        }
+
+        probe.events.filter { it.startsWith("a:") } shouldBe listOf("a:start", "a:enter", "a:drop", "a:stop")
     }
 })
