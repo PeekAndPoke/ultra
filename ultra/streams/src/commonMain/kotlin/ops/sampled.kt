@@ -78,23 +78,33 @@ private class StreamSampledOperator<T>(
             // Values are taken at the ticks only; the subscription keeps the source fresh
             // A handler of this operator's own: a lambda capturing nothing is one shared instance, and two samplers of
             // one source would then hold a single entry in its handler set, the first to leave unsubscribing both
-            unsubscribeSource = source.subscribeToStream { keepFresh(it) }
-            // A subscriber is told the value as it is at this moment, once the source is listened to
-            current = source()
-            unsubscribeEvery = every.subscribeToStream { interval(it) }
+            try {
+                unsubscribeSource = source.subscribeToStream { keepFresh(it) }
+                // A subscriber is told the value as it is at this moment, once the source is listened to
+                current = source()
+                unsubscribeEvery = every.subscribeToStream { interval(it) }
+            } catch (e: Throwable) {
+                // Half subscribed: undone, so the next subscriber starts afresh
+                stopListening()
+                throw e
+            }
         }
     }
 
     override fun onUnSub() {
         if (subscriptions.isEmpty()) {
-            listening = false
-            stopTicks()
-            unsubscribeEvery?.invoke()
-            unsubscribeEvery = null
-            interval = null
-            unsubscribeSource?.invoke()
-            unsubscribeSource = null
+            stopListening()
         }
+    }
+
+    private fun stopListening() {
+        listening = false
+        stopTicks()
+        unsubscribeEvery?.invoke()
+        unsubscribeEvery = null
+        interval = null
+        unsubscribeSource?.invoke()
+        unsubscribeSource = null
     }
 
     /** Values are taken at the ticks only: the subscription just keeps the source fresh. */

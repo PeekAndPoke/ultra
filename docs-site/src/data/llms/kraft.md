@@ -2530,8 +2530,11 @@ three.js has none), and `three.raw` is the module. Texture constants: `TextureWr
 
 `paused: Stream<Boolean>` stops the loop without unmounting (scene, camera and WebGL context stay): no frame is asked for
 while it holds true, e.g. `paused = windowCtrl.hasFocus.map { !it }`. After a resume the first `deltaMs` is 0 and
-`elapsedMs` counts running time only, so the scene goes on where it rested. The frames come from `clock`
-(default `FrameClock.animationFrames`, one `requestAnimationFrame` shared with `smooth()` and `animTicker()`).
+`elapsedMs` counts running time only, so the scene goes on where it rested. The scene is drawn once after `onReady`,
+also when mounted paused; a `renderer.setSize` while paused leaves the canvas cleared until the next frame, so render
+once by hand after resizing a paused scene. The frames come from `clock` (default `FrameClock.animationFrames`, one
+`requestAnimationFrame` shared with `smooth()` and `animTicker()`); a new clock restarts the loop, so keep your own in
+a field, not created inside `render`.
 
 ## Signature Pad — Capture signatures
 

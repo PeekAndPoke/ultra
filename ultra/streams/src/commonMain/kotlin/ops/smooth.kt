@@ -115,21 +115,31 @@ private class StreamSmoothOperator(
         if (!listening) {
             listening = true
             settledIn = false
-            // The law first, so the source's first value already knows it
-            unsubscribeLaw = smoothing.subscribeToStream { lawChanged(it) }
-            unsubscribe = source.subscribeToStream { incoming(it) }
+            try {
+                // The law first, so the source's first value already knows it
+                unsubscribeLaw = smoothing.subscribeToStream { lawChanged(it) }
+                unsubscribe = source.subscribeToStream { incoming(it) }
+            } catch (e: Throwable) {
+                // Half subscribed: undone, so the next subscriber starts afresh
+                stopListening()
+                throw e
+            }
         }
     }
 
     override fun onUnSub() {
         if (subscriptions.isEmpty()) {
-            listening = false
-            unsubscribe?.invoke()
-            unsubscribe = null
-            unsubscribeLaw?.invoke()
-            unsubscribeLaw = null
-            stop()
+            stopListening()
         }
+    }
+
+    private fun stopListening() {
+        listening = false
+        unsubscribe?.invoke()
+        unsubscribe = null
+        unsubscribeLaw?.invoke()
+        unsubscribeLaw = null
+        stop()
     }
 
     private fun incoming(value: Double?) {
@@ -224,10 +234,14 @@ private class StreamSmoothOperator(
     private fun lawChanged(next: Smoothing?) {
         law = next
 
-        // No law any more: a stream on its way lands at once
-        if (next == null && cancelFrame != null) {
-            stop()
-            emit(target?.let { Motion(it) })
+        when {
+            // No law any more: a stream on its way lands at once
+            next == null -> if (cancelFrame != null) {
+                stop()
+                emit(target?.let { Motion(it) })
+            }
+            // A motion that stalled (its law threw) goes on with the new law
+            settledIn && target != null && motion?.position != target -> start()
         }
     }
 

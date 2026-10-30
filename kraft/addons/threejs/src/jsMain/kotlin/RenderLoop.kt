@@ -1,6 +1,25 @@
 package io.peekandpoke.kraft.addons.threejs
 
 import io.peekandpoke.ultra.streams.ops.FrameClock
+import kotlinx.browser.window
+
+/**
+ * The first draw, then the loop's start: a draw that throws is [report]ed, by default as an uncaught error on a task
+ * of its own, so it neither breaks the mount it runs in nor keeps the loop from starting.
+ */
+internal fun drawOnceThenStart(
+    draw: () -> Unit,
+    start: () -> Unit,
+    report: (Throwable) -> Unit = { e -> window.setTimeout({ throw e }, 0) },
+) {
+    try {
+        draw()
+    } catch (e: Throwable) {
+        report(e)
+    }
+
+    start()
+}
 
 /**
  * The loop behind [ThreeJsComponent], on a [FrameClock] (ULTRA-00270): a frame calls [onFrame] with the time since the

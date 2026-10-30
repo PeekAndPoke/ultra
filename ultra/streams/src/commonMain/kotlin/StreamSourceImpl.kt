@@ -36,7 +36,13 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
     override fun subscribeToStream(sub: StreamHandler<T>): Unsubscribe {
         this.subscriptions.add(sub)
 
-        onSub()
+        try {
+            onSub()
+        } catch (e: Throwable) {
+            // No unsubscribe reaches the caller: the handler must not stay behind
+            subscriptions.remove(sub)
+            throw e
+        }
 
         sub(current)
 

@@ -51,7 +51,8 @@ class ThreeJsFrame(
  * `paused = windowCtrl.hasFocus.map { !it }`. The scene is drawn once after [onReady] also when mounted paused.
  * Nothing else draws while paused: a `renderer.setSize` then leaves the canvas cleared until the next frame, so render
  * once by hand after resizing a paused scene. The frames come from [clock], by default the browser's animation frames,
- * shared with every other user of [FrameClock.animationFrames]; a new clock restarts the loop.
+ * shared with every other user of [FrameClock.animationFrames]. A new clock restarts the loop: keep a clock of your own
+ * in a field, as one created inside `render` is a new one on every redraw.
  */
 @Suppress("FunctionName")
 fun Tag.ThreeJs(
@@ -172,13 +173,9 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
 
         props.onReady(ThreeJsContext(newScene, newCamera, newRenderer))
 
-        try {
-            // Drawn once at once, so a scene mounted paused is not left a blank canvas
-            newRenderer.render(newScene, newCamera)
-        } finally {
-            // Also after a throwing first render: the loop must run, as one bad frame does not stop it either
-            startLoop()
-        }
+        // Drawn once at once, so a scene mounted paused is not left a blank canvas; the loop runs also after a
+        // throwing first draw, as one bad frame does not stop it either
+        drawOnceThenStart(draw = { newRenderer.render(newScene, newCamera) }, start = { startLoop() })
     }
 
     private fun startLoop() {

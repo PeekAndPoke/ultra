@@ -154,6 +154,20 @@ class RenderLoopSpec : StringSpec({
         frames shouldBe 2
     }
 
+    "a first draw that throws is reported, not thrown, and the loop starts all the same" {
+        val reported = mutableListOf<Throwable>()
+        var started = false
+
+        drawOnceThenStart(
+            draw = { error("no WebGL") },
+            start = { started = true },
+            report = { reported.add(it) },
+        )
+
+        reported.map { it.message } shouldBe listOf("no WebGL")
+        started shouldBe true
+    }
+
     "a pause from inside a frame asks for no next frame" {
         val clock = HandClock()
         lateinit var loop: RenderLoop

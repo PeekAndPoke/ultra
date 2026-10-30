@@ -334,6 +334,8 @@ app.destroy(rendererDestroy = true)`} lang="kotlin" theme="vitesse-dark" />
         <li>After a pause the first <code>deltaMs</code> is 0, and <code>elapsedMs</code> counts running time only, so
             the scene goes on where it rested. A <code>renderer.setSize</code> while paused leaves the canvas cleared
             until the next frame: render once by hand after resizing a paused scene.</li>
+        <li>The frames come from <code>clock</code> (default <code>FrameClock.animationFrames</code>). A new clock
+            restarts the loop: keep a clock of your own in a field, not created inside <code>render</code>.</li>
         <li>Constructors on the addon for the scene, cameras, renderer, geometries, materials, meshes, lights (ambient,
             directional, point, hemisphere, spot), <code>createObject3D()</code>, <code>createGroup()</code>,
             <code>createVector2/3</code>, <code>createRaycaster()</code>, <code>createCanvasTexture(canvas)</code>; any

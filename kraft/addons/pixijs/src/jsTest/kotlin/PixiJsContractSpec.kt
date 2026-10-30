@@ -344,18 +344,22 @@ class PixiJsContractSpec : StringSpec({
         fun missing(obj: dynamic, names: List<String>): List<String> =
             names.filter { name -> js("!(name in obj)").unsafeCast<Boolean>() }
 
-        missing(app, listOf("stage", "canvas", "ticker", "screen", "init", "render", "destroy")).shouldBeEmpty()
+        missing(
+            app,
+            listOf("stage", "canvas", "ticker", "screen", "init", "render", "resize", "queueResize", "destroy"),
+        ).shouldBeEmpty()
         missing(app.screen, listOf("x", "y", "width", "height")).shouldBeEmpty()
         missing(app.ticker, listOf("deltaTime", "deltaMS", "add", "remove", "stop", "start")).shouldBeEmpty()
         missing(
             container,
             listOf(
-                "x", "y", "visible", "alpha", "rotation", "children",
-                "addChild", "removeChild", "removeChildren", "removeFromParent", "destroy",
+                "x", "y", "visible", "alpha", "rotation", "children", "scale", "zIndex", "sortableChildren",
+                "addChild", "addChildAt", "sortChildren", "removeChild", "removeChildren", "removeFromParent", "destroy",
             ),
         ).shouldBeEmpty()
-        missing(container, listOf("rect", "circle", "roundRect", "fill", "stroke", "clear")).shouldBeEmpty()
-        missing(addon.createText(jsObject { text = "x" }), listOf("text", "style")).shouldBeEmpty()
+        missing(container, listOf("rect", "circle", "poly", "roundRect", "fill", "stroke", "clear")).shouldBeEmpty()
+        missing(container.scale, listOf("x", "y", "set")).shouldBeEmpty()
+        missing(addon.createText(jsObject { text = "x" }), listOf("text", "style", "anchor")).shouldBeEmpty()
 
         app.destroy(rendererDestroy = true)
     }

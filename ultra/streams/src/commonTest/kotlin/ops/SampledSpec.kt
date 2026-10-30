@@ -171,6 +171,40 @@ class SampledSpec : StringSpec({
         clock.requests shouldBe 1
     }
 
+    "a source that throws on subscribe leaves nothing half subscribed" {
+        val clock = HandClock()
+        val inner = StreamSource(1)
+        var failNext = true
+        val source = object : Stream<Int> {
+            override fun invoke(): Int = inner()
+
+            override fun subscribeToStream(sub: (Int) -> Unit): Unsubscribe {
+                if (failNext) {
+                    failNext = false
+                    error("a source fails once")
+                }
+                return inner.subscribeToStream(sub)
+            }
+        }
+        val every = StreamSource(100.milliseconds)
+        val sampled = source.sampled(every = every, clockFor = { clock })
+
+        // The failed subscriber got no unsubscribe: it must not be told anything later
+        var leaked = 0
+        runCatching { sampled.subscribeToStream { leaked++ } }.isFailure shouldBe true
+        every.subscriptions.size shouldBe 0
+
+        val seen = mutableListOf<Int>()
+        sampled.subscribeToStream { seen.add(it) }
+        seen.clear()
+        inner(2)
+        clock.frame()
+
+        seen shouldBe listOf(2)
+        leaked shouldBe 0
+        every.subscriptions.size shouldBe 1
+    }
+
     "a subscriber is told the source's value as it is once the source is listened to" {
         val base = StreamSource(0)
         // fold computes only while listened to: read before subscribing it gives its initial value

@@ -121,6 +121,10 @@
 
 ### Fixes
 
+- **Streams: a subscribe that throws leaves nothing behind.** `StreamSourceImpl` drops the handler when `onSub()`
+  throws (the caller got no unsubscribe), and `smooth()` and `sampled()` undo a half-made subscription, so the next
+  subscriber starts afresh. A `smooth()` motion that a throwing law stalled goes on when the law changes.
+
 - **Kraft: `ResponsiveController` measured the page, not the viewport** (ULTRA-00276): the height came from
   `document.body`, so on a long page it was the content's height. It now reads `document.documentElement`, and it
   emits only when the state changed (it emitted on every resize event).

@@ -106,7 +106,8 @@ open external class Container {
      * The draw order among siblings: a higher one draws later, on top, once the parent sorts by it. Set while the node
      * sits in its parent, or before an [addChild], it turns the parent's [sortableChildren] on and marks the order to
      * be sorted. Before an [addChildAt] it does neither (pixi 8.22): set the parent's [sortableChildren] before the
-     * [addChildAt], or set the zIndex after it. Turning [sortableChildren] on afterwards does not mark the order.
+     * [addChildAt]. Afterwards neither helps: setting the value it already has does nothing (pixi ignores an equal
+     * one), and turning [sortableChildren] on does not mark the order.
      */
     var zIndex: Double
 

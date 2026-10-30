@@ -459,7 +459,8 @@ window over time, sample first: `diagnostics.sampled(every = 250.milliseconds).h
 
 `source.sampled(every = 250.milliseconds)`: the latest value at every tick, also unchanged and `null` (gaps show).
 `every`: `Duration`, `everyMs: Int`, or `Stream<Duration>` (may change while listening); `sampled(clock: FrameClock)`
-for animation frames or tests. Source held only while listened to.
+for animation frames or tests. `context`: the coroutine context the ticks run in (JVM/native; default
+`Dispatchers.Default`). Source held only while listened to.
 
 ---
 

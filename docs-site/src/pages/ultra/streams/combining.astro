@@ -176,8 +176,9 @@ println(recent())  // ["b", "c", "d"] — nulls excluded`} lang="kotlin" theme="
 <p><code>sampled(every)</code> takes the stream's latest value at every tick, also when it did not change and also
     when it is <code>null</code>. <code>every</code> is a <code>Duration</code>, milliseconds
     (<code>everyMs</code>), or a <code>Stream&lt;Duration&gt;</code> that may change while listening;
-    <code>sampled(clock)</code> ticks on a <code>FrameClock</code>. The source is held only while someone listens,
-    which keeps a source fresh that is computed only while listened to.</p>
+    <code>sampled(clock)</code> ticks on a <code>FrameClock</code>. On the JVM and native, <code>context</code> sets
+    the coroutine context the ticks run in (default <code>Dispatchers.Default</code>). The source is held only while
+    someone listens, which keeps a source fresh that is computed only while listened to.</p>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/streams/control" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

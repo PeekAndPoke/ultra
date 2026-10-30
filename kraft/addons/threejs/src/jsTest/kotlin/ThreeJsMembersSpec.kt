@@ -141,6 +141,10 @@ class ThreeJsMembersSpec : StringSpec({
             texture.wrapS = TextureWrapping.RepeatWrapping
             texture.minFilter = TextureFilter.NearestFilter
             texture.wrapS shouldBe 1000
+            // Write-only: it counts the texture's version up, which makes the renderer upload the image again
+            val textureVersion: Int = texture.asDynamic().version.unsafeCast<Int>()
+            texture.needsUpdate = true
+            (texture.asDynamic().version.unsafeCast<Int>() > textureVersion) shouldBe true
             texture.dispose()
         }
     }
