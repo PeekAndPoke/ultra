@@ -205,6 +205,19 @@ level 1.
 | 3 impl | SURPLUS | DndManager.register public | Unusable from outside (DropZone has an internal constructor) | reject | It is the interface's contract for its stage and zones; an alternative DndManager in the module, or a test double, implements it |
 | 3 | note | ledger row 2 (kraft:testing) | The follow-up was not linked | fix | ULTRA-00279 |
 
+Round 4 (level 1, reviewer-high, two-phase), base c8251d14..8af2dac5. Verdict: **CLEAN** (all three charters). Its
+MINORs to the maintainer as a list.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 4 impl | MINOR | DefaultDndManager.kt:60, :210 | A macOS ctrl+click on a source never opens the context menu (it fires on mousedown, while the press is pending) | list | |
+| 4 dom, impl | MINOR | DefaultDndManager.kt:239-242, :350 | After a chord drop, Windows opens the context menu on the right button's mouseup (the guard went with the drag) | list | |
+| 4 dom | MINOR | DndManager.kt:39-40, docs, mirror, example | The touch recipe lacks `-webkit-user-select: none` (Safari honours only the prefixed form; unverified on a device) | list | |
+| 4 sec | MINOR | DefaultDndManager.kt:193-201 | A pen whose release was lost recovers only on a press of its own pointerId | list | |
+| 4 dom, impl | MINOR | drag-and-drop.astro:66, DndStage.kt:26 | Docs say elementFromPoint; the stage KDoc says it never takes pointer events | list | |
+| 4 impl | MINOR | DndSpec | Untested guards: contenteditable=true, `if (!ended)` in start with two zones, a cancelling `current` subscriber, onLeave-cancel onto another zone, a non-empty user-select restored | list | |
+| 4 | SURPLUS | onOver, Drag.pointerType, the same-pointer PointerGone branch, site.ts kraftDnd | Unused or unreachable | list | |
+
 ## History
 
 - 2026-10-28: created from Klang's requests; checked against the code the same day.
@@ -221,3 +234,4 @@ level 1.
 - 2026-10-30: review round 1 (level 1): 4 MAJOR, all fixed with the MINORs; round 2 next at level 2.
 - 2026-10-30: review round 2 (level 2): clean. Gate PASS; the MINORs to the maintainer.
 - 2026-10-30: review round 3 (level 1): clean; maintainer: apply its MINORs, document the grip pattern; round 4 next.
+- 2026-10-30: review round 4 (level 1): clean; its MINORs to the maintainer.

@@ -129,4 +129,43 @@ class FadingModalLinkSpec : StringSpec({
             window.history.replaceState(null, "", originalHref)
         }
     }
+
+    "hash routing: a modal shown together with a navigation to another page stays open on that page" {
+        val m = DefaultModalsManager()
+
+        TestBed.preact(
+            appSetup = {
+                setAttribute(ModalsManager.key, m)
+                routing {
+                    mount(Static("/a")) {}
+                    mount(Static("/b")) {}
+                }
+            },
+            view = { },
+        ) { root ->
+            router.navToUri("/a")
+            router.awaitUri("/a")
+
+            // One handler: go to /b and open a modal there ("Saved", "Session expired")
+            router.navToUri("/b")
+            m.show { h ->
+                OkCancelModal(
+                    handle = h,
+                    transition = FadingModal.Transition(fadeInTimeMs = 0, fadeOutTimeMs = 0),
+                    view = OkCancelModal.View(
+                        appearance = { mini },
+                        header = { +"Header" },
+                        content = { +"content" },
+                        okText = { +"Yes" },
+                        cancelText = { +"No" },
+                    ),
+                    onResult = {},
+                )
+            }
+            router.awaitUri("/b")
+            delay(50)
+
+            m().size shouldBe 1
+        }
+    }
 })

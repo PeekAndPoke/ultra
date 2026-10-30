@@ -335,6 +335,24 @@ the link's click (rows under both strategies); ownEntry pinned for six operators
 Mutants, each red on its row: menu always opens, outer `.menu` match, no page watch, close on any emission, held
 ignored, current-address left to the browser, shared entry at switchMap / StreamCombinator / StreamSourceImpl.
 
+## Round 8 (level 3, reviewer-top, two-phase), base c8251d14..8af2dac5
+
+Verdict: NOT clean: 1 MAJOR (domain, kept in phase 2; impl and security found the same and graded it MINOR: the
+reviewer's MAJOR stands). Coordinator experiment: `FadingModalLinkSpec` "hash routing: a modal shown together with a
+navigation ... stays open": red. Rounds 7 and 8 not clean: safety valve, maintainer.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 8 dom (impl, sec MINOR) | MAJOR | FadingModal.kt:97-101 | Under hash routing a modal shown together with a navigation records the old page (the router follows a task later) and is dismissed when the router arrives | maintainer-decision (valve) | Experiment red. Fix direction: the page from the address (`strategy.getUriFromWindowLocation()`) |
+| 8 dom, sec, impl | MINOR | FadingModal.kt:31-32, CHANGELOG | "a query-only move does not dismiss it" is false under hash routing for a pushed move (navToUri, a #/ link): its popstate closes the modal through the trap; only replaceUri/urlParam keeps it | list | |
+| 8 dom | MINOR | DropdownMenu.kt:186, :201 | A link chosen in the menu now also runs click handlers above the menu (a clickable row navigates first) | list | |
+| 8 impl | MINOR | ResponsiveController.kt:51, :55 | Pre-existing: `isNotDesktop = !isDesktop` in the enum constructor reads an unassigned entry: Desktop.isNotDesktop and Mobile.isNotMobile are true | list | |
+| 8 impl | MINOR | specs | The "smooth" ownEntry row pins map; two listener-removal rows count calls, not identity; ULTRA-00268 hasFocus following blur has no row; ULTRA-00277 links have no path-strategy row; a WakeLock row never releases | list | |
+| 8 impl | MINOR | Router.kt:715, FadingModal.kt:197, RouterComponent.kt:39, helpers.kt:111 | The page rule is written four times | list | |
+| 8 impl | note | BackNavigationTrap.kt:126 | After "Close it" the trap's entry stays behind the new page; a later Back is spent on it (pre-existing under hash) | list | |
+| 8 | NIT/SURPLUS | various | StreamSource.subscriptions KDoc, heldJustNow private, a blank line, copied ownEntry comments, ResponsiveControllerSpec custom-set row | list | |
+| 8 | withdrawn | various | keepFresh (both), holderCount, TestWindowController focus/resize, custom-strategy surface, page-binding row | withdrawn | Phase 2 |
+
 ## History
 
 - 2026-10-28: created from Klang's request; checked against the code the same day.
