@@ -18,6 +18,7 @@ import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.browser.document
 import kotlinx.browser.window
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.html.Tag
@@ -323,7 +324,7 @@ class LeaveGuardSpec : StringSpec({
             }
         }
 
-        "$strategy: the guard goes with its component: after leaving, nothing asks" {
+        "$strategy: a guard is bound to its page: after leaving it, nothing asks" {
             val control = GuardControl()
 
             withEditor(control, strategy) {
@@ -385,6 +386,9 @@ class LeaveGuardSpec : StringSpec({
                 answer.complete(true)
 
                 router.awaitUri("/a")
+                settle()
+                // The yes was the answer: the navigation it starts is not asked again
+                control.asked shouldBe listOf("/a")
             }
         }
 
@@ -407,17 +411,48 @@ class LeaveGuardSpec : StringSpec({
             }
         }
 
-        "$strategy: scroll restoration is manual while a guard is registered, and back after" {
+        "$strategy: an Ask on a Back keeps its question over a query-only move; a yes still goes" {
             val control = GuardControl()
+            val answer = CompletableDeferred<Boolean>()
+            control.answer = { LeaveResult.Ask { answer.await() } }
 
             withEditor(control, strategy) {
-                (window.history.asDynamic().scrollRestoration as String) shouldBe "manual"
-
-                router.navToUri("/a")
-                router.awaitUri("/a")
+                window.history.back()
+                eventually { control.asked shouldBe listOf("/a") }
                 settle()
 
-                (window.history.asDynamic().scrollRestoration as String) shouldBe "auto"
+                // A urlParam written while the question is open
+                router.replaceUri("/edit/1?tab=2")
+                router.awaitUri("/edit/1?tab=2")
+
+                answer.complete(true)
+                router.awaitUri("/a")
+            }
+        }
+
+        "$strategy: a navigation past the guards drops a pending Ask and closes its question" {
+            val control = GuardControl()
+            var cancelled = false
+            control.answer = {
+                LeaveResult.Ask {
+                    try {
+                        CompletableDeferred<Boolean>().await()
+                    } catch (e: CancellationException) {
+                        cancelled = true
+                        throw e
+                    }
+                }
+            }
+
+            withEditor(control, strategy) {
+                router.navToUri("/other")
+                settle()
+
+                router.withoutLeaveGuards { router.navToUri("/login") }
+                router.awaitUri("/login")
+                settle()
+
+                cancelled shouldBe true
             }
         }
     }
@@ -470,6 +505,48 @@ class LeaveGuardSpec : StringSpec({
         }
     }
 
+    "Path: a navigation that throws lets nothing through: a later Back is asked" {
+        val control = GuardControl()
+
+        withEditor(control, Strategy.Path) {
+            // A backslash path resolves to another origin: the browser refuses to write it (no open redirect)
+            runCatching { router.navToUri("/" + Char(0x5C) + "evil.example/a") }
+            control.asked.clear()
+            control.answer = { LeaveResult.Stop }
+
+            window.history.back()
+            eventually { control.asked shouldBe listOf("/a") }
+        }
+    }
+
+    "Hash: a guard mounted before the router has a route (an app shell) is on no page, also not on the home page" {
+        val control = GuardControl().apply { answer = { LeaveResult.Stop } }
+        val originalHref = window.location.href
+
+        try {
+            TestBed.preact(
+                appSetup = {
+                    routing {
+                        mount(Static("")) { div(classes = "home") { } }
+                        mount(Static("/a")) { div(classes = "a") { } }
+                    }
+                },
+                view = {
+                    Editor(control)
+                    RouterComponent()
+                },
+            ) {
+                router.awaitUri("")
+                router.navToUri("/a")
+                router.awaitUri("/a")
+
+                control.asked shouldBe emptyList()
+            }
+        } finally {
+            window.history.replaceState(null, "", originalHref.substringBefore('#'))
+        }
+    }
+
     "beforeUnload: the browser's prompt is armed while the guard does not proceed" {
         // Karma treats a dispatched beforeunload as a page reload and aborts the run: the handler is called directly
         val handlers = mutableListOf<(Event) -> Unit>()
@@ -490,11 +567,12 @@ class LeaveGuardSpec : StringSpec({
 
         try {
             withEditor(control) {
+                // The listener of the editor mounted last: an unmounted one is no longer on the window
                 fun unload(): Boolean {
                     val options: dynamic = js("{}")
                     options.cancelable = true
                     val event = Event("beforeunload", options)
-                    handlers.forEach { it(event) }
+                    handlers.last()(event)
                     return event.defaultPrevented
                 }
 
@@ -503,13 +581,22 @@ class LeaveGuardSpec : StringSpec({
                 unload() shouldBe true
                 control.asked shouldBe listOf(null)
 
+                control.answer = { LeaveResult.Proceed }
+                unload() shouldBe false
+                control.answer = { LeaveResult.Stop }
+
+                // The router's own approvals (a guarded navigation let through) approve no page load
+                control.answer = { LeaveResult.Proceed }
+                router.navToUri("/edit/2")
+                router.awaitUri("/edit/2")
+                eventually { handlers.size shouldBe 2 }
+                control.answer = { LeaveResult.Stop }
+                unload() shouldBe true
+
                 // A page load inside withoutLeaveGuards (a logout through the server) leaves without the prompt,
                 // also when the browser fires beforeunload a little later
                 router.withoutLeaveGuards { unload() } shouldBe false
                 router.withoutLeaveGuards { }
-                unload() shouldBe false
-
-                control.answer = { LeaveResult.Proceed }
                 unload() shouldBe false
             }
         } finally {
@@ -517,7 +604,7 @@ class LeaveGuardSpec : StringSpec({
             win.removeEventListener = remove
         }
 
-        // The editor unmounted with the TestBed: its beforeunload listener went with it
-        removed shouldBe listOf("beforeunload")
+        // Each editor's beforeunload listener went with it: the one left for /edit/2, and the last with the TestBed
+        removed shouldBe listOf("beforeunload", "beforeunload")
     }
 })

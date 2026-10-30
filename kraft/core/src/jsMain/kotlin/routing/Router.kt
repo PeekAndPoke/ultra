@@ -365,11 +365,11 @@ class Router(
     /** The registered [LeaveGuard]s, in mount order. */
     private val leaveGuards = mutableListOf<RegisteredGuard>()
 
-    /** A guard with the page (its path) it was registered on: it protects leaving that page only. */
-    private class RegisteredGuard(val guard: LeaveGuard, val page: String)
-
-    /** `history.scrollRestoration` before the first guard set it to "manual". */
-    private var scrollRestorationBefore: dynamic = null
+    /**
+     * A guard with the page (its path) it was registered on: it protects leaving that page only. `null`: registered
+     * before the router had a route (an app shell), on no page, so never asked about a navigation.
+     */
+    private class RegisteredGuard(val guard: LeaveGuard, val page: String?)
 
     /** An [LeaveResult.Ask] is waiting for its answer: further navigations away are dropped meanwhile. */
     private var askingToLeave = false
@@ -387,8 +387,11 @@ class Router(
     internal val passingLeaveGuards: Boolean get() = approved || Date.now() < unloadApprovedUntil
 
 
-    /** The pending [LeaveResult.Ask], cancelled when the router is disposed. */
+    /** The pending [LeaveResult.Ask], cancelled when the router is disposed or leaves its page past the guards. */
     private var asking: Job? = null
+
+    /** The page the pending [asking] protects. */
+    private var askingFromPage: String? = null
 
     private var disposed = false
 
@@ -532,35 +535,40 @@ class Router(
      * returned [Unsubscribe] is called; [guardLeaving] registers for as long as its component is mounted.
      */
     internal fun addLeaveGuard(guard: LeaveGuard): Unsubscribe {
-        if (current().mountedRoute == MountedRoute.default) {
+        val onNoPage = current().mountedRoute == MountedRoute.default
+
+        if (onNoPage) {
             console.warn(
                 "guardLeaving registered before the router is on a route (outside the routed page?): " +
                     "it is never asked about navigations, only its beforeunload prompt works"
             )
         }
 
-        val registered = RegisteredGuard(guard, pagePath(current().uri))
-
-        if (leaveGuards.isEmpty()) {
-            // A held Back or Forward must not scroll the page to the other entry's position
-            scrollRestorationBefore = window.history.asDynamic().scrollRestoration
-            window.history.asDynamic().scrollRestoration = "manual"
-        }
+        val registered = RegisteredGuard(guard, if (onNoPage) null else pagePath(current().uri))
 
         leaveGuards += registered
 
-        return {
-            if (leaveGuards.remove(registered) && leaveGuards.isEmpty()) {
-                window.history.asDynamic().scrollRestoration = scrollRestorationBefore ?: "auto"
-            }
-        }
+        return { leaveGuards.remove(registered) }
     }
 
     /**
-     * Runs [block] past every [LeaveGuard]: the navigations it starts, and what they lead to, are not asked. For a
-     * leave that must happen whatever a page holds, e.g. a logout: `router.withoutLeaveGuards { navToUri("/login") }`.
+     * Runs [block] past every [LeaveGuard]: the router navigations it starts (`navToUri`, `replaceUri`, `navBack`),
+     * and what they lead to, are not asked, and a pending Ask is dropped. A page load it starts (a form submit,
+     * `location.href`) gets no beforeunload prompt. For a leave that must happen whatever a page holds, e.g. a logout:
+     * `router.withoutLeaveGuards { navToUri("/login") }`. A `history.back()` inside is the browser's and still asked:
+     * use `navBack()`.
      */
     fun <R> withoutLeaveGuards(block: () -> R): R {
+        try {
+            return approving(block)
+        } finally {
+            // A page load the block started may fire beforeunload a little later
+            unloadApprovedUntil = Date.now() + UNLOAD_APPROVAL_MS
+        }
+    }
+
+    /** The router's own approvals: past the guards, but no page load is approved by them. */
+    private fun <R> approving(block: () -> R): R {
         val was = approved
         approved = true
 
@@ -568,8 +576,19 @@ class Router(
             return block()
         } finally {
             approved = was
-            // A page load the block started (a form submit, location.href) may fire beforeunload a little later
-            unloadApprovedUntil = Date.now() + UNLOAD_APPROVAL_MS
+        }
+    }
+
+    /** Runs [go] as a navigation let through to [target]; a [go] that throws lets nothing through later. */
+    private fun letThroughTo(target: String, go: () -> Unit) {
+        letThrough = target
+        var gone = false
+
+        try {
+            go()
+            gone = true
+        } finally {
+            if (!gone) letThrough = null
         }
     }
 
@@ -579,18 +598,16 @@ class Router(
 
         // Within a navigation already let through (a middleware redirect), or past the guards on purpose
         if (approved) {
-            letThrough = target
-            return go()
+            // A pending Ask about the page left this way is moot
+            cancelAskIfLeaving(target)
+            return letThroughTo(target, go)
         }
 
         if (pageGuards().isEmpty() || !isLeaving(target)) return go()
         if (askingToLeave) return
 
         val pass = {
-            withoutLeaveGuards {
-                letThrough = target
-                go()
-            }
+            approving { letThroughTo(target, go) }
         }
 
         when (val answer = askGuards(target)) {
@@ -616,7 +633,7 @@ class Router(
         letThrough?.let { through ->
             if (sameUri(target, through)) {
                 letThrough = null
-                withoutLeaveGuards { navigateToWindowUri() }
+                approving { navigateToWindowUri() }
                 return
             }
         }
@@ -631,17 +648,17 @@ class Router(
         }
 
         when (val answer = askGuards(target)) {
-            LeaveResult.Proceed -> withoutLeaveGuards { navigateToWindowUri() }
+            LeaveResult.Proceed -> approving { navigateToWindowUri() }
 
             LeaveResult.Stop -> strategy.restoreUri(stay)
 
             is LeaveResult.Ask -> {
                 val restored = strategy.restoreUri(stay)
                 val marker = if (restored) markRestoredEntry() else null
-                val from = current()
+                val fromPage = pagePath(current().uri)
 
-                // Any move meanwhile (also a query change) means the restored entry is no longer where back starts
-                ask(answer, stillThere = { current() === from }) {
+                // A yes still goes after a query-only move meanwhile; the marker says where back would start
+                ask(answer, stillThere = { pagePath(current().uri) == fromPage }) {
                     when {
                         // On the restored entry, pushed on top of the target's: back is the move itself
                         marker != null && window.history.state == marker -> {
@@ -649,11 +666,12 @@ class Router(
                             window.history.back()
                         }
 
-                        // Restored, but something stands on top of it (a confirm UI's own entry): go there instead
-                        marker != null -> withoutLeaveGuards { strategy.navigateToUri(target) }
+                        // Restored, but something stands on top of it (a confirm UI's own entry): go there instead,
+                        // let through so its own hashchange is not asked again
+                        marker != null -> approving { navToUri(target) }
 
                         // Nothing was put back: the browser is still at the target
-                        else -> withoutLeaveGuards { navigateToWindowUri() }
+                        else -> approving { navigateToWindowUri() }
                     }
                 }
             }
@@ -692,7 +710,16 @@ class Router(
     private fun pageGuards(): List<LeaveGuard> {
         val page = pagePath(current().uri)
 
-        return leaveGuards.filter { it.page == page }.map { it.guard }
+        return leaveGuards.filter { it.page != null && it.page == page }.map { it.guard }
+    }
+
+    /** A pending Ask protects its page: a navigation past the guards to another path drops it (and closes its modal). */
+    private fun cancelAskIfLeaving(target: String) {
+        val pending = asking ?: return
+
+        if (pagePath(target) != askingFromPage) {
+            pending.cancel()
+        }
     }
 
     /** The first answer that does not proceed, in mount order. */
@@ -708,6 +735,7 @@ class Router(
      */
     private fun ask(answer: LeaveResult.Ask, stillThere: () -> Boolean, go: () -> Unit) {
         askingToLeave = true
+        askingFromPage = pagePath(current().uri)
 
         asking = launch {
             val yes = try {
@@ -715,6 +743,7 @@ class Router(
             } finally {
                 askingToLeave = false
                 asking = null
+                askingFromPage = null
             }
 
             if (yes && !disposed && stillThere()) go()
