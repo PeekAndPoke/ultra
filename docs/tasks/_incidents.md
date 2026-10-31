@@ -11,3 +11,4 @@ found) is one class of incident; this file replaces the review-loop escape ledge
 
 | date | what happened | what let it through | what it cost | immediate fix | proposed rule |
 |------|---------------|---------------------|--------------|---------------|---------------|
+| 2026-10-31 | Another project's session (spross, per Mission Control's mtimes) wrote spross's IntelliJ allow list over ultra's `.claude/hooks/idea-actions.allow`, adding `SaveAll` and `Synchronize`, which ultra never allowed | Every project's agent runs as user claude and can write to ultra's checkout; the hook file is plain text | Nothing so far: caught uncommitted in `git status`; the hook loads at session start, so it may already apply to new ultra sessions | Left uncommitted; asked the maintainer; Mission Control asked Spross-Main-Dev | A session writes only in its own repo's `.claude/` (for the meeting) |
