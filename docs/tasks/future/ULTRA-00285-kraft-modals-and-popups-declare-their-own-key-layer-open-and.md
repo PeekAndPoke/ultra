@@ -34,3 +34,4 @@ Checked against the code (2026-10-30):
 ## History
 
 - 2026-10-30: created from Klang-Main-Dev's request; checked against `ModalsManager.kt` and `PopupsManager.kt`.
+- 2026-10-31: Klang's KLANG-00325 step 4 waits for this (Klang-Main-Dev).

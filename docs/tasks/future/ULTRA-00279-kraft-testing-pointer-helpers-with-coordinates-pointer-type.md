@@ -30,3 +30,4 @@ gets no drag at all. `DndSpec` and `DropZoneStateSpec` each carry their own `poi
 
 - 2026-10-30: created from the ULTRA-00265 review, round 2.
 - 2026-10-30: keyboard modifiers added (Work 3), Klang-Main-Dev's request.
+- 2026-10-31: Klang's KLANG-00325 step 4 waits for Work 3 (Klang-Main-Dev).
