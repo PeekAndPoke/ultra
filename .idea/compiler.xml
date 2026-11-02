@@ -62,6 +62,7 @@
       <module name="ultra.kontainer.main" target="17" />
       <module name="ultra.kontainer.test" target="17" />
       <module name="ultra.kraft.addons.konva" target="17" />
+      <module name="ultra.kraft.dnd" target="21" />
       <module name="ultra.logging" target="17" />
       <module name="ultra.main" target="17" />
       <module name="ultra.meta" target="17" />

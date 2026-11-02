@@ -1,8 +1,15 @@
 # IDE actions invoke_ide_action may run without a prompt (one id per line). Everything else asks the maintainer.
+# spross: Optimize Imports (the maintainer, 2026-10-23) and Save All, which writes what the IDE holds (2026-10-24);
+# Move (members too) and Safe Delete, with Rename through mcp__idea__rename_refactoring (the weekly meeting, 2026-10-30,
+# confirmed by the maintainer in session). Reformat Code stays off.
+# The safeguards for every write action (SPROSS-00065): the absolute projectPath and get_repositories first, a VFS
+# refresh (Synchronize) when files changed outside the IDE, Save All after it, then git status and git diff (spross
+# only, nothing elsewhere); after a Rename or Move a repo-wide grep for the old name (docs, skills, tickets) and a
+# compile; a rename on a serialized type or property runs its golden-file or round-trip spec. Never for a worktree,
+# only while the maintainer is not typing in the IDE.
 OptimizeImports
-# Refactor Move (classes and members) and Safe Delete, plus mcp__idea__rename_refactoring in settings.json: maintainer
-# 2026-10-30 (weekly meeting, topic 6), with its safeguards: pass the project path, never in a worktree; VFS refresh
-# first; afterwards git diff, a repo-wide grep for the old name (prose, docs, tickets) and a compile.
+SaveAll
 Move
 SafeDelete
+Synchronize
 # ReformatCode: in the blueprint, off in ultra until the maintainer allows it (ULTRA-00237 only records Auto-Format differences)
