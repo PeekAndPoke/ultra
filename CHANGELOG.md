@@ -8,9 +8,16 @@
   (ULTRA-00118). A Google or GitHub account that claimed someone's address without verifying it signed in to that
   person's active account, by sign-in or sign-up: an account takeover. `AuthRealm.resolveSsoAccount` now asks the
   provider for every existing account, not only a pending one, and an SSO sign-up creates a new account only for a
-  verified address. Google needs `email_verified = true`; GitHub needs the address to be the verified primary in
-  `/user/emails` (the `user:email` scope), so a custom `GithubSsoAuth.RemoteClient` without `getEmails` now refuses
-  every GitHub sign-in.
+  verified address. Google needs `email_verified = true`; GitHub needs the account's address to be a verified entry of
+  `/user/emails`. That address no longer has to be GitHub's primary, so a pending account is now activated by any
+  address GitHub verified.
+
+  What changes with no compile signal:
+  - Every GitHub sign-in now reads `/user/emails`. An app with its own authorize URL needs the `user:email` scope, a
+    GitHub App needs the "Email addresses" permission, and a custom `GithubSsoAuth.RemoteClient` needs `getEmails`.
+    Without them every GitHub sign-in and sign-up is refused. Kraft's `GithubSignInButton` asks for the scope.
+  - A user whose Google address is unverified can no longer sign in with Google, also to an account SSO created
+    before the upgrade.
 
 ## 0.117.0
 

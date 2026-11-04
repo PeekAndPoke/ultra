@@ -91,6 +91,17 @@ collapse surface than the current design.
 Confirm this is a conscious product decision and write it down. If it should change, note that it
 makes §3 materially more dangerous.
 
+## 8. Linking by address alone (from the ULTRA-00118 gate, 2026-11-04)
+
+ULTRA-00118 closed §1: SSO reaches an account only through a provider-verified address. Linking still rests on the
+address alone, so probe:
+- **Google `email_verified` on a non-authoritative domain.** For an address that is not `gmail.com` and has no `hd`
+  claim, `email_verified` only says the address was verified once, when the Google account was made. Can an
+  address whose ownership has since changed (an employee who left, a lapsed domain) still link?
+- **No tie to the provider's stable subject** (Google `sub`, GitHub user id). Someone who buys an expired domain and
+  recreates its addresses gets them verified by the provider, and links to the old accounts.
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00117 (was `docs/tasks/20260726-redteam-value-class-emailaddress.md`).
+- 2026-11-04: §1 closed by ULTRA-00118; §8 added from its gate (domain reviewer, finding 1.4).

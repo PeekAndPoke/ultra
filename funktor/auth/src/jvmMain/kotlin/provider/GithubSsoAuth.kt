@@ -217,20 +217,19 @@ class GithubSsoAuth(
             ?: throw AuthError.invalidCredentials()
 
         return realm.resolveSsoAccount(user, provider = id) {
-            isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))
+            isVerifiedAddress(email, remoteClient.getEmails(ghAccessToken))
         } ?: throw AuthError.invalidCredentials()
     }
 
     /**
-     * GitHub's verified claim: [email] is the account's PRIMARY address and GitHub has verified it. The
+     * GitHub's verified claim: [email] is one of the account's addresses and GitHub has verified it. The
      * profile's `email` field alone proves nothing — GitHub does not require it to be verified.
      */
-    private fun isVerifiedPrimary(email: EmailAddress, emails: JsonArray?): Boolean =
+    private fun isVerifiedAddress(email: EmailAddress, emails: JsonArray?): Boolean =
         emails.orEmpty().any { entry ->
             val obj = entry as? JsonObject ?: return@any false
 
             EmailAddress.parseOrNull((obj["email"] as? JsonPrimitive)?.contentOrNull) == email &&
-                    (obj["primary"] as? JsonPrimitive)?.booleanOrNull == true &&
                     (obj["verified"] as? JsonPrimitive)?.booleanOrNull == true
         }
 
@@ -266,12 +265,12 @@ class GithubSsoAuth(
         val user = existing
             ?.let {
                 realm.resolveSsoAccount(it, provider = id) {
-                    isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))
+                    isVerifiedAddress(email, remoteClient.getEmails(ghAccessToken))
                 }
             }
             ?: run {
                 // Else whoever claims an address first would own the account its owner signs up for later
-                if (!isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))) {
+                if (!isVerifiedAddress(email, remoteClient.getEmails(ghAccessToken))) {
                     throw AuthError.invalidCredentials()
                 }
 

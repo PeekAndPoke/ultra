@@ -276,6 +276,40 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 deps.storage.authRecords.state() shouldBe activated
             }
 
+            "a sign-UP on an EXPIRED pending account retires it, then creates a fresh one only for a verified address" {
+                listOf(true to 1, false to 0, null to 0).forEach { (claim, accounts) ->
+                    withClue("email_verified = $claim") {
+                        val deps = realDeps()
+                        deps.storage.authRecords.preRegister(pending = true)
+                        var retired = false
+                        var created = 0
+
+                        val realm = MinimalTestRealm(
+                            getDeps = { deps },
+                            tokenConfig = RealmTokenConfig(pendingAccountLifetime = Duration.ZERO),
+                            onLoadUserById = { user },
+                            onLoadUserByEmail = { if (it == email && !retired) user else null },
+                            onRetire = { u, _ -> retired = true; u },
+                            onCreateUserForSignup = { params ->
+                                created++
+                                Stored(_id = "test_users/fresh", value = MinimalTestUser(email = params.email))
+                            },
+                        )
+                        val subject = google(verified = claim)
+
+                        when (claim) {
+                            true -> subject.signUp(realm, ssoSignUp(subject)).user._id shouldBe "test_users/fresh"
+                            else -> shouldThrow<AuthError> {
+                                subject.signUp(realm, ssoSignUp(subject))
+                            }.message shouldBe "Invalid credentials"
+                        }
+
+                        retired shouldBe true
+                        created shouldBe accounts
+                    }
+                }
+            }
+
             "a RETIRED address is refused, whatever the provider says" {
                 val deps = realDeps()
                 val retiredUser = Stored(
@@ -341,21 +375,24 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
         }
 
         "GitHub" - {
-            "the verified PRIMARY address from /user/emails activates a pending account" {
-                val deps = realDeps()
-                deps.storage.authRecords.preRegister(pending = true)
-                val subject = github(FakeGithub(githubEmails(Triple("Victim@example.com", true, true))))
+            "a verified address from /user/emails activates a pending account, primary or not" {
+                listOf(true, false).forEach { primary ->
+                    withClue("primary = $primary") {
+                        val deps = realDeps()
+                        deps.storage.authRecords.preRegister(pending = true)
+                        val subject = github(FakeGithub(githubEmails(Triple("Victim@example.com", primary, true))))
 
-                subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
+                        subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
 
-                deps.storage.authRecords.state() shouldBe activated
+                        deps.storage.authRecords.state() shouldBe activated
+                    }
+                }
             }
 
             "anything less is refused on a pending account, and changes nothing" {
                 val cases = mapOf(
-                    "verified but not primary" to githubEmails(Triple("victim@example.com", false, true)),
                     "primary but not verified" to githubEmails(Triple("victim@example.com", true, false)),
-                    "a DIFFERENT address is the verified primary" to githubEmails(Triple("other@example.com", true, true)),
+                    "a DIFFERENT address is verified" to githubEmails(Triple("other@example.com", true, true)),
                     "no emails at all" to buildJsonArray { },
                     "garbage entries" to buildJsonArray { add(JsonPrimitive("victim@example.com")) },
                 )
@@ -375,21 +412,30 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 }
             }
 
-            "the verified PRIMARY address signs in and up to an ACTIVE account, which keeps its password" {
-                val deps = realDeps()
-                deps.storage.authRecords.preRegister(pending = false)
-                val subject = github(FakeGithub(githubEmails(Triple("victim@example.com", true, true))))
+            "a verified address signs in and up to an ACTIVE account, primary or not, asking /user/emails once each" {
+                // A user's public /user address need not be their primary; refusing it would lock them out
+                listOf(true, false).forEach { primary ->
+                    withClue("primary = $primary") {
+                        val deps = realDeps()
+                        deps.storage.authRecords.preRegister(pending = false)
+                        val remote = FakeGithub(githubEmails(Triple("victim@example.com", primary, true)))
+                        val subject = github(remote)
 
-                subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
-                subject.signUp(realmWith(deps), ssoSignUp(subject)).user shouldBe user
+                        subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
+                        remote.emailsAsked shouldBe 1
 
-                deps.storage.authRecords.state()["password"] shouldBe true
+                        subject.signUp(realmWith(deps), ssoSignUp(subject)).user shouldBe user
+                        remote.emailsAsked shouldBe 2
+
+                        deps.storage.authRecords.state()["password"] shouldBe true
+                    }
+                }
             }
 
             "anything less is refused on an ACTIVE account, sign-in and sign-up (ULTRA-00118)" {
                 val cases = mapOf(
                     "primary but not verified" to githubEmails(Triple("victim@example.com", true, false)),
-                    "a DIFFERENT address is the verified primary" to githubEmails(Triple("other@example.com", true, true)),
+                    "a DIFFERENT address is verified" to githubEmails(Triple("other@example.com", true, true)),
                     "the emails API failed" to null,
                 )
 
@@ -412,7 +458,7 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 }
             }
 
-            "a sign-up creates an account only for the verified primary address" {
+            "a sign-up creates an account only for a verified address, asking /user/emails once" {
                 val refused = EmptyRealm(realDeps())
                 val unverified = github(FakeGithub(githubEmails(Triple("victim@example.com", true, false))))
 
@@ -423,10 +469,12 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 refused.created shouldBe 0
 
                 val empty = EmptyRealm(realDeps())
-                val verified = github(FakeGithub(githubEmails(Triple("victim@example.com", true, true))))
+                val remote = FakeGithub(githubEmails(Triple("victim@example.com", false, true)))
+                val verified = github(remote)
 
                 verified.signUp(empty.realm, ssoSignUp(verified)).user.value.email shouldBe email
                 empty.created shouldBe 1
+                remote.emailsAsked shouldBe 1
             }
         }
     }
