@@ -223,8 +223,8 @@ class AuthState<USER>(
 
     /**
      * Chooses the first password and activates the account, signing the user in when the server sent a session;
-     * null when the server could not be asked (transport or server error). An org choice is left to the login
-     * page: [isLoggedIn][Data.isLoggedIn] stays false then.
+     * null when the server could not be asked (transport or server error). A user with several organisations
+     * signs in again to choose one: [isLoggedIn][Data.isLoggedIn] stays false then.
      */
     suspend fun activateAccount(request: AuthActivateAccountRequest): AuthActivateAccountResponse? {
         val response = api

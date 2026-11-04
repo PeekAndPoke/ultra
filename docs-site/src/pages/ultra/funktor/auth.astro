@@ -117,7 +117,7 @@ api.auth.signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = "email-pass
 
 // The mailed link's page: the first password activates the account
 val response = api.auth.activateAccount(realm, AuthActivateAccountRequest(provider, token, password))
-response.signIn // the session; null when the realm could not sign in, e.g. an org choice is due`} lang="kotlin" theme="vitesse-dark"/>
+response.signIn // Success, OrgSelectionRequired (several orgs), or null (no org yet; sign-in switched off)`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Opening the link changes nothing, so a mail scanner that follows it activates nothing; only the
         page's POST does. Signing up again with a pending address re-sends the link, under delays that grow per

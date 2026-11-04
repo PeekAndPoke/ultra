@@ -6,6 +6,14 @@
 >
 > **Part of:** ULTRA-00248 (Auth and sessions epic)
 
+**Moved (2026-11-04) by ULTRA-00231 (email first signup):** the resend endpoint is gone. The same check-then-act now
+sits in `EmailAndPasswordAuth.reSendIfPending`, reached by signing up again with a pending address — ANONYMOUSLY, so
+the "the caller needs the password" half of "Why it is bounded now" no longer holds; the growing delays and the 7-day
+expiry still bound it, and option A applies unchanged. Two more from the ULTRA-00231 gate belong with it:
+- an anonymous sign-up again rotates the link, so it kills a genuine pending user's live link once the delay is up
+  (a nuisance: the newest mail reaches them) — parked for the maintainer in ULTRA-00231;
+- the re-send path sends inline, the silent path does not: a timing tell, recorded in ULTRA-00128.
+
 **Security-critical:** yes (it is a rate limit) → red-team scenario ULTRA-00127 (redteam account activation) §8
 **Severity:** LOW, bounded by the hardening of 2026-10-19 — see "Why it is bounded now".
 
@@ -88,3 +96,4 @@ send chain would not help this one.
 ## History
 
 - 2026-10-21: numbered ULTRA-00130 (was `docs/tasks/20260727-activation-resend-cooldown-atomicity.md`).
+- 2026-11-04: premise moved to the sign-up re-send path by ULTRA-00231.

@@ -51,8 +51,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             { _, _ -> error("findEmailVerificationToken not implemented") },
         val onRemoveEmailVerificationTokens: suspend (RealmId, UserId, String?) -> Unit =
             { _, _, _ -> error("removeEmailVerificationTokens not implemented") },
-        val onRemovePasswordRecords: suspend (RealmId, UserId) -> Unit =
-            { _, _ -> error("removePasswordRecords not implemented") },
+        val onRemovePasswordRecords: suspend (RealmId, UserId, String?) -> Unit =
+            { _, _, _ -> error("removePasswordRecords not implemented") },
         val onFindPendingActivation: suspend (RealmId, UserId) -> Stored<AuthRecord.PendingActivation>? =
             { _, _ -> error("findPendingActivation not implemented") },
         val onReplacePendingActivation: suspend (Stored<AuthRecord.PendingActivation>) -> Stored<AuthRecord.PendingActivation>? =
@@ -91,7 +91,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
         override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String?) =
             onRemoveEmailVerificationTokens(realm, owner, exceptId)
 
-        override suspend fun removePasswordRecords(realm: RealmId, owner: UserId) = onRemovePasswordRecords(realm, owner)
+        override suspend fun removePasswordRecords(realm: RealmId, owner: UserId, exceptId: String?) =
+            onRemovePasswordRecords(realm, owner, exceptId)
 
         override suspend fun findPendingActivation(
             realm: RealmId,
@@ -745,7 +746,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             pendingMarker(realm)
                         },
                         onRemoveAuthRecord = { events += "remove:$it"; true },
-                        onRemovePasswordRecords = { _, owner -> events += "remove-passwords:${owner.value}" },
+                        onRemovePasswordRecords = { _, owner, exceptId -> events += "remove-passwords:${owner.value}-except:$exceptId" },
                         onHashPassword = { "hash($it)" },
                         onCreateAuthRecord = { create ->
                             val record = create()
@@ -771,14 +772,15 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = token, password = "New-1234!"),
                 ) shouldBe storedUser
 
-                // The link by its delete count FIRST (single use), any older password before the chosen one (an
-                // account signed up before email first holds its sign-up password), the marker after the password
-                // (a failure in between leaves a pending account), and the dead links last.
+                // The link by its delete count FIRST (single use), the chosen password before the marker (a failure
+                // in between leaves a pending account), any OTHER password only once the marker is won (an account
+                // signed up before email first holds its sign-up password; removed earlier, a concurrent reset that
+                // wins would lose its own), and the dead links last.
                 events shouldBe listOf(
                     "remove:verification-record",
-                    "remove-passwords:${ownerId.value}",
                     "create:Password",
                     "activate:pending-activation",
+                    "remove-passwords:${ownerId.value}-except:new-password",
                     "remove-links",
                     "remove:cancel-record",
                 )
@@ -830,7 +832,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 ) shouldBe null
             }
 
-            "a retire or SSO that claimed the marker meanwhile wins: exactly the password written here is taken back" {
+            "a retire, SSO or reset that won the marker meanwhile: exactly the password written here is taken back" {
+                // `onRemovePasswordRecords` keeps its exploding default: a lost activation must not touch the winner's
+                // password — a reset that won holds one.
                 val removed = mutableListOf<String>()
 
                 val services = lazy {
@@ -838,7 +842,6 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onFindEmailVerificationToken = { realm, token -> linkRecord(realm, token) },
                         onFindPendingActivation = { realm, _ -> pendingMarker(realm) },
                         onRemoveAuthRecord = { removed += it; true },
-                        onRemovePasswordRecords = { _, _ -> },
                         onHashPassword = { "hash" },
                         onCreateAuthRecord = { create -> Stored(_id = "new-password", value = create()) },
                         onRemovePendingActivationIfUnclaimed = { false },
@@ -1161,6 +1164,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         },
                         onRemovePendingActivationIfUnclaimed = { removedIds += it; true },
                         onRemoveAuthRecord = { removedIds += it; true },
+                        onRemovePasswordRecords = { _, owner, exceptId -> removedIds += "passwords-of:${owner.value}-except:$exceptId" },
                     )
                 }
 
@@ -1192,7 +1196,11 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 result.success shouldBe true
 
                 activatedOwner shouldBe (realm.id to ownerId)
-                removedIds shouldBe listOf("recovery-record", "pending-activation")
+                // ... and, having activated, the account's other passwords go: one signed up before email first may
+                // be a pre-registering attacker's.
+                removedIds shouldBe listOf(
+                    "recovery-record", "pending-activation", "passwords-of:${ownerId.value}-except:new-password-record",
+                )
             }
 
             "on an ACTIVE (non-retired) account — no marker — sets the password" {

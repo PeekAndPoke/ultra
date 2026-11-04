@@ -10,6 +10,7 @@ import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.RealmId
@@ -107,6 +108,35 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldNotBeNull()
+            }
+
+            "through a provider WITHOUT SignIn, activation activates but hands out NO session" {
+                // A realm that switched password sign-in off must not get one through the activation POST. This
+                // realm cannot mint a JWT at all (`generateJwt` throws), so reaching `issueSignIn` fails the test.
+                val real = realDeps()
+                real.storage.authRecords.create(
+                    AuthRecord.PendingActivation(realm = realmId, ownerId = owner, createdAt = real.kronos.instantNow())
+                )
+                real.storage.authRecords.create(
+                    AuthRecord.EmailVerificationToken(
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                    )
+                )
+                val signUpOnly = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    log = NullLog,
+                    services = lazy { EmailAndPasswordAuth.Services(real) },
+                )
+                val realm = MinimalTestRealm(getDeps = { real }, getProviders = { listOf(signUpOnly) }, onLoadUserById = { user })
+
+                val response = realm.activate(
+                    AuthActivateAccountRequest(provider = signUpOnly.id, token = "act", password = "New-1234!")
+                )
+
+                response.success shouldBe true
+                response.signIn.shouldBeNull()
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldBeNull()
             }
         }
 

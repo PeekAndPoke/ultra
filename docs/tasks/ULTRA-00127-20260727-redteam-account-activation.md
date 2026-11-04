@@ -105,6 +105,9 @@ for a lapsed activation, so it is now the path locked-out users are guaranteed t
 
 ## 8. Resend: the growing delay is a check-then-act
 
+RETIRED IN PART 2026-11-04 (ULTRA-00231): the resend endpoint and its token are gone. The check-then-act lives on in
+signing up again (see "Added by email-first sign-up" below); the token attempts no longer apply.
+
 REWRITTEN 2026-10-19 (ULTRA-00222 (activation hardening)). The July premise — "K concurrent requests must
 share ONE token" — was false: every refused sign-in minted a fresh token and none was revoked. Now minting revokes the
 owner's earlier tokens, a token is consumed only by the request whose delete removed it (`count == 1`), and the delay
@@ -120,6 +123,8 @@ lives on the `PendingActivation` marker: read, compare, write, send. The write (
 
 ## 9. Resend authorization
 
+RETIRED 2026-11-04 (ULTRA-00231): `ActivationResendToken` and the resend endpoint no longer exist.
+
 The property to attack: `resendActivation` must be unreachable without a live
 `AuthRecord.ActivationResendToken`, which is minted ONLY in `AuthRealm.signIn` after a correct
 password for a pending account.
@@ -132,6 +137,12 @@ password for a pending account.
   localStorage or the URL — confirm it does not leak into history or `Referer`).
 
 ## Added by the activation-resend gate, round 2 (2026-10-19)
+
+RETIRED 2026-11-04 (ULTRA-00231), as far as they need the resend token or an attacker's sign-up password: scanner
+detonation followed by "sign in with the attacker's password", the sustained resend stream from an attacker-owned
+account, resend-token row growth, type confusion with a resend token, a custom provider throwing
+`AccountNotActivated`, the K-parallel resend burst. The pre-registration takeover itself is closed by email first:
+a pending account holds no password. Accounts signed up BEFORE the upgrade still hold one; see below.
 
 Collected, not executed. §2's "a copy change to close" is wrong once activation is zero-click.
 
@@ -199,3 +210,26 @@ Collected, not executed.
 ## History
 
 - 2026-10-21: numbered ULTRA-00127 (was `docs/tasks/20260727-redteam-account-activation.md`).
+
+## Added by email-first sign-up (ULTRA-00231 gate, round 1, 2026-11-04)
+
+Collected, not executed. The design: ULTRA-00231 (email first signup).
+
+- **The activation link is a session credential now.** Within `emailVerificationTokenLifetime` (24 h by default) it
+  chooses the password and signs in. Leak it — `Referer` from the activation page, a mail scanner that renders and
+  submits forms, forwarding, a shared mailbox, browser history of `/activate/{token}` — and take the pending account.
+  Does the session survive the owner's later reset (ULTRA-00136)?
+- **Anonymous link rotation.** Sign the victim's address up again once the delay is up, while the victim is typing a
+  password on the activation page: their submit meets a dead link. Measure how often an attacker can do it per day
+  (the growing delays) and whether the victim ever gets a working link in time.
+- **Timing oracle on signing up again** (ULTRA-00128): pending-inside-the-delay against new, and the schedule.
+- **Activation racing a reset, SSO, a cancel, the sweep** — two links of one mailbox submitted at once; an SSO sign-in
+  between activation's password write and its marker removal; a cancel landing in the same window. Any session for a
+  retired row, any active account without a password, any password the owner did not choose is a finding.
+- **Pre-upgrade pending accounts.** Accounts signed up under 0.114–0.117 hold their sign-up password. Sign in with it
+  (refused?), activate through the link, reset, SSO: after each, is the old password row gone and dead?
+- **A signup-only provider** (`capabilities = setOf(SignUp)`): does the activation POST hand out a session anyway?
+- **The display name.** Pre-register a victim's address with a display name that phishes ("Call support at …");
+  the victim's own sign-up re-sends the link and they activate an account carrying it. Where does that name show
+  (mails, admin screens)? Parked for the maintainer in ULTRA-00231.
+

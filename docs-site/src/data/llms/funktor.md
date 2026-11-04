@@ -177,7 +177,7 @@ api.auth.signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = "email-pass
 
 // The mailed link's page: the first password activates the account
 val response = api.auth.activateAccount(realm, AuthActivateAccountRequest(provider, token, password))
-response.signIn // the session; null when the realm could not sign in, e.g. an org choice is due
+response.signIn // Success, OrgSelectionRequired (several orgs), or null (no org yet; sign-in switched off)
 ```
 
 Design notes:

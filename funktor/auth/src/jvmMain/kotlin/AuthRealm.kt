@@ -325,11 +325,16 @@ interface AuthRealm<USER : AuthUser> {
      * `notSupported()`.
      *
      * The page has just chosen the account's first password, so a successful activation signs the user in —
-     * best-effort, as after [signUp].
+     * best-effort, as after [signUp], and only through a provider that may sign in at all.
      */
     suspend fun activate(request: AuthActivateAccountRequest): AuthActivateAccountResponse {
-        val user = getProvider(request.provider).activateAccount(realm = this, request = request)
+        val provider = getProvider(request.provider)
+
+        val user = provider.activateAccount(realm = this, request = request)
             ?: return AuthActivateAccountResponse(success = false)
+
+        // A realm that switched password sign-in off gets no session through the back door.
+        if (!provider.supportsSignIn()) return AuthActivateAccountResponse(success = true, signIn = null)
 
         val signInResponse = try {
             issueSignIn(user)
@@ -772,9 +777,9 @@ interface AuthRealm<USER : AuthUser> {
         // back out of it. That is the point: the client is told exactly what the token carries, so the
         // two cannot disagree. Threading them out of `generateJwt` instead would create a second source.
         // Wrapped: `verify` raises JwtVerificationException, which is NOT an AuthError, so it would
-        // escape AuthLoginApi's `catch (e: AuthError)` and surface as a 500 -- on the sign-up path that
-        // happens AFTER the account, password record and PendingActivation marker are committed, leaving
-        // an account that can never finish signing up. Same failure shape AuthRealm already defends
+        // escape AuthLoginApi's `catch (e: AuthError)` and surface as a 500 -- on the activation path that
+        // happens AFTER the password is set and the PendingActivation marker removed, so the user is told
+        // nothing worked although the account is active. Same failure shape AuthRealm already defends
         // against for sendAuthEmail. Reachable via a JwtGenerator clock ahead of the realm's Kronos.
         val payload = try {
             deps.jwtGenerator.verify(token)

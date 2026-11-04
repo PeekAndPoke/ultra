@@ -11,6 +11,11 @@
 >
 > **Part of:** ULTRA-00248 (Auth and sessions epic)
 
+**Superseded (2026-11-04) by ULTRA-00231 (email first signup):** the resend flow this ticket built
+(`ActivationResendToken`, `ActivationRequired`, the resend endpoint and its frontend) is removed; signing up again with a
+pending address re-sends the link instead. What it records stays as history. Recommended: archive as superseded, on the
+maintainer's word (the status line above says the archive is theirs).
+
 **Plan:** ULTRA-00030 (v1 email auth and sessions) → Phase 4 (verification) + Phase 6 (demo pages)
 **Follows:** ULTRA-00126 (account activation) — the backend guard. This is its open scope
 item 2, plus the resend it deliberately deferred.
@@ -256,3 +261,4 @@ to close" is wrong once activation is zero-click.
 ## History
 
 - 2026-10-21: numbered ULTRA-00129 (was `docs/tasks/20260727-activation-resend-and-frontend.md`).
+- 2026-11-04: marked superseded by ULTRA-00231 (the resend flow is removed).

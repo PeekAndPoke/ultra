@@ -47,8 +47,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * account at least held the sign-up password, which a pre-registering attacker chose.
  *
  * SCOPE: [TestUserRealm] is org-less, so the closing sign-in leg does not generalize to an
- * `OrgPolicy.Required` realm (there `issueSignIn` answers `OrgSelectionRequired`). The activation half
- * does generalize — the marker and the token carry no org dimension.
+ * `OrgPolicy.Required` realm (there `issueSignIn` answers `OrgSelectionRequired`), and neither does the
+ * session the activation POST hands out, which comes from the same `issueSignIn`.
  */
 class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 

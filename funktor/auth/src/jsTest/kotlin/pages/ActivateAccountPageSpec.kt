@@ -13,6 +13,7 @@ import io.ktor.http.headersOf
 import io.peekandpoke.funktor.auth.AuthSessionConfig
 import io.peekandpoke.funktor.auth.AuthState
 import io.peekandpoke.funktor.auth.api.AuthApiClient
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
@@ -191,6 +192,50 @@ class ActivateAccountPageSpec : StringSpec({
                 state().isLoggedIn shouldBe true
                 withClue("off to the app's redirect-after-login route") {
                     window.location.hash shouldBe "#/"
+                }
+            }
+        } finally {
+            // The session is persisted; the specs after this one must start signed out.
+            state.logout()
+            routes.disable()
+            window.location.hash = originalHash
+        }
+    }
+
+    "a browser already signed in as someone else still SEES a refused link — it is not sent off to the app" {
+        var refuse = false
+        val server = serverWithRealm().apply {
+            answer(activatePath, AuthActivateAccountResponse.serializer()) {
+                AuthActivateAccountResponse(
+                    success = !refuse,
+                    signIn = AuthSignInResponse.Success(
+                        session = AuthSignInResponse.Session.Bearer("someone.elses.token"),
+                        permissions = UserPermissions(),
+                        userId = UserId("users/someone-else"),
+                        realm = realmModel,
+                        user = JsonObject(emptyMap()),
+                    ).takeUnless { refuse },
+                )
+            }
+        }
+        lateinit var routes: Router
+        val state = stateOn(server, router = { routes })
+        routes = router { state.mount(this) }
+        val originalHash = window.location.hash
+
+        try {
+            state.activateAccount(AuthActivateAccountRequest(provider = "email-password", token = "other", password = goodPassword))
+            state().isLoggedIn shouldBe true
+
+            refuse = true
+
+            TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
+                root.choosePassword(goodPassword)
+                root.awaitText("This link is not valid any more")
+                delay(300)
+
+                withClue("no redirect to the app's redirect-after-login route") {
+                    window.location.hash shouldBe originalHash
                 }
             }
         } finally {

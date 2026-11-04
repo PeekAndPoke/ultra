@@ -270,6 +270,38 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             }
         }
 
+        "A reset of a pending account from BEFORE email first removes its sign-up password" {
+            // Activation and SSO remove it; a reset that activates must not leave it stored either.
+            apiApp {
+                anonymous {
+                    val email = freshEmail("legacy-reset")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+                    seedLegacyPassword(id)
+
+                    emails.clear()
+                    api.authLogin.recoverAccountInitPasswordReset(
+                        realmParam,
+                        body = AuthRecoverAccountRequest.InitPasswordReset(provider = provider, email = email),
+                    ) { status shouldBe HttpStatusCode.OK }
+
+                    val resetToken = emails.lastTo(email).shouldNotBeNull().hrefs().single()
+                        .substringAfterLast("/").decodeUriComponent()
+
+                    api.authLogin.recoverAccountSetPasswordWithToken(
+                        realmParam,
+                        body = AuthRecoverAccountRequest.SetPasswordWithToken(
+                            provider = provider, token = resetToken, password = "Victim-chose-1!",
+                        ),
+                    ) { status shouldBe HttpStatusCode.OK }
+
+                    isPending(id) shouldBe false
+                    records.findAllByOwner(AuthRecord.Password, realm.id, UserId(id)).size shouldBe 1
+                    passwordSignIn(email) { response -> response.status shouldBe HttpStatusCode.Forbidden }
+                }
+            }
+        }
+
         //  Signing up again: growing delays, silently  ///////////////////////////////////////////////////////////
 
         "Signing up again re-sends the link under GROWING delays per account — and says nothing about them" {
@@ -478,6 +510,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     // The cancel token outlives an activation (it expires with the pending lifetime), so only
                     // the account's state can refuse here.
                     val cancelToken = cancelTokenTo(email)
+                    val activationToken = activationTokenTo(email)
                     val id = userOf(email).shouldNotBeNull()._id
 
                     emails.clear()
@@ -499,6 +532,11 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     isPending(id) shouldBe false
 
                     cancel(cancelToken) shouldBe false
+
+                    withClue("the activation link left over from the sign-up sets NO password on the now active account") {
+                        activate(activationToken) shouldBe false
+                        passwordSignIn(email) { response -> response.status shouldBe HttpStatusCode.Forbidden }
+                    }
 
                     users.byId(id).shouldNotBeNull().value.email shouldBe EmailAddress.of(email)
                     passwordSignIn(email, password = "Brand-new-1234!") { response ->

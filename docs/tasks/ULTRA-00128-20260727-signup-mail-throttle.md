@@ -106,6 +106,13 @@ Captcha / proof-of-work on sign-up, or not granting `Capability.SignUp` on publi
 - **The activation mail's copy** has no "if you did not sign up, ignore this" (red-team §2). A text
   change, and it belongs with whatever touches this flow next.
 
+- **A timing tell on signing up again (ULTRA-00231 gate, round 1, security).** Signing up again with a pending address
+  answers with the same status and body as a fresh sign-up (ULTRA-00231 decision 2), but the silent path inside the
+  delay does one or two reads while the fresh and the re-send paths render and send the mail inline
+  (`SimpleMailing` → SES/SendGrid over HTTP). `letTheBotsWait()`'s 250–500 ms jitter does not reliably hide a
+  100–300 ms gap, so repeated probes can tell a pending address inside its delay, and when a mail went out. The fix
+  that also serves this ticket: send the mail off the request path on every branch.
+
 ## Red-team scenarios
 
 ULTRA-00127 (redteam account activation) §1 (the amplifier), §3 (enumeration), §4
@@ -114,3 +121,4 @@ ULTRA-00127 (redteam account activation) §1 (the amplifier), §3 (enumeration),
 ## History
 
 - 2026-10-21: numbered ULTRA-00128 (was `docs/tasks/20260727-signup-mail-throttle.md`).
+- 2026-11-04: the re-sign-up timing tell added from the ULTRA-00231 gate.

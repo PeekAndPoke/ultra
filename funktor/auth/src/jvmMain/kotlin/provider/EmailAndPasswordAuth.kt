@@ -116,8 +116,8 @@ class EmailAndPasswordAuth(
         /** Remove every email verification token for [realm] / [owner], except [exceptId] */
         suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String? = null)
 
-        /** Remove every password record of [realm] / [owner] */
-        suspend fun removePasswordRecords(realm: RealmId, owner: UserId)
+        /** Remove every password record of [realm] / [owner], except [exceptId] */
+        suspend fun removePasswordRecords(realm: RealmId, owner: UserId, exceptId: String? = null)
 
         /** Find the pending-activation marker for [realm] / [owner], or null when activated */
         suspend fun findPendingActivation(realm: RealmId, owner: UserId): Stored<AuthRecord.PendingActivation>?
@@ -135,7 +135,6 @@ class EmailAndPasswordAuth(
 
         /** Find the live sign-up cancel token of [realm] / [owner], if any */
         suspend fun findSignUpCancelTokenOf(realm: RealmId, owner: UserId): Stored<AuthRecord.SignUpCancelToken>?
-
 
         /** Remove an auth record by its [id]; true when THIS call removed it */
         suspend fun removeAuthRecord(id: String): Boolean
@@ -210,8 +209,10 @@ class EmailAndPasswordAuth(
         }
 
         /** @{inheritDoc} */
-        override suspend fun removePasswordRecords(realm: RealmId, owner: UserId) {
-            authRecordStorage.removeAllByOwner(type = AuthRecord.Password, realm = realm, owner = owner)
+        override suspend fun removePasswordRecords(realm: RealmId, owner: UserId, exceptId: String?) {
+            authRecordStorage.removeAllByOwner(
+                type = AuthRecord.Password, realm = realm, owner = owner, exceptId = exceptId,
+            )
         }
 
         /** @{inheritDoc} */
@@ -533,20 +534,21 @@ class EmailAndPasswordAuth(
             return null
         }
 
-        // Any password goes first: an account signed up before email first still holds its sign-up password,
-        // possibly a pre-registering attacker's. Then the one the mailbox owner just chose.
-        services.removePasswordRecords(realm = realm.id, owner = owner)
-
         val password = services.createAuthRecord {
             createPasswordRecord(realmId = realm.id, ownerId = owner, password = request.password)
         }
 
-        // Dropping the marker IS the activation — atomically, and only while unclaimed: if a retire or an SSO
-        // activation claimed it meanwhile, that one won, and exactly the password written here is taken back.
+        // Dropping the marker IS the activation — atomically, and only while unclaimed: if a retire, an SSO
+        // activation or a reset got there first, that one won, and exactly the password written here is taken back.
         if (!services.removePendingActivationIfUnclaimed(marker._id)) {
             services.removeAuthRecord(password._id)
             return null
         }
+
+        // Only now, having won: any other password goes. An account signed up before email first still holds its
+        // sign-up password, possibly a pre-registering attacker's — already dead, since sign-in validates only the
+        // newest record. Removed before winning, it would take a concurrent reset's password with it.
+        services.removePasswordRecords(realm = realm.id, owner = owner, exceptId = password._id)
 
         // The sign-up's other links are dead weight now.
         services.removeEmailVerificationTokens(realm = realm.id, owner = owner)
@@ -736,6 +738,12 @@ class EmailAndPasswordAuth(
         if (marker != null && !services.removePendingActivationIfUnclaimed(marker._id)) {
             services.removeAuthRecord(newPassword._id)
             return AuthRecoverAccountResponse.SetPasswordWithToken(success = false)
+        }
+
+        // A reset that activated: the account's other passwords go, as activation and SSO remove them — one signed
+        // up before email first may be a pre-registering attacker's.
+        if (marker != null) {
+            services.removePasswordRecords(realm = realm.id, owner = owner, exceptId = newPassword._id)
         }
 
         // Send email to the user to notify them that their password has been changed

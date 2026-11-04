@@ -1,7 +1,6 @@
 package io.peekandpoke.funktor.auth.pages
 
 import io.peekandpoke.funktor.auth.AuthState
-import io.peekandpoke.funktor.auth.asFormRule
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse

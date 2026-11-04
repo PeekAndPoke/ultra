@@ -60,7 +60,7 @@ sealed interface AuthRecord : Timestamped {
      * owner did not choose:
      * - **`activateAccount`** — the mailed link's page, where its holder chooses the first password (a POST, never
      *   a page load), next to "I did not sign up — cancel".
-     * - **a completed password reset** — proves the mailbox; the new password is the only one validated.
+     * - **a completed password reset** — proves the mailbox; any other password goes.
      * - **SSO with a provider-verified address** — `AuthRealm.resolveSsoAccount` deletes any password FIRST: an
      *   account signed up before email first still holds its sign-up password, possibly a pre-registering
      *   attacker's.

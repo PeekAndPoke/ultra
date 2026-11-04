@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.auth.asFormRule
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
+import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
@@ -112,7 +113,8 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
             null -> DisplayState.Failed(retry = { activate(password) })
         }
 
-        if (authState().isLoggedIn) {
+        // Only THIS answer's session: a browser already signed in as someone else must still see the outcome.
+        if (result?.signIn is AuthSignInResponse.Success) {
             val uri = authState.router().strategy.render(authState.frontend.config.redirectAfterLogin)
             authState.redirectAfterLogin(uri)
         }
@@ -291,7 +293,8 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
     private fun FlowContent.renderFailed(s: DisplayState.Failed) {
         ui.red.message {
             icon.exclamation()
-            +"We could not reach the server. Nothing has changed - please try again."
+            +"We could not reach the server - please try again. If your account was activated meanwhile, sign in "
+            +"with the password you chose."
         }
 
         ui.field {

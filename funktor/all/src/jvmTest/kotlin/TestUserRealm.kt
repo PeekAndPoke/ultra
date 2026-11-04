@@ -78,8 +78,8 @@ class TestUserRealm(
 
     /**
      * Only the activation-resend delays deviate from the defaults, and only so that BOTH sides of them
-     * stay testable against a real clock: `AccountActivationEmailE2eSpec` waits them out to prove a
-     * resend delivers a new link, and resends back-to-back to prove the delay suppresses one. The
+     * stay testable against a real clock: `AccountActivationEmailE2eSpec` waits them out to prove that
+     * signing up again delivers a new link, and signs up again back-to-back to prove the delay suppresses one. The
      * production defaults are minutes to hours; `ActivationHardeningE2eSpec` covers those with a clock
      * it can advance.
      */

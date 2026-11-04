@@ -51,6 +51,9 @@
     way back is the mailed link, or signing up again.
   - Rows of type `activation-resend-token` may stay in the auth-record store (Mongo's TTL does not cull them). Nothing
     reads them any more; they can be deleted.
+  - The activation link is now a credential: within `RealmTokenConfig.emailVerificationTokenLifetime` (24 h) it
+    chooses the password and signs in. A deployment whose mail may be forwarded or scanned can shorten it. A provider
+    without the `SignIn` capability still activates, but hands out no session.
 
 ## 0.117.0
 
