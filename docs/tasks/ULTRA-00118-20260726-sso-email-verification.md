@@ -1,6 +1,11 @@
 # ULTRA-00118: SSO signup links to an existing account without checking `email_verified` (account takeover)
 
-> **Status (2026-07-26): NOT STARTED.** needs a POLICY decision from the user before implementing.
+> **Status (2026-11-04): NOT STARTED.** needs a POLICY decision from the maintainer before implementing. Rechecked
+> 2026-11-04: STILL LIVE for an ACTIVE account. Activation hardening (ULTRA-00222) closed the pending half: there,
+> `AuthRealm.resolveSsoAccount` refuses an unverified address. For an account that is not pending it returns the user
+> "and [isEmailVerified] is never asked" (its KDoc). Google and GitHub, sign-in and sign-up, hand an unverified
+> provider address that resolves to an active account a session. `GoogleSsoAuthSpec` "should return the existing user
+> when the user already exists" pins that behaviour: its payload has no `email_verified`.
 >
 > **Part of:** ULTRA-00248 (Auth and sessions epic)
 
@@ -76,3 +81,5 @@ during feature work.
 ## History
 
 - 2026-10-21: numbered ULTRA-00118 (was `docs/tasks/20260726-sso-email-verification.md`).
+- 2026-11-04: rechecked against the code. The takeover remains for active accounts, and the activation TODO is done
+  (sign-up honours `requiresActivation`), so option C's "is the local address verified?" now has an answer.
