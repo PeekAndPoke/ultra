@@ -162,7 +162,8 @@ Key methods: `loadById(UserId)`, `loadByEmail(EmailAddress)`, `generateJwt()`, `
 
 - `EmailAndPasswordAuth` — sign up, sign in, password recovery, password change
 - `GoogleSsoAuth` — Google OAuth flow
-- `GithubSsoAuth` — GitHub OAuth flow
+- `GithubSsoAuth` — GitHub OAuth flow; the identity is the public `/user` address, which GitHub must list as
+  verified in `/user/emails` (the `user:email` scope, or a GitHub App's "Email addresses" permission)
 
 ### Account activation
 
@@ -187,7 +188,7 @@ Design notes:
 - A resend rotates the token, so the superseded link dies immediately. A cooldown bounds send rate.
 - Clearing the marker requires proving the mailbox AND invalidating every earlier password. A
   completed password reset does both, so it also activates. So does SSO with a provider-verified
-  address (Google's `email_verified`, an address GitHub verified): it deletes the sign-up password first.
+  address (Google's `email_verified`; GitHub's verified public address): it deletes the sign-up password first.
 - SSO reaches an account (active, pending or new) only through an address the provider verified;
   anything else is `invalidCredentials`.
 

@@ -256,6 +256,27 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 empty.created shouldBe 1
             }
 
+            "email_verified = false or absent never finishes an SSO claim left part-way, and changes nothing" {
+                listOf(false, null).forEach { claim ->
+                    withClue("email_verified = $claim") {
+                        val deps = realDeps()
+                        deps.storage.authRecords.preRegister(pending = true)
+                        val marker = deps.storage.authRecords
+                            .findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldNotBeNull()
+                        deps.storage.authRecords.replaceIfUnclaimed(
+                            marker.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO) }
+                        ).shouldNotBeNull()
+                        val subject = google(verified = claim)
+
+                        shouldThrow<AuthError> {
+                            subject.signIn(realmWith(deps), ssoRequest(subject))
+                        }.message shouldBe "Invalid credentials"
+
+                        deps.storage.authRecords.state() shouldBe untouched
+                    }
+                }
+            }
+
             "an EXPIRED pending account is retired, not activated — even with a verified address" {
                 val deps = realDeps()
                 deps.storage.authRecords.preRegister(pending = true)
@@ -454,6 +475,61 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                         }.message shouldBe "Invalid credentials"
 
                         deps.storage.authRecords.state()["password"] shouldBe true
+                    }
+                }
+            }
+
+            "the account's address is found among SEVERAL entries, wherever it is listed" {
+                // GitHub's real shape: a verified primary elsewhere, and the profile address as a secondary
+                val verified = githubEmails(
+                    Triple("other@example.com", true, true),
+                    Triple("victim@example.com", false, true),
+                )
+                val unverified = githubEmails(
+                    Triple("other@example.com", true, true),
+                    Triple("victim@example.com", false, false),
+                )
+
+                val deps = realDeps()
+                deps.storage.authRecords.preRegister(pending = false)
+
+                github(FakeGithub(verified)).let { it.signIn(realmWith(deps), ssoRequest(it)) } shouldBe user
+
+                shouldThrow<AuthError> {
+                    github(FakeGithub(unverified)).let { it.signIn(realmWith(deps), ssoRequest(it)) }
+                }.message shouldBe "Invalid credentials"
+            }
+
+            "a sign-UP on an EXPIRED pending account retires it, then creates a fresh one only for a verified address" {
+                listOf(true to 1, false to 0).forEach { (isVerified, accounts) ->
+                    withClue("verified = $isVerified") {
+                        val deps = realDeps()
+                        deps.storage.authRecords.preRegister(pending = true)
+                        var retired = false
+                        var created = 0
+
+                        val realm = MinimalTestRealm(
+                            getDeps = { deps },
+                            tokenConfig = RealmTokenConfig(pendingAccountLifetime = Duration.ZERO),
+                            onLoadUserById = { user },
+                            onLoadUserByEmail = { if (it == email && !retired) user else null },
+                            onRetire = { u, _ -> retired = true; u },
+                            onCreateUserForSignup = { params ->
+                                created++
+                                Stored(_id = "test_users/fresh", value = MinimalTestUser(email = params.email))
+                            },
+                        )
+                        val subject = github(FakeGithub(githubEmails(Triple("victim@example.com", true, isVerified))))
+
+                        when (isVerified) {
+                            true -> subject.signUp(realm, ssoSignUp(subject)).user._id shouldBe "test_users/fresh"
+                            false -> shouldThrow<AuthError> {
+                                subject.signUp(realm, ssoSignUp(subject))
+                            }.message shouldBe "Invalid credentials"
+                        }
+
+                        retired shouldBe true
+                        created shouldBe accounts
                     }
                 }
             }

@@ -2,22 +2,28 @@
 
 ## Unreleased
 
-### Fixes
+### Breaking changes
 
-- **Funktor auth: SSO no longer signs in to an account through an address the provider did not verify**
-  (ULTRA-00118). A Google or GitHub account that claimed someone's address without verifying it signed in to that
-  person's active account, by sign-in or sign-up: an account takeover. `AuthRealm.resolveSsoAccount` now asks the
+- **Funktor auth, a security fix: SSO no longer signs in to an account through an address the provider did not
+  verify** (ULTRA-00118). A Google or GitHub account that claimed someone's address without verifying it signed in to
+  that person's active account, by sign-in or sign-up: an account takeover. `AuthRealm.resolveSsoAccount` now asks the
   provider for every existing account, not only a pending one, and an SSO sign-up creates a new account only for a
-  verified address. Google needs `email_verified = true`; GitHub needs the account's address to be a verified entry of
-  `/user/emails`. That address no longer has to be GitHub's primary, so a pending account is now activated by any
-  address GitHub verified.
+  verified address. Google needs `email_verified = true`. GitHub's identity stays the public profile address of
+  `/user`, which must be a verified entry of `/user/emails`; it no longer has to be the primary, so a pending account is
+  now also activated when that address is a verified secondary one.
 
   What changes with no compile signal:
   - Every GitHub sign-in now reads `/user/emails`. An app with its own authorize URL needs the `user:email` scope, a
     GitHub App needs the "Email addresses" permission, and a custom `GithubSsoAuth.RemoteClient` needs `getEmails`.
-    Without them every GitHub sign-in and sign-up is refused. Kraft's `GithubSignInButton` asks for the scope.
+    Without them every GitHub sign-in and sign-up is refused. Funktor auth's `GithubSignInButton` asks for the scope,
+    but under hash routing the scope lands in the URL's fragment and does not reach GitHub (ULTRA-00288).
+  - A custom SSO provider that calls `resolveSsoAccount` is now asked `isEmailVerified` for active accounts too: a
+    lambda answering `false` locks its users out, one answering `true` keeps the takeover. Its own `signUp` must check
+    verification before `createForSignup`.
   - A user whose Google address is unverified can no longer sign in with Google, also to an account SSO created
     before the upgrade.
+  - Sessions taken through the hole before the upgrade survive it: a refresh does not ask the provider again. A
+    deployment that had Google or GitHub sign-up enabled can end every session by rotating the JWT signing key.
 
 ## 0.117.0
 

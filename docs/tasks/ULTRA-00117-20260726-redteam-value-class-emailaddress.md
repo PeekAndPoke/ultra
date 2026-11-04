@@ -34,6 +34,10 @@ Email+password signup returns `requiresActivation = true`, but `AuthRealm.signUp
 - Have the "victim" complete Google SSO signup → confirm they are handed the ATTACKER's account.
 - Confirm the attacker's original password still authenticates it afterwards.
 
+**2026-11-04 (ULTRA-00118 gate):** still holds for password accounts created before activation existed
+(ULTRA-00126). They have no marker, so a verified SSO links into them, and a password set by whoever registered the
+address keeps working. Closing it needs a migration or a policy (maintainer decision, ULTRA-00118 entry 2.11).
+
 ## 3. Unicode collapse — narrower than expected, verify it stays that way
 
 Over all code points ≥ U+0080, exactly ONE lowercases entirely into the address alphabet the

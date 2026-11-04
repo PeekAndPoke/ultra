@@ -1,11 +1,6 @@
 # ULTRA-00118: SSO signup links to an existing account without checking `email_verified` (account takeover)
 
-> **Status (2026-11-04): IN PROGRESS.** Decided by the maintainer 2026-11-04: A/C, link only if verified. Rechecked
-> 2026-11-04: STILL LIVE for an ACTIVE account. Activation hardening (ULTRA-00222) closed the pending half: there,
-> `AuthRealm.resolveSsoAccount` refuses an unverified address. For an account that is not pending it returns the user
-> "and [isEmailVerified] is never asked" (its KDoc). Google and GitHub, sign-in and sign-up, hand an unverified
-> provider address that resolves to an active account a session. `GoogleSsoAuthSpec` "should return the existing user
-> when the user already exists" pins that behaviour: its payload has no `email_verified`.
+> **Status (2026-11-04): DONE.** Gate PASS in round 2. Decided by the maintainer 2026-11-04: A/C, link only if verified. Rechecked 2026-11-04: STILL LIVE for an ACTIVE account. Activation hardening (ULTRA-00222) closed the pending half: there, `AuthRealm.resolveSsoAccount` refuses an unverified address. For an account that is not pending it returns the user "and [isEmailVerified] is never asked" (its KDoc). Google and GitHub, sign-in and sign-up, hand an unverified provider address that resolves to an active account a session. `GoogleSsoAuthSpec` "should return the existing user when the user already exists" pins that behaviour: its payload has no `email_verified`.
 >
 > **Part of:** ULTRA-00248 (Auth and sessions epic)
 
@@ -121,7 +116,33 @@ funktor-all 238 tests, both backends. Mutation-checked: putting the primary chec
 "primary or not" / creation rows; removing Google's creation gate reddens both Google creation rows, the new
 expired-account row included; nothing else turns red.
 
-Next round: level 2 (`reviewer-xhigh`), two-phase, because round 1 had a MAJOR.
+**Round 2 (2026-11-04), level 2 (`reviewer-xhigh`), two-phase. CLEAN.** Phase 1: implementation NOT CLEAN (MAJOR:
+no Google e2e over HTTP), domain CLEAN, security CLEAN. Phase 2: the implementation reviewer WITHDREW its MAJOR, which
+overlaps 1.6: "nothing factually wrong" in its reason (`funktor/auth` adds Google's library as `implementation`, and
+`funktor/all`'s jvmTest does not add it). Every FIXED entry holds in the current files (all three reviewers). No
+rejected CRITICAL or MAJOR in the ledger. The three case tables agree again: no row gives an unverified address a
+session or an account.
+
+| # | Charter | Sev | Finding | Disposition | Reason |
+|---|---------|-----|---------|-------------|--------|
+| 2.1 | Impl | MAJOR | No Google e2e over HTTP | WITHDRAWN in phase 2 | Overlaps 1.6 |
+| 2.2 | Impl | MINOR | No row for an SSO claim left part-way, given an unverified address; no GitHub sign-up on an expired pending account | FIXED | Rows added, mutation-checked |
+| 2.3 | Impl | MINOR | Every GitHub fixture had one `/user/emails` entry, so "first entry" and "any entry" read the same | FIXED | A two-entry row, mutation-checked (`take(1)` turns it red) |
+| 2.4 | Impl | MINOR | `AuthProvider.signUp` KDoc read as true for the password provider | FIXED | Scoped to SSO providers |
+| 2.5 | Impl, Dom, Sec | MINOR | CHANGELOG said "Kraft's `GithubSignInButton`"; it is funktor auth's | FIXED | |
+| 2.6 | Impl, Dom | MINOR | The docs never named GitHub's prerequisites (`user:email`, a GitHub App's permission) or that the identity is the public `/user` address; "any address GitHub verified" overstated it | FIXED | `auth.astro`, `llms/funktor.md`, CHANGELOG |
+| 2.7 | Dom | MINOR | No CHANGELOG line for custom SSO providers (`isEmailVerified` now asked for active accounts; their `signUp` must check before creating) | FIXED | |
+| 2.8 | Dom, Sec | MINOR | Sessions taken through the hole survive the upgrade (refresh does not ask the provider); the entry sat under Fixes | FIXED | CHANGELOG: rotate the JWT key; moved under Breaking changes |
+| 2.9 | Sec | MINOR, PRE-EXISTING | The GitHub authorize URL is built unencoded: under hash routing the scope lands in the fragment, and "Sign up" signs in | → ULTRA-00288 item 4 | Named in the CHANGELOG |
+| 2.10 | Dom | MINOR, design | `GithubSsoAuth.RemoteClient.getEmails` defaults to `null`, so a custom client fails at run time, not compile time | MAINTAINER | Optional: make it abstract (pre-1.0) |
+| 2.11 | Dom, Sec | note | Password accounts created before ULTRA-00126 have no marker and a password nobody proved: a verified SSO links into them, and a pre-registering attacker's password keeps working (§2 of ULTRA-00117 still holds for them). "A and C coincide" holds only for accounts made since | MAINTAINER | Needs a one-off migration or a policy; recorded in ULTRA-00117 §2 |
+
+The MINOR batch after round 2 was applied without another round (MINORs do not loop): docs, CHANGELOG, one KDoc
+sentence, and three spec rows. Each new row was mutation-checked: skipping verification on an SSO claim, taking only
+the first `/user/emails` entry, and removing GitHub's creation gate each turn exactly their rows red. Green on the final
+tree: auth 279 tests, funktor-all 238 tests, both backends; docs site built.
+
+**Verdict: gate PASS** (round 2 clean; no open CRITICAL or MAJOR; e2e present and green on both backends).
 
 ## Also required
 
@@ -139,3 +160,8 @@ during feature work.
 - 2026-10-21: numbered ULTRA-00118 (was `docs/tasks/20260726-sso-email-verification.md`).
 - 2026-11-04: rechecked against the code. The takeover remains for active accounts, and the activation TODO is done
   (sign-up honours `requiresActivation`), so option C's "is the local address verified?" now has an answer.
+- 2026-11-04: implemented (`b265aed4`, `b904d05d`, and the round-2 MINOR batch); gate PASS in round 2. Docs were updated
+  in place (the auth page and its mirror); the auth docs follow-up for the activation flow stays with ULTRA-00231, the
+  next auth task, which rewrites that surface again. Red team: ULTRA-00117 §1 closed, §8 added, §2 annotated. Follow-up:
+  ULTRA-00288.
+- 2026-11-04: DONE.

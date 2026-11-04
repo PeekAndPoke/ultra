@@ -64,8 +64,8 @@ interface AuthProvider {
     /**
      * Sign up a new account for the given request. Providers should check their SignUp capability internally.
      *
-     * An existing account found by email goes through `AuthRealm.resolveSsoAccount`, as for [signIn]; a new
-     * account is created only for an address the provider verified.
+     * An SSO provider passes an existing account found by email through `AuthRealm.resolveSsoAccount`, as for
+     * [signIn], and creates a new account only for an address the provider verified.
      */
     suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,

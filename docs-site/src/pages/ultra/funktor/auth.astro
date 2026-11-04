@@ -99,7 +99,9 @@ import {Code} from 'astro:components';
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">GithubSsoAuth</h3>
-            <p class="text-sm text-gray-400">GitHub OAuth flow. Exchanges authorization codes for access tokens.</p>
+            <p class="text-sm text-gray-400">GitHub OAuth flow. Exchanges authorization codes for access tokens. The
+                identity is the public profile address, which GitHub must have verified: the app needs the
+                <code>user:email</code> scope (a GitHub App: the "Email addresses" permission).</p>
         </div>
     </div>
 
@@ -131,7 +133,7 @@ import {Code} from 'astro:components';
 
     <p>Clearing the marker requires proving the mailbox <strong>and</strong> invalidating every earlier
         password. Completing a password reset does both, so it also activates. So does SSO with an address the
-        provider verified (Google's <code>email_verified</code>, an address GitHub verified): it deletes
+        provider verified (Google's <code>email_verified</code>; GitHub's verified public address): it deletes
         the sign-up password first.</p>
 
     <p>SSO reaches an account only through an address the provider verified, for an active account, a pending
