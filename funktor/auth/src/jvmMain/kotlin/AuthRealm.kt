@@ -557,11 +557,12 @@ interface AuthRealm<USER : AuthUser> {
     }
 
     /**
-     * The SSO policy for an account that signed up by password and never activated, shared by every SSO
-     * provider: call it with the account the provider's address resolved to.
+     * The SSO policy for an existing account, shared by every SSO provider: call it with the account the
+     * provider's address resolved to. A provider that creates an account instead asks [isEmailVerified] itself.
      *
      * - a retired account, or one being retired → [AuthError.invalidCredentials];
-     * - not pending → [user] unchanged, and [isEmailVerified] is never asked;
+     * - not pending → [user] when [isEmailVerified], else [AuthError.invalidCredentials]: an address the provider
+     *   did not verify never reaches an existing account (ULTRA-00118);
      * - pending but EXPIRED → retired here, and null: the address is free, so a sign-up may create a
      *   fresh account (a sign-in has nothing to sign into);
      * - pending and verified → activated, CLAIM FIRST: the marker is claimed for SSO by an atomic conditional
@@ -584,7 +585,11 @@ interface AuthRealm<USER : AuthUser> {
         val owner = UserId(user._id)
 
         val marker = records.findLatestRecordBy(AuthRecord.PendingActivation, realm = id, owner = owner)
-            ?: return user
+
+        if (marker == null) {
+            if (!isEmailVerified()) throw AuthError.invalidCredentials()
+            return user
+        }
 
         when (marker.value.claimedBy) {
             null, AuthRecord.PendingActivation.CLAIMED_BY_SSO -> Unit

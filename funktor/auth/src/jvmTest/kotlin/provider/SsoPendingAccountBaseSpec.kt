@@ -20,6 +20,7 @@ import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.funktorAuth
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
+import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.karango.config.ArangoDbConfig
 import io.peekandpoke.karango.karango
@@ -30,6 +31,7 @@ import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
+import io.peekandpoke.ultra.vault.value
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -62,7 +64,7 @@ class SsoPendingAccountMonkoSpec : SsoPendingAccountBaseSpec() {
 /**
  * Decision 2 (2026-10-19), against a REAL auth-record store: SSO on a PENDING password account activates it
  * and deletes the sign-up password when the provider says the address is verified, and is refused when it
- * does not. Already-active accounts keep today's behaviour.
+ * does not. An ACTIVE account, or a new one, is reached only with a verified address too (ULTRA-00118).
  */
 abstract class SsoPendingAccountBaseSpec : FreeSpec() {
 
@@ -84,6 +86,20 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
         getDeps = { deps },
         onLoadUserByEmail = { if (it == email) user else null },
     )
+
+    /** A realm without the victim's account, that counts the accounts a sign-up creates. */
+    private class EmptyRealm(deps: AuthSystem.Deps) {
+        var created = 0
+
+        val realm = MinimalTestRealm(
+            getDeps = { deps },
+            onLoadUserByEmail = { null },
+            onCreateUserForSignup = { params ->
+                created++
+                Stored(_id = "test_users/new", value = MinimalTestUser(email = params.email))
+            },
+        )
+    }
 
     /** What a password sign-up leaves behind, plus a resend token an attacker would hold. */
     private suspend fun AuthRecordStorage.preRegister(pending: Boolean) {
@@ -127,6 +143,8 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
     )
 
     private fun ssoRequest(provider: AuthProvider) = AuthSignInRequest.OAuth(provider = provider.id, token = "t")
+
+    private fun ssoSignUp(provider: AuthProvider) = AuthSignUpRequest.OAuth(provider = provider.id, token = "t")
 
     //  GitHub  //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -185,14 +203,57 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 }
             }
 
-            "an ACTIVE account keeps today's behaviour, verified or not, and keeps its password" {
+            "email_verified = true on an ACTIVE account signs in and up, and keeps its password" {
                 val deps = realDeps()
                 deps.storage.authRecords.preRegister(pending = false)
-                val subject = google(verified = false)
+                val subject = google(verified = true)
 
                 subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
+                subject.signUp(realmWith(deps), ssoSignUp(subject)).user shouldBe user
 
                 deps.storage.authRecords.state() shouldBe untouched.plus("marker" to false)
+            }
+
+            "email_verified = false or absent on an ACTIVE account is refused, sign-in and sign-up (ULTRA-00118)" {
+                // The takeover: a provider account that claims the victim's address without verifying it
+                listOf(false, null).forEach { claim ->
+                    withClue("email_verified = $claim") {
+                        val deps = realDeps()
+                        deps.storage.authRecords.preRegister(pending = false)
+                        val subject = google(verified = claim)
+
+                        shouldThrow<AuthError> {
+                            subject.signIn(realmWith(deps), ssoRequest(subject))
+                        }.message shouldBe "Invalid credentials"
+
+                        shouldThrow<AuthError> {
+                            subject.signUp(realmWith(deps), ssoSignUp(subject))
+                        }.message shouldBe "Invalid credentials"
+
+                        deps.storage.authRecords.state() shouldBe untouched.plus("marker" to false)
+                    }
+                }
+            }
+
+            "a sign-up creates an account only for a verified address" {
+                listOf(false, null).forEach { claim ->
+                    withClue("email_verified = $claim") {
+                        val empty = EmptyRealm(realDeps())
+                        val subject = google(verified = claim)
+
+                        shouldThrow<AuthError> {
+                            subject.signUp(empty.realm, ssoSignUp(subject))
+                        }.message shouldBe "Invalid credentials"
+
+                        empty.created shouldBe 0
+                    }
+                }
+
+                val empty = EmptyRealm(realDeps())
+                val subject = google(verified = true)
+
+                subject.signUp(empty.realm, ssoSignUp(subject)).user.value.email shouldBe email
+                empty.created shouldBe 1
             }
 
             "an EXPIRED pending account is retired, not activated — even with a verified address" {
@@ -314,16 +375,58 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 }
             }
 
-            "an ACTIVE account keeps today's behaviour — and /user/emails is not even asked" {
+            "the verified PRIMARY address signs in and up to an ACTIVE account, which keeps its password" {
                 val deps = realDeps()
                 deps.storage.authRecords.preRegister(pending = false)
-                val remote = FakeGithub(emails = null)
-                val subject = github(remote)
+                val subject = github(FakeGithub(githubEmails(Triple("victim@example.com", true, true))))
 
                 subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
+                subject.signUp(realmWith(deps), ssoSignUp(subject)).user shouldBe user
 
-                remote.emailsAsked shouldBe 0
                 deps.storage.authRecords.state()["password"] shouldBe true
+            }
+
+            "anything less is refused on an ACTIVE account, sign-in and sign-up (ULTRA-00118)" {
+                val cases = mapOf(
+                    "primary but not verified" to githubEmails(Triple("victim@example.com", true, false)),
+                    "a DIFFERENT address is the verified primary" to githubEmails(Triple("other@example.com", true, true)),
+                    "the emails API failed" to null,
+                )
+
+                cases.forEach { (case, emails) ->
+                    withClue(case) {
+                        val deps = realDeps()
+                        deps.storage.authRecords.preRegister(pending = false)
+                        val subject = github(FakeGithub(emails))
+
+                        shouldThrow<AuthError> {
+                            subject.signIn(realmWith(deps), ssoRequest(subject))
+                        }.message shouldBe "Invalid credentials"
+
+                        shouldThrow<AuthError> {
+                            subject.signUp(realmWith(deps), ssoSignUp(subject))
+                        }.message shouldBe "Invalid credentials"
+
+                        deps.storage.authRecords.state()["password"] shouldBe true
+                    }
+                }
+            }
+
+            "a sign-up creates an account only for the verified primary address" {
+                val refused = EmptyRealm(realDeps())
+                val unverified = github(FakeGithub(githubEmails(Triple("victim@example.com", true, false))))
+
+                shouldThrow<AuthError> {
+                    unverified.signUp(refused.realm, ssoSignUp(unverified))
+                }.message shouldBe "Invalid credentials"
+
+                refused.created shouldBe 0
+
+                val empty = EmptyRealm(realDeps())
+                val verified = github(FakeGithub(githubEmails(Triple("victim@example.com", true, true))))
+
+                verified.signUp(empty.realm, ssoSignUp(verified)).user.value.email shouldBe email
+                empty.created shouldBe 1
             }
         }
     }

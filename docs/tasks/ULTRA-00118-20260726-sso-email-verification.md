@@ -1,6 +1,6 @@
 # ULTRA-00118: SSO signup links to an existing account without checking `email_verified` (account takeover)
 
-> **Status (2026-11-04): NOT STARTED.** needs a POLICY decision from the maintainer before implementing. Rechecked
+> **Status (2026-11-04): IN PROGRESS.** Decided by the maintainer 2026-11-04: A/C, link only if verified. Rechecked
 > 2026-11-04: STILL LIVE for an ACTIVE account. Activation hardening (ULTRA-00222) closed the pending half: there,
 > `AuthRealm.resolveSsoAccount` refuses an unverified address. For an account that is not pending it returns the user
 > "and [isEmailVerified] is never asked" (its KDoc). Google and GitHub, sign-in and sign-up, hand an unverified
@@ -66,6 +66,26 @@ What should happen when a provider reports an email that resolves to an existing
 
 Any of these depends on whether the account-activation TODO gets implemented, since "is the local
 address verified?" has no answer today.
+
+## Decision (maintainer, 2026-11-04): A/C — link only if verified
+
+The maintainer chose "A/C: link only if verified" and "00118 first, then 00231". Since activation exists, an active
+account's address is verified locally (activated, or created by verified SSO), so A and C coincide. An account created
+before activation existed has no marker either. A covers it, because the rule depends on the provider's verification
+alone.
+
+- `AuthRealm.resolveSsoAccount`: an account that is not pending is returned only when `isEmailVerified()`, else
+  `invalidCredentials`. The pending branches are unchanged; the provider is still asked after the marker read, which
+  the claim-first race specs depend on.
+- `GoogleSsoAuth.signUp` and `GithubSsoAuth.signUp`: a new account is created only for a verified address (else whoever
+  claims an address first owns the account its owner signs up for later).
+- Specs:
+  - `SsoPendingAccountBaseSpec` (real store, both backends): the two rows that pinned "an ACTIVE account keeps today's
+    behaviour, verified or not" are flipped, and new rows cover sign-up creating an account.
+  - `GoogleSsoAuthSpec` and `GithubSsoAuthSpec`: the success rows now carry a verified address.
+  - `ActivationHardeningE2eSpec` (HTTP, both backends): two new rows, an active account and a new address.
+- Docs: `auth.astro` and `llms/funktor.md` said SSO does not activate a pending account, which has been stale since the
+  activation hardening; both now state the rule. A CHANGELOG entry under `## Unreleased`.
 
 ## Also required
 

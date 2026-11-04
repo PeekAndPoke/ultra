@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- **Funktor auth: SSO no longer signs in to an account through an address the provider did not verify**
+  (ULTRA-00118). A Google or GitHub account that claimed someone's address without verifying it signed in to that
+  person's active account, by sign-in or sign-up: an account takeover. `AuthRealm.resolveSsoAccount` now asks the
+  provider for every existing account, not only a pending one, and an SSO sign-up creates a new account only for a
+  verified address. Google needs `email_verified = true`; GitHub needs the address to be the verified primary in
+  `/user/emails` (the `user:email` scope), so a custom `GithubSsoAuth.RemoteClient` without `getEmails` now refuses
+  every GitHub sign-in.
+
 ## 0.117.0
 
 ### New

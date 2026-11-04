@@ -16,10 +16,23 @@ import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+
+/** What `/user/emails` answers when [address] is the account's verified primary. */
+private fun verifiedPrimary(address: String) = buildJsonArray {
+    add(
+        buildJsonObject {
+            put("email", address)
+            put("primary", true)
+            put("verified", true)
+        }
+    )
+}
 
 class GithubSsoAuthSpec : FreeSpec() {
 
@@ -296,6 +309,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         return ghUser
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray = verifiedPrimary("user@example.com")
                 }
 
                 val subject = GithubSsoAuth(
@@ -454,6 +469,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         return ghUser
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray = verifiedPrimary("user@example.com")
                 }
 
                 val subject = GithubSsoAuth(
@@ -502,6 +519,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         return ghUser
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray = verifiedPrimary("user@example.com")
                 }
 
                 val subject = GithubSsoAuth(

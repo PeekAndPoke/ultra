@@ -269,12 +269,19 @@ class GithubSsoAuth(
                     isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))
                 }
             }
-            ?: realm.users.createForSignup(
-                AuthUserAdapter.CreateUserForSignupParams.of(
-                    email = email,
-                    displayName = name,
+            ?: run {
+                // Else whoever claims an address first would own the account its owner signs up for later
+                if (!isVerifiedPrimary(email, remoteClient.getEmails(ghAccessToken))) {
+                    throw AuthError.invalidCredentials()
+                }
+
+                realm.users.createForSignup(
+                    AuthUserAdapter.CreateUserForSignupParams.of(
+                        email = email,
+                        displayName = name,
+                    )
                 )
-            )
+            }
 
         return AuthProvider.SignUpResult(
             user = user,

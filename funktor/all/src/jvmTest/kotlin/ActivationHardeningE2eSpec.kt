@@ -832,5 +832,69 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                 }
             }
         }
+
+        //  SSO on an active account, or a new one (ULTRA-00118)  ///////////////////////////////////////////////
+
+        "SSO with an UNVERIFIED address never reaches an ACTIVE account; a VERIFIED one signs in" {
+            // The takeover: a provider account that claims the victim's address without verifying it
+            apiApp {
+                anonymous {
+                    val email = freshEmail("active-victim")
+                    signUp(email)
+                    activate(activationTokenTo(email)) shouldBe true
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    githubSignIn(FakeGithub.unverified(email)) { response ->
+                        response.status shouldBe HttpStatusCode.Forbidden
+                        response.apiResponseData<AuthSignInResponse>().shouldBeNull()
+                    }
+
+                    api.authLogin.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.OAuth(provider = GithubSsoAuth.ID, token = FakeGithub.unverified(email)),
+                    ) {
+                        status shouldBe HttpStatusCode.BadRequest
+                        apiResponseData<AuthSignUpResponse>()?.signIn.shouldBeNull()
+                    }
+
+                    githubSignIn(FakeGithub.verified(email)) { response ->
+                        response.status shouldBe HttpStatusCode.OK
+                        response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                    }
+
+                    withClue("the account and its password are untouched") {
+                        userOf(email).shouldNotBeNull()._id shouldBe id
+                        hasPassword(id) shouldBe true
+                    }
+                }
+            }
+        }
+
+        "SSO sign-UP with an UNVERIFIED address creates no account" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("sso-new")
+
+                    api.authLogin.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.OAuth(provider = GithubSsoAuth.ID, token = FakeGithub.unverified(email)),
+                    ) {
+                        status shouldBe HttpStatusCode.BadRequest
+                    }
+
+                    userOf(email).shouldBeNull()
+
+                    api.authLogin.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.OAuth(provider = GithubSsoAuth.ID, token = FakeGithub.verified(email)),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                        apiResponseData<AuthSignUpResponse>().shouldNotBeNull().signIn.shouldNotBeNull()
+                    }
+
+                    userOf(email).shouldNotBeNull()
+                }
+            }
+        }
     }
 }

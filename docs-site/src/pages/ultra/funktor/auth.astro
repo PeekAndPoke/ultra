@@ -130,8 +130,13 @@ import {Code} from 'astro:components';
     </Aside>
 
     <p>Clearing the marker requires proving the mailbox <strong>and</strong> invalidating every earlier
-        password. Completing a password reset does both, so it also activates. SSO sign-in proves the mailbox
-        but leaves an attacker-set password intact, so it deliberately does not.</p>
+        password. Completing a password reset does both, so it also activates. So does SSO with an address the
+        provider verified (Google's <code>email_verified</code>, GitHub's verified primary address): it deletes
+        the sign-up password first.</p>
+
+    <p>SSO reaches an account only through an address the provider verified, for an active account, a pending
+        one and a new one alike. Otherwise anyone with a provider account that claims an address could sign in
+        to its owner's account, or create it before them.</p>
 
     <h2>Organisations</h2>
 

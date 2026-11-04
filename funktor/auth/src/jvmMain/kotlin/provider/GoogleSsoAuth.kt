@@ -206,12 +206,17 @@ class GoogleSsoAuth(
 
         val user = existing
             ?.let { realm.resolveSsoAccount(it, provider = id) { payload.isEmailVerified() } }
-            ?: realm.users.createForSignup(
-                AuthUserAdapter.CreateUserForSignupParams.of(
-                    email = email,
-                    displayName = displayName,
+            ?: run {
+                // Else whoever claims an address first would own the account its owner signs up for later
+                if (!payload.isEmailVerified()) throw AuthError.invalidCredentials()
+
+                realm.users.createForSignup(
+                    AuthUserAdapter.CreateUserForSignupParams.of(
+                        email = email,
+                        displayName = displayName,
+                    )
                 )
-            )
+            }
 
         return AuthProvider.SignUpResult(
             user = user,

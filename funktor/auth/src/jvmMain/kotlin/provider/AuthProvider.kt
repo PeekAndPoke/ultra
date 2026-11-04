@@ -43,8 +43,8 @@ interface AuthProvider {
      * Otherwise [AuthError] will be thrown.
      *
      * An SSO-style provider that resolves the user by email MUST pass it through
-     * `AuthRealm.resolveSsoAccount`, in [signUp] too — it is what keeps a pending password account from
-     * being taken over.
+     * `AuthRealm.resolveSsoAccount`, in [signUp] too — it refuses an address the provider did not verify, and
+     * keeps a pending password account from being taken over.
      */
     suspend fun <USER : AuthUser> signIn(
         realm: AuthRealm<USER>, request: AuthSignInRequest,
@@ -64,7 +64,8 @@ interface AuthProvider {
     /**
      * Sign up a new account for the given request. Providers should check their SignUp capability internally.
      *
-     * An existing account found by email goes through `AuthRealm.resolveSsoAccount`, as for [signIn].
+     * An existing account found by email goes through `AuthRealm.resolveSsoAccount`, as for [signIn]; a new
+     * account is created only for an address the provider verified.
      */
     suspend fun <USER : AuthUser> signUp(
         realm: AuthRealm<USER>, request: AuthSignUpRequest,

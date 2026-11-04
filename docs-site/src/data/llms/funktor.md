@@ -186,8 +186,10 @@ Design notes:
   password — never by naming an email address. That is what stops it being an open mail relay.
 - A resend rotates the token, so the superseded link dies immediately. A cooldown bounds send rate.
 - Clearing the marker requires proving the mailbox AND invalidating every earlier password. A
-  completed password reset does both, so it also activates. SSO sign-in does NOT — it proves the
-  mailbox but leaves an attacker-set password intact.
+  completed password reset does both, so it also activates. So does SSO with a provider-verified
+  address (Google's `email_verified`, GitHub's verified primary): it deletes the sign-up password first.
+- SSO reaches an account (active, pending or new) only through an address the provider verified;
+  anything else is `invalidCredentials`.
 
 ### Organisations (OrgPolicy)
 

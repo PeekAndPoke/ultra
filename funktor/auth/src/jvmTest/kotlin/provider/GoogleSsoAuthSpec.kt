@@ -188,6 +188,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
             "should return the user when sign in is successful" {
                 val tokenPayload = GoogleIdToken.Payload().apply {
                     email = "  User@EXAMPLE.com  "
+                    emailVerified = true
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
 
@@ -324,6 +325,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 // A valid token payload for the tests below
                 val tokenPayload = GoogleIdToken.Payload().apply {
                     email = "  User@EXAMPLE.com  "
+                    emailVerified = true
                     set("name", "User Name")
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
@@ -368,6 +370,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 // A valid token payload for the tests below
                 val tokenPayload = GoogleIdToken.Payload().apply {
                     email = "  User@EXAMPLE.com  "
+                    emailVerified = true
                     set("name", "User Name")
                 }
                 val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
