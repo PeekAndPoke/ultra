@@ -6,7 +6,6 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.kotest.matchers.types.shouldNotBeInstanceOf
 import io.peekandpoke.funktor.auth.AccountRetirement
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.MinimalTestDeps
@@ -52,6 +51,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             { _, _ -> error("findEmailVerificationToken not implemented") },
         val onRemoveEmailVerificationTokens: suspend (RealmId, UserId, String?) -> Unit =
             { _, _, _ -> error("removeEmailVerificationTokens not implemented") },
+        val onRemovePasswordRecords: suspend (RealmId, UserId) -> Unit =
+            { _, _ -> error("removePasswordRecords not implemented") },
         val onFindPendingActivation: suspend (RealmId, UserId) -> Stored<AuthRecord.PendingActivation>? =
             { _, _ -> error("findPendingActivation not implemented") },
         val onReplacePendingActivation: suspend (Stored<AuthRecord.PendingActivation>) -> Stored<AuthRecord.PendingActivation>? =
@@ -89,6 +90,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
         override suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String?) =
             onRemoveEmailVerificationTokens(realm, owner, exceptId)
+
+        override suspend fun removePasswordRecords(realm: RealmId, owner: UserId) = onRemovePasswordRecords(realm, owner)
 
         override suspend fun findPendingActivation(
             realm: RealmId,
@@ -327,9 +330,10 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 result shouldBe storedUser
             }
 
-            "should refuse sign in while the account is pending activation" {
+            "a pending account signed up BEFORE email first refuses its sign-up password, exactly like a wrong one" {
                 // The credentials are CORRECT here. Anything less would pass for the wrong reason —
-                // the point is that a valid password is not enough until the address is proven.
+                // the point is that a valid password is not enough until the address is proven. Since email
+                // first, a pending account has no password at all; one signed up before still has it.
 
                 val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
 
@@ -377,7 +381,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     subject.signIn(realm, request)
                 }
 
-                error.message shouldBe "Account not activated"
+                error.message shouldBe "Invalid credentials"
             }
 
             "a RETIRED key never signs in — the account is not even looked up" {
@@ -398,7 +402,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 }.message shouldBe "Invalid credentials"
             }
 
-            "a CLAIMED account refuses sign-in without a resend token, even with the right password" {
+            "a CLAIMED account refuses sign-in, even with the right password" {
                 val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
                 val subject = EmailAndPasswordAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignIn),
@@ -430,52 +434,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     )
                 }
 
-                error.shouldNotBeInstanceOf<AuthError.AccountNotActivated>()
-            }
-
-            "should check the PASSWORD before the pending marker" {
-                // The ordering IS the authorization for minting a resend token: `AccountNotActivated`
-                // makes the realm hand one out, so it must only ever follow a correct password. The
-                // account here IS pending, so a marker check that ran first would answer
-                // "Account not activated" to a wrong password.
-                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
-                var markerChecked = false
-
-                val services = lazy<EmailAndPasswordAuth.Services> {
-                    TestServices(
-                        onCheckPassword = { _, _ -> false },
-                        onFindLatestPasswordRecord = { realm, owner ->
-                            Stored(
-                                _id = "password-id",
-                                value = AuthRecord.Password(realm = realm, ownerId = owner, token = "hashed-password"),
-                            )
-                        },
-                        onFindPendingActivation = { realm, owner ->
-                            markerChecked = true
-                            Stored(_id = "pending", value = AuthRecord.PendingActivation(realm = realm, ownerId = owner))
-                        },
-                    )
-                }
-
-                val subject = EmailAndPasswordAuth(
-                    capabilities = setOf(AuthProviderModel.Capability.SignIn),
-                    log = NullLog,
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
-                    services = services
-                )
-
-                val error = shouldThrow<AuthError> {
-                    subject.signIn(
-                        MinimalTestRealm(onLoadUserByEmail = { storedUser }),
-                        AuthSignInRequest.EmailAndPassword(
-                            provider = subject.id, email = "user@example.com", password = "wrong-password",
-                        ),
-                    )
-                }
-
-                error.shouldNotBeInstanceOf<AuthError.AccountNotActivated>()
                 error.message shouldBe "Invalid credentials"
-                markerChecked shouldBe false
             }
         }
 
@@ -515,7 +474,6 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val request = AuthSignUpRequest.EmailAndPassword(
                     provider = subject.id,
                     email = " ",
-                    password = "password",
                     displayName = "Test User"
                 )
                 val realm = MinimalTestRealm()
@@ -539,7 +497,6 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val request = AuthSignUpRequest.EmailAndPassword(
                     provider = subject.id,
                     email = "this-is-not-an-email",
-                    password = "password",
                     displayName = "Test User"
                 )
                 val realm = MinimalTestRealm()
@@ -551,9 +508,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 error.message shouldBe "Invalid request"
             }
 
-            "should throw when password is weak" {
+            "should throw when an ACTIVE user already exists" {
                 // Setup
-                val services = lazy { TestServices() }
+                val services = lazy { TestServices(onFindPendingActivation = { _, _ -> null }) }
                 val subject = EmailAndPasswordAuth(
                     capabilities = setOf(AuthProviderModel.Capability.SignUp),
                     frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
@@ -563,35 +520,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val request = AuthSignUpRequest.EmailAndPassword(
                     provider = subject.id,
                     email = "test@example.com",
-                    password = "weak",
                     displayName = "Test User"
                 )
-                val realm = MinimalTestRealm(
-                    passwordPolicy = PasswordPolicy.default
-                )
-
-                // Execute & Verify
-                val error = shouldThrow<AuthError> {
-                    subject.signUp(realm, request)
-                }
-                error.message shouldBe "Weak password"
-            }
-
-            "should throw when user already exists" {
-                // Setup
-                val services = lazy { TestServices() }
-                val subject = EmailAndPasswordAuth(
-                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
-                    log = NullLog,
-                    services = services,
-                )
-                val request = AuthSignUpRequest.EmailAndPassword(
-                    provider = subject.id,
-                    email = "test@example.com",
-                    password = "A-valid-password-123!",
-                    displayName = "Test User"
-                )
+                // An ACTIVE account: no marker. `getMessaging` keeps its exploding default: nothing is mailed.
                 val realm = MinimalTestRealm(
                     passwordPolicy = PasswordPolicy.default,
                     onLoadUserByEmail = {
@@ -610,8 +541,6 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             "should sign up user successfully" {
                 // Setup
                 val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
-                val password = "A-valid-password-123!"
-                val hashedPassword = "hashed-password"
                 val email = "test@example.com"
                 val displayName = "Test User"
                 val verificationToken = "the-verification-token"
@@ -622,11 +551,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 var cancelUrl: String? = null
 
                 val services = lazy {
+                    // `onHashPassword` keeps its exploding default: sign-up never touches a password.
                     TestServices(
-                        onHashPassword = {
-                            it shouldBe password
-                            hashedPassword
-                        },
                         onCreateAuthRecord = { create ->
                             val record = create()
                             createdAuthRecords.add(record)
@@ -636,7 +562,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onGenerateToken = { verificationToken },
                         onInstantNow = { now },
                         // A brand-new user has no earlier tokens; the shared issue-and-send path calls
-                        // this anyway, so the sign-up and resend links cannot drift apart.
+                        // this anyway, so the sign-up and re-sent links cannot drift apart.
                         onRemoveEmailVerificationTokens = { _, _, _ -> },
                         onFindSignUpCancelTokenOf = { _, _ -> null },
                     )
@@ -652,7 +578,6 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val request = AuthSignUpRequest.EmailAndPassword(
                     provider = subject.id,
                     email = email,
-                    password = password,
                     displayName = displayName
                 )
 
@@ -683,10 +608,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 result.user shouldBe storedUser
                 result.requiresActivation shouldBe true
 
-                val createdPassword = createdAuthRecords.filterIsInstance<AuthRecord.Password>().single()
-                createdPassword.ownerId shouldBe UserId(storedUser._id)
-                createdPassword.token shouldBe hashedPassword
-                createdPassword.realm shouldBe realm.id
+                withClue("email first: a pending account holds NO credential") {
+                    createdAuthRecords.filterIsInstance<AuthRecord.Password>() shouldBe emptyList()
+                }
 
                 // The marker is what actually blocks sign-in, so its absence would make the whole
                 // activation flow decorative — assert it exists, and that it is non-expiring. A marker
@@ -718,17 +642,18 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
         }
 
         "signUp writes the marker FIRST" - {
-            "a failing password insert leaves a PENDING (passwordless) account, never an active one" {
+            "a failing link insert leaves a PENDING account, never an active one" {
                 val created = mutableListOf<AuthRecord>()
                 val services = lazy {
                     TestServices(
                         onInstantNow = { MpInstant.parse("2026-10-20T10:00:00Z") },
                         onCreateAuthRecord = { create ->
                             val record = create()
-                            check(record !is AuthRecord.Password) { "the store fails on the password insert" }
+                            check(record !is AuthRecord.EmailVerificationToken) { "the store fails on the link insert" }
                             created += record
                             Stored(_id = "record-${created.size}", value = record)
                         },
+                        onGenerateToken = { "token" },
                     )
                 }
                 val subject = EmailAndPasswordAuth(
@@ -744,9 +669,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             onLoadUserByEmail = { null },
                             onCreateUserForSignup = { Stored(_id = "user-id", value = MinimalTestUser()) },
                         ),
-                        AuthSignUpRequest.EmailAndPassword(
-                            provider = subject.id, email = "new@example.com", password = "A-valid-password-123!",
-                        ),
+                        AuthSignUpRequest.EmailAndPassword(provider = subject.id, email = "new@example.com"),
                     )
                 }
 
@@ -756,125 +679,182 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
         "activateAccount" - {
 
-            "should answer success=false for an unknown token, without touching anything" {
+            val ownerId = UserId("user-id")
+            val storedUser = Stored(_id = ownerId.value, value = MinimalTestUser())
+
+            fun subjectWith(services: Lazy<EmailAndPasswordAuth.Services>) = EmailAndPasswordAuth(
+                capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
+                log = NullLog,
+                services = services,
+            )
+
+            fun linkRecord(realm: RealmId, token: String) = Stored(
+                _id = "verification-record",
+                value = AuthRecord.EmailVerificationToken(
+                    realm = realm, ownerId = ownerId, token = token, expiresAt = Long.MAX_VALUE,
+                ),
+            )
+
+            fun pendingMarker(realm: RealmId) = Stored(
+                _id = "pending-activation",
+                value = AuthRecord.PendingActivation(
+                    realm = realm, ownerId = ownerId, createdAt = Kronos.systemUtc.instantNow(),
+                ),
+            )
+
+            "should answer null for an unknown token, without touching anything" {
                 val services = lazy {
                     TestServices(
                         onFindEmailVerificationToken = { _, _ -> null },
-                        // `removeAuthRecord` / `removePendingActivations` keep their exploding defaults:
-                        // an unknown token must not consume or activate ANYTHING.
+                        // Everything else keeps its exploding default: an unknown token must not consume,
+                        // write or activate ANYTHING.
                     )
                 }
 
-                val subject = EmailAndPasswordAuth(
-                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
-                    log = NullLog,
-                    services = services,
-                )
-
-                val result = subject.activateAccount(
+                subjectWith(services).activateAccount(
                     MinimalTestRealm(),
-                    AuthActivateAccountRequest(provider = subject.id, token = "no-such-token"),
-                )
-
-                result.success shouldBe false
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "no-such-token", password = "New-1234!"),
+                ) shouldBe null
             }
 
-            "should consume the token and drop the marker" {
-                val ownerId = UserId("user-id")
-                val token = "the-verification-token"
+            "a WEAK password is refused before the token is even looked up — the link stays usable" {
+                // Every service keeps its exploding default.
+                shouldThrow<AuthError> {
+                    subjectWith(lazy { TestServices() }).activateAccount(
+                        MinimalTestRealm(passwordPolicy = PasswordPolicy.default),
+                        AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "t", password = "weak"),
+                    )
+                }.message shouldBe "Weak password"
+            }
 
-                val removedRecordIds = mutableListOf<String>()
+            "consumes the link FIRST, then sets the chosen password, then drops the marker" {
+                val token = "the-verification-token"
+                val events = mutableListOf<String>()
                 var markerLookedUpFor: Pair<RealmId, UserId>? = null
+                val created = mutableListOf<AuthRecord>()
 
                 val services = lazy {
                     TestServices(
-                        onFindPendingActivation = { realm, owner ->
-                            markerLookedUpFor = realm to owner
-                            Stored(
-                                _id = "pending-activation",
-                                value = AuthRecord.PendingActivation(
-                                    realm = realm, ownerId = owner, createdAt = Kronos.systemUtc.instantNow(),
-                                ),
-                            )
-                        },
                         onFindEmailVerificationToken = { realm, requested ->
                             requested shouldBe token
+                            linkRecord(realm, token)
+                        },
+                        onFindPendingActivation = { realm, owner ->
+                            markerLookedUpFor = realm to owner
+                            pendingMarker(realm)
+                        },
+                        onRemoveAuthRecord = { events += "remove:$it"; true },
+                        onRemovePasswordRecords = { _, owner -> events += "remove-passwords:${owner.value}" },
+                        onHashPassword = { "hash($it)" },
+                        onCreateAuthRecord = { create ->
+                            val record = create()
+                            created += record
+                            events += "create:${record::class.simpleName}"
+                            Stored(_id = "new-password", value = record)
+                        },
+                        onRemovePendingActivationIfUnclaimed = { events += "activate:$it"; true },
+                        onRemoveEmailVerificationTokens = { _, _, _ -> events += "remove-links" },
+                        onFindSignUpCancelTokenOf = { realm, owner ->
                             Stored(
-                                _id = "verification-record",
-                                value = AuthRecord.EmailVerificationToken(
-                                    realm = realm,
-                                    ownerId = ownerId,
-                                    token = token,
-                                    expiresAt = Long.MAX_VALUE,
-                                )
+                                _id = "cancel-record",
+                                value = AuthRecord.SignUpCancelToken(realm, owner, Long.MAX_VALUE, token = "c"),
                             )
                         },
-                        onRemovePendingActivationIfUnclaimed = { removedRecordIds += it; true },
-                        onRemoveAuthRecord = { removedRecordIds += it; true },
                     )
                 }
 
-                val subject = EmailAndPasswordAuth(
-                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
-                    log = NullLog,
-                    services = services,
-                )
+                val realm = MinimalTestRealm(onLoadUserById = { storedUser })
 
-                val realm = MinimalTestRealm()
-
-                val result = subject.activateAccount(
+                subjectWith(services).activateAccount(
                     realm,
-                    AuthActivateAccountRequest(provider = subject.id, token = token),
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = token, password = "New-1234!"),
+                ) shouldBe storedUser
+
+                // The link by its delete count FIRST (single use), any older password before the chosen one (an
+                // account signed up before email first holds its sign-up password), the marker after the password
+                // (a failure in between leaves a pending account), and the dead links last.
+                events shouldBe listOf(
+                    "remove:verification-record",
+                    "remove-passwords:${ownerId.value}",
+                    "create:Password",
+                    "activate:pending-activation",
+                    "remove-links",
+                    "remove:cancel-record",
                 )
 
-                result.success shouldBe true
-
-                // The marker FIRST (that is the activation, and it acted on its own delete count), then the
-                // single-use token.
-                removedRecordIds shouldBe listOf("pending-activation", "verification-record")
+                val password = created.filterIsInstance<AuthRecord.Password>().single()
+                password.ownerId shouldBe ownerId
+                password.realm shouldBe realm.id
+                password.token shouldBe "hash(New-1234!)"
 
                 // ... and the marker is the token's OWNER's, not whoever is calling.
                 markerLookedUpFor shouldBe (realm.id to ownerId)
             }
 
-            "a leftover token of an ACTIVE (non-retired) account answers true and is consumed" {
-                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
-                val removedRecordIds = mutableListOf<String>()
+            "a leftover link of an ACTIVE account sets NO password and answers null" {
+                // Since the link chooses the password, a leftover one would be a password reset nobody asked for.
+                // `onCreateAuthRecord` and `onRemovePasswordRecords` keep their exploding defaults.
+                val removed = mutableListOf<String>()
 
                 val services = lazy {
                     TestServices(
+                        onFindEmailVerificationToken = { realm, token -> linkRecord(realm, token) },
                         onFindPendingActivation = { _, _ -> null },
-                        onFindEmailVerificationToken = { realm, token ->
-                            Stored(
-                                _id = "verification-record",
-                                value = AuthRecord.EmailVerificationToken(
-                                    realm = realm, ownerId = UserId(storedUser._id), token = token, expiresAt = Long.MAX_VALUE,
-                                ),
-                            )
-                        },
-                        onRemoveAuthRecord = { removedRecordIds += it; true },
+                        onRemoveAuthRecord = { removed += it; true },
                     )
                 }
 
-                val subject = EmailAndPasswordAuth(
-                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
-                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c/auth"),
-                    log = NullLog,
-                    services = services,
-                )
-
-                subject.activateAccount(
+                subjectWith(services).activateAccount(
                     MinimalTestRealm(onLoadUserById = { storedUser }),
-                    AuthActivateAccountRequest(provider = subject.id, token = "t"),
-                ).success shouldBe true
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "t", password = "New-1234!"),
+                ) shouldBe null
 
-                removedRecordIds shouldBe listOf("verification-record")
+                withClue("the leftover link is used up") {
+                    removed shouldBe listOf("verification-record")
+                }
+            }
+
+            "a link another submit consumed first goes no further" {
+                // `onFindPendingActivation` and every write keep their exploding defaults.
+                val services = lazy {
+                    TestServices(
+                        onFindEmailVerificationToken = { realm, token -> linkRecord(realm, token) },
+                        onRemoveAuthRecord = { false },
+                    )
+                }
+
+                subjectWith(services).activateAccount(
+                    MinimalTestRealm(),
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "t", password = "New-1234!"),
+                ) shouldBe null
+            }
+
+            "a retire or SSO that claimed the marker meanwhile wins: exactly the password written here is taken back" {
+                val removed = mutableListOf<String>()
+
+                val services = lazy {
+                    TestServices(
+                        onFindEmailVerificationToken = { realm, token -> linkRecord(realm, token) },
+                        onFindPendingActivation = { realm, _ -> pendingMarker(realm) },
+                        onRemoveAuthRecord = { removed += it; true },
+                        onRemovePasswordRecords = { _, _ -> },
+                        onHashPassword = { "hash" },
+                        onCreateAuthRecord = { create -> Stored(_id = "new-password", value = create()) },
+                        onRemovePendingActivationIfUnclaimed = { false },
+                    )
+                }
+
+                subjectWith(services).activateAccount(
+                    MinimalTestRealm(onLoadUserById = { storedUser }),
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "t", password = "New-1234!"),
+                ) shouldBe null
+
+                removed shouldBe listOf("verification-record", "new-password")
             }
         }
 
-        "resendActivation" - {
+        "signUp again with a PENDING address" - {
 
             // Expressed against the config rather than magic numbers, so the tests still mean something
             // if the defaults change.
@@ -882,7 +862,6 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             val config = MinimalTestRealm().tokenConfig
             val firstDelay = config.activationResendDelays[0]
             val thirdDelay = config.activationResendDelays[2]
-
             val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
             val owner = UserId(storedUser._id)
 
@@ -891,10 +870,12 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 createdAt: MpInstant,
                 resends: Int = 0,
                 lastSentAt: MpInstant? = null,
+                claimedBy: String? = null,
             ) = Stored(
                 _id = "pending-activation",
                 value = AuthRecord.PendingActivation(
                     realm = realm, ownerId = owner, createdAt = createdAt, resends = resends, lastSentAt = lastSentAt,
+                    claimedBy = claimedBy,
                 ),
             )
 
@@ -904,112 +885,72 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 services = services,
             )
 
-            "should send nothing for an account that no longer exists" {
-                // Every other service keeps its exploding default: nothing may be touched.
-                val result = subjectWith(lazy { TestServices() }).resendActivation(
-                    MinimalTestRealm(
-                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                        onLoadUserById = { null },
-                    ),
-                    owner,
-                )
+            // The existing pending account. `onCreateUserForSignup` keeps its exploding default: signing up again
+            // never creates a second account. `getMessaging` explodes too unless a test supplies it.
+            fun realmWith(getMessaging: (() -> TestMessaging)? = null) = MinimalTestRealm(
+                getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
+                onLoadUserByEmail = { storedUser },
+                getMessaging = getMessaging ?: { TestMessaging() },
+            )
 
-                result.sent shouldBe false
-                result.nextResendAt shouldBe null
-            }
+            suspend fun EmailAndPasswordAuth.signUpAgain(realm: MinimalTestRealm) =
+                signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = id, email = "user@example.com"))
 
-            "should send nothing for an already-activated account" {
-                val services = lazy { TestServices(onFindPendingActivation = { _, _ -> null }) }
-
-                val result = subjectWith(services).resendActivation(
-                    MinimalTestRealm(
-                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                        onLoadUserById = { storedUser },
-                    ),
-                    owner,
-                )
-
-                result.sent shouldBe false
-            }
-
-            "should send nothing for an EXPIRED pending account" {
-                // Expiry is what bounds the resend schedule: past it, the account is retired, not mailed.
+            "inside the first delay: answered exactly like a fresh sign-up, and NOTHING is sent or reserved" {
+                // `onReplacePendingActivation` keeps its exploding default, and so does every mail.
                 val services = lazy {
                     TestServices(
                         onInstantNow = { now },
                         onFindPendingActivation = { realm, _ ->
-                            pendingMarker(realm, createdAt = now.minus(config.pendingAccountLifetime))
+                            pendingMarker(realm, createdAt = now.minus(firstDelay).plus(1.seconds))
                         },
                     )
                 }
 
-                val result = subjectWith(services).resendActivation(
-                    MinimalTestRealm(
-                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                        onLoadUserById = { storedUser },
-                    ),
-                    owner,
-                )
+                val result = subjectWith(services).signUpAgain(realmWith())
 
-                result.sent shouldBe false
-                result.nextResendAt shouldBe null
+                result.user shouldBe storedUser
+                result.requiresActivation shouldBe true
             }
 
-            "should send nothing before the first delay has passed, and say when it will" {
-                // `getMessaging` and `savePendingActivation` keep their exploding defaults, so a send or
-                // a reserved slot fails the test rather than being asserted after the fact.
-                val signedUpAt = now.minus(firstDelay).plus(1.seconds)
-
-                val services = lazy {
-                    TestServices(
-                        onInstantNow = { now },
-                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = signedUpAt) },
-                    )
-                }
-
-                val result = subjectWith(services).resendActivation(
-                    MinimalTestRealm(
-                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                        onLoadUserById = { storedUser },
-                    ),
-                    owner,
-                )
-
-                result.sent shouldBe false
-                result.nextResendAt shouldBe signedUpAt.plus(firstDelay)
-            }
-
-            "the delay GROWS: after two resends the next one waits the third delay" {
+            "the delay GROWS: after two re-sends the next one waits the third delay" {
                 // One second short of the THIRD delay. With a flat cooldown (the first delay) this would
                 // send, so this is the test that fails if the schedule stops growing.
-                val lastSentAt = now.minus(thirdDelay).plus(1.seconds)
-
                 val services = lazy {
                     TestServices(
                         onInstantNow = { now },
                         onFindPendingActivation = { realm, _ ->
                             pendingMarker(
-                                realm, createdAt = now.minus(1.days), resends = 2, lastSentAt = lastSentAt,
+                                realm, createdAt = now.minus(1.days), resends = 2,
+                                lastSentAt = now.minus(thirdDelay).plus(1.seconds),
                             )
                         },
                     )
                 }
 
-                val result = subjectWith(services).resendActivation(
-                    MinimalTestRealm(
-                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                        onLoadUserById = { storedUser },
-                    ),
-                    owner,
-                )
+                subjectWith(services).signUpAgain(realmWith()).requiresActivation shouldBe true
+            }
 
-                result.sent shouldBe false
-                result.nextResendAt shouldBe lastSentAt.plus(thirdDelay)
+            "a CLAIMED account, or an EXPIRED one the retire did not free: same answer, nothing sent" {
+                for (marker in listOf(
+                    { realm: RealmId ->
+                        pendingMarker(
+                            realm, createdAt = now.minus(1.days), claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_SSO,
+                        )
+                    },
+                    { realm: RealmId -> pendingMarker(realm, createdAt = now.minus(config.pendingAccountLifetime)) },
+                )) {
+                    val services = lazy {
+                        TestServices(onInstantNow = { now }, onFindPendingActivation = { realm, _ -> marker(realm) })
+                    }
+
+                    subjectWith(services).signUpAgain(realmWith()).requiresActivation shouldBe true
+                }
             }
 
             "an activation that removed the marker meanwhile wins: nothing is re-inserted, nothing is sent" {
                 // A save here would re-insert the marker and make the now-ACTIVE account pending again — and
-                // the day-7 sweep would then retire it. `getMessaging` keeps its exploding default.
+                // the day-7 sweep would then retire it.
                 val services = lazy {
                     TestServices(
                         onInstantNow = { now },
@@ -1018,20 +959,11 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     )
                 }
 
-                val result = subjectWith(services).resendActivation(
-                    MinimalTestRealm(
-                        getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                        onLoadUserById = { storedUser },
-                    ),
-                    owner,
-                )
-
-                result.sent shouldBe false
+                subjectWith(services).signUpAgain(realmWith()).requiresActivation shouldBe true
             }
 
-            "once due: reserves the slot BEFORE mailing, rotates the token, and mails a NEW link" {
+            "once due: reserves the slot BEFORE mailing, rotates the link, and mails a NEW one" {
                 val newToken = "the-new-token"
-                val signedUpAt = now.minus(firstDelay)
 
                 val events = mutableListOf<String>()
                 var rotation: Triple<RealmId, UserId, String?>? = null
@@ -1044,7 +976,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     TestServices(
                         onInstantNow = { now },
                         onGenerateToken = { newToken },
-                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = signedUpAt) },
+                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = now.minus(firstDelay)) },
                         onReplacePendingActivation = { marker ->
                             events += "reserve"
                             saved = marker.value()
@@ -1053,7 +985,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onRemoveEmailVerificationTokens = { realm, o, exceptId ->
                             rotation = Triple(realm, o, exceptId)
                         },
-                        // The account's cancel token already exists: every resend mails the SAME one.
+                        // The account's cancel token already exists: every re-send mails the SAME one.
                         onFindSignUpCancelTokenOf = { realm, o ->
                             Stored(
                                 _id = "cancel-record",
@@ -1071,27 +1003,22 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     )
                 }
 
-                val realm = MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                    onLoadUserById = { storedUser },
-                    getMessaging = {
-                        TestMessaging(
-                            onSendAccountActivationEmail = { user, url, cancel ->
-                                events += "mail"
-                                user shouldBe storedUser
-                                activationUrl = url
-                                cancelUrl = cancel
-                                EmailResult.ofMessageId("message-id")
-                            }
-                        )
-                    },
-                )
+                val realm = realmWith {
+                    TestMessaging(
+                        onSendAccountActivationEmail = { user, url, cancel ->
+                            events += "mail"
+                            user shouldBe storedUser
+                            activationUrl = url
+                            cancelUrl = cancel
+                            EmailResult.ofMessageId("message-id")
+                        }
+                    )
+                }
 
-                val result = subjectWith(services).resendActivation(realm, owner)
+                val result = subjectWith(services).signUpAgain(realm)
 
-                result.sent shouldBe true
-                // The NEXT delay is the second one, counted from this send.
-                result.nextResendAt shouldBe now.plus(config.activationResendDelays[1])
+                result.user shouldBe storedUser
+                result.requiresActivation shouldBe true
 
                 // The slot is taken before the mail goes out, so a failing or slow mail cannot be
                 // retried at full speed.
@@ -1104,48 +1031,17 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 issued.ownerId shouldBe owner
 
                 // Rotation must EXCLUDE the row just created. Rotating first (or without the exception)
-                // lets two interleaved resends delete the token the other has already mailed, so a user
+                // lets two interleaved re-sends delete the token the other has already mailed, so a user
                 // receives a link that was dead before it arrived.
                 rotation shouldBe Triple(realm.id, owner, "record-1")
 
-                // The resent links must be built exactly like the sign-up ones.
+                // The re-sent links must be built exactly like the sign-up ones.
                 activationUrl shouldBe "https://a.b.c/auth/${EmailAndPasswordAuth.ID}/activate/$newToken"
                 cancelUrl shouldBe "https://a.b.c/auth/${EmailAndPasswordAuth.ID}/cancel-signup/the-cancel-token"
-                withClue("no second cancel token is minted") {
+                withClue("no second cancel token is minted, and no password is ever stored") {
                     createdAuthRecords.filterIsInstance<AuthRecord.SignUpCancelToken>() shouldBe emptyList()
+                    createdAuthRecords.filterIsInstance<AuthRecord.Password>() shouldBe emptyList()
                 }
-            }
-
-            "should answer sent=false when the mail FAILED" {
-                // Honest: rotation has already revoked the older link, so claiming success here would
-                // tell the user to wait for a mail that is not coming.
-                val services = lazy {
-                    TestServices(
-                        onInstantNow = { now },
-                        onGenerateToken = { "token" },
-                        onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = now.minus(1.days)) },
-                        onReplacePendingActivation = { it },
-                        onRemoveEmailVerificationTokens = { _, _, _ -> },
-                        onFindSignUpCancelTokenOf = { _, _ -> null },
-                        onCreateAuthRecord = { create -> Stored(_id = "record", value = create()) },
-                    )
-                }
-
-                val realm = MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                    onLoadUserById = { storedUser },
-                    getMessaging = {
-                        TestMessaging(
-                            onSendAccountActivationEmail = { _, _, _ -> EmailResult.ofError(RuntimeException("smtp down")) }
-                        )
-                    },
-                )
-
-                val response = subjectWith(services).resendActivation(realm, owner)
-
-                response.sent shouldBe false
-                // A delay here would make the client say "we already sent one recently" — about a failed mail.
-                response.nextResendAt shouldBe null
             }
 
             "the new link never outlives the pending account" {
@@ -1170,15 +1066,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     )
                 }
 
-                val realm = MinimalTestRealm(
-                    getDeps = { NullStorageTestDeps(kronos = Kronos.fixed(now)) },
-                    onLoadUserById = { storedUser },
-                    getMessaging = {
-                        TestMessaging(onSendAccountActivationEmail = { _, _, _ -> EmailResult.ofMessageId("id") })
-                    },
-                )
-
-                subjectWith(services).resendActivation(realm, owner).sent shouldBe true
+                subjectWith(services).signUpAgain(
+                    realmWith { TestMessaging(onSendAccountActivationEmail = { _, _, _ -> EmailResult.ofMessageId("id") }) }
+                ).requiresActivation shouldBe true
 
                 createdAuthRecords.filterIsInstance<AuthRecord.EmailVerificationToken>().single()
                     .expiresAt shouldBe signedUpAt.plus(config.pendingAccountLifetime).toEpochSeconds()
@@ -1365,6 +1255,18 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             )
 
             val request = AuthRecoverAccountRequest.SetPasswordWithToken(provider = "email-password", token = "t", password = "Pw-123456!")
+
+            "a WEAK password is refused before the token is even looked up — the link stays usable" {
+                // Every service keeps its exploding default. A reset also activates a pending account, so it chooses
+                // a first password as much as the activation page does (red-team ULTRA-00127 §7: only the frontend
+                // checked).
+                shouldThrow<AuthError> {
+                    subjectWith(lazy { TestServices() }).recoverAccountSetPasswordWithToken(
+                        MinimalTestRealm(),
+                        request.copy(password = "weak"),
+                    )
+                }.message shouldBe "Weak password"
+            }
 
             "a token another completion consumed first does nothing" {
                 // `createAuthRecord` keeps its exploding default.

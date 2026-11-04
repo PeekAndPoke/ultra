@@ -15,11 +15,9 @@ import kotlinx.serialization.json.JsonObject
  * - [Success] — the user is signed in; carries the JWT and (for org realms) the selected org.
  * - [OrgSelectionRequired] — credentials were valid but the user belongs to multiple organisations
  *   and must pick one; carries a short-lived selection token and the choices.
- * - [ActivationRequired] — credentials were valid but the account has not proven it owns its email
- *   address yet.
  *
- * The last two are NOT failures: the credential check passed and there is a defined next step. A
- * failure is an `AuthError`, which never produces one of these.
+ * The last is NOT a failure: the credential check passed and there is a defined next step. A failure is an
+ * `AuthError`, which never produces one of these.
  */
 @Serializable
 sealed interface AuthSignInResponse {
@@ -68,27 +66,6 @@ sealed interface AuthSignInResponse {
         val selectionToken: String,
         /** The organisations the user may select from. */
         val organisations: List<AuthOrgRef>,
-    ) : AuthSignInResponse
-
-    /**
-     * The password was right and the account exists — it just has not been activated yet.
-     *
-     * It exists so a client can tell this apart from a wrong password and offer "resend the activation
-     * email", which is impossible if the only signal is an error string.
-     */
-    @Serializable
-    @SerialName("activation-required")
-    data class ActivationRequired(
-        val realm: AuthRealmModel,
-        /**
-         * Short-lived, single-use proof that the credential check passed — the authorization for
-         * `POST /auth/{realm}/activate/resend`, exactly as [OrgSelectionRequired.selectionToken] authorizes
-         * `selectOrg`. A newer sign-in revokes it.
-         *
-         * Grants nothing else: it cannot sign in, and it can only ever cause a mail to the address
-         * already on the account, at the account's growing resend delay.
-         */
-        val resendToken: String,
     ) : AuthSignInResponse
 
     /**

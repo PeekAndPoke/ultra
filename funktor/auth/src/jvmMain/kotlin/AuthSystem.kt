@@ -6,8 +6,6 @@ import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -109,11 +107,6 @@ class AuthSystem(
         return getRealm(realm).activate(request)
     }
 
-    /** Send a fresh activation mail for [realm] and [request] */
-    suspend fun resendActivation(realm: RealmId, request: AuthResendActivationRequest): AuthResendActivationResponse {
-        return getRealm(realm).resendActivation(request)
-    }
-
     /** Retire a never-activated account by [realm] and [request] ("I did not sign up") */
     suspend fun cancelSignUp(realm: RealmId, request: AuthCancelSignUpRequest): AuthCancelSignUpResponse {
         return getRealm(realm).cancelSignUp(request)
@@ -122,8 +115,8 @@ class AuthSystem(
     /**
      * Retires the pending accounts of every realm that outlived `RealmTokenConfig.pendingAccountLifetime`;
      * returns how many. Run periodically by `funktor/all`'s `PendingAccountsExpiryWorker`. Expiry is also
-     * enforced where an expired account is used: sign-up, SSO, activation and reset retire it, resend refuses
-     * it; a password sign-in still answers `ActivationRequired`. So this frees what nobody touches again.
+     * enforced where an expired account is used: sign-up, SSO, activation and reset retire it. So this frees what
+     * nobody touches again.
      */
     suspend fun retireExpiredPendingAccounts(): Int {
         return realms.sumOf { realm ->

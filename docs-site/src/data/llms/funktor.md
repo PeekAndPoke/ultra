@@ -167,15 +167,17 @@ Key methods: `loadById(UserId)`, `loadByEmail(EmailAddress)`, `generateJwt()`, `
 
 ### Account activation
 
-A realm can require a new account to prove its email before it can sign in. Sign-up mails a link and
-issues NO session. Sign-in with the correct password answers with a response CASE, not an error:
+A new account proves its email before it holds a credential (email first). Sign-up takes the address and
+NO password, mails a link and issues NO session. The link opens "Choose your password": setting it
+activates the account and signs the user in.
 
 ```kotlin
-when (val response = api.auth.signIn(realm, credentials)) {
-    is AuthSignInResponse.Success              -> gotoDashboard(response)
-    is AuthSignInResponse.ActivationRequired   -> offerResend(response.resendToken)
-    is AuthSignInResponse.OrgSelectionRequired -> showOrgPicker(response)
-}
+// Sign-up: the address, no password
+api.auth.signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = "email-password", email = email))
+
+// The mailed link's page: the first password activates the account
+val response = api.auth.activateAccount(realm, AuthActivateAccountRequest(provider, token, password))
+response.signIn // the session; null when the realm could not sign in, e.g. an org choice is due
 ```
 
 Design notes:
@@ -183,12 +185,15 @@ Design notes:
 - "Not activated" is the PRESENCE of a marker record — not a boolean on the user (the only safe
   default would lock out every existing account) and not "an unexpired token exists" (that test
   erases itself once the token expires).
-- Resend is authorized by a SINGLE-USE token minted only on the sign-in path that proved the
-  password — never by naming an email address. That is what stops it being an open mail relay.
-- A resend rotates the token, so the superseded link dies immediately. A cooldown bounds send rate.
-- Clearing the marker requires proving the mailbox AND invalidating every earlier password. A
-  completed password reset does both, so it also activates. So does SSO with a provider-verified
-  address (Google's `email_verified`; GitHub's verified public address): it deletes the sign-up password first.
+- Opening the link changes nothing (mail scanners follow links); only the page's POST activates.
+- Signing up again with a pending address re-sends the link under delays that grow per account, and
+  answers exactly like a fresh sign-up, so pending and new addresses look the same. The re-sent link
+  replaces the earlier one.
+- A pending account cannot sign in: it holds no password. One signed up before email first still holds its
+  sign-up password and is refused like a wrong one.
+- A completed password reset proves the mailbox too, so it also activates. So does SSO with a
+  provider-verified address (Google's `email_verified`; GitHub's verified public address), which
+  deletes any earlier password first.
 - SSO reaches an account (active, pending or new) only through an address the provider verified;
   anything else is `invalidCredentials`.
 
@@ -254,7 +259,7 @@ All endpoints use the `{realm}` path parameter:
 | GET    | `/auth/{realm}/realm`                               | public        | Get realm config (providers, password policy) |
 | POST   | `/auth/{realm}/signin`                              | public        | Sign in                                       |
 | POST   | `/auth/{realm}/signup`                              | public        | Sign up                                       |
-| POST   | `/auth/{realm}/activate`                            | public        | Activate account                              |
+| POST   | `/auth/{realm}/activate`                            | public        | Choose the first password, activate, sign in  |
 | PUT    | `/auth/{realm}/update`                              | authenticated | Set password                                  |
 | PUT    | `/auth/{realm}/recover/reset-password/init`         | public        | Start password reset                          |
 | PUT    | `/auth/{realm}/recover/password-reset/validate`     | public        | Validate reset token                          |

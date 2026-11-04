@@ -416,67 +416,6 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             }
         }
 
-        "An activation-resend token must round-trip through findByToken, scoped by realm and TYPE" {
-            // Written in production by every refused sign-in on a pending account, and read back by
-            // `AuthRealm.resendActivation` — a backend that mangled it would make resend silently dead.
-            val kontainer = createKontainer()
-            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
-            val kronos = kontainer.get(Kronos::class)
-            authRecords.adapter.removeAll()
-
-            val expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds()
-
-            val created = authRecords.create(
-                AuthRecord.ActivationResendToken(
-                    realm = RealmId("realm"), ownerId = UserId("owner1"), token = "resend-1", expiresAt = expiresAt,
-                )
-            )
-            // The SAME secret under another record type — a lookup must never cross types.
-            authRecords.create(
-                AuthRecord.EmailVerificationToken(
-                    realm = RealmId("realm"), ownerId = UserId("owner2"), token = "verify-1", expiresAt = expiresAt,
-                )
-            )
-
-            withClue("round trip") {
-                val loaded = authRecords
-                    .findByToken(AuthRecord.ActivationResendToken, RealmId("realm"), "resend-1")
-                    .shouldNotBeNull()
-
-                loaded._id shouldBe created._id
-                loaded.value.ownerId shouldBe UserId("owner1")
-                loaded.value.token shouldBe "resend-1"
-                loaded.value.expiresAt shouldBe expiresAt
-            }
-
-            withClue("another realm does not match") {
-                authRecords.findByToken(AuthRecord.ActivationResendToken, RealmId("other"), "resend-1").shouldBeNull()
-            }
-
-            withClue("a verification token is not a resend token, and the other way round") {
-                authRecords.findByToken(AuthRecord.ActivationResendToken, RealmId("realm"), "verify-1").shouldBeNull()
-                authRecords.findByToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "resend-1").shouldBeNull()
-            }
-        }
-
-        "An EXPIRED activation-resend token must not be found" {
-            val kontainer = createKontainer()
-            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
-            val kronos = kontainer.get(Kronos::class)
-            authRecords.adapter.removeAll()
-
-            authRecords.create(
-                AuthRecord.ActivationResendToken(
-                    realm = RealmId("realm"),
-                    ownerId = UserId("owner1"),
-                    token = "expired",
-                    expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(),
-                )
-            )
-
-            authRecords.findByToken(AuthRecord.ActivationResendToken, RealmId("realm"), "expired").shouldBeNull()
-        }
-
         "removeById must report 1 for the call that removed a record and 0 for every later one" {
             // Single-use under concurrency rests on THIS count: of two requests that both found a token,
             // only the one whose delete reports 1 may act on it.
@@ -572,7 +511,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             authRecords.create(AuthRecord.Password(realm = realm, ownerId = owner, token = "pw"))
             authRecords.create(AuthRecord.EmailVerificationToken(realm, owner, expiresAt, token = "v"))
-            authRecords.create(AuthRecord.ActivationResendToken(realm, owner, expiresAt, token = "r"))
+            authRecords.create(AuthRecord.SignUpCancelToken(realm, owner, expiresAt, token = "c"))
             authRecords.create(AuthRecord.PasswordRecoveryToken(realm, owner, expiresAt, token = "p"))
             authRecords.create(AuthRecord.PendingActivation(realm = realm, ownerId = owner))
             // Untouchable neighbours:
@@ -583,7 +522,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             authRecords.findLatestRecordBy(AuthRecord.Password, realm, owner).shouldBeNull()
             authRecords.findLatestRecordBy(AuthRecord.EmailVerificationToken, realm, owner).shouldBeNull()
-            authRecords.findLatestRecordBy(AuthRecord.ActivationResendToken, realm, owner).shouldBeNull()
+            authRecords.findLatestRecordBy(AuthRecord.SignUpCancelToken, realm, owner).shouldBeNull()
             authRecords.findLatestRecordBy(AuthRecord.PasswordRecoveryToken, realm, owner).shouldBeNull()
 
             withClue("the excepted type stays") {

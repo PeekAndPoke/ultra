@@ -3,19 +3,16 @@ package io.peekandpoke.funktor.auth.provider
 import io.peekandpoke.funktor.auth.AuthError
 import io.peekandpoke.funktor.auth.AuthRealm
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthUser
-import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 
 interface AuthProvider {
@@ -74,27 +71,16 @@ interface AuthProvider {
     }
 
     /**
-     * Consumes an activation token issued by this provider at sign-up and activates the account.
+     * Consumes an activation token issued by this provider at sign-up, sets the account's first password and
+     * activates it; returns the activated user, whom the realm signs in.
      *
-     * Answers `success = false` for an unknown or expired token rather than throwing — the endpoint is
-     * anonymous, so an error would tell an attacker which tokens exist.
+     * Answers null for an unknown, used or expired token rather than throwing — the endpoint is anonymous, so
+     * an error would tell an attacker which tokens exist. Null too for an account that is not pending: a
+     * leftover link must never set the password of an active account.
      */
     suspend fun <USER : AuthUser> activateAccount(
         realm: AuthRealm<USER>, request: AuthActivateAccountRequest,
-    ): AuthActivateAccountResponse {
-        throw AuthError.notSupported()
-    }
-
-    /**
-     * Issues a fresh activation token for [owner] and mails it again.
-     *
-     * [owner] comes from a resend token the REALM has already found and consumed, so the caller proved
-     * the password moments ago. The provider applies the account's growing delay and its expiry, and
-     * answers honestly — see [AuthResendActivationResponse].
-     */
-    suspend fun <USER : AuthUser> resendActivation(
-        realm: AuthRealm<USER>, owner: UserId,
-    ): AuthResendActivationResponse {
+    ): Stored<USER>? {
         throw AuthError.notSupported()
     }
 
@@ -102,7 +88,7 @@ interface AuthProvider {
      * Retires a never-activated account, authorized by the cancel token mailed at sign-up (or by the
      * activation token, from the activation page's own cancel button).
      *
-     * Answers `success = false` rather than throwing for an unusable token, as [activateAccount] does.
+     * Answers `success = false` rather than throwing for an unusable token, as [activateAccount] answers null.
      */
     suspend fun <USER : AuthUser> cancelSignUp(
         realm: AuthRealm<USER>, request: AuthCancelSignUpRequest,

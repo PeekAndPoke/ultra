@@ -23,8 +23,6 @@ import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
@@ -48,7 +46,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 class ActivationHardeningKarangoE2eSpec : ActivationHardeningE2eSpec(activationHardeningKarangoApp) {
     override val users: HardeningUsers by service(HardeningKaUsersRepo::class)
@@ -62,8 +59,9 @@ class ActivationHardeningMonkoE2eSpec : ActivationHardeningE2eSpec(activationHar
  * The activation hardening of 2026-10-19, walked through the real API on BOTH backends — auth records AND
  * users on Karango in one app, on Monko in the other, each user store with a unique index on `email`.
  *
- * Runs the PRODUCTION token config (7-day pending lifetime, 5 min / 15 min / 1 h ... resend delays) against
- * a clock the spec advances, so what is pinned is what ships.
+ * Runs the PRODUCTION token config (7-day pending lifetime, 5 min / 15 min / 1 h ... delays between re-sent mails)
+ * against a clock the spec advances, so what is pinned is what ships. Since email first (ULTRA-00231) a sign-up
+ * stores no password; the activation link chooses it.
  */
 abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConfig>) :
     AppSpec<FunktorAllTestConfig>(app) {
@@ -101,7 +99,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
     /** Every auth row of [id] straight from the store — expired ones included, so only a delete makes it empty. */
     private suspend fun rawRowsOf(id: String): Map<String, Int> = listOf(
         AuthRecord.Password, AuthRecord.PasswordRecoveryToken, AuthRecord.PendingActivation,
-        AuthRecord.ActivationResendToken, AuthRecord.EmailVerificationToken, AuthRecord.SignUpCancelToken,
+        AuthRecord.EmailVerificationToken, AuthRecord.SignUpCancelToken,
     ).associate { it.identifier to records.adapter.findAllByOwner(realm.id, it.identifier, UserId(id)).size }
         .filterValues { it > 0 }
 
@@ -111,6 +109,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
     //  API helpers  ////////////////////////////////////////////////////////////////////////////////////////////
     //  Extensions on AppUnderTest, each opening its own anonymous scope: `apiResponseData` lives on the app.
 
+    /** Signs [email] up, or up AGAIN (which re-sends the link once the delay allows); clears the mails first. */
     private suspend fun AppUnderTest<FunktorAllTestConfig>.signUp(email: String) = anonymous {
         emails.clear()
 
@@ -118,12 +117,21 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             realmParam,
             body = AuthSignUpRequest.EmailAndPassword(
                 // No display name: it defaults to the address's local part, which retirement must not keep.
-                provider = provider, email = email, password = password, displayName = null,
+                provider = provider, email = email, displayName = null,
             ),
         ) {
             status shouldBe HttpStatusCode.OK
             apiResponseData<AuthSignUpResponse>().shouldNotBeNull().requiresActivation shouldBe true
         }
+    }
+
+    /** A password row as a sign-up before email first left it — the pre-registering attacker's. */
+    private suspend fun seedLegacyPassword(id: String) {
+        records.create(
+            AuthRecord.Password(
+                realm = realm.id, ownerId = UserId(id), token = authSystem.deps.passwordHasher.hashAsString(password),
+            )
+        )
     }
 
     /** The activation token from the newest mail to [email] — the one a browser would hand to the page. */
@@ -155,41 +163,17 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
         ) { this@passwordSignIn.check(this) }
     }
 
-    private suspend fun AppUnderTest<FunktorAllTestConfig>.resendToken(email: String): String {
-        var token: String? = null
-
-        passwordSignIn(email) { response ->
-            token = response.apiResponseData<AuthSignInResponse>()
-                .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
-                .resendToken
-        }
-
-        return token.shouldNotBeNull()
-    }
-
-    private suspend fun AppUnderTest<FunktorAllTestConfig>.resend(token: String): AuthResendActivationResponse {
-        var response: AuthResendActivationResponse? = null
-
-        anonymous {
-            api.authLogin.resendActivation(
-                realmParam,
-                body = AuthResendActivationRequest(provider = provider, token = token),
-            ) {
-                status shouldBe HttpStatusCode.OK
-                response = apiResponseData<AuthResendActivationResponse>()
-            }
-        }
-
-        return response.shouldNotBeNull()
-    }
-
-    private suspend fun AppUnderTest<FunktorAllTestConfig>.activate(token: String): Boolean {
+    /** Chooses [password] through the activation link [token]; true when that activated the account. */
+    private suspend fun AppUnderTest<FunktorAllTestConfig>.activate(
+        token: String,
+        password: String = this@ActivationHardeningE2eSpec.password,
+    ): Boolean {
         var success: Boolean? = null
 
         anonymous {
             api.authLogin.activateAccount(
                 realmParam,
-                body = AuthActivateAccountRequest(provider = provider, token = token),
+                body = AuthActivateAccountRequest(provider = provider, token = token, password = password),
             ) {
                 success = apiResponseData<AuthActivateAccountResponse>()?.success
             }
@@ -231,29 +215,64 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             RetireGate.afterRetireClaim = {}
         }
 
-        //  Password before marker  ///////////////////////////////////////////////////////////////////////////
+        //  Email first  /////////////////////////////////////////////////////////////////////////////////////////
 
-        "A WRONG password on a pending account is a plain 403 — no ActivationRequired, no resend token" {
-            // The order of the two checks IS the authorization for minting a resend token.
+        "Email first: a sign-up stores NO password, so nothing signs in until the link chooses one" {
             apiApp {
                 anonymous {
-                    val email = freshEmail("wrong-password")
+                    val email = freshEmail("email-first")
                     signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
 
-                    passwordSignIn(email, password = "Wrong-password-1!") { response ->
+                    isPending(id) shouldBe true
+                    hasPassword(id) shouldBe false
+
+                    passwordSignIn(email) { response ->
                         response.status shouldBe HttpStatusCode.Forbidden
                         response.apiResponseData<AuthSignInResponse>().shouldBeNull()
                     }
 
-                    val id = userOf(email).shouldNotBeNull()._id
-                    records.findAllByOwner(AuthRecord.ActivationResendToken, realm.id, UserId(id)) shouldBe emptyList()
+                    activate(activationTokenTo(email)) shouldBe true
+
+                    isPending(id) shouldBe false
+                    passwordSignIn(email) { response ->
+                        response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                    }
                 }
             }
         }
 
-        //  Resend: growing delays, revocation, lifetime, single use  //////////////////////////////////////////
+        "A pending account from BEFORE email first refuses its sign-up password like a wrong one; the link replaces it" {
+            // Accounts signed up under 0.114-0.117 still hold the password chosen at sign-up — possibly by a
+            // pre-registering attacker. It must never sign in, and the mailbox owner's choice must replace it.
+            apiApp {
+                anonymous {
+                    val email = freshEmail("legacy-pending")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+                    seedLegacyPassword(id)
 
-        "Resend is throttled by GROWING delays per account, and says when the next one is possible" {
+                    passwordSignIn(email) { response ->
+                        response.status shouldBe HttpStatusCode.Forbidden
+                        response.apiResponseData<AuthSignInResponse>().shouldBeNull()
+                    }
+
+                    activate(activationTokenTo(email), password = "Victim-chose-1!") shouldBe true
+
+                    withClue("the old password is gone, the chosen one signs in") {
+                        records.findAllByOwner(AuthRecord.Password, realm.id, UserId(id)).size shouldBe 1
+                        passwordSignIn(email) { response -> response.status shouldBe HttpStatusCode.Forbidden }
+                        passwordSignIn(email, password = "Victim-chose-1!") { response ->
+                            response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                        }
+                    }
+                }
+            }
+        }
+
+        //  Signing up again: growing delays, silently  ///////////////////////////////////////////////////////////
+
+        "Signing up again re-sends the link under GROWING delays per account — and says nothing about them" {
             apiApp {
                 anonymous {
                     val email = freshEmail("growing")
@@ -261,69 +280,30 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
 
                     val delays = config.activationResendDelays
 
-                    withClue("right after sign-up: too soon, and the answer names the first delay") {
-                        val response = resend(resendToken(email))
-                        response.sent shouldBe false
-                        response.nextResendAt.shouldNotBeNull()
+                    withClue("right after sign-up: too soon, nothing goes out") {
+                        signUp(email)
+                        emails.capturedTo(email) shouldBe emptyList()
                     }
 
-                    // Walk the first three delays: each resend is refused one minute early and sent once due.
+                    // Walk the first three delays: each re-send is withheld one minute early and sent once due.
                     delays.take(3).forEachIndexed { index, delay ->
                         advance(delay - 1.minutes)
 
                         withClue("one minute before delay #${index + 1} (${delay}) has passed") {
-                            resend(resendToken(email)).sent shouldBe false
+                            signUp(email)
+                            emails.capturedTo(email) shouldBe emptyList()
                         }
 
                         advance(1.minutes)
-                        emails.clear()
 
                         withClue("once delay #${index + 1} (${delay}) has passed") {
-                            val response = resend(resendToken(email))
-                            response.sent shouldBe true
-                            response.nextResendAt.shouldNotBeNull()
+                            signUp(email)
                             emails.capturedTo(email).size shouldBe 1
                         }
                     }
-                }
-            }
-        }
 
-        "Minting a resend token revokes the owner's earlier ones" {
-            // Without this, K parallel sign-ins hold K tokens and K resends race the delay check.
-            apiApp {
-                anonymous {
-                    val email = freshEmail("revoke")
-                    signUp(email)
-
-                    val first = resendToken(email)
-                    val second = resendToken(email)
-
-                    advance(config.activationResendDelays[0])
-
-                    withClue("the earlier token is dead") { resend(first).sent shouldBe false }
-                    withClue("the newest one still works") { resend(second).sent shouldBe true }
-                }
-            }
-        }
-
-        "A resend token lives activationResendTokenLifetime and not a second longer" {
-            apiApp {
-                anonymous {
-                    val email = freshEmail("lifetime")
-                    signUp(email)
-
-                    val token = resendToken(email)
-
-                    // Past the token's lifetime — and therefore past the first resend delay as well, so
-                    // the token's expiry is the only thing that can refuse this.
-                    config.activationResendTokenLifetime shouldNotBe Duration.ZERO
-                    (config.activationResendTokenLifetime > config.activationResendDelays[0]) shouldBe true
-                    advance(config.activationResendTokenLifetime + 1.seconds)
-
-                    withClue("expired token") { resend(token).sent shouldBe false }
-                    withClue("a fresh one at the same moment sends, so it WAS the expiry") {
-                        resend(resendToken(email)).sent shouldBe true
+                    withClue("still the one account") {
+                        users.byEmail(EmailAddress.of(email)).shouldNotBeNull()
                     }
                 }
             }
@@ -414,16 +394,10 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     signUp(email)
                     val oldId = userOf(email).shouldNotBeNull()._id
 
-                    withClue("before expiry the address is still taken") {
+                    withClue("before expiry, signing up again keeps the SAME pending account") {
                         advance(config.pendingAccountLifetime - 1.minutes)
-                        api.authLogin.signUp(
-                            realmParam,
-                            body = AuthSignUpRequest.EmailAndPassword(
-                                provider = provider, email = email, password = password, displayName = "Again",
-                            ),
-                        ) {
-                            status shouldBe HttpStatusCode.BadRequest
-                        }
+                        signUp(email)
+                        userOf(email).shouldNotBeNull()._id shouldBe oldId
                     }
 
                     advance(2.minutes)
@@ -436,22 +410,24 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             }
         }
 
-        "A link resent just before expiry dies WITH the account" {
+        "A link re-sent just before expiry dies WITH the account" {
             apiApp {
                 anonymous {
                     val email = freshEmail("late-link")
                     signUp(email)
+                    val oldId = userOf(email).shouldNotBeNull()._id
 
                     advance(config.pendingAccountLifetime - 1.hours)
-                    resend(resendToken(email)).sent shouldBe true
+                    signUp(email)
                     val lateToken = activationTokenTo(email)
 
                     // Well inside the link's own 24 h, but past the account's 7 days.
                     advance(2.hours)
 
                     activate(lateToken) shouldBe false
-                    withClue("and an expired account is not re-mailed either") {
-                        resend(resendToken(email)).sent shouldBe false
+                    withClue("and signing up again now starts a FRESH account, not the expired one") {
+                        signUp(email)
+                        userOf(email).shouldNotBeNull()._id shouldNotBe oldId
                     }
                 }
             }
@@ -611,7 +587,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     RetireGate.afterRetireClaim = {
                         midRetireActivation = authSystem.activate(
                             ActivationHardeningRealm.REALM,
-                            AuthActivateAccountRequest(provider = provider, token = activationToken),
+                            AuthActivateAccountRequest(provider = provider, token = activationToken, password = password),
                         ).success
                     }
 
@@ -758,14 +734,16 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
 
         //  SSO on a pending account  ///////////////////////////////////////////////////////////////////////////
 
-        "SSO with a VERIFIED address activates a pending account and DELETES the sign-up password" {
-            // The pre-registration takeover: an attacker signs up the victim's address with a password
-            // they know; the victim later signs in with GitHub. The attacker's password must never work.
+        "SSO with a VERIFIED address activates a pending account from before email first and DELETES its password" {
+            // The pre-registration takeover: an attacker signed up the victim's address with a password they
+            // know, before email first; the victim later signs in with GitHub. The attacker's password must
+            // never work — which is why SSO keeps deleting passwords (decision 1 of ULTRA-00231).
             apiApp {
                 anonymous {
                     val email = freshEmail("victim")
                     signUp(email)
                     val id = userOf(email).shouldNotBeNull()._id
+                    seedLegacyPassword(id)
 
                     githubSignIn(FakeGithub.verified(email)) { response ->
                         response.status shouldBe HttpStatusCode.OK
@@ -775,7 +753,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     isPending(id) shouldBe false
                     hasPassword(id) shouldBe false
 
-                    withClue("the pre-registered password is dead: a plain 403, not even ActivationRequired") {
+                    withClue("the pre-registered password is dead: a plain 403") {
                         passwordSignIn(email) { response ->
                             response.status shouldBe HttpStatusCode.Forbidden
                             response.apiResponseData<AuthSignInResponse>().shouldBeNull()
@@ -791,6 +769,8 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     val email = freshEmail("unverified")
                     signUp(email)
                     val id = userOf(email).shouldNotBeNull()._id
+
+                    seedLegacyPassword(id)
 
                     githubSignIn(FakeGithub.unverified(email)) { response ->
                         response.status shouldBe HttpStatusCode.Forbidden

@@ -66,7 +66,6 @@ class LoginController<USER>(
             val provider: AuthProviderModel,
             val email: String = "",
             val displayName: String = "",
-            val password: String = "",
             val message: Message? = null,
         ) : DisplayState
 
@@ -203,7 +202,7 @@ class LoginController<USER>(
         }
 
         fun FlowContent.renderSignUpState(s: DisplayState.SignUp) {
-            val realm = realmLoader.value() ?: return
+            realmLoader.value() ?: return
 
             renderMessage(s.message)
 
@@ -217,7 +216,6 @@ class LoginController<USER>(
                             provider = s.provider.id,
                             email = s.email,
                             displayName = s.displayName.ifBlank { null },
-                            password = s.password,
                         )
                         signup(req)
                     }
@@ -234,13 +232,7 @@ class LoginController<USER>(
                     placeholder("Display name (optional)")
                 }
 
-                UiPasswordField(s.password, { displayState = s.copy(password = it) }) {
-                    placeholder("Password")
-                    revealPasswordIcon()
-                    accepts(
-                        realm.passwordPolicy.asFormRule()
-                    )
-                }
+                // No password here (email first): the mailed link opens "Choose your password".
 
                 ui.field {
                     ui.primary.fluid
@@ -523,20 +515,6 @@ class LoginController<USER>(
                 displayState = DisplayState.SelectOrg(state.pendingOrgSelection!!)
             }
 
-            // Valid credentials, but the address was never proven. Send them to the activation page,
-            // which is where a new link can be requested. Showing "Login failed" here — which is what
-            // this branch used to fall through to — leaves the user with no idea what went wrong and
-            // nothing to do about it.
-            state.pendingActivation != null -> {
-                val pending = state.pendingActivation!!
-
-                host.router.navToUri(
-                    host.router.strategy.render(
-                        state.frontend.routes.resendActivation(pending.provider)
-                    )
-                )
-            }
-
             else -> displayState = displayState.withMessage(Message.error("Login failed"))
         }
     }
@@ -573,7 +551,7 @@ class LoginController<USER>(
                 DisplayState.Login(
                     email = emailPrefill,
                     message = if (data.requiresActivation) {
-                        Message.info("Account created. Please check your email to activate your account.")
+                        Message.info("Please check your email: the link we sent lets you choose your password.")
                     } else {
                         Message.info("Account created. You can now sign in.")
                     }

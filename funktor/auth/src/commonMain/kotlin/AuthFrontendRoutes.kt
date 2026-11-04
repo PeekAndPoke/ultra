@@ -1,6 +1,5 @@
 package io.peekandpoke.funktor.auth
 
-import io.peekandpoke.kraft.routing.Route1
 import io.peekandpoke.kraft.routing.Route2
 import io.peekandpoke.kraft.routing.Static
 
@@ -16,18 +15,9 @@ class AuthFrontendRoutes(mountPoint: String = DEFAULT_MOUNT_POINT) {
 
     val resetPassword = Route2("$mountPoint/{$PROVIDER_PARAM}/reset-password/{$TOKEN_PARAM}")
 
-    /** Deep-link target of the activation mail. Opening it changes nothing; the page's button activates. */
+    /** Deep-link target of the activation mail. Opening it changes nothing; choosing the password activates. */
     val activateAccount = Route2("$mountPoint/{$PROVIDER_PARAM}/activate/{$TOKEN_PARAM}")
 
     /** The activation mail's "Didn't sign up? Cancel" link — its own cancel token, the same page, cancel only. */
     val cancelSignUp = Route2("$mountPoint/{$PROVIDER_PARAM}/cancel-signup/{$TOKEN_PARAM}")
-
-    /**
-     * The same page WITHOUT a token — where the login page sends someone whose account is not
-     * activated yet, so they can ask for a new link.
-     *
-     * The email is deliberately NOT a route parameter: it would land in the address bar, the browser
-     * history and any `Referer` header. It is carried in memory on `AuthState.pendingActivation`.
-     */
-    val resendActivation = Route1("$mountPoint/{$PROVIDER_PARAM}/activate")
 }

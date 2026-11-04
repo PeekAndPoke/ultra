@@ -10,8 +10,8 @@ import kotlinx.html.h1
 import kotlinx.html.p
 
 /**
- * Sent at sign-up, and again on resend. Until the account is activated it cannot sign in, which makes
- * this the one auth mail whose failure locks a brand-new user out entirely. It also carries the way out
+ * Sent at sign-up, and again when the address signs up again. Its link is where the user chooses the first
+ * password, which makes this the one auth mail whose failure locks a brand-new user out entirely. It also carries the way out
  * for someone who did NOT sign up: the cancel link.
  *
  * Subclass to replace it; the framework's rendering is [DefaultAccountActivationEmailTemplate].
@@ -29,7 +29,10 @@ abstract class AccountActivationEmailTemplate :
         val senderEmail: String,
         val senderName: String,
         val applicationName: String,
-        /** Carries a live single-use token. Never put this in a subject — subjects are not anonymized. */
+        /**
+         * Opens "Choose your password", which activates the account. Carries a live single-use token. Never put
+         * this in a subject — subjects are not anonymized.
+         */
         val activationUrl: String,
         /** "Didn't sign up? Cancel" — carries the account's own cancel token, live as long as the sign-up. */
         val cancelUrl: String,
@@ -59,12 +62,12 @@ class DefaultAccountActivationEmailTemplate(
         h1 { +"Welcome!" }
 
         p {
-            +"Click the link below to activate your account. Until you do, you cannot sign in."
+            +"Click the link below to choose your password. That activates your account."
         }
 
         p {
             a(href = params.activationUrl) {
-                +"Activate account"
+                +"Choose your password"
             }
         }
 
@@ -89,14 +92,14 @@ class DefaultAccountActivationEmailTemplate(
 
         p {
             +(
-                "Klicke auf den folgenden Link, um dein Konto zu aktivieren. " +
-                        "Bis dahin kannst du dich nicht anmelden."
+                "Klicke auf den folgenden Link, um dein Passwort zu wählen. " +
+                        "Damit ist dein Konto aktiviert."
                 )
         }
 
         p {
             a(href = params.activationUrl) {
-                +"Konto aktivieren"
+                +"Passwort wählen"
             }
         }
 

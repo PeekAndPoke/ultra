@@ -6,7 +6,6 @@ import io.peekandpoke.funktor.auth.funktorAuth
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.rest.ApiRoutes
@@ -112,26 +111,6 @@ class AuthLoginApi : ApiRoutes("login", authFloor = { public() }) {
                 // No `withInfo(e.message)`: anonymous endpoint, and the message can echo caller input — as for
                 // `cancelSignUp`, see the error-disclosure inventory.
                 ApiResponse.badRequest(AuthActivateAccountResponse(success = false))
-            }
-        }
-    }
-
-    val resendActivation = AuthApiClient.ResendActivation.mount(RealmParam::class) {
-        docs {
-            name = "Resend Activation"
-        }.codeGen {
-            funcName = "resendActivation"
-        }.handle { params, body ->
-            letTheBotsWait()
-
-            try {
-                funktorAuth
-                    .resendActivation(params.realm, body)
-                    .let { ApiResponse.ok(it) }
-            } catch (_: AuthError) {
-                // No `withInfo(e.message)`: anonymous endpoint, and the message can echo caller input — as for
-                // `cancelSignUp`, see the error-disclosure inventory.
-                ApiResponse.badRequest(AuthResendActivationResponse(sent = false))
             }
         }
     }

@@ -55,15 +55,6 @@ class AuthFrontendDefault(
                     mode = ActivateAccountPage.Mode.Cancel,
                 )
             }
-
-            // The same page with nothing to redeem — where the login page sends an unactivated user.
-            mount(routes.resendActivation) {
-                ActivateAccountPage(
-                    state = state,
-                    provider = it[AuthFrontendRoutes.PROVIDER_PARAM],
-                    token = null,
-                )
-            }
         }
     }
 }

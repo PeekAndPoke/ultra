@@ -52,6 +52,7 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
     // Unique per run: the test users repo is not a fixture, so it is not cleared between runs.
     private val email = "reset-${System.currentTimeMillis()}@test.com"
     private val unknownEmail = "no-such-user-${System.currentTimeMillis()}@test.com"
+    /** Never set (email first: sign-up stores no password); the closing check pins that it does not sign in. */
     private val originalPassword = "Original1234!"
     private val newPassword = "Rotated5678!"
 
@@ -70,7 +71,6 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
                             email = email,
-                            password = originalPassword,
                             displayName = "Reset Me",
                         ),
                     ) {
@@ -182,6 +182,23 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                     }
 
                     emails.clear()
+
+                    //  A WEAK password is refused, and the link stays usable  //////////////////////
+
+                    // A reset also activates a pending account, so it chooses a first password as much as the
+                    // activation page does; the frontend's check alone is no check (red-team ULTRA-00127 §7).
+                    api.authLogin.recoverAccountSetPasswordWithToken(
+                        realmParam,
+                        body = AuthRecoverAccountRequest.SetPasswordWithToken(
+                            provider = provider,
+                            token = token,
+                            password = "weak",
+                        ),
+                    ) {
+                        status shouldBe HttpStatusCode.BadRequest
+                        apiResponseData<AuthRecoverAccountResponse.SetPasswordWithToken>()
+                            ?.success shouldBe false
+                    }
 
                     //  And the token sets a new password  ///////////////////////////////////////
 

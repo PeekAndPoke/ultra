@@ -16,8 +16,6 @@ import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -64,8 +62,8 @@ interface AuthRealm<USER : AuthUser> {
         suspend fun sendPasswordRecoveryEmil(user: Stored<USER>, resetUrl: String): EmailResult
 
         /**
-         * Sent at sign-up and on resend. Until the account is activated it cannot sign in; [cancelUrl]
-         * lets someone who did not sign up retire it instead.
+         * Sent at sign-up, and again when the address signs up again. [activationUrl] opens "Choose your
+         * password", which activates the account; [cancelUrl] lets someone who did not sign up retire it instead.
          */
         suspend fun sendAccountActivationEmail(user: Stored<USER>, activationUrl: String, cancelUrl: String): EmailResult
     }
@@ -101,11 +99,11 @@ interface AuthRealm<USER : AuthUser> {
          * **The `try` is the point.** Everything below `mailing.send` reports failure by RETURNING a
          * failed `EmailResult` — the senders catch `Throwable` themselves — and callers are written
          * against that: `EmailAndPasswordAuth` logs a warning and leaves the account recoverable via
-         * resend or password reset. Rendering is now app-overridable code running OUTSIDE that
+         * signing up again or password reset. Rendering is now app-overridable code running OUTSIDE that
          * protocol, and `AuthLoginApi` catches only `AuthError`, so an app template that throws would
-         * instead 500 the request. On sign-up that happens after the account, the password record and
-         * the `PendingActivation` marker are already written; on resend it happens after the previous
-         * activation link has been revoked — a deterministic throw there is an unrecoverable lockout.
+         * instead 500 the request. On sign-up that happens after the account and the `PendingActivation`
+         * marker are already written; on a re-send it happens after the previous activation link has been
+         * revoked — a deterministic throw there is an unrecoverable lockout.
          * It would also hand `recoverAccountInitPasswordReset` an account-enumeration oracle, since
          * that endpoint answers a neutral 200 for unknown addresses but only reaches this code for
          * ones that exist.
@@ -282,39 +280,7 @@ interface AuthRealm<USER : AuthUser> {
             )
         }
 
-        val user = try {
-            provider.signIn<USER>(realm = this, request = request)
-        } catch (e: AuthError.AccountNotActivated) {
-            // NOT a failure — the credential check passed. Answering with a response case rather than
-            // an error is what lets a client offer "resend the activation email" instead of showing a
-            // generic "login failed". Caught by TYPE: matching on the message would break on the first
-            // rewording or translation.
-            //
-            // The resend token is minted HERE, on the only path that has proven the password, and is
-            // what authorizes `resendActivation`. Exactly the OrgSelectionToken pattern below.
-            val resendToken = deps.random.getTokenAsBase64(tokenConfig.randomTokenByteLength)
-
-            val minted = deps.storage.authRecords.create {
-                AuthRecord.ActivationResendToken(
-                    realm = id,
-                    ownerId = e.userId,
-                    token = resendToken,
-                    expiresAt = deps.kronos.instantNow()
-                        .plus(tokenConfig.activationResendTokenLifetime).toEpochSeconds(),
-                )
-            }
-
-            // Only the newest token stays live. Without this, K parallel sign-ins hold K tokens, and K
-            // parallel resends race the delay check instead of sharing one token.
-            deps.storage.authRecords.removeAllByOwner(
-                type = AuthRecord.ActivationResendToken, realm = id, owner = e.userId, exceptId = minted._id,
-            )
-
-            return AuthSignInResponse.ActivationRequired(
-                realm = asApiModel(),
-                resendToken = resendToken,
-            )
-        }
+        val user = provider.signIn<USER>(realm = this, request = request)
 
         return issueSignIn(user)
     }
@@ -357,37 +323,22 @@ interface AuthRealm<USER : AuthUser> {
      * outstanding activation link — locking out accounts that were created legitimately. A provider
      * that does not issue these tokens refuses on its own: [AuthProvider.activateAccount] defaults to
      * `notSupported()`.
+     *
+     * The page has just chosen the account's first password, so a successful activation signs the user in —
+     * best-effort, as after [signUp].
      */
     suspend fun activate(request: AuthActivateAccountRequest): AuthActivateAccountResponse {
-        return getProvider(request.provider).activateAccount(realm = this, request = request)
-    }
+        val user = getProvider(request.provider).activateAccount(realm = this, request = request)
+            ?: return AuthActivateAccountResponse(success = false)
 
-    /**
-     * Sends a fresh activation mail, authorized by the single-use token from
-     * [AuthSignInResponse.ActivationRequired].
-     *
-     * Ungated on capabilities, like [activate], but for its own reason: the token was already issued
-     * to someone who proved the password, and stranding those users when registration closes helps
-     * nobody. The token stops this being an anonymous mail relay; the account's growing resend delay
-     * and its expiry bound what the password holder can cause.
-     *
-     * Found AND consumed here, where it is minted — the [selectOrg] pattern — so a provider never has
-     * to know the token exists.
-     */
-    suspend fun resendActivation(request: AuthResendActivationRequest): AuthResendActivationResponse {
-        val provider = getProvider(request.provider)
-
-        val record = deps.storage.authRecords
-            .findByToken(AuthRecord.ActivationResendToken, realm = id, token = request.token)
-            ?: return AuthResendActivationResponse(sent = false)
-
-        // Single-use under concurrency too: of two requests that both found the token, only the one
-        // whose delete actually removed it may go on.
-        if (deps.storage.authRecords.removeById(record._id).count != 1L) {
-            return AuthResendActivationResponse(sent = false)
+        val signInResponse = try {
+            issueSignIn(user)
+        } catch (e: AuthError) {
+            deps.log.error("Failed to sign in after activation", e)
+            null
         }
 
-        return provider.resendActivation(realm = this, owner = record.value.ownerId)
+        return AuthActivateAccountResponse(success = true, signIn = signInResponse)
     }
 
     /**
@@ -421,7 +372,7 @@ interface AuthRealm<USER : AuthUser> {
      * CLAIM FIRST: the marker is claimed for the retire by an atomic conditional write before anything
      * destructive happens. If an activation took the marker first, the claim fails and NOTHING changes
      * (false). Once claimed, the account stays blocked for every path — sign-in, activation, reset, SSO,
-     * resend, refresh — until the retire finishes, so it can never become active half-retired. A retire that
+     * re-send, refresh — until the retire finishes, so it can never become active half-retired. A retire that
      * stops part-way (a crash, a realm whose `retire()` fails or renames nothing) leaves the claim in place;
      * the sweep selects `retire`-claimed markers of any age, so the next run finishes the job.
      *
@@ -566,9 +517,10 @@ interface AuthRealm<USER : AuthUser> {
      * - pending but EXPIRED → retired here, and null: the address is free, so a sign-up may create a
      *   fresh account (a sign-in has nothing to sign into);
      * - pending and verified → activated, CLAIM FIRST: the marker is claimed for SSO by an atomic conditional
-     *   write (losing to a retire changes nothing), then the sign-up password is deleted — so a password chosen
-     *   by whoever pre-registered the address can never start working — and the marker goes last. The account
-     *   becomes SSO-only until its owner sets a password through a reset. A claim that stops part-way is
+     *   write (losing to a retire changes nothing), then any password is deleted — an account signed up before
+     *   email first still holds its sign-up password, possibly chosen by whoever pre-registered the address, and
+     *   it must never start working — and the marker goes last. The account is SSO-only until its owner sets a
+     *   password through a reset. A claim that stops part-way is
      *   finished by the next verified SSO sign-in — or, once the account has expired, taken over and retired by
      *   the sweep; the final marker delete is conditional on this SSO's claim, so a takeover is never undone and
      *   hands out no session;
@@ -618,7 +570,6 @@ interface AuthRealm<USER : AuthUser> {
         }
 
         records.removeAllByOwner(type = AuthRecord.Password, realm = id, owner = owner)
-        records.removeAllByOwner(type = AuthRecord.ActivationResendToken, realm = id, owner = owner)
         records.removeAllByOwner(type = AuthRecord.EmailVerificationToken, realm = id, owner = owner)
         records.removeAllByOwner(type = AuthRecord.SignUpCancelToken, realm = id, owner = owner)
 
@@ -630,7 +581,7 @@ interface AuthRealm<USER : AuthUser> {
 
         deps.log.warning(
             "SECURITY: pending account $owner in realm $id activated by '$provider' with a verified address; " +
-                    "its sign-up password was removed"
+                    "any password it held was removed"
         )
 
         return user

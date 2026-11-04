@@ -2,6 +2,7 @@ package io.peekandpoke.funktor
 
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -15,8 +16,6 @@ import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
@@ -34,18 +33,18 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Walks account activation the way a user does: sign up, READ THE EMAIL, follow the link in it, and
- * only then get in.
+ * Walks account activation the way a user does: sign up with the address only, READ THE EMAIL, follow the link
+ * in it, choose the password there, and only then get in (email first, ULTRA-00231).
  *
  * The middle step is the point, exactly as in [PasswordResetEmailE2eSpec]. Every piece of this flow
  * can be unit-tested green while the feature is completely broken for the user: a sign-up that mails
  * nothing, or mails a link whose token does not survive URL encoding, is indistinguishable from a
  * working one from the server's side.
  *
- * The security property being pinned is narrow and load-bearing: **correct credentials are not enough
- * until the address is proven.** Before this feature `AuthRealm.signUp` handed out a session
- * immediately, which is what made the SSO pre-hijack chain in
- * ULTRA-00118 (sso email verification) work.
+ * The security property being pinned is narrow and load-bearing: **an account that has not proven its address
+ * holds no credential.** Before account activation `AuthRealm.signUp` handed out a session immediately, which is
+ * what made the SSO pre-hijack chain in ULTRA-00118 (sso email verification) work; before email first, the
+ * account at least held the sign-up password, which a pre-registering attacker chose.
  *
  * SCOPE: [TestUserRealm] is org-less, so the closing sign-in leg does not generalize to an
  * `OrgPolicy.Required` realm (there `issueSignIn` answers `OrgSelectionRequired`). The activation half
@@ -88,31 +87,59 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
     /** Read from the realm, so the waits below cannot drift out of step with the configured window. */
     private val realmTokenConfig = TestUserRealm.TOKEN_CONFIG
 
-    /**
-     * The resend authorization, obtained the ONLY way it can be: by signing in with the right password
-     * and being refused because the account is pending.
-     *
-     * That this helper needs a password at all is the property under test elsewhere — an anonymous
-     * caller who merely knows the address cannot get one.
-     */
-    private suspend fun AppUnderTest<FunktorAllTestConfig>.resendTokenFor(
+    /** Signs [email] up — the address and a display name, no password — and returns the answer. */
+    private suspend fun AppUnderTest<FunktorAllTestConfig>.signUp(
         scope: AppUnderTest<FunktorAllTestConfig>.AuthenticationScope,
         email: String,
-    ): String = with(scope) {
-        var token: String? = null
+        displayName: String = "Activate Me",
+    ): AuthSignUpResponse = with(scope) {
+        var response: AuthSignUpResponse? = null
+
+        api.authLogin.signUp(
+            realmParam,
+            body = AuthSignUpRequest.EmailAndPassword(provider = provider, email = email, displayName = displayName),
+        ) {
+            status shouldBe HttpStatusCode.OK
+            response = apiResponseData<AuthSignUpResponse>()
+        }
+
+        response.shouldNotBeNull()
+    }
+
+    /** Chooses [password] through the mailed [token]; returns the answer and its status. */
+    private suspend fun AppUnderTest<FunktorAllTestConfig>.activate(
+        scope: AppUnderTest<FunktorAllTestConfig>.AuthenticationScope,
+        token: String,
+        password: String = this@AccountActivationEmailE2eSpec.password,
+    ): Pair<HttpStatusCode, AuthActivateAccountResponse> = with(scope) {
+        var answer: Pair<HttpStatusCode, AuthActivateAccountResponse>? = null
+
+        api.authLogin.activateAccount(
+            realmParam,
+            body = AuthActivateAccountRequest(provider = provider, token = token, password = password),
+        ) {
+            answer = status to apiResponseData<AuthActivateAccountResponse>().shouldNotBeNull()
+        }
+
+        answer.shouldNotBeNull()
+    }
+
+    /** Signs in with [password]; returns the session, or null when refused. */
+    private suspend fun AppUnderTest<FunktorAllTestConfig>.signInWith(
+        scope: AppUnderTest<FunktorAllTestConfig>.AuthenticationScope,
+        email: String,
+        password: String = this@AccountActivationEmailE2eSpec.password,
+    ): AuthSignInResponse.Success? = with(scope) {
+        var session: AuthSignInResponse.Success? = null
 
         api.authLogin.signIn(
             realmParam,
-            body = AuthSignInRequest.EmailAndPassword(
-                provider = provider, email = email, password = password,
-            ),
+            body = AuthSignInRequest.EmailAndPassword(provider = provider, email = email, password = password),
         ) {
-            token = apiResponseData<AuthSignInResponse>()
-                .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
-                .resendToken
+            session = apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success
         }
 
-        return token.shouldNotBeNull()
+        session
     }
 
     init {
@@ -123,27 +150,15 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     //  When a new account is created  //////////////////////////////////////////
 
-                    api.authLogin.signUp(
-                        realmParam,
-                        body = AuthSignUpRequest.EmailAndPassword(
-                            provider = provider,
-                            email = email,
-                            password = password,
-                            displayName = "Activate Me",
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
+                    val response = signUp(this, email)
 
-                        val response = apiResponseData<AuthSignUpResponse>().shouldNotBeNull()
-
-                        // The sign-up SUCCEEDED and still issued no session. Both halves matter:
-                        // `success == false` would make the frontend render "Sign-up failed", and a
-                        // non-null `signIn` would mean an unproven address got a live session — the
-                        // exact hole this feature closes.
-                        response.success shouldBe true
-                        response.requiresActivation shouldBe true
-                        response.signIn shouldBe null
-                    }
+                    // The sign-up SUCCEEDED and still issued no session. Both halves matter:
+                    // `success == false` would make the frontend render "Sign-up failed", and a
+                    // non-null `signIn` would mean an unproven address got a live session — the
+                    // exact hole this feature closes.
+                    response.success shouldBe true
+                    response.requiresActivation shouldBe true
+                    response.signIn shouldBe null
 
                     //  Then an activation mail actually goes out ...  //////////////////////////
 
@@ -197,333 +212,157 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     // the realm to `withoutContent` and the stored body becomes "n/a", leaving this
                     // reading as though it still proved anonymization.
                     storedBody shouldContain "#anonymized"
-                    storedBody shouldContain "Click the link below to activate your account"
+                    storedBody shouldContain "Click the link below to choose your password"
 
-                    //  Until the link is followed, the account cannot sign in  /////////////////
+                    //  Until the link is followed, there is nothing to sign in with  ///////////
 
-                    api.authLogin.signIn(
-                        realmParam,
-                        body = AuthSignInRequest.EmailAndPassword(
-                            provider = provider,
-                            email = email,
-                            password = password,
-                        ),
-                    ) {
-                        // The password is CORRECT here. Anything less would pass for the wrong reason.
-                        //
-                        // The answer is a response CASE, not an error: the credential check passed and
-                        // there is a defined next step. A wrong password still gets a 403, so this
-                        // cannot be satisfied by any ordinary failure.
-                        status shouldBe HttpStatusCode.OK
-
-                        apiResponseData<AuthSignInResponse>()
-                            .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
+                    withClue("email first: the pending account holds no password, so no password signs in") {
+                        signInWith(this, email).shouldBeNull()
                     }
 
-                    //  The token from the mail activates  //////////////////////////////////////
+                    //  The token from the mail chooses the password, activates, and signs in  //
 
-                    api.authLogin.activateAccount(
-                        realmParam,
-                        body = AuthActivateAccountRequest(provider = provider, token = token),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
-                    }
+                    val (status, activated) = activate(this, token)
 
-                    //  ... and now the same credentials work  //////////////////////////////////
+                    status shouldBe HttpStatusCode.OK
+                    activated.success shouldBe true
+                    activated.signIn.shouldBeInstanceOf<AuthSignInResponse.Success>()
 
-                    api.authLogin.signIn(
-                        realmParam,
-                        body = AuthSignInRequest.EmailAndPassword(
-                            provider = provider,
-                            email = email,
-                            password = password,
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        (apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success)
-                            .shouldNotBeNull()
-                    }
+                    //  ... and now the chosen password works  //////////////////////////////////
 
-                    //  And the token is single-use  ////////////////////////////////////////////
+                    signInWith(this, email).shouldNotBeNull()
 
-                    api.authLogin.activateAccount(
-                        realmParam,
-                        body = AuthActivateAccountRequest(provider = provider, token = token),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe false
+                    //  And the token is single-use: a replay sets NO new password  /////////////
+
+                    activate(this, token, password = "Replayed1234!").second.success shouldBe false
+
+                    withClue("a replayed link must not have changed the password") {
+                        signInWith(this, email, password = "Replayed1234!").shouldBeNull()
+                        signInWith(this, email).shouldNotBeNull()
                     }
                 }
             }
         }
 
-        "A resend must deliver a WORKING new link, and kill the old one" {
-            // The lockout this prevents: the first mail is lost or the 24h link lapses, and without a
-            // resend the only way back is a password reset the user has no reason to think of.
+        "Signing up again must deliver a WORKING new link, and kill the old one" {
+            // The lockout this prevents: the first mail is lost or the 24h link lapses. With no password at
+            // sign-up there is no sign-in to ask from, so signing up again with the same address is the way.
             apiApp {
                 anonymous {
                     val email = "resend-${System.currentTimeMillis()}@test.com"
 
                     emails.clear()
 
-                    api.authLogin.signUp(
-                        realmParam,
-                        body = AuthSignUpRequest.EmailAndPassword(
-                            provider = provider,
-                            email = email,
-                            password = password,
-                            displayName = "Resend Me",
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
+                    val fresh = signUp(this, email, displayName = "Resend Me")
 
                     val firstToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
 
-                    // Sign-up has just sent a mail, so the first resend delay is running. Waiting it out is
-                    // the point: it proves the window OPENS again rather than blocking forever.
-                    // `TestUserRealm` shortens it to 2s for exactly this. The wait can only LENGTHEN the
-                    // elapsed time, so a slow machine cannot flip what this test means.
+                    // Sign-up has just sent a mail, so the first delay is running. Waiting it out is the
+                    // point: it proves the window OPENS again rather than blocking forever. `TestUserRealm`
+                    // shortens it to 2s for exactly this. The wait can only LENGTHEN the elapsed time, so a
+                    // slow machine cannot flip what this test means.
                     delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
-
-                    // The resend authorization comes from a refused sign-in, and nowhere else — an
-                    // anonymous caller naming an address cannot reach this endpoint at all.
-                    val resendToken = resendTokenFor(this, email)
 
                     emails.clear()
 
-                    api.authLogin.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe true
+                    withClue("signing up again answers exactly like a fresh sign-up") {
+                        signUp(this, email, displayName = "Resend Me") shouldBe fresh
                     }
 
                     val secondToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
 
-                    withClue("the resent link must be a NEW token, not the same one mailed again") {
+                    withClue("the re-sent link must be a NEW token, not the same one mailed again") {
                         secondToken shouldNotBe firstToken
                     }
 
-                    // Rotation: the superseded link must be dead. Otherwise every resend leaves
-                    // another live credential in another inbox copy, for as long as its 24h lasts.
-                    api.authLogin.activateAccount(
-                        realmParam,
-                        body = AuthActivateAccountRequest(provider = provider, token = firstToken),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe false
+                    // Rotation: the superseded link must be dead. Otherwise every re-send leaves another
+                    // live credential in another inbox copy, for as long as its 24h lasts.
+                    activate(this, firstToken).second.success shouldBe false
+
+                    withClue("and the dead link really did nothing") {
+                        signInWith(this, email).shouldBeNull()
                     }
 
-                    // And the account is still blocked, i.e. the dead link really did nothing.
-                    api.authLogin.signIn(
-                        realmParam,
-                        body = AuthSignInRequest.EmailAndPassword(
-                            provider = provider, email = email, password = password,
-                        ),
-                    ) {
-                        apiResponseData<AuthSignInResponse>()
-                            .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
-                    }
+                    activate(this, secondToken).second.success shouldBe true
 
-                    api.authLogin.activateAccount(
-                        realmParam,
-                        body = AuthActivateAccountRequest(provider = provider, token = secondToken),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
-                    }
-
-                    api.authLogin.signIn(
-                        realmParam,
-                        body = AuthSignInRequest.EmailAndPassword(
-                            provider = provider, email = email, password = password,
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        (apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success)
-                            .shouldNotBeNull()
-                    }
+                    signInWith(this, email).shouldNotBeNull()
                 }
             }
         }
 
-        "A resend without a valid token must send nothing — naming an address is not enough" {
-            // THE property that keeps this endpoint from being an anonymous mail primitive aimed at
-            // any mailbox. It is what the first cut of this feature got wrong: it took an email.
-            apiApp {
-                anonymous {
-                    val email = "unauthorized-${System.currentTimeMillis()}@test.com"
-
-                    api.authLogin.signUp(
-                        realmParam,
-                        body = AuthSignUpRequest.EmailAndPassword(
-                            provider = provider,
-                            email = email,
-                            password = password,
-                            displayName = "No Token",
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
-
-                    // A real pending account exists, the caller knows the address, and the delay is
-                    // irrelevant here — without the token there is still nothing they can cause.
-                    delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
-
-                    emails.clear()
-
-                    api.authLogin.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, token = "not-a-real-token"),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
-                    }
-
-                    emails.capturedTo(email) shouldBe emptyList()
-                }
-            }
-        }
-
-        "A resend token must be single-use, so one sign-in buys exactly one resend" {
-            apiApp {
-                anonymous {
-                    val email = "single-use-${System.currentTimeMillis()}@test.com"
-
-                    api.authLogin.signUp(
-                        realmParam,
-                        body = AuthSignUpRequest.EmailAndPassword(
-                            provider = provider,
-                            email = email,
-                            password = password,
-                            displayName = "Single Use",
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
-
-                    delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
-
-                    val resendToken = resendTokenFor(this, email)
-
-                    api.authLogin.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
-                    ) {
-                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe true
-                    }
-
-                    emails.clear()
-
-                    // Wait the NEXT delay out FIRST, so single-use is the only thing that can stop the
-                    // replay. Without this wait the test passes even when the token is never consumed,
-                    // because the delay blocks the second send — verified by mutation: dropping the
-                    // consumption left the suite green until this delay was added.
-                    delay(realmTokenConfig.activationResendDelays[1] + 500.milliseconds)
-
-                    api.authLogin.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
-                    }
-
-                    emails.capturedTo(email) shouldBe emptyList()
-                }
-            }
-        }
-
-        "A resend inside the delay must send nothing, even with a valid token, and say when" {
-            // THE throttle behind the authorization: re-authenticating in a loop must not mail faster
-            // than the delay. Sign-up has just sent a mail, so this resend is inside it — and the test
-            // does NOT wait, so a slow machine can only make the elapsed time approach the delay and
-            // fail LOUDLY, never silently exercise a different path.
+        "Signing up again inside the delay sends nothing, and answers exactly like a fresh sign-up" {
+            // THE throttle: anyone who knows the address can sign it up again, so this must not mail faster
+            // than the delay — and must not tell the caller that a delay is running, which would tell them
+            // the address is pending. Sign-up has just sent a mail, so this one is inside the delay, and the
+            // test does NOT wait: a slow machine can only make the elapsed time approach the delay and fail
+            // LOUDLY, never silently exercise a different path.
             apiApp {
                 anonymous {
                     val email = "cooldown-${System.currentTimeMillis()}@test.com"
 
-                    api.authLogin.signUp(
-                        realmParam,
-                        body = AuthSignUpRequest.EmailAndPassword(
-                            provider = provider,
-                            email = email,
-                            password = password,
-                            displayName = "Cool Down",
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
-
-                    val resendToken = resendTokenFor(this, email)
+                    val fresh = signUp(this, email, displayName = "Cool Down")
 
                     emails.clear()
 
-                    api.authLogin.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        val response = apiResponseData<AuthResendActivationResponse>().shouldNotBeNull()
-                        response.sent shouldBe false
-                        // Honest: this refusal IS the delay, so the client may say "try again later".
-                        response.nextResendAt.shouldNotBeNull()
-                    }
+                    signUp(this, email, displayName = "Cool Down") shouldBe fresh
 
                     emails.capturedTo(email) shouldBe emptyList()
                 }
             }
         }
 
-        "A resend must send nothing for an ALREADY-ACTIVATED account" {
+        "Signing up again with an ACTIVATED address sends nothing" {
             apiApp {
                 anonymous {
                     val activated = "already-active-${System.currentTimeMillis()}@test.com"
 
                     emails.clear()
 
-                    api.authLogin.signUp(
-                        realmParam,
-                        body = AuthSignUpRequest.EmailAndPassword(
-                            provider = provider,
-                            email = activated,
-                            password = password,
-                            displayName = "Already Active",
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
+                    signUp(this, activated, displayName = "Already Active")
 
-                    // Grab the resend authorization BEFORE activating, so the token is valid and the
-                    // only thing stopping the mail is the account's state.
-                    val resendToken = resendTokenFor(this, activated)
+                    activate(this, activationTokenFrom(emails.lastTo(activated).shouldNotBeNull())).second.success shouldBe true
 
-                    api.authLogin.activateAccount(
-                        realmParam,
-                        body = AuthActivateAccountRequest(
-                            provider = provider,
-                            token = activationTokenFrom(emails.lastTo(activated).shouldNotBeNull()),
-                        ),
-                    ) {
-                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
-                    }
-
+                    // Past the delay, so the account's state is the only thing stopping a mail.
                     delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
 
                     emails.clear()
 
-                    api.authLogin.resendActivation(
+                    api.authLogin.signUp(
                         realmParam,
-                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
+                        body = AuthSignUpRequest.EmailAndPassword(provider = provider, email = activated),
                     ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe false
+                        // The address is taken. (That this answer differs from a pending one is the enumeration
+                        // asymmetry of ULTRA-00128 (signup mail throttle), unchanged here.)
+                        status shouldBe HttpStatusCode.BadRequest
                     }
 
                     emails.capturedTo(activated) shouldBe emptyList()
+                }
+            }
+        }
+
+        "A WEAK password at activation is refused, and leaves the link usable" {
+            apiApp {
+                anonymous {
+                    val email = "weak-${System.currentTimeMillis()}@test.com"
+
+                    emails.clear()
+
+                    signUp(this, email, displayName = "Weak")
+
+                    val token = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
+
+                    activate(this, token, password = "weak").let { (status, answer) ->
+                        status shouldBe HttpStatusCode.BadRequest
+                        answer.success shouldBe false
+                        answer.signIn shouldBe null
+                    }
+
+                    withClue("still pending, nothing signs in") {
+                        signInWith(this, email, password = "weak").shouldBeNull()
+                    }
+
+                    activate(this, token).second.success shouldBe true
                 }
             }
         }
@@ -544,17 +383,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    api.authLogin.signUp(
-                        realmParam,
-                        body = AuthSignUpRequest.EmailAndPassword(
-                            provider = provider,
-                            email = german,
-                            password = password,
-                            displayName = "Deutscher Nutzer",
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                    }
+                    signUp(this, german, displayName = "Deutscher Nutzer")
 
                     // Sign-up mails in the realm default (en) — nothing can express a language before
                     // the account exists. Asserting it here pins that the SWITCH below is what changes
@@ -574,17 +403,9 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     delay(realmTokenConfig.activationResendDelays[0] + 500.milliseconds)
 
-                    val resendToken = resendTokenFor(this, german)
-
                     emails.clear()
 
-                    api.authLogin.resendActivation(
-                        realmParam,
-                        body = AuthResendActivationRequest(provider = provider, token = resendToken),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthResendActivationResponse>()?.sent shouldBe true
-                    }
+                    signUp(this, german, displayName = "Deutscher Nutzer")
 
                     val germanMail = emails.lastTo(german).shouldNotBeNull()
 
@@ -595,37 +416,19 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     val body = germanMail.body.content
 
                     body shouldContain "Willkommen!"
-                    body shouldContain "Konto aktivieren"
+                    body shouldContain "Passwort wählen"
 
                     // No mixed-language mail: the English template must not be leaking in alongside
                     // the German one. Whole-template resolution is what guarantees this, and the
                     // assertion is what stops a future fragment-assembly "improvement" from passing.
                     body shouldNotContain "Welcome!"
-                    body shouldNotContain "Activate account"
+                    body shouldNotContain "Choose your password"
 
                     //  ... and the German link still activates  ////////////////////////////////
 
-                    api.authLogin.activateAccount(
-                        realmParam,
-                        body = AuthActivateAccountRequest(
-                            provider = provider,
-                            token = activationTokenFrom(germanMail),
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
-                    }
+                    activate(this, activationTokenFrom(germanMail)).second.success shouldBe true
 
-                    api.authLogin.signIn(
-                        realmParam,
-                        body = AuthSignInRequest.EmailAndPassword(
-                            provider = provider, email = german, password = password,
-                        ),
-                    ) {
-                        status shouldBe HttpStatusCode.OK
-                        (apiResponseData<AuthSignInResponse>() as? AuthSignInResponse.Success)
-                            .shouldNotBeNull()
-                    }
+                    signInWith(this, german).shouldNotBeNull()
                 }
             }
         }
@@ -633,14 +436,11 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
         "An unknown activation token must not activate anything" {
             apiApp {
                 anonymous {
-                    api.authLogin.activateAccount(
-                        realmParam,
-                        body = AuthActivateAccountRequest(provider = provider, token = "no-such-token"),
-                    ) {
+                    activate(this, "no-such-token").let { (status, answer) ->
                         // OK rather than an error: the endpoint is anonymous, so a different answer
                         // for a token that exists would let an attacker probe for live tokens.
                         status shouldBe HttpStatusCode.OK
-                        apiResponseData<AuthActivateAccountResponse>()?.success shouldBe false
+                        answer.success shouldBe false
                     }
                 }
             }

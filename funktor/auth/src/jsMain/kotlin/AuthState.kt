@@ -9,8 +9,6 @@ import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationResponse
 import io.peekandpoke.funktor.auth.model.AuthSelectOrgRequest
 import io.peekandpoke.funktor.auth.model.AuthSetPasswordRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -201,40 +199,12 @@ class AuthState<USER>(
         pendingOrgSelection = null
     }
 
-    /**
-     * What the activation page needs after a sign-in was refused for a not-yet-activated account.
-     *
-     * Carried in MEMORY rather than in the URL: the address would otherwise sit in the address bar,
-     * the browser history and any outgoing `Referer`.
-     */
-    data class PendingActivation(
-        val provider: String,
-        val email: String,
-        /** Single-use authorization for [resendActivation]. */
-        val resendToken: String,
-    )
-
-    /**
-     * Set when a sign-in resolved to [AuthSignInResponse.ActivationRequired] — the password was right
-     * but the address is unproven. Null otherwise.
-     */
-    var pendingActivation: PendingActivation? = null
-        private set
-
-    /** Forgets a pending activation (e.g. the user navigates back to the login form). */
-    fun clearPendingActivation() {
-        pendingActivation = null
-    }
-
     suspend fun login(request: AuthSignInRequest): Data<USER> {
         // Clear any selection left over from a previous attempt BEFORE this one runs. Otherwise a
         // failed login would leave the earlier attempt's still-valid selection token in place, and
         // the UI (which branches on pendingOrgSelection) would resurface that user's org picker —
         // letting a bystander whose own login just failed complete a sign-in as the earlier user.
         pendingOrgSelection = null
-        // Same reasoning for the activation carrier: a stale one would send the NEXT person who fails
-        // to sign in to an activation page prefilled with the previous user's address.
-        pendingActivation = null
 
         val response = api
             .signIn(request)
@@ -245,45 +215,33 @@ class AuthState<USER>(
         when (response) {
             is AuthSignInResponse.Success -> applySuccess(response)
             is AuthSignInResponse.OrgSelectionRequired -> pendingOrgSelection = response
-
-            is AuthSignInResponse.ActivationRequired -> {
-                // The address comes from what the user just typed, not from the response — the server
-                // has no reason to echo it back.
-                pendingActivation = PendingActivation(
-                    provider = request.provider,
-                    email = (request as? AuthSignInRequest.EmailAndPassword)?.email ?: "",
-                    resendToken = response.resendToken,
-                )
-            }
-
             null -> { /* sign-in failed */ }
         }
 
         return streamSource()
     }
 
-    /** Activates the account; null when the server could not be asked (transport or server error). */
+    /**
+     * Chooses the first password and activates the account, signing the user in when the server sent a session;
+     * null when the server could not be asked (transport or server error). An org choice is left to the login
+     * page: [isLoggedIn][Data.isLoggedIn] stays false then.
+     */
     suspend fun activateAccount(request: AuthActivateAccountRequest): AuthActivateAccountResponse? {
-        return api
+        val response = api
             .activateAccount(request)
             .map { it.data!! }
             .catch { /* noop */ }
             .firstOrNull()
+
+        (response?.signIn as? AuthSignInResponse.Success)?.let { applySuccess(it) }
+
+        return response
     }
 
     /** Retires a never-activated account ("I did not sign up"); null when the server could not be asked. */
     suspend fun cancelSignUp(request: AuthCancelSignUpRequest): AuthCancelSignUpResponse? {
         return api
             .cancelSignUp(request)
-            .map { it.data!! }
-            .catch { /* noop */ }
-            .firstOrNull()
-    }
-
-    /** Asks for a new activation mail; null when the server could not be asked. */
-    suspend fun resendActivation(request: AuthResendActivationRequest): AuthResendActivationResponse? {
-        return api
-            .resendActivation(request)
             .map { it.data!! }
             .catch { /* noop */ }
             .firstOrNull()

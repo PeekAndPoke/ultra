@@ -209,8 +209,8 @@ class AuthEmailTemplatesSpec : StringSpec({
 
         mail.subject shouldBe "Demo App: Activate your Account"
         mail.body.content shouldContain "Welcome!"
-        mail.body.content shouldContain "Click the link below to activate your account"
-        mail.body.content shouldContain "Activate account"
+        mail.body.content shouldContain "Click the link below to choose your password"
+        mail.body.content shouldContain "Choose your password"
     }
 
     "the activation mail in German, with nothing English left in it" {
@@ -218,12 +218,12 @@ class AuthEmailTemplatesSpec : StringSpec({
 
         mail.subject shouldBe "Demo App: Konto aktivieren"
         mail.body.content shouldContain "Willkommen!"
-        mail.body.content shouldContain "Konto aktivieren"
+        mail.body.content shouldContain "Passwort wählen"
 
         // Whole-email selection: a subject from one language and a body from another is not a worse
         // translation, it is a broken one.
         mail.body.content shouldNotContain "Welcome!"
-        mail.body.content shouldNotContain "Activate account"
+        mail.body.content shouldNotContain "Choose your password"
     }
 
     "non-ASCII survives into the rendered body" {

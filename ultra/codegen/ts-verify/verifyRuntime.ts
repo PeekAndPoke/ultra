@@ -1035,8 +1035,8 @@ function envelope<T>(status: number, data: T | null, message?: string) {
 /**
  * The sign-in flow.
  *
- * The point of the module: `AuthSignInResponse` has three branches and TWO OF THEM ARE NOT FAILURES.
- * Treating `activation-required` as a bad password is the obvious bug and it is silent.
+ * The point of the module: `AuthSignInResponse` has two branches and `org-selection-required` IS NOT A
+ * FAILURE. Treating it as a bad password is the obvious bug and it is silent.
  */
 async function checkLoginFlow(report: Report): Promise<void> {
     const success: SignInResult<{ roles?: string[] }> = {
@@ -1058,7 +1058,7 @@ async function checkLoginFlow(report: Report): Promise<void> {
         'login: the outcome carries the resulting session state',
     )
 
-    // 2. The two NON-FAILURE branches must NOT create a session — their tokens grant one next step.
+    // 2. The NON-FAILURE branch must NOT create a session — its token grants one next step.
     const s2 = new AuthSession<{ roles?: string[] }>(inMemorySession())
     const org = applySignIn(s2, envelope(200, {
         _type: 'org-selection-required' as const,
@@ -1073,10 +1073,11 @@ async function checkLoginFlow(report: Report): Promise<void> {
     )
     report(!s2.state().isLoggedIn, 'login: org selection does NOT log the user in')
 
+    // An older server's `activation-required` (gone since email first) is a variant this SDK no longer knows.
     const s3 = new AuthSession<{ roles?: string[] }>(inMemorySession())
-    const act = applySignIn(s3, envelope(200, { _type: 'activation-required' as const, resendToken: 'r-1' }))
+    const act = applySignIn(s3, envelope(200, { _type: 'activation-required', resendToken: 'r-1' } as never))
 
-    report(act._type === 'activation-required', 'login: activation required is NOT a failure')
+    report(act._type === 'rejected', 'login: an old server\'s activation-required is rejected')
     report(!s3.state().isLoggedIn, 'login: and does NOT log the user in')
 
     // 3. Rejection is ordinary control flow, not an exception — matching `request`'s contract.

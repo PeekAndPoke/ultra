@@ -1,10 +1,10 @@
 package io.peekandpoke.funktor
 
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeBlank
-import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
@@ -107,7 +107,6 @@ class AuthApiSpec : FunktorApiSpec() {
                             body = AuthSignUpRequest.EmailAndPassword(
                                 provider = provider,
                                 email = "signup@test.com",
-                                password = "Test1234!",
                             ),
                         ) {
                             status shouldBe HttpStatusCode.BadRequest
@@ -124,7 +123,6 @@ class AuthApiSpec : FunktorApiSpec() {
                             body = AuthSignUpRequest.EmailAndPassword(
                                 provider = provider,
                                 email = signupEmail,
-                                password = "Test1234!",
                                 displayName = "Test User",
                             ),
                         ) {
@@ -144,7 +142,7 @@ class AuthApiSpec : FunktorApiSpec() {
         }
 
         api.authLogin.signIn { route ->
-            "Sign in before activation must be refused, even with the correct password" {
+            "Sign in before activation must be refused: a pending account holds no password" {
                 apiApp {
                     anonymous {
                         route(
@@ -155,14 +153,11 @@ class AuthApiSpec : FunktorApiSpec() {
                                 password = "Test1234!",
                             ),
                         ) {
-                            // NOT a failure status: the credential check passed, so the answer is a
-                            // response CASE. An unknown user or a wrong password still gets a 403, so
-                            // this cannot go vacuously green if the sign-up above is renamed or
-                            // reordered — which a bare "shouldBe Forbidden" assertion would.
-                            status shouldBe HttpStatusCode.OK
-
-                            apiResponseData<AuthSignInResponse>()
-                                .shouldBeInstanceOf<AuthSignInResponse.ActivationRequired>()
+                            // Email first: the password is chosen on the activation page, so before it any
+                            // password is a wrong one. The next test signs in with exactly this one after
+                            // activating, so this cannot go vacuously green.
+                            status shouldBe HttpStatusCode.Forbidden
+                            apiResponseData<AuthSignInResponse>().shouldBeNull()
                         }
                     }
                 }
@@ -181,7 +176,7 @@ class AuthApiSpec : FunktorApiSpec() {
 
                         api.authLogin.activateAccount(
                             existingRealm,
-                            body = AuthActivateAccountRequest(provider = provider, token = token),
+                            body = AuthActivateAccountRequest(provider = provider, token = token, password = "Test1234!"),
                         ) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
@@ -231,7 +226,7 @@ class AuthApiSpec : FunktorApiSpec() {
                     anonymous {
                         route(
                             existingRealm,
-                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token"),
+                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token", password = "Test1234!"),
                         ) {
                             // OK, not an error: the endpoint is anonymous, so answering differently
                             // for a token that exists would let an attacker probe for live tokens.
@@ -249,7 +244,7 @@ class AuthApiSpec : FunktorApiSpec() {
                     anonymous {
                         route(
                             nonExistentRealm,
-                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token"),
+                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token", password = "Test1234!"),
                         ) {
                             status shouldBe HttpStatusCode.BadRequest
                         }

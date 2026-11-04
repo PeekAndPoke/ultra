@@ -349,7 +349,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                 )
 
                 // A request that is not OAuth
-                val request = AuthSignUpRequest.EmailAndPassword("test", "", "", "")
+                val request = AuthSignUpRequest.EmailAndPassword("test", "", "")
 
                 val realm = MinimalTestRealm()
                 val error = shouldThrow<AuthError> {

@@ -12,4 +12,6 @@ data class AuthActivateAccountRequest(
      */
     val provider: String,
     val token: String,
+    /** The account's first password, chosen on the activation page; must meet the realm's password policy. */
+    val password: String,
 )

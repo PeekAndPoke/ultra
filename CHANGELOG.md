@@ -25,6 +25,33 @@
   - Sessions taken through the hole before the upgrade survive it: a refresh does not ask the provider again. A
     deployment that had Google or GitHub sign-up enabled can end every session by rotating the JWT signing key.
 
+- **Funktor auth: email-first sign-up — the password is chosen when activating** (ULTRA-00231). A pending account no
+  longer holds a password, so whoever signs up someone else's address holds nothing: the attacker's password that a
+  victim's click on "Activate" used to bring to life no longer exists. `AuthSignUpRequest.EmailAndPassword` lost
+  `password`; the mailed link opens "Choose your password", and `AuthActivateAccountRequest` carries it (the realm's
+  password policy applies). A successful activation signs the user in: `AuthActivateAccountResponse.signIn`.
+  Signing up again with a pending address re-sends the link under the growing delays, and answers exactly like a
+  fresh sign-up. The password-reset completion now enforces the password policy on the server too.
+
+  Removed: the resend flow — `AuthSignInResponse.ActivationRequired`, `AuthError.AccountNotActivated`,
+  `AuthRecord.ActivationResendToken`, `POST /auth/{realm}/activate/resend` (`AuthApiClient.ResendActivation`,
+  `AuthResendActivationRequest`/`Response`, `AuthProvider.resendActivation`, `AuthRealm`/`AuthSystem.resendActivation`),
+  `RealmTokenConfig.activationResendTokenLifetime`, `AuthFrontendRoutes.resendActivation` and
+  `AuthState.pendingActivation`. `AuthProvider.activateAccount` returns the activated user (or null) instead of a
+  response, and `EmailAndPasswordAuth.Services` gained `removePasswordRecords`. The TypeScript SDK runtime's
+  `LoginOutcome` lost `activation-required`.
+
+  What changes with no compile signal:
+  - Pending accounts from before the upgrade still hold their sign-up password. It no longer signs in (refused like
+    a wrong one); their activation link opens "Choose your password", which replaces it, and SSO deletes it.
+  - An app's own sign-up form that still asks for a password: the server ignores it and stores none, so the user
+    chooses one again on the activation page. An app's own activation page that POSTs no password is refused. An
+    app's own activation mail template: its link now leads to choosing the password, so its copy should say so.
+  - A pending user who tries to sign in gets the plain "invalid credentials" answer, with no hint to activate; the
+    way back is the mailed link, or signing up again.
+  - Rows of type `activation-resend-token` may stay in the auth-record store (Mongo's TTL does not cull them). Nothing
+    reads them any more; they can be deleted.
+
 ## 0.117.0
 
 ### New

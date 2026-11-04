@@ -107,34 +107,31 @@ import {Code} from 'astro:components';
 
     <h2>Account activation</h2>
 
-    <p>A realm can require a new account to prove its email address before it can sign in. Sign-up mails a
-        link and issues <strong>no session</strong>; sign-in with the correct password answers with a
-        response case rather than an error, so the frontend can offer to resend rather than showing a
-        generic failure.</p>
+    <p>A new account proves its email address before it holds a credential. Sign-up takes the address and
+        no password, mails a link and issues <strong>no session</strong>. The link opens &ldquo;Choose your
+        password&rdquo;: setting it activates the account and signs the user in. Until then nothing can sign
+        in to the account, so whoever signs up someone else's address holds nothing.</p>
 
-    <Code code={`when (val response = api.auth.signIn(realm, credentials)) {
-    is AuthSignInResponse.Success            -> gotoDashboard(response)
-    is AuthSignInResponse.ActivationRequired -> offerResend(response.resendToken)
-    is AuthSignInResponse.OrgSelectionRequired -> showOrgPicker(response)
-}`} lang="kotlin" theme="vitesse-dark"/>
+    <Code code={`// Sign-up: the address, no password
+api.auth.signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = "email-password", email = email))
+
+// The mailed link's page: the first password activates the account
+val response = api.auth.activateAccount(realm, AuthActivateAccountRequest(provider, token, password))
+response.signIn // the session; null when the realm could not sign in, e.g. an org choice is due`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Opening the link changes nothing, so a mail scanner that follows it activates nothing; only the
+        page's POST does. Signing up again with a pending address re-sends the link, under delays that grow per
+        account, and answers exactly like a fresh sign-up: a caller cannot tell a pending address from a new
+        one.</p>
 
     <p>&ldquo;Not activated&rdquo; is modelled as the <em>presence</em> of a marker record, not a flag on the
         user and not &ldquo;an unexpired token exists&rdquo;. A flag would need a default, and the only safe
         default locks out every existing account; the token test erases itself once the token expires.</p>
 
-    <p>Resending is authorized by a <strong>single-use token</strong> minted only on the sign-in path that
-        proved the password &mdash; not by naming an email address. That is what keeps the endpoint from
-        being an open mail relay aimed at any mailbox. A resend rotates the token, so the superseded link
-        dies immediately, and a cooldown bounds how fast a caller can trigger mail.</p>
-
-    <Aside>The first cut took a bare email address on an anonymous route, which would have turned sign-up
-        into a sustained mail faucet pointed at anyone. The review caught it; the token is the fix.
-    </Aside>
-
-    <p>Clearing the marker requires proving the mailbox <strong>and</strong> invalidating every earlier
-        password. Completing a password reset does both, so it also activates. So does SSO with an address the
-        provider verified (Google's <code>email_verified</code>; GitHub's verified public address): it deletes
-        the sign-up password first.</p>
+    <p>A re-sent link replaces the earlier one, which dies at once. Completing a password reset proves the
+        mailbox too, so it also activates. So does SSO with an address the provider verified (Google's
+        <code>email_verified</code>; GitHub's verified public address). Both leave no earlier password working:
+        an account signed up before email first still holds its sign-up password, and SSO deletes it.</p>
 
     <p>SSO reaches an account only through an address the provider verified, for an active account, a pending
         one and a new one alike. Otherwise anyone with a provider account that claims an address could sign in

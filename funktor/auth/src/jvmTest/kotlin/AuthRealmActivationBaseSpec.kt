@@ -11,7 +11,6 @@ import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
-import io.peekandpoke.funktor.auth.model.AuthResendActivationRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -55,8 +54,8 @@ class AuthRealmActivationMonkoSpec : AuthRealmActivationBaseSpec() {
 }
 
 /**
- * The realm's own share of activation, against a REAL auth-record store: consuming the resend token, and
- * the guards around retiring an account. The happy paths run end to end in `ActivationHardeningE2eSpec`.
+ * Activation against a REAL auth-record store: consuming the activation link, and the guards around retiring an
+ * account. The happy paths run end to end in `ActivationHardeningE2eSpec`.
  */
 abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
@@ -74,49 +73,40 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
         configureAuth = { configureAuth() },
     ).funktorAuth.deps.also { it.storage.authRecords.adapter.removeAll() }
 
-    /** A provider that fails the test the moment a resend reaches it. */
-    private val unreachableProvider = EmailAndPasswordAuth(
-        frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
-        log = NullLog,
-        services = lazy { error("the provider must not be reached") },
-    )
-
     init {
-        "resendActivation" - {
+        "activateAccount" - {
 
-            "a token another request already consumed sends nothing — the delete COUNT decides" {
-                // Two requests found the token; the other one's delete won. Only a store that reports
-                // what THIS delete removed can stop the second from going on to the provider.
+            "a link another submit already consumed sets NO password — the delete COUNT decides" {
+                // Two submits of one link found the token; the other one's delete won. Only a store that reports
+                // what THIS delete removed can stop the second from choosing a password too.
                 val real = realDeps()
                 real.storage.authRecords.create(
-                    AuthRecord.ActivationResendToken(
-                        realm = realmId,
-                        ownerId = owner,
-                        token = "resend",
-                        expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(),
+                    AuthRecord.PendingActivation(realm = realmId, ownerId = owner, createdAt = real.kronos.instantNow())
+                )
+                real.storage.authRecords.create(
+                    AuthRecord.EmailVerificationToken(
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
                     )
                 )
 
                 val lostTheRace = depsWhereRemoveById(real) { id ->
-                    real.storage.authRecords.adapter.removeById(id) // the other request's delete
+                    real.storage.authRecords.adapter.removeById(id) // the other submit's delete
                     real.storage.authRecords.adapter.removeById(id) // ours: removes nothing
                 }
 
-                val realm = MinimalTestRealm(getDeps = { lostTheRace }, getProviders = { listOf(unreachableProvider) })
+                val provider = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    log = NullLog,
+                    services = lazy { EmailAndPasswordAuth.Services(lostTheRace) },
+                )
 
-                realm.resendActivation(
-                    AuthResendActivationRequest(provider = EmailAndPasswordAuth.ID, token = "resend"),
-                ).sent shouldBe false
+                provider.activateAccount(
+                    MinimalTestRealm(getDeps = { lostTheRace }, onLoadUserById = { user }),
+                    AuthActivateAccountRequest(provider = provider.id, token = "act", password = "New-1234!"),
+                ).shouldBeNull()
 
-                real.storage.authRecords.findByToken(AuthRecord.ActivationResendToken, realmId, "resend").shouldBeNull()
-            }
-
-            "an unknown token sends nothing and never reaches the provider" {
-                val realm = MinimalTestRealm(getDeps = { NullStorageTestDeps() }, getProviders = { listOf(unreachableProvider) })
-
-                realm.resendActivation(
-                    AuthResendActivationRequest(provider = EmailAndPasswordAuth.ID, token = "nope"),
-                ).sent shouldBe false
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner).shouldNotBeNull()
             }
         }
 
@@ -234,11 +224,15 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
                 provider.activateAccount(
                     MinimalTestRealm(getDeps = { staleRead }),
-                    AuthActivateAccountRequest(provider = provider.id, token = "act"),
-                ).success shouldBe false
+                    AuthActivateAccountRequest(provider = provider.id, token = "act", password = "New-1234!"),
+                ).shouldBeNull()
 
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner)
                     .shouldNotBeNull().value().claimedBy shouldBe AuthRecord.PendingActivation.CLAIMED_BY_RETIRE
+
+                withClue("exactly the password this activation wrote is taken back") {
+                    real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
+                }
             }
 
             "a retire that LOST the claim to an activation changes NOTHING — credentials and address stay" {
@@ -488,8 +482,10 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
                 providerOn(real).activateAccount(
                     MinimalTestRealm(getDeps = { real }, onLoadUserById = { retiredUser }),
-                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act"),
-                ).success shouldBe false
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act", password = "New-1234!"),
+                ).shouldBeNull()
+
+                real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
             }
         }
 
@@ -534,18 +530,31 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 ) shouldBe user
             }
 
-            "a leftover activation token answers true" {
+            "a leftover activation token sets NO password — it answers null, and the old password still signs in" {
+                // Since the link chooses the password, a leftover one on an ACTIVE account would be a password reset
+                // nobody asked for.
                 val real = realDeps()
+                real.storage.authRecords.create(
+                    AuthRecord.Password(realm = realmId, ownerId = owner, token = real.passwordHasher.hashAsString("Old-1234!"))
+                )
                 real.storage.authRecords.create(
                     AuthRecord.EmailVerificationToken(
                         realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
                     )
                 )
+                val realm = MinimalTestRealm(getDeps = { real }, onLoadUserById = { user }, onLoadUserByEmail = { user })
 
                 providerOn(real).activateAccount(
-                    MinimalTestRealm(getDeps = { real }, onLoadUserById = { user }),
-                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act"),
-                ).success shouldBe true
+                    realm,
+                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act", password = "New-1234!"),
+                ).shouldBeNull()
+
+                providerOn(real).signIn(
+                    realm,
+                    AuthSignInRequest.EmailAndPassword(
+                        provider = EmailAndPasswordAuth.ID, email = email.value, password = "Old-1234!",
+                    ),
+                ) shouldBe user
             }
         }
 

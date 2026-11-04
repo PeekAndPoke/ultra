@@ -101,13 +101,16 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
         )
     }
 
-    /** What a password sign-up leaves behind, plus a resend token an attacker would hold. */
-    private suspend fun AuthRecordStorage.preRegister(pending: Boolean) {
+    /**
+     * What a password sign-up from BEFORE email first leaves behind: the pre-registering attacker's password is
+     * still there (decision 1 of ULTRA-00231 keeps SSO deleting it), plus the sign-up's links.
+     */
+    private suspend fun AuthRecordStorage.preRegister(pending: Boolean, withPassword: Boolean = true) {
         val expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds()
 
-        create(AuthRecord.Password(realm = realmId, ownerId = owner, token = "attacker-hash"))
+        if (withPassword) create(AuthRecord.Password(realm = realmId, ownerId = owner, token = "attacker-hash"))
         create(AuthRecord.EmailVerificationToken(realmId, owner, expiresAt, token = "verify"))
-        create(AuthRecord.ActivationResendToken(realmId, owner, expiresAt, token = "resend"))
+        create(AuthRecord.SignUpCancelToken(realmId, owner, expiresAt, token = "cancel"))
 
         if (pending) create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
     }
@@ -116,11 +119,11 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
         "password" to (findLatestRecordBy(AuthRecord.Password, realmId, owner) != null),
         "marker" to (findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner) != null),
         "verification" to (findLatestRecordBy(AuthRecord.EmailVerificationToken, realmId, owner) != null),
-        "resend" to (findLatestRecordBy(AuthRecord.ActivationResendToken, realmId, owner) != null),
+        "cancel" to (findLatestRecordBy(AuthRecord.SignUpCancelToken, realmId, owner) != null),
     )
 
-    private val untouched = mapOf("password" to true, "marker" to true, "verification" to true, "resend" to true)
-    private val activated = mapOf("password" to false, "marker" to false, "verification" to false, "resend" to false)
+    private val untouched = mapOf("password" to true, "marker" to true, "verification" to true, "cancel" to true)
+    private val activated = mapOf("password" to false, "marker" to false, "verification" to false, "cancel" to false)
 
     //  Google  //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -177,9 +180,19 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
 
     init {
         "Google" - {
-            "email_verified = true on a PENDING account activates it and deletes the sign-up password" {
+            "email_verified = true on a PENDING account from before email first activates it and deletes its password" {
                 val deps = realDeps()
                 deps.storage.authRecords.preRegister(pending = true)
+                val subject = google(verified = true)
+
+                subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user
+
+                deps.storage.authRecords.state() shouldBe activated
+            }
+
+            "email_verified = true on an email-first PENDING account (no password) activates it" {
+                val deps = realDeps()
+                deps.storage.authRecords.preRegister(pending = true, withPassword = false)
                 val subject = google(verified = true)
 
                 subject.signIn(realmWith(deps), ssoRequest(subject)) shouldBe user

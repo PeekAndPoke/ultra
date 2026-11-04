@@ -1,10 +1,11 @@
 /**
  * The sign-in FLOW — what to do with the response, as opposed to how to send the request.
  *
- * Sign-in is not one outcome. `AuthSignInResponse` is a three-way union and two of its branches are
- * **not failures**: the credentials were right and there is a defined next step. Getting that wrong —
- * treating `activation-required` as a bad password — is the obvious bug, it is silent, and it is worth
- * writing down once rather than in every app.
+ * Sign-in is not one outcome. `AuthSignInResponse` is a two-way union and `org-selection-required` is
+ * **not a failure**: the credentials were right and there is a defined next step. Getting that wrong —
+ * treating it as a bad password — is the obvious bug, it is silent, and it is worth writing down once
+ * rather than in every app. (A not-yet-activated account has no password to sign in with: since email
+ * first, the password is chosen through the activation mail.)
  *
  * ```ts
  * const outcome = await completeSignIn(session, client.login.signIn({ realm }, credentials))
@@ -12,7 +13,6 @@
  * switch (outcome._type) {
  *     case 'signed-in':               router.push('/'); break
  *     case 'org-selection-required':  showOrgPicker(outcome.organisations, outcome.selectionToken); break
- *     case 'activation-required':     showResendActivation(outcome.resendToken); break
  *     case 'rejected':                showError(outcome.message); break
  * }
  * ```
@@ -42,11 +42,6 @@ export type SignInResult<P = unknown> =
           readonly selectionToken: string
           readonly organisations: readonly OrgChoice[]
       }
-    | {
-          readonly _type: 'activation-required'
-          /** Short-lived, single-use proof the credential check passed. Feeds `resendActivation`. */
-          readonly resendToken: string
-      }
 
 /** One organisation the user may sign in to. Structural — the generated `AuthOrgRef` satisfies it. */
 export interface OrgChoice {
@@ -69,7 +64,6 @@ export type LoginOutcome<P = unknown> =
           readonly selectionToken: string
           readonly organisations: readonly OrgChoice[]
       }
-    | { readonly _type: 'activation-required'; readonly resendToken: string }
     | {
           readonly _type: 'rejected'
           /**
@@ -95,9 +89,9 @@ export type LoginOutcome<P = unknown> =
  * Takes the PROMISE, so a caller writes one expression:
  * `await completeSignIn(session, client.login.signIn(...))`.
  *
- * **Only `success` touches the session.** The other two branches carry single-use tokens that grant a
- * next step and nothing else — storing them as a session would be wrong, and would make
- * `isLoggedIn` true for a user who is not.
+ * **Only `success` touches the session.** `org-selection-required` carries a single-use token that grants
+ * a next step and nothing else — storing it as a session would be wrong, and would make `isLoggedIn`
+ * true for a user who is not.
  *
  * Non-2xx becomes `rejected` rather than throwing, matching `request`'s contract: this SDK surfaces a
  * decoded envelope instead of an exception, so a wrong password is ordinary control flow.
@@ -138,14 +132,11 @@ export function applySignIn<P>(
                 organisations: result.organisations,
             }
 
-        case 'activation-required':
-            return { _type: 'activation-required', resendToken: result.resendToken }
-
         default:
             // A variant this SDK does not know — a newer server against a cached bundle, MFA being
-            // the obvious next one. Without this the function returned `undefined` through a
-            // signature that promises an outcome, so the documented `switch (outcome._type)` threw a
-            // TypeError. In `startAutoRefresh` that throw was swallowed by its own error handler,
+            // the obvious next one (or an older server's `activation-required`, gone since email
+            // first). Without this the function returned `undefined` through a signature that
+            // promises an outcome, so the documented `switch (outcome._type)` threw a TypeError. In `startAutoRefresh` that throw was swallowed by its own error handler,
             // leaving the refresher silently dead and the user "randomly logged out" at expiry.
             //
             // Rejecting is the safe reading: an outcome we cannot interpret must not create a

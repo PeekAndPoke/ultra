@@ -24,27 +24,21 @@ data class RealmTokenConfig(
     val emailVerificationTokenLifetime: Duration = 24.hours,
     /**
      * How long a never-activated account lives. After it the account is retired — when sign-up, SSO, activation
-     * or reset next touch it (resend refuses it; a password sign-in still answers `ActivationRequired`), or by
-     * `funktor/all`'s `PendingAccountsExpiryWorker` — and its address is free for a new sign-up; see
-     * `AuthRealm.retirePendingAccount`. Also bounds how much mail resend can cause.
+     * or reset next touch it, or by `funktor/all`'s `PendingAccountsExpiryWorker` — and its address is free for a
+     * new sign-up; see `AuthRealm.retirePendingAccount`. Also bounds how much mail signing up again can cause.
      */
     val pendingAccountLifetime: Duration = 7.days,
     /**
-     * The growing wait before each activation resend: the first after the sign-up mail waits the first
-     * entry, the next the second, and the last entry repeats. Must not be empty.
+     * The growing wait before each re-sent activation mail — signing up again with a pending address re-sends
+     * it: the first after the sign-up mail waits the first entry, the next the second, and the last entry
+     * repeats. Must not be empty. Inside the wait a sign-up again sends nothing, and answers as always.
      *
-     * Per pending account, stored on its marker. It bounds the mail an account's own password holder can
-     * cause — including an attacker who pre-registered someone else's address.
+     * Per pending account, stored on its marker. Anyone who knows the address can sign it up again, so this
+     * is what bounds the mail they can cause to it.
      */
     val activationResendDelays: List<Duration> = listOf(
         5.minutes, 15.minutes, 1.hours, 4.hours, 12.hours, 24.hours,
     ),
-    /**
-     * Lifetime of the single-use token handed out when a sign-in is refused for a pending account.
-     *
-     * Short on purpose: it exists only to carry the user from the login page to the activation page.
-     */
-    val activationResendTokenLifetime: Duration = 15.minutes,
     /** Lifetime of password-recovery tokens. */
     val passwordRecoveryTokenLifetime: Duration = 1.hours,
     /** Lifetime of the short-lived org-selection token issued between credential-check and org pick. */
@@ -68,7 +62,7 @@ data class RealmTokenConfig(
         require(activationResendDelays.isNotEmpty()) { "activationResendDelays must not be empty" }
     }
 
-    /** The wait before the resend that follows [resends] earlier ones. */
+    /** The wait before the re-sent mail that follows [resends] earlier ones. */
     fun activationResendDelay(resends: Int): Duration =
         activationResendDelays[resends.coerceIn(0, activationResendDelays.lastIndex)]
 }

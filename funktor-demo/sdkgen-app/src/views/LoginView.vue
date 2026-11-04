@@ -2,10 +2,10 @@
 /**
  * Sign in to the operators realm.
  *
- * The part worth reading is the outcome switch. `AuthSignInResponse` is a three-way union and two of
- * its branches are NOT failures — the credentials were right and there is a defined next step.
- * Treating `activation-required` as a bad password is the obvious bug and it is silent, which is why
- * `completeSignIn` returns a four-way outcome instead of a boolean.
+ * The part worth reading is the outcome switch. `AuthSignInResponse` is a two-way union and
+ * `org-selection-required` is NOT a failure — the credentials were right and there is a defined next
+ * step. Treating it as a bad password is the obvious bug and it is silent, which is why
+ * `completeSignIn` returns a three-way outcome instead of a boolean.
  */
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -54,10 +54,6 @@ async function submit(): Promise<void> {
 
             case 'org-selection-required':
                 note.value = `Pick an organisation (${outcome.organisations.length} available).`
-                break
-
-            case 'activation-required':
-                note.value = 'This account still needs activating — check your email.'
                 break
 
             case 'rejected':
