@@ -37,6 +37,8 @@ Email+password signup returns `requiresActivation = true`, but `AuthRealm.signUp
 **2026-11-04 (ULTRA-00118 gate):** still holds for password accounts created before activation existed
 (ULTRA-00126). They have no marker, so a verified SSO links into them, and a password set by whoever registered the
 address keeps working. Closing it needs a migration or a policy (maintainer decision, ULTRA-00118 entry 2.11).
+**2026-11-05:** the maintainer decided on no migration and no policy, as no such accounts are live. Keep the scenario
+for any deployment that ran a version before ULTRA-00126.
 
 ## 3. Unicode collapse — narrower than expected, verify it stays that way
 
@@ -109,3 +111,4 @@ address alone, so probe:
 
 - 2026-10-21: numbered ULTRA-00117 (was `docs/tasks/20260726-redteam-value-class-emailaddress.md`).
 - 2026-11-04: §1 closed by ULTRA-00118; §8 added from its gate (domain reviewer, finding 1.4).
+- 2026-11-05: §2: the maintainer settled ULTRA-00118 entry 2.11 (no action).

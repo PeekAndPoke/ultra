@@ -134,8 +134,8 @@ session or an account.
 | 2.7 | Dom | MINOR | No CHANGELOG line for custom SSO providers (`isEmailVerified` now asked for active accounts; their `signUp` must check before creating) | FIXED | |
 | 2.8 | Dom, Sec | MINOR | Sessions taken through the hole survive the upgrade (refresh does not ask the provider); the entry sat under Fixes | FIXED | CHANGELOG: rotate the JWT key; moved under Breaking changes |
 | 2.9 | Sec | MINOR, PRE-EXISTING | The GitHub authorize URL is built unencoded: under hash routing the scope lands in the fragment, and "Sign up" signs in | → ULTRA-00288 item 4 | Named in the CHANGELOG |
-| 2.10 | Dom | MINOR, design | `GithubSsoAuth.RemoteClient.getEmails` defaults to `null`, so a custom client fails at run time, not compile time | MAINTAINER | Optional: make it abstract (pre-1.0) |
-| 2.11 | Dom, Sec | note | Password accounts created before ULTRA-00126 have no marker and a password nobody proved: a verified SSO links into them, and a pre-registering attacker's password keeps working (§2 of ULTRA-00117 still holds for them). "A and C coincide" holds only for accounts made since | MAINTAINER | Needs a one-off migration or a policy; recorded in ULTRA-00117 §2 |
+| 2.10 | Dom | MINOR, design | `GithubSsoAuth.RemoteClient.getEmails` defaults to `null`, so a custom client fails at run time, not compile time | MAINTAINER → abstract | The maintainer, 2026-11-05: make it abstract (backward compatibility is no concern before 1.0). Done with the ULTRA-00289 batch |
+| 2.11 | Dom, Sec | note | Password accounts created before ULTRA-00126 have no marker and a password nobody proved: a verified SSO links into them, and a pre-registering attacker's password keeps working (§2 of ULTRA-00117 still holds for them). "A and C coincide" holds only for accounts made since | MAINTAINER → no action | The maintainer, 2026-11-05: no migration and no policy, as no such accounts are live. Recorded in ULTRA-00117 §2 |
 
 The MINOR batch after round 2 was applied without another round (MINORs do not loop): docs, CHANGELOG, one KDoc
 sentence, and three spec rows. Each new row was mutation-checked: skipping verification on an SSO claim, taking only
@@ -164,4 +164,5 @@ during feature work.
   in place (the auth page and its mirror); the auth docs follow-up for the activation flow stays with ULTRA-00231, the
   next auth task, which rewrites that surface again. Red team: ULTRA-00117 §1 closed, §8 added, §2 annotated. Follow-up:
   ULTRA-00288.
+- 2026-11-05: the maintainer settled 2.10 (make `getEmails` abstract) and 2.11 (no action, as no such accounts are live).
 - 2026-11-04: DONE.
