@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.auth.emails.authEmailLocales
 import io.peekandpoke.funktor.auth.emails.requireAuthEmailEnvelope
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse.Failure
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
 import io.peekandpoke.funktor.auth.model.AuthOrgRef
@@ -324,14 +325,35 @@ interface AuthRealm<USER : AuthUser> {
      * that does not issue these tokens refuses on its own: [AuthProvider.activateAccount] defaults to
      * `notSupported()`.
      *
+     * The input is checked FIRST, before the provider touches the token, so a refused password or name leaves the
+     * link usable and its [AuthActivateAccountResponse.failure] tells nothing about the token. The display name is
+     * written only after the activation has won; if [AuthUserAdapter.activate] throws, the account is active and
+     * keeps its default name.
+     *
      * The page has just chosen the account's first password, so a successful activation signs the user in —
      * best-effort, as after [signUp], and only through a provider that may sign in at all.
      */
     suspend fun activate(request: AuthActivateAccountRequest): AuthActivateAccountResponse {
         val provider = getProvider(request.provider)
 
-        val user = provider.activateAccount(realm = this, request = request)
+        if (!passwordPolicy.matches(request.password)) {
+            return AuthActivateAccountResponse(success = false, failure = Failure.WeakPassword)
+        }
+
+        val params = AuthUserAdapter.ActivateUserParams.of(request.displayName)
+            ?: return AuthActivateAccountResponse(success = false, failure = Failure.InvalidDisplayName)
+
+        val activated = provider.activateAccount(realm = this, request = request)
             ?: return AuthActivateAccountResponse(success = false)
+
+        val user = try {
+            users.activate(activated, params)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            deps.log.error("Account ${activated._id} is activated, but writing its display name failed", e)
+            throw e
+        }
 
         // A realm that switched password sign-in off gets no session through the back door.
         if (!provider.supportsSignIn()) return AuthActivateAccountResponse(success = true, signIn = null)

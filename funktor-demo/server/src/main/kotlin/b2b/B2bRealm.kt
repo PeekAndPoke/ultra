@@ -96,6 +96,11 @@ class B2bRealm(
             throw AuthError.notSupported()
         }
 
+        override suspend fun activate(user: Stored<B2bUser>, params: AuthUserAdapter.ActivateUserParams): Stored<B2bUser> {
+            // Invite-only, so no account here is ever pending activation — nothing to activate.
+            throw AuthError.notSupported()
+        }
+
         override suspend fun retire(user: Stored<B2bUser>, retirement: AccountRetirement): Stored<B2bUser> {
             // Invite-only, so no account here is ever pending activation — nothing to retire.
             throw AuthError.notSupported()

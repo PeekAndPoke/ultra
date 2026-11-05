@@ -14,8 +14,8 @@
 
   What changes with no compile signal:
   - Every GitHub sign-in now reads `/user/emails`. An app with its own authorize URL needs the `user:email` scope, a
-    GitHub App needs the "Email addresses" permission, and a custom `GithubSsoAuth.RemoteClient` needs `getEmails`.
-    Without them every GitHub sign-in and sign-up is refused. Funktor auth's `GithubSignInButton` asks for the scope,
+    GitHub App needs the "Email addresses" permission. Without them every GitHub sign-in and sign-up is refused. (A
+    custom `GithubSsoAuth.RemoteClient` does get a compile error: `getEmails` is abstract.) Funktor auth's `GithubSignInButton` asks for the scope,
     but under hash routing the scope lands in the URL's fragment and does not reach GitHub (ULTRA-00288).
   - A custom SSO provider that calls `resolveSsoAccount` is now asked `isEmailVerified` for active accounts too: a
     lambda answering `false` locks its users out, one answering `true` keeps the takeover. Its own `signUp` must check
@@ -54,6 +54,34 @@
   - The activation link is now a credential: within `RealmTokenConfig.emailVerificationTokenLifetime` (24 h) it
     chooses the password and signs in. A deployment whose mail may be forwarded or scanned can shorten it. A provider
     without the `SignIn` capability still activates, but hands out no session.
+
+- **Funktor auth: the display name is chosen at activation, older links overlap, refused input says why**
+  (ULTRA-00289). Sign-up takes no profile fields any more, so whoever signs up someone else's address cannot
+  choose what that account is called. A pre-registering attacker's "Call support at …" name used to survive into
+  the victim's account. `AuthSignUpRequest.EmailAndPassword` lost `displayName`, and
+  `AuthActivateAccountRequest.displayName` is new and required. `AuthDisplayName` (common) is the rule: 1 to 100
+  characters after trimming; no control characters, line breaks, invisible format characters (the zero-width joiner
+  and non-joiner excepted), tag characters, or letters that render blank. `AuthUserAdapter.activate(user,
+  ActivateUserParams)` is new and has no default: it writes the name once the activation has won, and a realm
+  without sign-up throws `AuthError.notSupported()`.
+
+  `AuthRealm.activate` now checks the password policy and the name before the provider touches the token, and
+  answers a refusal with `AuthActivateAccountResponse.failure` (`WeakPassword`, `InvalidDisplayName`): a 200 with
+  `success = false`, the same status as a dead link. The activation page keeps its form and says why. A refusal of
+  the link itself still carries no reason. `RealmTokenConfig.activationLinkOverlap` (default 30 min) keeps the
+  older links of a re-send usable for that long instead of killing them at once, so someone signing the address up
+  again cannot kill the link a user is typing into; 0 restores the old rotation. In an org realm, an activation
+  that needs an org choice hands `OrgSelectionRequired` to the login page, which opens on the picker, once
+  (`AuthState.takeActivationOrgSelection()`). `AuthState.logout()` now also drops a pending org selection. Also
+  breaking: `GithubSsoAuth.RemoteClient.getEmails` is abstract.
+
+  What changes with no compile signal:
+  - An app's own activation page that POSTs no `displayName` is refused, and its link stays usable. The answer is a
+    500, not a 400: funktor-rest does not yet map a missing body field to a client error. An app's own sign-up form
+    that still sends a name: the server ignores it.
+  - An account activated through a password reset or SSO is never asked for a name and keeps the default from the
+    address (its local part).
+  - After a re-send, up to about three links can be live at once for the first half hour.
 
 ## 0.117.0
 

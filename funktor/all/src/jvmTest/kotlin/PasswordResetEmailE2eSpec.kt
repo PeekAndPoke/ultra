@@ -71,7 +71,6 @@ class PasswordResetEmailE2eSpec : FunktorApiSpec() {
                         body = AuthSignUpRequest.EmailAndPassword(
                             provider = provider,
                             email = email,
-                            displayName = "Reset Me",
                         ),
                     ) {
                         status shouldBe HttpStatusCode.OK

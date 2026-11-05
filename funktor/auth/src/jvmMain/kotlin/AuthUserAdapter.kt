@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.auth
 
+import io.peekandpoke.funktor.auth.model.AuthDisplayName
 import io.peekandpoke.funktor.auth.model.AuthUser
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
@@ -54,6 +55,21 @@ interface AuthUserAdapter<USER : AuthUser> {
     }
 
     /**
+     * What the user chose on the activation page, see [activate].
+     */
+    @ConsistentCopyVisibility
+    data class ActivateUserParams private constructor(
+        /** Trimmed and checked against [AuthDisplayName]. */
+        val displayName: String,
+    ) {
+        companion object {
+            /** Null when [displayName] breaks [AuthDisplayName]. */
+            fun of(displayName: String): ActivateUserParams? =
+                AuthDisplayName.normalizeOrNull(displayName)?.let(::ActivateUserParams)
+        }
+    }
+
+    /**
      * Loads a user by its id.
      *
      * [id] is the realm-qualified Vault `_id` (`<user collection>/<key>`). Implementations should
@@ -76,6 +92,16 @@ interface AuthUserAdapter<USER : AuthUser> {
 
     /** Creates a new user during sign-up. Providers call this for the given email/displayName. */
     suspend fun createForSignup(params: CreateUserForSignupParams): Stored<USER>
+
+    /**
+     * Writes what the user chose on the activation page into [user], an account the framework has just activated
+     * through its activation link: sign-up takes no profile fields, so whoever signs up someone else's address
+     * cannot choose them. Returns the saved user.
+     *
+     * Required, with no default: a silent no-op would drop the name the page made mandatory. A realm without
+     * sign-up throws `AuthError.notSupported()`, as for [createForSignup].
+     */
+    suspend fun activate(user: Stored<USER>, params: ActivateUserParams): Stored<USER>
 
     /**
      * Retires [user]: renames its email with [retirement] and saves, so the address can sign up again. The row

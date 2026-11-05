@@ -14,4 +14,9 @@ data class AuthActivateAccountRequest(
     val token: String,
     /** The account's first password, chosen on the activation page; must meet the realm's password policy. */
     val password: String,
+    /**
+     * The user's display name, chosen on the activation page; must meet [AuthDisplayName]. Sign-up takes none, so
+     * whoever signs up someone else's address cannot choose what that account is called.
+     */
+    val displayName: String,
 )

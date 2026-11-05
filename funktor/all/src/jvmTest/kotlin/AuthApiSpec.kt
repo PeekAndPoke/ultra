@@ -123,7 +123,6 @@ class AuthApiSpec : FunktorApiSpec() {
                             body = AuthSignUpRequest.EmailAndPassword(
                                 provider = provider,
                                 email = signupEmail,
-                                displayName = "Test User",
                             ),
                         ) {
                             status shouldBe HttpStatusCode.OK
@@ -176,7 +175,10 @@ class AuthApiSpec : FunktorApiSpec() {
 
                         api.authLogin.activateAccount(
                             existingRealm,
-                            body = AuthActivateAccountRequest(provider = provider, token = token, password = "Test1234!"),
+                            body = AuthActivateAccountRequest(
+                                provider = provider, token = token, password = "Test1234!",
+                                displayName = "Test User",
+                            ),
                         ) {
                             status shouldBe HttpStatusCode.OK
                             apiResponseData<AuthActivateAccountResponse>()?.success shouldBe true
@@ -226,7 +228,10 @@ class AuthApiSpec : FunktorApiSpec() {
                     anonymous {
                         route(
                             existingRealm,
-                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token", password = "Test1234!"),
+                            body = AuthActivateAccountRequest(
+                                provider = provider, token = "invalid-token", password = "Test1234!",
+                                displayName = "Test User",
+                            ),
                         ) {
                             // OK, not an error: the endpoint is anonymous, so answering differently
                             // for a token that exists would let an attacker probe for live tokens.
@@ -244,7 +249,10 @@ class AuthApiSpec : FunktorApiSpec() {
                     anonymous {
                         route(
                             nonExistentRealm,
-                            body = AuthActivateAccountRequest(provider = provider, token = "invalid-token", password = "Test1234!"),
+                            body = AuthActivateAccountRequest(
+                                provider = provider, token = "invalid-token", password = "Test1234!",
+                                displayName = "Test User",
+                            ),
                         ) {
                             status shouldBe HttpStatusCode.BadRequest
                         }

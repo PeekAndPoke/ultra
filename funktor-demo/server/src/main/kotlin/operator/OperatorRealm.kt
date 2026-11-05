@@ -76,6 +76,11 @@ class OperatorRealm(
             error("Operator self-signup is not supported")
         }
 
+        override suspend fun activate(user: Stored<OperatorUser>, params: AuthUserAdapter.ActivateUserParams): Stored<OperatorUser> {
+            // No self-signup, so no operator is ever pending activation — nothing to activate.
+            throw AuthError.notSupported()
+        }
+
         override suspend fun retire(user: Stored<OperatorUser>, retirement: AccountRetirement): Stored<OperatorUser> {
             // No self-signup, so no operator is ever pending activation — nothing to retire.
             throw AuthError.notSupported()

@@ -103,7 +103,10 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
                 provider.activateAccount(
                     MinimalTestRealm(getDeps = { lostTheRace }, onLoadUserById = { user }),
-                    AuthActivateAccountRequest(provider = provider.id, token = "act", password = "New-1234!"),
+                    AuthActivateAccountRequest(
+                        provider = provider.id, token = "act", password = "New-1234!",
+                        displayName = "Test User",
+                    ),
                 ).shouldBeNull()
 
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
@@ -131,7 +134,10 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 val realm = MinimalTestRealm(getDeps = { real }, getProviders = { listOf(signUpOnly) }, onLoadUserById = { user })
 
                 val response = realm.activate(
-                    AuthActivateAccountRequest(provider = signUpOnly.id, token = "act", password = "New-1234!")
+                    AuthActivateAccountRequest(
+                        provider = signUpOnly.id, token = "act", password = "New-1234!",
+                        displayName = "Test User",
+                    )
                 )
 
                 response.success shouldBe true
@@ -254,7 +260,10 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
                 provider.activateAccount(
                     MinimalTestRealm(getDeps = { staleRead }),
-                    AuthActivateAccountRequest(provider = provider.id, token = "act", password = "New-1234!"),
+                    AuthActivateAccountRequest(
+                        provider = provider.id, token = "act", password = "New-1234!",
+                        displayName = "Test User",
+                    ),
                 ).shouldBeNull()
 
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.PendingActivation, realmId, owner)
@@ -512,7 +521,10 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
                 providerOn(real).activateAccount(
                     MinimalTestRealm(getDeps = { real }, onLoadUserById = { retiredUser }),
-                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act", password = "New-1234!"),
+                    AuthActivateAccountRequest(
+                        provider = EmailAndPasswordAuth.ID, token = "act", password = "New-1234!",
+                        displayName = "Test User",
+                    ),
                 ).shouldBeNull()
 
                 real.storage.authRecords.findLatestRecordBy(AuthRecord.Password, realmId, owner).shouldBeNull()
@@ -576,7 +588,10 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
                 providerOn(real).activateAccount(
                     realm,
-                    AuthActivateAccountRequest(provider = EmailAndPasswordAuth.ID, token = "act", password = "New-1234!"),
+                    AuthActivateAccountRequest(
+                        provider = EmailAndPasswordAuth.ID, token = "act", password = "New-1234!",
+                        displayName = "Test User",
+                    ),
                 ).shouldBeNull()
 
                 providerOn(real).signIn(

@@ -64,7 +64,6 @@ class LoginController<USER>(
         data class SignUp(
             val provider: AuthProviderModel,
             val email: String = "",
-            val displayName: String = "",
             val message: Message? = null,
         ) : DisplayState
 
@@ -214,7 +213,6 @@ class LoginController<USER>(
                         val req = AuthSignUpRequest.EmailAndPassword(
                             provider = s.provider.id,
                             email = s.email,
-                            displayName = s.displayName.ifBlank { null },
                         )
                         signup(req)
                     }
@@ -227,11 +225,8 @@ class LoginController<USER>(
                     )
                 }
 
-                UiInputField(s.displayName, { displayState = s.copy(displayName = it) }) {
-                    placeholder("Display name (optional)")
-                }
-
-                // No password here (email first): the mailed link opens "Choose your password".
+                // Only the address (email first): the mailed link opens the page that asks for the password and
+                // the name, so whoever signs up someone else's address chooses neither.
 
                 ui.field {
                     ui.primary.fluid
@@ -434,7 +429,10 @@ class LoginController<USER>(
         state.api.getRealm().map { it.data!! }
     }
 
-    var displayState: DisplayState by host.value(DisplayState.Login())
+    // Only an activation's selection opens the picker on arrival, and only once (see `AuthState.activateAccount`).
+    var displayState: DisplayState by host.value(
+        state.takeActivationOrgSelection()?.let { DisplayState.SelectOrg(it) } ?: DisplayState.Login()
+    )
 
     val formCtrl = host.formController()
     val noDblClick = host.doubleClickProtection()

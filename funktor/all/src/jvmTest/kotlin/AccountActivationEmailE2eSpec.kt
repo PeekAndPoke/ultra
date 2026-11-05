@@ -10,26 +10,39 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.ktor.client.request.header
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.peekandpoke.funktor.auth.AuthFrontendRoutes
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse.Failure
+import io.peekandpoke.funktor.auth.model.AuthDisplayName
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpResponse
 import io.peekandpoke.funktor.auth.model.LanguageSettings
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
+import io.peekandpoke.funktor.core.broker.typedRouteRenderer
 import io.peekandpoke.funktor.messaging.Email
 import io.peekandpoke.funktor.messaging.api.SentMessageModel
 import io.peekandpoke.funktor.messaging.senders.hrefs
 import io.peekandpoke.funktor.testing.AppUnderTest
 import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.common.encodeUriComponent
+import io.peekandpoke.ultra.remote.api
 import io.peekandpoke.ultra.security.user.EmailAddress
 import kotlinx.coroutines.delay
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -87,17 +100,16 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
     /** Read from the realm, so the waits below cannot drift out of step with the configured window. */
     private val realmTokenConfig = TestUserRealm.TOKEN_CONFIG
 
-    /** Signs [email] up — the address and a display name, no password — and returns the answer. */
+    /** Signs [email] up — the address only, no password and no name — and returns the answer. */
     private suspend fun AppUnderTest<FunktorAllTestConfig>.signUp(
         scope: AppUnderTest<FunktorAllTestConfig>.AuthenticationScope,
         email: String,
-        displayName: String = "Activate Me",
     ): AuthSignUpResponse = with(scope) {
         var response: AuthSignUpResponse? = null
 
         api.authLogin.signUp(
             realmParam,
-            body = AuthSignUpRequest.EmailAndPassword(provider = provider, email = email, displayName = displayName),
+            body = AuthSignUpRequest.EmailAndPassword(provider = provider, email = email),
         ) {
             status shouldBe HttpStatusCode.OK
             response = apiResponseData<AuthSignUpResponse>()
@@ -106,22 +118,46 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
         response.shouldNotBeNull()
     }
 
-    /** Chooses [password] through the mailed [token]; returns the answer and its status. */
+    /** Chooses [password] and [displayName] through the mailed [token]; returns the answer and its status. */
     private suspend fun AppUnderTest<FunktorAllTestConfig>.activate(
         scope: AppUnderTest<FunktorAllTestConfig>.AuthenticationScope,
         token: String,
         password: String = this@AccountActivationEmailE2eSpec.password,
+        displayName: String = "Activate Me",
     ): Pair<HttpStatusCode, AuthActivateAccountResponse> = with(scope) {
         var answer: Pair<HttpStatusCode, AuthActivateAccountResponse>? = null
 
         api.authLogin.activateAccount(
             realmParam,
-            body = AuthActivateAccountRequest(provider = provider, token = token, password = password),
+            body = AuthActivateAccountRequest(
+                provider = provider, token = token, password = password, displayName = displayName,
+            ),
         ) {
-            answer = status to apiResponseData<AuthActivateAccountResponse>().shouldNotBeNull()
+            val answered = apiResponseData<AuthActivateAccountResponse>().shouldNotBeNull()
+
+            // The server writes with Slumber, the browser reads with kotlinx: both must read the same answer.
+            withClue("the answer as the browser decodes it") {
+                val inBrowser = browserJson.decodeFromString(AuthActivateAccountResponse.serializer().api(), bodyAsText())
+                    .data.shouldNotBeNull()
+
+                inBrowser.success shouldBe answered.success
+                inBrowser.failure shouldBe answered.failure
+            }
+
+            answer = status to answered
         }
 
         answer.shouldNotBeNull()
+    }
+
+    /**
+     * Decodes the way an app's browser `ApiClient` does (as the funktor-demo apps configure it): kotlinx, which honours
+     * `@SerialName` where Slumber does not.
+     */
+    private val browserJson = Json {
+        classDiscriminator = "_type"
+        ignoreUnknownKeys = true
+        isLenient = true
     }
 
     /** Signs in with [password]; returns the session, or null when refused. */
@@ -244,7 +280,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
             }
         }
 
-        "Signing up again must deliver a WORKING new link, and kill the old one" {
+        "Signing up again must deliver a WORKING new link, and with NO overlap configured kill the old one" {
             // The lockout this prevents: the first mail is lost or the 24h link lapses. With no password at
             // sign-up there is no sign-in to ask from, so signing up again with the same address is the way.
             apiApp {
@@ -253,7 +289,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    val fresh = signUp(this, email, displayName = "Resend Me")
+                    val fresh = signUp(this, email)
 
                     val firstToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
 
@@ -266,7 +302,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                     emails.clear()
 
                     withClue("signing up again answers exactly like a fresh sign-up") {
-                        signUp(this, email, displayName = "Resend Me") shouldBe fresh
+                        signUp(this, email) shouldBe fresh
                     }
 
                     val secondToken = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
@@ -275,8 +311,8 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         secondToken shouldNotBe firstToken
                     }
 
-                    // Rotation: the superseded link must be dead. Otherwise every re-send leaves another
-                    // live credential in another inbox copy, for as long as its 24h lasts.
+                    // Rotation with `activationLinkOverlap = 0` (see `TestUserRealm`): the superseded link is dead at
+                    // once. With the default, it would live 30 more minutes — the hardening spec pins that.
                     activate(this, firstToken).second.success shouldBe false
 
                     withClue("and the dead link really did nothing") {
@@ -300,11 +336,11 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                 anonymous {
                     val email = "cooldown-${System.currentTimeMillis()}@test.com"
 
-                    val fresh = signUp(this, email, displayName = "Cool Down")
+                    val fresh = signUp(this, email)
 
                     emails.clear()
 
-                    signUp(this, email, displayName = "Cool Down") shouldBe fresh
+                    signUp(this, email) shouldBe fresh
 
                     emails.capturedTo(email) shouldBe emptyList()
                 }
@@ -318,7 +354,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    signUp(this, activated, displayName = "Already Active")
+                    signUp(this, activated)
 
                     activate(this, activationTokenFrom(emails.lastTo(activated).shouldNotBeNull())).second.success shouldBe true
 
@@ -348,21 +384,93 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    signUp(this, email, displayName = "Weak")
+                    signUp(this, email)
 
                     val token = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
 
-                    activate(this, token, password = "weak").let { (status, answer) ->
-                        status shouldBe HttpStatusCode.BadRequest
-                        answer.success shouldBe false
-                        answer.signIn shouldBe null
-                    }
+                    // A plain answer naming the reason, so the page can keep its form: the input was checked before
+                    // the token, so the reason tells nothing about the link.
+                    activate(this, token, password = "weak") shouldBe (
+                        HttpStatusCode.OK to AuthActivateAccountResponse(success = false, failure = Failure.WeakPassword)
+                        )
 
                     withClue("still pending, nothing signs in") {
                         signInWith(this, email, password = "weak").shouldBeNull()
                     }
 
                     activate(this, token).second.success shouldBe true
+                }
+            }
+        }
+
+        "A refused NAME at activation is refused before the link, and the name chosen at activation is the account's" {
+            apiApp {
+                anonymous {
+                    val email = "name-${System.currentTimeMillis()}@test.com"
+
+                    emails.clear()
+
+                    // An old client that still sends a name: the server ignores it.
+                    val oldClientSignUp = buildJsonObject {
+                        browserJson.parseToJsonElement(
+                            restCodec.serialize(AuthSignUpRequest.EmailAndPassword(provider = provider, email = email))!!
+                        ).jsonObject.forEach { (key, value) -> put(key, value) }
+                        put("displayName", "Call support at +1 555 0100")
+                    }
+
+                    request(
+                        HttpMethod.Post,
+                        kontainer.typedRouteRenderer.render(api.authLogin.signUp.route(realmParam)),
+                        setup = {
+                            setBody(oldClientSignUp.toString())
+                            header(HttpHeaders.ContentType, "application/json")
+                        },
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    withClue("sign-up takes no name: the account holds the default from the address") {
+                        realm.users.loadByEmail(EmailAddress.of(email)).shouldNotBeNull().value().name shouldBe
+                            email.substringBefore("@")
+                    }
+
+                    val token = activationTokenFrom(emails.lastTo(email).shouldNotBeNull())
+
+                    for (refused in listOf("", "   ", "x".repeat(AuthDisplayName.MAX_LENGTH + 1), "Call${Char(0x0A)}support")) {
+                        withClue("name '$refused'") {
+                            activate(this, token, displayName = refused) shouldBe (
+                                HttpStatusCode.OK to AuthActivateAccountResponse(
+                                    success = false, failure = Failure.InvalidDisplayName,
+                                )
+                                )
+                        }
+                    }
+
+                    // Refused before the link. The STATUS is not pinned: funktor-rest answers a missing body field
+                    // with a 500 today, not a 400, which is a framework matter outside this flow.
+                    withClue("a body WITHOUT displayName (an old client) is refused, and the link survives it") {
+                        request(
+                            HttpMethod.Post,
+                            kontainer.typedRouteRenderer.render(api.authLogin.activateAccount.route(realmParam)),
+                            setup = {
+                                setBody(
+                                    buildJsonObject {
+                                        put("provider", provider)
+                                        put("token", token)
+                                        put("password", password)
+                                    }.toString()
+                                )
+                                header(HttpHeaders.ContentType, "application/json")
+                            },
+                        ) {
+                            status shouldNotBe HttpStatusCode.OK
+                        }
+                    }
+
+                    // The link survived every refusal; the name is trimmed.
+                    activate(this, token, displayName = "  Ada Lovelace ").second.success shouldBe true
+
+                    realm.users.loadByEmail(EmailAddress.of(email)).shouldNotBeNull().value().name shouldBe "Ada Lovelace"
                 }
             }
         }
@@ -383,7 +491,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    signUp(this, german, displayName = "Deutscher Nutzer")
+                    signUp(this, german)
 
                     // Sign-up mails in the realm default (en) — nothing can express a language before
                     // the account exists. Asserting it here pins that the SWITCH below is what changes
@@ -405,7 +513,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
 
                     emails.clear()
 
-                    signUp(this, german, displayName = "Deutscher Nutzer")
+                    signUp(this, german)
 
                     val germanMail = emails.lastTo(german).shouldNotBeNull()
 

@@ -193,6 +193,8 @@ class MinimalTestRealm(
         { error("createUserForSignup was not expected to be called") },
     val onRetire: suspend (Stored<MinimalTestUser>, AccountRetirement) -> Stored<MinimalTestUser> =
         { _, _ -> error("retire was not expected to be called") },
+    val onActivate: suspend (Stored<MinimalTestUser>, AuthUserAdapter.ActivateUserParams) -> Stored<MinimalTestUser> =
+        { user, params -> user.modify { it.copy(name = params.displayName) } },
     /** Defaults to deps with an EMPTY auth-record store: every account reads as activated. */
     val getDeps: () -> AuthSystem.Deps = { NullStorageTestDeps() },
     val getProviders: () -> List<AuthProvider> = { error("Not needed for test") },
@@ -212,6 +214,10 @@ class MinimalTestRealm(
 
         override suspend fun retire(user: Stored<MinimalTestUser>, retirement: AccountRetirement): Stored<MinimalTestUser> =
             onRetire(user, retirement)
+
+        override suspend fun activate(
+            user: Stored<MinimalTestUser>, params: AuthUserAdapter.ActivateUserParams,
+        ): Stored<MinimalTestUser> = onActivate(user, params)
 
         override suspend fun serialize(user: Stored<MinimalTestUser>): JsonObject =
             error("Not needed for test")
@@ -331,6 +337,10 @@ class TestAppUserRealm(
                 )
             )
         }
+
+        override suspend fun activate(
+            user: Stored<TestAppUser>, params: AuthUserAdapter.ActivateUserParams,
+        ): Stored<TestAppUser> = repo.save(user.modify { it.copy(name = params.displayName) })
 
         override suspend fun retire(user: Stored<TestAppUser>, retirement: AccountRetirement): Stored<TestAppUser> {
             return repo.save(user.modify { it.copy(email = retirement.rename(it.email), name = "retired") })

@@ -172,6 +172,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         error("Should not be called")
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray? = null
                 }
 
                 val subject = GithubSsoAuth(
@@ -205,6 +207,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                         access shouldBe ghAccessToken
                         return null
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray? = null
                 }
 
                 val subject = GithubSsoAuth(
@@ -237,6 +241,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         return ghUser
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray? = null
                 }
 
                 val subject = GithubSsoAuth(
@@ -269,6 +275,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         return ghUser
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray? = null
                 }
 
                 val subject = GithubSsoAuth(
@@ -349,7 +357,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                 )
 
                 // A request that is not OAuth
-                val request = AuthSignUpRequest.EmailAndPassword("test", "", "")
+                val request = AuthSignUpRequest.EmailAndPassword("test", "")
 
                 val realm = MinimalTestRealm()
                 val error = shouldThrow<AuthError> {
@@ -370,6 +378,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         error("Should not be called")
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray? = null
                 }
 
                 val subject = GithubSsoAuth(
@@ -402,6 +412,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                         access shouldBe ghAccessToken
                         return null
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray? = null
                 }
 
                 val subject = GithubSsoAuth(
@@ -434,6 +446,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                     override suspend fun getUser(access: JsonObject): JsonObject {
                         return ghUser
                     }
+
+                    override suspend fun getEmails(access: JsonObject): JsonArray? = null
                 }
 
                 val subject = GithubSsoAuth(

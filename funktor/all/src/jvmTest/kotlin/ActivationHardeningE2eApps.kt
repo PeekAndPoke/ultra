@@ -6,7 +6,9 @@ import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.FunktorAuthBuilder
+import io.peekandpoke.funktor.auth.OrgPolicy
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthProviderModel.Capability
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.auth.provider.EmailAndPasswordAuth
@@ -34,6 +36,8 @@ import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.security.jwt.JwtUserData
 import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.OrgId
+import io.peekandpoke.ultra.security.user.OrgMembership
 import io.peekandpoke.ultra.security.user.SelectedOrg
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
@@ -161,6 +165,27 @@ object RetireGate {
     var afterRetireClaim: suspend () -> Unit = {}
 }
 
+/**
+ * Test hook: turns [ActivationHardeningRealm] into an `OrgPolicy.Required` realm in which every user may sign into
+ * [orgs]. Null (the default): an org-less realm.
+ */
+object OrgGate {
+    @Volatile
+    var orgs: List<AuthOrgRef>? = null
+}
+
+/** Test hook inside [ActivationHardeningRealm]'s `activate()`: a spec makes writing the display name fail. */
+object ActivateGate {
+    @Volatile
+    var fail: Boolean = false
+
+    suspend fun activate(user: Stored<TestUser>, write: suspend () -> Stored<TestUser>): Stored<TestUser> {
+        if (fail) error("ActivateGate: writing the display name of ${user._id} fails")
+
+        return write()
+    }
+}
+
 /** The real adapter, with [RetireGate.afterRetireClaim] run after a successful retire claim. */
 class RetireClaimGatedAdapter(private val inner: AuthRecordStorage.Adapter) : AuthRecordStorage.Adapter by inner {
     override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? =
@@ -187,6 +212,18 @@ class ActivationHardeningRealm(
 
     override val deps: AuthSystem.Deps by deps
     private val store: HardeningUsers by users
+
+    override val orgPolicy: OrgPolicy get() = if (OrgGate.orgs == null) OrgPolicy.None else OrgPolicy.Required
+
+    override suspend fun getMemberships(user: Stored<TestUser>): Set<OrgMembership> =
+        OrgGate.orgs.orEmpty().map { OrgMembership(orgId = it.id) }.toSet()
+
+    override suspend fun getAccessibleOrgs(memberships: Set<OrgMembership>): List<AuthOrgRef> =
+        OrgGate.orgs.orEmpty().filter { org -> memberships.any { it.orgId == org.id } }
+
+    override suspend fun resolveSelectedOrg(orgId: OrgId, memberships: Set<OrgMembership>): SelectedOrg? =
+        memberships.firstOrNull { it.orgId == orgId }?.let { SelectedOrg(orgId = orgId, membership = it) }
+
     private val emailAndPassword: EmailAndPasswordAuth.Factory by emailAndPassword
 
     override val id: RealmId = REALM
@@ -220,6 +257,9 @@ class ActivationHardeningRealm(
 
         override suspend fun createForSignup(params: AuthUserAdapter.CreateUserForSignupParams) =
             store.create(TestUser(name = params.displayName, email = params.email))
+
+        override suspend fun activate(user: Stored<TestUser>, params: AuthUserAdapter.ActivateUserParams) =
+            ActivateGate.activate(user) { store.update(user.modify { it.copy(name = params.displayName) }) }
 
         override suspend fun retire(user: Stored<TestUser>, retirement: AccountRetirement): Stored<TestUser> {
             RetireGate.beforeRename()

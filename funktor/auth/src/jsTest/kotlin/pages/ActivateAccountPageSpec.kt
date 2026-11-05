@@ -16,6 +16,7 @@ import io.peekandpoke.funktor.auth.api.AuthApiClient
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
@@ -33,6 +34,7 @@ import io.peekandpoke.kraft.testing.typeText
 import io.peekandpoke.ultra.remote.ApiClient
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.api
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.security.user.UserPermissions
 import kotlinx.browser.window
@@ -115,14 +117,17 @@ class ActivateAccountPageSpec : StringSpec({
 
     fun FakeAuthServer.posts() = calls.filter { it.startsWith("POST") }
 
-    suspend fun KQuery<Element>.choosePassword(password: String) {
-        awaitText("Choose a password")
+    val goodName = "Ada Lovelace"
+
+    suspend fun KQuery<Element>.choosePassword(password: String, name: String = goodName) {
+        awaitText("Choose your name and a password")
+        if (name.isNotEmpty()) selectCss("input:not([type=password])").typeText(name)
         selectCss("input[type=password]").typeText(password)
         delay(50)
         button("Activate my account").click()
     }
 
-    "opening the activation link POSTs NOTHING — only choosing the password does, and it sends the password" {
+    "opening the activation link POSTs NOTHING — only choosing the password does, and it sends the password and name" {
         val server = serverWithRealm().apply {
             answer(activatePath, AuthActivateAccountResponse.serializer()) { AuthActivateAccountResponse(success = true) }
         }
@@ -139,26 +144,116 @@ class ActivateAccountPageSpec : StringSpec({
             root.button("cancel this account").size shouldBe 1
 
             root.choosePassword(goodPassword)
-            root.awaitText("Your account is activated")
+            root.awaitText("Your account is active")
 
             server.posts() shouldBe listOf("POST $activatePath")
             server.bodies.single().let {
                 it["token"]?.jsonPrimitive?.content shouldBe "tok"
                 it["provider"]?.jsonPrimitive?.content shouldBe "email-password"
                 it["password"]?.jsonPrimitive?.content shouldBe goodPassword
+                it["displayName"]?.jsonPrimitive?.content shouldBe goodName
+            }
+
+            withClue("no session in the answer (e.g. no organisation yet): active, but no promise of signing in") {
+                root.containsText("sign in now") shouldBe false
             }
         }
     }
 
-    "a password that breaks the realm's policy is never sent" {
-        val server = serverWithRealm()
-        val state = stateOn(server)
+    "a password that breaks the realm's policy is never sent, and neither is a missing name" {
+        listOf("weak" to goodName, goodPassword to "").forEach { (password, name) ->
+            withClue("password '$password', name '$name'") {
+                val server = serverWithRealm()
+                val state = stateOn(server)
 
-        TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
-            root.choosePassword("weak")
-            delay(300)
+                TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
+                    root.choosePassword(password, name = name)
+                    delay(300)
 
-            server.posts() shouldBe emptyList()
+                    server.posts() shouldBe emptyList()
+                }
+            }
+        }
+    }
+
+    "input the SERVER refuses keeps the form and says why — it is not shown as a dead link" {
+        // The page's rules and the server's can disagree (a regex JS and the JVM read differently, an older page):
+        // the server checked the input before the token, so the link is still good and the user tries again.
+        listOf(
+            AuthActivateAccountResponse.Failure.WeakPassword to "did not accept this password",
+            AuthActivateAccountResponse.Failure.InvalidDisplayName to "did not accept this name",
+        ).forEach { (failure, says) ->
+            withClue(failure) {
+                var refuse = true
+                val server = serverWithRealm().apply {
+                    answer(activatePath, AuthActivateAccountResponse.serializer()) {
+                        if (refuse) {
+                            AuthActivateAccountResponse(success = false, failure = failure)
+                        } else {
+                            AuthActivateAccountResponse(success = true)
+                        }
+                    }
+                }
+                val state = stateOn(server)
+
+                TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
+                    root.choosePassword(goodPassword)
+                    root.awaitText(says)
+                    root.containsText("not valid any more") shouldBe false
+
+                    refuse = false
+                    root.button("Activate my account").click()
+                    root.awaitText("Your account is active")
+
+                    server.posts() shouldBe listOf("POST $activatePath", "POST $activatePath")
+                }
+            }
+        }
+    }
+
+    "an answer that needs an ORGANISATION choice hands it to the login page's picker" {
+        val org = AuthOrgRef(id = OrgId("orgs/o1"), slug = "o1", name = "Org One")
+        val selection = AuthSignInResponse.OrgSelectionRequired(
+            realm = realmModel,
+            selectionToken = "sel",
+            organisations = listOf(org, org.copy(id = OrgId("orgs/o2"), name = "Org Two")),
+        )
+        val server = serverWithRealm().apply {
+            answer(activatePath, AuthActivateAccountResponse.serializer()) {
+                AuthActivateAccountResponse(success = true, signIn = selection)
+            }
+        }
+        lateinit var routes: Router
+        val state = stateOn(server, router = { routes })
+        routes = router { state.mount(this) }
+        val originalHash = window.location.hash
+
+        try {
+            TestBed.preact({ RouterComponent(routes) }) { root ->
+                routes.navToUri("/auth/email-password/activate/tok")
+                root.choosePassword(goodPassword)
+
+                root.awaitText("Choose an organisation")
+
+                state.pendingOrgSelection shouldBe selection
+                window.location.hash shouldBe "#/auth/login"
+                root.button("Org Two").size shouldBe 1
+
+                // One-shot: whoever opens the login page next gets the sign-in form, not this selection.
+                routes.navToUri("/auth/email-password/activate/tok")
+                root.awaitText("Activate Account")
+                routes.navToUri("/auth/login")
+                root.awaitText("Sign In")
+                root.containsText("Choose an organisation") shouldBe false
+
+                // And a sign-out drops the selection altogether.
+                state.logout()
+                state.pendingOrgSelection shouldBe null
+            }
+        } finally {
+            state.clearPendingOrgSelection()
+            routes.disable()
+            window.location.hash = originalHash
         }
     }
 
@@ -224,7 +319,11 @@ class ActivateAccountPageSpec : StringSpec({
         val originalHash = window.location.hash
 
         try {
-            state.activateAccount(AuthActivateAccountRequest(provider = "email-password", token = "other", password = goodPassword))
+            state.activateAccount(
+                AuthActivateAccountRequest(
+                    provider = "email-password", token = "other", password = goodPassword, displayName = goodName,
+                )
+            )
             state().isLoggedIn shouldBe true
 
             refuse = true
@@ -332,7 +431,7 @@ class ActivateAccountPageSpec : StringSpec({
 
             reachable = true
             root.button("Retry").click()
-            root.awaitText("Your account is activated")
+            root.awaitText("Your account is active")
 
             server.posts() shouldBe listOf("POST $activatePath", "POST $activatePath")
             withClue("the retry sends the same password") {
@@ -367,7 +466,7 @@ class ActivateAccountPageSpec : StringSpec({
                         server.posts() shouldBe emptyList()
 
                         if (endpoint == activatePath) root.choosePassword(goodPassword) else root.button(primary).click()
-                        root.awaitText("The sign-up is cancelled".takeIf { endpoint == cancelPath } ?: "Your account is activated")
+                        root.awaitText("The sign-up is cancelled".takeIf { endpoint == cancelPath } ?: "Your account is active")
 
                         server.posts() shouldBe listOf("POST $endpoint")
                         server.bodies.single().let {

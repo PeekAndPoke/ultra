@@ -31,6 +31,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -67,6 +68,7 @@ class TestUserRealm(
         /** Exposed so specs can wait exactly as long as the realm is configured for. */
         val TOKEN_CONFIG = RealmTokenConfig(
             activationResendDelays = listOf(2.seconds, 3.seconds),
+            activationLinkOverlap = Duration.ZERO,
         )
     }
 
@@ -77,11 +79,12 @@ class TestUserRealm(
     override val id: RealmId = REALM
 
     /**
-     * Only the activation-resend delays deviate from the defaults, and only so that BOTH sides of them
+     * Two settings deviate from the defaults. The activation-resend delays, so that BOTH sides of them
      * stay testable against a real clock: `AccountActivationEmailE2eSpec` waits them out to prove that
      * signing up again delivers a new link, and signs up again back-to-back to prove the delay suppresses one. The
      * production defaults are minutes to hours; `ActivationHardeningE2eSpec` covers those with a clock
-     * it can advance.
+     * it can advance. No link overlap, so this realm pins the `0` setting: a re-send kills the older link at once
+     * (the 30 min default is the hardening spec's).
      */
     override val tokenConfig = TOKEN_CONFIG
 
@@ -130,6 +133,10 @@ class TestUserRealm(
                 )
             )
         }
+
+        override suspend fun activate(
+            user: Stored<TestUser>, params: AuthUserAdapter.ActivateUserParams,
+        ): Stored<TestUser> = repo.save(user.modify { it.copy(name = params.displayName) })
 
         override suspend fun retire(user: Stored<TestUser>, retirement: AccountRetirement): Stored<TestUser> {
             return repo.save(user.modify { it.copy(email = retirement.rename(it.email), name = "retired") })

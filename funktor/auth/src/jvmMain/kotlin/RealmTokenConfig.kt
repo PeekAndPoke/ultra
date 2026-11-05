@@ -39,6 +39,12 @@ data class RealmTokenConfig(
     val activationResendDelays: List<Duration> = listOf(
         5.minutes, 15.minutes, 1.hours, 4.hours, 12.hours, 24.hours,
     ),
+    /**
+     * How long the OLDER activation links stay usable after a re-send: each gets the earlier of its own expiry and
+     * now plus this; none is ever extended. Someone signing the address up again then cannot kill the link a user is
+     * typing a password into. 0: only the newest link lives.
+     */
+    val activationLinkOverlap: Duration = 30.minutes,
     /** Lifetime of password-recovery tokens. */
     val passwordRecoveryTokenLifetime: Duration = 1.hours,
     /** Lifetime of the short-lived org-selection token issued between credential-check and org pick. */
@@ -60,6 +66,7 @@ data class RealmTokenConfig(
 ) {
     init {
         require(activationResendDelays.isNotEmpty()) { "activationResendDelays must not be empty" }
+        require(!activationLinkOverlap.isNegative()) { "activationLinkOverlap must not be negative" }
     }
 
     /** The wait before the re-sent mail that follows [resends] earlier ones. */

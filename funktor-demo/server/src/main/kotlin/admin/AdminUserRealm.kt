@@ -89,6 +89,10 @@ class AdminUserRealm(
             )
         }
 
+        override suspend fun activate(
+            user: Stored<AdminUser>, params: AuthUserAdapter.ActivateUserParams,
+        ): Stored<AdminUser> = repo.save(user.modify { it.copy(name = params.displayName) })
+
         override suspend fun retire(user: Stored<AdminUser>, retirement: AccountRetirement): Stored<AdminUser> {
             // `email` is the only unique key (see AdminUsersRepo.buildIndexes); `name` defaults to the address's
             // local part, so it goes too.

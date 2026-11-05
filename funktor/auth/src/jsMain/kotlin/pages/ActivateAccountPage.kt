@@ -3,7 +3,9 @@ package io.peekandpoke.funktor.auth.pages
 import io.peekandpoke.funktor.auth.AuthState
 import io.peekandpoke.funktor.auth.asFormRule
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
+import io.peekandpoke.funktor.auth.model.AuthDisplayName
 import io.peekandpoke.funktor.auth.model.AuthRealmModel
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.kraft.components.Component
@@ -11,6 +13,7 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.forms.formController
 import io.peekandpoke.kraft.routing.href
+import io.peekandpoke.kraft.semanticui.forms.UiInputField
 import io.peekandpoke.kraft.semanticui.forms.UiPasswordField
 import io.peekandpoke.kraft.utils.dataLoader
 import io.peekandpoke.kraft.utils.doubleClickProtection
@@ -32,8 +35,9 @@ import kotlinx.html.p
  *
  * **Opening the page changes nothing** (it only reads the realm, for its password policy). Mail gateways
  * (Safe Links, Mimecast, Proofpoint) open links in a sandbox, so a link that activated on load would activate
- * an account nobody chose to. Only a click POSTs: `Mode.Activate` asks for the account's first password —
- * setting it activates the account and signs the user in — next to "I did not sign up — cancel";
+ * an account nobody chose to. Only a click POSTs: `Mode.Activate` asks for the account's first password and the
+ * display name — setting them activates the account and signs the user in, or hands a choice of several
+ * organisations to the login page's picker — next to "I did not sign up — cancel";
  * `Mode.Cancel` (the mail's cancel link, whose token cannot activate) offers only "Cancel this sign-up" and
  * points at the activation link for the other way.
  */
@@ -71,10 +75,15 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
     private sealed interface DisplayState {
-        /** A link from the mail, nothing done yet: the user chooses. */
-        data class Choose(val password: String = "") : DisplayState
+        /** A link from the mail, nothing done yet — or the server refused the input: the user chooses. */
+        data class Choose(
+            val password: String = "",
+            val displayName: String = "",
+            /** Why the server refused the last submit; the link is still usable. */
+            val refused: AuthActivateAccountResponse.Failure? = null,
+        ) : DisplayState
 
-        /** The account is activated, but the realm could not sign the user in (e.g. an org choice is due). */
+        /** The account is activated, but the realm handed out no session (e.g. no organisation yet). */
         data object Activated : DisplayState
 
         /** The click cancelled the sign-up; the address is free again. */
@@ -98,25 +107,45 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
     private val formCtrl = formController()
     private val noDblClick = doubleClickProtection()
 
-    private suspend fun activate(password: String) {
-        noDblClick.runBlocking { activateNow(password) }
+    /** Edits the CURRENT choice, not the rendered one: two fields changed before a re-render must not undo each other. */
+    private fun editChoice(edit: (DisplayState.Choose) -> DisplayState.Choose) {
+        (displayState as? DisplayState.Choose)?.let { displayState = edit(it) }
     }
 
-    private suspend fun activateNow(password: String) {
+    private suspend fun activate(input: DisplayState.Choose) {
+        noDblClick.runBlocking { activateNow(input) }
+    }
+
+    private suspend fun activateNow(input: DisplayState.Choose) {
         val result = authState.activateAccount(
-            AuthActivateAccountRequest(provider = props.provider, token = props.token, password = password)
+            AuthActivateAccountRequest(
+                provider = props.provider,
+                token = props.token,
+                password = input.password,
+                displayName = input.displayName,
+            )
         )
 
-        displayState = when (result?.success) {
-            true -> DisplayState.Activated
-            false -> DisplayState.LinkNotUsable
-            null -> DisplayState.Failed(retry = { activate(password) })
+        displayState = when {
+            result == null -> DisplayState.Failed(retry = { activate(input) })
+            result.success -> DisplayState.Activated
+            // The input, not the link: keep the form, say why.
+            result.failure != null -> input.copy(refused = result.failure)
+            else -> DisplayState.LinkNotUsable
         }
 
         // Only THIS answer's session: a browser already signed in as someone else must still see the outcome.
-        if (result?.signIn is AuthSignInResponse.Success) {
-            val uri = authState.router().strategy.render(authState.frontend.config.redirectAfterLogin)
-            authState.redirectAfterLogin(uri)
+        when (result?.signIn) {
+            is AuthSignInResponse.Success -> {
+                val uri = authState.router().strategy.render(authState.frontend.config.redirectAfterLogin)
+                authState.redirectAfterLogin(uri)
+            }
+
+            // Several organisations: `AuthState` holds the selection, the login page shows the picker.
+            is AuthSignInResponse.OrgSelectionRequired ->
+                authState.router().navToUri(authState.router().strategy.render(authState.frontend.routes.login()))
+
+            null -> Unit
         }
     }
 
@@ -223,9 +252,28 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
         ui.form Form {
             onSubmit { evt -> evt.preventDefault() }
 
-            p { +"Choose a password for your account. Setting it activates the account." }
+            p { +"Choose your name and a password for your account. Setting them activates the account." }
 
-            UiPasswordField(s.password, { displayState = s.copy(password = it) }) {
+            when (s.refused) {
+                AuthActivateAccountResponse.Failure.WeakPassword -> ui.error.visible.message {
+                    +"The server did not accept this password. "
+                    +realm.passwordPolicy.description
+                }
+
+                AuthActivateAccountResponse.Failure.InvalidDisplayName -> ui.error.visible.message {
+                    +"The server did not accept this name. "
+                    +AuthDisplayName.DESCRIPTION
+                }
+
+                null -> Unit
+            }
+
+            UiInputField(s.displayName, { name -> editChoice { it.copy(displayName = name) } }) {
+                placeholder("Your name")
+                accepts(AuthDisplayName.asFormRule())
+            }
+
+            UiPasswordField(s.password, { password -> editChoice { it.copy(password = password) } }) {
                 placeholder("Password")
                 revealPasswordIcon()
                 accepts(realm.passwordPolicy.asFormRule())
@@ -236,7 +284,7 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
                     .givenNot(noDblClick.canRun) { loading }
                     .givenNot(formCtrl.isValid) { disabled }
                     .button Submit {
-                    onClick { formCtrl.validate { activate(s.password) } }
+                    onClick { formCtrl.validate { activate(s.copy(refused = null)) } }
                     +"Activate my account"
                 }
             }
@@ -246,7 +294,7 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
     private fun FlowContent.renderActivated() {
         ui.success.message {
             icon.check()
-            +"Your account is activated. You can sign in now."
+            +"Your account is active."
         }
 
         renderBackLink()

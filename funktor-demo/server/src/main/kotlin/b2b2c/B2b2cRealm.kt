@@ -94,6 +94,11 @@ class B2b2cRealm(
             throw AuthError.notSupported()
         }
 
+        override suspend fun activate(user: Stored<B2b2cUser>, params: AuthUserAdapter.ActivateUserParams): Stored<B2b2cUser> {
+            // Provisioned by their organisation, so never pending activation — nothing to activate.
+            throw AuthError.notSupported()
+        }
+
         override suspend fun retire(user: Stored<B2b2cUser>, retirement: AccountRetirement): Stored<B2b2cUser> {
             // Provisioned by their organisation, so never pending activation — nothing to retire.
             throw AuthError.notSupported()

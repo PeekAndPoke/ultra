@@ -8,16 +8,15 @@ sealed interface AuthSignUpRequest {
     val provider: String
 
     /**
-     * Email first: no password. The activation mail's link opens "Choose your password", and setting it activates
-     * the account ([AuthActivateAccountRequest.password]), so an account that has not proven its address never
-     * holds a credential.
+     * Email first: the address only. The activation mail's link opens "Choose your password", and setting it and
+     * the display name activates the account ([AuthActivateAccountRequest]), so an account that has not proven its
+     * address holds no credential and nothing its creator chose.
      */
     @Serializable
     @SerialName("email_and_password")
     data class EmailAndPassword(
         override val provider: String,
         val email: String,
-        val displayName: String? = null,
     ) : AuthSignUpRequest
 
     @Serializable

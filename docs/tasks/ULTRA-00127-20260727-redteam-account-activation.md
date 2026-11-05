@@ -233,3 +233,19 @@ Collected, not executed. The design: ULTRA-00231 (email first signup).
   the victim's own sign-up re-sends the link and they activate an account carrying it. Where does that name show
   (mails, admin screens)? Parked for the maintainer in ULTRA-00231.
 
+
+## Added by activation round 2 (ULTRA-00289, 2026-11-05)
+
+- **The display-name scenario above is closed by design:** sign-up takes no name, the activation page sets it.
+  Probe that it stays closed: sign up with a `displayName` (an old client) and check that it is ignored. Activate
+  through a reset or SSO and check that the account carries only the default derived from the address.
+- **The name field as a carrier.** `AuthDisplayName` refuses control characters, line breaks and bidi controls.
+  Try zero-width characters, homoglyphs, 100 chars of combining marks, a name that looks like a URL or an
+  instruction. Where the name shows (mails to others, admin screens, invitations): does any of it render as more
+  than text?
+- **Overlapping links.** For 30 minutes after a re-send the older links still work. An attacker who can trigger
+  re-sends (anyone, after the delay) and read one old mail copy (a forwarded or scanned mailbox): how many live
+  links can exist at once, and for how long? Two interleaved re-sends (ULTRA-00130's race) cap each other's link
+  to 30 minutes: does a user ever end up with no live link?
+- **The refusal reasons.** `WeakPassword` and `InvalidDisplayName` are answered before the token is looked at. Send
+  a weak password with a used, an unknown and a live token: are the answers (body, status, timing) identical?

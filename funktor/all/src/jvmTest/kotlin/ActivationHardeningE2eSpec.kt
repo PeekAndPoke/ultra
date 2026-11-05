@@ -22,7 +22,9 @@ import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
+import io.peekandpoke.funktor.auth.model.AuthOrgRef
 import io.peekandpoke.funktor.auth.model.AuthRecoverAccountRequest
+import io.peekandpoke.funktor.auth.model.AuthSelectOrgRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
@@ -39,6 +41,7 @@ import io.peekandpoke.funktor.testing.AppUnderTest
 import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
@@ -115,10 +118,8 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
 
         api.authLogin.signUp(
             realmParam,
-            body = AuthSignUpRequest.EmailAndPassword(
-                // No display name: it defaults to the address's local part, which retirement must not keep.
-                provider = provider, email = email, displayName = null,
-            ),
+            // Sign-up takes no name: it defaults to the address's local part, which retirement must not keep.
+            body = AuthSignUpRequest.EmailAndPassword(provider = provider, email = email),
         ) {
             status shouldBe HttpStatusCode.OK
             apiResponseData<AuthSignUpResponse>().shouldNotBeNull().requiresActivation shouldBe true
@@ -163,23 +164,33 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
         ) { this@passwordSignIn.check(this) }
     }
 
-    /** Chooses [password] through the activation link [token]; true when that activated the account. */
+    /** Chooses [password] and [displayName] through the activation link [token]; true when that activated the account. */
     private suspend fun AppUnderTest<FunktorAllTestConfig>.activate(
         token: String,
         password: String = this@ActivationHardeningE2eSpec.password,
-    ): Boolean {
-        var success: Boolean? = null
+        displayName: String = "Test User",
+    ): Boolean = activateAnswer(token, password, displayName).success
+
+    /** As [activate], with the whole answer. */
+    private suspend fun AppUnderTest<FunktorAllTestConfig>.activateAnswer(
+        token: String,
+        password: String = this@ActivationHardeningE2eSpec.password,
+        displayName: String = "Test User",
+    ): AuthActivateAccountResponse {
+        var answer: AuthActivateAccountResponse? = null
 
         anonymous {
             api.authLogin.activateAccount(
                 realmParam,
-                body = AuthActivateAccountRequest(provider = provider, token = token, password = password),
+                body = AuthActivateAccountRequest(
+                    provider = provider, token = token, password = password, displayName = displayName,
+                ),
             ) {
-                success = apiResponseData<AuthActivateAccountResponse>()?.success
+                answer = apiResponseData<AuthActivateAccountResponse>()
             }
         }
 
-        return success.shouldNotBeNull()
+        return answer.shouldNotBeNull()
     }
 
     private suspend fun AppUnderTest<FunktorAllTestConfig>.cancel(token: String): Boolean {
@@ -338,6 +349,156 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                         users.byEmail(EmailAddress.of(email)).shouldNotBeNull()
                     }
                 }
+            }
+        }
+
+        //  The older links overlap  /////////////////////////////////////////////////////////////////////////
+
+        "After a re-send the OLDER link stays usable for the overlap — then only the newest one is" {
+            apiApp {
+                anonymous {
+                    val firstDelay = config.activationResendDelays[0]
+
+                    // Someone signs the address up again while the user types a password into the older link.
+                    val inside = freshEmail("overlap-inside")
+                    signUp(inside)
+                    val insideOlder = activationTokenTo(inside)
+                    advance(firstDelay)
+                    signUp(inside)
+                    val insideNewer = activationTokenTo(inside)
+                    insideNewer shouldNotBe insideOlder
+
+                    advance(config.activationLinkOverlap - 1.minutes)
+
+                    withClue("inside the overlap: the older link activates, and takes the newer one with it") {
+                        activate(insideOlder) shouldBe true
+                        activate(insideNewer) shouldBe false
+                    }
+
+                    val past = freshEmail("overlap-past")
+                    signUp(past)
+                    val pastOlder = activationTokenTo(past)
+                    advance(firstDelay)
+                    signUp(past)
+                    val pastNewer = activationTokenTo(past)
+
+                    advance(config.activationLinkOverlap + 1.minutes)
+
+                    withClue("past the overlap: the older link is dead, the newer one lives its own 24 h") {
+                        activate(pastOlder) shouldBe false
+                        activate(pastNewer) shouldBe true
+                    }
+                }
+            }
+        }
+
+        "A re-send never EXTENDS an older link: one about to expire keeps its own end" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("overlap-no-extend")
+                    signUp(email)
+                    val older = activationTokenTo(email)
+
+                    // A quarter of an hour before the older link's own end: now + overlap would reach past it.
+                    advance(config.emailVerificationTokenLifetime - 15.minutes)
+                    signUp(email)
+                    val newer = activationTokenTo(email)
+
+                    advance(20.minutes)
+
+                    activate(older) shouldBe false
+                    activate(newer) shouldBe true
+                }
+            }
+        }
+
+        //  The display name  ////////////////////////////////////////////////////////////////////////////////
+
+        "If writing the display name FAILS, the account is active anyway and keeps the default name" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("name-fails")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+                    val token = activationTokenTo(email)
+
+                    var status: HttpStatusCode? = null
+
+                    ActivateGate.fail = true
+                    try {
+                        // The test client may rethrow the server's exception rather than answer 500; either way the
+                        // request must not succeed.
+                        runCatching {
+                            api.authLogin.activateAccount(
+                                realmParam,
+                                body = AuthActivateAccountRequest(
+                                    provider = provider, token = token, password = password, displayName = "Ada",
+                                ),
+                            ) { status = this.status }
+                        }
+                    } finally {
+                        ActivateGate.fail = false
+                    }
+
+                    status shouldNotBe HttpStatusCode.OK
+
+                    withClue("active — a pending account with a used-up link would be worse — under the default name") {
+                        isPending(id) shouldBe false
+                        users.byId(id).shouldNotBeNull().value.name shouldBe email.substringBefore("@")
+                        passwordSignIn(email) { response -> response.status shouldBe HttpStatusCode.OK }
+                    }
+                }
+            }
+        }
+
+        //  Org realms  //////////////////////////////////////////////////////////////////////////////////////
+
+        "In an ORG realm, activation signs into the one org, hands n orgs to the picker, and with none just activates" {
+            val one = AuthOrgRef(id = OrgId("orgs/one"), slug = "one", name = "One")
+            val two = AuthOrgRef(id = OrgId("orgs/two"), slug = "two", name = "Two")
+
+            try {
+                apiApp {
+                    anonymous {
+                        listOf(emptyList(), listOf(one), listOf(one, two)).forEach { orgs ->
+                            withClue("${orgs.size} orgs") {
+                                OrgGate.orgs = orgs
+
+                                val email = freshEmail("org-${orgs.size}")
+                                signUp(email)
+                                val id = userOf(email).shouldNotBeNull()._id
+
+                                val answer = activateAnswer(activationTokenTo(email))
+
+                                answer.success shouldBe true
+                                isPending(id) shouldBe false
+
+                                when (orgs.size) {
+                                    0 -> answer.signIn shouldBe null
+
+                                    1 -> answer.signIn.shouldBeInstanceOf<AuthSignInResponse.Success>()
+
+                                    else -> {
+                                        val selection = answer.signIn.shouldBeInstanceOf<AuthSignInResponse.OrgSelectionRequired>()
+                                        selection.organisations shouldBe orgs
+
+                                        withClue("the picker's token completes the sign-in") {
+                                            api.authLogin.selectOrg(
+                                                realmParam,
+                                                body = AuthSelectOrgRequest(selectionToken = selection.selectionToken, orgId = two.id),
+                                            ) {
+                                                status shouldBe HttpStatusCode.OK
+                                                apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } finally {
+                OrgGate.orgs = null
             }
         }
 
@@ -625,7 +786,10 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     RetireGate.afterRetireClaim = {
                         midRetireActivation = authSystem.activate(
                             ActivationHardeningRealm.REALM,
-                            AuthActivateAccountRequest(provider = provider, token = activationToken, password = password),
+                            AuthActivateAccountRequest(
+                                provider = provider, token = activationToken, password = password,
+                                displayName = "Test User",
+                            ),
                         ).success
                     }
 

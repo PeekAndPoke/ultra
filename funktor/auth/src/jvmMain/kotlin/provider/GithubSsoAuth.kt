@@ -111,9 +111,9 @@ class GithubSsoAuth(
         /**
          * Gets the user's addresses (`GET /user/emails`, needs the `user:email` scope), or null.
          *
-         * Defaults to null, which reads as "nothing verified" — the safe answer.
+         * Null reads as "nothing verified". No default, so a custom client cannot skip it unnoticed.
          */
-        suspend fun getEmails(access: JsonObject): JsonArray? = null
+        suspend fun getEmails(access: JsonObject): JsonArray?
     }
 
     /** Default implementation of the remote client */

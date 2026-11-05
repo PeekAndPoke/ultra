@@ -72,7 +72,8 @@ interface AuthProvider {
 
     /**
      * Consumes an activation token issued by this provider at sign-up, sets the account's first password and
-     * activates it; returns the activated user, whom the realm signs in.
+     * activates it; returns the activated user, whose display name the realm then writes and whom it signs in.
+     * `AuthRealm.activate` has already checked the password policy and the display name.
      *
      * Answers null for an unknown, used or expired token rather than throwing — the endpoint is anonymous, so
      * an error would tell an attacker which tokens exist. Null too for an account that is not pending: a

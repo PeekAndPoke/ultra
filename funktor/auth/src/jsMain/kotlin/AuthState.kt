@@ -192,7 +192,21 @@ class AuthState<USER>(
      * selection token + the choices) until [selectOrg] is called. Null otherwise.
      */
     var pendingOrgSelection: AuthSignInResponse.OrgSelectionRequired? = null
-        private set
+        private set(value) {
+            field = value
+            orgSelectionFromActivation = false
+        }
+
+    /** True while [pendingOrgSelection] came from [activateAccount] and the login page has not taken it. */
+    private var orgSelectionFromActivation = false
+
+    /**
+     * The selection an activation handed to the login page, once; null for any other selection.
+     *
+     * One-shot, so opening the login page never resurfaces a selection someone else left behind (ULTRA-00068).
+     */
+    fun takeActivationOrgSelection(): AuthSignInResponse.OrgSelectionRequired? =
+        pendingOrgSelection?.takeIf { orgSelectionFromActivation }.also { orgSelectionFromActivation = false }
 
     /** Cancels a pending multi-org selection (e.g. the user backs out of the picker). */
     fun clearPendingOrgSelection() {
@@ -222,18 +236,28 @@ class AuthState<USER>(
     }
 
     /**
-     * Chooses the first password and activates the account, signing the user in when the server sent a session;
-     * null when the server could not be asked (transport or server error). A user with several organisations
-     * signs in again to choose one: [isLoggedIn][Data.isLoggedIn] stays false then.
+     * Chooses the first password and the display name and activates the account, signing the user in when the
+     * server sent a session; null when the server could not be asked (transport or server error). A user with
+     * several organisations gets [pendingOrgSelection], for the login page's picker.
      */
     suspend fun activateAccount(request: AuthActivateAccountRequest): AuthActivateAccountResponse? {
+        // As in [login]: no earlier attempt's selection may survive into this one's outcome.
+        pendingOrgSelection = null
+
         val response = api
             .activateAccount(request)
             .map { it.data!! }
             .catch { /* noop */ }
             .firstOrNull()
 
-        (response?.signIn as? AuthSignInResponse.Success)?.let { applySuccess(it) }
+        when (val signIn = response?.signIn) {
+            is AuthSignInResponse.Success -> applySuccess(signIn)
+            is AuthSignInResponse.OrgSelectionRequired -> {
+                pendingOrgSelection = signIn
+                orgSelectionFromActivation = true
+            }
+            null -> { /* no session: failed, or the realm could not sign the user in */ }
+        }
 
         return response
     }
@@ -312,6 +336,8 @@ class AuthState<USER>(
     }
 
     fun logout() {
+        // A picker left open must not outlive the sign-out, for whoever uses this browser next.
+        pendingOrgSelection = null
         stopSessionLifecycle()
         streamSource(Data.empty())
     }

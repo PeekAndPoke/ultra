@@ -116,6 +116,9 @@ class EmailAndPasswordAuth(
         /** Remove every email verification token for [realm] / [owner], except [exceptId] */
         suspend fun removeEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String? = null)
 
+        /** Let every live email verification token of [realm] / [owner] except [exceptId] expire by [notAfter] at the latest */
+        suspend fun capEmailVerificationTokens(realm: RealmId, owner: UserId, exceptId: String, notAfter: MpInstant)
+
         /** Remove every password record of [realm] / [owner], except [exceptId] */
         suspend fun removePasswordRecords(realm: RealmId, owner: UserId, exceptId: String? = null)
 
@@ -206,6 +209,19 @@ class EmailAndPasswordAuth(
             authRecordStorage.removeAllByOwner(
                 type = AuthRecord.EmailVerificationToken, realm = realm, owner = owner, exceptId = exceptId,
             )
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun capEmailVerificationTokens(
+            realm: RealmId, owner: UserId, exceptId: String, notAfter: MpInstant,
+        ) {
+            val cap = notAfter.toEpochSeconds()
+
+            authRecordStorage
+                .findAllByOwner(type = AuthRecord.EmailVerificationToken, realm = realm, owner = owner)
+                .filter { it._id != exceptId && it.value.expiresAt > cap }
+                // A replace, never a save: a link an activation removed meanwhile must stay removed.
+                .forEach { authRecordStorage.replaceIfUnclaimed(it.modify { token -> token.copy(expiresAt = cap) }) }
         }
 
         /** @{inheritDoc} */
@@ -353,7 +369,7 @@ class EmailAndPasswordAuth(
             ?: throw AuthError.invalidRequest()
         // Create params for user creation
         val createParams = AuthUserAdapter.CreateUserForSignupParams
-            .of(email = email, displayName = typed.displayName)
+            .of(email = email)
         // Ensure no existing user. An EXPIRED pending account gives its address up right here, so expiry
         // does not depend on the sweep having run.
         val existing = realm.users.loadByEmail(createParams.email)
@@ -460,11 +476,21 @@ class EmailAndPasswordAuth(
             )
         }
 
-        // Rotate AFTER creating, excluding what was just created: only the newest link stays live, and
-        // row growth stays bounded. Ordered this way because the reverse (delete, then create) lets two
-        // interleaved re-sends delete the token the other has already mailed, so a user would receive a
-        // link that was dead before it arrived.
-        services.removeEmailVerificationTokens(realm = realm.id, owner = UserId(user._id), exceptId = issued._id)
+        // Retire the older links AFTER creating, excluding what was just created. Ordered this way because the
+        // reverse lets two interleaved re-sends kill the token the other has already mailed, so a user would receive
+        // a link that was dead before it arrived. Not at once: anyone can sign the address up again, and the user may
+        // be typing a password into the older link right now. Rows stay bounded by the growing delays, and an
+        // activation removes them all.
+        val overlap = realm.tokenConfig.activationLinkOverlap
+
+        if (overlap.isPositive()) {
+            services.capEmailVerificationTokens(
+                realm = realm.id, owner = UserId(user._id), exceptId = issued._id,
+                notAfter = services.instantNow().plus(overlap),
+            )
+        } else {
+            services.removeEmailVerificationTokens(realm = realm.id, owner = UserId(user._id), exceptId = issued._id)
+        }
 
         // The cancel link lives as long as the ACCOUNT, not the activation link: one token, minted once and
         // mailed again by every re-send, so a victim can still decline on day 6.
@@ -509,9 +535,7 @@ class EmailAndPasswordAuth(
     override suspend fun <USER : AuthUser> activateAccount(
         realm: AuthRealm<USER>, request: AuthActivateAccountRequest,
     ): Stored<USER>? {
-        // Before the token is touched, so a weak password leaves the link usable.
-        if (!realm.passwordPolicy.matches(request.password)) throw AuthError.weakPassword()
-
+        // The input (password policy, display name) was checked by `AuthRealm.activate`, before the token is touched.
         val tokenRecord = services
             .findEmailVerificationToken(realm = realm.id, token = request.token)
             ?: return null
