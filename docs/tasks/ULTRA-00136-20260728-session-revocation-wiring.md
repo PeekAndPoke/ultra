@@ -1,6 +1,7 @@
 # ULTRA-00136: Session revocation — wire the JWT half
 
-> **Status (2026-08-01): NOT STARTED.** the storage half exists; the JWT integration does not
+> **Status (2026-11-06): NOT STARTED, waiting on the maintainer for open questions 1-5** (recommendations below).
+> Decided 2026-11-06: session ids are stored hashed. The storage half exists; the JWT integration does not.
 >
 > **Part of:** ULTRA-00248 (Auth and sessions epic)
 
@@ -75,6 +76,27 @@ These are design decisions, not implementation details. Settle them before build
    touches tenant isolation, so it needs the same treatment as any other cross-org operation.
 5. **`expiresAt` vs JWT expiry.** Two lifetimes now exist. Which wins, and does refresh extend the
    session row or only the JWT?
+
+## Decided by the maintainer (2026-11-06)
+
+- **Session ids are stored hashed** ("Yes i think session ids should be stored hashed too"). The row keeps
+  `tokenHash = TokenHash.of(sessionId)` and `token = null`, like the one-shot tokens; the raw id lives only in the JWT
+  claim. The `_key` no longer mirrors the raw id: the lookup is `findByTokenHash` (indexed), which ULTRA-00291 built.
+
+## Recommendations on the open questions (2026-11-06, for the maintainer)
+
+1. **Default: `Vault`**, revocation on. A security control that is silently off is what this repo rejects, and no
+   app is live, so the extra row per sign-in costs nothing to migrate. `Null` stays for tests.
+2. **Device list: none for now.** Keep `userAgent` and `ipAddress` as information on the row; drop the "device"
+   meaning of `deviceFingerprint` (keep or remove the field). A real "your devices" feature needs a client-generated
+   id and gets its own ticket when wanted.
+3. **No reuse:** one row per sign-in, pruned by the TTL. A list, when one exists, sorts by `lastSeenAt`.
+4. **Self-service only:** a user revokes their own sessions ("sign out", "sign out everywhere else"). Revoking for
+   others (org admins, super users) touches tenant isolation and gets its own ticket.
+5. **Two lifetimes, the row wins:** the row's `expiresAt` is an absolute session lifetime (new
+   `RealmTokenConfig.sessionLifetime`, default 30 days); the JWT stays short. `refreshToken` refuses when the row is
+   gone or expired, which is what stops a refresh from laundering a token; it never extends the row. `touch` updates
+   `lastSeenAt` only, debounced by `sessionTouchInterval`.
 
 ## Notes
 
