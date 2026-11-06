@@ -41,6 +41,9 @@ import io.peekandpoke.funktor.testing.AppSpec
 import io.peekandpoke.funktor.testing.AppUnderTest
 import io.peekandpoke.ultra.common.decodeUriComponent
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.security.password.Argon2PasswordHasher
+import io.peekandpoke.ultra.security.password.PBKDF2WithHmacSHA256PasswordHasher
+import io.peekandpoke.ultra.security.password.PasswordHasher
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
@@ -261,6 +264,42 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     withClue("the name chosen at activation is written, trimmed, on this backend") {
                         users.byId(id).shouldNotBeNull().value.name shouldBe "Ada Lovelace"
                     }
+                    passwordSignIn(email) { response ->
+                        response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                    }
+                }
+            }
+        }
+
+        "A sign-in moves a password hash made by an OLDER hasher to the current one, in place (ULTRA-00066)" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("rehash")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+                    activate(activationTokenTo(email)) shouldBe true
+
+                    // As if stored before a stronger hasher became the primary: one the compound hasher still verifies.
+                    val legacy = PBKDF2WithHmacSHA256PasswordHasher.i65536k256
+                    val stored = records.findLatestRecordBy(AuthRecord.Password, realm.id, UserId(id)).shouldNotBeNull()
+                    records.replaceIfUnclaimed(stored.modify { it.copy(token = legacy.hashAsString(password)) }).shouldNotBeNull()
+                    withClue("precondition: the legacy hash is what is stored now, on this backend") {
+                        val planted = records.findLatestRecordBy(AuthRecord.Password, realm.id, UserId(id)).shouldNotBeNull()
+                        PasswordHasher.Hash.fromString(planted.value.token).id shouldBe legacy.id
+                        authSystem.deps.passwordHasher.needsRehash(planted.value.token) shouldBe true
+                    }
+
+                    passwordSignIn(email) { response ->
+                        response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                    }
+
+                    val after = records.findLatestRecordBy(AuthRecord.Password, realm.id, UserId(id)).shouldNotBeNull()
+                    withClue("the same record, now hashed by the primary") {
+                        after._id shouldBe stored._id
+                        PasswordHasher.Hash.fromString(after.value.token).id shouldBe Argon2PasswordHasher.id_m65536i2p4o32.id
+                        authSystem.deps.passwordHasher.needsRehash(after.value.token) shouldBe false
+                    }
+
                     passwordSignIn(email) { response ->
                         response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
                     }

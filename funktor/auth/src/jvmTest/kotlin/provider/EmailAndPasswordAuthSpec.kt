@@ -45,6 +45,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
     private open class TestServices(
         val onHashPassword: (String) -> String = { error("hashPassword not implemented") },
         val onCheckPassword: (String, String) -> Boolean = { _, _ -> error("checkPassword not implemented") },
+        val onPasswordNeedsRehash: (String) -> Boolean = { false },
+        val onReplacePasswordRecord: suspend (Stored<AuthRecord.Password>) -> Boolean =
+            { error("replacePasswordRecord not implemented") },
         val onFindLatestPasswordRecord: suspend (RealmId, UserId) -> Stored<AuthRecord.Password>? = { _, _ -> error("findLatestPasswordRecord not implemented") },
         val onCreateAuthRecord: suspend (create: () -> AuthRecord) -> Stored<AuthRecord> = { error("createAuthRecord not implemented") },
         val onGenerateToken: (Int) -> String = { error("generateToken not implemented") },
@@ -77,6 +80,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
     ) : EmailAndPasswordAuth.Services {
         override fun hashPassword(password: String): String = onHashPassword(password)
         override fun checkPassword(plaintext: String, hash: String): Boolean = onCheckPassword(plaintext, hash)
+        override fun passwordNeedsRehash(hash: String): Boolean = onPasswordNeedsRehash(hash)
+        override suspend fun replacePasswordRecord(record: Stored<AuthRecord.Password>): Boolean =
+            onReplacePasswordRecord(record)
         override suspend fun findLatestPasswordRecord(realm: RealmId, owner: UserId): Stored<AuthRecord.Password>? =
             onFindLatestPasswordRecord(realm, owner)
 
@@ -348,6 +354,89 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 result shouldBe storedUser
             }
 
+            "rehash (ULTRA-00066): a proven password with an OUTDATED hash is re-hashed in place; a current one is not" {
+                val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
+                val record = Stored(
+                    _id = "password-id",
+                    value = AuthRecord.Password(realm = RealmId("test-realm"), ownerId = UserId(storedUser._id), token = "old-hash"),
+                )
+
+                fun subjectWith(outdated: Boolean, replace: suspend (Stored<AuthRecord.Password>) -> Boolean) =
+                    EmailAndPasswordAuth(
+                        capabilities = setOf(AuthProviderModel.Capability.SignIn),
+                        log = NullLog,
+                        frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                        services = lazy {
+                            TestServices(
+                                onCheckPassword = { plaintext, _ -> plaintext == "correct-password" },
+                                onPasswordNeedsRehash = { it == "old-hash" && outdated },
+                                onHashPassword = { "new-hash-of-$it" },
+                                onReplacePasswordRecord = replace,
+                                onFindLatestPasswordRecord = { _, _ -> record },
+                                onFindPendingActivation = { _, _ -> null },
+                            )
+                        },
+                    )
+
+                fun request(password: String) =
+                    AuthSignInRequest.EmailAndPassword(provider = EmailAndPasswordAuth.ID, email = "user@example.com", password = password)
+
+                val realm = MinimalTestRealm(onLoadUserByEmail = { storedUser })
+
+                withClue("outdated: the SAME record (in place), the new hash of the proven password") {
+                    val written = mutableListOf<Stored<AuthRecord.Password>>()
+                    subjectWith(outdated = true) { written += it; true }.signIn(realm, request("correct-password")) shouldBe storedUser
+
+                    written.single()._id shouldBe "password-id"
+                    written.single().resolve().token shouldBe "new-hash-of-correct-password"
+                }
+
+                withClue("current: nothing written") {
+                    val written = mutableListOf<Stored<AuthRecord.Password>>()
+                    subjectWith(outdated = false) { written += it; true }.signIn(realm, request("correct-password")) shouldBe
+                        storedUser
+
+                    written shouldBe emptyList()
+                }
+
+                withClue("a wrong password re-hashes nothing, outdated or not") {
+                    val written = mutableListOf<Stored<AuthRecord.Password>>()
+                    shouldThrow<AuthError> {
+                        subjectWith(outdated = true) { written += it; true }.signIn(realm, request("wrong-password"))
+                    }
+
+                    written shouldBe emptyList()
+                }
+
+                withClue("a new hash the hasher cannot verify is never written (a compound nested in a compound)") {
+                    val written = mutableListOf<Stored<AuthRecord.Password>>()
+                    val subject = EmailAndPasswordAuth(
+                        capabilities = setOf(AuthProviderModel.Capability.SignIn),
+                        log = NullLog,
+                        frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                        services = lazy {
+                            TestServices(
+                                // The stored hash checks; what the primary makes now does not.
+                                onCheckPassword = { plaintext, hash -> plaintext == "correct-password" && hash == "old-hash" },
+                                onPasswordNeedsRehash = { true },
+                                onHashPassword = { "unverifiable-$it" },
+                                onReplacePasswordRecord = { written += it; true },
+                                onFindLatestPasswordRecord = { _, _ -> record },
+                                onFindPendingActivation = { _, _ -> null },
+                            )
+                        },
+                    )
+
+                    subject.signIn(realm, request("correct-password")) shouldBe storedUser
+                    written shouldBe emptyList()
+                }
+
+                withClue("a failing rewrite never fails the sign-in, also when the store's failure is no Exception (Karango's)") {
+                    subjectWith(outdated = true) { throw object : Throwable("the store is down") {} }
+                        .signIn(realm, request("correct-password")) shouldBe storedUser
+                }
+            }
+
             "a pending account signed up BEFORE email first refuses its sign-up password, exactly like a wrong one" {
                 // The credentials are CORRECT here. Anything less would pass for the wrong reason —
                 // the point is that a valid password is not enough until the address is proven. Since email
@@ -522,6 +611,29 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     subject.signUp(realm, request)
                 }
                 error.message shouldBe "Invalid request"
+            }
+
+            "a sign-up whose user cannot be created (a concurrent sign-up won the index) is refused, also for a Throwable" {
+                // A Karango user repository fails with Throwables, not Exceptions; that was a 500.
+                val subject = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    log = NullLog,
+                    services = lazy { TestServices() },
+                )
+                listOf(
+                    object : Throwable("unique constraint violated") {} to "User already exists",
+                    // A realm without sign-up refuses with its own AuthError: its message survives.
+                    AuthError.notSupported() to "Not supported",
+                ).forEach { (failure, answer) ->
+                    val realm = MinimalTestRealm(onLoadUserByEmail = { null }, onCreateUserForSignup = { throw failure })
+
+                    withClue(failure.message) {
+                        shouldThrow<AuthError> {
+                            subject.signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = subject.id, email = "new@example.com"))
+                        }.message shouldBe answer
+                    }
+                }
             }
 
             "should throw when an ACTIVE user already exists" {

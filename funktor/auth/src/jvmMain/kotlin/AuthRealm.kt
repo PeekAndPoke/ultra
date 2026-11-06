@@ -568,7 +568,16 @@ interface AuthRealm<USER : AuthUser> {
 
         if (marker == null) {
             if (!isEmailVerified()) throw AuthError.invalidCredentials()
-            return user
+
+            // No marker: active, or retired a moment ago. A retire renames the row BEFORE it removes its claimed
+            // marker, so the row read now tells which; [user] was loaded before the marker read and may be stale
+            // (ULTRA-00288). The round trip on the id guards Monko's key-only findById, as in the retire. The address
+            // must still be the one the provider verified: a retire's rename, or a change meanwhile, is refused.
+            return users.loadById(owner)
+                ?.takeIf {
+                    it._id == user._id && it.value.email == user.value.email && !AccountRetirement.isRetired(it.value.email)
+                }
+                ?: throw AuthError.invalidCredentials()
         }
 
         when (marker.value.claimedBy) {

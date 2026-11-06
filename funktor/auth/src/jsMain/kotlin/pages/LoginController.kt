@@ -7,6 +7,7 @@ import io.peekandpoke.funktor.auth.model.AuthRecoverAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
+import io.peekandpoke.funktor.auth.widgets.GithubOAuth
 import io.peekandpoke.funktor.auth.widgets.GithubSignInButton
 import io.peekandpoke.funktor.auth.widgets.GoogleSignInButton
 import io.peekandpoke.kraft.components.Component
@@ -44,7 +45,6 @@ class LoginController<USER>(
 ) {
     companion object {
         const val AUTH_CALLBACK_PARAM = "auth-callback"
-        const val AUTH_ACTION_PARAM = "auth-action"
     }
 
     sealed interface DisplayState {
@@ -376,50 +376,30 @@ class LoginController<USER>(
             }
         }
 
+        /** GitHub's redirect URI: this page with the callback marker; no fragment, the route rides in the state. */
+        private fun githubCallbackUrl(provider: AuthProviderModel): String =
+            "${window.location.origin}${window.location.pathname}?$AUTH_CALLBACK_PARAM=${provider.id}"
+
         fun FlowContent.renderGithubSignInButton(provider: AuthProviderModel) {
             val clientId = provider.config["client-id"]?.jsonPrimitive?.content ?: ""
-
-            val parts = listOf(
-                window.location.origin,
-                window.location.pathname,
-                "?${AUTH_CALLBACK_PARAM}=${provider.id}",
-                window.location.hash,
-            )
-
-            val callbackUrl = parts.joinToString("")
 
             GithubSignInButton(
                 clientId = clientId,
                 label = "Sign in with GitHub",
-                callbackUrl = callbackUrl,
-            ) { token ->
-                login(
-                    AuthSignInRequest.OAuth(provider = provider.id, token = token)
-                )
-            }
+                callbackUrl = githubCallbackUrl(provider),
+                action = GithubOAuth.Action.SignIn,
+            )
         }
 
         fun FlowContent.renderGithubSignUpButton(provider: AuthProviderModel) {
             val clientId = provider.config["client-id"]?.jsonPrimitive?.content ?: ""
 
-            val parts = listOf(
-                window.location.origin,
-                window.location.pathname,
-                "?${AUTH_CALLBACK_PARAM}=${provider.id}&auth-action=signup",
-                window.location.hash,
-            )
-
-            val callbackUrl = parts.joinToString("")
-
             GithubSignInButton(
                 clientId = clientId,
                 label = "Sign up with GitHub",
-                callbackUrl = callbackUrl,
-            ) { token ->
-                signup(
-                    AuthSignUpRequest.OAuth(provider = provider.id, token = token)
-                )
-            }
+                callbackUrl = githubCallbackUrl(provider),
+                action = GithubOAuth.Action.SignUp,
+            )
         }
     }
 
@@ -445,25 +425,33 @@ class LoginController<USER>(
 
         if (params.has(AUTH_CALLBACK_PARAM)) {
             val providerId = params.get(AUTH_CALLBACK_PARAM)
-            val action = params.get(AUTH_ACTION_PARAM)
             val provider = realm.providers.find { it.id == providerId }
 
             when (provider?.type) {
                 AuthProviderModel.TYPE_GITHUB -> {
-                    params.get("code")?.let { code ->
-                        if (action == "signup") {
-                            signup(AuthSignUpRequest.OAuth(provider = provider.id, token = code))
-                        } else {
-                            login(AuthSignInRequest.OAuth(provider = provider.id, token = code))
+                    // Login CSRF: only a callback bringing back the state THIS browser stored is acted on, once.
+                    val pending = GithubOAuth.complete(params.get("state"))
+                    val code = params.get("code")
+
+                    when {
+                        pending == null -> console.warn("GitHub callback without a matching state: ignored")
+
+                        code != null -> {
+                            when (pending.action) {
+                                GithubOAuth.Action.SignUp ->
+                                    signup(AuthSignUpRequest.OAuth(provider = provider.id, token = code))
+
+                                GithubOAuth.Action.SignIn ->
+                                    login(AuthSignInRequest.OAuth(provider = provider.id, token = code))
+                            }
                         }
                     }
                 }
             }
 
-            // Remove the excess query params from the uri
-            val parts = listOf(window.location.origin, window.location.pathname, window.location.hash)
-
-            window.history.pushState(null, "", parts.joinToString(""))
+            // Remove the excess query params from the uri. The route the round trip started on is already back:
+            // `AuthState` restored it before the router read the URL (`GithubOAuth.returnToStartedRoute`).
+            window.history.replaceState(null, "", window.location.pathname + window.location.hash)
         }
     }
 

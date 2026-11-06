@@ -36,6 +36,8 @@ import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Repository
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.hooks.TimestampedHook
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 class KarangoAuthRecordsRepo(
     name: String = "system_auth_records",
@@ -57,7 +59,7 @@ class KarangoAuthRecordsRepo(
         const val WRITE_WRITE_CONFLICT = 1200
 
         /** Runs of one write before a conflict is thrown; each re-run sees the writes that beat the last. */
-        const val CONFLICT_ATTEMPTS = 5
+        const val CONFLICT_ATTEMPTS = 8
     }
 
     override fun KarangoIndexBuilder<AuthRecord>.buildIndexes() {
@@ -227,9 +229,10 @@ class KarangoAuthRecordsRepo(
      * document committed meanwhile. The aborted statement wrote nothing, and its FILTER never saw the other's result,
      * so the re-run decides against the committed document — a conditional write then loses exactly when its
      * condition fails, as on Mongo. Not a 500 for the slower of two re-sends, claims or removes (ULTRA-00130). A
-     * conflict that persists over [CONFLICT_ATTEMPTS] runs is thrown.
+     * conflict that persists over [CONFLICT_ATTEMPTS] runs is thrown. A short random pause before each re-run keeps
+     * the writers that collided from colliding again in lockstep.
      */
-    private inline fun <R> retryOnConflict(block: () -> R): R {
+    private suspend inline fun <R> retryOnConflict(block: () -> R): R {
         var attempt = 1
 
         while (true) {
@@ -238,6 +241,7 @@ class KarangoAuthRecordsRepo(
             } catch (e: KarangoQueryException) {
                 val conflict = (e.cause as? ArangoDBException)?.errorNum == WRITE_WRITE_CONFLICT
                 if (!conflict || attempt >= CONFLICT_ATTEMPTS) throw e
+                delay(Random.nextLong(1, 5L * attempt + 1))
                 attempt++
             }
         }

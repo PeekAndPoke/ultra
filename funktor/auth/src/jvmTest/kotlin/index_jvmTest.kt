@@ -180,19 +180,24 @@ class NullStorageTestDeps(
     override val random: AuthRandom get() = error("Not needed for test")
 }
 
+/**
+ * A realm for unit tests. Its unexpected-call defaults throw [AssertionError]: an `Error`, which no catch in the code
+ * under test turns into an expected answer (an `error()` would be an `IllegalStateException`, which the sign-up's
+ * "User already exists" wrap rewrites).
+ */
 class MinimalTestRealm(
     override val passwordPolicy: PasswordPolicy = PasswordPolicy.default,
     /** Exposed so a spec can prove `DefaultMessaging` actually consults the realm's default. */
     override val defaultLanguage: Locale = Locale("en"),
     val getMessaging: () -> AuthRealm.Messaging<MinimalTestUser> = { TestMessaging() },
     val onLoadUserByEmail: suspend (EmailAddress) -> Stored<MinimalTestUser>? =
-        { error("loadUserByEmail was not expected to be called") },
+        { throw AssertionError("loadUserByEmail was not expected to be called") },
     val onLoadUserById: suspend (UserId) -> Stored<MinimalTestUser>? =
-        { error("onLoadUserById was not expected to be called") },
+        { throw AssertionError("onLoadUserById was not expected to be called") },
     val onCreateUserForSignup: suspend (params: AuthUserAdapter.CreateUserForSignupParams) -> Stored<MinimalTestUser> =
-        { error("createUserForSignup was not expected to be called") },
+        { throw AssertionError("createUserForSignup was not expected to be called") },
     val onRetire: suspend (Stored<MinimalTestUser>, AccountRetirement) -> Stored<MinimalTestUser> =
-        { _, _ -> error("retire was not expected to be called") },
+        { _, _ -> throw AssertionError("retire was not expected to be called") },
     val onActivate: suspend (Stored<MinimalTestUser>, AuthUserAdapter.ActivateUserParams) -> Stored<MinimalTestUser> =
         { user, params -> user.modify { it.copy(name = params.displayName) } },
     /** Defaults to deps with an EMPTY auth-record store: every account reads as activated. */

@@ -107,6 +107,17 @@ address alone, so probe:
 - **No tie to the provider's stable subject** (Google `sub`, GitHub user id). Someone who buys an expired domain and
   recreates its addresses gets them verified by the provider, and links to the old accounts.
 
+## 9. The GitHub round trip (from ULTRA-00288, 2026-11-06)
+
+- **Login CSRF.** Hand a victim's browser a callback URL carrying the attacker's `code`: from another tab, after a
+  replay, with a guessed or fixed `state`, with sessionStorage cleared or shared. Nothing may sign the victim in.
+- **Code binding.** The server's code exchange sends no `redirect_uri`, so GitHub does not bind a code to the URI it
+  was issued for: try redeeming a code sent to another path under the registered callback URL.
+- **The stored route.** Put a crafted `hash` into the stored round trip (`funktor-auth-github-oauth`): can it navigate
+  anywhere but a same-origin route?
+- **A crafted Google id token** (numeric `aud`, a wrong-length ES256 signature, a huge header): always a refused
+  sign-in, never a 500.
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00117 (was `docs/tasks/20260726-redteam-value-class-emailaddress.md`).

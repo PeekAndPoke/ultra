@@ -8,9 +8,8 @@ import java.security.SecureRandom
 interface PasswordHasher {
 
     companion object {
-        val strongRandom: SecureRandom by lazy {
-            SecureRandom.getInstanceStrong() ?: SecureRandom()
-        }
+        /** A CSPRNG. Not `getInstanceStrong()`, which can block on a low-entropy host or container (ULTRA-00066). */
+        val strongRandom: SecureRandom by lazy { SecureRandom() }
     }
 
     /**
@@ -84,4 +83,14 @@ interface PasswordHasher {
 
     /** Check if the given [plaintext] password matches the given [hash] */
     fun check(plaintext: String?, hash: Hash?): Boolean
+
+    /**
+     * True when [hash] is not what this hasher makes today, so a sign-in that just proved the password should store a
+     * fresh hash of it (ULTRA-00066). By default any id but this hasher's [id]; a hasher whose hashes carry another
+     * id (a wrapper keeping the inner hasher's) overrides it.
+     */
+    fun needsRehash(hash: Hash?): Boolean = hash?.id != id
+
+    /** As [needsRehash], for a stored hash string. */
+    fun needsRehash(hash: String?): Boolean = needsRehash(hash?.let { Hash.fromString(it) })
 }

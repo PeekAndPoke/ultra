@@ -51,6 +51,19 @@ class CompoundPasswordHasher(
 
         val hasher = hashers[hash.id] ?: return false
 
-        return hasher.check(plaintext, hash)
+        // A corrupt or adversarial stored hash proves nothing: false, never an exception out of the sign-in (a 500
+        // and an error oracle). The leaf hashers throw IllegalArgumentException (password4j's BadParametersException,
+        // a bad base64) or, for too few parameters, IndexOutOfBoundsException on what they cannot decode. Narrow on
+        // purpose: a BROKEN hasher must still fail loudly, not turn every sign-in into a silent "wrong password".
+        return try {
+            hasher.check(plaintext, hash)
+        } catch (_: IllegalArgumentException) {
+            false
+        } catch (_: IndexOutOfBoundsException) {
+            false
+        }
     }
+
+    /** True unless the PRIMARY hasher would keep [hash]: a sign-in then moves it to the primary (ULTRA-00066). */
+    override fun needsRehash(hash: PasswordHasher.Hash?): Boolean = primary.needsRehash(hash)
 }

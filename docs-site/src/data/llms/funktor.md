@@ -473,7 +473,8 @@ Every app:
   user collection (lists and admin screens show them unless they filter `AccountRetirement.isRetired`);
 - without `funktor/all`'s `Funktor` module there is no sweep: expiry happens only at use;
 - GitHub needs the `user:email` scope (GitHub App: "Email addresses" permission). `GithubSignInButton` asks for
-  it, but under hash routing the scope lands in the URL fragment and does not reach GitHub;
+  it, sends a one-time `state` and returns to the page's route, also under hash routing; an authorize URL the app
+  builds itself is no longer acted on;
 - a Google account with an unverified address can no longer sign in, also to accounts SSO created earlier;
   sessions taken that way before the upgrade survive — rotate the JWT signing key to end them;
 - `RealmTokenConfig` throws at construction for `randomTokenByteLength < 32` or `maxSignUpCancelTokens < 2`.

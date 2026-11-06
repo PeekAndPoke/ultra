@@ -275,7 +275,7 @@ class GithubSsoAuth(
                     throw AuthError.invalidCredentials()
                 }
 
-                realm.users.createForSignup(
+                realm.users.createForSignupOrRefuse(
                     AuthUserAdapter.CreateUserForSignupParams.of(
                         email = email,
                         displayName = name,

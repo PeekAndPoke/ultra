@@ -21,6 +21,8 @@ import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.jsonPrimitive
 import java.security.GeneralSecurityException
+import java.io.IOException
+import java.util.Base64
 
 class GoogleSsoAuthSpec : FreeSpec() {
 
@@ -216,7 +218,8 @@ class GoogleSsoAuthSpec : FreeSpec() {
                         email shouldBe EmailAddress("user@example.com")
                         // USER FOUND
                         storedUser
-                    }
+                    },
+                    onLoadUserById = { storedUser }, // re-read after the marker read (ULTRA-00288)
                 )
 
                 val result = subject.signIn(realm, request)
@@ -290,6 +293,88 @@ class GoogleSsoAuthSpec : FreeSpec() {
                 }
 
                 error.message shouldBe "Invalid credentials"
+            }
+
+            "a verifier that fails for another reason (a token it cannot parse, Google's keys unreachable) refuses, no 500" {
+                // ULTRA-00288 item 3. Only GeneralSecurityException was caught; these escaped as a 500.
+                listOf(IllegalArgumentException("not a JWT"), IOException("certs unreachable")).forEach { failure ->
+                    val subject = GoogleSsoAuth(
+                        capabilities = setOf(AuthProviderModel.Capability.SignIn, AuthProviderModel.Capability.SignUp),
+                        clientId = "irrelevant",
+                        remoteClient = lazy {
+                            object : GoogleSsoAuth.RemoteClient {
+                                override suspend fun verifyIdToken(token: String): GoogleIdToken? = throw failure
+                            }
+                        },
+                    )
+
+                    withClue(failure::class.simpleName) {
+                        shouldThrow<AuthError> {
+                            subject.signIn(MinimalTestRealm(), AuthSignInRequest.OAuth(provider = subject.id, token = "t"))
+                        }.message shouldBe "Invalid credentials"
+                        shouldThrow<AuthError> {
+                            subject.signUp(MinimalTestRealm(), AuthSignUpRequest.OAuth(provider = subject.id, token = "t"))
+                        }.message shouldBe "Invalid credentials"
+                    }
+                }
+            }
+
+            "the REAL verifier, fed tokens built to break it, refuses each one, no 500" {
+                // No network: each fails before the keys are fetched. A numeric `aud` made the payload check throw a
+                // ClassCastException, which no narrow catch covered.
+                fun b64(json: String) = Base64.getUrlEncoder().withoutPadding().encodeToString(json.toByteArray())
+                val claims = """"iss":"accounts.google.com","exp":9999999999"""
+                val tokens = listOf(
+                    "x",
+                    "a.b.c",
+                    "!!!.!!!.!!!",
+                    b64("""{"alg":"RS256"}""") + "." + b64("""{$claims,"aud":1}""") + ".AA",
+                    b64("""{"alg":"ES256"}""") + "." + b64("""{$claims,"aud":"cid"}""") + ".AA",
+                )
+                val subject = GoogleSsoAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignIn),
+                    clientId = "cid",
+                    remoteClient = lazy { GoogleSsoAuth.RemoteClient("cid") },
+                )
+
+                tokens.forEach { token ->
+                    withClue(token) {
+                        shouldThrow<AuthError> {
+                            subject.signIn(MinimalTestRealm(), AuthSignInRequest.OAuth(provider = subject.id, token = token))
+                        }.message shouldBe "Invalid credentials"
+                    }
+                }
+            }
+
+            "a sign-up whose user cannot be created (a concurrent sign-up won the unique index) refuses, no 500" {
+                val payload = GoogleIdToken.Payload().apply {
+                    email = "new@example.com"
+                    emailVerified = true
+                }
+                val idToken = GoogleIdToken(JsonWebSignature.Header(), payload, byteArrayOf(), byteArrayOf())
+                val subject = GoogleSsoAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    clientId = "irrelevant",
+                    remoteClient = lazy {
+                        object : GoogleSsoAuth.RemoteClient {
+                            override suspend fun verifyIdToken(token: String): GoogleIdToken = idToken
+                        }
+                    },
+                )
+                // Not an Exception: a Karango user repository fails with Throwables. The adapter's own AuthError (a realm
+                // without sign-up) keeps its message.
+                listOf(
+                    object : Throwable("unique constraint violated") {} to "User already exists",
+                    AuthError.notSupported() to "Not supported",
+                ).forEach { (failure, answer) ->
+                    val realm = MinimalTestRealm(onLoadUserByEmail = { null }, onCreateUserForSignup = { throw failure })
+
+                    withClue(failure.message) {
+                        shouldThrow<AuthError> {
+                            subject.signUp(realm, AuthSignUpRequest.OAuth(provider = subject.id, token = "t"))
+                        }.message shouldBe answer
+                    }
+                }
             }
 
             "should throw InvalidCredentials when token payload has no email" {
@@ -469,6 +554,7 @@ class GoogleSsoAuthSpec : FreeSpec() {
                         email shouldBe EmailAddress("user@example.com")
                         existingUser // User exists
                     },
+                    onLoadUserById = { existingUser }, // re-read after the marker read (ULTRA-00288)
                     onCreateUserForSignup = { _ ->
                         error("Should not be called")
                     }

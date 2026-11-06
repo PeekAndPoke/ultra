@@ -15,6 +15,8 @@ import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignInResponse
 import io.peekandpoke.funktor.auth.model.PasswordPolicy
 import io.peekandpoke.funktor.auth.pages.AuthFrontend
+import io.peekandpoke.funktor.auth.pages.LoginController
+import io.peekandpoke.funktor.auth.widgets.GithubOAuth
 import io.peekandpoke.kraft.routing.Route
 import io.peekandpoke.kraft.routing.Router
 import io.peekandpoke.kraft.routing.RouterBuilder
@@ -134,6 +136,10 @@ class AuthState<USER>(
     private val windowFocusListener: (Event) -> Unit = { checkAndRefreshToken() }
 
     init {
+        // A GitHub callback landed on the root route of a hash-routed app: back to where the round trip started, before
+        // the router reads the URL (ULTRA-00288).
+        GithubOAuth.returnToStartedRoute(callbackParam = LoginController.AUTH_CALLBACK_PARAM)
+
         if (sessionConfig.enabled) {
             val data = streamSource()
             if (data.isLoggedIn) {

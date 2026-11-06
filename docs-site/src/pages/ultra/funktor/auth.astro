@@ -494,8 +494,9 @@ sessionConfig = AuthSessionConfig.disabled`} lang="kotlin" theme="vitesse-dark"/
         <li>without <code>funktor/all</code>'s <code>Funktor</code> module there is no sweep: an expired account
             is retired only when it is used again;</li>
         <li>GitHub sign-in needs the <code>user:email</code> scope (a GitHub App: the &ldquo;Email
-            addresses&rdquo; permission). <code>GithubSignInButton</code> asks for it, but under hash routing the
-            scope lands in the URL fragment and does not reach GitHub;</li>
+            addresses&rdquo; permission). <code>GithubSignInButton</code> asks for it, sends a one-time
+            <code>state</code> and returns to the page's route, also under hash routing; a GitHub authorize URL the
+            app builds itself is no longer acted on;</li>
         <li>a Google account with an unverified address can no longer sign in, also to an account SSO created
             earlier. Sessions taken that way before the upgrade survive it; rotating the JWT signing key ends
             them;</li>

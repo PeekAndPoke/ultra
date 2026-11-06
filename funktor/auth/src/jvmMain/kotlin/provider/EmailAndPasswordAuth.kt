@@ -33,6 +33,7 @@ import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.value
 import kotlinx.serialization.json.buildJsonObject
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Authentication provider for handling email and password-based authentication.
@@ -99,6 +100,12 @@ class EmailAndPasswordAuth(
 
         /** Check if the given plaintext password matches the given hash */
         fun checkPassword(plaintext: String, hash: String): Boolean
+
+        /** True when [hash] is not what the hasher makes today, so a proven password should be hashed again */
+        fun passwordNeedsRehash(hash: String): Boolean
+
+        /** Replace the password record [record] in place while it still exists; false when it is gone */
+        suspend fun replacePasswordRecord(record: Stored<AuthRecord.Password>): Boolean
 
         /** Create a new auth record of the given type */
         suspend fun <T : AuthRecord> createAuthRecord(record: () -> T): Stored<T>
@@ -178,6 +185,16 @@ class EmailAndPasswordAuth(
         /** @{inheritDoc} */
         override fun checkPassword(plaintext: String, hash: String): Boolean {
             return passwordHasher.check(plaintext, hash)
+        }
+
+        /** @{inheritDoc} */
+        override fun passwordNeedsRehash(hash: String): Boolean {
+            return passwordHasher.needsRehash(hash)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun replacePasswordRecord(record: Stored<AuthRecord.Password>): Boolean {
+            return authRecordStorage.replaceIfUnclaimed(record) != null
         }
 
         /** @{inheritDoc} */
@@ -363,7 +380,38 @@ class EmailAndPasswordAuth(
             throw AuthError.invalidCredentials()
         }
 
+        rehashIfOutdated(proven = proven, password = password)
+
         return user
+    }
+
+    /**
+     * Moves a password hash made by an older or weaker hasher to the current one, now that the sign-in proved the
+     * password (ULTRA-00066): adding a stronger hasher then migrates the users as they sign in. In place and only
+     * while the record still exists, so a password changed meanwhile is never brought back. Only a new hash that
+     * VERIFIES is written: a hasher set-up that cannot check what it makes (a compound nested in a compound) must not
+     * replace a working hash. Never fails the sign-in.
+     */
+    private suspend fun rehashIfOutdated(proven: Stored<AuthRecord.Password>, password: String) {
+        try {
+            if (!services.passwordNeedsRehash(proven.resolve().token)) return
+
+            val fresh = services.hashPassword(password)
+
+            if (!services.checkPassword(plaintext = password, hash = fresh)) {
+                log.warning("Not re-hashing the password of ${proven.value.ownerId}: the hasher cannot verify its own hash")
+                return
+            }
+
+            services.replacePasswordRecord(proven.modify { it.copy(token = fresh) })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Error) {
+            throw e
+        } catch (e: Throwable) {
+            // Throwable: a store's failures need not be Exceptions (Karango's are not), and none may fail the sign-in.
+            log.warning("Re-hashing the password of ${proven.value.ownerId} failed; it keeps its old hash: ${e.message}")
+        }
     }
 
     /**
@@ -397,12 +445,8 @@ class EmailAndPasswordAuth(
         // Create user via realm hook
         // NOTE: The check above is a best-effort guard. A unique index on email in the user repository
         //       is required to prevent a TOCTOU race under concurrent sign-ups.
-        val user = try {
-            realm.users.createForSignup(createParams)
-        } catch (e: Exception) {
-            // Duplicate key exception from a concurrent sign-up race — treat as "already exists"
-            throw AuthError("User already exists", cause = e)
-        }
+        // A duplicate key from a concurrent sign-up race is "already exists"; see createForSignupOrRefuse.
+        val user = realm.users.createForSignupOrRefuse(createParams)
         // Mark the account as not-yet-activated FIRST, before any mail. NO password (email first): it is chosen
         // on the activation page, so an account that has not proven its address never holds a credential — a
         // pre-registering attacker has nothing to sign in with. `createdAt` explicitly: the expiry counts from it.

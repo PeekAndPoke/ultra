@@ -1,6 +1,7 @@
 # ULTRA-00288: Funktor auth SSO: the pre-existing MINORs of the ULTRA-00118 gate (stale retired user, GitHub OAuth state and URL, 500s)
 
-> **Status (2026-11-04): NOT STARTED.** Found by the security reviewer of the ULTRA-00118 gate, round 1 (2026-11-04).
+> **Status (2026-11-06): DONE.** gate PASS after round 1. Built on the maintainer's word (2026-11-06: "tackle all auth tickets that you can work on where no additional input is needed"). Earlier status:
+> **(2026-11-04): NOT STARTED.** Found by the security reviewer of the ULTRA-00118 gate, round 1 (2026-11-04).
 > All three predate ULTRA-00118 and are out of its scope (`out-of-scope → follow-up task`).
 >
 > **Part of:** ULTRA-00248 (Epic: Auth and sessions)
@@ -34,11 +35,41 @@
 
 ## The work
 
+- [x] **1, stale user:** `AuthRealm.resolveSsoAccount`, the no-marker branch, re-reads the row by id (with the id
+      round trip that guards Monko's key-only `findById`) and refuses a missing or retired one; it signs in with the
+      fresh row. A retire renames the row BEFORE it removes its claimed marker, so "no marker" plus a fresh read is
+      enough.
+- [x] **2, login CSRF:** `widgets/GithubOAuth` (new): `begin` stores `{state, action, hash}` in sessionStorage (128
+      bits from `crypto.getRandomValues`) and builds the authorize URL; `complete(state)` accepts the callback only with
+      that state, once (removed whatever the outcome). `LoginController.handleAuthCallback` ignores a GitHub callback
+      without it. The check is the browser's: the state never reaches the server, which needs no change (the SPA
+      pattern; a server-issued state would need a session the anonymous login page does not have).
+- [x] **3, 500s:** Google's `verify` maps `IOException` and `IllegalArgumentException` too; SSO sign-ups create the
+      user through `createForSsoSignup` (`provider/SsoSignUp.kt`), which answers a failure, `Throwable`s included (a
+      Karango user repo), with "User already exists", as the email sign-up does.
+- [x] **4, the authorize URL:** every value encoded, `scope` first, the redirect URI is the page plus
+      `?auth-callback=<provider>` with NO fragment; the action (sign in or up) and the route to return to ride in
+      the stored state. Under hash routing GitHub's redirect lands on the ROOT route; `AuthState`, when created,
+      puts the started route back before the router reads the URL (`GithubOAuth.returnToStartedRoute`), and the login
+      page handles the callback there. `AUTH_ACTION_PARAM` and the button's dead `onToken` are gone. UNVERIFIED against GitHub
+      itself (no live app): the redirect URI must sit under the GitHub app's registered callback URL, as before.
+
 ## Acceptance
 
-- One spec per item, mutation-checked. Item 2 needs a frontend spec (`TestBed`) and a server check.
+- One spec per item, mutation-checked. Item 2 needs a frontend spec (`TestBed`) and a server check. (The server
+  check turned out to need no server change: the state is the browser's, see "The work".)
+
+## Review record
+
+Reviewed in one round with ULTRA-00066's round 2 (level 2, three charters, two-phase): CLEAN on all three. The
+ledger is in ULTRA-00066 ("Round 2"); every MINOR was applied, the password-records question went to the maintainer.
+
+**Verdict:** gate PASS after round 1.
 
 ## History
 
 - 2026-11-04: created from the ULTRA-00118 gate, round 1.
 - 2026-11-04: item 4 added from round 2.
+- 2026-11-06: built, reviewed with ULTRA-00066's round 2, gate PASS, DONE. The auth docs' GitHub line was corrected
+  in place (ULTRA-00290's pages); no new docs ticket.
+- 2026-11-06: DONE.

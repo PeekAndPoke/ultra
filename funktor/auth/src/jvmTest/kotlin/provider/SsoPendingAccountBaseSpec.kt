@@ -86,6 +86,8 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
     private fun realmWith(deps: AuthSystem.Deps) = MinimalTestRealm(
         getDeps = { deps },
         onLoadUserByEmail = { if (it == email) user else null },
+        // An active account is re-read by id after the marker read (ULTRA-00288).
+        onLoadUserById = { if (it == owner) user else null },
     )
 
     /** A realm without the victim's account, that counts the accounts a sign-up creates. */
@@ -356,6 +358,41 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
                 shouldThrow<AuthError> {
                     realm.resolveSsoAccount(retiredUser, provider = "test") { true }
                 }.message shouldBe "Invalid credentials"
+            }
+
+            "a STALE user: a retire that finished after the provider loaded the row leaves nothing to sign into" {
+                // ULTRA-00288 item 1. No marker any more (the retire removed it last), and the row was renamed before
+                // that: only a fresh read of the row tells retired from active. The `user` passed in is the old one.
+                val deps = realDeps()
+                val retiredRow = Stored(_id = user._id, value = MinimalTestUser(email = AccountRetirement.of(owner).rename(email)))
+                val realm = MinimalTestRealm(getDeps = { deps }, onLoadUserById = { retiredRow })
+
+                shouldThrow<AuthError> {
+                    realm.resolveSsoAccount(user, provider = "test") { true }
+                }.message shouldBe "Invalid credentials"
+            }
+
+            "the fresh read must be the SAME row with the SAME address: another id, or a changed address, is refused" {
+                val deps = realDeps()
+                val otherRow = Stored(_id = "test_users/someone-else", value = user.value)
+                val movedAddress = user.modify { it.copy(email = EmailAddress.of("moved@example.com")) }
+
+                listOf(otherRow, movedAddress).forEach { fresh ->
+                    withClue(fresh) {
+                        shouldThrow<AuthError> {
+                            MinimalTestRealm(getDeps = { deps }, onLoadUserById = { fresh })
+                                .resolveSsoAccount(user, provider = "test") { true }
+                        }.message shouldBe "Invalid credentials"
+                    }
+                }
+            }
+
+            "an ACTIVE account (no marker) signs in with the row as read now" {
+                val deps = realDeps()
+                val fresh = user.modify { it.copy(name = "Renamed meanwhile") }
+                val realm = MinimalTestRealm(getDeps = { deps }, onLoadUserById = { fresh })
+
+                realm.resolveSsoAccount(user, provider = "test") { true } shouldBe fresh
             }
 
             "a retire that wins the marker meanwhile leaves nothing to sign into" {

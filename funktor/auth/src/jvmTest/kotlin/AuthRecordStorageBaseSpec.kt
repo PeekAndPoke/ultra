@@ -711,8 +711,11 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner-$round")))
 
                 val removed = coroutineScope {
-                    val writes = (1..10).map { i ->
-                        async(Dispatchers.IO) { authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = i) }) }
+                    // Re-sends that all read the marker: at most one of them lands, as in production.
+                    val writes = (1..10).map {
+                        async(Dispatchers.IO) {
+                            authRecords.replacePendingActivationIfUnchanged(read = marker, next = marker.modify { it.copy(resends = 1) })
+                        }
                     }
                     val remove = async(Dispatchers.IO) { authRecords.removeIfUnclaimed(marker._id) }
 

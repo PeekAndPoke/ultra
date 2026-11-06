@@ -103,7 +103,7 @@ is reachable. Listed for completeness; do not pick it without a distributed lock
   parallel writers on one document made Arango abort the slower ones with `1200 write-write conflict` (3 runs of 3)
   instead of letting their FILTER miss. It hit every conditional write of the Karango auth repo (the re-send, retire
   and SSO claims, activation's remove) and the bulk removes. `KarangoAuthRecordsRepo.retryOnConflict` runs such a
-  statement again on a 1200 (the aborted run wrote nothing), up to 5 times, so it decides against the committed
+  statement again on a 1200 (the aborted run wrote nothing), up to 8 times after a short random pause, so it decides against the committed
   document; anything else, or a conflict that persists, still throws. (Round 1 answered a 1200 as "lost"; the gate
   showed why that is wrong, see the ledger.) The same burst without the resends condition (mutant R3) showed
   it end to end: Karango answered a loser with a 500, Monko sent a second mail.
@@ -131,7 +131,7 @@ Round 1 (level 1, `reviewer-high` ×3, 2026-11-06): all three charters CLEAN.
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
-| 1 | MINOR (all three) | `KarangoAuthRecordsRepo.kt:218` | A 1200 means the writes OVERLAPPED, not that this one's condition failed: an activation's remove (or a reset, a retire or SSO claim) overlapping a re-send's REPLACE, which leaves the marker unclaimed, was refused, the link burnt | fixed | Verified: re-send writes keep `claimedBy == null`. On a 1200 the statement now runs again (≤ 5), deciding against the committed document as Mongo does; new test: a remove overlapping 10 re-send writes, 10 rounds, always removes; mutant R6 (the round-1 "lost") red |
+| 1 | MINOR (all three) | `KarangoAuthRecordsRepo.kt:218` | A 1200 means the writes OVERLAPPED, not that this one's condition failed: an activation's remove (or a reset, a retire or SSO claim) overlapping a re-send's REPLACE, which leaves the marker unclaimed, was refused, the link burnt | fixed | Verified: re-send writes keep `claimedBy == null`. On a 1200 the statement now runs again (≤ 8), deciding against the committed document as Mongo does; new test: a remove overlapping 10 re-send writes, 10 rounds, always removes; mutant R6 (the round-1 "lost") red |
 | 1 | MINOR (impl) | `ActivationHardeningE2eSpec.kt:451` | The provider's switch to the conditional write (R3) is pinned only by a timing-dependent burst | fixed | `ResendGate` holds each re-send's write until two arrived: both read the marker and passed the delay; one mail with the fix, two with R3, every run |
 | 1 | MINOR (impl, out of scope) | `KarangoAuthRecordsRepo.kt:143-174` | The bulk removes (`removeAllByOwner`, `removeAllOfOwner`) also throw 1200 on overlap | fixed here | Same helper, cheap; test: 20 parallel `removeAllByOwner`; mutant R7 |
 | 1 | NIT (impl) | `AuthRecordStorage.kt:296` | `next` may name another record than `read` | fixed | `require(next._id == read._id)` |
@@ -160,3 +160,6 @@ send chain would not help this one.
 - 2026-11-06: option A built with the Karango conflict fix, gate PASS after round 1, DONE. No docs ticket: no
   public API a user of the library calls changed (the storage adapter and `Services` are extension points; CHANGELOG).
 - 2026-11-06: DONE.
+- 2026-11-06, after archiving: the overlap test once exhausted 5 attempts (its 10 writers all matched, unlike re-sends);
+  the writers now are real conditional re-sends, the retry pauses 1-5·n ms at random and runs up to 8 times.
+

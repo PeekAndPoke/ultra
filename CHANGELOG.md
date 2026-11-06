@@ -15,8 +15,8 @@
   What changes with no compile signal:
   - Every GitHub sign-in now reads `/user/emails`. An app with its own authorize URL needs the `user:email` scope, a
     GitHub App needs the "Email addresses" permission. Without them every GitHub sign-in and sign-up is refused. (A
-    custom `GithubSsoAuth.RemoteClient` does get a compile error: `getEmails` is abstract.) Funktor auth's `GithubSignInButton` asks for the scope,
-    but under hash routing the scope lands in the URL's fragment and does not reach GitHub (ULTRA-00288).
+    custom `GithubSsoAuth.RemoteClient` does get a compile error: `getEmails` is abstract.) Funktor auth's
+    `GithubSignInButton` asks for the scope, also under hash routing since ULTRA-00288.
   - A custom SSO provider that calls `resolveSsoAccount` is now asked `isEmailVerified` for active accounts too: a
     lambda answering `false` locks its users out, one answering `true` keeps the takeover. Its own `signUp` must check
     verification before `createForSignup`.
@@ -156,10 +156,44 @@
   marker's write is now conditional on the `resends` the request read: one slot, one mail.
   Also fixed on Karango: two overlapping writes of one auth record (a re-send, a retire or SSO claim, an activation's
   remove, removing an owner's records) made Arango abort the slower one with a write-write conflict, answered as a
-  500. The auth repo now runs such a write again (up to 5 times), so it decides against the committed record, as on
-  Mongo.
+  500. The auth repo now runs such a write again (up to 8 times, after a short random pause), so it decides against
+  the committed record, as on Mongo.
   Breaking: `AuthRecordStorage.Adapter.replaceRecordIfClaimedBy` and the Vault `Repo.replaceIfClaimedBy` take
   `expectedResends`; `EmailAndPasswordAuth.Services.replacePendingActivation` takes `(read, next)`.
+
+- **Funktor auth, SSO fixes** (ULTRA-00288):
+  - An SSO sign-in to an account WITHOUT a pending marker re-reads the user: one retired after the provider loaded
+    it is refused (a stale row could get one session). The realm's `users.loadById` is now called on that path.
+  - GitHub sign-in sends a random `state` and accepts the callback only with it, once (login CSRF), and builds the
+    authorize URL with every value encoded and no fragment in the redirect URI. Under hash routing `scope=user:email`
+    now reaches GitHub, and "Sign up with GitHub" signs up. The route and the action ride in the state
+    (`widgets/GithubOAuth`); `LoginController.AUTH_ACTION_PARAM` is gone, `GithubSignInButton` takes an `action`.
+  - Google token verification that fails with an `IOException` or `IllegalArgumentException`, and an SSO sign-up
+    whose user cannot be created, are refused (`AuthError`), no longer a 500.
+
+  What changes with no compile signal:
+  - GitHub's redirect URI no longer carries the page's hash or `auth-action`; check it still sits under the GitHub
+    app's registered callback URL. Under hash routing the callback lands on the root route, and `AuthState` puts the
+    login route back before the router reads the URL.
+  - A callback opened in another tab, or after the tab's sessionStorage is gone, is ignored: the user clicks again.
+  - An app with its OWN GitHub authorize URL whose callback lands on funktor's login page is ignored now: no stored
+    state. Build the URL through `GithubSignInButton` (which calls `GithubOAuth.begin`).
+  - An adapter's own `AuthError` from `createForSignup` (a realm without sign-up: `AuthError.notSupported()`) keeps
+    its message; any other failure there answers "User already exists".
+
+- **Funktor auth: password hashes move to the current hasher as users sign in** (ULTRA-00066). Adding a stronger
+  hasher in front of `CompoundPasswordHasher` used to protect only new passwords. Now a successful sign-in whose
+  stored hash came from another hasher re-hashes the proven password with the primary, in place; a failure there is
+  logged and never fails the sign-in. New: `PasswordHasher.needsRehash`. Breaking: `EmailAndPasswordAuth.Services`
+  gains `passwordNeedsRehash` and `replacePasswordRecord`.
+
+  What changes with no compile signal:
+  - A sign-in with an outdated hash writes the password record once (slower by one hash and one write).
+  - In `CompoundPasswordHasher` (the default), a stored hash its hasher cannot decode now checks `false` instead of
+    throwing (was a 500). A leaf hasher bound directly still throws.
+  - An email-and-password or SSO sign-up whose user cannot be created answers "User already exists" also when the
+    user repository's failure is no `Exception` (Karango's are `Throwable`s); it was a 500.
+  - `PasswordHasher.strongRandom` is `SecureRandom()`, no longer `SecureRandom.getInstanceStrong()`, which can block.
 
 ## 0.117.0
 

@@ -342,7 +342,8 @@ class GithubSsoAuthSpec : FreeSpec() {
                         email shouldBe EmailAddress("user@example.com")
                         // USER FOUND
                         storedUser
-                    }
+                    },
+                    onLoadUserById = { storedUser }, // re-read after the marker read (ULTRA-00288)
                 )
 
                 val result = subject.signIn(realm, request)
@@ -521,6 +522,40 @@ class GithubSsoAuthSpec : FreeSpec() {
                 result.requiresActivation shouldBe false
             }
 
+            "a sign-up whose user cannot be created is refused: a store failure as exists, the adapter's AuthError as is" {
+                // ULTRA-00288 item 3. A Karango user repo fails with Throwables; a realm without sign-up throws its own
+                // AuthError.notSupported(), whose message must survive.
+                val subject = GithubSsoAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    clientId = "irrelevant",
+                    clientSecret = "irrelevant",
+                    remoteClient = lazy {
+                        object : GithubSsoAuth.RemoteClient {
+                            override suspend fun getAccessToken(code: String): JsonObject =
+                                buildJsonObject { put("access_token", "gh-access-token") }
+
+                            override suspend fun getUser(access: JsonObject): JsonObject =
+                                buildJsonObject { put("email", "new@example.com") }
+
+                            override suspend fun getEmails(access: JsonObject): JsonArray = verifiedPrimary("new@example.com")
+                        }
+                    },
+                )
+
+                listOf(
+                    object : Throwable("unique constraint violated") {} to "User already exists",
+                    AuthError.notSupported() to "Not supported",
+                ).forEach { (failure, answer) ->
+                    val realm = MinimalTestRealm(onLoadUserByEmail = { null }, onCreateUserForSignup = { throw failure })
+
+                    withClue(failure.message) {
+                        shouldThrow<AuthError> {
+                            subject.signUp(realm, AuthSignUpRequest.OAuth(provider = subject.id, token = "t"))
+                        }.message shouldBe answer
+                    }
+                }
+            }
+
             "a null, missing, blank or refused profile name becomes the address's local part; a good one is kept" {
                 // ULTRA-00293: `"name": null` used to become the literal name "null".
                 val cases = mapOf<JsonElement?, String>(
@@ -602,6 +637,7 @@ class GithubSsoAuthSpec : FreeSpec() {
                         email shouldBe EmailAddress("user@example.com")
                         existingUser // User exists
                     },
+                    onLoadUserById = { existingUser }, // re-read after the marker read (ULTRA-00288)
                     onCreateUserForSignup = { _ ->
                         error("Should not be called")
                     }

@@ -19,6 +19,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.io.IOException
 import java.security.GeneralSecurityException
+import kotlin.coroutines.cancellation.CancellationException
 
 class GoogleSsoAuth(
     override val capabilities: Set<AuthProviderModel.Capability>,
@@ -153,11 +154,7 @@ class GoogleSsoAuth(
         val typed = (request as? AuthSignInRequest.OAuth)
             ?: throw AuthError.invalidRequest()
 
-        val idToken: GoogleIdToken = try {
-            remoteClient.verifyIdToken(typed.token) ?: throw AuthError.invalidCredentials()
-        } catch (e: GeneralSecurityException) {
-            throw AuthError.invalidCredentials(e)
-        }
+        val idToken: GoogleIdToken = verify(typed.token)
 
         val payload = idToken.payload
 
@@ -173,6 +170,19 @@ class GoogleSsoAuth(
             ?: throw AuthError.invalidCredentials()
     }
 
+    /**
+     * The verified id token, or an [AuthError]: a forged, expired or malformed token, and also a failure to reach
+     * Google's keys, is a refused sign-in, not a 500 (ULTRA-00288). The token is the client's, and the verifier throws
+     * more than it declares for one built to break it (a `ClassCastException` for a numeric `aud`), so any Exception.
+     */
+    private suspend fun verify(token: String): GoogleIdToken = try {
+        remoteClient.verifyIdToken(token) ?: throw AuthError.invalidCredentials()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        throw AuthError.invalidCredentials(e)
+    }
+
     /** Google's `email_verified` claim; anything but an explicit `true` is unverified. */
     private fun GoogleIdToken.Payload.isEmailVerified(): Boolean = emailVerified == true
 
@@ -186,11 +196,7 @@ class GoogleSsoAuth(
         val typed = (request as? AuthSignUpRequest.OAuth)
             ?: throw AuthError("Invalid sign-up request for Google")
 
-        val idToken: GoogleIdToken = try {
-            remoteClient.verifyIdToken(typed.token) ?: throw AuthError.invalidCredentials()
-        } catch (e: GeneralSecurityException) {
-            throw AuthError.invalidCredentials(e)
-        }
+        val idToken: GoogleIdToken = verify(typed.token)
 
         val payload = idToken.payload
         // GAP CLOSED: raw here meant the existence check below could MISS and create a duplicate
@@ -210,7 +216,7 @@ class GoogleSsoAuth(
                 // Else whoever claims an address first would own the account its owner signs up for later
                 if (!payload.isEmailVerified()) throw AuthError.invalidCredentials()
 
-                realm.users.createForSignup(
+                realm.users.createForSignupOrRefuse(
                     AuthUserAdapter.CreateUserForSignupParams.of(
                         email = email,
                         displayName = displayName,

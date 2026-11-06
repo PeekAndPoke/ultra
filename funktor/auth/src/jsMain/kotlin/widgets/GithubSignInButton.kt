@@ -16,13 +16,13 @@ fun Tag.GithubSignInButton(
     clientId: String,
     label: String,
     callbackUrl: String,
-    onToken: (token: String) -> Unit,
+    action: GithubOAuth.Action,
 ) = comp(
     GithubSignInButton.Props(
         clientId = clientId,
         label = label,
         callbackUrl = callbackUrl,
-        onToken = onToken,
+        action = action,
     )
 ) {
     GithubSignInButton(it)
@@ -37,8 +37,10 @@ class GithubSignInButton(ctx: Ctx<Props>) : Component<GithubSignInButton.Props>(
     data class Props(
         val clientId: String,
         val label: String,
+        /** Where GitHub sends the browser back: no fragment (RFC 6749 §3.1.2); the route rides in the state. */
         val callbackUrl: String,
-        val onToken: (token: String) -> Unit,
+        /** Sign in or up: rides in the stored state, so the callback cannot be told otherwise by its URL. */
+        val action: GithubOAuth.Action,
     )
 
     //  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,15 +51,15 @@ class GithubSignInButton(ctx: Ctx<Props>) : Component<GithubSignInButton.Props>(
         div {
             ui.fluid.basic.button {
                 onClick {
-                    val id = props.clientId
-                    val cbUrl = props.callbackUrl
                     // `user:email` lets the server read which addresses GitHub verified (`GET /user/emails`):
-                    // without it every GitHub sign-in and sign-up is refused.
-                    val url = "https://github.com/login/oauth/authorize?client_id=$id&redirect_uri=$cbUrl" +
-                            "&scope=user:email"
-
-                    // Forward to Github
-                    window.location.href = url
+                    // without it every GitHub sign-in and sign-up is refused. `GithubOAuth` encodes every value and
+                    // stores the state the callback must bring back (ULTRA-00288).
+                    window.location.href = GithubOAuth.begin(
+                        clientId = props.clientId,
+                        redirectUri = props.callbackUrl,
+                        action = props.action,
+                        hash = window.location.hash,
+                    )
                 }
 
                 icon.github()
