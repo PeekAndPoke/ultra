@@ -45,6 +45,7 @@ import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.firstOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -128,8 +129,10 @@ object FakeGithub : GithubSsoAuth.RemoteClient {
         put("access_token", code)
     }
 
+    /** As GitHub answers for a profile without a name: `"name": null` (ULTRA-00293: it became the name "null"). */
     override suspend fun getUser(access: JsonObject): JsonObject = buildJsonObject {
         put("email", access.code().substringAfter(":"))
+        put("name", JsonNull)
     }
 
     override suspend fun getEmails(access: JsonObject): JsonArray = buildJsonArray {

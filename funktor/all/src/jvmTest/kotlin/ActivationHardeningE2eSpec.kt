@@ -1020,6 +1020,23 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
 
         //  SSO on an active account, or a new one (ULTRA-00118)  ///////////////////////////////////////////////
 
+        "A NEW account from GitHub without a profile name is named after the address's local part, not \"null\"" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("sso-no-name")
+
+                    api.authLogin.signUp(
+                        realmParam,
+                        body = AuthSignUpRequest.OAuth(provider = GithubSsoAuth.ID, token = FakeGithub.verified(email)),
+                    ) {
+                        status shouldBe HttpStatusCode.OK
+                    }
+
+                    userOf(email).shouldNotBeNull().value.name shouldBe email.substringBefore("@")
+                }
+            }
+        }
+
         "SSO with an UNVERIFIED address never reaches an ACTIVE account; a VERIFIED one signs in" {
             // The takeover: a provider account that claims the victim's address without verifying it
             apiApp {

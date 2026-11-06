@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.common.model.Redacted
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.json.webtoken.JsonWebSignature
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -364,6 +365,78 @@ class GoogleSsoAuthSpec : FreeSpec() {
 
                 result.user shouldBe newUser
                 result.requiresActivation shouldBe false
+            }
+
+            "a missing, blank or refused profile name becomes the address's local part; a good one is kept, trimmed" {
+                // ULTRA-00293: the profile name is someone else's text; it meets the same rule as the activation page.
+                val cases = mapOf<Any?, String>(
+                    null to "user",
+                    "   " to "user",
+                    "Ada${Char(0x202E)}evol" to "user",
+                    "Call${Char(0x0A)}support" to "user",
+                    "  Ada Lovelace " to "Ada Lovelace",
+                )
+
+                for ((name, expected) in cases) {
+                    val tokenPayload = GoogleIdToken.Payload().apply {
+                        email = "User@EXAMPLE.com"
+                        emailVerified = true
+                        if (name != null) set("name", name)
+                    }
+                    val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
+                    val subject = GoogleSsoAuth(
+                        capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                        clientId = "irrelevant",
+                        remoteClient = lazy {
+                            object : GoogleSsoAuth.RemoteClient {
+                                override suspend fun verifyIdToken(token: String): GoogleIdToken = idToken
+                            }
+                        },
+                    )
+                    var written: String? = null
+                    val realm = MinimalTestRealm(
+                        onLoadUserByEmail = { null },
+                        onCreateUserForSignup = { params ->
+                            written = params.displayName
+                            Stored(_id = "new-user-id", value = MinimalTestUser())
+                        },
+                    )
+
+                    subject.signUp(realm, AuthSignUpRequest.OAuth(provider = subject.id, token = "some-token"))
+
+                    withClue("name ${name?.toString()?.map { it.code }}") { written shouldBe expected }
+                }
+            }
+
+            "a local part the rule refuses as too long is cut to MAX_LENGTH" {
+                // The address format allows a local part of 150 chars; the name rule allows 100.
+                val local = "a".repeat(150)
+                val tokenPayload = GoogleIdToken.Payload().apply {
+                    email = "$local@example.com"
+                    emailVerified = true
+                }
+                val idToken = GoogleIdToken(JsonWebSignature.Header(), tokenPayload, byteArrayOf(), byteArrayOf())
+                val subject = GoogleSsoAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                    clientId = "irrelevant",
+                    remoteClient = lazy {
+                        object : GoogleSsoAuth.RemoteClient {
+                            override suspend fun verifyIdToken(token: String): GoogleIdToken = idToken
+                        }
+                    },
+                )
+                var written: String? = null
+                val realm = MinimalTestRealm(
+                    onLoadUserByEmail = { null },
+                    onCreateUserForSignup = { params ->
+                        written = params.displayName
+                        Stored(_id = "new-user-id", value = MinimalTestUser())
+                    },
+                )
+
+                subject.signUp(realm, AuthSignUpRequest.OAuth(provider = subject.id, token = "some-token"))
+
+                written shouldBe "a".repeat(100)
             }
 
             "should return the existing user when the user already exists" {

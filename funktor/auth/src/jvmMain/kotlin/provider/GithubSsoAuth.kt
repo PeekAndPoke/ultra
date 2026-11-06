@@ -254,7 +254,8 @@ class GithubSsoAuth(
         val email = EmailAddress.parseOrNull((ghUser["email"] as? JsonPrimitive)?.contentOrNull)
             ?: throw AuthError.invalidCredentials()
 
-        val name = ghUser["name"]?.jsonPrimitive?.content
+        // `contentOrNull`: GitHub sends `"name": null` for a profile without one, and `content` reads it as "null".
+        val name = (ghUser["name"] as? JsonPrimitive)?.contentOrNull
 
         // The lookup is deliberately lax about format — an address stored before validation
         // existed must stay matchable, or its owner can never sign in again.

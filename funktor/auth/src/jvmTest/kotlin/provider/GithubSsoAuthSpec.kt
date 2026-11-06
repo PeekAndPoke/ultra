@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.auth.provider
 
 import io.peekandpoke.ultra.common.model.Redacted
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -17,7 +18,10 @@ import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.vault.Stored
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -515,6 +519,52 @@ class GithubSsoAuthSpec : FreeSpec() {
 
                 result.user shouldBe newUser
                 result.requiresActivation shouldBe false
+            }
+
+            "a null, missing, blank or refused profile name becomes the address's local part; a good one is kept" {
+                // ULTRA-00293: `"name": null` used to become the literal name "null".
+                val cases = mapOf<JsonElement?, String>(
+                    JsonNull to "user",
+                    null to "user",
+                    JsonPrimitive("   ") to "user",
+                    JsonPrimitive("Ada${Char(0x202E)}evol") to "user",
+                    JsonPrimitive("  Ada Lovelace ") to "Ada Lovelace",
+                )
+
+                for ((name, expected) in cases) {
+                    val ghUser = buildJsonObject {
+                        put("email", "User@EXAMPLE.com")
+                        if (name != null) put("name", name)
+                    }
+                    val subject = GithubSsoAuth(
+                        capabilities = setOf(AuthProviderModel.Capability.SignUp),
+                        clientId = "irrelevant",
+                        clientSecret = "irrelevant",
+                        remoteClient = lazy {
+                            object : GithubSsoAuth.RemoteClient {
+                                override suspend fun getAccessToken(code: String) =
+                                    buildJsonObject { put("access_token", "gh-access-token") }
+
+                                override suspend fun getUser(access: JsonObject) = ghUser
+
+                                override suspend fun getEmails(access: JsonObject): JsonArray =
+                                    verifiedPrimary("user@example.com")
+                            }
+                        },
+                    )
+                    var written: String? = null
+                    val realm = MinimalTestRealm(
+                        onLoadUserByEmail = { null },
+                        onCreateUserForSignup = { params ->
+                            written = params.displayName
+                            Stored(_id = "new-user-id", value = MinimalTestUser())
+                        },
+                    )
+
+                    subject.signUp(realm, AuthSignUpRequest.OAuth(provider = subject.id, token = "some-token"))
+
+                    withClue("name $name") { written shouldBe expected }
+                }
             }
 
             "should return the existing user when the user already exists" {

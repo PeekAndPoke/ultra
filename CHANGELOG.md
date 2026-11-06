@@ -86,6 +86,16 @@
     address (its local part).
   - After a re-send, up to about three links can be live at once for the first half hour.
 
+- **Funktor auth: an SSO sign-up's profile name meets `AuthDisplayName`, else the address's local part is the name**
+  (ULTRA-00293). The provider's name was only trimmed, so control, invisible and bidi characters reached the
+  account, and a GitHub profile without a name (`"name": null`) became the literal name `"null"`.
+  `AuthUserAdapter.CreateUserForSignupParams.of` now keeps a given name only when the rule accepts it.
+
+  What changes with no compile signal:
+  - A custom provider that passes its own `displayName` to `CreateUserForSignupParams.of` gets the local part for a
+    name the rule refuses.
+  - Email-and-password sign-up goes the same way: a local part over 100 chars now gives a name cut to 100.
+
 - **Funktor rest, a security fix: a request body that does not fit its type is a 400, and no answer in production
   quotes it** (ULTRA-00292). A body missing a required field, with a wrong-typed field, or not JSON at all was a 500:
   logged as an internal error with the whole input, and answered with Slumber's message, which quotes it, also in

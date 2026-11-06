@@ -36,9 +36,10 @@ interface AuthUserAdapter<USER : AuthUser> {
              * input. Spell the conversion at the call site with [EmailAddress.of] /
              * [EmailAddress.parseOrNull] so the failure mode is visible there.
              *
-             * NOTE [displayName] defaults to the CANONICAL local part, so an auto-derived name is
-             * lowercase (`John.Doe@x.com` → `john.doe`). Pass an explicit [displayName] to preserve
-             * the user's casing.
+             * [displayName] (an SSO profile name) is kept, trimmed, only when it meets [AuthDisplayName];
+             * missing or refused, it falls back to the CANONICAL local part, so an auto-derived name is
+             * lowercase (`John.Doe@x.com` → `john.doe`). Should even that break the rule, its first
+             * [AuthDisplayName.MAX_LENGTH] chars.
              */
             fun of(email: EmailAddress, displayName: String? = null): CreateUserForSignupParams {
                 // THE creation boundary — the one place RFC format is enforced. A lookup deliberately
@@ -48,7 +49,9 @@ interface AuthUserAdapter<USER : AuthUser> {
 
                 return CreateUserForSignupParams(
                     email = email,
-                    displayName = displayName?.trim() ?: email.localPart,
+                    displayName = displayName?.let(AuthDisplayName::normalizeOrNull)
+                        ?: AuthDisplayName.normalizeOrNull(email.localPart)
+                        ?: email.localPart.take(AuthDisplayName.MAX_LENGTH).trim(),
                 )
             }
         }
