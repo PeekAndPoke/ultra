@@ -48,10 +48,10 @@ data class RealmTokenConfig(
     /**
      * The most cancel links ("Didn't sign up? Cancel") one pending account keeps. Each activation mail carries its
      * own, which lives as long as the account ([pendingAccountLifetime]); past this many the OLDEST goes, so the
-     * newest mails' links always work. With the default delays, 7 days hold the sign-up mail and 11 re-sends; only
-     * the last re-send, after about 6.7 days, drops the sign-up mail's link. At least 2.
+     * newest mails' links always work. With the default delays, 7 days hold the sign-up mail and 11 re-sends (the
+     * last after about 6.7 days), so the default 12 keeps every mailed link. At least 2.
      */
-    val maxSignUpCancelTokens: Int = 11,
+    val maxSignUpCancelTokens: Int = 12,
     /** Lifetime of password-recovery tokens. */
     val passwordRecoveryTokenLifetime: Duration = 1.hours,
     /** Lifetime of the short-lived org-selection token issued between credential-check and org pick. */

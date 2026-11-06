@@ -33,6 +33,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.delay
 
 class AuthRealmActivationKarangoSpec : AuthRealmActivationBaseSpec() {
@@ -602,6 +603,26 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                     ),
                 ) shouldBe user
             }
+        }
+
+        "trimSignUpCancelTokens, against a real store, keeps the excepted one and the newest of the rest" {
+            // The default delays never reach the cap in an account's life, so no e2e gets here; this does.
+            val real = realDeps()
+            val now = real.kronos.instantNow()
+            val rows = (0 until 5).map { i ->
+                real.storage.authRecords.create(
+                    AuthRecord.SignUpCancelToken(
+                        realmId, owner, expiresAt = now.plus(1.hours).toEpochSeconds(),
+                        createdAt = now.plus(i.minutes), tokenHash = TokenHash.of("cancel-$i"),
+                    )
+                )
+            }
+
+            // The excepted one is the OLDEST here, so keeping it is not a side effect of keeping the newest.
+            EmailAndPasswordAuth.Services(real).trimSignUpCancelTokens(realmId, owner, exceptId = rows[0]._id, keep = 3)
+
+            real.storage.authRecords.findAllByOwner(AuthRecord.SignUpCancelToken, realmId, owner).map { it._id }.toSet() shouldBe
+                setOf(rows[0]._id, rows[3]._id, rows[4]._id)
         }
 
         "cancel on an account a LIVE SSO activation has claimed refuses — and leaves the cancel link usable" {

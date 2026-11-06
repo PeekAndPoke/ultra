@@ -2,8 +2,10 @@ package io.peekandpoke.funktor.auth.domain
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.RealmTokenConfig
+import kotlin.time.Duration
 
 /** What the auth records store of a one-shot secret (ULTRA-00291): pinned to a known answer, not to the code. */
 class TokenHashSpec : StringSpec({
@@ -23,5 +25,21 @@ class TokenHashSpec : StringSpec({
         shouldThrow<IllegalArgumentException> { RealmTokenConfig(maxSignUpCancelTokens = 1) }
 
         RealmTokenConfig(randomTokenByteLength = 32, maxSignUpCancelTokens = 2).randomTokenByteLength shouldBe 32
+    }
+
+    "with the defaults, every activation mail an account can get keeps its cancel link until the account ends" {
+        val config = RealmTokenConfig()
+        // The sign-up mail, then one re-send after each delay, the last delay repeating, while the account lives.
+        var mails = 1
+        var at = Duration.ZERO
+
+        while (true) {
+            at += config.activationResendDelays.getOrElse(mails - 1) { config.activationResendDelays.last() }
+            if (at > config.pendingAccountLifetime) break
+            mails++
+        }
+
+        mails shouldBe 12
+        mails shouldBeLessThanOrEqual config.maxSignUpCancelTokens
     }
 })

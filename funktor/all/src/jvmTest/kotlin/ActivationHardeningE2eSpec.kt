@@ -356,7 +356,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             }
         }
 
-        "Every mailed cancel link works for the account's life; past the cap only the oldest go, and none after an activation" {
+        "Every mailed cancel link works for the account's life: on day 6.7 the sign-up mail's still cancels" {
             apiApp {
                 anonymous {
                     val email = freshEmail("cancel-links")
@@ -364,21 +364,19 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                     val id = userOf(email).shouldNotBeNull()._id
                     val cancels = mutableListOf(cancelTokenTo(email))
 
-                    // The sign-up mail plus 11 re-sends, each after its growing delay: 6.7 days, inside the 7.
-                    repeat(config.maxSignUpCancelTokens) { resends ->
+                    // The sign-up mail plus 11 re-sends, each after its growing delay: the last on day 6.7, all the
+                    // 7 days hold. The default cap, 12, keeps every link (`TokenHashSpec` counts it for the defaults).
+                    repeat(11) { resends ->
                         advance(config.activationResendDelay(resends) + 1.minutes)
                         signUp(email)
                         cancels += cancelTokenTo(email)
                     }
 
-                    cancels.toSet().size shouldBe config.maxSignUpCancelTokens + 1
-                    records.findAllByOwner(AuthRecord.SignUpCancelToken, realm.id, UserId(id)).size shouldBe
-                        config.maxSignUpCancelTokens
+                    cancels.toSet().size shouldBe 12
+                    records.findAllByOwner(AuthRecord.SignUpCancelToken, realm.id, UserId(id)).size shouldBe 12
 
-                    withClue("the oldest, the sign-up mail's, went with the cap") { cancel(cancels.first()) shouldBe false }
-                    isPending(id) shouldBe true
-
-                    withClue("the second-oldest still cancels, on day 6.7") { cancel(cancels[1]) shouldBe true }
+                    withClue("the oldest, the sign-up mail's, still cancels") { cancel(cancels.first()) shouldBe true }
+                    AccountRetirement.isRetired(users.byId(id).shouldNotBeNull().value.email) shouldBe true
                 }
             }
         }

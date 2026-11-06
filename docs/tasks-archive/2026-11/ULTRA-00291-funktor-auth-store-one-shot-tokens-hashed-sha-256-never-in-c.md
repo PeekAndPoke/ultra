@@ -1,6 +1,6 @@
 # ULTRA-00291: Funktor auth: store one-shot tokens hashed (SHA-256), never in clear text
 
-> **Status (2026-11-06): DONE.** gate PASS after round 1.** The maintainer decided on hashes on 2026-11-05 and confirmed the plan on 2026-11-06: "yes build it. Implement as you proposed with the 11 and 7 configurable". Open for the maintainer: the default 11 drops the sign-up mail's cancel link on day 6.7 (12 would keep every one).
+> **Status (2026-11-06): DONE.** gate PASS after round 1.** The maintainer decided on hashes on 2026-11-05 and confirmed the plan on 2026-11-06: "yes build it. Implement as you proposed with the 11 and 7 configurable". The maintainer set the default cap to 12 on 2026-11-06 ("cap at 12 as the configurable default"), so every mailed cancel link lives as long as the account; `TokenHashSpec` pins that for the defaults.
 >
 > **Part of:** ULTRA-00248 (Epic: Auth and sessions)
 
@@ -108,7 +108,7 @@ maintainer chose hashes over clear text on 2026-11-05.
 | 1.5 | MINOR (security) | `EmailAndPasswordAuth.kt:273-279` | With `maxSignUpCancelTokens = 1`, two concurrent re-sends remove each other's cancel token | fixed | `require(maxSignUpCancelTokens >= 2)`; with ≥ 2 each keeps its own and the other's (verified by the reviewer, ties included); mutant Y4 |
 | 1.6 | NIT | `ActivationHardeningE2eSpec.kt:110-115` | `allRowsOf` checks the decoded record, not the stored document | recorded | Slumber writes only constructor parameters, so the decoded record holds every stored field |
 | 1.7 | NIT | `AuthRecordStorageBaseSpec.kt:7` | Import order | fixed | |
-| 1.8 | maintainer | `RealmTokenConfig.kt` | 7 days hold 12 mails (the 11th re-send at about 6.72 days), so the default 11 drops the sign-up mail's link: the acceptance line "every mailed cancel link works until the account ends" holds only with 12 | maintainer-decision | The maintainer said 11; the KDoc and CHANGELOG state the effect |
+| 1.8 | maintainer | `RealmTokenConfig.kt` | 7 days hold 12 mails (the 11th re-send at about 6.72 days), so the default 11 drops the sign-up mail's link: the acceptance line "every mailed cancel link works until the account ends" holds only with 12 | fixed | The maintainer chose 12 (2026-11-06); `TokenHashSpec` counts the mails the defaults allow and checks the cap |
 
 Out of scope, older: `AuthRealm.selectOrg` (`AuthRealm.kt:763`) ignores the `removeById` count, so two concurrent
 `select-org` calls with one token both succeed; activation and reset use the count-checked consume. For the maintainer.

@@ -97,9 +97,9 @@
   `findSignUpCancelTokenOf` and gains `removeSignUpCancelTokens` and `trimSignUpCancelTokens`.
 
   A hashed cancel token cannot be read back to mail again, so **every activation mail carries its own cancel link**,
-  each valid as long as the account. `RealmTokenConfig.maxSignUpCancelTokens` (default 11) caps them per account;
+  each valid as long as the account. `RealmTokenConfig.maxSignUpCancelTokens` (default 12) caps them per account;
   past it the oldest goes. With the default delays the 7 days of `pendingAccountLifetime` hold the sign-up mail and 11
-  re-sends, so only the last re-send drops the sign-up mail's link. Activation, cancel, retire, SSO activation and now
+  re-sends, so by default every mailed link works until the account ends. Activation, cancel, retire, SSO activation and now
   a reset that activates remove them all.
 
   What changes with no compile signal:
