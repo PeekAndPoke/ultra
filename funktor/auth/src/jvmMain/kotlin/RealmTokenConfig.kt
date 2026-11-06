@@ -45,6 +45,13 @@ data class RealmTokenConfig(
      * typing a password into. 0: only the newest link lives.
      */
     val activationLinkOverlap: Duration = 30.minutes,
+    /**
+     * The most cancel links ("Didn't sign up? Cancel") one pending account keeps. Each activation mail carries its
+     * own, which lives as long as the account ([pendingAccountLifetime]); past this many the OLDEST goes, so the
+     * newest mails' links always work. With the default delays, 7 days hold the sign-up mail and 11 re-sends; only
+     * the last re-send, after about 6.7 days, drops the sign-up mail's link. At least 2.
+     */
+    val maxSignUpCancelTokens: Int = 11,
     /** Lifetime of password-recovery tokens. */
     val passwordRecoveryTokenLifetime: Duration = 1.hours,
     /** Lifetime of the short-lived org-selection token issued between credential-check and org pick. */
@@ -61,12 +68,16 @@ data class RealmTokenConfig(
      * window between `revoke()` and the user actually being logged out on a given JVM.
      */
     val sessionCacheTtl: Duration = 30.seconds,
-    /** Length in bytes of randomly generated tokens (verification, recovery, email-change). */
+    /** Length in bytes of randomly generated tokens (verification, recovery, email-change); 32 at least. */
     val randomTokenByteLength: Int = 256,
 ) {
     init {
         require(activationResendDelays.isNotEmpty()) { "activationResendDelays must not be empty" }
         require(!activationLinkOverlap.isNegative()) { "activationLinkOverlap must not be negative" }
+        // 2 at least: two concurrent re-sends each keep their own token and the other's, the newest of the rest.
+        require(maxSignUpCancelTokens >= 2) { "maxSignUpCancelTokens must be at least 2" }
+        // The stored hash is unsalted and fast (`TokenHash`): only a long random token makes it unguessable.
+        require(randomTokenByteLength >= 32) { "randomTokenByteLength must be at least 32" }
     }
 
     /** The wait before the re-sent mail that follows [resends] earlier ones. */

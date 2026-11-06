@@ -9,7 +9,9 @@ import io.peekandpoke.funktor.auth.domain.createdAt
 import io.peekandpoke.funktor.auth.domain.expiresAt
 import io.peekandpoke.funktor.auth.domain.ownerId
 import io.peekandpoke.funktor.auth.domain.realm
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.domain.token
+import io.peekandpoke.funktor.auth.domain.tokenHash
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.monko.MonkoDriver
@@ -61,6 +63,11 @@ class MonkoAuthRecordsRepo(
             field { it.createdAt.ts }
         }
 
+        // The one-shot lookup by its hash.
+        persistentIndex {
+            field { it.tokenHash }
+        }
+
         // Meant to mirror Karango's TTL index, but it culls NOTHING today: `expiresAt` is a Long of epoch
         // seconds and a MongoDB TTL index only expires BSON Date fields. The code-level `hasNotExpired()`
         // filter in AuthRecordStorage is therefore the ONLY expiry boundary on Mongo, and expired rows
@@ -94,6 +101,21 @@ class MonkoAuthRecordsRepo(
                     r._type eq type,
                     r.realm eq realm,
                     r.token eq token,
+                )
+            )
+            limit(1)
+        }
+
+        return found.firstOrNull()
+    }
+
+    override suspend fun findByTokenHash(realm: RealmId, type: String, hash: TokenHash): Stored<AuthRecord>? {
+        val found = find { r ->
+            filter(
+                and(
+                    r._type eq type,
+                    r.realm eq realm,
+                    r.tokenHash eq hash,
                 )
             )
             limit(1)

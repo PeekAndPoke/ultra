@@ -25,6 +25,8 @@ sealed interface AuthRecord : Timestamped {
 
         override val expiresAt: Long? = null
 
+        override val tokenHash: TokenHash? = null
+
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
     }
@@ -35,12 +37,15 @@ sealed interface AuthRecord : Timestamped {
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
-        /** Very long secret token */
-        override val token: String,
+        /** The hash of the random secret; the raw token is never stored, see [TokenHash]. */
+        override val tokenHash: TokenHash,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<PasswordRecoveryToken> {
             override val identifier = "password-recovery-token"
         }
+
+        /** One-shot secrets are stored as [tokenHash] only. */
+        override val token: String? = null
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
@@ -102,6 +107,8 @@ sealed interface AuthRecord : Timestamped {
         /** Carries no secret. */
         override val token: String? = null
 
+        override val tokenHash: TokenHash? = null
+
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
     }
@@ -118,21 +125,25 @@ sealed interface AuthRecord : Timestamped {
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
-        /** Random secret token sent to the user's email. */
-        override val token: String,
+        /** The hash of the random secret; the raw token is never stored, see [TokenHash]. */
+        override val tokenHash: TokenHash,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<EmailVerificationToken> {
             override val identifier = "email-verification-token"
         }
+
+        /** One-shot secrets are stored as [tokenHash] only. */
+        override val token: String? = null
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
     }
 
     /**
-     * The secret behind the activation mail's "Didn't sign up? Cancel" link: single-use, one per pending
-     * account, expiring WITH the account rather than with the activation link, so a victim can cancel for
-     * the account's whole pending life. Every re-sent activation mail carries the same one.
+     * The secret behind the activation mail's "Didn't sign up? Cancel" link: single-use, one per MAIL (stored hashed,
+     * it cannot be read back to mail again), expiring WITH the account rather than with the activation link, so a
+     * victim can cancel from any of them for the account's whole pending life. At most
+     * `RealmTokenConfig.maxSignUpCancelTokens` per account; activation, cancel and retire remove them all.
      */
     data class SignUpCancelToken(
         override val realm: RealmId,
@@ -141,12 +152,15 @@ sealed interface AuthRecord : Timestamped {
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
-        /** Random secret mailed in the cancel link. */
-        override val token: String,
+        /** The hash of the random secret; the raw token is never stored, see [TokenHash]. */
+        override val tokenHash: TokenHash,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<SignUpCancelToken> {
             override val identifier = "sign-up-cancel-token"
         }
+
+        /** One-shot secrets are stored as [tokenHash] only. */
+        override val token: String? = null
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
@@ -163,14 +177,17 @@ sealed interface AuthRecord : Timestamped {
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
-        /** Random secret token sent to the new email address. */
-        override val token: String,
+        /** The hash of the random secret; the raw token is never stored, see [TokenHash]. */
+        override val tokenHash: TokenHash,
         /** The email the user wants to switch to. Canonical — see [EmailAddress]. */
         val pendingEmail: EmailAddress,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<EmailChangeToken> {
             override val identifier = "email-change-token"
         }
+
+        /** One-shot secrets are stored as [tokenHash] only. */
+        override val token: String? = null
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
@@ -186,12 +203,15 @@ sealed interface AuthRecord : Timestamped {
         override val expiresAt: Long,
         override val createdAt: MpInstant = MpInstant.Epoch,
         override val updatedAt: MpInstant = createdAt,
-        /** Random secret token handed to the client between credential-check and org-selection. */
-        override val token: String,
+        /** The hash of the random secret; the raw token is never stored, see [TokenHash]. */
+        override val tokenHash: TokenHash,
     ) : AuthRecord {
         companion object : Polymorphic.TypedChild<OrgSelectionToken> {
             override val identifier = "org-selection-token"
         }
+
+        /** One-shot secrets are stored as [tokenHash] only. */
+        override val token: String? = null
 
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
@@ -228,6 +248,9 @@ sealed interface AuthRecord : Timestamped {
             override val identifier = "session"
         }
 
+        /** Still the raw session id in [token]: ULTRA-00136 decides how sessions are stored. */
+        override val tokenHash: TokenHash? = null
+
         override fun withCreatedAt(instant: MpInstant) = copy(createdAt = instant)
         override fun withUpdatedAt(instant: MpInstant) = copy(updatedAt = instant)
     }
@@ -249,9 +272,13 @@ sealed interface AuthRecord : Timestamped {
     @Vault.Field
     val expiresAt: Long?
 
-    /** The token, f.e. the password-hash or the password-reset-token */
+    /** The password hash ([Password]) or the session id ([Session]); null for the one-shot secrets. */
     @Vault.Field
     val token: String?
+
+    /** The hash of a one-shot secret (a mailed link, an org-selection token); null for every other record. */
+    @Vault.Field
+    val tokenHash: TokenHash?
 
     @Vault.Field
     override val createdAt: MpInstant

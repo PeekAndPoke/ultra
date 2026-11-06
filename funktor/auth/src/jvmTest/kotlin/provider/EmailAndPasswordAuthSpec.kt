@@ -15,6 +15,7 @@ import io.peekandpoke.funktor.auth.NullStorageTestDeps
 import io.peekandpoke.funktor.auth.RealmTokenConfig
 import io.peekandpoke.funktor.auth.TestMessaging
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthDisplayName
@@ -64,8 +65,10 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             { error("replacePendingActivation not implemented") },
         val onFindSignUpCancelToken: suspend (RealmId, String) -> Stored<AuthRecord.SignUpCancelToken>? =
             { _, _ -> error("findSignUpCancelToken not implemented") },
-        val onFindSignUpCancelTokenOf: suspend (RealmId, UserId) -> Stored<AuthRecord.SignUpCancelToken>? =
-            { _, _ -> error("findSignUpCancelTokenOf not implemented") },
+        val onRemoveSignUpCancelTokens: suspend (RealmId, UserId) -> Unit =
+            { _, _ -> error("removeSignUpCancelTokens not implemented") },
+        val onTrimSignUpCancelTokens: suspend (RealmId, UserId, String, Int) -> Unit =
+            { _, _, _, _ -> error("trimSignUpCancelTokens not implemented") },
         val onRemovePendingActivationIfUnclaimed: suspend (String) -> Boolean =
             { error("removePendingActivationIfUnclaimed not implemented") },
         val onRemoveAuthRecord: suspend (String) -> Boolean = { error("removeAuthRecord not implemented") },
@@ -113,8 +116,11 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
         override suspend fun findSignUpCancelToken(realm: RealmId, token: String) = onFindSignUpCancelToken(realm, token)
 
-        override suspend fun findSignUpCancelTokenOf(realm: RealmId, owner: UserId) =
-            onFindSignUpCancelTokenOf(realm, owner)
+        override suspend fun removeSignUpCancelTokens(realm: RealmId, owner: UserId) =
+            onRemoveSignUpCancelTokens(realm, owner)
+
+        override suspend fun trimSignUpCancelTokens(realm: RealmId, owner: UserId, exceptId: String, keep: Int) =
+            onTrimSignUpCancelTokens(realm, owner, exceptId, keep)
 
         override suspend fun removePendingActivationIfUnclaimed(id: String) = onRemovePendingActivationIfUnclaimed(id)
 
@@ -549,6 +555,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
                 val email = "test@example.com"
                 val verificationToken = "the-verification-token"
+                val generated = ArrayDeque(listOf(verificationToken, "the-cancel-token"))
                 val now = MpInstant.parse("2026-07-27T10:00:00Z")
 
                 val createdAuthRecords = mutableListOf<AuthRecord>()
@@ -564,12 +571,12 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             @Suppress("UNCHECKED_CAST")
                             Stored(_id = "record-${createdAuthRecords.size}", value = record)
                         },
-                        onGenerateToken = { verificationToken },
+                        onGenerateToken = { generated.removeFirst() },
                         onInstantNow = { now },
                         // A brand-new user has no earlier tokens; the shared issue-and-send path calls
                         // this anyway, so the sign-up and re-sent links cannot drift apart.
                         onCapEmailVerificationTokens = { _, _, _, _ -> },
-                        onFindSignUpCancelTokenOf = { _, _ -> null },
+                        onTrimSignUpCancelTokens = { _, _, _, _ -> },
                     )
                 }
 
@@ -630,7 +637,10 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val verification = createdAuthRecords.filterIsInstance<AuthRecord.EmailVerificationToken>().single()
                 verification.ownerId shouldBe UserId(storedUser._id)
                 verification.realm shouldBe realm.id
-                verification.token shouldBe verificationToken
+                withClue("stored as its hash, never in clear text") {
+                    verification.tokenHash shouldBe TokenHash.of(verificationToken)
+                    verification.token shouldBe null
+                }
                 verification.expiresAt shouldBe now
                     .plus(realm.tokenConfig.emailVerificationTokenLifetime).toEpochSeconds()
 
@@ -642,7 +652,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val cancel = createdAuthRecords.filterIsInstance<AuthRecord.SignUpCancelToken>().single()
                 cancel.ownerId shouldBe UserId(storedUser._id)
                 cancel.expiresAt shouldBe now.plus(realm.tokenConfig.pendingAccountLifetime).toEpochSeconds()
-                cancelUrl shouldBe "https://a.b.c/auth/${subject.id}/cancel-signup/${cancel.token}"
+                cancel.tokenHash shouldBe TokenHash.of("the-cancel-token")
+                cancelUrl shouldBe "https://a.b.c/auth/${subject.id}/cancel-signup/the-cancel-token"
             }
         }
 
@@ -697,7 +708,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             fun linkRecord(realm: RealmId, token: String) = Stored(
                 _id = "verification-record",
                 value = AuthRecord.EmailVerificationToken(
-                    realm = realm, ownerId = ownerId, token = token, expiresAt = Long.MAX_VALUE,
+                    realm = realm, ownerId = ownerId, tokenHash = TokenHash.of(token), expiresAt = Long.MAX_VALUE,
                 ),
             )
 
@@ -784,12 +795,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         },
                         onRemovePendingActivationIfUnclaimed = { events += "activate:$it"; true },
                         onRemoveEmailVerificationTokens = { _, _, _ -> events += "remove-links" },
-                        onFindSignUpCancelTokenOf = { realm, owner ->
-                            Stored(
-                                _id = "cancel-record",
-                                value = AuthRecord.SignUpCancelToken(realm, owner, Long.MAX_VALUE, token = "c"),
-                            )
-                        },
+                        onRemoveSignUpCancelTokens = { _, owner -> events += "remove-cancel-links:${owner.value}" },
                     )
                 }
 
@@ -813,7 +819,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     "activate:pending-activation",
                     "remove-passwords:${ownerId.value}-except:new-password",
                     "remove-links",
-                    "remove:cancel-record",
+                    "remove-cancel-links:${ownerId.value}",
                 )
 
                 val password = created.filterIsInstance<AuthRecord.Password>().single()
@@ -1011,9 +1017,11 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
             "once due: reserves the slot BEFORE mailing, rotates the link, and mails a NEW one" {
                 val newToken = "the-new-token"
+                val generated = ArrayDeque(listOf(newToken, "the-new-cancel-token"))
 
                 val events = mutableListOf<String>()
                 var rotation: List<Any>? = null
+                var trimmed: List<Any>? = null
                 var saved: AuthRecord.PendingActivation? = null
                 var activationUrl: String? = null
                 var cancelUrl: String? = null
@@ -1022,7 +1030,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 val services = lazy {
                     TestServices(
                         onInstantNow = { now },
-                        onGenerateToken = { newToken },
+                        onGenerateToken = { generated.removeFirst() },
                         onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = now.minus(firstDelay)) },
                         onReplacePendingActivation = { marker ->
                             events += "reserve"
@@ -1034,15 +1042,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onCapEmailVerificationTokens = { realm, o, exceptId, notAfter ->
                             rotation = listOf(realm, o, exceptId, notAfter)
                         },
-                        // The account's cancel token already exists: every re-send mails the SAME one.
-                        onFindSignUpCancelTokenOf = { realm, o ->
-                            Stored(
-                                _id = "cancel-record",
-                                value = AuthRecord.SignUpCancelToken(
-                                    realm = realm, ownerId = o, expiresAt = Long.MAX_VALUE, token = "the-cancel-token",
-                                ),
-                            )
-                        },
+                        // Stored hashed, the cancel token cannot be mailed again: every mail mints its own.
+                        onTrimSignUpCancelTokens = { realm, o, exceptId, keep -> trimmed = listOf(realm, o, exceptId, keep) },
                         onCreateAuthRecord = { create ->
                             val record = create()
                             createdAuthRecords.add(record)
@@ -1076,7 +1077,10 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 saved?.lastSentAt shouldBe now
 
                 val issued = createdAuthRecords.filterIsInstance<AuthRecord.EmailVerificationToken>().single()
-                issued.token shouldBe newToken
+                withClue("the link is stored as its hash, never in clear text") {
+                    issued.tokenHash shouldBe TokenHash.of(newToken)
+                    issued.token shouldBe null
+                }
                 issued.ownerId shouldBe owner
 
                 // Rotation must EXCLUDE the row just created. Rotating first (or without the exception)
@@ -1086,9 +1090,14 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
 
                 // The re-sent links must be built exactly like the sign-up ones.
                 activationUrl shouldBe "https://a.b.c/auth/${EmailAndPasswordAuth.ID}/activate/$newToken"
-                cancelUrl shouldBe "https://a.b.c/auth/${EmailAndPasswordAuth.ID}/cancel-signup/the-cancel-token"
-                withClue("no second cancel token is minted, and no password is ever stored") {
-                    createdAuthRecords.filterIsInstance<AuthRecord.SignUpCancelToken>() shouldBe emptyList()
+                cancelUrl shouldBe "https://a.b.c/auth/${EmailAndPasswordAuth.ID}/cancel-signup/the-new-cancel-token"
+                withClue("a cancel token of its own, stored as its hash only; the older ones trimmed to the cap") {
+                    val cancel = createdAuthRecords.filterIsInstance<AuthRecord.SignUpCancelToken>().single()
+                    cancel.tokenHash shouldBe TokenHash.of("the-new-cancel-token")
+                    cancel.token shouldBe null
+                    trimmed shouldBe listOf(realm.id, owner, "record-2", config.maxSignUpCancelTokens)
+                }
+                withClue("no password is ever stored") {
                     createdAuthRecords.filterIsInstance<AuthRecord.Password>() shouldBe emptyList()
                 }
             }
@@ -1104,7 +1113,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onReplacePendingActivation = { it },
                         // `onCapEmailVerificationTokens` keeps its exploding default.
                         onRemoveEmailVerificationTokens = { realm, o, exceptId -> removed = Triple(realm, o, exceptId) },
-                        onFindSignUpCancelTokenOf = { _, _ -> null },
+                        onTrimSignUpCancelTokens = { _, _, _, _ -> },
                         onCreateAuthRecord = { create -> Stored(_id = "record", value = create()) },
                     )
                 }
@@ -1131,7 +1140,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = signedUpAt) },
                         onReplacePendingActivation = { it },
                         onCapEmailVerificationTokens = { _, _, _, _ -> },
-                        onFindSignUpCancelTokenOf = { _, _ -> null },
+                        onTrimSignUpCancelTokens = { _, _, _, _ -> },
                         onCreateAuthRecord = { create ->
                             val record = create()
                             createdAuthRecords.add(record)
@@ -1180,7 +1189,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             Stored(
                                 _id = "cancel-record",
                                 value = AuthRecord.SignUpCancelToken(
-                                    realm = realm, ownerId = UserId("user-id"), expiresAt = Long.MAX_VALUE, token = token,
+                                    realm = realm, ownerId = UserId("user-id"), expiresAt = Long.MAX_VALUE, tokenHash = TokenHash.of(token),
                                 ),
                             )
                         },
@@ -1215,7 +1224,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                                 value = AuthRecord.PasswordRecoveryToken(
                                     realm = realm,
                                     ownerId = ownerId,
-                                    token = token,
+                                    tokenHash = TokenHash.of(token),
                                     expiresAt = Long.MAX_VALUE,
                                 )
                             )
@@ -1236,6 +1245,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onRemovePendingActivationIfUnclaimed = { removedIds += it; true },
                         onRemoveAuthRecord = { removedIds += it; true },
                         onRemovePasswordRecords = { _, owner, exceptId -> removedIds += "passwords-of:${owner.value}-except:$exceptId" },
+                        onRemoveEmailVerificationTokens = { _, owner, _ -> removedIds += "links-of:${owner.value}" },
+                        onRemoveSignUpCancelTokens = { _, owner -> removedIds += "cancel-links-of:${owner.value}" },
                     )
                 }
 
@@ -1271,6 +1282,8 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 // be a pre-registering attacker's.
                 removedIds shouldBe listOf(
                     "recovery-record", "pending-activation", "passwords-of:${ownerId.value}-except:new-password-record",
+                    // ... and the sign-up's links, as after an activation (ULTRA-00291).
+                    "links-of:${ownerId.value}", "cancel-links-of:${ownerId.value}",
                 )
             }
 
@@ -1286,7 +1299,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                             Stored(
                                 _id = "recovery-record",
                                 value = AuthRecord.PasswordRecoveryToken(
-                                    realm = realm, ownerId = UserId(storedUser._id), token = token, expiresAt = Long.MAX_VALUE,
+                                    realm = realm, ownerId = UserId(storedUser._id), tokenHash = TokenHash.of(token), expiresAt = Long.MAX_VALUE,
                                 ),
                             )
                         },
@@ -1323,7 +1336,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             fun recoveryToken(realm: RealmId) = Stored(
                 _id = "recovery-record",
                 value = AuthRecord.PasswordRecoveryToken(
-                    realm = realm, ownerId = UserId("user-id"), token = "t", expiresAt = Long.MAX_VALUE,
+                    realm = realm, ownerId = UserId("user-id"), tokenHash = TokenHash.of("t"), expiresAt = Long.MAX_VALUE,
                 ),
             )
 

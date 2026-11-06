@@ -9,6 +9,7 @@ import io.peekandpoke.funktor.auth.AuthRecordStorage
 import io.peekandpoke.funktor.auth.AuthSystem
 import io.peekandpoke.funktor.auth.AuthUserAdapter
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpResponse
@@ -136,8 +137,11 @@ class EmailAndPasswordAuth(
         /** Find the sign-up cancel token for [realm] and [token] */
         suspend fun findSignUpCancelToken(realm: RealmId, token: String): Stored<AuthRecord.SignUpCancelToken>?
 
-        /** Find the live sign-up cancel token of [realm] / [owner], if any */
-        suspend fun findSignUpCancelTokenOf(realm: RealmId, owner: UserId): Stored<AuthRecord.SignUpCancelToken>?
+        /** Remove every sign-up cancel token of [realm] / [owner] */
+        suspend fun removeSignUpCancelTokens(realm: RealmId, owner: UserId)
+
+        /** Keep [exceptId] and the newest of the other sign-up cancel tokens of [realm] / [owner], [keep] in all */
+        suspend fun trimSignUpCancelTokens(realm: RealmId, owner: UserId, exceptId: String, keep: Int)
 
         /** Remove an auth record by its [id]; true when THIS call removed it */
         suspend fun removeAuthRecord(id: String): Boolean
@@ -192,7 +196,7 @@ class EmailAndPasswordAuth(
             token: String,
         ): Stored<AuthRecord.PasswordRecoveryToken>? {
             return authRecordStorage
-                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = realm, token = token)
+                .findByRawToken(type = AuthRecord.PasswordRecoveryToken, realm = realm, raw = token)
         }
 
         /** @{inheritDoc} */
@@ -201,7 +205,7 @@ class EmailAndPasswordAuth(
             token: String,
         ): Stored<AuthRecord.EmailVerificationToken>? {
             return authRecordStorage
-                .findByToken(type = AuthRecord.EmailVerificationToken, realm = realm, token = token)
+                .findByRawToken(type = AuthRecord.EmailVerificationToken, realm = realm, raw = token)
         }
 
         /** @{inheritDoc} */
@@ -257,15 +261,22 @@ class EmailAndPasswordAuth(
             realm: RealmId,
             token: String,
         ): Stored<AuthRecord.SignUpCancelToken>? {
-            return authRecordStorage.findByToken(type = AuthRecord.SignUpCancelToken, realm = realm, token = token)
+            return authRecordStorage.findByRawToken(type = AuthRecord.SignUpCancelToken, realm = realm, raw = token)
         }
 
         /** @{inheritDoc} */
-        override suspend fun findSignUpCancelTokenOf(
-            realm: RealmId,
-            owner: UserId,
-        ): Stored<AuthRecord.SignUpCancelToken>? {
-            return authRecordStorage.findLatestRecordBy(type = AuthRecord.SignUpCancelToken, realm = realm, owner = owner)
+        override suspend fun removeSignUpCancelTokens(realm: RealmId, owner: UserId) {
+            authRecordStorage.removeAllByOwner(type = AuthRecord.SignUpCancelToken, realm = realm, owner = owner)
+        }
+
+        /** @{inheritDoc} */
+        override suspend fun trimSignUpCancelTokens(realm: RealmId, owner: UserId, exceptId: String, keep: Int) {
+            authRecordStorage
+                .findAllByOwner(type = AuthRecord.SignUpCancelToken, realm = realm, owner = owner)
+                .filter { it._id != exceptId }
+                .sortedByDescending { it.value.createdAt }
+                .drop(keep - 1)
+                .forEach { authRecordStorage.removeById(it._id) }
         }
 
         /** @{inheritDoc} */
@@ -471,7 +482,7 @@ class EmailAndPasswordAuth(
             AuthRecord.EmailVerificationToken(
                 realm = realm.id,
                 ownerId = UserId(user._id),
-                token = token,
+                tokenHash = TokenHash.of(token),
                 expiresAt = tokenExpiresAt.toEpochSeconds(),
             )
         }
@@ -492,19 +503,24 @@ class EmailAndPasswordAuth(
             services.removeEmailVerificationTokens(realm = realm.id, owner = UserId(user._id), exceptId = issued._id)
         }
 
-        // The cancel link lives as long as the ACCOUNT, not the activation link: one token, minted once and
-        // mailed again by every re-send, so a victim can still decline on day 6.
-        val cancelToken = services.findSignUpCancelTokenOf(realm = realm.id, owner = UserId(user._id))?.value?.token
-            ?: services.generateRandomBase64Token(length = realm.tokenConfig.randomTokenByteLength).also { minted ->
-                services.createAuthRecord {
-                    AuthRecord.SignUpCancelToken(
-                        realm = realm.id,
-                        ownerId = UserId(user._id),
-                        token = minted,
-                        expiresAt = accountExpiresAt.toEpochSeconds(),
-                    )
-                }
-            }
+        // The cancel link lives as long as the ACCOUNT, not the activation link, so a victim can still decline on
+        // day 6. Stored hashed, it cannot be read back to mail again: every mail gets its own, the oldest go past
+        // `maxSignUpCancelTokens`.
+        val cancelToken = services.generateRandomBase64Token(length = realm.tokenConfig.randomTokenByteLength)
+
+        val cancelRecord = services.createAuthRecord {
+            AuthRecord.SignUpCancelToken(
+                realm = realm.id,
+                ownerId = UserId(user._id),
+                tokenHash = TokenHash.of(cancelToken),
+                expiresAt = accountExpiresAt.toEpochSeconds(),
+            )
+        }
+
+        services.trimSignUpCancelTokens(
+            realm = realm.id, owner = UserId(user._id), exceptId = cancelRecord._id,
+            keep = realm.tokenConfig.maxSignUpCancelTokens,
+        )
 
         val emailResult = realm.messaging.sendAccountActivationEmail(
             user = user,
@@ -579,7 +595,7 @@ class EmailAndPasswordAuth(
 
         // The sign-up's other links are dead weight now.
         services.removeEmailVerificationTokens(realm = realm.id, owner = owner)
-        services.findSignUpCancelTokenOf(realm = realm.id, owner = owner)?.let { services.removeAuthRecord(it._id) }
+        services.removeSignUpCancelTokens(realm = realm.id, owner = owner)
 
         return realm.users.loadById(owner)?.takeIf { it._id == owner.value }
     }
@@ -674,7 +690,7 @@ class EmailAndPasswordAuth(
             AuthRecord.PasswordRecoveryToken(
                 realm = realm.id,
                 ownerId = UserId(user._id),
-                token = token,
+                tokenHash = TokenHash.of(token),
                 expiresAt = services.instantNow()
                     .plus(realm.tokenConfig.passwordRecoveryTokenLifetime).toEpochSeconds(),
             )
@@ -771,6 +787,9 @@ class EmailAndPasswordAuth(
         // up before email first may be a pre-registering attacker's.
         if (marker != null) {
             services.removePasswordRecords(realm = realm.id, owner = owner, exceptId = newPassword._id)
+            // The sign-up's links are dead weight now, as after an activation.
+            services.removeEmailVerificationTokens(realm = realm.id, owner = owner)
+            services.removeSignUpCancelTokens(realm = realm.id, owner = owner)
         }
 
         // Send email to the user to notify them that their password has been changed

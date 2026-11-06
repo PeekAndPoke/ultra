@@ -252,3 +252,13 @@ Collected, not executed. The design: ULTRA-00231 (email first signup).
   to 30 minutes: does a user ever end up with no live link?
 - **The refusal reasons.** `WeakPassword` and `InvalidDisplayName` are answered before the token is looked at. Send
   a weak password with a used, an unknown and a live token: are the answers (body, status, timing) identical?
+
+## Added by hashed one-shot tokens (ULTRA-00291, 2026-11-06)
+
+- **A read of the auth records yields a live link?** With a copy of the auth-record collection (backup, read-only
+  leak, admin tool): find any field that still works as an activation, cancel, reset or org-selection token. Only
+  `tokenHash` (SHA-256, base64url) should be there; Session rows still hold the raw id (ULTRA-00136).
+- **Cancel-link flooding.** Every re-send mints a cancel link; the cap (`maxSignUpCancelTokens`, 11) drops the
+  oldest. Can an attacker who signs the address up again push the victim's only mail's link out of the cap faster
+  than the growing delays allow? Can concurrent re-sends leave more than the cap, or none?
+

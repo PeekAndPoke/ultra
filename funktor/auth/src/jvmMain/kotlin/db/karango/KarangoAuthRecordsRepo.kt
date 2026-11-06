@@ -6,7 +6,9 @@ import io.peekandpoke.funktor.auth.domain.createdAt
 import io.peekandpoke.funktor.auth.domain.expiresAt
 import io.peekandpoke.funktor.auth.domain.ownerId
 import io.peekandpoke.funktor.auth.domain.realm
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.domain.token
+import io.peekandpoke.funktor.auth.domain.tokenHash
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.fixtures.RepoFixtureLoader
 import io.peekandpoke.karango.aql.AqlPrinter
@@ -62,6 +64,11 @@ class KarangoAuthRecordsRepo(
             field { createdAt.ts }
         }
 
+        // The one-shot lookup by its hash.
+        persistentIndex {
+            field { tokenHash }
+        }
+
         ttlIndex {
             field { expiresAt }
         }
@@ -89,6 +96,20 @@ class KarangoAuthRecordsRepo(
                 FILTER(r._type EQ type)
                 FILTER(r.realm EQ realm)
                 FILTER(r.token EQ token)
+
+                LIMIT(1)
+
+                RETURN(r)
+            }
+        }
+    }
+
+    override suspend fun findByTokenHash(realm: RealmId, type: String, hash: TokenHash): Stored<AuthRecord>? {
+        return findFirst {
+            FOR(repo) { r ->
+                FILTER(r._type EQ type)
+                FILTER(r.realm EQ realm)
+                FILTER(r.tokenHash EQ hash)
 
                 LIMIT(1)
 

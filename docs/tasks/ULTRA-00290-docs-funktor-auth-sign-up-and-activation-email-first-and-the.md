@@ -26,8 +26,9 @@ already rewrote the activation section of `docs-site/src/pages/ultra/funktor/aut
   `InvalidDisplayName`, a 200); `AuthUserAdapter.activate(user, ActivateUserParams)`;
   `RealmTokenConfig.activationLinkOverlap` (30 min, 0 = rotate); the org handoff
   (`AuthState.takeActivationOrgSelection()`); its "no compile signal" list in `CHANGELOG.md` `## Unreleased`.
-- **Still moving, write last:** ULTRA-00291 (tokens stored hashed; a cancel token per mail) changes
-  `EmailAndPasswordAuth.Services` and what a re-send mails; ULTRA-00293 changes the default name of SSO accounts.
+- **Added by ULTRA-00291 and ULTRA-00293 (2026-11-06), settled:** one-shot tokens stored as `TokenHash`, a cancel
+  link per mail capped by `RealmTokenConfig.maxSignUpCancelTokens`, links from before the upgrade dead; SSO names
+  meet `AuthDisplayName`, else the local part. Both CHANGELOG entries list their silent changes.
 
 ## Decide before implementing
 

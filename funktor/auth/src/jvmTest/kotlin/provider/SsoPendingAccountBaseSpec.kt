@@ -17,6 +17,7 @@ import io.peekandpoke.funktor.auth.MinimalTestUser
 import io.peekandpoke.funktor.auth.RealmTokenConfig
 import io.peekandpoke.funktor.auth.createAuthTestContainer
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.funktorAuth
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
@@ -109,8 +110,8 @@ abstract class SsoPendingAccountBaseSpec : FreeSpec() {
         val expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds()
 
         if (withPassword) create(AuthRecord.Password(realm = realmId, ownerId = owner, token = "attacker-hash"))
-        create(AuthRecord.EmailVerificationToken(realmId, owner, expiresAt, token = "verify"))
-        create(AuthRecord.SignUpCancelToken(realmId, owner, expiresAt, token = "cancel"))
+        create(AuthRecord.EmailVerificationToken(realmId, owner, expiresAt, tokenHash = TokenHash.of("verify")))
+        create(AuthRecord.SignUpCancelToken(realmId, owner, expiresAt, tokenHash = TokenHash.of("cancel")))
 
         if (pending) create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
     }

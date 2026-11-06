@@ -83,6 +83,13 @@ These are design decisions, not implementation details. Settle them before build
 - The `Cached` layer means a revocation is not instant: worst case is one cache TTL. That is a
   deliberate trade and should be documented wherever revocation is exposed to users.
 
+## Note from ULTRA-00291 (2026-11-06)
+
+The one-shot tokens are now stored as `tokenHash` (SHA-256, `domain/TokenHash.kt`) and looked up with
+`AuthRecordStorage.findByRawToken`. `AuthRecord.Session` was left out on purpose: its `token` is the raw session id,
+mirrored as the row's `_key`. When sessions are issued, decide whether the id is stored hashed as well (then the
+`_key` cannot be the raw id), and use the same seam.
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00136 (was `docs/tasks/20260728-session-revocation-wiring.md`).

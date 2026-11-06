@@ -8,6 +8,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthProviderModel
@@ -86,7 +87,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 )
                 real.storage.authRecords.create(
                     AuthRecord.EmailVerificationToken(
-                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("act"),
                     )
                 )
 
@@ -122,7 +123,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 )
                 real.storage.authRecords.create(
                     AuthRecord.EmailVerificationToken(
-                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("act"),
                     )
                 )
                 val signUpOnly = EmailAndPasswordAuth(
@@ -243,7 +244,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 val marker = real.storage.authRecords.create(AuthRecord.PendingActivation(realm = realmId, ownerId = owner))
                 real.storage.authRecords.create(
                     AuthRecord.EmailVerificationToken(
-                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("act"),
                     )
                 )
 
@@ -492,7 +493,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 val real = realDeps()
                 real.storage.authRecords.create(
                     AuthRecord.PasswordRecoveryToken(
-                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "reset",
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("reset"),
                     )
                 )
 
@@ -515,7 +516,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 val real = realDeps()
                 real.storage.authRecords.create(
                     AuthRecord.EmailVerificationToken(
-                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("act"),
                     )
                 )
 
@@ -547,7 +548,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 )
                 real.storage.authRecords.create(
                     AuthRecord.PasswordRecoveryToken(
-                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "reset",
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("reset"),
                     )
                 )
                 val realm = MinimalTestRealm(
@@ -581,7 +582,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 )
                 real.storage.authRecords.create(
                     AuthRecord.EmailVerificationToken(
-                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "act",
+                        realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("act"),
                     )
                 )
                 val realm = MinimalTestRealm(getDeps = { real }, onLoadUserById = { user }, onLoadUserByEmail = { user })
@@ -612,7 +613,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
             )
             real.storage.authRecords.create(
                 AuthRecord.SignUpCancelToken(
-                    realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), token = "cancel",
+                    realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("cancel"),
                 )
             )
 
@@ -627,7 +628,7 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
                 AuthCancelSignUpRequest(provider = EmailAndPasswordAuth.ID, token = "cancel"),
             ).success shouldBe false
 
-            real.storage.authRecords.findByToken(AuthRecord.SignUpCancelToken, realmId, "cancel").shouldNotBeNull()
+            real.storage.authRecords.findByRawToken(AuthRecord.SignUpCancelToken, realmId, "cancel").shouldNotBeNull()
         }
 
         "an UNKNOWN claim is refused AND logged, naming the owner and the value" {

@@ -2,10 +2,12 @@ package io.peekandpoke.funktor.auth
 
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.kontainer.Kontainer
@@ -106,7 +108,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm"),
                     ownerId = UserId("owner1"),
-                    token = "token1",
+                    tokenHash = TokenHash.of("token1"),
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
             )
@@ -115,14 +117,14 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm"),
                     ownerId = UserId("owner2"),
-                    token = "token2",
+                    tokenHash = TokenHash.of("token2"),
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
             )
 
             withClue("Loading password reset token of owner1") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "token1")
+                    .findByRawToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), raw = "token1")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token1._id
@@ -134,7 +136,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
             withClue("Loading password reset token of owner2") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "token2")
+                    .findByRawToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), raw = "token2")
 
                 loaded.shouldNotBeNull()
                 loaded._id shouldBe token2._id
@@ -155,7 +157,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm"),
                     ownerId = UserId("owner1"),
-                    token = "token1",
+                    tokenHash = TokenHash.of("token1"),
                     expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(),
                 )
             )
@@ -177,13 +179,13 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm"),
                     ownerId = UserId("owner1"),
-                    token = "known-token",
+                    tokenHash = TokenHash.of("known-token"),
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
             )
 
             val loaded = authRecords
-                .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), token = "unknown-token")
+                .findByRawToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm"), raw = "unknown-token")
 
             loaded.shouldBeNull()
         }
@@ -198,20 +200,20 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm-a"),
                     ownerId = UserId("owner1"),
-                    token = "shared-token",
+                    tokenHash = TokenHash.of("shared-token"),
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
             )
 
             withClue("Same token in a different realm should not match") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-b"), token = "shared-token")
+                    .findByRawToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-b"), raw = "shared-token")
                 loaded.shouldBeNull()
             }
 
             withClue("Same token in the right realm should match") {
                 val loaded = authRecords
-                    .findByToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-a"), token = "shared-token")
+                    .findByRawToken(type = AuthRecord.PasswordRecoveryToken, realm = RealmId("realm-a"), raw = "shared-token")
                 loaded.shouldNotBeNull()
             }
         }
@@ -310,7 +312,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm"),
                     ownerId = UserId("owner1"),
-                    token = "future",
+                    tokenHash = TokenHash.of("future"),
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
             )
@@ -319,7 +321,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm"),
                     ownerId = UserId("owner2"),
-                    token = "past",
+                    tokenHash = TokenHash.of("past"),
                     expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(),
                 )
             )
@@ -331,7 +333,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.PasswordRecoveryToken(
                     realm = RealmId("realm"),
                     ownerId = UserId("owner3"),
-                    token = "boundary",
+                    tokenHash = TokenHash.of("boundary"),
                     expiresAt = kronos.secondsNow(),
                 )
             )
@@ -364,7 +366,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                     AuthRecord.PasswordRecoveryToken(
                         realm = RealmId(realm),
                         ownerId = UserId(owner),
-                        token = token,
+                        tokenHash = TokenHash.of(token),
                         expiresAt = kronos.instantNow().plus(expiresIn.hours).toEpochSeconds(),
                     )
                 )
@@ -384,7 +386,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             )
 
             withClue("only the live tokens of that type, realm and owner") {
-                found.map { it.resolve().token }.sorted() shouldBe listOf("a1", "a2")
+                found.map { it.resolve().tokenHash } shouldContainExactlyInAnyOrder listOf(TokenHash.of("a1"), TokenHash.of("a2"))
             }
         }
 
@@ -443,7 +445,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 AuthRecord.EmailVerificationToken(
                     realm = RealmId("realm"),
                     ownerId = UserId(owner),
-                    token = token,
+                    tokenHash = TokenHash.of(token),
                     expiresAt = kronos.instantNow().plus(1.hours).toEpochSeconds(),
                 )
             )
@@ -462,7 +464,7 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             authRecords.findAllByOwner(AuthRecord.EmailVerificationToken, RealmId("realm"), UserId("owner1"))
                 .map { it._id } shouldBe listOf(keep._id)
 
-            authRecords.findByToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "someone-else")
+            authRecords.findByRawToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "someone-else")
                 .shouldNotBeNull()
         }
 
@@ -510,9 +512,9 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             val owner = UserId("owner1")
 
             authRecords.create(AuthRecord.Password(realm = realm, ownerId = owner, token = "pw"))
-            authRecords.create(AuthRecord.EmailVerificationToken(realm, owner, expiresAt, token = "v"))
-            authRecords.create(AuthRecord.SignUpCancelToken(realm, owner, expiresAt, token = "c"))
-            authRecords.create(AuthRecord.PasswordRecoveryToken(realm, owner, expiresAt, token = "p"))
+            authRecords.create(AuthRecord.EmailVerificationToken(realm, owner, expiresAt, tokenHash = TokenHash.of("v")))
+            authRecords.create(AuthRecord.SignUpCancelToken(realm, owner, expiresAt, tokenHash = TokenHash.of("c")))
+            authRecords.create(AuthRecord.PasswordRecoveryToken(realm, owner, expiresAt, tokenHash = TokenHash.of("p")))
             authRecords.create(AuthRecord.PendingActivation(realm = realm, ownerId = owner))
             // Untouchable neighbours:
             authRecords.create(AuthRecord.Password(realm = realm, ownerId = UserId("owner2"), token = "pw2"))
@@ -710,24 +712,24 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
             val expiresAt = kronos.instantNow().plus(150.hours).toEpochSeconds()
 
             authRecords.create(
-                AuthRecord.SignUpCancelToken(RealmId("realm"), UserId("owner1"), expiresAt = expiresAt, token = "cancel-1")
+                AuthRecord.SignUpCancelToken(RealmId("realm"), UserId("owner1"), expiresAt = expiresAt, tokenHash = TokenHash.of("cancel-1"))
             )
             authRecords.create(
                 AuthRecord.SignUpCancelToken(
                     RealmId("realm"), UserId("owner2"),
-                    expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(), token = "cancel-old",
+                    expiresAt = kronos.instantNow().minus(1.hours).toEpochSeconds(), tokenHash = TokenHash.of("cancel-old"),
                 )
             )
 
-            val loaded = authRecords.findByToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-1")
+            val loaded = authRecords.findByRawToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-1")
                 .shouldNotBeNull()
             loaded.value.ownerId shouldBe UserId("owner1")
             loaded.value.expiresAt shouldBe expiresAt
 
             authRecords.findLatestRecordBy(AuthRecord.SignUpCancelToken, RealmId("realm"), UserId("owner1"))
                 .shouldNotBeNull()
-            authRecords.findByToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "cancel-1").shouldBeNull()
-            authRecords.findByToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-old").shouldBeNull()
+            authRecords.findByRawToken(AuthRecord.EmailVerificationToken, RealmId("realm"), "cancel-1").shouldBeNull()
+            authRecords.findByRawToken(AuthRecord.SignUpCancelToken, RealmId("realm"), "cancel-old").shouldBeNull()
         }
     }
 }

@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.auth
 
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.emails.AccountActivationEmailTemplate
 import io.peekandpoke.funktor.auth.emails.AuthEmailTemplates
 import io.peekandpoke.funktor.auth.emails.PasswordChangedEmailTemplate
@@ -732,7 +733,7 @@ interface AuthRealm<USER : AuthUser> {
                             AuthRecord.OrgSelectionToken(
                                 realm = id,
                                 ownerId = UserId(user._id),
-                                token = token,
+                                tokenHash = TokenHash.of(token),
                                 expiresAt = deps.kronos.instantNow()
                                     .plus(tokenConfig.orgSelectionTokenLifetime).toEpochSeconds(),
                             )
@@ -755,7 +756,7 @@ interface AuthRealm<USER : AuthUser> {
      */
     suspend fun selectOrg(selectionToken: String, orgId: OrgId): AuthSignInResponse {
         val record = deps.storage.authRecords
-            .findByToken(AuthRecord.OrgSelectionToken, realm = id, token = selectionToken)
+            .findByRawToken(AuthRecord.OrgSelectionToken, realm = id, raw = selectionToken)
             ?: throw AuthError.noOrganisationAccess()
 
         // Single-use: consume the token.

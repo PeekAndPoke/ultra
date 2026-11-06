@@ -18,6 +18,7 @@ import io.peekandpoke.funktor.auth.RealmTokenConfig
 import io.peekandpoke.funktor.auth.api.AuthApiFeature
 import io.peekandpoke.funktor.auth.api.AuthApiFeature.RealmParam
 import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountRequest
 import io.peekandpoke.funktor.auth.model.AuthActivateAccountResponse
 import io.peekandpoke.funktor.auth.model.AuthCancelSignUpRequest
@@ -105,6 +106,13 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
         AuthRecord.EmailVerificationToken, AuthRecord.SignUpCancelToken,
     ).associate { it.identifier to records.adapter.findAllByOwner(realm.id, it.identifier, UserId(id)).size }
         .filterValues { it > 0 }
+
+    /** Every auth row of [id] of every type, as stored (expired ones included), each as its full field dump. */
+    private suspend fun allRowsOf(id: String): List<String> = listOf(
+        AuthRecord.Password, AuthRecord.PasswordRecoveryToken, AuthRecord.PendingActivation,
+        AuthRecord.EmailVerificationToken, AuthRecord.SignUpCancelToken, AuthRecord.EmailChangeToken,
+        AuthRecord.OrgSelectionToken, AuthRecord.Session,
+    ).flatMap { type -> records.adapter.findAllByOwner(realm.id, type.identifier, UserId(id)).map { it.toString() } }
 
     private suspend fun hasPassword(id: String) =
         records.findLatestRecordBy(AuthRecord.Password, realm.id, UserId(id)) != null
@@ -316,6 +324,88 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             }
         }
 
+        //  Tokens stored hashed (ULTRA-00291)  /////////////////////////////////////////////////////////////////
+
+        "No stored row holds a raw token: not the sign-up's links, a re-send's, or a reset's" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("hashed")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+                    val raw = mutableListOf(activationTokenTo(email), cancelTokenTo(email))
+
+                    advance(config.activationResendDelay(0) + 1.minutes)
+                    signUp(email)
+                    raw += listOf(activationTokenTo(email), cancelTokenTo(email))
+
+                    emails.clear()
+                    api.authLogin.recoverAccountInitPasswordReset(
+                        realmParam,
+                        body = AuthRecoverAccountRequest.InitPasswordReset(provider = provider, email = email),
+                    ) { status shouldBe HttpStatusCode.OK }
+                    raw += emails.lastTo(email).shouldNotBeNull().hrefs().single().substringAfterLast("/").decodeUriComponent()
+
+                    raw.toSet().size shouldBe 5
+
+                    val rows = allRowsOf(id)
+                    for (token in raw) {
+                        withClue("no row contains the raw token") { rows.none { it.contains(token) } shouldBe true }
+                        withClue("a row holds its hash") { rows.any { it.contains(TokenHash.of(token).value) } shouldBe true }
+                    }
+                }
+            }
+        }
+
+        "Every mailed cancel link works for the account's life; past the cap only the oldest go, and none after an activation" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("cancel-links")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+                    val cancels = mutableListOf(cancelTokenTo(email))
+
+                    // The sign-up mail plus 11 re-sends, each after its growing delay: 6.7 days, inside the 7.
+                    repeat(config.maxSignUpCancelTokens) { resends ->
+                        advance(config.activationResendDelay(resends) + 1.minutes)
+                        signUp(email)
+                        cancels += cancelTokenTo(email)
+                    }
+
+                    cancels.toSet().size shouldBe config.maxSignUpCancelTokens + 1
+                    records.findAllByOwner(AuthRecord.SignUpCancelToken, realm.id, UserId(id)).size shouldBe
+                        config.maxSignUpCancelTokens
+
+                    withClue("the oldest, the sign-up mail's, went with the cap") { cancel(cancels.first()) shouldBe false }
+                    isPending(id) shouldBe true
+
+                    withClue("the second-oldest still cancels, on day 6.7") { cancel(cancels[1]) shouldBe true }
+                }
+            }
+        }
+
+        "After an activation no cancel link of any mail is left" {
+            apiApp {
+                anonymous {
+                    val email = freshEmail("cancel-after-activation")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+                    val first = cancelTokenTo(email)
+
+                    advance(config.activationResendDelay(0) + 1.minutes)
+                    signUp(email)
+                    val second = cancelTokenTo(email)
+
+                    activate(activationTokenTo(email)) shouldBe true
+
+                    records.adapter.findAllByOwner(realm.id, AuthRecord.SignUpCancelToken.identifier, UserId(id)) shouldBe
+                        emptyList()
+                    cancel(first) shouldBe false
+                    cancel(second) shouldBe false
+                    isPending(id) shouldBe false
+                }
+            }
+        }
+
         //  Signing up again: growing delays, silently  ///////////////////////////////////////////////////////////
 
         "Signing up again re-sends the link under GROWING delays per account — and says nothing about them" {
@@ -484,6 +574,14 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                                     else -> {
                                         val selection = answer.signIn.shouldBeInstanceOf<AuthSignInResponse.OrgSelectionRequired>()
                                         selection.organisations shouldBe orgs
+
+                                        withClue("the org-selection token is stored as its hash only (ULTRA-00291)") {
+                                            val rows = allRowsOf(id)
+                                            rows.none { it.contains(selection.selectionToken) } shouldBe true
+                                            records.adapter
+                                                .findAllByOwner(realm.id, AuthRecord.OrgSelectionToken.identifier, UserId(id))
+                                                .single().value.tokenHash shouldBe TokenHash.of(selection.selectionToken)
+                                        }
 
                                         withClue("the picker's token completes the sign-in") {
                                             api.authLogin.selectOrg(

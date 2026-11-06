@@ -86,6 +86,31 @@
     address (its local part).
   - After a re-send, up to about three links can be live at once for the first half hour.
 
+- **Funktor auth, a security fix: one-shot tokens are stored as their SHA-256 hash, never in clear text**
+  (ULTRA-00291). Anyone who could read the auth records (a backup, a read-only leak, an admin tool) held a working
+  activation link into every pending account, and a reset link into every account with a reset under way. The
+  activation, cancel, reset, email-change and org-selection tokens now store `tokenHash: TokenHash` (base64url
+  SHA-256 of the raw token) instead of `token`; the raw token exists only in the mail or the answer.
+  `AuthRecordStorage.findByRawToken` hashes inside, and both auth-record repos index `tokenHash`. Password and Session
+  records keep `token` (ULTRA-00136 decides sessions). Breaking: the five record types take `tokenHash`; the storage
+  `Adapter` and the Vault `Repo` gain `findByTokenHash`; `EmailAndPasswordAuth.Services` loses
+  `findSignUpCancelTokenOf` and gains `removeSignUpCancelTokens` and `trimSignUpCancelTokens`.
+
+  A hashed cancel token cannot be read back to mail again, so **every activation mail carries its own cancel link**,
+  each valid as long as the account. `RealmTokenConfig.maxSignUpCancelTokens` (default 11) caps them per account;
+  past it the oldest goes. With the default delays the 7 days of `pendingAccountLifetime` hold the sign-up mail and 11
+  re-sends, so only the last re-send drops the sign-up mail's link. Activation, cancel, retire, SSO activation and now
+  a reset that activates remove them all.
+
+  What changes with no compile signal:
+  - **Links mailed before the upgrade stop working.** No migration: nothing is live. A database that still holds
+    one-shot rows of the old shape (`token`, no `tokenHash`) cannot read them back, and listing an owner's tokens
+    (signing up again) may fail on them; delete the auth records of such dev databases (on Mongo the TTL index
+    culls nothing).
+  - `RealmTokenConfig` refuses `randomTokenByteLength` below 32 (the hash is unsalted) and `maxSignUpCancelTokens`
+    below 2.
+  - A reset that activates a pending account now also removes its activation and cancel links.
+
 - **Funktor auth: an SSO sign-up's profile name meets `AuthDisplayName`, else the address's local part is the name**
   (ULTRA-00293). The provider's name was only trimmed, so control, invisible and bidi characters reached the
   account, and a GitHub profile without a name (`"name": null`) became the literal name `"null"`.
