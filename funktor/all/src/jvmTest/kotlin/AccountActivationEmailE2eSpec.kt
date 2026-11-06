@@ -446,8 +446,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                         }
                     }
 
-                    // Refused before the link. The STATUS is not pinned: funktor-rest answers a missing body field
-                    // with a 500 today, not a 400, which is a framework matter outside this flow.
+                    // Refused before the link, as a client error (ULTRA-00292: it was a 500 that quoted the body).
                     withClue("a body WITHOUT displayName (an old client) is refused, and the link survives it") {
                         request(
                             HttpMethod.Post,
@@ -463,7 +462,7 @@ class AccountActivationEmailE2eSpec : FunktorApiSpec() {
                                 header(HttpHeaders.ContentType, "application/json")
                             },
                         ) {
-                            status shouldNotBe HttpStatusCode.OK
+                            status shouldBe HttpStatusCode.BadRequest
                         }
                     }
 

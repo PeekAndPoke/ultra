@@ -35,6 +35,17 @@ object ApiStatusPages {
         return config?.ktor?.isNotProduction == true
     }
 
+    /**
+     * What an error answer may say of its [cause]: outside production the stack trace; in production the message
+     * of a client error (written to be shown, see `SlumberRestCodec`), and nothing of an [internal] one, whose
+     * message may quote the request's input.
+     */
+    fun errorDetail(config: AppConfig?, cause: Throwable, internal: Boolean): String? = when {
+        exposesStackTraces(config) -> cause.stackTraceToString()
+        internal -> null
+        else -> cause.message ?: ""
+    }
+
     fun isClientError(cause: Throwable): Boolean {
         return cause is ChannelWriteException ||
                 cause is CancellationException ||
@@ -46,14 +57,11 @@ object ApiStatusPages {
 
         val plugin = createRouteScopedPlugin("API-Status-Pages") {
 
-            fun <T> ApiResponse<T>.withCause(call: ApplicationCall, cause: Throwable): ApiResponse<T> {
-                val config = call.kontainerOrNull?.getOrNull(AppConfig::class)
-
-                return when (exposesStackTraces(config)) {
-                    true -> this.withError(cause.stackTraceToString())
-                    else -> this.withError(cause.message ?: "")
+            fun <T> ApiResponse<T>.withCause(call: ApplicationCall, cause: Throwable, internal: Boolean) =
+                when (val detail = errorDetail(call.kontainerOrNull?.getOrNull(AppConfig::class), cause, internal)) {
+                    null -> this
+                    else -> this.withError(detail)
                 }
-            }
 
             on(CallFailed) { call, cause ->
                 try {
@@ -66,7 +74,7 @@ object ApiStatusPages {
 
                         cause is CouldNotConvertException -> {
                             call.apiRespond(
-                                ApiResponse.badRequest<Any>().withCause(call, cause)
+                                ApiResponse.badRequest<Any>().withCause(call, cause, internal = false)
                             )
                         }
 
@@ -85,7 +93,7 @@ object ApiStatusPages {
                             call.apiRespond(
                                 ApiResponse.internalServerError<Any>()
                                     .withError("The request '${call.request.uri}' cause an internal server error")
-                                    .withCause(call, cause)
+                                    .withCause(call, cause, internal = true)
                             )
                         }
                     }

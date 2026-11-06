@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.rest.codec
 
 import io.peekandpoke.funktor.core.broker.CouldNotConvertException
+import io.peekandpoke.ultra.slumber.AwakerException
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
 import io.peekandpoke.ultra.slumber.JsonUtil.unwrap
@@ -95,7 +96,7 @@ class SlumberRestCodec(
                     // Was `readValue<Map<String, Any?>>`, which assumed the body is a JSON OBJECT and
                     // threw for a top-level array or scalar. Unwrapping any element is strictly more
                     // permissive: Slumber's awaker for `asType` still decides what is acceptable.
-                    awakeBody(asType, json.parseToJsonElement(content).unwrap())
+                    awakeBody(asType, parseBody(asType, content))
                 }
             }
 
@@ -105,6 +106,9 @@ class SlumberRestCodec(
 
     /**
      * [awake]s a REQUEST BODY, translating a rejected value into a 400 instead of a 500.
+     *
+     * Slumber's own rejection, an [AwakerException] (a missing, null or wrong-typed value), becomes a
+     * [CouldNotConvertException] whose message is [safeAwakerMessage]: Slumber's message quotes the input.
      *
      * A `@JvmInline value class` (or any type with an `init { require(...) }`) is constructed
      * reflectively while awaking, so a violated invariant arrives wrapped in an
@@ -117,7 +121,7 @@ class SlumberRestCodec(
      * `IncomingValueClassConverter` already does on the URI-param path, where the same failure
      * is normalized to a fail-closed 404.
      *
-     * Deliberately narrow: only a failure thrown from a CONSTRUCTOR
+     * Beyond that, deliberately narrow: only a failure thrown from a CONSTRUCTOR
      * ([InvocationTargetException]) whose cause is an [IllegalArgumentException] /
      * [IllegalStateException] — i.e. a `require`/`check` in an `init` block — is translated.
      * Anything else keeps propagating, so a genuine server-side bug still surfaces as a 500.
@@ -125,6 +129,11 @@ class SlumberRestCodec(
     private fun awakeBody(asType: KType, data: Any?): Any? {
         try {
             return awake(asType, data)
+        } catch (e: AwakerException) {
+            // Slumber's message quotes the whole input ("Input value: ..."), a password included: only the
+            // failing path goes into the message, which production answers show. The cause keeps the rest,
+            // for the stack trace that only a non-production answer shows.
+            throw CouldNotConvertException("Could not convert request body to '$asType': ${e.safeAwakerMessage()}", e)
         } catch (e: Throwable) {
             val rejected = e.rejectedValueCause() ?: throw e
 
@@ -132,6 +141,27 @@ class SlumberRestCodec(
                 "Could not convert request body to '$asType': ${rejected.message}", rejected,
             )
         }
+    }
+
+    /**
+     * The first line of Slumber's message, "Value at path '...' must not be null", capped. A map's RAW key is part
+     * of the path (`<key>[KEY]`, `<key>[VAL]`), and a key containing dots cannot be told from the field names, so a
+     * path through a map is dropped altogether.
+     */
+    private fun AwakerException.safeAwakerMessage(): String {
+        val first = message.orEmpty().lineSequence().first()
+
+        return when {
+            "[KEY]" in first || "[VAL]" in first -> "a value inside a map is missing or of the wrong type"
+            else -> first.take(300)
+        }
+    }
+
+    /** The body as a plain tree; text that is not JSON is a client error, and kotlinx's message quotes it. */
+    private fun parseBody(asType: KType, content: String): Any? = try {
+        json.parseToJsonElement(content).unwrap()
+    } catch (e: SerializationException) {
+        throw CouldNotConvertException("Could not convert request body to '$asType': the body is not valid JSON", e)
     }
 
     /** Walks the cause chain for a constructor-thrown `require`/`check` failure. */

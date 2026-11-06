@@ -60,8 +60,12 @@
   choose what that account is called. A pre-registering attacker's "Call support at …" name used to survive into
   the victim's account. `AuthSignUpRequest.EmailAndPassword` lost `displayName`, and
   `AuthActivateAccountRequest.displayName` is new and required. `AuthDisplayName` (common) is the rule: 1 to 100
-  characters after trimming; no control characters, line breaks, invisible format characters (the zero-width joiner
-  and non-joiner excepted), tag characters, or letters that render blank. `AuthUserAdapter.activate(user,
+  UTF-16 chars after trimming, on one line, of characters that show. It refuses control characters, invisible ones
+  (format controls in every plane, the tag block, default-ignorable code points, blank-rendering letters, a run of
+  variation selectors, a joiner not between two visible characters), undisplayable ones (private use,
+  noncharacters, broken UTF-16) and a leading combining mark. `AuthDisplayName.refusalOf` says why, naming the
+  character and where it sits; the page shows that message. Names with the England, Scotland or Wales flag emoji are
+  refused, as those are built from tag characters. `AuthUserAdapter.activate(user,
   ActivateUserParams)` is new and has no default: it writes the name once the activation has won, and a realm
   without sign-up throws `AuthError.notSupported()`.
 
@@ -72,16 +76,29 @@
   older links of a re-send usable for that long instead of killing them at once, so someone signing the address up
   again cannot kill the link a user is typing into; 0 restores the old rotation. In an org realm, an activation
   that needs an org choice hands `OrgSelectionRequired` to the login page, which opens on the picker, once
-  (`AuthState.takeActivationOrgSelection()`). `AuthState.logout()` now also drops a pending org selection. Also
-  breaking: `GithubSsoAuth.RemoteClient.getEmails` is abstract.
+  (`AuthState.takeActivationOrgSelection()`). `AuthState.logout()` now also drops a pending org selection. A custom
+  `EmailAndPasswordAuth.Services` must implement the new `capEmailVerificationTokens`.
 
   What changes with no compile signal:
-  - An app's own activation page that POSTs no `displayName` is refused, and its link stays usable. The answer is a
-    500, not a 400: funktor-rest does not yet map a missing body field to a client error. An app's own sign-up form
-    that still sends a name: the server ignores it.
+  - An app's own activation page that POSTs no `displayName` is refused with a 400, and its link stays usable. An
+    app's own sign-up form that still sends a name: the server ignores it.
   - An account activated through a password reset or SSO is never asked for a name and keeps the default from the
     address (its local part).
   - After a re-send, up to about three links can be live at once for the first half hour.
+
+- **Funktor rest, a security fix: a request body that does not fit its type is a 400, and no answer in production
+  quotes it** (ULTRA-00292). A body missing a required field, with a wrong-typed field, or not JSON at all was a 500:
+  logged as an internal error with the whole input, and answered with Slumber's message, which quotes it, also in
+  production. A sign-in or activation body missing one field put the cleartext password into the log. Now
+  `SlumberRestCodec` turns these into `CouldNotConvertException` (400) whose message names the type and the failing
+  path only; the original stays its cause, so outside production the stack trace still shows the input. A 400 is not
+  logged as an internal error.
+
+  What changes with no compile signal:
+  - A client that sent malformed bodies and handled the 500 now gets a 400.
+  - **A 500 in production no longer carries the exception's message**, only "The request '…' cause an internal
+    server error": an unknown exception's message may quote the input. Outside production it carries the stack
+    trace, as before (`ApiStatusPages.errorDetail`).
 
 ## 0.117.0
 

@@ -52,4 +52,16 @@ class ApiStatusPagesSpec : StringSpec({
             }
         }
     }
+
+    // ULTRA-00292: an answer in production quotes no input.
+    "in production a client error says its message, an internal one nothing; outside it, the stack trace" {
+        val cause = IllegalStateException("Input value: {password=Secret-Marker-4711}")
+
+        ApiStatusPages.errorDetail(configFor("prod"), cause, internal = false) shouldBe cause.message
+        ApiStatusPages.errorDetail(configFor("prod"), cause, internal = true) shouldBe null
+        ApiStatusPages.errorDetail(null, cause, internal = true) shouldBe null
+
+        ApiStatusPages.errorDetail(configFor("dev"), cause, internal = true) shouldBe cause.stackTraceToString()
+        ApiStatusPages.errorDetail(configFor("dev"), cause, internal = false) shouldBe cause.stackTraceToString()
+    }
 })
