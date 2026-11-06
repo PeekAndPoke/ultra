@@ -61,8 +61,10 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
             { _, _, _ -> error("removePasswordRecords not implemented") },
         val onFindPendingActivation: suspend (RealmId, UserId) -> Stored<AuthRecord.PendingActivation>? =
             { _, _ -> error("findPendingActivation not implemented") },
-        val onReplacePendingActivation: suspend (Stored<AuthRecord.PendingActivation>) -> Stored<AuthRecord.PendingActivation>? =
-            { error("replacePendingActivation not implemented") },
+        val onReplacePendingActivation: suspend (
+            read: Stored<AuthRecord.PendingActivation>, next: Stored<AuthRecord.PendingActivation>,
+        ) -> Stored<AuthRecord.PendingActivation>? =
+            { _, _ -> error("replacePendingActivation not implemented") },
         val onFindSignUpCancelToken: suspend (RealmId, String) -> Stored<AuthRecord.SignUpCancelToken>? =
             { _, _ -> error("findSignUpCancelToken not implemented") },
         val onRemoveSignUpCancelTokens: suspend (RealmId, UserId) -> Unit =
@@ -111,8 +113,9 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
         ): Stored<AuthRecord.PendingActivation>? = onFindPendingActivation(realm, owner)
 
         override suspend fun replacePendingActivation(
-            marker: Stored<AuthRecord.PendingActivation>,
-        ): Stored<AuthRecord.PendingActivation>? = onReplacePendingActivation(marker)
+            read: Stored<AuthRecord.PendingActivation>,
+            next: Stored<AuthRecord.PendingActivation>,
+        ): Stored<AuthRecord.PendingActivation>? = onReplacePendingActivation(read, next)
 
         override suspend fun findSignUpCancelToken(realm: RealmId, token: String) = onFindSignUpCancelToken(realm, token)
 
@@ -1008,7 +1011,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     TestServices(
                         onInstantNow = { now },
                         onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = now.minus(1.days)) },
-                        onReplacePendingActivation = { null }, // the marker is gone
+                        onReplacePendingActivation = { _, _ -> null }, // the marker is gone
                     )
                 }
 
@@ -1032,7 +1035,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onInstantNow = { now },
                         onGenerateToken = { generated.removeFirst() },
                         onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = now.minus(firstDelay)) },
-                        onReplacePendingActivation = { marker ->
+                        onReplacePendingActivation = { _, marker ->
                             events += "reserve"
                             saved = marker.value()
                             marker
@@ -1110,7 +1113,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onInstantNow = { now },
                         onGenerateToken = { "token" },
                         onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = now.minus(firstDelay)) },
-                        onReplacePendingActivation = { it },
+                        onReplacePendingActivation = { _, next -> next },
                         // `onCapEmailVerificationTokens` keeps its exploding default.
                         onRemoveEmailVerificationTokens = { realm, o, exceptId -> removed = Triple(realm, o, exceptId) },
                         onTrimSignUpCancelTokens = { _, _, _, _ -> },
@@ -1138,7 +1141,7 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                         onInstantNow = { now },
                         onGenerateToken = { "token" },
                         onFindPendingActivation = { realm, _ -> pendingMarker(realm, createdAt = signedUpAt) },
-                        onReplacePendingActivation = { it },
+                        onReplacePendingActivation = { _, next -> next },
                         onCapEmailVerificationTokens = { _, _, _, _ -> },
                         onTrimSignUpCancelTokens = { _, _, _, _ -> },
                         onCreateAuthRecord = { create ->

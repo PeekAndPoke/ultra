@@ -51,7 +51,9 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 return RemoveResult.empty
             }
 
-            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
+            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(
+                stored: Stored<T>, expected: String?, expectedResends: Int?,
+            ): Stored<T>? {
                 return null
             }
 
@@ -91,7 +93,9 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                     realm: RealmId, type: String, before: MpInstant, orClaimedBy: String?, after: MpInstant?, limit: Int,
                 ): List<Stored<AuthRecord>>
 
-                suspend fun <T : AuthRecord> replaceIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>?
+                suspend fun <T : AuthRecord> replaceIfClaimedBy(
+                    stored: Stored<T>, expected: String?, expectedResends: Int?,
+                ): Stored<T>?
 
                 suspend fun removeIfClaimedBy(id: String, expected: String?): RemoveResult
             }
@@ -130,8 +134,10 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
                 return inner.removeAllByOwner(realm, type, owner, exceptId)
             }
 
-            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
-                return inner.replaceIfClaimedBy(stored, expected)
+            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(
+                stored: Stored<T>, expected: String?, expectedResends: Int?,
+            ): Stored<T>? {
+                return inner.replaceIfClaimedBy(stored, expected, expectedResends)
             }
 
             override suspend fun removeRecordIfClaimedBy(id: String, expected: String?): RemoveResult {
@@ -173,9 +179,12 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
 
         /**
          * Replaces [stored] only while a record with its `_id` exists AND its stored `claimedBy` equals [expected]
-         * (null: unclaimed, which an absent field also is) — in one atomic statement, never inserting; null otherwise.
+         * (null: unclaimed, which an absent field also is) and, when [expectedResends] is given, its stored `resends`
+         * equals it — in one atomic statement, never inserting; null otherwise.
          */
-        suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>?
+        suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(
+            stored: Stored<T>, expected: String?, expectedResends: Int?,
+        ): Stored<T>?
 
         /** Removes the record [id] only while its `claimedBy` equals [expected] — in one atomic statement. */
         suspend fun removeRecordIfClaimedBy(id: String, expected: String?): RemoveResult
@@ -276,7 +285,23 @@ class AuthRecordStorage(adapter: Lazy<Adapter>, kronos: Lazy<Kronos>) {
         @Suppress("UNCHECKED_CAST")
         val stamped = stored.modify { it.withUpdatedAt(kronos.instantNow()) as T }
 
-        return adapter.replaceRecordIfClaimedBy(stamped, expected)
+        return adapter.replaceRecordIfClaimedBy(stamped, expected, expectedResends = null)
+    }
+
+    /**
+     * Replaces the pending-activation marker with [next] only while it is unclaimed AND still holds the `resends` of
+     * [read], stamping `updatedAt`; null otherwise. Atomic on both backends: of two re-sends that read the same
+     * marker, only the first one's write lands, so only it may send (ULTRA-00130).
+     */
+    suspend fun replacePendingActivationIfUnchanged(
+        read: Stored<AuthRecord.PendingActivation>,
+        next: Stored<AuthRecord.PendingActivation>,
+    ): Stored<AuthRecord.PendingActivation>? {
+        require(next._id == read._id) { "next must be the marker that was read" }
+
+        val stamped = next.modify { it.withUpdatedAt(kronos.instantNow()) }
+
+        return adapter.replaceRecordIfClaimedBy(stamped, expected = null, expectedResends = read.resolve().resends)
     }
 
     /** Removes the record [id] only while it is unclaimed; atomic on both backends. True when THIS call removed it. */

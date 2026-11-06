@@ -10,14 +10,18 @@ import io.peekandpoke.funktor.auth.domain.AuthRecord
 import io.peekandpoke.funktor.auth.domain.TokenHash
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
-import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.value
-import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 
 abstract class AuthRecordStorageBaseSpec : FreeSpec() {
 
@@ -619,6 +623,131 @@ abstract class AuthRecordStorageBaseSpec : FreeSpec() {
                 authRecords.findAllByOwner(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1")) shouldBe
                         emptyList()
             }
+        }
+
+        "replacePendingActivationIfUnchanged: of two re-sends that read the same marker, only the FIRST write lands" {
+            // ULTRA-00130. Both passed the delay check on the same read; the second must lose at the database, or both
+            // send a mail and the growing delays bound nothing.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val read = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1"), resends = 4))
+            fun advanced() = read.modify { it.copy(resends = it.resends + 1) }
+
+            withClue("the first write lands") {
+                authRecords.replacePendingActivationIfUnchanged(read = read, next = advanced()).shouldNotBeNull()
+            }
+
+            withClue("the second, from the same read, matches nothing and writes nothing") {
+                authRecords
+                    .replacePendingActivationIfUnchanged(read = read, next = advanced().modify { it.copy(resends = 99) })
+                    .shouldBeNull()
+
+                authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull().value.resends shouldBe 5
+            }
+
+            withClue("a claimed marker loses too, whatever its resends") {
+                val current = authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                    .shouldNotBeNull()
+                authRecords
+                    .replaceIfUnclaimed(current.modify { it.copy(claimedBy = AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) })
+                    .shouldNotBeNull()
+
+                authRecords.replacePendingActivationIfUnchanged(read = current, next = current.modify { it.copy(resends = 6) })
+                    .shouldBeNull()
+            }
+        }
+
+        "replacePendingActivationIfUnchanged under a real burst: exactly one of 50 parallel writers lands, none throws" {
+            // The sequential case above cannot show what the database does when the writes overlap; this does. A
+            // writer that loses must get null, not a conflict error (Karango) or a second success.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val read = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+
+            val results = coroutineScope {
+                (1..50).map { i ->
+                    async(Dispatchers.IO) {
+                        authRecords.replacePendingActivationIfUnchanged(
+                            read = read,
+                            next = read.modify { it.copy(resends = 1, lastSentAt = MpInstant.fromEpochMillis(i.toLong())) },
+                        )
+                    }
+                }.awaitAll()
+            }
+
+            results.count { it != null } shouldBe 1
+            authRecords.findLatestRecordBy(AuthRecord.PendingActivation, RealmId("realm"), UserId("owner1"))
+                .shouldNotBeNull().value.resends shouldBe 1
+        }
+
+        "removeIfUnclaimed under a real burst: exactly one of 50 parallel removers removes it, none throws" {
+            // Activation's commit (it removes the marker) racing another activation or a retire's claim.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner1")))
+
+            val removed = coroutineScope {
+                (1..50).map { async(Dispatchers.IO) { authRecords.removeIfUnclaimed(marker._id) } }.awaitAll()
+            }
+
+            removed.count { it } shouldBe 1
+        }
+
+        "an activation's remove that overlaps re-send writes still REMOVES: an overlap is no failed condition" {
+            // The writes a re-send makes leave the marker unclaimed, so a remove "while unclaimed" holds whatever order
+            // they land in. Karango aborts an overlapping write (1200); answering that as "lost" refused activations.
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            repeat(10) { round ->
+                val marker = authRecords.create(AuthRecord.PendingActivation(RealmId("realm"), UserId("owner-$round")))
+
+                val removed = coroutineScope {
+                    val writes = (1..10).map { i ->
+                        async(Dispatchers.IO) { authRecords.replaceIfUnclaimed(marker.modify { it.copy(resends = i) }) }
+                    }
+                    val remove = async(Dispatchers.IO) { authRecords.removeIfUnclaimed(marker._id) }
+
+                    writes.awaitAll()
+                    remove.await()
+                }
+
+                withClue("round $round") { removed shouldBe true }
+            }
+        }
+
+        "removeAllByOwner under a real burst: every row goes, none of 20 parallel removers throws" {
+            val kontainer = createKontainer()
+            val authRecords = kontainer.funktorAuth.deps.storage.authRecords
+            authRecords.adapter.removeAll()
+
+            repeat(10) {
+                authRecords.create(
+                    AuthRecord.SignUpCancelToken(
+                        RealmId("realm"), UserId("owner1"), expiresAt = Long.MAX_VALUE / 2, tokenHash = TokenHash.of("c-$it"),
+                    )
+                )
+            }
+
+            val counts = coroutineScope {
+                (1..20).map {
+                    async(Dispatchers.IO) {
+                        authRecords.removeAllByOwner(AuthRecord.SignUpCancelToken, RealmId("realm"), UserId("owner1")).count
+                    }
+                }.awaitAll()
+            }
+
+            counts.sum() shouldBe 10L
+            authRecords.adapter.findAllByOwner(RealmId("realm"), AuthRecord.SignUpCancelToken.identifier, UserId("owner1")) shouldBe
+                emptyList()
         }
 
         "a CLAIMED marker can be neither replaced nor removed by the conditional writes — the claim is atomic" {

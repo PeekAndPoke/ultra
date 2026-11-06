@@ -49,7 +49,8 @@ data class RealmTokenConfig(
      * The most cancel links ("Didn't sign up? Cancel") one pending account keeps. Each activation mail carries its
      * own, which lives as long as the account ([pendingAccountLifetime]); past this many the OLDEST goes, so the
      * newest mails' links always work. With the default delays, 7 days hold the sign-up mail and 11 re-sends (the
-     * last after about 6.7 days), so the default 12 keeps every mailed link, one re-send per delay given. At least 2.
+     * last after about 6.7 days), so the default 12 keeps every mailed link. One delay slot sends one mail, however
+     * many sign-ups race for it (ULTRA-00130). At least 2.
      */
     val maxSignUpCancelTokens: Int = 12,
     /** Lifetime of password-recovery tokens. */
@@ -74,7 +75,8 @@ data class RealmTokenConfig(
     init {
         require(activationResendDelays.isNotEmpty()) { "activationResendDelays must not be empty" }
         require(!activationLinkOverlap.isNegative()) { "activationLinkOverlap must not be negative" }
-        // 2 at least: two concurrent re-sends each keep their own token and the other's, the newest of the rest.
+        // 2 at least: a re-send keeps the token it just minted and the previous mail's, so the link a user may be
+        // reading when a new mail goes out keeps working.
         require(maxSignUpCancelTokens >= 2) { "maxSignUpCancelTokens must be at least 2" }
         // The stored hash is unsalted and fast (`TokenHash`): only a long random token makes it unguessable.
         require(randomTokenByteLength >= 32) { "randomTokenByteLength must be at least 32" }

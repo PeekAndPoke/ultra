@@ -126,9 +126,10 @@ class EmailAndPasswordAuth(
         /** Find the pending-activation marker for [realm] / [owner], or null when activated */
         suspend fun findPendingActivation(realm: RealmId, owner: UserId): Stored<AuthRecord.PendingActivation>?
 
-        /** Replace the pending-activation [marker] only while it exists and is unclaimed; null otherwise */
+        /** Replace the pending-activation marker [read] with [next] only while it is unclaimed and unchanged since; null otherwise */
         suspend fun replacePendingActivation(
-            marker: Stored<AuthRecord.PendingActivation>,
+            read: Stored<AuthRecord.PendingActivation>,
+            next: Stored<AuthRecord.PendingActivation>,
         ): Stored<AuthRecord.PendingActivation>?
 
         /** Remove the pending-activation marker [id] only while it is unclaimed — i.e. activate; true when THIS call did */
@@ -246,9 +247,10 @@ class EmailAndPasswordAuth(
 
         /** @{inheritDoc} */
         override suspend fun replacePendingActivation(
-            marker: Stored<AuthRecord.PendingActivation>,
+            read: Stored<AuthRecord.PendingActivation>,
+            next: Stored<AuthRecord.PendingActivation>,
         ): Stored<AuthRecord.PendingActivation>? {
-            return authRecordStorage.replaceIfUnclaimed(marker)
+            return authRecordStorage.replacePendingActivationIfUnchanged(read = read, next = next)
         }
 
         /** @{inheritDoc} */
@@ -438,9 +440,12 @@ class EmailAndPasswordAuth(
 
         // Reserve the slot BEFORE sending, so a failing or slow mail cannot be retried at full speed. A
         // REPLACE, never a save: if an activation removed the marker meanwhile, a save would re-insert it
-        // and turn the now-active account pending again — and the sweep would retire it on day 7.
+        // and turn the now-active account pending again — and the sweep would retire it on day 7. And only
+        // while the marker still holds the `resends` read above: of concurrent sign-ups that all passed the
+        // delay check, only the first write lands, so one slot sends one mail (ULTRA-00130).
         val advanced = services.replacePendingActivation(
-            marker.modify { it.copy(resends = it.resends + 1, lastSentAt = now) }
+            read = marker,
+            next = marker.modify { it.copy(resends = it.resends + 1, lastSentAt = now) },
         ) ?: return true
 
         issueAndSendActivationToken(realm = realm, user = user, marker = advanced.value)

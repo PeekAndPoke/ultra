@@ -262,3 +262,9 @@ Collected, not executed. The design: ULTRA-00231 (email first signup).
   oldest. Can an attacker who signs the address up again push the victim's only mail's link out of the cap faster
   than the growing delays allow? Can concurrent re-sends leave more than the cap, or none?
 
+## Added by the re-send race fix (ULTRA-00130, 2026-11-06)
+
+- **A burst at the slot.** When a re-send is due, fire 50-500 parallel sign-ups of the pending address, from many
+  connections, against both backends: count the mails (one expected) and look for any 500. Repeat at every slot of the
+  schedule; also mix in a cancel, a reset and an activation in the same instant: each must decide as if run alone.
+

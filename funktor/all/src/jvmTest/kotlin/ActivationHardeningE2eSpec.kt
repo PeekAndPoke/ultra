@@ -50,6 +50,9 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 class ActivationHardeningKarangoE2eSpec : ActivationHardeningE2eSpec(activationHardeningKarangoApp) {
     override val users: HardeningUsers by service(HardeningKaUsersRepo::class)
@@ -232,6 +235,7 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             kronos.set(Kronos.systemUtc)
             RetireGate.beforeRename = {}
             RetireGate.afterRetireClaim = {}
+            ResendGate.disarm()
         }
 
         //  Email first  /////////////////////////////////////////////////////////////////////////////////////////
@@ -444,6 +448,76 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
         }
 
         //  The older links overlap  /////////////////////////////////////////////////////////////////////////
+
+        "Two sign-ups that BOTH read the marker and passed the delay before either wrote send ONE mail" {
+            // ULTRA-00130, deterministic: `ResendGate` holds each re-send's write until both have arrived, so the delay
+            // check cannot be what stops the second; only the conditional write on `resends` can.
+            apiApp {
+                anonymous {
+                    val email = freshEmail("both-read")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    advance(config.activationResendDelay(0) + 1.minutes)
+                    emails.clear()
+
+                    ResendGate.arm(parties = 2)
+                    try {
+                        coroutineScope {
+                            (1..2).map {
+                                async {
+                                    api.authLogin.signUp(
+                                        realmParam,
+                                        body = AuthSignUpRequest.EmailAndPassword(provider = provider, email = email),
+                                    ) { status shouldBe HttpStatusCode.OK }
+                                }
+                            }.awaitAll()
+                        }
+                    } finally {
+                        ResendGate.disarm()
+                    }
+
+                    withClue("one slot, one mail") { emails.capturedTo(email).size shouldBe 1 }
+                    records.findLatestRecordBy(AuthRecord.PendingActivation, realm.id, UserId(id))
+                        .shouldNotBeNull().value.resends shouldBe 1
+                }
+            }
+        }
+
+        "A BURST of concurrent sign-ups at a due re-send sends ONE mail: the slot is taken at the database" {
+            // ULTRA-00130. Every request reads the marker and passes the delay check before any write lands; only the
+            // conditional write on the `resends` they read decides. Without it the burst sends a mail per winner.
+            apiApp {
+                anonymous {
+                    val email = freshEmail("burst")
+                    signUp(email)
+                    val id = userOf(email).shouldNotBeNull()._id
+
+                    advance(config.activationResendDelay(0) + 1.minutes)
+                    emails.clear()
+
+                    val statuses = coroutineScope {
+                        (1..20).map {
+                            async {
+                                var answered: HttpStatusCode? = null
+                                api.authLogin.signUp(
+                                    realmParam,
+                                    body = AuthSignUpRequest.EmailAndPassword(provider = provider, email = email),
+                                ) { answered = status }
+                                answered
+                            }
+                        }.awaitAll()
+                    }
+
+                    // The mails first: that is the claim. (Without the fix Karango also answers some of the losers
+                    // with an error, from their concurrent writes to the same links.)
+                    withClue("one slot, one mail") { emails.capturedTo(email).size shouldBe 1 }
+                    statuses.toSet() shouldBe setOf(HttpStatusCode.OK)
+                    records.findLatestRecordBy(AuthRecord.PendingActivation, realm.id, UserId(id))
+                        .shouldNotBeNull().value.resends shouldBe 1
+                }
+            }
+        }
 
         "After a re-send the OLDER link stays usable for the overlap — then only the newest one is" {
             apiApp {

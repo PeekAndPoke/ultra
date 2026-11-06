@@ -203,7 +203,9 @@ class MonkoAuthRecordsRepo(
         return cursor.toList()
     }
 
-    override suspend fun <T : AuthRecord> replaceIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? {
+    override suspend fun <T : AuthRecord> replaceIfClaimedBy(
+        stored: Stored<T>, expected: String?, expectedResends: Int?,
+    ): Stored<T>? {
         // As the sealed AuthRecord, so the document carries its `_type` exactly like an inserted one.
         @Suppress("UNCHECKED_CAST")
         val document = Document(driver.codec.slumber(kType<AuthRecord>().type, stored.resolve()) as Map<String, Any?>)
@@ -211,7 +213,7 @@ class MonkoAuthRecordsRepo(
         document["_id"] = bsonId
 
         val result = driver.database.getCollection<Document>(name)
-            .replaceOne(claimedBy(bsonId, expected), document, ReplaceOptions().upsert(false))
+            .replaceOne(claimedBy(bsonId, expected, expectedResends), document, ReplaceOptions().upsert(false))
 
         return stored.takeIf { result.matchedCount == 1L }
     }
@@ -223,9 +225,17 @@ class MonkoAuthRecordsRepo(
         return RemoveResult(count = result.deletedCount, query = null)
     }
 
-    /** The document [bsonId] while its `claimedBy` equals [expected]; `eq(null)` also matches a missing field. */
-    private fun claimedBy(bsonId: Any, expected: String?) =
-        Filters.and(Filters.eq("_id", bsonId), Filters.eq("claimedBy", expected))
+    /**
+     * The document [bsonId] while its `claimedBy` equals [expected] (`eq(null)` also matches a missing field) and, when
+     * given, its `resends` equals [expectedResends].
+     */
+    private fun claimedBy(bsonId: Any, expected: String?, expectedResends: Int? = null) = Filters.and(
+        listOfNotNull(
+            Filters.eq("_id", bsonId),
+            Filters.eq("claimedBy", expected),
+            expectedResends?.let { Filters.eq("resends", it) },
+        )
+    )
 
     /** The same key mapping as removeAllByOwner: an ObjectId when the key is one, else the raw string. */
     private fun bsonIdOf(key: String): Any = if (ObjectId.isValid(key)) ObjectId(key) else key

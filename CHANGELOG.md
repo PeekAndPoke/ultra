@@ -99,8 +99,7 @@
   A hashed cancel token cannot be read back to mail again, so **every activation mail carries its own cancel link**,
   each valid as long as the account. `RealmTokenConfig.maxSignUpCancelTokens` (default 12) caps them per account;
   past it the oldest goes. With the default delays the 7 days of `pendingAccountLifetime` hold the sign-up mail and 11
-  re-sends, so by default every mailed link works until the account ends (as long as concurrent sign-ups cannot win
-  the same re-send slot twice: ULTRA-00130). Activation, cancel, retire, SSO activation and now
+  re-sends, so by default every mailed link works until the account ends. Activation, cancel, retire, SSO activation and now
   a reset that activates remove them all.
 
   What changes with no compile signal:
@@ -151,6 +150,16 @@
 - **Funktor auth, a security fix: an org-selection token signs in once, also under concurrent use** (ULTRA-00295).
   `AuthRealm.selectOrg` deleted the token without reading what the delete removed, so two requests with the same token
   could both get a session. Now only the one whose delete removed it goes on; the other is refused (403).
+
+- **Funktor auth: a burst of sign-ups at a due re-send sends one mail** (ULTRA-00130). Concurrent sign-ups with a
+  pending address all passed the delay check and each sent a mail, so the growing delays did not bound a burst. The
+  marker's write is now conditional on the `resends` the request read: one slot, one mail.
+  Also fixed on Karango: two overlapping writes of one auth record (a re-send, a retire or SSO claim, an activation's
+  remove, removing an owner's records) made Arango abort the slower one with a write-write conflict, answered as a
+  500. The auth repo now runs such a write again (up to 5 times), so it decides against the committed record, as on
+  Mongo.
+  Breaking: `AuthRecordStorage.Adapter.replaceRecordIfClaimedBy` and the Vault `Repo.replaceIfClaimedBy` take
+  `expectedResends`; `EmailAndPasswordAuth.Services.replacePendingActivation` takes `(read, next)`.
 
 ## 0.117.0
 

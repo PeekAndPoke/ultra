@@ -755,7 +755,9 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
 
         val adapter = object : AuthRecordStorage.Adapter by real.adapter {
             @Suppress("UNCHECKED_CAST")
-            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? =
+            override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(
+                stored: Stored<T>, expected: String?, expectedResends: Int?,
+            ): Stored<T>? =
                 onReplace() as Stored<T>?
         }
 

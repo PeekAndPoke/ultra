@@ -53,6 +53,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.time.Duration.Companion.hours
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.seconds
 
 //  The user store, once per backend  ////////////////////////////////////////////////////////////////////////
 //  Both carry a UNIQUE index on `email`, so every retirement in these specs also proves the renamed key
@@ -189,13 +193,56 @@ object ActivateGate {
     }
 }
 
-/** The real adapter, with [RetireGate.afterRetireClaim] run after a successful retire claim. */
+/**
+ * Test hook: holds every re-send's marker write until [parties] of them arrived. Each request has then read the
+ * marker and passed the delay check, so the conditional write ALONE decides which one sends (ULTRA-00130). Off (0)
+ * by default; [arm] for one burst, [disarm] after it.
+ */
+object ResendGate {
+    @Volatile
+    private var parties: Int = 0
+
+    private val arrived = AtomicInteger(0)
+
+    @Volatile
+    private var allIn = CompletableDeferred<Unit>()
+
+    fun arm(parties: Int) {
+        arrived.set(0)
+        allIn = CompletableDeferred()
+        this.parties = parties
+    }
+
+    fun disarm() {
+        parties = 0
+        allIn.complete(Unit)
+    }
+
+    suspend fun beforeResendWrite() {
+        if (parties == 0) return
+        if (arrived.incrementAndGet() >= parties) allIn.complete(Unit)
+        withTimeout(10.seconds) { allIn.await() }
+    }
+}
+
+/**
+ * The real adapter, with [ResendGate.beforeResendWrite] before a re-send's marker write and [RetireGate.afterRetireClaim]
+ * after a successful retire claim.
+ */
 class RetireClaimGatedAdapter(private val inner: AuthRecordStorage.Adapter) : AuthRecordStorage.Adapter by inner {
-    override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(stored: Stored<T>, expected: String?): Stored<T>? =
-        inner.replaceRecordIfClaimedBy(stored, expected).also { replaced ->
-            val claim = (stored.value() as? AuthRecord.PendingActivation)?.claimedBy
-            if (replaced != null && claim == AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) RetireGate.afterRetireClaim()
+    override suspend fun <T : AuthRecord> replaceRecordIfClaimedBy(
+        stored: Stored<T>, expected: String?, expectedResends: Int?,
+    ): Stored<T>? {
+        val marker = stored.value() as? AuthRecord.PendingActivation
+        // A re-send's write: unclaimed, and it stamps when it sent.
+        if (marker != null && marker.claimedBy == null && marker.lastSentAt != null) ResendGate.beforeResendWrite()
+
+        return inner.replaceRecordIfClaimedBy(stored, expected, expectedResends).also { replaced ->
+            if (replaced != null && marker?.claimedBy == AuthRecord.PendingActivation.CLAIMED_BY_RETIRE) {
+                RetireGate.afterRetireClaim()
+            }
         }
+    }
 }
 
 //  The realm  //////////////////////////////////////////////////////////////////////////////////////////////////
