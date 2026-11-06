@@ -4,9 +4,9 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
 import io.peekandpoke.ultra.slumber.builtin.datetime.TS
+import io.peekandpoke.ultra.slumber.builtin.datetime.javaZoneOrNull
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import java.time.Instant
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /** Awaker for [ZonedDateTime] values. Reads `{ts: epoch millis, timezone: zone id string}`. */
@@ -19,15 +19,12 @@ object ZonedDateTimeAwaker : Awaker {
         }
 
         val ts = data[TS]
-        val timezone = data[TIMEZONE]
+        val timezone = javaZoneOrNull(data[TIMEZONE])
 
         return when {
-            // TODO(scan): unlike ZoneIdAwaker, the timezone string is not validated here - an
-            //  unresolvable zone id makes ZoneId.of() throw DateTimeException instead of this
-            //  Awaker returning null as its contract requires.
-            ts is Number && timezone is String -> ZonedDateTime.ofInstant(
+            ts is Number && timezone != null -> ZonedDateTime.ofInstant(
                 Instant.ofEpochMilli(ts.toLong()),
-                ZoneId.of(timezone)
+                timezone,
             )
 
             else -> null

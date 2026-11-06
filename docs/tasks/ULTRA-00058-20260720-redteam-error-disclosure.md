@@ -71,6 +71,14 @@ Run these **after** the linked remediation tasks land, to confirm the fixes hold
 19. Re-run A1 and B5 against the *pre-fix* commit to confirm each scenario genuinely reproduced —
     a red-team scenario that never reproduced proves nothing about the fix.
 
+## G. Request bodies (added 2026-11-06, ULTRA-00292 and ULTRA-00294)
+
+- **A malformed body that still reaches a 500.** For every body-bearing route, try a missing field, a wrong type, a
+  non-JSON body, a value class that refuses its value, and a date with a missing, non-string or unknown zone
+  (`{"ts":1,"timezone":"Mars/X"}`): each must be a 400. Find any type whose awaker THROWS instead of returning null.
+- **The input in a production answer or log line.** Put a marker string into a failing body (a password field, a map
+  key with dots, a zone id) and look for it in the production answer and in the internal-error log.
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00058 (was `docs/tasks/20260720-redteam-error-disclosure.md`).

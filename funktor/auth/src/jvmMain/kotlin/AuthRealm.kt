@@ -759,8 +759,11 @@ interface AuthRealm<USER : AuthUser> {
             .findByRawToken(AuthRecord.OrgSelectionToken, realm = id, raw = selectionToken)
             ?: throw AuthError.noOrganisationAccess()
 
-        // Single-use: consume the token.
-        deps.storage.authRecords.removeById(record._id)
+        // Single-use: only the request whose delete removed the token goes on. Two that found it (a double submit, a
+        // stolen token raced against its owner) both delete, and the one that removed nothing is refused (ULTRA-00295).
+        if (deps.storage.authRecords.removeById(record._id).count != 1L) {
+            throw AuthError.noOrganisationAccess()
+        }
 
         val user = users.loadById(record.value().ownerId)
             ?: throw AuthError.noOrganisationAccess()

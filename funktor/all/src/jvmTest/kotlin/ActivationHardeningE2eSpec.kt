@@ -590,6 +590,15 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                                                 apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
                                             }
                                         }
+
+                                        withClue("the same token a second time signs nothing in (ULTRA-00295)") {
+                                            api.authLogin.selectOrg(
+                                                realmParam,
+                                                body = AuthSelectOrgRequest(selectionToken = selection.selectionToken, orgId = two.id),
+                                            ) {
+                                                status shouldBe HttpStatusCode.Forbidden
+                                            }
+                                        }
                                     }
                                 }
                             }

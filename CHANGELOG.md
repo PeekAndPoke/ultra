@@ -99,7 +99,8 @@
   A hashed cancel token cannot be read back to mail again, so **every activation mail carries its own cancel link**,
   each valid as long as the account. `RealmTokenConfig.maxSignUpCancelTokens` (default 12) caps them per account;
   past it the oldest goes. With the default delays the 7 days of `pendingAccountLifetime` hold the sign-up mail and 11
-  re-sends, so by default every mailed link works until the account ends. Activation, cancel, retire, SSO activation and now
+  re-sends, so by default every mailed link works until the account ends (as long as concurrent sign-ups cannot win
+  the same re-send slot twice: ULTRA-00130). Activation, cancel, retire, SSO activation and now
   a reset that activates remove them all.
 
   What changes with no compile signal:
@@ -134,6 +135,22 @@
   - **A 500 in production no longer carries the exception's message**, only "The request '…' cause an internal
     server error": an unknown exception's message may quote the input. Outside production it carries the stack
     trace, as before (`ApiStatusPages.errorDetail`).
+
+- **Slumber: the date awakers return null for a zone they cannot read, instead of throwing** (ULTRA-00294). An
+  `MpLocalDate`, `MpLocalDateTime` or `MpZonedDateTime` whose `timezone` was missing, not a string or unknown, a
+  `java.time.ZonedDateTime` with an unknown zone, and a kotlinx `LocalDate` / `LocalDateTime` with an unknown zone threw
+  an NPE, a `ClassCastException` or a zone exception, so a request body with such a date was a 500. Now Slumber
+  refuses it like any value it cannot read (`AwakerException` naming the path), which funktor-rest answers with a 400.
+
+  What changes with no compile signal:
+  - Such a value now reads like any value Slumber cannot read, in a request and when reading the database alike: a
+    NULLABLE field reads null and a field WITH A DEFAULT takes its default, instead of failing the whole object; any
+    other field fails with `AwakerException`. A record read that way and saved again keeps the null or the default.
+  - `MpTimezone` itself still accepts any string, unchanged.
+
+- **Funktor auth, a security fix: an org-selection token signs in once, also under concurrent use** (ULTRA-00295).
+  `AuthRealm.selectOrg` deleted the token without reading what the delete removed, so two requests with the same token
+  could both get a session. Now only the one whose delete removed it goes on; the other is refused (403).
 
 ## 0.117.0
 

@@ -44,6 +44,11 @@ These are the residual/edge scenarios to actively attempt.
 10. **Two-phase bypass** — try to trigger a pre-auth `findById` (DoS/oracle) on any route variant
     (Plain/WithParams/WithBody/WithBodyAndParams/Sse) by a floor-denied caller.
 
+## Added 2026-11-06 (ULTRA-00295)
+
+- **One org-selection token, two sessions.** Fire the same `selectionToken` in parallel bursts (two orgs, or the same
+  one twice) against both backends: at most one request may get a session. Also race a stolen token against its owner.
+
 ## Cross-references
 
 - ULTRA-00090 (two phase auth consistent params) — the feature.

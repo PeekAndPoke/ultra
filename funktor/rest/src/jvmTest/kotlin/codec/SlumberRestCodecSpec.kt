@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.funktor.core.broker.CouldNotConvertException
+import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.slumber.SlumberConfig
 
@@ -92,6 +93,21 @@ class SlumberRestCodecSpec : StringSpec({
             codec.deserialize(kType<GuardedBody>().type, """{"amount":-1}""")
         }
     }
+
+    // ULTRA-00294: the date awakers threw on a zone they could not read, which made this a 500.
+    "a date whose zone is unknown, missing or not a string is a client error, naming the path and not the value" {
+        listOf(""""$secret"""", "42", null).forEach { zone ->
+            val tz = zone?.let { ""","timezone":$it""" } ?: ""
+            val thrown = shouldThrow<CouldNotConvertException> {
+                codec.deserialize(kType<Meeting>().type, """{"at":{"ts":1649116800000$tz}}""")
+            }
+
+            withClue("zone $zone") {
+                thrown.message shouldBe
+                        "Could not convert request body to '${kType<Meeting>().type}': Value at path 'root.at' must not be null"
+            }
+        }
+    }
 })
 
 @JvmInline
@@ -106,6 +122,8 @@ data class Body(val id: VcId, val note: String)
 data class Login(val email: String, val password: String)
 
 data class Attrs(val attrs: Map<String, String>)
+
+data class Meeting(val at: MpZonedDateTime)
 
 data class GuardedBody(val amount: Int) {
     init {

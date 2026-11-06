@@ -4,6 +4,7 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
 import io.peekandpoke.ultra.slumber.builtin.datetime.TS
+import io.peekandpoke.ultra.slumber.builtin.datetime.kotlinxZoneOrNull
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 import kotlinx.datetime.LocalDateTime
@@ -16,7 +17,7 @@ import kotlin.time.Instant
  * Awaker for [LocalDateTime] values.
  *
  * Reads `ts` (epoch millis) and an optional `timezone` zone id string, defaulting to UTC when the
- * `timezone` entry is missing or not a string.
+ * `timezone` entry is missing or not a string; null for a zone no one knows.
  */
 object LocalDateTimeAwaker : Awaker {
 
@@ -26,7 +27,10 @@ object LocalDateTimeAwaker : Awaker {
             return null
         }
 
-        val timezone = (data[TIMEZONE] as? String?)?.let { tz -> TimeZone.of(tz) } ?: TimeZone.UTC
+        val timezone = when (val id = data[TIMEZONE]) {
+            is String -> kotlinxZoneOrNull(id) ?: return null
+            else -> TimeZone.UTC
+        }
 
         return when (val ts = data[TS]) {
             is Number -> {

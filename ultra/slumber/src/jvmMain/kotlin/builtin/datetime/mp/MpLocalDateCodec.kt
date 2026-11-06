@@ -7,10 +7,11 @@ import io.peekandpoke.ultra.slumber.Awaker
 import io.peekandpoke.ultra.slumber.Slumberer
 import io.peekandpoke.ultra.slumber.builtin.datetime.TIMEZONE
 import io.peekandpoke.ultra.slumber.builtin.datetime.TS
+import io.peekandpoke.ultra.slumber.builtin.datetime.mpTimezoneOrNull
 import io.peekandpoke.ultra.slumber.builtin.datetime.toMap
 import io.peekandpoke.ultra.slumber.builtin.datetime.utc
 
-/** Awaker for [MpLocalDate] values. Reads `ts` (epoch millis) and a required `timezone` zone id string. */
+/** Awaker for [MpLocalDate] values. Reads `ts` (epoch millis) and a required `timezone` zone id string; null without both. */
 object MpLocalDateAwaker : Awaker {
 
     override fun awake(data: Any?, context: Awaker.Context): MpLocalDate? {
@@ -19,12 +20,11 @@ object MpLocalDateAwaker : Awaker {
             return null
         }
 
+        val timezone = mpTimezoneOrNull(data[TIMEZONE]) ?: return null
+
         return when (val ts = data[TS]) {
-            // TODO(scan): unsafe cast - a missing or non-string "timezone" entry throws instead of
-            //  awaking to null, unlike the kotlinx sibling (LocalDateCodec.kt), which defaults to UTC
-            //  via a safe cast (`as? String`).
             is Number -> MpInstant.fromEpochMillis(ts.toLong())
-                .atZone(MpTimezone.of(data[TIMEZONE] as String))
+                .atZone(timezone)
                 .toLocalDate()
 
             else -> null

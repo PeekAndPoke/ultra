@@ -26,6 +26,7 @@ import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.log.NullLog
 import io.peekandpoke.ultra.security.user.EmailAddress
+import io.peekandpoke.ultra.security.user.OrgId
 import io.peekandpoke.ultra.security.user.UserId
 import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.Stored
@@ -605,8 +606,29 @@ abstract class AuthRealmActivationBaseSpec : FreeSpec() {
             }
         }
 
+        "selectOrg: an org-selection token another request already consumed signs nothing in — the delete COUNT decides" {
+            // Both requests found the token; the other one's delete won. Ours must stop before it even loads the user:
+            // this realm's loadById fails the test, and so would a session minted after it.
+            val real = realDeps()
+            real.storage.authRecords.create(
+                AuthRecord.OrgSelectionToken(
+                    realmId, owner, expiresAt = real.kronos.instantNow().plus(1.hours).toEpochSeconds(),
+                    tokenHash = TokenHash.of("pick"),
+                )
+            )
+
+            val lostTheRace = depsWhereRemoveById(real) { id ->
+                real.storage.authRecords.adapter.removeById(id) // the other request's delete
+                real.storage.authRecords.adapter.removeById(id) // ours: removes nothing
+            }
+
+            shouldThrow<AuthError> {
+                MinimalTestRealm(getDeps = { lostTheRace }).selectOrg(selectionToken = "pick", orgId = OrgId("orgs/one"))
+            }
+        }
+
         "trimSignUpCancelTokens, against a real store, keeps the excepted one and the newest of the rest" {
-            // The default delays never reach the cap in an account's life, so no e2e gets here; this does.
+            // The default delays never exceed the cap in an account's life, so no e2e gets here; this does.
             val real = realDeps()
             val now = real.kronos.instantNow()
             val rows = (0 until 5).map { i ->
