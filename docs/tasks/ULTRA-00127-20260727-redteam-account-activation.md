@@ -239,9 +239,12 @@ Collected, not executed. The design: ULTRA-00231 (email first signup).
 - **The display-name scenario above is closed by design:** sign-up takes no name, the activation page sets it.
   Probe that it stays closed: sign up with a `displayName` (an old client) and check that it is ignored. Activate
   through a reset or SSO and check that the account carries only the default derived from the address.
-- **The name field as a carrier.** `AuthDisplayName` refuses control characters, line breaks and bidi controls.
-  Try zero-width characters, homoglyphs, 100 chars of combining marks, a name that looks like a URL or an
-  instruction. Where the name shows (mails to others, admin screens, invitations): does any of it render as more
+- **The name field as a carrier.** `AuthDisplayName` (rewritten 2026-11-06, code points) refuses control,
+  invisible and undisplayable characters, a leading mark and more than 30 marks in a row. What it still lets
+  through, by design: one of FE00–FE0F after each base (4 hidden bits per letter), an ideographic selector after
+  each CJK ideograph that has no such sequence, supplementary code points outside its listed ranges (common code has
+  no categories there), characters newer than the JDK's or Kotlin/JS's Unicode tables. Measure each as a channel.
+  Also homoglyphs and mixed scripts ("Аdmin" with a Cyrillic А), a name that looks like a URL or an instruction. Where the name shows (mails to others, admin screens, invitations): does any of it render as more
   than text?
 - **Overlapping links.** For 30 minutes after a re-send the older links still work. An attacker who can trigger
   re-sends (anyone, after the delay) and read one old mail copy (a forwarded or scanned mailbox): how many live

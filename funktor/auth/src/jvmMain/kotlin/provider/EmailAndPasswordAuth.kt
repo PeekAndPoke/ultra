@@ -535,7 +535,10 @@ class EmailAndPasswordAuth(
     override suspend fun <USER : AuthUser> activateAccount(
         realm: AuthRealm<USER>, request: AuthActivateAccountRequest,
     ): Stored<USER>? {
-        // The input (password policy, display name) was checked by `AuthRealm.activate`, before the token is touched.
+        // `AuthRealm.activate` checked the input and gave the reason; checked again here, before the token is touched,
+        // for a realm that calls the provider directly. No oracle: the token was not looked at yet.
+        if (!realm.passwordPolicy.matches(request.password)) return null
+
         val tokenRecord = services
             .findEmailVerificationToken(realm = realm.id, token = request.token)
             ?: return null

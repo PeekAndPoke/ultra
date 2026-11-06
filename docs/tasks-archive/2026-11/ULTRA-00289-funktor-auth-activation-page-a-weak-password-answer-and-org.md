@@ -1,8 +1,6 @@
 # ULTRA-00289: Funktor auth activation, round 2: overlapping links, the name at activation, a weak-password answer, org realms
 
-> **Status (2026-11-05): IN REVIEW, gate CLEAN after round 2.** Plan confirmed by the maintainer on 2026-11-05 ("Go").
-> Built, green on both backends, mutation-checked. Before DONE: the maintainer's call on the round-2 MINOR list, and
-> the follow-up tickets (the funktor-rest password-in-log item, and 2.5), which the gate requires to exist.
+> **Status (2026-11-06): DONE.** gate PASS after round 3.** Plan confirmed by the maintainer on 2026-11-05 ("Go"). The round-2 MINOR list fixed on the maintainer's word of 2026-11-06 ("Fix them all"), confirmed CLEAN by round 3, whose MINORs are fixed too. Follow-ups exist: ULTRA-00292 (funktor-rest, the password in the log) and ULTRA-00293 (SSO names, 2.5).
 >
 > **Part of:** ULTRA-00248 (Epic: Auth and sessions)
 
@@ -109,29 +107,34 @@ Created from the ULTRA-00231 gate, round 1 (2026-11-04). Its two MINORs, 1.9 and
 
 Deviations from the plan, and decisions taken while building:
 
-- **The input checks live in `AuthRealm.activate`, not in the provider.** The realm owns the policy, and the name
-  rule applies to every provider. The provider's own policy check was removed, so there is no duplicate.
+- **The input checks live in `AuthRealm.activate`**, which gives the reason. The realm owns the policy, and the name
+  rule applies to every provider. The provider checks the policy again before the token (2.4), for a realm that
+  calls it directly; that answers a plain dead-link `null`.
 - **A refusal of the input is a 200**, `{success: false, failure}`, the same status as a dead link. Before, a weak
   password was a 400 (`AuthError`). One status for every answer the realm gives keeps the page's handling in one
   place.
 - **Expired older links are not removed at a re-send** (the plan said they would be). They stay bounded by the
   growing delays, and activation and retire remove them all. A re-send only caps the live ones, with a REPLACE, so a
   link an activation removed meanwhile cannot come back.
-- **The name rule is `AuthDisplayName` in commonMain**, so the page and the server cannot disagree. It refuses
-  control characters, line breaks, and the bidi embeddings, overrides and isolates (U+202A–U+202E,
-  U+2066–U+2069). Zero-width joiners stay allowed, since some scripts and emoji need them.
+- **The name rule is `AuthDisplayName` in commonMain**, so the page and the server cannot disagree. On the
+  maintainer's word ("only allow visible characters and characters that are not 'stripped'. Have better error
+  messages"), it works on code points and refuses rather than strips. `refusalOf` returns a `Refusal`: the problem
+  (`Blank`, `TooLong`, `LineBreak`, `Invisible`, `NotDisplayable`, `StartsWithMark`, `TooManyMarks`), the code point
+  and where it sits; the page's field and its server-refusal banner show `Refusal.message`. Kept: joiners between
+  visible characters or after an Indic virama, one variation selector after a base, an ideographic one only after a
+  CJK ideograph. Beyond the BMP common code has no categories: listed ranges are refused, the rest taken as visible.
 - **`TestUserRealm` runs with `activationLinkOverlap = 0`**, so `AccountActivationEmailE2eSpec` pins the 0 path
   end to end. The hardening app runs the 30-minute default.
 - **`ActivateAccountPage` edits the current state, not the rendered one** (`editChoice`). With two fields, typing
   the password before a re-render undid the name. The browser spec found it.
 - **Hardening hooks:** `OrgGate` turns the hardening realm into an org realm; `ActivateGate` makes the name write
   fail.
-- **Found outside this flow (funktor-rest), not fixed here:** a request body that misses a required field answers
-  500, not 400. Slumber's `AwakerException` is not translated by `SlumberRestCodec.awakeBody`. Its message carries the
+- **Found outside this flow (funktor-rest), fixed in ULTRA-00292:** a request body that misses a required field
+  answered 500, not 400. Slumber's `AwakerException` is not translated by `SlumberRestCodec.awakeBody`. Its message carries the
   whole input map, and `ApiStatusPages` logs it (`logInternalError`) and echoes `cause.message` even in production.
   So a malformed sign-in, reset or activation body puts the **cleartext password** into the server log. It predates
   this change, and every endpoint has it. The e2e row "A refused NAME…" pins only what this flow needs: refused, and
-  the link survives. Taken to the maintainer for a follow-up ticket.
+  the link survives. Now ULTRA-00292, which pins the 400 there.
 - **The TS SDK runtime and the Vue demo needed no change** (the plan said they would follow). `login.ts` is the
   sign-in flow only; neither it, `verifyRuntime.ts` nor `LoginView.vue` has a sign-up form, an activation page or a
   `displayName`. The generated request types follow on the next regeneration.
@@ -172,6 +175,22 @@ The round-1 fixes, the same way (2026-11-05):
 - not mutation-checked: "sign-up ignores an old client's `displayName`". The tolerance lives in Slumber's
   `DataClassAwaker`, not in this change; the e2e row guards it.
 
+The round-2 MINOR batch and the round-3 fixes, the same way (2026-11-06; auth JVM 282, funktor-all 246, browser 23):
+
+- mutation-checked: no supplementary ranges → red (`AuthDisplayNameSpec`: the tag block, the message rows)
+- mutation-checked: a run of variation selectors allowed → red (`AuthDisplayNameSpec`)
+- mutation-checked: joiner neighbours unchecked → red (`AuthDisplayNameSpec`: joiners only, the message rows)
+- mutation-checked: a leading mark allowed → red (`AuthDisplayNameSpec`: marks only)
+- mutation-checked: an unpaired low surrogate passes → red (`AuthDisplayNameSpec`)
+- mutation-checked: noncharacters pass → red (`AuthDisplayNameSpec`)
+- mutation-checked: the position not named → red (`AuthDisplayNameSpec`, the message test)
+- mutation-checked: the page shows only `DESCRIPTION` → red (page spec "…the page says WHY")
+- mutation-checked: the submit posts the rendered state → red (page spec, the password manager: the empty password)
+- mutation-checked: the provider's policy check dropped → red (provider unit test: the token lookup is reached)
+- mutation-checked: the name not written → red (the email-first e2e on Karango AND Monko)
+- mutation-checked: U+2065 allowed → red; an ideographic selector on any letter → red; no virama allowance → red (the
+  Bengali name refused); no mark cap → red; lone surrogates displayable → red (all `AuthDisplayNameSpec`)
+
 ## Review record (the ledger)
 
 ### Round 1: level 1 (`reviewer-high` ×3), blind, uncommitted on `d6786fe5`: NOT CLEAN (2 MAJOR)
@@ -192,7 +211,7 @@ merged; each finding was checked against the code before acting.
 | 1.9 | NIT | `TestUserRealm.kt:82` | KDoc said only the delays deviate (impl) | fix | Reworded |
 | 1.10 | NIT | `ActivateAccountPage.kt:7` | Import order (impl) | fix | Sorted |
 | 1.11 | NIT | `ActivationHardeningE2eApps.kt:226` | Missing blank line (impl) | fix | Added |
-| 1.12 | NIT | `ActivateAccountPageSpec.kt:179-211` | The refused-then-retry case re-posts unchanged input; a corrected name is not checked in the body (impl) | open → maintainer list | Not a defect: after a refusal the state is a `Choose` again, so the same `editChoice` path applies (corrected in round 2: no spec edits a field after a refusal) |
+| 1.12 | NIT | `ActivateAccountPageSpec.kt:179-211` | The refused-then-retry case re-posts unchanged input; a corrected name is not checked in the body (impl) | fixed (maintainer 2026-11-06): page spec, a corrected name on the next POST | Not a defect: after a refusal the state is a `Choose` again, so the same `editChoice` path applies (corrected in round 2: no spec edits a field after a refusal) |
 
 ### Round 2: level 2 (`reviewer-xhigh` ×3), two-phase, uncommitted on `d6786fe5`: CLEAN (0 CRITICAL, 0 MAJOR)
 
@@ -204,16 +223,16 @@ below was checked against the code and holds. Per the loop, open MINORs go to th
 
 | # | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
-| 2.1 | MINOR (all three) | `AuthDisplayName.kt:7-9,33-42`, `CHANGELOG.md:63` | The rule checks one UTF-16 unit at a time, so no supplementary-plane character is classified: format controls (U+1D173–1D17A, U+1BCA0–1BCA3, U+13430–1343F) render "Ad"+U+1D173+"min" as "Admin"; a run of variation selectors U+E0100–E01EF smuggles hidden bytes past the tag check; unpaired surrogates pass. The KDoc and CHANGELOG claim "every invisible format character" | open → maintainer list | Verified (`Char.category` of a surrogate half is `SURROGATE`). Proposed: decode code points; refuse unpaired surrogates and a range list of default-ignorables beyond the BMP; allow ONE variation selector after a base character (emoji VS16, CJK ideographic variants), refuse a run |
-| 2.2 | MINOR (impl, domain) | `AuthDisplayName.kt:19-25` | A name of only joiners, variation selectors or combining marks (U+200D, U+FE0F, U+034F) is accepted and renders blank | open → maintainer list | Verified. Proposed: require one character outside ZWJ/ZWNJ, Mn, Me, Cf, Zs |
-| 2.3 | MINOR (domain) | `AuthDisplayName.kt:16`, `index_js.kt:13-16` | `DESCRIPTION` names only the length; a name pasted with a trailing U+200E or a soft hyphen is refused under "1 to 100 characters", and the mandatory field blocks the user with no hint | open → maintainer list | Verified (`trim()` keeps Cf). Proposed: strip format characters at the ends like whitespace, and name the content rule in the message |
-| 2.4 | MINOR (security), NIT (domain) | `EmailAndPasswordAuth.kt:535-563` | The provider's `activateAccount` writes the password without its own policy check; `setPassword` (:614) and the reset (:721) keep theirs. A realm overriding `activate` that calls the provider directly stores a weak password | open → maintainer list | Verified; the only caller today is `AuthRealm.activate` (:346). Proposed: re-add the check before the token lookup (no oracle; the realm still produces the reason) |
-| 2.5 | MINOR (security) | `GithubSsoAuth.kt:257`, `GoogleSsoAuth.kt:199` | Older than this change: SSO sign-up names skip `AuthDisplayName` (only trimmed), and a GitHub `"name": null` becomes the literal name `"null"` (`JsonNull.content`) | out-of-scope → follow-up task (maintainer to approve) | Verified. Not this change's: the rule is scoped to the activation page by decision 2 |
-| 2.6 | MINOR (impl) | `CHANGELOG.md:58-84` | The new abstract `EmailAndPasswordAuth.Services.capEmailVerificationTokens` (public, via `Factory.invoke(services=…)`) is not named as breaking | open → maintainer list | Verified; the ULTRA-00231 entry named `removePasswordRecords` |
-| 2.7 | NIT (impl) | `ActivateAccountPage.kt:287,133` | The submit posts the render-time state; a password manager that fills and clicks in one task posts the stale password (refused, form kept, second click works). An edit made while the POST is in flight is overwritten by the refusal | open → maintainer list | Self-recovering. Proposed: submit the current `displayState` |
-| 2.8 | NIT (impl) | `ActivationHardeningE2eSpec.kt:168-194` | The written name is read back on Karango only (`TestUserRealm`), never on Monko | open → maintainer list | The write is realm adapter code, not framework storage |
-| 2.9 | NIT (impl, domain) | `CHANGELOG.md:18,75-76` | The `getEmails`-abstract note is in the ULTRA-00118 entry and again in ULTRA-00289's | open → maintainer list | Keep it in ULTRA-00118 |
-| 2.10 | NIT (domain), withdrawn in phase 2 | `AuthDisplayName.kt:37` | U+180E MONGOLIAN VOWEL SEPARATOR (Cf) is refused; traditional Mongolian spelling needs it, as ZWNJ/ZWJ are needed elsewhere | open → maintainer list | Proposed: add it to the exceptions |
+| 2.1 | MINOR (all three) | `AuthDisplayName.kt:7-9,33-42`, `CHANGELOG.md:63` | The rule checks one UTF-16 unit at a time, so no supplementary-plane character is classified: format controls (U+1D173–1D17A, U+1BCA0–1BCA3, U+13430–1343F) render "Ad"+U+1D173+"min" as "Admin"; a run of variation selectors U+E0100–E01EF smuggles hidden bytes past the tag check; unpaired surrogates pass. The KDoc and CHANGELOG claim "every invisible format character" | fixed (maintainer 2026-11-06) | Verified (`Char.category` of a surrogate half is `SURROGATE`). Proposed: decode code points; refuse unpaired surrogates and a range list of default-ignorables beyond the BMP; allow ONE variation selector after a base character (emoji VS16, CJK ideographic variants), refuse a run |
+| 2.2 | MINOR (impl, domain) | `AuthDisplayName.kt:19-25` | A name of only joiners, variation selectors or combining marks (U+200D, U+FE0F, U+034F) is accepted and renders blank | fixed (maintainer 2026-11-06) | Verified. Proposed: require one character outside ZWJ/ZWNJ, Mn, Me, Cf, Zs |
+| 2.3 | MINOR (domain) | `AuthDisplayName.kt:16`, `index_js.kt:13-16` | `DESCRIPTION` names only the length; a name pasted with a trailing U+200E or a soft hyphen is refused under "1 to 100 characters", and the mandatory field blocks the user with no hint | fixed (maintainer 2026-11-06): refused with a message naming the character and its place, not stripped | Verified (`trim()` keeps Cf). Proposed: strip format characters at the ends like whitespace, and name the content rule in the message |
+| 2.4 | MINOR (security), NIT (domain) | `EmailAndPasswordAuth.kt:535-563` | The provider's `activateAccount` writes the password without its own policy check; `setPassword` (:614) and the reset (:721) keep theirs. A realm overriding `activate` that calls the provider directly stores a weak password | fixed (maintainer 2026-11-06) | Verified; the only caller today is `AuthRealm.activate` (:346). Proposed: re-add the check before the token lookup (no oracle; the realm still produces the reason) |
+| 2.5 | MINOR (security) | `GithubSsoAuth.kt:257`, `GoogleSsoAuth.kt:199` | Older than this change: SSO sign-up names skip `AuthDisplayName` (only trimmed), and a GitHub `"name": null` becomes the literal name `"null"` (`JsonNull.content`) | out-of-scope → ULTRA-00293 (maintainer 2026-11-06: the local part as the fallback) | Verified. Not this change's: the rule is scoped to the activation page by decision 2 |
+| 2.6 | MINOR (impl) | `CHANGELOG.md:58-84` | The new abstract `EmailAndPasswordAuth.Services.capEmailVerificationTokens` (public, via `Factory.invoke(services=…)`) is not named as breaking | fixed (maintainer 2026-11-06) | Verified; the ULTRA-00231 entry named `removePasswordRecords` |
+| 2.7 | NIT (impl) | `ActivateAccountPage.kt:287,133` | The submit posts the render-time state; a password manager that fills and clicks in one task posts the stale password (refused, form kept, second click works). An edit made while the POST is in flight is overwritten by the refusal | fixed (maintainer 2026-11-06) | Self-recovering. Proposed: submit the current `displayState` |
+| 2.8 | NIT (impl) | `ActivationHardeningE2eSpec.kt:168-194` | The written name is read back on Karango only (`TestUserRealm`), never on Monko | fixed (maintainer 2026-11-06) | The write is realm adapter code, not framework storage |
+| 2.9 | NIT (impl, domain) | `CHANGELOG.md:18,75-76` | The `getEmails`-abstract note is in the ULTRA-00118 entry and again in ULTRA-00289's | fixed (maintainer 2026-11-06) | Keep it in ULTRA-00118 |
+| 2.10 | NIT (domain), withdrawn in phase 2 | `AuthDisplayName.kt:37` | U+180E MONGOLIAN VOWEL SEPARATOR (Cf) is refused; traditional Mongolian spelling needs it, as ZWNJ/ZWJ are needed elsewhere | withdrawn | Proposed: add it to the exceptions |
 
 **Probed and CLEAN in round 2** (in addition to round 1's list): the one-shot org handoff (every write resets the
 flag, logout clears, the login page reads only the take, no redirect bypasses it); the cross-codec wire for
@@ -234,31 +253,58 @@ accepted on JVM and JS alike.
 - No migration is needed: no stored shape changed.
 - Code style: imports, KDoc links, branding.
 
-**Recorded, not this ticket's to fix:** a request body that misses a required field answers 500, and the logged
-`AwakerException` carries the input, cleartext password included (funktor-rest-wide; see the implementation notes). A
-follow-up ticket waits for the maintainer.
+**Recorded, not this ticket's to fix:** a request body that misses a required field answered 500, and the logged
+`AwakerException` carried the input, cleartext password included (funktor-rest-wide). ULTRA-00292.
+
+### Round 3: level 1 (`reviewer-high`, all three charters), confirmation of the MINOR batch: CLEAN (0 CRITICAL, 0 MAJOR)
+
+| # | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3.1 | MINOR (security, domain) | `AuthDisplayName.kt:110` | U+2065, a reserved default-ignorable (category UNASSIGNED, not FORMAT), passes and renders as nothing: "Ad"+U+2065+"min" | fixed | Verified; permanently reserved, so not table drift. In the blank set, spec row |
+| 3.2 | MINOR (security) | `AuthDisplayName.kt:95-96` | One ideographic variation selector after EVERY letter carries a hidden byte per letter (26 in a 78-char name) | fixed | Verified. U+E0100–E01EF only after a CJK ideograph; FE00–FE0F still after any base (16 values, needed for emoji) |
+| 3.3 | MINOR (domain) | `AuthDisplayName.kt:90-93` | Older Bengali/Malayalam end a word with virama + ZWJ; refused as "invisible, please delete it", which changes the glyph | fixed | Verified. A joiner may follow an Indic virama with nothing visible after it |
+| 3.4 | NIT | `AuthDisplayName.kt:74,55` | A broken surrogate is refused with "(?)" | fixed | The lone half stays in the code point list, so the message names it and its place |
+| 3.5 | NIT | `AuthDisplayName.kt:42` | "characters" counts UTF-16 chars | fixed | The message says an emoji counts as two or more |
+| 3.6 | NIT | `AuthDisplayName.kt:99` | Marks on one letter are not capped ("a" + 99 × U+0301) | fixed | UAX #15's stream-safe limit: more than 30 in a row is `TooManyMarks` |
+| 3.7 | NIT | this ticket | Implementation notes and the ledger still describe round 2 | fixed | This update |
+
+**Probed and CLEAN in round 3:** code-point decoding and pair arithmetic; check order (invisible before mark, so
+U+17B4/17B5 are refused); noncharacters in every plane; every supplementary format control of Unicode 16 listed;
+joiner chains, a selector after a space, names of only joiners, selectors or marks; the rainbow and pirate flags,
+skin-tone ZWJ sequences, keycaps, Persian ZWNJ, Sinhala "Sri" and CJK variation sequences accepted; `trim()` alike on
+JVM and JS; the page's field rule and banner; 2.4 no oracle; 2.6/2.9 in the CHANGELOG; 2.7 reads the state at
+validation time and a refusal keeps edits made during the POST; 2.8 on both backends; 1.12 cannot pass vacuously.
+
+Round-3 fixes are MINOR and NIT only, so they do not loop (`.claude/skills/review-loop/`); they are mutation-checked
+below.
+
+**Verdict:** gate PASS (round 3 clean; follow-ups ULTRA-00292 and ULTRA-00293 exist).
 
 ## Acceptance
 
-- [ ] **A:** e2e on both backends.
-  - [ ] Inside the overlap, an older link still activates, and then the newer one is dead.
-  - [ ] After the overlap, the older link is dead.
-  - [ ] A link is never extended.
-  - [ ] With overlap 0, only the newest link lives.
-- [ ] **B:** e2e.
-  - [ ] Activation writes the given name.
-  - [ ] Sign-up ignores a `displayName` sent by an old client.
-  - [ ] A blank, overlong or control-character name is refused before the token: the link still works afterwards.
-  - [ ] A throwing adapter leaves the account active.
-- [ ] **C:** e2e for both reasons, plus a page spec for a refused answer (a 200 with `failure`, see the
+- [x] **A:** e2e on both backends.
+  - [x] Inside the overlap, an older link still activates, and then the newer one is dead.
+  - [x] After the overlap, the older link is dead.
+  - [x] A link is never extended.
+  - [x] With overlap 0, only the newest link lives.
+- [x] **B:** e2e.
+  - [x] Activation writes the given name.
+  - [x] Sign-up ignores a `displayName` sent by an old client.
+  - [x] A blank, overlong or control-character name is refused before the token: the link still works afterwards.
+  - [x] A throwing adapter leaves the account active.
+- [x] **C:** e2e for both reasons, plus a page spec for a refused answer (a 200 with `failure`, see the
       implementation notes), and a check that the browser's codec reads the reason the server's codec wrote.
-- [ ] **D:** e2e on an org realm with sign-up, with 0, 1 and n orgs, plus a page spec for the picker handoff.
-- [ ] Mutation checks on A, B and C, the security-relevant paths.
-- [ ] CHANGELOG `## Unreleased` names the breaking API. ULTRA-00290 (docs) is updated with the settled API.
-- [ ] ULTRA-00127 (red team) has the new scenarios: a stale link inside the overlap, and the name field as a phishing
+- [x] **D:** e2e on an org realm with sign-up, with 0, 1 and n orgs, plus a page spec for the picker handoff.
+- [x] Mutation checks on A, B and C, the security-relevant paths.
+- [x] CHANGELOG `## Unreleased` names the breaking API. ULTRA-00290 (docs) is updated with the settled API.
+- [x] ULTRA-00127 (red team) has the new scenarios: a stale link inside the overlap, and the name field as a phishing
       carrier.
 
 ## History
 
 - 2026-11-04: created from the ULTRA-00231 gate (1.9, 1.10).
 - 2026-11-05: 1.12 and 1.13 folded in on the maintainer's decisions; rewritten as the plan above.
+- 2026-11-06: the round-2 MINOR list fixed on the maintainer's word, round 3 CLEAN, its MINORs fixed and
+  mutation-checked; follow-ups ULTRA-00292, ULTRA-00293; DONE. Docs: ULTRA-00290, updated with the settled API
+  (written last, as ULTRA-00291 and ULTRA-00293 still move the same surface).
+- 2026-11-06: DONE.

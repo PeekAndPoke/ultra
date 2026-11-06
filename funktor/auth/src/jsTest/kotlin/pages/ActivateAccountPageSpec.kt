@@ -211,6 +211,76 @@ class ActivateAccountPageSpec : StringSpec({
         }
     }
 
+    "after the server refuses a name, the CORRECTED name is what the next POST sends" {
+        var refuse = true
+        val server = serverWithRealm().apply {
+            answer(activatePath, AuthActivateAccountResponse.serializer()) {
+                if (refuse) {
+                    AuthActivateAccountResponse(success = false, failure = AuthActivateAccountResponse.Failure.InvalidDisplayName)
+                } else {
+                    AuthActivateAccountResponse(success = true)
+                }
+            }
+        }
+        val state = stateOn(server)
+
+        TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
+            root.choosePassword(goodPassword, name = "Ada First")
+            root.awaitText("did not accept this name")
+
+            refuse = false
+            root.selectCss("input:not([type=password])").typeText("Ada Second")
+            delay(50)
+            root.button("Activate my account").click()
+            root.awaitText("Your account is active")
+
+            server.bodies.map { it["displayName"]?.jsonPrimitive?.content } shouldBe listOf("Ada First", "Ada Second")
+        }
+    }
+
+    "a name the rule refuses is never sent, and the page says WHY" {
+        listOf(
+            "Ad" + Char(0x200B) + "min" to "an invisible character (U+200B)",
+            goodName + Char(0x200E) to "an invisible character (U+200E) at the end",
+            Char(0x0301) + goodName to "starts with an accent or mark (U+0301)",
+            "x".repeat(101) to "at most 100 characters",
+        ).forEach { (name, says) ->
+            withClue(says) {
+                val server = serverWithRealm()
+                val state = stateOn(server)
+
+                TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
+                    root.choosePassword(goodPassword, name = name)
+                    root.awaitText(says)
+                    delay(100)
+
+                    server.posts() shouldBe emptyList()
+                }
+            }
+        }
+    }
+
+    "a form filled and submitted in one go, as a password manager does, sends what was filled" {
+        val server = serverWithRealm().apply {
+            answer(activatePath, AuthActivateAccountResponse.serializer()) { AuthActivateAccountResponse(success = true) }
+        }
+        val state = stateOn(server)
+
+        TestBed.preact({ ActivateAccountPage(state = state, provider = "email-password", token = "tok") }) { root ->
+            root.awaitText("Choose your name and a password")
+            root.selectCss("input:not([type=password])").typeText(goodName)
+            root.selectCss("input[type=password]").typeText(goodPassword)
+            // No pause: the click lands before the page re-renders with the filled values.
+            root.button("Activate my account").click()
+            root.awaitText("Your account is active")
+
+            server.bodies.single().let {
+                it["password"]?.jsonPrimitive?.content shouldBe goodPassword
+                it["displayName"]?.jsonPrimitive?.content shouldBe goodName
+            }
+        }
+    }
+
     "an answer that needs an ORGANISATION choice hands it to the login page's picker" {
         val org = AuthOrgRef(id = OrgId("orgs/o1"), slug = "o1", name = "Org One")
         val selection = AuthSignInResponse.OrgSelectionRequired(

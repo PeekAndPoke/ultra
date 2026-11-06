@@ -747,6 +747,16 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 }
             }
 
+            "the PROVIDER refuses a weak password itself, before the token, for a realm that calls it directly" {
+                // Every service keeps its exploding default: the token is never looked up.
+                subjectWith(lazy { TestServices() }).activateAccount(
+                    MinimalTestRealm(passwordPolicy = PasswordPolicy.default),
+                    AuthActivateAccountRequest(
+                        provider = EmailAndPasswordAuth.ID, token = "t", password = "weak", displayName = "Ada",
+                    ),
+                ) shouldBe null
+            }
+
             "consumes the link FIRST, then sets the chosen password, then drops the marker" {
                 val token = "the-verification-token"
                 val events = mutableListOf<String>()

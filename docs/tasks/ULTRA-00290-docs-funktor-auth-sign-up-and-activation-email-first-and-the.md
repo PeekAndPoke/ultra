@@ -20,6 +20,14 @@ already rewrote the activation section of `docs-site/src/pages/ultra/funktor/aut
 - Every upgrade trap with no compile signal, from both: the four of ULTRA-00222 round 1 and its round 2/3 additions
   (listed in its archived "Docs follow-up" box), and ULTRA-00231's (CHANGELOG `## Unreleased`).
 - The library skill (what will bite you), if the docs-site skill asks for one.
+- **Added by ULTRA-00289 (2026-11-06), settled:** the activation page asks for the name
+  (`AuthActivateAccountRequest.displayName`, required; sign-up takes none); the rule `AuthDisplayName` with
+  `refusalOf` and its messages; the refusal answer `AuthActivateAccountResponse.failure` (`WeakPassword`,
+  `InvalidDisplayName`, a 200); `AuthUserAdapter.activate(user, ActivateUserParams)`;
+  `RealmTokenConfig.activationLinkOverlap` (30 min, 0 = rotate); the org handoff
+  (`AuthState.takeActivationOrgSelection()`); its "no compile signal" list in `CHANGELOG.md` `## Unreleased`.
+- **Still moving, write last:** ULTRA-00291 (tokens stored hashed; a cancel token per mail) changes
+  `EmailAndPasswordAuth.Services` and what a re-send mails; ULTRA-00293 changes the default name of SSO accounts.
 
 ## Decide before implementing
 

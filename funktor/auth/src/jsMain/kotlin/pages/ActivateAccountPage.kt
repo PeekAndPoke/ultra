@@ -129,8 +129,9 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
         displayState = when {
             result == null -> DisplayState.Failed(retry = { activate(input) })
             result.success -> DisplayState.Activated
-            // The input, not the link: keep the form, say why.
-            result.failure != null -> input.copy(refused = result.failure)
+            // The input, not the link: keep the form as it is NOW (edits made during the POST stay), say why.
+            result.failure != null ->
+                (displayState as? DisplayState.Choose ?: input).copy(refused = result.failure)
             else -> DisplayState.LinkNotUsable
         }
 
@@ -262,7 +263,7 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
 
                 AuthActivateAccountResponse.Failure.InvalidDisplayName -> ui.error.visible.message {
                     +"The server did not accept this name. "
-                    +AuthDisplayName.DESCRIPTION
+                    +(AuthDisplayName.refusalOf(s.displayName)?.message ?: AuthDisplayName.DESCRIPTION)
                 }
 
                 null -> Unit
@@ -284,7 +285,12 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
                     .givenNot(noDblClick.canRun) { loading }
                     .givenNot(formCtrl.isValid) { disabled }
                     .button Submit {
-                    onClick { formCtrl.validate { activate(s.copy(refused = null)) } }
+                    // The CURRENT state, not the rendered `s`: a password manager may fill and click in one task.
+                    onClick {
+                        formCtrl.validate {
+                            (displayState as? DisplayState.Choose)?.let { activate(it.copy(refused = null)) }
+                        }
+                    }
                     +"Activate my account"
                 }
             }

@@ -11,6 +11,6 @@ fun PasswordPolicy.asFormRule() = given<String>(
 
 /** The activation page's display-name rule, the same one the server applies. */
 fun AuthDisplayName.asFormRule() = given<String>(
-    check = { normalizeOrNull(it) != null },
-    message = { DESCRIPTION },
+    check = { refusalOf(it) == null },
+    message = { refusalOf(it)?.message ?: DESCRIPTION },
 )

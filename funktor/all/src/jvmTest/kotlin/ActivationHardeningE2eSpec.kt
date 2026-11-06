@@ -243,9 +243,12 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
                         response.apiResponseData<AuthSignInResponse>().shouldBeNull()
                     }
 
-                    activate(activationTokenTo(email)) shouldBe true
+                    activate(activationTokenTo(email), displayName = "  Ada Lovelace ") shouldBe true
 
                     isPending(id) shouldBe false
+                    withClue("the name chosen at activation is written, trimmed, on this backend") {
+                        users.byId(id).shouldNotBeNull().value.name shouldBe "Ada Lovelace"
+                    }
                     passwordSignIn(email) { response ->
                         response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
                     }
