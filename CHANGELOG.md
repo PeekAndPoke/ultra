@@ -161,6 +161,10 @@
   Breaking: `AuthRecordStorage.Adapter.replaceRecordIfClaimedBy` and the Vault `Repo.replaceIfClaimedBy` take
   `expectedResends`; `EmailAndPasswordAuth.Services.replacePendingActivation` takes `(read, next)`.
 
+- **Funktor rest: the boot log names the key that signs new tokens** (ULTRA-00178). `funktorRest { jwt(...) }` logs
+  `kid`, algorithm and `issued` of the first key once at app start, never any part of a secret, so a key appended
+  instead of prepended is visible after a deploy.
+
 - **Funktor auth, SSO fixes** (ULTRA-00288):
   - An SSO sign-in to an account WITHOUT a pending marker re-reads the user: one retired after the provider loaded
     it is refused (a stale row could get one session). The realm's `users.loadById` is now called on that path.

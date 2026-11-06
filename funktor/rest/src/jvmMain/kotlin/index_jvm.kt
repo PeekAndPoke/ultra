@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.common.TypedAttributes
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
+import io.peekandpoke.ultra.log.Log
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.security.jwt.JwtConfig
 import io.peekandpoke.ultra.security.jwt.JwtGenerator
@@ -118,6 +119,7 @@ class FunktorRestBuilder internal constructor(
 
         with(kontainer) {
             singleton(JwtGenerator::class) { JwtGenerator(config) }
+            singleton(JwtSigningKeyOnAppStarting::class) { log: Log? -> JwtSigningKeyOnAppStarting(config, log) }
         }
     }
 }

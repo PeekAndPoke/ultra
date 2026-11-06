@@ -4,11 +4,15 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.security.jwt.JwtConfig
 import io.peekandpoke.ultra.security.jwt.JwtSigningKey
+import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.LogLevel
 
 /**
  * `funktorRest { jwt(...) }` must reject a broken key set **while the kontainer blueprint is being
@@ -20,7 +24,7 @@ import io.peekandpoke.ultra.security.jwt.JwtSigningKey
  * caller. `JwtSignatureGate`'s own `require` covers every other construction path; this spec covers
  * the wiring that makes a misconfigured deployment refuse to start.
  *
- * Without it, deleting the `requireUsableKeys` call from `FunktorRestBuilder.jwt` fails nothing:
+ * Without it, deleting the `requireUsableConfig` call from `FunktorRestBuilder.jwt` fails nothing:
  * `JwtSignatureGateSpec` proves the check works, not that funktor invokes it.
  */
 class JwtBootValidationSpec : StringSpec({
@@ -40,6 +44,36 @@ class JwtBootValidationSpec : StringSpec({
     /** Builds the blueprint only — never resolves the singleton, so a lazy check would not fire. */
     fun boot(keys: List<JwtSigningKey>) = kontainer {
         funktorRest(AppConfig.empty) { jwt(jwtConfig(keys)) }
+    }
+
+    "the boot log names the SIGNING key (the first), its algorithm and issue date, and nothing of any secret" {
+        // ULTRA-00178: an appended instead of prepended key signs with the old one; this line is how anyone notices.
+        val config = jwtConfig(listOf(key("2026-11-new").copy(issued = "2026-11-06"), key("2026-08-old")))
+
+        val line = JwtSigningKeyOnAppStarting.message(config)
+
+        line shouldContain "kid '2026-11-new'"
+        line shouldContain "HS512"
+        line shouldContain "issued 2026-11-06"
+        line shouldContain "2 key(s)"
+        line shouldNotContain "2026-08-old"
+        line shouldNotContain goodSecret
+        line shouldNotContain goodSecret.take(8)
+        line shouldNotContain goodSecret.length.toString()
+    }
+
+    "the hook writes that line once, at INFO" {
+        val lines = mutableListOf<Pair<LogLevel, String>>()
+        val log = object : Log {
+            override fun log(level: LogLevel, message: String, error: Throwable?) {
+                lines += level to message
+            }
+        }
+        val config = jwtConfig(listOf(key("current")))
+
+        JwtSigningKeyOnAppStarting(config, log).announce()
+
+        lines shouldBe listOf(LogLevel.INFO to JwtSigningKeyOnAppStarting.message(config))
     }
 
     "a usable key set boots" {
