@@ -9,11 +9,11 @@ import java.security.SecureRandom
 interface AuthRandom {
 
     companion object {
-        /** Default impl: uses [SecureRandom.getInstanceStrong] */
+        /** Default impl, on [secureRandom] */
         val default: AuthRandom = Impl()
 
-        /** Default impl: uses [SecureRandom] */
-        val secureRandom: SecureRandom = SecureRandom.getInstanceStrong()
+        /** A plain [SecureRandom]: a CSPRNG that does not block, unlike `getInstanceStrong()` (ULTRA-00067) */
+        val secureRandom: SecureRandom = SecureRandom()
     }
 
     /** Default impl */

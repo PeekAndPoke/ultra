@@ -161,6 +161,11 @@
   Breaking: `AuthRecordStorage.Adapter.replaceRecordIfClaimedBy` and the Vault `Repo.replaceIfClaimedBy` take
   `expectedResends`; `EmailAndPasswordAuth.Services.replacePendingActivation` takes `(read, next)`.
 
+- **ultra/security: `SecretGenerator`, random secrets from a CSPRNG** (ULTRA-00067). `token()` (URL-safe, 256 bits by
+  default), `string(length, alphabet)` and `tempPassword(length, alphabet, accept)` for an invite or a temporary
+  password a person can type: unambiguous characters, no modulo bias, redrawn until the realm's policy accepts it.
+  `AuthRandom` now uses a plain `SecureRandom()` instead of `getInstanceStrong()`, which can block.
+
 - **Funktor rest: the boot log names the key that signs new tokens** (ULTRA-00178). `funktorRest { jwt(...) }` logs
   `kid`, algorithm and `issued` of the first key once at app start, never any part of a secret, so a key appended
   instead of prepended is visible after a deploy.

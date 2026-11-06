@@ -61,6 +61,13 @@ The current regex both **over-restricts** (blocks strong passphrases lacking a s
 - Realm-configurable policy already exists (`AuthRealmModel.passwordPolicy`); this changes defaults +
   adds a screening step, not the plug-in shape.
 
+## Note from ULTRA-00067 (2026-11-06)
+
+`SecretGenerator.tempPassword` exists (ultra/security). Its default alphabet carries symbols only because the current
+composition policy demands one; symbols stop double-click selection and read as punctuation. Once the default is
+length-first, its default can drop them (e.g. lower case and digits, about 20 characters for ~100 bits). Its `accept`
+is a plain `(String) -> Boolean`: a suspend breach check would need its own overload.
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00065 (was `docs/tasks/20260720-password-policy-modernization.md`).
