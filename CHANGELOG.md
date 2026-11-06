@@ -402,8 +402,9 @@
     `AuthProvider.resendActivation` takes the owner; `AuthProvider.cancelSignUp`, `AuthApiClient.CancelSignUp` and
     the route `AuthFrontendRoutes.cancelSignUp` are new.
   - Auth-record storage: `PendingActivation` gains `claimedBy`, `resends` and `lastSentAt`; there is a new
-    `SignUpCancelToken` record. The storage adapter gains conditional writes (`replaceIfClaimedBy`,
-    `removeIfClaimedBy`), `removeAllOfOwner` and `findCreatedBefore`, and loses `save`. There is a new index on
+    `SignUpCancelToken` record. The storage adapter gains conditional writes (`replaceRecordIfClaimedBy`,
+    `removeRecordIfClaimedBy`; the Vault `Repo` names them `replaceIfClaimedBy`, `removeIfClaimedBy`), `removeAllOfOwner`
+    and `findCreatedBefore`, and loses `save`. There is a new index on
     (realm, type, createdAt) on both backends. Existing records need no migration.
 - **Upgrading with no compile error to warn you:**
   - an app's own activation-mail renderer must render `cancelUrl`;

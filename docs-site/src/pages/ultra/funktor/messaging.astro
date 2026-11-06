@@ -140,11 +140,13 @@ if (result.success) {
         val senderName: String,
         val applicationName: String,
         val activationUrl: String,
+        val cancelUrl: String,
     )
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Each template declares its own <code>Params</code>, so a value that is renamed or forgotten is a
-        compile error rather than a placeholder shipped to a recipient. Renderings live in a
+    <p>Each template declares its own <code>Params</code>, so a value that is renamed or removed is a
+        compile error rather than a placeholder shipped to a recipient. A value the renderer ignores is not:
+        an activation template that never renders <code>cancelUrl</code> silently mails no cancel link. Renderings live in a
         <code>Map&lt;Locale, (Params, Locale) -&gt; Email&gt;</code>, and a shared walker resolves
         <code>de-CH &rarr; de &rarr; en</code>. The renderer is <em>handed</em> the locale it matched, so the
         map key and the rendering cannot drift apart into a mixed-language mail.</p>

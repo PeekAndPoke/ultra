@@ -3,6 +3,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 import Aside from '../../../components/Aside.astro';
 import {funktorSidebar} from '../../../data/funktor-sidebar';
 import {Code} from 'astro:components';
+import {githubRepo} from '../../../data/site';
 ---
 
 <DocsLayout title="Auth Module" sidebar={funktorSidebar}
@@ -48,9 +49,21 @@ import {Code} from 'astro:components';
             AdminUser(email = params.email, name = params.displayName),
         )
 
+        // The name chosen on the activation page, written once the activation has won.
+        override suspend fun activate(user: Stored<AdminUser>, params: AuthUserAdapter.ActivateUserParams) =
+            usersRepo.save(user.modify { it.copy(name = params.displayName) })
+
+        // A never-activated account gives up its address: rename every unique key,
+        // and drop what was derived from it (the default name is its local part).
+        override suspend fun retire(user: Stored<AdminUser>, retirement: AccountRetirement) =
+            usersRepo.save(user.modify { it.copy(email = retirement.rename(it.email), name = "retired") })
+
         override suspend fun serialize(user: Stored<AdminUser>) = /* ... */
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>activate</code> and <code>retire</code> have no default. A realm without sign-up throws
+        <code>AuthError.notSupported()</code> from both, as from <code>createForSignup</code>.</p>
 
     <h2>JWT generation</h2>
 
@@ -105,33 +118,135 @@ import {Code} from 'astro:components';
         </div>
     </div>
 
-    <h2>Account activation</h2>
+    <h2 id="sign-up-and-activation">Sign-up and activation</h2>
 
-    <p>A new account proves its email address before it holds a credential. Sign-up takes the address and
-        no password, mails a link and issues <strong>no session</strong>. The link opens &ldquo;Choose your
-        password&rdquo;: setting it activates the account and signs the user in. Until then nothing can sign
-        in to the account, so whoever signs up someone else's address holds nothing.</p>
+    <p>A new account proves its email address before it holds anything. Sign-up takes the address only &mdash;
+        no password, no name &mdash; mails a link and issues <strong>no session</strong>. The link opens
+        &ldquo;Choose your password&rdquo;, which asks for the password and the display name; submitting it
+        activates the account and signs the user in. Until then nothing can sign in to the account, and whoever
+        signs up someone else's address has chosen nothing that its owner will later find in it.</p>
 
-    <Code code={`// Sign-up: the address, no password
-api.auth.signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = "email-password", email = email))
+    <Code code={`// Sign-up: the address, nothing else (\`api\` is the realm's AuthApiClient)
+api.signUp(AuthSignUpRequest.EmailAndPassword(provider = "email-password", email = email))
 
-// The mailed link's page: the first password activates the account
-val response = api.auth.activateAccount(realm, AuthActivateAccountRequest(provider, token, password))
-response.signIn // Success, OrgSelectionRequired (several orgs), or null (no org yet; sign-in switched off)`} lang="kotlin" theme="vitesse-dark"/>
+// The mailed link's page: the first password and the name activate the account
+val response = authState.activateAccount(
+    AuthActivateAccountRequest(provider, token, password = password, displayName = name),
+)
 
-    <p>Opening the link changes nothing, so a mail scanner that follows it activates nothing; only the
-        page's POST does. Signing up again with a pending address re-sends the link, under delays that grow per
-        account, and answers exactly like a fresh sign-up: a caller cannot tell a pending address from a new
-        one.</p>
+val problem = when {
+    response == null -> "The server could not be reached."
+    response.success -> null // signed in: response.signIn
+    response.failure == Failure.WeakPassword -> "Please choose a stronger password."
+    response.failure == Failure.InvalidDisplayName -> AuthDisplayName.refusalOf(name)?.message
+    else -> "This link is used, unknown or expired."
+}`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>&ldquo;Not activated&rdquo; is modelled as the <em>presence</em> of a marker record, not a flag on the
-        user and not &ldquo;an unexpired token exists&rdquo;. A flag would need a default, and the only safe
-        default locks out every existing account; the token test erases itself once the token expires.</p>
+    <p>The password policy and the name are checked <em>before</em> the token is looked at. A refused input is
+        a 200 with <code>success = false</code> and a <code>failure</code>; the link stays usable and the answer
+        says nothing about it. A dead link gets <code>success = false</code> and no reason. On success,
+        <code>signIn</code> is <code>Success</code>, <code>OrgSelectionRequired</code>, or <code>null</code>
+        (no org yet, or a provider without sign-in). In an org realm, <code>AuthState</code> hands an
+        <code>OrgSelectionRequired</code> to the login page, which opens on the org picker, once
+        (<code>takeActivationOrgSelection()</code>).</p>
 
-    <p>A re-sent link replaces the earlier one, which dies at once. Completing a password reset proves the
-        mailbox too, so it also activates. So does SSO with an address the provider verified (Google's
-        <code>email_verified</code>; GitHub's verified public address). Both leave no earlier password working:
-        an account signed up before email first still holds its sign-up password, and SSO deletes it.</p>
+    <h3>The life of a pending account</h3>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 pr-4 text-white font-semibold">When</th>
+                <th class="py-2 pr-4 text-white font-semibold">What happens</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5"><td class="py-2 pr-4">The link is opened</td><td class="py-2 pr-4">Nothing. Only the page's POST activates, so a mail scanner that follows links activates nothing.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4">The address signs up again</td><td class="py-2 pr-4">The mail is re-sent once the account's next delay has passed, and the answer is a fresh sign-up's, mail or no mail. Older links keep working for <code>activationLinkOverlap</code>, then die.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4">&ldquo;Didn't sign up? Cancel&rdquo;</td><td class="py-2 pr-4">Every mail carries its own cancel link, valid as long as the account. It retires the account. The activation page's cancel button does the same with the activation link.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4">A password reset completes</td><td class="py-2 pr-4">It proves the mailbox too, so it activates the account.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4">SSO with the address</td><td class="py-2 pr-4">Activates the account if the provider verified the address (Google's <code>email_verified</code>, GitHub's verified public address), and deletes any earlier password; otherwise refused. The account has no password until a reset.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4">Someone signs in</td><td class="py-2 pr-4">&ldquo;Invalid credentials&rdquo;, like a wrong password, with no hint to activate.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>pendingAccountLifetime</code> passes</td><td class="py-2 pr-4">The account is retired at its next use (sign-up, activation, reset, SSO), or by <code>funktor/all</code>'s <code>PendingAccountsExpiryWorker</code>, which every app wired through <code>funktor(...)</code> runs every 15 minutes. The address is free again.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p>Activation, cancel, retire, SSO and a reset that activates remove all of the sign-up's links. An account
+        activated by reset or SSO is never asked for a name and keeps the default one, the address's local
+        part.</p>
+
+    <Aside>A pending address and a new one look the same to a caller. An active one does not: signing it up
+        answers &ldquo;User already exists&rdquo;. So the sign-up form still tells whether an address has an
+        account &mdash; only no longer whether that account is finished.
+    </Aside>
+
+    <p>&ldquo;Not activated&rdquo; is the <em>presence</em> of a marker record, not a flag on the user and not
+        &ldquo;an unexpired token exists&rdquo;. A flag would need a default, and the only safe default locks out
+        every existing account; the token test erases itself once the token expires.</p>
+
+    <h3>Configuration</h3>
+
+    <p>Per realm, in <code>RealmTokenConfig</code>:</p>
+
+    <div class="not-prose my-8">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 pr-4 text-white font-semibold">Setting</th>
+                <th class="py-2 pr-4 text-white font-semibold">Default</th>
+                <th class="py-2 pr-4 text-white font-semibold">Meaning</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>pendingAccountLifetime</code></td><td class="py-2 pr-4">7 days</td><td class="py-2 pr-4">How long a never-activated account lives; no link outlives it.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>emailVerificationTokenLifetime</code></td><td class="py-2 pr-4">24 h</td><td class="py-2 pr-4">How long an activation link works. It chooses the password and signs in, so it is a credential: shorten it where mail is forwarded or scanned.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>activationResendDelays</code></td><td class="py-2 pr-4">5 min, 15 min, 1 h, 4 h, 12 h, 24 h</td><td class="py-2 pr-4">The wait before each re-sent mail, per account; the last entry repeats. It bounds the mail anyone who knows the address can cause.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>activationLinkOverlap</code></td><td class="py-2 pr-4">30 min</td><td class="py-2 pr-4">How long the older links stay usable after a re-send, so a re-send cannot kill the link a user is typing into. 0: only the newest lives.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>maxSignUpCancelTokens</code></td><td class="py-2 pr-4">12</td><td class="py-2 pr-4">Cancel links kept per account; past it the oldest goes. The default delays fit the sign-up mail and 11 re-sends into 7 days, so every mailed link works until the account ends. At least 2.</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 pr-4"><code>randomTokenByteLength</code></td><td class="py-2 pr-4">256</td><td class="py-2 pr-4">Random bytes per one-shot token. At least 32.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Retirement</h3>
+
+    <p>Expiry and cancel <em>retire</em> the account: the framework deletes its auth records, calls
+        <code>AuthUserAdapter.retire(user, AccountRetirement)</code>, and checks that the address no longer
+        resolves to the account. The row stays, since other collections may point at it; its email becomes
+        <code>retired-&lt;64 hex&gt;@&lt;32 hex&gt;#retired.invalid</code>, which keeps a SHA-256 of the address
+        but not the address. <code>AccountRetirement.retiredKeyPrefix(email)</code> finds an address's retired
+        rows, <code>AccountRetirement.isRetired(email)</code> tells them apart. A <code>retire()</code> that
+        throws or renames nothing leaves the account pending, logs an error, and the next sweep tries again.
+        <code>AuthRealm.DefaultMessaging</code> mails nothing to a retired address.</p>
+
+    <h3>The display name</h3>
+
+    <p><code>AuthDisplayName</code> lives in common code, so the activation page and the server apply the same
+        rule: 1 to 100 UTF-16 chars after trimming, on one line, built of characters that show. Control,
+        invisible and undisplayable characters are refused, as is a leading combining mark.
+        <code>refusalOf(name)</code> says why, naming the character and where it sits:</p>
+
+    <Code code={`AuthDisplayName.refusalOf(Char(0x200B) + "Ada")?.message
+// Your name contains an invisible character (U+200B) at the start. It often comes along
+// with copy and paste - please delete it, or type your name in again.
+
+AuthDisplayName.normalizeOrNull("  Ada Lovelace ") // "Ada Lovelace"`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>An SSO sign-up keeps the provider's profile name when the rule accepts it, and otherwise uses the
+        address's local part (lower-case, as the address is canonical).</p>
+
+    <Aside>The flags of England, Scotland and Wales are refused. They are built from tag characters, the same
+        ones that smuggle invisible text into a name, and the rule does not try to tell the two apart. Apologies
+        to three nations.
+    </Aside>
+
+    <h3>One-shot tokens are stored hashed</h3>
+
+    <p>Activation, cancel, reset, email-change and org-selection tokens are stored as their SHA-256
+        (<code>TokenHash</code>); the raw token exists only in the mail or the answer. Whoever reads the auth
+        records &mdash; a backup, a leak, an admin tool &mdash; finds no working link. The hash is unsalted and
+        fast, which is safe only because the token is long and random: hence the 32-byte floor.</p>
 
     <p>SSO reaches an account only through an address the provider verified, for an active account, a pending
         one and a new one alike. Otherwise anyone with a provider account that claims an address could sign in
@@ -214,8 +329,9 @@ val blueprint = kontainer {
     <h2>Auth API</h2>
 
     <p>The auth module provides pre-built API endpoints for all auth operations:
-        sign up, sign in, activate account, set password, password recovery, token refresh, and
-        user-specific API access queries.
+        sign up, sign in, org selection, activate account, cancel sign-up
+        (<code>POST /auth/{'{realm}'}/activate/cancel</code>), set password, password recovery, token refresh,
+        and user-specific API access queries.
         A matching client library (<code>AuthApiClient</code>) is available for Kotlin/JS frontends.</p>
 
     <h2>Token refresh</h2>
@@ -320,16 +436,71 @@ val auth = authState<MyUser>(
 sessionConfig = AuthSessionConfig.disabled`} lang="kotlin" theme="vitesse-dark"/>
 
     <Aside>The auth module handles the plumbing &mdash; token storage, JWT generation, password hashing,
-        recovery tokens, session lifecycle. You implement the user model and the realm. That's it.
+        recovery tokens, session lifecycle. You implement the user model and the realm, including how an
+        account gives up its address. Only your repository knows which of its fields are unique.
     </Aside>
 
     <h2>Storage backends</h2>
 
-    <p>Auth records (passwords, recovery tokens) are stored via pluggable backends:</p>
+    <p>Auth records (passwords, one-shot tokens, sessions) are stored via pluggable backends:</p>
 
     <ul>
         <li><code>useKarango()</code> &mdash; ArangoDB via <a href="/ultra/karango/">Karango</a></li>
         <li><code>useMonko()</code> &mdash; MongoDB via <a href="/ultra/monko/">Monko</a></li>
+    </ul>
+
+    <h2 id="upgrading">Upgrading to email-first sign-up</h2>
+
+    <p>The compiler walks you through most of the change; the <a href={`${githubRepo}/blob/master/CHANGELOG.md`}
+        target="_blank" rel="noopener">changelog</a> lists the API. What follows gives no compile signal.</p>
+
+    <p><strong>An app with its own pages, mails or routes:</strong></p>
+
+    <ul>
+        <li>a sign-up form that still sends a password or a name: the server ignores both;</li>
+        <li>an activation page must POST <code>password</code> and <code>displayName</code> (without the name:
+            a 400, and the link stays usable), and must never POST on load, or mail scanners activate accounts;</li>
+        <li>an activation mail template must render <code>cancelUrl</code>, and its copy should say the link
+            chooses the password;</li>
+        <li>a router of its own must mount <code>AuthFrontendRoutes.cancelSignUp</code>
+            (<code>AuthState.mount</code> does).</li>
+    </ul>
+
+    <p><strong>An app with its own providers or hooks:</strong></p>
+
+    <ul>
+        <li>an SSO provider must route every existing account through <code>AuthRealm.resolveSsoAccount</code>,
+            which now asks <code>isEmailVerified</code> for active accounts too, and must check verification
+            itself before <code>createForSignup</code>;</li>
+        <li>a name it passes to <code>CreateUserForSignupParams.of</code> that the rule refuses becomes the
+            local part;</li>
+        <li>an <code>AuthRealm.Messaging</code> of its own lacks <code>DefaultMessaging</code>'s guard against
+            mailing a retired address;</li>
+        <li><code>AuthRecordStorage.OnAfterSave</code> listeners do not see the conditional writes (claims,
+            re-send schedules, activations).</li>
+    </ul>
+
+    <p><strong>Every app:</strong></p>
+
+    <ul>
+        <li>links mailed before tokens were hashed stop working. Old one-shot rows (<code>token</code>, no
+            <code>tokenHash</code>) cannot be read back; delete them from dev databases. Rows of type
+            <code>activation-resend-token</code> are dead weight too;</li>
+        <li>accounts left pending from before email first still hold their sign-up password. It no longer signs
+            in; the activation link replaces it, and SSO deletes it;</li>
+        <li>the first expiry sweep retires every pending account older than <code>pendingAccountLifetime</code>,
+            and retired rows stay in the user collection, where lists and admin screens show them unless they filter
+            <code>AccountRetirement.isRetired</code>;</li>
+        <li>without <code>funktor/all</code>'s <code>Funktor</code> module there is no sweep: an expired account
+            is retired only when it is used again;</li>
+        <li>GitHub sign-in needs the <code>user:email</code> scope (a GitHub App: the &ldquo;Email
+            addresses&rdquo; permission). <code>GithubSignInButton</code> asks for it, but under hash routing the
+            scope lands in the URL fragment and does not reach GitHub;</li>
+        <li>a Google account with an unverified address can no longer sign in, also to an account SSO created
+            earlier. Sessions taken that way before the upgrade survive it; rotating the JWT signing key ends
+            them;</li>
+        <li><code>RealmTokenConfig</code> refuses <code>randomTokenByteLength</code> below 32 and
+            <code>maxSignUpCancelTokens</code> below 2, at construction.</li>
     </ul>
 
     <div class="mt-12">

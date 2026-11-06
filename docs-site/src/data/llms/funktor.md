@@ -156,7 +156,12 @@ Multi-realm authentication with pluggable providers, JWT tokens, and frontend se
 An `AuthRealm<USER>` represents a user population with its own providers, password policy, and user model.
 An app can have multiple realms (admin users, customers, etc.).
 
-Key methods: `loadById(UserId)`, `loadByEmail(EmailAddress)`, `generateJwt()`, `signIn()`, `signUp()`, `refreshToken()`. Ids and emails are `@JvmInline value class`es — `UserId`, `OrgId`, `RealmId`, `EmailAddress` — so an `EmailAddress` lookup is case-insensitive by type.
+Key methods: `generateJwt()`, `signIn()`, `signUp()`, `activate()`, `refreshToken()`. User operations live on
+`AuthRealm.users: AuthUserAdapter<USER>` — `loadById(UserId)`, `loadByEmail(EmailAddress)`, `createForSignup`,
+`activate(user, ActivateUserParams)` (writes the name chosen at activation), `retire(user, AccountRetirement)`
+(see Retirement) and `serialize`. `activate` and `retire` have NO default; a realm without sign-up throws
+`AuthError.notSupported()` from both. Ids and emails are `@JvmInline value class`es — `UserId`, `OrgId`, `RealmId`,
+`EmailAddress` — so an `EmailAddress` lookup is case-insensitive by type.
 
 ### Providers
 
@@ -165,37 +170,96 @@ Key methods: `loadById(UserId)`, `loadByEmail(EmailAddress)`, `generateJwt()`, `
 - `GithubSsoAuth` — GitHub OAuth flow; the identity is the public `/user` address, which GitHub must list as
   verified in `/user/emails` (the `user:email` scope, or a GitHub App's "Email addresses" permission)
 
-### Account activation
+### Sign-up and activation
 
-A new account proves its email before it holds a credential (email first). Sign-up takes the address and
-NO password, mails a link and issues NO session. The link opens "Choose your password": setting it
-activates the account and signs the user in.
+Email first: a new account proves its address before it holds anything. Sign-up takes the address ONLY (no
+password, no name), mails a link and issues NO session. The link opens "Choose your password", which asks for the
+password and the display name; submitting it activates the account and signs the user in.
 
 ```kotlin
-// Sign-up: the address, no password
-api.auth.signUp(realm, AuthSignUpRequest.EmailAndPassword(provider = "email-password", email = email))
+// Sign-up: the address, nothing else (`api` is the realm's AuthApiClient)
+api.signUp(AuthSignUpRequest.EmailAndPassword(provider = "email-password", email = email))
 
-// The mailed link's page: the first password activates the account
-val response = api.auth.activateAccount(realm, AuthActivateAccountRequest(provider, token, password))
-response.signIn // Success, OrgSelectionRequired (several orgs), or null (no org yet; sign-in switched off)
+// The mailed link's page: the first password and the name activate the account
+val response = authState.activateAccount(
+    AuthActivateAccountRequest(provider, token, password = password, displayName = name),
+)
+
+val problem = when {
+    response == null -> "The server could not be reached."
+    response.success -> null // signed in: response.signIn
+    response.failure == Failure.WeakPassword -> "Please choose a stronger password."
+    response.failure == Failure.InvalidDisplayName -> AuthDisplayName.refusalOf(name)?.message
+    else -> "This link is used, unknown or expired."
+}
 ```
 
-Design notes:
+- `AuthActivateAccountResponse(success, signIn, failure)`. Password policy and name are checked BEFORE the token:
+  a refused input is a 200, `success = false`, `failure` = `WeakPassword` | `InvalidDisplayName`, link still
+  usable. A dead link: `success = false`, no reason. `signIn` is `Success`, `OrgSelectionRequired`, or null (no
+  org yet; provider without sign-in).
+- Org realm: `AuthState` hands an `OrgSelectionRequired` from activation to the login page, which opens on the
+  picker ONCE (`AuthState.takeActivationOrgSelection()`).
 
-- "Not activated" is the PRESENCE of a marker record — not a boolean on the user (the only safe
-  default would lock out every existing account) and not "an unexpired token exists" (that test
-  erases itself once the token expires).
-- Opening the link changes nothing (mail scanners follow links); only the page's POST activates.
-- Signing up again with a pending address re-sends the link under delays that grow per account, and
-  answers exactly like a fresh sign-up, so pending and new addresses look the same. The re-sent link
-  replaces the earlier one.
-- A pending account cannot sign in: it holds no password. One signed up before email first still holds its
-  sign-up password and is refused like a wrong one.
-- A completed password reset proves the mailbox too, so it also activates. So does SSO with a
-  provider-verified address (Google's `email_verified`; GitHub's verified public address), which
-  deletes any earlier password first.
-- SSO reaches an account (active, pending or new) only through an address the provider verified;
-  anything else is `invalidCredentials`.
+The life of a pending account:
+
+| When | What happens |
+|---|---|
+| link opened | nothing; only the page's POST activates (mail scanners follow links) |
+| address signs up again | re-sent once the account's next delay passed; answered exactly like a fresh sign-up; older links live `activationLinkOverlap` more, then die |
+| "Didn't sign up? Cancel" | every mail has its OWN cancel link, valid as long as the account; retires it. The activation page's cancel button does the same with the activation token |
+| password reset completes | activates too (proves the mailbox) |
+| SSO with the address | provider-verified (Google `email_verified`, GitHub's verified public address): activates and deletes any earlier password; else `invalidCredentials`. No password until a reset |
+| sign-in attempt | plain "invalid credentials", no hint to activate |
+| `pendingAccountLifetime` passed | retired at next use (sign-up, activation, reset, SSO) or by `funktor/all`'s `PendingAccountsExpiryWorker` (every 15 min, registered by the `Funktor` module); address free again |
+
+- Activation, cancel, retire, SSO and an activating reset remove ALL the sign-up's links.
+- Activated by reset or SSO: never asked for a name, keeps the default (the address's local part).
+- A pending address and a new one answer alike; an ACTIVE address answers "User already exists" (400).
+- "Not activated" is the PRESENCE of a marker record — not a boolean on the user (the only safe default would
+  lock out every existing account) and not "an unexpired token exists" (that test erases itself on expiry).
+- SSO reaches an account (active, pending or new) only through an address the provider verified.
+
+`RealmTokenConfig` (per realm):
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `pendingAccountLifetime` | 7 days | life of a never-activated account; no link outlives it |
+| `emailVerificationTokenLifetime` | 24 h | life of an activation link — a credential (sets the password, signs in) |
+| `activationResendDelays` | 5m, 15m, 1h, 4h, 12h, 24h | wait before each re-send, per account; last entry repeats; not empty |
+| `activationLinkOverlap` | 30 min | older links stay usable this long after a re-send; 0 = only the newest |
+| `maxSignUpCancelTokens` | 12 | cancel links kept per account, oldest dropped; default delays = sign-up mail + 11 re-sends in 7 days, so every mailed link lives as long as the account; >= 2 |
+| `randomTokenByteLength` | 256 | bytes per one-shot token; >= 32 |
+
+#### Retirement
+
+Expiry and cancel RETIRE the account: auth records deleted, then `AuthUserAdapter.retire(user, AccountRetirement)`,
+then a check that the address no longer resolves to the account. The row stays (other collections reference it);
+its email becomes `retired-<64 hex>@<32 hex>#retired.invalid` (SHA-256 of the address, no plaintext; the `#` makes
+it unparseable as a sign-up). `retire` must rename EVERY unique key (`retirement.rename(email)`) and clear fields
+derived from the address. `AccountRetirement.retiredKeyPrefix(email)` finds an address's retired rows,
+`isRetired(email)` detects them. A `retire()` that throws or renames nothing leaves the account pending, logs an
+error; the next sweep retries. `DefaultMessaging` refuses to mail a retired address.
+
+#### Display name (`AuthDisplayName`, common code)
+
+Shared by page and server: 1 to 100 UTF-16 chars after trimming, one line, only characters that show. Refused:
+control chars, invisible ones (format controls, tag block, default-ignorable, blank-rendering letters), undisplayable
+ones (private use, noncharacters, broken UTF-16), a leading combining mark, > 30 marks in a row. The England,
+Scotland and Wales flag emoji are refused (tag characters).
+
+- `refusalOf(raw): Refusal?` — `problem`, `codePoint`, `position`, and `message` for the user, e.g.
+  "Your name contains an invisible character (U+200B) at the start. ..."
+- `normalizeOrNull(raw): String?` — trimmed, or null when refused. `MAX_LENGTH = 100`, `DESCRIPTION`.
+- SSO sign-up (`CreateUserForSignupParams.of(email, displayName)`): the profile name if the rule accepts it,
+  else the canonical (lower-case) local part, cut to 100 if needed.
+
+#### One-shot tokens are stored hashed
+
+Activation, cancel, reset, email-change and org-selection tokens are stored as `tokenHash: TokenHash`
+(base64url SHA-256), never the raw token, which exists only in the mail or the answer. A read of the auth records
+yields no working link. Unsalted and fast on purpose — safe only because tokens are long and random (hence the
+32-byte floor). Lookups go through `AuthRecordStorage.findByRawToken`, which hashes inside.
 
 ### Organisations (OrgPolicy)
 
@@ -258,8 +322,10 @@ All endpoints use the `{realm}` path parameter:
 |--------|-----------------------------------------------------|---------------|-----------------------------------------------|
 | GET    | `/auth/{realm}/realm`                               | public        | Get realm config (providers, password policy) |
 | POST   | `/auth/{realm}/signin`                              | public        | Sign in                                       |
-| POST   | `/auth/{realm}/signup`                              | public        | Sign up                                       |
-| POST   | `/auth/{realm}/activate`                            | public        | Choose the first password, activate, sign in  |
+| POST   | `/auth/{realm}/select-org`                          | public        | Pick the org after `OrgSelectionRequired`     |
+| POST   | `/auth/{realm}/signup`                              | public        | Sign up (address only)                        |
+| POST   | `/auth/{realm}/activate`                            | public        | Choose password and name, activate, sign in   |
+| POST   | `/auth/{realm}/activate/cancel`                     | public        | "Didn't sign up?" — retire a pending account  |
 | PUT    | `/auth/{realm}/update`                              | authenticated | Set password                                  |
 | PUT    | `/auth/{realm}/recover/reset-password/init`         | public        | Start password reset                          |
 | PUT    | `/auth/{realm}/recover/password-reset/validate`     | public        | Validate reset token                          |
@@ -380,6 +446,38 @@ fun RootRouterBuilder.mountNav(authState: AuthState<MyUser>) {
 The middleware saves the current URI before redirecting. After login, `authState.redirectAfterLogin(defaultUri)`
 navigates back to the original page.
 
+### Upgrading to email-first sign-up: what gives NO compile signal
+
+The compiler and `CHANGELOG.md` cover the API. These do not:
+
+App's own pages, mails, routes:
+- sign-up form still sending a password or name: ignored by the server;
+- activation page must POST `password` AND `displayName` (no name: 400, link stays usable), never on load;
+- activation mail template must render `cancelUrl`; its copy should say the link chooses the password;
+- own router must mount `AuthFrontendRoutes.cancelSignUp` (`AuthState.mount` does).
+
+App's own providers and hooks:
+- SSO provider: route every existing account through `AuthRealm.resolveSsoAccount` (asks `isEmailVerified` for
+  ACTIVE accounts too); check verification before `createForSignup`;
+- a `displayName` passed to `CreateUserForSignupParams.of` that the rule refuses becomes the local part;
+- own `AuthRealm.Messaging` lacks `DefaultMessaging`'s retired-recipient guard;
+- `AuthRecordStorage.OnAfterSave` listeners do not see the conditional writes (claims, re-send schedules,
+  activations).
+
+Every app:
+- links mailed before token hashing stop working; old one-shot rows (`token`, no `tokenHash`) cannot be read
+  back — delete them from dev databases. `activation-resend-token` rows are dead weight too;
+- accounts pending from before email first still hold their sign-up password: it no longer signs in; the link
+  replaces it; SSO deletes it;
+- the first sweep retires every pending account older than `pendingAccountLifetime`; retired rows stay in the
+  user collection (lists and admin screens show them unless they filter `AccountRetirement.isRetired`);
+- without `funktor/all`'s `Funktor` module there is no sweep: expiry happens only at use;
+- GitHub needs the `user:email` scope (GitHub App: "Email addresses" permission). `GithubSignInButton` asks for
+  it, but under hash routing the scope lands in the URL fragment and does not reach GitHub;
+- a Google account with an unverified address can no longer sign in, also to accounts SSO created earlier;
+  sessions taken that way before the upgrade survive — rotate the JWT signing key to end them;
+- `RealmTokenConfig` throws at construction for `randomTokenByteLength < 32` or `maxSignUpCancelTokens < 2`.
+
 ## Messaging Module
 
 Email sending, dev overrides, storage of sent messages, and the auth email templates.
@@ -413,13 +511,15 @@ abstract class AccountActivationEmailTemplate :
         val senderEmail: String,
         val senderName: String,
         val applicationName: String,
-        val activationUrl: String,
+        val activationUrl: String,  // "Choose your password"; a live single-use token
+        val cancelUrl: String,      // "Didn't sign up? Cancel"; its own token per mail
     )
 }
 ```
 
-- Each template declares its own nested `Params` — a renamed or forgotten value is a COMPILE ERROR,
-  not a placeholder shipped to a recipient.
+- Each template declares its own nested `Params` — a renamed or removed value is a COMPILE ERROR,
+  not a placeholder shipped to a recipient. A value the renderer IGNORES is not: an activation
+  template that never renders `cancelUrl` silently mails no cancel link.
 - Renderings live in `Map<Locale, (Params, Locale) -> Email>`; a shared walker resolves
   `de-CH -> de -> en`.
 - The renderer is HANDED the locale it matched, so the map key and the rendering cannot drift into a
