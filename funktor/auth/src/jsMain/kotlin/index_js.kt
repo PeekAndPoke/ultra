@@ -6,7 +6,7 @@ import io.peekandpoke.kraft.forms.validation.given
 
 fun PasswordPolicy.asFormRule() = given<String>(
     check = { matches(it) },
-    message = { description },
+    message = { refusalDescription(it) },
 )
 
 /** The activation page's display-name rule, the same one the server applies. */

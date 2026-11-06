@@ -271,6 +271,37 @@ abstract class ActivationHardeningE2eSpec(app: App.Definition<FunktorAllTestConf
             }
         }
 
+        "A password is at most 256 characters: activation refuses 257, signs in with 256, and sign-in refuses longer" {
+            // ULTRA-00296: no request makes the server hash or match megabytes.
+            apiApp {
+                anonymous {
+                    val email = freshEmail("max-length")
+                    signUp(email)
+                    val token = activationTokenTo(email)
+                    val longest = "Aa1!" + "x".repeat(252)
+
+                    withClue("257 characters: refused as a weak password, the link still good") {
+                        val answer = activateAnswer(token, password = longest + "x")
+                        answer.success shouldBe false
+                        answer.failure shouldBe AuthActivateAccountResponse.Failure.WeakPassword
+                    }
+
+                    activate(token, password = longest) shouldBe true
+
+                    passwordSignIn(email, password = longest) { response ->
+                        response.apiResponseData<AuthSignInResponse>().shouldBeInstanceOf<AuthSignInResponse.Success>()
+                    }
+
+                    withClue("a 300,000-character password is refused like a wrong one") {
+                        passwordSignIn(email, password = longest + "x".repeat(300_000)) { response ->
+                            response.status shouldBe HttpStatusCode.Forbidden
+                            response.apiResponseData<AuthSignInResponse>().shouldBeNull()
+                        }
+                    }
+                }
+            }
+        }
+
         "A sign-in moves a password hash made by an OLDER hasher to the current one, in place (ULTRA-00066)" {
             apiApp {
                 anonymous {

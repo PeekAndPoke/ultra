@@ -311,6 +311,25 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                 error.message shouldBe "Invalid credentials"
             }
 
+            "a password over 256 characters is refused before the user is even loaded, so the address cannot matter" {
+                // ULTRA-00296: the realm's loadByEmail and every service throw if reached.
+                val subject = EmailAndPasswordAuth(
+                    capabilities = setOf(AuthProviderModel.Capability.SignIn),
+                    log = NullLog,
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    services = lazy { TestServices() },
+                )
+
+                listOf(257, 100_000).forEach { length ->
+                    shouldThrow<AuthError> {
+                        subject.signIn(
+                            MinimalTestRealm(),
+                            AuthSignInRequest.EmailAndPassword(provider = subject.id, email = "user@example.com", password = "x".repeat(length)),
+                        )
+                    }.message shouldBe "Invalid credentials"
+                }
+            }
+
             "should return the user on successful sign in" {
 
                 val storedUser = Stored(_id = "user-id", value = MinimalTestUser())
@@ -1581,6 +1600,33 @@ class EmailAndPasswordAuthSpec : FreeSpec() {
                     subject.setPassword(realm, request)
                 }
                 error.message shouldBe "Weak password"
+            }
+
+            "a NEW password over 256 characters is a weak password; a CURRENT one is refused before any hashing" {
+                // ULTRA-00296. The fakes' defaults throw: nothing may be hashed, checked or looked up.
+                val subject = EmailAndPasswordAuth(
+                    frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://a.b.c"),
+                    log = NullLog,
+                    services = lazy { TestServices() },
+                )
+                val user = Stored(_id = "user-id", value = MinimalTestUser())
+                val strong = "Aa1!" + "x".repeat(253) // 257
+
+                shouldThrow<AuthError> {
+                    subject.setPassword(
+                        MinimalTestRealm(passwordPolicy = PasswordPolicy.default),
+                        AuthSetPasswordRequest(subject.id, UserId(user._id), currentPassword = "old", newPassword = strong),
+                    )
+                }.message shouldBe "Weak password"
+
+                shouldThrow<AuthError> {
+                    subject.setPassword(
+                        MinimalTestRealm(passwordPolicy = PasswordPolicy.default, onLoadUserById = { user }),
+                        AuthSetPasswordRequest(
+                            subject.id, UserId(user._id), currentPassword = "x".repeat(257), newPassword = "A-valid-password-123!",
+                        ),
+                    )
+                }.message shouldBe "Invalid credentials"
             }
 
             "should throw userNotFound when user does not exist" {

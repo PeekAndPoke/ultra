@@ -21,6 +21,7 @@ import io.peekandpoke.funktor.auth.model.AuthSetPasswordResponse
 import io.peekandpoke.funktor.auth.model.AuthSignInRequest
 import io.peekandpoke.funktor.auth.model.AuthSignUpRequest
 import io.peekandpoke.funktor.auth.model.AuthUser
+import io.peekandpoke.funktor.auth.model.PasswordPolicy
 import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.messaging.api.EmailResult
 import io.peekandpoke.ultra.datetime.Kronos
@@ -351,8 +352,9 @@ class EmailAndPasswordAuth(
             // A retired key is no account: nothing signs into it, whatever is (still) stored for it.
             ?.takeUnless { AccountRetirement.isRetired(it) }
             ?: throw AuthError.invalidCredentials()
-        // Validate password
-        val password = typed.password.takeIf { it.isNotBlank() }
+        // Validate password. Longer than any realm accepts: refused before the user is even loaded, so the answer is
+        // the same for every address and no megabyte "password" is ever hashed (ULTRA-00296).
+        val password = typed.password.takeIf { !PasswordPolicy.isTooLong(it) && it.isNotBlank() }
             ?: throw AuthError.invalidCredentials()
         // Load user
         val user = realm.users.loadByEmail(email)
@@ -863,6 +865,9 @@ class EmailAndPasswordAuth(
     private suspend fun <USER : AuthUser> validateCurrentPassword(
         realm: AuthRealm<USER>, user: Stored<USER>, password: String,
     ): Stored<AuthRecord.Password>? {
+        // Refused before hashing (ULTRA-00296). No password set since is longer; an older, longer one needs a reset.
+        if (PasswordPolicy.isTooLong(password)) return null
+
         val record = services
             .findLatestPasswordRecord(realm = realm.id, owner = UserId(user._id))
             ?: return null

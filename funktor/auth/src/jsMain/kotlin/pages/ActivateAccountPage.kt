@@ -258,7 +258,7 @@ class ActivateAccountPage<USER>(ctx: Ctx<Props<USER>>) : Component<ActivateAccou
             when (s.refused) {
                 AuthActivateAccountResponse.Failure.WeakPassword -> ui.error.visible.message {
                     +"The server did not accept this password. "
-                    +realm.passwordPolicy.description
+                    +realm.passwordPolicy.refusalDescription(s.password)
                 }
 
                 AuthActivateAccountResponse.Failure.InvalidDisplayName -> ui.error.visible.message {

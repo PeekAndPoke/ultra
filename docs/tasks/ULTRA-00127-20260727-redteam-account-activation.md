@@ -268,3 +268,9 @@ Collected, not executed. The design: ULTRA-00231 (email first signup).
   connections, against both backends: count the mails (one expected) and look for any 500. Repeat at every slot of the
   schedule; also mix in a cancel, a reset and an activation in the same instant: each must decide as if run alone.
 
+## Added by the password length cap (ULTRA-00296, 2026-11-06)
+
+- **Megabyte passwords.** Send passwords of 257 characters up to the largest body the server takes, to sign-in,
+  activation, reset and password change: each must be refused without hashing (time it against a 10-character one),
+  and sign-in must answer the same for a known and an unknown address.
+

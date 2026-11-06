@@ -161,6 +161,13 @@
   Breaking: `AuthRecordStorage.Adapter.replaceRecordIfClaimedBy` and the Vault `Repo.replaceIfClaimedBy` take
   `expectedResends`; `EmailAndPasswordAuth.Services.replacePendingActivation` takes `(read, next)`.
 
+- **Funktor auth: a password is at most 256 characters** (ULTRA-00296). `PasswordPolicy.MAX_LENGTH` caps every realm's
+  policy, whatever its regex: activation, reset and a password change refuse a longer password as a weak one, the
+  forms say why, and sign-in refuses one before the user is loaded or anything hashed.
+
+  What changes with no compile signal: a password longer than 256 that an older version stored can no longer sign
+  in; its owner resets it.
+
 - **ultra/security: `SecretGenerator`, random secrets from a CSPRNG** (ULTRA-00067). `token()` (URL-safe, 256 bits by
   default), `string(length, alphabet)` and `tempPassword(length, alphabet, accept)` for an invite or a temporary
   password a person can type: unambiguous characters, no modulo bias, redrawn until the realm's policy accepts it.

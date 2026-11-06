@@ -193,7 +193,7 @@ class IntrospectionApi : ApiRoutes("introspection", authFloor = { isSuperUser() 
             ApiResponse.ok(
                 PasswordValidationResponse(
                     matches = matches,
-                    policyDescription = policy?.description ?: "No policy configured",
+                    policyDescription = policy?.refusalDescription(body.password) ?: "No policy configured",
                 )
             )
         }
