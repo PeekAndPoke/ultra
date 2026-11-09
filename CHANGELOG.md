@@ -12,8 +12,18 @@
   superuser wherever insights is not active for the mount or the environment; before, the graphs were served even
   where nothing was recorded. A caller below superuser still gets the 401. The `runtime` slice now redacts system
   properties whose name looks secret (the header rule's pattern, plus `key`, `pass`, `pwd`, and `sun.java.command`) or
-  whose value carries a URL password or a `password=` parameter. Records written before keep their properties: clear
-  the depot (default `./tmp/depot/insights`) on upgrade.
+  whose value carries a URL password or a `password=` parameter. Older depot records are not rewritten: those written
+  before this keep their properties, and those written before 2026-10-19 may hold raw AQL with its values inlined,
+  labelled `aql`, or a `$`-prefixed hash key in `mongo-bound` text (ULTRA-00228). Clear the depot (default
+  `./tmp/depot/insights`) on upgrade.
+
+- **Monko's query printer walks only known query operators** (ULTRA-00228). A document is printed as structure only
+  when every `$` key is an operator Mongo allows there (`$eq`, `$in`, `$elemMatch`, … at a value position; `$and`,
+  `$text`, `$expr`, … at a query position); any other document, also one keyed by a `$`-prefixed password hash or
+  carrying an unknown operator, is one bound value (`@p1:object`). An insights record of a query with a misspelt
+  operator therefore no longer shows the operator.
+
+- **Karango: `AqlTypedQuery.LANGUAGE` and `LANGUAGE_RAW` are now `internal`** (ULTRA-00228).
 
 - **Funktor auth, a security fix: SSO no longer signs in to an account through an address the provider did not
   verify** (ULTRA-00118). A Google or GitHub account that claimed someone's address without verifying it signed in to

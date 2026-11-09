@@ -71,11 +71,33 @@ class MonkoDriver(
         private val LOGICAL_OPERATORS = setOf("\$and", "\$or", "\$nor")
 
         /**
-         * Placeholder-ises a query document, recording each value in [vars]. Its keys are field names and
-         * operators, so they are kept; each value goes through [placeholderiseValue].
+         * The query operators that may stand at a value position (ULTRA-00228). A closed set, not "starts with `$`": a
+         * map keyed by a bcrypt or argon2 hash (`$2b$10$…`, `$argon2id$…`) also starts with `$`, and walking it would
+         * print the hash as a key. A document with any other key is bound whole.
          */
-        private fun placeholderiseQuery(query: BsonDocument, vars: MutableMap<String, Any?>): BsonDocument =
-            BsonDocument().also { out ->
+        private val VALUE_OPERATORS = setOf(
+            "eq", "ne", "gt", "gte", "lt", "lte", "in", "nin",
+            "exists", "type", "regex", "options", "not", "elemMatch", "size", "all", "mod",
+            "bitsAllSet", "bitsAnySet", "bitsAllClear", "bitsAnyClear",
+            "geoWithin", "geoIntersects", "near", "nearSphere", "geometry", "maxDistance", "minDistance",
+            "box", "center", "centerSphere", "polygon",
+            // the options of `$text`, so its operand stays readable
+            "search", "language", "caseSensitive", "diacriticSensitive",
+        ).map { "\$$it" }.toSet()
+
+        /** The operators that may stand at a QUERY position, beside field names: the logical ones and the top-level ones. */
+        private val QUERY_OPERATORS = LOGICAL_OPERATORS + setOf("expr", "where", "text", "comment", "jsonSchema").map { "\$$it" }
+
+        /**
+         * Placeholder-ises a query document, recording each value in [vars]. Its keys are field names and
+         * operators, so they are kept; each value goes through [placeholderiseValue]. A document with a `$` key that is
+         * none of [QUERY_OPERATORS] is no query, but data (a hash-keyed map passed as a filter): ONE value, like at a
+         * value position (ULTRA-00228).
+         */
+        private fun placeholderiseQuery(query: BsonDocument, vars: MutableMap<String, Any?>): BsonValue {
+            if (query.keys.any { it.startsWith("$") && it !in QUERY_OPERATORS }) return bind(query, vars)
+
+            return BsonDocument().also { out ->
                 query.forEach { (key, child) ->
                     out[key] = when {
                         key in LOGICAL_OPERATORS && child.isArray -> BsonArray(
@@ -86,11 +108,12 @@ class MonkoDriver(
                     }
                 }
             }
+        }
 
         /**
          * Placeholder-ises what a field or an operator is compared with.
          *
-         * Fail-closed: only an operator document (every key starts with `$`) is walked, and an `$elemMatch`
+         * Fail-closed: only an operator document (every key one of [VALUE_OPERATORS]) is walked, and an `$elemMatch`
          * operand is walked as a query. Anything else is ONE value -- a whole `$in` list, and an embedded
          * document, whose keys may be data (`{profile: {<secret>: 1}}`).
          */
@@ -100,6 +123,8 @@ class MonkoDriver(
             return BsonDocument().also { out ->
                 value.asDocument().forEach { (operator, operand) ->
                     out[operator] = when {
+                        // An `$elemMatch` operand is operators (`{$gte: 80}`) or a query (`{field: …}`)
+                        operator == "\$elemMatch" && operand.isOperatorDocument() -> placeholderiseValue(operand, vars)
                         operator == "\$elemMatch" && operand.isDocument -> placeholderiseQuery(operand.asDocument(), vars)
                         else -> placeholderiseValue(operand, vars)
                     }
@@ -108,7 +133,7 @@ class MonkoDriver(
         }
 
         private fun BsonValue.isOperatorDocument(): Boolean =
-            isDocument && asDocument().isNotEmpty() && asDocument().keys.all { it.startsWith("$") }
+            isDocument && asDocument().isNotEmpty() && asDocument().keys.all { it in VALUE_OPERATORS }
 
         /** Records [value] in [vars] and returns its `@pN:<type>` placeholder. */
         private fun bind(value: BsonValue, vars: MutableMap<String, Any?>): BsonString {

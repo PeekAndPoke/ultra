@@ -681,7 +681,8 @@ export function overrideDefinition(service: KontainerService, blueprint: Kontain
  * Whether a `slim` record was written against [graph]: `same`, `other` -- expected after almost any deploy,
  * the fingerprint covers every code location, line numbers included -- or `unknown` when the record names
  * no graph (the server could not build one then). In the last two cases the definitions and edges shown are
- * today's, not necessarily the ones the request ran with. A `full` record carries its own: `same`.
+ * the server's at the time the graph was fetched, not necessarily the ones the request ran with. A `full` record
+ * carries its own: `same`.
  */
 export function graphMatch(slice: KontainerSlice, graph: KontainerGraphData): 'same' | 'other' | 'unknown' {
     if (slice.shape === 'full') return 'same'

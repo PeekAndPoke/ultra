@@ -24,10 +24,10 @@ data class AqlTypedQuery<T>(
          * Text printed from the query DSL, every value an `@placeholder`. `VaultCollector` keeps a query's
          * text by this label alone, so nothing else may be recorded under it.
          */
-        const val LANGUAGE: String = "aql"
+        internal const val LANGUAGE: String = "aql"
 
         /** Any other AQL text: it may hold literal values, so insights withholds it. */
-        const val LANGUAGE_RAW: String = "aql-raw"
+        internal const val LANGUAGE_RAW: String = "aql-raw"
 
         /** A query from raw [query] text. Recorded as [LANGUAGE_RAW]: nothing guarantees its values are bound. */
         fun <T> of(type: TypeRef<T>, query: String = "", vars: Map<String, Any?> = emptyMap()) = AqlTypedQuery(

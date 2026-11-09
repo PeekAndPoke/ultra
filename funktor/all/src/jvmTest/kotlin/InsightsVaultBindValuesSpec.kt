@@ -108,6 +108,14 @@ class S1MoSessionsRepo(driver: MonkoDriver) : MonkoRepository<S1MoSession>(
         filter(Filters.eq("token", Document(token, 1)))
     }.count
 
+    /**
+     * A document keyed by a password HASH, which starts with `$` like an operator does. The server rejects it as an
+     * unknown operator; the record of the rejected query must not carry the hash (ULTRA-00228).
+     */
+    suspend fun lookupByHashAsKey(hash: String): Result<Long> = runCatching {
+        find { filter(Document("token", Document(hash, 1))) }.count
+    }
+
     /** A query the server rejects: `$noSuchOperator` is no operator. */
     suspend fun failingLookup(): Result<Long> = runCatching {
         find { filter(Document("token", Document("\$noSuchOperator", 1))) }.count
@@ -120,6 +128,10 @@ class S1ProbeApi : ApiRoutes("insights-s1-probe", authFloor = { authenticated() 
     companion object {
         /** Seeded per JVM, so a value from an earlier run can never make the leak check pass by accident. */
         val token: String = "s1-session-token-${UUID.randomUUID()}"
+
+        /** A bcrypt-shaped hash, seeded per JVM like [token]: `$2b$10$` and then random text. */
+        val hashSecret: String = UUID.randomUUID().toString().replace("-", "")
+        val hash: String = "\$2b\$10\$$hashSecret"
 
         val Probe = Get(uri = "/_/e2e/insights-s1/probe", response = Int.serializer().api())
     }
@@ -134,10 +146,11 @@ class S1ProbeApi : ApiRoutes("insights-s1-probe", authFloor = { authenticated() 
                 moSessions.findByToken(token),
             )
 
-            // After the lookups, so the specs can tell each entry apart by its label and text.
+            // After the lookups. The three document lookups print the same text and are told apart by counting.
             check(kaSessions.countByRawAql(token) == 1L)
             check(moSessions.countByTokenAsKey(token) == 0L)
             check(moSessions.failingLookup().isFailure) { "the server accepted \$noSuchOperator" }
+            check(moSessions.lookupByHashAsKey(hash).isFailure) { "the server accepted a hash as an operator" }
 
             // Two log lines, so the record's log slice is real too -- for the Vue fixtures. No token in them:
             // a log line IS recorded verbatim, which is the app's own business.
@@ -288,6 +301,12 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
         body.also { served = it }
     }
 
+    /** The Mongo entries whose filter compares `token` with ONE bound document. */
+    private fun boundDocumentLookups(body: String): Int = vaultEntries(body).count {
+        it["queryLanguage"]?.jsonPrimitive?.content == "mongo-bound" &&
+                (it["query"]?.jsonPrimitive?.content ?: "").contains("\"token\": \"@p1:object\"")
+    }
+
     private fun vaultEntries(body: String): List<JsonObject> =
         Json.parseToJsonElement(body).jsonObject["data"]!!.jsonObject["collectors"]!!.jsonArray
             .map { it.jsonObject }
@@ -310,6 +329,12 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             withClue("vars, query text and the explain plan were all routes a bind value took") {
                 body shouldNotContain S1ProbeApi.token
             }
+        }
+
+        "a document keyed by a hash that starts with \$ leaves no trace of the hash, also when the server rejects it (ULTRA-00228)" {
+            val body = probeRecord()
+
+            body shouldNotContain S1ProbeApi.hashSecret
         }
 
         "the Mongo lookup is recorded as typed placeholder text under Monko's own label, with the value counted" {
@@ -344,12 +369,14 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             entry["varsCount"]!!.jsonPrimitive.int shouldBe 1
         }
 
-        "a FAILED Mongo query keeps its placeholder text, as an Arango one does" {
-            val entry = lookup(probeRecord(), language = "mongo-bound", text = "\$noSuchOperator")
+        "a FAILED Mongo query is recorded too; its unknown operator is bound whole, like any document of data (ULTRA-00228)" {
+            val body = probeRecord()
 
-            withClue(entry) {
-                entry["query"]!!.jsonPrimitive.content shouldContain "\"\$noSuchOperator\": \"@p1:int\""
-                entry["varsCount"]!!.jsonPrimitive.int shouldBe 1
+            withClue("token-as-key, hash-as-key and \$noSuchOperator: three lookups, each ONE bound document") {
+                boundDocumentLookups(body) shouldBe 3
+            }
+            withClue("only known operators are structure; an unknown one could be a hash") {
+                body shouldNotContain "noSuchOperator"
             }
         }
 

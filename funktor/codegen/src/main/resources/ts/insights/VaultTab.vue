@@ -87,7 +87,7 @@ async function loadGraph(): Promise<void> {
     loading.value = false
     if (result.ok) {
         database.value = result.value
-        fetchedAt.value = new Date(result.fetchedAt).toLocaleTimeString()
+        fetchedAt.value = new Date(result.fetchedAt).toLocaleString()
     } else {
         graphProblem.value = `The database graph is not available: ${result.reason}`
     }

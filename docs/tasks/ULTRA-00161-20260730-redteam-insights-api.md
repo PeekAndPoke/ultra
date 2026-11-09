@@ -144,6 +144,10 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
     `password=`, a Sentry DSN (`https://<key>@host`, no password: NOT caught by the value rule), a bearer token in a
     property whose name says `header`: what reaches the `runtime` slice?
 
+41. **(ULTRA-00228) A hash-keyed map passed as a QUERY** — `find { filter(Document(hashKeyedMap)) }`,
+    `elemMatch("grants", Document(hash, 1))`, a `$or` of such documents: does any `$2b$`/`$argon2` key reach the
+    `mongo-bound` text, and what does the server's rejection put into the log slice when the exception escapes?
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes

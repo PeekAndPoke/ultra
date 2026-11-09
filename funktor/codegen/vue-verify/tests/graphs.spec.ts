@@ -256,6 +256,54 @@ describe('the kontainer graphs', () => {
     })
 })
 
+describe('a cached graph keeps the time it was fetched (ULTRA-00228)', () => {
+    const fetched = Date.UTC(2026, 0, 2, 3, 4, 5)
+    const threeDaysLater = fetched + 3 * 24 * 3600 * 1000
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('kontainer: a second tab, days later, served from the cache, says the first fetch time', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(fetched)
+        const { graphs, requests } = recordedGraphs()
+        // A record naming no fingerprint: the tab then says when the graph it shows was fetched
+        const unnamed = (): unknown => {
+            const slice = sliceOf(recorded.slim(), 'kontainer')
+            slice.graphFingerprint = null
+            return slice
+        }
+
+        const first = await render(KontainerTab, unnamed(), graphs)
+        await click(first, 'Show instances Graph')
+
+        vi.setSystemTime(threeDaysLater)
+        const second = await render(KontainerTab, unnamed(), graphs)
+        await click(second, 'Show instances Graph')
+
+        expect(requests).toEqual([KONTAINER_GRAPH_PATH])
+        expect(second.textContent).toContain(`fetched at ${new Date(fetched).toLocaleString()}`)
+        expect(second.textContent).not.toContain(new Date(threeDaysLater).toLocaleString())
+    })
+
+    it('database: a second tab, days later, served from the cache, says the first fetch time', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(fetched)
+        const { graphs, requests } = recordedGraphs()
+
+        const first = await render(VaultTab, sliceOf(recorded.vault(), 'vault'), graphs)
+        await click(first, 'Show Database Graph')
+
+        vi.setSystemTime(threeDaysLater)
+        const second = await render(VaultTab, sliceOf(recorded.vault(), 'vault'), graphs)
+        await click(second, 'Show Database Graph')
+
+        expect(requests).toEqual([DATABASE_GRAPH_PATH])
+        expect(second.textContent).toContain(`as fetched at ${new Date(fetched).toLocaleString()}`)
+    })
+})
+
 describe('the kontainer network, built from the real graph', () => {
     const services = () => joinKontainerGraph(slimSlice(), graphData(), true)
 

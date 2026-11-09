@@ -9,8 +9,8 @@
  * - `slim` (since) -- only services with instances, plus the `graphFingerprint` they were written
  *   against. Injects and definitions come from the kontainer graph endpoint, joined on `cls`, fetched on
  *   the first graph click and never before, and cached by fingerprint (`InsightsGraphSource.kontainer`). A
- *   fingerprint mismatch is said, not hidden: the edges are then the server's, fetched for this record,
- *   which is expected after almost any deploy.
+ *   fingerprint mismatch is said, not hidden: the edges are then the server's, fetched for a record of this
+ *   fingerprint, which is expected after almost any deploy.
  *
  * Services are ordered with instantiated ones first, then by FQN (`readKontainer` does the sort).
  *
@@ -83,7 +83,7 @@ async function toggle(which: 'instances' | 'full'): Promise<void> {
     loading.value = false
     if (result.ok) {
         graph.value = result.value
-        fetchedAt.value = new Date(result.fetchedAt).toLocaleTimeString()
+        fetchedAt.value = new Date(result.fetchedAt).toLocaleString()
     } else {
         graphProblem.value = `The kontainer graph is not available: ${result.reason}`
     }

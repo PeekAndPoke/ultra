@@ -149,6 +149,55 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
             ).toJson()
         }
 
+        "a document keyed by a hash that starts with \$ is ONE value: only known operators are walked (ULTRA-00228)" {
+            val hash = "${'$'}2b${'$'}10${'$'}N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+
+            listOf(
+                Document(hash, true),
+                Document("${'$'}gt", 1).append(hash, true),
+                Document("${'$'}argon2id${'$'}v=19${'$'}m=65536", 1),
+            ).forEach { doc ->
+                withClue(doc.keys) {
+                    val result = printed { filter(Filters.eq("grants", doc)) }
+
+                    result.query shouldNotContain "2b${'$'}10"
+                    result.query shouldNotContain "argon2id"
+                    result.query shouldContain "\"grants\": \"@p1:object\""
+                    result.vars shouldBe mapOf("p1" to doc)
+                }
+            }
+        }
+
+        "a hash-keyed document at a QUERY position is ONE value too: top level, in \$and, in \$elemMatch (ULTRA-00228)" {
+            val hash = "${'$'}2b${'$'}10${'$'}N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+
+            withClue("top level") {
+                val result = printed { filter(Document(hash, 1)) }
+                result.query shouldNotContain "2b${'$'}10"
+                BsonDocument.parse(result.query)["filter"]!!.asString().value shouldBe "@p1:object"
+            }
+            withClue("in \$and") {
+                val result = printed { filter(Filters.and(Filters.eq("a", 1), Document(hash, 1))) }
+                result.query shouldNotContain "2b${'$'}10"
+                result.query shouldContain "\"a\": \"@p1:int\""
+            }
+            withClue("in \$elemMatch") {
+                val result = printed { filter(Filters.elemMatch("grants", Document(hash, 1))) }
+                result.query shouldNotContain "2b${'$'}10"
+                result.query shouldContain "\"${'$'}elemMatch\": \"@p1:object\""
+            }
+        }
+
+        "the query-level operators keep their structure: \$text with its options, \$comment" {
+            val result = printed {
+                filter(Document("${'$'}text", Document("${'$'}search", "needle").append("${'$'}caseSensitive", true)).append("${'$'}comment", "why"))
+            }
+
+            BsonDocument.parse(result.query)["filter"]!!.asDocument().toJson() shouldBe BsonDocument.parse(
+                """{"${'$'}text": {"${'$'}search": "@p1:string", "${'$'}caseSensitive": "@p2:bool"}, "${'$'}comment": "@p3:string"}"""
+            ).toJson()
+        }
+
         "no filter records no vars and keeps the paging" {
             val result = printed { page(page = 3, epp = 5) }
 
