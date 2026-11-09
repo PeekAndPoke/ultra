@@ -4,6 +4,7 @@ import impl.InsightsDisabled
 import impl.InsightsFull
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.routing.RoutingContext
+import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.kontainerOrNull
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.api.InsightsApiFeature
@@ -31,8 +32,9 @@ val RoutingContext.funktorInsights get() = call.funktorInsights
 val Funktor_Insights = module {
     dynamic(InsightsConfig::class) { InsightsConfig.Disabled }
 
-    dynamic(Insights::class) { config: InsightsConfig, kontainer: Kontainer ->
-        when (config.enabled) {
+    dynamic(Insights::class) { config: InsightsConfig, appConfig: AppConfig, kontainer: Kontainer ->
+        // The environment decides too: an enabled config records nothing outside development (ULTRA-00225)
+        when (config.isActiveIn(appConfig.ktor)) {
             false -> InsightsDisabled(config)
 
             true -> {

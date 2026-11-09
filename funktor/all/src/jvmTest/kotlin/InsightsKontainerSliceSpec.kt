@@ -127,8 +127,8 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
     private suspend fun kontainerGraph(): InsightsKontainerGraph {
         var body = ""
 
-        // Deliberately the OTHER host: the graph belongs to the blueprint, not to a mount
-        apiApp {
+        // The graph belongs to the blueprint, not to a mount; it is served only where insights is active (ULTRA-00225)
+        insightsApp {
             authenticate(superUserToken) {
                 request(insightsApi.insights.getKontainerGraph) {
                     status shouldBe HttpStatusCode.OK

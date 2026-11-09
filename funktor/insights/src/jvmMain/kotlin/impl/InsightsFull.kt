@@ -32,6 +32,8 @@ internal class InsightsFull(
     private val repository: InsightsRepository,
     private val codec: InsightsCodec,
 ) : Insights.Base() {
+    override val isActive: Boolean = true
+
     private val json = Json { prettyPrint = true }
 
     private val date = LocalDate.now()

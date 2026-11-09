@@ -105,7 +105,7 @@ class HeaderLogging private constructor(
          * [applyToQueryParams]. Header names are kebab-case; query parameters are conventionally
          * snake_case, so `?api_key=` — the very example that KDoc gives — was not matched.
          */
-        private val sensitiveByName = Regex(
+        internal val sensitiveByName = Regex(
             ".*(token|secret|password|passwd|credential|session|auth|api[-_]?key|cookie|signature).*"
         )
 

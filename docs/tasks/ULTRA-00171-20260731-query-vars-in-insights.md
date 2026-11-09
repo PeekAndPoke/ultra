@@ -4,6 +4,8 @@
 > 2026-10-19 (round-2 MINORs): the earlier text predated D1 and T1 and was wrong on four facts.
 >
 > **Part of:** ULTRA-00253 (Insights epic)
+>
+> **DECIDED 2026-11-09 (maintainer): "query values: show them again".** Record the bind values and render them in both GUIs, as the old GUI did. Safety around it: insights is superuser-only and refused in production (ULTRA-00225). Bind names are generated, so masking by name is not possible. What a credential repository (auth records: session ids until ULTRA-00136 hashes them, password hashes on writes) puts into `vars` gets checked when implementing; if it does, that repository opts out wholesale (the "per-repository default" row below), and the tab says so.
 
 **Security-critical:** yes — data exposure, not injection
 **Found:** 2026-07-31, while removing Jackson from the query printers

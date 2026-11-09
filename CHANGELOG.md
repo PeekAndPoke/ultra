@@ -4,6 +4,17 @@
 
 ### Breaking changes
 
+- **Funktor insights only runs in development, and its API answers 404 where it is not active** (ULTRA-00225).
+  `instrumentWithInsights(config, ktor)` takes the app's `KtorConfig`: with `enabled = true` outside `dev`, `test` or
+  `qa*` the boot fails with an `AppStartException` naming the environment; an enabled config that only reaches the
+  kontainer records nothing there. Every other name counts as production,
+  `staging` and a misspelt one too. The four insights endpoints (records, one record, both graphs) answer 404 to a
+  superuser wherever insights is not active for the mount or the environment; before, the graphs were served even
+  where nothing was recorded. A caller below superuser still gets the 401. The `runtime` slice now redacts system
+  properties whose name looks secret (the header rule's pattern, plus `key`, `pass`, `pwd`, and `sun.java.command`) or
+  whose value carries a URL password or a `password=` parameter. Records written before keep their properties: clear
+  the depot (default `./tmp/depot/insights`) on upgrade.
+
 - **Funktor auth, a security fix: SSO no longer signs in to an account through an address the provider did not
   verify** (ULTRA-00118). A Google or GitHub account that claimed someone's address without verifying it signed in to
   that person's active account, by sign-in or sign-up: an account takeover. `AuthRealm.resolveSsoAccount` now asks the

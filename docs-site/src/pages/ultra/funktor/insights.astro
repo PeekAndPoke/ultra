@@ -16,7 +16,10 @@ import {Code} from 'astro:components';
     <h2>Enabling insights</h2>
 
     <p>Insights is enabled per-route group by calling <code>instrumentWithInsights()</code> after
-        installing the Kontainer. The insights config controls whether collection is active.</p>
+        installing the Kontainer. The insights config controls whether collection is active, and the
+        environment whether it may be: only <code>dev</code>, <code>test</code> and <code>qa*</code> run insights. Any
+        other environment refuses to boot when an enabled config reaches <code>instrumentWithInsights</code>, and the insights API answers 404 wherever
+        insights is not active.</p>
 
     <Code code={`fun Route.installApiKontainer(app: App<MyConfig>, insights: InsightsConfig?) {
     installKontainer { call ->
@@ -26,7 +29,7 @@ import {Code} from 'astro:components';
         }
     }
 
-    instrumentWithInsights(insights)
+    instrumentWithInsights(insights, app.config.ktor)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Mounting the GUI</h2>

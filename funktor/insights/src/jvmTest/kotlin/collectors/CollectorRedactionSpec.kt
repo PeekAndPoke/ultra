@@ -194,4 +194,18 @@ class CollectorRedactionSpec : StringSpec({
         data.headers["X-Trace"] shouldBe listOf("abc")
         data.toString().contains("SECRET-SESSION") shouldBe false
     }
+
+    "RuntimeCollector redacts a secret-looking system property in the slice it records (ULTRA-00225)" {
+        val name = "probe.ultra00225.password"
+        System.setProperty(name, "SECRET-PROPERTY")
+
+        try {
+            val data = collectFrom { RuntimeCollector().finish(it) as RuntimeCollector.Data }
+
+            data.systemProperties[name] shouldBe HeaderLogging.REDACTED
+            data.systemProperties["java.version"] shouldBe System.getProperty("java.version")
+        } finally {
+            System.clearProperty(name)
+        }
+    }
 })

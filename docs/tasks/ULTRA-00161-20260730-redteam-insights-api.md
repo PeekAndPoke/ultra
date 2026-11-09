@@ -135,6 +135,15 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
     public `AqlPrinter.append(String)`. Both printers keep names by design under a trusted label — inventory real apps
     for data-keyed maps.
 
+38. **(ULTRA-00225) An enabled config that reaches only the kontainer, in production** — inject
+    `InsightsConfig(enabled = true)` into a mount's request kontainer without `instrumentWithInsights`, environment
+    `prod`: does anything record, and do all four endpoints answer 404 to a superuser? Old depot files present.
+39. **(ULTRA-00225) Environment names at the edge** — `qa-prod-mirror`, `qatar`, `QA`, `dev ` (trailing space), an
+    unresolved `${ENV}`, a homoglyph `dеv`, an unset key (default `prod`): which ones run insights?
+40. **(ULTRA-00225) Secrets in system property values** — `-D` overrides carrying a connection string, a JDBC URL with
+    `password=`, a Sentry DSN (`https://<key>@host`, no password: NOT caught by the value rule), a bearer token in a
+    property whose name says `header`: what reaches the `runtime` slice?
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes

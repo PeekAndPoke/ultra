@@ -6,6 +6,8 @@
 > round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
 >
 > **Part of:** ULTRA-00253 (Insights epic)
+>
+> **DECIDED 2026-11-09 (maintainer):** query values are shown again (ULTRA-00171). Icons: a small icon set, chosen: `@lucide/vue` (ISC; `lucide-vue-next` is deprecated in its favour; latest 1.70.0, looked up 2026-11-09), tree-shaken, one icon per tab. Highlighting: Prism (`prismjs` 1.30.0), the same highlighter as Kraft. The git version and environment id go in the list page header and the detail Overview.
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors) → "Insights specifics"
 **Spec:** `funktor/insights/reference/TAB-SPECS.md` — all ten tabs, wire shapes read from a real record

@@ -20,6 +20,12 @@ interface Insights : RequestMetricsProvider {
 
     val config: InsightsConfig
 
+    /**
+     * Whether this request is recorded: the config turns insights on AND the environment allows it (ULTRA-00225). The
+     * insights API answers 404 when it is false, so the kontainer decides both in one place.
+     */
+    val isActive: Boolean get() = false
+
     override fun getRequestDuration(): Duration
 
     suspend fun start(call: ApplicationCall) {}

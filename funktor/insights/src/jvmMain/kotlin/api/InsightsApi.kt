@@ -1,8 +1,12 @@
 package io.peekandpoke.funktor.insights.api
 
+import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.insights.InsightsDataLoader
 import io.peekandpoke.funktor.insights.InsightsGraphs
+import io.peekandpoke.funktor.insights.Insights
+import io.peekandpoke.funktor.insights.funktorInsights
 import io.peekandpoke.funktor.insights.toInsightsDatabaseGraph
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
@@ -21,6 +25,9 @@ import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
  * user records and application config, so there is no view of it that is safe for anyone else — which
  * is why the floor sits on the group rather than on individual routes. The two graphs sit under it for
  * the same reason: one names every class in the app, the other every repository and reference.
+ *
+ * Every route also answers 404 unless insights is on for the mount and the environment allows it
+ * ([requireActiveInsights]).
  */
 class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
 
@@ -70,6 +77,8 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }.codeGen {
             funcName = "listRecords"
         }.noInsights().handle { params ->
+            requireActiveInsights()
+
             ApiResponse.ok(
                 call.kontainer.get(InsightsDataLoader::class).list(
                     page = params.page.coerceIn(1, MAX_PAGE),
@@ -85,6 +94,8 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }.codeGen {
             funcName = "getRecord"
         }.noInsights().handle { params ->
+            requireActiveInsights()
+
             ApiResponse.okOrNotFound(
                 call.kontainer.get(InsightsDataLoader::class).load(
                     InsightsRecordRef(bucket = params.bucket, file = params.file)
@@ -99,6 +110,8 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }.codeGen {
             funcName = "getKontainerGraph"
         }.noInsights().handle {
+            requireActiveInsights()
+
             ApiResponse.ok(call.kontainer.get(InsightsGraphs::class).kontainerGraph)
         }
     }
@@ -109,8 +122,20 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }.codeGen {
             funcName = "getDatabaseGraph"
         }.noInsights().handle {
+            requireActiveInsights()
+
             // Always registered: funktor core installs `ultraVault` (`funktor/core/.../core_module.kt`)
             ApiResponse.ok(call.kontainer.get(DatabaseGraphBuilder::class).getGraph().toInsightsDatabaseGraph())
         }
+    }
+
+    /**
+     * 404 unless this mount records insights ([Insights.isActive]: enabled, and an environment that allows it;
+     * ULTRA-00225). The graphs need no record, so without this a superuser of an app that records nothing still got
+     * every service definition and the repository graph. Checked after the floor, so an unauthorized caller gets the
+     * floor's 401 as before.
+     */
+    private fun RoutingContext.requireActiveInsights() {
+        if (call.funktorInsights?.isActive != true) throw NotFoundException()
     }
 }

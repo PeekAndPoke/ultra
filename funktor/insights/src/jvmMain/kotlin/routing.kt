@@ -15,6 +15,7 @@ import io.ktor.server.routing.RoutingResolveTrace
 import io.ktor.server.routing.Routing
 import io.ktor.util.AttributeKey
 import io.ktor.server.request.path
+import io.peekandpoke.funktor.core.config.ktor.KtorConfig
 import io.peekandpoke.funktor.core.fullUrl
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.rest.FunktorRouteAttributes
@@ -29,11 +30,16 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.microseconds
 
 /**
- * Applies insights instrumentation to the Pipeline
+ * Applies insights instrumentation to the Pipeline when [config] turns it on.
+ *
+ * [ktor] decides whether it may: outside a development environment an enabled [config] refuses the boot
+ * ([refuseInsightsOutsideDevelopment]).
  */
-fun Route.instrumentWithInsights(config: InsightsConfig?) {
+fun Route.instrumentWithInsights(config: InsightsConfig?, ktor: KtorConfig) {
 
-    if (config?.enabled != true) {
+    refuseInsightsOutsideDevelopment(config, ktor)
+
+    if (!config.isActiveIn(ktor)) {
         return
     }
 

@@ -101,7 +101,7 @@ class InsightsDatabaseGraphBackendsSpec : AppSpec<FunktorAllTestConfig>(database
     private suspend fun fetchGraph(): InsightsDatabaseGraph {
         var body = ""
 
-        testApp(host = "api.funktor.local").apply {
+        testApp(host = "insights.funktor.local").apply {
             authenticate(token(UserPermissions(isSuperUser = true))) {
                 request(api.insights.getDatabaseGraph) {
                     status shouldBe HttpStatusCode.OK

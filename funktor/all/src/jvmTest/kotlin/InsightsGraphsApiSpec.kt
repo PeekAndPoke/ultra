@@ -116,7 +116,7 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
             suspend fun fetch(): String {
                 var body = ""
 
-                apiApp {
+                insightsApp {
                     authenticate(superUserToken) {
                         request(api.insights.getKontainerGraph) {
                             status shouldBe HttpStatusCode.OK
@@ -211,7 +211,7 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
             "the wire shape: {repos[{id{name, connection}, storedClasses[{fqn, references[{repo, fqn}]}]}]}" {
                 var body = ""
 
-                apiApp {
+                insightsApp {
                     authenticate(superUserToken) {
                         request(api.insights.getDatabaseGraph) {
                             status shouldBe HttpStatusCode.OK

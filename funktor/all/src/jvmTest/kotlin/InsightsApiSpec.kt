@@ -46,13 +46,13 @@ class InsightsApiSpec : FunktorApiSpec() {
             }
 
             "super-user may list records" {
-                apiApp {
+                insightsApp {
                     authenticate(superUserToken) {
                         route(firstPage) {
                             status shouldBe HttpStatusCode.OK
                             // This spec is about WHO may call the endpoint; that it returns real records
-                            // is `InsightsRecordingSpec`'s job, on the recording host. Here the depot is
-                            // legitimately empty, so assert only that a well-formed envelope came back.
+                            // is `InsightsRecordingSpec`'s job. The depot may or may not hold records yet,
+                            // so assert only that a well-formed envelope came back.
                             apiResponseData<Paged<InsightsRecordSummary>>() shouldNotBe null
                         }
                     }
@@ -60,7 +60,7 @@ class InsightsApiSpec : FunktorApiSpec() {
             }
 
             "the response carries no credential material" {
-                apiApp {
+                insightsApp {
                     authenticate(superUserToken) {
                         route(firstPage) {
                             status shouldBe HttpStatusCode.OK
@@ -100,7 +100,7 @@ class InsightsApiSpec : FunktorApiSpec() {
             }
 
             "a missing record is a not-found for a super-user, not an error" {
-                apiApp {
+                insightsApp {
                     authenticate(superUserToken) {
                         route(someRecord) {
                             status shouldBe HttpStatusCode.NotFound

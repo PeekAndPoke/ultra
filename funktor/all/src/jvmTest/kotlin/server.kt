@@ -59,7 +59,7 @@ private fun Route.mountApi(
 
     installApiStatusPages()
 
-    instrumentWithInsights(insights)
+    instrumentWithInsights(insights, app.config.ktor)
 
     authenticate(AUTH_JWT, AUTH_ANON) {
         val allRoutes = init.getAll(ApiFeature::class)

@@ -28,7 +28,7 @@ fun Route.installWwwKontainer(app: App<FunktorDemoConfig>, insights: InsightsCon
         }
     }
 
-    instrumentWithInsights(insights)
+    instrumentWithInsights(insights, app.config.ktor)
 }
 
 fun Route.installApiKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) {
@@ -41,7 +41,7 @@ fun Route.installApiKontainer(app: App<FunktorDemoConfig>, insights: InsightsCon
         }
     }
 
-    instrumentWithInsights(insights)
+    instrumentWithInsights(insights, app.config.ktor)
 }
 
 fun createBlueprint(config: FunktorDemoConfig) = kontainer {

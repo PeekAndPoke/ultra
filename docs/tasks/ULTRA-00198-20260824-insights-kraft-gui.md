@@ -8,6 +8,8 @@
 > Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
 >
 > **Part of:** ULTRA-00253 (Insights epic)
+>
+> **DECIDED 2026-11-09 (maintainer):** parity with the old GUI on both Vue and Kraft, as far as possible. Query values are shown (ULTRA-00171). The git version and environment id go in the list page header and the detail Overview. Kraft uses its existing Semantic UI icons and the `prismjs` addon. On resume: carry the one WIP commit `24e745bf` over to master and verify it there instead of rebasing a branch 448 commits behind.
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Counterpart:** ULTRA-00190 (insights vue tabs) — the Vue implementation and its full
