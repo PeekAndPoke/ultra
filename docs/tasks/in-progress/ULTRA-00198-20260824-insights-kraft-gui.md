@@ -182,6 +182,30 @@ Gate `/feature-review`, change set = file set of `38b70eba`, `b9060d6f`, `33c054
 | 1 | MINOR | `PrismJsInternals.kt:49` | Theme CSS from cdnjs (with SRI) (security) | **maintainer list** | Pre-existing addon behaviour |
 | 1 | MINOR | `slices.kt:345`, sorts, `FunktorInspectRoutes.kt:4` | 4-space vs Vue's 2-space values indent; bare word parsed as JSON; code-point sort vs `localeCompare`; import order (impl) | **fix (imports) / maintainer list (rest)** | Display-only differences |
 
+**Round 2 — level 2 (`reviewer-xhigh`), two-phase, 2026-11-10. NOT CLEAN (1 MAJOR, found by impl and domain;
+security clean).** Safety valve reached (2 rounds without a clean one): stopped for the maintainer. Note: the impl and
+security reviewers saw this table in phase 1 (it is in the ticket they read); both say they did not use it.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MAJOR | `addons.astro:249`, `llms/kraft.md:2365`, `visnetwork/README.md:15` | The addon docs build `data`/`options` inline in `render()`: every host re-render calls `setOptions`/`setData`, the graph is laid out again and the selection cleared (impl F1, domain #1) | **open — maintainer (valve)** | Confirmed by reading. It is the round-1 MAJOR's fix not reaching the docs (both reconciles). Proposed fix: build once in all three, one line on the identity contract |
+| 2 | MINOR | `CHANGELOG.md:281`, this ticket's step 2 | The Prism `.js` fix is overstated: every app and example sets `fullySpecified: false` for `.m?js`, so only strict bundles (the test bundles) were affected (impl F4) | **fix (pending)** | Confirmed: grep shows the rule in all 4 demo apps and 4 examples. My "in every app" was wrong |
+| 2 | MINOR | `VisNetworkComponent.kt:79`, `visnetwork_addon.kt:89` | A failed library load is silent; a failed draw leaves the half-built canvas and never retries (impl F2, domain #2) | open | Reconcile: the round-1 reason "vis-network logs invalid options rather than throwing" is incomplete: duplicate node ids or a non-array `nodes` throw, so a failing-creation test is possible |
+| 2 | MINOR | `InsightsDetailPage.kt:46`, `InsightsPagesSpec.kt:177` | The router remounts the page per path; "the router keeps this page for prev/next" is wrong (impl F3) | open | Confirmed by the reviewer's read of `RouterComponent.kt:56`; the reload stays for embedding hosts |
+| 2 | MINOR | `render.kt:173` | `muted()` KDoc wrong: it mutes unconditionally (impl F5) | open | |
+| 2 | MINOR | `VaultTab.kt:82-112` | Unkeyed siblings before the query segments: a graph toggle shifts every query's Prism block (impl F6, transient half withdrawn) | open | |
+| 2 | MINOR | `graphs.kt:217` | The graph cache does not share an in-flight fetch (Vue does) (impl F7) | open | |
+| 2 | MINOR | `KontainerTab.kt:87`, `VaultTab.kt:184` | Raw slice and database graph re-serialised on every render (impl F8) | open | |
+| 2 | MINOR | `FunktorInspectUi.kt:30`, `InsightsPagesSpec.kt:40` | Pre-existing FQN; import order not reached by the round-1 fix (impl F9) | open | |
+| 2 | MINOR | `render.kt:92` | Key/value tables unsorted, `***redacted***` not marked, unlike Vue's `KeyValueTable` (domain #3) | open | |
+| 2 | MINOR | `InsightsDetailPage.kt:61`, `InsightsListPage.kt:64` | A missing record and inactive insights both show a bare "404 Not Found"; "Null on a 2xx is what a missing record is" is wrong: `okOrNotFound` sends 404 (domain #4; Vue has the same) | open | Confirmed: `ApiResponse.kt:66-69` |
+| 2 | MINOR | `InsightsApiFeature.kt:24` | KDoc "the TS client is the only intended consumer" now wrong (domain #5) | open | Confirmed by reading |
+| 2 | MINOR | `.json` record routes | Dot rule outside the demo (domain #6) | **withdrawn** | Overlaps the settled round-1 entry; a DOCS follow-up note for host apps |
+| 2 | MINOR | `kraft/README.MD:16` | Still "12 Addons" (domain #7) | open | Confirmed |
+
+Out of scope, noted by security in round 2: `InsightsDataLoader.kt:46` uses `bucket/file` as a depot path unvalidated
+(superuser only, pre-existing); `funktor/staticweb` ships the prismjs 1.29.0 webjar, below the CVE-2024-53382 fix.
+
 Probed CLEAN in round 1 (all three charters): every reader against `slices.ts` and the current collectors; no `unsafe {}`;
 Prism's innerHTML path takes a text node; vis-network string titles go to `innerText`; route params re-encoded; the
 auth floor and `requireActiveInsights` unchanged; legacy and withheld vault data never shown; 32k highlight cap.
