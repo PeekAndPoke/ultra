@@ -94,6 +94,7 @@ class InsightsTsContributor(
             "slices.ts",
             "graphs.ts",
             "NetworkGraph.vue",
+            "CodeBlock.vue",
             "RequestTab.vue",
             "ResponseTab.vue",
             "UserTab.vue",

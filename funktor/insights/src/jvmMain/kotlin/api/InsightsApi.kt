@@ -2,7 +2,9 @@ package io.peekandpoke.funktor.insights.api
 
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.routing.RoutingContext
+import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.kontainer
+import io.peekandpoke.funktor.core.model.AppInfo
 import io.peekandpoke.funktor.insights.InsightsDataLoader
 import io.peekandpoke.funktor.insights.InsightsGraphs
 import io.peekandpoke.funktor.insights.Insights
@@ -25,6 +27,9 @@ import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
  * user records and application config, so there is no view of it that is safe for anyone else — which
  * is why the floor sits on the group rather than on individual routes. The two graphs sit under it for
  * the same reason: one names every class in the app, the other every repository and reference.
+ *
+ * The server info names the build and environment; under the floor because a git describe can name a branch or
+ * ticket, and an id the deployment.
  *
  * Every route also answers 404 unless insights is on for the mount and the environment allows it
  * ([requireActiveInsights]).
@@ -56,6 +61,12 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         val GetDatabaseGraph = Get(
             uri = "$base/graphs/database",
             response = InsightsDatabaseGraph.serializer().api(),
+        )
+
+        /** The running server's git version and environment, for the list page header. */
+        val GetServerInfo = Get(
+            uri = "$base/server",
+            response = InsightsServerInfo.serializer().api(),
         )
 
         /** Upper bound on `epp`, so one request cannot walk the entire depot. */
@@ -126,6 +137,23 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
 
             // Always registered: funktor core installs `ultraVault` (`funktor/core/.../core_module.kt`)
             ApiResponse.ok(call.kontainer.get(DatabaseGraphBuilder::class).getGraph().toInsightsDatabaseGraph())
+        }
+    }
+
+    val getServerInfo = GetServerInfo.mount {
+        docs {
+            name = "Get the server's version and environment"
+        }.codeGen {
+            funcName = "getServerInfo"
+        }.noInsights().handle {
+            requireActiveInsights()
+
+            ApiResponse.ok(
+                InsightsServerInfo.of(
+                    version = call.kontainer.get(AppInfo::class).version,
+                    ktor = call.kontainer.get(AppConfig::class).ktor,
+                )
+            )
         }
     }
 

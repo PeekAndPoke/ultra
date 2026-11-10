@@ -43,6 +43,8 @@ const targets = {
     'graph-kontainer.json': 'kontainer-graph.json',
     'graph-database.json': 'database-graph-two-backends.json',
     'refusal-graph.json': 'refusal-kontainer-graph.json',
+    // InsightsServerInfoApiSpec: the running server's git version and environment, for the list page header
+    'server-info.json': 'server-info.json',
 }
 
 function anonymise(response) {

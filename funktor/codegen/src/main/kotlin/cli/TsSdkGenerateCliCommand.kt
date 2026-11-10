@@ -73,9 +73,20 @@ class TsSdkGenerateCliCommand(
          * `TsSdkGenerateCliCommandSpec` keeps the two in step.
          */
         internal val TESTED_VERSIONS: Map<String, String> = mapOf(
+            "@lucide/vue" to "1.71.0",
+            "@types/prismjs" to "1.26.6",
+            "prismjs" to "1.30.0",
             "vis-network" to "10.1.2",
             "vue" to "3.5.44",
             "zod" to "4.6.7",
+        )
+
+        /**
+         * Packages that ship no types of their own, with the package that does: the app's `vue-tsc` fails on an
+         * import without types, so importing the one requires declaring the other.
+         */
+        internal val TYPES_PACKAGES: Map<String, String> = mapOf(
+            "prismjs" to "@types/prismjs",
         )
 
         /** Where `package.json` may declare a package; any one of them satisfies an import. */
@@ -202,7 +213,9 @@ class TsSdkGenerateCliCommand(
                 TsImports.of(entry.content)
                     .filterNot { TsImports.isRelative(it) }
                     .filterNot { specifier -> aliases.any { specifier == it || specifier.startsWith("$it/") } }
-                    .map { TsImports.packageOf(it) to entry.path }
+                    .map { TsImports.packageOf(it) }
+                    .flatMap { pkg -> listOfNotNull(pkg, TYPES_PACKAGES[pkg]) }
+                    .map { pkg -> pkg to entry.path }
             }
             .filter { (pkg, _) -> pkg !in declared }
             .groupBy({ it.first }, { it.second })

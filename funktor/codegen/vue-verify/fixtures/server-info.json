@@ -1,0 +1,24 @@
+{
+  "status": {
+    "value": 200,
+    "description": "OK"
+  },
+  "data": {
+    "git": "",
+    "gitDesc": "n/a",
+    "applicationId": "Funktor-All | Test",
+    "environment": "test"
+  },
+  "messages": null,
+  "insights": {
+    "ts": 1794322702,
+    "method": "GET",
+    "url": "http://insights.funktor.local:80/_/funktor/insights/server",
+    "server": "build-host",
+    "status": {
+      "value": 200,
+      "description": "OK"
+    },
+    "durationMs": 0.68582
+  }
+}

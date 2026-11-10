@@ -241,7 +241,7 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1794317345,
+    "ts": 1794322690,
     "method": "GET",
     "url": "http://insights.funktor.local:80/_/funktor/insights/graphs/database",
     "server": "build-host",
@@ -249,6 +249,6 @@
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 11.749287
+    "durationMs": 11.556542
   }
 }

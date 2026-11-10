@@ -12,7 +12,10 @@
  *   fingerprint mismatch is said, not hidden: the edges are then the server's, fetched for a record of this
  *   fingerprint, which is expected after almost any deploy.
  *
- * Services are ordered with instantiated ones first, then by FQN (`readKontainer` does the sort).
+ * Services are ordered with instantiated ones first, then by FQN (`readKontainer` does the sort). A click on a
+ * column header sorts by it, again reverses, as the old GUI's sortable table did (ULTRA-00190). The Service
+ * column shows the full class name, so the browser's find reaches it; the other columns keep the simple name,
+ * with the full one in its tooltip.
  *
  * **Without the graph the tab still renders**: no API client, a 401, a missing endpoint -- each leaves a
  * notice and the table, never an exception.
@@ -131,6 +134,70 @@ function counts(value: { numOld: number | null; numTotal: number | null }): stri
     return `${young} / ${value.numOld ?? '?'} / ${value.numTotal ?? '?'}`
 }
 
+/*  Click-to-sort  ----------------------------------------------------------------------------------  */
+
+type SortColumn = 'service' | 'type' | 'instances' | 'injects' | 'definition'
+
+const SORT_COLUMNS: Array<{ column: SortColumn, label: string }> = [
+    { column: 'service', label: 'Service' },
+    { column: 'type', label: 'Type' },
+    { column: 'instances', label: 'Instances' },
+    { column: 'injects', label: 'Injects' },
+    { column: 'definition', label: 'Definition & overwrites' },
+]
+
+/** Null: the reader's order, instantiated first. */
+const sortBy: Ref<{ column: SortColumn, descending: boolean } | null> = ref(null)
+
+function sortKey(service: KontainerService, column: SortColumn): string | number {
+    switch (column) {
+        case 'service':
+            return service.cls ?? ''
+        case 'type':
+            return service.type ?? ''
+        case 'instances':
+            return service.instances.length
+        case 'injects':
+            return service.definition?.injects.length ?? 0
+        case 'definition':
+            // What the cell shows, not the hidden FQN: sorting by package would look unsorted
+            return service.definition === null ? '' : `${service.definition.injectionType ?? '?'} - ${shortName(service.definition.creates)}`
+    }
+}
+
+/** Stable, so equal keys keep the reader's order: instantiated first, then by name. */
+const sorted = computed<KontainerService[]>(() => {
+    const by = sortBy.value
+    if (by === null) return services.value
+
+    const direction = by.descending ? -1 : 1
+
+    return [...services.value].sort((a, b) => {
+        const left = sortKey(a, by.column)
+        const right = sortKey(b, by.column)
+        const order = typeof left === 'number' && typeof right === 'number'
+            ? left - right
+            : String(left).localeCompare(String(right))
+
+        return order * direction
+    })
+})
+
+function sortOn(column: SortColumn): void {
+    const by = sortBy.value
+    sortBy.value = { column, descending: by?.column === column ? !by.descending : false }
+}
+
+function ariaSort(column: SortColumn): 'ascending' | 'descending' | 'none' {
+    const by = sortBy.value
+    return by?.column !== column ? 'none' : by.descending ? 'descending' : 'ascending'
+}
+
+function arrow(column: SortColumn): string {
+    const sort = ariaSort(column)
+    return sort === 'ascending' ? '▲' : sort === 'descending' ? '▼' : ''
+}
+
 function shortName(fqn: string | null): string {
     return fqn === null ? 'n/a' : (fqn.split('.').pop() ?? fqn)
 }
@@ -197,16 +264,17 @@ function shortName(fqn: string | null): string {
             <table class="fk-kv fk-services">
                 <thead>
                     <tr>
-                        <th>Service</th>
-                        <th>Type</th>
-                        <th>Instances</th>
-                        <th>Injects</th>
-                        <th>Definition &amp; overwrites</th>
+                        <th v-for="header in SORT_COLUMNS" :key="header.column" :aria-sort="ariaSort(header.column)">
+                            <button type="button" class="fk-sort" @click="sortOn(header.column)">
+                                {{ header.label }}
+                                <span class="fk-sort__arrow" aria-hidden="true">{{ arrow(header.column) }}</span>
+                            </button>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="service in services" :key="service.cls ?? ''">
-                        <td class="fk-mono" :title="service.cls ?? ''">{{ shortName(service.cls) }}</td>
+                    <tr v-for="service in sorted" :key="service.cls ?? ''">
+                        <td class="fk-mono fk-services__cls">{{ service.cls ?? 'n/a' }}</td>
                         <td>
                             <span class="fk-label">{{ service.type ?? 'n/a' }}</span>
                             <div v-if="service.instances.length > 0" class="fk-muted">
@@ -217,7 +285,7 @@ function shortName(fqn: string | null): string {
                         <td class="fk-mono">
                             <div v-if="service.instances.length === 0" class="fk-muted">-</div>
                             <div v-for="(instance, index) in service.instances" :key="index">
-                                {{ shortName(instance.cls) }}
+                                <span :title="instance.cls ?? ''">{{ shortName(instance.cls) }}</span>
                                 <span class="fk-muted">{{ createdAt(instance) }}</span>
                             </div>
                         </td>
@@ -226,7 +294,7 @@ function shortName(fqn: string | null): string {
                             <div v-if="!service.definition?.injects.length" class="fk-muted">-</div>
                             <div v-for="inject in service.definition?.injects ?? []" :key="inject.name ?? ''">
                                 {{ inject.name ?? '?' }}:
-                                <span class="fk-muted">
+                                <span class="fk-muted" :title="inject.classes.join(', ')">
                                     {{ inject.classes.map(shortName).join(', ') || 'n/a' }}
                                 </span>
                                 <!-- Lazy injection is why a singleton can hold a request-scoped service. -->
@@ -241,7 +309,8 @@ function shortName(fqn: string | null): string {
                                 :key="index"
                             >
                                 <span v-if="index > 0" class="fk-muted">Overwrites -&gt;</span>
-                                {{ definition.injectionType ?? '?' }} - {{ shortName(definition.creates) }}
+                                {{ definition.injectionType ?? '?' }} -
+                                <span :title="definition.creates ?? ''">{{ shortName(definition.creates) }}</span>
                                 <div v-if="definition.codeLocation" class="fk-muted">
                                     {{ definition.codeLocation }}
                                 </div>

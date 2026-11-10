@@ -8,6 +8,7 @@
 import { createApp, h, nextTick } from 'vue'
 import type { Component } from 'vue'
 import { FunktorInsightsClient } from '../src/funktorsdk/api/funktorInsightsClient.ts'
+import { loadPrism } from '../src/funktorsdk/insights/CodeBlock.vue'
 import { createGraphSource, provideInsightsGraphs } from '../src/funktorsdk/insights/graphs.ts'
 import type { InsightsGraphSource } from '../src/funktorsdk/insights/graphs.ts'
 import { sdkConfig } from '../src/funktorsdk/runtime/client.ts'
@@ -16,6 +17,7 @@ import fat from '../fixtures/record-fat.json'
 import databaseGraph from '../fixtures/graph-database.json'
 import kontainerGraph from '../fixtures/graph-kontainer.json'
 import refusal from '../fixtures/refusal-graph.json'
+import serverInfo from '../fixtures/server-info.json'
 import slim from '../fixtures/record-slim.json'
 import vault from '../fixtures/record-vault.json'
 
@@ -24,6 +26,8 @@ export const PAYLOAD = '<img src=x onerror=alert(1)>'
 
 export const KONTAINER_GRAPH_PATH = '/_/funktor/insights/graphs/kontainer'
 export const DATABASE_GRAPH_PATH = '/_/funktor/insights/graphs/database'
+export const RECORDS_PATH = '/_/funktor/insights/records'
+export const SERVER_INFO_PATH = '/_/funktor/insights/server'
 
 /** The recorded API responses, deep-copied so a test may change one without touching the next. */
 export const recorded = {
@@ -33,6 +37,7 @@ export const recorded = {
     kontainerGraph: () => structuredClone(kontainerGraph),
     databaseGraph: () => structuredClone(databaseGraph),
     refusal: () => structuredClone(refusal),
+    serverInfo: () => structuredClone(serverInfo),
 }
 
 /** The `data` of one collector slice in a recorded record response. */
@@ -137,6 +142,15 @@ export async function mount(component: Component, props: Record<string, unknown>
             host.remove()
         },
     }
+}
+
+/**
+ * Waits for the highlighter, then for the re-render: a CodeBlock shows plain text until Prism's dynamic import is
+ * done, which can outlast {@link settle} while other test files load in parallel.
+ */
+export async function highlighted(): Promise<void> {
+    await loadPrism()
+    await settle()
 }
 
 /** Lets pending promises, dynamic imports and re-renders finish. */

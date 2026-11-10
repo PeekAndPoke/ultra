@@ -32,14 +32,16 @@
  * the tab renders as before, with a notice. Its raw view is safe to show: it holds repository names,
  * stored classes and references, no query and no value.
  *
+ * Query text, values and plan are highlighted by `CodeBlock` (Prism, without `v-html`).
+ *
  * See `RequestTab.vue` for the import-path note.
  */
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
 // JsonTree renders the DATABASE GRAPH only, never the slice.
 import JsonTree from '../ui/JsonTree.vue'
-import PreBlock from '../ui/PreBlock.vue'
 import StatStrip from '../ui/StatStrip.vue'
+import CodeBlock from './CodeBlock.vue'
 import { databaseNetwork, useInsightsGraphsOrNull } from './graphs.ts'
 import type { DatabaseGraphResult } from './graphs.ts'
 import NetworkGraph from './NetworkGraph.vue'
@@ -112,6 +114,25 @@ function emptyQueryText(entry: VaultEntry): string {
         'could hold values.'
 }
 
+/** The Prism language of a query's text: AQL for Arango, JSON for Monko's printed filter. */
+function queryLanguage(entry: VaultEntry): string | null {
+    switch (entry.queryLanguage) {
+        case 'aql':
+        case 'aql-raw':
+            return 'aql'
+        case 'mongo-bound':
+        case 'json':
+            return 'json'
+        default:
+            return null
+    }
+}
+
+/** Mongo explains in JSON, Arango in its own text table. */
+function planLanguage(plan: string): string | null {
+    return plan.trimStart().startsWith('{') ? 'json' : null
+}
+
 function results(entry: VaultEntry): string {
     const count = entry.count ?? 0
     return entry.totalCount === null ? `${count} of n/a` : `${count} of ${entry.totalCount}`
@@ -167,9 +188,10 @@ function results(entry: VaultEntry): string {
                 ]"
             />
 
-            <PreBlock
+            <CodeBlock
                 v-if="!entry.legacy"
                 :text="entry.query"
+                :language="queryLanguage(entry)"
                 :empty-text="emptyQueryText(entry)"
                 wrap
             />
@@ -187,16 +209,17 @@ function results(entry: VaultEntry): string {
                 Values withheld: this repository holds credentials, so the server recorded only that the query
                 had {{ entry.varsCount ?? 'some' }} bind {{ entry.varsCount === 1 ? 'variable' : 'variables' }}.
             </div>
-            <PreBlock
+            <CodeBlock
                 v-else-if="entry.values !== null && Object.keys(entry.values).length > 0"
                 :text="valuesText(entry.values)"
+                language="json"
                 wrap
             />
 
             <details v-if="entry.plan !== null" class="fk-details">
                 <summary>Explained</summary>
                 <div class="fk-details__body">
-                    <PreBlock :text="entry.plan" wrap />
+                    <CodeBlock :text="entry.plan" :language="planLanguage(entry.plan)" wrap />
                 </div>
             </details>
         </section>

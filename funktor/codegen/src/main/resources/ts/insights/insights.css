@@ -114,5 +114,65 @@
         border-radius: var(--fk-radius);
         background: var(--fk-surface);
     }
-}
 
+    /*  Tab icons (Lucide, decorative)  ---------------------------------------------------------------  */
+
+    .fk-tabs__icon {
+        margin-right: 6px;
+        vertical-align: -2px;
+    }
+
+    /*
+     * Highlighted code (CodeBlock): Prism's token classes in the theme's colours. Accepted: a Prism theme the app
+     * loads OUTSIDE any layer wins over these, whatever their specificity, and repaints the tokens.
+     */
+
+    .fk-code .token.keyword,
+    .fk-code .token.property {
+        color: var(--fk-accent);
+    }
+
+    .fk-code .token.keyword {
+        font-weight: 600;
+    }
+
+    .fk-code .token.string {
+        color: var(--fk-ok);
+    }
+
+    /* AQL's `@v_1` and Monko's `@p1:string` are variables or strings: the placeholders stand out either way */
+    .fk-code .token.number,
+    .fk-code .token.boolean,
+    .fk-code .token.null,
+    .fk-code .token.variable {
+        color: var(--fk-warn);
+    }
+
+    .fk-code .token.punctuation,
+    .fk-code .token.operator,
+    .fk-code .token.comment {
+        color: var(--fk-text-muted);
+    }
+
+    /*  Sortable table headers (the kontainer table)  ---------------------------------------------------  */
+
+    .fk-sort {
+        padding: 0;
+        border: none;
+        background: none;
+        color: inherit;
+        font: inherit;
+        font-weight: inherit;
+        cursor: pointer;
+    }
+
+    .fk-sort__arrow {
+        margin-left: 4px;
+        font-size: var(--fk-font-size-sm);
+    }
+
+    /* Full class names: long, so they break anywhere rather than widen the table */
+    .fk-services__cls {
+        word-break: break-all;
+    }
+}

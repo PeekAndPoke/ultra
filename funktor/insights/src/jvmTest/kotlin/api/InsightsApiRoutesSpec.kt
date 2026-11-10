@@ -34,12 +34,13 @@ class InsightsApiRoutesSpec : StringSpec({
         permissions = UserPermissions(),
     )
 
-    "all four documented endpoints are mounted" {
+    "all five documented endpoints are mounted" {
         api.all.map { it.pattern.pattern } shouldContainExactlyInAnyOrder listOf(
             "${InsightsApi.base}/records",
             "${InsightsApi.base}/records/{bucket}/{file}",
             "${InsightsApi.base}/graphs/kontainer",
             "${InsightsApi.base}/graphs/database",
+            "${InsightsApi.base}/server",
         )
     }
 

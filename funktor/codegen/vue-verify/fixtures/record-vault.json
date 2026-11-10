@@ -6,17 +6,17 @@
   "data": {
     "ref": {
       "bucket": "records-2026-11-10",
-      "file": "2026-11-10T14:29:16.581267130.json"
+      "file": "2026-11-10T15:58:24.099135644.json"
     },
     "recordedAt": {
-      "ts": 1794317356762,
+      "ts": 1794322704317,
       "timezone": "UTC",
-      "human": "2026-11-10T13:29:16.762Z"
+      "human": "2026-11-10T14:58:24.317Z"
     },
     "method": "GET",
     "path": "/_/e2e/insights-s1/probe",
     "status": 200,
-    "durationMs": 135.359636,
+    "durationMs": 170.946554,
     "collectors": [
       {
         "key": "user",
@@ -105,8 +105,8 @@
               "gitDesc": "n/a",
               "date": null
             },
-            "versionName": "-1794317354886000",
-            "versionHash": "169e3cc1-4d4505e0-7cd395f-42b093c0"
+            "versionName": "-1794322702201000",
+            "versionHash": "44bcf68f-73b7f020-5d5aa2af-488bd840"
           },
           "config": {
             "ktor": {
@@ -167,7 +167,7 @@
       {
         "key": "kontainer",
         "data": {
-          "graphFingerprint": "66bae8a60475292397e3245ed39558c369ff084acf4bddd169295ef4787d2ba7",
+          "graphFingerprint": "1fd182d0701572674d46a140ef135adb8698777b6d8c869a3ae1b99ec40f6c37",
           "services": [
             {
               "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
@@ -176,9 +176,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
                   "createdAt": {
-                    "ts": 1794317356325,
+                    "ts": 1794322703774,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.325598678Z"
+                    "human": "2026-11-10T14:58:23.774400106Z"
                   }
                 }
               ]
@@ -190,9 +190,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.model.AppInfo",
                   "createdAt": {
-                    "ts": 1794317356570,
+                    "ts": 1794322704090,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.570647392Z"
+                    "human": "2026-11-10T14:58:24.090086211Z"
                   }
                 }
               ]
@@ -204,9 +204,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
                   "createdAt": {
-                    "ts": 1794317354892,
+                    "ts": 1794322702208,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:14.892881172Z"
+                    "human": "2026-11-10T14:58:22.208036523Z"
                   }
                 }
               ]
@@ -218,9 +218,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
                   "createdAt": {
-                    "ts": 1794317354892,
+                    "ts": 1794322702208,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:14.892939468Z"
+                    "human": "2026-11-10T14:58:22.208085096Z"
                   }
                 }
               ]
@@ -232,9 +232,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
                   "createdAt": {
-                    "ts": 1794317356564,
+                    "ts": 1794322704085,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.564495277Z"
+                    "human": "2026-11-10T14:58:24.085464724Z"
                   }
                 }
               ]
@@ -246,9 +246,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
                   "createdAt": {
-                    "ts": 1794317356574,
+                    "ts": 1794322704093,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.574657075Z"
+                    "human": "2026-11-10T14:58:24.093245124Z"
                   }
                 }
               ]
@@ -260,9 +260,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
                   "createdAt": {
-                    "ts": 1794317356575,
+                    "ts": 1794322704093,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.575209143Z"
+                    "human": "2026-11-10T14:58:24.093612475Z"
                   }
                 }
               ]
@@ -274,9 +274,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
                   "createdAt": {
-                    "ts": 1794317356575,
+                    "ts": 1794322704093,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.575216057Z"
+                    "human": "2026-11-10T14:58:24.093617505Z"
                   }
                 }
               ]
@@ -288,9 +288,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
                   "createdAt": {
-                    "ts": 1794317356575,
+                    "ts": 1794322704093,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.575222239Z"
+                    "human": "2026-11-10T14:58:24.093623196Z"
                   }
                 }
               ]
@@ -302,9 +302,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
                   "createdAt": {
-                    "ts": 1794317356575,
+                    "ts": 1794322704093,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.575231557Z"
+                    "human": "2026-11-10T14:58:24.093631151Z"
                   }
                 }
               ]
@@ -316,9 +316,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
                   "createdAt": {
-                    "ts": 1794317356401,
+                    "ts": 1794322703885,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.401634533Z"
+                    "human": "2026-11-10T14:58:23.885745357Z"
                   }
                 }
               ]
@@ -330,9 +330,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
                   "createdAt": {
-                    "ts": 1794317356401,
+                    "ts": 1794322703885,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.401602900Z"
+                    "human": "2026-11-10T14:58:23.885705520Z"
                   }
                 }
               ]
@@ -344,9 +344,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
                   "createdAt": {
-                    "ts": 1794317356401,
+                    "ts": 1794322703885,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.401611968Z"
+                    "human": "2026-11-10T14:58:23.885714287Z"
                   }
                 }
               ]
@@ -358,9 +358,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
                   "createdAt": {
-                    "ts": 1794317356401,
+                    "ts": 1794322703885,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.401617289Z"
+                    "human": "2026-11-10T14:58:23.885721731Z"
                   }
                 }
               ]
@@ -372,9 +372,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
                   "createdAt": {
-                    "ts": 1794317356401,
+                    "ts": 1794322703885,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.401620786Z"
+                    "human": "2026-11-10T14:58:23.885728104Z"
                   }
                 }
               ]
@@ -386,9 +386,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
                   "createdAt": {
-                    "ts": 1794317356401,
+                    "ts": 1794322703885,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.401627168Z"
+                    "human": "2026-11-10T14:58:23.885734125Z"
                   }
                 }
               ]
@@ -400,9 +400,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
                   "createdAt": {
-                    "ts": 1794317356404,
+                    "ts": 1794322703888,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.404722934Z"
+                    "human": "2026-11-10T14:58:23.888969464Z"
                   }
                 }
               ]
@@ -414,9 +414,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
                   "createdAt": {
-                    "ts": 1794317356567,
+                    "ts": 1794322704087,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.567422228Z"
+                    "human": "2026-11-10T14:58:24.087509870Z"
                   }
                 }
               ]
@@ -428,9 +428,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
                   "createdAt": {
-                    "ts": 1794317356567,
+                    "ts": 1794322704087,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.567430895Z"
+                    "human": "2026-11-10T14:58:24.087516152Z"
                   }
                 }
               ]
@@ -442,9 +442,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
                   "createdAt": {
-                    "ts": 1794317356400,
+                    "ts": 1794322703883,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.400017638Z"
+                    "human": "2026-11-10T14:58:23.883961710Z"
                   }
                 }
               ]
@@ -456,9 +456,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
                   "createdAt": {
-                    "ts": 1794317356564,
+                    "ts": 1794322704085,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.564913459Z"
+                    "human": "2026-11-10T14:58:24.085792921Z"
                   }
                 }
               ]
@@ -470,9 +470,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
                   "createdAt": {
-                    "ts": 1794317356326,
+                    "ts": 1794322703775,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.326541002Z"
+                    "human": "2026-11-10T14:58:23.775207027Z"
                   }
                 }
               ]
@@ -484,9 +484,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
                   "createdAt": {
-                    "ts": 1794317356326,
+                    "ts": 1794322703775,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.326561653Z"
+                    "human": "2026-11-10T14:58:23.775329101Z"
                   }
                 }
               ]
@@ -498,9 +498,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
                   "createdAt": {
-                    "ts": 1794317356565,
+                    "ts": 1794322704085,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.565046694Z"
+                    "human": "2026-11-10T14:58:24.085919372Z"
                   }
                 }
               ]
@@ -512,9 +512,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.log.Slf4jAppender",
                   "createdAt": {
-                    "ts": 1794317354892,
+                    "ts": 1794322702208,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:14.892921503Z"
+                    "human": "2026-11-10T14:58:22.208068705Z"
                   }
                 }
               ]
@@ -526,9 +526,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
                   "createdAt": {
-                    "ts": 1794317356565,
+                    "ts": 1794322704086,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.565147635Z"
+                    "human": "2026-11-10T14:58:24.086007390Z"
                   }
                 }
               ]
@@ -540,9 +540,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
                   "createdAt": {
-                    "ts": 1794317356567,
+                    "ts": 1794322704087,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.567438320Z"
+                    "human": "2026-11-10T14:58:24.087520661Z"
                   }
                 }
               ]
@@ -554,9 +554,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
                   "createdAt": {
-                    "ts": 1794317356575,
+                    "ts": 1794322704093,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.575403329Z"
+                    "human": "2026-11-10T14:58:24.093798801Z"
                   }
                 }
               ]
@@ -568,9 +568,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.InsightsCodec",
                   "createdAt": {
-                    "ts": 1794317356570,
+                    "ts": 1794322704090,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.570642702Z"
+                    "human": "2026-11-10T14:58:24.090083405Z"
                   }
                 }
               ]
@@ -582,9 +582,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.HeaderLogging",
                   "createdAt": {
-                    "ts": 1794317356570,
+                    "ts": 1794322704090,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.570613955Z"
+                    "human": "2026-11-10T14:58:24.090060962Z"
                   }
                 }
               ]
@@ -596,9 +596,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.InsightsGraphs",
                   "createdAt": {
-                    "ts": 1794317356570,
+                    "ts": 1794322704090,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.570681459Z"
+                    "human": "2026-11-10T14:58:24.090112631Z"
                   }
                 }
               ]
@@ -610,9 +610,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
                   "createdAt": {
-                    "ts": 1794317356400,
+                    "ts": 1794322703884,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.400993438Z"
+                    "human": "2026-11-10T14:58:23.884929027Z"
                   }
                 }
               ]
@@ -624,9 +624,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
                   "createdAt": {
-                    "ts": 1794317356565,
+                    "ts": 1794322704086,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.565432501Z"
+                    "human": "2026-11-10T14:58:24.086132650Z"
                   }
                 }
               ]
@@ -638,9 +638,9 @@
                 {
                   "cls": "com.arangodb.internal.ArangoDatabaseAsyncImpl",
                   "createdAt": {
-                    "ts": 1794317354892,
+                    "ts": 1794322702208,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:14.892945651Z"
+                    "human": "2026-11-10T14:58:22.208090396Z"
                   }
                 }
               ]
@@ -652,9 +652,9 @@
                 {
                   "cls": "com.mongodb.kotlin.client.coroutine.MongoClient",
                   "createdAt": {
-                    "ts": 1794317356305,
+                    "ts": 1794322703758,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.305337537Z"
+                    "human": "2026-11-10T14:58:23.758568970Z"
                   }
                 }
               ]
@@ -666,9 +666,9 @@
                 {
                   "cls": "com.mongodb.kotlin.client.coroutine.MongoDatabase",
                   "createdAt": {
-                    "ts": 1794317356305,
+                    "ts": 1794322703758,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.305350874Z"
+                    "human": "2026-11-10T14:58:23.758591393Z"
                   }
                 }
               ]
@@ -680,9 +680,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.S1ProbeFeature",
                   "createdAt": {
-                    "ts": 1794317356567,
+                    "ts": 1794322704087,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.567364874Z"
+                    "human": "2026-11-10T14:58:24.087458622Z"
                   }
                 }
               ]
@@ -694,9 +694,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
                   "createdAt": {
-                    "ts": 1794317356570,
+                    "ts": 1794322704090,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.570668844Z"
+                    "human": "2026-11-10T14:58:24.090104996Z"
                   }
                 }
               ]
@@ -708,9 +708,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo",
                   "createdAt": {
-                    "ts": 1794317356699,
+                    "ts": 1794322704251,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.699936095Z"
+                    "human": "2026-11-10T14:58:24.251844996Z"
                   }
                 }
               ]
@@ -722,9 +722,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogRepository",
                   "createdAt": {
-                    "ts": 1794317356714,
+                    "ts": 1794322704267,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.714144840Z"
+                    "human": "2026-11-10T14:58:24.267118928Z"
                   }
                 }
               ]
@@ -736,9 +736,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581938645Z"
+                    "human": "2026-11-10T14:58:24.099622494Z"
                   }
                 }
               ]
@@ -750,9 +750,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.datetime.Kronos$UsingClock",
                   "createdAt": {
-                    "ts": 1794317356675,
+                    "ts": 1794322704231,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.675189704Z"
+                    "human": "2026-11-10T14:58:24.231674843Z"
                   }
                 }
               ]
@@ -764,9 +764,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.log.UltraLogManager",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581965268Z"
+                    "human": "2026-11-10T14:58:24.099639516Z"
                   }
                 }
               ]
@@ -778,9 +778,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.security.user.UserProvider$Lazy",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704098,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581032253Z"
+                    "human": "2026-11-10T14:58:24.098958977Z"
                   }
                 }
               ]
@@ -792,9 +792,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.Database",
                   "createdAt": {
-                    "ts": 1794317356587,
+                    "ts": 1794322704104,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.587382882Z"
+                    "human": "2026-11-10T14:58:24.104478519Z"
                   }
                 }
               ]
@@ -806,9 +806,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.DefaultEntityCache",
                   "createdAt": {
-                    "ts": 1794317356587,
+                    "ts": 1794322704104,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.587398854Z"
+                    "human": "2026-11-10T14:58:24.104489460Z"
                   }
                 }
               ]
@@ -820,9 +820,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.hooks.TimestampedHook",
                   "createdAt": {
-                    "ts": 1794317356674,
+                    "ts": 1794322704231,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.674915298Z"
+                    "human": "2026-11-10T14:58:24.231432400Z"
                   }
                 }
               ]
@@ -834,9 +834,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler",
                   "createdAt": {
-                    "ts": 1794317356583,
+                    "ts": 1794322704100,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.583451253Z"
+                    "human": "2026-11-10T14:58:24.100737023Z"
                   }
                 }
               ]
@@ -848,9 +848,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo",
                   "createdAt": {
-                    "ts": 1794317356674,
+                    "ts": 1794322704231,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.674983143Z"
+                    "human": "2026-11-10T14:58:24.231514136Z"
                   }
                 }
               ]
@@ -862,9 +862,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.rest.codec.SlumberRestCodec",
                   "createdAt": {
-                    "ts": 1794317356714,
+                    "ts": 1794322704268,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.714951184Z"
+                    "human": "2026-11-10T14:58:24.268100824Z"
                   }
                 }
               ]
@@ -876,9 +876,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704098,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581048575Z"
+                    "human": "2026-11-10T14:58:24.098973995Z"
                   }
                 }
               ]
@@ -890,9 +890,9 @@
                 {
                   "cls": "impl.InsightsFull",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581288442Z"
+                    "human": "2026-11-10T14:58:24.099152416Z"
                   }
                 }
               ]
@@ -904,9 +904,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.InsightsFileRepository",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581215988Z"
+                    "human": "2026-11-10T14:58:24.099094295Z"
                   }
                 }
               ]
@@ -918,9 +918,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.UserCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716635974Z"
+                    "human": "2026-11-10T14:58:24.270090524Z"
                   }
                 }
               ]
@@ -932,9 +932,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716646806Z"
+                    "human": "2026-11-10T14:58:24.270102587Z"
                   }
                 }
               ]
@@ -946,9 +946,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716653128Z"
+                    "human": "2026-11-10T14:58:24.270110201Z"
                   }
                 }
               ]
@@ -960,9 +960,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716684651Z"
+                    "human": "2026-11-10T14:58:24.270125911Z"
                   }
                 }
               ]
@@ -974,9 +974,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716702927Z"
+                    "human": "2026-11-10T14:58:24.270139658Z"
                   }
                 }
               ]
@@ -988,9 +988,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716713198Z"
+                    "human": "2026-11-10T14:58:24.270148625Z"
                   }
                 }
               ]
@@ -1002,9 +1002,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716719049Z"
+                    "human": "2026-11-10T14:58:24.270156079Z"
                   }
                 }
               ]
@@ -1016,9 +1016,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716725131Z"
+                    "human": "2026-11-10T14:58:24.270162501Z"
                   }
                 }
               ]
@@ -1030,9 +1030,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581957843Z"
+                    "human": "2026-11-10T14:58:24.099635849Z"
                   }
                 }
               ]
@@ -1044,9 +1044,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716732215Z"
+                    "human": "2026-11-10T14:58:24.270169575Z"
                   }
                 }
               ]
@@ -1058,9 +1058,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
                   "createdAt": {
-                    "ts": 1794317356716,
+                    "ts": 1794322704270,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.716740823Z"
+                    "human": "2026-11-10T14:58:24.270177400Z"
                   }
                 }
               ]
@@ -1072,9 +1072,9 @@
                 {
                   "cls": "io.peekandpoke.karango.vault.KarangoDriver",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581988815Z"
+                    "human": "2026-11-10T14:58:24.099655868Z"
                   }
                 }
               ]
@@ -1086,9 +1086,9 @@
                 {
                   "cls": "io.peekandpoke.karango.slumber.KarangoCodec",
                   "createdAt": {
-                    "ts": 1794317356587,
+                    "ts": 1794322704104,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.587430476Z"
+                    "human": "2026-11-10T14:58:24.104508626Z"
                   }
                 }
               ]
@@ -1100,9 +1100,9 @@
                 {
                   "cls": "io.peekandpoke.monko.MonkoDriver",
                   "createdAt": {
-                    "ts": 1794317356582,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.582028895Z"
+                    "human": "2026-11-10T14:58:24.099686316Z"
                   }
                 }
               ]
@@ -1114,9 +1114,9 @@
                 {
                   "cls": "io.peekandpoke.monko.MonkoCodec",
                   "createdAt": {
-                    "ts": 1794317356596,
+                    "ts": 1794322704151,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.596891581Z"
+                    "human": "2026-11-10T14:58:24.151356411Z"
                   }
                 }
               ]
@@ -1128,9 +1128,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.S1KaSessionsRepo",
                   "createdAt": {
-                    "ts": 1794317356582,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.582010047Z"
+                    "human": "2026-11-10T14:58:24.099669253Z"
                   }
                 }
               ]
@@ -1142,9 +1142,9 @@
                 {
                   "cls": "io.peekandpoke.funktor.S1MoSessionsRepo",
                   "createdAt": {
-                    "ts": 1794317356582,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.582038925Z"
+                    "human": "2026-11-10T14:58:24.099695553Z"
                   }
                 }
               ]
@@ -1156,9 +1156,9 @@
                 {
                   "cls": "io.peekandpoke.ultra.kontainer.Kontainer",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581179656Z"
+                    "human": "2026-11-10T14:58:24.099062855Z"
                   }
                 }
               ]
@@ -1170,17 +1170,17 @@
                 {
                   "cls": "io.peekandpoke.ultra.log.LogImpl",
                   "createdAt": {
-                    "ts": 1794317356581,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.581972042Z"
+                    "human": "2026-11-10T14:58:24.099644095Z"
                   }
                 },
                 {
                   "cls": "io.peekandpoke.ultra.log.LogImpl",
                   "createdAt": {
-                    "ts": 1794317356582,
+                    "ts": 1794322704099,
                     "timezone": "UTC",
-                    "human": "2026-11-10T13:29:16.582020117Z"
+                    "human": "2026-11-10T14:58:24.099678170Z"
                   }
                 }
               ]
@@ -1193,11 +1193,11 @@
         "data": {
           "jvmVersion": "17.0.17",
           "maxMem": 536870912,
-          "reservedMem": 447741952,
-          "freeMem": 243389680,
+          "reservedMem": 458227712,
+          "freeMem": 250655536,
           "cpus": 16,
           "kotlinVersion": "2.4.21",
-          "openFileDescriptors": 309,
+          "openFileDescriptors": 310,
           "maxFileDescriptors": 1048576,
           "systemProperties": {
             "os.name": "Linux",
@@ -1215,11 +1215,11 @@
           "entries": [
             {
               "level": "INFO",
-              "text": "2026-11-10 14:29:16.714 INFO - i.p.f.S1ProbeApi - S1 probe: looked a session token up on both backends"
+              "text": "2026-11-10 15:58:24.267 INFO - i.p.f.S1ProbeApi - S1 probe: looked a session token up on both backends"
             },
             {
               "level": "WARNING",
-              "text": "2026-11-10 14:29:16.714 WARNING - i.p.f.S1ProbeApi - S1 probe: found 2 of 2"
+              "text": "2026-11-10 15:58:24.267 WARNING - i.p.f.S1ProbeApi - S1 probe: found 2 of 2"
             }
           ]
         }
@@ -1231,18 +1231,18 @@
             {
               "connection": "ArangoDB::_system",
               "queryLanguage": "aql",
-              "query": "FOR `p2_256d3a6e` IN `insights_s1_ka_sessions`\n    FILTER `p2_256d3a6e`.`token` == @v_1\n    LIMIT 0, 1\n    RETURN `p2_256d3a6e`\n",
+              "query": "FOR `p2_5209c32d` IN `insights_s1_ka_sessions`\n    FILTER `p2_5209c32d`.`token` == @v_1\n    LIMIT 0, 1\n    RETURN `p2_5209c32d`\n",
               "varsCount": 1,
               "valuesWithheld": false,
               "values": {
-                "v_1": "\"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\""
+                "v_1": "\"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\""
               },
-              "explain": "Query String (128 chars, results cachable: true):\n FOR `p2_256d3a6e` IN `insights_s1_ka_sessions`\n     FILTER `p2_256d3a6e`.`token` == @v_1\n     LIMIT 0, 1\n     RETURN `p2_256d3a6e`\n \n\nExecution plan:\n Id   NodeType                  Par   Est.   Comment\n  1   SingletonNode                      1   * ROOT \n  2   EnumerateCollectionNode          122     - FOR p2_256d3a6e IN insights_s1_ka_sessions   /* full collection scan  */   FILTER (p2_256d3a6e.`token` == \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\")   /* early pruning */\n  5   LimitNode                          1       - LIMIT 0, 1\n  6   ReturnNode                         1       - RETURN p2_256d3a6e\n\nIndexes used:\n none\n\nOptimization rules applied:\n Id   Rule Name                           Id   Rule Name                  \n  1   move-filters-into-enumerate          2   optimize-projections       \n\n58 rule(s) executed, 1 plan(s) created, peak mem [b]: 0, exec time [s]: 0.00023\n\n",
+              "explain": "Query String (128 chars, results cachable: true):\n FOR `p2_5209c32d` IN `insights_s1_ka_sessions`\n     FILTER `p2_5209c32d`.`token` == @v_1\n     LIMIT 0, 1\n     RETURN `p2_5209c32d`\n \n\nExecution plan:\n Id   NodeType                  Par   Est.   Comment\n  1   SingletonNode                      1   * ROOT \n  2   EnumerateCollectionNode          127     - FOR p2_5209c32d IN insights_s1_ka_sessions   /* full collection scan  */   FILTER (p2_5209c32d.`token` == \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\")   /* early pruning */\n  5   LimitNode                          1       - LIMIT 0, 1\n  6   ReturnNode                         1       - RETURN p2_5209c32d\n\nIndexes used:\n none\n\nOptimization rules applied:\n Id   Rule Name                           Id   Rule Name                  \n  1   move-filters-into-enumerate          2   optimize-projections       \n\n58 rule(s) executed, 1 plan(s) created, peak mem [b]: 0, exec time [s]: 0.00027\n\n",
               "count": 1,
               "totalCount": null,
-              "totalNs": 6476469,
+              "totalNs": 44892921,
               "measureQuery": {
-                "totalNs": 3187308,
+                "totalNs": 2058561,
                 "count": 1
               },
               "measureIterator": {
@@ -1254,11 +1254,11 @@
                 "count": 0
               },
               "measureDeserializer": {
-                "totalNs": 52314,
+                "totalNs": 51819,
                 "count": 1
               },
               "measureExplain": {
-                "totalNs": 3236847,
+                "totalNs": 42782541,
                 "count": 1
               }
             },
@@ -1269,14 +1269,14 @@
               "varsCount": 1,
               "valuesWithheld": false,
               "values": {
-                "p1": "\"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\""
+                "p1": "\"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\""
               },
-              "explain": "{\n  \"explainVersion\": \"1\",\n  \"queryPlanner\": {\n    \"namespace\": \"test.insights_s1_mo_sessions\",\n    \"parsedQuery\": {\n      \"token\": {\n        \"$eq\": \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\"\n      }\n    },\n    \"indexFilterSet\": false,\n    \"queryHash\": \"BFD1FBB4\",\n    \"planCacheShapeHash\": \"BFD1FBB4\",\n    \"planCacheKey\": \"41EA35D0\",\n    \"optimizationTimeMillis\": 0,\n    \"maxIndexedOrSolutionsReached\": false,\n    \"maxIndexedAndSolutionsReached\": false,\n    \"maxScansToExplodeReached\": false,\n    \"prunedSimilarIndexes\": false,\n    \"winningPlan\": {\n      \"isCached\": false,\n      \"stage\": \"LIMIT\",\n      \"limitAmount\": 1,\n      \"inputStage\": {\n        \"stage\": \"COLLSCAN\",\n        \"filter\": {\n          \"token\": {\n            \"$eq\": \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\"\n          }\n        },\n        \"direction\": \"forward\"\n      }\n    },\n    \"rejectedPlans\": []\n  },\n  \"queryShapeHash\": \"4EC0A177B33759889D27B178EECDCAAED6BD331F730BF9793860D89317DF0E6A\",\n  \"command\": {\n    \"find\": \"insights_s1_mo_sessions\",\n    \"filter\": {\n      \"token\": \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\"\n    },\n    \"limit\": 1,\n    \"maxTimeMS\": 0,\n    \"$db\": \"test\"\n  },\n  \"serverInfo\": {\n    \"host\": \"25351da164c9\",\n    \"port\": 27017,\n    \"version\": \"8.2.1\",\n    \"gitVersion\": \"3312bdcf28aa65f5930005e21c2cb130f648b8c3\"\n  },\n  \"serverParameters\": {\n    \"internalQueryFacetBufferSizeBytes\": 104857600,\n    \"internalQueryFacetMaxOutputDocSizeBytes\": 104857600,\n    \"internalLookupStageIntermediateDocumentMaxSizeBytes\": 104857600,\n    \"internalDocumentSourceGroupMaxMemoryBytes\": 104857600,\n    \"internalQueryMaxBlockingSortMemoryUsageBytes\": 104857600,\n    \"internalQueryProhibitBlockingMergeOnMongoS\": 0,\n    \"internalQueryMaxAddToSetBytes\": 104857600,\n    \"internalDocumentSourceSetWindowFieldsMaxMemoryBytes\": 104857600,\n    \"internalQueryFrameworkControl\": \"trySbeRestricted\",\n    \"internalQueryPlannerIgnoreIndexWithCollationForRegex\": 1\n  },\n  \"ok\": 1.0\n}",
+              "explain": "{\n  \"explainVersion\": \"1\",\n  \"queryPlanner\": {\n    \"namespace\": \"test.insights_s1_mo_sessions\",\n    \"parsedQuery\": {\n      \"token\": {\n        \"$eq\": \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\"\n      }\n    },\n    \"indexFilterSet\": false,\n    \"queryHash\": \"BFD1FBB4\",\n    \"planCacheShapeHash\": \"BFD1FBB4\",\n    \"planCacheKey\": \"41EA35D0\",\n    \"optimizationTimeMillis\": 0,\n    \"maxIndexedOrSolutionsReached\": false,\n    \"maxIndexedAndSolutionsReached\": false,\n    \"maxScansToExplodeReached\": false,\n    \"prunedSimilarIndexes\": false,\n    \"winningPlan\": {\n      \"isCached\": false,\n      \"stage\": \"LIMIT\",\n      \"limitAmount\": 1,\n      \"inputStage\": {\n        \"stage\": \"COLLSCAN\",\n        \"filter\": {\n          \"token\": {\n            \"$eq\": \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\"\n          }\n        },\n        \"direction\": \"forward\"\n      }\n    },\n    \"rejectedPlans\": []\n  },\n  \"queryShapeHash\": \"4EC0A177B33759889D27B178EECDCAAED6BD331F730BF9793860D89317DF0E6A\",\n  \"command\": {\n    \"find\": \"insights_s1_mo_sessions\",\n    \"filter\": {\n      \"token\": \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\"\n    },\n    \"limit\": 1,\n    \"maxTimeMS\": 0,\n    \"$db\": \"test\"\n  },\n  \"serverInfo\": {\n    \"host\": \"25351da164c9\",\n    \"port\": 27017,\n    \"version\": \"8.2.1\",\n    \"gitVersion\": \"3312bdcf28aa65f5930005e21c2cb130f648b8c3\"\n  },\n  \"serverParameters\": {\n    \"internalQueryFacetBufferSizeBytes\": 104857600,\n    \"internalQueryFacetMaxOutputDocSizeBytes\": 104857600,\n    \"internalLookupStageIntermediateDocumentMaxSizeBytes\": 104857600,\n    \"internalDocumentSourceGroupMaxMemoryBytes\": 104857600,\n    \"internalQueryMaxBlockingSortMemoryUsageBytes\": 104857600,\n    \"internalQueryProhibitBlockingMergeOnMongoS\": 0,\n    \"internalQueryMaxAddToSetBytes\": 104857600,\n    \"internalDocumentSourceSetWindowFieldsMaxMemoryBytes\": 104857600,\n    \"internalQueryFrameworkControl\": \"trySbeRestricted\",\n    \"internalQueryPlannerIgnoreIndexWithCollationForRegex\": 1\n  },\n  \"ok\": 1.0\n}",
               "count": 1,
               "totalCount": null,
-              "totalNs": 11967139,
+              "totalNs": 11645802,
               "measureQuery": {
-                "totalNs": 2218342,
+                "totalNs": 2265176,
                 "count": 1
               },
               "measureIterator": {
@@ -1288,27 +1288,27 @@
                 "count": 0
               },
               "measureDeserializer": {
-                "totalNs": 286420,
+                "totalNs": 259265,
                 "count": 1
               },
               "measureExplain": {
-                "totalNs": 9462377,
+                "totalNs": 9121361,
                 "count": 1
               }
             },
             {
               "connection": "ArangoDB::_system",
               "queryLanguage": "aql-raw",
-              "query": "FOR d IN insights_s1_ka_sessions FILTER d.token == \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\" RETURN d",
+              "query": "FOR d IN insights_s1_ka_sessions FILTER d.token == \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\" RETURN d",
               "varsCount": 0,
               "valuesWithheld": false,
               "values": {},
-              "explain": "Query String (115 chars, results cachable: true):\n FOR d IN insights_s1_ka_sessions FILTER d.token == \n \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\" RETURN d\n\nExecution plan:\n Id   NodeType                  Par   Est.   Comment\n  1   SingletonNode                      1   * ROOT \n  2   EnumerateCollectionNode     ✓    122     - FOR d IN insights_s1_ka_sessions   /* full collection scan  */   FILTER (d.`token` == \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\")   /* early pruning */\n  5   ReturnNode                       122       - RETURN d\n\nIndexes used:\n none\n\nOptimization rules applied:\n Id   Rule Name                           Id   Rule Name                           Id   Rule Name                  \n  1   move-filters-into-enumerate          2   optimize-projections                 3   async-prefetch             \n\n58 rule(s) executed, 1 plan(s) created, peak mem [b]: 0, exec time [s]: 0.00024\n\n",
+              "explain": "Query String (115 chars, results cachable: true):\n FOR d IN insights_s1_ka_sessions FILTER d.token == \n \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\" RETURN d\n\nExecution plan:\n Id   NodeType                  Par   Est.   Comment\n  1   SingletonNode                      1   * ROOT \n  2   EnumerateCollectionNode     ✓    127     - FOR d IN insights_s1_ka_sessions   /* full collection scan  */   FILTER (d.`token` == \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\")   /* early pruning */\n  5   ReturnNode                       127       - RETURN d\n\nIndexes used:\n none\n\nOptimization rules applied:\n Id   Rule Name                           Id   Rule Name                           Id   Rule Name                  \n  1   move-filters-into-enumerate          2   optimize-projections                 3   async-prefetch             \n\n58 rule(s) executed, 1 plan(s) created, peak mem [b]: 0, exec time [s]: 0.00023\n\n",
               "count": 1,
               "totalCount": null,
-              "totalNs": 47145713,
+              "totalNs": 45239985,
               "measureQuery": {
-                "totalNs": 2811841,
+                "totalNs": 1948151,
                 "count": 1
               },
               "measureIterator": {
@@ -1324,7 +1324,7 @@
                 "count": 0
               },
               "measureExplain": {
-                "totalNs": 44333872,
+                "totalNs": 43291834,
                 "count": 1
               }
             },
@@ -1335,14 +1335,14 @@
               "varsCount": 1,
               "valuesWithheld": false,
               "values": {
-                "p1": "{\"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\":1}"
+                "p1": "{\"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\":1}"
               },
-              "explain": "{\n  \"explainVersion\": \"1\",\n  \"queryPlanner\": {\n    \"namespace\": \"test.insights_s1_mo_sessions\",\n    \"parsedQuery\": {\n      \"token\": {\n        \"$eq\": {\n          \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\": 1\n        }\n      }\n    },\n    \"indexFilterSet\": false,\n    \"queryHash\": \"BFD1FBB4\",\n    \"planCacheShapeHash\": \"BFD1FBB4\",\n    \"planCacheKey\": \"41EA35D0\",\n    \"optimizationTimeMillis\": 0,\n    \"maxIndexedOrSolutionsReached\": false,\n    \"maxIndexedAndSolutionsReached\": false,\n    \"maxScansToExplodeReached\": false,\n    \"prunedSimilarIndexes\": false,\n    \"winningPlan\": {\n      \"isCached\": false,\n      \"stage\": \"COLLSCAN\",\n      \"filter\": {\n        \"token\": {\n          \"$eq\": {\n            \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\": 1\n          }\n        }\n      },\n      \"direction\": \"forward\"\n    },\n    \"rejectedPlans\": []\n  },\n  \"queryShapeHash\": \"27EADC6325C2D1DFF6251B11B6E396B3D7C44547219AEBEF49396E870F836417\",\n  \"command\": {\n    \"find\": \"insights_s1_mo_sessions\",\n    \"filter\": {\n      \"token\": {\n        \"s1-session-token-a842ccd5-7ae2-4038-b170-b0f45aa57da0\": 1\n      }\n    },\n    \"maxTimeMS\": 0,\n    \"$db\": \"test\"\n  },\n  \"serverInfo\": {\n    \"host\": \"25351da164c9\",\n    \"port\": 27017,\n    \"version\": \"8.2.1\",\n    \"gitVersion\": \"3312bdcf28aa65f5930005e21c2cb130f648b8c3\"\n  },\n  \"serverParameters\": {\n    \"internalQueryFacetBufferSizeBytes\": 104857600,\n    \"internalQueryFacetMaxOutputDocSizeBytes\": 104857600,\n    \"internalLookupStageIntermediateDocumentMaxSizeBytes\": 104857600,\n    \"internalDocumentSourceGroupMaxMemoryBytes\": 104857600,\n    \"internalQueryMaxBlockingSortMemoryUsageBytes\": 104857600,\n    \"internalQueryProhibitBlockingMergeOnMongoS\": 0,\n    \"internalQueryMaxAddToSetBytes\": 104857600,\n    \"internalDocumentSourceSetWindowFieldsMaxMemoryBytes\": 104857600,\n    \"internalQueryFrameworkControl\": \"trySbeRestricted\",\n    \"internalQueryPlannerIgnoreIndexWithCollationForRegex\": 1\n  },\n  \"ok\": 1.0\n}",
+              "explain": "{\n  \"explainVersion\": \"1\",\n  \"queryPlanner\": {\n    \"namespace\": \"test.insights_s1_mo_sessions\",\n    \"parsedQuery\": {\n      \"token\": {\n        \"$eq\": {\n          \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\": 1\n        }\n      }\n    },\n    \"indexFilterSet\": false,\n    \"queryHash\": \"BFD1FBB4\",\n    \"planCacheShapeHash\": \"BFD1FBB4\",\n    \"planCacheKey\": \"41EA35D0\",\n    \"optimizationTimeMillis\": 0,\n    \"maxIndexedOrSolutionsReached\": false,\n    \"maxIndexedAndSolutionsReached\": false,\n    \"maxScansToExplodeReached\": false,\n    \"prunedSimilarIndexes\": false,\n    \"winningPlan\": {\n      \"isCached\": false,\n      \"stage\": \"COLLSCAN\",\n      \"filter\": {\n        \"token\": {\n          \"$eq\": {\n            \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\": 1\n          }\n        }\n      },\n      \"direction\": \"forward\"\n    },\n    \"rejectedPlans\": []\n  },\n  \"queryShapeHash\": \"27EADC6325C2D1DFF6251B11B6E396B3D7C44547219AEBEF49396E870F836417\",\n  \"command\": {\n    \"find\": \"insights_s1_mo_sessions\",\n    \"filter\": {\n      \"token\": {\n        \"s1-session-token-9aa8b601-acbd-4af7-bfaf-c9cc898c03f5\": 1\n      }\n    },\n    \"maxTimeMS\": 0,\n    \"$db\": \"test\"\n  },\n  \"serverInfo\": {\n    \"host\": \"25351da164c9\",\n    \"port\": 27017,\n    \"version\": \"8.2.1\",\n    \"gitVersion\": \"3312bdcf28aa65f5930005e21c2cb130f648b8c3\"\n  },\n  \"serverParameters\": {\n    \"internalQueryFacetBufferSizeBytes\": 104857600,\n    \"internalQueryFacetMaxOutputDocSizeBytes\": 104857600,\n    \"internalLookupStageIntermediateDocumentMaxSizeBytes\": 104857600,\n    \"internalDocumentSourceGroupMaxMemoryBytes\": 104857600,\n    \"internalQueryMaxBlockingSortMemoryUsageBytes\": 104857600,\n    \"internalQueryProhibitBlockingMergeOnMongoS\": 0,\n    \"internalQueryMaxAddToSetBytes\": 104857600,\n    \"internalDocumentSourceSetWindowFieldsMaxMemoryBytes\": 104857600,\n    \"internalQueryFrameworkControl\": \"trySbeRestricted\",\n    \"internalQueryPlannerIgnoreIndexWithCollationForRegex\": 1\n  },\n  \"ok\": 1.0\n}",
               "count": 0,
               "totalCount": null,
-              "totalNs": 4820055,
+              "totalNs": 5770612,
               "measureQuery": {
-                "totalNs": 2702274,
+                "totalNs": 3382811,
                 "count": 1
               },
               "measureIterator": {
@@ -1358,7 +1358,7 @@
                 "count": 0
               },
               "measureExplain": {
-                "totalNs": 2117781,
+                "totalNs": 2387801,
                 "count": 1
               }
             },
@@ -1374,9 +1374,9 @@
               "explain": null,
               "count": null,
               "totalCount": null,
-              "totalNs": 5366822,
+              "totalNs": 5466932,
               "measureQuery": {
-                "totalNs": 5366822,
+                "totalNs": 5466932,
                 "count": 1
               },
               "measureIterator": {
@@ -1403,14 +1403,14 @@
               "varsCount": 1,
               "valuesWithheld": false,
               "values": {
-                "p1": "{\"$2b$10$e03bac1c88ae427695c22524c1f6c55b\":1}"
+                "p1": "{\"$2b$10$8915eee38c4340e781883ad55f9287ea\":1}"
               },
               "explain": null,
               "count": null,
               "totalCount": null,
-              "totalNs": 2377118,
+              "totalNs": 4015168,
               "measureQuery": {
-                "totalNs": 2377118,
+                "totalNs": 4015168,
                 "count": 1
               },
               "measureIterator": {
@@ -1440,9 +1440,9 @@
               "explain": null,
               "count": 1,
               "totalCount": null,
-              "totalNs": 5642070,
+              "totalNs": 3868449,
               "measureQuery": {
-                "totalNs": 4431012,
+                "totalNs": 3370428,
                 "count": 1
               },
               "measureIterator": {
@@ -1454,7 +1454,7 @@
                 "count": 0
               },
               "measureDeserializer": {
-                "totalNs": 1211058,
+                "totalNs": 498021,
                 "count": 1
               },
               "measureExplain": {
@@ -1465,16 +1465,16 @@
             {
               "connection": "ArangoDB::_system",
               "queryLanguage": "aql",
-              "query": "FOR `p2_35c52cee` IN `system_auth_records`\n    FILTER `p2_35c52cee`.`_type` == @v_1\n    FILTER `p2_35c52cee`.`realm` == @v_2\n    FILTER `p2_35c52cee`.`token` == @v_3\n    LIMIT 0, 1\n    RETURN `p2_35c52cee`\n",
+              "query": "FOR `p2_6ca163f0` IN `system_auth_records`\n    FILTER `p2_6ca163f0`.`_type` == @v_1\n    FILTER `p2_6ca163f0`.`realm` == @v_2\n    FILTER `p2_6ca163f0`.`token` == @v_3\n    LIMIT 0, 1\n    RETURN `p2_6ca163f0`\n",
               "varsCount": 3,
               "valuesWithheld": true,
               "values": null,
               "explain": null,
               "count": 1,
               "totalCount": null,
-              "totalNs": 2665150,
+              "totalNs": 2567183,
               "measureQuery": {
-                "totalNs": 2459511,
+                "totalNs": 2449037,
                 "count": 1
               },
               "measureIterator": {
@@ -1486,7 +1486,7 @@
                 "count": 0
               },
               "measureDeserializer": {
-                "totalNs": 205639,
+                "totalNs": 118146,
                 "count": 1
               },
               "measureExplain": {
@@ -1504,9 +1504,9 @@
               "explain": null,
               "count": 1,
               "totalCount": null,
-              "totalNs": 4865015,
+              "totalNs": 4371920,
               "measureQuery": {
-                "totalNs": 4418146,
+                "totalNs": 3734653,
                 "count": 1
               },
               "measureIterator": {
@@ -1518,7 +1518,7 @@
                 "count": 0
               },
               "measureDeserializer": {
-                "totalNs": 446869,
+                "totalNs": 637267,
                 "count": 1
               },
               "measureExplain": {
@@ -1529,16 +1529,16 @@
             {
               "connection": "ArangoDB::_system",
               "queryLanguage": "aql",
-              "query": "FOR `p2_63e70bf9` IN `system_sent_messages`\n    FILTER @v_1 IN `p2_63e70bf9`.`lookup`.`refs`\n    SORT `p2_63e70bf9`.`createdAt`.`ts` DESC\n    LIMIT 0, 20\n    RETURN `p2_63e70bf9`\n",
+              "query": "FOR `p2_538aa83f` IN `system_sent_messages`\n    FILTER @v_1 IN `p2_538aa83f`.`lookup`.`refs`\n    SORT `p2_538aa83f`.`createdAt`.`ts` DESC\n    LIMIT 0, 20\n    RETURN `p2_538aa83f`\n",
               "varsCount": 1,
               "valuesWithheld": true,
               "values": null,
               "explain": null,
               "count": 0,
               "totalCount": null,
-              "totalNs": 2165947,
+              "totalNs": 2221162,
               "measureQuery": {
-                "totalNs": 2165947,
+                "totalNs": 2221162,
                 "count": 1
               },
               "measureIterator": {
@@ -1568,9 +1568,9 @@
               "explain": null,
               "count": 0,
               "totalCount": null,
-              "totalNs": 2415985,
+              "totalNs": 3370817,
               "measureQuery": {
-                "totalNs": 2415985,
+                "totalNs": 3370817,
                 "count": 1
               },
               "measureIterator": {
@@ -1605,14 +1605,14 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1794317356,
+    "ts": 1794322704,
     "method": "GET",
-    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D11%2D10/2026%2D11%2D10T14%3A29%3A16%2E581267130%2Ejson",
+    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D11%2D10/2026%2D11%2D10T15%3A58%3A24%2E099135644%2Ejson",
     "server": "build-host",
     "status": {
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 3.728224
+    "durationMs": 3.222465
   }
 }

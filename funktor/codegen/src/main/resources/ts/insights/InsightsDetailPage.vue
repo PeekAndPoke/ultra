@@ -21,6 +21,7 @@
  *
  * Imports assume the emitted layout -- SDK root at `<out>/`, these files at `<out>/insights/`.
  */
+import { Boxes, CloudDownload, CloudUpload, Compass, Cpu, Database, List, Settings, Tv, User } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import type { Component, Ref } from 'vue'
 import type { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
@@ -43,7 +44,7 @@ import TemplateTab from './TemplateTab.vue'
 import UserTab from './UserTab.vue'
 import VaultTab from './VaultTab.vue'
 import { createGraphSource, provideInsightsGraphs, useInsightsGraphsOrNull } from './graphs.ts'
-import { readResponse, readRuntime, readVault, runtimeCells, vaultCells } from './slices.ts'
+import { buildFacts, readBuildInfo, readResponse, readRuntime, readVault, runtimeCells, vaultCells } from './slices.ts'
 
 defineOptions({ name: 'InsightsDetailPage' })
 
@@ -86,6 +87,23 @@ const TAB_LABELS: Record<string, string> = {
     vault: 'Database',
     kontainer: 'Kontainer',
     'app-config': 'Config',
+}
+
+/**
+ * One icon per known tab, the old GUI's choice in Lucide (ULTRA-00190). An unknown key gets none: its raw key is
+ * its label, and an icon would claim more than we know about it. Decorative: the label says it all.
+ */
+const TAB_ICONS: Record<string, Component> = {
+    request: CloudUpload,
+    response: CloudDownload,
+    user: User,
+    routing: Compass,
+    runtime: Cpu,
+    log: List,
+    template: Tv,
+    vault: Database,
+    kontainer: Boxes,
+    'app-config': Settings,
 }
 
 /** Annotated as `Ref<…>` -- see the note in `InsightsPage.vue`; the generic form breaks IntelliJ. */
@@ -141,8 +159,12 @@ const overview = computed<Fact[]>(() => {
         },
         { key: 'Duration', value: value.durationMs === null ? null : `${value.durationMs.toFixed(1)} ms` },
         { key: 'Recorded', value: value.recordedAt === null ? null : toDate(value.recordedAt).toLocaleString() },
+        // The record's OWN build, which may be older than the running server's on the list page. Absent in BRIEF.
+        ...(build.value === null ? [] : buildFacts(build.value)),
     ]
 })
+
+const build = computed(() => readBuildInfo(sliceFor('app-config')))
 
 /**
  * The record's slices, or none.
@@ -180,6 +202,11 @@ const overviewRuntime = computed(() => {
     const parsed = readRuntime(sliceFor('runtime'))
     return parsed === null ? [] : runtimeCells(parsed)
 })
+
+/** `Object.hasOwn` for the reason given at {@link tabFor}. */
+function iconFor(key: string): Component | null {
+    return Object.hasOwn(TAB_ICONS, key) ? TAB_ICONS[key] : null
+}
 
 function labelFor(key: string): string {
     return Object.hasOwn(TAB_LABELS, key) ? TAB_LABELS[key] : key
@@ -258,6 +285,7 @@ function tabFor(key: string): Component | null {
                         :aria-selected="slice.key === activeKey"
                         @click="activeKey = slice.key"
                     >
+                        <component :is="iconFor(slice.key)" v-if="iconFor(slice.key)" class="fk-tabs__icon" :size="14" aria-hidden="true" />
                         {{ labelFor(slice.key) }}
                     </button>
                 </nav>

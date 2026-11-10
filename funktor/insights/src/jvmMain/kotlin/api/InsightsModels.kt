@@ -1,5 +1,7 @@
 package io.peekandpoke.funktor.insights.api
 
+import io.peekandpoke.funktor.core.config.ktor.KtorConfig
+import io.peekandpoke.funktor.core.model.AppVersion
 import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -110,3 +112,28 @@ data class InsightsCollectorSlice(
     val key: String,
     val data: JsonElement,
 )
+
+/**
+ * The RUNNING server's build and environment, for the list page header: what the old insights bar showed
+ * (ULTRA-00190). A record's own values, possibly from an older build, are in its `app-config` slice.
+ */
+@Serializable
+data class InsightsServerInfo(
+    /** `<branch>-<rev>`, as the old bar showed it; empty when the build carries no git info. */
+    val git: String,
+    /** `git describe`, the old bar's tooltip; `n/a` without git info. */
+    val gitDesc: String,
+    /** `ktor.application.id`: the old bar's "Env". */
+    val applicationId: String,
+    /** `ktor.deployment.environment`. */
+    val environment: String,
+) {
+    companion object {
+        fun of(version: AppVersion, ktor: KtorConfig) = InsightsServerInfo(
+            git = version.describeGit(),
+            gitDesc = version.gitDesc,
+            applicationId = ktor.application.id,
+            environment = ktor.deployment.environment,
+        )
+    }
+}

@@ -3871,7 +3871,7 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1794317347,
+    "ts": 1794322692,
     "method": "GET",
     "url": "http://insights.funktor.local:80/_/funktor/insights/graphs/kontainer",
     "server": "build-host",
@@ -3879,6 +3879,6 @@
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 27.006215
+    "durationMs": 22.428426
   }
 }

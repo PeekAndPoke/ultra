@@ -224,6 +224,15 @@ describe('the other readers', () => {
         )
     })
 
+    it('a value that looks like an internal marker is just a value: each is shown in its own slot', () => {
+        // The old display swapped markers into the whole text, so a value spelling one took another's place
+        const marker = `${String.fromCharCode(0)}verbatim:0`
+
+        expect(valuesText({ a: JSON.stringify(marker), b: '9007199254740993' })).toBe(
+            `{\n  "a": ${JSON.stringify(marker)},\n  "b": 9007199254740993\n}`,
+        )
+    })
+
     it('a value that is not a string is dropped, not guessed', () => {
         const entry = readVault({ entries: [{ queryLanguage: 'aql', query: 'q', values: { a: '1', b: 2 } }] })!.entries[0]
 

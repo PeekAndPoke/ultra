@@ -5,6 +5,9 @@
  * The bar was an overlay on every page showing the current request's status and timing. It is gone
  * (maintainer, 2026-07-30); the same information is here, for every request rather than the current one.
  *
+ * The header shows the RUNNING server's git version, application id and environment, as the bar did
+ * (`GET …/server`, fetched once per mount, so again on every way back from a record). Without it -- an older server, a refusal -- the header is left out.
+ *
  * `path` is a path, not a URL: the writer stores `request.path()` deliberately so a `?token=` never
  * reaches the record. It is still attacker-controlled and still escaped on render.
  *
@@ -15,8 +18,10 @@ import type { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
 import type { InsightsRecordRef, InsightsRecordSummary } from '../models.ts'
 import { isSuccess } from '../runtime/apiResponse.ts'
 import { toDate } from '../runtime/datetime.ts'
+import FactList from '../ui/FactList.vue'
 import { toneAbove, toneForStatus } from '../ui/types.ts'
-import type { FkTone } from '../ui/types.ts'
+import type { Fact, FkTone } from '../ui/types.ts'
+import { buildFacts, serverBuildInfo } from './slices.ts'
 
 defineOptions({ name: 'InsightsListPage' })
 
@@ -79,6 +84,22 @@ async function load(): Promise<void> {
 
 watch(() => [page.value, props.epp, props.client], load, { immediate: true })
 
+/** The running server's build facts; empty until fetched, and when the server cannot say. */
+const server = ref<Fact[]>([])
+
+async function loadServer(): Promise<void> {
+    server.value = []
+
+    try {
+        const response = await props.client.insights.getServerInfo()
+        if (isSuccess(response) && response.data !== null) server.value = buildFacts(serverBuildInfo(response.data))
+    } catch {
+        // The header is a convenience: the list works without it
+    }
+}
+
+watch(() => props.client, loadServer, { immediate: true })
+
 /**
  * Duration thresholds inherited from the old bar, minus its fourth band.
  *
@@ -122,6 +143,9 @@ const hasNextPage = computed(() =>
 <template>
     <div class="fk-root fk-insights">
         <h3 class="fk-section__title">Recorded requests</h3>
+        <section v-if="server.length > 0" class="fk-section fk-server">
+            <FactList :facts="server" />
+        </section>
 
         <div v-if="problem !== null" class="fk-notice fk-notice--error">{{ problem }}</div>
         <div v-else-if="loading" class="fk-empty">Loading...</div>

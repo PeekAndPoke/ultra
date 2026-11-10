@@ -28,7 +28,7 @@
  * sanitising is wanted. Rendering escapes.
  */
 
-import type { StatCell } from '../ui/types.ts'
+import type { Fact, StatCell } from '../ui/types.ts'
 
 /*  Primitive narrowing  ------------------------------------------------------------------------------  */
 
@@ -429,40 +429,28 @@ function readValues(value: unknown): Record<string, string> | null {
  * The bind values as one pretty JSON document, `{name: value}`, for display.
  *
  * A value is pretty-printed only when re-printing it gives back the server's text exactly. Otherwise it is shown
- * as the server wrote it: a value cut at the length limit (no longer JSON), and a number JavaScript cannot hold
- * (a Long above 2^53, or `1.0`, which would read back as `1`) -- the text is the fact, the parse a guess.
+ * as the server wrote it: a value cut at the length limit (no longer JSON, so shown as a string), and a number
+ * JavaScript cannot hold (a Long above 2^53, or `1.0`, which would read back as `1`) -- the text is the fact, the
+ * parse a guess. Built per name, never by substituting markers into the whole: a value can contain anything.
  */
 export function valuesText(values: Record<string, string>): string {
-    const verbatim: string[] = []
-    const marker = (index: number) => `\u0000verbatim:${index}`
+    const entries = Object.entries(values)
+    if (entries.length === 0) return '{}'
 
-    const parsed = Object.fromEntries(
-        Object.entries(values).map(([name, text]) => {
-            try {
-                const value: unknown = JSON.parse(text)
-                if (JSON.stringify(value) === text) return [name, value]
-            } catch {
-                // not JSON: shown as the server wrote it
-            }
-            verbatim.push(text)
-            return [name, marker(verbatim.length - 1)]
-        }),
-    )
+    const lines = entries.map(([name, text]) => `  ${JSON.stringify(name)}: ${valueDisplay(text).replaceAll('\n', '\n  ')}`)
 
-    return verbatim.reduce(
-        (pretty, text, index) => pretty.replace(JSON.stringify(marker(index)), () => (isJson(text) ? text : JSON.stringify(text))),
-        JSON.stringify(parsed, null, 2),
-    )
+    return `{\n${lines.join(',\n')}\n}`
 }
 
-function isJson(text: string): boolean {
+function valueDisplay(text: string): string {
     try {
-        JSON.parse(text)
-        return true
+        const value: unknown = JSON.parse(text)
+        return JSON.stringify(value) === text ? JSON.stringify(value, null, 2) : text
     } catch {
-        return false
+        return JSON.stringify(text)
     }
 }
+
 
 export function readVault(data: unknown): VaultSlice | null {
     const rawEntries = asArray(asRecord(data)?.entries)
@@ -771,6 +759,65 @@ export function readAppConfig(data: unknown): AppConfigSlice | null {
     if (record.info === undefined && record.config === undefined) return null
 
     return { info: record.info, config: record.config }
+}
+
+/*  build info: the git version and environment the old insights bar showed  -----------------------------  */
+
+/**
+ * The build and environment: the git version and application id the old insights bar showed (ULTRA-00190), plus
+ * the environment. The list page reads the RUNNING server's from `GET …/server`; the Overview reads the record's
+ * own from its `app-config` slice, since a record may come from an older build.
+ */
+export interface BuildInfo {
+    /** `<branch>-<rev>`, as `AppVersion.describeGit()`; null when the build carries no git info. */
+    git: string | null
+    gitDesc: string | null
+    applicationId: string | null
+    environment: string | null
+}
+
+/** `AppVersion`'s placeholder for a build without git info: not a version, so shown as missing. */
+const NOT_AVAILABLE = 'n/a'
+
+function known(value: unknown): string | null {
+    const text = asString(value)
+    return text === null || text === '' || text === NOT_AVAILABLE ? null : text
+}
+
+/** The record's own build info, from its `app-config` slice; null without one (a BRIEF record). */
+export function readBuildInfo(data: unknown): BuildInfo | null {
+    const slice = readAppConfig(data)
+    if (slice === null) return null
+
+    const version = asRecord(asRecord(slice.info)?.version)
+    const ktor = asRecord(asRecord(slice.config)?.ktor)
+    const git = [known(version?.gitBranch), known(version?.gitRev)].filter((part) => part !== null).join('-')
+
+    return {
+        git: git === '' ? null : git,
+        gitDesc: known(version?.gitDesc),
+        applicationId: known(asRecord(ktor?.application)?.id),
+        environment: known(asRecord(ktor?.deployment)?.environment),
+    }
+}
+
+/** What `GET …/server` answers, as {@link BuildInfo}. */
+export function serverBuildInfo(server: { git: string, gitDesc: string, applicationId: string, environment: string }): BuildInfo {
+    return {
+        git: known(server.git),
+        gitDesc: known(server.gitDesc),
+        applicationId: known(server.applicationId),
+        environment: known(server.environment),
+    }
+}
+
+/** The facts both pages show; the git description goes next to the version, as the old bar's tooltip had it. */
+export function buildFacts(info: BuildInfo): Fact[] {
+    return [
+        { key: 'Git', value: info.git === null ? null : info.gitDesc === null ? info.git : `${info.git} (${info.gitDesc})` },
+        { key: 'Application', value: info.applicationId },
+        { key: 'Environment', value: info.environment },
+    ]
 }
 
 /*  Stat strips shared with the Overview section  -----------------------------------------------------  */

@@ -25,6 +25,17 @@
 
 - **Karango: `AqlTypedQuery.LANGUAGE` and `LANGUAGE_RAW` are now `internal`** (ULTRA-00228).
 
+- **Funktor insights Vue GUI: parity with the old GUI** (ULTRA-00190). An app that generates the TS SDK must now
+  declare `@lucide/vue` 1.71.0, `prismjs` 1.30.0 and `@types/prismjs` 1.26.6; the generator refuses to run without
+  them and prints the `pnpm add` line (a package without types of its own now also requires its `@types/` package).
+  - Queries, their values and the explain plan are highlighted (Prism, loaded on first use). Rendered from Prism's
+    token tree, never `v-html`; Prism is loaded in manual mode, and an app's own global `Prism` is put back.
+  - Every known tab has an icon (Lucide).
+  - The kontainer table sorts by any column on click, and shows each service's full class name.
+  - The git version, application id and environment: the running server's on the list page, from the new
+    superuser-only endpoint `GET /_/funktor/insights/server` (`InsightsApi.getServerInfo`, 404 where insights is
+    not active); the record's own in the detail Overview.
+
 - **Funktor insights shows query values again** (ULTRA-00171, maintainer decision 2026-11-09). The `vault` slice
   records each bind value as JSON text (`values`, each cut at 4000 characters), the raw query text (`aql-raw` too)
   and, with `VaultConfig.explain`, the EXPLAIN plan (`explain`). A repository that holds credentials withholds them:

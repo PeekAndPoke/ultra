@@ -64,13 +64,14 @@ class InsightsProductionGateSpec : FunktorApiSpec() {
             val ref = aRecordedRef()
             val recordParam = InsightsApiFeature.RecordParam(bucket = ref.bucket, file = ref.file)
 
-            withClue("control: the insights host serves all four") {
+            withClue("control: the insights host serves all five") {
                 insightsApp {
                     authenticate(superUserToken) {
                         request(insightsApi.insights.listRecords, wholeDepot) { status shouldBe HttpStatusCode.OK }
                         request(insightsApi.insights.getRecord, recordParam) { status shouldBe HttpStatusCode.OK }
                         request(insightsApi.insights.getKontainerGraph) { status shouldBe HttpStatusCode.OK }
                         request(insightsApi.insights.getDatabaseGraph) { status shouldBe HttpStatusCode.OK }
+                        request(insightsApi.insights.getServerInfo) { status shouldBe HttpStatusCode.OK }
                     }
                 }
             }
@@ -89,6 +90,9 @@ class InsightsProductionGateSpec : FunktorApiSpec() {
                     withClue("database graph") {
                         request(insightsApi.insights.getDatabaseGraph) { status shouldBe HttpStatusCode.NotFound }
                     }
+                    withClue("server info") {
+                        request(insightsApi.insights.getServerInfo) { status shouldBe HttpStatusCode.NotFound }
+                    }
                 }
             }
         }
@@ -102,6 +106,7 @@ class InsightsProductionGateSpec : FunktorApiSpec() {
                     request(insightsApi.insights.getRecord, recordParam) { status shouldBe HttpStatusCode.Unauthorized }
                     request(insightsApi.insights.getKontainerGraph) { status shouldBe HttpStatusCode.Unauthorized }
                     request(insightsApi.insights.getDatabaseGraph) { status shouldBe HttpStatusCode.Unauthorized }
+                    request(insightsApi.insights.getServerInfo) { status shouldBe HttpStatusCode.Unauthorized }
                 }
             }
         }

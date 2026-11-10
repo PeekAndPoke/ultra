@@ -1,9 +1,6 @@
 # ULTRA-00190: Insights — the Vue detail page and its collector tabs
 
-> **Status (2026-08-02): PAUSED.** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE
-> 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps
-> below (icons, highlighting, sort, FQNs, `vars`) and step 10 (delete `reference/` — kept until T4 ports from it). The
-> round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
+> **Status (2026-11-10): IN PROGRESS.** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps below (icons, highlighting, sort, FQNs, `vars`) and step 10 (delete `reference/` — kept until T4 ports from it). The round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
 >
 > **Part of:** ULTRA-00253 (Insights epic)
 >
@@ -346,21 +343,57 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
 
 ### Cross-cutting gaps
 
-- [ ] **Icons. Every tab had one; none of the Vue tabs do.** `cloud_upload_alternate` (request),
+- [x] **Icons** -- DONE 2026-11-10: Lucide (`@lucide/vue` 1.71.0), the old icon per tab (`InsightsDetailPage.TAB_ICONS`), decorative (`aria-hidden`); none for an app-defined collector. Was: **Every tab had one; none of the Vue tabs do.** `cloud_upload_alternate` (request),
       `cloud_download_alternate` (response), `user`, `compass_outline` (routing), `microchip` (runtime),
       `list` (logs), `tv` (view), `database` (vault), `cubes` (kontainer), `cog` (config). The registry
       already carries an `icon` for nav entries (`Nav(icon = "gauge")`), so there is a concept to hang
       this on — but no icon set ships with the SDK, and picking one is a dependency decision.
-- [ ] **Syntax highlighting.** The old GUI ran everything through Prism: `json()` was
+- [x] **Syntax highlighting** -- DONE 2026-11-10: `insights/CodeBlock.vue`, see the vault gaps. Was: The old GUI ran everything through Prism: `json()` was
       `prism(Language.Json)`, and the vault tab highlighted the query by its `queryLanguage` plus the
       explain output as `text`. `JsonTree` replaces the JSON case and is better (collapsible,
       searchable by eye) — **but query text is now unhighlighted plain `<pre>`.**
 - [x] **Three vis.js graphs** — ported 2026-10-19 (T1), `vis-network` 10.1.2. See
       ULTRA-00197 (insights graphs and static slices) Parts C+D.
-- [ ] **The bar's git version and environment id have no home.** The bar is deleted by decision, and
+- [x] **Git version and environment** -- DONE 2026-11-10: the running server's on the list page (new `GET …/server`), the record's own in the Overview (from `app-config`). Was: **The bar's git version and environment id have no home.** The bar is deleted by decision, and
       the list page absorbed status/duration — but `appInfo.version.describeGit()` and
       `appConfig.ktor.application.id` were bar items and are now shown nowhere. Both are in the
       `app-config` slice, so this is a placement decision, not a data problem.
+
+### Parity step 2026-11-10: review record (ledger)
+
+Scope: icons, Prism highlighting (`CodeBlock.vue`), kontainer sort + full FQNs, git/env (`GET …/server`, Overview),
+the SDK generator's `TYPES_PACKAGES`. Tests: vueVerify 99/0 (three clean runs before the last additions),
+funktor-all, insights, codegen green. Mutants P1–P12 (P5/P7/P10–P12 rewritten until red in a test, not by a compile
+error), Q1–Q5, S1–S2 red.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 impl | MAJOR | `CodeBlock.vue` load | An app's own global Prism in auto mode hands `manual: false` to our copy, which re-highlights the app's `language-*` blocks with none of its languages | fix | The stand-in `{manual: true, disableWorkerMessageHandler: true}` is now the global during EVERY load; restored after. `prism-host.spec` asserts the app's block is untouched; mutant Q1 red. (Also raised by security as MINOR 1) |
+| 1 impl/sec | MINOR | `CodeBlock.vue` finally | Our `{manual: true}` Prism stays on `window` when there was no global, so an app loading Prism later never auto-highlights | fix | Deleted after the load; Q2 red |
+| 1 sec | MINOR | `CodeBlock.vue`, JSON grammar | Greedy patterns rescan per token: crafted text (`/*` in every `$in` value, repeated in a plan) costs quadratic time | fix | No highlighting above 32,000 chars (`MAX_HIGHLIGHT_CHARS`); plain text instead. Q3 red. No server cap on the plan: it reads fine as text |
+| 1 sec | MINOR | `escaping.spec.ts` vault | Values and plan carry no payload; the highlighted path is never asserted | fix | Payload in a value and in the plan (4 positions), and tokens asserted in both. Q5b red |
+| 1 sec | MINOR | `slices.ts` `valuesText` (from ULTRA-00171) | A value spelling the internal marker took another value's slot | fix | Built per name, no markers; test with such a value |
+| 1 impl | MINOR | `KontainerTab.vue` definition sort | Sorted by the hidden FQN, so the column looks unsorted | fix | Sorted by what the cell shows; Type and Definition sorts tested; Q4 red |
+| 1 impl | MINOR | `InsightsServerInfoApiSpec` | Expected git values came from the code under test, all `n/a` | fix | `InsightsServerInfo.of` unit-tested with distinct literals; S1/S2 red |
+| 1 impl | MINOR | `InsightsModels.kt` `gitBranch` | Wire field nothing reads | fix | Dropped; `git` carries the branch |
+| 1 impl | MINOR | `InsightsListPage.vue:9` | "fetched once per client" is wrong: the list remounts | fix | "once per mount" |
+
+| 2 impl | MINOR | `CodeBlock.vue` load | The stand-in replaced the app's own Prism for the whole chunk download: an app calling `Prism.highlightAll()` or registering a language meanwhile threw | fix | The stand-in inherits from the app's Prism (`Object.create`); asserted mid-load in `prism-host.spec`; Q7 red. Accepted residual: an app that sets a NEW global Prism during the download loses it, because Prism overwrites the global as it evaluates (a guard was tried and shown not to work by its own test; a synchronous load would need extra modules the SDK barrel imports eagerly) |
+| 2 impl | MINOR | `parity.spec.ts` host element | `language-json` is not in Prism's bundle, so auto mode would not change it: the no-global case could not fail | fix | `language-javascript`; Q6 (no stand-in without an app Prism) red |
+| 2 impl | MINOR | `InsightsServerInfoApiSpec.kt:36` | Expected git values computed by the code under test | withdrawn in phase 2, applied anyway | Literals `""` and `n/a` |
+| 2 impl | MINOR | `insights.css` tokens | An app's Prism theme outside any layer repaints our tokens | accept | Cosmetic; noted in the CSS |
+| 2 impl (b) | MINOR | `escaping.spec.ts:108` | The values block's highlighting was not asserted on its own | fix | Query and values `pre` asserted separately; Q8 red |
+
+Round 2 phase 2: every round-1 fix holds; no rejected entries. **Verdict: gate PASS** (round 2 clean of
+CRITICAL/MAJOR; its MINORs applied in one batch, mutants Q6–Q8 red). vueVerify 99/99, funktor-all green.
+
+Also fixed: two tests of the REAL graph library (`graphs-real-library.spec.ts`) and the new highlighting checks
+waited a fixed `settle()` for a dynamic import, which more test files in parallel outlasted. They now wait for the
+import (`vi.waitFor`, `highlighted()`).
+
+Round 1 CLEAN (security): no attacker string becomes markup (text nodes via `h()`, classes only from grammar keys);
+a planted global Prism cannot inject; the endpoint is under the floor and the 404, discloses what `app-config`
+already shows; the three packages pinned exactly, no other lockfile entries.
 
 ### Per tab
 
@@ -380,9 +413,9 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
 
 ### `vault` — the four gaps
 
-- [ ] **Query syntax highlighting** — `prism(it.queryLanguage) { it.query }`, and `prism("text")` for the
+- [x] **Query syntax highlighting** -- DONE 2026-11-10: Prism's `tokenize()` rendered as Vue elements (no `v-html`), JSON and AQL grammars inlined, Prism lazy (own 18.8 kB chunk), loaded manual, an app's own global `Prism` put back. Was: — `prism(it.queryLanguage) { it.query }`, and `prism("text")` for the
       explain output. Needs a highlighter the SDK can ship.
-- [ ] **`vars`** — BLOCKED on ULTRA-00171 (query vars in insights), deliberately omitted,
+- [x] **`vars`** -- DONE 2026-11-10 by ULTRA-00171 (values shown; credential repositories withhold them). Was: BLOCKED on ULTRA-00171 (query vars in insights), deliberately omitted,
       and the reason the tab has no raw dump or JSON fallback either.
 - [x] **The repository graph** (red "Show Database Graph" button + network) — DONE 2026-10-19, from
       `GET …/graphs/database`, fetched on first click.
@@ -396,10 +429,10 @@ Read from the inert copy in `funktor/insights/reference/`, collector by collecto
       SemiDynamic `#9400D3`, DynamicOverride `#DC143C`); edge per injection, arrow at target, **dashed
       when `provisionType == Lazy`**, weight 2 Direct / 1 Lazy. **All of it IS derivable from the
       record**, unlike vault's — this one is purely a graph-library decision.
-- [ ] **Click-to-sort.** The old table was `ui.sortable.celled.table` with `semanticui-tablesort.js`
+- [x] **Click-to-sort** -- DONE 2026-11-10: every column header, again reverses, `aria-sort`; stable, so ties keep the reader's order. Was: The old table was `ui.sortable.celled.table` with `semanticui-tablesort.js`
       loaded by `InsightsGuiWebResources` and `$("table.sortable").tablesort()` in `gui.js`. The Vue
       table sorts once (instantiated first, then FQN) and cannot be re-sorted.
-- [ ] **Full FQNs.** The old table printed `service.cls.fqn` in full; the Vue one shortens to the simple
+- [x] **Full FQNs** -- DONE 2026-11-10: the Service column shows the full class name; the other columns keep the simple name with the full one as tooltip. Was: The old table printed `service.cls.fqn` in full; the Vue one shortens to the simple
       name with the FQN in a `title` tooltip. Deliberate for width, but it makes the column unsearchable
       with the browser's own find — worth revisiting alongside sorting.
 
@@ -811,3 +844,4 @@ responses, the 401 to a non-superuser included (unverified, outside this change)
 ## History
 
 - 2026-10-21: numbered ULTRA-00190 (was `docs/tasks/20260802-insights-vue-tabs.md`).
+- 2026-11-10: IN PROGRESS.

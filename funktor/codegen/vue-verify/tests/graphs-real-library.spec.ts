@@ -2,10 +2,10 @@
  * The REAL `vis-network`, unmocked. happy-dom has no canvas, so drawing fails -- which makes this the
  * test of the promise that a broken graph never takes its tab with it.
  */
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import KontainerTab from '../src/funktorsdk/insights/KontainerTab.vue'
 import VaultTab from '../src/funktorsdk/insights/VaultTab.vue'
-import { click, mount, recorded, recordedGraphs, settle, sliceOf } from './support.ts'
+import { click, mount, recorded, recordedGraphs, sliceOf } from './support.ts'
 import type { Mounted } from './support.ts'
 
 let mounted: Mounted | null = null
@@ -21,9 +21,11 @@ describe('when the graph library itself fails', () => {
         mounted = await mount(KontainerTab, { data: slice })
 
         await click(mounted.host, 'Show Full Graph')
-        await settle()
-
-        expect(mounted.host.querySelector('.fk-graph .fk-notice--error')?.textContent).toContain('could not be drawn')
+        // The real library is a 650 KB dynamic import: with other test files loading in parallel it can outlast settle()
+        await vi.waitFor(
+            () => expect(mounted!.host.querySelector('.fk-graph .fk-notice--error')?.textContent).toContain('could not be drawn'),
+            { timeout: 10_000 },
+        )
         expect(mounted.host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.info.services.length)
     })
 
@@ -32,9 +34,11 @@ describe('when the graph library itself fails', () => {
         mounted = await mount(VaultTab, { data: slice }, recordedGraphs().graphs)
 
         await click(mounted.host, 'Show Database Graph')
-        await settle()
-
-        expect(mounted.host.querySelector('.fk-graph .fk-notice--error')?.textContent).toContain('could not be drawn')
+        // The real library is a 650 KB dynamic import: with other test files loading in parallel it can outlast settle()
+        await vi.waitFor(
+            () => expect(mounted!.host.querySelector('.fk-graph .fk-notice--error')?.textContent).toContain('could not be drawn'),
+            { timeout: 10_000 },
+        )
         expect(mounted.host.querySelectorAll('.fk-query')).toHaveLength(slice.entries.length)
     })
 })

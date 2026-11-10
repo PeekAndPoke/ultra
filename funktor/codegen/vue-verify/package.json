@@ -8,6 +8,9 @@
     "verify": "vue-tsc --noEmit && vite build && vitest run"
   },
   "dependencies": {
+    "@lucide/vue": "1.71.0",
+    "@types/prismjs": "1.26.6",
+    "prismjs": "1.30.0",
     "vis-network": "10.1.2",
     "vue": "3.5.44",
     "zod": "4.6.7"

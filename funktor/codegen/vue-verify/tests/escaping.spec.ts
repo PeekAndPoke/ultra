@@ -18,7 +18,7 @@ import RoutingTab from '../src/funktorsdk/insights/RoutingTab.vue'
 import RuntimeTab from '../src/funktorsdk/insights/RuntimeTab.vue'
 import UserTab from '../src/funktorsdk/insights/UserTab.vue'
 import VaultTab from '../src/funktorsdk/insights/VaultTab.vue'
-import { mount, PAYLOAD, recorded, sliceOf } from './support.ts'
+import { highlighted, mount, PAYLOAD, recorded, sliceOf } from './support.ts'
 import type { Mounted } from './support.ts'
 
 vi.mock('vis-network/standalone', () => ({ Network: class {} }))
@@ -92,12 +92,23 @@ describe('a recorded <img onerror> renders as text', () => {
         await expectEscaped(RuntimeTab, slice, 2)
     })
 
-    it('vault: the query text and the connection', async () => {
+    it('vault: the query text, the connection, a bind value and the plan, all highlighted', async () => {
         const slice = sliceOf(recorded.vault(), 'vault')
         slice.entries[0].query = `${slice.entries[0].query} ${PAYLOAD}`
         slice.entries[0].connection = PAYLOAD
+        slice.entries[0].values = { v_1: JSON.stringify(PAYLOAD) }
+        slice.entries[0].explain = `{"parsedQuery": ${JSON.stringify(PAYLOAD)}}`
 
-        await expectEscaped(VaultTab, slice, 2)
+        await expectEscaped(VaultTab, slice, 4)
+
+        // The highlighted path, not only the plain text shown before Prism loads (ULTRA-00190)
+        await highlighted()
+        expect(mounted!.host.querySelector('img'), 'the highlighted payload reached the DOM as markup').toBeNull()
+        const card = mounted!.host.querySelector('.fk-query')!
+        const [query, values] = [...card.querySelectorAll(':scope > pre')]
+        expect(query.querySelectorAll('.token').length).toBeGreaterThan(0)
+        expect(values.querySelectorAll('.token').length).toBeGreaterThan(0)
+        expect(card.querySelectorAll('details pre .token').length).toBeGreaterThan(0)
     })
 
     it('kontainer: a class name and a code location', async () => {

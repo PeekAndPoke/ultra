@@ -312,6 +312,40 @@ class TsSdkGenerateCliCommandSpec : FreeSpec() {
                 runAliased("--out", dir.absolutePath, "--alias", "@sdk") shouldBe null
             }
 
+            "a package that ships no types needs its types package declared too" {
+                val prismBuilder = lazy {
+                    TsSdkBuilder.forTesting(
+                        listOf(
+                            RestApiTsContributor(lazyOf(listOf(FxDemoApiFeature(listOf(FxTalksApiRoutes()))))),
+                            object : TsSdkContributor {
+                                override val name = "fx:prism"
+                                override fun emit(context: TsSdkEmitContext) {
+                                    context.out.file("pages/Code.vue", "<script setup lang=\"ts\">\nimport Prism from 'prismjs'\n</script>\n")
+                                }
+                            },
+                        )
+                    )
+                }
+
+                fun runPrism(manifest: String): Throwable? {
+                    val dir = tempdir()
+                    File(dir, "package.json").writeText(manifest)
+
+                    return runCatching { TsSdkGenerateCliCommand(prismBuilder).parse(arrayOf("--out", dir.absolutePath)) }
+                        .exceptionOrNull()
+                }
+
+                val refused = runPrism("""{ "dependencies": { "zod": "4.4.3", "prismjs": "1.30.0" } }""")
+
+                withClue("prismjs is declared, but without @types/prismjs the app's vue-tsc cannot type the import") {
+                    (refused as TsSdkGenerateCliCommand.UndeclaredPackagesException).packages shouldBe
+                            mapOf("@types/prismjs" to listOf("pages/Code.vue"))
+                    refused.message!! shouldContain "@types/prismjs@${TsSdkGenerateCliCommand.TESTED_VERSIONS["@types/prismjs"]}"
+                }
+
+                runPrism("""{ "dependencies": { "zod": "4.4.3", "prismjs": "1.30.0" }, "devDependencies": { "@types/prismjs": "1.26.6" } }""") shouldBe null
+            }
+
             "the tested versions offered are the ones vue-verify pins" {
                 // Resolved from the module root, like the resource dirs in InsightsTsContributorSpec.
                 val pinned = Json.parseToJsonElement(File("vue-verify/package.json").readText())
