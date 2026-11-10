@@ -1,6 +1,7 @@
 # ULTRA-00052: Environment classification must fail closed on unknown environments
 
-> **Status (2026-07-22): NOT STARTED.**
+> **Status (2026-07-22): NOT STARTED.** 2026-11-10: `isQa` is no longer a prefix match. The maintainer chose `qa`,
+> `qa-<name>` and `qa<digits>` (ULTRA-00225); the code quoted below with `startsWith("qa")` predates that.
 >
 > **Part of:** ULTRA-00250 (Route auth and error disclosure epic)
 
@@ -318,3 +319,4 @@ Fixes applied: ...
 ## History
 
 - 2026-10-21: numbered ULTRA-00052 (was `docs/tasks/20260720-env-classification-allowlist.md`).
+- 2026-11-10: `isQa` tightened to `qa(-[a-z0-9-]+|[0-9]+)?`, any case (maintainer decision in ULTRA-00225).

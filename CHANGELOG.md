@@ -6,7 +6,7 @@
 
 - **Funktor insights only runs in development, and its API answers 404 where it is not active** (ULTRA-00225).
   `instrumentWithInsights(config, ktor)` takes the app's `KtorConfig`: with `enabled = true` outside `dev`, `test` or
-  `qa*` the boot fails with an `AppStartException` naming the environment; an enabled config that only reaches the
+  QA the boot fails with an `AppStartException` naming the environment; an enabled config that only reaches the
   kontainer records nothing there. Every other name counts as production,
   `staging` and a misspelt one too. The four insights endpoints (records, one record, both graphs) answer 404 to a
   superuser wherever insights is not active for the mount or the environment; before, the graphs were served even
@@ -24,6 +24,10 @@
   operator therefore no longer shows the operator.
 
 - **Karango: `AqlTypedQuery.LANGUAGE` and `LANGUAGE_RAW` are now `internal`** (ULTRA-00228).
+
+- **Funktor core: `KtorConfig.isQa` is `qa`, `qa-<name>` or `qa<digits>`, any case**, no longer any name starting with
+  `qa`. `qatar` or `qaprod` now count as production for `isDevelopment`, and so for insights (ULTRA-00225, maintainer
+  decision 2026-11-10).
 
 - **Funktor auth, a security fix: SSO no longer signs in to an account through an address the provider did not
   verify** (ULTRA-00118). A Google or GitHub account that claimed someone's address without verifying it signed in to

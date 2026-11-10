@@ -44,9 +44,20 @@ class KtorConfigSpec : StringSpec({
     }
 
     "development environments must be recognised" {
-        listOf("dev", "DEV", "test", "qa", "qa-eu").forEach { env ->
+        listOf("dev", "DEV", "test", "qa", "QA", "qa-eu", "qa-eu-2", "qa2", "QA17").forEach { env ->
             withClue("environment '$env' must be development") {
                 configFor(env).isDevelopment shouldBe true
+            }
+        }
+    }
+
+    "qa is qa, qa-<name> or qa<digits>, not any name that starts with qa" {
+        listOf("qatar", "qaprod", "qa-", "qa_eu", "qa eu", "qa2x", "qa-eu ", "qa-prod.mirror").forEach { env ->
+            withClue("environment '$env' must not be qa") {
+                val config = configFor(env)
+
+                config.isQa shouldBe false
+                config.isDevelopment shouldBe false
             }
         }
     }

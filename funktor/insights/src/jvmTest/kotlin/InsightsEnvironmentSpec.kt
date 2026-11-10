@@ -26,9 +26,9 @@ class InsightsEnvironmentSpec : StringSpec({
     fun env(name: String) = KtorConfig(deployment = KtorConfig.Deployment(environment = name))
 
     val development = listOf("dev", "test", "qa", "qa-eu", "QA2", "Dev")
-    val notDevelopment = listOf("prod", "live", "production", "staging", "prd", "", "\${ENV}", "dev ", "testing")
+    val notDevelopment = listOf("prod", "live", "production", "staging", "prd", "", "\${ENV}", "dev ", "testing", "qatar", "qaprod")
 
-    "only dev, test and qa* allow insights; every other name counts as production" {
+    "only dev, test and qa, qa-<name>, qa<digits> allow insights; every other name counts as production" {
         development.forEach { withClue(it) { env(it).allowsInsights shouldBe true } }
         notDevelopment.forEach { withClue(it) { env(it).allowsInsights shouldBe false } }
     }

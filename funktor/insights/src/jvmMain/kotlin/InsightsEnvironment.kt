@@ -5,8 +5,8 @@ import io.peekandpoke.funktor.core.lifecycle.AppStartException
 import io.peekandpoke.funktor.core.model.InsightsConfig
 
 /**
- * Whether this environment may run insights (ULTRA-00225): only a development one, `dev`, `test` or `qa*`
- * ([KtorConfig.isDevelopment]).
+ * Whether this environment may run insights (ULTRA-00225): only a development one, `dev`, `test`, `qa`, `qa-<name>` or
+ * `qa<digits>` ([KtorConfig.isDevelopment]).
  *
  * An allow-list on purpose. A record holds request headers, user records, config and queries, so every other name
  * counts as production: `prod` and `live`, but also `staging`, a typo, or an unresolved `${ENV}`.
@@ -25,7 +25,7 @@ internal fun refuseInsightsOutsideDevelopment(config: InsightsConfig?, ktor: Kto
 
     throw AppStartException(
         "Insights is enabled, but the environment '${ktor.deployment.environment}' is not a development one " +
-                "(dev, test, qa*). Insights records headers, users, config and queries, so it never runs in " +
+                "(dev, test, qa, qa-<name>, qa<digits>). Insights records headers, users, config and queries, so it never runs in " +
                 "production. Pass a disabled InsightsConfig to instrumentWithInsights in this environment."
     )
 }

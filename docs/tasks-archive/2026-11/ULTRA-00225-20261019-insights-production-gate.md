@@ -119,8 +119,13 @@ ULTRA-00198), which would surprise nobody if they changed next week.
 ## Open for the maintainer
 
 1. `qa*` is a prefix: should insights accept only `qa`, `qa-…` and `qa<digits>`? (Changing `isQa` itself: ULTRA-00052.)
+   **Answered 2026-11-10: "yes only qa, qa- and qa<digits>".** Done in `KtorConfig.isQa` itself, the one definition
+   (`isDevelopment` is its only consumer): `qa`, `qa-<name>` (`[a-z0-9-]+`) or `qa<digits>`, any case. Mutants Q1–Q4
+   red in `KtorConfigSpec`.
 2. The API's 404 is per mount. An app that records on `api.*` and serves the GUI from an uninstrumented `admin.*`
-   host gets 404 there. Intended, or should "active" be per app?
+   host gets 404 there. Intended, or should "active" be per app? **Answered 2026-11-10: "I lean to serve it through
+   api.* and have one switch for the entire application."** Needs a ticket of its own (moving `InsightsConfig` to
+   the app config); asked.
 
 ## History
 

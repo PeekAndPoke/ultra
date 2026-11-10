@@ -100,7 +100,8 @@ Runs after the batch: `:monko:core:test` 265/0, `:funktor:all:jvmTest` 269/0. (`
 ## Open for the maintainer
 
 - A database driver's exception message can carry query input (here a hash used as an operator) into the log slice
-  and the app's log when the exception escapes. A ticket for that?
+  and the app's log when the exception escapes. A ticket for that? **Answered 2026-11-10: yes, with a security review
+  first: ULTRA-00300.**
 
 ## History
 

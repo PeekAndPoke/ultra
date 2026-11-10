@@ -34,7 +34,8 @@ data class KtorConfig(
 
     val isTest: Boolean get() = deployment.environment.lowercase() == "test"
 
-    val isQa: Boolean get() = deployment.environment.lowercase().startsWith("qa")
+    /** `qa`, `qa-<name>` or `qa<digits>`, any case. Not a bare prefix: `qatar` or `qaprod` are not QA. */
+    val isQa: Boolean get() = qaEnvironment.matches(deployment.environment.lowercase())
 
     val isDevelopment: Boolean get() = isLocalDev || isTest || isQa
 
@@ -42,3 +43,6 @@ data class KtorConfig(
 
     val isNotProduction: Boolean get() = !isProduction
 }
+
+/** Top level, not a companion: Slumber reflects over [KtorConfig] and cannot read a private companion. */
+private val qaEnvironment = Regex("qa(-[a-z0-9-]+|[0-9]+)?")

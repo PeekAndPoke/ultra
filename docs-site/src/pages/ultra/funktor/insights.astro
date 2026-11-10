@@ -17,7 +17,7 @@ import {Code} from 'astro:components';
 
     <p>Insights is enabled per-route group by calling <code>instrumentWithInsights()</code> after
         installing the Kontainer. The insights config controls whether collection is active, and the
-        environment whether it may be: only <code>dev</code>, <code>test</code> and <code>qa*</code> run insights. Any
+        environment whether it may be: only <code>dev</code>, <code>test</code>, <code>qa</code>, <code>qa-&lt;name&gt;</code> and <code>qa&lt;digits&gt;</code> run insights. Any
         other environment refuses to boot when an enabled config reaches <code>instrumentWithInsights</code>, and the insights API answers 404 wherever
         insights is not active.</p>
 
