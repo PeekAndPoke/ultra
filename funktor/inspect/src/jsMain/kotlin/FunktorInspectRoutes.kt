@@ -1,8 +1,6 @@
 package io.peekandpoke.funktor.inspect
 
 import io.peekandpoke.funktor.inspect.cluster.FunktorClusterRoutes
-import io.peekandpoke.funktor.inspect.insights.InsightsRoutes
-import io.peekandpoke.funktor.inspect.insights.mountFunktorInsights
 import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.mountFunktorBackgroundJobs
 import io.peekandpoke.funktor.inspect.cluster.depot.mountFunktorDepot
 import io.peekandpoke.funktor.inspect.cluster.devtools.mountFunktorDevtools
@@ -10,6 +8,8 @@ import io.peekandpoke.funktor.inspect.cluster.locks.mountFunktorLocks
 import io.peekandpoke.funktor.inspect.cluster.storage.mountFunktorStorage
 import io.peekandpoke.funktor.inspect.cluster.vault.mountFunktorVault
 import io.peekandpoke.funktor.inspect.cluster.workers.mountFunktorWorkers
+import io.peekandpoke.funktor.inspect.insights.InsightsRoutes
+import io.peekandpoke.funktor.inspect.insights.mountFunktorInsights
 import io.peekandpoke.funktor.inspect.introspection.IntrospectionRoutes
 import io.peekandpoke.funktor.inspect.introspection.mountFunktorIntrospection
 import io.peekandpoke.funktor.inspect.logging.LoggingRoutes

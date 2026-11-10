@@ -3,7 +3,6 @@ package io.peekandpoke.funktor.inspect.insights
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
@@ -37,7 +36,10 @@ internal fun JsonElement?.asWrappedString(): String? = asString() ?: asRecord()?
 
 internal fun JsonElement?.asWrappedNumber(): Double? = asNumber() ?: asRecord()?.get("value").asNumber()
 
-private val compact = Json { prettyPrint = false }
+private val compact = Json
+
+/** Indented JSON, for display. */
+internal val prettyJson = Json { prettyPrint = true }
 
 /** A JSON value as compact text, for a cell that holds something other than a string. */
 internal fun JsonElement.toCompactText(): String = compact.encodeToString(JsonElement.serializer(), this)
@@ -323,8 +325,6 @@ internal fun readVault(data: JsonElement?): VaultSlice? {
     )
 }
 
-private val pretty = Json { prettyPrint = true }
-
 /**
  * The bind values as one pretty JSON document, `{name: value}`.
  *
@@ -344,7 +344,7 @@ internal fun valuesText(values: Map<String, String>): String {
 
 private fun valueDisplay(text: String): String = try {
     val value = compact.parseToJsonElement(text)
-    if (value.toCompactText() == text) pretty.encodeToString(JsonElement.serializer(), value) else text
+    if (value.toCompactText() == text) prettyJson.encodeToString(JsonElement.serializer(), value) else text
 } catch (_: Throwable) {
     JsonPrimitive(text).toCompactText()
 }
@@ -402,7 +402,7 @@ internal data class KontainerSlice(
     val services: List<KontainerService>,
 )
 
-/** The kontainer graph endpoint's data, read like a slice. */
+/** The kontainer graph endpoint's data, in the reader's shape. */
 internal data class KontainerGraphData(
     val fingerprint: String?,
     val services: List<KontainerService>,
@@ -470,16 +470,6 @@ internal fun readKontainer(data: JsonElement?): KontainerSlice? {
         numTotal = if (slim) null else record["numTotal"].asNumber(),
         graphFingerprint = record["graphFingerprint"].asString(),
         services = rawServices.map { it.readService() }.sortedForTable(),
-    )
-}
-
-internal fun readKontainerGraph(data: JsonElement?): KontainerGraphData? {
-    val record = data.asRecord() ?: return null
-    val services = record["services"].asArray() ?: return null
-
-    return KontainerGraphData(
-        fingerprint = record["fingerprint"].asString(),
-        services = services.map { it.readService() },
     )
 }
 
@@ -642,5 +632,3 @@ internal fun VaultSlice.cells(): List<StatCell> = listOf(
     StatCell("Explain", nsToMs(explain.totalNs)),
 )
 
-/** Whether a JSON value is null or absent. */
-internal fun JsonElement?.isNullOrJsonNull(): Boolean = this == null || this is JsonNull

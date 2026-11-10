@@ -17,7 +17,6 @@ import kotlinx.html.th
 import kotlinx.html.thead
 import kotlinx.html.title
 import kotlinx.html.tr
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
 /**
@@ -43,25 +42,16 @@ internal const val INSIGHTS_CSS = """
 .funktor-insights .insights-path { word-break: break-all; }
 """
 
-private val prettyJson = Json { prettyPrint = true }
-
 /** A value as indented JSON. */
 internal fun JsonElement.toPrettyText(): String = prettyJson.encodeToString(JsonElement.serializer(), this)
 
-internal fun Tone.color(): String? = when (this) {
-    Tone.Ok -> "green"
-    Tone.Warn -> "yellow"
-    Tone.Error -> "red"
-    Tone.Neutral -> null
-}
-
 /** A label in [tone]'s colour. */
 internal fun FlowContent.toneLabel(tone: Tone, text: String) {
-    when (tone.color()) {
-        "green" -> ui.green.label { +text }
-        "yellow" -> ui.yellow.label { +text }
-        "red" -> ui.red.label { +text }
-        else -> ui.basic.label { +text }
+    when (tone) {
+        Tone.Ok -> ui.green.label { +text }
+        Tone.Warn -> ui.yellow.label { +text }
+        Tone.Error -> ui.red.label { +text }
+        Tone.Neutral -> ui.basic.label { +text }
     }
 }
 
@@ -148,9 +138,8 @@ internal fun FlowContent.jsonView(value: JsonElement?) {
 }
 
 /** A collapsed section, opened by its [title]. */
-internal fun FlowContent.collapsed(title: String, open: Boolean = false, body: FlowContent.() -> Unit) {
+internal fun FlowContent.collapsed(title: String, body: FlowContent.() -> Unit) {
     details {
-        if (open) attributes["open"] = ""
         summary { ui.small.header { +title } }
         div { body() }
     }

@@ -37,7 +37,8 @@ class InsightsUi(
         }
 }
 
-class InsightsRoutes(mount: String = "/_/funktor/insights") {
+/** The pages' routes; not the API's base path, or a reload of a page would ask the backend for it. */
+class InsightsRoutes(mount: String = "/_/funktor/inspect/insights") {
     val list = Static(mount)
     val detail = Route2("$mount/{bucket}/{file}")
     fun detail(ref: InsightsRecordRef) = detail(ref.bucket, ref.file)

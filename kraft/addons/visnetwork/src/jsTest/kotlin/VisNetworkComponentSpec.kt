@@ -9,7 +9,6 @@ import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.testing.selectCss
-import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.utils.jsObject
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.streams.StreamSource
@@ -83,6 +82,7 @@ class VisNetworkComponentSpec : StringSpec() {
             // vis-network draws on a canvas: the label is no markup on the page
             root.selectCss("canvas").count() shouldBe 1
             root.selectCss("img").count() shouldBe 0
+            root.selectCss(".vis-network-problem").count() shouldBe 0
 
             // New data updates the live network, without a second one
             val first = drawn
@@ -100,7 +100,6 @@ class VisNetworkComponentSpec : StringSpec() {
             source(Shown(null))
             eventually { destroyed shouldBe 1 }
             root.selectCss(".vis-network").count() shouldBe 0
-            root.selectCss(".vis-network-problem").textContent() shouldBe ""
         }
     }
 

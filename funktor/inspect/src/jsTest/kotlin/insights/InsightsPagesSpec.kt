@@ -12,6 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.peekandpoke.funktor.insights.api.InsightsApiClient
 import io.peekandpoke.funktor.insights.api.InsightsCollectorSlice
+import io.peekandpoke.funktor.insights.api.InsightsDatabaseGraph
 import io.peekandpoke.funktor.insights.api.InsightsKontainerGraph
 import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
@@ -37,7 +38,10 @@ import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.html.Tag
 import kotlinx.html.div
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.await
 import org.w3c.dom.Element
+import kotlin.js.Date
+import kotlin.js.Promise
 
 /** Markup in a recorded value: it must reach the page as text, never as an element. */
 private const val ATTACK = "<img src=x onerror=alert(1)>"
@@ -50,6 +54,7 @@ private class FakeInsightsServer {
     val records = mutableMapOf<String, InsightsRecord>()
     var summaries: List<InsightsRecordSummary> = emptyList()
     var kontainerGraph = InsightsKontainerGraph(fingerprint = "fp1", services = emptyList())
+    var databaseGraph = InsightsDatabaseGraph(repos = emptyList())
 
     private fun answer(path: String): String? = when {
         path == "/_/funktor/insights/records" -> codec.encodeToString(
@@ -62,6 +67,9 @@ private class FakeInsightsServer {
 
         path == "/_/funktor/insights/graphs/kontainer" ->
             codec.encodeToString(InsightsKontainerGraph.serializer().api(), ApiResponse.ok(kontainerGraph))
+
+        path == "/_/funktor/insights/graphs/database" ->
+            codec.encodeToString(InsightsDatabaseGraph.serializer().api(), ApiResponse.ok(databaseGraph))
 
         path == "/_/funktor/insights/server" -> codec.encodeToString(
             InsightsServerInfo.serializer().api(),
@@ -181,6 +189,26 @@ private class DetailHost(ctx: Ctx<Props>) : Component<DetailHost.Props>(ctx) {
     }
 }
 
+/** Counts `Network.setData` and `setOptions` calls of every vis-network instance while [block] runs. */
+private suspend fun countingSetData(block: suspend (calls: () -> Int) -> Unit) {
+    val module: dynamic = (js("import('vis-network/standalone')") as Promise<dynamic>).await()
+    val prototype = module.Network.prototype
+    val originalData = prototype.setData
+    val originalOptions = prototype.setOptions
+    val counter: dynamic = js("({ calls: 0 })")
+    val wrap = js("(function (orig, counter) { return function (d) { counter.calls++; return orig.call(this, d); }; })")
+
+    prototype.setData = wrap(originalData, counter)
+    prototype.setOptions = wrap(originalOptions, counter)
+
+    try {
+        block { counter.calls.unsafeCast<Int>() }
+    } finally {
+        prototype.setData = originalData
+        prototype.setOptions = originalOptions
+    }
+}
+
 private suspend fun KQuery<Element>.tab(label: String) {
     eventually { selectCss(".tabular.menu .item").filter { it.textContent?.trim() == label }.size shouldBe 1 }
     selectCss(".tabular.menu .item").filter { it.textContent?.trim() == label }.first().let { KQuery(listOf(it)) }.click()
@@ -250,10 +278,11 @@ class InsightsPagesSpec : StringSpec() {
                 eventually { root.textContent() shouldContain "http://api.test:80/search" }
                 root.selectCss(".insights-mono").filter { it.textContent == ATTACK }.size shouldBe 2
 
-                // An app-defined collector: its raw JSON
+                // An app-defined collector: its raw JSON, highlighted, the markup in it as text
                 root.tab("custom")
-                eventually { root.selectCss(".funktor-insights code").textContent() shouldContain ATTACK }
-
+                eventually { root.textContent() shouldNotContain "http://api.test:80/search" }
+                eventually { root.selectCss(".bottom.attached.segment code .token.property").textContent() shouldBe "\"note\"" }
+                root.selectCss(".bottom.attached.segment code").textContent() shouldContain ATTACK
                 root.selectCss("img").count() shouldBe 0
             }
         }
@@ -317,12 +346,106 @@ class InsightsPagesSpec : StringSpec() {
                 eventually { root.selectCss(".vis-network canvas").count() shouldBe 1 }
                 server.count("/_/funktor/insights/graphs/kontainer") shouldBe 1
 
+                // Sorting the table re-renders the tab; the drawn graph must not be handed new data
+                countingSetData { calls ->
+                    KQuery(root.selectCss("th").filter { it.textContent?.trim() == "Type" }).click()
+                    eventually { root.selectCss("th.ascending.sorted").count() shouldBe 1 }
+                    calls() shouldBe 0
+                }
+
                 // Another record of the same fingerprint: the graph is not asked for again
                 ref(InsightsRecordRef("records-2026-11-10", "b.json"))
                 eventually { root.textContent() shouldContain "Injects and definitions are not part of this record" }
                 root.button("Show Full Graph")
                 eventually { root.textContent() shouldContain "Module.kt:42" }
                 server.count("/_/funktor/insights/graphs/kontainer") shouldBe 1
+            }
+        }
+
+        "the database graph is fetched on the first click, once per UI, and kept while the tab re-renders" {
+            val server = FakeInsightsServer()
+            server.databaseGraph = InsightsDatabaseGraph(
+                repos = listOf(
+                    InsightsDatabaseGraph.Repo(
+                        id = InsightsDatabaseGraph.Repo.Id(name = "users", connection = "arango::demo"),
+                        storedClasses = listOf(
+                            InsightsDatabaseGraph.StoredClass(
+                                fqn = "com.example.User",
+                                references = listOf(
+                                    InsightsDatabaseGraph.Reference(
+                                        repo = InsightsDatabaseGraph.Repo.Id(name = "orgs", connection = "arango::demo"),
+                                        fqn = "com.example.Org",
+                                    )
+                                ),
+                            )
+                        ),
+                    ),
+                    InsightsDatabaseGraph.Repo(
+                        id = InsightsDatabaseGraph.Repo.Id(name = "orgs", connection = "arango::demo"),
+                        storedClasses = emptyList(),
+                    ),
+                )
+            )
+            server.records["records-2026-11-10/a.json"] = record("a.json", vaultSlice)
+            server.records["records-2026-11-10/b.json"] = record("b.json", vaultSlice)
+
+            withDetail(server, "a.json") { root, ref ->
+                eventually { root.textContent() shouldContain "Show Database Graph" }
+                server.count("/_/funktor/insights/graphs/database") shouldBe 0
+
+                root.button("Show Database Graph")
+                eventually { root.selectCss(".vis-network canvas").count() shouldBe 1 }
+                root.textContent() shouldContain "2 nodes, 1 edges."
+
+                countingSetData { calls ->
+                    root.button("Database Graph Data")
+                    eventually { root.textContent() shouldContain "arango::demo" }
+                    calls() shouldBe 0
+                }
+
+                // The other record's tab is a new one, with no graph shown yet
+                ref(InsightsRecordRef("records-2026-11-10", "b.json"))
+                eventually { root.selectCss(".vis-network canvas").count() shouldBe 0 }
+                root.button("Show Database Graph")
+                eventually { root.selectCss(".vis-network canvas").count() shouldBe 1 }
+                server.count("/_/funktor/insights/graphs/database") shouldBe 1
+            }
+        }
+
+        "older record shapes read: a full kontainer slice with epoch seconds, a Monko json entry, no view" {
+            val server = FakeInsightsServer()
+            server.records["records-2026-11-10/a.json"] = record(
+                "a.json",
+                slice(
+                    "kontainer",
+                    """{"numOld": 0, "numTotal": 1, "info": {"services": [
+                        {"cls": {"fqn": "com.example.Clock"}, "type": "Prototype",
+                         "definition": {"creates": {"fqn": "com.example.Clock"}, "injectionType": "Prototype",
+                                        "injects": [], "codeLocation": {"location": "Clocks.kt:7"}},
+                         "instances": [{"cls": {"fqn": "com.example.Clock"}, "createdAt": 1700000000.5}]}
+                    ]}}""",
+                ),
+                slice(
+                    "vault",
+                    """{"entries": [{"connection": "mongo", "count": 1, "totalCount": 1, "query": null,
+                       "queryLanguage": "json", "varsCount": 0, "totalNs": 1000000}]}""",
+                ),
+                slice("template", """{"timeNs": null}"""),
+            )
+
+            withDetail(server, "a.json") { root, _ ->
+                eventually { root.textContent() shouldContain "full -- every definition inline" }
+                root.textContent() shouldContain "Clocks.kt:7"
+                root.textContent() shouldContain "1 / 0 / 1 -- not measured"
+                // Epoch SECONDS, as millis: not the year 58,000
+                root.textContent() shouldContain Date(1_700_000_000_500.0).toLocaleString()
+
+                root.tab("Database")
+                eventually { root.textContent() shouldContain "when Monko still put the bind values into its query text" }
+                root.textContent() shouldContain "unknownBind vars"
+
+                root.tab("View")
+                eventually { root.textContent() shouldContain "No view was rendered for this request." }
             }
         }
 

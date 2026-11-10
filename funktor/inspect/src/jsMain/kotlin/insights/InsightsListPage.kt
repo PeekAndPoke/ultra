@@ -112,7 +112,22 @@ class InsightsListPage(ctx: Ctx<Props>) : Component<InsightsListPage.Props>(ctx)
 
                 when (val current = state) {
                     is State.Loading -> ui.basic.segment { ui.active.inline.loader {} }
-                    is State.Failed -> problem(current.reason)
+                    is State.Failed -> {
+                        problem(current.reason)
+                        ui.basic.button {
+                            onClick { load() }
+                            icon.redo()
+                            +"Retry"
+                        }
+                        if (page > 1) {
+                            ui.basic.button {
+                                onClick { goTo(page - 1) }
+                                icon.arrow_left()
+                                +"Previous"
+                            }
+                        }
+                    }
+
                     is State.Loaded -> {
                         if (current.paged.items.isEmpty()) ui.basic.segment { +"No records" } else records(current.paged.items)
                         pager(current.paged)

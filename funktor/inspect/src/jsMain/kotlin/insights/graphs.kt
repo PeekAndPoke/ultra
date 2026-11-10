@@ -4,6 +4,7 @@ import io.peekandpoke.funktor.insights.api.InsightsApiClient
 import io.peekandpoke.funktor.insights.api.InsightsDatabaseGraph
 import io.peekandpoke.funktor.insights.api.InsightsKontainerGraph
 import io.peekandpoke.kraft.addons.visnetwork.VisEdge
+import io.peekandpoke.kraft.addons.visnetwork.VisNetworkComponent
 import io.peekandpoke.kraft.addons.visnetwork.VisNetworkData
 import io.peekandpoke.kraft.addons.visnetwork.VisNetworkOptions
 import io.peekandpoke.kraft.addons.visnetwork.VisNode
@@ -22,6 +23,11 @@ import kotlin.js.Date
 /** Which graph a network is: each had its own physics in the old GUI. */
 internal enum class NetworkKind { Instances, Full, Database }
 
+/**
+ * One network, built once and kept by the tab while what it is drawn from stays the same: [VisNetworkComponent]
+ * updates the live network whenever [data] or [options] is another object, so a rebuild per render would lay the
+ * graph out again on every sort click. vis-network keeps [data]'s node and edge objects and writes ids into the edges.
+ */
 internal class NetworkGraph(
     val kind: NetworkKind,
     val data: VisNetworkData,
@@ -29,7 +35,9 @@ internal class NetworkGraph(
     val edgeCount: Int,
     /** Edges not drawn because one end is no node, e.g. an injection whose declared type is no service key. */
     val undrawn: Int,
-)
+) {
+    val options: VisNetworkOptions = networkOptions(kind)
+}
 
 /** The old GUI's colours, by provider type. */
 private val typeColours = mapOf(

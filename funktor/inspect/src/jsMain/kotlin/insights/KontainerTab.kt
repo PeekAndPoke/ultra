@@ -50,6 +50,11 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
 
     private data class Sort(val column: Column, val descending: Boolean)
 
+    private class Drawn(val kind: NetworkKind, val graph: KontainerGraphData?, val network: NetworkGraph)
+
+    /** The network last drawn; the slice is fixed per instance, the tab is keyed by record and slice. */
+    private var drawn: Drawn? = null
+
     private var graph: KontainerGraphData? by value(null)
     private var fetchedAt: Date? by value(null)
     private var graphProblem: String? by value(null)
@@ -179,6 +184,15 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
         }
 
         val which = shown ?: return
+
+        // Keyed by the graph shown: switching graphs draws a new network rather than morphing the old one
+        network(slice, which, loaded)?.let { div { key = which.name; networkGraph(it) } }
+    }
+
+    /** The network for [which], built once per kind and loaded graph: see [NetworkGraph]. */
+    private fun network(slice: KontainerSlice, which: NetworkKind, loaded: KontainerGraphData?): NetworkGraph? {
+        drawn?.let { if (it.kind == which && it.graph === loaded) return it.network }
+
         val network = when {
             slice.shape == KontainerShape.Full -> kontainerNetwork(
                 if (which == NetworkKind.Instances) slice.services.filter { it.instances.isNotEmpty() } else slice.services,
@@ -189,8 +203,9 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
             else -> null
         }
 
-        // Keyed by the graph shown: switching graphs draws a new network rather than morphing the old one
-        network?.let { div { key = which.name; networkGraph(it) } }
+        drawn = network?.let { Drawn(which, loaded, it) }
+
+        return network
     }
 
     private fun sortKey(service: KontainerService, column: Column): Comparable<*> = when (column) {

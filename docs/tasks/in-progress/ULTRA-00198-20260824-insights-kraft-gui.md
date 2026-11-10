@@ -158,6 +158,34 @@ means rewriting the kontainer tab twice.
 - [x] A `vault` slice carrying `vars` must not put the value on the page — mutation-tested by
       reinstating a dump and confirming it goes red.
 
+## Review record
+
+Gate `/feature-review`, change set = file set of `38b70eba`, `b9060d6f`, `33c05401`, `134acab5` plus the fix batch
+(base: master before `38b70eba`).
+
+**Round 1 — level 1 (`reviewer-high`), blind, 2026-11-10. NOT CLEAN (1 MAJOR, found by two charters).**
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `insights/KontainerTab.kt:182`, `VaultTab.kt:107`, `graphs.kt` (+ `VisNetworkComponent.kt:64`) | Graph data and options rebuilt per render; a sort click or "Database Graph Data" calls `setData`/`setOptions`, the graph is laid out again (impl + domain) | **fix** | Confirmed by experiment first: a `setData` spy saw 1 call per sort click. Fixed: `NetworkGraph` builds its options once; both tabs keep the built graph until kind or loaded graph changes. Mutants F1-F3 red (spy counts `setData` and `setOptions`) |
+| 1 | MINOR | `InsightsPagesSpec.kt:254` | Unknown-collector test passed on the stale Request tab (impl) | **fix** | Waits for the Request content to go, asserts the highlighted `"note"` property in the panel; mutant F4 (unknown key renders nothing) red |
+| 1 | MINOR | `InsightsPagesSpec.kt` | Most tabs, the database graph, failure states untested (impl) | **fix (part)** | Added: database graph fetched once per UI and kept on re-render (F6 red), template null render time, older shapes. Remaining tabs' degradation untested: maintainer list |
+| 1 | MINOR | `InsightsListPage.kt:115` | Failed page load has no way out (impl) | **fix** | Retry button, and Previous when past page 1 |
+| 1 | MINOR | `VaultTab.kt:180`, `slices.kt:326`, `render.kt:46` | Three pretty `Json` instances, one per render (impl) | **fix** | One `prettyJson` in `slices.kt` |
+| 1 | MINOR | `VisNetworkComponentSpec.kt:103` | Problem-box assertion after unmount cannot fail (impl) | **fix (part)** | Asserted while mounted instead; a failing-creation case is not added (vis-network logs invalid options rather than throwing): maintainer list |
+| 1 | MINOR | `slices.kt`, `render.kt`, `VaultTab.kt` | SURPLUS: `readKontainerGraph`, `isNullOrJsonNull`, `collapsed(open)`, `networkGraph(onReady)`, `Tone.color()` unused (impl, domain) | **fix** | Removed; grep for the names is empty |
+| 1 | MINOR | `InsightsUi.kt:42` + demo `webpack.js:24` | Reload of a record page (`….json`) fails on the dev server: dot rule (domain) | **fix** | Demo admin `historyApiFallback = { disableDotRule: true }` |
+| 1 | MINOR | `Prism.kt:207`, `PrismJsInternals.kt:30` | Prism loads in auto mode (highlights every `language-*` of the page); output replaces preact-owned DOM (domain) | **maintainer list** | Pre-existing addon behaviour; part 1 unverified. A fix (manual mode, own child element) is an addon change with no deterministic test here |
+| 1 | MINOR | `InsightsPagesSpec.kt` | No test for older shapes (domain) | **fix** | Full kontainer slice with epoch-seconds `createdAt` (F5 red), Monko `json` entry (F7 red) |
+| 1 | MINOR | `InsightsUi.kt:40` | Default `InsightsRoutes` mount = the API base path (domain) | **fix** | Default `/_/funktor/inspect/insights` |
+| 1 | MINOR | `kotlin-js-store/yarn.lock` | vis-network not in the committed lock (security) | **maintainer list** | The lock is regenerated at release (`yarnLockAutoReplace`); version pinned exactly |
+| 1 | MINOR | `PrismJsInternals.kt:49` | Theme CSS from cdnjs (with SRI) (security) | **maintainer list** | Pre-existing addon behaviour |
+| 1 | MINOR | `slices.kt:345`, sorts, `FunktorInspectRoutes.kt:4` | 4-space vs Vue's 2-space values indent; bare word parsed as JSON; code-point sort vs `localeCompare`; import order (impl) | **fix (imports) / maintainer list (rest)** | Display-only differences |
+
+Probed CLEAN in round 1 (all three charters): every reader against `slices.ts` and the current collectors; no `unsafe {}`;
+Prism's innerHTML path takes a text node; vis-network string titles go to `innerText`; route params re-encoded; the
+auth floor and `requireActiveInsights` unchanged; legacy and withheld vault data never shown; 32k highlight cap.
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00198 (was `docs/tasks/20260824-insights-kraft-gui.md`).

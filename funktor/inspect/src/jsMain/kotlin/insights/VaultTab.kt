@@ -11,7 +11,6 @@ import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlin.js.Date
 
@@ -40,6 +39,12 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
     private var loading: Boolean by value(false)
     private var showGraph: Boolean by value(false)
     private var showData: Boolean by value(false)
+
+    /** The network drawn from [graph], built once: see [NetworkGraph]. */
+    private var drawn: Pair<InsightsDatabaseGraph, NetworkGraph>? = null
+
+    private fun network(loaded: InsightsDatabaseGraph): NetworkGraph =
+        drawn?.takeIf { it.first === loaded }?.second ?: databaseNetwork(loaded).also { drawn = loaded to it }
 
     private fun loadGraph() {
         if (graph != null || loading) return
@@ -104,7 +109,7 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
         graphProblem?.let { problem(it) }
 
         val loaded = graph
-        if (showGraph && loaded != null) networkGraph(databaseNetwork(loaded))
+        if (showGraph && loaded != null) networkGraph(network(loaded))
     }
 
     private fun FlowContent.query(index: Int, entry: VaultEntry) {
@@ -177,7 +182,7 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
 
         when {
             loaded != null -> codeBlock(
-                text = Json { prettyPrint = true }.encodeToString(InsightsDatabaseGraph.serializer(), loaded),
+                text = prettyJson.encodeToString(InsightsDatabaseGraph.serializer(), loaded),
                 language = "json",
             )
 
@@ -213,12 +218,12 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
 }
 
 /** A drawn graph with its counts; a failure to draw stays inside the graph's box. */
-internal fun FlowContent.networkGraph(graph: NetworkGraph, onReady: ((VisNetwork) -> Unit)? = null) {
+internal fun FlowContent.networkGraph(graph: NetworkGraph) {
     note(
         "${graph.nodeCount} nodes, ${graph.edgeCount} edges" +
             (if (graph.undrawn > 0) ", ${graph.undrawn} not drawn: their target is no node in this graph" else "") +
             "."
     )
 
-    VisNetwork(data = graph.data, options = networkOptions(graph.kind), height = "600px", onReady = onReady)
+    VisNetwork(data = graph.data, options = graph.options, height = "600px")
 }

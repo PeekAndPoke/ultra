@@ -20,8 +20,9 @@ if (devServer) {
     devServer.open = true
     devServer.hot = false
 
-    // History fallback so that reloads work properly
-    devServer.historyApiFallback = true
+    // History fallback so that reloads work properly. disableDotRule: an insights record page ends in ".json",
+    // which the fallback would otherwise take for a file request
+    devServer.historyApiFallback = { disableDotRule: true }
 }
 
 console.log(config)
