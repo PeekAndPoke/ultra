@@ -15,9 +15,6 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.funktor.rest.noInsights
 import io.peekandpoke.ultra.remote.ApiResponse
-import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
-import io.peekandpoke.ultra.remote.api
-import io.peekandpoke.ultra.remote.apiPaged
 import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
 
 /**
@@ -37,37 +34,8 @@ import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
 class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
 
     companion object {
-        const val base = "/_/funktor/insights"
-
-        /** The most recent records, newest first, paged. */
-        val ListRecords = Get(
-            uri = "$base/records",
-            response = InsightsRecordSummary.serializer().apiPaged(),
-        )
-
-        /** One full record, with its neighbours for prev/next navigation. */
-        val GetRecord = Get(
-            uri = "$base/records/{bucket}/{file}",
-            response = InsightsRecord.serializer().api(),
-        )
-
-        /** The kontainer's service definition graph. Static per blueprint, so a client may cache it by fingerprint. */
-        val GetKontainerGraph = Get(
-            uri = "$base/graphs/kontainer",
-            response = InsightsKontainerGraph.serializer().api(),
-        )
-
-        /** The database's repositories and references, built per request; `repos` is empty for an app without any. */
-        val GetDatabaseGraph = Get(
-            uri = "$base/graphs/database",
-            response = InsightsDatabaseGraph.serializer().api(),
-        )
-
-        /** The running server's git version and environment, for the list page header. */
-        val GetServerInfo = Get(
-            uri = "$base/server",
-            response = InsightsServerInfo.serializer().api(),
-        )
+        /** The base path of every insights endpoint. */
+        const val base = InsightsApiClient.base
 
         /** Upper bound on `epp`, so one request cannot walk the entire depot. */
         const val MAX_EPP = 200
@@ -82,7 +50,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         const val MAX_PAGE = 1_000_000
     }
 
-    val listRecords = ListRecords.mount(InsightsApiFeature.PagingParam::class) {
+    val listRecords = InsightsApiClient.ListRecords.mount(InsightsApiFeature.PagingParam::class) {
         docs {
             name = "List insights records"
         }.codeGen {
@@ -99,7 +67,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }
     }
 
-    val getRecord = GetRecord.mount(InsightsApiFeature.RecordParam::class) {
+    val getRecord = InsightsApiClient.GetRecord.mount(InsightsApiFeature.RecordParam::class) {
         docs {
             name = "Get one insights record"
         }.codeGen {
@@ -115,7 +83,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }
     }
 
-    val getKontainerGraph = GetKontainerGraph.mount {
+    val getKontainerGraph = InsightsApiClient.GetKontainerGraph.mount {
         docs {
             name = "Get the kontainer graph"
         }.codeGen {
@@ -127,7 +95,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }
     }
 
-    val getDatabaseGraph = GetDatabaseGraph.mount {
+    val getDatabaseGraph = InsightsApiClient.GetDatabaseGraph.mount {
         docs {
             name = "Get the database graph"
         }.codeGen {
@@ -140,7 +108,7 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
         }
     }
 
-    val getServerInfo = GetServerInfo.mount {
+    val getServerInfo = InsightsApiClient.GetServerInfo.mount {
         docs {
             name = "Get the server's version and environment"
         }.codeGen {

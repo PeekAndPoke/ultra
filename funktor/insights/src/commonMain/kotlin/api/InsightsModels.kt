@@ -1,7 +1,5 @@
 package io.peekandpoke.funktor.insights.api
 
-import io.peekandpoke.funktor.core.config.ktor.KtorConfig
-import io.peekandpoke.funktor.core.model.AppVersion
 import io.peekandpoke.ultra.datetime.MpInstant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -128,12 +126,6 @@ data class InsightsServerInfo(
     /** `ktor.deployment.environment`. */
     val environment: String,
 ) {
-    companion object {
-        fun of(version: AppVersion, ktor: KtorConfig) = InsightsServerInfo(
-            git = version.describeGit(),
-            gitDesc = version.gitDesc,
-            applicationId = ktor.application.id,
-            environment = ktor.deployment.environment,
-        )
-    }
+    /** The server builds one with `InsightsServerInfo.of(version, ktor)` (jvmMain). */
+    companion object
 }

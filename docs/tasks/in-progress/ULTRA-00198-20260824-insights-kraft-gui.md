@@ -1,11 +1,6 @@
 # ULTRA-00198: Insights — the Kraft (Kotlin/JS) GUI, on par with the Vue one
 
-> **Status (2026-10-19): PAUSED.** PAUSED 2026-10-19 (maintainer: budget precaution before the 0.114.0 release) — started as track T4 on
-> `wt/insights-kraft` (worktree `/opt/dev/peekandpoke/ultra-wt/insights-kraft`). Done so far, UNVERIFIED, committed as WIP
-> `24e745bf`: the four endpoint declarations moved to a commonMain `InsightsApiClient`, the API models moved to commonMain,
-> the server mounts them. Next on resume: re-take the generated-TS baseline FROM MASTER (the implementer's copy was not
-> kept), regenerate on the branch, `diff -r` (must be empty or explained), run the module tests, then the pages.
-> Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
+> **Status (2026-11-10): IN PROGRESS.** PAUSED 2026-10-19 (maintainer: budget precaution before the 0.114.0 release) — started as track T4 on `wt/insights-kraft` (worktree `/opt/dev/peekandpoke/ultra-wt/insights-kraft`). Done so far, UNVERIFIED, committed as WIP `24e745bf`: the four endpoint declarations moved to a commonMain `InsightsApiClient`, the API models moved to commonMain, the server mounts them. Next on resume: re-take the generated-TS baseline FROM MASTER (the implementer's copy was not kept), regenerate on the branch, `diff -r` (must be empty or explained), run the module tests, then the pages. Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
 >
 > **Part of:** ULTRA-00253 (Insights epic)
 >
@@ -38,6 +33,15 @@ So this is a new page, not a port of Kraft code. The two things that DO exist as
 
 - `funktor/insights/reference/` — the old renderers, verbatim, plus `TAB-SPECS.md`.
 - The Vue implementation, which already made every layout decision once.
+
+## Progress (2026-11-10)
+
+- [x] **Step 1, the WIP carried over** (not rebased; `24e745bf` re-done on master by hand, since the models and API
+      changed a lot after it): `InsightsApiClient` in commonMain with all five endpoints (incl. `GetServerInfo`,
+      ULTRA-00190), the models and graph models moved to commonMain (`InsightsServerInfo.of` stays jvm, as an
+      extension), `InsightsApi` mounts the client's declarations, `InsightsApiFeature`'s KDoc corrected. **Verified:**
+      the generated TS SDK regenerated and byte-identical to the one before (`diff -r`), vueVerify 99/99, insights,
+      funktor-all green, `funktor:inspect` compiles for JS.
 
 ## Two loose ends from the removal, fix them here
 
@@ -126,3 +130,4 @@ means rewriting the kontainer tab twice.
 ## History
 
 - 2026-10-21: numbered ULTRA-00198 (was `docs/tasks/20260824-insights-kraft-gui.md`).
+- 2026-11-10: IN PROGRESS.

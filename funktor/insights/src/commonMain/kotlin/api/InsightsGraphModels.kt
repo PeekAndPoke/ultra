@@ -3,7 +3,7 @@ package io.peekandpoke.funktor.insights.api
 import kotlinx.serialization.Serializable
 
 /**
- * The service definition graph of the app's kontainer, as [InsightsApi.GetKontainerGraph] serves it.
+ * The service definition graph of the app's kontainer, as [InsightsApiClient.GetKontainerGraph] serves it.
  *
  * Static per blueprint, which is why a record does not carry it: a record's `kontainer` slice lists
  * only the services that had instances, keyed by [Service.cls], plus the [fingerprint] of the graph it
@@ -59,7 +59,7 @@ data class InsightsKontainerGraph(
 }
 
 /**
- * The repositories and the references between the classes they store, as [InsightsApi.GetDatabaseGraph]
+ * The repositories and the references between the classes they store, as [InsightsApiClient.GetDatabaseGraph]
  * serves it.
  *
  * `DatabaseGraphModel` without its two dead fields: `Repo.connection` duplicated [Repo.Id.connection], and

@@ -40,6 +40,13 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                // `api`: InsightsApiClient and its DTOs are this module's published API -- they expose
+                // ApiClient, Paged, MpInstant, JsonElement and Flow.
+                api(project(":ultra:remote"))
+                api(project(":ultra:model"))
+                api(project(":ultra:datetime"))
+                api(Deps.KotlinX.serialization_json)
+                api(Deps.KotlinX.coroutines_core)
             }
         }
 

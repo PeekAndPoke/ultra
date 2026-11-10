@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  * Not all of it is request-specific: a `Singleton` entry is process state, shared by every request and
  * created by the boot or by whichever request first needed it; every other type is this kontainer's own.
  * `createdAt` only says whether this request was the one that created it. The definitions are static
- * per blueprint, so `InsightsApi.GetKontainerGraph` serves them once instead of every record repeating
+ * per blueprint, so `InsightsApiClient.GetKontainerGraph` serves them once instead of every record repeating
  * them; a reader joins on [Data.Service.cls].
  *
  * VUE-REF: `reference/collectors/KontainerCollector.kt`
