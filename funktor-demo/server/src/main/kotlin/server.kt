@@ -7,6 +7,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.http.content.staticResources
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
@@ -87,7 +88,7 @@ fun Application.module() = app.module(this) { app, config, init ->
         allowHost("b2b2c.funktor-demo.localhost:36592", schemes = listOf("http", "https"))
     }
 
-    install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
+    install(ContentNegotiation) {
         json(
             Json {
                 prettyPrint = true
@@ -101,7 +102,7 @@ fun Application.module() = app.module(this) { app, config, init ->
 
         host("api.*".toRegex()) {
             // Install Kontainer into ApplicationCall
-            installApiKontainer(app, config.api.insights)
+            installApiKontainer(app)
             // Mount the app
             init.get(ApiApp::class).apply { mountApiAppModule() }
         }
@@ -110,7 +111,7 @@ fun Application.module() = app.module(this) { app, config, init ->
 
         host("admin.*".toRegex()) {
             // Install Kontainer into ApplicationCall
-            installWwwKontainer(app, config.api.insights)
+            installWwwKontainer(app)
 
             staticResources(remotePath = "assets", basePackage = "assets")
 

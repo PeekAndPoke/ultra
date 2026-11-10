@@ -3,7 +3,6 @@ package io.peekandpoke.funktor.demo.server
 import io.ktor.server.routing.Route
 import io.peekandpoke.funktor.core.App
 import io.peekandpoke.funktor.core.installKontainer
-import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.demo.server.admin.AdminUserModule
 import io.peekandpoke.funktor.demo.server.api.ApiApp
 import io.peekandpoke.funktor.demo.server.b2b.B2bModule
@@ -20,28 +19,25 @@ import io.peekandpoke.monko.monko
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.funktor.codegen.funktorCodegen
 
-fun Route.installWwwKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) {
+fun Route.installWwwKontainer(app: App<FunktorDemoConfig>) {
     installKontainer {
-        app.kontainers.create {
-            // Insights config
-            insights?.let { with { insights } }
-        }
+        app.kontainers.create()
     }
 
-    instrumentWithInsights(insights, app.config.ktor)
+    // Records when `funktor.insights.enabled` is on
+    instrumentWithInsights(app)
 }
 
-fun Route.installApiKontainer(app: App<FunktorDemoConfig>, insights: InsightsConfig?) {
+fun Route.installApiKontainer(app: App<FunktorDemoConfig>) {
     installKontainer { call ->
         app.kontainers.create {
             // user record provider
             with { call.currentUserProvider() }
-            // Insights config
-            insights?.let { with { insights } }
         }
     }
 
-    instrumentWithInsights(insights, app.config.ktor)
+    // Records when `funktor.insights.enabled` is on
+    instrumentWithInsights(app)
 }
 
 fun createBlueprint(config: FunktorDemoConfig) = kontainer {

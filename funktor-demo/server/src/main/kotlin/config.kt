@@ -4,7 +4,6 @@ import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import io.peekandpoke.funktor.core.config.ktor.KtorConfig
-import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.messaging.MailingDevConfig
 import io.peekandpoke.funktor.messaging.senders.aws.AwsSesConfig
 import io.peekandpoke.funktor.messaging.senders.sendgrid.SendgridConfig
@@ -29,7 +28,6 @@ data class FunktorDemoConfig(
 
     data class ApiConfig(
         val baseUrl: String,
-        val insights: InsightsConfig = InsightsConfig(),
     )
 
     data class AwsConfig(

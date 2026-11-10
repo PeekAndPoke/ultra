@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor
 
+import io.peekandpoke.funktor.core.App
 import io.peekandpoke.funktor.messaging.senders.CapturedEmails
 import io.peekandpoke.funktor.messaging.storage.SentMessagesStorage
 import io.peekandpoke.funktor.testing.AppSpec
@@ -7,7 +8,10 @@ import io.peekandpoke.ultra.security.user.EmailAddress
 import io.peekandpoke.ultra.security.user.UserId
 import kotlinx.coroutines.runBlocking
 
-abstract class FunktorApiSpec : AppSpec<FunktorAllTestConfig>(testApp) {
+/** A spec against funktor-all's test app, or against [definition] (`insightsOffTestApp`: the same app, insights off). */
+abstract class FunktorApiSpec(
+    definition: App.Definition<FunktorAllTestConfig> = testApp,
+) : AppSpec<FunktorAllTestConfig>(definition) {
 
     protected val realm by service(TestUserRealm::class)
     protected val usersRepo by service(TestUsersRepo::class)

@@ -26,6 +26,6 @@ internal fun refuseInsightsOutsideDevelopment(config: InsightsConfig?, ktor: Kto
     throw AppStartException(
         "Insights is enabled, but the environment '${ktor.deployment.environment}' is not a development one " +
                 "(dev, test, qa, qa-<name>, qa<digits>). Insights records headers, users, config and queries, so it never runs in " +
-                "production. Pass a disabled InsightsConfig to instrumentWithInsights in this environment."
+                "production. Set funktor.insights.enabled = false in this environment's config."
     )
 }

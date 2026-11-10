@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import io.peekandpoke.funktor.core.config.ktor.KtorConfig
 import io.peekandpoke.funktor.core.funktorApp
+import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.InsightsFileRepository
 import io.peekandpoke.funktor.insights.InsightsRepository
 import io.peekandpoke.funktor.testing.AppSpecAware
@@ -72,16 +73,29 @@ val testApp = funktorApp<FunktorAllTestConfig>(
     },
 )
 
+/**
+ * The same app with its insights switch OFF (`funktor.insights.enabled = false`, ULTRA-00301): the insights API
+ * answers 404 on every host, and nothing records. The config file turns it on for the suite, so the blueprint
+ * overrides it; `instrumentWithInsights(app)` and the API read the blueprint's config, not the file's.
+ */
+val insightsOffTestApp = funktorApp<FunktorAllTestConfig>(
+    kontainers = { config ->
+        AppKontainers(
+            createBlueprint(config.copy(funktor = config.funktor.copy(insights = InsightsConfig.Disabled)))
+        )
+    },
+)
+
 inline fun <C : AppConfig> AppSpecAware<C>.apiApp(block: AppUnderTest<C>.() -> Unit) =
     testApp(host = "api.funktor.local").block()
 
 /**
  * The same API surface as [apiApp], mounted a second time with insights **recording**.
  *
- * Insights is not on the `api.*` host because recording is expensive — a FULL record serialises the
- * whole kontainer and app config, ~270 KB per request measured on real data — and every spec in this
- * module would pay it for coverage only one spec wants. The routes, auth chain and handlers are the
- * very same ones.
+ * The app's insights switch is on for the whole suite, so the insights API answers on both hosts (ULTRA-00301);
+ * only this host INSTRUMENTS its routes, because recording is expensive — a FULL record serialises the whole
+ * kontainer and app config, ~270 KB per request measured on real data — and every spec in this module would pay
+ * it for coverage only one spec wants. The routes, auth chain and handlers are the very same ones.
  *
  * **The record-writing half is what this isolates, not all of the cost.** `instrumentWithInsights`
  * calls `registerTracer()`, which walks to the application's root `Routing` and installs a `trace { }`

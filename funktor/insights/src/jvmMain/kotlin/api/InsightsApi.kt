@@ -31,7 +31,7 @@ import io.peekandpoke.ultra.vault.tools.DatabaseGraphBuilder
  * The server info names the build and environment; under the floor because a git describe can name a branch or
  * ticket, and an id the deployment.
  *
- * Every route also answers 404 unless insights is on for the mount and the environment allows it
+ * Every route also answers 404 unless the app's insights switch is on and the environment allows it
  * ([requireActiveInsights]).
  */
 class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
@@ -158,8 +158,8 @@ class InsightsApi : ApiRoutes("insights", authFloor = { isSuperUser() }) {
     }
 
     /**
-     * 404 unless this mount records insights ([Insights.isActive]: enabled, and an environment that allows it;
-     * ULTRA-00225). The graphs need no record, so without this a superuser of an app that records nothing still got
+     * 404 unless insights is active ([Insights.isActive]: the app's one switch, `funktor.insights.enabled`, and
+     * an environment that allows it; ULTRA-00225, ULTRA-00301), on whichever host the API is routed. The graphs need no record, so without this a superuser of an app that records nothing still got
      * every service definition and the repository graph. Checked after the floor, so an unauthorized caller gets the
      * floor's 401 as before.
      */

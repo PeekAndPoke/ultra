@@ -15,9 +15,9 @@ import io.ktor.server.routing.RoutingResolveTrace
 import io.ktor.server.routing.Routing
 import io.ktor.util.AttributeKey
 import io.ktor.server.request.path
-import io.peekandpoke.funktor.core.config.ktor.KtorConfig
+import io.peekandpoke.funktor.core.App
+import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.fullUrl
-import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.rest.FunktorRouteAttributes
 import io.peekandpoke.funktor.rest.InsightsLevel
 import io.peekandpoke.funktor.rest.InsightsOptions
@@ -30,16 +30,24 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.microseconds
 
 /**
- * Applies insights instrumentation to the Pipeline when [config] turns it on.
+ * Records insights for the requests of this route tree, when the app's one switch is on (ULTRA-00301).
  *
- * [ktor] decides whether it may: outside a development environment an enabled [config] refuses the boot
- * ([refuseInsightsOutsideDevelopment]).
+ * The switch is `funktor.insights.enabled`, read from [app]'s kontainer: the same config the insights API and
+ * the collectors read, so "on" means the same everywhere. Which route trees record is still decided here, per
+ * call; the insights API answers on every host it is routed on while the switch is on. Outside a development
+ * environment an enabled switch refuses the boot: here, and app-wide in [InsightsEnvironmentCheck].
  */
-fun Route.instrumentWithInsights(config: InsightsConfig?, ktor: KtorConfig) {
+fun Route.instrumentWithInsights(app: App<*>) {
+    instrumentWithInsights(app.kontainers.system().get(AppConfig::class))
+}
 
-    refuseInsightsOutsideDevelopment(config, ktor)
+/** [instrumentWithInsights] for a given [config]. */
+internal fun Route.instrumentWithInsights(config: AppConfig) {
+    val insights = config.funktor.insights
 
-    if (!config.isActiveIn(ktor)) {
+    refuseInsightsOutsideDevelopment(insights, config.ktor)
+
+    if (!insights.isActiveIn(config.ktor)) {
         return
     }
 

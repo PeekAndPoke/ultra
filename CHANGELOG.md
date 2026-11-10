@@ -5,12 +5,10 @@
 ### Breaking changes
 
 - **Funktor insights only runs in development, and its API answers 404 where it is not active** (ULTRA-00225).
-  `instrumentWithInsights(config, ktor)` takes the app's `KtorConfig`: with `enabled = true` outside `dev`, `test` or
-  QA the boot fails with an `AppStartException` naming the environment; an enabled config that only reaches the
-  kontainer records nothing there. Every other name counts as production,
-  `staging` and a misspelt one too. The four insights endpoints (records, one record, both graphs) answer 404 to a
-  superuser wherever insights is not active for the mount or the environment; before, the graphs were served even
-  where nothing was recorded. A caller below superuser still gets the 401. The `runtime` slice now redacts system
+  With the app's insights switch on (`funktor.insights.enabled`, ULTRA-00301) outside `dev`, `test` or QA the boot
+  fails with an `AppStartException` naming the environment. Every other name counts as production, `staging` and a
+  misspelt one too. The insights endpoints answer 404 to a superuser while the app's switch is off or the
+  environment does not allow it; before, the graphs were served even where nothing was recorded. A caller below superuser still gets the 401. The `runtime` slice now redacts system
   properties whose name looks secret (the header rule's pattern, plus `key`, `pass`, `pwd`, and `sun.java.command`) or
   whose value carries a URL password or a `password=` parameter. Older depot records are not rewritten: those written
   before this keep their properties, and those written before 2026-10-19 may hold raw AQL with its values inlined,
@@ -24,6 +22,15 @@
   operator therefore no longer shows the operator.
 
 - **Karango: `AqlTypedQuery.LANGUAGE` and `LANGUAGE_RAW` are now `internal`** (ULTRA-00228).
+
+- **Funktor insights: one switch for the whole app** (ULTRA-00301). `funktor.insights.enabled` in the app config
+  (`FunktorConfig.insights`) replaces the per-mount `InsightsConfig`: `instrumentWithInsights(app)` takes the `App`
+  and no config, and the kontainer no longer takes `with { InsightsConfig }`. Which route groups record is still
+  decided by calling `instrumentWithInsights(app)` on them; while the switch is on, the insights API answers on every
+  host it is routed on (a GUI on `admin.*` reads what `api.*` recorded), while it is off, 404 everywhere. The boot
+  refusal outside a development environment is app-wide now (`InsightsEnvironmentCheck`, at start, whether or not a
+  route is instrumented) and names the config key. Move `insights { enabled = … }` from wherever
+  the app kept it into `funktor { }`.
 
 - **Funktor insights Vue GUI: parity with the old GUI** (ULTRA-00190). An app that generates the TS SDK must now
   declare `@lucide/vue` 1.71.0, `prismjs` 1.30.0 and `@types/prismjs` 1.26.6; the generator refuses to run without

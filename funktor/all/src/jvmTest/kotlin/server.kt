@@ -8,7 +8,6 @@ import io.ktor.server.routing.host
 import io.ktor.server.routing.routing
 import io.peekandpoke.funktor.core.App
 import io.peekandpoke.funktor.core.installKontainer
-import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.instrumentWithInsights
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiStatusPages.installApiStatusPages
@@ -31,35 +30,34 @@ fun Application.module() = testApp.module(this) { app, _, init ->
 
     routing {
         host("api.*".toRegex()) {
-            mountApi(app, init, insights = null)
+            mountApi(app, init, record = false)
         }
 
-        // The identical API surface with insights recording ON — see `insightsApp`. Two mounts rather
-        // than one flag because `instrumentWithInsights` decides at INSTALL time, so a single mount
-        // would either record for every spec in this module or for none. Note this isolates the
-        // record WRITING; the routing tracer it installs is application-global either way.
+        // The identical API surface, RECORDING -- see `insightsApp`. The app's insights switch is on for the whole
+        // suite (`funktor.insights.enabled`, ULTRA-00301), so the insights API answers on both hosts; only this one
+        // instruments its routes, so only this one writes records. Note this isolates the record WRITING; the
+        // routing tracer it installs is application-global either way.
         host("insights.*".toRegex()) {
-            mountApi(app, init, insights = InsightsConfig(enabled = true))
+            mountApi(app, init, record = true)
         }
     }
 }
 
-/** Mounts every registered [ApiFeature]'s routes, recording insights when [insights] is enabled. */
+/** Mounts every registered [ApiFeature]'s routes, recording insights when [record] is set and the switch is on. */
 private fun Route.mountApi(
     app: App<FunktorAllTestConfig>,
     init: Kontainer,
-    insights: InsightsConfig?,
+    record: Boolean,
 ) {
     installKontainer { call ->
         app.kontainers.create {
             with { call.currentUserProvider() }
-            insights?.let { with { it } }
         }
     }
 
     installApiStatusPages()
 
-    instrumentWithInsights(insights, app.config.ktor)
+    if (record) instrumentWithInsights(app)
 
     authenticate(AUTH_JWT, AUTH_ANON) {
         val allRoutes = init.getAll(ApiFeature::class)

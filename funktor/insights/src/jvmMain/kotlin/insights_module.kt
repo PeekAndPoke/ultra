@@ -6,7 +6,6 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.kontainerOrNull
-import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.api.InsightsApiFeature
 import io.peekandpoke.funktor.insights.collectors.AppConfigCollector
 import io.peekandpoke.funktor.insights.collectors.KontainerCollector
@@ -30,10 +29,10 @@ val ApplicationCall.funktorInsights get() = kontainerOrNull?.funktorInsights
 val RoutingContext.funktorInsights get() = call.funktorInsights
 
 val Funktor_Insights = module {
-    dynamic(InsightsConfig::class) { InsightsConfig.Disabled }
+    dynamic(Insights::class) { appConfig: AppConfig, kontainer: Kontainer ->
+        // One switch for the whole app (ULTRA-00301); the environment decides too (ULTRA-00225)
+        val config = appConfig.funktor.insights
 
-    dynamic(Insights::class) { config: InsightsConfig, appConfig: AppConfig, kontainer: Kontainer ->
-        // The environment decides too: an enabled config records nothing outside development (ULTRA-00225)
         when (config.isActiveIn(appConfig.ktor)) {
             false -> InsightsDisabled(config)
 
@@ -79,6 +78,8 @@ val Funktor_Insights = module {
 
     // Fails the boot on duplicate collector keys — see the class for why it cannot wait
     singleton(CollectorKeyUniquenessCheck::class)
+    // Fails the boot when the insights switch is on outside development, instrumented routes or not
+    singleton(InsightsEnvironmentCheck::class)
 
     // The static graphs. A true singleton, so the kontainer graph is built once per blueprint
     singleton(InsightsGraphs::class)

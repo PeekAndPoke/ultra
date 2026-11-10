@@ -21,8 +21,9 @@ interface Insights : RequestMetricsProvider {
     val config: InsightsConfig
 
     /**
-     * Whether this request is recorded: the config turns insights on AND the environment allows it (ULTRA-00225). The
-     * insights API answers 404 when it is false, so the kontainer decides both in one place.
+     * Whether insights is active for this app: its one switch, `funktor.insights.enabled`, is on AND the environment
+     * allows it (ULTRA-00225, ULTRA-00301). A request is recorded when this holds and its route tree is instrumented;
+     * the insights API answers 404 when it is false, on every host.
      */
     val isActive: Boolean get() = false
 

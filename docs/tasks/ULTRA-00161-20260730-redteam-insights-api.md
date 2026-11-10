@@ -154,6 +154,11 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
     app's API-key or invitation store without `withholdingQueryValues()`. And a value that breaks the record:
     NaN, a self-referencing map, a 10 MB document.
 
+43. **(ULTRA-00301) One switch for the app** — find a way to get insights active in `prod`, `staging` or an unknown
+    environment: the switch in `application.common.conf`, an env-var substitution, a blueprint that sets it in code,
+    an app that never instruments a route. And on a dev/qa box with the switch on: which hosts of the app answer the
+    insights API (every host routing `InsightsApiFeature`), and does any of them face the internet?
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes

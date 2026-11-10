@@ -11,7 +11,7 @@
 >
 > **DECIDED 2026-11-09 (maintainer):** parity with the old GUI on both Vue and Kraft, as far as possible. Query values are shown (ULTRA-00171). The git version and environment id go in the list page header and the detail Overview. Kraft uses its existing Semantic UI icons and the `prismjs` addon. On resume: carry the one WIP commit `24e745bf` over to master and verify it there instead of rebasing a branch 448 commits behind.
 
-> **2026-11-10:** blocked by ULTRA-00301 (one insights switch for the whole app; the GUI talks to the API on `api.*`).
+> **2026-11-10:** ULTRA-00301 DONE (one insights switch for the whole app; the GUI talks to the API on `api.*`): unblocked.
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Counterpart:** ULTRA-00190 (insights vue tabs) — the Vue implementation and its full

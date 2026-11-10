@@ -30,7 +30,7 @@ class InsightsGraphs(private val blueprint: KontainerBlueprint) {
      * The blueprint's service graph, built on first use.
      *
      * Read from a kontainer created WITHOUT dynamic overrides. A request's kontainer swaps some services
-     * for instances handed in at creation (`UserProvider`, `InsightsConfig`), which it reports as
+     * for instances handed in at creation (`UserProvider`, `QueryProfiler`), which it reports as
      * `DynamicOverride` with an empty definition — a graph read from it would depend on who asked.
      * Sorted, so equal blueprints give equal fingerprints whatever order the kontainer lists them in.
      */

@@ -5,13 +5,18 @@ import impl.InsightsFull
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContain as shouldContainElement
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.peekandpoke.funktor.core.config.AppConfig
+import io.peekandpoke.funktor.core.config.funktor.FunktorConfig
 import io.peekandpoke.funktor.core.config.ktor.KtorConfig
+import io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks
 import io.peekandpoke.funktor.core.lifecycle.AppStartException
 import io.peekandpoke.funktor.core.model.InsightsConfig
 import io.peekandpoke.funktor.insights.collectors.RuntimeCollector
@@ -24,6 +29,12 @@ import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 class InsightsEnvironmentSpec : StringSpec({
 
     fun env(name: String) = KtorConfig(deployment = KtorConfig.Deployment(environment = name))
+
+    /** An app config with the one insights switch (ULTRA-00301) set to [enabled]. */
+    fun app(environment: String, enabled: Boolean) = AppConfig.of(
+        ktor = env(environment),
+        funktor = FunktorConfig(insights = InsightsConfig(enabled = enabled)),
+    )
 
     val development = listOf("dev", "test", "qa", "qa-eu", "QA2", "Dev")
     val notDevelopment = listOf("prod", "live", "production", "staging", "prd", "", "\${ENV}", "dev ", "testing", "qatar", "qaprod")
@@ -59,7 +70,7 @@ class InsightsEnvironmentSpec : StringSpec({
         shouldThrow<AppStartException> {
             testApplication {
                 application {
-                    routing { instrumentWithInsights(InsightsConfig(enabled = true), env("prod")) }
+                    routing { instrumentWithInsights(app("prod", enabled = true)) }
                 }
                 startApplication()
             }
@@ -68,26 +79,72 @@ class InsightsEnvironmentSpec : StringSpec({
         // The same app in a development environment boots
         testApplication {
             application {
-                routing { instrumentWithInsights(InsightsConfig(enabled = true), env("dev")) }
+                routing { instrumentWithInsights(app("dev", enabled = true)) }
             }
             startApplication()
         }
     }
 
-    "the kontainer hands out InsightsDisabled for an enabled config in production, InsightsFull in development" {
-        fun insightsIn(environment: String) = kontainer {
+    "the kontainer reads the app's one switch: InsightsFull only when it is on in development" {
+        fun insightsIn(environment: String, enabled: Boolean) = kontainer {
             funktorInsights()
-            instance(AppConfig::class, AppConfig.of(ktor = env(environment)))
+            instance(AppConfig::class, app(environment, enabled))
             // What funktor core and auth provide in a real app
             instance(QueryProfiler::class, NullQueryProfiler)
             instance(UserProvider::class, UserProvider.anonymous)
-        }.create {
-            with { InsightsConfig(enabled = true) }
-        }.get(Insights::class)
+        }.create().get(Insights::class)
 
         // The API asks `isActive` too, so this also decides its 404
-        insightsIn("prod").shouldBeInstanceOf<InsightsDisabled>().isActive shouldBe false
-        insightsIn("dev").shouldBeInstanceOf<InsightsFull>().isActive shouldBe true
+        insightsIn("dev", enabled = true).shouldBeInstanceOf<InsightsFull>().isActive shouldBe true
+        insightsIn("dev", enabled = false).shouldBeInstanceOf<InsightsDisabled>().isActive shouldBe false
+        insightsIn("prod", enabled = true).shouldBeInstanceOf<InsightsDisabled>().isActive shouldBe false
+    }
+
+    "a switch that is off instruments nothing and refuses nothing, in any environment" {
+        testApplication {
+            application {
+                routing { instrumentWithInsights(app("prod", enabled = false)) }
+            }
+            startApplication()
+        }
+    }
+
+    "the app-wide check refuses the start with the switch on outside development, instrumented routes or not" {
+        shouldThrow<AppStartException> { InsightsEnvironmentCheck(app("prod", enabled = true)).check() }
+            .message shouldContain "'prod'"
+
+        InsightsEnvironmentCheck(app("prod", enabled = false)).check()
+        InsightsEnvironmentCheck(app("dev", enabled = true)).check()
+    }
+
+    "the app-wide check runs at start: the insights module registers it" {
+        kontainer {
+            funktorInsights()
+            instance(AppConfig::class, app("dev", enabled = false))
+            instance(QueryProfiler::class, NullQueryProfiler)
+            instance(UserProvider::class, UserProvider.anonymous)
+        }.create().getAll(AppLifeCycleHooks.OnAppStarting::class).map { it::class } shouldContainElement InsightsEnvironmentCheck::class
+    }
+
+    "routes are instrumented only while the switch is on" {
+        fun instrumented(config: AppConfig): Boolean {
+            var root: Routing? = null
+
+            testApplication {
+                application {
+                    routing {
+                        root = this
+                        route("/x") { instrumentWithInsights(config) }
+                    }
+                }
+                startApplication()
+            }
+
+            return RoutingInstrumentation.Registry.contains(root)
+        }
+
+        instrumented(app("dev", enabled = true)) shouldBe true
+        instrumented(app("dev", enabled = false)) shouldBe false
     }
 
     "system properties whose name or value looks secret are redacted; the rest stay" {
