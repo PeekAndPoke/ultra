@@ -115,7 +115,14 @@ interface QueryProfiler {
             val queryLanguage: String,
             override var query: String? = null,
         ) : Entry {
+            /** Set by [ValuesWithheldQueryProfiler] before the driver reports anything; see [Entry.valuesWithheld]. */
+            override var valuesWithheld: Boolean = false
+
+            /** When [valuesWithheld], only the names are kept: every value is dropped on the way in. */
             override var vars: Map<String, Any?>? = null
+                set(value) {
+                    field = if (valuesWithheld) value?.mapValues { null } else value
+                }
 
             /** The number of results returned */
             override var count: Long? = null
@@ -123,8 +130,11 @@ interface QueryProfiler {
             /** The total number of results matching the query */
             override var totalCount: Long? = null
 
-            /** The query plan as returned by EXPLAIN */
+            /** The query plan as returned by EXPLAIN. Dropped when [valuesWithheld]: the database fills it with them. */
             override var queryExplained: String? = null
+                set(value) {
+                    field = if (valuesWithheld) null else value
+                }
 
             override val measureQuery: StopWatch.Impl = StopWatch.Impl()
             override val measureIterator: StopWatch.Impl = StopWatch.Impl()
@@ -132,6 +142,12 @@ interface QueryProfiler {
             override val measureDeserializer: StopWatch.Impl = StopWatch.Impl()
             override val measureExplain: StopWatch.Impl = StopWatch.Impl()
         }
+
+        /**
+         * True when the query came through a driver that withholds its values ([withholdingValues]): a repository
+         * that holds credentials. [vars] then keeps only the names, and [queryExplained] stays null.
+         */
+        val valuesWithheld: Boolean get() = false
 
         /** The query as sent to the database */
         var query: String?

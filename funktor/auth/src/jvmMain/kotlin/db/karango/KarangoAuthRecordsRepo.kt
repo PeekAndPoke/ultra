@@ -47,7 +47,8 @@ class KarangoAuthRecordsRepo(
 ) : AuthRecordStorage.Adapter.Vault.Repo, EntityRepository<AuthRecord>(
     name = name,
     storedType = kType(),
-    driver = driver,
+    // Holds credentials (password hashes, token and session hashes): insights records these queries without their values (ULTRA-00171)
+    driver = driver.withholdingQueryValues(),
     hooks = Repository.Hooks
         .of(onAfterSaves)
         .plus(timestamped.onBeforeSave())

@@ -21,6 +21,7 @@ import io.peekandpoke.ultra.vault.VaultHookScope
 import io.peekandpoke.ultra.vault.ensureKey
 import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
+import io.peekandpoke.ultra.vault.profiling.withholdingValues
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -38,6 +39,8 @@ import org.bson.codecs.DocumentCodec
 import org.bson.conversions.Bson
 import org.bson.json.JsonWriterSettings
 import org.bson.types.ObjectId
+import java.util.Collections
+import java.util.WeakHashMap
 
 class MonkoDriver(
     private val lazyCodec: Lazy<MonkoCodec>,
@@ -48,6 +51,21 @@ class MonkoDriver(
     val hookScope: VaultHookScope = VaultHookScope.Inline(),
 ) {
     companion object {
+        /**
+         * The server version per client, asked once per JVM: the driver is created per request, and copied per
+         * repository (`withLog`, `withholdingQueryValues`), so a per-instance lazy asked the server again each time.
+         */
+        private val versions: MutableMap<MongoClient, String> = Collections.synchronizedMap(WeakHashMap())
+
+        private fun versionOf(client: MongoClient): String = versions.getOrPut(client) {
+            runBlocking {
+                client
+                    .getDatabase("admin")
+                    .runCommand(Document("buildInfo", 1))
+                    .getString("version")
+            }
+        }
+
         private val prettyJsonWriterSettings = JsonWriterSettings.builder().indent(true).build()
 
         private fun Document.toPrettyJson(): String {
@@ -283,14 +301,20 @@ class MonkoDriver(
         hookScope = hookScope,
     )
 
-    private val version: String by lazy {
-        runBlocking {
-            client
-                .getDatabase("admin")
-                .runCommand(Document("buildInfo", 1))
-                .getString("version")
-        }
-    }
+    /**
+     * This driver, but the profiler records no values of its queries: for a repository that holds credentials.
+     * See `ValuesWithheldQueryProfiler`.
+     */
+    fun withholdingQueryValues() = MonkoDriver(
+        lazyCodec = lazyCodec,
+        lazyClient = lazyClient,
+        lazyDatabase = lazyDatabase,
+        lazyProfiler = lazy { lazyProfiler.value.withholdingValues() },
+        log = log,
+        hookScope = hookScope,
+    )
+
+    private val version: String by lazy { versionOf(client) }
 
     fun getDatabaseVersion(): String {
         return version

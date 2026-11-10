@@ -3,12 +3,18 @@ package io.peekandpoke.funktor
 import com.mongodb.client.model.Filters
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo
+import io.peekandpoke.funktor.auth.db.monko.MonkoAuthRecordsRepo
+import io.peekandpoke.funktor.auth.domain.AuthRecord
+import io.peekandpoke.funktor.auth.model.RealmId
 import io.peekandpoke.funktor.core.AppKontainers
 import io.peekandpoke.funktor.core.funktorApp
 import io.peekandpoke.funktor.core.kontainer
@@ -18,6 +24,8 @@ import io.peekandpoke.funktor.insights.api.InsightsApi
 import io.peekandpoke.funktor.insights.api.InsightsApiFeature
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
 import io.peekandpoke.funktor.insights.collectors.VaultCollector
+import io.peekandpoke.funktor.messaging.storage.karango.KarangoSentMessagesRepo
+import io.peekandpoke.funktor.messaging.storage.monko.MonkoSentMessagesRepo
 import io.peekandpoke.funktor.rest.ApiFeature
 import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.docs
@@ -38,6 +46,7 @@ import io.peekandpoke.monko.monko
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.log.UltraLogManager
 import io.peekandpoke.ultra.model.Paged
+import io.peekandpoke.ultra.model.PagedSearchFilter
 import io.peekandpoke.ultra.reflection.kType
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.TypedApiEndpoint.Get
@@ -51,6 +60,7 @@ import io.peekandpoke.ultra.vault.Stored
 import io.peekandpoke.ultra.vault.Vault
 import io.peekandpoke.ultra.vault.VaultConfig
 import io.peekandpoke.ultra.vault.firstOrNull
+import io.peekandpoke.ultra.vault.hooks.TimestampedHook
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.builtins.serializer
@@ -133,6 +143,9 @@ class S1ProbeApi : ApiRoutes("insights-s1-probe", authFloor = { authenticated() 
         val hashSecret: String = UUID.randomUUID().toString().replace("-", "")
         val hash: String = "\$2b\$10\$$hashSecret"
 
+        /** What the repositories that hold credentials store and look up: they withhold their values (ULTRA-00171). */
+        val credential: String = "s1-credential-${UUID.randomUUID()}"
+
         val Probe = Get(uri = "/_/e2e/insights-s1/probe", response = Int.serializer().api())
     }
 
@@ -151,6 +164,25 @@ class S1ProbeApi : ApiRoutes("insights-s1-probe", authFloor = { authenticated() 
             check(moSessions.countByTokenAsKey(token) == 0L)
             check(moSessions.failingLookup().isFailure) { "the server accepted \$noSuchOperator" }
             check(moSessions.lookupByHashAsKey(hash).isFailure) { "the server accepted a hash as an operator" }
+
+            // The repositories that hold credentials, wired as an app wires them: Karango's from the kontainer,
+            // Monko's built the same way on their own collections. A write and a lookup of the auth records, a
+            // lookup of the sent messages: none may leave the credential in the record.
+            val realm = RealmId("insights-s1")
+            val owner = UserId("insights-s1-owner")
+            val monko = kontainer.get(MonkoDriver::class)
+            val timestamped = kontainer.get(TimestampedHook::class)
+            val kaAuth = kontainer.get(KarangoAuthRecordsRepo::class)
+            val moAuth = MonkoAuthRecordsRepo("insights_s1_mo_auth_records", monko, emptyList(), timestamped)
+
+            listOf(kaAuth, moAuth).forEach { auth ->
+                auth.insert(AuthRecord.Password(realm = realm, ownerId = owner, token = credential))
+                checkNotNull(auth.findByToken(realm, AuthRecord.Password.identifier, credential))
+            }
+
+            kontainer.get(KarangoSentMessagesRepo::class).findByRef(setOf(credential), PagedSearchFilter())
+            MonkoSentMessagesRepo("insights_s1_mo_sent_messages", monko, timestamped)
+                .findByRef(setOf(credential), PagedSearchFilter())
 
             // Two log lines, so the record's log slice is real too -- for the Vue fixtures. No token in them:
             // a log line IS recorded verbatim, which is the app's own business.
@@ -209,10 +241,11 @@ private val s1TestApp = funktorApp<FunktorAllTestConfig>(
 )
 
 /**
- * No bind value reaches an insights record, on either backend -- S1 of the 2026-08-24 review gate.
+ * Bind values in an insights record, on both backends (ULTRA-00171): an ordinary repository's are recorded and
+ * shown; a repository that holds credentials (auth records, sent messages) withholds them, by every route.
  *
- * `MonkoDriver` used to record the filter WITH its values, so a session-token lookup wrote the live
- * token into the record. It now records `@pN` placeholders, and `VaultCollector` keeps that text.
+ * The query TEXT stays placeholder-ised either way (`@pN`, S1 of the 2026-08-24 gate; ULTRA-00228): it is all a
+ * withholding repository keeps.
  */
 class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
 
@@ -322,19 +355,61 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
         }
     }
 
+    /** Every recorded query text: values must never be in one from a placeholder-ising printer. */
+    private fun queryTexts(body: String): List<String> = vaultEntries(body)
+        .filter { it["queryLanguage"]?.jsonPrimitive?.content in setOf("aql", "mongo-bound") }
+        .mapNotNull { it["query"]?.jsonPrimitive?.contentOrNull }
+
+    private fun JsonObject.values(): Map<String, String>? = (this["values"] as? JsonObject)
+        ?.mapValues { (_, v) -> v.jsonPrimitive.content }
+
     init {
-        "the token appears NOWHERE in the record, on either backend" {
+        "the repositories that hold credentials leave no trace of one, on either backend (ULTRA-00171)" {
             val body = probeRecord()
 
-            withClue("vars, query text and the explain plan were all routes a bind value took") {
-                body shouldNotContain S1ProbeApi.token
+            withClue("values, raw text and the explain plan are all routes a credential could take") {
+                body shouldNotContain S1ProbeApi.credential
             }
         }
 
-        "a document keyed by a hash that starts with \$ leaves no trace of the hash, also when the server rejects it (ULTRA-00228)" {
-            val body = probeRecord()
+        "their queries are recorded, marked as withholding, with the values counted but not shown" {
+            val withheld = vaultEntries(probeRecord()).filter { it["valuesWithheld"]?.jsonPrimitive?.content == "true" }
 
-            body shouldNotContain S1ProbeApi.hashSecret
+            withClue("auth records: a write and a lookup on Arango, a lookup on Mongo; sent messages: one lookup each") {
+                withheld.size shouldBeGreaterThanOrEqual 5
+                withheld.count { it["connection"]!!.jsonPrimitive.content.contains("Arango") } shouldBeGreaterThanOrEqual 3
+                withheld.count { it["connection"]!!.jsonPrimitive.content.contains("Mongo") } shouldBeGreaterThanOrEqual 2
+            }
+            withheld.forEach { entry ->
+                withClue(entry) {
+                    entry.values().shouldBeNull()
+                    entry["explain"]?.jsonPrimitive?.contentOrNull.shouldBeNull()
+                    withClue("no EXPLAIN ran at all, not one whose plan was dropped") {
+                        entry["measureExplain"]!!.jsonObject["count"]!!.jsonPrimitive.int shouldBe 0
+                    }
+                    entry["varsCount"]!!.jsonPrimitive.int shouldBeGreaterThanOrEqual 1
+                }
+            }
+        }
+
+        "an ordinary repository's lookup is recorded with its value, on both backends (ULTRA-00171)" {
+            val body = probeRecord()
+            val mongo = lookup(body, language = "mongo-bound")
+            val arango = lookup(body, language = "aql")
+
+            mongo["valuesWithheld"]!!.jsonPrimitive.content shouldBe "false"
+            mongo.values() shouldBe mapOf("p1" to "\"${S1ProbeApi.token}\"")
+
+            arango["valuesWithheld"]!!.jsonPrimitive.content shouldBe "false"
+            arango.values()!!.values.toList() shouldBe listOf("\"${S1ProbeApi.token}\"")
+        }
+
+        "the explain plan of an ordinary query is recorded, values and all" {
+            val arango = lookup(probeRecord(), language = "aql")
+
+            withClue("the database fills the plan with the values: why a withholding repository never explains") {
+                arango["explain"]!!.jsonPrimitive.content shouldContain S1ProbeApi.token
+            }
         }
 
         "the Mongo lookup is recorded as typed placeholder text under Monko's own label, with the value counted" {
@@ -353,11 +428,11 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             entry["connection"]!!.jsonPrimitive.content shouldContain "MongoDB"
         }
 
-        "raw AQL is recorded under its own label, and its text -- the token inlined -- is withheld" {
+        "raw AQL of an ordinary repository is recorded under its own label, its text with the token inlined" {
             val raw = vaultEntries(probeRecord()).filter { it["queryLanguage"]?.jsonPrimitive?.content == "aql-raw" }
 
             raw.size shouldBe 1
-            raw.single()["query"]?.jsonPrimitive?.contentOrNull shouldBe null
+            raw.single()["query"]!!.jsonPrimitive.content shouldContain S1ProbeApi.token
         }
 
         "a Mongo filter comparing with an embedded document binds it whole -- its keys can be data" {
@@ -369,6 +444,16 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             entry["varsCount"]!!.jsonPrimitive.int shouldBe 1
         }
 
+        "a document keyed by a hash that starts with \$ is one value: no query TEXT carries the hash (ULTRA-00228)" {
+            val body = probeRecord()
+
+            queryTexts(body).forEach { withClue(it) { it shouldNotContain S1ProbeApi.hashSecret } }
+
+            withClue("an ordinary repository shows it as the value it is") {
+                body shouldContain S1ProbeApi.hashSecret
+            }
+        }
+
         "a FAILED Mongo query is recorded too; its unknown operator is bound whole, like any document of data (ULTRA-00228)" {
             val body = probeRecord()
 
@@ -376,7 +461,7 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
                 boundDocumentLookups(body) shouldBe 3
             }
             withClue("only known operators are structure; an unknown one could be a hash") {
-                body shouldNotContain "noSuchOperator"
+                queryTexts(body).forEach { it shouldNotContain "noSuchOperator" }
             }
         }
 
@@ -402,7 +487,7 @@ class InsightsVaultBindValuesSpec : AppSpec<FunktorAllTestConfig>(s1TestApp) {
             log.map { it.jsonObject["level"]!!.jsonPrimitive.content } shouldBe listOf("INFO", "WARNING")
         }
 
-        "no entry carries the fields that used to hold values" {
+        "no entry uses the old keys vars or queryExplained, which the GUI reads as a pre-2026-08 record" {
             val entries = vaultEntries(probeRecord())
 
             entries.shouldNotBeEmpty()

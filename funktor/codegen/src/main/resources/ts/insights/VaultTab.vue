@@ -10,26 +10,19 @@
  * at all. `slices.ts` still sums ACROSS entries for the header strip; that part is genuinely frontend
  * arithmetic, and if a header figure disagrees with the per-query rows, it is where to look.
  *
- * ## Bind values are withheld, and the frontend no longer decides that
+ * ## Bind values are shown, except where the server withheld them
  *
- * `VaultCollector` records a placeholder-ised query or none at all, records only the COUNT of bind
- * variables, and does not record the EXPLAIN plan. So this tab renders whatever it is given.
+ * Maintainer, 2026-11-09 (ULTRA-00171): "query values: show them again". As in the old GUI, each query shows
+ * its text, its bind values and, when the app explains queries, the plan in a collapsed "Explained".
  *
- * That is a deliberate move of the check. An earlier version kept a language allowlist here, deciding
- * per driver whether the query text was safe to show — a frontend patch over a backend contract
- * violation, and a check every future consumer would have had to repeat. The invariant now lives at the
- * one place that turns a driver's output into a record.
+ * The frontend decides none of it. `VaultCollector` records what may be shown: everything for an ordinary
+ * repository; for one that holds credentials (auth records, sent messages: `withholdingQueryValues()`) only
+ * placeholder-ised text and the COUNT of values, marked `valuesWithheld`, which this tab says. An earlier
+ * version kept a language allowlist here: a frontend patch over a backend contract, which every consumer
+ * would have had to repeat.
  *
- * Two things are still withheld at the source, and they are not this tab's to reinstate:
- *
- * - **`vars`** — still withheld; the collector does not record query variables. A query is how a session
- *   token or an activation code gets looked up.
- * - **`queryExplained`** — cannot be made safe by placeholder-ising, because the DATABASE substitutes
- *   the values into the plan it returns. Measured against a real Arango server.
- *
- * **This tab still has no raw-slice dump and no JSON-tree fallback.** Less critical now that the record
- * itself is clean, but the reasoning stands: a viewer for the whole object defeats withholding part of
- * it, and the slice is the one place a future field could arrive unreviewed.
+ * A record from before `VaultCollector.Data` (`legacy`) still has its text hidden: written whole by Jackson,
+ * from every repository, the withholding ones too.
  *
  * ## The repository graph is not in the record
  *
@@ -39,21 +32,18 @@
  * the tab renders as before, with a notice. Its raw view is safe to show: it holds repository names,
  * stored classes and references, no query and no value.
  *
- * Queries are shown through `PreBlock` rather than syntax-highlighted: the old tab used Prism, which is
- * a dependency this SDK does not have and cannot assume the consuming app has.
- *
  * See `RequestTab.vue` for the import-path note.
  */
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
-// JsonTree renders the DATABASE GRAPH only, never the slice -- see the note above about `vars`.
+// JsonTree renders the DATABASE GRAPH only, never the slice.
 import JsonTree from '../ui/JsonTree.vue'
 import PreBlock from '../ui/PreBlock.vue'
 import StatStrip from '../ui/StatStrip.vue'
 import { databaseNetwork, useInsightsGraphsOrNull } from './graphs.ts'
 import type { DatabaseGraphResult } from './graphs.ts'
 import NetworkGraph from './NetworkGraph.vue'
-import { nsToMs, readVault, vaultCells } from './slices.ts'
+import { nsToMs, readVault, valuesText, vaultCells } from './slices.ts'
 import type { VaultEntry, VaultMeasure } from './slices.ts'
 
 defineOptions({ name: 'VaultTab' })
@@ -113,12 +103,13 @@ function emptyQueryText(entry: VaultEntry): string {
         return 'No query text recorded: written before 2026-10-19, when Monko still put the bind values into its ' +
             'query text, so the server withheld it and did not count the bind variables.'
     }
-    if (entry.queryLanguage === 'aql-raw') {
-        return 'No query text recorded: raw AQL, not printed by the query DSL, so it may hold literal values ' +
-            'and the server withholds it.'
+    if (entry.valuesWithheld) {
+        return `No query text recorded (${entry.queryLanguage ?? 'unknown language'}): this repository withholds ` +
+            'its values, and the text may hold them as literals.'
     }
-    return `No query text recorded (${entry.queryLanguage ?? 'unknown language'}). Either the driver is not known ` +
-        'to keep bind values out of it, so the server withholds it, or the query failed before it was printed.'
+    return `No query text recorded (${entry.queryLanguage ?? 'unknown language'}). Either the query failed ` +
+        'before it was printed, or the record is from before 2026-11-10, when the server withheld text that ' +
+        'could hold values.'
 }
 
 function results(entry: VaultEntry): string {
@@ -192,16 +183,25 @@ function results(entry: VaultEntry): string {
                 kept out of it.
             </div>
 
-            <!--
-              `queryExplained` is NOT rendered, for either backend. Arango's explain endpoint SUBSTITUTES
-              the bind values into the returned plan -- measured 2026-08-24 against a real server, which
-              answered with `FILTER ((d.token == "<the actual token>") ...)`. Monko's QUERY_PLANNER output
-              carries `parsedQuery` with the same literals. So this field reproduces exactly what `vars`
-              is withheld to protect.
-            -->
+            <div v-if="entry.valuesWithheld" class="fk-notice">
+                Values withheld: this repository holds credentials, so the server recorded only that the query
+                had {{ entry.varsCount ?? 'some' }} bind {{ entry.varsCount === 1 ? 'variable' : 'variables' }}.
+            </div>
+            <PreBlock
+                v-else-if="entry.values !== null && Object.keys(entry.values).length > 0"
+                :text="valuesText(entry.values)"
+                wrap
+            />
+
+            <details v-if="entry.plan !== null" class="fk-details">
+                <summary>Explained</summary>
+                <div class="fk-details__body">
+                    <PreBlock :text="entry.plan" wrap />
+                </div>
+            </details>
         </section>
 
-        <details v-if="graphs !== null" class="fk-details" @toggle="onDataToggle">
+        <details v-if="graphs !== null" class="fk-details fk-graph-data" @toggle="onDataToggle">
             <summary>Database Graph Data</summary>
             <div class="fk-details__body">
                 <JsonTree v-if="database !== null" :value="database.raw" :expand-depth="2" />
@@ -212,11 +212,11 @@ function results(entry: VaultEntry): string {
     </div>
 
     <!--
-      No raw fallback here, unlike every other tab. An unreadable vault slice still contains `vars`, so
-      dumping it would leak precisely what this tab omits on purpose.
+      No raw fallback here, unlike every other tab: an unreadable slice may be a pre-collector one, written
+      whole by Jackson with the values of every repository, the withholding ones too.
     -->
     <div v-else class="fk-notice">
-        This database slice could not be read. The raw view is suppressed because the slice contains query
-        bind values, which are not safe to display -- see the query-vars task.
+        This database slice could not be read. The raw view is suppressed: an unreadable slice may be an old
+        one that holds the values of repositories that withhold them now.
     </div>
 </template>

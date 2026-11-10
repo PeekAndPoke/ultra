@@ -25,6 +25,15 @@
 
 - **Karango: `AqlTypedQuery.LANGUAGE` and `LANGUAGE_RAW` are now `internal`** (ULTRA-00228).
 
+- **Funktor insights shows query values again** (ULTRA-00171, maintainer decision 2026-11-09). The `vault` slice
+  records each bind value as JSON text (`values`, each cut at 4000 characters), the raw query text (`aql-raw` too)
+  and, with `VaultConfig.explain`, the EXPLAIN plan (`explain`). A repository that holds credentials withholds them:
+  build it on `driver.withholdingQueryValues()` (Karango and Monko), and its entries keep only placeholder text and
+  the count, marked `valuesWithheld`; no EXPLAIN runs for it. Funktor's auth records and sent messages do so on both
+  backends. Ultra vault: `QueryProfiler.Entry.valuesWithheld`, `ValuesWithheldQueryProfiler`,
+  `QueryProfiler.withholdingValues()`. An app's own repository that stores secrets needs the same one line. Monko
+  asks the server for its version once per client instead of once per driver instance (that is, per request).
+
 - **Funktor core: `KtorConfig.isQa` is `qa`, `qa-<name>` or `qa<digits>`, any case**, no longer any name starting with
   `qa`. `qatar` or `qaprod` now count as production for `isDevelopment`, and so for insights (ULTRA-00225, maintainer
   decision 2026-11-10).

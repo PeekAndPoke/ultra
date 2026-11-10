@@ -4,10 +4,16 @@ import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.slumber
+import io.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
+import io.peekandpoke.ultra.vault.profiling.withholdingValues
+import java.time.Instant
+import java.util.Date
 
 /**
  * The spec that would have caught the defect this DTO exists to fix.
@@ -50,6 +56,9 @@ class VaultCollectorSlumberSpec : FreeSpec() {
 
     private val codec = Codec.default
 
+    /** Stands in for a driver type with no JSON form of its own, like BSON's `ObjectId`: recorded by `toString`. */
+    private data class Token(val value: String)
+
     init {
         "the slice slumbers at all — the whole point of the DTO" {
             val data = VaultCollector.Data.of(listOf(entry("aql", "FOR d IN c FILTER d.t == @v1")))
@@ -86,56 +95,113 @@ class VaultCollectorSlumberSpec : FreeSpec() {
             }
         }
 
-        "no bind value reaches the record, by any of the three routes that used to carry it" {
-            // `vars` was the field this collector always intended to withhold. `query` carried the same
-            // values on Mongo, and `queryExplained` on both backends -- found by the review gate. The
-            // third entry is a driver nobody vetted, inlining its value: its text must not survive.
+        "an ordinary repository's entry records its values, its raw text and its plan (ULTRA-00171)" {
             val data = VaultCollector.Data.of(
                 listOf(
                     entry("mongo-bound", MONKO_QUERY),
-                    entry("json", OLD_MONKO_QUERY),
-                    entry("aql", "FOR d IN c FILTER d.t == @v1"),
-                    entry("sql", "SELECT * FROM c WHERE t = '$TOKEN'"),
                     entry("aql-raw", "FOR d IN c FILTER d.t == '$TOKEN'"),
                 )
             )
 
-            val text = codec.slumber(data).toString()
+            data.entries.forEach { entry ->
+                withClue(entry) {
+                    entry.valuesWithheld shouldBe false
+                    entry.values shouldBe mapOf("v1" to "\"$TOKEN\"")
+                    entry.explain shouldBe """FILTER ((d.`token` == "$TOKEN"))"""
+                    entry.varsCount shouldBe 1
+                }
+            }
+            data.entries[0].query shouldBe MONKO_QUERY
+            data.entries[1].query shouldBe "FOR d IN c FILTER d.t == '$TOKEN'"
 
-            withClue("the recorded slice must not contain the token anywhere: $text") {
-                text shouldNotContain TOKEN
+            withClue("and it slumbers, values and all") {
+                codec.slumber(data).toString() shouldContain TOKEN
             }
         }
 
-        "only drivers known to keep values out of the text keep it; any other has it dropped" {
-            val data = VaultCollector.Data.of(
-                listOf(
-                    entry("mongo-bound", MONKO_QUERY),
-                    entry("json", OLD_MONKO_QUERY),
-                    entry("aql", "FOR d IN c FILTER d.t == @v1"),
-                    entry("sql", "SELECT * FROM c WHERE t = '$TOKEN'"),
-                    entry("aql-raw", "FOR d IN c FILTER d.t == '$TOKEN'"),
-                )
+        "a repository that withholds its values: no value reaches the record, by any of the three routes" {
+            // `vars`, the query text (inline values: `json`, `sql`, `aql-raw`) and the EXPLAIN plan, which the
+            // database fills with the values. Through the real profiler, as a withholding driver gets it.
+            val profiler = DefaultQueryProfiler(explainQueries = true).withholdingValues()
+
+            withClue("a withholding driver never asks the database to explain") {
+                profiler.explainQueries shouldBe false
+            }
+
+            val languages = listOf(
+                "mongo-bound" to MONKO_QUERY,
+                "json" to OLD_MONKO_QUERY,
+                "aql" to "FOR d IN c FILTER d.t == @v1",
+                "sql" to "SELECT * FROM c WHERE t = '$TOKEN'",
+                "aql-raw" to "FOR d IN c FILTER d.t == '$TOKEN'",
             )
 
-            withClue("monko's own label: placeholders since 2026-10-19 (MonkoDriver.FindQueryBuilder.printQuery)") {
-                data.entries[0].query shouldBe MONKO_QUERY
+            languages.forEach { (language, query) ->
+                profiler.profile(connection = "ArangoDB::test", queryLanguage = language, query = query) { entry ->
+                    entry.vars = mapOf("v1" to TOKEN)
+                    entry.queryExplained = """FILTER ((d.`token` == "$TOKEN"))"""
+                }
             }
-            withClue("monko's OLD label is no longer trusted: an older driver still inlines its values under it") {
-                data.entries[1].query shouldBe null
+
+            val data = VaultCollector.Data.of(profiler.entries.filterIsInstance<QueryProfiler.Entry.Impl>())
+
+            withClue("the recorded slice must not contain the token anywhere: ${codec.slumber(data)}") {
+                codec.slumber(data).toString() shouldNotContain TOKEN
             }
-            withClue("aql keeps @placeholders and passes values separately, so its text is safe") {
-                data.entries[2].query shouldBe "FOR d IN c FILTER d.t == @v1"
+
+            data.entries.size shouldBe languages.size
+            data.entries.forEach { entry ->
+                withClue(entry) {
+                    entry.valuesWithheld shouldBe true
+                    entry.values shouldBe null
+                    entry.explain shouldBe null
+                    entry.varsCount shouldBe 1
+                }
             }
-            withClue("fail-closed: a language nobody vetted is suppressed, not trusted") {
-                data.entries[3].query shouldBe null
+
+            withClue("only text from a placeholder-ising printer survives") {
+                data.entries.map { it.query } shouldBe listOf(MONKO_QUERY, null, "FOR d IN c FILTER d.t == @v1", null, null)
             }
-            withClue("raw AQL (AqlTypedQuery.of) has its own label: Karango cannot vouch for its text") {
-                data.entries[4].query shouldBe null
+        }
+
+        "the profiler entry itself drops the values, so they never sit in memory either" {
+            val entry = QueryProfiler.Entry.Impl(connection = "c", queryLanguage = "aql").apply {
+                valuesWithheld = true
+                vars = mapOf("v1" to TOKEN)
+                queryExplained = TOKEN
             }
-            withClue("the COUNT of bind variables is still useful, and discloses nothing") {
-                data.entries[0].varsCount shouldBe 1
-            }
+
+            entry.vars shouldBe mapOf("v1" to null)
+            entry.queryExplained shouldBe null
+        }
+
+        "a bind value is recorded as JSON text, whatever type the driver bound" {
+            val date = Date.from(Instant.parse("2026-11-10T12:00:00Z"))
+
+            VaultCollector.Data.valueText("a\"b") shouldBe "\"a\\\"b\""
+            VaultCollector.Data.valueText(42) shouldBe "42"
+            VaultCollector.Data.valueText(true) shouldBe "true"
+            VaultCollector.Data.valueText(null) shouldBe "null"
+            VaultCollector.Data.valueText(listOf(1, "x")) shouldBe "[1,\"x\"]"
+            VaultCollector.Data.valueText(mapOf("k" to mapOf("n" to null))) shouldBe "{\"k\":{\"n\":null}}"
+            VaultCollector.Data.valueText(Token("t-1")) shouldBe "\"Token(value=t-1)\""
+            VaultCollector.Data.valueText(date) shouldBe "\"2026-11-10T12:00:00Z\""
+        }
+
+        "a value JSON has no number for is recorded as text, never thrown: a throw here loses the whole record" {
+            VaultCollector.Data.valueText(Double.POSITIVE_INFINITY) shouldBe "\"Infinity\""
+            VaultCollector.Data.valueText(Double.NaN) shouldBe "\"NaN\""
+            VaultCollector.Data.valueText(Float.NEGATIVE_INFINITY) shouldBe "\"-Infinity\""
+            VaultCollector.Data.valueText(mapOf("max" to Double.POSITIVE_INFINITY)) shouldBe "{\"max\":\"Infinity\"}"
+            VaultCollector.Data.valueText(1.5) shouldBe "1.5"
+        }
+
+        "a long value is cut, and says how long it was" {
+            val long = "x".repeat(VaultCollector.Data.MAX_VALUE_CHARS + 10)
+            val text = VaultCollector.Data.valueText(long)
+
+            text.length shouldBe VaultCollector.Data.MAX_VALUE_CHARS + " … (${long.length + 2} chars)".length
+            text shouldEndWith " … (${long.length + 2} chars)"
         }
     }
 }

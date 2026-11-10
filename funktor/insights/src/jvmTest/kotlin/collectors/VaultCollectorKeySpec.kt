@@ -7,10 +7,10 @@ import io.kotest.matchers.shouldBe
 /**
  * Pins [VaultCollector.KEY] to the literal the frontend registries key on.
  *
- * The frontend maps `"vault"` to the tab that withholds bind values, and an UNREGISTERED key falls
- * through to a raw JSON view of the slice. So renaming this constant does not break a build anywhere —
- * it silently swaps a redacting view for a dumping one, in a page whose whole point is that the data is
- * sensitive. The tab's display label is already "Database", which makes a tidy-up rename plausible.
+ * The frontend maps `"vault"` to the tab that shows each query, its values and the "values withheld" notice,
+ * and hides a pre-collector record's text; an UNREGISTERED key falls through to a raw JSON view of the slice.
+ * So renaming this constant does not break a build anywhere — it silently swaps that view for a dump, in a
+ * page whose whole point is that the data is sensitive. The tab's display label is already "Database", which makes a tidy-up rename plausible.
  *
  * The frontend lives in `funktor/codegen`, which deliberately does not depend on this module, so no
  * compiler can link the two. This spec is the link. Raised by the `/feature-review` gate, 2026-08-24.

@@ -345,20 +345,25 @@ export interface VaultEntry {
     count: number | null
     totalCount: number | null
     /**
-     * Placeholder-ised query text, or null when the driver could not provide one safely.
+     * The query text, or null when the server withheld it.
      *
-     * **Guaranteed by the backend, not checked here.** `VaultCollector.Data.of` drops the text for any
-     * driver that inlines its bind values, so this field never contains a value. The frontend used to
-     * carry a language allowlist to decide that; enforcing it at the one place that turns a driver's
-     * output into a record made every consumer's copy unnecessary.
+     * **Decided by the backend, not here** (ULTRA-00171). `VaultCollector.Data.of` keeps every text of an
+     * ordinary repository, and only placeholder-ised text (`aql`, `mongo-bound`) of one that withholds its
+     * values, so this field never holds a credential.
      */
     query: string | null
     queryLanguage: string | null
-    /**
-     * How many bind variables the query had; the VALUES are deliberately not recorded. Null when unknown:
-     * see {@link isInlinedMongoEntry}.
-     */
+    /** How many bind variables the query had. Null when unknown: see {@link isInlinedMongoEntry}. */
     varsCount: number | null
+    /** Each bind value as JSON text, by name; null when withheld or not recorded (an older record). */
+    values: Record<string, string> | null
+    /**
+     * True when the repository holds credentials (auth records, sent messages): the server recorded neither
+     * its values nor its plan, only their count.
+     */
+    valuesWithheld: boolean
+    /** The EXPLAIN plan, when the app explains queries; null otherwise or when withheld. */
+    plan: string | null
     /**
      * True when the slice predates `VaultCollector.Data` and carries the raw profiler entry.
      *
@@ -410,14 +415,63 @@ export function isInlinedMongoEntry(entry: Record<string, unknown>): boolean {
     return asString(entry.queryLanguage) === 'json'
 }
 
+/** `{name: jsonText}`; an entry that is not a string is dropped, not guessed. */
+function readValues(value: unknown): Record<string, string> | null {
+    const record = asRecord(value)
+    if (record === null) return null
+
+    return Object.fromEntries(
+        Object.entries(record).flatMap(([name, text]) => (typeof text === 'string' ? [[name, text]] : [])),
+    )
+}
+
+/**
+ * The bind values as one pretty JSON document, `{name: value}`, for display.
+ *
+ * A value is pretty-printed only when re-printing it gives back the server's text exactly. Otherwise it is shown
+ * as the server wrote it: a value cut at the length limit (no longer JSON), and a number JavaScript cannot hold
+ * (a Long above 2^53, or `1.0`, which would read back as `1`) -- the text is the fact, the parse a guess.
+ */
+export function valuesText(values: Record<string, string>): string {
+    const verbatim: string[] = []
+    const marker = (index: number) => `\u0000verbatim:${index}`
+
+    const parsed = Object.fromEntries(
+        Object.entries(values).map(([name, text]) => {
+            try {
+                const value: unknown = JSON.parse(text)
+                if (JSON.stringify(value) === text) return [name, value]
+            } catch {
+                // not JSON: shown as the server wrote it
+            }
+            verbatim.push(text)
+            return [name, marker(verbatim.length - 1)]
+        }),
+    )
+
+    return verbatim.reduce(
+        (pretty, text, index) => pretty.replace(JSON.stringify(marker(index)), () => (isJson(text) ? text : JSON.stringify(text))),
+        JSON.stringify(parsed, null, 2),
+    )
+}
+
+function isJson(text: string): boolean {
+    try {
+        JSON.parse(text)
+        return true
+    } catch {
+        return false
+    }
+}
+
 export function readVault(data: unknown): VaultSlice | null {
     const rawEntries = asArray(asRecord(data)?.entries)
     if (rawEntries === null) return null
 
     const entries: VaultEntry[] = rawEntries.map((raw) => {
         const record = asRecord(raw) ?? {}
-        // Coupled to the collector never writing `vars`: if it ever
-        // does, this marks every entry legacy and hides all text.
+        // Coupled to the collector never writing `vars` or `queryExplained`: it records the values under
+        // `values` and the plan under `explain` (ULTRA-00171). Either OLD key marks every entry legacy.
         const legacy = 'vars' in record || 'queryExplained' in record
         return {
             connection: asString(record.connection),
@@ -430,6 +484,9 @@ export function readVault(data: unknown): VaultSlice | null {
             varsCount: isInlinedMongoEntry(record)
                 ? null
                 : (asNumber(record.varsCount) ?? (legacy ? Object.keys(asRecord(record.vars) ?? {}).length : 0)),
+            values: legacy ? null : readValues(record.values),
+            valuesWithheld: record.valuesWithheld === true,
+            plan: legacy ? null : asString(record.explain),
             legacy,
             totalNs: asNumber(record.totalNs) ?? 0,
             serializer: readMeasure(record.measureSerializer),

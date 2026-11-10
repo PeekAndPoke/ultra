@@ -167,6 +167,42 @@ describe('vault', () => {
         expect(texts.join('\n')).toContain('"token": "@p1:string"')
     })
 
+    it('an ordinary query shows its values, and its plan under Explained (ULTRA-00171)', async () => {
+        const slice = sliceOf(recorded.vault(), 'vault')
+        const host = await render(VaultTab, slice)
+        const index = slice.entries.findIndex(
+            (entry: { queryLanguage: string, query: string }) => entry.queryLanguage === 'aql' && entry.query.includes('token'),
+        )
+        const entry = slice.entries[index]
+        const card = host.querySelectorAll('.fk-query')[index]
+        const [name, text] = Object.entries(entry.values as Record<string, string>)[0]
+
+        const texts = [...card.querySelectorAll(':scope > pre')].map((pre) => pre.textContent)
+        expect(texts).toContain(JSON.stringify({ [name]: JSON.parse(text) }, null, 2))
+
+        const explained = card.querySelector('details')!
+        expect(explained.querySelector('summary')?.textContent).toBe('Explained')
+        expect(explained.querySelector('pre')?.textContent).toBe(entry.explain)
+    })
+
+    it('a query of a repository that withholds its values says so, and shows neither values nor plan', async () => {
+        const slice = sliceOf(recorded.vault(), 'vault')
+        const host = await render(VaultTab, slice)
+        const cards = [...host.querySelectorAll('.fk-query')]
+        const withheld = slice.entries
+            .map((entry: { valuesWithheld: boolean, query: string | null }, index: number) => [entry, index] as const)
+            .filter(([entry]: readonly [{ valuesWithheld: boolean, query: string | null }, number]) => entry.valuesWithheld)
+
+        expect(withheld.length).toBeGreaterThan(0)
+        for (const [entry, index] of withheld) {
+            const card = cards[index]
+            expect(card.textContent).toContain('Values withheld: this repository holds credentials')
+            // The query text, if any, and no values block
+            expect(card.querySelectorAll(':scope > pre')).toHaveLength(entry.query ? 1 : 0)
+            expect(card.querySelector('details')).toBeNull()
+        }
+    })
+
     it('an old Mongo entry, under the label json, says why it has no text and that its bind count is unknown', async () => {
         // Derived from the real record: what the collector wrote for Monko 2026-08-24..2026-10-19.
         const slice = sliceOf(recorded.vault(), 'vault')
@@ -181,16 +217,15 @@ describe('vault', () => {
         expect(bindVars.querySelector('.fk-strip__value')?.textContent).toBe('unknown')
     })
 
-    it('a raw AQL entry says why it has no text', async () => {
-        // What the collector writes for AqlTypedQuery.of: its own label, the text withheld.
+    it('raw AQL of a repository that withholds its values says why it has no text', async () => {
+        // What the collector writes for AqlTypedQuery.of in such a repository: its own label, the text withheld.
         const slice = sliceOf(recorded.vault(), 'vault')
-        const arango = slice.entries.find((entry: { queryLanguage: string }) => entry.queryLanguage === 'aql')
-        Object.assign(arango, { queryLanguage: 'aql-raw', query: null })
+        slice.entries = slice.entries.filter((entry: { queryLanguage: string }) => entry.queryLanguage === 'aql').slice(0, 1)
+        Object.assign(slice.entries[0], { queryLanguage: 'aql-raw', query: null, valuesWithheld: true, values: null })
 
         const host = await render(VaultTab, slice)
-        const card = [...host.querySelectorAll('.fk-query')].find((it) => it.textContent?.includes('ArangoDB'))!
 
-        expect(card.textContent).toContain('raw AQL, not printed by the query DSL')
+        expect(host.querySelector('.fk-query')!.textContent).toContain('(aql-raw): this repository withholds its values')
     })
 })
 

@@ -32,6 +32,8 @@ import io.ktor.server.auth.bearer
  * - Store keys hashed (Argon2/bcrypt or HMAC), never plaintext.
  * - Return null for empty / malformed / wrong-prefix tokens before any DB lookup.
  * - Do not log the raw token.
+ * - Build the keystore's repository on `driver.withholdingQueryValues()`, so insights records its lookups
+ *   without the values (ULTRA-00171).
  */
 fun AuthenticationConfig.apiKeyCaller(
     name: String,

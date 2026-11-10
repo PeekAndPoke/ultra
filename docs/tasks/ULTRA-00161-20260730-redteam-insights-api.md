@@ -148,6 +148,12 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
     `elemMatch("grants", Document(hash, 1))`, a `$or` of such documents: does any `$2b$`/`$argon2` key reach the
     `mongo-bound` text, and what does the server's rejection put into the log slice when the exception escapes?
 
+42. **(ULTRA-00171) Query values are recorded; credential repositories withhold them** — find a query path from the
+    auth records or sent messages that records a value anyway: a repository built on the shared driver for the same
+    collection, a `withProfiler()` copy, a driver call that profiles outside the repository, a custom `Entry`, an
+    app's API-key or invitation store without `withholdingQueryValues()`. And a value that breaks the record:
+    NaN, a self-referencing map, a 10 MB document.
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes

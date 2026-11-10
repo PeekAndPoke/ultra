@@ -22,6 +22,7 @@ import io.peekandpoke.ultra.reflection.kMapType
 import io.peekandpoke.ultra.vault.VaultHookScope
 import io.peekandpoke.ultra.vault.profiling.NullQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
+import io.peekandpoke.ultra.vault.profiling.withholdingValues
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -59,6 +60,18 @@ class KarangoDriver(
         lazyCodec = lazyCodec,
         lazyArangoDb = lazyArangoDb,
         lazyProfiler = lazy { newProfiler },
+        log = log,
+        hookScope = hookScope,
+    )
+
+    /**
+     * This driver, but the profiler records no values of its queries: for a repository that holds credentials.
+     * See `ValuesWithheldQueryProfiler`.
+     */
+    fun withholdingQueryValues() = KarangoDriver(
+        lazyCodec = lazyCodec,
+        lazyArangoDb = lazyArangoDb,
+        lazyProfiler = lazy { lazyProfiler.value.withholdingValues() },
         log = log,
         hookScope = hookScope,
     )

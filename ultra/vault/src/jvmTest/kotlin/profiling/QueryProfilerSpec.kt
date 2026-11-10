@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 
 class QueryProfilerSpec : StringSpec({
 
@@ -198,5 +199,42 @@ class QueryProfilerSpec : StringSpec({
         profiler.profile("conn3", "AQL", "q3") { "r3" }
 
         profiler.entries.size shouldBe 3
+    }
+
+    // ValuesWithheldQueryProfiler (ULTRA-00171) ////////////////////////////////////////////////////
+
+    "a withholding profiler records into its inner one, marked, without values or a plan, and never explains" {
+        val inner = DefaultQueryProfiler(explainQueries = true)
+        val profiler = inner.withholdingValues()
+
+        profiler.explainQueries shouldBe false
+
+        val result = profiler.profile("conn", "aql", "FOR d IN c FILTER d.t == @v1") { entry ->
+            entry.vars = mapOf("v1" to "secret")
+            entry.queryExplained = "secret"
+            "done"
+        }
+
+        result shouldBe "done"
+        profiler.entries shouldBe inner.entries
+
+        val entry = inner.entries.single().shouldBeInstanceOf<QueryProfiler.Entry.Impl>()
+
+        entry.valuesWithheld shouldBe true
+        entry.vars shouldBe mapOf("v1" to null)
+        entry.queryExplained shouldBe null
+        entry.query shouldBe "FOR d IN c FILTER d.t == @v1"
+    }
+
+    "the inner profiler's own queries keep their values; wrapping twice is wrapping once" {
+        val inner = DefaultQueryProfiler(explainQueries = false)
+
+        inner.profile("conn", "aql", "q") { it.vars = mapOf("v1" to "kept") }
+
+        inner.entries.single().vars shouldBe mapOf("v1" to "kept")
+        inner.entries.single().valuesWithheld shouldBe false
+        val withheld = inner.withholdingValues()
+
+        withheld.withholdingValues() shouldBeSameInstanceAs withheld
     }
 })

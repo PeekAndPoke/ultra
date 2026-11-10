@@ -30,7 +30,8 @@ class KarangoSentMessagesRepo(
 ) : SentMessagesStorage.Vault.Repo, EntityRepository<SentMessage>(
     name = repoName,
     storedType = kType(),
-    driver = driver,
+    // Holds credentials (mails with activation and reset links): insights records these queries without their values (ULTRA-00171)
+    driver = driver.withholdingQueryValues(),
     hooks = Repository.Hooks.of(
         timestamped.onBeforeSave(),
     ),

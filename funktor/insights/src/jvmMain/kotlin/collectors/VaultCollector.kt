@@ -4,6 +4,14 @@ import io.ktor.server.application.ApplicationCall
 import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.doubleOrNull
+import java.util.Date
 
 /**
  * Database queries run while handling the request.
@@ -35,7 +43,7 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
     companion object {
         /**
          * **The frontend keys its tab on this exact string.** `InsightsDetailPage.vue`'s registry maps
-         * `"vault"` to the tab that withholds bind values; an unregistered key falls through to a raw
+         * `"vault"` to the tab that renders queries and their values; an unregistered key falls through to a raw
          * JSON view. So renaming this does not break a build — it silently swaps a redacting view for a
          * dumping one. Pinned by `VaultCollectorKeySpec`.
          */
@@ -60,18 +68,24 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
     /**
      * One profiled query.
      *
-     * **[query] never contains bind values, and that is an invariant of this type, not a hope.** A driver
-     * that inlines its values into the query text must not set it — see [Data.of]. The values live in
-     * [varsCount] only, as a count: the values themselves are deliberately not recorded here, because a
-     * query is how a session token or an activation code is looked up.
+     * The bind values are recorded (maintainer, 2026-11-09, ULTRA-00171: "query values: show them again"), as JSON
+     * text per name in [values], and so are the raw query text and the EXPLAIN plan, which carry them too. A
+     * repository that holds credentials withholds them: its driver comes from `withholdingQueryValues()`, and its
+     * entries carry [valuesWithheld], only the [varsCount], and query text only from a placeholder-ising printer.
      */
     data class Entry(
         val connection: String?,
         val queryLanguage: String?,
-        /** Placeholder-ised query text, or null when the driver could not provide one safely. */
+        /** The query text; null when withheld and the text could hold literals. */
         val query: String?,
-        /** How many bind variables the query had. The VALUES are not recorded. */
+        /** How many bind variables the query had. */
         val varsCount: Int,
+        /** True when the repository withholds its values: [values] and [explain] are then null. */
+        val valuesWithheld: Boolean,
+        /** Each bind value as JSON text, by name; each cut at [Data.MAX_VALUE_CHARS]. */
+        val values: Map<String, String>?,
+        /** The EXPLAIN plan, when the app explains queries (`VaultConfig.explain`). */
+        val explain: String?,
         val count: Long?,
         val totalCount: Long?,
         val totalNs: Long,
@@ -86,24 +100,20 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
         val entries: List<Entry>,
     ) : InsightsCollectorData {
         companion object {
+            /** The longest bind value recorded, in characters of its JSON text. */
+            const val MAX_VALUE_CHARS = 4_000
+
             /**
-             * Query languages whose recorded text is known to keep bind values OUT of it.
+             * Query languages whose recorded text is known to keep bind values OUT of it: the only text a
+             * repository that withholds its values keeps.
              *
-             * Kept HERE rather than in the frontend, and it is the last place it should ever live: this
-             * is where a driver's output is turned into a record, so it is the one point that can
-             * enforce the invariant for every consumer at once. The frontend renders [Entry.query]
-             * unconditionally and needs no such list.
+             * `aql`: Karango records under it only the text its query DSL printed, `@placeholders` intact. Raw text
+             * (`AqlTypedQuery.of`) is `aql-raw` and may hold literals. `mongo-bound`: `MonkoDriver` records the text
+             * of `FindQueryBuilder.printQuery()` under that label, every filter value an `@pN:<type>` placeholder.
+             * Monko's old label `json` was the filter WITH its values.
              *
-             * `aql` qualifies: Karango records under it only the text its query DSL printed, `@placeholders`
-             * intact and values passed separately. Raw text (`AqlTypedQuery.of`) is `aql-raw`, NOT trusted:
-             * it may hold literals. `mongo-bound` qualifies: `MonkoDriver` records the text of
-             * `FindQueryBuilder.printQuery()` under that label, every filter value an `@pN:<type>`
-             * placeholder. Monko's old label `json` does NOT: until 2026-10-19 it was the filter WITH its
-             * values, and a driver older than that may still send it.
-             *
-             * **Trusted by the label alone.** This cannot see how a text was made, so a driver path that
-             * recorded raw text under an allowlisted label would leak; each label names exactly one
-             * placeholder-ising printer, and a new one is added here only after its printer is.
+             * **Trusted by the label alone.** Each label names exactly one placeholder-ising printer, and a new
+             * one is added here only after its printer is.
              */
             private val PLACEHOLDER_SAFE_LANGUAGES = setOf("aql", "mongo-bound")
 
@@ -117,11 +127,16 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
              */
             fun of(entries: List<QueryProfiler.Entry.Impl>) = Data(
                 entries = entries.map { entry ->
+                    val withheld = entry.valuesWithheld
+
                     Entry(
                         connection = entry.connection,
                         queryLanguage = entry.queryLanguage,
-                        query = entry.query.takeIf { entry.queryLanguage in PLACEHOLDER_SAFE_LANGUAGES },
+                        query = entry.query.takeIf { !withheld || entry.queryLanguage in PLACEHOLDER_SAFE_LANGUAGES },
                         varsCount = entry.vars?.size ?: 0,
+                        valuesWithheld = withheld,
+                        values = entry.vars.takeUnless { withheld }?.mapValues { (_, value) -> valueText(value) },
+                        explain = entry.queryExplained.takeUnless { withheld },
                         count = entry.count,
                         totalCount = entry.totalCount,
                         totalNs = entry.totalNs,
@@ -133,18 +148,38 @@ class VaultCollector(private val profiler: QueryProfiler) : InsightsCollector {
                     )
                 },
             )
+
+            /**
+             * One bind value as compact JSON text, cut at [MAX_VALUE_CHARS]: a write binds a whole document.
+             *
+             * Must not throw: this runs in `finish`, after the response, and a throw there loses the whole record.
+             */
+            internal fun valueText(value: Any?): String {
+                val text = Json.encodeToString(JsonElement.serializer(), toJson(value))
+
+                return when {
+                    text.length <= MAX_VALUE_CHARS -> text
+                    else -> text.take(MAX_VALUE_CHARS) + " … (${text.length} chars)"
+                }
+            }
+
+            /** What the drivers bind: Karango slumbers to plain maps, lists and scalars; Monko adds BSON's own types. */
+            private fun toJson(value: Any?): JsonElement = when (value) {
+                null -> JsonNull
+                is String -> JsonPrimitive(value)
+                // JSON has no number for NaN or Infinity (also Decimal128's): those become text
+                is Number -> JsonPrimitive(value).takeIf { it.doubleOrNull?.isFinite() != false }
+                    ?: JsonPrimitive(value.toString())
+                is Boolean -> JsonPrimitive(value)
+                is Map<*, *> -> JsonObject(value.entries.associate { (k, v) -> k.toString() to toJson(v) })
+                is Iterable<*> -> JsonArray(value.map { toJson(it) })
+                is Array<*> -> JsonArray(value.map { toJson(it) })
+                is Date -> JsonPrimitive(value.toInstant().toString())
+                else -> JsonPrimitive(value.toString())
+            }
         }
     }
 
-    /**
-     * **`queryExplained` is deliberately absent from the DTO.**
-     *
-     * It cannot be made safe by placeholder-ising, because the DATABASE substitutes the values into the
-     * plan it returns — measured against a real Arango server, which answered with
-     * `FILTER ((d.token == "<the actual token>"))`. Mongo's `QUERY_PLANNER` output carries the same
-     * literals in `parsedQuery`, placeholders in the query or not. Recording it would put a live
-     * session token in a depot file.
-     */
     override fun finish(call: ApplicationCall): Data =
         Data.of(profiler.entries.filterIsInstance<QueryProfiler.Entry.Impl>())
 }

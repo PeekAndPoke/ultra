@@ -95,20 +95,23 @@ and user name of the server included; the fixtures keep six keys.
 { "entries": [ {
     "connection": "MongoDB(8.2.1)::funktor_test", "queryLanguage": "mongo-bound",
     "query": "{\n  \"collection\": \"insights_s1_mo_sessions\",\n  \"filter\": {\n    \"token\": \"@p1:string\"\n  },\n  \"sort\": null,\n  \"limit\": 1,\n  \"skip\": null\n}",
-    "varsCount": 1, "count": 1, "totalCount": null, "totalNs": 37765040,
+    "varsCount": 1, "valuesWithheld": false, "values": {"p1": "\"s1-session-token-…\""}, "explain": "{…}",
+    "count": 1, "totalCount": null, "totalNs": 37765040,
     "measureQuery": {"totalNs": 1979916, "count": 1}, "measureIterator": {…}, "measureSerializer": {…},
     "measureDeserializer": {…}, "measureExplain": {…} } ] }
 ```
 
-- `query` holds placeholders, never a value: Karango's `@v_1` (`aql`); Monko's `@p1:<type>` (`mongo-bound`,
-  since 2026-10-19), the type being Mongo's `$type` alias (`string`, `objectId`, `int`, …) and a list
-  `array[<length>]` -- the type, never the value. Monko's text also names the `collection`. `VaultCollector`
-  keeps the text only for `aql` and `mongo-bound`; for any other label it is `null`.
+- **Values are shown** (ULTRA-00171, since 2026-11-10): `values` is `{name: JSON text}`, each cut at 4000 chars
+  (` … (N chars)` appended, so no longer JSON); `explain` is the EXPLAIN plan when the app explains queries. The text
+  of an ordinary repository is kept for every label, `aql-raw` too.
+- **`valuesWithheld: true`**: a repository that holds credentials (auth records, sent messages). `values` and
+  `explain` are `null`, `varsCount` still counts, and `query` is kept only for `aql` and `mongo-bound`, whose text is
+  placeholders: Karango's `@v_1`; Monko's `@p1:<type>`, the type being Mongo's `$type` alias (`string`, `objectId`,
+  …) and a list `array[<length>]`. The GUI says the values were withheld.
 - **`json` is Monko's OLD label** (2026-08-24..2026-10-19): its text inlined the values, so it was withheld and
   `varsCount` is a false 0 -- the tab shows "unknown".
-- **No `vars`, no `queryExplained`**: values are counted (`varsCount`), and an EXPLAIN plan has the values
-  substituted in by the database itself. An entry WITH either field predates `VaultCollector.Data`: its
-  `query` may hold values and must not be shown (`slices.ts` marks it `legacy`).
+- **`vars` or `queryExplained`** (the OLD keys): the entry predates `VaultCollector.Data`, written whole by Jackson
+  for every repository; its `query`, values and plan must not be shown (`slices.ts` marks it `legacy`).
 - Arango's `connection` is `ArangoDB::<db>` (no version), Mongo's `MongoDB(<version>)::<db>`.
 - Totals across entries are summed by the frontend; they are not in the record.
 

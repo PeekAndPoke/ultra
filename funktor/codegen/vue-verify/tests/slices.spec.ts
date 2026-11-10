@@ -11,6 +11,7 @@ import {
     readKontainerGraph,
     readRuntime,
     readVault,
+    valuesText,
     runtimeCells,
 } from '../src/funktorsdk/insights/slices.ts'
 import { recorded, sliceOf } from './support.ts'
@@ -188,8 +189,46 @@ describe('the other readers', () => {
     it('vault entries of the current collector are not legacy, and keep their placeholder text', () => {
         const slice = readVault(sliceOf(recorded.vault(), 'vault'))!
 
-        expect(slice.entries.map((entry) => entry.queryLanguage).sort()).toEqual(['aql', 'mongo-bound'])
-        expect(slice.entries.every((entry) => !entry.legacy && entry.query !== null && entry.varsCount === 1)).toBe(true)
+        expect(new Set(slice.entries.map((entry) => entry.queryLanguage))).toEqual(new Set(['aql', 'aql-raw', 'mongo-bound']))
+        expect(slice.entries.every((entry) => !entry.legacy && entry.query !== null)).toBe(true)
+    })
+
+    it('an ordinary entry carries its values and plan; a withholding one neither, only the count (ULTRA-00171)', () => {
+        const slice = readVault(sliceOf(recorded.vault(), 'vault'))!
+        const ordinary = slice.entries.filter((entry) => !entry.valuesWithheld)
+        const withheld = slice.entries.filter((entry) => entry.valuesWithheld)
+
+        expect(ordinary.length).toBeGreaterThan(0)
+        expect(withheld.length).toBeGreaterThanOrEqual(5)
+
+        const lookup = ordinary.find((entry) => entry.queryLanguage === 'aql' && entry.query?.includes('token'))!
+        expect(Object.values(lookup.values!)).toHaveLength(1)
+        expect(lookup.plan).not.toBeNull()
+
+        for (const entry of withheld) {
+            expect(entry.values).toBeNull()
+            expect(entry.plan).toBeNull()
+            expect(entry.varsCount).toBeGreaterThanOrEqual(1)
+        }
+    })
+
+    it('the values read as one pretty JSON document; a value cut at the limit stays text', () => {
+        expect(valuesText({ v_1: '"abc"', p2: '{"a":[1,null]}', p3: '"xxx … (9000 chars)' })).toBe(
+            JSON.stringify({ v_1: 'abc', p2: { a: [1, null] }, p3: '"xxx … (9000 chars)' }, null, 2),
+        )
+    })
+
+    it('a value JavaScript would print differently is shown as the server wrote it: a Long above 2^53, a 1.0', () => {
+        expect(valuesText({ id: '9007199254740993', ratio: '1.0', doc: '{"n":9007199254740993}', ok: '42' })).toBe(
+            '{\n  "id": 9007199254740993,\n  "ratio": 1.0,\n  "doc": {"n":9007199254740993},\n  "ok": 42\n}',
+        )
+    })
+
+    it('a value that is not a string is dropped, not guessed', () => {
+        const entry = readVault({ entries: [{ queryLanguage: 'aql', query: 'q', values: { a: '1', b: 2 } }] })!.entries[0]
+
+        expect(entry.values).toEqual({ a: '1' })
+        expect(entry.valuesWithheld).toBe(false)
     })
 
     it('a Mongo entry under the OLD label json has an UNKNOWN bind count, not the 0 it was recorded with', () => {
@@ -201,7 +240,7 @@ describe('the other readers', () => {
         const entry = readVault(raw)!.entries.find((it) => it.queryLanguage === 'json')!
 
         expect(entry.varsCount).toBeNull()
-        expect(readVault(sliceOf(recorded.vault(), 'vault'))!.entries.every((it) => it.varsCount === 1)).toBe(true)
+        expect(readVault(sliceOf(recorded.vault(), 'vault'))!.entries.every((it) => it.varsCount !== null)).toBe(true)
     })
 
     it('...and so has a PRE-collector one, which kept its text and an empty vars', () => {
@@ -212,6 +251,15 @@ describe('the other readers', () => {
 
         expect(entry.legacy).toBe(true)
         expect(entry.varsCount).toBeNull()
+    })
+
+    it('a PRE-collector entry shows neither its values nor its plan: Jackson wrote them for every repository', () => {
+        const raw = { entries: [{ queryLanguage: 'aql', query: 'q', vars: { v: 'secret' }, queryExplained: 'secret', values: { v: '"secret"' }, explain: 'secret' }] }
+
+        const entry = readVault(raw)!.entries[0]
+
+        expect(entry.legacy).toBe(true)
+        expect([entry.query, entry.values, entry.plan]).toEqual([null, null, null])
     })
 
     it('the file descriptor cell carries the "not measured" caveat when both counts are 0', () => {

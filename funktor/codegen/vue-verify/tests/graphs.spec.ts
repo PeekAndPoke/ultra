@@ -390,7 +390,7 @@ describe('the database graph', () => {
 
         await click(host, 'Show Database Graph')
 
-        const details = host.querySelector('details')!
+        const details = host.querySelector<HTMLDetailsElement>('details.fk-graph-data')!
         details.open = true
         details.dispatchEvent(new Event('toggle'))
         await new Promise((resolve) => setTimeout(resolve, 0))
