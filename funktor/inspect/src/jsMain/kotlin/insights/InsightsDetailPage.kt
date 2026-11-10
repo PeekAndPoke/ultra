@@ -43,7 +43,7 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
         load(props.ref)
 
         lifecycle {
-            // The router keeps this page for prev / next and only hands it the new record
+            // For a host that renders the page with a new record in place; the router mounts one per path
             onNextProps { new, old -> if (new.ref != old.ref) load(new.ref) }
         }
     }
@@ -57,9 +57,10 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
                 val record = response.data
 
                 when {
-                    !response.isSuccess() -> State.Failed(response.refusal())
-                    // Null on a 2xx is what a missing record is
-                    record == null -> State.Failed("This record no longer exists.")
+                    !response.isSuccess() -> State.Failed(
+                        response.refusal("This record does not exist, or insights are not active on this server.")
+                    )
+                    record == null -> State.Failed("The server sent no record.")
                     else -> State.Loaded(record)
                 }
             } catch (e: Throwable) {

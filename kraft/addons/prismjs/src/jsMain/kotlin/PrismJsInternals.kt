@@ -1,6 +1,7 @@
 package io.peekandpoke.kraft.addons.prismjs
 
 import kotlinx.browser.document
+import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.delay
 import org.w3c.dom.Element
@@ -27,8 +28,13 @@ class PrismJsInternals {
             if (prism != null) return
 
             // Reuse the same promise for concurrent callers
-            val promise = importPromise ?: (js("import('prismjs')") as Promise<dynamic>).also {
-                importPromise = it
+            val promise = importPromise ?: run {
+                // Manual mode, read by Prism when it loads: otherwise it highlights every `language-*` block on the
+                // page. An app's own global Prism keeps its own setting.
+                val global = window.asDynamic()
+                if (global.Prism == null) global.Prism = js("({ manual: true })")
+
+                (js("import('prismjs')") as Promise<dynamic>).also { importPromise = it }
             }
 
             val module: dynamic = promise.await()

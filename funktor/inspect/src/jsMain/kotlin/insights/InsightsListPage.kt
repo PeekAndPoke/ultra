@@ -61,7 +61,7 @@ class InsightsListPage(ctx: Ctx<Props>) : Component<InsightsListPage.Props>(ctx)
                 val data = response.data
 
                 when {
-                    !response.isSuccess() -> State.Failed(response.refusal())
+                    !response.isSuccess() -> State.Failed(response.refusal(INSIGHTS_OFF))
                     data == null -> State.Failed("The server sent no records.")
                     else -> State.Loaded(data)
                 }

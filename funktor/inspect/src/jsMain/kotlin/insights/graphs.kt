@@ -10,6 +10,10 @@ import io.peekandpoke.kraft.addons.visnetwork.VisNetworkOptions
 import io.peekandpoke.kraft.addons.visnetwork.VisNode
 import io.peekandpoke.kraft.utils.jsObject
 import io.peekandpoke.ultra.remote.ApiResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlin.js.Date
 
@@ -193,10 +197,17 @@ internal sealed class GraphResult<out T> {
 /**
  * Fetches the two graph endpoints for the tabs, lazily: nothing is asked until a tab asks.
  *
- * One per [InsightsUi], so going back to the list and into another record reuses a graph already fetched. A
- * failed fetch is not kept: the next click asks again. Never throws.
+ * One per [InsightsUi], so going back to the list and into another record reuses a graph already fetched. Askers
+ * while a fetch is running share it. A failed fetch is not kept: the next click asks again. Never throws.
  */
 internal class InsightsGraphSource(private val api: InsightsApiClient) {
+
+    /** Fetches outlive the tab that started them: another tab may be waiting for the same one. */
+    private val scope = CoroutineScope(SupervisorJob())
+
+    private val kontainerInFlight = mutableMapOf<String?, Deferred<GraphResult<KontainerGraphData>>>()
+
+    private var databaseInFlight: Deferred<GraphResult<InsightsDatabaseGraph>>? = null
 
     /** Successful answers, by the fingerprint the SERVER sent. */
     private val kontainerByFingerprint = mutableMapOf<String, GraphResult.Ok<KontainerGraphData>>()
@@ -219,24 +230,32 @@ internal class InsightsGraphSource(private val api: InsightsApiClient) {
         known?.let { return it }
         asked[fingerprint]?.let { return it }
 
-        val result = fetch({ api.getKontainerGraph().first() }) { it.toGraphData() }
-
-        if (result is GraphResult.Ok) {
-            result.value.fingerprint?.let { kontainerByFingerprint[it] = result }
-            latestKontainer = result
-            asked[fingerprint] = result
+        val pending = kontainerInFlight.getOrPut(fingerprint) {
+            scope.async {
+                fetch({ api.getKontainerGraph().first() }) { it.toGraphData() }.also { result ->
+                    if (result is GraphResult.Ok) {
+                        result.value.fingerprint?.let { kontainerByFingerprint[it] = result }
+                        latestKontainer = result
+                        asked[fingerprint] = result
+                    }
+                }
+            }
         }
 
-        return result
+        return pending.await().also {
+            if (kontainerInFlight[fingerprint] === pending) kontainerInFlight.remove(fingerprint)
+        }
     }
 
     /** The database graph, fetched once: it has no fingerprint, nothing joins it. */
     suspend fun database(): GraphResult<InsightsDatabaseGraph> {
         database?.let { return it }
 
-        return fetch({ api.getDatabaseGraph().first() }) { it }.also {
-            if (it is GraphResult.Ok) database = it
-        }
+        val pending = databaseInFlight ?: scope.async {
+            fetch({ api.getDatabaseGraph().first() }) { it }.also { if (it is GraphResult.Ok) database = it }
+        }.also { databaseInFlight = it }
+
+        return pending.await().also { if (databaseInFlight === pending) databaseInFlight = null }
     }
 
     private suspend fun <R, T> fetch(load: suspend () -> ApiResponse<R>, map: (R) -> T): GraphResult<T> = try {
@@ -244,7 +263,7 @@ internal class InsightsGraphSource(private val api: InsightsApiClient) {
         val data = response.data
 
         when {
-            !response.isSuccess() -> GraphResult.Failed(response.refusal())
+            !response.isSuccess() -> GraphResult.Failed(response.refusal(INSIGHTS_OFF))
             data == null -> GraphResult.Failed("The server sent no graph.")
             else -> GraphResult.Ok(map(data), Date())
         }
@@ -253,6 +272,13 @@ internal class InsightsGraphSource(private val api: InsightsApiClient) {
         GraphResult.Failed(e.message ?: e.toString())
     }
 }
+
+/** The API's answer to every call while insights are off; for a record, also a missing one. */
+internal const val INSIGHTS_OFF = "Insights are not active on this server: it answers 404 to every insights call."
+
+/** [refusal], saying what a 404 means here: [meaning]. */
+internal fun ApiResponse<*>.refusal(meaning: String): String =
+    if (status.value == 404) "$meaning (${refusal()})" else refusal()
 
 /** Why a response is not a success, for a notice. */
 internal fun ApiResponse<*>.refusal(): String {

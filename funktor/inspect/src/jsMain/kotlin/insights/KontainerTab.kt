@@ -83,8 +83,12 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
         }
     }
 
+    /** Read and encoded once: the tab is keyed by record and slice, so its data never changes. */
+    private val slice: KontainerSlice? by lazy { readKontainer(props.data) }
+    private val rawText: String by lazy { props.data.toPrettyText() }
+
     override fun VDom.render() {
-        val slice = readKontainer(props.data) ?: return jsonView(props.data)
+        val slice = slice ?: return codeBlock(text = rawText, language = "json")
 
         factList(summary(slice))
         note(
@@ -103,8 +107,8 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
 
         table(sorted(services(slice)))
 
-        rawSlice(
-            props.data,
+        rawSliceText(
+            rawText,
             if (slice.shape == KontainerShape.Full) "Raw slice -- large, every definition inline" else "Raw slice",
         )
     }
@@ -208,21 +212,21 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
         return network
     }
 
-    private fun sortKey(service: KontainerService, column: Column): Comparable<*> = when (column) {
-        Column.Service -> service.cls ?: ""
-        Column.Type -> service.type ?: ""
-        Column.Instances -> service.instances.size
-        Column.Injects -> service.definition?.injects?.size ?: 0
+    private fun comparator(column: Column): Comparator<KontainerService> = when (column) {
+        Column.Service -> compareBy(localeOrder) { it.cls ?: "" }
+        Column.Type -> compareBy(localeOrder) { it.type ?: "" }
+        Column.Instances -> compareBy { it.instances.size }
+        Column.Injects -> compareBy { it.definition?.injects?.size ?: 0 }
         // What the cell shows, not the hidden FQN: sorting by package would look unsorted
-        Column.Definition -> service.definition?.let { "${it.injectionType ?: "?"} - ${shortName(it.creates)}" } ?: ""
+        Column.Definition -> compareBy(localeOrder) {
+            it.definition?.let { def -> "${def.injectionType ?: "?"} - ${shortName(def.creates)}" } ?: ""
+        }
     }
 
     /** Stable, so equal keys keep the reader's order: instantiated first, then by name. */
     private fun sorted(services: List<KontainerService>): List<KontainerService> {
         val by = sortBy ?: return services
-
-        @Suppress("UNCHECKED_CAST")
-        val comparator = compareBy<KontainerService> { sortKey(it, by.column) as Comparable<Any> }
+        val comparator = comparator(by.column)
 
         return services.sortedWith(if (by.descending) comparator.reversed() else comparator)
     }

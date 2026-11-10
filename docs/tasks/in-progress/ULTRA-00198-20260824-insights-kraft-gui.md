@@ -53,8 +53,9 @@ So this is a new page, not a port of Kraft code. The two things that DO exist as
 - [x] **Step 2, the addons** (`b9060d6f`, `33c05401`): `kraft/addons/visnetwork` (vis-network 10.1.4; the component
       loads the library itself when the app registered no addon, so the ops UI needs nothing from its host app),
       mutants V1-V5 red. Prism: `PrismAql`, a new `code` re-highlights. **Found and fixed on the way:** every lazily
-      loaded Prism language and plugin failed to resolve (the imports lacked `.js`, which webpack requires from an ES
-      module), in every app: only Prism's built-in languages ever highlighted. Mutants P1-P4 red.
+      loaded Prism language and plugin failed to resolve in a strict bundle (the imports lacked `.js`, which webpack
+      requires from an ES module unless `fullySpecified` is relaxed, as every app and example here does; the test
+      bundles do not). Mutants P1-P4 red.
 - [x] **Step 3, the pages** in `funktor/inspect/src/jsMain/kotlin/insights/`: `InsightsUi` (optional in
       `FunktorInspectUi(insightsApi = ...)`, mounted at `/_/funktor/inspect/insights`, a card on the overview),
       `slices.kt` (the readers, a port of `slices.ts`), `graphs.kt` (networks, options, the graph cache per UI),
@@ -188,20 +189,30 @@ security reviewers saw this table in phase 1 (it is in the ticket they read); bo
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
-| 2 | MAJOR | `addons.astro:249`, `llms/kraft.md:2365`, `visnetwork/README.md:15` | The addon docs build `data`/`options` inline in `render()`: every host re-render calls `setOptions`/`setData`, the graph is laid out again and the selection cleared (impl F1, domain #1) | **open — maintainer (valve)** | Confirmed by reading. It is the round-1 MAJOR's fix not reaching the docs (both reconciles). Proposed fix: build once in all three, one line on the identity contract |
-| 2 | MINOR | `CHANGELOG.md:281`, this ticket's step 2 | The Prism `.js` fix is overstated: every app and example sets `fullySpecified: false` for `.m?js`, so only strict bundles (the test bundles) were affected (impl F4) | **fix (pending)** | Confirmed: grep shows the rule in all 4 demo apps and 4 examples. My "in every app" was wrong |
-| 2 | MINOR | `VisNetworkComponent.kt:79`, `visnetwork_addon.kt:89` | A failed library load is silent; a failed draw leaves the half-built canvas and never retries (impl F2, domain #2) | open | Reconcile: the round-1 reason "vis-network logs invalid options rather than throwing" is incomplete: duplicate node ids or a non-array `nodes` throw, so a failing-creation test is possible |
-| 2 | MINOR | `InsightsDetailPage.kt:46`, `InsightsPagesSpec.kt:177` | The router remounts the page per path; "the router keeps this page for prev/next" is wrong (impl F3) | open | Confirmed by the reviewer's read of `RouterComponent.kt:56`; the reload stays for embedding hosts |
-| 2 | MINOR | `render.kt:173` | `muted()` KDoc wrong: it mutes unconditionally (impl F5) | open | |
-| 2 | MINOR | `VaultTab.kt:82-112` | Unkeyed siblings before the query segments: a graph toggle shifts every query's Prism block (impl F6, transient half withdrawn) | open | |
-| 2 | MINOR | `graphs.kt:217` | The graph cache does not share an in-flight fetch (Vue does) (impl F7) | open | |
-| 2 | MINOR | `KontainerTab.kt:87`, `VaultTab.kt:184` | Raw slice and database graph re-serialised on every render (impl F8) | open | |
-| 2 | MINOR | `FunktorInspectUi.kt:30`, `InsightsPagesSpec.kt:40` | Pre-existing FQN; import order not reached by the round-1 fix (impl F9) | open | |
-| 2 | MINOR | `render.kt:92` | Key/value tables unsorted, `***redacted***` not marked, unlike Vue's `KeyValueTable` (domain #3) | open | |
-| 2 | MINOR | `InsightsDetailPage.kt:61`, `InsightsListPage.kt:64` | A missing record and inactive insights both show a bare "404 Not Found"; "Null on a 2xx is what a missing record is" is wrong: `okOrNotFound` sends 404 (domain #4; Vue has the same) | open | Confirmed: `ApiResponse.kt:66-69` |
-| 2 | MINOR | `InsightsApiFeature.kt:24` | KDoc "the TS client is the only intended consumer" now wrong (domain #5) | open | Confirmed by reading |
+| 2 | MAJOR | `addons.astro:249`, `llms/kraft.md:2365`, `visnetwork/README.md:15` | The addon docs build `data`/`options` inline in `render()`: every host re-render calls `setOptions`/`setData`, the graph is laid out again and the selection cleared (impl F1, domain #1) | **fix** (maintainer: go ahead) | Confirmed by reading: the round-1 MAJOR's fix had not reached the docs. All three examples now build `data`/`options` once in a component's fields, each says a new object redraws and drops the selection; the example compiled in the addon's test source set (then removed) |
+| 2 | MINOR | `CHANGELOG.md:281`, this ticket's step 2 | The Prism `.js` fix is overstated: every app and example sets `fullySpecified: false` for `.m?js`, so only strict bundles (the test bundles) were affected (impl F4) | **fix** | Confirmed: grep shows the rule in all 4 demo apps and 4 examples. My "in every app" was wrong; CHANGELOG and step 2 now say strict bundles |
+| 2 | MINOR | `VisNetworkComponent.kt:79`, `visnetwork_addon.kt:89` | A failed library load is silent; a failed draw leaves the half-built canvas and never retries (impl F2, domain #2) | **fix** | Reconcile accepted: duplicate node ids throw. A failed draw clears the box; new `data`/`options` clear the problem and try again; without a registered addon a failed load shows the problem. Test: duplicate ids, then valid data. Mutants V6 (no clear) and V7 (no retry) red. The failed-load path has no test: the import cannot be made to fail in Karma |
+| 2 | MINOR | `InsightsDetailPage.kt:46`, `InsightsPagesSpec.kt:177` | The router remounts the page per path; "the router keeps this page for prev/next" is wrong (impl F3) | **fix** | Both comments now say the router mounts one page per path; the reload stays for hosts that render in place |
+| 2 | MINOR | `render.kt:173` | `muted()` KDoc wrong: it mutes unconditionally (impl F5) | **fix** | KDoc: grey text for placeholders and detail |
+| 2 | MINOR | `VaultTab.kt:82-112` | Unkeyed siblings before the query segments: a graph toggle shifts every query's Prism block (impl F6, transient half withdrawn) | **fix (untested)** | Graph section and graph data each in a keyed `div`, every query segment keyed `query-<index>`. No test: preact's reuse is not observable without a Prism-internals probe |
+| 2 | MINOR | `graphs.kt:217` | The graph cache does not share an in-flight fetch (Vue does) (impl F7) | **fix** | `Deferred` per fingerprint and one for the database graph, run in the source's own scope so a closed tab does not cancel another's wait. Test: four concurrent asks, one fetch each; mutants I3, I3b red |
+| 2 | MINOR | `KontainerTab.kt:87`, `VaultTab.kt:184` | Raw slice and database graph re-serialised on every render (impl F8) | **fix** | KontainerTab reads and encodes its slice once (`by lazy`; the tab is keyed by record and slice); VaultTab encodes the graph when it arrives. Not tested (performance only) |
+| 2 | MINOR | `FunktorInspectUi.kt:30`, `InsightsPagesSpec.kt:40` | Pre-existing FQN; import order not reached by the round-1 fix (impl F9) | **fix** | Import added; spec imports sorted |
+| 2 | MINOR | `render.kt:92` | Key/value tables unsorted, `***redacted***` not marked, unlike Vue's `KeyValueTable` (domain #3) | **fix** | As Vue: sorted by `localeCompare`, one row per name with a line per value, `***redacted***` grey italic. Mutants I1 (code-point order), I2 (no mark) red |
+| 2 | MINOR | `InsightsDetailPage.kt:61`, `InsightsListPage.kt:64` | A missing record and inactive insights both show a bare "404 Not Found"; "Null on a 2xx is what a missing record is" is wrong: `okOrNotFound` sends 404 (domain #4; Vue has the same) | **fix** | Confirmed (`ApiResponse.kt:66-69`). Client side, no wire change: a 404 now says what it means (list and graphs: insights off; record: missing or insights off). The fake server's 404 is now an envelope, as funktor's `ApiStatusPages` sends. Mutant I6 red |
+| 2 | MINOR | `InsightsApiFeature.kt:24` | KDoc "the TS client is the only intended consumer" now wrong (domain #5) | **fix** | Names both GUIs' clients |
 | 2 | MINOR | `.json` record routes | Dot rule outside the demo (domain #6) | **withdrawn** | Overlaps the settled round-1 entry; a DOCS follow-up note for host apps |
-| 2 | MINOR | `kraft/README.MD:16` | Still "12 Addons" (domain #7) | open | Confirmed |
+| 2 | MINOR | `kraft/README.MD:16` | Still "12 Addons" (domain #7) | **fix** | 13 |
+
+**Between rounds 2 and 3 — maintainer, 2026-11-10:** "Ok please go ahead". The MAJOR and the code MINORs above fixed
+in one batch, plus the maintainer's decisions on the round-1 maintainer list:
+
+| Item | Decision | Done |
+|---|---|---|
+| Prism auto mode (round 1, domain) | "it should not run in auto mode" | Confirmed first (`prism.js:1184`: without `manual`, it highlights every `language-*` 16 ms after loading). The loader sets `window.Prism = { manual: true }` before the import, unless the app has its own global `Prism`. Test: a foreign `language-json` block stays untokenised; mutant (no flag, flag assertion removed too) red |
+| Display gaps vs Vue | "if the gaps are easy to close please do so" | Two-space JSON indent; a bare word in values shown as a string (mutants I4, I5 red); `localeCompare` order in the kontainer table and key/value tables |
+| Theme CSS from cdnjs | serve locally | Open: design question to the maintainer (how a published addon ships its CSS). `kraft/addons/pdfjs` loads pdf.js and its worker from cdnjs too |
+| `yarn.lock` | "fine" | Settled |
 
 Out of scope, noted by security in round 2: `InsightsDataLoader.kt:46` uses `bucket/file` as a depot path unvalidated
 (superuser only, pre-existing); `funktor/staticweb` ships the prismjs 1.29.0 webjar, below the CVE-2024-53382 fix.

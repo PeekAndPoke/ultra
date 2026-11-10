@@ -11,8 +11,12 @@ import io.peekandpoke.kraft.testing.selectCss
 import io.peekandpoke.kraft.testing.textContent
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.streams.StreamSource
+import kotlinx.browser.document
+import kotlinx.browser.window
+import kotlinx.coroutines.delay
 import kotlinx.html.Tag
 import kotlinx.html.div
+import org.w3c.dom.HTMLElement
 
 private data class Shown(val language: String, val code: String)
 
@@ -36,6 +40,29 @@ private class PrismHost(ctx: Ctx<Props>) : Component<PrismHost.Props>(ctx) {
 class PrismComponentSpec : StringSpec() {
 
     init {
+        // First in the spec: Prism's automatic pass runs once, when it loads
+        "a language block outside the component is left alone" {
+            val foreign = (document.createElement("pre") as HTMLElement).apply {
+                innerHTML = """<code class="language-json">{"foreign": 1}</code>"""
+            }
+            document.body!!.append(foreign)
+
+            try {
+                val source = StreamSource(Shown("json", """{"own": 1}"""))
+
+                TestBed.preact(view = { PrismHost(source) }) { root ->
+                    eventually { root.selectCss("code .token.property").textContent() shouldBe "\"own\"" }
+                    // Prism's automatic pass is due 16 ms after it loads
+                    delay(200)
+                }
+
+                (window.asDynamic().Prism.manual as Boolean?) shouldBe true
+                foreign.querySelectorAll(".token").length shouldBe 0
+            } finally {
+                foreign.remove()
+            }
+        }
+
         "AQL is highlighted" {
             val source = StreamSource(Shown("aql", "FOR d IN users FILTER d.name == @name RETURN d"))
 

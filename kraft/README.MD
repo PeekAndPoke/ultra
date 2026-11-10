@@ -13,7 +13,7 @@ but you never touch Preact directly.
 - **Routing** — Type-safe routes with params, middleware, and nested layouts
 - **Forms & Validation** — Two-way binding, field validation, draft/commit pattern
 - **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a fluent API for FomanticUI
-- **12 Addons** — ChartJS, PDF viewer, syntax highlighting, signature pad, and more
+- **13 Addons** — ChartJS, PDF viewer, syntax highlighting, signature pad, and more
 
 ## Quick example
 

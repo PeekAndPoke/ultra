@@ -35,10 +35,13 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.api
 import io.peekandpoke.ultra.remote.apiPaged
 import io.peekandpoke.ultra.streams.StreamSource
+import kotlinx.coroutines.async
+import kotlinx.coroutines.await
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.html.Tag
 import kotlinx.html.div
 import kotlinx.serialization.json.Json
-import kotlinx.coroutines.await
 import org.w3c.dom.Element
 import kotlin.js.Date
 import kotlin.js.Promise
@@ -55,8 +58,12 @@ private class FakeInsightsServer {
     var summaries: List<InsightsRecordSummary> = emptyList()
     var kontainerGraph = InsightsKontainerGraph(fingerprint = "fp1", services = emptyList())
     var databaseGraph = InsightsDatabaseGraph(repos = emptyList())
+    /** False: the list answers 404, as the API does while insights are off. */
+    var listAnswers = true
 
     private fun answer(path: String): String? = when {
+        path == "/_/funktor/insights/records" && !listAnswers -> null
+
         path == "/_/funktor/insights/records" -> codec.encodeToString(
             InsightsRecordSummary.serializer().apiPaged(),
             ApiResponse.ok(Paged(items = summaries, page = 1, epp = 20, fullItemCount = summaries.size.toLong())),
@@ -89,7 +96,16 @@ private class FakeInsightsServer {
                     calls += path
 
                     when (val body = answer(path)) {
-                        null -> respond(content = "", status = HttpStatusCode.NotFound)
+                        // As funktor answers a NotFoundException and `okOrNotFound`: an envelope, no data
+                        null -> respond(
+                            content = codec.encodeToString(
+                                InsightsRecord.serializer().api(),
+                                ApiResponse.notFound<InsightsRecord>().withError("The Resource '$path' was not found"),
+                            ),
+                            status = HttpStatusCode.NotFound,
+                            headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
+
                         else -> respond(
                             content = body,
                             status = HttpStatusCode.OK,
@@ -174,7 +190,7 @@ private val graph = InsightsKontainerGraph(
     ),
 )
 
-// Host that shows the detail page of whatever record the stream names, as the router does on prev / next
+// Host that shows the detail page of whatever record the stream names, in place (the router mounts one per path)
 @Suppress("TestFunctionName")
 private fun Tag.DetailHost(ui: InsightsUi, ref: StreamSource<InsightsRecordRef>) =
     comp(DetailHost.Props(ui, ref)) { DetailHost(it) }
@@ -447,6 +463,68 @@ class InsightsPagesSpec : StringSpec() {
                 root.tab("View")
                 eventually { root.textContent() shouldContain "No view was rendered for this request." }
             }
+        }
+
+        "headers are sorted by name, one row per name and a line per value; a redacted value is muted" {
+            val server = FakeInsightsServer()
+            val headers = slice(
+                "request",
+                """{"method": {"value": "GET"}, "uri": "/", "queryParams": {},
+                   "headers": {"b-second": ["2", "3"], "X-Attack": ["$ATTACK"], "A-first": ["$REDACTED"]}}""",
+            )
+            server.records["records-2026-11-10/a.json"] = record("a.json", headers)
+
+            withDetail(server, "a.json") { root, _ ->
+                eventually { root.selectCss(".insights-redacted").count() shouldBe 1 }
+
+                val rows = root.selectCss(".bottom.attached.segment .celled.table tbody tr")
+                    .map { row -> row.querySelector("td")?.textContent }
+                // localeCompare, as the Vue GUI: not code point order, which puts "X" before "b"
+                rows shouldBe listOf("A-first", "b-second", "X-Attack")
+                root.selectCss(".insights-redacted").textContent() shouldBe REDACTED
+                root.selectCss(".bottom.attached.segment .celled.table tbody tr td div").count() shouldBe 4
+            }
+        }
+
+        "a missing record, and insights switched off, say what the 404 means" {
+            val server = FakeInsightsServer()
+            val ui = InsightsUi(api = server.api)
+            val ref = StreamSource(InsightsRecordRef(bucket = "records-2026-11-10", file = "gone.json"))
+
+            TestBed.preact(view = { DetailHost(ui, ref) }) { root ->
+                eventually { root.textContent() shouldContain "This record does not exist, or insights are not active" }
+            }
+
+            // Switched off, the server answers 404 to the list too
+            val off = FakeInsightsServer().apply { listAnswers = false }
+            val offUi = InsightsUi(api = off.api)
+
+            TestBed.preact(view = { offUi { InsightsListPage() } }) { root ->
+                eventually { root.textContent() shouldContain "Insights are not active on this server" }
+            }
+        }
+
+        "values print with two spaces, a bare word as a string" {
+            valuesText(mapOf("a" to "abc", "b" to "{\"x\":[1]}")) shouldBe
+                "{\n  \"a\": \"abc\",\n  \"b\": {\n    \"x\": [\n      1\n    ]\n  }\n}"
+        }
+
+        "tabs asking for a graph at once share one fetch" {
+            val server = FakeInsightsServer()
+            val graphs = InsightsGraphSource(server.api)
+
+            val results = coroutineScope {
+                listOf(
+                    async { graphs.database() },
+                    async { graphs.database() },
+                    async { graphs.kontainer("fp1") },
+                    async { graphs.kontainer("fp1") },
+                ).awaitAll()
+            }
+
+            results.all { it is GraphResult.Ok } shouldBe true
+            server.count("/_/funktor/insights/graphs/database") shouldBe 1
+            server.count("/_/funktor/insights/graphs/kontainer") shouldBe 1
         }
 
         "the page follows a new record" {

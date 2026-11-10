@@ -23,7 +23,7 @@ class InsightsApiFeature : ApiFeature {
      *
      * Declared as a PARAMS class, not read off `queryParameters`: codegen derives query parameters
      * exclusively from the route's params type, so a value read off the raw request is invisible to the
-     * generated TypeScript client — which for this endpoint is the only intended consumer.
+     * generated TypeScript client, which the Vue GUI uses (the Kraft GUI uses `InsightsApiClient`).
      */
     data class PagingParam(
         val page: Int = 1,

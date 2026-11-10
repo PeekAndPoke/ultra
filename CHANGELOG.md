@@ -278,10 +278,14 @@
 
 ### Fixes
 
-- **Kraft prismjs: lazily loaded languages and plugins never loaded.** The addon imported
-  `prismjs/components/prism-json` and the like without `.js`, which webpack refuses from an ES module, so every
-  language beyond Prism's built-in ones (markup, CSS, C-like, JavaScript) rendered unhighlighted, and the line
-  numbers, toolbar, copy-to-clipboard, show-language and inline-color plugins did nothing.
+- **Kraft prismjs: lazily loaded languages and plugins failed in strict bundles.** The addon imported
+  `prismjs/components/prism-json` and the like without `.js`, which webpack refuses from an ES module unless the app
+  relaxes `fullySpecified` (every app and example here does; the test bundles do not). There, every language beyond
+  Prism's built-in ones rendered unhighlighted, and the line numbers, toolbar, copy-to-clipboard, show-language and
+  inline-color plugins did nothing.
+- **Kraft prismjs: Prism no longer highlights the whole page.** It loaded in automatic mode and highlighted every
+  `language-*` block in the document, not only its own; it now loads in manual mode, unless the app already has a
+  global `Prism`.
 
 ## 0.117.0
 

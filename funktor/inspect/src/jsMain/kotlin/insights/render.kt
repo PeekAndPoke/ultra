@@ -40,6 +40,7 @@ internal const val INSIGHTS_CSS = """
 .funktor-insights .insights-records tbody tr { cursor: pointer; }
 .funktor-insights .insights-mono { font-family: monospace; }
 .funktor-insights .insights-path { word-break: break-all; }
+.funktor-insights .insights-redacted { color: grey; font-style: italic; }
 """
 
 /** A value as indented JSON. */
@@ -88,7 +89,13 @@ internal fun FlowContent.statStrip(cells: List<StatCell>) {
     }
 }
 
-/** A map of names to lists, one row per value. */
+/** What the server shows for a value declared `Redacted`. */
+internal const val REDACTED = "***redacted***"
+
+/**
+ * A map of names to lists, sorted by name, one row per name and one line per value: a repeated header stays
+ * visibly two values, not one with a comma. A [REDACTED] value is muted.
+ */
 internal fun FlowContent.keyValueTable(entries: Map<String, List<String>>, keyLabel: String, emptyText: String) {
     if (entries.isEmpty()) {
         ui.basic.segment { +emptyText }
@@ -98,11 +105,13 @@ internal fun FlowContent.keyValueTable(entries: Map<String, List<String>>, keyLa
     ui.very.compact.celled.table Table {
         thead { tr { th { +keyLabel }; th { +"Value" } } }
         tbody {
-            entries.forEach { (key, values) ->
-                values.ifEmpty { listOf("") }.forEach { value ->
-                    tr {
-                        td(classes = "insights-mono") { +key }
-                        td(classes = "insights-mono insights-path") { +value }
+            entries.entries.sortedWith(compareBy(localeOrder) { it.key }).forEach { (key, values) ->
+                tr {
+                    td(classes = "insights-mono") { +key }
+                    td(classes = "insights-mono insights-path") {
+                        values.forEach { value ->
+                            div(classes = if (value == REDACTED) "insights-redacted" else null) { +value }
+                        }
                     }
                 }
             }
@@ -147,7 +156,12 @@ internal fun FlowContent.collapsed(title: String, body: FlowContent.() -> Unit) 
 
 /** The raw slice, collapsed: the fallback of every readable tab. */
 internal fun FlowContent.rawSlice(data: JsonElement?, title: String = "Raw slice") {
-    collapsed(title) { jsonView(data) }
+    rawSliceText(data?.toPrettyText(), title)
+}
+
+/** [rawSlice] for text already encoded, by a tab that keeps it between renders. */
+internal fun FlowContent.rawSliceText(text: String?, title: String = "Raw slice") {
+    collapsed(title) { codeBlock(text = text, language = "json") }
 }
 
 /** A short note under a section. */
@@ -170,7 +184,7 @@ internal fun FlowContent.insightsStyles() {
     style { +INSIGHTS_CSS }
 }
 
-/** A cell that is muted when [text] is a placeholder. */
+/** Grey text, for placeholders and secondary detail. */
 internal fun FlowContent.muted(text: String) {
     span { ui.grey.text { +text } }
 }

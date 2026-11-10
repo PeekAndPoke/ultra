@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.inspect
 
 import io.peekandpoke.funktor.insights.api.InsightsApiClient
 import io.peekandpoke.funktor.inspect.cluster.FunktorClusterApiClient
+import io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi
 import io.peekandpoke.funktor.inspect.insights.InsightsUi
 import io.peekandpoke.funktor.inspect.introspection.IntrospectionUi
 import io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiClient
@@ -27,7 +28,7 @@ class FunktorInspectUi(
         routes = routes.logging,
     )
 
-    val cluster = io.peekandpoke.funktor.inspect.cluster.FunktorInspectClusterUi(
+    val cluster = FunktorInspectClusterUi(
         api = clusterApi,
         routes = routes.cluster,
         kronos = kronos,

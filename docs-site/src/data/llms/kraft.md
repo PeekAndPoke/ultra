@@ -2363,18 +2363,25 @@ A new config updates the live chart: options, `data` fields and datasets follow 
 ## visnetwork — Network graphs
 
 ```kotlin
-VisNetwork(
-    data = jsObject {
+class ServiceGraph(ctx: NoProps) : PureComponent(ctx) {
+    // Built once: a new object redraws the network and drops its selection
+    private val data = jsObject<VisNetworkData> {
         nodes = arrayOf(jsObject { id = 1; label = "Api" }, jsObject { id = 2; label = "Repo" })
         edges = arrayOf(jsObject { from = 1; to = 2; arrows = "to" })
-    },
-    options = jsObject { physics = jsObject<dynamic> { solver = "forceAtlas2Based" } },
-    height = "500px",
-)
+    }
+    private val options = jsObject<VisNetworkOptions> {
+        physics = jsObject<dynamic> { solver = "forceAtlas2Based" }
+    }
+
+    override fun VDom.render() {
+        VisNetwork(data = data, options = options, height = "500px")
+    }
+}
 ```
 
 - Uses the registered `visNetwork()` addon, or loads the library itself when none is registered.
-- A new `data` / `options` object (by identity) updates the live network; `onReady` hands you the `VisNetwork`.
+- A new `data` / `options` object (by identity) redraws the live network and drops its selection: build them once,
+  never inline in `render()`. `onReady` hands you the `VisNetwork`.
 - Labels are drawn on a canvas. A string `title` is text, an element is HTML — never build one from untrusted input.
 - Mount only while visible: a network in a hidden container cannot lay itself out.
 

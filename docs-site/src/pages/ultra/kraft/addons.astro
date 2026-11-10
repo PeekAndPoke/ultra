@@ -246,20 +246,25 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
 
     <h2>visnetwork — Network graphs</h2>
 
-<Code code={`override fun VDom.render() {
-    VisNetwork(
-        data = jsObject {
-            nodes = arrayOf(jsObject { id = 1; label = "Api" }, jsObject { id = 2; label = "Repo" })
-            edges = arrayOf(jsObject { from = 1; to = 2; arrows = "to" })
-        },
-        options = jsObject { physics = jsObject<dynamic> { solver = "forceAtlas2Based" } },
-        height = "500px",
-    )
+<Code code={`class ServiceGraph(ctx: NoProps) : PureComponent(ctx) {
+    // Built once: a new object redraws the network and drops its selection
+    private val data = jsObject<VisNetworkData> {
+        nodes = arrayOf(jsObject { id = 1; label = "Api" }, jsObject { id = 2; label = "Repo" })
+        edges = arrayOf(jsObject { from = 1; to = 2; arrows = "to" })
+    }
+    private val options = jsObject<VisNetworkOptions> {
+        physics = jsObject<dynamic> { solver = "forceAtlas2Based" }
+    }
+
+    override fun VDom.render() {
+        VisNetwork(data = data, options = options, height = "500px")
+    }
 }`} lang="kotlin" theme="vitesse-dark" />
 
     <p><code>VisNetwork</code> uses the registered <code>visNetwork()</code> addon, or loads the library itself when
         none is registered, so a library page can draw graphs without asking its host app for an addon. A new
-        <code>data</code> or <code>options</code> object updates the live network; <code>onReady</code> hands you the
+        <code>data</code> or <code>options</code> object, by identity, redraws the live network and drops its
+        selection, so build them once rather than inside <code>render()</code>; <code>onReady</code> hands you the
         network for its events. Labels are drawn on a canvas. A string <code>title</code> shows as text, an element as
         HTML: never build one from untrusted input. Mount the graph only while it is visible: a hidden container cannot
         be laid out.</p>

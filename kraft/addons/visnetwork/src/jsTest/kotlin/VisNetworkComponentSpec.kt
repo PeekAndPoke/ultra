@@ -112,5 +112,27 @@ class VisNetworkComponentSpec : StringSpec() {
         "draws, updates and destroys a network with the addon registered" {
             runWith(registered = true)
         }
+
+        "a failed draw shows the problem, leaves nothing behind, and new data draws" {
+            // vis-data refuses a second node with the same id
+            val broken = jsObject<VisNetworkData> {
+                nodes = arrayOf(jsObject { id = 1; label = "a" }, jsObject { id = 1; label = "b" })
+                edges = arrayOf()
+            }
+            val source = StreamSource(Shown(broken))
+            var drawn: VisNetwork? = null
+
+            TestBed.preact(view = { NetworkHost(source) { drawn = it } }) { root ->
+                eventually { root.selectCss(".vis-network-problem").count() shouldBe 1 }
+                root.selectCss(".vis-network-problem canvas").count() shouldBe 0
+                root.selectCss(".vis-network-problem div").count() shouldBe 0
+
+                source(Shown(network(3)))
+
+                eventually { drawn?.nodeCount() shouldBe 3 }
+                root.selectCss(".vis-network-problem").count() shouldBe 0
+                root.selectCss("canvas").count() shouldBe 1
+            }
+        }
     }
 }

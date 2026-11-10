@@ -1,8 +1,10 @@
 package io.peekandpoke.funktor.inspect.insights
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
@@ -38,8 +40,15 @@ internal fun JsonElement?.asWrappedNumber(): Double? = asNumber() ?: asRecord()?
 
 private val compact = Json
 
-/** Indented JSON, for display. */
-internal val prettyJson = Json { prettyPrint = true }
+/** Orders text as `localeCompare` does, like the Vue GUI, not by code point. */
+internal val localeOrder: Comparator<String> = Comparator { a, b -> (a.asDynamic().localeCompare(b) as Number).toInt() }
+
+/** Indented JSON, for display; two spaces, as the Vue GUI and `JSON.stringify(v, null, 2)` print it. */
+@OptIn(ExperimentalSerializationApi::class)
+internal val prettyJson = Json {
+    prettyPrint = true
+    prettyPrintIndent = "  "
+}
 
 /** A JSON value as compact text, for a cell that holds something other than a string. */
 internal fun JsonElement.toCompactText(): String = compact.encodeToString(JsonElement.serializer(), this)
@@ -344,9 +353,22 @@ internal fun valuesText(values: Map<String, String>): String {
 
 private fun valueDisplay(text: String): String = try {
     val value = compact.parseToJsonElement(text)
-    if (value.toCompactText() == text) prettyJson.encodeToString(JsonElement.serializer(), value) else text
+    when {
+        // kotlinx reads a bare word as an unquoted literal; JSON.parse, and so the Vue GUI, refuses it
+        !value.isJson() -> JsonPrimitive(text).toCompactText()
+        value.toCompactText() == text -> prettyJson.encodeToString(JsonElement.serializer(), value)
+        else -> text
+    }
 } catch (_: Throwable) {
     JsonPrimitive(text).toCompactText()
+}
+
+/** False for an unquoted literal that is no number, boolean or null, anywhere in the value. */
+private fun JsonElement.isJson(): Boolean = when (this) {
+    is JsonNull -> true
+    is JsonPrimitive -> isString || booleanOrNull != null || doubleOrNull != null
+    is JsonObject -> values.all { it.isJson() }
+    is JsonArray -> all { it.isJson() }
 }
 
 //  kontainer  /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -454,7 +476,7 @@ private fun JsonElement?.readService(): KontainerService {
 
 /** The old table's order: services with instances first, then by FQN. */
 internal fun List<KontainerService>.sortedForTable(): List<KontainerService> =
-    sortedWith(compareBy<KontainerService> { it.instances.isEmpty() }.thenBy { it.cls ?: "" })
+    sortedWith(compareBy<KontainerService> { it.instances.isEmpty() }.thenBy(localeOrder) { it.cls ?: "" })
 
 /** Either shape, told apart by what is there: the `graphFingerprint` key marks `slim`, `info` marks `full`. */
 internal fun readKontainer(data: JsonElement?): KontainerSlice? {

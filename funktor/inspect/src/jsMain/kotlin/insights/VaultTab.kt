@@ -7,10 +7,12 @@ import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.key
 import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
 import kotlinx.html.Tag
+import kotlinx.html.div
 import kotlinx.serialization.json.JsonElement
 import kotlin.js.Date
 
@@ -34,6 +36,8 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
     data class Props(val data: JsonElement, val ui: InsightsUi)
 
     private var graph: InsightsDatabaseGraph? by value(null)
+    /** [graph] as indented JSON, encoded once when it arrives. */
+    private var graphText: String? = null
     private var fetchedAt: Date? by value(null)
     private var graphProblem: String? by value(null)
     private var loading: Boolean by value(false)
@@ -55,6 +59,7 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
         launch {
             when (val result = props.ui.graphs.database()) {
                 is GraphResult.Ok -> {
+                    graphText = prettyJson.encodeToString(InsightsDatabaseGraph.serializer(), result.value)
                     graph = result.value
                     fetchedAt = result.fetchedAt
                 }
@@ -79,15 +84,16 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
         statStrip(slice.cells())
         ui.hidden.divider()
 
-        graphSection()
+        // Keyed: the graph section grows and shrinks, and must not shift the queries' Prism blocks
+        div { key = "graph"; graphSection() }
 
         if (slice.entries.isEmpty()) {
-            ui.basic.segment { +"No database queries ran for this request." }
+            ui.basic.segment { key = "no-queries"; +"No database queries ran for this request." }
         }
 
         slice.entries.forEachIndexed { index, entry -> query(index, entry) }
 
-        graphData()
+        div { key = "graph-data"; graphData() }
     }
 
     private fun FlowContent.graphSection() {
@@ -114,6 +120,7 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
 
     private fun FlowContent.query(index: Int, entry: VaultEntry) {
         ui.segment {
+            key = "query-$index"
             ui.small.header {
                 +"Query #${index + 1} took ${nsToMs(entry.totalNs)}"
                 ui.sub.header { +(entry.connection ?: "unknown connection") }
@@ -177,14 +184,11 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
 
         if (!showData) return
 
-        val loaded = graph
+        val text = graphText
         val reason = graphProblem
 
         when {
-            loaded != null -> codeBlock(
-                text = prettyJson.encodeToString(InsightsDatabaseGraph.serializer(), loaded),
-                language = "json",
-            )
+            graph != null && text != null -> codeBlock(text = text, language = "json")
 
             reason != null -> problem(reason)
             else -> ui.basic.segment { +"Loading the database graph..." }
