@@ -263,6 +263,21 @@
     user repository's failure is no `Exception` (Karango's are `Throwable`s); it was a 500.
   - `PasswordHasher.strongRandom` is `SecureRandom()`, no longer `SecureRandom.getInstanceStrong()`, which can block.
 
+### New
+
+- **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`
+  draws a network graph (vis-network 10.1.4, loaded on first use), follows new `data` and `options`, and destroys the
+  network on unmount. It uses the registered `visNetwork()` addon or, when an app registered none, loads the library
+  itself.
+- **Kraft prismjs: `PrismAql`**, and a `Prism` block given new code highlights the new code (it kept the first).
+
+### Fixes
+
+- **Kraft prismjs: lazily loaded languages and plugins never loaded.** The addon imported
+  `prismjs/components/prism-json` and the like without `.js`, which webpack refuses from an ES module, so every
+  language beyond Prism's built-in ones (markup, CSS, C-like, JavaScript) rendered unhighlighted, and the line
+  numbers, toolbar, copy-to-clipboard, show-language and inline-color plugins did nothing.
+
 ## 0.117.0
 
 ### New

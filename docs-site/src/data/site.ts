@@ -119,6 +119,7 @@ export const dep = {
     kraftAddonNxCompile: `${kraftGroup}:addons-nxcompile:${kraftVersion}`,
     kraftAddonSourceMappedStacktrace: `${kraftGroup}:addons-sourcemappedstacktrace:${kraftVersion}`,
     kraftAddonThreeJs: `${kraftGroup}:addons-threejs:${kraftVersion}`,
+    kraftAddonVisNetwork: `${kraftGroup}:addons-visnetwork:${kraftVersion}`,
     vault: `${ultraGroup}:vault:${ultraVersion}`,
     mutatorCore: `${mutatorGroup}:core:${ultraVersion}`,
     mutatorKsp: `${mutatorGroup}:ksp:${ultraVersion}`,

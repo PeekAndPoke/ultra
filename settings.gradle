@@ -46,6 +46,7 @@ include(
         ":kraft:addons:signaturepad",
         ":kraft:addons:sourcemappedstacktrace",
         ":kraft:addons:threejs",
+        ":kraft:addons:visnetwork",
         // Examples
         ":kraft:examples:addons",
         ":kraft:examples:hello-world",

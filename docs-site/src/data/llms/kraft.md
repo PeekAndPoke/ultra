@@ -56,7 +56,7 @@ This means:
 - **Routing** — Type-safe routes with params, middleware for auth guards, and nested layouts.
 - **Forms & Validation** — Two-way binding, field validation, draft/commit pattern — all type-safe.
 - **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a beautiful, fluent API for FomanticUI.
-- **12 Addons** — ChartJS, PrismJS, PDF viewer, PixiJS (2D WebGL), Three.js (3D WebGL), markdown, signature pad, and
+- **13 Addons** — ChartJS, PrismJS, vis-network graphs, PDF viewer, PixiJS (2D WebGL), Three.js (3D WebGL), markdown, signature pad, and
   more — loaded on demand
   via the AddonRegistry.
 
@@ -2302,6 +2302,7 @@ the addon becomes ready — subscribing is just like any other stream.
 | `marked`                 | [marked](https://marked.js.org/) + DOMPurify | Markdown → sanitized HTML           |
 | `prismjs`                | [Prism](https://prismjs.com/)                | Syntax highlighting with plugins    |
 | `chartjs`                | [Chart.js](https://www.chartjs.org/)         | Bar, line, pie, radar charts        |
+| `visnetwork`             | [vis-network](https://visjs.github.io/vis-network/docs/network/) | Network graphs, physics layout |
 | `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser (CDN-loaded) |
 | `pixijs`                 | [PixiJS v8](https://pixijs.com/)             | 2D WebGL/WebGPU rendering           |
 | `threejs`                | [Three.js](https://threejs.org/)             | 3D WebGL rendering                  |
@@ -2358,6 +2359,24 @@ A new config updates the live chart: options, `data` fields and datasets follow 
   in every config.
 - Inline top-level `plugins` are read at creation only; dataset fields starting with `_` are reserved for Chart.js.
 - `Chart.update(mode)` takes a Chart.js 4 update mode (`"none"`, `"resize"`, …).
+
+## visnetwork — Network graphs
+
+```kotlin
+VisNetwork(
+    data = jsObject {
+        nodes = arrayOf(jsObject { id = 1; label = "Api" }, jsObject { id = 2; label = "Repo" })
+        edges = arrayOf(jsObject { from = 1; to = 2; arrows = "to" })
+    },
+    options = jsObject { physics = jsObject<dynamic> { solver = "forceAtlas2Based" } },
+    height = "500px",
+)
+```
+
+- Uses the registered `visNetwork()` addon, or loads the library itself when none is registered.
+- A new `data` / `options` object (by identity) updates the live network; `onReady` hands you the `VisNetwork`.
+- Labels are drawn on a canvas. A string `title` is text, an element is HTML — never build one from untrusted input.
+- Mount only while visible: a network in a hidden container cannot lay itself out.
 
 ## Prism.js — Syntax highlighting
 

@@ -493,6 +493,10 @@ object Deps {
 
         // https://www.npmjs.com/package/trim-canvas
         fun KotlinDependencyHandler.trimCanvas() = npm("trim-canvas", "0.1.2")
+
+        // https://www.npmjs.com/package/vis-network
+        // checked 2026-11-10: latest 10.1.5 (2026-11-08); 10.1.4 taken, two weeks old
+        fun KotlinDependencyHandler.visNetwork() = npm("vis-network", "10.1.4")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////

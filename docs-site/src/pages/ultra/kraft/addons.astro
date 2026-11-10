@@ -95,6 +95,11 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
       <td>Bar, line, pie, radar charts</td>
     </tr>
     <tr>
+      <td><code>visnetwork</code></td>
+        <td><a href="https://www.npmjs.com/package/vis-network" target="_blank" rel="noopener">vis-network</a></td>
+      <td>Network graphs: nodes, edges, physics layout</td>
+    </tr>
+    <tr>
       <td><code>pdfjs</code></td>
         <td><a href="https://www.npmjs.com/package/pdfjs-dist" target="_blank" rel="noopener">pdf.js</a></td>
         <td>Render PDFs in-browser (CDN-loaded)</td>
@@ -199,7 +204,8 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
     <p>Language components: <code>PrismKotlin</code>, <code>PrismJava</code>, <code>PrismJavascript</code>,
         <code>PrismJson</code>, <code>PrismHtml</code>, <code>PrismCss</code>, <code>PrismXml</code>,
         <code>PrismRust</code>,
-        <code>PrismTypescript</code>, and more.</p>
+        <code>PrismTypescript</code>, <code>PrismAql</code>, and more. A new <code>code</code> re-highlights the
+        block.</p>
 
     <p>Plugins: <code>lineNumbers()</code>, <code>copyToClipboard()</code>, <code>inlineColor()</code>,
         <code>showLanguage()</code>.</p>
@@ -237,6 +243,26 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
         many times per second sets <code>{"options = jsObject { asDynamic().animation = false }"}</code> in every config
         it passes.
         <code>Chart.update(mode)</code> takes a Chart.js 4 update mode such as <code>"none"</code>.</p>
+
+    <h2>visnetwork — Network graphs</h2>
+
+<Code code={`override fun VDom.render() {
+    VisNetwork(
+        data = jsObject {
+            nodes = arrayOf(jsObject { id = 1; label = "Api" }, jsObject { id = 2; label = "Repo" })
+            edges = arrayOf(jsObject { from = 1; to = 2; arrows = "to" })
+        },
+        options = jsObject { physics = jsObject<dynamic> { solver = "forceAtlas2Based" } },
+        height = "500px",
+    )
+}`} lang="kotlin" theme="vitesse-dark" />
+
+    <p><code>VisNetwork</code> uses the registered <code>visNetwork()</code> addon, or loads the library itself when
+        none is registered, so a library page can draw graphs without asking its host app for an addon. A new
+        <code>data</code> or <code>options</code> object updates the live network; <code>onReady</code> hands you the
+        network for its events. Labels are drawn on a canvas. A string <code>title</code> shows as text, an element as
+        HTML: never build one from untrusted input. Mount the graph only while it is visible: a hidden container cannot
+        be laid out.</p>
 
     <h2>pixijs — 2D WebGL/WebGPU</h2>
 
