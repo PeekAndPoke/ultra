@@ -110,6 +110,7 @@ class PrismJsInternals {
             return when (val existing = prism.languages[language]) {
                 null -> try {
                     when (language) {
+                        "aql" -> loadAql()
                         "dart" -> loadDart()
                         "java" -> loadJava()
                         "json" -> loadJson()
@@ -141,21 +142,25 @@ class PrismJsInternals {
         // Prerequisite loaders ////////////////////////////////////////////////////////////////////////////////////////
 
         private suspend fun loadMarkupTemplating(): dynamic = loadInternal("markup-templating") {
-            js("import('prismjs/components/prism-markup-templating')") as Promise<dynamic>
+            js("import('prismjs/components/prism-markup-templating.js')") as Promise<dynamic>
         }
 
         // Language loaders ////////////////////////////////////////////////////////////////////////////////////////////
 
+        private suspend fun loadAql(): dynamic = loadInternal("aql") {
+            js("import('prismjs/components/prism-aql.js')") as Promise<dynamic>
+        }
+
         private suspend fun loadDart(): dynamic = loadInternal("dart") {
-            js("import('prismjs/components/prism-dart')") as Promise<dynamic>
+            js("import('prismjs/components/prism-dart.js')") as Promise<dynamic>
         }
 
         private suspend fun loadJava(): dynamic = loadInternal("java") {
-            js("import('prismjs/components/prism-java')") as Promise<dynamic>
+            js("import('prismjs/components/prism-java.js')") as Promise<dynamic>
         }
 
         private suspend fun loadJson(): dynamic = loadInternal("json") {
-            js("import('prismjs/components/prism-json')") as Promise<dynamic>
+            js("import('prismjs/components/prism-json.js')") as Promise<dynamic>
         }
 
         private suspend fun loadJson5(): dynamic {
@@ -163,7 +168,7 @@ class PrismJsInternals {
             loadJson()
 
             return loadInternal("json5") {
-                js("import('prismjs/components/prism-json5')") as Promise<dynamic>
+                js("import('prismjs/components/prism-json5.js')") as Promise<dynamic>
             }
         }
 
@@ -172,16 +177,16 @@ class PrismJsInternals {
             loadJson()
 
             return loadInternal("jsonp") {
-                js("import('prismjs/components/prism-jsonp')") as Promise<dynamic>
+                js("import('prismjs/components/prism-jsonp.js')") as Promise<dynamic>
             }
         }
 
         private suspend fun loadKotlin(): dynamic = loadInternal("kotlin") {
-            js("import('prismjs/components/prism-kotlin')") as Promise<dynamic>
+            js("import('prismjs/components/prism-kotlin.js')") as Promise<dynamic>
         }
 
         private suspend fun loadLess(): dynamic = loadInternal("less") {
-            js("import('prismjs/components/prism-less')") as Promise<dynamic>
+            js("import('prismjs/components/prism-less.js')") as Promise<dynamic>
         }
 
         private suspend fun loadPhp(): dynamic {
@@ -190,32 +195,32 @@ class PrismJsInternals {
             loadMarkupTemplating()
 
             return loadInternal("php") {
-                js("import('prismjs/components/prism-php')") as Promise<dynamic>
+                js("import('prismjs/components/prism-php.js')") as Promise<dynamic>
             }
         }
 
         private suspend fun loadRegex(): dynamic = loadInternal("regex") {
-            js("import('prismjs/components/prism-regex')") as Promise<dynamic>
+            js("import('prismjs/components/prism-regex.js')") as Promise<dynamic>
         }
 
         private suspend fun loadRuby(): dynamic = loadInternal("ruby") {
-            js("import('prismjs/components/prism-ruby')") as Promise<dynamic>
+            js("import('prismjs/components/prism-ruby.js')") as Promise<dynamic>
         }
 
         private suspend fun loadRust(): dynamic = loadInternal("rust") {
-            js("import('prismjs/components/prism-rust')") as Promise<dynamic>
+            js("import('prismjs/components/prism-rust.js')") as Promise<dynamic>
         }
 
         private suspend fun loadSass(): dynamic = loadInternal("sass") {
-            js("import('prismjs/components/prism-sass')") as Promise<dynamic>
+            js("import('prismjs/components/prism-sass.js')") as Promise<dynamic>
         }
 
         private suspend fun loadScss(): dynamic = loadInternal("scss") {
-            js("import('prismjs/components/prism-scss')") as Promise<dynamic>
+            js("import('prismjs/components/prism-scss.js')") as Promise<dynamic>
         }
 
         private suspend fun loadTypescript(): dynamic = loadInternal("typescript") {
-            js("import('prismjs/components/prism-typescript')") as Promise<dynamic>
+            js("import('prismjs/components/prism-typescript.js')") as Promise<dynamic>
         }
 
         private suspend fun loadInternal(language: String, promise: () -> Promise<dynamic>): dynamic {
@@ -246,7 +251,7 @@ class PrismJsInternals {
             loadToolbar()
 
             return loadInternal("copyToClipboard", { _, duration -> duration < 100 }) {
-                js("import('prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard')") as Promise<dynamic>
+                js("import('prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard.js')") as Promise<dynamic>
             }
         }
 
@@ -254,7 +259,7 @@ class PrismJsInternals {
             styles.loadInlineColor()
 
             return loadInternal("inlineColor", { _, duration -> duration < 100 }) {
-                js("import('prismjs/plugins/inline-color/prism-inline-color')") as Promise<dynamic>
+                js("import('prismjs/plugins/inline-color/prism-inline-color.js')") as Promise<dynamic>
             }
         }
 
@@ -262,7 +267,7 @@ class PrismJsInternals {
             styles.loadLineNumbers()
 
             return loadInternal("lineNumbers") {
-                js("import('prismjs/plugins/line-numbers/prism-line-numbers')") as Promise<dynamic>
+                js("import('prismjs/plugins/line-numbers/prism-line-numbers.js')") as Promise<dynamic>
             }
         }
 
@@ -271,7 +276,7 @@ class PrismJsInternals {
             loadToolbar()
 
             return loadInternal("showLanguage", { _, duration -> duration < 10 }) {
-                js("import('prismjs/plugins/show-language/prism-show-language')") as Promise<dynamic>
+                js("import('prismjs/plugins/show-language/prism-show-language.js')") as Promise<dynamic>
             }
         }
 
@@ -279,7 +284,7 @@ class PrismJsInternals {
             styles.loadToolbar()
 
             return loadInternal("toolbar") {
-                js("import('prismjs/plugins/toolbar/prism-toolbar')") as Promise<dynamic>
+                js("import('prismjs/plugins/toolbar/prism-toolbar.js')") as Promise<dynamic>
             }
         }
 

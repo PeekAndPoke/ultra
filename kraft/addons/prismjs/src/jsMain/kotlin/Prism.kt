@@ -28,6 +28,10 @@ fun Tag.Prism(language: String, code: String, options: PrismOptsBuilder) = comp(
     )
 ) { Prism(it) }
 
+/** Syntax highlights [code] as AQL, the ArangoDB query language. */
+inline fun Tag.PrismAql(code: String, noinline options: PrismOptsBuilder = {}) =
+    Prism(language = "aql", code = code, options = options)
+
 /** Syntax highlights [code] as Atom. */
 inline fun Tag.PrismAtom(code: String, noinline options: PrismOptsBuilder = {}) =
     Prism(language = "atom", code = code, options = options)
@@ -170,20 +174,37 @@ class Prism(ctx: Ctx<Props>) : Component<Prism.Props>(ctx) {
 
     //  IMPL  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** The props of the latest highlight asked for. */
+    private var requested: Props? = null
+
     init {
+        highlight()
+
+        lifecycle {
+            // The block is filled outside of preact, so new props would otherwise leave the old code on the page
+            onUpdate {
+                if (requested != props) highlight()
+            }
+        }
+    }
+
+    private fun highlight() {
+        val wanted = props
+        requested = wanted
+
         launch {
             prismJsInternals.styles.loadDefaultTheme()
 
-            props.options.plugins.forEach { it.load() }
+            wanted.options.plugins.forEach { it.load() }
 
-            prismJsInternals.languages.load(props.language)
+            prismJsInternals.languages.load(wanted.language)
 
-            createContent()
+            // A later change may have overtaken this load
+            if (props == wanted) createContent()
         }
     }
 
     private fun createContent() {
-
         dom?.let { d ->
             val pre = (document.createElement("pre") as HTMLPreElement).also { pre ->
 
