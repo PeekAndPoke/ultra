@@ -151,6 +151,14 @@ class LoggedInLayout(ctx: Ctx<Props>) : Component<LoggedInLayout.Props>(ctx) {
                     icon.search()
                     +"Funktor Inspect"
                 }
+
+                funktorInspect.insights?.let { insights ->
+                    noui.item A {
+                        onClick { evt -> router.navToUri(evt, insights.routes.list()) }
+                        icon.chart_bar_outline()
+                        +"Insights"
+                    }
+                }
             }
 
             noui.item()

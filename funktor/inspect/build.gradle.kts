@@ -61,6 +61,11 @@ kotlin {
         }
 
         jsMain {
+            dependencies {
+                api(project(":funktor:insights"))
+                implementation(project(":kraft:addons:prismjs"))
+                implementation(project(":kraft:addons:visnetwork"))
+            }
         }
 
         jsTest {
@@ -68,6 +73,8 @@ kotlin {
                 Deps.Test {
                     jsTestDeps()
                 }
+                implementation(project(":kraft:testing"))
+                implementation(Deps.Ktor.Client.mock)
             }
         }
 

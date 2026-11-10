@@ -270,6 +270,11 @@
   network on unmount. It uses the registered `visNetwork()` addon or, when an app registered none, loads the library
   itself.
 - **Kraft prismjs: `PrismAql`**, and a `Prism` block given new code highlights the new code (it kept the first).
+- **Funktor inspect: the insights GUI for Kraft** (ULTRA-00198), on par with the Vue one: the recorded requests
+  with the running server's git version and environment, and a record's overview, Database and Runtime strips and
+  ten tabs, with highlighted queries, values and plans and the kontainer and database graphs. Pass
+  `insightsApi = InsightsApiClient(config)` to `FunktorInspectUi`; the pages mount under
+  `/_/funktor/inspect/insights` and get a card on the inspect overview. Superuser only, on the server.
 
 ### Fixes
 

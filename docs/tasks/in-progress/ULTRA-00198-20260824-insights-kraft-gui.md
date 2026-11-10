@@ -7,6 +7,13 @@
 > **DECIDED 2026-11-09 (maintainer):** parity with the old GUI on both Vue and Kraft, as far as possible. Query values are shown (ULTRA-00171). The git version and environment id go in the list page header and the detail Overview. Kraft uses its existing Semantic UI icons and the `prismjs` addon. On resume: carry the one WIP commit `24e745bf` over to master and verify it there instead of rebasing a branch 448 commits behind.
 
 > **2026-11-10:** ULTRA-00301 DONE (one insights switch for the whole app; the GUI talks to the API on `api.*`): unblocked.
+>
+> **DECIDED 2026-11-10 (maintainer):** the graphs get a Kraft vis-network addon ("a Kraft addon for the graph is
+> generally a good thing"); raw JSON views are pretty JSON through `PrismJson`, not a collapsible tree ("Yes to
+> PrismJson").
+>
+> **Status 2026-11-10 (evening): BUILT, tests green, review gate next.** Open question for the maintainer: per-record
+> links from the request history (below).
 
 **Plan:** ULTRA-00153 (frontend sdk vue contributors)
 **Counterpart:** ULTRA-00190 (insights vue tabs) — the Vue implementation and its full
@@ -43,12 +50,33 @@ So this is a new page, not a port of Kraft code. The two things that DO exist as
       the generated TS SDK regenerated and byte-identical to the one before (`diff -r`), vueVerify 99/99, insights,
       funktor-all green, `funktor:inspect` compiles for JS.
 
+- [x] **Step 2, the addons** (`b9060d6f`, `33c05401`): `kraft/addons/visnetwork` (vis-network 10.1.4; the component
+      loads the library itself when the app registered no addon, so the ops UI needs nothing from its host app),
+      mutants V1-V5 red. Prism: `PrismAql`, a new `code` re-highlights. **Found and fixed on the way:** every lazily
+      loaded Prism language and plugin failed to resolve (the imports lacked `.js`, which webpack requires from an ES
+      module), in every app: only Prism's built-in languages ever highlighted. Mutants P1-P4 red.
+- [x] **Step 3, the pages** in `funktor/inspect/src/jsMain/kotlin/insights/`: `InsightsUi` (optional in
+      `FunktorInspectUi(insightsApi = ...)`, mounted at `/_/funktor/inspect/insights`, a card on the overview),
+      `slices.kt` (the readers, a port of `slices.ts`), `graphs.kt` (networks, options, the graph cache per UI),
+      list page, detail page, ten tabs with the old GUI's Semantic UI icons. **Verified:** `InsightsPagesSpec` 6/6 in
+      ChromeHeadless against a MockEngine server; mutants: header value and list path as markup, unreadable vault
+      shown raw, withheld ignored, no graph cache, no reload on a new record, legacy plan shown: all red. Legacy query
+      text has two guards (reader and tab); each single mutant survives, the double mutant is red. **The fake server
+      found a real bug:** inside `jsObject<dynamic> { }` the name `NetworkKind` resolved as a property of the JS
+      object (undefined), so every graph threw; the per-kind values are now computed outside.
+
 ## Two loose ends from the removal, fix them here
 
-- [ ] `funktor-demo/adminapp/.../AdminAppConfig.kt:11` — `insightsDetailsBaseUrl` still points at
+- [x] `funktor-demo/adminapp/.../AdminAppConfig.kt:11` — `insightsDetailsBaseUrl` still points at
       `/_/insights/details/`, a route that no longer exists. Either repoint it at this page or delete it.
+      **Deleted** (nothing read it); the demo admin passes `insightsApi = InsightsApiClient(Apis.config)` (`api.*`)
+      and has an "Insights" entry in its admin menu.
 - [ ] `funktor/inspect/.../DevtoolsRequestHistoryPage.kt:59-61` — a disabled link whose comment says it
       "returns when the Vue insights page can" be linked to. With this page it links internally instead.
+      **Not possible as it stands:** `ApiResponse.Insights` carries no record reference, since the record is written
+      after the response. A per-record link needs the server to name the record (bucket and file) at call setup and
+      `ApiResponse.Insights` to carry it: a wire change in `ultra:remote`, so the maintainer's call. The comment now
+      says so.
 
 ## What to build
 
@@ -64,22 +92,24 @@ no hand-written `ApiClient` (its KDoc explains why). So decide first:
 
 Then, mirroring the Vue structure so the two stay comparable:
 
-- [ ] List page — paged `listRecords`, columns Recorded / Method / Path / Status / Duration, with the
+- [x] List page — paged `listRecords`, columns Recorded / Method / Path / Status / Duration, with the
       status and duration tone bands (red >300ms, yellow >150).
-- [ ] Detail page — Overview facts, the Database and Runtime strips, prev/next, and a tab per slice.
-- [ ] Ten tabs: `request`, `response`, `user`, `routing`, `runtime`, `log`, `template`, `vault`,
+- [x] Detail page — Overview facts, the Database and Runtime strips, prev/next, and a tab per slice.
+- [x] Ten tabs: `request`, `response`, `user`, `routing`, `runtime`, `log`, `template`, `vault`,
       `kontainer`, `app-config`.
-- [ ] Mount into `mountFunktorInspect`, which is where the rest of the Kraft ops UI lives.
+- [x] Mount into `mountFunktorInspect`, which is where the rest of the Kraft ops UI lives.
 
 ## Carry these across — they are not Vue-specific
 
 The Vue implementation learned these the hard way; a fresh Kraft port will hit every one.
 
-- [ ] **Escaping.** Every string in a slice is recorded verbatim from an unauthenticated request.
+- [x] **Escaping.** Every string in a slice is recorded verbatim from an unauthenticated request.
       kotlinx.html escapes text by default — the danger is `unsafe { }`, which is the exact equivalent of
       `v-html` and must not appear in these pages. The old GUI's `inlineScript` helper used it; do not
       revive that pattern for content.
-- [ ] **`vault`'s `vars` must NOT be rendered.** Bind values include the token or activation code *being
+- [x] ~~**`vault`'s `vars` must NOT be rendered.**~~ **Reversed by ULTRA-00171** (maintainer 2026-11-09: "query
+      values: show them again"): values are shown except where the server withheld them; legacy slices still show
+      no text, and an unreadable vault slice has no raw view. Was: Bind values include the token or activation code *being
       looked up*. Blocked on ULTRA-00171 (query vars in insights) (deferred by the
       maintainer 2026-08-24, still open). **And therefore no raw-slice dump and no JSON fallback on that
       tab either** — a viewer for the object defeats suppressing one field of it.
@@ -87,13 +117,14 @@ The Vue implementation learned these the hard way; a fresh Kraft port will hit e
       Mongo's `query` text and through Arango's EXPLAIN output (`queryExplained`), not only through `vars`. Treat all three
       as unsafe to render until the Vue task's "S1 at the source" item lands, and follow the shape `VaultCollector` records
       after it (ULTRA-00190 (insights vue tabs), "Review record").
-- [ ] **Every tab degrades rather than throws.** Records outlive the code that wrote them; read
+- [x] **Every tab degrades rather than throws.** Records outlive the code that wrote them; read
       defensively, exactly as `slices.ts` does, and fall back to a JSON tree.
-- [ ] **`template`'s null render time is the NORMAL case**, not an error — it is null on every API request.
-- [ ] **`app-config` displays application config.** `Redacted<T>` covers the four known framework
+- [x] **`template`'s null render time is the NORMAL case**, not an error — it is null on every API request.
+- [x] **`app-config` displays application config.** `Redacted<T>` covers the four known framework
       secrets; an app's own secret in a plain `String` is still shown. Say so in the UI, as the Vue tab
       does — not only in a comment.
-- [ ] ~~The wire traps from `TAB-SPECS.md`: `method`/`status` are objects, `uri` is path-only,
+- [x] **Resolved 2026-11-10:** the Kraft readers are a port of the Vue `slices.ts` as ULTRA-00190 left it (current
+      wire shapes, both kontainer shapes, both `createdAt` shapes). Was: ~~The wire traps from `TAB-SPECS.md`: `method`/`status` are objects, `uri` is path-only,
       `userId` is a flat string, kontainer `createdAt` is epoch **seconds** as a double.~~
       **STALE — do not copy this list** (marked 2026-10-19; the original is struck through, not rewritten). `TAB-SPECS.md`
       was distilled from a Jackson-era record, and the Slumber switch changed at least kontainer `createdAt` (now an object,
@@ -120,14 +151,15 @@ means rewriting the kontainer tab twice.
 
 ## Verification
 
-- [ ] Tests in `kraft/core-tests` or the module's own `jsTest` via `TestBed.preact { }` — real browser
+- [x] Tests in `kraft/core-tests` or the module's own `jsTest` via `TestBed.preact { }` — real browser
       behaviour, not mocks.
-- [ ] **An escaping test with a real payload**, mirroring the Vue harness: a slice containing
+- [x] **An escaping test with a real payload**, mirroring the Vue harness: a slice containing
       `<img src=x onerror=…>` must render as text. Mutation-test it.
-- [ ] A `vault` slice carrying `vars` must not put the value on the page — mutation-tested by
+- [x] A `vault` slice carrying `vars` must not put the value on the page — mutation-tested by
       reinstating a dump and confirming it goes red.
 
 ## History
 
 - 2026-10-21: numbered ULTRA-00198 (was `docs/tasks/20260824-insights-kraft-gui.md`).
 - 2026-11-10: IN PROGRESS.
+- 2026-11-10: addons (`b9060d6f`, `33c05401`) and the pages built; review gate next.

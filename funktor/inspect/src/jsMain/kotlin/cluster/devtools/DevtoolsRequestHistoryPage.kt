@@ -56,10 +56,8 @@ class DevtoolsRequestHistoryPage(ctx: Ctx<Props>) : Component<DevtoolsRequestHis
                         .forEachIndexed { idx, it ->
 
                             tr {
-                                // The row used to link to the insights details page via
-                                // ApiResponse.Insights.detailsUrl. That page was a staticweb route on the
-                                // admin host and is gone; the link returns when the Vue insights page can
-                                // be addressed by path.
+                                // No link to the request's insights record: ApiResponse.Insights names
+                                // none, since the record is written after the response (ULTRA-00198).
                                 td { +"${idx + 1}." }
                                 td { +Date(it.ts * 1000).toISOString() }
                                 td {

@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.auth.pages.AuthFrontend
 import io.peekandpoke.funktor.auth.pages.AuthFrontendConfig
 import io.peekandpoke.funktor.demo.adminapp.state.AdminAppState
 import io.peekandpoke.funktor.demo.common.AdminUserModel
+import io.peekandpoke.funktor.insights.api.InsightsApiClient
 import io.peekandpoke.funktor.inspect.FunktorInspectUi
 import io.peekandpoke.funktor.inspect.cluster.FunktorClusterApiClient
 import io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiClient
@@ -53,6 +54,8 @@ val funktorInspect = FunktorInspectUi(
     loggingApi = LoggingApiClient(Apis.config),
     clusterApi = FunktorClusterApiClient(Apis.config),
     introspectionApi = IntrospectionApiClient(Apis.config),
+    // Served by api.*, where the requests are recorded; superuser only
+    insightsApi = InsightsApiClient(Apis.config),
 )
 
 val kraft = kraftApp {

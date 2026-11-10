@@ -1,6 +1,8 @@
 package io.peekandpoke.funktor.inspect
 
+import io.peekandpoke.funktor.insights.api.InsightsApiClient
 import io.peekandpoke.funktor.inspect.cluster.FunktorClusterApiClient
+import io.peekandpoke.funktor.inspect.insights.InsightsUi
 import io.peekandpoke.funktor.inspect.introspection.IntrospectionUi
 import io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiClient
 import io.peekandpoke.funktor.inspect.logging.LoggingUi
@@ -14,6 +16,8 @@ class FunktorInspectUi(
     loggingApi: LoggingApiClient,
     clusterApi: FunktorClusterApiClient,
     introspectionApi: IntrospectionApiClient,
+    /** The insights API; null leaves the insights pages out, as for an app without insights. */
+    insightsApi: InsightsApiClient? = null,
     kronos: () -> Kronos = { Kronos.systemUtc },
     customInternals: RenderFn = {},
     val routes: FunktorInspectRoutes = FunktorInspectRoutes(),
@@ -34,6 +38,11 @@ class FunktorInspectUi(
         api = introspectionApi,
         routes = routes.app,
     )
+
+    /** Recorded requests (ULTRA-00198); null without an [InsightsApiClient]. */
+    val insights: InsightsUi? = insightsApi?.let {
+        InsightsUi(api = it, routes = routes.insights)
+    }
 
     operator fun invoke(block: FunktorInspectUi.() -> Unit) {
         this.block()

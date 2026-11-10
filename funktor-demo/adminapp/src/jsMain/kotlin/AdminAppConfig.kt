@@ -8,7 +8,6 @@ data class AdminAppConfig(
     val environment: String = "dev",
     val wwwBaseUrl: String = "http://www.funktor-demo.localhost:36587",
     val apiBaseUrl: String = "http://api.funktor-demo.localhost:36587",
-    val insightsDetailsBaseUrl: String = "http://admin.funktor-demo.localhost:36587/_/insights/details/",
 ) {
     @Suppress("unused")
     @JsName("withOrgId")
@@ -37,10 +36,6 @@ data class AdminAppConfig(
     @Suppress("unused")
     @JsName("withApiBaseUrl")
     fun withApiBaseUrl(url: String) = copy(apiBaseUrl = url)
-
-    @Suppress("unused")
-    @JsName("withInsightsDetailsBaseUrl")
-    fun withInsightsDetailsBaseUrl(url: String) = copy(insightsDetailsBaseUrl = url)
 
     // Getters
 

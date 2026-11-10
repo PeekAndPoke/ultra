@@ -23,10 +23,30 @@ class FunktorInspectOverviewPage(ctx: Ctx<Props>) : Component<FunktorInspectOver
             ui.header H2 { +"Funktor Inspect" }
 
             renderDevtools()
+            renderInsights()
             renderAppIntrospection()
             renderLocks()
             renderWorkersAndJobs()
             renderStorage()
+        }
+    }
+
+    private fun FlowContent.renderInsights() {
+        val insights = props.ui.insights ?: return
+
+        ui.dividing.header { +"Insights" }
+
+        ui.four.doubling.stackable.cards {
+            ui.card A {
+                href(insights.routes.list())
+
+                ui.center.aligned.content {
+                    icon.large.chart_bar_outline()
+                }
+                ui.center.aligned.content {
+                    noui.header { +"Recorded Requests" }
+                }
+            }
         }
     }
 

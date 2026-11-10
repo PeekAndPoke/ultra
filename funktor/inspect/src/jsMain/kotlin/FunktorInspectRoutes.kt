@@ -1,6 +1,8 @@
 package io.peekandpoke.funktor.inspect
 
 import io.peekandpoke.funktor.inspect.cluster.FunktorClusterRoutes
+import io.peekandpoke.funktor.inspect.insights.InsightsRoutes
+import io.peekandpoke.funktor.inspect.insights.mountFunktorInsights
 import io.peekandpoke.funktor.inspect.cluster.backgroundjobs.mountFunktorBackgroundJobs
 import io.peekandpoke.funktor.inspect.cluster.depot.mountFunktorDepot
 import io.peekandpoke.funktor.inspect.cluster.devtools.mountFunktorDevtools
@@ -24,6 +26,8 @@ class FunktorInspectRoutes(val mount: String = "/_/funktor/inspect") {
     val cluster = FunktorClusterRoutes(mount)
 
     val app = IntrospectionRoutes("$mount/app")
+
+    val insights = InsightsRoutes("$mount/insights")
 }
 
 fun RouterBuilder.mountFunktorInspect(ui: FunktorInspectUi) {
@@ -44,4 +48,7 @@ fun RouterBuilder.mountFunktorInspect(ui: FunktorInspectUi) {
 
     // App introspection
     mountFunktorIntrospection(ui.introspection)
+
+    // Insights, when the app has them
+    ui.insights?.let { mountFunktorInsights(it) }
 }
