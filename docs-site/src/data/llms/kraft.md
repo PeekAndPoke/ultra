@@ -2364,7 +2364,7 @@ A new config updates the live chart: options, `data` fields and datasets follow 
 
 ```kotlin
 class ServiceGraph(ctx: NoProps) : PureComponent(ctx) {
-    // Built once: a new object redraws the network and drops its selection
+    // Built once: new data resets the network and its selection, new options restart its layout
     private val data = jsObject<VisNetworkData> {
         nodes = arrayOf(jsObject { id = 1; label = "Api" }, jsObject { id = 2; label = "Repo" })
         edges = arrayOf(jsObject { from = 1; to = 2; arrows = "to" })
@@ -2380,8 +2380,8 @@ class ServiceGraph(ctx: NoProps) : PureComponent(ctx) {
 ```
 
 - Uses the registered `visNetwork()` addon, or loads the library itself when none is registered.
-- A new `data` / `options` object (by identity) redraws the live network and drops its selection: build them once,
-  never inline in `render()`. `onReady` hands you the `VisNetwork`.
+- A new `data` object (by identity) resets the live network and its selection, new `options` restart its layout:
+  build both once, never inline in `render()`. `onReady` hands you the `VisNetwork`.
 - Labels are drawn on a canvas. A string `title` is text, an element is HTML — never build one from untrusted input.
 - Mount only while visible: a network in a hidden container cannot lay itself out.
 
@@ -2408,8 +2408,8 @@ override fun VDom.render() {
 }
 ```
 
-Available language components: `PrismKotlin`, `PrismJava`, `PrismJavascript`, `PrismJson`, `PrismHtml`, `PrismCss`, and
-more.
+Available language components: `PrismKotlin`, `PrismJava`, `PrismJavascript`, `PrismJson`, `PrismHtml`, `PrismCss`,
+`PrismAql`, and more. A new `code` re-highlights the block.
 
 Plugins: `lineNumbers()`, `copyToClipboard()`, `inlineColor()`.
 

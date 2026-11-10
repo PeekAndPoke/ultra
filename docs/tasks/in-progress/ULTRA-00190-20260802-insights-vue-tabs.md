@@ -841,6 +841,15 @@ responses, the 401 to a non-superuser included (unverified, outside this change)
 **Verdict:** gate PASS — round 2 clean, e2e present and green on both backends, full suite green on `ff2a865c`
 (15 864 tests, 0 failures; `f1f5acb3` is task docs only).
 
+## Open: a 404 shows bare (found by the ULTRA-00198 gate, round 3, 2026-11-10)
+
+`funktor/codegen/src/main/resources/ts/insights/InsightsDetailPage.vue:130-132` says "`okOrNotFound()` sends null, which
+is what a missing record is" and shows "This record no longer exists." for it. Wrong: `okOrNotFound(null)` answers 404
+(`ultra/remote/src/commonMain/kotlin/ApiResponse.kt:66-69`), so that branch is dead and a missing record shows the bare
+refusal. The Kraft GUI now says what a 404 means (record: missing or insights off; list and graphs: insights off). The
+runtime comments `ultra/codegen/src/main/resources/ts/runtime/client.ts:210-211` and `apiResponse.ts:64-65` carry the
+same premise; their conclusion holds through `noContent()`.
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00190 (was `docs/tasks/20260802-insights-vue-tabs.md`).

@@ -214,8 +214,39 @@ in one batch, plus the maintainer's decisions on the round-1 maintainer list:
 | Theme CSS from cdnjs | serve locally | Open: design question to the maintainer (how a published addon ships its CSS). `kraft/addons/pdfjs` loads pdf.js and its worker from cdnjs too |
 | `yarn.lock` | "fine" | Settled |
 
+**Round 3 — level 3 (`reviewer-top`, opus max), two-phase, 2026-11-10. CLEAN (0 CRITICAL, 0 MAJOR in all three
+charters, after reconcile).** Phase 1 blind: the reviewers read the ticket without this section (given as a separate
+file); the domain reviewer disclosed two grep hits on two settled rows and did not re-raise them. Every FIXED entry of
+rounds 1-2 confirmed holding by all three. The MINORs and NITs below were fixed after the round (they do not loop).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 | MINOR | `render.kt:93`, `tabs.kt:155`, `InsightsPagesSpec.kt:473` | The GUI copies `***redacted***`; the spec feeds the copy back as its expectation, so a wrong copy stays green (impl M1) | **fix** | `Redacted.PLACEHOLDER` (ultra common) in both; the spec's input is the literal. Mutant R1 (comparison against `"[redacted]"`) red |
+| 3 | MINOR | `VisNetworkComponent.kt:52,109` | With a registered `visNetwork()`, a failed load is silent and never retried; the KDoc overstates (impl M2, sticks as an incomplete round-2 fix) | **fix** | Accepted: `Addon.ensureLoading` logs only. The component always subscribes to `VisNetworkLoader.stream` (the registered addon loads through it) and loads itself when the library is missing. Tests 3/3. The failing-load path itself stays untested (the import cannot fail in Karma) |
+| 3 | MINOR | `render.kt:38` | `wrap = true` never wraps highlighted code: the Prism theme gives `code[class*=language-]` its own `white-space: pre` (domain F1) | **fix** | Confirmed in `prism.css`. The wrap rule names `pre code` too. Test with the theme's rule inlined: computed `white-space` is `pre-wrap`; mutant R2 red |
+| 3 | MINOR | `graphs.kt:197` | The graph cache lives for the app session; Vue's per `InsightsPage` visit, so a restarted server's schema stays stale (domain F2, maintainer decision) | **fix** (parity, the maintainer's goal) | `InsightsGraphSource.forget()` when the list page mounts; note text says so. Mutant R3 red |
+| 3 | MINOR | `insights.astro:42`, `staticweb.astro:53` | Public insights docs teach the deleted `InsightsGui` (impl M4) | **out-of-scope → DOCS follow-up** | Pre-existing; the DOCS follow-up at archive, with the dot-rule note for host apps |
+| 3 | MINOR | `InsightsDetailPage.vue:130`, `client.ts:210`, `apiResponse.ts:64` | The round-2 404 correction did not reach the Vue page and the TS runtime comments (impl B1, domain reach gap) | **out-of-scope → ULTRA-00190** | Recorded in ULTRA-00190 ("Open: a 404 shows bare") |
+| 3 | MINOR | `kotlin-js-store/yarn.lock` | No vis-network entry (security, domain F5) | **withdrawn** | Both: overlaps the settled round-1 entry; its reason holds |
+| 3 | MINOR | record routes `.json` | Dot rule outside the demo (impl M3) | **withdrawn** | Overlaps the settled entries; the note is now in the CHANGELOG too |
+| 3 | NIT | docs + KDoc | "a new `data` or `options` drops the selection": only `setData` calls `unselectAll` (impl N2, withdrawn by the reviewer) | **fix** | Verified in vis-network 10.1.4's `setData`/`setOptions` (the reviewer could not: no node_modules in its view). All three docs and the KDoc now say: new data resets network and selection, new options restart the layout |
+| 3 | NIT | `llms/kraft.md:2411` | Mirror lacks `PrismAql` and the re-highlight note (impl, domain F4) | **fix** | |
+| 3 | NIT | `InsightsModels.kt:99` | KDoc claims collector schemas are generated (domain F3) | **fix** | |
+| 3 | NIT | `CHANGELOG.md:269`, `FunktorInspectUi.kt:21` | "loaded on first use" is wrong for the eager addon; positional callers break (impl) | **fix** | CHANGELOG: eager unless `lazy = true`; **Breaking** line for the parameter order |
+| 3 | NIT | `InsightsListPage.kt:192`, `InsightsApi.kt:8` | Recomputes `Paged.fullPageCount`; import order (impl) | **fix** | |
+| 3 | NIT | `PrismJsInternals.kt` | A failed core import is remembered forever (domain residual 2) | **fix** | Forgotten like the vis-network loader's |
+| 3 | NIT | `visnetwork_models.kt:30,46`; SURPLUS | `title: Any?` takes an element as easily as text; `PrismAql`, `fit`/`on`, `interaction`, `onReady`, `InsightsUi.epp`, `site.ts` entry, empty jsTest deps unused (security, impl, domain) | **keep** | General addon API, documented; the maintainer wanted the addon |
+| 3 | NIT | `kraft/examples/addons` | No visnetwork example; tab items and sort headers not keyboard-reachable (impl, domain) | **maintainer list** | |
+
+**Gate verdict: PASS** on findings (no open CRITICAL or MAJOR; e2e for the server side in `funktor/all`; browser tests
+green: inspect 14/14, prism 5+2, visnetwork 3/3; demo admin compiles). Archive waits on the follow-up tickets below.
+
 Out of scope, noted by security in round 2: `InsightsDataLoader.kt:46` uses `bucket/file` as a depot path unvalidated
 (superuser only, pre-existing); `funktor/staticweb` ships the prismjs 1.29.0 webjar, below the CVE-2024-53382 fix.
+Disposition **out-of-scope → follow-up task**, pending the maintainer's OK to create them (asked 2026-11-10). Checked:
+the depot is not the problem (the FS repository refuses `..` and `File(root, "/abs")` stays under root; S3 keys are
+literal); the loader accepts any path inside the insights repository instead of `records-<date>/<name>.json`, and a `..`
+answers 500 instead of 404.
 
 Probed CLEAN in round 1 (all three charters): every reader against `slices.ts` and the current collectors; no `unsafe {}`;
 Prism's innerHTML path takes a text node; vis-network string titles go to `innerText`; route params re-encoded; the

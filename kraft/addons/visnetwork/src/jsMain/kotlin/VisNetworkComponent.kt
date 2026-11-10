@@ -1,10 +1,8 @@
 package io.peekandpoke.kraft.addons.visnetwork
 
-import io.peekandpoke.kraft.addons.registry.AddonRegistry
 import io.peekandpoke.kraft.components.Component
 import io.peekandpoke.kraft.components.Ctx
 import io.peekandpoke.kraft.components.comp
-import io.peekandpoke.kraft.components.getAttributeRecursiveOrNull
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import kotlinx.dom.clear
@@ -16,8 +14,9 @@ import kotlinx.html.style
  * Draws a vis-network graph of [data] with [options], [height] high and the full width.
  *
  * Uses the registered `visNetwork()` addon, or loads the library itself when the app registered none. Renders an
- * empty box until the library is there. A new [data] or [options] (by identity) redraws the live network, so build
- * them once rather than in `render()`; after a failed load or draw, it is the next try.
+ * empty box until the library is there. A new [data] object (by identity) resets the live network and its selection,
+ * new [options] restart its layout, so build both once rather than in `render()`. After a failed load or draw, new
+ * [data] or [options] are the next try.
  * [onReady] receives the network once it is drawn, for example to listen to its events.
  *
  * Mount it only while visible: a network created in a hidden container cannot lay itself out.
@@ -48,10 +47,8 @@ class VisNetworkComponent(ctx: Ctx<Props>) : Component<VisNetworkComponent.Props
 
     ////  STATE  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /** The app's registered addon; null when it registered none and the component loads the library itself. */
-    private val registered = getAttributeRecursiveOrNull(AddonRegistry.key)?.getOrNull(visNetworkAddonKey)
-
-    private val addon: VisNetworkAddon? by subscribingTo(registered ?: VisNetworkLoader.stream)
+    /** The registered `visNetwork()` addon loads through the same loader, so this sees the library either way. */
+    private val addon: VisNetworkAddon? by subscribingTo(VisNetworkLoader.stream)
 
     private var problem: String? by value(null)
 
@@ -104,9 +101,9 @@ class VisNetworkComponent(ctx: Ctx<Props>) : Component<VisNetworkComponent.Props
         }
     }
 
-    /** Without a registered addon, a failed load is reported here; the stream alone would stay empty. */
+    /** Loads the library, or reports why it could not: the stream alone would stay empty. Shares a running load. */
     private fun loadItself() {
-        if (registered != null || addon != null) return
+        if (addon != null) return
 
         launch {
             try {

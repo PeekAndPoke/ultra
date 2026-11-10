@@ -23,7 +23,6 @@ import kotlinx.html.th
 import kotlinx.html.thead
 import kotlinx.html.tr
 import kotlin.js.Date
-import kotlin.math.ceil
 import kotlin.math.max
 
 /**
@@ -47,6 +46,8 @@ class InsightsListPage(ctx: Ctx<Props>) : Component<InsightsListPage.Props>(ctx)
     private var server: List<Fact> by value(emptyList())
 
     init {
+        // A new visit to the insights: the server may have restarted with another schema
+        props.ui.graphs.forget()
         load()
         loadServer()
     }
@@ -189,7 +190,7 @@ class InsightsListPage(ctx: Ctx<Props>) : Component<InsightsListPage.Props>(ctx)
             }
 
             +"Page $page"
-            total?.let { +" of ${max(1L, ceil(it.toDouble() / epp).toLong())}" }
+            paged.fullPageCount?.let { +" of ${max(1L, it)}" }
             +" "
 
             ui.basic.given(!hasNext) { disabled }.button {

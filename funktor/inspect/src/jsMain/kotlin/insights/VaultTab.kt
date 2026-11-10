@@ -108,7 +108,7 @@ internal class VaultTab(ctx: Ctx<Props>) : Component<VaultTab.Props>(ctx) {
         note(
             "The database graph is the server's schema" +
                 (fetchedAt?.let { " as fetched at ${it.toLocaleString()}" } ?: "") +
-                ", not part of this record. It is fetched once per page."
+                ", not part of this record. It is fetched once until you go back to the list."
         )
 
         if (loading) ui.basic.segment { +"Loading the database graph..." }

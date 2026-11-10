@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.inspect.insights
 
 import io.peekandpoke.kraft.addons.prismjs.Prism
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.ultra.semanticui.noui
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
@@ -33,9 +34,13 @@ import kotlinx.serialization.json.JsonElement
  */
 internal const val MAX_HIGHLIGHT_CHARS = 32_000
 
-/** The page's own styles: wrapping code blocks, and the clickable rows. No recorded value is ever in here. */
+/**
+ * The page's own styles: wrapping code blocks, and the clickable rows. No recorded value is ever in here. The wrap
+ * rule names `code` too: Prism's theme gives a highlighted `code` its own `white-space: pre`.
+ */
 internal const val INSIGHTS_CSS = """
-.funktor-insights .insights-wrap pre { white-space: pre-wrap; word-break: break-word; }
+.funktor-insights .insights-wrap pre,
+.funktor-insights .insights-wrap pre code { white-space: pre-wrap; word-break: break-word; word-wrap: break-word; }
 .funktor-insights pre { max-height: 600px; overflow: auto; }
 .funktor-insights .insights-records tbody tr { cursor: pointer; }
 .funktor-insights .insights-mono { font-family: monospace; }
@@ -89,12 +94,9 @@ internal fun FlowContent.statStrip(cells: List<StatCell>) {
     }
 }
 
-/** What the server shows for a value declared `Redacted`. */
-internal const val REDACTED = "***redacted***"
-
 /**
  * A map of names to lists, sorted by name, one row per name and one line per value: a repeated header stays
- * visibly two values, not one with a comma. A [REDACTED] value is muted.
+ * visibly two values, not one with a comma. A value the server redacted (`Redacted.PLACEHOLDER`) is muted.
  */
 internal fun FlowContent.keyValueTable(entries: Map<String, List<String>>, keyLabel: String, emptyText: String) {
     if (entries.isEmpty()) {
@@ -110,7 +112,7 @@ internal fun FlowContent.keyValueTable(entries: Map<String, List<String>>, keyLa
                     td(classes = "insights-mono") { +key }
                     td(classes = "insights-mono insights-path") {
                         values.forEach { value ->
-                            div(classes = if (value == REDACTED) "insights-redacted" else null) { +value }
+                            div(classes = if (value == Redacted.PLACEHOLDER) "insights-redacted" else null) { +value }
                         }
                     }
                 }

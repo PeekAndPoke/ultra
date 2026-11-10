@@ -5,8 +5,8 @@ applications: network graphs with a physics layout.
 
 ## Features
 
-- `VisNetwork(data, options, height, onReady)`: draws a network, redraws it when a new `data` or `options` object
-  arrives (by identity: build them once, not in `render()`), destroys it on unmount
+- `VisNetwork(data, options, height, onReady)`: draws a network; a new `data` object (by identity) resets it and its
+  selection, new `options` restart its layout (build both once, not in `render()`); destroys it on unmount
 - Works with the `visNetwork()` addon registered, and without it: the component then loads the library itself
 - Typed `VisNode`, `VisEdge`, `VisNetworkOptions` externals, built with `jsObject { }`
 
@@ -14,7 +14,7 @@ applications: network graphs with a physics layout.
 
 ```kotlin
 class ServiceGraph(ctx: NoProps) : PureComponent(ctx) {
-    // Built once: a new object redraws the network and drops its selection
+    // Built once: new data resets the network and its selection, new options restart its layout
     private val data = jsObject<VisNetworkData> {
         nodes = arrayOf(jsObject { id = 1; label = "Api" }, jsObject { id = 2; label = "Repo" })
         edges = arrayOf(jsObject { from = 1; to = 2; arrows = "to" })

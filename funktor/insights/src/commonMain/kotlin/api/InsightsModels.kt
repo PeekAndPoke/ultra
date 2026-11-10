@@ -96,8 +96,8 @@ data class InsightsRecord(
  * One collector's slice: its declared key and its payload, untyped on purpose.
  *
  * [data] stays a [JsonElement] so the envelope never has to name every collector — a sealed hierarchy
- * here would make an app-defined collector impossible. Type safety comes back per tab: each collector's
- * `Data` class is a codegen root, so the frontend gets a generated schema for exactly its own slice.
+ * here would make an app-defined collector impossible. No schema is generated per collector: each GUI's tabs read
+ * their slice defensively (`slices.ts`, `slices.kt`).
  *
  * **Every string inside [data] is attacker-controlled.** Headers, query parameters, paths and user
  * agents are all recorded verbatim from unauthenticated requests, so a payload may contain

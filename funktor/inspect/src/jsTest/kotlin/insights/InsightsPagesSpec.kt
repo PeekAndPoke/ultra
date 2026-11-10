@@ -35,6 +35,8 @@ import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.remote.api
 import io.peekandpoke.ultra.remote.apiPaged
 import io.peekandpoke.ultra.streams.StreamSource
+import kotlinx.browser.document
+import kotlinx.browser.window
 import kotlinx.coroutines.async
 import kotlinx.coroutines.await
 import kotlinx.coroutines.awaitAll
@@ -470,7 +472,7 @@ class InsightsPagesSpec : StringSpec() {
             val headers = slice(
                 "request",
                 """{"method": {"value": "GET"}, "uri": "/", "queryParams": {},
-                   "headers": {"b-second": ["2", "3"], "X-Attack": ["$ATTACK"], "A-first": ["$REDACTED"]}}""",
+                   "headers": {"b-second": ["2", "3"], "X-Attack": ["$ATTACK"], "A-first": ["***redacted***"]}}""",
             )
             server.records["records-2026-11-10/a.json"] = record("a.json", headers)
 
@@ -481,7 +483,7 @@ class InsightsPagesSpec : StringSpec() {
                     .map { row -> row.querySelector("td")?.textContent }
                 // localeCompare, as the Vue GUI: not code point order, which puts "X" before "b"
                 rows shouldBe listOf("A-first", "b-second", "X-Attack")
-                root.selectCss(".insights-redacted").textContent() shouldBe REDACTED
+                root.selectCss(".insights-redacted").textContent() shouldBe "***redacted***"
                 root.selectCss(".bottom.attached.segment .celled.table tbody tr td div").count() shouldBe 4
             }
         }
@@ -507,6 +509,45 @@ class InsightsPagesSpec : StringSpec() {
         "values print with two spaces, a bare word as a string" {
             valuesText(mapOf("a" to "abc", "b" to "{\"x\":[1]}")) shouldBe
                 "{\n  \"a\": \"abc\",\n  \"b\": {\n    \"x\": [\n      1\n    ]\n  }\n}"
+        }
+
+        "highlighted code in a wrapping block wraps, over the Prism theme's own rule" {
+            // The theme's rule, inline: the test must not depend on fetching it
+            val theme = document.createElement("style").apply {
+                textContent = "code[class*=\"language-\"] { white-space: pre; }"
+            }
+            document.head!!.append(theme)
+
+            try {
+                val server = FakeInsightsServer()
+                server.records["records-2026-11-10/a.json"] = record("a.json", vaultSlice)
+
+                withDetail(server, "a.json") { root, _ ->
+                    eventually { root.selectCss(".insights-wrap code .token.keyword").count() shouldBe 8 }
+
+                    root.selectCss(".insights-wrap pre code").forEach { code ->
+                        window.getComputedStyle(code).whiteSpace shouldBe "pre-wrap"
+                    }
+                }
+            } finally {
+                theme.remove()
+            }
+        }
+
+        "the list page drops the graphs, as a new visit to the Vue GUI does" {
+            val server = FakeInsightsServer()
+            val ui = InsightsUi(api = server.api)
+
+            ui.graphs.database()
+            ui.graphs.database()
+            server.count("/_/funktor/insights/graphs/database") shouldBe 1
+
+            TestBed.preact(view = { ui { InsightsListPage() } }) { root ->
+                eventually { root.textContent() shouldContain "No records" }
+            }
+
+            ui.graphs.database()
+            server.count("/_/funktor/insights/graphs/database") shouldBe 2
         }
 
         "tabs asking for a graph at once share one fetch" {

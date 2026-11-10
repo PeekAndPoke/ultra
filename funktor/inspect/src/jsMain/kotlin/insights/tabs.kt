@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor.inspect.insights
 
+import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.ultra.semanticui.icon
 import io.peekandpoke.ultra.semanticui.ui
 import kotlinx.html.FlowContent
@@ -152,7 +153,7 @@ private fun FlowContent.appConfigTab(data: JsonElement) {
         +"Values declared as "
         code { +"Redacted" }
         +" appear as "
-        code { +"***redacted***" }
+        code { +Redacted.PLACEHOLDER }
         +". Anything else is shown verbatim -- a secret held in a plain "
         code { +"String" }
         +" is recorded and displayed."

@@ -37,7 +37,13 @@ class PrismJsInternals {
                 (js("import('prismjs')") as Promise<dynamic>).also { importPromise = it }
             }
 
-            val module: dynamic = promise.await()
+            val module: dynamic = try {
+                promise.await()
+            } catch (e: Throwable) {
+                // A failed download is asked again next time, not remembered
+                importPromise = null
+                throw e
+            }
 
             if (prism == null) {
                 prism = module.default ?: module

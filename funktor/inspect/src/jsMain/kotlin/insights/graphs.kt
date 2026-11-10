@@ -197,8 +197,9 @@ internal sealed class GraphResult<out T> {
 /**
  * Fetches the two graph endpoints for the tabs, lazily: nothing is asked until a tab asks.
  *
- * One per [InsightsUi], so going back to the list and into another record reuses a graph already fetched. Askers
- * while a fetch is running share it. A failed fetch is not kept: the next click asks again. Never throws.
+ * One per [InsightsUi]. Records opened one after another reuse a graph already fetched; the list page [forget]s
+ * them, as the Vue GUI starts fresh with each visit, so a restarted server's new schema shows. Askers while a fetch
+ * is running share it. A failed fetch is not kept: the next click asks again. Never throws.
  */
 internal class InsightsGraphSource(private val api: InsightsApiClient) {
 
@@ -245,6 +246,16 @@ internal class InsightsGraphSource(private val api: InsightsApiClient) {
         return pending.await().also {
             if (kontainerInFlight[fingerprint] === pending) kontainerInFlight.remove(fingerprint)
         }
+    }
+
+    /** Drops every graph fetched; a fetch still running completes for its askers only. */
+    fun forget() {
+        kontainerByFingerprint.clear()
+        asked.clear()
+        latestKontainer = null
+        database = null
+        kontainerInFlight.clear()
+        databaseInFlight = null
     }
 
     /** The database graph, fetched once: it has no fingerprint, nothing joins it. */

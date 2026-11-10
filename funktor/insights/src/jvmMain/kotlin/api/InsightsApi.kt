@@ -5,9 +5,9 @@ import io.ktor.server.routing.RoutingContext
 import io.peekandpoke.funktor.core.config.AppConfig
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.core.model.AppInfo
+import io.peekandpoke.funktor.insights.Insights
 import io.peekandpoke.funktor.insights.InsightsDataLoader
 import io.peekandpoke.funktor.insights.InsightsGraphs
-import io.peekandpoke.funktor.insights.Insights
 import io.peekandpoke.funktor.insights.funktorInsights
 import io.peekandpoke.funktor.insights.toInsightsDatabaseGraph
 import io.peekandpoke.funktor.rest.ApiRoutes

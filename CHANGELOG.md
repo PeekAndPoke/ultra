@@ -266,15 +266,18 @@
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`
-  draws a network graph (vis-network 10.1.4, loaded on first use), follows new `data` and `options`, and destroys the
-  network on unmount. It uses the registered `visNetwork()` addon or, when an app registered none, loads the library
-  itself.
+  draws a network graph (vis-network 10.1.4), follows new `data` and `options`, and destroys the network on unmount.
+  It uses the registered `visNetwork()` addon (eager unless `lazy = true`) or, when an app registered none, loads the
+  library on first use.
 - **Kraft prismjs: `PrismAql`**, and a `Prism` block given new code highlights the new code (it kept the first).
 - **Funktor inspect: the insights GUI for Kraft** (ULTRA-00198), on par with the Vue one: the recorded requests
   with the running server's git version and environment, and a record's overview, Database and Runtime strips and
   ten tabs, with highlighted queries, values and plans and the kontainer and database graphs. Pass
   `insightsApi = InsightsApiClient(config)` to `FunktorInspectUi`; the pages mount under
   `/_/funktor/inspect/insights` and get a card on the inspect overview. Superuser only, on the server.
+  - **Breaking:** `insightsApi` comes before `kronos` and `customInternals`; pass those by name.
+  - A record page's path ends in `.json`: a webpack dev server needs `historyApiFallback = { disableDotRule: true }`
+    for a reload of it to work.
 
 ### Fixes
 
