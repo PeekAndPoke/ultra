@@ -28,8 +28,8 @@ import kotlin.time.Duration.Companion.seconds
 data class ClusterShowcaseRepoParams(val repo: String)
 
 /**
- * Public cluster showcase reads (list jobs / depot files / storage / locks / workers).
- * Floor: `public()`. The super-user actions live in the separate [ClusterAdminShowcaseApi] group.
+ * Public cluster showcase reads (list jobs / storage / locks / workers).
+ * Floor: `public()`. The super-user actions and the depot listings live in the separate [ClusterAdminShowcaseApi] group.
  */
 class ClusterShowcaseApi : ApiRoutes("showcase-cluster", authFloor = { public() }) {
 
@@ -70,54 +70,6 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster", authFloor = { public() 
                     jobType = v.type,
                     status = if (v.didFinallySucceed()) "succeeded" else "failed",
                     createdAt = v.createdAt?.toIsoString() ?: "?",
-                )
-            }
-
-            ApiResponse.ok(result)
-        }
-    }
-
-    val getDepotRepos = ShowcaseApiClient.GetDepotRepos.mount {
-        docs {
-            name = "List depot repositories"
-        }.codeGen {
-            funcName = "getDepotRepos"
-        }.authorize {
-            // The depot's repositories, their locations and files are not public, insights records included
-            isSuperUser()
-        }.handle {
-            val repos = cluster.depot.getRepos()
-
-            val result = repos.map {
-                DepotRepoInfo(
-                    name = it.name,
-                    type = it.type,
-                    location = it.location,
-                )
-            }
-
-            ApiResponse.ok(result)
-        }
-    }
-
-    val getDepotFiles = ShowcaseApiClient.GetDepotFiles.mount(ClusterShowcaseRepoParams::class) {
-        docs {
-            name = "List files in depot repository"
-        }.codeGen {
-            funcName = "getDepotFiles"
-        }.authorize {
-            // The depot's repositories, their locations and files are not public, insights records included
-            isSuperUser()
-        }.handle { params ->
-            val repo = cluster.depot.getRepo(params.repo)
-            val items = repo?.listItems() ?: emptyList()
-
-            val result = items.map { item ->
-                DepotFileInfo(
-                    name = item.name,
-                    path = item.path,
-                    isFolder = item is DepotItem.Folder,
-                    sizeBytes = (item as? DepotItem.File)?.size,
                 )
             }
 
@@ -198,10 +150,53 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster", authFloor = { public() 
 }
 
 /**
- * Super-user cluster showcase actions (queue job, upload, save storage, acquire lock).
+ * Super-user cluster showcase actions (queue job, upload, save storage, acquire lock) and the depot listings: the
+ * depot's repositories, their locations and files are not public, insights records included (ULTRA-00304).
  * Floor: `isSuperUser()`.
  */
 class ClusterAdminShowcaseApi : ApiRoutes("showcase-cluster-admin", authFloor = { isSuperUser() }) {
+
+    val getDepotRepos = ShowcaseApiClient.GetDepotRepos.mount {
+        docs {
+            name = "List depot repositories"
+        }.codeGen {
+            funcName = "getDepotRepos"
+        }.handle {
+            val repos = cluster.depot.getRepos()
+
+            val result = repos.map {
+                DepotRepoInfo(
+                    name = it.name,
+                    type = it.type,
+                    location = it.location,
+                )
+            }
+
+            ApiResponse.ok(result)
+        }
+    }
+
+    val getDepotFiles = ShowcaseApiClient.GetDepotFiles.mount(ClusterShowcaseRepoParams::class) {
+        docs {
+            name = "List files in depot repository"
+        }.codeGen {
+            funcName = "getDepotFiles"
+        }.handle { params ->
+            val repo = cluster.depot.getRepo(params.repo)
+            val items = repo?.listItems() ?: emptyList()
+
+            val result = items.map { item ->
+                DepotFileInfo(
+                    name = item.name,
+                    path = item.path,
+                    isFolder = item is DepotItem.Folder,
+                    sizeBytes = (item as? DepotItem.File)?.size,
+                )
+            }
+
+            ApiResponse.ok(result)
+        }
+    }
 
     val queueJob = ShowcaseApiClient.PostQueueJob.mount {
         docs {
