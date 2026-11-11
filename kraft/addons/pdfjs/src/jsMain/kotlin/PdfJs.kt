@@ -1,11 +1,10 @@
 package io.peekandpoke.kraft.addons.pdfjs
 
 import io.peekandpoke.kraft.addons.pdfjs.js.PdfjsLib
-import io.peekandpoke.kraft.utils.ScriptLoader
-import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlin.js.Promise
 
 /** Wrapper around the pdf.js library that handles lazy loading and document retrieval. */
 class PdfJs private constructor(private val lib: PdfjsLib) {
@@ -13,75 +12,21 @@ class PdfJs private constructor(private val lib: PdfjsLib) {
     companion object {
         private var instance: PdfJs? = null
 
-        /** The CDN source for the pdf.js library. Change before first use to override. */
-        var librarySource: LibrarySrc = LibrarySrc.CdnJs.v4_7_76
-
         /** Returns the singleton [PdfJs] instance, loading the library on first call. */
         suspend fun instance(): PdfJs {
             instance?.let { return it }
 
-            ScriptLoader.load(librarySource.src).await()
+            // From the npm package (ULTRA-00306): webpack splits the library into its own chunk, loaded here on first
+            // use, and copies the worker into the app's build output; both come from the app's origin, no CDN
+            val module: dynamic = (js("import('pdfjs-dist')") as Promise<dynamic>).await()
+            // The ES module's namespace, or its default export where a bundler wraps it
+            val lib: PdfjsLib = (if (module.GlobalWorkerOptions != null) module else module.default).unsafeCast<PdfjsLib>()
 
-            val winDyn = window.asDynamic()
+            lib.GlobalWorkerOptions.workerSrc =
+                js("new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url)").href.unsafeCast<String>()
 
-            val candidates = sequenceOf(
-                { "window.pdfjsLib" to winDyn.pdfjsLib },
-                { "window.exports" to winDyn.exports },
-                { "window.module" to winDyn.module },
-                { "window.module?.exports" to winDyn.module?.exports }
-            )
-
-            val (name: String, lib: PdfjsLib) = candidates
-                .map { it() }
-                .first { (_, item) ->
-                    @Suppress("UnsafeCastFromDynamic")
-                    !!item && !!item.getDocument
-                }
-
-            console.info("pdfjsLib was loaded into $name", lib)
-
-            lib.GlobalWorkerOptions.workerSrc = librarySource.workerSrc
-
-            @Suppress("UnsafeCastFromDynamic")
             return PdfJs(lib).also {
                 instance = it
-            }
-        }
-    }
-
-    /** Describes where to load the pdf.js library and worker from. */
-    interface LibrarySrc {
-        val src: ScriptLoader.Javascript.Default
-        val workerSrc: String
-
-        /**
-         * https://cdnjs.com/libraries/pdf.js
-         */
-        data class CdnJs(
-            override val src: ScriptLoader.Javascript.Default,
-            override val workerSrc: String,
-        ) : LibrarySrc {
-
-            companion object {
-                @Suppress("unused")
-                val v2_16_105 = CdnJs(
-                    src = ScriptLoader.Javascript.Default(
-                        src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js",
-                        integrity = "sha512-tqaIiFJopq4lTBmFlWF0MNzzTpDsHyug8tJaaY0VkcH5AR2ANMJlcD+3fIL+RQ4JU3K6edt9OoySKfCCyKgkng==",
-                    ),
-                    workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js",
-                )
-
-                // https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.min.mjs
-
-                val v4_7_76 = CdnJs(
-                    src = ScriptLoader.Javascript.Default(
-                        src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.min.mjs",
-                        type = "module",
-                        integrity = "sha384-qgyx6GmMWoI003drRr62DU41/67b3n7M2G0EXu2WhaOsBqONtHyay9Vw4aIivyOX",
-                    ),
-                    workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.worker.min.mjs",
-                )
             }
         }
     }

@@ -102,7 +102,7 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
     <tr>
       <td><code>pdfjs</code></td>
         <td><a href="https://www.npmjs.com/package/pdfjs-dist" target="_blank" rel="noopener">pdf.js</a></td>
-        <td>Render PDFs in-browser (CDN-loaded)</td>
+        <td>Render PDFs in-browser (loaded on first use)</td>
     </tr>
     <tr>
         <td><code>pixijs</code></td>
@@ -209,6 +209,11 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
 
     <p>Plugins: <code>lineNumbers()</code>, <code>copyToClipboard()</code>, <code>inlineColor()</code>,
         <code>showLanguage()</code>.</p>
+
+    <Aside>No CDN: the addons that load CSS or a worker on demand (prismjs, pdfjs) take them from their npm package
+        through <code>new URL(..., import.meta.url)</code>. Your webpack build copies the files into its output, they
+        are served from your app's origin and requested only when needed. Nothing to configure.
+    </Aside>
 
     <h2>chartjs — Data visualization</h2>
 
@@ -394,7 +399,8 @@ app.destroy(rendererDestroy = true)`} lang="kotlin" theme="vitesse-dark" />
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-    <p>pdf.js is loaded from a CDN via <code>ScriptLoader</code>, not bundled with your app.</p>
+    <p>pdf.js comes from the npm package <code>pdfjs-dist</code> (4.x): webpack splits it into its own chunk, loaded on
+        first use, and copies its worker into your build output.</p>
 
     <h2>signaturepad — Capture signatures</h2>
 

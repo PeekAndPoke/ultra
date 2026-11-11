@@ -47,6 +47,7 @@ kotlin {
 
         jsMain {
             dependencies {
+                api(Deps.Npm { pdfjsDist() })
             }
         }
 

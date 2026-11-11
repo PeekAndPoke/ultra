@@ -10,9 +10,7 @@ import org.w3c.dom.HTMLLinkElement
 import kotlin.js.Date
 import kotlin.js.Promise
 
-/**
- * See: https://cdnjs.com/libraries/prism/1.28.0 for available assets
- */
+/** Loads Prism, its languages, plugins and stylesheets, all from the npm package `prismjs`. */
 class PrismJsInternals {
 
     /** The dynamically loaded Prism module. Set by [CoreLoader.ensureLoaded]. */
@@ -51,6 +49,12 @@ class PrismJsInternals {
         }
     }
 
+    /**
+     * Prism's stylesheets, from the npm package `prismjs` (ULTRA-00306): `new URL(<file>, import.meta.url)` makes the
+     * app's webpack copy the file into its own build output and gives back its URL, so the CSS comes from the app's
+     * origin, not a CDN, and is still requested only when first needed. Webpack sees only a literal path, hence one
+     * `js()` per file.
+     */
     internal class StylesLoader {
 
         private val loaded = mutableMapOf<String, Element>()
@@ -59,51 +63,31 @@ class PrismJsInternals {
             get() = document.getElementsByTagName("head").item(0) as? HTMLHeadElement
 
         fun loadDefaultTheme() {
-            loadStyle(
-                "https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism.min.css",
-                "sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==",
-            )
+            loadStyle(js("new URL('prismjs/themes/prism.min.css', import.meta.url)"))
 
             loadLineNumbers()
         }
 
         fun loadInlineColor() {
-            loadStyle(
-                "https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/inline-color/prism-inline-color.min.css",
-                "sha512-jPGdTBr51+zDG6sY0smU+6rV19GOIN9RXAdVT8Gyvb55dToNJwq2n9SgCa764+z0xMuGA3/idik1tkQQhmALSA==",
-            )
+            loadStyle(js("new URL('prismjs/plugins/inline-color/prism-inline-color.min.css', import.meta.url)"))
         }
 
         fun loadLineNumbers() {
-            loadStyle(
-                "https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/line-numbers/prism-line-numbers.min.css",
-                "sha512-cbQXwDFK7lj2Fqfkuxbo5iD1dSbLlJGXGpfTDqbggqjHJeyzx88I3rfwjS38WJag/ihH7lzuGlGHpDBymLirZQ==",
-            )
+            loadStyle(js("new URL('prismjs/plugins/line-numbers/prism-line-numbers.min.css', import.meta.url)"))
         }
 
         fun loadToolbar() {
-            loadStyle(
-                "https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/toolbar/prism-toolbar.min.css",
-                "sha512-Dqf5696xtofgH089BgZJo2lSWTvev4GFo+gA2o4GullFY65rzQVQLQVlzLvYwTo0Bb2Gpb6IqwxYWtoMonfdhQ==",
-            )
+            loadStyle(js("new URL('prismjs/plugins/toolbar/prism-toolbar.min.css', import.meta.url)"))
         }
 
-        private fun loadStyle(
-            href: String,
-            integrity: String? = null,
-            crossOrigin: String = "anonymous",
-            referrerPolicy: String = "no-referrer",
-        ) {
+        private fun loadStyle(url: dynamic) {
+            val href: String = url.href.unsafeCast<String>()
+
             head?.let { h ->
                 loaded.getOrPut(href) {
                     (document.createElement("link") as HTMLLinkElement).apply {
                         this.rel = "stylesheet"
                         this.href = href
-                        integrity?.let {
-                            this.asDynamic().integrity = it
-                        }
-                        this.crossOrigin = crossOrigin
-                        this.referrerPolicy = referrerPolicy
 
                         h.append(this)
                     }

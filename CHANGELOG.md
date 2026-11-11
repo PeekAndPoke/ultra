@@ -287,6 +287,12 @@
   templates, `WebResources`, flash sessions and `funktorStaticWeb()` had no users left; the frontends bring their
   assets through npm. `funktor:all` no longer pulls it in, and `Deps.Ktor.Server.full` no longer adds webjars.
 
+- **Kraft prismjs and pdfjs: no CDN any more** (ULTRA-00306). Prism's theme and plugin CSS and pdf.js with its
+  worker come from their npm packages: `new URL(<file>, import.meta.url)` lets the app's webpack copy the files into
+  its build output, served from the app's own origin and still requested only when first needed; pdf.js is its own
+  chunk. A strict CSP needs no CDN host. `PdfJs.librarySource` and `PdfJs.LibrarySrc` are gone; pdf.js is
+  `pdfjs-dist` 4.10.38 (was 4.7.76 from cdnjs). The prism CSS moves from 1.28.0 to the package's 1.30.0.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`

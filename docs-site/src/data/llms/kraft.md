@@ -2303,7 +2303,7 @@ the addon becomes ready — subscribing is just like any other stream.
 | `prismjs`                | [Prism](https://prismjs.com/)                | Syntax highlighting with plugins    |
 | `chartjs`                | [Chart.js](https://www.chartjs.org/)         | Bar, line, pie, radar charts        |
 | `visnetwork`             | [vis-network](https://visjs.github.io/vis-network/docs/network/) | Network graphs, physics layout |
-| `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser (CDN-loaded) |
+| `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser (loaded on first use) |
 | `pixijs`                 | [PixiJS v8](https://pixijs.com/)             | 2D WebGL/WebGPU rendering           |
 | `threejs`                | [Three.js](https://threejs.org/)             | 3D WebGL rendering                  |
 | `signaturepad`           | SignaturePad                                 | Capture handwritten signatures      |
@@ -2412,6 +2412,9 @@ Available language components: `PrismKotlin`, `PrismJava`, `PrismJavascript`, `P
 `PrismAql`, and more. A new `code` re-highlights the block.
 
 Plugins: `lineNumbers()`, `copyToClipboard()`, `inlineColor()`.
+
+No CDN: prismjs CSS and the pdf.js worker come from their npm packages via `new URL(..., import.meta.url)`; the
+app's webpack copies them into its output, served from the app's origin, requested only when needed.
 
 ## PDF.js — PDF viewer
 

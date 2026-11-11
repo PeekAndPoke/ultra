@@ -460,6 +460,11 @@ object Deps {
         // https://www.npmjs.com/package/vis-network
         // checked 2026-11-10: latest 10.1.5 (2026-11-08); 10.1.4 taken, two weeks old
         fun KotlinDependencyHandler.visNetwork() = npm("vis-network", "10.1.4")
+
+        // https://www.npmjs.com/package/pdfjs-dist
+        // checked 2026-11-11: latest 6.5.438 (2026-11-01); 4.10.38 taken, the newest 4.x: the addon's externals and
+        // viewers are written against 4.x (it loaded 4.7.76 from cdnjs), 5 and 6 change the render API (ULTRA-00306)
+        fun KotlinDependencyHandler.pdfjsDist() = npm("pdfjs-dist", "4.10.38")
     }
 
     // // Test dependencies ////////////////////////////////////////////////////////////////////////

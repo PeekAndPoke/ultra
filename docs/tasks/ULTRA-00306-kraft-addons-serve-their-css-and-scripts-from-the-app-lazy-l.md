@@ -1,6 +1,6 @@
 # ULTRA-00306: Kraft addons: serve their CSS and scripts from the app, lazy-loaded
 
-> **Status (2026-11-11): DESIGNED.** From ULTRA-00198's gate. The maintainer on 2026-11-11: "We should be able to
+> **Status (2026-11-11): IN PROGRESS.** Implemented; review gate next. From ULTRA-00198's gate. The maintainer on 2026-11-11: "We should be able to
 > serve assets locally, but not be compiling them into the bundle. It must be still possible to lazy-load them at
 > runtime." Earlier: "we should serve all css or other assets locally. How would this work when we publish the
 > kraft addon and use it in another project?"
@@ -51,3 +51,12 @@ Risks the spike settles:
 ## History
 
 - 2026-11-11: created from ULTRA-00198's gate.
+- 2026-11-11: implemented. The spike settled all three risks: the addons compile to ES modules (`es2015`), so
+  `js("new URL('prismjs/...', import.meta.url)")` works; Karma serves the emitted files; webpack resolves the bare
+  package path. Prism: theme, line numbers, toolbar, inline color from `prismjs` (1.30.0), no SRI needed (same
+  origin). pdf.js: `pdfjs-dist` 4.10.38 (latest is 6.5.438; 5 and 6 change the render API the viewers and externals
+  use, so the newest 4.x; the upgrade is its own task), `import('pdfjs-dist')` and the worker by `new URL`;
+  `LibrarySrc`/`librarySource` removed. No other addon loads from a CDN. Tests: `PrismStylesSpec` (red on the CDN:
+  "should start with http://localhost:9876"), `PdfJsSpec` (a one-page PDF opened through the worker; red with a
+  broken worker URL). The admin app's build emits the four Prism stylesheets as separate files, no cdnjs URL left.
+  Docs (`addons.astro`, mirror) and CHANGELOG.
