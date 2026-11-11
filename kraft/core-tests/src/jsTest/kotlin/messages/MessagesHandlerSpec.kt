@@ -40,26 +40,58 @@ class MessagesHandlerSpec : StringSpec({
         val bus = MessagesHandler()
         bus.send(Note("x"))
 
-        val told = mutableListOf<String>()
-        bus.stream.subscribeToStream { (it as? Note)?.let { note -> told.add(note.text) } }
+        val told = mutableListOf<String?>()
+        bus.stream.subscribeToStream { told.add((it as? Note)?.text) }
 
-        told shouldBe emptyList()
+        // Told "no message" first, never the past one; the bus keeps no message to read either
+        told shouldBe listOf(null)
+        bus.stream() shouldBe null
 
         bus.send(Note("y"))
 
-        told shouldBe listOf("y")
+        told shouldBe listOf(null, "y")
+        bus.stream() shouldBe null
     }
 
     "a handler that throws while subscribing is not kept" {
         val bus = MessagesHandler()
-        var calls = 0
+        val seen = mutableListOf<String?>()
 
         runCatching {
-            bus.stream.subscribeToStream { calls++; if (it == null) error("boom") }
+            bus.stream.subscribeToStream { seen.add((it as? Note)?.text); if (it == null) error("boom") }
         }
 
         bus.send(Note("y"))
 
-        calls shouldBe 1
+        // Called with the initial null, then never again
+        seen shouldBe listOf(null)
+    }
+
+    "a handler that throws during a send does not keep the message from the others" {
+        val bus = MessagesHandler()
+        val second = mutableListOf<String>()
+
+        bus.stream.subscribeToStream { if (it != null) error("boom") }
+        bus.stream.subscribeToStream { (it as? Note)?.let { note -> second.add(note.text) } }
+
+        bus.send(Note("x"))
+
+        second shouldBe listOf("x")
+    }
+
+    "a handler subscribing during a dispatch gets only the messages sent after it" {
+        val bus = MessagesHandler()
+        val late = mutableListOf<String?>()
+
+        bus.stream.subscribeToStream {
+            if ((it as? Note)?.text == "x") {
+                bus.stream.subscribeToStream { msg -> late.add((msg as? Note)?.text) }
+                bus.send(Note("y"))
+            }
+        }
+
+        bus.send(Note("x"))
+
+        late shouldBe listOf(null, "y")
     }
 })
