@@ -34,4 +34,4 @@ markdown {
 ## Links
 
 - [npm: marked](https://www.npmjs.com/package/marked)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/marked)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)

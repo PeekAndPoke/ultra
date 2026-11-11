@@ -33,4 +33,4 @@ println(decoded.expiration)
 ## Links
 
 - [npm: jwt-decode](https://www.npmjs.com/package/jwt-decode)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/jwtdecode)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)

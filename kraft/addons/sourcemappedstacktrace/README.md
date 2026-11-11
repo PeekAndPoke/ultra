@@ -32,4 +32,4 @@ SourcemappedStacktrace.mapStackTrace(error.stackTraceToString()) { mapped ->
 ## Links
 
 - [npm: sourcemapped-stacktrace](https://www.npmjs.com/package/sourcemapped-stacktrace)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/sourcemappedstacktrace)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)

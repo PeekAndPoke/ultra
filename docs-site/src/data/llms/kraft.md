@@ -2432,7 +2432,7 @@ override fun VDom.render() {
             scaleRange = 0.1..3.0,
         ),
         onChange = { state ->
-            console.log("Page ${state.currentPage} of ${state.totalPages}")
+            console.log("${state.doc?.numPages} pages, at ${state.scale}x")
         },
     )
 }

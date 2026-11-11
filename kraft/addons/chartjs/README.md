@@ -39,4 +39,4 @@ ChartJs(chartJsData {
 ## Links
 
 - [npm: chart.js](https://www.npmjs.com/package/chart.js)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/chartjs)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)

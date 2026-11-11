@@ -33,4 +33,4 @@ println(browser.platformType)   // e.g., "desktop"
 ## Links
 
 - [npm: bowser](https://www.npmjs.com/package/bowser)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/browserdetect)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)

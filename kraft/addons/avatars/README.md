@@ -32,4 +32,4 @@ minidenticon {
 ## Links
 
 - [npm: minidenticons](https://www.npmjs.com/package/minidenticons)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/avatars)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)

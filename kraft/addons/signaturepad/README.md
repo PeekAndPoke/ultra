@@ -35,4 +35,4 @@ signaturePad {
 ## Links
 
 - [npm: signature_pad](https://www.npmjs.com/package/signature_pad)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/signaturepad)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)

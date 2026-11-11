@@ -34,4 +34,4 @@ val result = compiled.exec(
 ## Links
 
 - [npm: @aspect-build/rules_js](https://www.npmjs.com/package/@aspect-build/rules_js)
-- [Documentation](https://ultra.peekandpoke.io/kraft/addons/nxcompile)
+- [Documentation](https://peekandpoke.io/ultra/kraft/addons)
