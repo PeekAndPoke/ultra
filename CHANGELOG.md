@@ -332,6 +332,21 @@
   extension functions in `io.peekandpoke.funktor.cluster.depot.api` (`asApiModel()`); `getMeta` returns the depot's
   own `DepotMeta`. `DepotApi` and the kontainer wiring stay in `funktor:cluster`. No behaviour change.
 
+- **Depot: every write names its data subject, and a file carries free metadata** (ULTRA-00311, step 2).
+  - `DepotRepository` is generic over the kind of subject: `putFile(subject: DepotSubjectId<T>, path, content, meta)`.
+    A repository for anything is a `DepotRepository<Any>`; system files pass `DepotSubjectId.system`. Looked up by
+    name, a repository is a `DepotRepository<*>` and takes system files only. `FileSystemRepository` and
+    `AwsS3Repository` take the same type parameter.
+  - Metadata is a `Map<String, String>`: keys of `a-z`, `0-9` and `-` (1 to 64), keys starting with `depot-` reserved,
+    2 KB in all. The subject's id is always stored as `depot-subject`. `getMeta` returns the map: empty for a file
+    stored without any, null when there is no such file.
+  - `DepotPutFileOptions`, its unused `encryption` option, `DepotMeta` and `DepotItemModel.Meta`/`Visibility` are
+    gone; `DepotBrowseModel.meta` is the map.
+  - S3: metadata is the object's user metadata (`x-amz-meta-*`, values percent-encoded); **tags are no longer
+    written or read**, so metadata of objects stored before is not seen. A `mime-type` entry sets the content type.
+  - File system: metadata lives in `<root>/.meta/<path>.json`. `.meta` is a reserved first path segment in every
+    repository and never listed.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`

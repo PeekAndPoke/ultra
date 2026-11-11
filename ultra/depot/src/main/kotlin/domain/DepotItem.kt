@@ -19,7 +19,7 @@ sealed interface DepotItem {
     }
 
     /** The bucket the file belongs to */
-    val repo: DepotRepository
+    val repo: DepotRepository<*>
 
     /** The path of the item */
     val path: String

@@ -68,36 +68,14 @@ class DepotBrowsePage(ctx: Ctx<Props>) : Component<DepotBrowsePage.Props>(ctx) {
                     +data.item.depotUri.uri
                 }
 
-                data.meta?.let { meta ->
+                data.meta?.takeIf { it.isNotEmpty() }?.let { meta ->
                     ui.relaxed.divided.horizontal.list {
-                        noui.item {
-                            noui.content {
-                                noui.header { +"MimeType" }
-                                noui.description { +(meta.mimeType ?: "-") }
-                            }
-                        }
-                        noui.item {
-                            noui.content {
-                                noui.header { +"Visibility" }
-                                noui.description { +(meta.visibility.name) }
-                            }
-                        }
-                        noui.item {
-                            noui.content {
-                                noui.header { +"Organisation Id" }
-                                noui.description { +(meta.organisationId ?: "-") }
-                            }
-                        }
-                        noui.item {
-                            noui.content {
-                                noui.header { +"Organisation Name" }
-                                noui.description { +(meta.organisationName ?: "-") }
-                            }
-                        }
-                        noui.item {
-                            noui.content {
-                                noui.header { +"Owner Id" }
-                                noui.description { +(meta.ownerId ?: "-") }
+                        meta.entries.sortedBy { it.key }.forEach { (key, value) ->
+                            noui.item {
+                                noui.content {
+                                    noui.header { +key }
+                                    noui.description { +value }
+                                }
                             }
                         }
                     }

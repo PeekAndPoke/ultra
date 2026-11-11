@@ -58,7 +58,7 @@ class DepotApi : ApiRoutes("depot", authFloor = { isSuperUser() }) {
                 DepotBrowseModel(
                     repo = repository.asApiModel(),
                     item = item.asApiModel(),
-                    meta = meta?.asApiModel(),
+                    meta = meta,
                     children = children.sortedBy { it.name }.map { it.asApiModel() }
                 )
             )

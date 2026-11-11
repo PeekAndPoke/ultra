@@ -2,18 +2,30 @@ package io.peekandpoke.ultra.depot.repos.fs
 
 import io.peekandpoke.ultra.common.ensureDirectory
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.depot.DepotException
 import io.peekandpoke.ultra.depot.domain.DepotFileContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
-import io.peekandpoke.ultra.depot.domain.DepotMeta
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
+import io.peekandpoke.ultra.depot.repos.DEPOT_META_DIR
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
-import io.peekandpoke.ultra.depot.repos.DepotPutFileOptions
+import io.peekandpoke.ultra.depot.repos.DepotMetadata
 import io.peekandpoke.ultra.depot.repos.DepotRepository
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
+import java.nio.file.StandardCopyOption
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 
-abstract class FileSystemRepository(override val name: String, dir: String) : DepotRepository {
+/**
+ * A depot repository in a folder of the file system. A file's metadata lives beside the files, in a tree of its own:
+ * `<root>/.meta/<path>.json`.
+ */
+abstract class FileSystemRepository<in T>(override val name: String, dir: String) : DepotRepository<T> {
 
     data class FsFileContent(private val file: File) : DepotFileContent {
         override suspend fun getContentBytes(): ByteArray {
@@ -23,7 +35,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
 
     /** A file; [path] is the path it was asked for, while [file] is where it lies, symlinks resolved. */
     data class FsFile(
-        override val repo: FileSystemRepository,
+        override val repo: FileSystemRepository<*>,
         private val file: File,
         override val path: String,
     ) : DepotItem.File {
@@ -54,7 +66,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
 
     /** A folder; [path] is the path it was asked for, while [file] is where it lies, symlinks resolved. */
     data class FsFolder(
-        override val repo: FileSystemRepository,
+        override val repo: FileSystemRepository<*>,
         private val file: File,
         override val path: String,
     ) : DepotItem.Folder {
@@ -70,6 +82,8 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
             }
         }
     }
+
+    private val json = Json
 
     internal val root = File(dir).absoluteFile
 
@@ -130,6 +144,8 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         val parent = normalised(path)
 
         return (dir.listFiles() ?: emptyArray())
+            // The metadata tree is not part of the repository's content
+            .filter { parent.isNotEmpty() || it.name != DEPOT_META_DIR }
             // A symlink pointing out of the root is not listed; any other entry of a resolved folder is inside it
             .filter { !Files.isSymbolicLink(it.toPath()) || isInside(it) }
             .mapNotNull {
@@ -176,25 +192,64 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         }
     }
 
-    override suspend fun getMeta(path: String): DepotMeta? {
-        // No meta here, but the same paths are refused as everywhere
-        resolve(path)
+    override suspend fun getMeta(path: String): Map<String, String>? {
+        val file = resolve(path)
 
-        return null
+        if (!file.isFile) return null
+
+        val meta = metaFile(path)
+
+        // A file stored without metadata, or before there was any
+        if (!meta.isFile) return emptyMap()
+
+        return try {
+            json.decodeFromString(JsonObject.serializer(), meta.readText())
+                .mapValues { (_, value) -> value.jsonPrimitive.content }
+        } catch (_: SerializationException) {
+            throw DepotException("The metadata of '$name/${normalised(path)}' cannot be read")
+        } catch (_: IllegalArgumentException) {
+            throw DepotException("The metadata of '$name/${normalised(path)}' cannot be read")
+        }
+    }
+
+    /**
+     * Where the metadata of the file at [path] lives: `<root>/.meta/<path>.json`. For a [path] that passed [resolve];
+     * the same containment check applies.
+     */
+    private fun metaFile(path: String): File {
+        val file = File(File(root, DEPOT_META_DIR), normalised(path) + ".json").absoluteFile
+
+        if (!isInside(file)) throw DepotInvalidPathException()
+
+        return file
+    }
+
+    /** Writes [stored] for [path]: to a temporary file first, then moved in place, so a reader never sees half of it. */
+    private fun writeMeta(path: String, stored: Map<String, String>) {
+        val target = metaFile(path)
+        target.parentFile.ensureDirectory()
+
+        val temp = File(target.parentFile, target.name + ".tmp")
+        temp.writeText(json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) })))
+
+        Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
     }
 
     override suspend fun putFile(
+        subject: DepotSubjectId<T>,
         path: String,
         content: ByteArray,
-        options: DepotPutFileOptions.Builder.() -> Unit,
+        meta: Map<String, String>,
     ): DepotItem {
-        // val builtOptions = depotPutFileOptions(options)
-
         val file = resolve(path)
 
-        file.parentFile.ensureDirectory()
+        val stored = DepotMetadata.validateSize(DepotMetadata.validate(meta) + (DepotMetadata.SUBJECT to subject.value))
 
-        // TODO: apply encryption to [content]
+        // The metadata first: a file is never there without it. One left behind by a failed write reads as
+        // "no such file" and is replaced by the next write.
+        writeMeta(path, stored)
+
+        file.parentFile.ensureDirectory()
         file.writeBytes(content)
 
         return FsFile(repo = this, file = file, path = normalised(path))
@@ -209,10 +264,14 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         val link = File(root, path).absoluteFile
         val linkInside = link != root && link.parentFile?.let { isInside(it) } == true
 
-        if (Files.isSymbolicLink(link.toPath())) {
-            return linkInside && link.isFile && link.delete()
+        val removed = when {
+            Files.isSymbolicLink(link.toPath()) -> linkInside && link.isFile && link.delete()
+            else -> file.exists() && file.isFile && file.delete()
         }
 
-        return file.exists() && file.isFile && file.delete()
+        // Its metadata goes with it
+        if (removed) metaFile(path).delete()
+
+        return removed
     }
 }

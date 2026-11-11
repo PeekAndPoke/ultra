@@ -4,11 +4,11 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.mp
 import io.peekandpoke.ultra.depot.domain.DepotFileContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
-import io.peekandpoke.ultra.depot.domain.DepotMeta
-import io.peekandpoke.ultra.depot.repos.DepotPutFileOptions
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
+import io.peekandpoke.ultra.depot.repos.DepotMetadata
 import io.peekandpoke.ultra.depot.repos.DepotRepository
-import io.peekandpoke.ultra.depot.repos.depotPutFileOptions
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
+import java.net.URLDecoder
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
@@ -17,7 +17,7 @@ import software.amazon.awssdk.services.s3.model.CommonPrefix
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
-import software.amazon.awssdk.services.s3.model.GetObjectTaggingRequest
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
@@ -32,10 +32,10 @@ import software.amazon.awssdk.services.s3.model.S3Object
  * How to use the AWS-SDK-2:
  * See https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/javav2/example_code/s3
  */
-abstract class AwsS3Repository(
+abstract class AwsS3Repository<in T>(
     private val s3: S3AsyncClient,
     private val bucketName: String,
-) : DepotRepository, AwsHelper {
+) : DepotRepository<T> {
 
     /**
      * Implementation of [DepotFileContent] for S3 repos.
@@ -64,7 +64,7 @@ abstract class AwsS3Repository(
      */
     data class DepotS3File(
         val s3: S3AsyncClient,
-        override val repo: AwsS3Repository,
+        override val repo: AwsS3Repository<*>,
         val obj: S3Object,
     ) : DepotItem.File {
         /** Path of the file */
@@ -91,7 +91,7 @@ abstract class AwsS3Repository(
 
     data class DepotS3Folder(
         val s3: S3AsyncClient,
-        override val repo: AwsS3Repository,
+        override val repo: AwsS3Repository<*>,
         val obj: CommonPrefix,
     ) : DepotItem.Folder {
         override val path: String = obj.prefix()
@@ -213,8 +213,11 @@ abstract class AwsS3Repository(
         return DepotS3FileContent(s3 = s3, request = request)
     }
 
-    /** Get the meta information of the file with the given [path] */
-    override suspend fun getMeta(path: String): DepotMeta? {
+    /**
+     * The metadata of the file at [path], from the object's user metadata (`x-amz-meta-*`); values are stored
+     * percent-encoded, as headers are ASCII.
+     */
+    override suspend fun getMeta(path: String): Map<String, String>? {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
@@ -222,39 +225,41 @@ abstract class AwsS3Repository(
             return null
         }
 
-        val request = GetObjectTaggingRequest.builder()
+        val request = HeadObjectRequest.builder()
             .bucket(bucketName)
             .key(path)
             .build()
 
         return try {
-            s3.getObjectTagging(request).await().toMeta()
+            s3.headObject(request).await().metadata()
+                .mapValues { (_, value) -> URLDecoder.decode(value, Charsets.UTF_8) }
         } catch (e: NoSuchKeyException) {
             null
         }
     }
 
     /**
-     * Puts a file with the given [path] and [content] into the bucket.
+     * Puts a file with the given [path] and [content] into the bucket, its metadata as the object's user metadata.
+     * A [DepotMetadata.MIME_TYPE] entry also sets the object's content type.
      */
     override suspend fun putFile(
+        subject: DepotSubjectId<T>,
         path: String,
         content: ByteArray,
-        options: DepotPutFileOptions.Builder.() -> Unit,
+        meta: Map<String, String>,
     ): DepotItem {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
-        val builtOptions = depotPutFileOptions(options)
+        val stored = DepotMetadata.validateSize(DepotMetadata.validate(meta) + (DepotMetadata.SUBJECT to subject.value))
 
         val request = PutObjectRequest.builder()
             .bucket(bucketName)
             .key(path)
-            .add(builtOptions.meta)
-            .apply { builtOptions.meta.mimeType?.let { contentType(it) } }
+            .metadata(stored.mapValues { (_, value) -> DepotMetadata.encode(value) })
+            .apply { meta[DepotMetadata.MIME_TYPE]?.let { contentType(it) } }
             .build()
 
-        // TODO: apply encryption to [content]
         val response = s3.putObject(request, AsyncRequestBody.fromBytes(content)).await()
 
         return DepotS3File(

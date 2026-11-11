@@ -7,47 +7,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class DepotItemModel {
-    /**
-     * Meta information for an item
-     */
-    @Serializable
-    data class Meta(
-        val visibility: Visibility,
-        val mimeType: String?,
-        val organisationId: String?,
-        val organisationName: String?,
-        val ownerId: String?,
-    ) {
-        companion object {
-            val default = Meta(
-                visibility = Visibility.Public,
-                mimeType = null,
-                organisationId = null,
-                organisationName = null,
-                ownerId = null,
-            )
-        }
-    }
-
-    /**
-     * Visibility of an item
-     */
-    enum class Visibility {
-        Public,
-        Private;
-
-        companion object {
-            fun valueOfOrPublic(value: String?) = when (value) {
-                null -> Public
-                else -> try {
-                    valueOf(value)
-                } catch (_: Throwable) {
-                    Public
-                }
-            }
-        }
-    }
-
     @Serializable
     @SerialName("folder")
     data class Folder(

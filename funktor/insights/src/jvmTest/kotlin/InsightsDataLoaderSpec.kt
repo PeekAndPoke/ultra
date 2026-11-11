@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import java.io.File
 import kotlinx.coroutines.runBlocking
@@ -20,8 +21,8 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 class InsightsDataLoaderSpec : StringSpec({
 
-    fun loaderOver(dir: File): Pair<InsightsDataLoader, FileSystemRepository> {
-        val repo = object : FileSystemRepository("insights", dir.absolutePath), InsightsRepository {}
+    fun loaderOver(dir: File): Pair<InsightsDataLoader, FileSystemRepository<Any>> {
+        val repo = object : FileSystemRepository<Any>("insights", dir.absolutePath), InsightsRepository {}
 
         return InsightsDataLoader(repo) to repo
     }
@@ -64,7 +65,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val exotic = """{ "key": "acme-billing", "data": { "tenant": "acme", "credits": 7 } }"""
 
         runBlocking {
-            repo.putFile("records-2026-07-31/a.json", record(requestSlice, responseSlice, exotic))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/a.json", record(requestSlice, responseSlice, exotic))
 
             val loaded = loader.load(InsightsRecordRef("records-2026-07-31", "a.json")).shouldNotBeNull()
 
@@ -81,7 +82,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-31/a.json", record(requestSlice, responseSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/a.json", record(requestSlice, responseSlice))
 
             val summary = loader.list(page = 1, epp = 10).items.single()
 
@@ -99,7 +100,7 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             // This is what InsightsLevel.BRIEF writes. The summary must not need a single slice; that
             // is the whole point of storing the headline rather than digging it out of `request`.
-            repo.putFile("records-2026-07-31/brief.json", record(method = "POST", uri = "/api/x", status = 201))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/brief.json", record(method = "POST", uri = "/api/x", status = 201))
 
             val summary = loader.list(page = 1, epp = 10).items.single()
 
@@ -117,6 +118,7 @@ class InsightsDataLoaderSpec : StringSpec({
 
         runBlocking {
             repo.putFile(
+                DepotSubjectId.system,
                 "records-2026-07-31/a.json",
                 record(responseSlice, method = null, uri = null, status = null),
             )
@@ -135,7 +137,7 @@ class InsightsDataLoaderSpec : StringSpec({
 
         runBlocking {
             // names sort chronologically, so rec-4 is newest
-            repeat(5) { i -> repo.putFile("records-2026-07-31/rec-$i.json", record(requestSlice)) }
+            repeat(5) { i -> repo.putFile(DepotSubjectId.system, "records-2026-07-31/rec-$i.json", record(requestSlice)) }
 
             loader.list(page = 1, epp = 2).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/rec-4.json",
@@ -158,9 +160,9 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-29/a.json", record(requestSlice))
-            repo.putFile("records-2026-07-30/b.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/c.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-29/a.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-30/b.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/c.json", record(requestSlice))
 
             loader.list(page = 1, epp = 2).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/c.json",
@@ -177,8 +179,8 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-29/old.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/new.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-29/old.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/new.json", record(requestSlice))
 
             loader.list(page = 1, epp = 10).items.map { it.ref.toPath() } shouldContainExactly listOf(
                 "records-2026-07-31/new.json",
@@ -195,11 +197,11 @@ class InsightsDataLoaderSpec : StringSpec({
             // e,d,c,b,a newest-first; `c` is a truncated write. `putFile` is a bare non-atomic
             // writeBytes and records are written after the response, so this is the ordinary case for a
             // listing taken against live traffic, not a contrived one.
-            repo.putFile("records-2026-07-31/e.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/d.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/c.json", "{ truncated write")
-            repo.putFile("records-2026-07-31/b.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/a.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/e.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/d.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/c.json", "{ truncated write")
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/b.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/a.json", record(requestSlice))
 
             val p1 = loader.list(page = 1, epp = 2).items.map { it.ref.file }
             val p2 = loader.list(page = 2, epp = 2).items.map { it.ref.file }
@@ -221,11 +223,11 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-29/a.json", record(requestSlice))
-            repo.putFile("records-2026-07-30/b.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/c.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/d.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/e.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-29/a.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-30/b.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/c.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/d.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/e.json", record(requestSlice))
 
             val first = loader.list(page = 1, epp = 2)
 
@@ -255,8 +257,8 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-31/a.json", record(requestSlice))
-            repo.putFile("records-2026-07-31/b.json", "{ truncated write")
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/a.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/b.json", "{ truncated write")
 
             val page = loader.list(page = 1, epp = 10)
 
@@ -272,7 +274,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-31/a.json", record(requestSlice))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/a.json", record(requestSlice))
 
             // `(page - 1) * epp` in Int wrapped NEGATIVE here, so the skip was never reached and the
             // endpoint answered with the first page — a client walking pages until one came back short
@@ -288,6 +290,7 @@ class InsightsDataLoaderSpec : StringSpec({
 
         runBlocking {
             repo.putFile(
+                DepotSubjectId.system,
                 "records-2026-07-31/a.json",
                 """{ "method": "GET", "uri": "/x", "status": 200, "collectors": [] }"""
             )
@@ -305,7 +308,7 @@ class InsightsDataLoaderSpec : StringSpec({
 
         runBlocking {
             // exactly what InsightsLevel.BRIEF writes: a headline and no collectors at all
-            repo.putFile("records-2026-07-31/brief.json", record())
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/brief.json", record())
 
             val loaded = loader.load(InsightsRecordRef("records-2026-07-31", "brief.json")).shouldNotBeNull()
 
@@ -330,7 +333,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-31/broken.json", "{ this is not json")
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/broken.json", "{ this is not json")
 
             loader.load(InsightsRecordRef("records-2026-07-31", "broken.json")) shouldBe null
             // and it must not take the whole listing down with it
@@ -346,7 +349,7 @@ class InsightsDataLoaderSpec : StringSpec({
             // Ordering comes from the FILENAME, not mtime, so no sleep is needed to separate them —
             // and the result cannot depend on filesystem timestamp granularity or on the async write.
             listOf("a", "b", "c").forEach { name ->
-                repo.putFile("records-2026-07-31/$name.json", record(requestSlice))
+                repo.putFile(DepotSubjectId.system, "records-2026-07-31/$name.json", record(requestSlice))
             }
 
             val newest = loader.load(InsightsRecordRef("records-2026-07-31", "c.json")).shouldNotBeNull()
@@ -378,7 +381,7 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-31/a.json", record("""{ "key": "bare" }"""))
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/a.json", record("""{ "key": "bare" }"""))
 
             val loaded = loader.load(InsightsRecordRef("records-2026-07-31", "a.json")).shouldNotBeNull()
 
@@ -392,11 +395,11 @@ class InsightsDataLoaderSpec : StringSpec({
         val (loader, repo) = loaderOver(dir)
 
         runBlocking {
-            repo.putFile("records-2026-07-31/a.json", record())
-            repo.putFile("records-2026-07-31/b.json", record())
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/a.json", record())
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/b.json", record())
             // Both sort before the records, newest-first: either would be b's "next"
-            repo.putFile("records-2026-07-31/notes.txt", "{}".toByteArray())
-            repo.putFile("records-2026-07-31/c.json/inner.json", "{}".toByteArray())
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/notes.txt", "{}".toByteArray())
+            repo.putFile(DepotSubjectId.system, "records-2026-07-31/c.json/inner.json", "{}".toByteArray())
 
             val b = loader.load(InsightsRecordRef("records-2026-07-31", "b.json")).shouldNotBeNull()
 

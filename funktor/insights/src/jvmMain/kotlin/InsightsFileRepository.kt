@@ -10,7 +10,7 @@ import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
  * whatever a previous demo run left behind, and behaves differently per machine.
  */
 class InsightsFileRepository(dir: String = DEFAULT_DIR) :
-    FileSystemRepository("insights", dir), InsightsRepository {
+    FileSystemRepository<Any>("insights", dir), InsightsRepository {
 
     companion object {
         const val DEFAULT_DIR = "./tmp/depot/insights"

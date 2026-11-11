@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
@@ -14,7 +15,7 @@ import java.nio.file.Files
 /** Paths in a [FileSystemRepository] and the shared depot path check (ULTRA-00304). */
 class FileSystemRepositorySpec : StringSpec({
 
-    fun repoOver(dir: File) = object : FileSystemRepository("test", dir.absolutePath) {}
+    fun repoOver(dir: File) = object : FileSystemRepository<Any>("test", dir.absolutePath) {}
 
     "the depot path check refuses dot segments and NUL, and allows the rest" {
         listOf("..", "a/../b", "./a", "a/.", "a\\..\\b", "..\\x", "a${Char(0)}b").forEach { path ->
@@ -83,7 +84,7 @@ class FileSystemRepositorySpec : StringSpec({
         val target = File(outside, "not-yet.txt")
         Files.createSymbolicLink(File(dir, "dangling").toPath(), target.toPath())
 
-        shouldThrow<DepotInvalidPathException> { repoOver(dir).putFile("dangling", "x".toByteArray()) {} }
+        shouldThrow<DepotInvalidPathException> { repoOver(dir).putFile(DepotSubjectId.system, "dangling", "x".toByteArray()) }
 
         target.exists() shouldBe false
     }

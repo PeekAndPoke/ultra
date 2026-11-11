@@ -19,6 +19,7 @@ import io.peekandpoke.funktor.rest.ApiRoutes
 import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.map
@@ -233,7 +234,8 @@ class ClusterAdminShowcaseApi : ApiRoutes("showcase-cluster-admin", authFloor = 
                 val content = Base64.getDecoder().decode(body.contentBase64)
 
                 try {
-                    repo.putFile(body.path, content)
+                    // By name the repository is a DepotRepository<*>: it takes system files only
+                    repo.putFile(DepotSubjectId.system, body.path, content)
                     ApiResponse.ok(DepotUploadResponse(success = true, path = body.path))
                 } catch (_: DepotInvalidPathException) {
                     // A path that could leave the repository is a bad request, as in DepotApi

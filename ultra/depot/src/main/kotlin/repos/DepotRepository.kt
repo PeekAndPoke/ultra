@@ -2,12 +2,17 @@ package io.peekandpoke.ultra.depot.repos
 
 import io.peekandpoke.ultra.depot.domain.DepotFileContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
-import io.peekandpoke.ultra.depot.domain.DepotMeta
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 
 /**
- * Definition of a depot repository
+ * Definition of a depot repository.
+ *
+ * [T] is the kind of data subject its files belong to: a write takes a `DepotSubjectId<T>`, so a repository of
+ * customer files cannot be written without saying which customer. A repository for anything is a
+ * `DepotRepository<Any>`. Seen as `DepotRepository<*>` (looked up by name), it can be read, and written only for
+ * [DepotSubjectId.system].
  */
-interface DepotRepository {
+interface DepotRepository<in T> {
     /** Unique name of the repository */
     val name: String
 
@@ -43,27 +48,31 @@ interface DepotRepository {
     /** Get the content of the file with the given [path] */
     suspend fun getContent(path: String): DepotFileContent?
 
-    /** Get the meta information of the file with the given [path] */
-    suspend fun getMeta(path: String): DepotMeta?
+    /**
+     * The metadata of the file at [path]: what the writer gave, plus the depot's own entries such as
+     * [DepotMetadata.SUBJECT]. Empty for a file stored without any, null when there is no such file.
+     */
+    suspend fun getMeta(path: String): Map<String, String>?
 
-    /** Puts a file with the given [path] and [content] */
+    /**
+     * Puts a file with the given [path] and [content], for the data [subject] it is about. [meta] follows the rules
+     * of [DepotMetadata]; the subject's id is stored with it.
+     */
     suspend fun putFile(
+        subject: DepotSubjectId<T>,
         path: String,
         content: ByteArray,
-        options: DepotPutFileOptions.Builder.() -> Unit = {},
+        meta: Map<String, String> = emptyMap(),
     ): DepotItem
 
     /** Puts a file with the given [path] and [content] */
     suspend fun putFile(
+        subject: DepotSubjectId<T>,
         path: String,
         content: String,
-        options: DepotPutFileOptions.Builder.() -> Unit = {},
+        meta: Map<String, String> = emptyMap(),
     ): DepotItem {
-        return putFile(
-            path = path,
-            content = content.toByteArray(),
-            options = options,
-        )
+        return putFile(subject = subject, path = path, content = content.toByteArray(), meta = meta)
     }
 
     /** Remove a file with a certain uri */

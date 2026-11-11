@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 data class DepotBrowseModel(
     val repo: DepotRepositoryModel,
     val item: DepotItemModel,
-    val meta: DepotItemModel.Meta?,
+    /** The file's metadata: what its writer gave, plus the depot's own entries such as `depot-subject`. */
+    val meta: Map<String, String>?,
     val children: List<DepotItemModel>,
 ) {
     val path get() = item.path

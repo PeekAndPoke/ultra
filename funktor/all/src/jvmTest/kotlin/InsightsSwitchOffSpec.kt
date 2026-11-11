@@ -8,9 +8,10 @@ import io.peekandpoke.funktor.insights.api.InsightsApi
 import io.peekandpoke.funktor.insights.api.InsightsApiFeature
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature
-import kotlinx.coroutines.delay
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 
 /**
  * With the app's one insights switch off, the insights API answers 404 on every host, and nothing records
@@ -60,7 +61,7 @@ class InsightsSwitchOffSpec : FunktorApiSpec(insightsOffTestApp) {
         "a superuser gets 404 from every endpoint on every host, also for a record that exists" {
             val ref = InsightsRecordRef(bucket = "records-2026-11-10", file = "2026-11-10T12:00:00.000000000.json")
             val planted = File(insightsDepotDir, ref.toPath())
-            repository.putFile(path = ref.toPath(), content = """{"planted": true}""")
+            repository.putFile(subject = DepotSubjectId.system, path = ref.toPath(), content = """{"planted": true}""")
             planted.exists() shouldBe true
 
             val recordParam = InsightsApiFeature.RecordParam(bucket = ref.bucket, file = ref.file)

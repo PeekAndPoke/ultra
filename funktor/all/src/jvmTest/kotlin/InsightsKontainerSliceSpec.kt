@@ -17,8 +17,14 @@ import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
 import io.peekandpoke.funktor.insights.collectors.KontainerCollector
 import io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.model.Paged
 import io.peekandpoke.ultra.security.user.UserProvider
+import java.io.File
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
@@ -30,11 +36,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import java.io.File
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * The `kontainer` slice of a REAL record — recorded the way `InsightsRecordingSpec` records one — as it
@@ -265,7 +266,7 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
             val ref = InsightsRecordRef(bucket = "records-2026-10-01", file = "2026-10-01T12:00:00.000000000.json")
             val stored = Json.parseToJsonElement(FAT_RECORD).jsonObject
 
-            repository.putFile(path = ref.toPath(), content = FAT_RECORD)
+            repository.putFile(subject = DepotSubjectId.system, path = ref.toPath(), content = FAT_RECORD)
 
             try {
                 val record = served(ref)

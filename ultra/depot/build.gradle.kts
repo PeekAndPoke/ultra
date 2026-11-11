@@ -21,6 +21,9 @@ dependencies {
     api(project(":ultra:common"))
     api(project(":ultra:datetime"))
 
+    // The file system repository stores a file's metadata as JSON
+    implementation(Deps.KotlinX.serialization_json)
+
     // Tests /////////////////////////
     Deps.Test {
         jvmTestDeps()

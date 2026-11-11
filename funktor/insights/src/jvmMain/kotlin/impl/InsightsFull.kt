@@ -14,17 +14,18 @@ import io.peekandpoke.funktor.insights.InsightsRepository
 import io.peekandpoke.funktor.rest.InsightsLevel
 import io.peekandpoke.funktor.rest.InsightsOptions
 import io.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.slumber.JsonUtil.toJsonElement
 import io.peekandpoke.ultra.slumber.slumber
+import java.time.LocalDate
+import java.time.LocalDateTime
+import kotlin.reflect.KClass
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import java.time.LocalDate
-import java.time.LocalDateTime
-import kotlin.reflect.KClass
 
 internal class InsightsFull(
     override val config: InsightsConfig,
@@ -87,7 +88,7 @@ internal class InsightsFull(
                     codec.slumber(data).toJsonElement(),
                 )
 
-                repository.putFile(path = filename, content = content)
+                repository.putFile(subject = DepotSubjectId.system, path = filename, content = content)
             }
         }
     }

@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import java.io.File
@@ -18,7 +19,7 @@ class FileSystemRepositoryPathSpec : StringSpec({
     val secret = File(outside, "secret.txt").apply { writeText("secret") }
     Files.createSymbolicLink(File(root, "link-out").toPath(), outside.toPath())
 
-    val repo = object : FileSystemRepository("test", root.absolutePath) {}
+    val repo = object : FileSystemRepository<Any>("test", root.absolutePath) {}
 
     // A traversal and a symlink out of the root, for every method
     listOf("a/../../${outside.name}/secret.txt", "link-out/secret.txt").forEach { bad ->
@@ -26,7 +27,7 @@ class FileSystemRepositoryPathSpec : StringSpec({
         "getFile refuses $bad" { shouldThrow<DepotInvalidPathException> { repo.getFile(bad) } }
         "getFolder refuses $bad" { shouldThrow<DepotInvalidPathException> { repo.getFolder(bad) } }
         "getContent refuses $bad" { shouldThrow<DepotInvalidPathException> { repo.getContent(bad) } }
-        "putFile refuses $bad" { shouldThrow<DepotInvalidPathException> { repo.putFile(bad, "x".toByteArray()) {} } }
+        "putFile refuses $bad" { shouldThrow<DepotInvalidPathException> { repo.putFile(DepotSubjectId.system, bad, "x".toByteArray()) } }
         "removeFile refuses $bad, the file outside stays" {
             shouldThrow<DepotInvalidPathException> { repo.removeFile(bad) }
             secret.readText() shouldBe "secret"
@@ -51,7 +52,7 @@ class FileSystemRepositoryPathSpec : StringSpec({
         val linkedRoot = File(holder, "depot").toPath()
         Files.createSymbolicLink(linkedRoot, volume.toPath())
 
-        val linked = object : FileSystemRepository("test", linkedRoot.toString()) {}
+        val linked = object : FileSystemRepository<Any>("test", linkedRoot.toString()) {}
 
         linked.removeFile("") shouldBe false
         linked.removeFile("/") shouldBe false
@@ -80,7 +81,7 @@ class FileSystemRepositoryPathSpec : StringSpec({
         Files.createSymbolicLink(File(root, "records-2026-07-31").toPath(), day.toPath())
 
         repo.getFile("latest.json")!!.path shouldBe "latest.json"
-        repo.putFile("latest.json", "{}".toByteArray()) {}.path shouldBe "latest.json"
+        repo.putFile(DepotSubjectId.system, "latest.json", "{}".toByteArray()).path shouldBe "latest.json"
         repo.listItems("records-2026-07-31").map { it.path } shouldBe listOf("records-2026-07-31/r.json")
     }
 

@@ -3,7 +3,6 @@ package io.peekandpoke.ultra.depot
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.depot.domain.DepotFileContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
-import io.peekandpoke.ultra.depot.domain.DepotMeta
 import io.peekandpoke.ultra.depot.domain.DepotUri
 import io.peekandpoke.ultra.depot.repos.DepotRepository
 import kotlin.reflect.KClass
@@ -11,7 +10,7 @@ import kotlin.reflect.KClass
 /**
  * The depot
  */
-class DepotFacade(private val drivers: Lookup<DepotRepository>) {
+class DepotFacade(private val drivers: Lookup<DepotRepository<*>>) {
 
     /**
      * Gets all repositories
@@ -21,17 +20,17 @@ class DepotFacade(private val drivers: Lookup<DepotRepository>) {
     /**
      * Gets a repository by it's [name]
      */
-    fun getRepo(name: String): DepotRepository? = drivers.all().firstOrNull { it.name == name }
+    fun getRepo(name: String): DepotRepository<*>? = drivers.all().firstOrNull { it.name == name }
 
     /**
      * Gets a repository by [cls]
      */
-    fun <T : DepotRepository> getRepo(cls: KClass<T>): T? = drivers.getOrNull(cls)
+    fun <T : DepotRepository<*>> getRepo(cls: KClass<T>): T? = drivers.getOrNull(cls)
 
     /**
      * Gets the [DepotRepository] for the given [uri]
      */
-    fun getRepo(uri: DepotUri): DepotRepository? {
+    fun getRepo(uri: DepotUri): DepotRepository<*>? {
         return getRepo(uri.repo)
     }
 
@@ -59,7 +58,7 @@ class DepotFacade(private val drivers: Lookup<DepotRepository>) {
     /**
      * Get the meta-data for the given [uri]
      */
-    suspend fun getMeta(uri: DepotUri): DepotMeta? {
+    suspend fun getMeta(uri: DepotUri): Map<String, String>? {
         return getRepo(uri)?.getMeta(uri.path)
     }
 }
