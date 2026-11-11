@@ -22,7 +22,7 @@ import io.peekandpoke.ultra.codegen.sdk.TsSdkRegistry
  * `ultra:codegen` already set the precedent.
  *
  * The cost is honest and worth stating: a collector's wire shape and its tab now live in different
- * modules, with no compiler linking them. `funktor/insights/reference/TAB-SPECS.md` is the bridge.
+ * modules, with no compiler linking them. `funktor/insights/TAB-SPECS.md` is the bridge.
  *
  * **This does not close the extension point.** `out.resource` reads the CONTRIBUTOR's classpath, so
  * an app defining its own collector ships its own tab from its own module and always could — an

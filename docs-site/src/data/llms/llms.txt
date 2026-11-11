@@ -38,7 +38,6 @@
   - [SaaS](https://peekandpoke.io/ultra/funktor/saas): Organisations, memberships, and boot-enforced cross-tenant isolation
   - [Insights](https://peekandpoke.io/ultra/funktor/insights): Request profiling, performance metrics, debug GUI
   - [Logging](https://peekandpoke.io/ultra/funktor/logging): Structured logging with DB persistence and web UI
-  - [Static Web](https://peekandpoke.io/ultra/funktor/staticweb): Templates, flash sessions, web resources, cache busting
   - [Testing](https://peekandpoke.io/ultra/funktor/testing): Test harness with fixtures, service injection, route testing
 - [Vault](https://peekandpoke.io/llms/vault.md): Shared DBAL foundation — Storable hierarchy, Flow cursors, repositories, entity cache
   - [Storable Hierarchy](https://peekandpoke.io/ultra/vault/storable): Storable, Stored, New, Ref — entity wrappers with metadata

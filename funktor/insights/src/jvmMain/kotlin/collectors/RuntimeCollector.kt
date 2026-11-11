@@ -45,7 +45,6 @@ class RuntimeCollector : InsightsCollector {
             }
     }
 
-    /** VUE-REF: `reference/collectors/RuntimeCollector.kt` */
     data class Data(
         val jvmVersion: String,
         val maxMem: Long,

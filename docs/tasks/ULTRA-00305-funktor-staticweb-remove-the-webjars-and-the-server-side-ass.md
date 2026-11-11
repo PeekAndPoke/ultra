@@ -1,6 +1,6 @@
 # ULTRA-00305: Funktor staticweb: remove the webjars and the server-side asset plumbing
 
-> **Status (2026-11-11): DESIGNED.** Out-of-scope finding of ULTRA-00198's gate. The maintainer on 2026-11-11: "remove
+> **Status (2026-11-11): IN PROGRESS.** The maintainer: "delete staticweb entirely, go ahead" (2026-11-11). Out-of-scope finding of ULTRA-00198's gate. The maintainer on 2026-11-11: "remove
 > all webjars this project and funktor-demo does not need... should be most if not all of them. This might also mean
 > that we can remove the plumbing code for loading webjar assets into templates. Try to clean up as much code-surface
 > as possible in static-web. These are old ideas that no longer hold today."
@@ -48,3 +48,12 @@ Who uses it, read 2026-11-11:
 ## History
 
 - 2026-11-11: created from ULTRA-00198's gate, scope widened by the maintainer.
+- 2026-11-11: implemented. `funktor/insights/reference/` deleted (ULTRA-00190 step 10) except `TAB-SPECS.md`, still
+  the wire reference for `slices.ts`, moved to `funktor/insights/TAB-SPECS.md`; the `VUE-REF` pointers removed.
+  `funktor/staticweb` deleted with its settings entry, `funktor/all`'s dependency and `funktorStaticWeb()`;
+  `Deps.WebJars` and `Deps.Ktor.Server.webjars` deleted (also from `Ktor.Server.full`); the demo server's
+  `install(Webjars)` removed. Docs: `staticweb.astro`, its sidebar entry, index card, logging link, `site.ts`
+  artifact and `llms.txt` line removed; docs build green (114 pages). `ultra/html` and `ultra/semanticui` stay
+  (Kraft core, Kraft semanticui, funktor inspect). Compile sweep green: funktor-all (main and tests), insights,
+  demo server and the four demo frontends.
+- 2026-11-11: funktor-all 283/283 green. The demo server's tests stop at boot on `${AWS_SES_ACCESS_KEY}` unresolved (the maintainer's pending local `keys.env.conf` entry), so "demo server starts" is not verified yet.

@@ -18,7 +18,6 @@ class ResponseCollector(
         const val KEY = "response"
     }
 
-    /** VUE-REF: `reference/collectors/ResponseCollector.kt` */
     data class Data(
         val status: HttpStatusCode?,
         val headers: Map<String, List<String>>,

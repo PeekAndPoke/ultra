@@ -17,7 +17,6 @@ class UserCollector(
         const val KEY = "user"
     }
 
-    /** VUE-REF: `reference/collectors/UserCollector.kt` */
     data class Data(
         val user: UserRecord,
         val permissions: UserPermissions,

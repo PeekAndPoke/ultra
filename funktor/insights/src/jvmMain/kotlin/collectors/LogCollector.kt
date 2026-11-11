@@ -39,7 +39,6 @@ class LogCollector : InsightsCollector {
         }
     }
 
-    /** VUE-REF: `reference/collectors/LogCollector.kt` */
     data class Data(
         val entries: List<Entry>,
     ) : InsightsCollectorData {

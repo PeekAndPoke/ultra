@@ -14,7 +14,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.host
 import io.ktor.server.routing.routing
 import io.ktor.server.sse.SSE
-import io.ktor.server.webjars.Webjars
 import io.peekandpoke.funktor.cluster.workers.launchWorkers
 import io.peekandpoke.funktor.core.lifecycle.lifeCycle
 import io.peekandpoke.funktor.demo.server.api.ApiApp
@@ -31,10 +30,6 @@ fun Application.module() = app.module(this) { app, config, init ->
             // TODO: start and stop the workers by using LifeCycleHooks as well
             launchWorkers { init.clone() }
         }
-    }
-
-    install(Webjars) {
-        path = "vendor"
     }
 
     install(SSE)

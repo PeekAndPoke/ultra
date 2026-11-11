@@ -20,7 +20,6 @@ import kotlin.reflect.KClass
  * per blueprint, so `InsightsApiClient.GetKontainerGraph` serves them once instead of every record repeating
  * them; a reader joins on [Data.Service.cls].
  *
- * VUE-REF: `reference/collectors/KontainerCollector.kt`
  */
 class KontainerCollector(
     private val kontainer: Kontainer,

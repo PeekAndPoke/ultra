@@ -187,7 +187,7 @@ Leaves first, because of D-1 — each step is useful even if the import question
       them. Every module that needs the primitives asks for them via `sharedResource`, so "the ui ships
       iff something needs it" holds by construction — the same property that keeps views in their module.
       The tabs and pages themselves stay `resource`: `funktor/insights` genuinely is their sole owner.
-- [ ] **10. Delete as you go** — per `reference/README.md`, a shipped tab deletes its `reference/collectors/*.kt`
+- [x] **10. Delete as you go** — DONE 2026-11-11 with ULTRA-00305: `reference/` deleted, `TAB-SPECS.md` moved to `funktor/insights/TAB-SPECS.md`. — per `reference/README.md`, a shipped tab deletes its `reference/collectors/*.kt`
       and its TAB-SPECS section. When both are empty, delete `reference/`.
       **Not done, and needs a maintainer decision (T1, 2026-10-19):** every tab has shipped, but T4 (the Kraft
       port) still needs the old renderers as its spec, and TAB-SPECS is now the CURRENT wire reference rather
@@ -854,3 +854,4 @@ same premise; their conclusion holds through `noContent()`.
 
 - 2026-10-21: numbered ULTRA-00190 (was `docs/tasks/20260802-insights-vue-tabs.md`).
 - 2026-11-10: IN PROGRESS.
+- 2026-11-11: step 10 done with ULTRA-00305 (`reference/` deleted, TAB-SPECS moved).

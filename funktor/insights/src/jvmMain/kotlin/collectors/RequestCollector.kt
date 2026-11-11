@@ -23,7 +23,6 @@ class RequestCollector(
         const val KEY = "request"
     }
 
-    /** VUE-REF: `reference/collectors/RequestCollector.kt` */
     data class Data(
         val method: HttpMethod,
         val scheme: String,

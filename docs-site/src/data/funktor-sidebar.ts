@@ -9,6 +9,5 @@ export const funktorSidebar = [
     {href: '/ultra/funktor/saas', label: 'SaaS', section: 'Modules'},
     {href: '/ultra/funktor/insights', label: 'Insights', section: 'Modules'},
     {href: '/ultra/funktor/logging', label: 'Logging', section: 'Modules'},
-    {href: '/ultra/funktor/staticweb', label: 'Static Web', section: 'Modules'},
     {href: '/ultra/funktor/testing', label: 'Testing', section: 'Modules'},
 ];

@@ -1,8 +1,8 @@
 /**
  * The three insights graphs: their data, the nodes and edges drawn from it, and where a tab gets it.
  *
- * Ported from the old vis.js renderers (`funktor/insights/reference/collectors/KontainerCollector.kt` and
- * `VaultCollector.kt` before `e448c64d`): same colours, sizes, arrows and dashes.
+ * Ported from the old vis.js renderers (`KontainerCollector.kt` and `VaultCollector.kt` before `e448c64d`, kept in
+ * `funktor/insights/reference/` until ULTRA-00305): same colours, sizes, arrows and dashes.
  *
  * **Nothing here imports the graph library.** This file is re-exported by the SDK barrel, so a package
  * import here would be a dependency of every app that imports the barrel. `NetworkGraph.vue` loads

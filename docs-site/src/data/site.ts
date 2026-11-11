@@ -135,6 +135,5 @@ export const dep = {
     funktorMessaging: `${funktorGroup}:messaging:${ultraVersion}`,
     funktorInsights: `${funktorGroup}:insights:${ultraVersion}`,
     funktorLogging: `${funktorGroup}:logging:${ultraVersion}`,
-    funktorStaticWeb: `${funktorGroup}:staticweb:${ultraVersion}`,
     funktorTesting: `${funktorGroup}:testing:${ultraVersion}`,
 };

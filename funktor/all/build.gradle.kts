@@ -74,7 +74,6 @@ kotlin {
             dependencies {
                 api(Deps.JavaLibs.logback_classic)
 
-                api(project(":funktor:staticweb"))
             }
         }
 

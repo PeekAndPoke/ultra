@@ -282,6 +282,11 @@
 - **Funktor insights: the record endpoint reads records only** (ULTRA-00304): `records-<yyyy-mm-dd>/<name>.json`;
   any other file of the insights depot is a 404, as is a name with `..` (it was a 500).
 
+- **Funktor: the `staticweb` module is gone** (ULTRA-00305), with all webjars (jQuery, prismjs 1.29.0, which lacks
+  the CVE-2024-53382 fix, Fomantic UI CSS, lazysizes, vis.js) and `ktor-server-webjars`. Its server-rendered page
+  templates, `WebResources`, flash sessions and `funktorStaticWeb()` had no users left; the frontends bring their
+  assets through npm. `funktor:all` no longer pulls it in, and `Deps.Ktor.Server.full` no longer adds webjars.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`

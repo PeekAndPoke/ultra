@@ -43,7 +43,6 @@ class AppConfigCollector(
         )
     }
 
-    /** VUE-REF: `reference/collectors/AppConfigCollector.kt` */
     data class Data(val info: Any, val config: Any) : InsightsCollectorData
 
     override fun finish(call: ApplicationCall): Data = static

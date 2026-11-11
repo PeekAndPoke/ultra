@@ -19,7 +19,6 @@ import io.peekandpoke.funktor.rest.FunktorRestBuilder
 import io.peekandpoke.funktor.rest.funktorRest
 import io.peekandpoke.funktor.saas.FunktorSaasBuilder
 import io.peekandpoke.funktor.saas.funktorSaas
-import io.peekandpoke.funktor.staticweb.funktorStaticWeb
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
 
@@ -33,7 +32,6 @@ val Funktor = module { params: FunktorParams ->
     // Auth's pending-account expiry runs as a cluster worker — this module is the one that sees both.
     dynamic(PendingAccountsExpiryWorker::class)
     funktorLogging(params.logging)
-    funktorStaticWeb()
     funktorMessaging(params.config, params.messaging)
     funktorSaas(params.saas)
     funktorInsights()

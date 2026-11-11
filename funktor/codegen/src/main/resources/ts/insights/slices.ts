@@ -16,7 +16,7 @@
  * 2. **A tab that throws takes the whole page with it.** Every reader returns null instead, and the tab
  *    falls back to a raw JSON tree -- degraded, but the data is still there and readable.
  *
- * Wire shapes come from `funktor/insights/reference/TAB-SPECS.md`, which read them out of a real record
+ * Wire shapes come from `funktor/insights/TAB-SPECS.md`, which read them out of a real record
  * rather than inferring them from the Kotlin types -- several differ.
  *
  * **No parity spec guards this against the Kotlin collectors** (maintainer, 2026-08-02): backend and
