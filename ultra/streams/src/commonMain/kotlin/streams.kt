@@ -24,16 +24,35 @@ internal fun <T> ownEntry(handler: StreamHandler<T>): StreamHandler<T> = { handl
  *
  * Uses a snapshot (toList) to avoid concurrent modification, and catches exceptions
  * per handler so that a failing subscriber does not prevent others from being notified.
+ *
+ * During the notification (ULTRA-00307): a handler removed meanwhile is skipped, as its unsubscribe has returned; once
+ * [superseded], a newer notification of the same publisher has reached every handler, so this one stops.
  */
-internal fun <T> notifyHandlers(handlers: Set<StreamHandler<T>>, value: T) {
-    handlers.toList().forEach {
+internal fun <T> notifyHandlers(handlers: Set<StreamHandler<T>>, value: T, superseded: () -> Boolean = { false }) {
+    for (handler in handlers.toList()) {
+        if (superseded()) return
+        if (handler !in handlers) continue
+
         try {
-            it(value)
+            handler(value)
         } catch (t: Throwable) {
             // A failing handler must not prevent other handlers from being notified.
             // But we log the error so it doesn't go unnoticed during development.
             println("[Streams] ERROR: subscriber threw ${t::class.simpleName}: ${t.message}")
         }
+    }
+}
+
+/**
+ * Notifies a publisher's handlers, counting the notifications: one that a handler's write overtakes stops, so no handler
+ * ends on the older value (ULTRA-00307).
+ */
+internal class Notifier {
+    private var count = 0
+
+    fun <T> notify(handlers: Set<StreamHandler<T>>, value: T) {
+        val own = ++count
+        notifyHandlers(handlers, value) { count != own }
     }
 }
 

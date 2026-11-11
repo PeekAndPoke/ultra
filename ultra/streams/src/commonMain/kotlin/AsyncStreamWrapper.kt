@@ -21,13 +21,22 @@ abstract class AsyncStreamWrapper<WRAPPED, RESULT>(
 ) {
     private var latest: RESULT? = null
 
+    /** Counts the incoming values: only the newest one's result is published (ULTRA-00308). */
+    private var incoming = 0
+
     override fun invoke(): RESULT? = latest
 
     override fun handleIncoming(value: WRAPPED) {
+        val own = ++incoming
+
         scope.launch {
             val mapped = mapper(value)
-            latest = mapped
-            publish(mapped)
+
+            // A newer value came meanwhile: its result, not this older one, is the stream's
+            if (own == incoming) {
+                latest = mapped
+                publish(mapped)
+            }
         }
     }
 }

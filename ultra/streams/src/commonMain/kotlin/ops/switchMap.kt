@@ -1,9 +1,9 @@
 package io.peekandpoke.ultra.streams.ops
 
+import io.peekandpoke.ultra.streams.Notifier
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamHandler
 import io.peekandpoke.ultra.streams.Unsubscribe
-import io.peekandpoke.ultra.streams.notifyHandlers
 import io.peekandpoke.ultra.streams.ownEntry
 
 /**
@@ -61,6 +61,8 @@ private class SwitchMapStream<OUTER, INNER, RESULT>(
 ) : Stream<RESULT> {
 
     private val subscriptions = mutableSetOf<StreamHandler<RESULT>>()
+
+    private val notifier = Notifier()
 
     /** Only valid while [hasValue] is set, which is exactly while we are subscribed */
     private var lastValue: RESULT? = null
@@ -195,6 +197,6 @@ private class SwitchMapStream<OUTER, INNER, RESULT>(
         lastValue = value
         hasValue = true
 
-        notifyHandlers(subscriptions, value)
+        notifier.notify(subscriptions, value)
     }
 }

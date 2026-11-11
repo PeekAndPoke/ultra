@@ -1,6 +1,6 @@
 # ULTRA-00302: Streams: distinct and cutoff return a stale value without a subscriber
 
-> **Status (2026-11-11): DESIGNED.** Requested by Klang-Research (KLANG-00422); the design below was agreed by the
+> **Status (2026-11-11): IN PROGRESS.** Widened by the operator audit of 2026-11-11. Requested by Klang-Research (KLANG-00422); the design below was agreed by the
 > maintainer on 2026-11-11 ("Yes please put it in as described").
 
 **Security-critical:** no
@@ -73,6 +73,25 @@ override fun invoke(): T {
 - Existing `DistinctSpec`, `CutoffSpec`, `HandlerResilienceSpec` unchanged and green.
 - `:ultra:streams:allTests` green on JVM, JS and native.
 
+## Widened by the operator audit (2026-11-11)
+
+The same class, found by the audit the maintainer asked for ("revisit all stream operators for defects"):
+- `filter()` / `filter(initial)`: a read without a subscriber returned what it held (`null` / the initial value).
+  Now: the source's value when it passes, else the last one that passed (`ops/filter.kt`).
+- `debounce`: `invoke()` returned the source's value, one subscribers may not have received yet. Now: the last value
+  passed on while listened to, the source's while not (built with ULTRA-00309 and ULTRA-00271).
+- `indexed()` (audit F4): a read without a subscriber counted up. Now its own operator; a read counts nothing.
+- `fold` / `history` / `mapAsync` see values only while listened to, by nature; `fold` and `history` also take the
+  source's current value in again on every new subscription (audit F11; a repeated value is legitimate, so no code
+  fix). KDoc says so.
+
+## Test evidence
+
+- `commonTest/ops/ReadWithoutSubscriberSpec.kt` (distinct, distinctStrict, cutoffWhen, cutoffWhenNot, filter, indexed)
+  and `DebounceStreamSpec.kt`. The distinct and cutoff cases were red on the old code (8 of 8, "expected 2 but was 1").
+- Mutations (undoing each fix): see ULTRA-00309's log; cutoff M2, filter M6, indexed M7, debounce read M10.
+
 ## History
 
 - 2026-11-11: created on Klang-Research's request (KLANG-00422); design agreed by the maintainer.
+- 2026-11-11: implemented; widened by the operator audit (filter, debounce, indexed, fold KDoc).

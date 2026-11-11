@@ -34,7 +34,7 @@ fun <T> StreamSource<T>.persistInLocalStorage(
             codec.encodeToString(serializer, it)
         },
         fromStr = {
-            it?.let { nonNull -> codec.decodeFromString(serializer, nonNull) }
+            codec.decodeFromString(serializer, it)
         },
         storageKey = key
     )
@@ -47,18 +47,20 @@ fun <T> StreamSource<T>.persistInLocalStorage(
 
 class LocalStorageStreamStorage<T>(
     private val toStr: (T) -> String,
-    private val fromStr: (String?) -> T?,
+    private val fromStr: (String) -> T,
     private val storageKey: String,
 ) : StreamStorage<T> {
 
     /**
      * We keep the value in memory, in case the local storage is not supported or the quota is exceeded
      */
-    private var lastValue: T? = null
+    private var lastValue: StreamStorage.Stored<T>? = null
 
-    override fun read(): T? {
+    override fun read(): T? = readStored()?.value
+
+    override fun readStored(): StreamStorage.Stored<T>? {
         try {
-            lastValue = fromStr(window.localStorage[storageKey])
+            window.localStorage[storageKey]?.let { lastValue = StreamStorage.Stored(fromStr(it)) }
         } catch (e: Throwable) {
             console.warn(e)
         }
@@ -67,7 +69,7 @@ class LocalStorageStreamStorage<T>(
     }
 
     override fun write(value: T) {
-        lastValue = value
+        lastValue = StreamStorage.Stored(value)
 
         try {
             window.localStorage[storageKey] = toStr(value)

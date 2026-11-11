@@ -65,6 +65,8 @@ val indexed = source.indexed()
 
 // Pair(0, "a"), then Pair(1, "b"), Pair(2, "c")...`} lang="kotlin" theme="vitesse-dark" />
 
+<p>Values are counted while someone listens; a read without a subscriber counts nothing.</p>
+
 <h2>filter</h2>
 
     <p>Only pass values matching a predicate. Since streams always have a value, you must provide an initial value for
@@ -74,12 +76,11 @@ val indexed = source.indexed()
         worth it.
     </Aside>
 
-<p>A filter sees values only while someone listens: read without a subscriber, it keeps what it had.</p>
+<p>Read without a subscriber, a filter gives the source's value when it passes, else the last one that passed.</p>
 
 <Code code={`val source = StreamSource(3)
 
 val big = source.filter(initial = 0) { it > 10 }
-big.subscribeToStream { }  // listening, so the filter sees the source's values
 
 println(big())  // 0
 
@@ -174,6 +175,9 @@ println(safe())  // "hello"
 
 // Or compute the fallback dynamically
 val computed = source.fallbackBy { "fallback-value" }`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The fallback may be a stream: <code>source.fallbackTo(defaultName)</code> publishes its new value at once while the
+    source is <code>null</code>.</p>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/streams/combining" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

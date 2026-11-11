@@ -14,8 +14,8 @@ internal class PersistentStreamSource<T>(
     init {
         try {
             // Try to load the latest value and publish it on the wrapped stream source
-            storage.read()?.let {
-                wrapped(it)
+            storage.readStored()?.let {
+                wrapped(it.value)
             }
         } catch (_: Throwable) {
             // Storage read failed — proceed with the wrapped stream's current value

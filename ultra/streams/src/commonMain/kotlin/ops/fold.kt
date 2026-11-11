@@ -5,6 +5,9 @@ import io.peekandpoke.ultra.streams.StreamWrapperBase
 
 /**
  * Folds the incoming values with the [operation] starting with the [initial] value.
+ *
+ * Values are folded only while someone listens, and each new subscription folds in the source's current value again,
+ * also one folded before (ULTRA-00302). Read meanwhile, the stream gives what it folded so far.
  */
 fun <T, R> Stream<T>.fold(initial: R, operation: (acc: R, next: T) -> R): Stream<R> =
     StreamFoldOperator(

@@ -17,6 +17,8 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
      */
     override val subscriptions: MutableSet<(T) -> Unit> = mutableSetOf()
 
+    private val notifier = Notifier()
+
     /**
      * @see StreamSource.invoke
      */
@@ -27,7 +29,7 @@ open class StreamSourceImpl<T>(initial: T) : StreamSource<T> {
      */
     override operator fun invoke(next: T) {
         current = next
-        notifyHandlers(subscriptions, current)
+        notifier.notify(subscriptions, current)
     }
 
     /**

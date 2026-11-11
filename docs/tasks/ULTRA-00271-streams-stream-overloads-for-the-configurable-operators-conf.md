@@ -1,6 +1,6 @@
 # ULTRA-00271: Streams: stream overloads for the configurable operators (config is a stream)
 
-> **Status (2026-10-29): DESIGNED.** The maintainer's rule 2026-10-29 (answer "Rule + stream overloads"): config values are streams; existing operators get stream overloads beside the constant ones. Follows ULTRA-00264 and ULTRA-00267.
+> **Status (2026-11-11): IN PROGRESS.** Implemented on master 2026-11-11 (the maintainer: "please update the ultra/streams/CLAUDE.md with the new rule and work on the implementation"); the CLAUDE.md waits for the maintainer's OK of its before/after. Was DESIGNED (2026-10-29). The maintainer's rule 2026-10-29 (answer "Rule + stream overloads"): config values are streams; existing operators get stream overloads beside the constant ones. Follows ULTRA-00264 and ULTRA-00267.
 
 **Security-critical:** no
 
@@ -44,3 +44,9 @@ ULTRA-00264 (`smooth`'s law) and ULTRA-00267 (`sampled`'s interval) are the firs
 ## History
 
 - 2026-10-29: created on the maintainer's answer "Rule + stream overloads".
+- 2026-11-11: implemented: decision 1 a new `ultra/streams/CLAUDE.md` (awaiting the OK); decision 2 as recommended,
+  plus `smooth`'s `rest`/`near` as streams (overload with a law stream; `rest` required there to keep the calls
+  unambiguous), `ticker(interval: Stream<Duration>)` with all clocks on one time axis, `debounce(delay: Stream<Duration>,
+  context)`. Specs: `QuantizeSpec`, `FallbackToStreamSpec`, `HistoryCapacitySpec`, `TickerIntervalStreamSpec`,
+  `SmoothConfigStreamSpec`, `DebounceStreamSpec`, each with "listened to only while someone listens". Docs pages and
+  mirror, CHANGELOG.

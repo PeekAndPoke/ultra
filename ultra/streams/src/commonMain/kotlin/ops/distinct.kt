@@ -36,9 +36,8 @@ private class StreamDistinctOperator<T>(
     private val strict: Boolean,
 ) : StreamWrapper<T>(wrapped = wrapped) {
 
+    /** The value last compared against; [invoke] reads the source, which distinct never holds back (ULTRA-00302). */
     private var latest: T = wrapped()
-
-    override fun invoke(): T = latest
 
     override fun handleIncoming(value: T) {
 

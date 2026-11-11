@@ -39,7 +39,8 @@ class MapAsyncSpec : StringSpec({
 
         delay(100)
 
-        received shouldBe listOf(null, Out(100), Out(200), Out(200))
+        // The latest value wins: the first In(20) was overtaken by the second before its mapping finished (ULTRA-00308)
+        received shouldBe listOf(null, Out(100), Out(200))
 
         unsubscribe()
     }

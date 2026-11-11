@@ -1,9 +1,9 @@
 package io.peekandpoke.ultra.streams.ops
 
+import io.peekandpoke.ultra.streams.Notifier
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamHandler
 import io.peekandpoke.ultra.streams.Unsubscribe
-import io.peekandpoke.ultra.streams.notifyHandlers
 import io.peekandpoke.ultra.streams.ownEntry
 
 /**
@@ -26,6 +26,8 @@ fun <T> Stream<T>.cutoffWhenNot(predicate: Stream<Boolean>): Stream<T> = cutoffW
  * Cuts off the stream when the [predicate] is true.
  *
  * - While cut off, the source is fully unsubscribed.
+ * - Read while nobody listens, it gives the source's value when not cut off, and when cut off the value it last saw:
+ *   with nobody listening nothing watches the source, so the value at the moment the cut-off began is not known.
  * - When the cut-off is lifted, the source is re-subscribed and its current value is published immediately.
  * - The initial cut-off state is read from the [predicate]'s current value, not from its first emission.
  */
@@ -35,6 +37,8 @@ private class CutoffStream<T>(
 ) : Stream<T> {
 
     private val subscriptions = mutableSetOf<StreamHandler<T>>()
+
+    private val notifier = Notifier()
 
     private var lastValue: T = source()
 
@@ -50,7 +54,12 @@ private class CutoffStream<T>(
     /** Counts source subscriptions, so one left over from an outdated state can be detected */
     private var sourceCount = 0
 
-    override fun invoke(): T = lastValue
+    override fun invoke(): T {
+        // A subscriber keeps lastValue current. Without one nothing watches the source, so read it here (ULTRA-00302).
+        if (predicateUnsubscribe == null && !predicate()) lastValue = source()
+
+        return lastValue
+    }
 
     override fun subscribeToStream(sub: (T) -> Unit): Unsubscribe {
         // An entry of this subscription's own (see ownEntry)
@@ -156,6 +165,6 @@ private class CutoffStream<T>(
     }
 
     private fun publish(value: T) {
-        notifyHandlers(subscriptions, value)
+        notifier.notify(subscriptions, value)
     }
 }

@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.streams.StreamSource
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 
 class PersistInLocalStorageSpec : StringSpec() {
@@ -58,6 +59,18 @@ class PersistInLocalStorageSpec : StringSpec() {
             }
 
             copy.removeAllSubscriptions()
+        }
+
+        "A stored null comes back as null, not as the initial value (ULTRA-00309)" {
+
+            val key = "nullable-key"
+
+            val original = StreamSource<String?>("initial").persistInLocalStorage(key, String.serializer().nullable)
+            original(null)
+
+            val copy = StreamSource<String?>("initial").persistInLocalStorage(key, String.serializer().nullable)
+
+            copy() shouldBe null
         }
     }
 }

@@ -263,6 +263,18 @@
     user repository's failure is no `Exception` (Karango's are `Throwable`s); it was a 500.
   - `PasswordHasher.strongRandom` is `SecureRandom()`, no longer `SecureRandom.getInstanceStrong()`, which can block.
 
+- **Streams: a value written during a publish wins; a handler unsubscribed during one is skipped** (ULTRA-00307).
+  A handler that writes to the stream it is told about (a clamp) used to see the older value delivered after the
+  newer one to the handlers behind it, which then ended on the older value; now the older publish stops. A
+  `history` behind such a write records only the newer value. A handler removed during a publish was still called
+  with its value; this also froze `sampled` and left `switchMap` stale when its last subscriber left mid-publish.
+- **Streams: `mapAsync` publishes the latest value's result only** (ULTRA-00308): a mapping that finishes after a
+  newer value came is dropped, so `userId.mapAsync { fetchUser(it) }` no longer ends on an older user.
+- **Streams: `debounce` and `asFlow`** (ULTRA-00309). `debounce` tells a new subscriber the current value once (it was
+  published again after the delay), reads as the last value it passed on while listened to (it read the source), and
+  drops a pending value when the last subscriber leaves. `asFlow()` is conflated: a slow collector gets the latest
+  value; it lost every value beyond a buffer of 64, the latest included.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`
@@ -279,7 +291,21 @@
   - A record page's path ends in `.json`: a webpack dev server needs `historyApiFallback = { disableDotRule: true }`
     for a reload of it to work.
 
+- **Streams: configurable operators take their config as a stream** (ULTRA-00271), beside the constant forms:
+  `quantize(size, offset)`, `fallbackTo(fallback)`, `history(capacity)` / `historyOfNonNull(capacity)`,
+  `ticker(interval: Stream<Duration>)`, `debounce(delay: Stream<Duration>)` (also `debounce(Duration, context)`),
+  and `smooth(smoothing: Stream, rest: Stream, near: Stream)`. Each KDoc says when a change takes effect.
+
 ### Fixes
+
+- **Streams: reads without a subscriber** (ULTRA-00302, from Klang). `distinct()`, `cutoffWhen()`, `filter()` and
+  `indexed()` returned what they held when last listened to (or built): now `distinct` reads the source, `cutoff` the
+  source while not cut off (else the value it last saw), `filter` the source's value when it passes, and a read of
+  `indexed` no longer counts up.
+- **Streams: smaller fixes** (ULTRA-00309). `smooth` told a new subscriber its first value twice; `ticker(0)` and
+  `FrameClock.ticker(0)` ran frames back to back (now at least 1 ms apart); `history` with a capacity below 0 threw;
+  `persistInLocalStorage` brought a stored `null` back as the initial value (`StreamStorage.readStored()`, which own
+  storages may override for a nullable value).
 
 - **Kraft prismjs: lazily loaded languages and plugins failed in strict bundles.** The addon imported
   `prismjs/components/prism-json` and the like without `.js`, which webpack refuses from an ES module unless the app

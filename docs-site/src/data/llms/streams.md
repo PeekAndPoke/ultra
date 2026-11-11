@@ -179,7 +179,6 @@ println(doubled())  // 10
 
 // filter — only pass values matching a predicate
 val big = source.filter(initial = 0) { it > 10 }
-big.subscribeToStream { }  // a filter sees values only while someone listens
 println(big())  // 0 (initial, since 5 doesn't match)
 
 source(20)
@@ -277,17 +276,17 @@ val indexed = source.indexed()
 // Pair(0, "a"), then Pair(1, "b"), Pair(2, "c")...
 ```
 
+Values are counted while someone listens; a read without a subscriber counts nothing.
+
 ## filter
 
 Only pass values matching a predicate. Since streams always have a value, you provide an initial value for when nothing
-matches yet. A filter sees values only while someone listens; unsubscribed it keeps what it had:
+matches yet. Read without a subscriber, it gives the source's value when it passes, else the last one that passed:
 
 ```kotlin
 val source = StreamSource(3)
 
 val big = source.filter(initial = 0) { it > 10 }
-big.subscribeToStream { }
-
 println(big())  // 0
 
 source(20)
@@ -349,6 +348,8 @@ println(safe())  // "hello"
 // Or compute the fallback dynamically
 val computed = source.fallbackBy { "fallback-value" }
 ```
+
+The fallback may be a stream: `source.fallbackTo(defaultName)` publishes its new value at once while the source is `null`.
 
 ---
 
@@ -452,7 +453,8 @@ source(4)
 println(recent())  // [2, 3, 4] — oldest values dropped
 ```
 
-`historyOfNonNull(capacity)` only keeps non-null values. Each value copies the window: for a fast producer, or a
+The capacity may be a `Stream<Int>`: a smaller one drops the oldest at once, a larger one fills up from there. Values
+are recorded only while someone listens, the current one first on each subscribe. `historyOfNonNull(capacity)` only keeps non-null values. Each value copies the window: for a fast producer, or a
 window over time, sample first: `diagnostics.sampled(every = 250.milliseconds).history(capacity = 480)`.
 
 ## sampled
@@ -482,10 +484,14 @@ val debounced = search.debounce(300)  // 300ms delay
 // Only "hello" is published — 300ms after the last keystroke
 ```
 
+The delay may be a `Duration` or a `Stream<Duration>` (a new delay applies to the next value). A new subscriber is told
+the current value once; read while listened to, it gives the last value passed on. `context` (JVM/native) is where it
+publishes.
+
 ## cutoffWhen / cutoffWhenNot
 
 Pause a stream based on a boolean predicate stream. While paused, the source is fully unsubscribed. When resumed, the
-current value is published immediately:
+current value is published immediately. Read without a subscriber: the source's value, or while cut off the last one seen:
 
 ```kotlin
 val source = StreamSource(1)
@@ -521,7 +527,8 @@ unsub()  // stops the ticker
 ```
 
 Also accepts a `Duration`: `ticker(1.seconds)`, or any `FrameClock`: `ticker(clock)` (its initial frame
-carries 0.0, the next ones the clock's times). Times are in ms, with fractions.
+carries 0.0, the next ones the clock's times). Times are in ms, with fractions. `ticker(interval: Stream<Duration>)`:
+the due frame keeps its time, the next comes at the new interval. Below 1 ms counts as 1 ms.
 
 ## FrameClock
 
@@ -546,12 +553,13 @@ starts from `rest`; a value on the way becomes the new goal, keeping the speed; 
 exactly and stops asking for frames. Upstream only while listened to.
 
 The law may be a `Stream<out Smoothing?>` (any stream of laws) and change mid-motion: `brightness.smooth(smoothing = law)`, then
-`law(Smoothing.Spring(...))`; the next step goes on from the current position and speed. `null` passes values at once.
+`law(Smoothing.Spring(...))`; the next step goes on from the current position and speed. `null` passes values at once. With a law stream, `rest`
+and `near` may be streams too: a new `near` applies from the next frame, a new `rest` to the next start from `null`.
 
 ## quantize
 
 `level.quantize(size = 0.1, offset = 0.05)`: snaps to the nearest `offset + k * size` (the offset shifts the grid);
-`null` passes. On `Stream<Double>` and `Stream<Double?>`. After `smooth()` it repeats the grid value each frame:
+`null` passes. On `Stream<Double>` and `Stream<Double?>`. `size`/`offset` may be streams (a change re-snaps at once). After `smooth()` it repeats the grid value each frame:
 add `.distinct()`.
 
 ## mapAsync
@@ -567,6 +575,8 @@ val user = userId.mapAsync { id ->
 
 // user() is null initially, then the fetched User object
 ```
+
+The latest value wins: a mapping that finishes after a newer value came is dropped. Mapped only while listened to.
 
 ---
 
@@ -617,6 +627,11 @@ class UserDashboard {
 ```
 
 `unsubscribeAll()` can be called multiple times safely.
+
+## Writes and unsubscribes during a publish
+
+A handler that writes to the stream it is told about starts a new publish; the older one stops, so no handler ends on
+the older value. A handler unsubscribed during a publish is not called with its value.
 
 ## Error resilience
 
@@ -763,6 +778,9 @@ println(clamped())  // 100
 
 For operators with internal state, extend `StreamWrapperBase` directly and override `handleIncoming()` and `invoke()`.
 
+A configurable operator takes its config as a stream, with a constant overload that delegates through `steady(x)`;
+it listens to the config only while listened to, and its KDoc says when a change takes effect.
+
 ## Flow interop
 
 Convert any stream to a Kotlin `Flow`:
@@ -779,7 +797,7 @@ source.asFlow()
 ```
 
 The Flow emits the current value immediately on collection, then subsequent values. Cancelling the collector
-unsubscribes automatically.
+unsubscribes automatically. A slow collector gets the latest value, not every value (conflated).
 
 ## Platform summary
 

@@ -23,9 +23,14 @@ val debounced = search.debounce(300)  // 300ms delay
 // Typing rapidly: "h", "he", "hel", "hell", "hello"
 // Only "hello" is published — 300ms after the last keystroke`} lang="kotlin" theme="vitesse-dark" />
 
+<p>The delay may be a <code>Duration</code> or a <code>Stream&lt;Duration&gt;</code>: a new delay applies to the next
+    value. A new subscriber is told the current value once. Read while someone listens, the stream gives the last value
+    it passed on. On the JVM and native, <code>debounce(delay, context = ...)</code> publishes on that context.</p>
+
 <h2>cutoffWhen / cutoffWhenNot</h2>
 
-<p>Pause a stream based on a boolean predicate stream. While paused, the source is fully unsubscribed. When resumed, the current value is published immediately:</p>
+<p>Pause a stream based on a boolean predicate stream. While paused, the source is fully unsubscribed. When resumed, the current value is published immediately. Read without a subscriber it gives the source's value, or
+    while cut off the value it last saw:</p>
 
 <Code code={`val source = StreamSource(1)
 val paused = StreamSource(false)
@@ -58,7 +63,8 @@ unsub()  // stops the ticker`} lang="kotlin" theme="vitesse-dark" />
 
 <p>Also accepts a <code>Duration</code>: <code>ticker(1.seconds)</code>, or any <code>FrameClock</code>:
     <code>ticker(clock)</code>, whose initial frame carries the time 0.0 and the next ones the clock's times. Times are
-    in milliseconds, with fractions.</p>
+    in milliseconds, with fractions. <code>ticker(interval = stream)</code> takes a <code>Stream&lt;Duration&gt;</code>:
+    the due frame keeps its time, the next one comes at the new interval. An interval below 1 ms counts as 1 ms.</p>
 
 <h2>FrameClock</h2>
 
@@ -111,6 +117,9 @@ val bulb = brightness.smooth(smoothing = law)
 // A stutter: a new law, no restart of the motion
 law(Smoothing.Spring(stiffness = 300.0, damping = 4.0))`} lang="kotlin" theme="vitesse-dark" />
 
+<p>With a law stream, <code>rest</code> and <code>near</code> may be streams as well: a new <code>near</code> applies
+    from the next frame, a new <code>rest</code> to the next motion that starts from <code>null</code>.</p>
+
 <h2>quantize</h2>
 
 <p>Snaps every value to the nearest <code>offset + k * size</code>; the offset shifts the grid, not the value.
@@ -120,6 +129,8 @@ law(Smoothing.Spring(stiffness = 300.0, damping = 4.0))`} lang="kotlin" theme="v
 
 val stepped = level.smooth(sharePer10Ms = 0.9).quantize(size = 0.1)              // 0.0, 0.1, 0.2, ...
 val shifted = level.quantize(size = 0.1, offset = 0.05)                          // 0.05, 0.15, ...`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>size</code> and <code>offset</code> may be streams: a change re-snaps the current value at once.</p>
 
 <p>While a smoothed motion runs, <code>quantize</code> passes the same grid value on every frame; add
     <code>.distinct()</code> to publish only the changes.</p>
@@ -139,6 +150,9 @@ val user = userId.mapAsync { id ->
 }
 
 // user() is null initially, then the fetched User object`} lang="kotlin" theme="vitesse-dark" />
+
+<p>The latest value wins: a mapping that finishes after a newer value came is dropped. Values are mapped only while
+    someone listens.</p>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/streams/subscriptions" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

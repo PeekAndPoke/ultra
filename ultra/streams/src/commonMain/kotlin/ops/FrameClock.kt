@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.DurationUnit
+import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /**
@@ -26,20 +27,28 @@ fun interface FrameClock {
          * creation. On the JVM and native the frames run on [context]'s threads.
          */
         fun ticker(intervalMs: Int = 16, context: CoroutineContext = Dispatchers.Default): FrameClock =
-            TickerFrameClock(intervalMs = intervalMs, context = context)
+            TickerFrameClock(intervalMs = intervalMs, context = context, start = TimeSource.Monotonic.markNow())
     }
 }
+
+/** A [FrameClock.ticker] timed from [start]: clocks of one start give times on one axis. */
+internal fun tickerFrameClock(intervalMs: Int, context: CoroutineContext, start: TimeMark): FrameClock =
+    TickerFrameClock(intervalMs = intervalMs, context = context, start = start)
 
 /** The clock [FrameClock.default] returns. */
 internal expect val platformFrameClock: FrameClock
 
-private class TickerFrameClock(private val intervalMs: Int, context: CoroutineContext) : FrameClock {
+private class TickerFrameClock(
+    private val intervalMs: Int,
+    context: CoroutineContext,
+    private val start: TimeMark,
+) : FrameClock {
     private val scope = CoroutineScope(context + SupervisorJob())
-    private val start = TimeSource.Monotonic.markNow()
 
     override fun next(onFrame: (timeMs: Double) -> Unit): () -> Unit {
         val job = scope.launch {
-            delay(intervalMs.toLong())
+            // An interval below 1 ms counts as 1 ms: frames back to back would hold a thread busy
+            delay(intervalMs.coerceAtLeast(1).toLong())
             onFrame(start.elapsedNow().toDouble(DurationUnit.MILLISECONDS))
         }
 

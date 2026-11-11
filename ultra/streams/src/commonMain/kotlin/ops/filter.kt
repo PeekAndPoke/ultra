@@ -71,13 +71,18 @@ fun <T, I : T & Any> Stream<T>.filterIsInstanceOf(cls: KClass<I>, initial: I): S
  * Filter operator impl
  */
 private class StreamFilterOperator<T>(
-    wrapped: Stream<T>,
+    private val wrapped: Stream<T>,
     private val predicate: (T) -> Boolean,
 ) : StreamWrapperBase<T, T?>(wrapped = wrapped) {
 
     private var latest: T? = null
 
-    override fun invoke(): T? = latest
+    // Nobody listening: the source's value if it passes, else the last one that passed (ULTRA-00302)
+    override fun invoke(): T? {
+        if (!isSubscribedToWrapped()) wrapped().takeIf(predicate)?.let { latest = it }
+
+        return latest
+    }
 
     override fun handleIncoming(value: T) {
         if (predicate(value)) {
@@ -91,14 +96,22 @@ private class StreamFilterOperator<T>(
  * Filter operator impl
  */
 private class StreamFilterWithInitialValueOperator<T>(
-    wrapped: Stream<T>,
+    private val wrapped: Stream<T>,
     initial: T,
     private val predicate: (T) -> Boolean,
 ) : StreamWrapperBase<T, T>(wrapped = wrapped) {
 
     private var latest: T = initial
 
-    override fun invoke(): T = latest
+    // Nobody listening: the source's value if it passes, else the last one that passed (ULTRA-00302)
+    override fun invoke(): T {
+        if (!isSubscribedToWrapped()) {
+            val value = wrapped()
+            if (predicate(value)) latest = value
+        }
+
+        return latest
+    }
 
     override fun handleIncoming(value: T) {
         if (predicate(value)) {

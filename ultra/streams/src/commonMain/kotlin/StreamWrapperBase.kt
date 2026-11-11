@@ -14,6 +14,8 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
     /** All subscriptions to this stream */
     private val subscriptions = mutableSetOf<StreamHandler<RESULT>>()
 
+    private val notifier = Notifier()
+
     /**
      * Returns 'true' if the stream has subscriptions
      */
@@ -79,6 +81,6 @@ abstract class StreamWrapperBase<WRAPPED, RESULT>(
      * A failing handler will not prevent other handlers from being notified.
      */
     protected fun publish(value: RESULT) {
-        notifyHandlers(subscriptions, value)
+        notifier.notify(subscriptions, value)
     }
 }

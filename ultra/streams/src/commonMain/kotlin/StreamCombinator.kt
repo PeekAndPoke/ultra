@@ -21,6 +21,8 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
     /** All subscriptions to this stream */
     private val subscriptions = mutableSetOf<StreamHandler<RESULT>>()
 
+    private val notifier = Notifier()
+
     override fun invoke(): RESULT {
         return combine(first(), second())
     }
@@ -93,6 +95,6 @@ class StreamCombinator<FIRST, SECOND, RESULT>(
      * A failing handler will not prevent other handlers from being notified.
      */
     private fun publish(value: RESULT) {
-        notifyHandlers(subscriptions, value)
+        notifier.notify(subscriptions, value)
     }
 }

@@ -34,6 +34,10 @@ println(clamped())  // 100`} lang="kotlin" theme="vitesse-dark" />
 
 <p>For operators with internal state, extend <code>StreamWrapperBase</code> directly and override <code>handleIncoming()</code> and <code>invoke()</code>.</p>
 
+<p>A configurable operator takes its config as a stream, with a constant overload that delegates through
+    <code>steady(x)</code>; it listens to the config only while someone listens to it, and its KDoc says when a change
+    takes effect.</p>
+
 <h2>Flow interop</h2>
 
 <p>Convert any stream to a Kotlin <code>Flow</code>:</p>
@@ -47,7 +51,8 @@ source.asFlow()
     .take(3)
     .collect { println(it) }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>The Flow emits the current value immediately on collection, then subsequent values. Cancelling the collector unsubscribes automatically.</p>
+<p>The Flow emits the current value immediately on collection, then subsequent values. Cancelling the collector unsubscribes automatically. A collector slower than the stream gets the latest value, not
+    every value: the Flow is conflated.</p>
 
     <Aside>We didn't try to replace Flow. Sometimes you need the full coroutines ecosystem. This bridge lets you get
         there without rewriting everything.

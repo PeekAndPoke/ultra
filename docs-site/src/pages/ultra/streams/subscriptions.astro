@@ -64,6 +64,11 @@ source(2)  // prints "Got: 2"`} lang="kotlin" theme="vitesse-dark" />
     <p>The exception is logged as <code>[Streams] ERROR: subscriber threw ...</code> so it shows up in your console
         during development, but it doesn't take down the stream.</p>
 
+    <h2>Writes and unsubscribes during a publish</h2>
+
+    <p>A handler that writes to the stream it is told about (a clamp) starts a new publish; the older one stops, so no
+        handler ends on the older value. A handler unsubscribed during a publish is not called with its value.</p>
+
     <Aside>We debated whether to swallow exceptions silently. We didn't. They're logged. You'll see them. You just won't
         lose your other subscribers over it.
     </Aside>

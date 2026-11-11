@@ -151,6 +151,9 @@ source(4)
 
 println(recent())  // [2, 3, 4] — oldest values dropped`} lang="kotlin" theme="vitesse-dark" />
 
+<p>The capacity may be a <code>Stream&lt;Int&gt;</code>: a smaller one drops the oldest values at once, a larger one
+    fills up from there. Values are recorded only while someone listens, the current one first on each subscribe.</p>
+
 <p>Each value copies the window. For a fast producer, or a window over time rather than over values, sample first:</p>
 
 <Code code={`// The latest value every 250 ms, also when unchanged or null: two minutes (in a visible tab), with gaps where there was nothing

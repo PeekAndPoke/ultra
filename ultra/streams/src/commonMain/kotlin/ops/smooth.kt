@@ -20,12 +20,11 @@ fun Stream<Double?>.smooth(
     rest: Double = 0.0,
     near: Double = 0.001,
     clock: FrameClock = FrameClock.default,
-): Stream<Double?> = StreamSmoothOperator(
-    source = this,
+): Stream<Double?> = smooth(
     // NaN-guard: a share that is not a number counts as none
     smoothing = steady(if (sharePer10Ms > 0.0) Smoothing.Exponential(sharePer10Ms) else null),
-    rest = rest,
-    near = near,
+    rest = steady(rest),
+    near = steady(near),
     clock = clock,
 )
 
@@ -65,14 +64,34 @@ fun Stream<Double?>.smooth(
     rest: Double = 0.0,
     near: Double = 0.001,
     clock: FrameClock = FrameClock.default,
-): Stream<Double?> = StreamSmoothOperator(source = this, smoothing = smoothing, rest = rest, near = near, clock = clock)
+): Stream<Double?> = smooth(smoothing = smoothing, rest = steady(rest), near = steady(near), clock = clock)
+
+/**
+ * Smooths a stream of numbers by the law [smoothing] holds now, with [rest] and [near] as streams too (ULTRA-00271): a
+ * new [near] applies from the next frame, a new [rest] to the next motion that starts from `null`. A [rest] that is not
+ * finite counts as 0. All three are listened to only while someone listens here.
+ *
+ * See the overload with a [Smoothing] for `null` values and the lifecycle.
+ */
+fun Stream<Double?>.smooth(
+    smoothing: Stream<out Smoothing?>,
+    rest: Stream<Double>,
+    near: Stream<Double> = steady(0.001),
+    clock: FrameClock = FrameClock.default,
+): Stream<Double?> = StreamSmoothOperator(
+    source = this,
+    smoothing = smoothing,
+    restStream = rest,
+    nearStream = near,
+    clock = clock,
+)
 
 /** The smooth operator; a law of `null` passes every value at once. */
 private class StreamSmoothOperator(
     private val source: Stream<Double?>,
     private val smoothing: Stream<out Smoothing?>,
-    private val rest: Double,
-    private val near: Double,
+    private val restStream: Stream<Double>,
+    private val nearStream: Stream<Double>,
     private val clock: FrameClock,
 ) : StreamSourceImpl<Double?>(source().finiteOrNull()) {
 
@@ -87,11 +106,24 @@ private class StreamSmoothOperator(
 
     private var unsubscribeLaw: Unsubscribe? = null
 
+    private var unsubscribeRest: Unsubscribe? = null
+
+    private var unsubscribeNear: Unsubscribe? = null
+
+    /** Where a motion starts after a `null`: [restStream]'s latest while someone listens. */
+    private var rest: Double = 0.0
+
+    /** Within what a motion counts as there: [nearStream]'s latest while someone listens. */
+    private var near: Double = 0.001
+
     /** The law the next step goes by: [smoothing]'s latest while someone listens. */
     private var law: Smoothing? = null
 
     /** Someone listens: the source is subscribed, frames may be asked for. */
     private var listening = false
+
+    /** Set while [onSub] subscribes: the first value is set, not told; the new subscriber is told it once. */
+    private var starting = false
 
     /** The first value of this listening has come; until then a value is taken as it is. */
     private var settledIn = false
@@ -115,14 +147,19 @@ private class StreamSmoothOperator(
         if (!listening) {
             listening = true
             settledIn = false
+            starting = true
             try {
-                // The law first, so the source's first value already knows it
+                // The config first, so the source's first value already knows it
+                unsubscribeRest = restStream.subscribeToStream { rest = it.takeIf { r -> r.isFinite() } ?: 0.0 }
+                unsubscribeNear = nearStream.subscribeToStream { near = it }
                 unsubscribeLaw = smoothing.subscribeToStream { lawChanged(it) }
                 unsubscribe = source.subscribeToStream { incoming(it) }
             } catch (e: Throwable) {
                 // Half subscribed: undone, so the next subscriber starts afresh
                 stopListening()
                 throw e
+            } finally {
+                starting = false
             }
         }
     }
@@ -139,6 +176,10 @@ private class StreamSmoothOperator(
         unsubscribe = null
         unsubscribeLaw?.invoke()
         unsubscribeLaw = null
+        unsubscribeNear?.invoke()
+        unsubscribeNear = null
+        unsubscribeRest?.invoke()
+        unsubscribeRest = null
         stop()
     }
 
@@ -250,6 +291,7 @@ private class StreamSmoothOperator(
 
     private fun emit(next: Motion?) {
         motion = next
-        invoke(next?.position)
+
+        if (starting) current = next?.position else invoke(next?.position)
     }
 }
