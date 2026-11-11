@@ -337,9 +337,13 @@
     A repository for anything is a `DepotRepository<Any>`; system files pass `DepotSubjectId.system`. Looked up by
     name, a repository is a `DepotRepository<*>` and takes system files only. `FileSystemRepository` and
     `AwsS3Repository` take the same type parameter.
+  - A subject id has no public constructor: `DepotSubjectId.of(Customer::class, "customers", "42")` names its kind
+    and is stored as `customers/42`, so equal ids of two kinds stay apart. `funktor:cluster` adds
+    `Storable<T>.asDepotSubject()` (the entity's `collection/key`) and `repo.putFile(storedEntity, path, content,
+    meta)`; `funktor:cluster` now exposes `ultra:vault`.
   - Metadata is a `Map<String, String>`: keys of `a-z`, `0-9` and `-` (1 to 64), keys starting with `depot-` reserved,
-    2 KB in all. The subject's id is always stored as `depot-subject`. `getMeta` returns the map: empty for a file
-    stored without any, null when there is no such file.
+    2 KB in all. The subject's id is always read as `depot-subject`: a file without a stored subject reads as a
+    system file (`depot-subject` = `system`). `getMeta` returns the map, null when there is no such file.
   - `DepotPutFileOptions`, its unused `encryption` option, `DepotMeta` and `DepotItemModel.Meta`/`Visibility` are
     gone; `DepotBrowseModel.meta` is the map.
   - S3: metadata is the object's user metadata (`x-amz-meta-*`, values percent-encoded); **tags are no longer
@@ -348,6 +352,7 @@
     `.meta.`) is a reserved first path segment in every repository; the file system repository never lists it. **A
     depot that already holds a top-level `.meta` folder of its own files can no longer reach them.** Content and
     metadata are written through temporary files and moved in place; writers of one file take turns.
+    A system file without metadata gets no metadata file.
   - `DepotException` is a `RuntimeException` now (it was a bare `Throwable`); `AwsHelper` (the tag mapping) is gone.
 
 ### New

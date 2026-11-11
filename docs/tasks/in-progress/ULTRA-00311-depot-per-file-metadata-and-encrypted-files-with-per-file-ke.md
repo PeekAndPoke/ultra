@@ -159,6 +159,28 @@ a reader between the two moves of a write sees the new metadata with the old con
 into a "corrupted" answer. Open in the docs: `cluster.astro`'s depot example, rewritten once the subject's shape is
 decided.
 
+The maintainer's decisions on round 1 (2026-11-11), built:
+
+- **The subject's shape** (both subject MAJORs): the maintainer proposed that the app's extension takes the stored
+  entity ("putFile expects the customer or `Storable<Customer>` and constructs the subject id that way"), agreed
+  as: no public constructor; `DepotSubjectId.of(type: KClass<T>, namespace, id)`, stored as `namespace/id`, the
+  `KClass` pinning `T` so it is never inferred from what the repository expects; blank parts, a `/` in the
+  namespace and `Nothing::class` refused; `system` has no `/`, so no factory produces it. In `funktor:cluster`:
+  `Storable<T>.asDepotSubject()` (`collection/key`) and `DepotRepository<T>.putFile(Storable<T>, ...)`.
+  Accepted by the maintainer: the subject is tied to the collection's name ("Renaming should rarely happen as this
+  would also be a big problem for references between collections").
+- **System files without metadata** (the insights question; built on the proposal, the maintainer's "Yes this is
+  fine" answered both questions in one line, reported back as such): the file system repository writes no metadata
+  file for them and removes an older one after the content is in place; on both stores a file without a stored
+  subject reads as `depot-subject = system`.
+
+Verified after the decisions: depot 68, depot-s3 11, cluster 140, insights 114, funktor-all 288, demo 52. Mutations,
+each red: R1 the namespace's `/`, R2 a blank id, R3 `Nothing` as the kind, R4 the namespace in the stored value,
+R5 no metadata file for a system-only write, R6 removal of the older metadata, R7 and R8 "no stored subject reads
+as system" (file system, S3), R9 the collection as the namespace. Refused by the compiler, each tried: C1 the
+constructor, C2 a customer's id on a by-name repository, C3 another kind's id on a typed repository, C4 another
+kind's stored entity through the extension. Docs: `cluster.astro`'s example rewritten.
+
 Probed and clean (round 1): variance; reserved keys cannot be forged through `meta`; size measured as S3 counts it;
 JSON and header encoding; `getMeta` null versus empty on both stores; a refused write leaves nothing; browse is
 superuser-only and renders text; the S3 stub is faithful for what the tests claim.

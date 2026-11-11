@@ -231,7 +231,10 @@ abstract class AwsS3Repository<in T>(
             .build()
 
         return try {
-            s3.headObject(request).await().metadata().mapValues { (_, value) -> decode(value) }
+            val stored = s3.headObject(request).await().metadata().mapValues { (_, value) -> decode(value) }
+
+            // An object without a stored subject (written by another tool) reads as a system file
+            DepotMetadata.systemOnly + stored
         } catch (_: NoSuchKeyException) {
             null
         }

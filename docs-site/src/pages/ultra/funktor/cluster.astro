@@ -47,13 +47,25 @@ welcomeEmailHandler.queue(
 
     <p>Abstract file storage with pluggable backends. Same API for local filesystem and AWS S3.</p>
 
-    <Code code={`val repo = cluster.depot.getRepo("uploads")
+    <p>
+        Every write names the data subject the file is about. A repository is typed by the kind of subject it
+        holds, and a stored entity is its own subject id (<code>collection/key</code>). Files that belong to no
+        person are written for <code>DepotSubjectId.system</code>.
+    </p>
 
-// Upload
-repo?.putFile("photos/avatar.jpg", imageBytes)
+    <Code code={`// A repository of customer files, registered in the kontainer and injected with its type
+class CustomerFiles(dir: String) : FileSystemRepository<Customer>("customer-files", dir)
 
-// List
+// Upload for a stored customer, with free metadata
+customerFiles.putFile(customer, "photos/avatar.jpg", imageBytes, mapOf("mime-type" to "image/jpeg"))
+
+// A file of the system itself; a repository looked up by name takes only these
+val repo = cluster.depot.getRepo("uploads")
+repo?.putFile(DepotSubjectId.system, "reports/latest.json", report)
+
+// List, and read the metadata
 val files = repo?.listItems("photos/")
+val meta = customerFiles.getMeta("photos/avatar.jpg")   // {mime-type=image/jpeg, depot-subject=customers/42}
 
 // Download
 val content = cluster.depot.getContent(DepotUri("uploads", "photos/avatar.jpg"))`} lang="kotlin" theme="vitesse-dark"/>

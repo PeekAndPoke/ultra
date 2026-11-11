@@ -23,7 +23,9 @@ class DepotMetadataSpec : StringSpec({
 
     fun repoOver(dir: File) = object : FileSystemRepository<Customer>("test", dir.absolutePath) {}
 
-    val anna = DepotSubjectId<Customer>("customer-42")
+    fun customer(id: String) = DepotSubjectId.of(Customer::class, "customers", id)
+
+    val anna = customer("42")
 
     "keys are 1 to 64 characters of a-z, 0-9 and '-'; depot- keys are reserved" {
         listOf("", "Upper", "under_score", "dot.ted", "späce", "a".repeat(65)).forEach { key ->
@@ -53,7 +55,7 @@ class DepotMetadataSpec : StringSpec({
         repo.getMeta("docs/contract.pdf") shouldBe mapOf(
             "mime-type" to "application/pdf",
             "title" to "Vertrag März",
-            "depot-subject" to "customer-42",
+            "depot-subject" to "customers/42",
         )
     }
 
@@ -65,7 +67,7 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "contract.pdf", "other", mapOf("title" to "top"))
 
         File(dir, ".meta/files/docs/2026/contract.pdf").isFile shouldBe true
-        repo.getMeta("docs/2026/contract.pdf") shouldBe mapOf("depot-subject" to "customer-42")
+        repo.getMeta("docs/2026/contract.pdf") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
     "a write without metadata still records the subject" {
@@ -73,15 +75,15 @@ class DepotMetadataSpec : StringSpec({
 
         repo.putFile(anna, "a.txt", "a")
 
-        repo.getMeta("a.txt") shouldBe mapOf("depot-subject" to "customer-42")
+        repo.getMeta("a.txt") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
-    "a file stored without metadata reads as an empty map; no file reads as null" {
+    "a file from before there was metadata reads as a system file; no file reads as null" {
         val dir = tempdir()
         File(dir, "old.txt").writeText("from before")
         val repo = repoOver(dir)
 
-        repo.getMeta("old.txt") shouldBe emptyMap()
+        repo.getMeta("old.txt") shouldBe mapOf("depot-subject" to "system")
         repo.getMeta("nothing.txt") shouldBe null
     }
 
@@ -114,7 +116,7 @@ class DepotMetadataSpec : StringSpec({
 
         // Only the first segment is reserved
         repo.putFile(anna, "docs/.meta/x.txt", "x")
-        repo.getMeta("docs/.meta/x.txt") shouldBe mapOf("depot-subject" to "customer-42")
+        repo.getMeta("docs/.meta/x.txt") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
     "removing a file removes its metadata" {
@@ -132,9 +134,9 @@ class DepotMetadataSpec : StringSpec({
         val repo = repoOver(tempdir())
         repo.putFile(anna, "a.txt", "a", mapOf("title" to "first", "note" to "n"))
 
-        repo.putFile(DepotSubjectId("customer-43"), "a.txt", "b", mapOf("title" to "second"))
+        repo.putFile(customer("43"), "a.txt", "b", mapOf("title" to "second"))
 
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "second", "depot-subject" to "customer-43")
+        repo.getMeta("a.txt") shouldBe mapOf("title" to "second", "depot-subject" to "customers/43")
     }
 
     "the system subject is accepted by a typed repository, and by one seen without its type" {
@@ -148,14 +150,52 @@ class DepotMetadataSpec : StringSpec({
         repo.getMeta("sys2.txt") shouldBe mapOf("depot-subject" to "system")
     }
 
+    "a subject id is namespace/id; blank parts, a slash in the namespace and Nothing as the kind are refused" {
+        DepotSubjectId.of(Customer::class, "customers", "42").value shouldBe "customers/42"
+        DepotSubjectId.of(Customer::class, "customers", "a/b").value shouldBe "customers/a/b"
+
+        shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, "", "42") }
+        shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, " ", "42") }
+        shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, "a/b", "42") }
+        shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, "customers", "") }
+        shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, "customers", " ") }
+        shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Nothing::class, "customers", "42") }
+    }
+
+    "a system file without metadata gets no metadata file, and reads as a system file" {
+        val dir = tempdir()
+        val repo = repoOver(dir)
+
+        repo.putFile(DepotSubjectId.system, "sys.txt", "s")
+
+        File(dir, ".meta/files").exists() shouldBe false
+        repo.getMeta("sys.txt") shouldBe mapOf("depot-subject" to "system")
+
+        repo.putFile(DepotSubjectId.system, "titled.txt", "s", mapOf("title" to "t"))
+        File(dir, ".meta/files/titled.txt").isFile shouldBe true
+    }
+
+    "a system write without metadata over a customer's file removes the customer's metadata" {
+        val dir = tempdir()
+        val repo = repoOver(dir)
+        repo.putFile(anna, "a.txt", "a", mapOf("title" to "first"))
+
+        repo.putFile(DepotSubjectId.system, "a.txt", "b")
+
+        File(dir, ".meta/files/a.txt").exists() shouldBe false
+        repo.getMeta("a.txt") shouldBe mapOf("depot-subject" to "system")
+        File(dir, "a.txt").readText() shouldBe "b"
+    }
+
     "the subject's id counts towards the size limit" {
         val repo = repoOver(tempdir())
 
-        // 13 for the key "depot-subject" + 2030 = 2043 bytes; "k" + 5 more = 2049
+        // 13 for the key "depot-subject" + 2030 ("customers%2F" is 12, with the slash percent-encoded) = 2043 bytes;
+        // "k" + 5 more = 2049
         shouldThrow<DepotInvalidMetadataException> {
-            repo.putFile(DepotSubjectId("s".repeat(2030)), "a.txt", "a", mapOf("k" to "v".repeat(5)))
+            repo.putFile(customer("s".repeat(2018)), "a.txt", "a", mapOf("k" to "v".repeat(5)))
         }
-        repo.putFile(DepotSubjectId("s".repeat(2030)), "a.txt", "a", mapOf("k" to "v".repeat(4)))
+        repo.putFile(customer("s".repeat(2018)), "a.txt", "a", mapOf("k" to "v".repeat(4)))
     }
 
     "a mime type must look like type/subtype" {
@@ -200,13 +240,13 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "target.txt", "t", mapOf("title" to "one"))
         Files.createSymbolicLink(File(dir, "link.txt").toPath(), File(dir, "target.txt").toPath())
 
-        repo.getMeta("link.txt") shouldBe mapOf("title" to "one", "depot-subject" to "customer-42")
+        repo.getMeta("link.txt") shouldBe mapOf("title" to "one", "depot-subject" to "customers/42")
 
-        repo.putFile(DepotSubjectId("customer-43"), "link.txt", "t2")
-        repo.getMeta("target.txt") shouldBe mapOf("depot-subject" to "customer-43")
+        repo.putFile(customer("43"), "link.txt", "t2")
+        repo.getMeta("target.txt") shouldBe mapOf("depot-subject" to "customers/43")
 
         repo.removeFile("link.txt") shouldBe true
-        repo.getMeta("target.txt") shouldBe mapOf("depot-subject" to "customer-43")
+        repo.getMeta("target.txt") shouldBe mapOf("depot-subject" to "customers/43")
     }
 
     "a file and a folder whose names differ by a suffix do not collide in the metadata tree" {
@@ -216,8 +256,8 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "report.json/part1", "p")
         repo.putFile(anna, "report.tmp/part1", "p")
 
-        repo.getMeta("report") shouldBe mapOf("depot-subject" to "customer-42")
-        repo.getMeta("report.json/part1") shouldBe mapOf("depot-subject" to "customer-42")
+        repo.getMeta("report") shouldBe mapOf("depot-subject" to "customers/42")
+        repo.getMeta("report.json/part1") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
     "a write to a folder or the root is refused and leaves nothing behind" {
@@ -249,11 +289,11 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "a.txt", "old", mapOf("title" to "old"))
 
         shouldThrow<DepotInvalidMetadataException> {
-            repo.putFile(DepotSubjectId("customer-43"), "a.txt", "new", mapOf("title" to "x".repeat(3000)))
+            repo.putFile(customer("43"), "a.txt", "new", mapOf("title" to "x".repeat(3000)))
         }
 
         File(dir, "a.txt").readText() shouldBe "old"
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "old", "depot-subject" to "customer-42")
+        repo.getMeta("a.txt") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
     }
 
     "two writers of one file at once: the file ends with one writer's content and that writer's metadata" {
@@ -265,14 +305,14 @@ class DepotMetadataSpec : StringSpec({
             val threads = (1..2).map { n ->
                 Thread {
                     start.await()
-                    runBlocking { repo.putFile(DepotSubjectId("c$n"), "r$round.txt", "content-$n", mapOf("n" to "$n")) }
+                    runBlocking { repo.putFile(customer("$n"), "r$round.txt", "content-$n", mapOf("n" to "$n")) }
                 }
             }
             threads.forEach { it.start() }
             threads.forEach { it.join() }
 
             val n = File(dir, "r$round.txt").readText().removePrefix("content-")
-            repo.getMeta("r$round.txt") shouldBe mapOf("n" to n, "depot-subject" to "c$n")
+            repo.getMeta("r$round.txt") shouldBe mapOf("n" to n, "depot-subject" to "customers/$n")
         }
 
         File(dir, ".meta/tmp").list()!!.toList() shouldBe emptyList()

@@ -52,7 +52,7 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
         val stub = Stub()
 
         repoOver(stub).putFile(
-            DepotSubjectId("customer-42"),
+            DepotSubjectId.of(Any::class, "customers", "42"),
             "docs/contract.pdf",
             "pdf".toByteArray(),
             mapOf("mime-type" to "application/pdf", "title" to "Vertrag März"),
@@ -65,16 +65,16 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
         request.metadata() shouldBe mapOf(
             "mime-type" to "application%2Fpdf",
             "title" to "Vertrag+M%C3%A4rz",
-            "depot-subject" to "customer-42",
+            "depot-subject" to "customers%2F42",
         )
     }
 
     "metadata reads back decoded; no such object reads as null" {
         val stub = Stub()
         val repo = repoOver(stub)
-        repo.putFile(DepotSubjectId("customer-42"), "a.txt", "a".toByteArray(), mapOf("title" to "Vertrag März"))
+        repo.putFile(DepotSubjectId.of(Any::class, "customers", "42"), "a.txt", "a".toByteArray(), mapOf("title" to "Vertrag März"))
 
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "Vertrag März", "depot-subject" to "customer-42")
+        repo.getMeta("a.txt") shouldBe mapOf("title" to "Vertrag März", "depot-subject" to "customers/42")
         repo.getMeta("nothing.txt") shouldBe null
     }
 
@@ -92,10 +92,10 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
         stub.puts.size shouldBe 0
     }
 
-    "metadata another tool wrote is read as it is, not an error" {
+    "metadata another tool wrote is read as it is, as a system file, not an error" {
         val stub = Stub()
         stub.puts.add(PutObjectRequest.builder().bucket("bucket").key("foreign.txt").metadata(mapOf("rate" to "50%")).build())
 
-        repoOver(stub).getMeta("foreign.txt") shouldBe mapOf("rate" to "50%")
+        repoOver(stub).getMeta("foreign.txt") shouldBe mapOf("rate" to "50%", "depot-subject" to "system")
     }
 })

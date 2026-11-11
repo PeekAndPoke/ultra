@@ -50,7 +50,8 @@ interface DepotRepository<in T> {
 
     /**
      * The metadata of the file at [path]: what the writer gave, plus the depot's own entries such as
-     * [DepotMetadata.SUBJECT]. Empty for a file stored without any, null when there is no such file.
+     * [DepotMetadata.SUBJECT]. A file without a stored subject reads as a system file ([DepotMetadata.systemOnly]);
+     * null when there is no such file.
      */
     suspend fun getMeta(path: String): Map<String, String>?
 

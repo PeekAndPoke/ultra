@@ -68,6 +68,8 @@ kotlin {
             dependencies {
                 // `api`: the depot's repositories and facade are part of this module's surface
                 api(project(":ultra:depot"))
+                // `api`: a stored entity names the data subject of a depot write (`Storable<T>.asDepotSubject()`)
+                api(project(":ultra:vault"))
 
                 implementation(project(":karango:core"))
                 implementation(project(":monko:core"))

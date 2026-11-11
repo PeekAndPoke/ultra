@@ -30,7 +30,7 @@ class DepotMetaApiSpec : FunktorApiSpec() {
 
             "a file's metadata is served with it: what the writer gave and the subject" {
                 repository.putFile(
-                    subject = DepotSubjectId<Any>("customer-42"),
+                    subject = DepotSubjectId.of(Any::class, "customers", "42"),
                     path = "meta-e2e/contract.pdf",
                     content = "pdf",
                     meta = mapOf("mime-type" to "application/pdf", "title" to "Vertrag März"),
@@ -43,7 +43,7 @@ class DepotMetaApiSpec : FunktorApiSpec() {
                             apiResponseData<DepotBrowseModel>()?.meta shouldBe mapOf(
                                 "mime-type" to "application/pdf",
                                 "title" to "Vertrag März",
-                                "depot-subject" to "customer-42",
+                                "depot-subject" to "customers/42",
                             )
                         }
                     }

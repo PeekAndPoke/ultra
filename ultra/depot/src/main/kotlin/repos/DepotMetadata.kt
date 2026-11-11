@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.depot.repos
 
+import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import java.net.URLEncoder
 
 /** Thrown for metadata a depot repository refuses: a bad or reserved key, or too much of it. */
@@ -20,6 +21,9 @@ object DepotMetadata {
 
     /** The data subject's id, written with every file. */
     const val SUBJECT = "depot-subject"
+
+    /** What a system file without metadata of its own has, and how a file without a stored subject reads. */
+    val systemOnly: Map<String, String> = mapOf(SUBJECT to DepotSubjectId.system.value)
 
     /**
      * The file's mime type, by convention. It must look like `type/subtype`. The S3 repository also sets it as the
