@@ -1,7 +1,7 @@
-package io.peekandpoke.funktor.cluster.depot.repos.aws
+package io.peekandpoke.ultra.depot.s3
 
-import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.domain.DepotMeta
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingResponse
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.Tag
@@ -21,9 +21,9 @@ interface AwsHelper {
     }
 
     /**
-     * Adds [DepotItemModel.Meta] as tags to the request
+     * Adds [DepotMeta] as tags to the request
      */
-    fun PutObjectRequest.Builder.add(meta: DepotItemModel.Meta): PutObjectRequest.Builder =
+    fun PutObjectRequest.Builder.add(meta: DepotMeta): PutObjectRequest.Builder =
         apply {
             // Add tags
             tagging(meta.toTags())
@@ -32,9 +32,9 @@ interface AwsHelper {
         }
 
     /**
-     * Converts a [DepotItemModel.Meta] to [Tagging]
+     * Converts a [DepotMeta] to [Tagging]
      */
-    fun DepotItemModel.Meta.toTags(): Tagging = createTags(
+    fun DepotMeta.toTags(): Tagging = createTags(
         TAG_VISIBILITY to visibility.toString(),
         TAG_MIME_TYPE to mimeType,
         TAG_ORGANISATION_ID to organisationId,
@@ -45,8 +45,8 @@ interface AwsHelper {
     /**
      * Converts a [GetObjectTaggingResponse] to [DepotItem.Meta]
      */
-    fun GetObjectTaggingResponse.toMeta() = DepotItemModel.Meta(
-        visibility = DepotItemModel.Visibility.valueOfOrPublic(
+    fun GetObjectTaggingResponse.toMeta() = DepotMeta(
+        visibility = DepotMeta.Visibility.valueOfOrPublic(
             tagSet().firstOrNull { it.key() == TAG_VISIBILITY }?.value()
         ),
         mimeType = tagSet().getValue(TAG_MIME_TYPE),

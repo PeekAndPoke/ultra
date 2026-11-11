@@ -1,11 +1,11 @@
-package io.peekandpoke.funktor.cluster.depot
+package io.peekandpoke.ultra.depot
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.shouldBe
-import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
-import io.peekandpoke.funktor.cluster.depot.repos.fs.FileSystemRepository
+import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
+import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption

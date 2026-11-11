@@ -1,7 +1,6 @@
-package io.peekandpoke.funktor.cluster.depot.domain
+package io.peekandpoke.ultra.depot.domain
 
-import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
+import io.peekandpoke.ultra.depot.repos.DepotRepository
 import io.peekandpoke.ultra.datetime.MpInstant
 
 /**
@@ -36,24 +35,4 @@ sealed interface DepotItem {
 
     /** Fully qualifying uri of the file */
     val uri: DepotUri get() = DepotUri.of(this)
-
-    /** Map to api model */
-    fun asApiModel() = when (this) {
-        is File -> DepotItemModel.File(
-            path = path,
-            parentPath = parentPath,
-            name = name,
-            depotUri = uri.asApiModel(),
-            size = size,
-            lastModifiedAt = lastModifiedAt,
-        )
-
-        is Folder -> DepotItemModel.Folder(
-            path = path,
-            parentPath = parentPath,
-            name = name,
-            depotUri = uri.asApiModel(),
-            lastModifiedAt = lastModifiedAt,
-        )
-    }
 }

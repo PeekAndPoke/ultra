@@ -325,6 +325,13 @@
   once with the last old message, as if it had just happened; and the bus kept that message and its sender alive. A
   new handler now gets only the messages sent after it registered.
 
+- **The depot moved out of `funktor:cluster` into `ultra:depot` and `ultra:depot-s3`** (ULTRA-00311, step 1).
+  Packages: `io.peekandpoke.funktor.cluster.depot[.domain|.repos|.repos.fs]` is now `io.peekandpoke.ultra.depot[...]`,
+  and `...depot.repos.aws` is `io.peekandpoke.ultra.depot.s3`. `funktor:cluster` exposes `ultra:depot` and no longer
+  brings the AWS S3 SDK: an app using `AwsS3Repository` adds `ultra:depot-s3`. The API models are mapped by
+  extension functions in `io.peekandpoke.funktor.cluster.depot.api` (`asApiModel()`); `getMeta` returns the depot's
+  own `DepotMeta`. `DepotApi` and the kontainer wiring stay in `funktor:cluster`. No behaviour change.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`

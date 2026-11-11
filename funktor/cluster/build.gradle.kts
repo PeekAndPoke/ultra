@@ -67,7 +67,8 @@ kotlin {
 
         jvmMain {
             dependencies {
-                implementation(Deps.JavaLibs.Aws.s3)
+                // `api`: the depot's repositories and facade are part of this module's surface
+                api(project(":ultra:depot"))
 
                 implementation(project(":karango:core"))
                 implementation(project(":monko:core"))

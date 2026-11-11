@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.cluster.depot.api
 
 import io.peekandpoke.funktor.cluster.cluster
-import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
+import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotApiClient
 import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotBrowseModel
 import io.peekandpoke.funktor.rest.ApiRoutes
@@ -58,7 +58,7 @@ class DepotApi : ApiRoutes("depot", authFloor = { isSuperUser() }) {
                 DepotBrowseModel(
                     repo = repository.asApiModel(),
                     item = item.asApiModel(),
-                    meta = meta,
+                    meta = meta?.asApiModel(),
                     children = children.sortedBy { it.name }.map { it.asApiModel() }
                 )
             )

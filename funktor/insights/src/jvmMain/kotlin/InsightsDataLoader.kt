@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.insights
 
-import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.insights.api.InsightsCollectorSlice
 import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef

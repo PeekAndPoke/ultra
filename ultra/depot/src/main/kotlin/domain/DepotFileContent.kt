@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.depot.domain
+package io.peekandpoke.ultra.depot.domain
 
 /**
  * Definition of the content of a depot file

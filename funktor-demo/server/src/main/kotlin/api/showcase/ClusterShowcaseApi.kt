@@ -1,8 +1,8 @@
 package io.peekandpoke.funktor.demo.server.api.showcase
 
 import io.peekandpoke.funktor.cluster.cluster
-import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.cluster.storage.RandomDataStorage
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.demo.common.showcase.DepotFileInfo

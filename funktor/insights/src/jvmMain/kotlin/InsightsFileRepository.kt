@@ -1,6 +1,6 @@
 package io.peekandpoke.funktor.insights
 
-import io.peekandpoke.funktor.cluster.depot.repos.fs.FileSystemRepository
+import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 
 /**
  * Default file-system-backed repository for storing insights data.

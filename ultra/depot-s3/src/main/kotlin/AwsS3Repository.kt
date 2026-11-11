@@ -1,14 +1,14 @@
-package io.peekandpoke.funktor.cluster.depot.repos.aws
+package io.peekandpoke.ultra.depot.s3
 
-import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
-import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import io.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
-import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import io.peekandpoke.funktor.cluster.depot.repos.depotPutFileOptions
-import io.peekandpoke.funktor.cluster.depot.repos.validateDepotPath
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.mp
+import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.domain.DepotMeta
+import io.peekandpoke.ultra.depot.repos.DepotPutFileOptions
+import io.peekandpoke.ultra.depot.repos.DepotRepository
+import io.peekandpoke.ultra.depot.repos.depotPutFileOptions
+import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
@@ -215,7 +215,7 @@ abstract class AwsS3Repository(
     }
 
     /** Get the meta information of the file with the given [path] */
-    override suspend fun getMeta(path: String): DepotItemModel.Meta? {
+    override suspend fun getMeta(path: String): DepotMeta? {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 

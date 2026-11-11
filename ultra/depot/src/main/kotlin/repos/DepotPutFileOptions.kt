@@ -1,7 +1,6 @@
-package io.peekandpoke.funktor.cluster.depot.repos
+package io.peekandpoke.ultra.depot.repos
 
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
-import kotlinx.serialization.SerialName
+import io.peekandpoke.ultra.depot.domain.DepotMeta
 
 /** Creates [DepotPutFileOptions] via a builder DSL. */
 fun depotPutFileOptions(block: DepotPutFileOptions.Builder.() -> Unit = {}) =
@@ -9,7 +8,7 @@ fun depotPutFileOptions(block: DepotPutFileOptions.Builder.() -> Unit = {}) =
 
 /** Options for writing a file to a depot repository (metadata, optional encryption). */
 data class DepotPutFileOptions(
-    val meta: DepotItemModel.Meta,
+    val meta: DepotMeta,
     val encryption: Encryption?,
 ) {
     companion object {
@@ -21,7 +20,6 @@ data class DepotPutFileOptions(
 
         abstract val algoName: String
 
-        @SerialName(AesGcmNoPadding.algoName)
         data class AesGcmNoPadding(
             val keySize: Int = 256,
         ) : Encryption() {
@@ -34,7 +32,7 @@ data class DepotPutFileOptions(
     }
 
     class Builder internal constructor() {
-        private var meta: DepotItemModel.Meta = DepotItemModel.Meta.default
+        private var meta: DepotMeta = DepotMeta.default
 
         private var encryption: Encryption? = null
 
@@ -43,7 +41,7 @@ data class DepotPutFileOptions(
             encryption = encryption,
         )
 
-        fun meta(meta: DepotItemModel.Meta) {
+        fun meta(meta: DepotMeta) {
             this.meta = meta
         }
 

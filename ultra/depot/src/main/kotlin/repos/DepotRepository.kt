@@ -1,9 +1,8 @@
-package io.peekandpoke.funktor.cluster.depot.repos
+package io.peekandpoke.ultra.depot.repos
 
-import depot.api.DepotRepositoryModel
-import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
-import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
+import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.domain.DepotMeta
 
 /**
  * Definition of a depot repository
@@ -45,7 +44,7 @@ interface DepotRepository {
     suspend fun getContent(path: String): DepotFileContent?
 
     /** Get the meta information of the file with the given [path] */
-    suspend fun getMeta(path: String): DepotItemModel.Meta?
+    suspend fun getMeta(path: String): DepotMeta?
 
     /** Puts a file with the given [path] and [content] */
     suspend fun putFile(
@@ -69,11 +68,4 @@ interface DepotRepository {
 
     /** Remove a file with a certain uri */
     suspend fun removeFile(path: String): Boolean
-
-    /** Map to api model */
-    fun asApiModel() = DepotRepositoryModel(
-        name = name,
-        type = type,
-        location = location,
-    )
 }

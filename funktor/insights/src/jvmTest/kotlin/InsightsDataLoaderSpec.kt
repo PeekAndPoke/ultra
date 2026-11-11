@@ -5,7 +5,7 @@ import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.peekandpoke.funktor.cluster.depot.repos.fs.FileSystemRepository
+import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import java.io.File
 import kotlinx.coroutines.runBlocking

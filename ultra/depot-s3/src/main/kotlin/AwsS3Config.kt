@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.depot.repos.aws
+package io.peekandpoke.ultra.depot.s3
 
 import io.peekandpoke.ultra.common.model.Redacted
 

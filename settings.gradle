@@ -10,6 +10,8 @@ include(
         ":ultra:cache",
         ":ultra:codegen",
         ":ultra:datetime",
+        ":ultra:depot",
+        ":ultra:depot-s3",
         ":ultra:fixture",
         ":ultra:maths",
         ":ultra:model",

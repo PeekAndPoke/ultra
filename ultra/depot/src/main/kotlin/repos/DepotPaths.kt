@@ -1,4 +1,4 @@
-package io.peekandpoke.funktor.cluster.depot.repos
+package io.peekandpoke.ultra.depot.repos
 
 /**
  * Thrown for a path a depot repository refuses, one that could leave the repository (ULTRA-00304). It does not carry

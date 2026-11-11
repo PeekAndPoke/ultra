@@ -1,6 +1,5 @@
-package io.peekandpoke.funktor.cluster.depot.domain
+package io.peekandpoke.ultra.depot.domain
 
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotUriModel
 
 /** Structured URI pointing to a file in a depot repository (e.g. `depot://repo-name/path/to/file`). */
 @Suppress("DataClassPrivateConstructor", "DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED_WARNING")
@@ -10,7 +9,7 @@ data class DepotUri private constructor(
 ) {
     companion object {
 
-        const val protocol = DepotUriModel.protocol
+        const val protocol = "depot"
 
         private val parseRegex = "($protocol://)([^/]+)/(.+)".toRegex()
 
@@ -37,6 +36,4 @@ data class DepotUri private constructor(
     }
 
     val uri: String = "$protocol://$repo/$path"
-
-    fun asApiModel() = DepotUriModel(repo = repo, path = path, uri = uri)
 }

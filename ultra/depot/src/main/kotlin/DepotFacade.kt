@@ -1,11 +1,11 @@
-package io.peekandpoke.funktor.cluster.depot
+package io.peekandpoke.ultra.depot
 
-import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
-import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import io.peekandpoke.funktor.cluster.depot.domain.DepotUri
-import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.domain.DepotMeta
+import io.peekandpoke.ultra.depot.domain.DepotUri
+import io.peekandpoke.ultra.depot.repos.DepotRepository
 import kotlin.reflect.KClass
 
 /**
@@ -59,7 +59,7 @@ class DepotFacade(private val drivers: Lookup<DepotRepository>) {
     /**
      * Get the meta-data for the given [uri]
      */
-    suspend fun getMeta(uri: DepotUri): DepotItemModel.Meta? {
+    suspend fun getMeta(uri: DepotUri): DepotMeta? {
         return getRepo(uri)?.getMeta(uri.path)
     }
 }

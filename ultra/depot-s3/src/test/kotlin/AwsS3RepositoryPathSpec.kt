@@ -1,9 +1,8 @@
-package io.peekandpoke.funktor.cluster.depot
+package io.peekandpoke.ultra.depot.s3
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
-import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
-import io.peekandpoke.funktor.cluster.depot.repos.aws.AwsS3Repository
+import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import java.lang.reflect.Proxy
 

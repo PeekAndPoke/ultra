@@ -1,14 +1,14 @@
-package io.peekandpoke.funktor.cluster.depot.repos.fs
+package io.peekandpoke.ultra.depot.repos.fs
 
-import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
-import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
-import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
-import io.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
-import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
-import io.peekandpoke.funktor.cluster.depot.repos.validateDepotPath
-import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.common.ensureDirectory
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.domain.DepotMeta
+import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
+import io.peekandpoke.ultra.depot.repos.DepotPutFileOptions
+import io.peekandpoke.ultra.depot.repos.DepotRepository
+import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -176,7 +176,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         }
     }
 
-    override suspend fun getMeta(path: String): DepotItemModel.Meta? {
+    override suspend fun getMeta(path: String): DepotMeta? {
         // No meta here, but the same paths are refused as everywhere
         resolve(path)
 

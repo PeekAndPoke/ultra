@@ -1,7 +1,6 @@
 # ULTRA-00311: Depot: per-file metadata, and encrypted files with per-file keys
 
-> **Status (2026-11-11): DESIGNED.** Plan updated and reviewed 2026-11-11; it waits for the maintainer's confirmation
-> of the summary and of the points under "To confirm". Nothing is built.
+> **Status (2026-11-11): IN PROGRESS.** Plan confirmed by the maintainer 2026-11-11; step 1 (the move) started.
 >
 > The maintainer on 2026-11-11: "I would like to be able to set meta-data for each file. On AWS this should work out
 > of the box. For the file-system we would need to store an additional file ... store personal customer data in aws.
@@ -119,14 +118,12 @@ stores on both DB backends (`MatrixTest2d`), mutation checks throughout (securit
 stub at the SDK boundary asserts the request built (metadata headers, sizes); there is no real S3 on this machine,
 and the report will say so until one runs (see "To confirm").
 
-## To confirm before step 3 (expensive to reverse: the stored format)
+## Confirmed (the maintainer, 2026-11-11)
 
-- **Envelope keys** as above, instead of the subject's key encrypting files directly. Reason: with one key over many
-  files, a repeated random IV breaks AES-GCM, and rotating a subject's key means re-encrypting every file; with
-  envelopes rotation re-wraps small metadata only.
-- **Subject ids in clear** in the metadata of every file (also on S3, readable by whoever can read the bucket). An
-  id is not the personal data itself, but it links files to a person. Alternative: a keyed hash of the id.
-- **S3 against a real endpoint:** a MinIO container for the test suite, or the stub only.
+- **Envelope keys:** each file its own data key, wrapped by the subject's key ("ok").
+- **Subject ids in clear** in the metadata; "the path for the hashed id should still stay open for the future": the
+  metadata carries a format version (`depot-enc`), and the subject entry is read through one function.
+- **S3 tests: stubbed only now**; a real endpoint stays untested and is said so.
 
 ## History
 
@@ -134,3 +131,12 @@ and the report will say so until one runs (see "To confirm").
 - 2026-11-11: decisions 1-7 taken with the maintainer.
 - 2026-11-11: decision 8 (the subject, a generic value class, always required); plan reviewed: metadata key rules,
   `.meta` reserved, write order, envelope keys, additional data, the unencrypted-file rule, module split, steps.
+- 2026-11-11: the three open points confirmed; step 1 started.
+- 2026-11-11: IN PROGRESS.
+- 2026-11-11: step 1 done: `ultra/depot` (core, 44 tests moved with it) and `ultra/depot-s3` (7), packages
+  `io.peekandpoke.ultra.depot[.s3]`; `funktor/cluster` keeps `DepotApi`, the kontainer wiring and the API mapping
+  (`depot/api/api_models.kt`); a core `DepotMeta` replaces the funktor model in the core until step 2 replaces it
+  with the map; the dead `@SerialName` on `DepotPutFileOptions.Encryption` dropped (the class goes in step 2).
+  Green: depot 44/44, depot-s3 7/7, cluster 137/137, insights 114/114, funktor-all 286/286, demo 52/52.
+  Not done here: a docs page and the `site.ts`/README artifact lines for the new modules (with step 2, when the
+  API settles). Review gate (implementation charter; a move without behaviour change) next.

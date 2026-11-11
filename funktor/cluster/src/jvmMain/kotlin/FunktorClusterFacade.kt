@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.cluster
 
 import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
-import io.peekandpoke.funktor.cluster.depot.DepotFacade
+import io.peekandpoke.ultra.depot.DepotFacade
 import io.peekandpoke.funktor.cluster.locks.GlobalServerId
 import io.peekandpoke.funktor.cluster.locks.GlobalServerList
 import io.peekandpoke.funktor.cluster.locks.LocksFacade
