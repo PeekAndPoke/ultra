@@ -52,6 +52,7 @@ class DepotMetaApiSpec : FunktorApiSpec() {
 
             "the metadata tree is not part of what the browser lists, and cannot be browsed" {
                 repository.putFile(subject = DepotSubjectId.system, path = "meta-e2e/b.txt", content = "b")
+                File(insightsDepotDir, ".meta").isDirectory shouldBe true
 
                 apiApp {
                     authenticate(superUserToken) {

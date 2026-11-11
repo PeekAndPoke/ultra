@@ -237,9 +237,12 @@ abstract class AwsS3Repository<in T>(
         }
     }
 
-    /** A value as the depot wrote it; one another tool wrote (a bare `%`) is taken as it is. */
+    /**
+     * A value as the depot wrote it: `%XX` decoded, a `+` kept. One another tool wrote with a bare `%` is taken as it
+     * is; one with a `%XX` of its own is decoded too.
+     */
     private fun decode(value: String): String = try {
-        URLDecoder.decode(value, Charsets.UTF_8)
+        URLDecoder.decode(value.replace("+", "%2B"), Charsets.UTF_8)
     } catch (_: IllegalArgumentException) {
         value
     }

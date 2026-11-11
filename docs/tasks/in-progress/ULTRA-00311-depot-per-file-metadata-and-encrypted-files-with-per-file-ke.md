@@ -190,14 +190,14 @@ without a clean one: stopped, the maintainer asked.
 | 2 | MAJOR | `FileSystemRepository.kt:356-358` | The locks belong to one repository object; a `dynamic` repository is built per request, so two requests do not take turns (impl M1; security m4, domain m5) | fix | Confirmed red by a test with two objects over one folder; the locks are in the companion. Across processes (a shared volume) still open, KDoc says "in this process" |
 | 2 | MAJOR | `FileSystemRepository.kt:209,298`, `AwsS3Repository.kt:237`, `DepotMetadata.kt:25` | "No stored subject reads as `system`" contradicts decision 8 ("always written") and the design ("reads as an empty map"): a lost `.meta` tree or a file dropped in from outside reads as belonging to no person (domain M1) | fix (maintainer: back to decision 8) | Built on an answer that did not name this question; reverted |
 | 2 | MINOR | `FileSystemRepository.kt:246` | The content move deletes a folder at its target recursively: a race of `p` and `p/x` deletes an acknowledged file (impl m1, domain m2, security m2) | fix | Orphan removal only in the mirror; a content move onto a folder fails |
-| 2 | MINOR | `FileSystemRepository.kt:310-318` | No rollback between the two moves: a failed content move (another mount, read-only folder) leaves old content under new metadata; temp files in `.meta/tmp` are not on a sub-mount's file system (impl m2, domain m1, security m3) | open | Depends on the design answer below |
-| 2 | MINOR | `FileSystemRepository.kt:241` | Files are created 0600 through `createTempFile` (before: by umask); crash leftovers in `.meta/tmp` hold content and are never swept; `.meta/tmp` as a link out of the root is not checked (impl m3, m4, m7; domain m3) | open | |
-| 2 | MINOR | `FileSystemRepository.kt:212`, `DepotMetadata` | FS `getMeta` does not add the subject to a metadata file without one, S3 does; no single function for the subject entry; `getMeta` between `isFile` and `readText` can throw (impl m6, domain m4) | open | Depends on the MAJOR's decision |
-| 2 | MINOR | `removeMeta`/`ensureMetaParent` | Pruning empty mirror folders races with a neighbour's write, which then fails (impl m5); the write lock is held for the whole content write (security m5) | open | |
-| 2 | MINOR | `DepotMetadata.kt:42`, `AwsS3Repository.kt:243` | Form-encoding (`+` for a space), not percent-encoding; a foreign `+` reads as a space (domain m6) | open | |
-| 2 | MINOR | `DepotMetadata.kt:55` | A `getMeta` result cannot be passed back to `putFile` (domain m7) | open | With step 3's raw write |
-| 2 | MINOR | `cluster.astro:67,71`, `CHANGELOG.md:332` | The example downloads from another repository than it wrote to; the step-1 entry still names `DepotMeta` (domain m8, m9) | open | |
-| 2 | NIT | tests, surrogates, import order, `metaRoot` computed twice | | open | |
+| 2 | MINOR | `FileSystemRepository.kt:310-318` | No rollback between the two moves: a failed content move (another mount, read-only folder) leaves old content under new metadata; temp files in `.meta/tmp` are not on a sub-mount's file system (impl m2, domain m1, security m3) | fix | |
+| 2 | MINOR | `FileSystemRepository.kt:241` | Files are created 0600 through `createTempFile` (before: by umask); crash leftovers in `.meta/tmp` hold content and are never swept; `.meta/tmp` as a link out of the root is not checked (impl m3, m4, m7; domain m3) | fix | |
+| 2 | MINOR | `FileSystemRepository.kt:212`, `DepotMetadata` | FS `getMeta` does not add the subject to a metadata file without one, S3 does; no single function for the subject entry; `getMeta` between `isFile` and `readText` can throw (impl m6, domain m4) | fix | |
+| 2 | MINOR | `removeMeta`/`ensureMetaParent` | Pruning empty mirror folders races with a neighbour's write, which then fails (impl m5); the write lock is held for the whole content write (security m5) | fix | |
+| 2 | MINOR | `DepotMetadata.kt:42`, `AwsS3Repository.kt:243` | Form-encoding (`+` for a space), not percent-encoding; a foreign `+` reads as a space (domain m6) | fix | |
+| 2 | MINOR | `DepotMetadata.kt:55` | A `getMeta` result cannot be passed back to `putFile` (domain m7) | fix | `withoutReserved` |
+| 2 | MINOR | `cluster.astro:67,71`, `CHANGELOG.md:332` | The example downloads from another repository than it wrote to; the step-1 entry still names `DepotMeta` (domain m8, m9) | fix | |
+| 2 | NIT | tests, surrogates, import order, `metaRoot` computed twice | | fix / reject | see below |
 
 Round-2 fixes so far: depot 70, cluster 140, insights 114, funktor-all 288, demo 52. The two new tests were red
 before the fixes (the remove below a file; two repository objects racing).
@@ -208,6 +208,22 @@ subject, system files too; a file without a metadata file (FS) or without the en
 write (domain m4). Also fixed: the docs example's repository (m8), the step-1 changelog clause (m9). Verified: depot
 69, depot-s3 11, cluster 140, insights 114, funktor-all 288, demo 52; mutations red: S1 the subject dropped from
 `stored`, S2 "no metadata file reads as system".
+
+The maintainer (2026-11-11): "Fix all of the findings and run round 3". The round-2 MINORs and NITs, fixed:
+a failed content move puts the old metadata back (or removes the new one); temp files are written before the lock,
+created by the umask (not 0600), under a `.meta/tmp` checked to lie inside the root, and stale ones (over an hour)
+swept once per root and process; a move falls back to a copying move where an atomic one is not supported (a
+sub-mount); a content move onto a folder is refused; the metadata move is tried again when a neighbour's removal
+took the mirror folder; `getMeta` survives a removal between its two looks; S3 values are percent-encoded with
+`%20`, a `+` is kept on read; `DepotMetadata.withoutReserved`; ids with unpaired surrogates refused; `system`'s KDoc
+no longer says "belongs to no person"; the e2e test asserts `.meta` exists; the listing filter's canonical half
+is pinned. Verified: depot 74, depot-s3 11, cluster 140, insights 114, funktor-all 288, demo 52. Mutations red:
+U1/U2 the rollback, U3 the sweep, U5 the tmp containment, U6/U7 the encoding, U8 surrogates, U9 the file mode,
+U10 `withoutReserved`, U11 the listing filter. U4 (a symlink check before the containment check) survived as
+redundant and was removed. Not testable here, said so: the copying fallback (needs a second mount), the retry and
+the `getMeta` race (timing), the refusal of a content move onto a folder (a race only). Rejected: caching `metaRoot`
+(the root may be re-pointed while the app runs). Open by decision: several processes on one folder do not take
+turns (KDoc says so); the content hash proposed to the maintainer is not built.
 
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header

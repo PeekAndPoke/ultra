@@ -64,7 +64,7 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
         request.contentType() shouldBe "application/pdf"
         request.metadata() shouldBe mapOf(
             "mime-type" to "application%2Fpdf",
-            "title" to "Vertrag+M%C3%A4rz",
+            "title" to "Vertrag%20M%C3%A4rz",
             "depot-subject" to "customers%2F42",
         )
     }
@@ -74,7 +74,10 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
         val repo = repoOver(stub)
         repo.putFile(DepotSubjectId.of(Any::class, "customers", "42"), "a.txt", "a".toByteArray(), mapOf("title" to "Vertrag März"))
 
+        repo.putFile(DepotSubjectId.system, "plus.txt", "a".toByteArray(), mapOf("phone" to "+49 30 1"))
+
         repo.getMeta("a.txt") shouldBe mapOf("title" to "Vertrag März", "depot-subject" to "customers/42")
+        repo.getMeta("plus.txt") shouldBe mapOf("phone" to "+49 30 1", "depot-subject" to "system")
         repo.getMeta("nothing.txt") shouldBe null
     }
 
@@ -94,8 +97,9 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
 
     "metadata another tool wrote is read as it is, without a subject, not an error" {
         val stub = Stub()
-        stub.puts.add(PutObjectRequest.builder().bucket("bucket").key("foreign.txt").metadata(mapOf("rate" to "50%")).build())
+        val foreign = mapOf("rate" to "50%", "phone" to "+49 30 1")
+        stub.puts.add(PutObjectRequest.builder().bucket("bucket").key("foreign.txt").metadata(foreign).build())
 
-        repoOver(stub).getMeta("foreign.txt") shouldBe mapOf("rate" to "50%")
+        repoOver(stub).getMeta("foreign.txt") shouldBe foreign
     }
 })

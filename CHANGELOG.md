@@ -352,8 +352,11 @@
   - File system: metadata lives in `<root>/.meta/files/<path>`, a mirror of the files. `.meta` (in any case, also
     `.meta.`) is a reserved first path segment in every repository; the file system repository never lists it. **A
     depot that already holds a top-level `.meta` folder of its own files can no longer reach them.** Content and
-    metadata are written through temporary files and moved in place; writers of one file take turns.
-  - `DepotException` is a `RuntimeException` now (it was a bare `Throwable`); `AwsHelper` (the tag mapping) is gone.
+    metadata are written through temporary files (`<root>/.meta/tmp`) and moved in place; writers of one file in
+    one process take turns, and a write that fails leaves both as they were. A replaced file is a new file: its
+    former owner, mode and hard links are not kept.
+  - `DepotMetadata.withoutReserved(meta)` gives the caller's own entries of a `getMeta` result, for writing them
+    back. `DepotException` is a `RuntimeException` now (it was a bare `Throwable`); `AwsHelper` (the tag mapping) is gone.
 
 ### New
 

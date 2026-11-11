@@ -36,8 +36,11 @@ object DepotMetadata {
 
     private val keyRule = Regex("[a-z0-9-]{1,64}")
 
-    /** A value as S3 carries it in a header: percent-encoded UTF-8. */
-    fun encode(value: String): String = URLEncoder.encode(value, Charsets.UTF_8)
+    /** A value as S3 carries it in a header: percent-encoded UTF-8, a space as `%20`. */
+    fun encode(value: String): String = URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
+
+    /** The caller's own entries of a file's metadata, without the depot's: what a write takes back. */
+    fun withoutReserved(meta: Map<String, String>): Map<String, String> = meta.filterKeys { !it.startsWith(RESERVED_PREFIX) }
 
     /** Checks a caller's metadata and returns it; see the rules above. */
     fun validate(meta: Map<String, String>): Map<String, String> = meta.also {

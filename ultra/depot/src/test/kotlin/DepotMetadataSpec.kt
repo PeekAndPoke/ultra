@@ -117,6 +117,7 @@ class DepotMetadataSpec : StringSpec({
         // Only the first segment is reserved
         repo.putFile(anna, "docs/.meta/x.txt", "x")
         repo.getMeta("docs/.meta/x.txt") shouldBe mapOf("depot-subject" to "customers/42")
+        repo.listItems("docs").map { it.name } shouldBe listOf(".meta")
     }
 
     "removing a file removes its metadata" {
@@ -160,6 +161,8 @@ class DepotMetadataSpec : StringSpec({
         shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, "customers", "") }
         shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, "customers", " ") }
         shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Nothing::class, "customers", "42") }
+        // An unpaired surrogate would be stored as '?'
+        shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Customer::class, "customers", "a" + Char(0xD800)) }
     }
 
     "a system file records its subject like any other; a system write over a customer's file replaces the subject" {
@@ -280,6 +283,71 @@ class DepotMetadataSpec : StringSpec({
 
         File(dir, "a.txt").readText() shouldBe "old"
         repo.getMeta("a.txt") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
+    }
+
+    "a write whose content cannot be moved in place puts the old metadata back, and leaves no temporary file" {
+        val dir = tempdir()
+        val repo = repoOver(dir)
+        repo.putFile(anna, "locked/a.txt", "old", mapOf("title" to "old"))
+        val locked = File(dir, "locked")
+
+        locked.setWritable(false)
+
+        try {
+            // Not for a user the file system lets write anyway (root)
+            if (!Files.isWritable(locked.toPath())) {
+                shouldThrow<Exception> { repo.putFile(customer("43"), "locked/a.txt", "new", mapOf("title" to "new")) }
+                shouldThrow<Exception> { repo.putFile(customer("43"), "locked/b.txt", "new") }
+
+                File(locked, "a.txt").readText() shouldBe "old"
+                repo.getMeta("locked/a.txt") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
+                File(dir, ".meta/files/locked/b.txt").exists() shouldBe false
+                File(dir, ".meta/tmp").list()!!.toList() shouldBe emptyList()
+            }
+        } finally {
+            locked.setWritable(true)
+        }
+    }
+
+    "a file is created like any file of the process, not owner-only" {
+        val dir = tempdir()
+        repoOver(dir).putFile(anna, "a.txt", "a")
+        val plain = File(dir, "plain.txt").also { it.writeText("p") }
+
+        Files.getPosixFilePermissions(File(dir, "a.txt").toPath()) shouldBe Files.getPosixFilePermissions(plain.toPath())
+    }
+
+    "temporary files a crashed write left behind are swept; one of a write under way stays" {
+        val dir = tempdir()
+        val tmp = File(dir, ".meta/tmp").also { it.mkdirs() }
+        val stale = File(tmp, "put-stale.tmp").also { it.writeText("left") }.also { it.setLastModified(System.currentTimeMillis() - 2 * 60 * 60 * 1000L) }
+        val fresh = File(tmp, "put-fresh.tmp").also { it.writeText("under way") }
+
+        repoOver(dir).putFile(anna, "a.txt", "a")
+
+        stale.exists() shouldBe false
+        fresh.exists() shouldBe true
+    }
+
+    "a temporary folder that is a link out of the root is refused, and nothing is written there" {
+        val dir = tempdir()
+        val outside = tempdir()
+        File(dir, ".meta").mkdirs()
+        Files.createSymbolicLink(File(dir, ".meta/tmp").toPath(), outside.toPath())
+
+        shouldThrow<DepotInvalidPathException> { repoOver(dir).putFile(anna, "a.txt", "a") }
+
+        outside.list()!!.toList() shouldBe emptyList()
+        File(dir, "a.txt").exists() shouldBe false
+    }
+
+    "what getMeta returns goes back into a write without the depot's own entries" {
+        val repo = repoOver(tempdir())
+        repo.putFile(anna, "a.txt", "a", mapOf("title" to "t"))
+
+        repo.putFile(anna, "a.txt", "b", DepotMetadata.withoutReserved(repo.getMeta("a.txt")!!))
+
+        repo.getMeta("a.txt") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
     }
 
     "removing a path below a file keeps that file's metadata; so does a refused write below it" {

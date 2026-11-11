@@ -14,7 +14,10 @@ import kotlin.reflect.KClass
 @JvmInline
 value class DepotSubjectId<out T> private constructor(val value: String) {
     companion object {
-        /** Files that belong to no person: records of the system itself, technical uploads. No [of] produces it. */
+        /**
+         * Files not attributed to one person: records of the system itself, technical uploads. No [of] produces it.
+         * It says nothing about whether a file holds personal data.
+         */
         val system: DepotSubjectId<Nothing> = DepotSubjectId("system")
 
         /**
@@ -22,12 +25,15 @@ value class DepotSubjectId<out T> private constructor(val value: String) {
          * kinds apart (customer 42, employee 42): for a stored entity it is the collection's name. Renaming it makes
          * new files belong to another subject than the old ones.
          *
-         * @throws IllegalArgumentException for a blank part, a [namespace] with a `/`, or `Nothing` as the kind
+         * @throws IllegalArgumentException for a blank part, a [namespace] with a `/`, text that is not valid Unicode, or `Nothing`
+         * as the kind
          */
         fun <T : Any> of(type: KClass<T>, namespace: String, id: String): DepotSubjectId<T> {
             require(type != Nothing::class) { "A subject has a kind" }
             require(namespace.isNotBlank() && '/' !in namespace) { "A subject's namespace is not blank and has no '/'" }
             require(id.isNotBlank()) { "A subject's id is not blank" }
+            // An unpaired surrogate would be stored as '?', and two ids would become one
+            require("$namespace/$id".let { it.encodeToByteArray().decodeToString() == it }) { "A subject's id is valid text" }
 
             return DepotSubjectId("$namespace/$id")
         }

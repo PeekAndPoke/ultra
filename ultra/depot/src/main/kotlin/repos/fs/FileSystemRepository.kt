@@ -9,13 +9,18 @@ import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DEPOT_META_DIR
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
-import io.peekandpoke.ultra.depot.repos.isDepotMetaDir
 import io.peekandpoke.ultra.depot.repos.DepotRepository
+import io.peekandpoke.ultra.depot.repos.isDepotMetaDir
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import java.io.File
+import java.io.FileNotFoundException
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
+import java.nio.file.NoSuchFileException
 import java.nio.file.StandardCopyOption
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -212,6 +217,13 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         return try {
             json.decodeFromString(JsonObject.serializer(), meta.readText())
                 .mapValues { (_, value) -> value.jsonPrimitive.content }
+        } catch (e: FileNotFoundException) {
+            // Removed between the two looks: by a removal of the file, or of its metadata
+            when {
+                meta.exists() -> throw e
+                file.isFile -> emptyMap()
+                else -> null
+            }
         } catch (_: SerializationException) {
             throw DepotException("The metadata of a file in '$name' cannot be read")
         } catch (_: IllegalArgumentException) {
@@ -233,22 +245,55 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         return file
     }
 
-    /** A new temporary file in `<root>/.meta/tmp`, on the files' own file system so a move from it is atomic. */
+    /**
+     * A new temporary file in `<root>/.meta/tmp`, created like any file of the process (by its umask). The first one
+     * for a root in this process sweeps what a crashed write left behind.
+     */
     private fun tempFile(): File {
-        // Reached only after [metaFile] has checked that the tree lies inside the root
-        val dir = File(metaRoot, META_TMP).ensureDirectory()
+        val dir = File(metaRoot, META_TMP)
 
-        return Files.createTempFile(dir.toPath(), "put-", ".tmp").toFile()
+        // Never outside the root, as through a link
+        dir.ensureDirectory()
+        if (!dir.canonicalFile.toPath().startsWith(metaRoot.toPath()) || !isInside(dir)) throw DepotInvalidPathException()
+
+        if (swept.add(dir.path)) {
+            val stale = System.currentTimeMillis() - STALE_TEMP_MS
+
+            dir.listFiles()?.filter { it.name.startsWith(TEMP_PREFIX) && it.lastModified() < stale }?.forEach { it.delete() }
+        }
+
+        return File(dir, "$TEMP_PREFIX${UUID.randomUUID()}.tmp").also { it.createNewFile() }
     }
 
     /**
-     * Moves [temp] to [target] in one step. In the mirror ([orphans]), a folder left where a file goes is removed;
-     * a content move onto a folder fails.
+     * Moves [temp] to [target], in one step where the file system can (a folder of the root on another mount cannot:
+     * there the move copies). In the mirror ([orphans]), a folder left where a file goes is removed; a content move
+     * onto a folder is refused.
      */
     private fun moveInPlace(temp: File, target: File, orphans: Boolean = false) {
-        if (orphans && target.isDirectory && !Files.isSymbolicLink(target.toPath())) target.deleteRecursively()
+        if (target.isDirectory && !Files.isSymbolicLink(target.toPath())) {
+            if (!orphans) throw DepotInvalidPathException()
+            target.deleteRecursively()
+        }
 
-        Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+        try {
+            Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+
+    /** Moves [temp] in place as the metadata [meta]; tried again when a neighbour's removal took the folder away. */
+    private fun moveMetaInPlace(temp: File, meta: File) {
+        repeat(MOVE_ATTEMPTS) { attempt ->
+            try {
+                ensureMetaParent(meta)
+
+                return moveInPlace(temp, meta, orphans = true)
+            } catch (e: NoSuchFileException) {
+                if (attempt == MOVE_ATTEMPTS - 1) throw e
+            }
+        }
     }
 
     /** Creates the folders above [meta] in the mirror; a file left where a folder goes (an orphan) is removed. */
@@ -278,10 +323,10 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
     }
 
     /**
-     * Writes content and metadata through temporary files, each moved in place in one step: the metadata, then the
-     * content. A write that fails before the moves changes nothing, and writers of one file in this process take turns, so a file
-     * never ends up with another writer's metadata. A reader between the two moves sees the new metadata with the
-     * old content for that moment.
+     * Writes content and metadata through temporary files, moved in place: the metadata, then the content. Writers of
+     * one file in this process take turns, so a file never ends up with another writer's metadata; a write that fails
+     * leaves content and metadata as they were. A reader between the two moves sees the new metadata with the old
+     * content for that moment. Several processes on one folder do not take turns.
      */
     override suspend fun putFile(
         subject: DepotSubjectId<T>,
@@ -297,27 +342,40 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         if (file.isDirectory) throw DepotInvalidPathException()
 
         val metaTarget = metaFile(file)
+        val temps = mutableListOf<File>()
 
-        synchronized(lockFor(file)) {
-            val contentTemp = tempFile()
-            val metaTemp = tempFile()
+        try {
+            // Written before the lock, which is held for the moves only
+            val contentTemp = tempFile().also { temps.add(it) }
+            contentTemp.writeBytes(content)
 
-            try {
-                contentTemp.writeBytes(content)
+            val metaTemp = tempFile().also { temps.add(it) }
+            metaTemp.writeText(
+                json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) }))
+            )
+
+            synchronized(lockFor(file)) {
+                // The metadata as it was, put back when the content cannot be moved
+                val before = metaTarget.takeIf { it.isFile }?.let { old ->
+                    tempFile().also { temps.add(it) }.also { old.copyTo(it, overwrite = true) }
+                }
 
                 file.parentFile.ensureDirectory()
+                moveMetaInPlace(metaTemp, metaTarget)
 
-                metaTemp.writeText(
-                    json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) }))
-                )
-                ensureMetaParent(metaTarget)
+                try {
+                    moveInPlace(contentTemp, file)
+                } catch (e: Exception) {
+                    when {
+                        before != null -> moveInPlace(before, metaTarget, orphans = true)
+                        metaTarget.isFile -> metaTarget.delete()
+                    }
 
-                moveInPlace(metaTemp, metaTarget, orphans = true)
-                moveInPlace(contentTemp, file)
-            } finally {
-                contentTemp.delete()
-                metaTemp.delete()
+                    throw e
+                }
             }
+        } finally {
+            temps.forEach { it.delete() }
         }
 
         return FsFile(repo = this, file = file, path = normalised(path))
@@ -355,6 +413,16 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
 
     private companion object {
         val locks = Array(64) { Any() }
+
+        /** The temporary folders already swept in this process. */
+        val swept: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        const val TEMP_PREFIX = "put-"
+
+        /** A temporary file this old belongs to no write under way. */
+        const val STALE_TEMP_MS = 60 * 60 * 1000L
+
+        const val MOVE_ATTEMPTS = 3
 
         /** In `<root>/.meta`: the mirror of the files, holding each one's metadata. */
         const val META_FILES = "files"
