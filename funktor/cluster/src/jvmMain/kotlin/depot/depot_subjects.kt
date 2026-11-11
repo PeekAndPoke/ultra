@@ -7,6 +7,8 @@ import io.peekandpoke.ultra.vault.Storable
 
 /**
  * The stored entity as the data subject of a depot file: its database id, `collection/key`.
+ * The id is taken as it is: a reference woken from a client's input names whatever collection the client wrote, so
+ * check or load it first.
  *
  * @throws IllegalArgumentException for an entity that is not stored yet (no collection or key)
  */

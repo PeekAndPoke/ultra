@@ -217,10 +217,10 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         return try {
             json.decodeFromString(JsonObject.serializer(), meta.readText())
                 .mapValues { (_, value) -> value.jsonPrimitive.content }
-        } catch (e: FileNotFoundException) {
+        } catch (_: FileNotFoundException) {
             // Removed between the two looks: by a removal of the file, or of its metadata
             when {
-                meta.exists() -> throw e
+                meta.exists() -> throw DepotException("The metadata of a file in '$name' cannot be read")
                 file.isFile -> emptyMap()
                 else -> null
             }
@@ -325,7 +325,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
     /**
      * Writes content and metadata through temporary files, moved in place: the metadata, then the content. Writers of
      * one file in this process take turns, so a file never ends up with another writer's metadata; a write that fails
-     * leaves content and metadata as they were. A reader between the two moves sees the new metadata with the old
+     * leaves content and metadata as they were (not where the move has to copy: a folder on another mount). A reader between the two moves sees the new metadata with the old
      * content for that moment. Several processes on one folder do not take turns.
      */
     override suspend fun putFile(
@@ -360,15 +360,25 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
                     tempFile().also { temps.add(it) }.also { old.copyTo(it, overwrite = true) }
                 }
 
+                // Again, under the lock: a folder that appeared meanwhile has metadata of its own files below it.
+                // And no file below a file.
+                if (file.isDirectory || generateSequence(file.parentFile) { it.parentFile }.any { it.isFile }) {
+                    throw DepotInvalidPathException()
+                }
+
                 file.parentFile.ensureDirectory()
                 moveMetaInPlace(metaTemp, metaTarget)
 
                 try {
                     moveInPlace(contentTemp, file)
                 } catch (e: Exception) {
-                    when {
-                        before != null -> moveInPlace(before, metaTarget, orphans = true)
-                        metaTarget.isFile -> metaTarget.delete()
+                    try {
+                        when {
+                            before != null -> moveInPlace(before, metaTarget, orphans = true)
+                            metaTarget.isFile -> metaTarget.delete()
+                        }
+                    } catch (rollback: Exception) {
+                        e.addSuppressed(rollback)
                     }
 
                     throw e
@@ -407,9 +417,10 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
 
     /**
      * One of a fixed set of locks, by the file: writers and removers of one file take turns, in every repository
-     * object of this process (a repository may be created per request).
+     * object of this process (a repository may be created per request). By the path in lower case: on a file system
+     * that ignores case, two spellings are one file.
      */
-    private fun lockFor(file: File): Any = locks[Math.floorMod(file.path.hashCode(), locks.size)]
+    private fun lockFor(file: File): Any = locks[Math.floorMod(file.path.lowercase().hashCode(), locks.size)]
 
     private companion object {
         val locks = Array(64) { Any() }

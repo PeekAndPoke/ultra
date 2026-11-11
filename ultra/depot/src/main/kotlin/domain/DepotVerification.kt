@@ -8,6 +8,6 @@ enum class DepotVerification {
     /** The content differs from what was written, or belongs to other metadata. */
     Damaged,
 
-    /** No hash is stored: the depot did not write the file. */
+    /** No hash is stored: a file from before hashes were stored, or one the depot did not write. */
     NoHash,
 }

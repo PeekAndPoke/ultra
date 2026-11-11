@@ -195,6 +195,9 @@ class DepotMetadataSpec : StringSpec({
         repo.verify("foreign.txt") shouldBe DepotVerification.NoHash
 
         repo.verify("nothing.txt") shouldBe null
+
+        DepotMetadata.subjectOf(repo.getMeta("a.txt")!!) shouldBe "customers/42"
+        DepotMetadata.subjectOf(repo.getMeta("foreign.txt")!!) shouldBe null
     }
 
     "the subject's id counts towards the size limit" {
@@ -378,7 +381,8 @@ class DepotMetadataSpec : StringSpec({
         repo.removeFile("a.txt/x") shouldBe false
         repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
 
-        shouldThrow<Exception> { repo.putFile(anna, "a.txt/x", "x") }
+        shouldThrow<DepotInvalidPathException> { repo.putFile(anna, "a.txt/x", "x") }
+        shouldThrow<DepotInvalidPathException> { repo.putFile(anna, "a.txt/x/y", "x") }
         repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
     }
 

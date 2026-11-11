@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
  * Names the data subject of a file: the person (or thing) the data is about. Every write names one.
  *
  * [T] is the kind of subject and is only checked by the compiler: a `DepotRepository<Customer>` takes a
- * `DepotSubjectId<Customer>` and nothing else. The [value], `namespace/id`, is written into the file's metadata.
+ * `DepotSubjectId<Customer>` (or [system]), not another kind's. The [value], `namespace/id`, is written into the file's metadata.
  *
  * There is no public constructor: an id comes from [of], which names its kind, so the kind is never inferred from
  * what a repository expects.

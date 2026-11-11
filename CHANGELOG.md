@@ -343,10 +343,10 @@
     meta)`; `funktor:cluster` now exposes `ultra:vault`.
   - Metadata is a `Map<String, String>`: keys of `a-z`, `0-9` and `-` (1 to 64), keys starting with `depot-` reserved,
     2 KB in all. The subject's id is always stored as `depot-subject`, for system files too. `getMeta` returns the
-    map: without `depot-subject` for a file the depot did not write (no subject recorded), null when there is no
-    such file.
+    map: without `depot-subject` for a file written before this release or not by the depot (no subject recorded),
+    null when there is no such file. `DepotMetadata.subjectOf(meta)` reads the subject.
   - Every write also stores the content's SHA-256 as `depot-sha256`, and `repo.verify(path)` re-reads the file and
-    answers `Intact`, `Damaged` or `NoHash`. It finds damage and content paired with other metadata; it is no proof
+    answers `Intact`, `Damaged` or `NoHash` (files from before this release have none). It finds damage and content paired with other metadata; it is no proof
     against tampering by someone who can write the metadata too.
   - `DepotPutFileOptions`, its unused `encryption` option, `DepotMeta` and `DepotItemModel.Meta`/`Visibility` are
     gone; `DepotBrowseModel.meta` is the map.
@@ -356,7 +356,8 @@
     `.meta.`) is a reserved first path segment in every repository; the file system repository never lists it. **A
     depot that already holds a top-level `.meta` folder of its own files can no longer reach them.** Content and
     metadata are written through temporary files (`<root>/.meta/tmp`) and moved in place; writers of one file in
-    one process take turns, and a write that fails leaves both as they were. A replaced file is a new file: its
+    one process take turns, and a write that fails leaves both as they were (except where a folder of the root is
+    another mount and the move has to copy). A replaced file is a new file: its
     former owner, mode and hard links are not kept.
   - `DepotMetadata.withoutReserved(meta)` gives the caller's own entries of a `getMeta` result, for writing them
     back. `DepotException` is a `RuntimeException` now (it was a bare `Throwable`); `AwsHelper` (the tag mapping) is gone.

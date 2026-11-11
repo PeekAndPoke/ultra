@@ -237,6 +237,33 @@ always intact, H3 no hash read as damaged, H4 S3 hashing other bytes. Both race 
 Round 3 was started at level 3 and stopped unfinished when the maintainer asked for the mid level ("review at mid
 level"); no result was read. It runs at level 2 over the state including the hash.
 
+Round 3, 2026-11-11, level 2 (`reviewer-xhigh`, the maintainer: "review at mid level"), blind; charters 1, 2
+and 3. **CLEAN: no CRITICAL, no MAJOR** from any of the three. **The step-2 gate is passed.**
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 | MINOR | `FileSystemRepository.kt:274,342` | A failing write of `a`, racing a first write of `a/b`, deletes `a/b`'s fresh metadata (impl 1, security 1, domain 9) | fix | The folder check is repeated under the lock, before the metadata moves |
+| 3 | MINOR | `FileSystemRepository.kt:363` | A write below a file throws `IllegalStateException` with the absolute path, not `DepotInvalidPathException`; `getMeta` rethrows a raw `FileNotFoundException` (impl 2, security 5) | fix | Refused as an invalid path; `DepotException` without a path |
+| 3 | MINOR | `FileSystemRepository.kt:412` | Two spellings of one new file take different locks on a case-insensitive file system (security 2) | fix | The lock is chosen by the lower-case path |
+| 3 | MINOR | `DepotRepository.kt:85-91` | `verify`: null for a failed S3 read; `Damaged` possible during a write (impl 4, 5; domain 1, 2) | fix | Throws `DepotException` when the content cannot be read; the KDoc says to verify again |
+| 3 | MINOR | `FileSystemRepository.kt:369` | A failing rollback hides the original exception; the copying fallback cannot keep the promise (impl 6, domain 3) | fix | `addSuppressed`; KDoc and CHANGELOG name the exception |
+| 3 | MINOR | `DepotVerification.kt:11`, `DepotRepository.kt:54`, CHANGELOG | "The depot did not write the file" is wrong for files from before this release (impl 9, domain 4, security 6) | fix | |
+| 3 | MINOR | `DepotMetadata.kt` | No function to read the subject entry, though the ticket confirmed one (domain 6) | fix | `DepotMetadata.subjectOf(meta)` |
+| 3 | MINOR | `depot_subjects.kt:13` | A `Ref` woken from client input names any collection; `asDepotSubject` takes it as it is (security 4) | fix (KDoc) | An app's duty, said in the KDoc |
+| 3 | MINOR | `DepotMetadataSpec.kt:319` | The rollback test does nothing when run as root (impl 3) | open | Known; the suite does not run as root here |
+| 3 | MINOR | `DepotSubjectId.kt:31` | The namespace is free text: `customers/42` and `customer/42` for one person (domain 5) | step 3 / maintainer | Stored entities go through `asDepotSubject()`; a namespace per kind is a question for step 3, where it costs a key |
+| 3 | MINOR | nested roots | A repository whose root contains another's can write that one's `.meta` (security 3) | step 3 | The boot check planned there covers one root inside another |
+| 3 | MINOR | caller metadata | Stays readable after shredding (domain 7); `mime-type` with parameters refused (impl 8); a user's own top-level `.meta` is overwritten, not only unreachable (impl 7) | step 3 / maintainer | Put to the maintainer |
+| 3 | NIT | KDoc of `DepotSubjectId`, `sha256` wording, test hygiene, `reified` on `asDepotSubject` | | fix / open | |
+
+After round 3: depot 75, depot-s3 11, cluster 140, insights 114, funktor-all 288, demo 52. Mutations red: V1 the
+refusal below a file, V2 `subjectOf`. Not pinned by a test: `verify`'s throw (the S3 stub has no `getObject`), the
+lower-case lock key (needs a case-insensitive file system), the check under the lock (a race).
+
+For step 3, from the reviewers: `verify` must be overridden by a wrapper that changes content; the additional data
+binds the canonical repository-relative path; the crypto entries count towards the 2 KB; items returned by the
+inner store bypass the middleware and must be wrapped; one subject per file.
+
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header
 injection towards S3; error messages; the browse API; the size rule; test expectations are literals.

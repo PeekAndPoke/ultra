@@ -24,7 +24,7 @@ object DepotMetadata {
     /** The data subject's id, written with every file. */
     const val SUBJECT = "depot-subject"
 
-    /** The SHA-256 of the content as it was written, in hex, written with every file; see [DepotRepository.verify]. */
+    /** The SHA-256 of the bytes as they are stored, in hex, written with every file; see [DepotRepository.verify]. */
     const val SHA256 = "depot-sha256"
 
     /**
@@ -43,6 +43,9 @@ object DepotMetadata {
 
     /** A value as S3 carries it in a header: percent-encoded UTF-8, a space as `%20`. */
     fun encode(value: String): String = URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
+
+    /** The subject's id as recorded in a file's [meta]; null when none is. Read it here, not from the map. */
+    fun subjectOf(meta: Map<String, String>): String? = meta[SUBJECT]
 
     /** The caller's own entries of a file's metadata, without the depot's: what a write takes back. */
     fun withoutReserved(meta: Map<String, String>): Map<String, String> = meta.filterKeys { !it.startsWith(RESERVED_PREFIX) }
