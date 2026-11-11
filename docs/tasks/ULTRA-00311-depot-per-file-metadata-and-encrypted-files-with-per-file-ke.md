@@ -4,7 +4,7 @@
 > file. On AWS this should work out of the box. For the file-system we would need to store an additional file, maybe
 > <original-filename>.meta or similar. Why? ... store personal customer data in aws. We would generate a one-time
 > secret, encrypt the file and upload the file, while setting the encryption keys ID on the meta data and storing the
-> key in the database." Decisions below are open; nothing is built.
+> key in the database." Decisions 1-7 taken 2026-11-11 (below); one open: the key scope. Nothing is built.
 
 **Security-critical:** yes (keys, personal data; a red-team ticket follows the gate)
 
@@ -20,33 +20,32 @@ What the depot has today (`funktor/cluster/src/jvmMain/kotlin/depot/`):
 - `DepotItemModel.Meta` is a fixed record (visibility, mimeType, organisationId/Name, ownerId), not free key/values.
 - S3 `getMeta` reads object **tags** (`GetObjectTaggingRequest`); FS `getMeta` returns null.
 
-## Decide before implementing
+## Decisions (the maintainer, 2026-11-11)
 
-1. **The metadata model.** Recommendation: free string key/values (`Map<String, String>`), with the known fields kept
-   as typed accessors over well-known keys. The keyId, the cipher and its IV/nonce go in under reserved keys.
-2. **S3: user metadata or tags.** User metadata (`x-amz-meta-*`) is written with the object, travels with copies,
-   2 KB in total, immutable without a copy; tags are mutable, at most 10, and meant for lifecycle and IAM rules.
-   Recommendation: user metadata for the file's own facts (keyId, cipher, IV, mime type), tags left to operators.
-   Changes today's `getMeta`, which reads tags.
-3. **File system: where the metadata lives.**
-   - (a) A sidecar `<name>.meta` next to the file: simple, but every listing must hide it, a user file named
-     `x.meta` would collide, and moves or deletes must carry both.
-   - (b) A parallel tree, `<root>/.meta/<path>.json`: no collision, listings unaffected, the path rules apply as for
-     the file.
-   Recommendation: (b). Either way: written with the file (file first, then meta, or meta via a temp file and a
-   rename), removed with it, never listed, never reachable as a file through the depot API.
-4. **Who encrypts.** Recommendation: the depot. `putFile(..., encryption = AesGcm(key))` encrypts with a key the
-   caller passes, stores cipher, IV and the caller's `keyId` in the metadata; `getContent(path, keys)` decrypts with
-   a key resolver (`keyId -> key`) the app implements against its database. The depot never stores a key. The app
-   generates a fresh key per file (`SecureRandom`, 256 bit). Alternative: the app encrypts and only uses the
-   metadata; simpler for the depot, but every app re-implements AES-GCM correctly.
-5. **Integrity and reading without the key.** AES-GCM authenticates: a tampered or truncated file fails to decrypt,
-   never returns garbage. A file whose key is gone answers a distinct "key not available" (shredded), not "not found".
-6. **Key wrapping (later?).** Storing raw data keys in the database vs wrapping them with a master key (KMS on AWS).
-   Recommendation: start with keys in the database as the maintainer describes, design the resolver so a KMS-wrapped
-   key fits later.
-7. **Streaming.** Files read and written whole today (`ByteArray`). Large files would need streaming AES-GCM
-   (chunked). Recommendation: whole files first, a size note in the KDoc.
+1. **Metadata: a free `Map<String, String>`, stored as JSON.** The known fields (mime type, owner, ...) become typed
+   accessors over well-known keys; keyId, cipher and IV go under reserved keys.
+2. **S3: user metadata (`x-amz-meta-*`), tags dropped** (today's `getMeta` reads tags). Real tags are not planned:
+   they serve operators (lifecycle, IAM, cost) and have no reader on the file system; a concrete need such as
+   retention gets its own ticket.
+3. **File system: a parallel tree, `<root>/.meta/<path>.json`.** Written with the file, removed with it, never listed,
+   never reachable as a file through the depot API; the path rules apply to it as to the file.
+4. **Encryption as middleware per repository**, not per call: an `EncryptingDepotRepository` wraps any repository and
+   is registered as that repository; callers do not change.
+   - write: a fresh key, AES-GCM, the key through a key store, keyId + cipher + IV into the metadata;
+   - read: the key by keyId, decrypt;
+   - delete: the file and its key; `shred(path)` deletes only the key.
+   - A `DepotKeyStore` interface, with ready implementations as database repositories (Karango and Monko, both
+     backends). Other middlewares (compression) compose the same way.
+5. **A file whose key is gone answers distinctly** ("shredded"), not "not found". AES-GCM authenticates: a tampered
+   or truncated file fails, never returns garbage.
+6. **Keys in the database first; master-key wrapping (KMS) later**, through the key store, nothing else changes.
+7. **Whole files first.** The depot has no streaming today (`putFile(ByteArray)`, `getContentBytes(): ByteArray`).
+
+## Open
+
+- **Key scope:** one key per file (the maintainer's "one-time secret"; erasing a customer means deleting the keys
+  of all their files) or one per data subject (a `subjectId` in the metadata picks the key; erasing a customer is
+  one key deletion, also for files the app lost track of), or both, per repository.
 
 ## The work (after the decisions)
 
@@ -60,3 +59,4 @@ What the depot has today (`funktor/cluster/src/jvmMain/kotlin/depot/`):
 ## History
 
 - 2026-11-11: created from the maintainer's request; decisions open.
+- 2026-11-11: decisions 1-7 taken with the maintainer; the key scope open.
