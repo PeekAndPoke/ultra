@@ -14,7 +14,6 @@ import io.peekandpoke.funktor.insights.collectors.RequestCollector
 import io.peekandpoke.funktor.insights.collectors.ResponseCollector
 import io.peekandpoke.funktor.insights.collectors.RoutingCollector
 import io.peekandpoke.funktor.insights.collectors.RuntimeCollector
-import io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
 import io.peekandpoke.funktor.insights.collectors.UserCollector
 import io.peekandpoke.funktor.insights.collectors.VaultCollector
 import io.peekandpoke.ultra.kontainer.Kontainer
@@ -74,7 +73,6 @@ val Funktor_Insights = module {
     dynamic(LogCollector::class)
     dynamic(LogCollector.Appender::class)
     dynamic(VaultCollector::class)
-    dynamic(TemplateInsightsCollector::class)
 
     // Fails the boot on duplicate collector keys — see the class for why it cannot wait
     singleton(CollectorKeyUniquenessCheck::class)

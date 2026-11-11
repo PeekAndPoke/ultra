@@ -14,7 +14,6 @@ import RequestTab from '../src/funktorsdk/insights/RequestTab.vue'
 import ResponseTab from '../src/funktorsdk/insights/ResponseTab.vue'
 import RoutingTab from '../src/funktorsdk/insights/RoutingTab.vue'
 import RuntimeTab from '../src/funktorsdk/insights/RuntimeTab.vue'
-import TemplateTab from '../src/funktorsdk/insights/TemplateTab.vue'
 import UserTab from '../src/funktorsdk/insights/UserTab.vue'
 import VaultTab from '../src/funktorsdk/insights/VaultTab.vue'
 import { FK_REDACTED } from '../src/funktorsdk/ui/types.ts'
@@ -91,17 +90,6 @@ describe('routing', () => {
         const host = await render(RoutingTab, slice)
 
         expect(host.querySelector('pre')?.textContent).toBe(slice.trace)
-    })
-})
-
-describe('template', () => {
-    it('treats a null render time as no view rendered, the normal case for an API call', async () => {
-        const slice = sliceOf(recorded.slim(), 'template')
-        expect(slice.timeNs).toBeNull()
-
-        const host = await render(TemplateTab, slice)
-
-        expect(host.textContent).toContain('No view was rendered')
     })
 })
 

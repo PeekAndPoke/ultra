@@ -85,9 +85,10 @@ and user name of the server included; the fixtures keep six keys.
 
 `level` is the `LogLevel` name. `text` is already formatted by `LogAppender.format`: render, do not parse.
 
-## `template`
+## `template` (gone)
 
-`{ "timeNs": null }` — null on every request that rendered no view, which is every API call. Normal, not an error.
+The collector was removed on 2026-11-11 (it had no writer since the server-rendered GUI went). Records written before
+carry `{ "timeNs": null }` under this key; both GUIs show such an unknown slice as plain JSON.
 
 ## `vault`
 

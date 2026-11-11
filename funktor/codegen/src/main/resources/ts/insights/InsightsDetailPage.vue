@@ -21,7 +21,7 @@
  *
  * Imports assume the emitted layout -- SDK root at `<out>/`, these files at `<out>/insights/`.
  */
-import { Boxes, CloudDownload, CloudUpload, Compass, Cpu, Database, List, Settings, Tv, User } from '@lucide/vue'
+import { Boxes, CloudDownload, CloudUpload, Compass, Cpu, Database, List, Settings, User } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import type { Component, Ref } from 'vue'
 import type { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
@@ -40,7 +40,6 @@ import RequestTab from './RequestTab.vue'
 import ResponseTab from './ResponseTab.vue'
 import RoutingTab from './RoutingTab.vue'
 import RuntimeTab from './RuntimeTab.vue'
-import TemplateTab from './TemplateTab.vue'
 import UserTab from './UserTab.vue'
 import VaultTab from './VaultTab.vue'
 import { createGraphSource, provideInsightsGraphs, useInsightsGraphsOrNull } from './graphs.ts'
@@ -67,7 +66,6 @@ const TABS: Record<string, Component> = {
     response: ResponseTab,
     user: UserTab,
     routing: RoutingTab,
-    template: TemplateTab,
     log: LogTab,
     runtime: RuntimeTab,
     vault: VaultTab,
@@ -83,7 +81,6 @@ const TAB_LABELS: Record<string, string> = {
     routing: 'Routing',
     runtime: 'Runtime',
     log: 'Logs',
-    template: 'View',
     vault: 'Database',
     kontainer: 'Kontainer',
     'app-config': 'Config',
@@ -100,7 +97,6 @@ const TAB_ICONS: Record<string, Component> = {
     routing: Compass,
     runtime: Cpu,
     log: List,
-    template: Tv,
     vault: Database,
     kontainer: Boxes,
     'app-config': Settings,

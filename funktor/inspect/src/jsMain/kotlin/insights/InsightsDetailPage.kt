@@ -79,7 +79,7 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
 
         insightsStyles()
 
-        ui.padded.segment {
+        ui.segment {
             div(classes = "funktor-insights") {
                 toolbar((state as? State.Loaded)?.record)
 
@@ -93,7 +93,8 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
     }
 
     private fun FlowContent.toolbar(record: InsightsRecord?) {
-        ui.basic.segment {
+        // No segment around the buttons: its padding indented them from the content below
+        div(classes = "insights-toolbar") {
             ui.basic.button A {
                 href(props.ui.routes.list())
                 icon.list()
@@ -150,7 +151,7 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
         val build = readBuildInfo(slice("app-config"))
 
         return listOf(
-            Fact("Request", listOfNotNull(record.method, record.path).joinToString(" ").ifEmpty { null }),
+            Fact("Request", listOfNotNull(record.method, record.path).joinToString(" ").ifEmpty { null }, full = true),
             Fact("Status", record.status?.let { if (reason == null) "$it" else "$it $reason" }, toneForStatus(record.status)),
             Fact("Duration", record.durationMs?.let { "${it.toFixed(1)} ms" }),
             Fact("Recorded", record.recordedAt?.let { Date(it.toEpochMillis()).toLocaleString() }),
@@ -172,7 +173,7 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
             }
         }
 
-        ui.bottom.attached.segment {
+        ui.bottom.attached.with("insights-tab-body").segment {
             val active = collectors.firstOrNull { it.key == activeKey } ?: return@segment
 
             div {

@@ -99,17 +99,15 @@ class InsightsListPage(ctx: Ctx<Props>) : Component<InsightsListPage.Props>(ctx)
 
         insightsStyles()
 
-        ui.padded.segment {
+        ui.segment {
             div(classes = "funktor-insights") {
                 ui.dividing.header H2 {
                     icon.chart_bar_outline()
                     +"Recorded requests"
                 }
 
-                if (server.isNotEmpty()) {
-                    ui.small.header { icon.code_branch(); +"Server" }
-                    factList(server)
-                }
+                // The running server, as one compact row of cards (the Vue page shows no header either)
+                if (server.isNotEmpty()) factList(server)
 
                 when (val current = state) {
                     is State.Loading -> ui.basic.segment { ui.active.inline.loader {} }
@@ -182,7 +180,7 @@ class InsightsListPage(ctx: Ctx<Props>) : Component<InsightsListPage.Props>(ctx)
         // Not `items.size >= epp`: the server skips a half-written record but still consumes its slot
         val hasNext = if (total == null) paged.items.size >= epp else page.toLong() * epp < total
 
-        ui.basic.segment {
+        div(classes = "insights-toolbar") {
             ui.basic.given(page <= 1) { disabled }.button {
                 onClick { if (page > 1) goTo(page - 1) }
                 icon.arrow_left()

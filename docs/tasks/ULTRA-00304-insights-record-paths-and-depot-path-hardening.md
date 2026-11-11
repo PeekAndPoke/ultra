@@ -143,3 +143,11 @@ Mutations, each red: Y1 the siblings filter, Y2 removing the link not the target
   the regexes are top-level now. Green: funktor-all 283/283, insights 111/111, cluster, codegen 104/104.
   Mutations, each red: D1 `..` check, D2 backslash check, D3 canonical check, D4 listing filter, D5 limit path,
   I1 `isRecord` in the loader, I2 the 400 mapping. Review gate next (security-critical).
+- 2026-11-11: the maintainer on the safety valve: the demo config now starts without the SES keys
+  (`application.common.conf`, maintainer's change). The demo suite runs: 52/52, `ShowcaseDepotAuthTest` 4/4; mutation
+  Z1 (the admin group's floor set to `public()`) red in three cases. Round 2's MAJOR is resolved.
+- 2026-11-11, maintainer decisions: symlinks that lead out of a depot root stay refused ("following symlinks must
+  not be allowed, that is correct"); `TemplateInsightsCollector` removed (with the View tab in both GUIs);
+  `Routes.mountPoint` removed; the lock file carries `pdfjs-dist` and `@napi-rs/canvas`.
+- 2026-11-11: round 3 of the gate waits until the maintainer's visual sweep of the Kraft insights pages settles, so
+  it reviews the final pages once.

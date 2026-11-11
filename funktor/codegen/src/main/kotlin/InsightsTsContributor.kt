@@ -99,7 +99,6 @@ class InsightsTsContributor(
             "ResponseTab.vue",
             "UserTab.vue",
             "RoutingTab.vue",
-            "TemplateTab.vue",
             "LogTab.vue",
             "RuntimeTab.vue",
             "VaultTab.vue",

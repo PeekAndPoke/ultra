@@ -4,24 +4,10 @@ import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.reflection.kType
 
 /**
- * Base class for all route collections
+ * Base class for all route collections. A route's pattern is its uri as written: there is no prefix, because an API
+ * route's endpoint is shared with the client, and a server-side prefix would be invisible to it.
  */
-abstract class Routes(
-    /**
-     * A URL prefix prepended to every route this collection declares.
-     *
-     * **Never usable for API routes, and `ApiRoutes` therefore does not expose it.** An API route is
-     * declared by a `TypedApiEndpoint` that the CLIENT owns too — the same object in `commonMain`
-     * builds the server's pattern and the client's request URL. A prefix applied only on the server
-     * is invisible to the client, which then calls the unprefixed path and gets a 404, and whose
-     * access-matrix lookups miss for the same reason. No value can be correct, so the parameter is
-     * simply absent there.
-     *
-     * It is sound HERE because a plain route collection has no client-side counterpart to diverge
-     * from.
-     */
-    val mountPoint: String = "",
-) {
+abstract class Routes {
     /**
      * Creates a plain route without params or body
      */
@@ -62,8 +48,6 @@ abstract class Routes(
     inline fun <reified PARAMS : Any, reified BODY : Any> route(uri: String) =
         route(kType<PARAMS>(), kType<BODY>(), uri)
 
-    /**
-     * Converts a string into an uri pattern while prepending the mountPoint
-     */
-    private val String.asPattern get() = UriPattern(mountPoint + this)
+    /** Converts a string into an uri pattern */
+    private val String.asPattern get() = UriPattern(this)
 }

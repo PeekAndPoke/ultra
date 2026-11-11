@@ -28,7 +28,6 @@ internal val insightsTabs: Map<String, InsightsTab> = mapOf(
     "routing" to InsightsTab("Routing", { icon.compass_outline() }) { data, _ -> routingTab(data) },
     "runtime" to InsightsTab("Runtime", { icon.microchip() }) { data, _ -> runtimeTab(data) },
     "log" to InsightsTab("Logs", { icon.list() }) { data, _ -> logTab(data) },
-    "template" to InsightsTab("View", { icon.tv() }) { data, _ -> templateTab(data) },
     "vault" to InsightsTab("Database", { icon.database() }) { data, ui -> VaultTab(data, ui) },
     "kontainer" to InsightsTab("Kontainer", { icon.cubes() }) { data, ui -> KontainerTab(data, ui) },
     "app-config" to InsightsTab("Config", { icon.cog() }) { data, _ -> appConfigTab(data) },
@@ -46,7 +45,7 @@ private fun FlowContent.requestTab(data: JsonElement) {
     val slice = readRequest(data) ?: return jsonView(data)
 
     section {
-        factList(listOf(Fact("Method", slice.method), Fact("URL", slice.composeUrl())))
+        factList(listOf(Fact("Method", slice.method), Fact("URL", slice.composeUrl(), full = true)))
         note("The recorded URL is a path; the query string is listed separately and is not part of it.")
     }
     section("Headers") { keyValueTable(slice.headers, "Header", "No headers recorded") }
@@ -133,16 +132,6 @@ private fun FlowContent.logTab(data: JsonElement) {
             toneLabel(toneForLogLevel(entry.level), entry.level ?: "UNKNOWN")
             codeBlock(text = entry.text, language = null, emptyText = "(empty log entry)", wrap = true)
         }
-    }
-}
-
-private fun FlowContent.templateTab(data: JsonElement) {
-    val slice = readTemplate(data) ?: return jsonView(data)
-
-    when (val timeNs = slice.timeNs) {
-        // The normal case: every request that rendered no view
-        null -> ui.basic.segment { +"No view was rendered for this request." }
-        else -> factList(listOf(Fact("Render time", nsToMs(timeNs), toneAbove(timeNs / 1_000_000, warn = 10.0, error = 30.0))))
     }
 }
 

@@ -430,7 +430,7 @@ class InsightsPagesSpec : StringSpec() {
             }
         }
 
-        "older record shapes read: a full kontainer slice with epoch seconds, a Monko json entry, no view" {
+        "older record shapes read: a full kontainer slice with epoch seconds, a Monko json entry" {
             val server = FakeInsightsServer()
             server.records["records-2026-11-10/a.json"] = record(
                 "a.json",
@@ -448,7 +448,6 @@ class InsightsPagesSpec : StringSpec() {
                     """{"entries": [{"connection": "mongo", "count": 1, "totalCount": 1, "query": null,
                        "queryLanguage": "json", "varsCount": 0, "totalNs": 1000000}]}""",
                 ),
-                slice("template", """{"timeNs": null}"""),
             )
 
             withDetail(server, "a.json") { root, _ ->
@@ -462,8 +461,6 @@ class InsightsPagesSpec : StringSpec() {
                 eventually { root.textContent() shouldContain "when Monko still put the bind values into its query text" }
                 root.textContent() shouldContain "unknownBind vars"
 
-                root.tab("View")
-                eventually { root.textContent() shouldContain "No view was rendered for this request." }
             }
         }
 

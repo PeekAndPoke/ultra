@@ -166,19 +166,9 @@ internal fun readUser(data: JsonElement?): UserSlice? {
     )
 }
 
-//  routing, template, log  ////////////////////////////////////////////////////////////////////////////////////////////
+//  routing, log  ////////////////////////////////////////////////////////////////////////////////////////////
 
 internal fun readRoutingTrace(data: JsonElement?): String? = data.asRecord()?.get("trace").asString()
-
-/** Null only when unrecognisable; a null [timeNs] is the NORMAL case, every request that rendered no view. */
-internal data class TemplateSlice(val timeNs: Double?)
-
-internal fun readTemplate(data: JsonElement?): TemplateSlice? {
-    val record = data.asRecord() ?: return null
-    if (!record.containsKey("timeNs")) return null
-
-    return TemplateSlice(timeNs = record["timeNs"].asNumber())
-}
 
 /** One log line; [text] is already formatted by the appender. */
 internal data class LogEntry(val level: String?, val text: String?)
@@ -593,7 +583,8 @@ internal fun serverBuildInfo(git: String, gitDesc: String, applicationId: String
 //  Facts and stat cells  //////////////////////////////////////////////////////////////////////////////////////////////
 
 /** One row of a fact list; a null [value] reads n/a. */
-internal data class Fact(val key: String, val value: String?, val tone: Tone = Tone.Neutral)
+/** One labelled value; [full] gives it a whole row of the card grid (a request line, a URL). */
+internal data class Fact(val key: String, val value: String?, val tone: Tone = Tone.Neutral, val full: Boolean = false)
 
 /** One cell of a stat strip. */
 internal data class StatCell(val label: String, val value: String?, val hint: String? = null)

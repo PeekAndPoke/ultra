@@ -15,7 +15,6 @@ import io.peekandpoke.funktor.insights.collectors.RequestCollector
 import io.peekandpoke.funktor.insights.collectors.ResponseCollector
 import io.peekandpoke.funktor.insights.collectors.RoutingCollector
 import io.peekandpoke.funktor.insights.collectors.RuntimeCollector
-import io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector
 import io.peekandpoke.funktor.insights.collectors.UserCollector
 import io.peekandpoke.funktor.insights.collectors.VaultCollector
 import io.peekandpoke.ultra.common.SimpleLookup
@@ -84,17 +83,17 @@ class CollectorKeyUniquenessCheckSpec : StringSpec({
         }
     }
 
-    "the built-in collectors declare ten distinct keys" {
+    "the built-in collectors declare nine distinct keys" {
         // Read off the collectors themselves, not a list written here — a new built-in that reuses an
         // existing key fails this rather than someone's boot.
         val keys = listOf(
             RequestCollector.KEY, ResponseCollector.KEY, UserCollector.KEY, RoutingCollector.KEY,
             AppConfigCollector.KEY, KontainerCollector.KEY, RuntimeCollector.KEY, LogCollector.KEY,
-            VaultCollector.KEY, TemplateInsightsCollector.KEY,
+            VaultCollector.KEY,
         )
 
         keys.distinct() shouldBe keys
-        keys.size shouldBe 10
+        keys.size shouldBe 9
     }
 }) {
     private object Slice : InsightsCollectorData

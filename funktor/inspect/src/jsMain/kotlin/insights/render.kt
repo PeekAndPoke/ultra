@@ -46,6 +46,23 @@ internal const val INSIGHTS_CSS = """
 .funktor-insights .insights-mono { font-family: monospace; }
 .funktor-insights .insights-path { word-break: break-all; }
 .funktor-insights .insights-redacted { color: grey; font-style: italic; }
+.funktor-insights .insights-facts {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(13em, 1fr)); gap: 0.5em; margin: 0.5em 0 1em;
+}
+.funktor-insights .insights-fact {
+  min-width: 0; padding: 0.45em 0.7em; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: 0.28rem;
+  background: #fff;
+}
+.funktor-insights .insights-fact.wide { grid-column: span 2; }
+.funktor-insights .insights-fact.full { grid-column: 1 / -1; }
+.funktor-insights .insights-fact-key {
+  margin-bottom: 0.15em; font-size: 0.75em; letter-spacing: 0.03em; text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+}
+.funktor-insights .insights-fact-value { font-family: monospace; word-break: break-word; }
+.funktor-insights .insights-toolbar { margin: 0 0 1em; }
+.funktor-insights .ui.segment.insights-tab-body { padding: 0.75em; }
+.funktor-insights .insights-summary { margin: 1em 0 0.5em; font-weight: bold; cursor: pointer; }
 """
 
 /** A value as indented JSON. */
@@ -61,22 +78,33 @@ internal fun FlowContent.toneLabel(tone: Tone, text: String) {
     }
 }
 
-/** Key and value rows; a missing value reads n/a. */
+/**
+ * Facts as a grid of small cards, a muted label above the value: fills the width and wraps on a narrow screen. A long
+ * value (a git description) takes two columns, a [Fact.full] one the whole row.
+ */
 internal fun FlowContent.factList(facts: List<Fact>) {
-    ui.very.basic.compact.definition.table Table {
-        tbody {
-            facts.forEach { fact ->
-                tr {
-                    td { +fact.key }
-                    td(classes = "insights-mono") {
-                        val value = fact.value ?: "n/a"
-                        if (fact.tone == Tone.Neutral) +value else toneLabel(fact.tone, value)
-                    }
+    div(classes = "insights-facts") {
+        facts.forEach { fact ->
+            val value = fact.value ?: "n/a"
+
+            val width = when {
+                fact.full -> " full"
+                value.length > WIDE_FACT_CHARS -> " wide"
+                else -> ""
+            }
+
+            div(classes = "insights-fact$width") {
+                div(classes = "insights-fact-key") { +fact.key }
+                div(classes = "insights-fact-value") {
+                    if (fact.tone == Tone.Neutral) +value else toneLabel(fact.tone, value)
                 }
             }
         }
     }
 }
+
+/** From this many characters on, a fact's card takes two columns. */
+private const val WIDE_FACT_CHARS = 28
 
 /** A strip of labelled figures, the old GUI's statistics. */
 internal fun FlowContent.statStrip(cells: List<StatCell>) {
@@ -109,7 +137,8 @@ internal fun FlowContent.keyValueTable(entries: Map<String, List<String>>, keyLa
         tbody {
             entries.entries.sortedWith(compareBy(localeOrder) { it.key }).forEach { (key, values) ->
                 tr {
-                    td(classes = "insights-mono") { +key }
+                    // As narrow as the longest name: the values get the width
+                    td(classes = "collapsing insights-mono") { +key }
                     td(classes = "insights-mono insights-path") {
                         values.forEach { value ->
                             div(classes = if (value == Redacted.PLACEHOLDER) "insights-redacted" else null) { +value }
@@ -151,7 +180,8 @@ internal fun FlowContent.jsonView(value: JsonElement?) {
 /** A collapsed section, opened by its [title]. */
 internal fun FlowContent.collapsed(title: String, body: FlowContent.() -> Unit) {
     details {
-        summary { ui.small.header { +title } }
+        // The title inline in the summary, so the disclosure arrow and the title share one line
+        summary(classes = "insights-summary") { +title }
         div { body() }
     }
 }

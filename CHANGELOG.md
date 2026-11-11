@@ -310,6 +310,12 @@
   `text/javascript`. `PdfSource.Data` is copied before pdf.js gets it: pdf.js empties the array it is given, so a
   second load of the same source failed.
 
+- **Funktor insights: `TemplateInsightsCollector` is gone**, with the "View" tab in the Kraft and Vue GUIs. Its only
+  writer was the server-rendered GUI removed with ULTRA-00305, so every record carried an empty slice. Older records
+  still holding a `template` slice show it as plain JSON.
+- **Funktor core: `Routes.mountPoint` is gone.** `ApiRoutes` could not use it (an API route's endpoint is shared with
+  the client), and its last user went with the server-rendered insights GUI.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`

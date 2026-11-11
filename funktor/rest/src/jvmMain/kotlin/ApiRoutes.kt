@@ -48,10 +48,7 @@ annotation class RestDsl
 abstract class ApiRoutes(
     val name: String,
     authFloor: FloorAuthRuleBuilder.() -> Unit,
-    // A group of API routes has NO mount point and cannot have one — see the KDoc on
-    // `Routes.mountPoint`. An `ApiRoutes` route is declared by a `TypedApiEndpoint` the CLIENT owns
-    // too, and a server-side prefix is invisible to it.
-) : Routes(mountPoint = "") {
+) : Routes() {
 
     /** list with all registered routes */
     private val allRoutes = mutableListOf<ApiRoute<*>>()

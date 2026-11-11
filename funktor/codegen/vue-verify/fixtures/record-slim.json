@@ -1302,12 +1302,6 @@
         "data": {
           "entries": []
         }
-      },
-      {
-        "key": "template",
-        "data": {
-          "timeNs": null
-        }
       }
     ],
     "next": null,

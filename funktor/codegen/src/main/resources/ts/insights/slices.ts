@@ -206,32 +206,6 @@ export function readRoutingTrace(data: unknown): string | null {
 }
 
 /**
- * View render time in nanoseconds.
- *
- * **Null is the NORMAL case, not an error** -- it is null on every API request, which is most of them.
- * A tab that treats it as a failure would report a problem on almost every record.
- */
-export interface TemplateSlice {
-    /** Null is the NORMAL case -- it is null on every request that rendered no view. */
-    timeNs: number | null
-}
-
-/**
- * Returns null only when the slice is UNRECOGNISABLE, so the tab can tell that apart from
- * `{timeNs: null}`.
- *
- * The two used to collapse into one null, and the tab reported both as "no view was rendered" -- so a
- * record whose field had been renamed showed a request that took 4.5 ms as one that rendered nothing,
- * with the data displayed nowhere. Found by the review gate, 2026-08-24.
- */
-export function readTemplate(data: unknown): TemplateSlice | null {
-    const record = asRecord(data)
-    if (record === null || !('timeNs' in record)) return null
-
-    return { timeNs: asNumber(record.timeNs) }
-}
-
-/**
  * One log line from the record.
  *
  * `level` is the enum NAME — ALL, TRACE, DEBUG, INFO, WARNING, ERROR, OFF — and is deliberately
