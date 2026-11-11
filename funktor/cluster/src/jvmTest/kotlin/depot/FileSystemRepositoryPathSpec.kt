@@ -91,4 +91,24 @@ class FileSystemRepositoryPathSpec : StringSpec({
     "getMeta refuses the same paths" {
         shouldThrow<DepotInvalidPathException> { repo.getMeta("a/../../x") }
     }
+
+    "removeFile never unlinks a link outside the root, reached through a link out and back in" {
+        val outside = tempdir()
+        val data = File(root, "data.txt").apply { writeText("data") }
+        val back = File(outside, "back.txt").toPath()
+        Files.createSymbolicLink(back, data.toPath())
+        Files.createSymbolicLink(File(root, "out").toPath(), outside.toPath())
+
+        repo.removeFile("out/back.txt")
+
+        // The link outside the root is still there
+        Files.isSymbolicLink(back) shouldBe true
+    }
+
+    "an item reached through a link keeps the link's name" {
+        val target = File(root, "v43.json").apply { writeText("{}") }
+        Files.createSymbolicLink(File(root, "newest.json").toPath(), target.toPath())
+
+        repo.getFile("newest.json")!!.name shouldBe "newest.json"
+    }
 })

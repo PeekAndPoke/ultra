@@ -1,7 +1,6 @@
 # ULTRA-00304: Insights record paths and depot path hardening
 
-> **Status (2026-11-11): IN PROGRESS.** Implemented with the recommended decisions; mutation checks and the review gate next. Out-of-scope finding of ULTRA-00198's review gate; the maintainer on 2026-11-11:
-> "yes we need to harden this. Does depot allow path traversal from user input? If so we need to fix this too."
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (three rounds and a final check; ledger in ULTRA-00304). Implemented with the recommended decisions; mutation checks and the review gate next. Out-of-scope finding of ULTRA-00198's review gate; the maintainer on 2026-11-11: "yes we need to harden this. Does depot allow path traversal from user input? If so we need to fix this too."
 >
 > **Part of:** ULTRA-00253 (Epic: Insights)
 
@@ -154,6 +153,20 @@ Round-3 fixes, verified: cluster 186/186, insights 114/114, funktor-all 286/286,
 Mutations, each red: W1 the root/folder guard in `removeFile` (both new cases), W2 the `InvalidPathException`
 mapping, W3 the path as asked, W4 the pdf.js copy, W5 `getMeta`'s check.
 
+### Final check, 2026-11-11 (maintainer: "short final check"), charter 2 on the round-3 fixes only
+
+**Clean: 0 CRITICAL, 0 MAJOR** — round 3's MAJOR (M1) closed, and m2, m5 hold; the fixes add no defect.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| F | MINOR | `FileSystemRepository.kt:207` | The parent-inside guard in `removeFile` is unpinned | fix | Spec: a link outside reached through a link out and back stays; mutation W6 red |
+| F | MINOR | `CHANGELOG.md` | Non-ASCII names refused under a C locale, unsaid | fix | CHANGELOG: run with a UTF-8 locale |
+| F | NIT | `FileSystemRepository.kt:31,61` | `name` from the target while `path` is the one asked | fix | Name from the asked path; spec case |
+| F | NIT | `FileSystemRepository.kt:107` | A Windows `\` path comes back with `\` | fix | `normalised` splits on `File.separatorChar` too |
+
+**Gate verdict: PASS** (maintainer's short final check after three rounds). Follow-ups: the red-team items in
+ULTRA-00161 (44-48); docs were written with the change (ULTRA-00303).
+
 ## History
 
 - 2026-11-11: created from ULTRA-00198's gate; depot read for traversal.
@@ -183,3 +196,5 @@ mapping, W3 the path as asked, W4 the pdf.js copy, W5 `getMeta`'s check.
 - 2026-11-11: round 3 of the gate waits until the maintainer's visual sweep of the Kraft insights pages settles, so
   it reviews the final pages once.
 - 2026-11-11: round 3 (top level) not clean: one MAJOR, a defect of round 2's `removeFile` fix; fixed and mutation-checked. Third round without a clean one: back to the maintainer.
+- 2026-11-11: final check clean; its findings fixed (W6 red); gate PASS; DONE.
+- 2026-11-11: DONE.

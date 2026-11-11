@@ -1,9 +1,6 @@
 # ULTRA-00305: Funktor staticweb: remove the webjars and the server-side asset plumbing
 
-> **Status (2026-11-11): IN PROGRESS.** The maintainer: "delete staticweb entirely, go ahead" (2026-11-11). Out-of-scope finding of ULTRA-00198's gate. The maintainer on 2026-11-11: "remove
-> all webjars this project and funktor-demo does not need... should be most if not all of them. This might also mean
-> that we can remove the plumbing code for loading webjar assets into templates. Try to clean up as much code-surface
-> as possible in static-web. These are old ideas that no longer hold today."
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (three rounds and a final check; ledger in ULTRA-00304). The maintainer: "delete staticweb entirely, go ahead" (2026-11-11). Out-of-scope finding of ULTRA-00198's gate. The maintainer on 2026-11-11: "remove all webjars this project and funktor-demo does not need... should be most if not all of them. This might also mean that we can remove the plumbing code for loading webjar assets into templates. Try to clean up as much code-surface as possible in static-web. These are old ideas that no longer hold today."
 
 **Security-critical:** no (it removes the prismjs 1.29.0 webjar, which lacks the CVE-2024-53382 fix)
 
@@ -57,3 +54,5 @@ Who uses it, read 2026-11-11:
   (Kraft core, Kraft semanticui, funktor inspect). Compile sweep green: funktor-all (main and tests), insights,
   demo server and the four demo frontends.
 - 2026-11-11: funktor-all 283/283 green. The demo server's tests stop at boot on `${AWS_SES_ACCESS_KEY}` unresolved (the maintainer's pending local `keys.env.conf` entry), so "demo server starts" is not verified yet.
+- 2026-11-11: review gate PASS (with ULTRA-00304); DONE.
+- 2026-11-11: DONE.

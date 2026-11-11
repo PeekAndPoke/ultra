@@ -1,7 +1,6 @@
 # ULTRA-00303: Docs: the insights pages for Kraft and Vue (replace InsightsGui)
 
-> **Status (2026-11-11): IN PROGRESS.** `insights.astro` rewritten (steps 1-3); `staticweb.astro` waits on ULTRA-00305. The DOCS follow-up of ULTRA-00198 (Kraft insights GUI); the maintainer said
-> "yes please update the docs" on 2026-11-11.
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (three rounds and a final check; ledger in ULTRA-00304). `insights.astro` rewritten (steps 1-3); `staticweb.astro` waits on ULTRA-00305. The DOCS follow-up of ULTRA-00198 (Kraft insights GUI); the maintainer said "yes please update the docs" on 2026-11-11.
 >
 > **Part of:** ULTRA-00253 (Epic: Insights)
 
@@ -46,3 +45,5 @@ The GUI is now an API (`InsightsApiFeature`) plus two frontends: the Kraft pages
 - 2026-11-11: created as the DOCS follow-up of ULTRA-00198.
 - 2026-11-11: `insights.astro`: "Viewing records" (Kraft and Vue), the dev-server note, the ten collectors, records in the depot. The funktor LLM mirror has no insights section, so nothing to move there. Docs build green (115 pages). Left: `staticweb.astro:44-53`, removed with ULTRA-00305.
 - 2026-11-11: `staticweb.astro` removed with ULTRA-00305; no page or mirror names `InsightsGui` any more. All steps done.
+- 2026-11-11: review gate PASS (with ULTRA-00304); DONE.
+- 2026-11-11: DONE.

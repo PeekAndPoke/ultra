@@ -28,7 +28,8 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         override val path: String,
     ) : DepotItem.File {
 
-        override val name: String = file.name
+        // The name as asked for too: a link keeps its own name, not its target's
+        override val name: String = path.substringAfterLast('/').ifEmpty { file.name }
 
         override val size: Long? by lazy(LazyThreadSafetyMode.NONE) {
             try {
@@ -58,7 +59,8 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         override val path: String,
     ) : DepotItem.Folder {
 
-        override val name: String = file.name
+        // The name as asked for too: a link keeps its own name, not its target's
+        override val name: String = path.substringAfterLast('/').ifEmpty { file.name }
 
         override val lastModifiedAt: MpInstant? by lazy(LazyThreadSafetyMode.NONE) {
             try {
@@ -103,8 +105,9 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         }
     }
 
-    /** [path] as this repository reports it: `/`-separated, without empty segments. */
-    private fun normalised(path: String): String = path.split('/').filter { it.isNotEmpty() }.joinToString("/")
+    /** [path] as this repository reports it: `/`-separated (also for a Windows `\`), without empty segments. */
+    private fun normalised(path: String): String =
+        path.split('/', File.separatorChar).filter { it.isNotEmpty() }.joinToString("/")
 
     /** The path of [name] inside the folder at [parent] (a normalised path). */
     private fun childPath(parent: String, name: String): String = if (parent.isEmpty()) name else "$parent/$name"

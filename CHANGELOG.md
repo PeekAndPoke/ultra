@@ -288,7 +288,9 @@
   one. A name like `a..b` is allowed now (it was refused). `DepotApi.browse` answers 400 for such a path (it was a
   500). The file system repository's paths are `/`-separated on every platform. Files reached through a symlink that
   leads out of the root (a mounted volume linked into the depot) are no longer reachable: point the repository at
-  the link's target, or make the root itself the link.
+  the link's target, or make the root itself the link. A file name the JVM cannot encode is refused: run it with a
+  UTF-8 locale (`LANG=C.UTF-8`), as under a C locale a non-ASCII name like `März.pdf` is refused (it was written
+  with `?` in place of each such character before).
 - **Funktor insights: the record endpoint and the list show records only** (ULTRA-00304):
   `records-<yyyy-mm-dd>/<name>.json`. Any other file of the insights depot is a 404 and left out of the list, and a
   path the depot refuses is a 404 too (it was a 500).

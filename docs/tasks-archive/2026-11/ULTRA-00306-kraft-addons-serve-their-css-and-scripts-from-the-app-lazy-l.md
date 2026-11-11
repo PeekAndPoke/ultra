@@ -1,9 +1,6 @@
 # ULTRA-00306: Kraft addons: serve their CSS and scripts from the app, lazy-loaded
 
-> **Status (2026-11-11): IN PROGRESS.** Implemented; review gate next. From ULTRA-00198's gate. The maintainer on 2026-11-11: "We should be able to
-> serve assets locally, but not be compiling them into the bundle. It must be still possible to lazy-load them at
-> runtime." Earlier: "we should serve all css or other assets locally. How would this work when we publish the
-> kraft addon and use it in another project?"
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (three rounds and a final check; ledger in ULTRA-00304). Implemented; review gate next. From ULTRA-00198's gate. The maintainer on 2026-11-11: "We should be able to serve assets locally, but not be compiling them into the bundle. It must be still possible to lazy-load them at runtime." Earlier: "we should serve all css or other assets locally. How would this work when we publish the kraft addon and use it in another project?"
 
 **Security-critical:** no (it removes a third-party origin from the pages)
 
@@ -60,3 +57,5 @@ Risks the spike settles:
   "should start with http://localhost:9876"), `PdfJsSpec` (a one-page PDF opened through the worker; red with a
   broken worker URL). The admin app's build emits the four Prism stylesheets as separate files, no cdnjs URL left.
   Docs (`addons.astro`, mirror) and CHANGELOG.
+- 2026-11-11: review gate PASS (with ULTRA-00304); DONE.
+- 2026-11-11: DONE.
