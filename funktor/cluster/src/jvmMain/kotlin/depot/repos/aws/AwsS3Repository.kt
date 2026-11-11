@@ -127,7 +127,6 @@ abstract class AwsS3Repository(
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
-
         val listObjects = ListObjectsRequest.builder()
             .bucket(bucketName)
             .prefix(path)
@@ -159,7 +158,6 @@ abstract class AwsS3Repository(
     override suspend fun getFile(path: String): DepotS3File? {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
-
 
         if (path.isEmpty() || path == "/") {
             return null
@@ -208,7 +206,6 @@ abstract class AwsS3Repository(
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
-
         val request = GetObjectRequest.builder()
             .bucket(bucketName)
             .key(path)
@@ -221,7 +218,6 @@ abstract class AwsS3Repository(
     override suspend fun getMeta(path: String): DepotItemModel.Meta? {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
-
 
         if (path.isEmpty()) {
             return null
@@ -250,7 +246,6 @@ abstract class AwsS3Repository(
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
-
         val builtOptions = depotPutFileOptions(options)
 
         val request = PutObjectRequest.builder()
@@ -278,7 +273,6 @@ abstract class AwsS3Repository(
     override suspend fun removeFile(path: String): Boolean {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
-
 
         try {
             val request = DeleteObjectRequest.builder()

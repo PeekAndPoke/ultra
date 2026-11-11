@@ -17,7 +17,7 @@ and funktor-v1-roadmap plans. All open work for v1 lives here.
 | G1 — Zero CRITICAL/HIGH issues | ✅ All HIGH FIXED    | All 5 HIGH items resolved (2026-04-15)                                       |
 | G2 — Public API tested (≥25%)  | 🟡 IN PROGRESS      | vault/html/semanticui ✅ hardened (2026-04-07); Funktor modules still thin    |
 | G3 — TODOs resolved or tracked | 🟡 IN PROGRESS      | ~15 in Funktor, 5 reflection, 0 vault                                        |
-| G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache ✅, Funktor ✅ (~85% after 2026-04-13 pass); inspect/staticweb remaining |
+| G4 — KDoc 90%+ public API      | 🟡 IN PROGRESS      | cache ✅, Funktor ✅ (~85% after 2026-04-13 pass); inspect remaining (staticweb deleted 2026-11-11, ULTRA-00305) |
 | G5 — Clean build, no warnings  | ✅ ASSUMED PASSING   | Verify at release gate                                                       |
 | G6 — README per library        | ✅ DONE              |                                                                              |
 | G7 — ES2015 everywhere         | ✅ DONE (2026-04-06) | All 48 JS modules target ES2015                                              |
@@ -95,7 +95,7 @@ Raise Funktor from ~11% to 25%+ test ratio. Focus on the modules with the thinne
 | logging   | 0 tests | +6          | Log storage, appender, filtering, both backends            |
 | insights  | 0 tests | SKIP for v1 | Deprioritized — needs rework; high-level smoke only if any |
 | inspect   | 0 tests | +8          | API clients (commonMain)                                   |
-| staticweb | 1 test  | SKIP for v1 | Deprioritized — needs rework; high-level smoke only if any |
+| staticweb | —       | DELETED     | Module removed 2026-11-11 (ULTRA-00305) |
 | testing   | 0 tests | +2          | AppSpec, test harness                                      |
 
 **Deprioritized decision (2026-04-15):** `insights` and `staticweb` are slated for rework
@@ -117,7 +117,7 @@ to prove the module loads and wires into a kontainer.
 
 1. ✅ **ultra/cache KDoc blitz** — DONE (~90%)
 2. ✅ **Funktor KDoc main pass** — DONE 2026-04-13 (8 submodules)
-3. **Funktor inspect + staticweb KDoc** — internal tooling, low priority, currently ~40%
+3. **Funktor inspect KDoc** (staticweb deleted 2026-11-11, ULTRA-00305) — internal tooling, low priority, currently ~40%
 4. **Funktor TODO cleanup** — ~15 TODOs, mostly "make configurable":
     - Account activation flow (`AuthSystem.activate()`)
     - Token length + expiration configurable
@@ -133,7 +133,7 @@ to prove the module loads and wires into a kontainer.
       email hooks, SentMessages queries
     - `docs-site/src/pages/ultra/funktor/insights.astro` (THIN → GOOD): kontainer config, mounting
       InsightsGui, per-request data flow
-    - `docs-site/src/pages/ultra/funktor/staticweb.astro` (THIN → GOOD): web resource config, virtual
+    - ~~`docs-site/src/pages/ultra/funktor/staticweb.astro`~~ (deleted 2026-11-11, ULTRA-00305) (THIN → GOOD): web resource config, virtual
       host routing, full template composition
     - Update `docs-site/public/llms.txt` and `llms-full.txt` to match
 6. **FunktorConf showcase** — design done (see "FunktorConf Showcase" section below)

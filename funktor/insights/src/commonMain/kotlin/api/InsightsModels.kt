@@ -21,12 +21,13 @@ data class InsightsRecordRef(
     fun toPath(): String = "$bucket/$file"
 
     /** Whether this addresses a record, `records-<yyyy-mm-dd>/<name>.json`, rather than any file (ULTRA-00304). */
-    fun isRecord(): Boolean = RECORD_BUCKET.matches(bucket) && RECORD_FILE.matches(file) && ".." !in file
+    fun isRecord(): Boolean = RECORD_BUCKET.matches(bucket) && RECORD_FILE.matches(file)
 }
 
 // Top level, not a companion: Slumber reflects on the class and cannot reach a private companion
 private val RECORD_BUCKET = Regex("records-\\d{4}-\\d{2}-\\d{2}")
-private val RECORD_FILE = Regex("[^/\\\\]+\\.json")
+// One segment, no separator or control character (a NUL, say)
+private val RECORD_FILE = Regex("[^/\\\\\\x00-\\x1f]+\\.json")
 
 /**
  * One record in the list view.

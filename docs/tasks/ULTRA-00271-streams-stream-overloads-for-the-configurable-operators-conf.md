@@ -1,6 +1,6 @@
 # ULTRA-00271: Streams: stream overloads for the configurable operators (config is a stream)
 
-> **Status (2026-11-11): IN PROGRESS.** Implemented on master 2026-11-11 (the maintainer: "please update the ultra/streams/CLAUDE.md with the new rule and work on the implementation"); the CLAUDE.md waits for the maintainer's OK of its before/after. Was DESIGNED (2026-10-29). The maintainer's rule 2026-10-29 (answer "Rule + stream overloads"): config values are streams; existing operators get stream overloads beside the constant ones. Follows ULTRA-00264 and ULTRA-00267.
+> **Status (2026-11-11): IN PROGRESS.** Implemented on master 2026-11-11 (the maintainer: "please update the ultra/streams/CLAUDE.md with the new rule and work on the implementation"); the module CLAUDE.md was OKed by the maintainer on 2026-11-11 and committed (`1121ec95`). Was DESIGNED (2026-10-29). The maintainer's rule 2026-10-29 (answer "Rule + stream overloads"): config values are streams; existing operators get stream overloads beside the constant ones. Follows ULTRA-00264 and ULTRA-00267.
 
 **Security-critical:** no
 

@@ -13,7 +13,7 @@
 | Vue contributors — `AuthTsContributor`, `SdkContextTsContributor`, `InsightsTsContributor` | DONE. 23 `.vue`/`.ts`/`.css` resources ship from `funktor/codegen/src/main/resources/ts/` |
 | `funktor-demo/sdkgen-app` — signs in, loads the access matrix, renders the insights page in a browser | DONE 2026-08-02 |
 | The insights tabs | IN PROGRESS — ULTRA-00190 (insights vue tabs) |
-| Steps 8–9 below — delete `funktor/inspect/src/jsMain` (still 51 `.kt` files) and the staticweb cleanup | NOT STARTED |
+| Step 8 below — delete `funktor/inspect/src/jsMain` (still 51 `.kt` files); step 9 (the staticweb cleanup) DONE 2026-11-11 with ULTRA-00305 | NOT STARTED |
 
 **Two things this table is deliberately blunt about.** The `.vue` and `.css` content has never been
 through `/feature-review` — both 2026-08-09 gates covered the generator and the app shell only. And
@@ -789,7 +789,7 @@ This task depends on ULTRA-00146 (ts sdk codegen) Phase 2 (`RestApiTsContributor
 8. **The bulk** — remaining inspect sections, then insights detail views, then delete
    `funktor/inspect/src/jsMain` (51 files, 5,165 lines of Kraft) and the 33 hand-written API client and
    model files in `funktor/inspect/src/commonMain`.
-9. **staticweb cleanup**, once nothing renders server-side HTML.
+9. **staticweb cleanup**, once nothing renders server-side HTML. — DONE 2026-11-11: ULTRA-00305 deleted `funktor/staticweb` and every webjar.
 
 **What actually happened, 2026-08-02 → 08-09.** Steps 1–3, 5 and 6 are done. Step 4 is done for
 insights: `funktor/insights` has no `jsMain` source set at all any more — the old renderers sit

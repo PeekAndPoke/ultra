@@ -112,7 +112,7 @@ val updated = company.mutate {
 
 ### Funktor
 
-Full-stack Kotlin on Ktor — auth, REST, SaaS organisations, messaging, clustering, static web.
+Full-stack Kotlin on Ktor — auth, REST, SaaS organisations, messaging, clustering, insights.
 See <https://peekandpoke.io/ultra/funktor/>.
 
 ## Getting Started

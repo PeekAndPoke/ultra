@@ -10,6 +10,7 @@ import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.common.ensureDirectory
 import io.peekandpoke.ultra.datetime.MpInstant
 import java.io.File
+import java.nio.file.Files
 
 abstract class FileSystemRepository(override val name: String, dir: String) : DepotRepository {
 
@@ -68,26 +69,39 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     internal val root = File(dir).absoluteFile
 
     /** The root with symlinks resolved: every file this repository touches lies below it. */
-    private val canonicalRoot by lazy { root.canonicalFile.toPath() }
+    private val canonicalRoot: File by lazy { root.canonicalFile }
 
     /** Whether [file] lies inside the root, also after following symlinks. */
-    private fun isInside(file: File): Boolean = file.canonicalFile.toPath().startsWith(canonicalRoot)
+    private fun isInside(file: File): Boolean = file.canonicalFile.toPath().startsWith(canonicalRoot.toPath())
 
-    /** The file [path] names: a path that could leave the root throws [DepotInvalidPathException] (ULTRA-00304). */
+    /**
+     * The file [path] names, with symlinks resolved: a path that could leave the root throws
+     * [DepotInvalidPathException] (ULTRA-00304). A dangling symlink is refused too: its canonical path is the link's
+     * own, so the containment check cannot see where a write through it would land. A local writer swapping a path
+     * component for a symlink between this check and the use is out of scope.
+     */
     private fun resolve(path: String): File {
         val file = File(root, path.validateDepotPath()).absoluteFile
 
-        if (!isInside(file)) throw DepotInvalidPathException(path)
+        if (Files.isSymbolicLink(file.toPath()) && !file.exists()) throw DepotInvalidPathException(path)
 
-        return file
+        val canonical = file.canonicalFile
+
+        if (!canonical.toPath().startsWith(canonicalRoot.toPath())) throw DepotInvalidPathException(path)
+
+        return canonical
     }
 
     override val type = "File system"
 
     override val location: String = root.absolutePath
 
+    /**
+     * The path of [file] in this repository, `/`-separated on every platform: it goes back into [resolve]. Every file
+     * here comes from [resolve] or a listing of a resolved folder, so it lies under the canonical root.
+     */
     fun getPathInRepo(file: File): String {
-        return file.toRelativeString(root)
+        return file.relativeTo(canonicalRoot).invariantSeparatorsPath
     }
 
     override suspend fun listItems(path: String): List<DepotItem> {

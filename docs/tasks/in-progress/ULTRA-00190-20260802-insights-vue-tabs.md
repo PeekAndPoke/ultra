@@ -1,6 +1,6 @@
 # ULTRA-00190: Insights — the Vue detail page and its collector tabs
 
-> **Status (2026-11-10): IN PROGRESS.** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps below (icons, highlighting, sort, FQNs, `vars`) and step 10 (delete `reference/` — kept until T4 ports from it). The round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
+> **Status (2026-11-10): IN PROGRESS.** IN PROGRESS — started 2026-08-02. Gate blockers S1, I4, TAB-SPECS, D5, D6 and the harness DONE 2026-10-19 (track T1); `/feature-review` gate PASS in round 2, merged to master 2026-10-19. Still open: the inventory gaps below (icons, highlighting, sort, FQNs, `vars`) ; step 10 (delete `reference/`) DONE 2026-11-11 with ULTRA-00305. The round-2 MINORs are DONE (ULTRA-00226 (insights vue round2 minors), merged `348c66bc`)
 >
 > **Part of:** ULTRA-00253 (Insights epic)
 >

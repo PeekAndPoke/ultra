@@ -118,7 +118,8 @@ val bulb = brightness.smooth(smoothing = law)
 law(Smoothing.Spring(stiffness = 300.0, damping = 4.0))`} lang="kotlin" theme="vitesse-dark" />
 
 <p>With a law stream, <code>rest</code> and <code>near</code> may be streams as well: a new <code>near</code> applies
-    from the next frame, a new <code>rest</code> to the next motion that starts from <code>null</code>.</p>
+    from the next frame, a new <code>rest</code> to the next motion that starts from <code>null</code>. To mix a stream
+    with a constant, wrap the constant in <code>steady(x)</code>.</p>
 
 <h2>quantize</h2>
 

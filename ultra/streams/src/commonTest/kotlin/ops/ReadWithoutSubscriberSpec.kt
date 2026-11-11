@@ -137,4 +137,15 @@ class ReadWithoutSubscriberSpec : StringSpec({
 
         seen shouldBe listOf(Pair(0, "a"))
     }
+
+    "filter on a nullable stream: a passing null is the value of a read without a subscriber" {
+        val source = StreamSource<String?>("abcd")
+        val filtered = source.filter { it == null || it.length > 3 }
+
+        filtered() shouldBe "abcd"
+
+        source(null)
+
+        filtered() shouldBe null
+    }
 })

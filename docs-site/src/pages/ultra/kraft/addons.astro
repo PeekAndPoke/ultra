@@ -212,7 +212,10 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
 
     <Aside>No CDN: the addons that load CSS or a worker on demand (prismjs, pdfjs) take them from their npm package
         through <code>new URL(..., import.meta.url)</code>. Your webpack build copies the files into its output, they
-        are served from your app's origin and requested only when needed. Nothing to configure.
+        are served from your app's origin and requested only when needed. Two things to check: an app with its own
+        <code>.css</code> loader rule adds <code>dependency: {'{'} not: ['url'] {'}'}</code> to it, so these files stay
+        plain files; and its server must serve <code>.mjs</code> as <code>text/javascript</code> (the pdf.js worker is a
+        module worker).
     </Aside>
 
     <h2>chartjs — Data visualization</h2>

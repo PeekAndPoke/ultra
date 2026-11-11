@@ -67,7 +67,9 @@ source(2)  // prints "Got: 2"`} lang="kotlin" theme="vitesse-dark" />
     <h2>Writes and unsubscribes during a publish</h2>
 
     <p>A handler that writes to the stream it is told about (a clamp) starts a new publish; the older one stops, so no
-        handler ends on the older value. A handler unsubscribed during a publish is not called with its value.</p>
+        handler ends on the older value: handlers before the writer see both values, those after it only the newer one.
+        A handler unsubscribed during a publish is not called with its value. An <code>onEach</code> block may write
+        upstream the same way; the lambdas of <code>map</code>, <code>filter</code> and <code>fold</code> must not.</p>
 
     <Aside>We debated whether to swallow exceptions silently. We didn't. They're logged. You'll see them. You just won't
         lose your other subscribers over it.

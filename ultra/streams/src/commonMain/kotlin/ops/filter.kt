@@ -79,7 +79,11 @@ private class StreamFilterOperator<T>(
 
     // Nobody listening: the source's value if it passes, else the last one that passed (ULTRA-00302)
     override fun invoke(): T? {
-        if (!isSubscribedToWrapped()) wrapped().takeIf(predicate)?.let { latest = it }
+        if (!isSubscribedToWrapped()) {
+            // Explicit: a `null` that passes is a value too
+            val value = wrapped()
+            if (predicate(value)) latest = value
+        }
 
         return latest
     }

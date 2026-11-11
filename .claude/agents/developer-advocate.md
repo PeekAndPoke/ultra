@@ -18,7 +18,7 @@ Create and maintain a compelling documentation website that:
 | **Ultra**   | `ultra/`   | Foundation utilities: DI container (Kontainer), serialization (Slumber), logging, security, HTML rendering, streams |
 | **Kraft**   | `kraft/`   | Build SPAs in pure Kotlin on Preact, with a FomanticUI DSL                                                          |
 | **Mutator** | `mutator/` | KSP-generated code to mutate deeply nested immutable data structures                                                |
-| **Funktor** | `funktor/` | Full-stack Kotlin framework on Ktor (auth, REST, clustering, static web)                                            |
+| **Funktor** | `funktor/` | Full-stack Kotlin framework on Ktor (auth, REST, clustering, insights)                                              |
 | **Karango** | `karango/` | Type-safe ArangoDB access with KSP codegen                                                                          |
 | **Monko**   | `monko/`   | Object database wrapper with KSP codegen                                                                            |
 

@@ -430,12 +430,6 @@ object Deps {
         // https://www.npmjs.com/package/@nx-js/compiler-util
         fun KotlinDependencyHandler.nxJsCompilerUtil() = npm("@nx-js/compiler-util", "2.0.0")
 
-        // TODO: check update to 5.5.207
-        // https://www.npmjs.com/package/pdfjs-dist
-        // See [PdfJs.kt] as this lib is loaded asynchronously
-        @Suppress("UnusedReceiverParameter", "unused")
-        fun KotlinDependencyHandler.pdfJs() = "4.10.38"
-
         // https://www.npmjs.com/package/pixi.js
         fun KotlinDependencyHandler.pixiJs() = npm("pixi.js", "8.22.0")
 

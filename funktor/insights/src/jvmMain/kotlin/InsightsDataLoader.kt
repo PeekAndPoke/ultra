@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.insights
 
 import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.insights.api.InsightsCollectorSlice
 import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
@@ -48,8 +49,12 @@ class InsightsDataLoader(
 
         val path = ref.toPath()
 
-        val content = repository.getContent(path) ?: return null
-        val file = repository.getFile(path) ?: return null
+        // A path the depot refuses (a symlink out of the root, say) is no record either: 404, not 500
+        val (content, file) = try {
+            Pair(repository.getContent(path) ?: return null, repository.getFile(path) ?: return null)
+        } catch (_: DepotInvalidPathException) {
+            return null
+        }
 
         val root = parse(content.getContentBytes()) ?: return null
 
@@ -109,8 +114,10 @@ class InsightsDataLoader(
         var seen = 0L
 
         for (folder in dayFolders) {
+            // Only what the detail endpoint can open: a foreign file in a day folder is no row (ULTRA-00304)
             val files = repository.listItems(folder.path)
                 .filterIsInstance<DepotItem.File>()
+                .filter { it.path.toRef()?.isRecord() == true }
                 .sortedByDescending { it.name }
 
             for (file in files) {
@@ -124,6 +131,7 @@ class InsightsDataLoader(
                 // outside the window the file is never opened — only its directory entry is counted
                 if (slot < skip || slot >= skip + epp) continue
 
+                // A listed path is never refused: the listing leaves out symlinks that lead out of the root
                 val root = parse(repository.getContent(file.path)?.getContentBytes()) ?: continue
 
                 val ref = file.path.toRef() ?: continue

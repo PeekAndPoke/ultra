@@ -126,6 +126,7 @@ val count = clicks.fold(0) { acc, _ -> acc + 1 }
 
     <Code code={`val source = StreamSource<String?>(null)
 val lengths = source.foldNotNull(0) { acc, next -> acc + next.length }
+lengths.subscribeToStream { }  // a fold sees values only while someone listens
 
 println(lengths())  // 0
 
@@ -144,6 +145,7 @@ println(lengths())  // 10`} lang="kotlin" theme="vitesse-dark"/>
 
 <Code code={`val source = StreamSource(1)
 val recent = source.history(3)
+recent.subscribeToStream { }  // records only while someone listens: 1 first
 
 source(2)
 source(3)
@@ -165,6 +167,7 @@ val graph = diagnostics.sampled(every = 250.milliseconds).history(capacity = 480
 
     <Code code={`val source = StreamSource<String?>("a")
 val recent = source.historyOfNonNull(3)
+recent.subscribeToStream { }
 
 source("b")
 source(null)   // skipped

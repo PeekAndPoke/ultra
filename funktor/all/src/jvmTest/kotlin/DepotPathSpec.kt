@@ -35,25 +35,28 @@ class DepotPathSpec : FunktorApiSpec() {
             }
 
             "a symlink inside the repository that points out of it is not followed" {
-                val outside = createTempDirectory("depot-outside").toFile().apply { deleteOnExit() }
+                val outside = createTempDirectory("depot-outside").toFile()
                 File(outside, "outside-secret.txt").writeText("secret")
                 val link = File(insightsDepotDir, "link-out").toPath()
                 Files.deleteIfExists(link)
                 Files.createSymbolicLink(link, outside.toPath())
 
-                apiApp {
-                    authenticate(superUserToken) {
-                        route(DepotApi.BrowseParam(repo = "insights", path = "link-out")) {
-                            status shouldBe HttpStatusCode.BadRequest
-                        }
-                        route(DepotApi.BrowseParam(repo = "insights", path = "")) {
-                            status shouldBe HttpStatusCode.OK
-                            bodyAsText() shouldNotContain "link-out"
+                try {
+                    apiApp {
+                        authenticate(superUserToken) {
+                            route(DepotApi.BrowseParam(repo = "insights", path = "link-out")) {
+                                status shouldBe HttpStatusCode.BadRequest
+                            }
+                            route(DepotApi.BrowseParam(repo = "insights", path = "")) {
+                                status shouldBe HttpStatusCode.OK
+                                bodyAsText() shouldNotContain "link-out"
+                            }
                         }
                     }
+                } finally {
+                    Files.deleteIfExists(link)
+                    outside.deleteRecursively()
                 }
-
-                Files.deleteIfExists(link)
             }
         }
     }

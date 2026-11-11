@@ -267,7 +267,10 @@
   A handler that writes to the stream it is told about (a clamp) used to see the older value delivered after the
   newer one to the handlers behind it, which then ended on the older value; now the older publish stops. A
   `history` behind such a write records only the newer value. A handler removed during a publish was still called
-  with its value; this also froze `sampled` and left `switchMap` stale when its last subscriber left mid-publish.
+  with its value; this also froze `sampled` and left `switchMap` stale when its last subscriber left mid-publish. An
+  `onEach` block may write upstream the same way; the lambdas of `map`, `filter` and `fold` must not. Kraft's message
+  bus (`MessagesHandler`) keeps delivering every message to every handler, also one sent during another's dispatch:
+  it has its own delivery now.
 - **Streams: `mapAsync` publishes the latest value's result only** (ULTRA-00308): a mapping that finishes after a
   newer value came is dropped, so `userId.mapAsync { fetchUser(it) }` no longer ends on an older user.
 - **Streams: `debounce` and `asFlow`** (ULTRA-00309). `debounce` tells a new subscriber the current value once (it was
@@ -275,10 +278,11 @@
   drops a pending value when the last subscriber leaves. `asFlow()` is conflated: a slow collector gets the latest
   value; it lost every value beyond a buffer of 64, the latest included.
 
-- **Funktor depot: one path check for every repository** (ULTRA-00304). A path with a `.` or `..` segment, a
-  backslash or a NUL throws `DepotInvalidPathException` in the file system and the S3 repository alike; the file
-  system repository also refuses, and does not list, a symlink that leads out of its root. A name like `a..b` is
-  allowed now (it was refused). `DepotApi.browse` answers 400 for such a path (it was a 500).
+- **Funktor depot: one path check for every repository** (ULTRA-00304). A path with a `.` or `..` segment (between
+  `/` or `\`) or a NUL throws `DepotInvalidPathException` in the file system and the S3 repository alike; the file
+  system repository also refuses, and does not list, a symlink that leads out of its root, and refuses a dangling
+  one. A name like `a..b` is allowed now (it was refused). `DepotApi.browse` answers 400 for such a path (it was a
+  500). The file system repository's paths are `/`-separated on every platform.
 - **Funktor insights: the record endpoint reads records only** (ULTRA-00304): `records-<yyyy-mm-dd>/<name>.json`;
   any other file of the insights depot is a 404, as is a name with `..` (it was a 500).
 
@@ -286,12 +290,17 @@
   the CVE-2024-53382 fix, Fomantic UI CSS, lazysizes, vis.js) and `ktor-server-webjars`. Its server-rendered page
   templates, `WebResources`, flash sessions and `funktorStaticWeb()` had no users left; the frontends bring their
   assets through npm. `funktor:all` no longer pulls it in, and `Deps.Ktor.Server.full` no longer adds webjars.
+  Through staticweb, `funktor:all` also gave its users `ktor-server-html-builder`, `kotlin-css`, `ultra:html` and
+  `ultra:semanticui`; an app that uses them declares them itself now.
 
 - **Kraft prismjs and pdfjs: no CDN any more** (ULTRA-00306). Prism's theme and plugin CSS and pdf.js with its
   worker come from their npm packages: `new URL(<file>, import.meta.url)` lets the app's webpack copy the files into
   its build output, served from the app's own origin and still requested only when first needed; pdf.js is its own
   chunk. A strict CSP needs no CDN host. `PdfJs.librarySource` and `PdfJs.LibrarySrc` are gone; pdf.js is
-  `pdfjs-dist` 4.10.38 (was 4.7.76 from cdnjs). The prism CSS moves from 1.28.0 to the package's 1.30.0.
+  `pdfjs-dist` 4.10.38 (was 4.7.76 from cdnjs). The prism CSS moves from 1.28.0 to the package's 1.30.0. An app
+  with its own `.css` loader rule excludes these files (`dependency: { not: ['url'] }`); its server serves `.mjs` as
+  `text/javascript`. `PdfSource.Data` is copied before pdf.js gets it: pdf.js empties the array it is given, so a
+  second load of the same source failed.
 
 ### New
 

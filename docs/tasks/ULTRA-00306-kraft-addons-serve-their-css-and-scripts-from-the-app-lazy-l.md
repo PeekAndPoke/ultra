@@ -11,7 +11,7 @@
 
 - `kraft/addons/prismjs/src/jsMain/kotlin/PrismJsInternals.kt:61-89`: the theme and plugin CSS come from cdnjs
   (1.28.0, with SRI), while the JS comes from the npm package `prismjs` through webpack.
-- `kraft/addons/pdfjs/src/jsMain/kotlin/PdfJs.kt:55-83`: pdf.js 2.16.105 and its worker come from cdnjs.
+- `kraft/addons/pdfjs/src/jsMain/kotlin/PdfJs.kt:55-83`: pdf.js and its worker come from cdnjs (the default `LibrarySrc.CdnJs.v4_7_76`, 4.7.76).
 - Other addons: to check in step 1.
 
 ## Design (to confirm in a spike, step 1)

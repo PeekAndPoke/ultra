@@ -16,12 +16,13 @@ class FileSystemRepositorySpec : StringSpec({
 
     fun repoOver(dir: File) = object : FileSystemRepository("test", dir.absolutePath) {}
 
-    "the depot path check refuses dot segments, backslashes and NUL, and allows the rest" {
-        listOf("..", "a/../b", "./a", "a/.", "a\\b", "a${Char(0)}b").forEach { path ->
+    "the depot path check refuses dot segments and NUL, and allows the rest" {
+        listOf("..", "a/../b", "./a", "a/.", "a\\..\\b", "..\\x", "a${Char(0)}b").forEach { path ->
             shouldThrow<DepotInvalidPathException> { path.validateDepotPath() }
         }
 
-        listOf("", "/", "a/b.json", "records-2026-01-01/x.json", "a..b", "/abs/path").forEach { path ->
+        // A backslash elsewhere is allowed: S3 keys may hold one
+        listOf("", "/", "a/b.json", "records-2026-01-01/x.json", "a..b", "/abs/path", "C:\\scan.pdf").forEach { path ->
             path.validateDepotPath() shouldBe path
         }
     }
@@ -62,5 +63,28 @@ class FileSystemRepositorySpec : StringSpec({
 
         shouldThrow<DepotInvalidPathException> { repo.getContent("link-out/secret.txt") }
         repo.listItems("").map { it.name } shouldContainExactly listOf("inside.txt")
+    }
+
+    "a listed path goes back into the repository, on every platform /-separated" {
+        val dir = tempdir()
+        File(dir, "sub").mkdirs()
+        File(dir, "sub/a.txt").writeText("nested")
+
+        val repo = repoOver(dir)
+        val listed = repo.listItems("sub").single()
+
+        listed.path shouldBe "sub/a.txt"
+        String(repo.getContent(listed.path)!!.getContentBytes()) shouldBe "nested"
+    }
+
+    "a dangling symlink is refused, so a write cannot land outside the root" {
+        val dir = tempdir()
+        val outside = tempdir()
+        val target = File(outside, "not-yet.txt")
+        Files.createSymbolicLink(File(dir, "dangling").toPath(), target.toPath())
+
+        shouldThrow<DepotInvalidPathException> { repoOver(dir).putFile("dangling", "x".toByteArray()) {} }
+
+        target.exists() shouldBe false
     }
 })

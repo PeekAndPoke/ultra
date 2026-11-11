@@ -8,7 +8,8 @@ import io.peekandpoke.kraft.addons.registry.AddonRegistryBuilder
 /**
  * Facade for the lazily-loaded pdf.js addon.
  *
- * Wraps the [PdfJs] singleton, which loads the library from a CDN via ScriptLoader.
+ * Wraps the [PdfJs] singleton, which loads the library from the npm package `pdfjs-dist`: its own chunk, loaded on
+ * first use.
  */
 class PdfJsAddon internal constructor(
     private val pdfJs: PdfJs,
@@ -20,7 +21,7 @@ class PdfJsAddon internal constructor(
 /** Key for the pdfjs addon. */
 val pdfJsAddonKey = AddonKey<PdfJsAddon>("pdfjs")
 
-/** Registers the pdfjs addon for lazy loading via CDN script. */
+/** Registers the pdfjs addon; with [lazy], pdf.js is loaded on first use. */
 fun AddonRegistryBuilder.pdfJs(lazy: Boolean = false): Addon<PdfJsAddon> = register(
     key = pdfJsAddonKey,
     name = "pdfjs",

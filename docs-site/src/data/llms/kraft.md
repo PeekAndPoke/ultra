@@ -2414,7 +2414,8 @@ Available language components: `PrismKotlin`, `PrismJava`, `PrismJavascript`, `P
 Plugins: `lineNumbers()`, `copyToClipboard()`, `inlineColor()`.
 
 No CDN: prismjs CSS and the pdf.js worker come from their npm packages via `new URL(..., import.meta.url)`; the
-app's webpack copies them into its output, served from the app's origin, requested only when needed.
+app's webpack copies them into its output, served from the app's origin, requested only when needed. An app with its
+own `.css` loader rule adds `dependency: { not: ['url'] }` to it; the server must serve `.mjs` as `text/javascript`.
 
 ## PDF.js — PDF viewer
 

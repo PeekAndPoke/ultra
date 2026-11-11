@@ -7,16 +7,18 @@ import io.peekandpoke.ultra.streams.steady
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
 /** A single frame emitted by a ticker stream */
 data class TickerFrame(val count: Int, val currentTime: Double, val deltaTime: Double)
 
 /** Creates a ticker stream that emits a [TickerFrame] at the given [intervalMs] */
-fun ticker(intervalMs: Int): Stream<TickerFrame> = ticker(FrameClock.ticker(intervalMs))
+fun ticker(intervalMs: Int): Stream<TickerFrame> = ticker(interval = intervalMs.milliseconds)
 
-/** Creates a ticker stream that emits a [TickerFrame] at the given [interval] */
-fun ticker(interval: Duration): Stream<TickerFrame> = ticker(interval.inWholeIntervalMs())
+/** Creates a ticker stream that emits a [TickerFrame] at the given [interval], on coroutines in [context] */
+fun ticker(interval: Duration, context: CoroutineContext = Dispatchers.Default): Stream<TickerFrame> =
+    ticker(interval = steady(interval), context = context)
 
 /**
  * Creates a ticker stream that emits a [TickerFrame] at the [interval] it holds now, which may change (ULTRA-00271):

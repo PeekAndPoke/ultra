@@ -128,12 +128,9 @@ private class StreamDebounceOperator<T>(
                 val token = Any()
                 pending = token
 
+                // The block only checks its token: clearing the fields here could race a newer value on another thread
                 cancelPending = after(wait) {
-                    if (pending === token) {
-                        pending = null
-                        cancelPending = null
-                        invoke(value)
-                    }
+                    if (pending === token) invoke(value)
                 }
             }
         }

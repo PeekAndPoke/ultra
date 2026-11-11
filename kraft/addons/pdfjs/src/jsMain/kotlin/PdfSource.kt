@@ -28,7 +28,8 @@ suspend fun PdfSource.load(): Flow<PdfjsLib.PDFDocumentProxy> {
         })
 
         is PdfSource.Data -> PdfJs.instance().getDocument(jsObject<PdfjsLib.GetDocumentParameters> {
-            this.data = src.data
+            // A copy: pdf.js transfers the array to its worker, which empties the caller's, so a second load failed
+            this.data = src.data.asDynamic().slice().unsafeCast<Uint8Array>()
         })
     }
 }

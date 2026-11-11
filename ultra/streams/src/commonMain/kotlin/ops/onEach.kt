@@ -17,10 +17,15 @@ private class StreamOnEachOperator<T>(
     private val block: (T) -> Unit,
 ) : StreamWrapper<T>(wrapped = wrapped) {
 
+    /** Counts the incoming values: a block that wrote upstream has had the newer value passed on already. */
+    private var incoming = 0
+
     override fun handleIncoming(value: T) {
+        val own = ++incoming
 
         block(value)
 
-        super.handleIncoming(value)
+        // The block wrote a newer value upstream, which was passed on during it: this older one is not (ULTRA-00307)
+        if (own == incoming) super.handleIncoming(value)
     }
 }

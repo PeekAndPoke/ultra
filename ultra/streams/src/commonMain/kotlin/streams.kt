@@ -28,7 +28,7 @@ internal fun <T> ownEntry(handler: StreamHandler<T>): StreamHandler<T> = { handl
  * During the notification (ULTRA-00307): a handler removed meanwhile is skipped, as its unsubscribe has returned; once
  * [superseded], a newer notification of the same publisher has reached every handler, so this one stops.
  */
-internal fun <T> notifyHandlers(handlers: Set<StreamHandler<T>>, value: T, superseded: () -> Boolean = { false }) {
+internal fun <T> notifyHandlers(handlers: Set<StreamHandler<T>>, value: T, superseded: () -> Boolean) {
     for (handler in handlers.toList()) {
         if (superseded()) return
         if (handler !in handlers) continue

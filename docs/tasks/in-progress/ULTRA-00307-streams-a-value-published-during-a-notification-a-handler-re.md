@@ -48,6 +48,34 @@ Every publisher has the pattern: `StreamSourceImpl.invoke(next)`, `StreamWrapper
   before the fix.
 - `:ultra:streams:allTests` green; the Kraft and Klang users of streams compile and their tests are green.
 
+## Review record (the ledger) — streams gate (ULTRA-00302, 00307, 00308, 00309, 00271)
+
+Round 1, 2026-11-11, level 1 (`reviewer-high`), blind; charters 1 (implementation) and 2 (domain). The security charter
+was left out by risk: no auth, tenancy or data boundary in the change; the persistence item (F9) is covered by
+charter 1 and a mutation check.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `ops/onEach.kt:20-25` | An `onEach` block that writes upstream still leaves subscribers on the older value; the docs promise no handler does (domain M1) | fix | Confirmed by reading: `block` runs the nested publish, then `onEach` publishes the older value with a fresh notification. `onEach` counts incoming values; the docs say `map`/`filter`/`fold` lambdas must not write upstream |
+| 1 | MINOR | `kraft/core/.../messages/MessagesHandler.kt:10-18` | Kraft's message bus is a `StreamSource`: latest-wins drops a message for later handlers when a handler sends another synchronously (domain m1) | fix | An event bus must deliver every message; a queue is out because `sendMessage` reads `isStopped` right after `send()`. `MessagesHandler` gets its own delivery, every handler, in order, as before ULTRA-00307 |
+| 1 | MINOR | `combining.astro:127-175`, `streams.md:446-453` | `history`/`historyOfNonNull`/`foldNotNull` examples have no subscriber, so they print nothing (impl F-B, domain m2) | fix | Confirmed: they record only while listened to; the examples subscribe first |
+| 1 | MINOR | `ops/debounce.kt:131-137` | Clearing `pending`/`cancelPending` in the timer block can lose the newest value across threads (impl F-A) | fix | The block only checks its token; the fields are reset by `incoming` and `stopListening` |
+| 1 | MINOR | `ops/filter.kt:82` | Nullable `filter`: a read without a subscriber ignores a passing `null` (impl F-C, domain n1) | fix | `takeIf` cannot tell a passing `null`; explicit check as in the initial-value variant |
+| 1 | MINOR | `ultra/streams/CLAUDE.md` | Committed although ULTRA-00271 says it waits for the OK (impl, domain m3) | reject | The maintainer gave the OK on 2026-11-11 ("CLAUDE.md ok"); the ticket header was stale and is updated |
+| 1 | NIT | `streams.kt:31` | `superseded` default unused (impl F-D) | fix | Removed |
+| 1 | NIT | `ops/ticker.kt:16-19`, `ops/debounce.kt:21` | Constant overloads not via `steady`, no `context` (impl F-E) | fix | `ticker(Duration, context)` through `steady`; `debounce(delayMs)` already delegates; the Duration overload has the context |
+| 1 | NIT | `ops/fallback.kt:9,16` | On a `Stream<Any?>`, `fallbackTo(stream)` now takes the stream's value (domain n2) | reject | Only an `Any`-typed stream; the stream overload is the more specific one by design (ULTRA-00271) |
+| 1 | NIT | `smooth`/`quantize` | Mixed constant and stream config has no overload (domain n3) | fix (docs) | The docs say to wrap a constant in `steady()` |
+| 1 | — | docs "Writes during a publish" | Handlers before the writer see both values, after it only the newer one (domain m1 note) | fix (docs) | One sentence |
+
+Round-1 fixes, verified: streams JVM 174/174, browser 208/208, Kraft core 219/219. Mutations, each red: R2-onEach
+(the counter), R2-filter-null; `MessagesHandlerSpec` red on the old bus ("x" lost).
+
+Probed and clean (round 1): `Notifier`'s superseded logic in every nested publish path (sources, wrappers, combinator,
+cutoff, switchMap, smooth, debounce, history), diamonds, count overflow; F2 membership; `NotificationSpec` traced red
+on the old code; mapAsync latest-wins; read semantics consistent ("what a new subscriber would be told"); overloads
+unambiguous; `readStored` compatible with Klang's storage; no implementor of the changed base classes in the repo.
+
 ## History
 
 - 2026-11-11: created from the operator audit (findings F1, F2).

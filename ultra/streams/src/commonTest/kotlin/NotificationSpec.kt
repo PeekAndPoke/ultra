@@ -6,6 +6,7 @@ import io.peekandpoke.ultra.streams.ops.HandClock
 import io.peekandpoke.ultra.streams.ops.combinedWith
 import io.peekandpoke.ultra.streams.ops.distinct
 import io.peekandpoke.ultra.streams.ops.map
+import io.peekandpoke.ultra.streams.ops.onEach
 import io.peekandpoke.ultra.streams.ops.sampled
 import io.peekandpoke.ultra.streams.ops.switchMap
 import kotlin.time.Duration
@@ -92,5 +93,17 @@ class NotificationSpec : StringSpec({
         inner("c")
 
         switched() shouldBe "c"
+    }
+
+    "an onEach block that writes upstream does not leave its subscribers on the older value" {
+        val source = StreamSource(0)
+        val clamped = source.onEach { if (it < 0) source(0) }
+        var shown = 99
+        clamped.subscribeToStream { shown = it }
+
+        source(-5)
+
+        shown shouldBe 0
+        clamped() shouldBe 0
     }
 })

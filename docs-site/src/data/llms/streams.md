@@ -445,6 +445,7 @@ Keep a sliding window of recent values:
 ```kotlin
 val source = StreamSource(1)
 val recent = source.history(3)
+recent.subscribeToStream { }  // records only while someone listens: 1 first
 
 source(2)
 source(3)
@@ -555,6 +556,7 @@ exactly and stops asking for frames. Upstream only while listened to.
 The law may be a `Stream<out Smoothing?>` (any stream of laws) and change mid-motion: `brightness.smooth(smoothing = law)`, then
 `law(Smoothing.Spring(...))`; the next step goes on from the current position and speed. `null` passes values at once. With a law stream, `rest`
 and `near` may be streams too: a new `near` applies from the next frame, a new `rest` to the next start from `null`.
+To mix a stream with a constant, wrap the constant in `steady(x)`.
 
 ## quantize
 
@@ -631,7 +633,9 @@ class UserDashboard {
 ## Writes and unsubscribes during a publish
 
 A handler that writes to the stream it is told about starts a new publish; the older one stops, so no handler ends on
-the older value. A handler unsubscribed during a publish is not called with its value.
+the older value: handlers before the writer see both values, those after it only the newer one. A handler
+unsubscribed during a publish is not called with its value. An `onEach` block may write upstream the same way; the
+lambdas of `map`, `filter` and `fold` must not.
 
 ## Error resilience
 
