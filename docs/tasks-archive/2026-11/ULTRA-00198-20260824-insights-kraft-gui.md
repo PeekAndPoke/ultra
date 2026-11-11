@@ -1,6 +1,6 @@
 # ULTRA-00198: Insights — the Kraft (Kotlin/JS) GUI, on par with the Vue one
 
-> **Status (2026-11-10): IN PROGRESS.** PAUSED 2026-10-19 (maintainer: budget precaution before the 0.114.0 release) — started as track T4 on `wt/insights-kraft` (worktree `/opt/dev/peekandpoke/ultra-wt/insights-kraft`). Done so far, UNVERIFIED, committed as WIP `24e745bf`: the four endpoint declarations moved to a commonMain `InsightsApiClient`, the API models moved to commonMain, the server mounts them. Next on resume: re-take the generated-TS baseline FROM MASTER (the implementer's copy was not kept), regenerate on the branch, `diff -r` (must be empty or explained), run the module tests, then the pages. Created 2026-08-24. **Maintainer decision: yes, and the two should be mostly on par.**
+> **Status (2026-11-11): DONE.** Review gate PASS after round 3 (clean). Follow-ups: ULTRA-00303 (DOCS), ULTRA-00304 (record paths and depot hardening), ULTRA-00305 (staticweb and webjars removal), ULTRA-00306 (addon assets served locally), red team ULTRA-00161 items 44-48. The DOCS follow-up is written against settled code: the pages and both addons are on master.
 >
 > **Part of:** ULTRA-00253 (Insights epic)
 >
@@ -239,11 +239,11 @@ rounds 1-2 confirmed holding by all three. The MINORs and NITs below were fixed 
 | 3 | NIT | `kraft/examples/addons` | No visnetwork example; tab items and sort headers not keyboard-reachable (impl, domain) | **maintainer list** | |
 
 **Gate verdict: PASS** on findings (no open CRITICAL or MAJOR; e2e for the server side in `funktor/all`; browser tests
-green: inspect 14/14, prism 5+2, visnetwork 3/3; demo admin compiles). Archive waits on the follow-up tickets below.
+green: inspect 14/14, prism 5+2, visnetwork 3/3; demo admin compiles). Follow-ups created 2026-11-11: ULTRA-00303 (DOCS), ULTRA-00304, ULTRA-00305, ULTRA-00306, ULTRA-00161 items 44-48.
 
 Out of scope, noted by security in round 2: `InsightsDataLoader.kt:46` uses `bucket/file` as a depot path unvalidated
 (superuser only, pre-existing); `funktor/staticweb` ships the prismjs 1.29.0 webjar, below the CVE-2024-53382 fix.
-Disposition **out-of-scope → follow-up task**, pending the maintainer's OK to create them (asked 2026-11-10). Checked:
+Disposition **out-of-scope → follow-up task**: ULTRA-00304 (paths) and ULTRA-00305 (webjars), created 2026-11-11 on the maintainer's OK. Checked:
 the depot is not the problem (the FS repository refuses `..` and `File(root, "/abs")` stays under root; S3 keys are
 literal); the loader accepts any path inside the insights repository instead of `records-<date>/<name>.json`, and a `..`
 answers 500 instead of 404.
@@ -257,3 +257,5 @@ auth floor and `requireActiveInsights` unchanged; legacy and withheld vault data
 - 2026-10-21: numbered ULTRA-00198 (was `docs/tasks/20260824-insights-kraft-gui.md`).
 - 2026-11-10: IN PROGRESS.
 - 2026-11-10: addons (`b9060d6f`, `33c05401`) and the pages built; review gate next.
+- 2026-11-11: gate PASS (round 3 clean); follow-up tickets created; DONE.
+- 2026-11-11: DONE.

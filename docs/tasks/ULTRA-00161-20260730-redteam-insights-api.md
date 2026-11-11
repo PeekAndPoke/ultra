@@ -159,6 +159,25 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
     an app that never instruments a route. And on a dev/qa box with the switch on: which hosts of the app answer the
     insights API (every host routing `InsightsApiFeature`), and does any of them face the internet?
 
+### Added 2026-11-11 from ULTRA-00198 (the Kraft insights GUI)
+
+44. **Stored payloads in the Kraft pages** — a record whose path, headers, query values, body, AQL text or log
+    lines carry `</code><img src=x onerror=...>`, `{{...}}`, a `language-*` class or a vis-network label with HTML.
+    Check every place the Kraft pages render them: plain text, Prism-highlighted blocks (Prism builds HTML from
+    tokens; manual mode since ULTRA-00198), the vis-network graphs (node `title` as a string is text in
+    vis-network 9+; confirm the version and that no element title is built from record data).
+45. **The record path in the URL** — `/insights/details/<bucket>/<file>` with `..`, `%2e%2e`, an absolute path, a
+    backslash, a non-`.json` file, a folder: must be 404, never 500, never a file outside `records-<date>/`
+    (fix: ULTRA-00304, which also covers the depot paths).
+46. **Redaction in the GUI** — values the server marked `***redacted***` (`Redacted.PLACEHOLDER`): confirm no tab,
+    raw-JSON view or copy button shows the original, i.e. the server never sends it. Query values are shown again
+    (maintainer, 2026-11-09): confirm a `?token=` value is redacted before it reaches the record.
+47. **Cached graphs across users** — `InsightsGraphSource` caches graphs in the browser tab and forgets them only when
+    the list page opens. Log out and in as a non-superuser in the same tab, deep-link a record page: is a graph
+    of the earlier session shown? Are the Kraft routes guarded, or only the API?
+48. **A host app's own Prism** — an app with a global Prism in auto mode highlights every `language-*` block on the
+    page, including record data; see 44.
+
 ## Known, accepted, time-boxed
 
 17. The kotlinx.html GUI routes stay reachable **without any credential** until the Vue rewrite removes
@@ -168,3 +187,4 @@ what the `isSuperUser()` floor guards. Scenarios 1-4, 15, 16 and 21 above now al
 ## History
 
 - 2026-10-21: numbered ULTRA-00161 (was `docs/tasks/20260730-redteam-insights-api.md`).
+- 2026-11-11: items 44-48 added from ULTRA-00198 (the Kraft insights GUI).
