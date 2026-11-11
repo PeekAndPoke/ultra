@@ -40,11 +40,18 @@ class PdfJs private constructor(private val lib: PdfjsLib) {
         }
     }
 
-    /** Loads a PDF document from [src] parameters (e.g. binary data) and emits the document proxy. */
+    /**
+     * Loads a PDF document from [src] parameters (e.g. binary data) and emits the document proxy. Binary `data` is
+     * copied first: pdf.js transfers the array it gets to its worker, which empties the caller's.
+     */
     fun getDocument(src: PdfjsLib.GetDocumentParameters): Flow<PdfjsLib.PDFDocumentProxy> {
+        // A new parameter object with a copy of the data: the caller's object and array stay as they were
+        val params: dynamic = js("Object.assign({}, src)")
+        if (params.data != null) params.data = params.data.slice()
+
         return flow {
             emit(
-                lib.getDocument(src).promise.await()
+                lib.getDocument(params.unsafeCast<PdfjsLib.GetDocumentParameters>()).promise.await()
             )
         }
     }

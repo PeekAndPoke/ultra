@@ -88,7 +88,7 @@ and user name of the server included; the fixtures keep six keys.
 ## `template` (gone)
 
 The collector was removed on 2026-11-11 (it had no writer since the server-rendered GUI went). Records written before
-carry `{ "timeNs": null }` under this key; both GUIs show such an unknown slice as plain JSON.
+carry `{ "timeNs": null }` under this key; both GUIs drop it (`RETIRED_SLICES`): it gets no tab.
 
 ## `vault`
 

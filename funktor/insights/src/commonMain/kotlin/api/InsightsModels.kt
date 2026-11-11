@@ -21,7 +21,7 @@ data class InsightsRecordRef(
     fun toPath(): String = "$bucket/$file"
 
     /** Whether this addresses a record, `records-<yyyy-mm-dd>/<name>.json`, rather than any file (ULTRA-00304). */
-    fun isRecord(): Boolean = RECORD_BUCKET.matches(bucket) && RECORD_FILE.matches(file)
+    internal fun isRecord(): Boolean = RECORD_BUCKET.matches(bucket) && RECORD_FILE.matches(file)
 }
 
 /** Whether [name] is a day folder of records, `records-<yyyy-mm-dd>` (ULTRA-00304). */

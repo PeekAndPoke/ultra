@@ -2,6 +2,7 @@ package io.peekandpoke.funktor.demo.server.api.showcase
 
 import io.peekandpoke.funktor.cluster.cluster
 import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.cluster.storage.RandomDataStorage
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.funktor.demo.common.showcase.DepotFileInfo
@@ -21,9 +22,9 @@ import io.peekandpoke.funktor.rest.docs.codeGen
 import io.peekandpoke.funktor.rest.docs.docs
 import io.peekandpoke.ultra.remote.ApiResponse
 import io.peekandpoke.ultra.vault.map
-import kotlinx.coroutines.delay
 import java.util.Base64
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 
 data class ClusterShowcaseRepoParams(val repo: String)
 
@@ -230,8 +231,14 @@ class ClusterAdminShowcaseApi : ApiRoutes("showcase-cluster-admin", authFloor = 
                 ApiResponse.ok(DepotUploadResponse(success = false, path = body.path))
             } else {
                 val content = Base64.getDecoder().decode(body.contentBase64)
-                repo.putFile(body.path, content)
-                ApiResponse.ok(DepotUploadResponse(success = true, path = body.path))
+
+                try {
+                    repo.putFile(body.path, content)
+                    ApiResponse.ok(DepotUploadResponse(success = true, path = body.path))
+                } catch (_: DepotInvalidPathException) {
+                    // A path that could leave the repository is a bad request, as in DepotApi
+                    ApiResponse.badRequest<DepotUploadResponse>().withError("Invalid path")
+                }
             }
         }
     }

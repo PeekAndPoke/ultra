@@ -64,12 +64,20 @@ funktor {
 
     <h3>Vue</h3>
 
-    <p>The generated TypeScript SDK ships the same pages. <code>mountAll(router)</code> adds the
+    <p>The generated TypeScript SDK ships the same pages. Load its stylesheets first, give the app the SDK's config
+        (the contributed pages get their API client from it), then <code>mountAll(router)</code> adds the
         <code>/insights</code> route, and <code>navItems</code> its menu entry:</p>
 
-    <Code code={`import { mountAll } from './funktorsdk/mount.ts'
+    <Code code={`import './funktorsdk/styles.ts' // first, before anything renders
 
-mountAll(router)`} lang="ts" theme="vitesse-dark"/>
+import { createApp } from 'vue'
+import { mountAll } from './funktorsdk/mount.ts'
+import { provideSdkConfig } from './funktorsdk/ui/sdkContext.ts'
+
+const app = createApp(App)
+provideSdkConfig(app, config) // required: without it the insights page fails on first render
+mountAll(router)
+app.use(router).mount('#app')`} lang="ts" theme="vitesse-dark"/>
 
     <Aside>A record page's path ends in <code>.json</code>. A webpack dev server serving the app needs
         <code>historyApiFallback: {'{'} disableDotRule: true {'}'}</code>, or a reload of that page answers 404.

@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.common.ensureDirectory
 import io.peekandpoke.ultra.datetime.MpInstant
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 
 abstract class FileSystemRepository(override val name: String, dir: String) : DepotRepository {
 
@@ -20,11 +21,12 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         }
     }
 
+    /** A file; [path] is the path it was asked for, while [file] is where it lies, symlinks resolved. */
     data class FsFile(
         override val repo: FileSystemRepository,
         private val file: File,
+        override val path: String,
     ) : DepotItem.File {
-        override val path by lazy { repo.getPathInRepo(file) }
 
         override val name: String = file.name
 
@@ -49,11 +51,12 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         }
     }
 
+    /** A folder; [path] is the path it was asked for, while [file] is where it lies, symlinks resolved. */
     data class FsFolder(
         override val repo: FileSystemRepository,
         private val file: File,
+        override val path: String,
     ) : DepotItem.Folder {
-        override val path by lazy { repo.getPathInRepo(file) }
 
         override val name: String = file.name
 
@@ -68,8 +71,11 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
 
     internal val root = File(dir).absoluteFile
 
-    /** The root with symlinks resolved: every file this repository touches lies below it. */
-    private val canonicalRoot: File by lazy { root.canonicalFile }
+    /**
+     * The root with symlinks resolved: every file this repository touches lies below it. Read on every call, not
+     * cached: a root that is a link may be re-pointed while the app runs.
+     */
+    private val canonicalRoot: File get() = root.canonicalFile
 
     /** Whether [file] lies inside the root, also after following symlinks. */
     private fun isInside(file: File): Boolean = file.canonicalFile.toPath().startsWith(canonicalRoot.toPath())
@@ -83,22 +89,33 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     private fun resolve(path: String): File {
         val file = File(root, path.validateDepotPath()).absoluteFile
 
-        if (Files.isSymbolicLink(file.toPath()) && !file.exists()) throw DepotInvalidPathException()
+        return try {
+            if (Files.isSymbolicLink(file.toPath()) && !file.exists()) throw DepotInvalidPathException()
 
-        val canonical = file.canonicalFile
+            val canonical = file.canonicalFile
 
-        if (!canonical.toPath().startsWith(canonicalRoot.toPath())) throw DepotInvalidPathException()
+            if (!canonical.toPath().startsWith(canonicalRoot.toPath())) throw DepotInvalidPathException()
 
-        return canonical
+            canonical
+        } catch (_: InvalidPathException) {
+            // A name the platform cannot encode (an unpaired surrogate, a non-ASCII name under a C locale)
+            throw DepotInvalidPathException()
+        }
     }
+
+    /** [path] as this repository reports it: `/`-separated, without empty segments. */
+    private fun normalised(path: String): String = path.split('/').filter { it.isNotEmpty() }.joinToString("/")
+
+    /** The path of [name] inside the folder at [parent] (a normalised path). */
+    private fun childPath(parent: String, name: String): String = if (parent.isEmpty()) name else "$parent/$name"
 
     override val type = "File system"
 
     override val location: String = root.absolutePath
 
     /**
-     * The path of [file] in this repository, `/`-separated on every platform: it goes back into [resolve]. Every file
-     * here comes from [resolve] or a listing of a resolved folder, so it lies under the canonical root.
+     * The path of [file] in this repository, `/`-separated on every platform: it goes back into [resolve]. For a file
+     * under the canonical root.
      */
     fun getPathInRepo(file: File): String {
         return file.relativeTo(canonicalRoot).invariantSeparatorsPath
@@ -106,14 +123,16 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
 
     override suspend fun listItems(path: String): List<DepotItem> {
         val dir = resolve(path)
+        // The entries carry the folder's path as asked for, also when the folder is a link inside the root
+        val parent = normalised(path)
 
         return (dir.listFiles() ?: emptyArray())
             // A symlink pointing out of the root is not listed; any other entry of a resolved folder is inside it
             .filter { !Files.isSymbolicLink(it.toPath()) || isInside(it) }
             .mapNotNull {
                 when {
-                    it.isFile -> FsFile(repo = this, file = it)
-                    it.isDirectory -> FsFolder(repo = this, file = it)
+                    it.isFile -> FsFile(repo = this, file = it, path = childPath(parent, it.name))
+                    it.isDirectory -> FsFolder(repo = this, file = it, path = childPath(parent, it.name))
                     else -> null
                 }
             }
@@ -131,7 +150,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         val file = resolve(path)
 
         return when {
-            file.exists() && file.isFile -> FsFile(repo = this, file = file)
+            file.exists() && file.isFile -> FsFile(repo = this, file = file, path = normalised(path))
             else -> null
         }
     }
@@ -140,7 +159,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         val file = resolve(path)
 
         return when {
-            file.exists() && file.isDirectory -> FsFolder(repo = this, file = file)
+            file.exists() && file.isDirectory -> FsFolder(repo = this, file = file, path = normalised(path))
             else -> null
         }
     }
@@ -155,6 +174,9 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     }
 
     override suspend fun getMeta(path: String): DepotItemModel.Meta? {
+        // No meta here, but the same paths are refused as everywhere
+        resolve(path)
+
         return null
     }
 
@@ -172,16 +194,21 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         // TODO: apply encryption to [content]
         file.writeBytes(content)
 
-        return FsFile(repo = this, file = file)
+        return FsFile(repo = this, file = file, path = normalised(path))
     }
 
     /** Remove a file with a certain uri */
     override suspend fun removeFile(path: String): Boolean {
         val file = resolve(path)
 
-        // A symlink inside the root is removed itself: deleting through it would delete the file it points to
+        // A link to a file, lying in a folder inside the root, is removed itself: deleting through it would delete the
+        // file it points to. Never the root (path ""), never a link to a folder, never a link outside the root.
         val link = File(root, path).absoluteFile
-        if (Files.isSymbolicLink(link.toPath())) return link.delete()
+        val linkInside = link != root && link.parentFile?.let { isInside(it) } == true
+
+        if (Files.isSymbolicLink(link.toPath())) {
+            return linkInside && link.isFile && link.delete()
+        }
 
         return file.exists() && file.isFile && file.delete()
     }

@@ -2303,7 +2303,7 @@ the addon becomes ready — subscribing is just like any other stream.
 | `prismjs`                | [Prism](https://prismjs.com/)                | Syntax highlighting with plugins    |
 | `chartjs`                | [Chart.js](https://www.chartjs.org/)         | Bar, line, pie, radar charts        |
 | `visnetwork`             | [vis-network](https://visjs.github.io/vis-network/docs/network/) | Network graphs, physics layout |
-| `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser (loaded on first use) |
+| `pdfjs`                  | [pdf.js](https://mozilla.github.io/pdf.js/)  | Render PDFs in-browser (from npm, no CDN) |
 | `pixijs`                 | [PixiJS v8](https://pixijs.com/)             | 2D WebGL/WebGPU rendering           |
 | `threejs`                | [Three.js](https://threejs.org/)             | 3D WebGL rendering                  |
 | `signaturepad`           | SignaturePad                                 | Capture handwritten signatures      |

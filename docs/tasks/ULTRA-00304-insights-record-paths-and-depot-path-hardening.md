@@ -123,6 +123,37 @@ Round-2 fixes, verified: funktor-all 286/286, cluster 181/181, insights 114/114,
 Mutations, each red: Y1 the siblings filter, Y2 removing the link not the target, Y3 the listing's symlink filter.
 `ShowcaseDepotAuthTest` compiles; not run (demo boot key, demo server running).
 
+### Round 3, 2026-11-11, level 3 (`reviewer-top`), two-phase; charters 1, 2 and 3
+
+Run on the maintainer's word after the safety valve ("run the review now"). Phase 1 leaks: charter 1 saw two ledger
+lines through a grep and the section heading, charter 2 one row (the `.mjs` docs row); neither built a finding on them.
+Result: **NOT clean — 1 MAJOR** (charter 2, held in phase 2). Charters 1 and 3: 0 CRITICAL, 0 MAJOR.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 | MAJOR | `FileSystemRepository.kt:179-187` | `removeFile("")` unlinks a root that is a symlink (the CHANGELOG's own migration); the link branch also removes links to folders (domain M1; impl M1 and security MINOR 1 as MINOR, plus a link outside the root reached through a link) | fix | Experiment: `File(root, "")` is the root and a symlink. The branch now removes only a link to a file whose folder lies inside the root, never the root; spec cases for a linked root (`""`, `"/"`) and a folder link. A defect of round 2's own fix |
+| 3 | MINOR | `FileSystemRepository.kt:83-93` | Items reached through a link inside the root report the target's path (impl M2) | fix | IO stays on the canonical file; `FsFile`/`FsFolder` carry the path as asked for, listings the folder's own path; spec case |
+| 3 | MINOR | `FileSystemRepository.kt:72` | Canonical root cached; a re-pointed root link refuses everything until restart (domain m2) | fix | Read per call |
+| 3 | MINOR | `FileSystemRepository.kt:86,90` | `InvalidPathException` from `toPath()` escapes as a 500 (security MINOR 2) | fix | Mapped to `DepotInvalidPathException`; spec with `Char(0xD800)` |
+| 3 | MINOR | `CHANGELOG.md`, `TAB-SPECS.md` | Old `template` slices "show as plain JSON"; both GUIs drop them (all three) | fix | "get no tab"; the CHANGELOG also names an app's own `template` collector (domain N2) |
+| 3 | MINOR | `insights.astro:65-72` | The Vue snippet omits `provideSdkConfig` and `styles.ts`; the page throws (impl M4) | fix | Snippet from the demo's `main.ts` |
+| 3 | MINOR | `InsightsDataLoaderSpec.kt:390-405` | The `is DepotItem.File` siblings clause is unpinned (impl M6) | fix | A folder `c.json` planted |
+| 3 | MINOR | `CHANGELOG.md` | The pdf.js entry does not say what `librarySource` users lose (domain m4) | fix | Version/build/host choice gone, the modern build needs Safari 17.4+, an app's own `pdfjs-dist` is shared |
+| 3 | MINOR | `PdfJs.kt:43-50` | `getDocument(params)` still hands over the caller's array (domain m5, gap of round-1 row) | fix | The copy moved into `getDocument` (a new parameter object); `PdfSource` relies on it; spec loads the same bytes twice |
+| 3 | NIT | `InsightsModels.kt:24` | `isRecord()` public (domain N1) | fix | `internal` |
+| 3 | NIT | `addons.astro:105`, `kraft.md:2306`, `pdfjs_addon.kt` | "loaded on first use" left in the table, mirror and KDoc (gap of round-2 row) | fix | |
+| 3 | NIT | `ClusterShowcaseApi.kt:233` | The demo upload answers 500 for a refused path (security NIT 5, impl N5) | fix | 400, as DepotApi |
+| 3 | NIT | `CHANGELOG.md` | "removeFile removes the link" listed as breaking: the released code did that already (impl N1) | fix | Line removed |
+| 3 | NIT | `CHANGELOG.md` | The list's narrowing to records unmentioned (impl N2) | fix | |
+| 3 | NIT | `FileSystemRepository.kt:157` | FS `getMeta` checks no path (impl N3) | fix | It resolves the path; spec case |
+| 3 | NIT | `InsightsRecordPathSpec` | `records-2026-01-05` not cleaned; two containers of one name; a title counting NUL as an existing file (impl N4, security) | fix | |
+| 3 | NIT | addon READMEs | APIs that do not exist and a wrong docs host (domain N5) | out of scope → follow-up | Predates this change |
+| 3 | — | withdrawn in phase 2 | security MINOR 3 (`..` cases), the `invariantSeparatorsPath` surplus claim; impl M5, M7, N7; domain N3, N4, the es5 note | withdrawn | Reasons named in the reconciles |
+
+Round-3 fixes, verified: cluster 186/186, insights 114/114, funktor-all 286/286, demo 52/52, pdfjs 4/4, docs build.
+Mutations, each red: W1 the root/folder guard in `removeFile` (both new cases), W2 the `InvalidPathException`
+mapping, W3 the path as asked, W4 the pdf.js copy, W5 `getMeta`'s check.
+
 ## History
 
 - 2026-11-11: created from ULTRA-00198's gate; depot read for traversal.
@@ -151,3 +182,4 @@ Mutations, each red: Y1 the siblings filter, Y2 removing the link not the target
   `Routes.mountPoint` removed; the lock file carries `pdfjs-dist` and `@napi-rs/canvas`.
 - 2026-11-11: round 3 of the gate waits until the maintainer's visual sweep of the Kraft insights pages settles, so
   it reviews the final pages once.
+- 2026-11-11: round 3 (top level) not clean: one MAJOR, a defect of round 2's `removeFile` fix; fixed and mutation-checked. Third round without a clean one: back to the maintainer.

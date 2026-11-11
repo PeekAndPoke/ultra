@@ -43,4 +43,52 @@ class FileSystemRepositoryPathSpec : StringSpec({
         Files.exists(link, LinkOption.NOFOLLOW_LINKS) shouldBe false
         target.readText() shouldBe "data"
     }
+
+    "removeFile with an empty path leaves a root that is a link alone" {
+        val volume = tempdir()
+        File(volume, "data.txt").writeText("data")
+        val holder = tempdir()
+        val linkedRoot = File(holder, "depot").toPath()
+        Files.createSymbolicLink(linkedRoot, volume.toPath())
+
+        val linked = object : FileSystemRepository("test", linkedRoot.toString()) {}
+
+        linked.removeFile("") shouldBe false
+        linked.removeFile("/") shouldBe false
+
+        Files.isSymbolicLink(linkedRoot) shouldBe true
+        File(volume, "data.txt").readText() shouldBe "data"
+    }
+
+    "removeFile on a link to a folder removes nothing" {
+        val folder = File(root, "v7").apply { mkdirs() }
+        File(folder, "a.txt").writeText("a")
+        val link = File(root, "current").toPath()
+        Files.createSymbolicLink(link, folder.toPath())
+
+        repo.removeFile("current") shouldBe false
+
+        Files.isSymbolicLink(link) shouldBe true
+        File(folder, "a.txt").readText() shouldBe "a"
+    }
+
+    "items reached through a link inside the root keep the path they were asked for" {
+        val target = File(root, "v42.json").apply { writeText("{}") }
+        Files.createSymbolicLink(File(root, "latest.json").toPath(), target.toPath())
+        val day = File(root, "archive/day").apply { mkdirs() }
+        File(day, "r.json").writeText("{}")
+        Files.createSymbolicLink(File(root, "records-2026-07-31").toPath(), day.toPath())
+
+        repo.getFile("latest.json")!!.path shouldBe "latest.json"
+        repo.putFile("latest.json", "{}".toByteArray()) {}.path shouldBe "latest.json"
+        repo.listItems("records-2026-07-31").map { it.path } shouldBe listOf("records-2026-07-31/r.json")
+    }
+
+    "a name the platform cannot encode is refused, not an error" {
+        shouldThrow<DepotInvalidPathException> { repo.getContent("a${Char(0xD800)}.json") }
+    }
+
+    "getMeta refuses the same paths" {
+        shouldThrow<DepotInvalidPathException> { repo.getMeta("a/../../x") }
+    }
 })

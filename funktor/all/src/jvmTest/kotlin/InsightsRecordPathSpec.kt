@@ -26,7 +26,7 @@ class InsightsRecordPathSpec : FunktorApiSpec() {
     init {
         // Other specs count the records in the shared depot: what this one plants goes again
         afterSpec {
-            listOf("records-2026-01-02", "records-2026-01-03", "records-2026-01-07", "elsewhere", "etc")
+            listOf("records-2026-01-02", "records-2026-01-03", "records-2026-01-05", "records-2026-01-07", "elsewhere", "etc")
                 .forEach { File(insightsDepotDir, it).deleteRecursively() }
         }
 
@@ -68,7 +68,7 @@ class InsightsRecordPathSpec : FunktorApiSpec() {
                 }
             }
 
-            "a file that exists but is no record is a not-found: a backslash name, an absolute folder, a NUL" {
+            "what is no record is a not-found: a backslash name and an absolute folder that exist, a NUL" {
                 // Real files, so only the record rule can make these a 404
                 put("records-2026-01-07/a\\b.json")
                 put("etc/passwd.json")
@@ -99,9 +99,6 @@ class InsightsRecordPathSpec : FunktorApiSpec() {
                     }
                 }
             }
-        }
-
-        api.insights.getRecord { route ->
 
             "a symlink in a records folder that points out of the depot is a not-found, not an error" {
                 val outside = createTempDirectory("insights-outside").toFile()

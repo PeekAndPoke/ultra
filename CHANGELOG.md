@@ -286,12 +286,12 @@
   `/` or `\`) or a NUL throws `DepotInvalidPathException` in the file system and the S3 repository alike; the file
   system repository also refuses, and does not list, a symlink that leads out of its root, and refuses a dangling
   one. A name like `a..b` is allowed now (it was refused). `DepotApi.browse` answers 400 for such a path (it was a
-  500). The file system repository's paths are `/`-separated on every platform; `removeFile` on a symlink inside the
-  root removes the link, not the file it points to. Files reached through a symlink that leads out of the root (a
-  mounted volume linked into the depot) are no longer reachable: point the repository at the link's target, or make
-  the root itself the link.
-- **Funktor insights: the record endpoint reads records only** (ULTRA-00304): `records-<yyyy-mm-dd>/<name>.json`;
-  any other file of the insights depot is a 404, and a path the depot refuses is a 404 too (it was a 500).
+  500). The file system repository's paths are `/`-separated on every platform. Files reached through a symlink that
+  leads out of the root (a mounted volume linked into the depot) are no longer reachable: point the repository at
+  the link's target, or make the root itself the link.
+- **Funktor insights: the record endpoint and the list show records only** (ULTRA-00304):
+  `records-<yyyy-mm-dd>/<name>.json`. Any other file of the insights depot is a 404 and left out of the list, and a
+  path the depot refuses is a 404 too (it was a 500).
 
 - **Funktor: the `staticweb` module is gone** (ULTRA-00305), with all webjars (jQuery, prismjs 1.29.0, which lacks
   the CVE-2024-53382 fix, Fomantic UI CSS, lazysizes, vis.js) and `ktor-server-webjars`. Its server-rendered page
@@ -305,14 +305,16 @@
   its build output, served from the app's own origin and still requested only when first needed; pdf.js is its own
   chunk. A strict CSP needs no CDN host, unless the bundle itself is served from one (then that host sends CORS
   headers for the worker, and the CSP allows `worker-src blob:`). `PdfJs.librarySource` and `PdfJs.LibrarySrc` are gone; pdf.js is
-  `pdfjs-dist` 4.10.38 (was 4.7.76 from cdnjs). The prism CSS moves from 1.28.0 to the package's 1.30.0. An app
+  `pdfjs-dist` 4.10.38 (was 4.7.76 from cdnjs): an app can no longer pick a pdf.js version, build or host through
+  `librarySource`; the modern build is used, which needs a current browser (Safari 17.4 and later); an app that
+  declares its own `pdfjs-dist` shares that one copy with the addon. The prism CSS moves from 1.28.0 to the package's 1.30.0. An app
   with its own `.css` loader rule excludes these files (`dependency: { not: ['url'] }`); its server serves `.mjs` as
   `text/javascript`. `PdfSource.Data` is copied before pdf.js gets it: pdf.js empties the array it is given, so a
   second load of the same source failed.
 
 - **Funktor insights: `TemplateInsightsCollector` is gone**, with the "View" tab in the Kraft and Vue GUIs. Its only
-  writer was the server-rendered GUI removed with ULTRA-00305, so every record carried an empty slice. Older records
-  still holding a `template` slice show it as plain JSON.
+  writer was the server-rendered GUI removed with ULTRA-00305, so every record carried an empty slice. Older records'
+  `template` slices get no tab; an app's own collector keyed `template` would be hidden the same way.
 - **Funktor core: `Routes.mountPoint` is gone.** `ApiRoutes` could not use it (an API route's endpoint is shared with
   the client), and its last user went with the server-rendered insights GUI.
 

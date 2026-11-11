@@ -42,4 +42,17 @@ class PdfJsSpec : StringSpec({
 
         doc.numPages shouldBe 1
     }
+
+    "the same bytes open twice: the caller's array is not handed over to the worker" {
+        val bytes = Uint8Array(onePage.length).also { arr ->
+            onePage.forEachIndexed { i, c -> arr.asDynamic()[i] = c.code }
+        }
+
+        repeat(2) {
+            val params = js("({})").unsafeCast<PdfjsLib.GetDocumentParameters>().apply { data = bytes }
+            PdfJs.instance().getDocument(params).first().numPages shouldBe 1
+        }
+
+        bytes.length shouldBe onePage.length
+    }
 })

@@ -394,8 +394,9 @@ class InsightsDataLoaderSpec : StringSpec({
         runBlocking {
             repo.putFile("records-2026-07-31/a.json", record())
             repo.putFile("records-2026-07-31/b.json", record())
-            // Sorts before the records, newest-first: it would be b's "next"
+            // Both sort before the records, newest-first: either would be b's "next"
             repo.putFile("records-2026-07-31/notes.txt", "{}".toByteArray())
+            repo.putFile("records-2026-07-31/c.json/inner.json", "{}".toByteArray())
 
             val b = loader.load(InsightsRecordRef("records-2026-07-31", "b.json")).shouldNotBeNull()
 
