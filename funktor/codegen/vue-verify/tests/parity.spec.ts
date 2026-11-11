@@ -243,6 +243,17 @@ describe('the detail page', () => {
         }
     })
 
+    it("an older record's slice of a removed collector gets no tab", async () => {
+        const response = recorded.slim()
+        ;(response.data.collectors as Array<{ key: string, data: unknown }>).push({ key: 'template', data: { timeNs: null } })
+
+        const host = await openRecord(response)
+        const labels = [...host.querySelectorAll('.fk-tabs__tab')].map((tab) => tab.textContent?.trim())
+
+        expect(labels).not.toContain('template')
+        expect(labels).toHaveLength(response.data.collectors.length - 1)
+    })
+
     it("the Overview shows the record's OWN git version, application and environment", async () => {
         const response = recorded.slim()
         const config = sliceOf(response, 'app-config')

@@ -127,7 +127,7 @@ async function load(): Promise<void> {
         record.value = response.data
         if (response.data === null) problem.value = 'This record no longer exists.'
 
-        activeKey.value = response.data?.collectors[0]?.key ?? null
+        activeKey.value = collectors.value[0]?.key ?? null
     } catch (error) {
         problem.value = error instanceof Error ? error.message : String(error)
         record.value = null
@@ -172,8 +172,12 @@ const build = computed(() => readBuildInfo(sliceFor('app-config')))
  */
 const collectors = computed<InsightsCollectorSlice[]>(() => {
     const rec: InsightsRecord | null = record.value
-    return rec === null ? [] : rec.collectors
+    // Slices of removed collectors, still in older records, get no tab
+    return rec === null ? [] : rec.collectors.filter((slice: InsightsCollectorSlice) => !RETIRED_SLICES.has(slice.key))
 })
+
+/** Keys of collectors that no longer exist; older records still carry their slices. */
+const RETIRED_SLICES: ReadonlySet<string> = new Set(['template'])
 
 const activeSlice = computed<InsightsCollectorSlice | null>(() => {
     return collectors.value.find((slice: InsightsCollectorSlice) => slice.key === activeKey.value) ?? null

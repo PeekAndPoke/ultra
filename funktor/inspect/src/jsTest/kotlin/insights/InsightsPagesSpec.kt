@@ -325,6 +325,17 @@ class InsightsPagesSpec : StringSpec() {
             }
         }
 
+        "an older record's slice of a removed collector gets no tab" {
+            val server = FakeInsightsServer()
+            server.records["records-2026-11-10/a.json"] =
+                record("a.json", requestSlice, slice("template", """{"timeNs": null}"""))
+
+            withDetail(server, "a.json") { root, _ ->
+                eventually { root.selectCss(".tabular.menu .item").count() shouldBe 1 }
+                root.selectCss(".tabular.menu .item").textContent().trim() shouldBe "Request"
+            }
+        }
+
         "the database tab shows values, says when they were withheld, and highlights the query" {
             val server = FakeInsightsServer()
             server.records["records-2026-11-10/a.json"] = record("a.json", vaultSlice)

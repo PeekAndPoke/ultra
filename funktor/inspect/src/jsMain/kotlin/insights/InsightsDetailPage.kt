@@ -61,7 +61,8 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
                         response.refusal("This record does not exist, or insights are not active on this server.")
                     )
                     record == null -> State.Failed("The server sent no record.")
-                    else -> State.Loaded(record)
+                    // Slices of removed collectors, still in older records, get no tab
+                    else -> State.Loaded(record.copy(collectors = record.collectors.filterNot { it.key in RETIRED_SLICES }))
                 }
             } catch (e: Throwable) {
                 State.Failed(e.message ?: e.toString())
@@ -222,3 +223,6 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
 
 /** The Overview tab's key; `#` keeps it apart from every collector key. */
 private const val OVERVIEW_TAB = "#overview"
+
+/** Keys of collectors that no longer exist; older records still carry their slices. */
+private val RETIRED_SLICES = setOf("template")
