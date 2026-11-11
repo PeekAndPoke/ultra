@@ -110,18 +110,29 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
                 +"Back to list"
             }
 
-            neighbour(record?.previous, "Previous") { icon.arrow_left() }
-            neighbour(record?.next, "Next") { icon.arrow_right() }
+            neighbour(record?.previous, "Previous", iconFirst = true) { icon.arrow_left() }
+            // After the label: Semantic UI spaces an icon with the class `right` (arrow_right) as a trailing one
+            neighbour(record?.next, "Next", iconFirst = false) { icon.arrow_right() }
         }
     }
 
-    private fun FlowContent.neighbour(ref: InsightsRecordRef?, label: String, icon: FlowContent.() -> Unit) {
+    private fun FlowContent.neighbour(
+        ref: InsightsRecordRef?,
+        label: String,
+        iconFirst: Boolean,
+        icon: FlowContent.() -> Unit,
+    ) {
+        fun FlowContent.content() {
+            if (iconFirst) icon()
+            +label
+            if (!iconFirst) icon()
+        }
+
         when (ref) {
-            null -> ui.basic.disabled.button { icon(); +label }
+            null -> ui.basic.disabled.button { content() }
             else -> ui.basic.button A {
                 href(props.ui.routes.detail(ref))
-                icon()
-                +label
+                content()
             }
         }
     }
