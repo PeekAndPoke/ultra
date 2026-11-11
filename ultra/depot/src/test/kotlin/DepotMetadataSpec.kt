@@ -296,6 +296,37 @@ class DepotMetadataSpec : StringSpec({
         repo.getMeta("a.txt") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
     }
 
+    "removing a path below a file keeps that file's metadata; so does a refused write below it" {
+        val repo = repoOver(tempdir())
+        repo.putFile(anna, "a.txt", "a", mapOf("title" to "t"))
+
+        repo.removeFile("a.txt/x") shouldBe false
+        repo.getMeta("a.txt") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
+
+        shouldThrow<Exception> { repo.putFile(anna, "a.txt/x", "x") }
+        repo.getMeta("a.txt") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
+    }
+
+    "two repository objects over one folder: writers of one file still take turns" {
+        val dir = tempdir()
+        val repos = listOf(repoOver(dir), repoOver(dir))
+
+        repeat(400) { round ->
+            val start = CyclicBarrier(2)
+            val threads = (1..2).map { n ->
+                Thread {
+                    start.await()
+                    runBlocking { repos[n - 1].putFile(customer("$n"), "r$round.txt", "content-$n", mapOf("n" to "$n")) }
+                }
+            }
+            threads.forEach { it.start() }
+            threads.forEach { it.join() }
+
+            val n = File(dir, "r$round.txt").readText().removePrefix("content-")
+            repos[0].getMeta("r$round.txt") shouldBe mapOf("n" to n, "depot-subject" to "customers/$n")
+        }
+    }
+
     "two writers of one file at once: the file ends with one writer's content and that writer's metadata" {
         val dir = tempdir()
         val repo = repoOver(dir)

@@ -181,6 +181,31 @@ as system" (file system, S3), R9 the collection as the namespace. Refused by the
 constructor, C2 a customer's id on a by-name repository, C3 another kind's id on a typed repository, C4 another
 kind's stored entity through the extension. Docs: `cluster.astro`'s example rewritten.
 
+Round 2, 2026-11-11, level 2 (`reviewer-xhigh`), blind; charters 1, 2 and 3. **NOT clean: 3 MAJOR.** Second round
+without a clean one: stopped, the maintainer asked.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MAJOR | `FileSystemRepository.kt:271,349` | `removeFile("a.txt/x")` deletes the metadata file of `a.txt`: the clean-up loop deletes a file as if it were an empty folder (security M1) | fix | Confirmed red by a test; the loop removes folders only |
+| 2 | MAJOR | `FileSystemRepository.kt:356-358` | The locks belong to one repository object; a `dynamic` repository is built per request, so two requests do not take turns (impl M1; security m4, domain m5) | fix | Confirmed red by a test with two objects over one folder; the locks are in the companion. Across processes (a shared volume) still open, KDoc says "in this process" |
+| 2 | MAJOR | `FileSystemRepository.kt:209,298`, `AwsS3Repository.kt:237`, `DepotMetadata.kt:25` | "No stored subject reads as `system`" contradicts decision 8 ("always written") and the design ("reads as an empty map"): a lost `.meta` tree or a file dropped in from outside reads as belonging to no person (domain M1) | maintainer decision | Built on an answer that did not name this question |
+| 2 | MINOR | `FileSystemRepository.kt:246` | The content move deletes a folder at its target recursively: a race of `p` and `p/x` deletes an acknowledged file (impl m1, domain m2, security m2) | fix | Orphan removal only in the mirror; a content move onto a folder fails |
+| 2 | MINOR | `FileSystemRepository.kt:310-318` | No rollback between the two moves: a failed content move (another mount, read-only folder) leaves old content under new metadata; temp files in `.meta/tmp` are not on a sub-mount's file system (impl m2, domain m1, security m3) | open | Depends on the design answer below |
+| 2 | MINOR | `FileSystemRepository.kt:241` | Files are created 0600 through `createTempFile` (before: by umask); crash leftovers in `.meta/tmp` hold content and are never swept; `.meta/tmp` as a link out of the root is not checked (impl m3, m4, m7; domain m3) | open | |
+| 2 | MINOR | `FileSystemRepository.kt:212`, `DepotMetadata` | FS `getMeta` does not add the subject to a metadata file without one, S3 does; no single function for the subject entry; `getMeta` between `isFile` and `readText` can throw (impl m6, domain m4) | open | Depends on the MAJOR's decision |
+| 2 | MINOR | `removeMeta`/`ensureMetaParent` | Pruning empty mirror folders races with a neighbour's write, which then fails (impl m5); the write lock is held for the whole content write (security m5) | open | |
+| 2 | MINOR | `DepotMetadata.kt:42`, `AwsS3Repository.kt:243` | Form-encoding (`+` for a space), not percent-encoding; a foreign `+` reads as a space (domain m6) | open | |
+| 2 | MINOR | `DepotMetadata.kt:55` | A `getMeta` result cannot be passed back to `putFile` (domain m7) | open | With step 3's raw write |
+| 2 | MINOR | `cluster.astro:67,71`, `CHANGELOG.md:332` | The example downloads from another repository than it wrote to; the step-1 entry still names `DepotMeta` (domain m8, m9) | open | |
+| 2 | NIT | tests, surrogates, import order, `metaRoot` computed twice | | open | |
+
+Round-2 fixes so far: depot 70, cluster 140, insights 114, funktor-all 288, demo 52. The two new tests were red
+before the fixes (the remove below a file; two repository objects racing).
+
+Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
+`Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header
+injection towards S3; error messages; the browse API; the size rule; test expectations are literals.
+
 Probed and clean (round 1): variance; reserved keys cannot be forged through `meta`; size measured as S3 counts it;
 JSON and header encoding; `getMeta` null versus empty on both stores; a refused write leaves nothing; browse is
 superuser-only and renders text; the S3 stub is faithful for what the tests claim.

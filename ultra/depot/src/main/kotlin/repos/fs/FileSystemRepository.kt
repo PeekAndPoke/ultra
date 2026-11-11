@@ -241,9 +241,12 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         return Files.createTempFile(dir.toPath(), "put-", ".tmp").toFile()
     }
 
-    /** Moves [temp] to [target] in one step; a folder left where a file goes (an orphan of the mirror) is removed. */
-    private fun moveInPlace(temp: File, target: File) {
-        if (target.isDirectory && !Files.isSymbolicLink(target.toPath())) target.deleteRecursively()
+    /**
+     * Moves [temp] to [target] in one step. In the mirror ([orphans]), a folder left where a file goes is removed;
+     * a content move onto a folder fails.
+     */
+    private fun moveInPlace(temp: File, target: File, orphans: Boolean = false) {
+        if (orphans && target.isDirectory && !Files.isSymbolicLink(target.toPath())) target.deleteRecursively()
 
         Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
     }
@@ -268,14 +271,15 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         val top = File(metaRoot, META_FILES)
         var dir: File? = meta.parentFile
 
-        while (dir != null && dir != top && dir.delete()) {
+        // Folders only: below a file there is no folder, and its metadata file stays
+        while (dir != null && dir != top && dir.isDirectory && !Files.isSymbolicLink(dir.toPath()) && dir.delete()) {
             dir = dir.parentFile
         }
     }
 
     /**
      * Writes content and metadata through temporary files, each moved in place in one step: the metadata, then the
-     * content. A write that fails before the moves changes nothing, and writers of one file take turns, so a file
+     * content. A write that fails before the moves changes nothing, and writers of one file in this process take turns, so a file
      * never ends up with another writer's metadata. A reader between the two moves sees the new metadata with the
      * old content for that moment. A system file without metadata gets no metadata file; an older one is removed
      * after the content is in place.
@@ -312,7 +316,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
                         json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) }))
                     )
                     ensureMetaParent(metaTarget)
-                    moveInPlace(metaTemp, metaTarget)
+                    moveInPlace(metaTemp, metaTarget, orphans = true)
                 }
 
                 moveInPlace(contentTemp, file)
@@ -352,12 +356,15 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         }
     }
 
-    /** One of a fixed set of locks, by the file: writers and removers of one file take turns. */
+    /**
+     * One of a fixed set of locks, by the file: writers and removers of one file take turns, in every repository
+     * object of this process (a repository may be created per request).
+     */
     private fun lockFor(file: File): Any = locks[Math.floorMod(file.path.hashCode(), locks.size)]
 
-    private val locks = Array(64) { Any() }
-
     private companion object {
+        val locks = Array(64) { Any() }
+
         /** In `<root>/.meta`: the mirror of the files, holding each one's metadata. */
         const val META_FILES = "files"
 
