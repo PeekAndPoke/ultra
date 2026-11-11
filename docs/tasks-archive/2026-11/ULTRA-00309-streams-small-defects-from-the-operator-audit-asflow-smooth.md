@@ -1,7 +1,6 @@
 # ULTRA-00309: Streams: small defects from the operator audit (asFlow, smooth, debounce, ticker, persistence)
 
-> **Status (2026-11-11): IN PROGRESS.** Found by the streams operator audit of 2026-11-11 (findings F5-F10, MINOR).
-> F4 (`indexed`) and F11 (`fold`/`history` on re-subscription) went to ULTRA-00302, which is about reads and re-reads.
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (round 2 clean; ledger in ULTRA-00307). Docs (streams pages, LLM mirror) and CHANGELOG were written with the change, so no DOCS follow-up. Found by the streams operator audit of 2026-11-11 (findings F5-F10, MINOR). F4 (`indexed`) and F11 (`fold`/`history` on re-subscription) went to ULTRA-00302, which is about reads and re-reads.
 
 **Security-critical:** no
 
@@ -28,3 +27,5 @@
 
 - 2026-11-11: created from the operator audit (F5-F10).
 - 2026-11-11: implemented. Specs: `AuditJvmSpec` (F5, F8, F10), `SmoothConfigStreamSpec` (F6), `DebounceStreamSpec` (F7), `PersistInLocalStorageSpec` (F9). F9 kept `read()` and added `StreamStorage.readStored()` with a default: Klang implements `StreamStorage`. Mutations M8 (F6), M9 (F7), M11 (F8), M12 (F5), M15 (F9) red; F10 by the thread name. Review gate next.
+- 2026-11-11: review gate PASS (round 2 clean); DONE.
+- 2026-11-11: DONE.

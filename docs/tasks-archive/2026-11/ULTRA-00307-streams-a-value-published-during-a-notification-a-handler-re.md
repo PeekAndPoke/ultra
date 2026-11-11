@@ -1,7 +1,6 @@
 # ULTRA-00307: Streams: a value published during a notification; a handler removed during one
 
-> **Status (2026-11-11): IN PROGRESS.** Found by the streams operator audit of 2026-11-11 (the maintainer: "revisit
-> all stream operators for defects. Write tickets for all defects and fix them right away."). Both MAJOR.
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (round 2 clean; ledger in ULTRA-00307). Docs (streams pages, LLM mirror) and CHANGELOG were written with the change, so no DOCS follow-up. Found by the streams operator audit of 2026-11-11 (the maintainer: "revisit all stream operators for defects. Write tickets for all defects and fix them right away."). Both MAJOR.
 
 **Security-critical:** no
 
@@ -112,3 +111,5 @@ round-1 fix holds; three reached only part of what they needed (rows marked "gap
 
 - 2026-11-11: created from the operator audit (findings F1, F2).
 - 2026-11-11: implemented (`Notifier`, `notifyHandlers` skips removed handlers). `NotificationSpec`: 6 cases, all red on the old code; mutations M3 (membership check removed) and M4 (superseded check removed) red. Kraft core 216/216 green. Review gate next.
+- 2026-11-11: review gate PASS (round 2 clean); DONE.
+- 2026-11-11: DONE.

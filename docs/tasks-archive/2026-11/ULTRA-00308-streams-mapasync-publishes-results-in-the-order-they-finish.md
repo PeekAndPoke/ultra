@@ -1,6 +1,6 @@
 # ULTRA-00308: Streams: mapAsync publishes results in the order they finish
 
-> **Status (2026-11-11): IN PROGRESS.** Found by the streams operator audit of 2026-11-11 (finding F3, MAJOR).
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (round 2 clean; ledger in ULTRA-00307). Docs (streams pages, LLM mirror) and CHANGELOG were written with the change, so no DOCS follow-up. Found by the streams operator audit of 2026-11-11 (finding F3, MAJOR).
 
 **Security-critical:** no
 
@@ -27,3 +27,5 @@ not cancelled (cancelling a user's call midway is a surprise; the result is just
 
 - 2026-11-11: created from the operator audit (F3).
 - 2026-11-11: implemented (a counter in `AsyncStreamWrapper`). `MapAsyncOrderSpec` red on the old code (ended on "one"); mutation M5 red. `MapAsyncSpec` updated: two equal values within the mapping time now give one result. Review gate next.
+- 2026-11-11: review gate PASS (round 2 clean); DONE.
+- 2026-11-11: DONE.

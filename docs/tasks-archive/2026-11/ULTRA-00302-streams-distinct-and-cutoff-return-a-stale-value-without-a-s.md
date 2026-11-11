@@ -1,7 +1,6 @@
 # ULTRA-00302: Streams: distinct and cutoff return a stale value without a subscriber
 
-> **Status (2026-11-11): IN PROGRESS.** Widened by the operator audit of 2026-11-11. Requested by Klang-Research (KLANG-00422); the design below was agreed by the
-> maintainer on 2026-11-11 ("Yes please put it in as described").
+> **Status (2026-11-11): DONE.** Review gate PASS 2026-11-11 (round 2 clean; ledger in ULTRA-00307). Docs (streams pages, LLM mirror) and CHANGELOG were written with the change, so no DOCS follow-up. Widened by the operator audit of 2026-11-11. Requested by Klang-Research (KLANG-00422); the design below was agreed by the maintainer on 2026-11-11 ("Yes please put it in as described").
 
 **Security-critical:** no
 
@@ -95,3 +94,5 @@ The same class, found by the audit the maintainer asked for ("revisit all stream
 
 - 2026-11-11: created on Klang-Research's request (KLANG-00422); design agreed by the maintainer.
 - 2026-11-11: implemented; widened by the operator audit (filter, debounce, indexed, fold KDoc).
+- 2026-11-11: review gate PASS (round 2 clean); DONE.
+- 2026-11-11: DONE.
