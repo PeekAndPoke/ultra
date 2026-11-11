@@ -10,7 +10,7 @@ import {Code} from 'astro:components';
     <h1>Insights</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        Request profiling, performance metrics, and a built-in debug GUI.
+        Request profiling, performance metrics, and pages to browse them in Kraft or Vue.
     </p>
 
     <h2>Enabling insights</h2>
@@ -39,21 +39,41 @@ funktor {
     instrumentWithInsights(app)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <h2>Mounting the GUI</h2>
+    <h2>Viewing records</h2>
 
-    <p>Mount the built-in debug toolbar on your admin host. It provides a web UI for browsing
-        recent requests, database queries, and timing breakdowns.</p>
+    <p>Each recorded request is stored as a record in the depot (<code>./tmp/depot/insights</code> by default). The
+        insights API reads them back, superuser only; there is no server-rendered GUI. Two frontends show them, on par
+        with each other: the list of recorded requests with the server's git version and environment, and per record
+        an overview and a tab per collector, with highlighted queries and the kontainer and database graphs.</p>
 
-    <Code code={`routing {
-    host("admin.*".toRegex()) {
-        installWwwKontainer(app)
+    <h3>Kraft</h3>
 
-        // Mount insights GUI at /_/insights/
-        init.use(InsightsGui::class) {
-            mount()
-        }
-    }
-}`} lang="kotlin" theme="vitesse-dark"/>
+    <p>Pass the insights client to <code>FunktorInspectUi</code>; <code>mountFunktorInspect</code> then mounts the
+        pages under <code>/_/funktor/inspect/insights</code> and adds a card to the inspect overview. The client talks
+        to the host that records the requests, usually <code>api.*</code>:</p>
+
+    <Code code={`val funktorInspect = FunktorInspectUi(
+    loggingApi = LoggingApiClient(Apis.config),
+    clusterApi = FunktorClusterApiClient(Apis.config),
+    introspectionApi = IntrospectionApiClient(Apis.config),
+    insightsApi = InsightsApiClient(Apis.config),
+)`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The pages use the Kraft addons <a href="/ultra/kraft/addons">prismjs</a> (queries and values, in manual mode)
+        and <a href="/ultra/kraft/addons">visnetwork</a> (the graphs).</p>
+
+    <h3>Vue</h3>
+
+    <p>The generated TypeScript SDK ships the same pages. <code>mountAll(router)</code> adds the
+        <code>/insights</code> route, and <code>navItems</code> its menu entry:</p>
+
+    <Code code={`import { mountAll } from './funktorsdk/mount.ts'
+
+mountAll(router)`} lang="ts" theme="vitesse-dark"/>
+
+    <Aside>A record page's path ends in <code>.json</code>. A webpack dev server serving the app needs
+        <code>historyApiFallback: {'{'} disableDotRule: true {'}'}</code>, or a reload of that page answers 404.
+    </Aside>
 
     <h2>What it collects</h2>
 
@@ -85,13 +105,29 @@ funktor {
             <h3 class="text-white font-semibold mb-1">UserCollector</h3>
             <p class="text-sm text-gray-400">Authenticated user info for the request.</p>
         </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">LogCollector</h3>
+            <p class="text-sm text-gray-400">Log entries written while the request ran.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">RoutingCollector</h3>
+            <p class="text-sm text-gray-400">The routing trace: how the request found its route.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">AppConfigCollector</h3>
+            <p class="text-sm text-gray-400">The app's info and configuration.</p>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+            <h3 class="text-white font-semibold mb-1">TemplateInsightsCollector</h3>
+            <p class="text-sm text-gray-400">Time spent rendering a template.</p>
+        </div>
     </div>
 
     <h2>How it works</h2>
 
     <p>Each collector is a <strong>dynamic</strong> Kontainer service &mdash; a new instance is created for
         every request. Throughout the request lifecycle, collectors accumulate data. At the end of the
-        request, the collected data is serialized into the API response as metadata.</p>
+        request, the collected data is stored as a record in the depot, under <code>records-&lt;date&gt;/</code>.</p>
 
     <Aside>Insights is the reason Kontainer has per-request scoping.
         Each collector is a dynamic service that accumulates data throughout one request,
