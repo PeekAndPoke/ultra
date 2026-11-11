@@ -56,7 +56,9 @@ describe('the detail page, loaded', () => {
         const { host } = await open(response)
 
         const tabs = [...host.querySelectorAll('.fk-tabs__tab')] as HTMLButtonElement[]
-        expect(tabs).toHaveLength(response.data.collectors.length)
+        // The Overview, then one per collector
+        expect(tabs).toHaveLength(response.data.collectors.length + 1)
+        expect(tabs[0].textContent?.trim()).toBe('Overview')
 
         for (const tab of tabs) {
             tab.click()
@@ -73,11 +75,11 @@ describe('the detail page, loaded', () => {
 
         const { host } = await open(response)
 
-        // The first tab is `user`, so the runtime TAB is not rendered: this can only be the Overview's strip.
+        // The Overview tab opens first, so the runtime TAB is not rendered: this can only be the Overview's strip.
         const overview = [...host.querySelectorAll('.fk-section')].find(
             (section) => section.querySelector('.fk-section__title')?.textContent === 'Runtime',
         )
-        expect(host.querySelector('.fk-tabs__tab--active')?.textContent?.trim()).toBe('User')
+        expect(host.querySelector('.fk-tabs__tab--active')?.textContent?.trim()).toBe('Overview')
         expect(overview?.querySelector('.fk-strip')?.textContent).toContain('not measured on this platform')
     })
 

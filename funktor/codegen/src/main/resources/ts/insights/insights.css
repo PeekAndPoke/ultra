@@ -19,6 +19,13 @@
         padding: calc(var(--fk-gap) * 1.5);
     }
 
+    .fk-insights__head {
+        padding: var(--fk-gap);
+        border: var(--fk-border-width) solid var(--fk-border);
+        border-radius: var(--fk-radius);
+        background: var(--fk-surface);
+    }
+
     /*  The record list  -------------------------------------------------------------------------------  */
 
     .fk-records__row {

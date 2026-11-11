@@ -21,7 +21,7 @@
  *
  * Imports assume the emitted layout -- SDK root at `<out>/`, these files at `<out>/insights/`.
  */
-import { Boxes, CloudDownload, CloudUpload, Compass, Cpu, Database, List, Settings, User } from '@lucide/vue'
+import { Boxes, CloudDownload, CloudUpload, Compass, Cpu, Database, Gauge, List, Settings, User } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import type { Component, Ref } from 'vue'
 import type { FunktorInsightsClient } from '../api/funktorInsightsClient.ts'
@@ -127,7 +127,8 @@ async function load(): Promise<void> {
         record.value = response.data
         if (response.data === null) problem.value = 'This record no longer exists.'
 
-        activeKey.value = collectors.value[0]?.key ?? null
+        // The Overview first, when the record has figures for it; else the first collector
+        activeKey.value = hasOverview.value ? OVERVIEW_TAB : collectors.value[0]?.key ?? null
     } catch (error) {
         problem.value = error instanceof Error ? error.message : String(error)
         record.value = null
@@ -147,7 +148,7 @@ const overview = computed<Fact[]>(() => {
     const reason = response !== null && response.status === value.status ? response.statusDescription : null
 
     return [
-        { key: 'Request', value: [value.method, value.path].filter((part) => part !== null).join(' ') || null },
+        { key: 'Request', value: [value.method, value.path].filter((part) => part !== null).join(' ') || null, full: true },
         {
             key: 'Status',
             value: value.status === null ? null : reason === null ? value.status : `${value.status} ${reason}`,
@@ -176,6 +177,9 @@ const collectors = computed<InsightsCollectorSlice[]>(() => {
     return rec === null ? [] : rec.collectors.filter((slice: InsightsCollectorSlice) => !RETIRED_SLICES.has(slice.key))
 })
 
+/** The Overview tab's key; `#` keeps it apart from every collector key. */
+const OVERVIEW_TAB = '#overview'
+
 /** Keys of collectors that no longer exist; older records still carry their slices. */
 const RETIRED_SLICES: ReadonlySet<string> = new Set(['template'])
 
@@ -203,6 +207,9 @@ const overviewRuntime = computed(() => {
     return parsed === null ? [] : runtimeCells(parsed)
 })
 
+/** Whether the record has figures for the Overview tab: the database and runtime strips. */
+const hasOverview = computed<boolean>(() => overviewVault.value.length > 0 || overviewRuntime.value.length > 0)
+
 /** `Object.hasOwn` for the reason given at {@link tabFor}. */
 function iconFor(key: string): Component | null {
     return Object.hasOwn(TAB_ICONS, key) ? TAB_ICONS[key] : null
@@ -227,51 +234,53 @@ function tabFor(key: string): Component | null {
 
 <template>
     <div class="fk-root fk-insights">
-        <div class="fk-toolbar">
-            <button type="button" class="fk-button" @click="emit('back')">Back to list</button>
-            <span class="fk-toolbar__spacer"></span>
-            <button
-                type="button"
-                class="fk-button"
-                :disabled="!record?.previous"
-                @click="record?.previous && emit('navigate', record.previous)"
-            >
-                Previous
-            </button>
-            <button
-                type="button"
-                class="fk-button"
-                :disabled="!record?.next"
-                @click="record?.next && emit('navigate', record.next)"
-            >
-                Next
-            </button>
+        <!-- The record's head in one box: the toolbar and the facts; the tabs below it -->
+        <div class="fk-insights__head">
+            <div class="fk-toolbar">
+                <button type="button" class="fk-button" @click="emit('back')">Back to list</button>
+                <span class="fk-toolbar__spacer"></span>
+                <button
+                    type="button"
+                    class="fk-button"
+                    :disabled="!record?.previous"
+                    @click="record?.previous && emit('navigate', record.previous)"
+                >
+                    Previous
+                </button>
+                <button
+                    type="button"
+                    class="fk-button"
+                    :disabled="!record?.next"
+                    @click="record?.next && emit('navigate', record.next)"
+                >
+                    Next
+                </button>
+            </div>
+
+            <div v-if="problem !== null" class="fk-notice fk-notice--error">{{ problem }}</div>
+            <div v-else-if="loading" class="fk-empty">Loading...</div>
+
+            <FactList v-else-if="record !== null" :facts="overview" />
         </div>
 
-        <div v-if="problem !== null" class="fk-notice fk-notice--error">{{ problem }}</div>
-        <div v-else-if="loading" class="fk-empty">Loading...</div>
-
-        <template v-else-if="record !== null">
-            <section class="fk-section">
-                <FactList :facts="overview" />
-            </section>
-
-            <section v-if="overviewVault.length > 0" class="fk-section">
-                <h4 class="fk-section__title">Database</h4>
-                <StatStrip :cells="overviewVault" />
-            </section>
-
-            <section v-if="overviewRuntime.length > 0" class="fk-section">
-                <h4 class="fk-section__title">Runtime</h4>
-                <StatStrip :cells="overviewRuntime" />
-            </section>
-
+        <template v-if="problem === null && !loading && record !== null">
             <div v-if="collectors.length === 0" class="fk-empty">
                 This record collected nothing -- it was recorded in BRIEF mode.
             </div>
 
             <template v-else>
                 <nav class="fk-tabs">
+                    <button
+                        v-if="hasOverview"
+                        type="button"
+                        class="fk-tabs__tab"
+                        :class="{ 'fk-tabs__tab--active': activeKey === OVERVIEW_TAB }"
+                        :aria-selected="activeKey === OVERVIEW_TAB"
+                        @click="activeKey = OVERVIEW_TAB"
+                    >
+                        <Gauge class="fk-tabs__icon" :size="14" aria-hidden="true" />
+                        Overview
+                    </button>
                     <button
                         v-for="slice in collectors"
                         :key="slice.key"
@@ -286,7 +295,19 @@ function tabFor(key: string): Component | null {
                     </button>
                 </nav>
 
-                <section v-if="activeSlice !== null" class="fk-tabs__panel">
+                <section v-if="activeKey === OVERVIEW_TAB" class="fk-tabs__panel">
+                    <section v-if="overviewVault.length > 0" class="fk-section">
+                        <h4 class="fk-section__title">Database</h4>
+                        <StatStrip :cells="overviewVault" />
+                    </section>
+
+                    <section v-if="overviewRuntime.length > 0" class="fk-section">
+                        <h4 class="fk-section__title">Runtime</h4>
+                        <StatStrip :cells="overviewRuntime" />
+                    </section>
+                </section>
+
+                <section v-else-if="activeSlice !== null" class="fk-tabs__panel">
                     <component :is="tabFor(activeSlice.key)" v-if="tabFor(activeSlice.key)" :data="activeSlice.data" />
                     <!-- No tab for this key: an app-defined collector, or one not built yet. -->
                     <JsonTree v-else :value="activeSlice.data" :expand-depth="2" />

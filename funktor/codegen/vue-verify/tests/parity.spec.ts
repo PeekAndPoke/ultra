@@ -235,7 +235,8 @@ describe('the detail page', () => {
         const host = await openRecord(response)
         const tabs = [...host.querySelectorAll('.fk-tabs__tab')]
 
-        expect(tabs).toHaveLength(response.data.collectors.length)
+        // The Overview, then one per collector
+        expect(tabs).toHaveLength(response.data.collectors.length + 1)
         for (const tab of tabs) {
             const custom = tab.textContent?.trim() === 'custom-collector'
             expect(tab.querySelectorAll('svg').length, tab.textContent ?? '').toBe(custom ? 0 : 1)
@@ -251,7 +252,8 @@ describe('the detail page', () => {
         const labels = [...host.querySelectorAll('.fk-tabs__tab')].map((tab) => tab.textContent?.trim())
 
         expect(labels).not.toContain('template')
-        expect(labels).toHaveLength(response.data.collectors.length - 1)
+        // The Overview, then the collectors without the removed one
+        expect(labels).toHaveLength(response.data.collectors.length)
     })
 
     it("the Overview shows the record's OWN git version, application and environment", async () => {

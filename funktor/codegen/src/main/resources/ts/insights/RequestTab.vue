@@ -31,7 +31,7 @@ const facts = computed<Fact[]>(() => {
 
     return [
         { key: 'Method', value: value.method },
-        { key: 'URL', value: composeUrl(value) },
+        { key: 'URL', value: composeUrl(value), full: true },
     ]
 })
 </script>

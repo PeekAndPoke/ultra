@@ -30,8 +30,8 @@ withDefaults(
             class="fk-strip__cell"
             :class="cell.tone ? `fk-strip__cell--${cell.tone}` : null"
         >
-            <span class="fk-strip__value">{{ cell.value ?? placeholder }}</span>
             <span class="fk-strip__label">{{ cell.label }}</span>
+            <span class="fk-strip__value">{{ cell.value ?? placeholder }}</span>
             <span v-if="cell.hint" class="fk-strip__hint">{{ cell.hint }}</span>
         </div>
     </div>

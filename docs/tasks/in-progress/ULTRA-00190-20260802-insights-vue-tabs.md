@@ -855,3 +855,8 @@ same premise; their conclusion holds through `noContent()`.
 - 2026-10-21: numbered ULTRA-00190 (was `docs/tasks/20260802-insights-vue-tabs.md`).
 - 2026-11-10: IN PROGRESS.
 - 2026-11-11: step 10 done with ULTRA-00305 (`reference/` deleted, TAB-SPECS moved).
+- 2026-11-11: the maintainer's visual sweep of the Kraft insights pages, and its Vue parity ("follow now for the
+  insights"): facts as a grid of cards (Request and URL full width, long values two columns), the Database and
+  Runtime figures in a first "Overview" tab as cards whose labels do not break, the record's head (toolbar and facts)
+  in one box with the tabs below, no neighbours note, no tab for a retired collector's slice. Kraft: `7588c039`,
+  `8afe677d`, `0aee0f59` and earlier; Vue: shared `FactList`/`StatStrip`, `InsightsDetailPage.vue`. Vue checks 99/99.

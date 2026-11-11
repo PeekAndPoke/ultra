@@ -34,6 +34,8 @@ export interface Fact {
     key: string
     value: string | number | null | undefined
     tone?: FkTone
+    /** A whole row of the card grid: a request line, a URL. */
+    full?: boolean
 }
 
 /** One cell of a `StatStrip`. `value` is pre-formatted: units and precision are the caller's business. */
