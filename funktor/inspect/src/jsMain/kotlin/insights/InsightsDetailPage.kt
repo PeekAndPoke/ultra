@@ -69,7 +69,10 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
 
             if (props.ref == ref) {
                 state = next
-                activeKey = (next as? State.Loaded)?.record?.collectors?.firstOrNull()?.key
+                // The overview first, when the record has one; else the first collector
+                activeKey = (next as? State.Loaded)?.record?.let { loaded ->
+                    if (hasOverview(loaded)) OVERVIEW_TAB else loaded.collectors.firstOrNull()?.key
+                }
             }
         }
     }
@@ -79,16 +82,21 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
 
         insightsStyles()
 
-        ui.segment {
-            div(classes = "funktor-insights") {
+        div(classes = "funktor-insights") {
+            // The record's head in a segment; its tabs below, framed by their own box only
+            ui.segment {
                 toolbar((state as? State.Loaded)?.record)
 
                 when (val current = state) {
                     is State.Loading -> ui.basic.segment { ui.active.inline.loader {} }
                     is State.Failed -> problem(current.reason)
-                    is State.Loaded -> record(current.record)
+                    is State.Loaded -> head(current.record)
                 }
             }
+
+            (state as? State.Loaded)?.record
+                ?.takeIf { it.collectors.isNotEmpty() }
+                ?.let { tabs(it) }
         }
     }
 
@@ -117,14 +125,24 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
         }
     }
 
-    private fun FlowContent.record(record: InsightsRecord) {
+    /** The record's head: its facts, or why there is nothing more. */
+    private fun FlowContent.head(record: InsightsRecord) {
         fun slice(key: String): JsonElement? = record.collectors.firstOrNull { it.key == key }?.data
 
         factList(overview(record, ::slice))
-        note(
-            "Neighbours are within the same day folder, so the oldest record of a day reports no previous even " +
-                "when earlier days exist."
-        )
+
+        if (record.collectors.isEmpty()) {
+            ui.basic.segment { +"This record collected nothing -- it was recorded in BRIEF mode." }
+        }
+    }
+
+    /** Whether [record] has figures for the Overview tab: the database and runtime strips. */
+    private fun hasOverview(record: InsightsRecord): Boolean =
+        record.collectors.any { it.key == "vault" || it.key == "runtime" }
+
+    /** The Overview tab: the database and runtime figures at a glance. */
+    private fun FlowContent.overviewTab(record: InsightsRecord) {
+        fun slice(key: String): JsonElement? = record.collectors.firstOrNull { it.key == key }?.data
 
         readVault(slice("vault"))?.let { vault ->
             ui.dividing.header H4 { icon.database(); +"Database" }
@@ -135,13 +153,6 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
             ui.dividing.header H4 { icon.microchip(); +"Runtime" }
             statStrip(runtime.cells())
         }
-
-        if (record.collectors.isEmpty()) {
-            ui.basic.segment { +"This record collected nothing -- it was recorded in BRIEF mode." }
-            return
-        }
-
-        tabs(record.collectors)
     }
 
     private fun overview(record: InsightsRecord, slice: (String) -> JsonElement?): List<Fact> {
@@ -158,8 +169,19 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
         ) + (build?.facts() ?: emptyList()) // The record's OWN build, maybe older than the server's
     }
 
-    private fun FlowContent.tabs(collectors: List<InsightsCollectorSlice>) {
+    private fun FlowContent.tabs(record: InsightsRecord) {
+        val collectors = record.collectors
+
         ui.top.attached.tabular.menu {
+            if (hasOverview(record)) {
+                noui.given(activeKey == OVERVIEW_TAB) { active }.item A {
+                    key = OVERVIEW_TAB
+                    onClick { activeKey = OVERVIEW_TAB }
+                    icon.tachometer_alternate()
+                    +"Overview"
+                }
+            }
+
             collectors.forEach { slice ->
                 val tab = insightsTabs[slice.key]
 
@@ -174,6 +196,14 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
         }
 
         ui.bottom.attached.with("insights-tab-body").segment {
+            if (activeKey == OVERVIEW_TAB) {
+                div {
+                    key = "${props.ref.toPath()}/$OVERVIEW_TAB"
+                    overviewTab(record)
+                }
+                return@segment
+            }
+
             val active = collectors.firstOrNull { it.key == activeKey } ?: return@segment
 
             div {
@@ -189,3 +219,6 @@ class InsightsDetailPage(ctx: Ctx<Props>) : Component<InsightsDetailPage.Props>(
         }
     }
 }
+
+/** The Overview tab's key; `#` keeps it apart from every collector key. */
+private const val OVERVIEW_TAB = "#overview"

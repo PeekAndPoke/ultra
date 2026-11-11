@@ -239,9 +239,11 @@ private suspend fun KQuery<Element>.button(label: String) {
 
 class InsightsPagesSpec : StringSpec() {
 
+    /** Opens a record; with [firstCollector], on the first collector's tab rather than the Overview. */
     private suspend fun withDetail(
         server: FakeInsightsServer,
         file: String,
+        firstCollector: Boolean = true,
         test: suspend (root: KQuery<Element>, ref: StreamSource<InsightsRecordRef>) -> Unit,
     ) {
         val ui = InsightsUi(api = server.api)
@@ -249,6 +251,12 @@ class InsightsPagesSpec : StringSpec() {
 
         TestBed.preact(view = { DetailHost(ui, ref) }) { root ->
             eventually { root.selectCss(".tabular.menu").count() shouldBe 1 }
+
+            val items = root.selectCss(".tabular.menu .item").filter { true }
+            if (firstCollector && items.firstOrNull()?.textContent?.trim() == "Overview") {
+                KQuery(listOf(items[1])).click()
+            }
+
             test(root, ref)
         }
     }
@@ -289,12 +297,10 @@ class InsightsPagesSpec : StringSpec() {
             withDetail(server, "a.json") { root, _ ->
                 root.textContent() shouldContain "GET /search/$ATTACK"
                 root.textContent() shouldContain "200 OK"
-                // The Database strip in the Overview: two queries, 3.00 ms in total
-                root.textContent() shouldContain "3.00 ms"
 
-                // The first tab is open: the request
+                // The first collector's tab: the request
                 eventually { root.textContent() shouldContain "http://api.test:80/search" }
-                root.selectCss(".insights-mono").filter { it.textContent == ATTACK }.size shouldBe 2
+                root.selectCss(".insights-mono, .insights-fact-value").filter { it.textContent == ATTACK }.size shouldBe 2
 
                 // An app-defined collector: its raw JSON, highlighted, the markup in it as text
                 root.tab("custom")
@@ -302,6 +308,20 @@ class InsightsPagesSpec : StringSpec() {
                 eventually { root.selectCss(".bottom.attached.segment code .token.property").textContent() shouldBe "\"note\"" }
                 root.selectCss(".bottom.attached.segment code").textContent() shouldContain ATTACK
                 root.selectCss("img").count() shouldBe 0
+            }
+        }
+
+        "the Overview tab opens first, with the database and runtime figures" {
+            val server = FakeInsightsServer()
+            server.records["records-2026-11-10/a.json"] = record("a.json", requestSlice, vaultSlice)
+
+            withDetail(server, "a.json", firstCollector = false) { root, _ ->
+                eventually { root.selectCss(".tabular.menu .active.item").textContent().trim() shouldBe "Overview" }
+                // The Database strip: two queries, 3.00 ms in total
+                root.textContent() shouldContain "3.00 ms"
+
+                root.tab("Request")
+                eventually { root.textContent() shouldNotContain "3.00 ms" }
             }
         }
 
@@ -340,6 +360,9 @@ class InsightsPagesSpec : StringSpec() {
                 root.textContent() shouldNotContain "secret-token-1"
 
                 ref(InsightsRecordRef("records-2026-11-10", "b.json"))
+                // A new record opens on its Overview: wait for it, then go to its Database tab
+                eventually { root.selectCss(".tabular.menu .active.item").textContent().trim() shouldBe "Overview" }
+                root.tab("Database")
 
                 eventually { root.textContent() shouldContain "Query text is hidden" }
                 root.textContent() shouldNotContain "secret-token"
@@ -424,6 +447,9 @@ class InsightsPagesSpec : StringSpec() {
                 // The other record's tab is a new one, with no graph shown yet
                 ref(InsightsRecordRef("records-2026-11-10", "b.json"))
                 eventually { root.selectCss(".vis-network canvas").count() shouldBe 0 }
+                // A new record opens on its Overview: wait for it, then go to its Database tab
+                eventually { root.selectCss(".tabular.menu .active.item").textContent().trim() shouldBe "Overview" }
+                root.tab("Database")
                 root.button("Show Database Graph")
                 eventually { root.selectCss(".vis-network canvas").count() shouldBe 1 }
                 server.count("/_/funktor/insights/graphs/database") shouldBe 1
@@ -459,7 +485,8 @@ class InsightsPagesSpec : StringSpec() {
 
                 root.tab("Database")
                 eventually { root.textContent() shouldContain "when Monko still put the bind values into its query text" }
-                root.textContent() shouldContain "unknownBind vars"
+                // A stat card: its label above its value
+                root.textContent() shouldContain "Bind varsunknown"
 
             }
         }

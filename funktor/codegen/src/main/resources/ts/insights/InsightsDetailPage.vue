@@ -250,10 +250,6 @@ function tabFor(key: string): Component | null {
         <template v-else-if="record !== null">
             <section class="fk-section">
                 <FactList :facts="overview" />
-                <p class="fk-section__note">
-                    Neighbours are within the same day folder, so the oldest record of a day reports no
-                    previous even when earlier days exist.
-                </p>
             </section>
 
             <section v-if="overviewVault.length > 0" class="fk-section">

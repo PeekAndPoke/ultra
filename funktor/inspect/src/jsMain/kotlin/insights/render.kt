@@ -49,6 +49,7 @@ internal const val INSIGHTS_CSS = """
 .funktor-insights .insights-facts {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(13em, 1fr)); gap: 0.5em; margin: 0.5em 0 1em;
 }
+.funktor-insights .insights-facts:last-child { margin-bottom: 0; }
 .funktor-insights .insights-fact {
   min-width: 0; padding: 0.45em 0.7em; border: 1px solid rgba(34, 36, 38, 0.15); border-radius: 0.28rem;
   background: #fff;
@@ -57,11 +58,13 @@ internal const val INSIGHTS_CSS = """
 .funktor-insights .insights-fact.full { grid-column: 1 / -1; }
 .funktor-insights .insights-fact-key {
   margin-bottom: 0.15em; font-size: 0.75em; letter-spacing: 0.03em; text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.5);
+  color: rgba(0, 0, 0, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .funktor-insights .insights-fact-value { font-family: monospace; word-break: break-word; }
 .funktor-insights .insights-toolbar { margin: 0 0 1em; }
 .funktor-insights .ui.segment.insights-tab-body { padding: 0.75em; }
+.funktor-insights .insights-stat-value { font-size: 1.35em; line-height: 1.3; }
+.funktor-insights .insights-fact-hint { font-size: 0.8em; color: rgba(0, 0, 0, 0.5); }
 .funktor-insights .insights-summary { margin: 1em 0 0.5em; font-weight: bold; cursor: pointer; }
 """
 
@@ -106,17 +109,16 @@ internal fun FlowContent.factList(facts: List<Fact>) {
 /** From this many characters on, a fact's card takes two columns. */
 private const val WIDE_FACT_CHARS = 28
 
-/** A strip of labelled figures, the old GUI's statistics. */
+/** Labelled figures as cards, like [factList]: the label above, the figure larger below; titles do not break. */
 internal fun FlowContent.statStrip(cells: List<StatCell>) {
-    ui.mini.statistics {
+    div(classes = "insights-facts") {
         cells.forEach { cell ->
-            ui.statistic {
+            div(classes = "insights-fact") {
                 cell.hint?.let { title = it }
-                noui.value { +(cell.value ?: "n/a") }
-                noui.label {
-                    +cell.label
-                    cell.hint?.let { hint -> div { ui.small.grey.text { +hint } } }
-                }
+
+                div(classes = "insights-fact-key") { +cell.label }
+                div(classes = "insights-stat-value") { +(cell.value ?: "n/a") }
+                cell.hint?.let { hint -> div(classes = "insights-fact-hint") { +hint } }
             }
         }
     }
