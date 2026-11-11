@@ -21,8 +21,6 @@ dependencies {
     api(project(":ultra:common"))
     api(project(":ultra:datetime"))
 
-    implementation(Deps.KotlinX.coroutines_core)
-
     // Tests /////////////////////////
     Deps.Test {
         jvmTestDeps()

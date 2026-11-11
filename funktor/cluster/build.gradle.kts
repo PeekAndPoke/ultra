@@ -37,9 +37,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":funktor:core"))
-                // `api`: AwsS3Config exposes Redacted<String> in a public constructor, so ultra:common
-                // is this module's published surface. funktor:core is `implementation` here, so it is
-                // not reachable transitively either.
+                // `api`: on the JVM ultra:common is this module's surface anyway (through ultra:depot, whose
+                // facade takes a Lookup); funktor:core is `implementation` here, so it does not bring it.
                 api(project(":ultra:common"))
                 implementation(project(":funktor:rest"))
                 implementation(project(":funktor:inspect"))

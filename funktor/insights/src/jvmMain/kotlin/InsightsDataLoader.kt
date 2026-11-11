@@ -1,13 +1,13 @@
 package io.peekandpoke.funktor.insights
 
-import io.peekandpoke.ultra.depot.domain.DepotItem
-import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.insights.api.InsightsCollectorSlice
 import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
 import io.peekandpoke.funktor.insights.api.isRecordBucket
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.depot.domain.DepotItem
+import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.model.Paged
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement

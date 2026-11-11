@@ -1,12 +1,12 @@
 package io.peekandpoke.funktor.cluster
 
 import io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs
-import io.peekandpoke.ultra.depot.DepotFacade
 import io.peekandpoke.funktor.cluster.locks.GlobalServerId
 import io.peekandpoke.funktor.cluster.locks.GlobalServerList
 import io.peekandpoke.funktor.cluster.locks.LocksFacade
 import io.peekandpoke.funktor.cluster.storage.StorageFacade
 import io.peekandpoke.funktor.cluster.workers.WorkersFacade
+import io.peekandpoke.ultra.depot.DepotFacade
 
 /** Central facade providing access to all cluster subsystems. */
 class FunktorClusterFacade(

@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.depot.s3
 
-import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotMeta
 import software.amazon.awssdk.services.s3.model.GetObjectTaggingResponse
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
@@ -43,7 +42,7 @@ interface AwsHelper {
     )
 
     /**
-     * Converts a [GetObjectTaggingResponse] to [DepotItem.Meta]
+     * Converts a [GetObjectTaggingResponse] to [DepotMeta]
      */
     fun GetObjectTaggingResponse.toMeta() = DepotMeta(
         visibility = DepotMeta.Visibility.valueOfOrPublic(

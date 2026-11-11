@@ -10,7 +10,6 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJo
 import io.peekandpoke.funktor.cluster.backgroundjobs.monko.MonkoBackgroundJobsArchiveRepo
 import io.peekandpoke.funktor.cluster.backgroundjobs.monko.MonkoBackgroundJobsQueueRepo
 import io.peekandpoke.funktor.cluster.backgroundjobs.workers.BackgroundJobsWorker
-import io.peekandpoke.ultra.depot.DepotFacade
 import io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
 import io.peekandpoke.funktor.cluster.locks.GlobalServerId
 import io.peekandpoke.funktor.cluster.locks.GlobalServerList
@@ -49,6 +48,7 @@ import io.peekandpoke.funktor.cluster.workers.vault.KarangoWorkerHistoryRepo
 import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.ultra.depot.DepotFacade
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module

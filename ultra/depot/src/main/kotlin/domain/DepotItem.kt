@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.depot.domain
 
-import io.peekandpoke.ultra.depot.repos.DepotRepository
 import io.peekandpoke.ultra.datetime.MpInstant
+import io.peekandpoke.ultra.depot.repos.DepotRepository
 
 /**
  * Definition of a depot file

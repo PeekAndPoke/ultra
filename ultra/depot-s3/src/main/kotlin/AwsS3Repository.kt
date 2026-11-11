@@ -13,7 +13,6 @@ import kotlinx.coroutines.future.await
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.CommonPrefix
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
@@ -27,7 +26,7 @@ import software.amazon.awssdk.services.s3.model.S3Object
 /**
  * Depot repository implementation for storing files in AWS S3.
  *
- * The repo needs an [S3Client] to work with.
+ * The repo needs an [S3AsyncClient] to work with.
  * The repo also works on exactly one bucket specified by [bucketName].
  *
  * How to use the AWS-SDK-2:
