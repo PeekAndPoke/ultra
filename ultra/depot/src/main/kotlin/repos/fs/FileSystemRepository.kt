@@ -336,7 +336,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
     ): DepotItem {
         val file = resolve(path)
 
-        val stored = DepotMetadata.stored(subject, meta)
+        val stored = DepotMetadata.stored(subject, meta, content)
 
         // A folder, the root included, is no place for a file
         if (file.isDirectory) throw DepotInvalidPathException()

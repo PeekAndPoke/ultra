@@ -260,7 +260,7 @@ abstract class AwsS3Repository<in T>(
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
-        val stored = DepotMetadata.stored(subject, meta)
+        val stored = DepotMetadata.stored(subject, meta, content)
 
         val request = PutObjectRequest.builder()
             .bucket(bucketName)

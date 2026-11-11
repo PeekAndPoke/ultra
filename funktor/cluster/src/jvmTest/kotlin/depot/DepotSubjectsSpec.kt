@@ -31,7 +31,7 @@ class DepotSubjectsSpec : StringSpec({
         repo.putFile(Stored(Customer(), "customers/42"), "a.txt", "a", mapOf("title" to "t"))
         repo.putFile(Stored(Customer(), "customers/43"), "b.txt", "b".toByteArray())
 
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
-        repo.getMeta("b.txt") shouldBe mapOf("depot-subject" to "customers/43")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
+        repo.getMeta("b.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/43")
     }
 })

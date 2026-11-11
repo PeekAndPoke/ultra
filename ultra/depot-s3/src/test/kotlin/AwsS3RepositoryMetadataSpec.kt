@@ -66,6 +66,7 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
             "mime-type" to "application%2Fpdf",
             "title" to "Vertrag%20M%C3%A4rz",
             "depot-subject" to "customers%2F42",
+            "depot-sha256" to "c35b21d6ca39aa7cc3b79a705d989f1a6e88b99ab43988d74048799e3db926a3",
         )
     }
 
@@ -76,8 +77,8 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
 
         repo.putFile(DepotSubjectId.system, "plus.txt", "a".toByteArray(), mapOf("phone" to "+49 30 1"))
 
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "Vertrag März", "depot-subject" to "customers/42")
-        repo.getMeta("plus.txt") shouldBe mapOf("phone" to "+49 30 1", "depot-subject" to "system")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "Vertrag März", "depot-subject" to "customers/42")
+        repo.getMeta("plus.txt")?.minus("depot-sha256") shouldBe mapOf("phone" to "+49 30 1", "depot-subject" to "system")
         repo.getMeta("nothing.txt") shouldBe null
     }
 

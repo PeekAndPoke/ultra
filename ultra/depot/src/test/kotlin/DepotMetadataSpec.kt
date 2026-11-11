@@ -6,6 +6,7 @@ import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
+import io.peekandpoke.ultra.depot.domain.DepotVerification
 import io.peekandpoke.ultra.depot.repos.DepotInvalidMetadataException
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
@@ -52,7 +53,7 @@ class DepotMetadataSpec : StringSpec({
 
         repo.putFile(anna, "docs/contract.pdf", "pdf".toByteArray(), mapOf("mime-type" to "application/pdf", "title" to "Vertrag März"))
 
-        repo.getMeta("docs/contract.pdf") shouldBe mapOf(
+        repo.getMeta("docs/contract.pdf")?.minus("depot-sha256") shouldBe mapOf(
             "mime-type" to "application/pdf",
             "title" to "Vertrag März",
             "depot-subject" to "customers/42",
@@ -67,7 +68,7 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "contract.pdf", "other", mapOf("title" to "top"))
 
         File(dir, ".meta/files/docs/2026/contract.pdf").isFile shouldBe true
-        repo.getMeta("docs/2026/contract.pdf") shouldBe mapOf("depot-subject" to "customers/42")
+        repo.getMeta("docs/2026/contract.pdf")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
     "a write without metadata still records the subject" {
@@ -75,7 +76,7 @@ class DepotMetadataSpec : StringSpec({
 
         repo.putFile(anna, "a.txt", "a")
 
-        repo.getMeta("a.txt") shouldBe mapOf("depot-subject" to "customers/42")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
     "a file the depot did not write has no subject recorded; no file reads as null" {
@@ -116,7 +117,7 @@ class DepotMetadataSpec : StringSpec({
 
         // Only the first segment is reserved
         repo.putFile(anna, "docs/.meta/x.txt", "x")
-        repo.getMeta("docs/.meta/x.txt") shouldBe mapOf("depot-subject" to "customers/42")
+        repo.getMeta("docs/.meta/x.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/42")
         repo.listItems("docs").map { it.name } shouldBe listOf(".meta")
     }
 
@@ -137,7 +138,7 @@ class DepotMetadataSpec : StringSpec({
 
         repo.putFile(customer("43"), "a.txt", "b", mapOf("title" to "second"))
 
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "second", "depot-subject" to "customers/43")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "second", "depot-subject" to "customers/43")
     }
 
     "the system subject is accepted by a typed repository, and by one seen without its type" {
@@ -147,8 +148,8 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(DepotSubjectId.system, "sys.txt", "s")
         untyped.putFile(DepotSubjectId.system, "sys2.txt", "s")
 
-        repo.getMeta("sys.txt") shouldBe mapOf("depot-subject" to "system")
-        repo.getMeta("sys2.txt") shouldBe mapOf("depot-subject" to "system")
+        repo.getMeta("sys.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "system")
+        repo.getMeta("sys2.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "system")
     }
 
     "a subject id is namespace/id; blank parts, a slash in the namespace and Nothing as the kind are refused" {
@@ -173,18 +174,38 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(DepotSubjectId.system, "a.txt", "b")
 
         File(dir, ".meta/files/a.txt").isFile shouldBe true
-        repo.getMeta("a.txt") shouldBe mapOf("depot-subject" to "system")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "system")
+    }
+
+    "a write stores the content's hash; verify tells an intact file from a damaged one and one without a hash" {
+        val dir = tempdir()
+        val repo = repoOver(dir)
+        repo.putFile(anna, "a.txt", "a")
+
+        repo.getMeta("a.txt") shouldBe mapOf(
+            "depot-subject" to "customers/42",
+            "depot-sha256" to "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+        )
+        repo.verify("a.txt") shouldBe DepotVerification.Intact
+
+        File(dir, "a.txt").writeText("b")
+        repo.verify("a.txt") shouldBe DepotVerification.Damaged
+
+        File(dir, "foreign.txt").writeText("f")
+        repo.verify("foreign.txt") shouldBe DepotVerification.NoHash
+
+        repo.verify("nothing.txt") shouldBe null
     }
 
     "the subject's id counts towards the size limit" {
         val repo = repoOver(tempdir())
 
-        // 13 for the key "depot-subject" + 2030 ("customers%2F" is 12, with the slash percent-encoded) = 2043 bytes;
-        // "k" + 5 more = 2049
+        // 13 for the key "depot-subject" + 1954 ("customers%2F" is 12, with the slash percent-encoded), and 12 + 64
+        // for the hash = 2043 bytes; "k" + 5 more = 2049
         shouldThrow<DepotInvalidMetadataException> {
-            repo.putFile(customer("s".repeat(2018)), "a.txt", "a", mapOf("k" to "v".repeat(5)))
+            repo.putFile(customer("s".repeat(1942)), "a.txt", "a", mapOf("k" to "v".repeat(5)))
         }
-        repo.putFile(customer("s".repeat(2018)), "a.txt", "a", mapOf("k" to "v".repeat(4)))
+        repo.putFile(customer("s".repeat(1942)), "a.txt", "a", mapOf("k" to "v".repeat(4)))
     }
 
     "a mime type must look like type/subtype" {
@@ -229,13 +250,13 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "target.txt", "t", mapOf("title" to "one"))
         Files.createSymbolicLink(File(dir, "link.txt").toPath(), File(dir, "target.txt").toPath())
 
-        repo.getMeta("link.txt") shouldBe mapOf("title" to "one", "depot-subject" to "customers/42")
+        repo.getMeta("link.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "one", "depot-subject" to "customers/42")
 
         repo.putFile(customer("43"), "link.txt", "t2")
-        repo.getMeta("target.txt") shouldBe mapOf("depot-subject" to "customers/43")
+        repo.getMeta("target.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/43")
 
         repo.removeFile("link.txt") shouldBe true
-        repo.getMeta("target.txt") shouldBe mapOf("depot-subject" to "customers/43")
+        repo.getMeta("target.txt")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/43")
     }
 
     "a file and a folder whose names differ by a suffix do not collide in the metadata tree" {
@@ -245,8 +266,8 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "report.json/part1", "p")
         repo.putFile(anna, "report.tmp/part1", "p")
 
-        repo.getMeta("report") shouldBe mapOf("depot-subject" to "customers/42")
-        repo.getMeta("report.json/part1") shouldBe mapOf("depot-subject" to "customers/42")
+        repo.getMeta("report")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/42")
+        repo.getMeta("report.json/part1")?.minus("depot-sha256") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
     "a write to a folder or the root is refused and leaves nothing behind" {
@@ -282,7 +303,7 @@ class DepotMetadataSpec : StringSpec({
         }
 
         File(dir, "a.txt").readText() shouldBe "old"
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
     }
 
     "a write whose content cannot be moved in place puts the old metadata back, and leaves no temporary file" {
@@ -300,7 +321,7 @@ class DepotMetadataSpec : StringSpec({
                 shouldThrow<Exception> { repo.putFile(customer("43"), "locked/b.txt", "new") }
 
                 File(locked, "a.txt").readText() shouldBe "old"
-                repo.getMeta("locked/a.txt") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
+                repo.getMeta("locked/a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "old", "depot-subject" to "customers/42")
                 File(dir, ".meta/files/locked/b.txt").exists() shouldBe false
                 File(dir, ".meta/tmp").list()!!.toList() shouldBe emptyList()
             }
@@ -347,7 +368,7 @@ class DepotMetadataSpec : StringSpec({
 
         repo.putFile(anna, "a.txt", "b", DepotMetadata.withoutReserved(repo.getMeta("a.txt")!!))
 
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
     }
 
     "removing a path below a file keeps that file's metadata; so does a refused write below it" {
@@ -355,10 +376,10 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(anna, "a.txt", "a", mapOf("title" to "t"))
 
         repo.removeFile("a.txt/x") shouldBe false
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
 
         shouldThrow<Exception> { repo.putFile(anna, "a.txt/x", "x") }
-        repo.getMeta("a.txt") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
+        repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "t", "depot-subject" to "customers/42")
     }
 
     "two repository objects over one folder: writers of one file still take turns" {
@@ -377,7 +398,8 @@ class DepotMetadataSpec : StringSpec({
             threads.forEach { it.join() }
 
             val n = File(dir, "r$round.txt").readText().removePrefix("content-")
-            repos[0].getMeta("r$round.txt") shouldBe mapOf("n" to n, "depot-subject" to "customers/$n")
+            repos[0].getMeta("r$round.txt")?.minus("depot-sha256") shouldBe mapOf("n" to n, "depot-subject" to "customers/$n")
+            repos[0].verify("r$round.txt") shouldBe DepotVerification.Intact
         }
     }
 
@@ -397,7 +419,8 @@ class DepotMetadataSpec : StringSpec({
             threads.forEach { it.join() }
 
             val n = File(dir, "r$round.txt").readText().removePrefix("content-")
-            repo.getMeta("r$round.txt") shouldBe mapOf("n" to n, "depot-subject" to "customers/$n")
+            repo.getMeta("r$round.txt")?.minus("depot-sha256") shouldBe mapOf("n" to n, "depot-subject" to "customers/$n")
+            repo.verify("r$round.txt") shouldBe DepotVerification.Intact
         }
 
         File(dir, ".meta/tmp").list()!!.toList() shouldBe emptyList()

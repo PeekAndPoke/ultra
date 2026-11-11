@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.depot.repos
 import io.peekandpoke.ultra.depot.domain.DepotFileContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
+import io.peekandpoke.ultra.depot.domain.DepotVerification
 
 /**
  * Definition of a depot repository.
@@ -50,7 +51,7 @@ interface DepotRepository<in T> {
 
     /**
      * The metadata of the file at [path]: what the writer gave, plus the depot's own entries such as
-     * [DepotMetadata.SUBJECT]. A file the depot did not write has no subject recorded: it reads without that entry,
+     * [DepotMetadata.SUBJECT] and [DepotMetadata.SHA256]. A file the depot did not write has no subject recorded: it reads without those entries,
      * which is not the same as a system file. Null when there is no such file.
      */
     suspend fun getMeta(path: String): Map<String, String>?
@@ -74,6 +75,19 @@ interface DepotRepository<in T> {
         meta: Map<String, String> = emptyMap(),
     ): DepotItem {
         return putFile(subject = subject, path = path, content = content.toByteArray(), meta = meta)
+    }
+
+    /**
+     * Reads the file at [path] and compares it with the hash stored at its write ([DepotMetadata.SHA256]). Null when
+     * there is no such file. It finds damage: a truncated or altered file, content paired with other metadata. It
+     * does not prove that nobody tampered: who can write the file and its metadata can write a fitting hash.
+     */
+    suspend fun verify(path: String): DepotVerification? {
+        val meta = getMeta(path) ?: return null
+        val expected = meta[DepotMetadata.SHA256] ?: return DepotVerification.NoHash
+        val content = getContent(path)?.getContentBytes() ?: return null
+
+        return if (DepotMetadata.sha256(content) == expected) DepotVerification.Intact else DepotVerification.Damaged
     }
 
     /** Remove a file with a certain uri */

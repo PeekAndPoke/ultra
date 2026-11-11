@@ -65,7 +65,10 @@ repo?.putFile(DepotSubjectId.system, "reports/latest.json", report)
 
 // List, and read the metadata
 val files = customerFiles.listItems("photos/")
-val meta = customerFiles.getMeta("photos/avatar.jpg")   // {mime-type=image/jpeg, depot-subject=customers/42}
+val meta = customerFiles.getMeta("photos/avatar.jpg")   // mime-type, depot-subject=customers/42, depot-sha256=...
+
+// Compare the file with the hash stored at its write: Intact, Damaged or NoHash
+val state = customerFiles.verify("photos/avatar.jpg")
 
 // Download
 val content = cluster.depot.getContent(DepotUri("customer-files", "photos/avatar.jpg"))`} lang="kotlin" theme="vitesse-dark"/>

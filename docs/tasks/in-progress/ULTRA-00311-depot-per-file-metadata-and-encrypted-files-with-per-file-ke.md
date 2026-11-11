@@ -225,6 +225,18 @@ the `getMeta` race (timing), the refusal of a content move onto a folder (a race
 (the root may be re-pointed while the app runs). Open by decision: several processes on one folder do not take
 turns (KDoc says so); the content hash proposed to the maintainer is not built.
 
+The content hash (maintainer, 2026-11-11: "could we store a salted hash of the file in the metadata so we could
+detect tampered data?"; answered that a hash beside the file finds damage, not tampering, which needs a keyed
+hash; the split agreed: "Yes split is ok"). Built in step 2: every write stores `depot-sha256` (SHA-256 of the
+content as written, hex), and `DepotRepository.verify(path)` answers `Intact`, `Damaged`, `NoHash` or null. **For
+step 3:** a keyed hash (HMAC) for unencrypted repositories with a key from the key store; for encrypted ones
+AES-GCM covers it, and what `depot-sha256` is taken over (the ciphertext) is decided there. Verified: depot 75,
+depot-s3 11, cluster 140, insights 114, funktor-all 288, demo 52; mutations red: H1 the hash not stored, H2 verify
+always intact, H3 no hash read as damaged, H4 S3 hashing other bytes. Both race tests now also assert `Intact`.
+
+Round 3 was started at level 3 and stopped unfinished when the maintainer asked for the mid level ("review at mid
+level"); no result was read. It runs at level 2 over the state including the hash.
+
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header
 injection towards S3; error messages; the browse API; the size rule; test expectations are literals.

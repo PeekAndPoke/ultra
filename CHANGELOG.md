@@ -345,6 +345,9 @@
     2 KB in all. The subject's id is always stored as `depot-subject`, for system files too. `getMeta` returns the
     map: without `depot-subject` for a file the depot did not write (no subject recorded), null when there is no
     such file.
+  - Every write also stores the content's SHA-256 as `depot-sha256`, and `repo.verify(path)` re-reads the file and
+    answers `Intact`, `Damaged` or `NoHash`. It finds damage and content paired with other metadata; it is no proof
+    against tampering by someone who can write the metadata too.
   - `DepotPutFileOptions`, its unused `encryption` option, `DepotMeta` and `DepotItemModel.Meta`/`Visibility` are
     gone; `DepotBrowseModel.meta` is the map.
   - S3: metadata is the object's user metadata (`x-amz-meta-*`, values percent-encoded); **tags are no longer

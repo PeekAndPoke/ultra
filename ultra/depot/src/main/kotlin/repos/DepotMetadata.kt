@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.depot.repos
 
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import java.net.URLEncoder
+import java.security.MessageDigest
 
 /** Thrown for metadata a depot repository refuses: a bad or reserved key, or too much of it. */
 class DepotInvalidMetadataException(message: String) : IllegalArgumentException(message)
@@ -11,6 +12,7 @@ class DepotInvalidMetadataException(message: String) : IllegalArgumentException(
  *
  * - a key is 1 to 64 characters of `a-z`, `0-9` and `-` (S3 lowercases header names);
  * - keys starting with `depot-` are the depot's own and refused from a caller;
+ * - the depot adds the subject's id ([SUBJECT]) and the content's hash ([SHA256]), which count towards the size;
  * - a [MIME_TYPE] entry looks like `type/subtype`;
  * - all keys and values together stay within [MAX_BYTES], S3's limit for user metadata, measured as S3 stores
  *   them (values percent-encoded).
@@ -21,6 +23,9 @@ object DepotMetadata {
 
     /** The data subject's id, written with every file. */
     const val SUBJECT = "depot-subject"
+
+    /** The SHA-256 of the content as it was written, in hex, written with every file; see [DepotRepository.verify]. */
+    const val SHA256 = "depot-sha256"
 
     /**
      * The file's mime type, by convention. It must look like `type/subtype`. The S3 repository also sets it as the
@@ -58,9 +63,16 @@ object DepotMetadata {
         }
     }
 
-    /** What is stored for a write: the caller's [meta], checked, with the [subject]'s id, within the size limit. */
-    fun stored(subject: DepotSubjectId<*>, meta: Map<String, String>): Map<String, String> =
-        validateSize(validate(meta) + (SUBJECT to subject.value))
+    /**
+     * What is stored for a write: the caller's [meta], checked, with the [subject]'s id and the [content]'s hash,
+     * within the size limit.
+     */
+    fun stored(subject: DepotSubjectId<*>, meta: Map<String, String>, content: ByteArray): Map<String, String> =
+        validateSize(validate(meta) + (SUBJECT to subject.value) + (SHA256 to sha256(content)))
+
+    /** The SHA-256 of [content], in lowercase hex. */
+    fun sha256(content: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(content).joinToString("") { "%02x".format(it) }
 
     /** Checks the size of everything that is stored, the depot's own entries included. */
     fun validateSize(stored: Map<String, String>): Map<String, String> = stored.also {

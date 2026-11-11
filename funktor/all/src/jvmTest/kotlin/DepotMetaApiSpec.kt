@@ -44,6 +44,7 @@ class DepotMetaApiSpec : FunktorApiSpec() {
                                 "mime-type" to "application/pdf",
                                 "title" to "Vertrag März",
                                 "depot-subject" to "customers/42",
+                                "depot-sha256" to "c35b21d6ca39aa7cc3b79a705d989f1a6e88b99ab43988d74048799e3db926a3",
                             )
                         }
                     }
