@@ -1,0 +1,66 @@
+package io.peekandpoke.funktor.cluster.depot
+
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.engine.spec.tempdir
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
+import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
+import io.peekandpoke.funktor.cluster.depot.repos.fs.FileSystemRepository
+import io.peekandpoke.funktor.cluster.depot.repos.validateDepotPath
+import java.io.File
+import java.nio.file.Files
+
+/** Paths in a [FileSystemRepository] and the shared depot path check (ULTRA-00304). */
+class FileSystemRepositorySpec : StringSpec({
+
+    fun repoOver(dir: File) = object : FileSystemRepository("test", dir.absolutePath) {}
+
+    "the depot path check refuses dot segments, backslashes and NUL, and allows the rest" {
+        listOf("..", "a/../b", "./a", "a/.", "a\\b", "a${Char(0)}b").forEach { path ->
+            shouldThrow<DepotInvalidPathException> { path.validateDepotPath() }
+        }
+
+        listOf("", "/", "a/b.json", "records-2026-01-01/x.json", "a..b", "/abs/path").forEach { path ->
+            path.validateDepotPath() shouldBe path
+        }
+    }
+
+    "listItems with a limit lists the folder it was given" {
+        val dir = tempdir()
+        File(dir, "sub").mkdirs()
+        File(dir, "sub/a.txt").writeText("a")
+        File(dir, "top.txt").writeText("t")
+
+        repoOver(dir).listItems(path = "sub", limit = 10).map { it.name } shouldContainExactly listOf("a.txt")
+    }
+
+    "an entry whose name holds two dots is listed, not a failure of the folder" {
+        val dir = tempdir()
+        File(dir, "a..b.txt").writeText("x")
+        File(dir, "c.txt").writeText("y")
+
+        repoOver(dir).listItems("").map { it.name }.sorted() shouldContainExactly listOf("a..b.txt", "c.txt")
+    }
+
+    "an absolute path stays inside the repository" {
+        val dir = tempdir()
+        File(dir, "etc").mkdirs()
+        File(dir, "etc/hosts").writeText("inside")
+
+        String(repoOver(dir).getContent("/etc/hosts")!!.getContentBytes()) shouldBe "inside"
+    }
+
+    "a symlink inside the repository that points out of it is neither read nor listed" {
+        val dir = tempdir()
+        val outside = tempdir()
+        File(outside, "secret.txt").writeText("secret")
+        Files.createSymbolicLink(File(dir, "link-out").toPath(), outside.toPath())
+        File(dir, "inside.txt").writeText("x")
+
+        val repo = repoOver(dir)
+
+        shouldThrow<DepotInvalidPathException> { repo.getContent("link-out/secret.txt") }
+        repo.listItems("").map { it.name } shouldContainExactly listOf("inside.txt")
+    }
+})

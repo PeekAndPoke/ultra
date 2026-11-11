@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.cluster.depot.api
 
 import io.peekandpoke.funktor.cluster.cluster
+import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotApiClient
 import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotBrowseModel
 import io.peekandpoke.funktor.rest.ApiRoutes
@@ -40,13 +41,18 @@ class DepotApi : ApiRoutes("depot", authFloor = { isSuperUser() }) {
                 ?: return@handle ApiResponse.notFound<DepotBrowseModel>()
                     .withError("Repo '${params.repo}' not found")
 
-            val item = repository.getItem(params.path)
-                ?: return@handle ApiResponse.notFound<DepotBrowseModel>()
-                    .withError("Path '${params.repo}/${params.path}' not found")
+            // A path that could leave the repository is a bad request, not a server error (ULTRA-00304)
+            val browsed = try {
+                val item = repository.getItem(params.path)
+                    ?: return@handle ApiResponse.notFound<DepotBrowseModel>()
+                        .withError("Path '${params.repo}/${params.path}' not found")
 
-            val meta = repository.getMeta(params.path)
+                Triple(item, repository.getMeta(params.path), repository.listItems(params.path))
+            } catch (_: DepotInvalidPathException) {
+                return@handle ApiResponse.badRequest<DepotBrowseModel>().withError("Invalid path")
+            }
 
-            val children = repository.listItems(params.path)
+            val (item, meta, children) = browsed
 
             ApiResponse.ok(
                 DepotBrowseModel(

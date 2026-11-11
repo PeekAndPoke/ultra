@@ -1,6 +1,6 @@
 # ULTRA-00304: Insights record paths and depot path hardening
 
-> **Status (2026-11-11): DESIGNED.** Out-of-scope finding of ULTRA-00198's review gate; the maintainer on 2026-11-11:
+> **Status (2026-11-11): IN PROGRESS.** Implemented with the recommended decisions; mutation checks and the review gate next. Out-of-scope finding of ULTRA-00198's review gate; the maintainer on 2026-11-11:
 > "yes we need to harden this. Does depot allow path traversal from user input? If so we need to fix this too."
 >
 > **Part of:** ULTRA-00253 (Epic: Insights)
@@ -58,3 +58,20 @@
 ## History
 
 - 2026-11-11: created from ULTRA-00198's gate; depot read for traversal.
+- 2026-11-11: implemented, decisions as recommended:
+  - `InsightsRecordRef.isRecord()` (`records-yyyy-mm-dd` / one segment `.json`, no `..`); the loader answers null
+    (404) for anything else.
+  - `String.validateDepotPath()` + `DepotInvalidPathException` (`depot/repos/DepotPaths.kt`): no `.`/`..`
+    segment, backslash or NUL; used by both repositories. The FS repository also checks the canonical path stays
+    under the canonical root (a symlink out is refused and not listed). A name like `a..b` is allowed now.
+  - `DepotApi.browse` answers 400 for a refused path (was 500 with a stack trace in the messages).
+  - `listItems(path, limit)` honours `path`; one bad entry no longer fails the folder listing.
+  - Demo: `getDepotRepos`/`getDepotFiles` are superuser only (they listed repo locations and files publicly).
+  - S3: the check runs before every SDK call; no test against the SDK's request building (no bucket here), the
+    shared check is unit-tested.
+  - Tests: `InsightsRecordPathSpec`, `DepotPathSpec` (funktor/all, e2e, both red before: 200 / 500 / a symlink
+    listed), `FileSystemRepositorySpec` (funktor/cluster).
+- 2026-11-11: a private companion on `InsightsRecordRef` broke Slumber's reflection (every record read was a 500);
+  the regexes are top-level now. Green: funktor-all 283/283, insights 111/111, cluster, codegen 104/104.
+  Mutations, each red: D1 `..` check, D2 backslash check, D3 canonical check, D4 listing filter, D5 limit path,
+  I1 `isRecord` in the loader, I2 the 400 mapping. Review gate next (security-critical).

@@ -82,6 +82,9 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster", authFloor = { public() 
             name = "List depot repositories"
         }.codeGen {
             funcName = "getDepotRepos"
+        }.authorize {
+            // The depot's repositories, their locations and files are not public, insights records included
+            isSuperUser()
         }.handle {
             val repos = cluster.depot.getRepos()
 
@@ -102,6 +105,9 @@ class ClusterShowcaseApi : ApiRoutes("showcase-cluster", authFloor = { public() 
             name = "List files in depot repository"
         }.codeGen {
             funcName = "getDepotFiles"
+        }.authorize {
+            // The depot's repositories, their locations and files are not public, insights records included
+            isSuperUser()
         }.handle { params ->
             val repo = cluster.depot.getRepo(params.repo)
             val items = repo?.listItems() ?: emptyList()

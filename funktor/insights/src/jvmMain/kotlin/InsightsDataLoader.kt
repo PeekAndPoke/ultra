@@ -43,6 +43,9 @@ class InsightsDataLoader(
 
     /** Loads the record [ref] addresses, or null when there is no such file. */
     suspend fun load(ref: InsightsRecordRef): InsightsRecord? {
+        // Only records: the ref comes from the URL, and the depot would read any file of the repository (ULTRA-00304)
+        if (!ref.isRecord()) return null
+
         val path = ref.toPath()
 
         val content = repository.getContent(path) ?: return null

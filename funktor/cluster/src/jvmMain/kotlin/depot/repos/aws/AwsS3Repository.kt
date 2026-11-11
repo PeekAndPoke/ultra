@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
 import io.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
 import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
 import io.peekandpoke.funktor.cluster.depot.repos.depotPutFileOptions
+import io.peekandpoke.funktor.cluster.depot.repos.validateDepotPath
 import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.mp
@@ -123,6 +124,9 @@ abstract class AwsS3Repository(
      * Lists [limit] newest files in the bucket
      */
     override suspend fun listItems(path: String, limit: Int): List<DepotItem> {
+        // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
+        path.validateDepotPath()
+
 
         val listObjects = ListObjectsRequest.builder()
             .bucket(bucketName)
@@ -153,6 +157,9 @@ abstract class AwsS3Repository(
      * Gets a file by the given [path]
      */
     override suspend fun getFile(path: String): DepotS3File? {
+        // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
+        path.validateDepotPath()
+
 
         if (path.isEmpty() || path == "/") {
             return null
@@ -182,6 +189,9 @@ abstract class AwsS3Repository(
     }
 
     override suspend fun getFolder(path: String): DepotItem.Folder {
+        // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
+        path.validateDepotPath()
+
         return DepotS3Folder(
             s3 = s3,
             repo = this,
@@ -195,6 +205,9 @@ abstract class AwsS3Repository(
      * Gets the [DepotFileContent] of the file with the given [path]
      */
     override suspend fun getContent(path: String): DepotS3FileContent {
+        // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
+        path.validateDepotPath()
+
 
         val request = GetObjectRequest.builder()
             .bucket(bucketName)
@@ -206,6 +219,9 @@ abstract class AwsS3Repository(
 
     /** Get the meta information of the file with the given [path] */
     override suspend fun getMeta(path: String): DepotItemModel.Meta? {
+        // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
+        path.validateDepotPath()
+
 
         if (path.isEmpty()) {
             return null
@@ -231,6 +247,9 @@ abstract class AwsS3Repository(
         content: ByteArray,
         options: DepotPutFileOptions.Builder.() -> Unit,
     ): DepotItem {
+        // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
+        path.validateDepotPath()
+
 
         val builtOptions = depotPutFileOptions(options)
 
@@ -257,6 +276,9 @@ abstract class AwsS3Repository(
 
     /** Remove a file with a certain uri */
     override suspend fun removeFile(path: String): Boolean {
+        // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
+        path.validateDepotPath()
+
 
         try {
             val request = DeleteObjectRequest.builder()

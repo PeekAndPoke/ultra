@@ -275,6 +275,13 @@
   drops a pending value when the last subscriber leaves. `asFlow()` is conflated: a slow collector gets the latest
   value; it lost every value beyond a buffer of 64, the latest included.
 
+- **Funktor depot: one path check for every repository** (ULTRA-00304). A path with a `.` or `..` segment, a
+  backslash or a NUL throws `DepotInvalidPathException` in the file system and the S3 repository alike; the file
+  system repository also refuses, and does not list, a symlink that leads out of its root. A name like `a..b` is
+  allowed now (it was refused). `DepotApi.browse` answers 400 for such a path (it was a 500).
+- **Funktor insights: the record endpoint reads records only** (ULTRA-00304): `records-<yyyy-mm-dd>/<name>.json`;
+  any other file of the insights depot is a 404, as is a name with `..` (it was a 500).
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`
@@ -298,6 +305,8 @@
 
 ### Fixes
 
+- **Funktor depot: `FileSystemRepository.listItems(path, limit)` listed the root**, whatever the path; and one
+  entry whose name held `..` failed the listing of its whole folder (ULTRA-00304).
 - **Streams: reads without a subscriber** (ULTRA-00302, from Klang). `distinct()`, `cutoffWhen()`, `filter()` and
   `indexed()` returned what they held when last listened to (or built): now `distinct` reads the source, `cutoff` the
   source while not cut off (else the value it last saw), `filter` the source's value when it passes, and a read of

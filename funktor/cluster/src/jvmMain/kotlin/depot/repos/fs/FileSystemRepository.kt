@@ -2,24 +2,16 @@ package io.peekandpoke.funktor.cluster.depot.repos.fs
 
 import io.peekandpoke.funktor.cluster.depot.domain.DepotFileContent
 import io.peekandpoke.funktor.cluster.depot.domain.DepotItem
+import io.peekandpoke.funktor.cluster.depot.repos.DepotInvalidPathException
 import io.peekandpoke.funktor.cluster.depot.repos.DepotPutFileOptions
 import io.peekandpoke.funktor.cluster.depot.repos.DepotRepository
+import io.peekandpoke.funktor.cluster.depot.repos.validateDepotPath
 import io.peekandpoke.funktor.inspect.cluster.depot.api.DepotItemModel
 import io.peekandpoke.ultra.common.ensureDirectory
 import io.peekandpoke.ultra.datetime.MpInstant
 import java.io.File
 
 abstract class FileSystemRepository(override val name: String, dir: String) : DepotRepository {
-
-    companion object {
-        private fun String.isInvalidName() = contains("..")
-
-        internal fun String.validateName() = this.apply {
-            if (isInvalidName()) {
-                error("Invalid name")
-            }
-        }
-    }
 
     data class FsFileContent(private val file: File) : DepotFileContent {
         override suspend fun getContentBytes(): ByteArray {
@@ -75,6 +67,21 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
 
     internal val root = File(dir).absoluteFile
 
+    /** The root with symlinks resolved: every file this repository touches lies below it. */
+    private val canonicalRoot by lazy { root.canonicalFile.toPath() }
+
+    /** Whether [file] lies inside the root, also after following symlinks. */
+    private fun isInside(file: File): Boolean = file.canonicalFile.toPath().startsWith(canonicalRoot)
+
+    /** The file [path] names: a path that could leave the root throws [DepotInvalidPathException] (ULTRA-00304). */
+    private fun resolve(path: String): File {
+        val file = File(root, path.validateDepotPath()).absoluteFile
+
+        if (!isInside(file)) throw DepotInvalidPathException(path)
+
+        return file
+    }
+
     override val type = "File system"
 
     override val location: String = root.absolutePath
@@ -84,12 +91,11 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     }
 
     override suspend fun listItems(path: String): List<DepotItem> {
-        // SECURITY. Prevent path traversal! check for any slashes and dot-dots
-        path.validateName()
-
-        val dir = File(root, path).absoluteFile
+        val dir = resolve(path)
 
         return (dir.listFiles() ?: emptyArray())
+            // A symlink pointing out of the root is not listed
+            .filter { isInside(it) }
             .mapNotNull {
                 when {
                     it.isFile -> FsFile(repo = this, file = it)
@@ -97,11 +103,10 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
                     else -> null
                 }
             }
-            .onEach { it.path.validateName() }
     }
 
     override suspend fun listItems(path: String, limit: Int): List<DepotItem> {
-        return listItems().take(limit)
+        return listItems(path).take(limit)
     }
 
     override suspend fun getItem(path: String): DepotItem? {
@@ -109,34 +114,25 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     }
 
     override suspend fun getFile(path: String): FsFile? {
-        // SECURITY. Prevent path traversal! check for any slashes and dot-dots
-        path.validateName()
-
-        val file = File(root, path)
+        val file = resolve(path)
 
         return when {
-            file.exists() && file.isFile -> FsFile(repo = this, file = File(root, path))
+            file.exists() && file.isFile -> FsFile(repo = this, file = file)
             else -> null
         }
     }
 
     override suspend fun getFolder(path: String): FsFolder? {
-        // SECURITY. Prevent path traversal! check for any slashes and dot-dots
-        path.validateName()
-
-        val file = File(root, path)
+        val file = resolve(path)
 
         return when {
-            file.exists() && file.isDirectory -> FsFolder(repo = this, file = File(root, path))
+            file.exists() && file.isDirectory -> FsFolder(repo = this, file = file)
             else -> null
         }
     }
 
     override suspend fun getContent(path: String): FsFileContent? {
-        // SECURITY. Prevent path traversal! check for any slashes and dot-dots
-        path.validateName()
-
-        val file = File(root, path)
+        val file = resolve(path)
 
         return when {
             file.exists() && file.isFile -> FsFileContent(file)
@@ -155,10 +151,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     ): DepotItem {
         // val builtOptions = depotPutFileOptions(options)
 
-        // SECURITY. Prevent path traversal! check for any slashes and dot-dots
-        path.validateName()
-
-        val file = File(root, path).absoluteFile
+        val file = resolve(path)
 
         file.parentFile.ensureDirectory()
 
@@ -170,10 +163,7 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
 
     /** Remove a file with a certain uri */
     override suspend fun removeFile(path: String): Boolean {
-        // SECURITY. Prevent path traversal! check for any slashes and dot-dots
-        path.validateName()
-
-        val file = File(root, path)
+        val file = resolve(path)
 
         return file.exists() && file.isFile && file.delete()
     }
