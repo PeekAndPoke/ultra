@@ -329,8 +329,8 @@
   Packages: `io.peekandpoke.funktor.cluster.depot[.domain|.repos|.repos.fs]` is now `io.peekandpoke.ultra.depot[...]`,
   and `...depot.repos.aws` is `io.peekandpoke.ultra.depot.s3`. `funktor:cluster` exposes `ultra:depot` and no longer
   brings the AWS S3 SDK: an app using `AwsS3Repository` adds `ultra:depot-s3`. The API models are mapped by
-  extension functions in `io.peekandpoke.funktor.cluster.depot.api` (`asApiModel()`); `getMeta` returns the depot's
-  own `DepotMeta`. `DepotApi` and the kontainer wiring stay in `funktor:cluster`. No behaviour change.
+  extension functions in `io.peekandpoke.funktor.cluster.depot.api` (`asApiModel()`). `DepotApi` and the kontainer
+  wiring stay in `funktor:cluster`. No behaviour change.
 
 - **Depot: every write names its data subject, and a file carries free metadata** (ULTRA-00311, step 2).
   - `DepotRepository` is generic over the kind of subject: `putFile(subject: DepotSubjectId<T>, path, content, meta)`.
@@ -342,8 +342,9 @@
     `Storable<T>.asDepotSubject()` (the entity's `collection/key`) and `repo.putFile(storedEntity, path, content,
     meta)`; `funktor:cluster` now exposes `ultra:vault`.
   - Metadata is a `Map<String, String>`: keys of `a-z`, `0-9` and `-` (1 to 64), keys starting with `depot-` reserved,
-    2 KB in all. The subject's id is always read as `depot-subject`: a file without a stored subject reads as a
-    system file (`depot-subject` = `system`). `getMeta` returns the map, null when there is no such file.
+    2 KB in all. The subject's id is always stored as `depot-subject`, for system files too. `getMeta` returns the
+    map: without `depot-subject` for a file the depot did not write (no subject recorded), null when there is no
+    such file.
   - `DepotPutFileOptions`, its unused `encryption` option, `DepotMeta` and `DepotItemModel.Meta`/`Visibility` are
     gone; `DepotBrowseModel.meta` is the map.
   - S3: metadata is the object's user metadata (`x-amz-meta-*`, values percent-encoded); **tags are no longer
@@ -352,7 +353,6 @@
     `.meta.`) is a reserved first path segment in every repository; the file system repository never lists it. **A
     depot that already holds a top-level `.meta` folder of its own files can no longer reach them.** Content and
     metadata are written through temporary files and moved in place; writers of one file take turns.
-    A system file without metadata gets no metadata file.
   - `DepotException` is a `RuntimeException` now (it was a bare `Throwable`); `AwsHelper` (the tag mapping) is gone.
 
 ### New

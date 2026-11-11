@@ -231,10 +231,7 @@ abstract class AwsS3Repository<in T>(
             .build()
 
         return try {
-            val stored = s3.headObject(request).await().metadata().mapValues { (_, value) -> decode(value) }
-
-            // An object without a stored subject (written by another tool) reads as a system file
-            DepotMetadata.systemOnly + stored
+            s3.headObject(request).await().metadata().mapValues { (_, value) -> decode(value) }
         } catch (_: NoSuchKeyException) {
             null
         }
@@ -260,7 +257,7 @@ abstract class AwsS3Repository<in T>(
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
-        val stored = DepotMetadata.validateSize(DepotMetadata.validate(meta) + (DepotMetadata.SUBJECT to subject.value))
+        val stored = DepotMetadata.stored(subject, meta)
 
         val request = PutObjectRequest.builder()
             .bucket(bucketName)

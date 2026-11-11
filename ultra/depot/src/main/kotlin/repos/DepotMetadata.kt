@@ -22,9 +22,6 @@ object DepotMetadata {
     /** The data subject's id, written with every file. */
     const val SUBJECT = "depot-subject"
 
-    /** What a system file without metadata of its own has, and how a file without a stored subject reads. */
-    val systemOnly: Map<String, String> = mapOf(SUBJECT to DepotSubjectId.system.value)
-
     /**
      * The file's mime type, by convention. It must look like `type/subtype`. The S3 repository also sets it as the
      * object's content type, which is what a bucket served to browsers answers with: an app that takes it from a user
@@ -57,6 +54,10 @@ object DepotMetadata {
             }
         }
     }
+
+    /** What is stored for a write: the caller's [meta], checked, with the [subject]'s id, within the size limit. */
+    fun stored(subject: DepotSubjectId<*>, meta: Map<String, String>): Map<String, String> =
+        validateSize(validate(meta) + (SUBJECT to subject.value))
 
     /** Checks the size of everything that is stored, the depot's own entries included. */
     fun validateSize(stored: Map<String, String>): Map<String, String> = stored.also {

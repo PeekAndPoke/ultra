@@ -64,11 +64,11 @@ val repo = cluster.depot.getRepo("uploads")
 repo?.putFile(DepotSubjectId.system, "reports/latest.json", report)
 
 // List, and read the metadata
-val files = repo?.listItems("photos/")
+val files = customerFiles.listItems("photos/")
 val meta = customerFiles.getMeta("photos/avatar.jpg")   // {mime-type=image/jpeg, depot-subject=customers/42}
 
 // Download
-val content = cluster.depot.getContent(DepotUri("uploads", "photos/avatar.jpg"))`} lang="kotlin" theme="vitesse-dark"/>
+val content = cluster.depot.getContent(DepotUri("customer-files", "photos/avatar.jpg"))`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Distributed locks</h2>
 

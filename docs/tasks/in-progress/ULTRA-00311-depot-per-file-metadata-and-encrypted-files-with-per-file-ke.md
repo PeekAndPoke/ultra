@@ -188,7 +188,7 @@ without a clean one: stopped, the maintainer asked.
 |---|---|---|---|---|---|
 | 2 | MAJOR | `FileSystemRepository.kt:271,349` | `removeFile("a.txt/x")` deletes the metadata file of `a.txt`: the clean-up loop deletes a file as if it were an empty folder (security M1) | fix | Confirmed red by a test; the loop removes folders only |
 | 2 | MAJOR | `FileSystemRepository.kt:356-358` | The locks belong to one repository object; a `dynamic` repository is built per request, so two requests do not take turns (impl M1; security m4, domain m5) | fix | Confirmed red by a test with two objects over one folder; the locks are in the companion. Across processes (a shared volume) still open, KDoc says "in this process" |
-| 2 | MAJOR | `FileSystemRepository.kt:209,298`, `AwsS3Repository.kt:237`, `DepotMetadata.kt:25` | "No stored subject reads as `system`" contradicts decision 8 ("always written") and the design ("reads as an empty map"): a lost `.meta` tree or a file dropped in from outside reads as belonging to no person (domain M1) | maintainer decision | Built on an answer that did not name this question |
+| 2 | MAJOR | `FileSystemRepository.kt:209,298`, `AwsS3Repository.kt:237`, `DepotMetadata.kt:25` | "No stored subject reads as `system`" contradicts decision 8 ("always written") and the design ("reads as an empty map"): a lost `.meta` tree or a file dropped in from outside reads as belonging to no person (domain M1) | fix (maintainer: back to decision 8) | Built on an answer that did not name this question; reverted |
 | 2 | MINOR | `FileSystemRepository.kt:246` | The content move deletes a folder at its target recursively: a race of `p` and `p/x` deletes an acknowledged file (impl m1, domain m2, security m2) | fix | Orphan removal only in the mirror; a content move onto a folder fails |
 | 2 | MINOR | `FileSystemRepository.kt:310-318` | No rollback between the two moves: a failed content move (another mount, read-only folder) leaves old content under new metadata; temp files in `.meta/tmp` are not on a sub-mount's file system (impl m2, domain m1, security m3) | open | Depends on the design answer below |
 | 2 | MINOR | `FileSystemRepository.kt:241` | Files are created 0600 through `createTempFile` (before: by umask); crash leftovers in `.meta/tmp` hold content and are never swept; `.meta/tmp` as a link out of the root is not checked (impl m3, m4, m7; domain m3) | open | |
@@ -201,6 +201,13 @@ without a clean one: stopped, the maintainer asked.
 
 Round-2 fixes so far: depot 70, cluster 140, insights 114, funktor-all 288, demo 52. The two new tests were red
 before the fixes (the remove below a file; two repository objects racing).
+
+The maintainer on round 2's MAJOR (2026-11-11): "Yes back to [decision] 8". Built: every write records its
+subject, system files too; a file without a metadata file (FS) or without the entry (S3) reads without
+`depot-subject`, never as `system`. One function, `DepotMetadata.stored(subject, meta)`, builds what both stores
+write (domain m4). Also fixed: the docs example's repository (m8), the step-1 changelog clause (m9). Verified: depot
+69, depot-s3 11, cluster 140, insights 114, funktor-all 288, demo 52; mutations red: S1 the subject dropped from
+`stored`, S2 "no metadata file reads as system".
 
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header

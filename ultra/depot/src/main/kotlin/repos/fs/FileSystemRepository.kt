@@ -206,8 +206,8 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
 
         val meta = metaFile(file)
 
-        // A system file stored without metadata, or a file from before there was any
-        if (!meta.isFile) return DepotMetadata.systemOnly
+        // No subject recorded: a file from before there was metadata, or one put there by something else
+        if (!meta.isFile) return emptyMap()
 
         return try {
             json.decodeFromString(JsonObject.serializer(), meta.readText())
@@ -281,8 +281,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
      * Writes content and metadata through temporary files, each moved in place in one step: the metadata, then the
      * content. A write that fails before the moves changes nothing, and writers of one file in this process take turns, so a file
      * never ends up with another writer's metadata. A reader between the two moves sees the new metadata with the
-     * old content for that moment. A system file without metadata gets no metadata file; an older one is removed
-     * after the content is in place.
+     * old content for that moment.
      */
     override suspend fun putFile(
         subject: DepotSubjectId<T>,
@@ -292,15 +291,12 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
     ): DepotItem {
         val file = resolve(path)
 
-        val stored = DepotMetadata.validateSize(DepotMetadata.validate(meta) + (DepotMetadata.SUBJECT to subject.value))
+        val stored = DepotMetadata.stored(subject, meta)
 
         // A folder, the root included, is no place for a file
         if (file.isDirectory) throw DepotInvalidPathException()
 
         val metaTarget = metaFile(file)
-
-        // A system file without metadata gets no metadata file: that is how a file without one reads
-        val writeMeta = stored != DepotMetadata.systemOnly
 
         synchronized(lockFor(file)) {
             val contentTemp = tempFile()
@@ -311,18 +307,13 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
 
                 file.parentFile.ensureDirectory()
 
-                if (writeMeta) {
-                    metaTemp.writeText(
-                        json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) }))
-                    )
-                    ensureMetaParent(metaTarget)
-                    moveInPlace(metaTemp, metaTarget, orphans = true)
-                }
+                metaTemp.writeText(
+                    json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) }))
+                )
+                ensureMetaParent(metaTarget)
 
+                moveInPlace(metaTemp, metaTarget, orphans = true)
                 moveInPlace(contentTemp, file)
-
-                // After the content: old content never reads as a system file
-                if (!writeMeta) removeMeta(file)
             } finally {
                 contentTemp.delete()
                 metaTemp.delete()

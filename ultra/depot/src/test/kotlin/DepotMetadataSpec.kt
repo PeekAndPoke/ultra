@@ -78,12 +78,12 @@ class DepotMetadataSpec : StringSpec({
         repo.getMeta("a.txt") shouldBe mapOf("depot-subject" to "customers/42")
     }
 
-    "a file from before there was metadata reads as a system file; no file reads as null" {
+    "a file the depot did not write has no subject recorded; no file reads as null" {
         val dir = tempdir()
         File(dir, "old.txt").writeText("from before")
         val repo = repoOver(dir)
 
-        repo.getMeta("old.txt") shouldBe mapOf("depot-subject" to "system")
+        repo.getMeta("old.txt") shouldBe emptyMap()
         repo.getMeta("nothing.txt") shouldBe null
     }
 
@@ -162,29 +162,15 @@ class DepotMetadataSpec : StringSpec({
         shouldThrow<IllegalArgumentException> { DepotSubjectId.of(Nothing::class, "customers", "42") }
     }
 
-    "a system file without metadata gets no metadata file, and reads as a system file" {
-        val dir = tempdir()
-        val repo = repoOver(dir)
-
-        repo.putFile(DepotSubjectId.system, "sys.txt", "s")
-
-        File(dir, ".meta/files").exists() shouldBe false
-        repo.getMeta("sys.txt") shouldBe mapOf("depot-subject" to "system")
-
-        repo.putFile(DepotSubjectId.system, "titled.txt", "s", mapOf("title" to "t"))
-        File(dir, ".meta/files/titled.txt").isFile shouldBe true
-    }
-
-    "a system write without metadata over a customer's file removes the customer's metadata" {
+    "a system file records its subject like any other; a system write over a customer's file replaces the subject" {
         val dir = tempdir()
         val repo = repoOver(dir)
         repo.putFile(anna, "a.txt", "a", mapOf("title" to "first"))
 
         repo.putFile(DepotSubjectId.system, "a.txt", "b")
 
-        File(dir, ".meta/files/a.txt").exists() shouldBe false
+        File(dir, ".meta/files/a.txt").isFile shouldBe true
         repo.getMeta("a.txt") shouldBe mapOf("depot-subject" to "system")
-        File(dir, "a.txt").readText() shouldBe "b"
     }
 
     "the subject's id counts towards the size limit" {
