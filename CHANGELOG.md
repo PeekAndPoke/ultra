@@ -316,6 +316,11 @@
 - **Funktor core: `Routes.mountPoint` is gone.** `ApiRoutes` could not use it (an API route's endpoint is shared with
   the client), and its last user went with the server-rendered insights GUI.
 
+- **Kraft: the message bus no longer replays the last message to a new handler** (ULTRA-00310). An `onMessage`
+  registered after messages have flowed (a `FormController` created lazily, an observer added later) was called at
+  once with the last old message, as if it had just happened; and the bus kept that message and its sender alive. A
+  new handler now gets only the messages sent after it registered.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`

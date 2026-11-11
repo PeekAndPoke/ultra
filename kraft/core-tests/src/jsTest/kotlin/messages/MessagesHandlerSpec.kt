@@ -36,23 +36,26 @@ class MessagesHandlerSpec : StringSpec({
         seen shouldBe emptyList()
     }
 
-    "a new subscriber is told the last message" {
+    "a handler registered after a message is not called with it, and gets the next one (ULTRA-00310)" {
         val bus = MessagesHandler()
         bus.send(Note("x"))
 
-        var told: String? = null
-        bus.stream.subscribeToStream { told = (it as? Note)?.text }
+        val told = mutableListOf<String>()
+        bus.stream.subscribeToStream { (it as? Note)?.let { note -> told.add(note.text) } }
 
-        told shouldBe "x"
+        told shouldBe emptyList()
+
+        bus.send(Note("y"))
+
+        told shouldBe listOf("y")
     }
 
-    "a handler that throws on the last message while subscribing is not kept" {
+    "a handler that throws while subscribing is not kept" {
         val bus = MessagesHandler()
-        bus.send(Note("x"))
         var calls = 0
 
         runCatching {
-            bus.stream.subscribeToStream { calls++; if ((it as? Note)?.text == "x") error("boom") }
+            bus.stream.subscribeToStream { calls++; if (it == null) error("boom") }
         }
 
         bus.send(Note("y"))

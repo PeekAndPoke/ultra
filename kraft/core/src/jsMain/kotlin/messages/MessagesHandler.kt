@@ -10,16 +10,17 @@ import io.peekandpoke.ultra.streams.Unsubscribe
  * Every message reaches every handler, also one sent by a handler while another message is dispatched (ULTRA-00307):
  * the bus has its own delivery, not a stream source's "latest value wins". The nested message is delivered at once,
  * so `sendMessage` sees `isStopped` right after `send` returns.
+ *
+ * It keeps no message (ULTRA-00310): a new subscriber is told `null`, "no message", and then every message sent after
+ * it registered. A handler registered late does not act on a past event, and no old message (nor its sender) is kept.
  */
 class MessagesHandler {
 
     private val handlers = mutableSetOf<StreamHandler<Message<*>?>>()
 
-    private var last: Message<*>? = null
-
     /** Stream of messages; subscribers receive each message as it is sent. */
     val stream: Stream<Message<*>?> = object : Stream<Message<*>?> {
-        override fun invoke(): Message<*>? = last
+        override fun invoke(): Message<*>? = null
 
         override fun subscribeToStream(sub: StreamHandler<Message<*>?>): Unsubscribe {
             // An entry of this subscription's own: the same handler given twice is two subscriptions
@@ -28,7 +29,7 @@ class MessagesHandler {
             handlers.add(entry)
 
             try {
-                sub(last)
+                sub(null)
             } catch (e: Throwable) {
                 // No unsubscribe reaches the caller: the handler must not stay behind
                 handlers.remove(entry)
@@ -41,8 +42,6 @@ class MessagesHandler {
 
     /** Dispatches the given [message] to all subscribers. */
     fun send(message: Message<*>) {
-        last = message
-
         for (handler in handlers.toList()) {
             // Unsubscribed during this dispatch: its unsubscribe has returned
             if (handler !in handlers) continue
