@@ -23,7 +23,7 @@ class DepotMetaApiSpec : FunktorApiSpec() {
     init {
         afterSpec {
             File(insightsDepotDir, "meta-e2e").deleteRecursively()
-            File(insightsDepotDir, ".meta/meta-e2e").deleteRecursively()
+            File(insightsDepotDir, ".meta/files/meta-e2e").deleteRecursively()
         }
 
         api.depot.browse { route ->

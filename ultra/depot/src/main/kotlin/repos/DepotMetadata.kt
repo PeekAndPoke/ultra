@@ -10,6 +10,7 @@ class DepotInvalidMetadataException(message: String) : IllegalArgumentException(
  *
  * - a key is 1 to 64 characters of `a-z`, `0-9` and `-` (S3 lowercases header names);
  * - keys starting with `depot-` are the depot's own and refused from a caller;
+ * - a [MIME_TYPE] entry looks like `type/subtype`;
  * - all keys and values together stay within [MAX_BYTES], S3's limit for user metadata, measured as S3 stores
  *   them (values percent-encoded).
  */
@@ -20,8 +21,14 @@ object DepotMetadata {
     /** The data subject's id, written with every file. */
     const val SUBJECT = "depot-subject"
 
-    /** The file's mime type, by convention; the S3 repository also sets it as the object's content type. */
+    /**
+     * The file's mime type, by convention. It must look like `type/subtype`. The S3 repository also sets it as the
+     * object's content type, which is what a bucket served to browsers answers with: an app that takes it from a user
+     * decides which types it allows.
+     */
     const val MIME_TYPE = "mime-type"
+
+    private val mimeRule = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+")
 
     /** S3's limit for the user metadata of one object, in bytes. */
     const val MAX_BYTES = 2048
@@ -33,6 +40,10 @@ object DepotMetadata {
 
     /** Checks a caller's metadata and returns it; see the rules above. */
     fun validate(meta: Map<String, String>): Map<String, String> = meta.also {
+        meta[MIME_TYPE]?.let { mime ->
+            if (!mimeRule.matches(mime)) throw DepotInvalidMetadataException("Invalid mime type: expected type/subtype")
+        }
+
         meta.keys.forEach { key ->
             if (!keyRule.matches(key)) {
                 throw DepotInvalidMetadataException("Invalid metadata key: 1 to 64 characters of a-z, 0-9 and '-'")

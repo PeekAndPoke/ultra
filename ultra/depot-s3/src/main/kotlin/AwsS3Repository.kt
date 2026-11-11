@@ -231,11 +231,17 @@ abstract class AwsS3Repository<in T>(
             .build()
 
         return try {
-            s3.headObject(request).await().metadata()
-                .mapValues { (_, value) -> URLDecoder.decode(value, Charsets.UTF_8) }
-        } catch (e: NoSuchKeyException) {
+            s3.headObject(request).await().metadata().mapValues { (_, value) -> decode(value) }
+        } catch (_: NoSuchKeyException) {
             null
         }
+    }
+
+    /** A value as the depot wrote it; one another tool wrote (a bare `%`) is taken as it is. */
+    private fun decode(value: String): String = try {
+        URLDecoder.decode(value, Charsets.UTF_8)
+    } catch (_: IllegalArgumentException) {
+        value
     }
 
     /**

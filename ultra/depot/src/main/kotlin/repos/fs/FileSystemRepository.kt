@@ -9,6 +9,7 @@ import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DEPOT_META_DIR
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
+import io.peekandpoke.ultra.depot.repos.isDepotMetaDir
 import io.peekandpoke.ultra.depot.repos.DepotRepository
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import java.io.File
@@ -22,8 +23,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * A depot repository in a folder of the file system. A file's metadata lives beside the files, in a tree of its own:
- * `<root>/.meta/<path>.json`.
+ * A depot repository in a folder of the file system. A file's metadata lives beside the files, in a tree of its own
+ * that mirrors them: `<root>/.meta/files/<path>`.
  */
 abstract class FileSystemRepository<in T>(override val name: String, dir: String) : DepotRepository<T> {
 
@@ -93,6 +94,9 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
      */
     private val canonicalRoot: File get() = root.canonicalFile
 
+    /** The metadata tree's folder, symlinks resolved: `<root>/.meta`. */
+    private val metaRoot: File get() = File(canonicalRoot, DEPOT_META_DIR).canonicalFile
+
     /** Whether [file] lies inside the root, also after following symlinks. */
     private fun isInside(file: File): Boolean = file.canonicalFile.toPath().startsWith(canonicalRoot.toPath())
 
@@ -111,6 +115,9 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
             val canonical = file.canonicalFile
 
             if (!canonical.toPath().startsWith(canonicalRoot.toPath())) throw DepotInvalidPathException()
+            // The metadata tree, however it was reached: another spelling on a case-insensitive file system, a
+            // Windows short name, a link that aliases the root
+            if (canonical.toPath().startsWith(metaRoot.toPath())) throw DepotInvalidPathException()
 
             canonical
         } catch (_: InvalidPathException) {
@@ -144,8 +151,8 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         val parent = normalised(path)
 
         return (dir.listFiles() ?: emptyArray())
-            // The metadata tree is not part of the repository's content
-            .filter { parent.isNotEmpty() || it.name != DEPOT_META_DIR }
+            // The metadata tree is not part of the repository's content, under any spelling or alias of the root
+            .filter { !it.name.isDepotMetaDir() || !it.canonicalFile.toPath().startsWith(metaRoot.toPath()) }
             // A symlink pointing out of the root is not listed; any other entry of a resolved folder is inside it
             .filter { !Files.isSymbolicLink(it.toPath()) || isInside(it) }
             .mapNotNull {
@@ -197,7 +204,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
 
         if (!file.isFile) return null
 
-        val meta = metaFile(path)
+        val meta = metaFile(file)
 
         // A file stored without metadata, or before there was any
         if (!meta.isFile) return emptyMap()
@@ -206,35 +213,72 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
             json.decodeFromString(JsonObject.serializer(), meta.readText())
                 .mapValues { (_, value) -> value.jsonPrimitive.content }
         } catch (_: SerializationException) {
-            throw DepotException("The metadata of '$name/${normalised(path)}' cannot be read")
+            throw DepotException("The metadata of a file in '$name' cannot be read")
         } catch (_: IllegalArgumentException) {
-            throw DepotException("The metadata of '$name/${normalised(path)}' cannot be read")
+            throw DepotException("The metadata of a file in '$name' cannot be read")
         }
     }
 
     /**
-     * Where the metadata of the file at [path] lives: `<root>/.meta/<path>.json`. For a [path] that passed [resolve];
-     * the same containment check applies.
+     * Where the metadata of [resolved] lives: `<root>/.meta/files/<its path>`, a mirror of the files. Keyed by the
+     * file itself, not by the path it was asked for, so a link and its target share one. A path is never a file and
+     * a folder at once, so neither are two entries of the mirror.
      */
-    private fun metaFile(path: String): File {
-        val file = File(File(root, DEPOT_META_DIR), normalised(path) + ".json").absoluteFile
+    private fun metaFile(resolved: File): File {
+        val file = File(File(metaRoot, META_FILES), getPathInRepo(resolved)).absoluteFile
 
-        if (!isInside(file)) throw DepotInvalidPathException()
+        // Inside the mirror, and inside the root: a `.meta` that is a link out of the root is refused
+        if (!file.canonicalFile.toPath().startsWith(metaRoot.toPath()) || !isInside(file)) throw DepotInvalidPathException()
 
         return file
     }
 
-    /** Writes [stored] for [path]: to a temporary file first, then moved in place, so a reader never sees half of it. */
-    private fun writeMeta(path: String, stored: Map<String, String>) {
-        val target = metaFile(path)
-        target.parentFile.ensureDirectory()
+    /** A new temporary file in `<root>/.meta/tmp`, on the files' own file system so a move from it is atomic. */
+    private fun tempFile(): File {
+        // Reached only after [metaFile] has checked that the tree lies inside the root
+        val dir = File(metaRoot, META_TMP).ensureDirectory()
 
-        val temp = File(target.parentFile, target.name + ".tmp")
-        temp.writeText(json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) })))
+        return Files.createTempFile(dir.toPath(), "put-", ".tmp").toFile()
+    }
+
+    /** Moves [temp] to [target] in one step; a folder left where a file goes (an orphan of the mirror) is removed. */
+    private fun moveInPlace(temp: File, target: File) {
+        if (target.isDirectory && !Files.isSymbolicLink(target.toPath())) target.deleteRecursively()
 
         Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
     }
 
+    /** Creates the folders above [meta] in the mirror; a file left where a folder goes (an orphan) is removed. */
+    private fun ensureMetaParent(meta: File) {
+        var dir: File? = meta.parentFile
+
+        while (dir != null && dir != metaRoot) {
+            if (dir.isFile) dir.delete()
+            dir = dir.parentFile
+        }
+
+        meta.parentFile.ensureDirectory()
+    }
+
+    /** Removes the metadata of [resolved], and the folders of the mirror it leaves empty. */
+    private fun removeMeta(resolved: File) {
+        val meta = metaFile(resolved)
+        meta.delete()
+
+        val top = File(metaRoot, META_FILES)
+        var dir: File? = meta.parentFile
+
+        while (dir != null && dir != top && dir.delete()) {
+            dir = dir.parentFile
+        }
+    }
+
+    /**
+     * Writes content and metadata through temporary files, each moved in place in one step: the metadata, then the
+     * content. A write that fails before the moves changes nothing, and writers of one file take turns, so a file
+     * never ends up with another writer's metadata. A reader between the two moves sees the new metadata with the
+     * old content for that moment.
+     */
     override suspend fun putFile(
         subject: DepotSubjectId<T>,
         path: String,
@@ -245,12 +289,31 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
 
         val stored = DepotMetadata.validateSize(DepotMetadata.validate(meta) + (DepotMetadata.SUBJECT to subject.value))
 
-        // The metadata first: a file is never there without it. One left behind by a failed write reads as
-        // "no such file" and is replaced by the next write.
-        writeMeta(path, stored)
+        // A folder, the root included, is no place for a file
+        if (file.isDirectory) throw DepotInvalidPathException()
 
-        file.parentFile.ensureDirectory()
-        file.writeBytes(content)
+        val metaTarget = metaFile(file)
+
+        synchronized(lockFor(file)) {
+            val contentTemp = tempFile()
+            val metaTemp = tempFile()
+
+            try {
+                contentTemp.writeBytes(content)
+                metaTemp.writeText(
+                    json.encodeToString(JsonObject.serializer(), JsonObject(stored.mapValues { JsonPrimitive(it.value) }))
+                )
+
+                file.parentFile.ensureDirectory()
+                ensureMetaParent(metaTarget)
+
+                moveInPlace(metaTemp, metaTarget)
+                moveInPlace(contentTemp, file)
+            } finally {
+                contentTemp.delete()
+                metaTemp.delete()
+            }
+        }
 
         return FsFile(repo = this, file = file, path = normalised(path))
     }
@@ -264,14 +327,31 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         val link = File(root, path).absoluteFile
         val linkInside = link != root && link.parentFile?.let { isInside(it) } == true
 
-        val removed = when {
-            Files.isSymbolicLink(link.toPath()) -> linkInside && link.isFile && link.delete()
-            else -> file.exists() && file.isFile && file.delete()
+        if (Files.isSymbolicLink(link.toPath())) {
+            // The metadata belongs to the file the link points to, and stays with it
+            return linkInside && link.isFile && link.delete()
         }
 
-        // Its metadata goes with it
-        if (removed) metaFile(path).delete()
+        return synchronized(lockFor(file)) {
+            val removed = file.isFile && file.delete()
 
-        return removed
+            // Its metadata goes with it; so does metadata left behind without a file
+            if (!file.exists()) removeMeta(file)
+
+            removed
+        }
+    }
+
+    /** One of a fixed set of locks, by the file: writers and removers of one file take turns. */
+    private fun lockFor(file: File): Any = locks[Math.floorMod(file.path.hashCode(), locks.size)]
+
+    private val locks = Array(64) { Any() }
+
+    private companion object {
+        /** In `<root>/.meta`: the mirror of the files, holding each one's metadata. */
+        const val META_FILES = "files"
+
+        /** In `<root>/.meta`: temporary files of writes under way. */
+        const val META_TMP = "tmp"
     }
 }

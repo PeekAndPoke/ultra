@@ -344,8 +344,11 @@
     gone; `DepotBrowseModel.meta` is the map.
   - S3: metadata is the object's user metadata (`x-amz-meta-*`, values percent-encoded); **tags are no longer
     written or read**, so metadata of objects stored before is not seen. A `mime-type` entry sets the content type.
-  - File system: metadata lives in `<root>/.meta/<path>.json`. `.meta` is a reserved first path segment in every
-    repository and never listed.
+  - File system: metadata lives in `<root>/.meta/files/<path>`, a mirror of the files. `.meta` (in any case, also
+    `.meta.`) is a reserved first path segment in every repository; the file system repository never lists it. **A
+    depot that already holds a top-level `.meta` folder of its own files can no longer reach them.** Content and
+    metadata are written through temporary files and moved in place; writers of one file take turns.
+  - `DepotException` is a `RuntimeException` now (it was a bare `Throwable`); `AwsHelper` (the tag mapping) is gone.
 
 ### New
 

@@ -91,4 +91,11 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
 
         stub.puts.size shouldBe 0
     }
+
+    "metadata another tool wrote is read as it is, not an error" {
+        val stub = Stub()
+        stub.puts.add(PutObjectRequest.builder().bucket("bucket").key("foreign.txt").metadata(mapOf("rate" to "50%")).build())
+
+        repoOver(stub).getMeta("foreign.txt") shouldBe mapOf("rate" to "50%")
+    }
 })

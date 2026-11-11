@@ -16,10 +16,16 @@ fun String.validateDepotPath(): String = apply {
     val invalid = contains(Char(0)) ||
             segments.any { it == ".." || it == "." } ||
             // The file system repository keeps the metadata there
-            segments.firstOrNull { it.isNotEmpty() } == DEPOT_META_DIR
+            segments.firstOrNull { it.isNotEmpty() }?.isDepotMetaDir() == true
 
     if (invalid) throw DepotInvalidPathException()
 }
 
 /** The reserved top-level folder for metadata; no file can be addressed in it, in any repository. */
 const val DEPOT_META_DIR = ".meta"
+
+/**
+ * Whether this path segment names [DEPOT_META_DIR] on any file system: without regard to case, and with the trailing
+ * dots and spaces Windows drops.
+ */
+fun String.isDepotMetaDir(): Boolean = trimEnd('.', ' ').equals(DEPOT_META_DIR, ignoreCase = true)

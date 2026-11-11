@@ -125,6 +125,44 @@ and the report will say so until one runs (see "To confirm").
   metadata carries a format version (`depot-enc`), and the subject entry is read through one function.
 - **S3 tests: stubbed only now**; a real endpoint stays untested and is said so.
 
+## Review record (the ledger) — step 2
+
+Round 1, 2026-11-11, level 1 (`reviewer-high`), blind; charters 1, 2 and 3. **NOT clean: 3 MAJOR.**
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `DepotSubjectId.kt`, `DepotRepository.kt:12`, CHANGELOG | The subject check is skipped when the id is built at the call: `T` is inferred from the expected type, also `Nothing` for a by-name repository (domain M1; impl M6, security n1) | maintainer decision | Confirmed: `DepotMetadataSpec` itself calls `putFile(DepotSubjectId("customer-43"))` on a `<Customer>` repository. A kind-carrying factory proposed |
+| 1 | MAJOR | `FileSystemRepository.kt:246`, `AwsS3Repository.kt:254` | The stored id carries no kind: customer 123 and employee 123 are one subject, and one key in step 3; a real id "system" equals `system` (domain M2) | maintainer decision | Same proposal: the kind is part of the stored value |
+| 1 | MAJOR | `DepotPaths.kt:19`, `FileSystemRepository.kt:105-120,148` | `.meta` is reserved by exact spelling: `.META` (case-insensitive file systems), `.meta.` (Windows), or a link aliasing the root reach the metadata tree and can rewrite another file's subject (security M1; impl M4, domain m8, security m1) | fix | Case-insensitive, trailing dots and spaces trimmed; `resolve` refuses a canonical path at or under `<root>/.meta`; listing filter by the same rule |
+| 1 | MINOR | `FileSystemRepository.kt:200,250,273` | Metadata keyed by the path asked for: a link and its target split it (impl M3, security m1) | fix | Keyed by the resolved file's path |
+| 1 | MINOR | `FileSystemRepository.kt:232,248-253` | A fixed `.tmp` name and metadata-then-content: concurrent writers mix, a failed overwrite leaves old content under new metadata (impl M1, M2; domain m2; security m3) | fix | Unique temp files; content to a temp file, metadata moved, content moved; a lock per path |
+| 1 | MINOR | `FileSystemRepository.kt:220` | `<path>.json` lets a file `x` and a folder `x.json` collide; a user can block a name (domain m3, security m2, impl D1) | fix | The tree mirrors the paths without a suffix (`.meta/<path>`): a data path cannot be file and folder at once. A deviation from decision 3's wording, reported to the maintainer |
+| 1 | MINOR | `FileSystemRepository.kt:244-253,267-273` | Orphan metadata not removed; a write to a folder or the root leaves one (impl M5, domain m4, security m6) | fix | `removeFile` always removes the metadata; a write to a folder is refused first |
+| 1 | MINOR | `AwsS3Repository.kt:235` | `getMeta` throws on foreign metadata (`50%`) (domain m1, impl M7, security n3) | fix | Lenient decode: the raw value |
+| 1 | MINOR | `AwsS3Repository.kt:260` | `mime-type` goes into Content-Type unchecked (security m4) | fix | A `type/subtype` token pattern, checked in the shared rules; KDoc says it becomes the served type |
+| 1 | MINOR | `FileSystemRepository.kt:209,211`, `exception.kt:4` | `DepotException` carries the caller's path and is not an `Exception` (security m5, domain m6) | fix | No path in the message; extends `RuntimeException` |
+| 1 | MINOR | step 3 shape | Inner repositories refuse `depot-*` keys, so the middleware cannot write its own; `getContent` has no room for "shredded" (domain m5) | step 3 | An opt-in raw write for middlewares, and the read result type, are designed with step 3 |
+| 1 | MINOR | `cluster.astro:53` | The docs example no longer compiles (domain m7) | fix | |
+| 1 | MINOR | tests | Unpinned: the subject in the size count, `metaFile`'s containment, case variants, a root alias, an untyped repository, orphans, links (security m7, impl) | fix | |
+| 1 | MINOR | CHANGELOG | An existing top-level `.meta` becomes unreachable; "never listed" holds for the file system only; `AwsHelper` unnamed (domain m4, NITs) | fix | |
+| 1 | — | insights | One metadata file per record, always `system` (domain, impl SURPLUS) | maintainer decision | |
+| 1 | NIT | `AwsS3Repository.kt:236`, `DepotMetadataSpec` titles, long names, the browser "table" | | fix / reject | Long names (over 246 bytes) no longer matter without the suffix and with random temp names; the horizontal list stays |
+
+Round-1 fixes, verified (everything except the two subject MAJORs and the insights question, which wait for the
+maintainer): depot 65/65, depot-s3 11/11, cluster 137, insights 114, funktor-all 288, demo 52. Mutations, each red:
+Q1 the case rule, Q2 the canonical `.meta` check in `resolve`, Q3 the mirror's containment, Q5 the mirror's layout,
+Q6 a write to a folder, Q7 orphan removal, Q8 the subject in the size count, Q9 the mime rule, Q10 the per-file lock
+(400 rounds of two writers), Q11 the lenient S3 decode. Q4 (a second containment check in `tempFile`) survived: it
+was redundant with `metaFile`, which always runs first; removed. Deviations: the mirror is `<root>/.meta/files/<path>`
+with temporary files in `.meta/tmp` (no `.json` suffix; decision 3 named `<path>.json`). Known and said in the KDoc:
+a reader between the two moves of a write sees the new metadata with the old content; step 3 must not turn that
+into a "corrupted" answer. Open in the docs: `cluster.astro`'s depot example, rewritten once the subject's shape is
+decided.
+
+Probed and clean (round 1): variance; reserved keys cannot be forged through `meta`; size measured as S3 counts it;
+JSON and header encoding; `getMeta` null versus empty on both stores; a refused write leaves nothing; browse is
+superuser-only and renders text; the S3 stub is faithful for what the tests claim.
+
 ## History
 
 - 2026-11-11: created from the maintainer's request.
