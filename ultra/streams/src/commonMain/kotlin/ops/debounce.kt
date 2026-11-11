@@ -31,8 +31,8 @@ fun <T> Stream<T>.debounce(delay: Duration, context: CoroutineContext = Dispatch
  *
  * A new subscriber is told the value as it is; nothing is published again for it. Read while someone listens, the
  * stream gives the last value it passed on; while nobody listens, the source's (ULTRA-00302). The source and [delay]
- * are listened to only while someone listens here. Values are published on [context]: on the JVM and native pass the
- * context the subscribers run on (default: a pool thread).
+ * are listened to only while someone listens here. Delayed values are published on [context]: on the JVM and native
+ * pass the context the subscribers run on (default: a pool thread). A delay of zero or less publishes on the caller's.
  */
 fun <T> Stream<T>.debounce(delay: Stream<Duration>, context: CoroutineContext = Dispatchers.Default): Stream<T> {
     val scope = CoroutineScope(context + SupervisorJob())

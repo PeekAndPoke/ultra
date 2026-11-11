@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
@@ -23,6 +24,12 @@ class InsightsRecordPathSpec : FunktorApiSpec() {
     }
 
     init {
+        // Other specs count the records in the shared depot: what this one plants goes again
+        afterSpec {
+            listOf("records-2026-01-02", "records-2026-01-03", "records-2026-01-07", "elsewhere", "etc")
+                .forEach { File(insightsDepotDir, it).deleteRecursively() }
+        }
+
         api.insights.getRecord { route ->
 
             "a record is found" {
@@ -61,20 +68,33 @@ class InsightsRecordPathSpec : FunktorApiSpec() {
                 }
             }
 
-            "a name with dot-dot, a backslash, a NUL or an absolute folder is a not-found, not an error" {
+            "a file that exists but is no record is a not-found: a backslash name, an absolute folder, a NUL" {
+                // Real files, so only the record rule can make these a 404
+                put("records-2026-01-07/a\\b.json")
+                put("etc/passwd.json")
+
                 insightsApp {
                     authenticate(superUserToken) {
-                        route(InsightsApiFeature.RecordParam("records-2026-01-01", "x..json")) {
-                            status shouldBe HttpStatusCode.NotFound
-                        }
-                        route(InsightsApiFeature.RecordParam("records-2026-01-01", "a\\b.json")) {
-                            status shouldBe HttpStatusCode.NotFound
-                        }
-                        route(InsightsApiFeature.RecordParam("records-2026-01-01", "a${Char(0)}.json")) {
+                        route(InsightsApiFeature.RecordParam("records-2026-01-07", "a\\b.json")) {
                             status shouldBe HttpStatusCode.NotFound
                         }
                         route(InsightsApiFeature.RecordParam("/etc", "passwd.json")) {
                             status shouldBe HttpStatusCode.NotFound
+                        }
+                        route(InsightsApiFeature.RecordParam("records-2026-01-07", "a${Char(0)}.json")) {
+                            status shouldBe HttpStatusCode.NotFound
+                        }
+                    }
+                }
+            }
+
+            "two dots inside a name are allowed: only a dot-dot segment is refused" {
+                put("records-2026-01-07/x..json")
+
+                insightsApp {
+                    authenticate(superUserToken) {
+                        route(InsightsApiFeature.RecordParam("records-2026-01-07", "x..json")) {
+                            status shouldBe HttpStatusCode.OK
                         }
                     }
                 }
@@ -109,11 +129,13 @@ class InsightsRecordPathSpec : FunktorApiSpec() {
         api.insights.listRecords { route ->
 
             "the list shows records only, and a refused entry does not fail it" {
-                put("records-2026-01-06/2026-01-06T10:00:00.json", """{"method":"GET","uri":"/listed"}""")
-                put("records-2026-01-06/notes.txt")
+                // A far-future day: newest first, so these take the first slots of page 1 however full the depot is
+                val day = File(insightsDepotDir, "records-2999-12-31")
+                put("records-2999-12-31/2999-12-31T10:00:00.json", """{"method":"GET","uri":"/listed"}""")
+                put("records-2999-12-31/notes.txt")
                 val outside = createTempDirectory("insights-outside").toFile()
                 File(outside, "y.json").writeText("{}")
-                val link = File(insightsDepotDir, "records-2026-01-06/2026-01-06T11:00:00.json").toPath()
+                val link = File(day, "2999-12-31T11:00:00.json").toPath()
 
                 try {
                     Files.deleteIfExists(link)
@@ -123,12 +145,15 @@ class InsightsRecordPathSpec : FunktorApiSpec() {
                         authenticate(superUserToken) {
                             route(InsightsApiFeature.PagingParam(page = 1, epp = InsightsApi.MAX_EPP)) {
                                 status shouldBe HttpStatusCode.OK
+                                bodyAsText() shouldContain "/listed"
                                 bodyAsText() shouldNotContain "notes.txt"
                             }
                         }
                     }
                 } finally {
+                    // Other specs count the records
                     Files.deleteIfExists(link)
+                    day.deleteRecursively()
                     outside.deleteRecursively()
                 }
             }

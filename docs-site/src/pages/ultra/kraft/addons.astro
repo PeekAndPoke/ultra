@@ -215,7 +215,8 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
         are served from your app's origin and requested only when needed. Two things to check: an app with its own
         <code>.css</code> loader rule adds <code>dependency: {'{'} not: ['url'] {'}'}</code> to it, so these files stay
         plain files; and its server must serve <code>.mjs</code> as <code>text/javascript</code> (the pdf.js worker is a
-        module worker).
+        module worker). If the bundle itself is served from another origin (a CDN), that host must send CORS headers for
+        the worker, and a CSP needs <code>worker-src blob:</code>.
     </Aside>
 
     <h2>chartjs — Data visualization</h2>
@@ -402,8 +403,9 @@ app.destroy(rendererDestroy = true)`} lang="kotlin" theme="vitesse-dark" />
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-    <p>pdf.js comes from the npm package <code>pdfjs-dist</code> (4.x): webpack splits it into its own chunk, loaded on
-        first use, and copies its worker into your build output.</p>
+    <p>pdf.js comes from the npm package <code>pdfjs-dist</code> (4.x): webpack splits it into its own chunk, loaded at
+        app start (or on first use with <code>pdfJs(lazy = true)</code>), and copies its worker into your build
+        output.</p>
 
     <h2>signaturepad — Capture signatures</h2>
 

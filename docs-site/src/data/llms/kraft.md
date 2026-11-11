@@ -2416,6 +2416,7 @@ Plugins: `lineNumbers()`, `copyToClipboard()`, `inlineColor()`.
 No CDN: prismjs CSS and the pdf.js worker come from their npm packages via `new URL(..., import.meta.url)`; the
 app's webpack copies them into its output, served from the app's origin, requested only when needed. An app with its
 own `.css` loader rule adds `dependency: { not: ['url'] }` to it; the server must serve `.mjs` as `text/javascript`.
+A bundle on another origin (a CDN) needs CORS headers there for the worker, and a CSP needs `worker-src blob:`.
 
 ## PDF.js — PDF viewer
 

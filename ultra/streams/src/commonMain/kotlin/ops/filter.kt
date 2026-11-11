@@ -77,7 +77,8 @@ private class StreamFilterOperator<T>(
 
     private var latest: T? = null
 
-    // Nobody listening: the source's value if it passes, else the last one that passed (ULTRA-00302)
+    // Nobody listening: the source's value if it passes, else the last passing value it saw, on a read or while
+    // listened to; a value that passed while nobody looked is not known (ULTRA-00302)
     override fun invoke(): T? {
         if (!isSubscribedToWrapped()) {
             // Explicit: a `null` that passes is a value too
@@ -107,7 +108,8 @@ private class StreamFilterWithInitialValueOperator<T>(
 
     private var latest: T = initial
 
-    // Nobody listening: the source's value if it passes, else the last one that passed (ULTRA-00302)
+    // Nobody listening: the source's value if it passes, else the last passing value it saw, on a read or while
+    // listened to; a value that passed while nobody looked is not known (ULTRA-00302)
     override fun invoke(): T {
         if (!isSubscribedToWrapped()) {
             val value = wrapped()

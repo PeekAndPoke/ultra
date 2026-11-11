@@ -35,16 +35,18 @@ class TickerIntervalStreamSpec : StringSpec({
     }
 
     "a repeat of the same interval keeps its clock; zero or less counts as 1 ms" {
-        val (made, clockFor) = clocks()
+        var created = 0
         val interval = StreamSource(Duration.ZERO)
-        val tick = ticker(interval = interval, clockFor = clockFor)
+        val clock = HandClock()
+        val tick = ticker(interval = interval, clockFor = { ms -> created++; ms shouldBe 1; clock })
 
         tick.subscribeToStream { }
         interval((-5).milliseconds)
         interval(1.milliseconds)
 
-        made.keys shouldBe setOf(1)
-        made.getValue(1).requests shouldBe 1
+        // One clock for all three: each counts as 1 ms
+        created shouldBe 1
+        clock.requests shouldBe 1
     }
 
     "the interval is listened to only while someone listens" {

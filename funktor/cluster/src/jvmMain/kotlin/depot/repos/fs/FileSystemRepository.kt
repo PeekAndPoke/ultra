@@ -83,11 +83,11 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     private fun resolve(path: String): File {
         val file = File(root, path.validateDepotPath()).absoluteFile
 
-        if (Files.isSymbolicLink(file.toPath()) && !file.exists()) throw DepotInvalidPathException(path)
+        if (Files.isSymbolicLink(file.toPath()) && !file.exists()) throw DepotInvalidPathException()
 
         val canonical = file.canonicalFile
 
-        if (!canonical.toPath().startsWith(canonicalRoot.toPath())) throw DepotInvalidPathException(path)
+        if (!canonical.toPath().startsWith(canonicalRoot.toPath())) throw DepotInvalidPathException()
 
         return canonical
     }
@@ -108,8 +108,8 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
         val dir = resolve(path)
 
         return (dir.listFiles() ?: emptyArray())
-            // A symlink pointing out of the root is not listed
-            .filter { isInside(it) }
+            // A symlink pointing out of the root is not listed; any other entry of a resolved folder is inside it
+            .filter { !Files.isSymbolicLink(it.toPath()) || isInside(it) }
             .mapNotNull {
                 when {
                     it.isFile -> FsFile(repo = this, file = it)
@@ -178,6 +178,10 @@ abstract class FileSystemRepository(override val name: String, dir: String) : De
     /** Remove a file with a certain uri */
     override suspend fun removeFile(path: String): Boolean {
         val file = resolve(path)
+
+        // A symlink inside the root is removed itself: deleting through it would delete the file it points to
+        val link = File(root, path).absoluteFile
+        if (Files.isSymbolicLink(link.toPath())) return link.delete()
 
         return file.exists() && file.isFile && file.delete()
     }

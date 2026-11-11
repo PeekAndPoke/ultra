@@ -1,7 +1,9 @@
-package io.peekandpoke.kraft.messages
+package io.peekandpoke.kraft.coretests.messages
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.kraft.messages.MessageBase
+import io.peekandpoke.kraft.messages.MessagesHandler
 
 /** The message bus delivers every message to every handler (ULTRA-00307). */
 class MessagesHandlerSpec : StringSpec({
@@ -42,5 +44,19 @@ class MessagesHandlerSpec : StringSpec({
         bus.stream.subscribeToStream { told = (it as? Note)?.text }
 
         told shouldBe "x"
+    }
+
+    "a handler that throws on the last message while subscribing is not kept" {
+        val bus = MessagesHandler()
+        bus.send(Note("x"))
+        var calls = 0
+
+        runCatching {
+            bus.stream.subscribeToStream { calls++; if ((it as? Note)?.text == "x") error("boom") }
+        }
+
+        bus.send(Note("y"))
+
+        calls shouldBe 1
     }
 })

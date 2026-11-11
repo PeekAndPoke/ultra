@@ -281,7 +281,8 @@ Values are counted while someone listens; a read without a subscriber counts not
 ## filter
 
 Only pass values matching a predicate. Since streams always have a value, you provide an initial value for when nothing
-matches yet. Read without a subscriber, it gives the source's value when it passes, else the last one that passed:
+matches yet. Read without a subscriber, it gives the source's value when it passes, else the last passing value it
+saw (on a read or while listened to):
 
 ```kotlin
 val source = StreamSource(3)
@@ -561,7 +562,7 @@ To mix a stream with a constant, wrap the constant in `steady(x)`.
 ## quantize
 
 `level.quantize(size = 0.1, offset = 0.05)`: snaps to the nearest `offset + k * size` (the offset shifts the grid);
-`null` passes. On `Stream<Double>` and `Stream<Double?>`. `size`/`offset` may be streams (a change re-snaps at once). After `smooth()` it repeats the grid value each frame:
+`null` passes. On `Stream<Double>` and `Stream<Double?>`. `size`/`offset` may be streams (a change re-snaps at once; wrap a constant beside a stream in `steady(x)`). After `smooth()` it repeats the grid value each frame:
 add `.distinct()`.
 
 ## mapAsync
@@ -574,6 +575,7 @@ val userId = StreamSource("user-1")
 val user = userId.mapAsync { id ->
     api.fetchUser(id)  // suspend function
 }
+user.subscribeToStream { }  // values are mapped only while someone listens
 
 // user() is null initially, then the fetched User object
 ```
@@ -630,13 +632,6 @@ class UserDashboard {
 
 `unsubscribeAll()` can be called multiple times safely.
 
-## Writes and unsubscribes during a publish
-
-A handler that writes to the stream it is told about starts a new publish; the older one stops, so no handler ends on
-the older value: handlers before the writer see both values, those after it only the newer one. A handler
-unsubscribed during a publish is not called with its value. An `onEach` block may write upstream the same way; the
-lambdas of `map`, `filter` and `fold` must not.
-
 ## Error resilience
 
 A failing subscriber never breaks other subscribers. If one handler throws during a publish cycle, the remaining
@@ -653,6 +648,13 @@ source(2)  // prints "Got: 2"
 
 The exception is logged as `[Streams] ERROR: subscriber threw ...` so it shows up in your console during development,
 but it never takes down the stream.
+
+## Writes and unsubscribes during a publish
+
+A handler that writes to the stream it is told about starts a new publish; the older one stops, so no handler ends on
+the older value: handlers before the writer see both values, those after it only the newer one. A handler
+unsubscribed during a publish is not called with its value. An `onEach` block may write upstream the same way; no
+other operator's lambda may (`map`, `filter`, `fold`, `combinedWith`, the `switchMap` selector and the others).
 
 ## Lazy subscription chains
 

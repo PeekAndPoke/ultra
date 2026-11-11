@@ -6,6 +6,7 @@ import io.peekandpoke.funktor.insights.api.InsightsCollectorSlice
 import io.peekandpoke.funktor.insights.api.InsightsRecord
 import io.peekandpoke.funktor.insights.api.InsightsRecordRef
 import io.peekandpoke.funktor.insights.api.InsightsRecordSummary
+import io.peekandpoke.funktor.insights.api.isRecordBucket
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.model.Paged
 import kotlinx.serialization.json.Json
@@ -37,9 +38,6 @@ class InsightsDataLoader(
          * read but not controlled. (They were written by Jackson until 2026-07-31; by Slumber and
          * kotlinx since. Records from before the switch are still on disk, which is the point.) */
         private val json = Json { ignoreUnknownKeys = true; isLenient = true }
-
-        /** Records are written to `records-<date>/<datetime>.json`. */
-        private const val DAY_FOLDER_PREFIX = "records-"
     }
 
     /** Loads the record [ref] addresses, or null when there is no such file. */
@@ -63,7 +61,10 @@ class InsightsDataLoader(
         // measured on real data, five records whose filenames run 872,875,895,905,945 had mtimes that
         // sorted 905,872,875,945,895. The filename is `<LocalDateTime>.json`, which sorts
         // chronologically, needs no stat, and cannot tie.
-        val siblings = repository.listItems(file.parentPath).sortedByDescending { it.name }
+        // Records only, as in the list: a stray file must not become a next/previous link the detail endpoint refuses
+        val siblings = repository.listItems(file.parentPath)
+            .filter { it is DepotItem.File && it.path.toRef()?.isRecord() == true }
+            .sortedByDescending { it.name }
         val idx = siblings.indexOfFirst { it.path == path }
 
         return InsightsRecord(
@@ -107,7 +108,8 @@ class InsightsDataLoader(
         val skip = (page.toLong() - 1) * epp
 
         val dayFolders = repository.listItems("")
-            .filter { it is DepotItem.Folder && it.name.startsWith(DAY_FOLDER_PREFIX) }
+            // The record rule, not only the prefix: a folder name the depot refuses must not fail the whole list
+            .filter { it is DepotItem.Folder && isRecordBucket(it.name) }
             .sortedByDescending { it.name }
 
         val result = mutableListOf<InsightsRecordSummary>()

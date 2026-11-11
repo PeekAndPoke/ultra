@@ -271,6 +271,10 @@
   `onEach` block may write upstream the same way; the lambdas of `map`, `filter` and `fold` must not. Kraft's message
   bus (`MessagesHandler`) keeps delivering every message to every handler, also one sent during another's dispatch:
   it has its own delivery now.
+- **Streams: a stored `null` comes back as `null`** (ULTRA-00309), no compile signal: `persistInLocalStorage` on a
+  nullable stream brought a stored `null` back as the initial value, and now restores it. An app that wrote `null` to
+  mean "back to the default" gets `null` after the upgrade. `StreamStorage.readStored()` tells "nothing stored" from
+  "a stored `null`"; an own storage may override it for a nullable value.
 - **Streams: `mapAsync` publishes the latest value's result only** (ULTRA-00308): a mapping that finishes after a
   newer value came is dropped, so `userId.mapAsync { fetchUser(it) }` no longer ends on an older user.
 - **Streams: `debounce` and `asFlow`** (ULTRA-00309). `debounce` tells a new subscriber the current value once (it was
@@ -282,9 +286,12 @@
   `/` or `\`) or a NUL throws `DepotInvalidPathException` in the file system and the S3 repository alike; the file
   system repository also refuses, and does not list, a symlink that leads out of its root, and refuses a dangling
   one. A name like `a..b` is allowed now (it was refused). `DepotApi.browse` answers 400 for such a path (it was a
-  500). The file system repository's paths are `/`-separated on every platform.
+  500). The file system repository's paths are `/`-separated on every platform; `removeFile` on a symlink inside the
+  root removes the link, not the file it points to. Files reached through a symlink that leads out of the root (a
+  mounted volume linked into the depot) are no longer reachable: point the repository at the link's target, or make
+  the root itself the link.
 - **Funktor insights: the record endpoint reads records only** (ULTRA-00304): `records-<yyyy-mm-dd>/<name>.json`;
-  any other file of the insights depot is a 404, as is a name with `..` (it was a 500).
+  any other file of the insights depot is a 404, and a path the depot refuses is a 404 too (it was a 500).
 
 - **Funktor: the `staticweb` module is gone** (ULTRA-00305), with all webjars (jQuery, prismjs 1.29.0, which lacks
   the CVE-2024-53382 fix, Fomantic UI CSS, lazysizes, vis.js) and `ktor-server-webjars`. Its server-rendered page
@@ -296,7 +303,8 @@
 - **Kraft prismjs and pdfjs: no CDN any more** (ULTRA-00306). Prism's theme and plugin CSS and pdf.js with its
   worker come from their npm packages: `new URL(<file>, import.meta.url)` lets the app's webpack copy the files into
   its build output, served from the app's own origin and still requested only when first needed; pdf.js is its own
-  chunk. A strict CSP needs no CDN host. `PdfJs.librarySource` and `PdfJs.LibrarySrc` are gone; pdf.js is
+  chunk. A strict CSP needs no CDN host, unless the bundle itself is served from one (then that host sends CORS
+  headers for the worker, and the CSP allows `worker-src blob:`). `PdfJs.librarySource` and `PdfJs.LibrarySrc` are gone; pdf.js is
   `pdfjs-dist` 4.10.38 (was 4.7.76 from cdnjs). The prism CSS moves from 1.28.0 to the package's 1.30.0. An app
   with its own `.css` loader rule excludes these files (`dependency: { not: ['url'] }`); its server serves `.mjs` as
   `text/javascript`. `PdfSource.Data` is copied before pdf.js gets it: pdf.js empties the array it is given, so a
@@ -320,7 +328,8 @@
 
 - **Streams: configurable operators take their config as a stream** (ULTRA-00271), beside the constant forms:
   `quantize(size, offset)`, `fallbackTo(fallback)`, `history(capacity)` / `historyOfNonNull(capacity)`,
-  `ticker(interval: Stream<Duration>)`, `debounce(delay: Stream<Duration>)` (also `debounce(Duration, context)`),
+  `ticker(interval: Stream<Duration>)` (also `ticker(Duration, context)`), `debounce(delay: Stream<Duration>)` (also
+  `debounce(Duration, context)`),
   and `smooth(smoothing: Stream, rest: Stream, near: Stream)`. Each KDoc says when a change takes effect.
 
 ### Fixes
@@ -332,9 +341,7 @@
   source while not cut off (else the value it last saw), `filter` the source's value when it passes, and a read of
   `indexed` no longer counts up.
 - **Streams: smaller fixes** (ULTRA-00309). `smooth` told a new subscriber its first value twice; `ticker(0)` and
-  `FrameClock.ticker(0)` ran frames back to back (now at least 1 ms apart); `history` with a capacity below 0 threw;
-  `persistInLocalStorage` brought a stored `null` back as the initial value (`StreamStorage.readStored()`, which own
-  storages may override for a nullable value).
+  `FrameClock.ticker(0)` ran frames back to back (now at least 1 ms apart); `history` with a capacity below 0 threw.
 
 - **Kraft prismjs: lazily loaded languages and plugins failed in strict bundles.** The addon imported
   `prismjs/components/prism-json` and the like without `.js`, which webpack refuses from an ES module unless the app

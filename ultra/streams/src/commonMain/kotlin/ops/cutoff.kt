@@ -9,7 +9,9 @@ import io.peekandpoke.ultra.streams.ownEntry
 /**
  * Cuts off the stream when the [predicate] is true.
  *
- * The last value of the source stream is published.
+ * The last value of the source stream is published. *
+ * Read while nobody listens: the source's value while not cut off, else the value it last saw. Without a subscriber
+ * nothing watches the source, so the value at the moment the cut-off began is not known (ULTRA-00302).
  */
 fun <T> Stream<T>.cutoffWhen(predicate: Stream<Boolean>): Stream<T> {
     return CutoffStream(source = this, predicate = predicate)
@@ -18,7 +20,7 @@ fun <T> Stream<T>.cutoffWhen(predicate: Stream<Boolean>): Stream<T> {
 /**
  * Cuts off the stream when the [predicate] is false.
  *
- * The last value of the source stream is published.
+ * The last value of the source stream is published. See [cutoffWhen] for a read while nobody listens.
  */
 fun <T> Stream<T>.cutoffWhenNot(predicate: Stream<Boolean>): Stream<T> = cutoffWhen(predicate.map { !it })
 
@@ -139,8 +141,9 @@ private class CutoffStream<T>(
         val attempt = ++sourceCount
 
         val unsubscribe = source.subscribeToStream { next ->
-            // The cut-off may have taken effect while this handler was already part of a
-            // notification snapshot. Values of an outdated subscription must not be published.
+            // The cut-off may have taken effect while this handler was already part of a notification snapshot. Values of
+            // an outdated subscription must not be published. The library's streams skip a removed handler themselves
+            // (ULTRA-00307); this guards a foreign Stream implementation that does not.
             if (attempt == sourceCount) {
                 lastValue = next
                 publish(next)

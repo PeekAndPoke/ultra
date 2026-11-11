@@ -18,7 +18,7 @@ abstract class Routes(
      * simply absent there.
      *
      * It is sound HERE because a plain route collection has no client-side counterpart to diverge
-     * from — `InsightsGuiRoutes : Routes("/_")` is the intended use.
+     * from.
      */
     val mountPoint: String = "",
 ) {

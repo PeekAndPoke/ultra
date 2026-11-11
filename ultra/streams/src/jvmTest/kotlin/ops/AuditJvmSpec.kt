@@ -10,6 +10,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -40,18 +41,21 @@ class AuditJvmSpec : StringSpec({
     "FrameClock.ticker with an interval of 0 does not run frames back to back" {
         val frames = AtomicInteger(0)
         val clock = FrameClock.ticker(intervalMs = 0)
-        var cancel: () -> Unit = {}
+        // A flag the frames read: a cancel handle written on pool threads could be stale
+        val running = AtomicBoolean(true)
 
         fun next() {
-            cancel = clock.next {
-                frames.incrementAndGet()
-                next()
+            clock.next {
+                if (running.get()) {
+                    frames.incrementAndGet()
+                    next()
+                }
             }
         }
 
         next()
         delay(100)
-        cancel()
+        running.set(false)
 
         // At least 1 ms apart: about 100 frames; back to back: tens of thousands
         frames.get() shouldBeLessThan 500

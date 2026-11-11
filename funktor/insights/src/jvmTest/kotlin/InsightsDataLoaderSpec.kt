@@ -386,4 +386,21 @@ class InsightsDataLoaderSpec : StringSpec({
             (loaded.collectors.single().data as? JsonObject) shouldBe null
         }
     }
+
+    "next and previous skip what is no record: a stray file or folder in a day folder (ULTRA-00304)" {
+        val dir = tempdir()
+        val (loader, repo) = loaderOver(dir)
+
+        runBlocking {
+            repo.putFile("records-2026-07-31/a.json", record())
+            repo.putFile("records-2026-07-31/b.json", record())
+            // Sorts before the records, newest-first: it would be b's "next"
+            repo.putFile("records-2026-07-31/notes.txt", "{}".toByteArray())
+
+            val b = loader.load(InsightsRecordRef("records-2026-07-31", "b.json")).shouldNotBeNull()
+
+            b.next shouldBe null
+            b.previous shouldBe InsightsRecordRef("records-2026-07-31", "a.json")
+        }
+    }
 })

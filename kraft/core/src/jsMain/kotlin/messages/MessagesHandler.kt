@@ -26,7 +26,14 @@ class MessagesHandler {
             val entry: StreamHandler<Message<*>?> = { sub(it) }
 
             handlers.add(entry)
-            sub(last)
+
+            try {
+                sub(last)
+            } catch (e: Throwable) {
+                // No unsubscribe reaches the caller: the handler must not stay behind
+                handlers.remove(entry)
+                throw e
+            }
 
             return { handlers.remove(entry) }
         }

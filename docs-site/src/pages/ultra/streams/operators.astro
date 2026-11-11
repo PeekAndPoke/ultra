@@ -76,7 +76,8 @@ val indexed = source.indexed()
         worth it.
     </Aside>
 
-<p>Read without a subscriber, a filter gives the source's value when it passes, else the last one that passed.</p>
+<p>Read without a subscriber, a filter gives the source's value when it passes, else the last passing value it saw
+    (on a read or while listened to).</p>
 
 <Code code={`val source = StreamSource(3)
 

@@ -131,7 +131,8 @@ law(Smoothing.Spring(stiffness = 300.0, damping = 4.0))`} lang="kotlin" theme="v
 val stepped = level.smooth(sharePer10Ms = 0.9).quantize(size = 0.1)              // 0.0, 0.1, 0.2, ...
 val shifted = level.quantize(size = 0.1, offset = 0.05)                          // 0.05, 0.15, ...`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>size</code> and <code>offset</code> may be streams: a change re-snaps the current value at once.</p>
+<p><code>size</code> and <code>offset</code> may be streams: a change re-snaps the current value at once. To mix a
+    stream with a constant, wrap the constant in <code>steady(x)</code>.</p>
 
 <p>While a smoothed motion runs, <code>quantize</code> passes the same grid value on every frame; add
     <code>.distinct()</code> to publish only the changes.</p>
@@ -149,6 +150,7 @@ val shifted = level.quantize(size = 0.1, offset = 0.05)                         
 val user = userId.mapAsync { id ->
     api.fetchUser(id)  // suspend function
 }
+user.subscribeToStream { }  // values are mapped only while someone listens
 
 // user() is null initially, then the fetched User object`} lang="kotlin" theme="vitesse-dark" />
 

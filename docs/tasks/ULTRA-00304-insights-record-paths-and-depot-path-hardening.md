@@ -93,6 +93,36 @@ paths; Unicode look-alikes; prefix confusion; existing symlinks out; who reaches
 (generic message, 400 without echo); `isRecord` against every written record name; staticweb held nothing
 protective; the `new URL` literals cannot be injected; Prism manual mode kept; asset URLs under a CDN or sub-path.
 
+### Round 2, 2026-11-11, level 2 (`reviewer-xhigh`), two-phase; charters 1, 2 and 3
+
+Implementation and security disclosed that their phase-1 read took in this ledger (a whole-file read), domain saw one
+row via a grep. Result: **NOT clean — 1 MAJOR** (charter 1). Security and domain: 0 CRITICAL, 0 MAJOR. Every round-1
+fix holds; three reached only part of what they needed. Two rounds without a clean one: **safety valve, the maintainer
+is asked** (review-loop).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MAJOR | `ClusterShowcaseApi.kt:157`, `ShowcaseApiBuildTest` | No e2e test pins the superuser floor on the demo's depot listings (impl M1; security MINOR-2) | fix, not yet run | `ShowcaseDepotAuthTest` (AppSpec): anonymous 401, b2b user 401, admin-realm superuser 200. The demo suite stops at boot on `${AWS_SES_ACCESS_KEY}` here, and the maintainer's demo server is running |
+| 2 | MINOR | `InsightsRecordPathSpec.kt:64-81` | The `x..json`/backslash/absolute cases cannot go red; "red first" for the absolute case was wrong (impl m1, security NIT-3) | fix | Real files planted (`a\b.json`, `etc/passwd.json`); `x..json` planted and expected 200; `InsightsRecordRefSpec` unit table pins the backslash and control-character clauses. Ledger correction: the absolute case was never red |
+| 2 | MINOR | `CHANGELOG.md:286-287` | "as is a name with `..`" is wrong (impl m2, gap of row 5) | fix | |
+| 2 | MINOR | `InsightsRecordPathSpec.kt:109-135` | The list test has no positive assertion, depends on depot size, never cleans up (impl m3) | fix | Day `records-2999-12-31`, asserts `/listed`, cleans up; an `afterSpec` removes every planted folder |
+| 2 | MINOR | `InsightsDataLoader.kt:66-82,110` | next/previous over unfiltered siblings; day folders by prefix only (impl m4, domain 3 + NIT; gap of row 3) | fix | Siblings and day folders use the record rule (`isRecordBucket`) |
+| 2 | MINOR | `broker/Routes.kt:20-21` | KDoc names the deleted `InsightsGuiRoutes` (impl m5) | fix | `mountPoint` now unused: maintainer decision |
+| 2 | MINOR | `insights.astro:89-98` | Runtime/Response/Vault collector descriptions wrong (impl m6, domain 7) | fix | |
+| 2 | MINOR | `FileSystemRepository.kt` | Four FS methods have no per-method test (security MINOR-1) | fix | `FileSystemRepositoryPathSpec`: all six methods, traversal and symlink out; `removeFile` leaves the outside file |
+| 2 | MINOR | `FileSystemRepository.kt:179-183` | `removeFile` through a symlink inside the root deletes the target (domain 1) | fix | The link itself is removed; spec case |
+| 2 | MINOR | `FileSystemRepository.kt:90,112` | Refusing symlinks that lead out of the root drops mounted storage (domain 2) | maintainer decision | Implemented as "refuse" (the ticket's open item); CHANGELOG gives the migration line |
+| 2 | MINOR | `FileSystemRepository.kt:75,112` | `canonicalFile` per listed entry (domain 4) | fix | Only symlinks are resolved; other entries of a resolved folder are inside by construction |
+| 2 | MINOR | docs, CHANGELOG | A bundle on a CDN needs CORS for the worker and `worker-src blob:` (domain 5) | fix (docs) | |
+| 2 | NIT | `DepotPaths.kt:4` | `DepotInvalidPathException.path` unread, holds attacker input (impl n1, security NIT-4) | fix | Removed |
+| 2 | NIT | `addons.astro:405` | "loaded on first use" wrong for the eager default (impl n2, domain 8) | fix | |
+| 2 | NIT | `vue-verify/fixtures/graph-kontainer.json` | Frozen fixture names staticweb classes (impl n3) | reject | A recorded graph of an old app; harmless |
+| 2 | — | ledger row "putFile refuses a symlink" | Wording (security, impl, domain) | corrected | Only a dangling symlink, or one leading out, is refused; a live link inside is written through to its target |
+
+Round-2 fixes, verified: funktor-all 286/286, cluster 181/181, insights 114/114, Kraft core-tests 589/589, docs build.
+Mutations, each red: Y1 the siblings filter, Y2 removing the link not the target, Y3 the listing's symlink filter.
+`ShowcaseDepotAuthTest` compiles; not run (demo boot key, demo server running).
+
 ## History
 
 - 2026-11-11: created from ULTRA-00198's gate; depot read for traversal.

@@ -4,7 +4,8 @@ import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamWrapper
 
 /**
- * Performs the given [block] on each incoming value and then passes it through.
+ * Performs the given [block] on each incoming value and then passes it through, unless the block wrote a newer value
+ * upstream: that one was passed on already, the older one is not (ULTRA-00307).
  */
 fun <T> Stream<T>.onEach(block: (T) -> Unit): Stream<T> =
     StreamOnEachOperator(wrapped = this, block = block)

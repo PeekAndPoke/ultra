@@ -102,4 +102,23 @@ class DebounceStreamSpec : StringSpec({
         timer.pending.size shouldBe 0
         debounced() shouldBe 1
     }
+
+    "a timer that fires after a newer value came publishes nothing (its token is stale)" {
+        val fired = mutableListOf<() -> Unit>()
+        // A timer whose cancel comes too late, as on another thread: the block is kept and run anyway
+        val lateCancel: (Duration, () -> Unit) -> () -> Unit = { _, block -> fired.add(block); {} }
+        val source = StreamSource(0)
+        val debounced = source.debounce(delay = StreamSource(50.milliseconds), after = lateCancel)
+        val seen = mutableListOf<Int>()
+
+        debounced.subscribeToStream { seen.add(it) }
+        source(1)
+        source(2)
+
+        fired[0]()
+        seen shouldBe listOf(0)
+
+        fired[1]()
+        seen shouldBe listOf(0, 2)
+    }
 })

@@ -76,6 +76,38 @@ cutoff, switchMap, smooth, debounce, history), diamonds, count overflow; F2 memb
 on the old code; mapAsync latest-wins; read semantics consistent ("what a new subscriber would be told"); overloads
 unambiguous; `readStored` compatible with Klang's storage; no implementor of the changed base classes in the repo.
 
+### Round 2, 2026-11-11, level 2 (`reviewer-xhigh`), two-phase; charters 1 and 2
+
+Both reviewers disclosed that their phase-1 read of this ticket took in the ledger too (a whole-file read); their
+findings were checked against the code, and phase 2 reconciled them. Result: **0 CRITICAL, 0 MAJOR: clean.** Every
+round-1 fix holds; three reached only part of what they needed (rows marked "gap").
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MINOR | `AsyncStreamWrapper.kt:29-40` | Latest-wins can fail with the default multi-threaded scope (impl M1) | fix (KDoc) | The check and the publish are not atomic on a pool; the KDoc tells JVM users to pass a scope on the subscribers' thread, as debounce/sampled/smooth do |
+| 2 | MINOR | `MessagesHandler.kt:24-32` | A handler that throws on the replayed message stays registered (impl M2, domain 3) | fix | Removed and rethrown, as `StreamSourceImpl` does; spec case |
+| 2 | MINOR | `TickerIntervalStreamSpec.kt:37-48` | "keeps its clock" cannot fail (impl M3) | fix | Counts the clocks made |
+| 2 | MINOR | `cutoff.kt:9-23` | The read limit is only on the private class (impl M4) | fix | On the public KDocs |
+| 2 | MINOR | `control.astro:147-153`, `streams.md:572-579` | The mapAsync example has no subscriber (impl D1, domain B1; gap of round-1 row 3) | fix | Subscribes first |
+| 2 | MINOR | `filter.kt:80,110`, docs | "else the last one that passed" is wrong for values nobody saw (domain 1) | fix | "the last passing value it saw" |
+| 2 | MINOR | docs, CHANGELOG | The lambda rule lists only map/filter/fold; combinedWith and switchMap fail the same way (domain 2, gap of round-1 row 1) | fix (docs) | "no other operator's lambda may", naming them |
+| 2 | MINOR | `StreamStorage.kt:8-17` | `readStored()` public but only internal code calls it (domain 4, SURPLUS) | reject | The interface itself could not say "a stored null"; the default keeps every implementor compiling, and an app building its own persistence on the interface needs it |
+| 2 | MINOR | `CHANGELOG.md` | The stored-null change is data behaviour without a compile signal (domain 5) | fix | Moved under Breaking changes |
+| 2 | NIT | `onEach.kt:7` | KDoc "then passes it through" (impl N1, gap of row 1) | fix | |
+| 2 | NIT | `debounce.kt:34-35` | "published on [context]" wrong for a zero delay (impl N2) | fix | |
+| 2 | NIT | `cutoff.kt:144` | Guard unreachable for library streams (impl N3) | fix (comment) | Kept for a foreign Stream implementation |
+| 2 | NIT | `streams.kt:31-44` | Fold `notifyHandlers` into `Notifier` (impl N4) | reject | Style; one small function with one caller is clear as it is |
+| 2 | NIT | `debounce.kt:133` | No test for the token check (impl N5) | fix | A late-cancel timer spec |
+| 2 | NIT | `MessagesHandlerSpec` | In `kraft/core/src/jsTest`; `kraft/CLAUDE.md` says `core-tests` (impl N6) | fix | Moved |
+| 2 | NIT | `AuditJvmSpec.kt:40-58` | Unsynchronised cancel can leave a frame chain running (impl N7) | fix | A stop flag |
+| 2 | NIT | `history.kt`, `debounce.kt` | Third and fourth copy of the listening pattern (impl N8) | defer | A shared base is a refactor of its own |
+| 2 | NIT | docs | quantize lacks the `steady()` hint (impl D2, domain B2; gap of row 10) | fix | |
+| 2 | NIT | `CHANGELOG.md` | `ticker(Duration, context)` missing (impl D3) | fix | |
+| 2 | NIT | `subscriptions.astro:67-76` | Aside under the wrong heading; mirror order differs (domain 6) | fix | |
+| 2 | NIT | `MessagesHandler.kt:29` | The bus replays the last message to a new subscriber (domain 7) | maintainer decision | As before ULTRA-00307 (a StreamSource did the same); kept |
+
+**Gate verdict (streams): PASS** — round 2 clean; its MINORs and NITs fixed as above.
+
 ## History
 
 - 2026-11-11: created from the operator audit (findings F1, F2).

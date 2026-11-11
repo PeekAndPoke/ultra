@@ -87,15 +87,15 @@ mountAll(router)`} lang="ts" theme="vitesse-dark"/>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">ResponseCollector</h3>
-            <p class="text-sm text-gray-400">Status code, response time, content type.</p>
+            <p class="text-sm text-gray-400">Status code and response headers (credentials redacted); the timing is on the record itself.</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">VaultCollector</h3>
-            <p class="text-sm text-gray-400">Database queries executed, query times, results.</p>
+            <p class="text-sm text-gray-400">Database queries executed: their text, values, explain plans, times and result counts.</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">RuntimeCollector</h3>
-            <p class="text-sm text-gray-400">JVM heap, thread count, GC stats.</p>
+            <p class="text-sm text-gray-400">JVM and Kotlin versions, memory, CPUs, file descriptors and system properties (secrets redacted).</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">KontainerCollector</h3>

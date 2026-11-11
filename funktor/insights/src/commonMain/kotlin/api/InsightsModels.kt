@@ -24,6 +24,9 @@ data class InsightsRecordRef(
     fun isRecord(): Boolean = RECORD_BUCKET.matches(bucket) && RECORD_FILE.matches(file)
 }
 
+/** Whether [name] is a day folder of records, `records-<yyyy-mm-dd>` (ULTRA-00304). */
+internal fun isRecordBucket(name: String): Boolean = RECORD_BUCKET.matches(name)
+
 // Top level, not a companion: Slumber reflects on the class and cannot reach a private companion
 private val RECORD_BUCKET = Regex("records-\\d{4}-\\d{2}-\\d{2}")
 // One segment, no separator or control character (a NUL, say)
