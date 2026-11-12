@@ -24,6 +24,7 @@ class DepotUriSpec : FreeSpec() {
                 "depot://repo//file" to DepotUri(repo = "repo", path = "/file"),
                 "depot://repo/a b.pdf " to DepotUri(repo = "repo", path = "a b.pdf "),
                 "depot://repo/a\\b.pdf" to DepotUri(repo = "repo", path = "a\\b.pdf"),
+                "depot://repo/" to DepotUri(repo = "repo", path = ""),
                 "depot://repo/bucket" to DepotUri(repo = "repo", path = "bucket"),
                 "depot://repo/bucket/" to DepotUri(repo = "repo", path = "bucket/"),
                 "depot://repo/bucket/file" to DepotUri(repo = "repo", path = "bucket/file"),

@@ -58,10 +58,16 @@ abstract class SignedDepotRepository<in T>(
     /** Stores [content] with a keyed hash over the content, the path, the subject and the [meta]. */
     @OptIn(DepotRawWrite::class)
     override suspend fun putFile(subject: DepotSubjectId<T>, path: String, content: ByteArray, meta: Map<String, String>): DepotItem {
-        // Everything that can refuse the write, before a key is made for it
+        // The path, the metadata and its size with the depot's entries, before a key is made for the write. What
+        // only the store can refuse (a folder at the path) comes after.
         val own = DepotMetadata.validate(meta)
         val storedPath = inner.storedPath(path)
-        DepotMetadata.stored(subject, own, content)
+
+        DepotMetadata.validateSize(
+            DepotMetadata.stored(subject, own, content) +
+                (DepotMetadata.KEY to "x".repeat(DepotKeyStore.MAX_KEY_ID_LENGTH)) +
+                (DepotMetadata.MAC to "$METHOD:" + "0".repeat(MAC_HEX_LENGTH))
+        )
 
         val key = keys.getOrCreate(subject.value)
 
@@ -137,5 +143,6 @@ abstract class SignedDepotRepository<in T>(
         /** Names the hash with all its choices; stored in front of it. */
         const val METHOD = "hmac-sha256-v1"
         const val MAC_PURPOSE = "depot hmac-sha256-v1 sign"
+        const val MAC_HEX_LENGTH = 64
     }
 }

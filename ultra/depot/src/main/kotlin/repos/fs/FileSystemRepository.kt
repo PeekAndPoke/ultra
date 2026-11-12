@@ -285,11 +285,16 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         }
     }
 
-    /** Moves [temp] in place as the metadata [meta]; tried again when a neighbour's removal took the folder away. */
-    private fun moveMetaInPlace(temp: File, meta: File) {
+    /**
+     * Moves [temp] in place as the metadata [meta] of [file]; tried again when a neighbour's removal took the folder
+     * away. Where [file] has become a folder, the mirror's folder holds the metadata of the files in it: refused.
+     */
+    private fun moveMetaInPlace(temp: File, meta: File, file: File) {
         repeat(MOVE_ATTEMPTS) { attempt ->
             try {
                 ensureMetaParent(meta)
+
+                if (file.isDirectory) throw DepotInvalidPathException()
 
                 return moveInPlace(temp, meta, orphans = true)
             } catch (e: NoSuchFileException) {
@@ -374,7 +379,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
                 }
 
                 file.parentFile.ensureDirectory()
-                moveMetaInPlace(metaTemp, metaTarget)
+                moveMetaInPlace(metaTemp, metaTarget, file)
 
                 try {
                     moveInPlace(contentTemp, file)

@@ -34,7 +34,9 @@ class DepotSubjectKey(val id: String, val subject: String, val key: ByteArray) {
 /** Where the subjects' keys live. A stored key is a credential: keep it out of logs, insights and API output. */
 interface DepotKeyStore {
     /**
-     * The key of [subject] (a subject id's value), created when there is none. One subject has one key, ever.
+     * The key of [subject] (a subject id's value), created when there is none. One subject has one key, ever: an
+     * erased subject's id is burnt, so subject ids must never be given to someone else. A key's id has at most
+     * [MAX_KEY_ID_LENGTH] characters.
      *
      * @throws DepotSubjectErasedException when the subject was erased
      */
@@ -53,6 +55,11 @@ interface DepotKeyStore {
      * files are not erased, only no longer verifiable.
      */
     suspend fun delete(subject: String): Boolean
+
+    companion object {
+        /** The longest id a key may have: what a write reserves in a file's metadata before the key is made. */
+        const val MAX_KEY_ID_LENGTH = 128
+    }
 }
 
 /** A key store in memory, for tests: its keys are gone with the process. */
@@ -64,19 +71,19 @@ class InMemoryDepotKeyStore : DepotKeyStore {
     /** How many subjects have a key. */
     val size: Int get() = bySubject.size
 
-    override suspend fun getOrCreate(subject: String): DepotSubjectKey {
+    override suspend fun getOrCreate(subject: String): DepotSubjectKey = synchronized(this) {
         if (subject in erasedSubjects) throw DepotSubjectErasedException()
 
-        return bySubject.computeIfAbsent(subject) { DepotSubjectKey.create(it) }
+        bySubject.computeIfAbsent(subject) { DepotSubjectKey.create(it) }
     }
 
     override suspend fun get(id: String): DepotSubjectKey? = bySubject.values.firstOrNull { it.id == id }
 
     override suspend fun isErased(id: String): Boolean = id in erasedIds
 
-    override suspend fun delete(subject: String): Boolean {
+    override suspend fun delete(subject: String): Boolean = synchronized(this) {
         erasedSubjects.add(subject)
 
-        return bySubject.remove(subject)?.also { erasedIds.add(it.id) } != null
+        bySubject.remove(subject)?.also { erasedIds.add(it.id) } != null
     }
 }

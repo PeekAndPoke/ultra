@@ -60,15 +60,29 @@ object Aes256GcmV1 : DepotEncryption {
     private const val WRAPPED_BYTES = DepotSubjectKey.KEY_BYTES + TAG_BITS / Byte.SIZE_BITS
 
     /** Bytes in front of the encrypted content. */
-    const val HEADER_BYTES = IV_BYTES + IV_BYTES + WRAPPED_BYTES
+    private const val HEADER_BYTES = IV_BYTES + IV_BYTES + WRAPPED_BYTES
 
     private val random = SecureRandom()
 
-    override fun encrypt(plain: ByteArray, key: DepotSubjectKey, context: DepotEncryptionContext): ByteArray {
+    override fun encrypt(plain: ByteArray, key: DepotSubjectKey, context: DepotEncryptionContext): ByteArray = encrypt(
+        plain = plain,
+        key = key,
+        context = context,
+        fileKey = randomBytes(DepotSubjectKey.KEY_BYTES),
+        iv = randomBytes(IV_BYTES),
+        wrapIv = randomBytes(IV_BYTES),
+    )
+
+    /** [encrypt] with the random parts given: for the test that pins the stored format. */
+    internal fun encrypt(
+        plain: ByteArray,
+        key: DepotSubjectKey,
+        context: DepotEncryptionContext,
+        fileKey: ByteArray,
+        iv: ByteArray,
+        wrapIv: ByteArray,
+    ): ByteArray {
         val aad = context.bytes()
-        val fileKey = randomBytes(DepotSubjectKey.KEY_BYTES)
-        val iv = randomBytes(IV_BYTES)
-        val wrapIv = randomBytes(IV_BYTES)
 
         val wrapped = cipher(Cipher.ENCRYPT_MODE, key.derive(WRAP_PURPOSE), wrapIv, aad).doFinal(fileKey)
         val content = cipher(Cipher.ENCRYPT_MODE, fileKey, iv, aad).doFinal(plain)

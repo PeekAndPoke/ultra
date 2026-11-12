@@ -21,8 +21,8 @@ executed in normal feature work.
       into the folder; reading a file without `depot-enc` must be refused, never handed out as it is.
 - [ ] 7. After `shred`: every way to the content (items from listings, `DepotFacade.getContent`, the browse
       API, `verify`, a stale `DepotSubjectKey` held in memory by a running request, a cache in front).
-- [ ] 8. Shred racing a write of the same subject: is a file written during the erase readable afterwards?
-      (A new key is created; the old one is gone. Decide whether that is acceptable.)
+- [ ] 8. Shred racing a write of the same subject: a write after the erase is refused; one racing it lands
+      under the erased key or fails. Confirm no key is ever made for an erased subject.
 - [ ] 9. The key store: read the key collection through insights (vault tab values withheld?), logs, the
       database's own slow-query log, backups; a database dump restores erased keys.
 - [ ] 10. The key record's document key is the SHA-256 of the subject id: enumerate subjects with known ids.
@@ -35,7 +35,7 @@ executed in normal feature work.
 - [ ] 15. The mid-write window: a reader between the metadata move and the content move; three attempts,
       then "corrupted". Force it and check nothing but a retry or an error is ever returned.
 - [ ] 16. `.meta/tmp` leftovers of a crashed write hold ciphertext; confirm never plaintext.
-- [ ] 17. Shred while the database fails, on Karango (`remove` swallows every error): must throw, never `false`.
+- [ ] 17. Shred while the database fails: an erasure is a save or an insert, both throw. Must never be `false`.
 - [ ] 18. Rollback: restore an older version of one file, content and metadata, at the same path. It decrypts
       and verifies; decide whether a version counter must be bound.
 - [ ] 19. A crash between the metadata move and the content move of an encrypted file, same subject and another
@@ -47,7 +47,7 @@ executed in normal feature work.
       type (a signed repository binds it, an encrypting one does not).
 - [ ] 24. A client `Ref` naming the key collection (`system_depot_keys/<hash>`), resolved through `RefCodec`.
 - [ ] 25. Subject ids differing only in Unicode normalisation (NFC and NFD): two subjects, a shred that misses one.
-- [ ] 26. `InMemoryDepotKeyStore` used in production: every file reads as shredded after a restart.
+- [ ] 26. `InMemoryDepotKeyStore` used in production: every file reads as corrupted after a restart.
 - [ ] 27. A caller rewriting a file for alternating subjects to exhaust readers' retries.
 - [ ] 28. Slumber's `AwakerException` prints its input value: a malformed key record echoed into logs.
 - [ ] 29. Signed repository: forge a `depot-mac` by reusing one of another file, path or subject; strip the
@@ -69,6 +69,20 @@ executed in normal feature work.
 - [ ] 39. A write for an erased subject is refused (a tombstone in the key store): try to get a key again, by
       another spelling of the subject, by a race of `shred` and a first write, by removing the tombstone.
 - [ ] 40. A backup that skips `.meta` (a dot-folder): encrypted files without method, subject and key id.
+- [ ] 41. Subject-id reuse after erasure: register, erase, and the id is burnt for whoever gets it next. A
+      shred triggered through an unchecked `Ref` is irreversible.
+- [ ] 42. The key collection lost (renamed `depotKeysRepoName`, a fresh database, a restore without it, a dev
+      `removeAll`): every file reads as corrupted, every tombstone is gone, erased subjects get keys again. A
+      restore of an older backup brings back keys and drops tombstones: erasures must be applied again.
+- [ ] 43. Concurrent writes of `a` and `a/b` on the file system: the finished write's metadata.
+- [ ] 44. Metadata at the size boundary: a key made for a write that is then refused.
+- [ ] 45. The stored path on file systems that fold case or Unicode form: a rewrite under another spelling.
+- [ ] 46. The per-request entity cache keeps the key record after a shred in the same request.
+- [ ] 47. `<sha256(subject)>.none` is computable from a subject id: a forged file naming it reads as erased.
+- [ ] 48. A shredded file's listed size gives its content's length (88 bytes more).
+- [ ] 49. A `DepotUri` made past the name rule (deserialisation).
+- [ ] 50. A custom `VaultDepotKeyStore.Repo` whose `insert` overwrites: the tombstone and "one key, ever" rest
+      on insert failing.
 
 ## History
 

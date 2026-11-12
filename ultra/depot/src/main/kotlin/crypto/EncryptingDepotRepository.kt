@@ -63,8 +63,24 @@ abstract class EncryptingDepotRepository<in T>(
     /** The metadata without the entries only the depot reads (the key's id). */
     override suspend fun getMeta(path: String): Map<String, String>? = inner.getMeta(path)?.minus(DepotMetadata.internal)
 
-    /** Compares the stored (encrypted) bytes with their hash: it needs no key, and works for a shredded file. */
-    override suspend fun verify(path: String): DepotVerification? = inner.verify(path)
+    /**
+     * Compares the stored (encrypted) bytes with their hash, and, while the subject's key is there, decrypts the
+     * file: bytes replaced together with their hash are [DepotVerification.Damaged]. A shredded file is checked
+     * by its hash alone.
+     */
+    override suspend fun verify(path: String): DepotVerification? {
+        val hashed = inner.verify(path)
+
+        if (hashed != DepotVerification.Intact) return hashed
+
+        return try {
+            getContent(path)
+
+            DepotVerification.Intact
+        } catch (_: DepotCorruptedException) {
+            DepotVerification.Damaged
+        }
+    }
 
     override suspend fun removeFile(path: String): Boolean = inner.removeFile(path)
 
@@ -116,10 +132,16 @@ abstract class EncryptingDepotRepository<in T>(
             throw DepotException("An encrypting repository takes no system files")
         }
 
-        // Everything that can refuse the write, before a key is made for it
+        // The path, the metadata and its size with the depot's entries, before a key is made for the write. What
+        // only the store can refuse (a folder at the path) comes after.
         val own = DepotMetadata.validate(meta)
         val storedPath = inner.storedPath(path)
-        DepotMetadata.stored(subject, own, content)
+
+        DepotMetadata.validateSize(
+            DepotMetadata.stored(subject, own, content) +
+                (DepotMetadata.ENC to encryption.name) +
+                (DepotMetadata.KEY to "x".repeat(DepotKeyStore.MAX_KEY_ID_LENGTH))
+        )
 
         val key = keys.getOrCreate(subject.value)
 

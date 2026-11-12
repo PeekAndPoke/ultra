@@ -58,6 +58,9 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
             second.id shouldBe first.id
             second.key.toList() shouldBe first.key.toList()
 
+            // An id under this subject's record that no key has
+            store.get("${first.id.substringBefore('.')}.${UUID.randomUUID()}") shouldBe null
+
             val found = store.get(first.id)!!
             found.subject shouldBe subject
             found.key.toList() shouldBe first.key.toList()
@@ -82,6 +85,8 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
 
             store.get(old.id) shouldBe null
             store.isErased(old.id) shouldBe true
+            // Another id under the erased subject's record: made up, not erased
+            store.isErased("${old.id.substringBefore('.')}.${UUID.randomUUID()}") shouldBe false
             shouldThrow<DepotSubjectErasedException> { store.getOrCreate(subject) }
 
             // What stays is a tombstone: no key, no subject

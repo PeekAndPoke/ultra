@@ -390,6 +390,28 @@ erased subject refused (database), H2 an erased key not handed out, H3 the tombs
 a subject without a key, H5 `isErased`, H6/H7 erased told from forged (encrypting, signed), H8 the in-memory
 store's refusal, H9 the uri's path as it is, H10 the name rule, H11 the facade's name check.
 
+Round 3, 2026-11-12, level 2 (`reviewer-xhigh`), blind; charters 1, 2 and 3. **NOT clean: 1 MAJOR** (domain,
+a test gap; implementation and security returned CLEAN). The security reviewer reported having read the round-2
+table by mistake; its finding 1 matches the other two reviewers' independent ones.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 3 | MAJOR | `DepotEncryption.kt`, `DepotKeyStore.kt:18`, `SignedDepotRepository.kt:121` | Nothing pins the stored formats: every test writes and reads with the same code, so a mirrored change (a purpose text, the field order, the derivation, the metadata's order) stays green while every stored file stops reading (domain 1) | fix | `DepotStoredFormatSpec`: bytes made by another implementation (Python `hmac`, `cryptography` AESGCM) for the derivation, a stored `aes256gcm-v1` file (decrypt, and encrypt with given IVs), and a `depot-mac` with two metadata entries out of order. They matched the code at the first run |
+| 3 | MINOR | `EncryptingDepotRepository.kt:119`, `SignedDepotRepository.kt:61` | The size check before a key is made leaves out the depot's own entries (all three charters) | fix | Checked with the method's name and a reserve of `DepotKeyStore.MAX_KEY_ID_LENGTH`; the comment no longer claims the store's refusals |
+| 3 | MINOR | `VaultDepotKeyStore.kt:66` | The guard "this record's key has that id" unpinned on the database store (impl 2) | fix | |
+| 3 | MINOR | `DepotUri.kt:9,18` | `copy()` skips the name rule; the empty path's uri does not read back (impl 3, 4; security B, C) | fix | `@ConsistentCopyVisibility`; `(.*)` |
+| 3 | MINOR | `FileSystemRepository.kt:275` | A write of `a` racing a finished write of `a/b` deletes the mirror folder with `a/b`'s metadata (security 2) | fix | Refused when the content path has become a folder, checked right before the mirror's folder would be removed; not pinned (a race) |
+| 3 | MINOR | `EncryptingDepotRepository.kt:66` | `verify` says `Intact` for ciphertext replaced together with its hash (security 4) | fix | Decrypts while the key is there |
+| 3 | MINOR | erased ids | An erased subject id is burnt for whoever gets it next (security 3); the tombstone keeps a hash of the id: pseudonymous (domain 4) | fix (docs) | KDoc, CHANGELOG, docs |
+| 3 | MINOR | `CHANGELOG.md:376` | "Copied elsewhere" is wrong for the decided same-path case (domain 3) | fix | |
+| 3 | NIT | the in-memory store's check-then-act; `HEADER_BYTES` public | | fix | |
+| 3 | NIT | `SignedDepotRepository` is named for a signature and makes a keyed hash (domain 5); the S3 storage id ignores the endpoint (impl 7, domain 6); `alsoReads` and the custom method are not asked for (domain) | | maintainer | Put to the maintainer |
+
+Verified after round 3: depot 115, depot-s3 14, cluster 160, insights 114, funktor-all 289, demo 52. Mutations
+red: I1 the wrap purpose, I2 the derivation's counter, I3 the context's field order, I5 the metadata's order in
+the keyed hash, I6 its field count, I7 the signing purpose, I8 the size reserve, I9 the decrypting verify, I10
+the key-id guard of the database store, I11 the empty path's uri.
+
 Probed and clean, step 3 round 1: AES-GCM use (fresh file key, random IVs, 128-bit tag, the bound context on
 content and wrap), parameter parsing, an erased key id never valid again, `getContent`'s distinct answers,
 `storedPath` through links, refusals (system, raw write, a file without marker), the file-system overlap check,

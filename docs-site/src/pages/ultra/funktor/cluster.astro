@@ -102,7 +102,8 @@ when (val content = customerFiles.getContent("contract.pdf")) {
     DepotContent.NotFound -> null
 }
 
-// Right to erasure: every file of this customer becomes unreadable, and later writes for it are refused.
+// Right to erasure: every file of this customer becomes unreadable, and later writes for it are refused
+// for good: an erased subject id must never be given to someone else.
 // Throws when the key could not be erased.
 customerFiles.shred(customer.asDepotSubject())`} lang="kotlin" theme="vitesse-dark"/>
 

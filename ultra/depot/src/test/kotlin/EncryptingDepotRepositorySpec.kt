@@ -18,6 +18,7 @@ import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.domain.DepotVerification
+import io.peekandpoke.ultra.depot.repos.DepotMetadata
 import io.peekandpoke.ultra.depot.repos.DepotRawWrite
 import io.peekandpoke.ultra.depot.repos.DepotRepository
 import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
@@ -226,6 +227,8 @@ class EncryptingDepotRepositorySpec : StringSpec({
         shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "../out.txt", secret) }
         shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "a.txt", secret, mapOf("Bad Key" to "x")) }
         shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "a.txt", secret, mapOf("note" to "x".repeat(3000))) }
+        // Fits by itself (1987 bytes with subject and hash), not with the method's name and the key's id
+        shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "a.txt", secret, mapOf("note" to "x".repeat(1880))) }
 
         s.keys.size shouldBe 0
     }
@@ -240,6 +243,19 @@ class EncryptingDepotRepositorySpec : StringSpec({
         shouldThrowExactly<DepotException> { repo.getContent("plain.txt") }
         shouldThrowExactly<DepotException> { repo.getContent("foreign.txt") }
         repo.getContent("nothing.txt") shouldBe DepotContent.NotFound
+    }
+
+    "verify decrypts while the key is there: bytes replaced together with their hash are damaged" {
+        val s = setup()
+        s.repo.putFile(anna, "a.txt", secret)
+        val file = File(s.dir, "a.txt")
+        val meta = File(s.dir, ".meta/files/a.txt")
+        val forged = ByteArray(file.length().toInt()) { 7 }
+
+        file.writeBytes(forged)
+        meta.writeText(meta.readText().replace(Regex("\"depot-sha256\":\"[0-9a-f]+\""), "\"depot-sha256\":\"${DepotMetadata.sha256(forged)}\""))
+
+        s.repo.verify("a.txt") shouldBe DepotVerification.Damaged
     }
 
     "altered content does not decrypt" {

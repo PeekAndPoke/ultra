@@ -6,7 +6,7 @@ package io.peekandpoke.ultra.depot.domain
  * It names exactly one path: the [path] is kept as it is given, never trimmed or tidied, so two files never share
  * one uri. A [repo] name has no `/` or `\` and no blanks around it, so the uri reads back one way only.
  */
-@Suppress("DataClassPrivateConstructor", "DATA_CLASS_COPY_VISIBILITY_WILL_BE_CHANGED_WARNING")
+@ConsistentCopyVisibility
 data class DepotUri private constructor(
     val repo: String,
     val path: String,
@@ -15,7 +15,7 @@ data class DepotUri private constructor(
 
         const val protocol = "depot"
 
-        private val parseRegex = "($protocol://)([^/]+)/(.+)".toRegex(RegexOption.DOT_MATCHES_ALL)
+        private val parseRegex = "($protocol://)([^/]+)/(.*)".toRegex(RegexOption.DOT_MATCHES_ALL)
 
         /** Whether [name] is a repository name a uri can carry: not blank, no `/` or `\`, no blanks around it. */
         fun isRepoName(name: String): Boolean =
