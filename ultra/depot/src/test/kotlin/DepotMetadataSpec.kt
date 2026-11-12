@@ -211,11 +211,18 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(customer("s".repeat(1942)), "a.txt", "a", mapOf("k" to "v".repeat(4)))
     }
 
-    "a mime type must look like type/subtype" {
-        listOf("text", "text/html\r\nX-Evil: 1", "a b/c", "").forEach { mime ->
+    "a mime type must look like type/subtype, parameters allowed" {
+        val bad = listOf(
+            "text", "text/html\r\nX-Evil: 1", "a b/c", "", "text/plain;", "text/plain; charset", "text/plain; charset=",
+            "text/plain; a=\"b\r\nX-Evil: 1\"", "text/plain; a=\"b\"c\"", "text/plain charset=utf-8",
+        )
+
+        bad.forEach { mime ->
             shouldThrow<DepotInvalidMetadataException> { DepotMetadata.validate(mapOf("mime-type" to mime)) }
         }
         DepotMetadata.validate(mapOf("mime-type" to "image/svg+xml"))
+        DepotMetadata.validate(mapOf("mime-type" to "text/plain; charset=utf-8"))
+        DepotMetadata.validate(mapOf("mime-type" to "text/plain;charset=utf-8; format=\"flowed x\""))
     }
 
     "a link that aliases the root does not reach or show the metadata tree" {

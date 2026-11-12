@@ -22,8 +22,9 @@ value class DepotSubjectId<out T> private constructor(val value: String) {
 
         /**
          * The subject [id] of kind [type], stored as `namespace/id`. The [namespace] keeps equal ids of different
-         * kinds apart (customer 42, employee 42): for a stored entity it is the collection's name. Renaming it makes
-         * new files belong to another subject than the old ones.
+         * kinds apart (customer 42, employee 42): for a stored entity it is the collection's name, and a stored
+         * entity's id is made by its `asDepotSubject()` (funktor cluster), never by hand with another spelling. Another
+         * namespace is another subject: renaming it makes new files belong to another subject than the old ones.
          *
          * @throws IllegalArgumentException for a blank part, a [namespace] with a `/`, text that is not valid Unicode, or `Nothing`
          * as the kind

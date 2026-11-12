@@ -8,12 +8,14 @@ import java.security.MessageDigest
 class DepotInvalidMetadataException(message: String) : IllegalArgumentException(message)
 
 /**
- * The rules for a file's metadata, a free map of strings, the same in every repository:
+ * The rules for a file's metadata, a free map of strings, the same in every repository. Metadata is stored in
+ * clear and stays readable when a subject's files are made unreadable: it holds no personal data (no names, no
+ * titles that name a person).
  *
  * - a key is 1 to 64 characters of `a-z`, `0-9` and `-` (S3 lowercases header names);
  * - keys starting with `depot-` are the depot's own and refused from a caller;
  * - the depot adds the subject's id ([SUBJECT]) and the content's hash ([SHA256]), which count towards the size;
- * - a [MIME_TYPE] entry looks like `type/subtype`;
+ * - a [MIME_TYPE] entry looks like `type/subtype`, parameters allowed (`; charset=utf-8`);
  * - all keys and values together stay within [MAX_BYTES], S3's limit for user metadata, measured as S3 stores
  *   them (values percent-encoded).
  */
@@ -28,13 +30,16 @@ object DepotMetadata {
     const val SHA256 = "depot-sha256"
 
     /**
-     * The file's mime type, by convention. It must look like `type/subtype`. The S3 repository also sets it as the
+     * The file's mime type, by convention. It must look like `type/subtype`, with parameters if any. The S3 repository also sets it as the
      * object's content type, which is what a bucket served to browsers answers with: an app that takes it from a user
      * decides which types it allows.
      */
     const val MIME_TYPE = "mime-type"
 
-    private val mimeRule = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+")
+    private const val TOKEN = "[A-Za-z0-9!#$&^_.+-]+"
+
+    /** `type/subtype`, then any number of `; name=value` with a token or a quoted value; never a control character. */
+    private val mimeRule = Regex("$TOKEN/$TOKEN( *; *$TOKEN=($TOKEN|\"[^\"\\\\\\p{Cntrl}]*\"))*")
 
     /** S3's limit for the user metadata of one object, in bytes. */
     const val MAX_BYTES = 2048
@@ -53,7 +58,7 @@ object DepotMetadata {
     /** Checks a caller's metadata and returns it; see the rules above. */
     fun validate(meta: Map<String, String>): Map<String, String> = meta.also {
         meta[MIME_TYPE]?.let { mime ->
-            if (!mimeRule.matches(mime)) throw DepotInvalidMetadataException("Invalid mime type: expected type/subtype")
+            if (!mimeRule.matches(mime)) throw DepotInvalidMetadataException("Invalid mime type: expected type/subtype, with parameters if any")
         }
 
         meta.keys.forEach { key ->

@@ -341,7 +341,7 @@
     and is stored as `customers/42`, so equal ids of two kinds stay apart. `funktor:cluster` adds
     `Storable<T>.asDepotSubject()` (the entity's `collection/key`) and `repo.putFile(storedEntity, path, content,
     meta)`; `funktor:cluster` now exposes `ultra:vault`.
-  - Metadata is a `Map<String, String>`: keys of `a-z`, `0-9` and `-` (1 to 64), keys starting with `depot-` reserved,
+  - Metadata is stored in clear and holds no personal data. It is a `Map<String, String>`: keys of `a-z`, `0-9` and `-` (1 to 64), keys starting with `depot-` reserved,
     2 KB in all. The subject's id is always stored as `depot-subject`, for system files too. `getMeta` returns the
     map: without `depot-subject` for a file written before this release or not by the depot (no subject recorded),
     null when there is no such file. `DepotMetadata.subjectOf(meta)` reads the subject.

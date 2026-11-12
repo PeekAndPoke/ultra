@@ -264,6 +264,13 @@ For step 3, from the reviewers: `verify` must be overridden by a wrapper that ch
 binds the canonical repository-relative path; the crypto entries count towards the 2 KB; items returned by the
 inner store bypass the middleware and must be wrapped; one subject per file.
 
+The maintainer on the four questions after round 3 (2026-11-12): (1) "Let's keep metadata plain. They should not
+contain personal data": said in the `DepotMetadata` KDoc, the CHANGELOG and the docs; step 3 does not encrypt
+caller entries. (2) the namespace stays free ("Yes keep as is"): the KDoc says a stored entity's id comes from
+`asDepotSubject()`. (3) "Yes to boot check": step 3's boot check refuses one root inside another. (4) mime types
+with parameters allowed ("Ok"): `type/subtype` plus `; name=value` with a token or quoted value, no control
+characters; mutation W1 (the parameter tail accepting anything) red.
+
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header
 injection towards S3; error messages; the browse API; the size rule; test expectations are literals.
