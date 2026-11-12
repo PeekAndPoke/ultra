@@ -109,6 +109,8 @@ customerFiles.shred(customer.asDepotSubject())`} lang="kotlin" theme="vitesse-da
         For files that need not be secret but must not be changed unnoticed, a
         <code>SignedDepotRepository</code> is built the same way. It stores files as they are, with a keyed hash,
         and its <code>verify(path)</code> finds tampering with the content, the path, the subject or the metadata.
+        Only <code>Intact</code> proves a file; treat every other answer as not proven. Signed files are not
+        erased by <code>shred</code>.
     </p>
 
     <h2>Distributed locks</h2>

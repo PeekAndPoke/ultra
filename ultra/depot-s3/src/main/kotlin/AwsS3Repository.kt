@@ -8,6 +8,7 @@ import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
 import io.peekandpoke.ultra.depot.repos.DepotRawWrite
 import io.peekandpoke.ultra.depot.repos.DepotRepository
+import io.peekandpoke.ultra.depot.repos.DepotStorageId
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import java.net.URLDecoder
 import kotlinx.coroutines.future.await
@@ -87,8 +88,13 @@ abstract class AwsS3Repository<in T>(
     override val type = "AWS S3"
 
     /** The location of the repo */
-    /** By the bucket, not the name: two repositories on one bucket are in one place under any names. */
     override val location: String get() = "S3 Bucket: $bucketName"
+
+    /** By the bucket, not the name: two repositories on one bucket are in one place under any names. */
+    override val storageId: DepotStorageId get() = DepotStorageId(kind = "s3", place = bucketName)
+
+    /** The object's key, checked like every path. */
+    override suspend fun storedPath(path: String): String = path.validateDepotPath()
 
     /**
      * Lists all files in the bucket

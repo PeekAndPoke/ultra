@@ -63,6 +63,12 @@ class EncryptingDepotRepositorySpec : StringSpec({
         (s.repo.listItems("docs").single() as DepotItem.File).getContent().text() shouldBe secret
         s.repo.getFile("docs/contract.txt")!!.getContent().text() shouldBe secret
         s.repo.getFile("docs/contract.txt")!!.repo shouldBe s.repo
+        // No item hands out the inner repository
+        (s.repo.listItems("docs", 10).single() as DepotItem.File).getContent().text() shouldBe secret
+        s.repo.listItems("docs", 10).single().repo shouldBe s.repo
+        s.repo.listItems("").single().repo shouldBe s.repo
+        s.repo.getFolder("docs")!!.repo shouldBe s.repo
+        s.repo.getItem("docs")!!.repo shouldBe s.repo
     }
 
     "the metadata names the subject and the method, and keeps the key's id to itself" {
@@ -143,6 +149,12 @@ class EncryptingDepotRepositorySpec : StringSpec({
 
         val plain = object : EncryptingDepotRepository<Customer>(innerOver(dir), keys) {}
         shouldThrowExactly<DepotException> { plain.getContent("a.txt") }
+
+        // A deployment that moved on to another method names the earlier one to keep reading its files
+        val movedOn = object : EncryptingDepotRepository<Customer>(innerOver(dir), keys, alsoReads = listOf(custom)) {}
+        movedOn.getContent("a.txt").text() shouldBe secret
+        movedOn.putFile(anna, "b.txt", "new")
+        movedOn.getMeta("b.txt")!!["depot-enc"] shouldBe "aes256gcm-v1"
     }
 
     "shredding a subject makes its files unreadable for good, and leaves the others" {
@@ -185,6 +197,19 @@ class EncryptingDepotRepositorySpec : StringSpec({
 
         File(s.dir, "sys.txt").exists() shouldBe false
         File(s.dir, "raw.txt").exists() shouldBe false
+
+        // The system is no subject to erase either
+        shouldThrow<DepotException> { s.repo.shred(DepotSubjectId.system) }
+    }
+
+    "a refused write makes no key" {
+        val s = setup()
+
+        shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "../out.txt", secret) }
+        shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "a.txt", secret, mapOf("Bad Key" to "x")) }
+        shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "a.txt", secret, mapOf("note" to "x".repeat(3000))) }
+
+        s.keys.size shouldBe 0
     }
 
     "a file that is not encrypted is refused, not handed out" {
@@ -247,6 +272,15 @@ class EncryptingDepotRepositorySpec : StringSpec({
         meta.writeText(meta.readText().replace("aes256gcm-v1", "rot13-v9"))
 
         shouldThrowExactly<DepotException> { s.repo.getContent("a.txt") }
+    }
+
+    "each use of a subject's key has a key of its own, always the same one" {
+        val key = DepotSubjectKey.create("customers/42")
+
+        key.derive("wrap").size shouldBe 32
+        key.derive("wrap").toList() shouldBe key.derive("wrap").toList()
+        key.derive("wrap").toList() shouldNotBe key.derive("sign").toList()
+        key.derive("wrap").toList() shouldNotBe key.key.toList()
     }
 
     "a corrupted file is a depot failure like the others" {
@@ -313,6 +347,12 @@ class EncryptingDepotRepositorySpec : StringSpec({
         // One name, one repository: a uri finds its repository by name
         class AlsoNamedA(dir: File) : FileSystemRepository<Customer>("a", dir.absolutePath)
         shouldThrow<DepotException> { facade(RepoA(dir), AlsoNamedA(other)) }
+
+        // A uri spells both of these names "docs-eu"
+        class Slashed(dir: File) : FileSystemRepository<Customer>("docs/eu", dir.absolutePath)
+
+        class Dashed(dir: File) : FileSystemRepository<Customer>("docs-eu", dir.absolutePath)
+        shouldThrow<DepotException> { facade(Slashed(dir), Dashed(other)) }
 
         // An encrypting repository and a plain one on its folder: the way around the encryption
         shouldThrow<DepotException> { facade(Encrypting(dir), RepoB(dir)) }

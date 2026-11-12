@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
 import io.peekandpoke.ultra.depot.repos.DepotRawWrite
 import io.peekandpoke.ultra.depot.repos.DepotRepository
+import io.peekandpoke.ultra.depot.repos.DepotStorageId
 import io.peekandpoke.ultra.depot.repos.isDepotMetaDir
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import java.io.File
@@ -135,13 +136,8 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
 
     override val location: String = root.absolutePath
 
-    /** The same folder, or one inside the other, links resolved. */
-    override fun overlaps(other: DepotRepository<*>): Boolean {
-        val theirs = (other.storage as? FileSystemRepository<*>)?.canonicalRoot?.toPath() ?: return false
-        val mine = canonicalRoot.toPath()
-
-        return mine.startsWith(theirs) || theirs.startsWith(mine)
-    }
+    /** The root, links resolved: the same folder, or one inside the other, is one storage. */
+    override val storageId: DepotStorageId get() = DepotStorageId(kind = "file-system", place = canonicalRoot.path, nests = true)
 
     /** The file's own path, links resolved: a link and its target are stored under one. */
     override suspend fun storedPath(path: String): String = getPathInRepo(resolve(path))

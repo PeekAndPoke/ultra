@@ -82,11 +82,11 @@ interface DepotRepository<in T> {
      */
     suspend fun storedPath(path: String): String = path
 
-    /** The repository that holds the bytes: itself, or the one a middleware wraps. */
-    val storage: DepotRepository<*> get() = this
-
-    /** Whether this repository and [other] hold their files in the same place, or one inside the other. */
-    fun overlaps(other: DepotRepository<*>): Boolean = storage.location == other.storage.location
+    /**
+     * Names the place the files are held in: two repositories with the same id share their storage. A middleware
+     * has the id of the repository it wraps. See [DepotStorageId].
+     */
+    val storageId: DepotStorageId get() = DepotStorageId(kind = type, place = location)
 
     /** Puts a file with the given [path] and [content] */
     suspend fun putFile(

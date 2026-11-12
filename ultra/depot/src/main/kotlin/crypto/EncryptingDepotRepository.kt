@@ -9,6 +9,7 @@ import io.peekandpoke.ultra.depot.domain.DepotVerification
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
 import io.peekandpoke.ultra.depot.repos.DepotRawWrite
 import io.peekandpoke.ultra.depot.repos.DepotRepository
+import io.peekandpoke.ultra.depot.repos.DepotStorageId
 import java.security.GeneralSecurityException
 import kotlinx.coroutines.delay
 
@@ -31,10 +32,12 @@ abstract class EncryptingDepotRepository<in T>(
     private val inner: DepotRepository<T>,
     private val keys: DepotKeyStore,
     private val encryption: DepotEncryption = Aes256GcmV1,
+    alsoReads: List<DepotEncryption> = emptyList(),
 ) : DepotRepository<T> {
 
-    /** The methods this repository reads: the built-in ones, and the one it writes with. */
-    private val readers: Map<String, DepotEncryption> = DepotEncryption.all + (encryption.name to encryption)
+    /** The methods this repository reads: the built-in ones, the one it writes with, and [alsoReads] (earlier ones). */
+    private val readers: Map<String, DepotEncryption> =
+        DepotEncryption.all + alsoReads.associateBy { it.name } + (encryption.name to encryption)
 
     override val name: String get() = inner.name
 
@@ -42,9 +45,7 @@ abstract class EncryptingDepotRepository<in T>(
 
     override val location: String get() = inner.location
 
-    override val storage: DepotRepository<*> get() = inner.storage
-
-    override fun overlaps(other: DepotRepository<*>): Boolean = inner.overlaps(other)
+    override val storageId: DepotStorageId get() = inner.storageId
 
     override suspend fun storedPath(path: String): String = inner.storedPath(path)
 
@@ -67,7 +68,8 @@ abstract class EncryptingDepotRepository<in T>(
     override suspend fun removeFile(path: String): Boolean = inner.removeFile(path)
 
     /**
-     * Reads and decrypts the file at [path]: [DepotContent.Shredded] when its subject's key was erased.
+     * Reads and decrypts the file at [path]: [DepotContent.Shredded] when no key is stored under the id the file
+     * names (its subject's key was erased; a file rewritten at that moment may read so once).
      *
      * @throws DepotCorruptedException when the key is there and the file does not decrypt
      * @throws DepotException for a file that is not encrypted, or encrypted with a method this version cannot read
@@ -112,12 +114,16 @@ abstract class EncryptingDepotRepository<in T>(
             throw DepotException("An encrypting repository takes no system files")
         }
 
+        // Everything that can refuse the write, before a key is made for it
         val own = DepotMetadata.validate(meta)
+        val storedPath = inner.storedPath(path)
+        DepotMetadata.stored(subject, own, content)
+
         val key = keys.getOrCreate(subject.value)
 
         val context = DepotEncryptionContext(
             method = encryption.name,
-            path = inner.storedPath(path),
+            path = storedPath,
             subject = subject.value,
             keyId = key.id,
         )
@@ -137,11 +143,17 @@ abstract class EncryptingDepotRepository<in T>(
         throw DepotException("An encrypting repository takes no raw writes")
 
     /**
-     * Erases the [subject]'s key: every file written for it reads as [DepotContent.Shredded] from now on. The files
+     * Erases the [subject]'s key, in the key store: every file written for it, here and in every other repository
+     * on that key store, reads as [DepotContent.Shredded] from now on (a signed one no longer verifies). The files
      * and their metadata stay until they are removed. Whether there was a key; a key that could not be erased is an
      * exception, never `false`.
      */
-    suspend fun shred(subject: DepotSubjectId<T>): Boolean = keys.delete(subject.value)
+    suspend fun shred(subject: DepotSubjectId<T>): Boolean {
+        // No file here is a system file; the system's key signs the system files of signed repositories
+        if (subject.value == DepotSubjectId.system.value) throw DepotException("The system is no data subject to erase")
+
+        return keys.delete(subject.value)
+    }
 
     private fun DepotItem.wrapped(): DepotItem = wrappedFor(this@EncryptingDepotRepository)
 

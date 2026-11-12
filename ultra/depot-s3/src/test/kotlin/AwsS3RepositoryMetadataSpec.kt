@@ -146,8 +146,8 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
         }
         val other = object : AwsS3Repository<Any>(s3 = stub.client, bucketName = "other") {}
 
-        first.overlaps(renamed) shouldBe true
-        first.overlaps(other) shouldBe false
+        first.storageId.overlaps(renamed.storageId) shouldBe true
+        first.storageId.overlaps(other.storageId) shouldBe false
     }
 
     "refused metadata never reaches S3" {

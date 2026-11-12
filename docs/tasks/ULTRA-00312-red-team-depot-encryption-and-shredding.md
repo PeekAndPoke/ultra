@@ -7,8 +7,9 @@
 Concrete attack scenarios against the encrypting depot repository (ULTRA-00311, step 3). Collected here, never
 executed in normal feature work.
 
-- [ ] 1. Copy an encrypted file and its metadata to another path, and to another repository of the same subject
-      kind: it must not decrypt (path binding).
+- [ ] 1. Copy an encrypted file and its metadata to another path: it must not decrypt (path binding). To the
+      same relative path in another repository on the same key store: **it decrypts** (the repository is not
+      bound; needs write access to the storage). Decide whether a repository identity must be bound.
 - [ ] 2. Relabel a file to another subject (metadata edited), with and without that subject's key id: must not
       decrypt, and shredding the original subject must still make it unreadable.
 - [ ] 3. Downgrade: rewrite `depot-enc` to another known method once a second method exists; must not decrypt.
@@ -51,6 +52,21 @@ executed in normal feature work.
 - [ ] 28. Slumber's `AwakerException` prints its input value: a malformed key record echoed into logs.
 - [ ] 29. Signed repository: forge a `depot-mac` by reusing one of another file, path or subject; strip the
       `depot-mac` entry so `verify` answers `NoHash` (a caller that treats `NoHash` as fine).
+- [ ] 30. One subject key, two uses: the wrap key and the signing key are derived (`DepotSubjectKey.derive`);
+      confirm no code path uses the subject key itself.
+- [ ] 31. `Unverifiable` forged by pointing `depot-key` at an unknown id; a caller that skips it as "erased".
+- [ ] 32. Shredding a subject leaves its signed files readable.
+- [ ] 33. Key records left by refused writes with client-chosen subjects (checked before the key is made:
+      path, metadata, size); a flood of valid first writes for invented subjects.
+- [ ] 34. `DepotUri` normalises paths (backslash, surrounding spaces, doubled slashes) and repository names: an
+      item's uri names another file or repository. An app that authorises downloads by a stored uri.
+- [ ] 35. Erasure lag inside the database: Mongo oplog, delayed secondaries, Arango WAL, unreclaimed pages.
+- [ ] 36. Overlap check: bind mounts, a root made a link after the facade was built, case-insensitive file
+      systems.
+- [ ] 37. `Shredded` reported once for a live file rewritten during a re-key.
+- [ ] 38. Key bytes stay in the heap, unzeroed: heap and core dumps.
+- [ ] 39. A write for an erased subject silently makes a new key (no tombstone): a retried job after erasure.
+- [ ] 40. A backup that skips `.meta` (a dot-folder): encrypted files without method, subject and key id.
 
 ## History
 

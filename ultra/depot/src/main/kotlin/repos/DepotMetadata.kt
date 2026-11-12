@@ -12,7 +12,7 @@ class DepotInvalidMetadataException(message: String) : IllegalArgumentException(
  * clear and stays readable when a subject's files are made unreadable: it holds no personal data (no names, no
  * titles that name a person).
  *
- * - a key is 1 to 64 characters of `a-z`, `0-9` and `-` (S3 lowercases header names);
+ * - a key is 1 to 64 characters of `a-z`, `0-9` and `-` (S3 lowercases header names); a value is valid Unicode;
  * - keys starting with `depot-` are the depot's own and refused from a caller;
  * - the depot adds the subject's id ([SUBJECT]) and the content's hash ([SHA256]), which count towards the size;
  * - a [MIME_TYPE] entry looks like `type/subtype`, parameters allowed (`; charset=utf-8`);
@@ -73,9 +73,13 @@ object DepotMetadata {
             if (!mimeRule.matches(mime)) throw DepotInvalidMetadataException("Invalid mime type: expected type/subtype, with parameters if any")
         }
 
-        meta.keys.forEach { key ->
+        meta.forEach { (key, value) ->
             if (!keyRule.matches(key)) {
                 throw DepotInvalidMetadataException("Invalid metadata key: 1 to 64 characters of a-z, 0-9 and '-'")
+            }
+            // An unpaired surrogate would be stored as '?': the value read is then not the value written
+            if (value.encodeToByteArray().decodeToString() != value) {
+                throw DepotInvalidMetadataException("Invalid metadata value: not valid text")
             }
             if (key.startsWith(RESERVED_PREFIX)) {
                 throw DepotInvalidMetadataException("Metadata keys starting with '$RESERVED_PREFIX' are reserved")

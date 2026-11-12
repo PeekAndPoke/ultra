@@ -87,13 +87,29 @@ class SignedDepotRepositorySpec : StringSpec({
         s.repo.verify("a.txt") shouldBe DepotVerification.Damaged
     }
 
-    "a file without a keyed hash, an erased key and a missing file each have their own answer" {
+    "a shift of bytes between the metadata and the content does not verify" {
+        val s = setup()
+        s.repo.putFile(anna, "a.txt", "content", mapOf("title" to "t"))
+
+        // The same bytes in the same order, cut at another place: only the lengths in the hash tell them apart
+        s.meta("a.txt").writeText(s.meta("a.txt").readText().replace("\"title\":\"t\"", "\"title\":\"tc\""))
+        File(s.dir, "a.txt").writeText("ontent")
+
+        s.repo.verify("a.txt") shouldBe DepotVerification.Damaged
+    }
+
+    "only an intact file proves anything: no keyed hash is damaged, an unknown key is unverifiable" {
         val s = setup()
         s.repo.putFile(anna, "a.txt", "content")
+        s.repo.putFile(anna, "stripped.txt", "content")
         File(s.dir, "foreign.txt").writeText("f")
 
-        s.repo.verify("foreign.txt") shouldBe DepotVerification.NoHash
+        s.repo.verify("foreign.txt") shouldBe DepotVerification.Damaged
         s.repo.verify("nothing.txt") shouldBe null
+
+        // The entry removed by someone without the key
+        s.meta("stripped.txt").writeText(s.meta("stripped.txt").readText().replace(Regex(",?\"depot-mac\":\"[^\"]+\""), ""))
+        s.repo.verify("stripped.txt") shouldBe DepotVerification.Damaged
 
         s.keys.delete("customers/42") shouldBe true
         s.repo.verify("a.txt") shouldBe DepotVerification.Unverifiable

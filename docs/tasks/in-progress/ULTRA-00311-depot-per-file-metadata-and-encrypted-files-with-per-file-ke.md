@@ -344,6 +344,32 @@ F1 the look after "nothing removed", F2 the repository's own method as a reader,
 F8 duplicate names, F10a-e each part of the keyed hash (path, metadata, erased key, subject, content), F11 the read
 retry, F12 a key per file.
 
+Round 2, 2026-11-12, level 2 (`reviewer-xhigh`), blind; charters 1, 2 and 3. **NOT clean: 1 MAJOR** (domain;
+the implementation and security charters graded the same point MINOR and returned CLEAN). Second round without a
+clean one: fixes built, the maintainer asked before round 3.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 2 | MAJOR | `SignedDepotRepository.kt:85,89`, `DepotVerification.kt`, CHANGELOG, docs | Who can write the metadata turns a tampered signed file into `NoHash` (remove `depot-mac`) or `Unverifiable` (point `depot-key` at an unknown id), both documented as harmless (domain M1; impl 4, security S5) | fix | A signed file without `depot-mac` is `Damaged`; KDoc, enum, CHANGELOG and docs say only `Intact` proves a file and what `Unverifiable` can mean. An erased key and a forged id cannot be told apart without a record of erased ids |
+| 2 | MINOR | `DepotRepository.kt:86` | `storage` hands the inner repository to any holder of the middleware (domain m1, security S1) | fix | Replaced by `storageId: DepotStorageId` (kind, place, nesting); `overlaps` is gone from the interface |
+| 2 | MINOR | `EncryptingDepotRepository.kt:144` | `shred(system)` compiles and erases the key that signs system files; `shred` acts on the whole key store (domain m2, impl 3) | fix | Refused; KDoc and CHANGELOG say "every repository on that key store" |
+| 2 | MINOR | `DepotEncryption.kt:72`, `SignedDepotRepository.kt:115` | One subject key for AES-GCM wrapping and for HMAC (security S2; domain: no weakness, cheap hygiene) | fix | `DepotSubjectKey.derive(purpose)` (HMAC-SHA-256 as HKDF expands), a label per use; nothing is live |
+| 2 | MINOR | `EncryptingDepotRepository.kt:116`, `SignedDepotRepository.kt:62` | A key is made before path, metadata and size are checked (security S4, impl NIT 4) | fix | Checked first; pinned |
+| 2 | MINOR | `EncryptingDepotRepository.kt:33` | A deployment moving from one custom method to another cannot read the earlier files (domain m3) | fix | `alsoReads` |
+| 2 | MINOR | `DepotMetadata.kt:71` | A metadata value with an unpaired surrogate is stored as `?`: a signed file never verifies (impl 5) | fix | Refused |
+| 2 | MINOR | `DepotFacade.kt:21` | The name check compares raw names, a uri normalises them (security S7) | fix | Compared as a uri spells them |
+| 2 | MINOR | `DepotKeyStore.kt:7,31` | "Erasing the key erases the files" is false for signed files (security S3) | fix | KDoc of the key, the store and the signed repository |
+| 2 | MINOR | tests | The keyed hash's length prefixes, `listItems(path, limit)` and folders unpinned (impl 1, 2); a stale assertion (NIT) | fix | |
+| 2 | MINOR | `DepotEncryption.kt:12` | The repository is not bound: a file copied to the same path of another repository on the same key store decrypts (security S8) | maintainer | Red team item 1 corrected |
+| 2 | MINOR | `DepotUri.kt:19` | A uri normalises paths; two files can share one uri (security S6; from before this ticket) | maintainer | Red team item 34; no ticket created |
+| 2 | MINOR | key id holds the subject's SHA-256 (domain m4); the metadata's loss loses an encrypted file (domain m5); no tombstone after an erasure (domain m6) | | maintainer | Red team items 39, 40 |
+| 2 | NIT | `Shredded` once for a live file rewritten during a re-key (security S9) | | fix (KDoc) | |
+
+Verified after round 2: depot 102, depot-s3 14, cluster 160, insights 114, funktor-all 289, demo 52. Mutations red:
+G1 the derived wrap key, G2 a signed file without its hash, G3 `shred(system)`, G4 the checks before a key is made,
+G6 the value's text, G7 names as a uri spells them, G8 the lengths in the keyed hash, G9 `alsoReads`, G10 the
+S3 storage id, G11 nesting, G12/G13 wrapped items of `listItems(path, limit)` and `getFolder`.
+
 Probed and clean, step 3 round 1: AES-GCM use (fresh file key, random IVs, 128-bit tag, the bound context on
 content and wrap), parameter parsing, an erased key id never valid again, `getContent`'s distinct answers,
 `storedPath` through links, refusals (system, raw write, a file without marker), the file-system overlap check,

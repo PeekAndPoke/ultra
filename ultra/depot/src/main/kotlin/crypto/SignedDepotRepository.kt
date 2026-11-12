@@ -8,6 +8,7 @@ import io.peekandpoke.ultra.depot.domain.DepotVerification
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
 import io.peekandpoke.ultra.depot.repos.DepotRawWrite
 import io.peekandpoke.ultra.depot.repos.DepotRepository
+import io.peekandpoke.ultra.depot.repos.DepotStorageId
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import javax.crypto.Mac
@@ -19,7 +20,8 @@ import javax.crypto.spec.SecretKeySpec
  * metadata cannot make a fitting hash without the key.
  *
  * It wraps the [inner] repository. Give it an inner repository nobody else can reach, as for
- * [EncryptingDepotRepository]. Reading does not check; [verify] is the call that does.
+ * [EncryptingDepotRepository]. Reading does not check; [verify] is the call that does. The files are not secret,
+ * and erasing a subject's key does not erase them: data that must be erasable belongs in an encrypting repository.
  */
 abstract class SignedDepotRepository<in T>(
     private val inner: DepotRepository<T>,
@@ -32,9 +34,7 @@ abstract class SignedDepotRepository<in T>(
 
     override val location: String get() = inner.location
 
-    override val storage: DepotRepository<*> get() = inner.storage
-
-    override fun overlaps(other: DepotRepository<*>): Boolean = inner.overlaps(other)
+    override val storageId: DepotStorageId get() = inner.storageId
 
     override suspend fun storedPath(path: String): String = inner.storedPath(path)
 
@@ -58,10 +58,14 @@ abstract class SignedDepotRepository<in T>(
     /** Stores [content] with a keyed hash over the content, the path, the subject and the [meta]. */
     @OptIn(DepotRawWrite::class)
     override suspend fun putFile(subject: DepotSubjectId<T>, path: String, content: ByteArray, meta: Map<String, String>): DepotItem {
+        // Everything that can refuse the write, before a key is made for it
         val own = DepotMetadata.validate(meta)
+        val storedPath = inner.storedPath(path)
+        DepotMetadata.stored(subject, own, content)
+
         val key = keys.getOrCreate(subject.value)
 
-        val mac = mac(key = key, path = inner.storedPath(path), subject = subject.value, own = own, content = content)
+        val mac = mac(key = key, path = storedPath, subject = subject.value, own = own, content = content)
 
         val stored = DepotMetadata.stored(subject, own, content) +
             (DepotMetadata.KEY to key.id) +
@@ -77,12 +81,15 @@ abstract class SignedDepotRepository<in T>(
 
     /**
      * Compares the file at [path], its path, subject and metadata with the keyed hash stored at its write.
-     * [DepotVerification.NoHash] for a file without one, [DepotVerification.Unverifiable] when the key that made
-     * it was erased. While the file is being written it may answer [DepotVerification.Damaged] once.
+     * **Only [DepotVerification.Intact] proves a file.** A file without a keyed hash is
+     * [DepotVerification.Damaged]. [DepotVerification.Unverifiable] says no key is stored under the id the file
+     * names: the key was erased, or the entry was altered, which needs no key. While the file is being written it
+     * may answer [DepotVerification.Damaged] once.
      */
     override suspend fun verify(path: String): DepotVerification? {
         val meta = inner.getMeta(path) ?: return null
-        val expected = meta[DepotMetadata.MAC] ?: return DepotVerification.NoHash
+        // Every file of this repository has one: without it the file was not written here, or the entry was removed
+        val expected = meta[DepotMetadata.MAC] ?: return DepotVerification.Damaged
 
         val subject = DepotMetadata.subjectOf(meta) ?: return DepotVerification.Damaged
         val keyId = meta[DepotMetadata.KEY] ?: return DepotVerification.Damaged
@@ -112,7 +119,7 @@ abstract class SignedDepotRepository<in T>(
     private fun mac(key: DepotSubjectKey, path: String, subject: String, own: Map<String, String>, content: ByteArray): String {
         val fields = listOf(METHOD, path, subject, key.id) + own.toSortedMap().flatMap { listOf(it.key, it.value) }
 
-        val hmac = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(key.key, "HmacSHA256")) }
+        val hmac = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(key.derive(MAC_PURPOSE), "HmacSHA256")) }
 
         hmac.update(ByteBuffer.allocate(Int.SIZE_BYTES).putInt(fields.size).array())
 
@@ -127,5 +134,6 @@ abstract class SignedDepotRepository<in T>(
     private companion object {
         /** Names the hash with all its choices; stored in front of it. */
         const val METHOD = "hmac-sha256-v1"
+        const val MAC_PURPOSE = "depot hmac-sha256-v1 sign"
     }
 }

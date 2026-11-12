@@ -57,7 +57,6 @@ class DepotEncryptionApiSpec : FunktorApiSpec() {
                             apiResponseData<DepotBrowseModel>()?.meta?.keys shouldBe
                                 setOf("mime-type", "depot-subject", "depot-sha256", "depot-enc")
                             bodyAsText() shouldNotContain "depot-key"
-                            bodyAsText() shouldNotContain "depot-enc-params"
                         }
                     }
                 }

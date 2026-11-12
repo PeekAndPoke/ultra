@@ -47,13 +47,14 @@ interface DepotEncryption {
 }
 
 /**
- * AES-256-GCM over the whole file, with a random key per file. The file's key is wrapped (AES-256-GCM) by its
- * subject's key. Both are bound to the [DepotEncryptionContext]. Stored: the content's IV (12 bytes), the wrap's
+ * AES-256-GCM over the whole file, with a random key per file. The file's key is wrapped (AES-256-GCM) by a key
+ * derived from its subject's key. Both are bound to the [DepotEncryptionContext]. Stored: the content's IV (12 bytes), the wrap's
  * IV (12), the wrapped key (48), the encrypted content.
  */
 object Aes256GcmV1 : DepotEncryption {
     override val name = "aes256gcm-v1"
 
+    private const val WRAP_PURPOSE = "depot aes256gcm-v1 wrap"
     private const val IV_BYTES = 12
     private const val TAG_BITS = 128
     private const val WRAPPED_BYTES = DepotSubjectKey.KEY_BYTES + TAG_BITS / Byte.SIZE_BITS
@@ -69,7 +70,7 @@ object Aes256GcmV1 : DepotEncryption {
         val iv = randomBytes(IV_BYTES)
         val wrapIv = randomBytes(IV_BYTES)
 
-        val wrapped = cipher(Cipher.ENCRYPT_MODE, key.key, wrapIv, aad).doFinal(fileKey)
+        val wrapped = cipher(Cipher.ENCRYPT_MODE, key.derive(WRAP_PURPOSE), wrapIv, aad).doFinal(fileKey)
         val content = cipher(Cipher.ENCRYPT_MODE, fileKey, iv, aad).doFinal(plain)
 
         return iv + wrapIv + wrapped + content
@@ -87,7 +88,7 @@ object Aes256GcmV1 : DepotEncryption {
         val wrapIv = stored.part(IV_BYTES, IV_BYTES)
         val wrapped = stored.part(IV_BYTES + IV_BYTES, WRAPPED_BYTES)
 
-        return cipher(Cipher.DECRYPT_MODE, key.key, wrapIv, context.bytes()).doFinal(wrapped)
+        return cipher(Cipher.DECRYPT_MODE, key.derive(WRAP_PURPOSE), wrapIv, context.bytes()).doFinal(wrapped)
     }
 
     private fun ByteArray.part(from: Int, size: Int): ByteArray {

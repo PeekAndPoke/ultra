@@ -370,17 +370,20 @@
     (AES-256-GCM), wrapped by the key of its data subject. `shred(subject)` erases the subject's key; its files then
     read as `DepotContent.Shredded`, from every copy and backup of the files. **A backup of the key store taken
     before the erasure still holds the key, until it expires.** `shred` throws when a key could not be erased;
-    `false` only means there was none. System files are refused, and so is reading a file that is not encrypted.
+    `false` only means there was none. It acts on the key store: the subject's files in every repository on that
+    store are affected. System files are refused, and so is reading a file that is not encrypted.
   - A file is bound to its path, subject, key and method: copied elsewhere or relabelled to another subject, it
     throws `DepotCorruptedException` (a `DepotException`). The method's name is stored with each file (`depot-enc`,
     today `aes256gcm-v1`), so files stay readable when a later version writes with another method; a repository
-    also reads the method it was given to write with. A file's key material is part of its stored bytes (88 bytes
+    also reads the method it was given to write with, and those named in `alsoReads`. A file's key material is part of its stored bytes (88 bytes
     more than the content).
   - Metadata stays plain. `getMeta` leaves out the depot's internal entry (`depot-key`). `depot-sha256` of an
     encrypted file is the hash of the stored bytes: `verify` needs no key.
   - `SignedDepotRepository<T>(inner, keys)` stores files as they are, each with a keyed hash (`depot-mac`,
-    HMAC-SHA-256 with the subject's key) over content, path, subject and metadata. Its `verify` finds tampering,
-    which the plain hash cannot; `DepotVerification.Unverifiable` when the key was erased.
+    HMAC-SHA-256 with a key derived from the subject's key) over content, path, subject and metadata. **Only
+    `Intact` proves a file:** a file without its keyed hash is `Damaged`, and `Unverifiable` says no key is stored
+    under the id the file names (the key was erased, or the entry was altered). Signed files are not secret and
+    are not erased by `shred`.
   - Keys: `DepotKeyStore` (`ultra:depot`), with `InMemoryDepotKeyStore` for tests. `funktor:cluster` stores them in
     the database with `useKarango()` / `useMonko()` (collection `system_depot_keys`, parameter `depotKeysRepoName`)
     and provides `DepotKeyStore` as a kontainer service. **The keys are stored as they are: who reads the database
@@ -388,7 +391,8 @@
   - **`DepotFacade` now refuses two repositories that hold their files in the same place, or one inside the
     other** (one folder, one bucket), **or share a name**, with a `DepotException` when it is created. Give an encrypting repository an
     inner repository that is no kontainer service of its own.
-  - For middlewares: `DepotRepository.putRaw` (opt-in `@DepotRawWrite`), `storedPath`, `storage`, `overlaps`.
+  - For middlewares: `DepotRepository.putRaw` (opt-in `@DepotRawWrite`), `storedPath`, `storageId`.
+  - A metadata value must be valid Unicode (an unpaired surrogate was stored as `?`).
 
 ### New
 

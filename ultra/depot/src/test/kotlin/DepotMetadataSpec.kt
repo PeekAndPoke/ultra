@@ -214,6 +214,11 @@ class DepotMetadataSpec : StringSpec({
         repo.putFile(customer("s".repeat(1942)), "a.txt", "a", mapOf("k" to "v".repeat(4)))
     }
 
+    "a metadata value that is not valid text is refused" {
+        shouldThrow<DepotInvalidMetadataException> { DepotMetadata.validate(mapOf("title" to "a" + Char(0xD800))) }
+        DepotMetadata.validate(mapOf("title" to "Zoë 日本"))
+    }
+
     "a mime type must look like type/subtype, parameters allowed" {
         val bad = listOf(
             "text", "text/html\r\nX-Evil: 1", "a b/c", "", "text/plain;", "text/plain; charset", "text/plain; charset=",
