@@ -1,7 +1,7 @@
 package io.peekandpoke.funktor.cluster.depot.keys
 
 import io.peekandpoke.ultra.datetime.Kronos
-import io.peekandpoke.ultra.depot.DepotException
+import io.peekandpoke.ultra.depot.DepotSubjectErasedException
 import io.peekandpoke.ultra.depot.crypto.DepotKeyStore
 import io.peekandpoke.ultra.depot.crypto.DepotSubjectKey
 import io.peekandpoke.ultra.vault.Repository
@@ -12,7 +12,7 @@ import kotlinx.coroutines.delay
 
 /**
  * The depot's subject keys in the database: one record per subject, under a document key derived from the subject.
- * Erasing a subject removes its record; a file names its key by an id no later key of that subject has again.
+ * Erasing a subject empties its record and leaves it as a tombstone: the subject gets no key again.
  *
  * The keys are stored as they are: who reads the database reads the keys.
  */
@@ -25,7 +25,11 @@ class VaultDepotKeyStore(private val repo: Repo, private val kronos: Kronos) : D
         val docKey = docKey(subject)
 
         repeat(CREATE_ATTEMPTS) { attempt ->
-            repo.findById(docKey)?.let { return it.value().asKey() }
+            repo.findById(docKey)?.value()?.let { found ->
+                if (found.erasedAt != null) throw DepotSubjectErasedException()
+
+                return found.asKey()
+            }
 
             val created = DepotSubjectKey.create(subject)
 
@@ -53,25 +57,36 @@ class VaultDepotKeyStore(private val repo: Repo, private val kronos: Kronos) : D
         error("unreachable")
     }
 
-    override suspend fun get(id: String): DepotSubjectKey? {
-        val record = repo.findById(id.substringBefore('.'))?.value() ?: return null
+    override suspend fun get(id: String): DepotSubjectKey? = live(id)?.takeIf { it.erasedAt == null }?.asKey()
 
-        // The subject's current key is another one: the key asked for was erased
-        return record.takeIf { it.keyId == id }?.asKey()
-    }
+    override suspend fun isErased(id: String): Boolean = live(id)?.erasedAt != null
+
+    /** The record whose key has the [id]; null when the subject's record names another key, or there is none. */
+    private suspend fun live(id: String): DepotSubjectKeyRecord? =
+        repo.findById(id.substringBefore('.'))?.value()?.takeIf { it.keyId == id }
 
     /**
-     * Whether there was a key. A repository may answer "nothing removed" for a removal that failed (Karango does,
-     * for any database error): the record is looked up again, and a key that is still there is an exception.
+     * Whether there was a key. The record stays as a tombstone, without key and subject: it says the subject was
+     * erased, by the hash of its id, and which key id that was.
      */
     override suspend fun delete(subject: String): Boolean {
         val docKey = docKey(subject)
+        val now = kronos.instantNow()
 
-        if (repo.remove(docKey).count > 0) return true
+        val stored = repo.findById(docKey)
 
-        if (repo.findById(docKey) != null) throw DepotException("A depot key could not be erased")
+        if (stored == null) {
+            // Never had a key: erased all the same, so that no later write makes one
+            repo.insert(docKey, DepotSubjectKeyRecord(keyId = "$docKey.none", subject = "", key = "", createdAt = now, erasedAt = now))
 
-        return false
+            return false
+        }
+
+        if (stored.value().erasedAt != null) return false
+
+        repo.save(stored.modify { it.copy(subject = "", key = "", erasedAt = now) })
+
+        return true
     }
 
     private fun DepotSubjectKeyRecord.asKey() = DepotSubjectKey(id = keyId, subject = subject, key = Base64.getDecoder().decode(key))

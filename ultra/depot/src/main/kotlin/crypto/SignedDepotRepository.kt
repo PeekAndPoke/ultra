@@ -82,9 +82,9 @@ abstract class SignedDepotRepository<in T>(
     /**
      * Compares the file at [path], its path, subject and metadata with the keyed hash stored at its write.
      * **Only [DepotVerification.Intact] proves a file.** A file without a keyed hash is
-     * [DepotVerification.Damaged]. [DepotVerification.Unverifiable] says no key is stored under the id the file
-     * names: the key was erased, or the entry was altered, which needs no key. While the file is being written it
-     * may answer [DepotVerification.Damaged] once.
+     * [DepotVerification.Damaged], and so is one naming a key that never existed.
+     * [DepotVerification.Unverifiable] says the key that made the hash was erased. While the file is being written
+     * it may answer [DepotVerification.Damaged] once.
      */
     override suspend fun verify(path: String): DepotVerification? {
         val meta = inner.getMeta(path) ?: return null
@@ -93,7 +93,9 @@ abstract class SignedDepotRepository<in T>(
 
         val subject = DepotMetadata.subjectOf(meta) ?: return DepotVerification.Damaged
         val keyId = meta[DepotMetadata.KEY] ?: return DepotVerification.Damaged
-        val key = keys.get(keyId) ?: return DepotVerification.Unverifiable
+        // No key under that id: erased, or an id no key ever had (the entry was altered)
+        val key = keys.get(keyId)
+            ?: return if (keys.isErased(keyId)) DepotVerification.Unverifiable else DepotVerification.Damaged
 
         val content = when (val read = inner.getContent(path)) {
             is DepotContent.Found -> read.bytes

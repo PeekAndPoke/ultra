@@ -98,7 +98,7 @@ class SignedDepotRepositorySpec : StringSpec({
         s.repo.verify("a.txt") shouldBe DepotVerification.Damaged
     }
 
-    "only an intact file proves anything: no keyed hash is damaged, an unknown key is unverifiable" {
+    "only an intact file proves anything: no keyed hash and an unknown key are damaged, an erased key is unverifiable" {
         val s = setup()
         s.repo.putFile(anna, "a.txt", "content")
         s.repo.putFile(anna, "stripped.txt", "content")
@@ -110,6 +110,12 @@ class SignedDepotRepositorySpec : StringSpec({
         // The entry removed by someone without the key
         s.meta("stripped.txt").writeText(s.meta("stripped.txt").readText().replace(Regex(",?\"depot-mac\":\"[^\"]+\""), ""))
         s.repo.verify("stripped.txt") shouldBe DepotVerification.Damaged
+
+        // A key id made up by someone without the key: not "erased"
+        val original = s.meta("a.txt").readText()
+        s.meta("a.txt").writeText(original.replace(Regex("\"depot-key\":\"[^\"]+\""), "\"depot-key\":\"made-up\""))
+        s.repo.verify("a.txt") shouldBe DepotVerification.Damaged
+        s.meta("a.txt").writeText(original)
 
         s.keys.delete("customers/42") shouldBe true
         s.repo.verify("a.txt") shouldBe DepotVerification.Unverifiable

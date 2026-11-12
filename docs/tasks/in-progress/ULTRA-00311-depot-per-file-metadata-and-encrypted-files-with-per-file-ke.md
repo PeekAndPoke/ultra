@@ -370,6 +370,26 @@ G1 the derived wrap key, G2 a signed file without its hash, G3 `shred(system)`, 
 G6 the value's text, G7 names as a uri spells them, G8 the lengths in the keyed hash, G9 `alsoReads`, G10 the
 S3 storage id, G11 nesting, G12/G13 wrapped items of `listItems(path, limit)` and `getFolder`.
 
+The maintainer on round 2 (2026-11-12): round 3 at mid level ("yes"); a file copied into another repository on
+the same key store decrypting there stays ("leave as is"); a tombstone after an erasure ("yes add it"); no key
+id in the stored bytes against a lost `.meta` ("no need ... the backups need to be correct instead"); tickets for
+Karango's `remove` (ULTRA-00313) and `DepotUri` (ULTRA-00314, "Tackle the normalized DepotUri right away").
+Built:
+- **Tombstone:** `DepotKeyStore.delete` remembers the erasure; `getOrCreate` then throws
+  `DepotSubjectErasedException`; `isErased(id)` is new. In the database the record stays, emptied of key and
+  subject id (it is found by the hash of the subject id, and keeps the erased key's id). A subject erased before
+  it had a key gets a tombstone too. One subject has one key, ever.
+- **Erased or forged, told apart:** with `isErased`, a file naming a key that never existed is corrupted
+  (encrypting) or `Damaged` (signed); only an erased key reads as `Shredded` / `Unverifiable`. This closes what
+  round 2's MAJOR had left to wording.
+- The look-up after Karango's "nothing removed" is gone with it: an erasure is a save now, which throws.
+- **ULTRA-00314:** `DepotUri` exact; names a uri cannot carry refused.
+
+Verified: depot 109, depot-s3 14, cluster 160, insights 114, funktor-all 289, demo 52. Mutations red: H1 the
+erased subject refused (database), H2 an erased key not handed out, H3 the tombstone emptied, H4 a tombstone for
+a subject without a key, H5 `isErased`, H6/H7 erased told from forged (encrypting, signed), H8 the in-memory
+store's refusal, H9 the uri's path as it is, H10 the name rule, H11 the facade's name check.
+
 Probed and clean, step 3 round 1: AES-GCM use (fresh file key, random IVs, 128-bit tag, the bound context on
 content and wrap), parameter parsing, an erased key id never valid again, `getContent`'s distinct answers,
 `storedPath` through links, refusals (system, raw write, a file without marker), the file-system overlap check,

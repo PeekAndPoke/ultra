@@ -11,9 +11,6 @@ enum class DepotVerification {
     /** No hash is stored: a file from before hashes were stored, or one the depot did not write. */
     NoHash,
 
-    /**
-     * A keyed hash is stored, and no key under the id the file names: the key was erased, or the entry was altered.
-     * Nothing is proven; only [Intact] proves a file.
-     */
+    /** A keyed hash is stored, and the key that made it was erased. Nothing is proven; only [Intact] proves a file. */
     Unverifiable,
 }

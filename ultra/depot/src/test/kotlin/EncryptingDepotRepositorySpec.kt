@@ -171,10 +171,28 @@ class EncryptingDepotRepositorySpec : StringSpec({
         // The stored bytes are still what was written
         s.repo.verify("anna.txt") shouldBe DepotVerification.Intact
 
-        // A new file of the same subject gets a new key; the old file stays unreadable
-        s.repo.putFile(anna, "anna2.txt", "new")
-        s.repo.getContent("anna2.txt").text() shouldBe "new"
+        // Erased stays erased: nothing more is stored for the subject
+        shouldThrow<DepotSubjectErasedException> { s.repo.putFile(anna, "anna2.txt", "new") }
+        File(s.dir, "anna2.txt").exists() shouldBe false
         s.repo.getContent("anna.txt") shouldBe DepotContent.Shredded
+    }
+
+    "a subject erased before it had a file takes no file either" {
+        val s = setup()
+
+        s.repo.shred(anna) shouldBe false
+
+        shouldThrow<DepotSubjectErasedException> { s.repo.putFile(anna, "a.txt", secret) }
+    }
+
+    "a file naming a key that never existed is corrupted, not shredded" {
+        val s = setup()
+        s.repo.putFile(anna, "a.txt", secret)
+        val meta = File(s.dir, ".meta/files/a.txt")
+
+        meta.writeText(meta.readText().replace(Regex("\"depot-key\":\"[^\"]+\""), "\"depot-key\":\"made-up\""))
+
+        shouldThrow<DepotCorruptedException> { s.repo.getContent("a.txt") }
     }
 
     "removing a file keeps the subject's key" {
@@ -348,11 +366,9 @@ class EncryptingDepotRepositorySpec : StringSpec({
         class AlsoNamedA(dir: File) : FileSystemRepository<Customer>("a", dir.absolutePath)
         shouldThrow<DepotException> { facade(RepoA(dir), AlsoNamedA(other)) }
 
-        // A uri spells both of these names "docs-eu"
+        // A name a uri cannot carry
         class Slashed(dir: File) : FileSystemRepository<Customer>("docs/eu", dir.absolutePath)
-
-        class Dashed(dir: File) : FileSystemRepository<Customer>("docs-eu", dir.absolutePath)
-        shouldThrow<DepotException> { facade(Slashed(dir), Dashed(other)) }
+        shouldThrow<DepotException> { facade(Slashed(dir)) }
 
         // An encrypting repository and a plain one on its folder: the way around the encryption
         shouldThrow<DepotException> { facade(Encrypting(dir), RepoB(dir)) }

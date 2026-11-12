@@ -17,8 +17,12 @@ class DepotFacade(private val drivers: Lookup<DepotRepository<*>>) {
         // metadata: around the subject check, and around an encrypting repository
         val repos = drivers.all()
 
-        // By name is how a uri finds its repository: one name, one repository. As a uri spells the name.
-        repos.groupBy { DepotUri(it.name, "").repo }.entries.firstOrNull { it.value.size > 1 }?.let {
+        // By name is how a uri finds its repository: a name a uri can carry, and one name, one repository
+        repos.firstOrNull { !DepotUri.isRepoName(it.name) }?.let {
+            throw DepotException("A depot repository's name has no '/' or '\\', and no blanks around it")
+        }
+
+        repos.groupBy { it.name }.entries.firstOrNull { it.value.size > 1 }?.let {
             throw DepotException("Two depot repositories are named '${it.key}'")
         }
 

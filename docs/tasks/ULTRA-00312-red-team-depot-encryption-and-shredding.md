@@ -54,7 +54,8 @@ executed in normal feature work.
       `depot-mac` entry so `verify` answers `NoHash` (a caller that treats `NoHash` as fine).
 - [ ] 30. One subject key, two uses: the wrap key and the signing key are derived (`DepotSubjectKey.derive`);
       confirm no code path uses the subject key itself.
-- [ ] 31. `Unverifiable` forged by pointing `depot-key` at an unknown id; a caller that skips it as "erased".
+- [ ] 31. `depot-key` pointed at an unknown id is `Damaged` / corrupted; at another, erased subject's key id it
+      is `Unverifiable` / shredded. A caller that skips those as "erased".
 - [ ] 32. Shredding a subject leaves its signed files readable.
 - [ ] 33. Key records left by refused writes with client-chosen subjects (checked before the key is made:
       path, metadata, size); a flood of valid first writes for invented subjects.
@@ -65,7 +66,8 @@ executed in normal feature work.
       systems.
 - [ ] 37. `Shredded` reported once for a live file rewritten during a re-key.
 - [ ] 38. Key bytes stay in the heap, unzeroed: heap and core dumps.
-- [ ] 39. A write for an erased subject silently makes a new key (no tombstone): a retried job after erasure.
+- [ ] 39. A write for an erased subject is refused (a tombstone in the key store): try to get a key again, by
+      another spelling of the subject, by a race of `shred` and a first write, by removing the tombstone.
 - [ ] 40. A backup that skips `.meta` (a dot-folder): encrypted files without method, subject and key id.
 
 ## History

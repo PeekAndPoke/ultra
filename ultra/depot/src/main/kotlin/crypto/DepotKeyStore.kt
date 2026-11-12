@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.depot.crypto
 
+import io.peekandpoke.ultra.depot.DepotSubjectErasedException
 import java.security.SecureRandom
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -32,16 +33,24 @@ class DepotSubjectKey(val id: String, val subject: String, val key: ByteArray) {
 
 /** Where the subjects' keys live. A stored key is a credential: keep it out of logs, insights and API output. */
 interface DepotKeyStore {
-    /** The key of [subject] (a subject id's value), created when there is none. One subject has one key at a time. */
+    /**
+     * The key of [subject] (a subject id's value), created when there is none. One subject has one key, ever.
+     *
+     * @throws DepotSubjectErasedException when the subject was erased
+     */
     suspend fun getOrCreate(subject: String): DepotSubjectKey
 
-    /** The key with [id]; null when it was erased, or never existed. */
+    /** The key with [id]; null when it was erased, or never existed: [isErased] tells which. */
     suspend fun get(id: String): DepotSubjectKey?
 
+    /** Whether the key with [id] existed and was erased. False for an id no key ever had. */
+    suspend fun isErased(id: String): Boolean
+
     /**
-     * Erases the key of [subject]; whether there was one. It throws when the key is there and could not be erased:
-     * `false` only ever means "no key". Encrypted files written with it cannot be read again, except with a backup
-     * of this store from before; signed files are not erased, only no longer verifiable.
+     * Erases the key of [subject] and remembers that the subject was erased: [getOrCreate] refuses it from now on.
+     * Whether there was a key. It throws when the key could not be erased: `false` only ever means "no key".
+     * Encrypted files written with it cannot be read again, except with a backup of this store from before; signed
+     * files are not erased, only no longer verifiable.
      */
     suspend fun delete(subject: String): Boolean
 }
@@ -49,14 +58,25 @@ interface DepotKeyStore {
 /** A key store in memory, for tests: its keys are gone with the process. */
 class InMemoryDepotKeyStore : DepotKeyStore {
     private val bySubject = ConcurrentHashMap<String, DepotSubjectKey>()
+    private val erasedSubjects: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    private val erasedIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     /** How many subjects have a key. */
     val size: Int get() = bySubject.size
 
-    override suspend fun getOrCreate(subject: String): DepotSubjectKey =
-        bySubject.computeIfAbsent(subject) { DepotSubjectKey.create(it) }
+    override suspend fun getOrCreate(subject: String): DepotSubjectKey {
+        if (subject in erasedSubjects) throw DepotSubjectErasedException()
+
+        return bySubject.computeIfAbsent(subject) { DepotSubjectKey.create(it) }
+    }
 
     override suspend fun get(id: String): DepotSubjectKey? = bySubject.values.firstOrNull { it.id == id }
 
-    override suspend fun delete(subject: String): Boolean = bySubject.remove(subject) != null
+    override suspend fun isErased(id: String): Boolean = id in erasedIds
+
+    override suspend fun delete(subject: String): Boolean {
+        erasedSubjects.add(subject)
+
+        return bySubject.remove(subject)?.also { erasedIds.add(it.id) } != null
+    }
 }

@@ -102,14 +102,16 @@ when (val content = customerFiles.getContent("contract.pdf")) {
     DepotContent.NotFound -> null
 }
 
-// Right to erasure: every file of this customer becomes unreadable. Throws when the key could not be erased.
+// Right to erasure: every file of this customer becomes unreadable, and later writes for it are refused.
+// Throws when the key could not be erased.
 customerFiles.shred(customer.asDepotSubject())`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>
         For files that need not be secret but must not be changed unnoticed, a
         <code>SignedDepotRepository</code> is built the same way. It stores files as they are, with a keyed hash,
         and its <code>verify(path)</code> finds tampering with the content, the path, the subject or the metadata.
-        Only <code>Intact</code> proves a file; treat every other answer as not proven. Signed files are not
+        Only <code>Intact</code> proves a file; treat every other answer as not proven
+        (<code>Unverifiable</code>: the subject's key was erased). Signed files are not
         erased by <code>shred</code>.
     </p>
 

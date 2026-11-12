@@ -10,6 +10,8 @@ object NoDepotKeyStore : DepotKeyStore {
 
     override suspend fun get(id: String): DepotSubjectKey? = fail()
 
+    override suspend fun isErased(id: String): Boolean = fail()
+
     override suspend fun delete(subject: String): Boolean = fail()
 
     private fun fail(): Nothing =

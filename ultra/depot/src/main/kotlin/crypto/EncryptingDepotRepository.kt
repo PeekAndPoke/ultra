@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.depot.crypto
 
 import io.peekandpoke.ultra.depot.DepotCorruptedException
 import io.peekandpoke.ultra.depot.DepotException
+import io.peekandpoke.ultra.depot.DepotSubjectErasedException
 import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
@@ -68,8 +69,7 @@ abstract class EncryptingDepotRepository<in T>(
     override suspend fun removeFile(path: String): Boolean = inner.removeFile(path)
 
     /**
-     * Reads and decrypts the file at [path]: [DepotContent.Shredded] when no key is stored under the id the file
-     * names (its subject's key was erased; a file rewritten at that moment may read so once).
+     * Reads and decrypts the file at [path]: [DepotContent.Shredded] when its subject's key was erased.
      *
      * @throws DepotCorruptedException when the key is there and the file does not decrypt
      * @throws DepotException for a file that is not encrypted, or encrypted with a method this version cannot read
@@ -84,7 +84,9 @@ abstract class EncryptingDepotRepository<in T>(
             val subject = DepotMetadata.subjectOf(meta) ?: throw DepotCorruptedException()
             val keyId = meta[DepotMetadata.KEY] ?: throw DepotCorruptedException()
 
-            val key = keys.get(keyId) ?: return DepotContent.Shredded
+            // No key under that id: erased, or an id no key ever had (the entry was altered)
+            val key = keys.get(keyId)
+                ?: if (keys.isErased(keyId)) return DepotContent.Shredded else throw DepotCorruptedException()
 
             val stored = when (val read = inner.getContent(path)) {
                 is DepotContent.Found -> read.bytes
@@ -144,7 +146,8 @@ abstract class EncryptingDepotRepository<in T>(
 
     /**
      * Erases the [subject]'s key, in the key store: every file written for it, here and in every other repository
-     * on that key store, reads as [DepotContent.Shredded] from now on (a signed one no longer verifies). The files
+     * on that key store, reads as [DepotContent.Shredded] from now on (a signed one no longer verifies), and a
+     * later write for the subject is refused with [DepotSubjectErasedException]. The files
      * and their metadata stay until they are removed. Whether there was a key; a key that could not be erased is an
      * exception, never `false`.
      */

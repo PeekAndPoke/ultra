@@ -11,14 +11,13 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.peekandpoke.ultra.datetime.Kronos
-import io.peekandpoke.ultra.depot.DepotException
+import io.peekandpoke.ultra.depot.DepotSubjectErasedException
 import io.peekandpoke.ultra.depot.crypto.DepotKeyStore
 import io.peekandpoke.ultra.depot.crypto.EncryptingDepotRepository
 import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import io.peekandpoke.ultra.kontainer.Kontainer
-import io.peekandpoke.ultra.vault.RemoveResult
 import io.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import java.util.UUID
@@ -37,11 +36,6 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
 
     /** A key store on this backend whose queries are recorded by [profiler]. */
     abstract fun profiledStore(profiler: QueryProfiler): DepotKeyStore
-
-    /** A repository that answers "nothing removed" whatever happens, as Karango does for a failed removal. */
-    private class RemovesNothing(real: VaultDepotKeyStore.Repo) : VaultDepotKeyStore.Repo by real {
-        override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
-    }
 
     private class Customer
 
@@ -78,33 +72,31 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
             store.get(second.id)!!.key.toList() shouldBe second.key.toList()
         }
 
-        "an erased key is never found again, also after the subject got a new one" {
+        "an erased subject: its key is gone, known to be erased, and it gets no key again" {
             val subject = subject()
             val old = store.getOrCreate(subject)
 
+            store.isErased(old.id) shouldBe false
             store.delete(subject) shouldBe true
             store.delete(subject) shouldBe false
-            store.get(old.id) shouldBe null
 
-            val new = store.getOrCreate(subject)
-
-            new.id shouldNotBe old.id
-            new.key.toList() shouldNotBe old.key.toList()
             store.get(old.id) shouldBe null
-            store.get(new.id)!!.key.toList() shouldBe new.key.toList()
+            store.isErased(old.id) shouldBe true
+            shouldThrow<DepotSubjectErasedException> { store.getOrCreate(subject) }
+
+            // What stays is a tombstone: no key, no subject
+            val record = repo.findById(old.id.substringBefore('.'))!!.value()
+            record.key shouldBe ""
+            record.subject shouldBe ""
+            (record.erasedAt != null) shouldBe true
         }
 
-        "a key that could not be erased is an exception, never 'there was none'" {
+        "a subject erased before it had a key gets none either" {
             val subject = subject()
-            val failing = VaultDepotKeyStore(RemovesNothing(repo), Kronos.systemUtc)
-            val key = failing.getOrCreate(subject)
 
-            shouldThrow<DepotException> { failing.delete(subject) }
+            store.delete(subject) shouldBe false
 
-            // Still there, and still erasable for real
-            store.get(key.id)!!.key.toList() shouldBe key.key.toList()
-            failing.delete(subject()) shouldBe false
-            store.delete(subject) shouldBe true
+            shouldThrow<DepotSubjectErasedException> { store.getOrCreate(subject) }
         }
 
         "the key store's queries are recorded without their values" {
@@ -135,6 +127,8 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
         "an unknown id finds nothing" {
             store.get("no-such-key") shouldBe null
             store.get("${"0".repeat(64)}.${UUID.randomUUID()}") shouldBe null
+            store.isErased("no-such-key") shouldBe false
+            store.isErased("${"0".repeat(64)}.${UUID.randomUUID()}") shouldBe false
         }
 
         "many first calls for one subject at once agree on one key" {

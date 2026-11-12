@@ -371,7 +371,8 @@
     read as `DepotContent.Shredded`, from every copy and backup of the files. **A backup of the key store taken
     before the erasure still holds the key, until it expires.** `shred` throws when a key could not be erased;
     `false` only means there was none. It acts on the key store: the subject's files in every repository on that
-    store are affected. System files are refused, and so is reading a file that is not encrypted.
+    store are affected, and **an erased subject stays erased**: a later write for it throws
+    `DepotSubjectErasedException` (the key record stays as a tombstone without key and subject id). System files are refused, and so is reading a file that is not encrypted.
   - A file is bound to its path, subject, key and method: copied elsewhere or relabelled to another subject, it
     throws `DepotCorruptedException` (a `DepotException`). The method's name is stored with each file (`depot-enc`,
     today `aes256gcm-v1`), so files stay readable when a later version writes with another method; a repository
@@ -381,8 +382,8 @@
     encrypted file is the hash of the stored bytes: `verify` needs no key.
   - `SignedDepotRepository<T>(inner, keys)` stores files as they are, each with a keyed hash (`depot-mac`,
     HMAC-SHA-256 with a key derived from the subject's key) over content, path, subject and metadata. **Only
-    `Intact` proves a file:** a file without its keyed hash is `Damaged`, and `Unverifiable` says no key is stored
-    under the id the file names (the key was erased, or the entry was altered). Signed files are not secret and
+    `Intact` proves a file:** a file without its keyed hash, or naming a key that never existed, is `Damaged`;
+    `Unverifiable` says the key was erased. Signed files are not secret and
     are not erased by `shred`.
   - Keys: `DepotKeyStore` (`ultra:depot`), with `InMemoryDepotKeyStore` for tests. `funktor:cluster` stores them in
     the database with `useKarango()` / `useMonko()` (collection `system_depot_keys`, parameter `depotKeysRepoName`)
@@ -393,6 +394,10 @@
     inner repository that is no kontainer service of its own.
   - For middlewares: `DepotRepository.putRaw` (opt-in `@DepotRawWrite`), `storedPath`, `storageId`.
   - A metadata value must be valid Unicode (an unpaired surrogate was stored as `?`).
+  - **`DepotUri` keeps a path as it is** (ULTRA-00314): it no longer trims it, drops a leading `/` or folds `\`
+    and runs of `/` into one `/`, so two files never share a uri (`a.pdf` and `a.pdf ` did). A repository name
+    with a `/`, a `\` or blanks around it is refused, by `DepotUri(...)` and by `DepotFacade`; before, it was
+    rewritten (`docs/eu` became `docs-eu`). A stored uri that was tidied on its way in names the tidied path.
 
 ### New
 
