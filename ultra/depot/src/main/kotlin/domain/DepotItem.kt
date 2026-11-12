@@ -15,7 +15,7 @@ sealed interface DepotItem {
         val size: Long?
 
         /** Gets the content of the file */
-        suspend fun getContent(): DepotFileContent?
+        suspend fun getContent(): DepotContent
     }
 
     /** The bucket the file belongs to */

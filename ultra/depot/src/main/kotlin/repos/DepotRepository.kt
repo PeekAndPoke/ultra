@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.depot.repos
 
 import io.peekandpoke.ultra.depot.DepotException
-import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.domain.DepotVerification
@@ -47,8 +47,8 @@ interface DepotRepository<in T> {
     /** Gets the folder with the given [path] */
     suspend fun getFolder(path: String): DepotItem.Folder?
 
-    /** Get the content of the file with the given [path] */
-    suspend fun getContent(path: String): DepotFileContent?
+    /** Reads the content of the file with the given [path]. */
+    suspend fun getContent(path: String): DepotContent
 
     /**
      * The metadata of the file at [path]: what the writer gave, plus the depot's own entries such as
@@ -90,8 +90,11 @@ interface DepotRepository<in T> {
     suspend fun verify(path: String): DepotVerification? {
         val meta = getMeta(path) ?: return null
         val expected = meta[DepotMetadata.SHA256] ?: return DepotVerification.NoHash
-        val content = getContent(path)?.getContentBytes()
-            ?: throw DepotException("The content of a file in '$name' cannot be read")
+        val content = when (val read = getContent(path)) {
+            is DepotContent.Found -> read.bytes
+            is DepotContent.NotFound -> return null
+            is DepotContent.Shredded -> throw DepotException("The content of a file in '$name' cannot be read")
+        }
 
         return if (DepotMetadata.sha256(content) == expected) DepotVerification.Intact else DepotVerification.Damaged
     }

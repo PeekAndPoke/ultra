@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.depot
 
 import io.peekandpoke.ultra.common.Lookup
-import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotUri
 import io.peekandpoke.ultra.depot.repos.DepotRepository
@@ -51,8 +51,8 @@ class DepotFacade(private val drivers: Lookup<DepotRepository<*>>) {
     /**
      * Get the contents for the given [uri]
      */
-    suspend fun getContent(uri: DepotUri): DepotFileContent? {
-        return getRepo(uri)?.getContent(uri.path)
+    suspend fun getContent(uri: DepotUri): DepotContent {
+        return getRepo(uri)?.getContent(uri.path) ?: DepotContent.NotFound
     }
 
     /**

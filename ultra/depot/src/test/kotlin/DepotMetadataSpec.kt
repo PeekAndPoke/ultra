@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.domain.DepotVerification
 import io.peekandpoke.ultra.depot.repos.DepotInvalidMetadataException
@@ -195,6 +196,8 @@ class DepotMetadataSpec : StringSpec({
         repo.verify("foreign.txt") shouldBe DepotVerification.NoHash
 
         repo.verify("nothing.txt") shouldBe null
+        repo.getContent("nothing.txt") shouldBe DepotContent.NotFound
+        String(repo.getFile("a.txt")!!.getContent().bytesOrNull()!!) shouldBe "b"
 
         DepotMetadata.subjectOf(repo.getMeta("a.txt")!!) shouldBe "customers/42"
         DepotMetadata.subjectOf(repo.getMeta("foreign.txt")!!) shouldBe null

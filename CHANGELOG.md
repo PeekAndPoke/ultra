@@ -345,6 +345,9 @@
     2 KB in all. The subject's id is always stored as `depot-subject`, for system files too. `getMeta` returns the
     map: without `depot-subject` for a file written before this release or not by the depot (no subject recorded),
     null when there is no such file. `DepotMetadata.subjectOf(meta)` reads the subject.
+  - `getContent` returns a sealed `DepotContent`: `Found(bytes)`, `NotFound` or `Shredded` (an erased subject's
+    file, with step 3), with `bytesOrNull()`. `DepotFileContent` and its lazy `getContentBytes()` are gone; the S3
+    repository now throws an S3 error other than "no such key" (before, it was printed and read as null).
   - Every write also stores the content's SHA-256 as `depot-sha256`, and `repo.verify(path)` re-reads the file and
     answers `Intact`, `Damaged` or `NoHash` (files from before this release have none). It finds damage and content paired with other metadata; it is no proof
     against tampering by someone who can write the metadata too.

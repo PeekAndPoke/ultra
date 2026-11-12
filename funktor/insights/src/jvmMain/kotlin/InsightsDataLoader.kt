@@ -49,12 +49,12 @@ class InsightsDataLoader(
 
         // A path the depot refuses (a symlink out of the root, say) is no record either: 404, not 500
         val (content, file) = try {
-            Pair(repository.getContent(path) ?: return null, repository.getFile(path) ?: return null)
+            Pair(repository.getContent(path).bytesOrNull() ?: return null, repository.getFile(path) ?: return null)
         } catch (_: DepotInvalidPathException) {
             return null
         }
 
-        val root = parse(content.getContentBytes()) ?: return null
+        val root = parse(content) ?: return null
 
         // Sorted by NAME, not lastModifiedAt: records are written asynchronously
         // (`launch(Dispatchers.IO) { delay(1) }`), so mtime is WRITE time and reorders under load —
@@ -134,7 +134,7 @@ class InsightsDataLoader(
                 if (slot < skip || slot >= skip + epp) continue
 
                 // A listed path is never refused: the listing leaves out symlinks that lead out of the root
-                val root = parse(repository.getContent(file.path)?.getContentBytes()) ?: continue
+                val root = parse(repository.getContent(file.path).bytesOrNull()) ?: continue
 
                 val ref = file.path.toRef() ?: continue
 

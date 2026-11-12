@@ -2,7 +2,7 @@ package io.peekandpoke.ultra.depot.s3
 
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.mp
-import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
@@ -38,28 +38,6 @@ abstract class AwsS3Repository<in T>(
 ) : DepotRepository<T> {
 
     /**
-     * Implementation of [DepotFileContent] for S3 repos.
-     */
-    data class DepotS3FileContent(
-        val s3: S3AsyncClient,
-        val request: GetObjectRequest,
-    ) : DepotFileContent {
-        /**
-         * Read the contents of the file as [ByteArray]
-         */
-        override suspend fun getContentBytes(): ByteArray? {
-            return try {
-                val objectBytes = s3.getObject(request, AsyncResponseTransformer.toBytes()).await()
-
-                objectBytes.asByteArray()
-            } catch (e: RuntimeException) {
-                e.printStackTrace()
-                null
-            }
-        }
-    }
-
-    /**
      * Implementation of [DepotItem] for S3 repos.
      */
     data class DepotS3File(
@@ -84,9 +62,7 @@ abstract class AwsS3Repository<in T>(
             get() = obj.lastModified()?.mp
 
         /** Get the contents of the file */
-        override suspend fun getContent(): DepotFileContent {
-            return repo.getContent(path)
-        }
+        override suspend fun getContent(): DepotContent = repo.getContent(path)
     }
 
     data class DepotS3Folder(
@@ -198,19 +174,25 @@ abstract class AwsS3Repository<in T>(
         )
     }
 
-    /**
-     * Gets the [DepotFileContent] of the file with the given [path]
-     */
-    override suspend fun getContent(path: String): DepotS3FileContent {
+    /** Reads the object at [path]. An S3 error other than "no such key" is thrown, not read as "not found". */
+    override suspend fun getContent(path: String): DepotContent {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
+
+        if (path.isEmpty()) {
+            return DepotContent.NotFound
+        }
 
         val request = GetObjectRequest.builder()
             .bucket(bucketName)
             .key(path)
             .build()
 
-        return DepotS3FileContent(s3 = s3, request = request)
+        return try {
+            DepotContent.Found(s3.getObject(request, AsyncResponseTransformer.toBytes()).await().asByteArray())
+        } catch (_: NoSuchKeyException) {
+            DepotContent.NotFound
+        }
     }
 
     /**

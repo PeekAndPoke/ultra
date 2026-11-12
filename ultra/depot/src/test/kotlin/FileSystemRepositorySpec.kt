@@ -50,7 +50,7 @@ class FileSystemRepositorySpec : StringSpec({
         File(dir, "etc").mkdirs()
         File(dir, "etc/hosts").writeText("inside")
 
-        String(repoOver(dir).getContent("/etc/hosts")!!.getContentBytes()) shouldBe "inside"
+        String(repoOver(dir).getContent("/etc/hosts").bytesOrNull()!!) shouldBe "inside"
     }
 
     "a symlink inside the repository that points out of it is neither read nor listed" {
@@ -75,7 +75,7 @@ class FileSystemRepositorySpec : StringSpec({
         val listed = repo.listItems("sub").single()
 
         listed.path shouldBe "sub/a.txt"
-        String(repo.getContent(listed.path)!!.getContentBytes()) shouldBe "nested"
+        String(repo.getContent(listed.path).bytesOrNull()!!) shouldBe "nested"
     }
 
     "a dangling symlink is refused, so a write cannot land outside the root" {

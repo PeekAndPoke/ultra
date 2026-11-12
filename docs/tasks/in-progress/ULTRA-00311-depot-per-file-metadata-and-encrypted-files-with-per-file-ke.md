@@ -271,6 +271,17 @@ caller entries. (2) the namespace stays free ("Yes keep as is"): the KDoc says a
 with parameters allowed ("Ok"): `type/subtype` plus `; name=value` with a token or quoted value, no control
 characters; mutation W1 (the parameter tail accepting anything) red.
 
+**Step 3, plan confirmed (the maintainer, 2026-11-12: "Plan is ok. getContent should return a sealed
+interface"; and: "Should the encryption method be part of the meta data as well? ... Then old data can also be
+decrypted which has an old encryption method").** `depot-enc` names the method (`aes256gcm-v1`: cipher, key
+wrapping and what is bound), the reader picks the code by it, the writer uses the configured one, an unknown name
+is refused, and the name is bound to the ciphertext against a downgrade. No bulk re-encryption yet. `depot-sha256`
+of an encrypting repository is over the stored bytes. Step 3a, built: `getContent` returns the sealed
+`DepotContent` (`Found`, `NotFound`, `Shredded`) on the interface, both stores, items and the facade;
+`DepotFileContent` is gone; S3 throws errors other than "no such key". Verified: depot 75, depot-s3 12, cluster
+140, insights 114, funktor-all 288, demo 52; mutations red: X1 S3 reading every error as not found, X2 FS reading
+a missing file as empty content.
+
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header
 injection towards S3; error messages; the browse API; the size rule; test expectations are literals.

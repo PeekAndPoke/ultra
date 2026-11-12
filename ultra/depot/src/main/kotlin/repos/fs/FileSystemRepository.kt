@@ -3,7 +3,7 @@ package io.peekandpoke.ultra.depot.repos.fs
 import io.peekandpoke.ultra.common.ensureDirectory
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.depot.DepotException
-import io.peekandpoke.ultra.depot.domain.DepotFileContent
+import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DEPOT_META_DIR
@@ -33,12 +33,6 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 abstract class FileSystemRepository<in T>(override val name: String, dir: String) : DepotRepository<T> {
 
-    data class FsFileContent(private val file: File) : DepotFileContent {
-        override suspend fun getContentBytes(): ByteArray {
-            return file.readBytes()
-        }
-    }
-
     /** A file; [path] is the path it was asked for, while [file] is where it lies, symlinks resolved. */
     data class FsFile(
         override val repo: FileSystemRepository<*>,
@@ -65,9 +59,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
             }
         }
 
-        override suspend fun getContent(): DepotFileContent {
-            return FsFileContent(file = file)
-        }
+        override suspend fun getContent(): DepotContent = repo.getContent(path)
     }
 
     /** A folder; [path] is the path it was asked for, while [file] is where it lies, symlinks resolved. */
@@ -195,12 +187,14 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         }
     }
 
-    override suspend fun getContent(path: String): FsFileContent? {
+    override suspend fun getContent(path: String): DepotContent {
         val file = resolve(path)
 
-        return when {
-            file.exists() && file.isFile -> FsFileContent(file)
-            else -> null
+        return try {
+            if (file.isFile) DepotContent.Found(file.readBytes()) else DepotContent.NotFound
+        } catch (_: FileNotFoundException) {
+            // Removed between the look and the read
+            if (file.exists()) throw DepotException("The content of a file in '$name' cannot be read") else DepotContent.NotFound
         }
     }
 

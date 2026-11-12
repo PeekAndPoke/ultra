@@ -3,14 +3,20 @@ package io.peekandpoke.ultra.depot.s3
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
+import io.peekandpoke.ultra.depot.domain.DepotVerification
 import io.peekandpoke.ultra.depot.repos.DepotInvalidMetadataException
+import software.amazon.awssdk.core.ResponseBytes
 import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.GetObjectResponse
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectResponse
+import software.amazon.awssdk.services.s3.model.S3Exception
 import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
 
@@ -22,6 +28,10 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
 
     class Stub {
         val puts = mutableListOf<PutObjectRequest>()
+
+        /** What a GET answers, by key; a key without one fails with [failure], or "no such key". */
+        val bodies = mutableMapOf<String, ByteArray>()
+        var failure: Exception? = null
 
         val client = Proxy.newProxyInstance(
             S3AsyncClient::class.java.classLoader,
@@ -38,6 +48,16 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
                     when (val put = puts.lastOrNull { it.key() == key }) {
                         null -> CompletableFuture.failedFuture<HeadObjectResponse>(NoSuchKeyException.builder().build())
                         else -> CompletableFuture.completedFuture(HeadObjectResponse.builder().metadata(put.metadata()).build())
+                    }
+                }
+
+                "getObject" -> {
+                    val key = (args[0] as GetObjectRequest).key()
+                    when (val body = bodies[key]) {
+                        null -> CompletableFuture.failedFuture<Any>(failure ?: NoSuchKeyException.builder().build())
+                        else -> CompletableFuture.completedFuture<Any>(
+                            ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), body)
+                        )
                     }
                 }
 
@@ -80,6 +100,26 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
         repo.getMeta("a.txt")?.minus("depot-sha256") shouldBe mapOf("title" to "Vertrag März", "depot-subject" to "customers/42")
         repo.getMeta("plus.txt")?.minus("depot-sha256") shouldBe mapOf("phone" to "+49 30 1", "depot-subject" to "system")
         repo.getMeta("nothing.txt") shouldBe null
+    }
+
+    "content reads as found or not found; another S3 error is thrown, and verify does not call it a missing file" {
+        val stub = Stub()
+        val repo = repoOver(stub)
+        repo.putFile(DepotSubjectId.system, "a.txt", "a".toByteArray())
+        stub.bodies["a.txt"] = "a".toByteArray()
+
+        String(repo.getContent("a.txt").bytesOrNull()!!) shouldBe "a"
+        repo.getContent("nothing.txt") shouldBe DepotContent.NotFound
+        repo.verify("a.txt") shouldBe DepotVerification.Intact
+
+        stub.bodies["a.txt"] = "b".toByteArray()
+        repo.verify("a.txt") shouldBe DepotVerification.Damaged
+
+        stub.bodies.clear()
+        stub.failure = S3Exception.builder().message("slow down").statusCode(503).build()
+
+        shouldThrow<S3Exception> { repo.getContent("a.txt") }
+        shouldThrow<S3Exception> { repo.verify("a.txt") }
     }
 
     "refused metadata never reaches S3" {
