@@ -17,4 +17,7 @@ data class DepotSubjectKeyRecord(
     /** The key, base64. */
     val key: String,
     val createdAt: MpInstant,
-)
+) {
+    /** Without the key: a log line or a failed assertion prints this. */
+    override fun toString(): String = "DepotSubjectKeyRecord(keyId=$keyId, subject=$subject, createdAt=$createdAt)"
+}

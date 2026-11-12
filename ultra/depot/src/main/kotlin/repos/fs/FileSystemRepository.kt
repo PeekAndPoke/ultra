@@ -218,7 +218,7 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
         val meta = metaFile(file)
 
         // No subject recorded: a file from before there was metadata, or one put there by something else
-        if (!meta.isFile) return emptyMap()
+        if (!meta.isFile) return if (file.isFile) emptyMap() else null
 
         return try {
             json.decodeFromString(JsonObject.serializer(), meta.readText())

@@ -308,6 +308,47 @@ retry, K3 delete. Found by the tests: Karango's exceptions extend `Throwable`, s
 nothing at first. Not pinned by a test: the mid-write retry of a read (timing), values withheld from the
 profiler for the key repositories. Red team: ULTRA-00312.
 
+## Review record (the ledger) — step 3
+
+Round 1, 2026-11-12, level 1 (`reviewer-high`), blind; charters 1, 2 and 3. **NOT clean: 3 distinct MAJOR.**
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `VaultDepotKeyStore.kt:62`, `EntityRepository.kt:330` | On Karango `remove` swallows every database error as "nothing removed": a failed `shred` returns `false`, the key stays (all three charters) | fix | After "nothing removed" the record is looked up; still there is a `DepotException`. Pinned with a repository that removes nothing |
+| 1 | MAJOR | `EncryptingDepotRepository.kt:31,90` | A method passed to the constructor writes files the reader never looks it up for (impl M2; domain m2, security m2) | fix | The readers are the built-in methods plus the one it writes with |
+| 1 | MAJOR | `cluster.astro:82`, KDoc, CHANGELOG | "For good, in backups too" is false for database backups that hold the key (domain M2, impl 5) | fix | Said in docs, KDoc and CHANGELOG |
+| 1 | MINOR | `FileSystemRepository.kt:381`, `EncryptingDepotRepository.kt:137` | A crash between the two moves of an overwrite leaves new key material with old content: both versions lost (domain m1, security m3) | fix | The key material is the first 72 bytes of the stored content, not metadata (`depot-enc-params` is gone): for one subject, content and metadata of two writes still fit. Another subject's overwrite still reads as corrupted until rewritten |
+| 1 | MINOR | `exception.kt:10` | `DepotCorruptedException` is no `DepotException` (domain m4, impl NIT) | fix | |
+| 1 | MINOR | `EncryptingDepotRepository.kt:92` | The subject read from the map, not `subjectOf` (domain m3, security n2) | fix | |
+| 1 | MINOR | `FileSystemRepository.kt:216` | A removal between the two looks of `getMeta` reads as "not encrypted", not "not found" (impl 1) | fix | Not pinned (a race) |
+| 1 | MINOR | `AwsS3Repository.kt:84,90` | `location` from the overridable `name`: two repositories on one bucket pass the overlap check (security m1) | fix | From the bucket's name |
+| 1 | MINOR | `DepotFacade.kt:20` | Duplicate names not refused (security m4) | fix | |
+| 1 | MINOR | tests | "A key of its own" only compared ciphertexts; a title overclaimed; no S3 test of the encrypted write (impl 2, 3, 4; domain n1) | fix | |
+| 1 | NIT | `DepotSubjectKeyRecord.kt:12` | `toString` prints the key (domain n4, security n1) | fix | |
+| 1 | NIT | key id holds the SHA-256 of the subject (domain n3); a `depot-key` naming a missing id reads as shredded (domain n2) | | open | With hashed subject ids; whoever writes the metadata can also delete the file |
+| 1 | — | rollback of one file to an older version; caller metadata not bound in an encrypting repository (security, for the maintainer) | | red team | ULTRA-00312 items 18 and 23 |
+| 1 | — | Karango's `remove(idOrKey)` should swallow only "document not found" (security) | | maintainer | A change with a wider reach; no ticket created |
+
+Also built in this round, the open points (maintainer, 2026-11-12: "Let's finish the open points then"):
+- **The keyed hash:** `SignedDepotRepository<T>(inner, keys)`: files stored as they are, `depot-mac` =
+  `hmac-sha256-v1:<hex>` with the subject's key over the method, stored path, subject, key id, the caller's metadata
+  and the content, each length-prefixed. `verify` answers `Intact`, `Damaged`, `NoHash`, or the new
+  `DepotVerification.Unverifiable` (the key was erased). System files are signed too.
+- **Values withheld:** pinned on both backends with a recording profiler.
+- **The read retry:** pinned with an inner repository that answers wrong content twice (reads), three times
+  (corrupted).
+
+Verified after round 1: depot 98, depot-s3 14, cluster 160, insights 114, funktor-all 289, demo 52. Mutations red:
+F1 the look after "nothing removed", F2 the repository's own method as a reader, F3/F4 the withholding driver
+(Karango, Monko), F5 the record's printout, F6 no content type for an encrypted object, F7 the location by bucket,
+F8 duplicate names, F10a-e each part of the keyed hash (path, metadata, erased key, subject, content), F11 the read
+retry, F12 a key per file.
+
+Probed and clean, step 3 round 1: AES-GCM use (fresh file key, random IVs, 128-bit tag, the bound context on
+content and wrap), parameter parsing, an erased key id never valid again, `getContent`'s distinct answers,
+`storedPath` through links, refusals (system, raw write, a file without marker), the file-system overlap check,
+the profiler withholding, exception messages without paths or keys, the browse API.
+
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header
 injection towards S3; error messages; the browse API; the size rule; test expectations are literals.

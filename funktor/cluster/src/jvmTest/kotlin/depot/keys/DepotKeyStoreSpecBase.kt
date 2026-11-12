@@ -1,17 +1,26 @@
 package io.peekandpoke.funktor.cluster.depot.keys
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.depot.DepotException
 import io.peekandpoke.ultra.depot.crypto.DepotKeyStore
 import io.peekandpoke.ultra.depot.crypto.EncryptingDepotRepository
 import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.vault.RemoveResult
+import io.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler
+import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import java.util.UUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -23,6 +32,16 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
     abstract val kontainer: Kontainer
 
     private val store: DepotKeyStore get() = kontainer.get(DepotKeyStore::class)
+
+    private val repo: VaultDepotKeyStore.Repo get() = kontainer.get(VaultDepotKeyStore.Repo::class)
+
+    /** A key store on this backend whose queries are recorded by [profiler]. */
+    abstract fun profiledStore(profiler: QueryProfiler): DepotKeyStore
+
+    /** A repository that answers "nothing removed" whatever happens, as Karango does for a failed removal. */
+    private class RemovesNothing(real: VaultDepotKeyStore.Repo) : VaultDepotKeyStore.Repo by real {
+        override suspend fun remove(idOrKey: String): RemoveResult = RemoveResult.empty
+    }
 
     private class Customer
 
@@ -73,6 +92,44 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
             new.key.toList() shouldNotBe old.key.toList()
             store.get(old.id) shouldBe null
             store.get(new.id)!!.key.toList() shouldBe new.key.toList()
+        }
+
+        "a key that could not be erased is an exception, never 'there was none'" {
+            val subject = subject()
+            val failing = VaultDepotKeyStore(RemovesNothing(repo), Kronos.systemUtc)
+            val key = failing.getOrCreate(subject)
+
+            shouldThrow<DepotException> { failing.delete(subject) }
+
+            // Still there, and still erasable for real
+            store.get(key.id)!!.key.toList() shouldBe key.key.toList()
+            failing.delete(subject()) shouldBe false
+            store.delete(subject) shouldBe true
+        }
+
+        "the key store's queries are recorded without their values" {
+            val profiler = DefaultQueryProfiler(explainQueries = true)
+            val profiled = profiledStore(profiler)
+            val subject = subject()
+
+            val key = profiled.getOrCreate(subject)
+            profiled.get(key.id)
+            profiled.delete(subject)
+
+            profiler.entries.shouldNotBeEmpty()
+            profiler.entries.forEach { entry ->
+                withClue(entry.query) {
+                    entry.valuesWithheld shouldBe true
+                    entry.vars?.values?.filterNotNull() shouldBe (entry.vars?.let { emptyList<Any>() })
+                    entry.queryExplained shouldBe null
+                }
+            }
+        }
+
+        "a key record prints without its key" {
+            val record = DepotSubjectKeyRecord(keyId = "id", subject = "customers/42", key = "c2VjcmV0", createdAt = Kronos.systemUtc.instantNow())
+
+            record.toString() shouldNotContain "c2VjcmV0"
         }
 
         "an unknown id finds nothing" {

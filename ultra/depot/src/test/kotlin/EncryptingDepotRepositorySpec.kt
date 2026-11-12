@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.depot
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.shouldBe
@@ -8,6 +9,7 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldNotContain
 import io.peekandpoke.ultra.common.SimpleLookup
 import io.peekandpoke.ultra.depot.crypto.Aes256GcmV1
+import io.peekandpoke.ultra.depot.crypto.DepotEncryption
 import io.peekandpoke.ultra.depot.crypto.DepotEncryptionContext
 import io.peekandpoke.ultra.depot.crypto.DepotSubjectKey
 import io.peekandpoke.ultra.depot.crypto.EncryptingDepotRepository
@@ -54,7 +56,7 @@ class EncryptingDepotRepositorySpec : StringSpec({
         s.repo.putFile(anna, "docs/contract.txt", secret, mapOf("mime-type" to "text/plain"))
 
         String(File(s.dir, "docs/contract.txt").readBytes(), Charsets.ISO_8859_1) shouldNotContain "private"
-        File(s.dir, "docs/contract.txt").length() shouldBe secret.length + 16L
+        File(s.dir, "docs/contract.txt").length() shouldBe secret.length + 88L
 
         s.repo.getContent("docs/contract.txt").text() shouldBe secret
         (s.repo.getItem("docs/contract.txt") as DepotItem.File).getContent().text() shouldBe secret
@@ -63,7 +65,7 @@ class EncryptingDepotRepositorySpec : StringSpec({
         s.repo.getFile("docs/contract.txt")!!.repo shouldBe s.repo
     }
 
-    "the metadata names the subject and the method, and keeps the key's id and the parameters to itself" {
+    "the metadata names the subject and the method, and keeps the key's id to itself" {
         val s = setup()
         s.repo.putFile(anna, "a.txt", secret, mapOf("title" to "t"))
 
@@ -77,15 +79,70 @@ class EncryptingDepotRepositorySpec : StringSpec({
 
         val raw = File(s.dir, ".meta/files/a.txt").readText()
         raw.contains("depot-key") shouldBe true
-        raw.contains("depot-enc-params") shouldBe true
     }
 
-    "every file has a key of its own: two files of one subject share nothing" {
+    "every file has a key of its own, wrapped by its subject's key" {
         val s = setup()
         s.repo.putFile(anna, "a.txt", secret)
         s.repo.putFile(anna, "b.txt", secret)
+        val key = s.keys.getOrCreate("customers/42")
 
-        File(s.dir, "a.txt").readBytes().toList() shouldNotBe File(s.dir, "b.txt").readBytes().toList()
+        fun fileKey(path: String) = Aes256GcmV1.fileKey(
+            stored = File(s.dir, path).readBytes(),
+            key = key,
+            context = DepotEncryptionContext(method = "aes256gcm-v1", path = path, subject = "customers/42", keyId = key.id),
+        ).toList()
+
+        fileKey("a.txt").size shouldBe 32
+        fileKey("a.txt") shouldNotBe fileKey("b.txt")
+        fileKey("a.txt") shouldNotBe key.key.toList()
+    }
+
+    "a file carries its key material: old content under the metadata of a later write of the same subject still reads" {
+        val s = setup()
+        s.repo.putFile(anna, "a.txt", "first", mapOf("title" to "one"))
+        val first = File(s.dir, "a.txt").readBytes()
+        s.repo.putFile(anna, "a.txt", "second", mapOf("title" to "two"))
+
+        // As a crash between the two moves of the second write leaves it: the new metadata, the old content
+        File(s.dir, "a.txt").writeBytes(first)
+
+        s.repo.getContent("a.txt").text() shouldBe "first"
+    }
+
+    "a read that meets a write under way tries again; content that stays wrong is corrupted" {
+        @OptIn(DepotRawWrite::class)
+        class Flaky(val real: DepotRepository<Customer>, var wrong: Int) : DepotRepository<Customer> by real {
+            override suspend fun getContent(path: String): DepotContent =
+                if (wrong-- > 0) DepotContent.Found(ByteArray(200)) else real.getContent(path)
+        }
+
+        val dir = tempdir()
+        val keys = InMemoryDepotKeyStore()
+        object : EncryptingDepotRepository<Customer>(innerOver(dir), keys) {}.putFile(anna, "a.txt", secret)
+
+        val twice = object : EncryptingDepotRepository<Customer>(Flaky(innerOver(dir), wrong = 2), keys) {}
+        twice.getContent("a.txt").text() shouldBe secret
+
+        val always = object : EncryptingDepotRepository<Customer>(Flaky(innerOver(dir), wrong = 3), keys) {}
+        shouldThrow<DepotCorruptedException> { always.getContent("a.txt") }
+    }
+
+    "a repository reads what it wrote with a method of its own; one without that method refuses the file" {
+        val custom = object : DepotEncryption by Aes256GcmV1 {
+            override val name = "custom-v1"
+        }
+        val dir = tempdir()
+        val keys = InMemoryDepotKeyStore()
+        val repo = object : EncryptingDepotRepository<Customer>(innerOver(dir), keys, custom) {}
+
+        repo.putFile(anna, "a.txt", secret)
+
+        repo.getMeta("a.txt")!!["depot-enc"] shouldBe "custom-v1"
+        repo.getContent("a.txt").text() shouldBe secret
+
+        val plain = object : EncryptingDepotRepository<Customer>(innerOver(dir), keys) {}
+        shouldThrowExactly<DepotException> { plain.getContent("a.txt") }
     }
 
     "shredding a subject makes its files unreadable for good, and leaves the others" {
@@ -137,8 +194,8 @@ class EncryptingDepotRepositorySpec : StringSpec({
         inner.putFile(anna, "plain.txt", "plain")
         File(dir, "foreign.txt").writeText("foreign")
 
-        shouldThrow<DepotException> { repo.getContent("plain.txt") }
-        shouldThrow<DepotException> { repo.getContent("foreign.txt") }
+        shouldThrowExactly<DepotException> { repo.getContent("plain.txt") }
+        shouldThrowExactly<DepotException> { repo.getContent("foreign.txt") }
         repo.getContent("nothing.txt") shouldBe DepotContent.NotFound
     }
 
@@ -182,14 +239,18 @@ class EncryptingDepotRepositorySpec : StringSpec({
         s.repo.getContent("a.txt").text() shouldBe secret
     }
 
-    "an unknown method is refused; a method renamed in the metadata does not decrypt" {
+    "an unknown method is refused" {
         val s = setup()
         s.repo.putFile(anna, "a.txt", secret)
         val meta = File(s.dir, ".meta/files/a.txt")
 
         meta.writeText(meta.readText().replace("aes256gcm-v1", "rot13-v9"))
 
-        shouldThrow<DepotException> { s.repo.getContent("a.txt") }
+        shouldThrowExactly<DepotException> { s.repo.getContent("a.txt") }
+    }
+
+    "a corrupted file is a depot failure like the others" {
+        (DepotCorruptedException() is DepotException) shouldBe true
     }
 
     "a link and the file it points to read the same content" {
@@ -208,7 +269,7 @@ class EncryptingDepotRepositorySpec : StringSpec({
         val context = DepotEncryptionContext(method = "aes256gcm-v1", path = "a.txt", subject = "customers/42", keyId = key.id)
         val encrypted = Aes256GcmV1.encrypt("plain".toByteArray(), key, context)
 
-        String(Aes256GcmV1.decrypt(encrypted.bytes, encrypted.params, key, context)) shouldBe "plain"
+        String(Aes256GcmV1.decrypt(encrypted, key, context)) shouldBe "plain"
 
         listOf(
             DepotEncryptionContext("other", "a.txt", "customers/42", key.id),
@@ -216,13 +277,14 @@ class EncryptingDepotRepositorySpec : StringSpec({
             DepotEncryptionContext("aes256gcm-v1", "a.txt", "customers/43", key.id),
             DepotEncryptionContext("aes256gcm-v1", "a.txt", "customers/42", "other-key"),
         ).forEach { other ->
-            shouldThrow<GeneralSecurityException> { Aes256GcmV1.decrypt(encrypted.bytes, encrypted.params, key, other) }
+            shouldThrow<GeneralSecurityException> { Aes256GcmV1.decrypt(encrypted, key, other) }
         }
 
         shouldThrow<GeneralSecurityException> {
-            Aes256GcmV1.decrypt(encrypted.bytes, encrypted.params, DepotSubjectKey.create("customers/42"), context)
+            Aes256GcmV1.decrypt(encrypted, DepotSubjectKey.create("customers/42"), context)
         }
-        shouldThrow<GeneralSecurityException> { Aes256GcmV1.decrypt(encrypted.bytes, "not.the.params", key, context) }
+        shouldThrow<GeneralSecurityException> { Aes256GcmV1.decrypt(ByteArray(10), key, context) }
+        shouldThrow<GeneralSecurityException> { Aes256GcmV1.decrypt(ByteArray(0), key, context) }
 
         DepotEncryptionContext("m", "ab", "c", "k").bytes().toList() shouldNotBe DepotEncryptionContext("m", "a", "bc", "k").bytes().toList()
     }
@@ -247,6 +309,10 @@ class EncryptingDepotRepositorySpec : StringSpec({
         shouldThrow<DepotException> { facade(RepoA(dir), RepoB(dir)) }
         shouldThrow<DepotException> { facade(RepoA(dir), RepoB(nested)) }
         shouldThrow<DepotException> { facade(RepoA(nested), RepoB(dir)) }
+
+        // One name, one repository: a uri finds its repository by name
+        class AlsoNamedA(dir: File) : FileSystemRepository<Customer>("a", dir.absolutePath)
+        shouldThrow<DepotException> { facade(RepoA(dir), AlsoNamedA(other)) }
 
         // An encrypting repository and a plain one on its folder: the way around the encryption
         shouldThrow<DepotException> { facade(Encrypting(dir), RepoB(dir)) }

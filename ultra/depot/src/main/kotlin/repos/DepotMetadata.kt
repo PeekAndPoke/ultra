@@ -32,14 +32,14 @@ object DepotMetadata {
     /** The encryption method of an encrypted file, as `DepotEncryption.name`. */
     const val ENC = "depot-enc"
 
-    /** The id of the subject's key that wraps an encrypted file's own key. */
+    /** The id of the subject's key that wraps an encrypted file's own key, or signs a signed file. */
     const val KEY = "depot-key"
 
-    /** What the encryption method needs besides the key to read an encrypted file. */
-    const val ENC_PARAMS = "depot-enc-params"
+    /** The keyed hash of a signed file, as `method:hex`; see `SignedDepotRepository`. */
+    const val MAC = "depot-mac"
 
-    /** The entries only the depot reads: left out of what `getMeta` of an encrypting repository returns. */
-    val internal: Set<String> = setOf(KEY, ENC_PARAMS)
+    /** The entries only the depot reads: left out of what `getMeta` of a middleware returns. */
+    val internal: Set<String> = setOf(KEY)
 
     /**
      * The file's mime type, by convention. It must look like `type/subtype`, with parameters if any. The S3 repository also sets it as the

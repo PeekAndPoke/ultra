@@ -26,7 +26,11 @@ interface DepotKeyStore {
     /** The key with [id]; null when it was erased, or never existed. */
     suspend fun get(id: String): DepotSubjectKey?
 
-    /** Erases every key of [subject]; whether there was one. Files written with it can never be read again. */
+    /**
+     * Erases the key of [subject]; whether there was one. It throws when the key is there and could not be erased:
+     * `false` only ever means "no key". Files written with it cannot be read again, except with a backup of this
+     * store from before.
+     */
     suspend fun delete(subject: String): Boolean
 }
 

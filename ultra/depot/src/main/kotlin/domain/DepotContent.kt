@@ -8,7 +8,7 @@ sealed interface DepotContent {
     /** There is no such file. */
     data object NotFound : DepotContent
 
-    /** The file is there and can never be read again: the key of its data subject was erased. */
+    /** The file is there and cannot be read: the key of its data subject was erased. */
     data object Shredded : DepotContent
 
     /** The content, or null when there is none to read. */

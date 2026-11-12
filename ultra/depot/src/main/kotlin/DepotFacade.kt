@@ -17,6 +17,11 @@ class DepotFacade(private val drivers: Lookup<DepotRepository<*>>) {
         // metadata: around the subject check, and around an encrypting repository
         val repos = drivers.all()
 
+        // By name is how a uri finds its repository: one name, one repository
+        repos.groupBy { it.name }.entries.firstOrNull { it.value.size > 1 }?.let {
+            throw DepotException("Two depot repositories are named '${it.key}'")
+        }
+
         repos.forEachIndexed { index, first ->
             repos.drop(index + 1).firstOrNull { first.overlaps(it) || it.overlaps(first) }?.let { second ->
                 throw DepotException("The depot repositories '${first.name}' and '${second.name}' share their storage")

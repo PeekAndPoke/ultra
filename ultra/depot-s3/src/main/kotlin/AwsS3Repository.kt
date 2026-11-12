@@ -87,7 +87,8 @@ abstract class AwsS3Repository<in T>(
     override val type = "AWS S3"
 
     /** The location of the repo */
-    override val location: String get() = "S3 Bucket: $name"
+    /** By the bucket, not the name: two repositories on one bucket are in one place under any names. */
+    override val location: String get() = "S3 Bucket: $bucketName"
 
     /**
      * Lists all files in the bucket

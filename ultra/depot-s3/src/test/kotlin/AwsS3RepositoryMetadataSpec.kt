@@ -3,6 +3,8 @@ package io.peekandpoke.ultra.depot.s3
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.depot.crypto.EncryptingDepotRepository
+import io.peekandpoke.ultra.depot.crypto.InMemoryDepotKeyStore
 import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.domain.DepotVerification
@@ -120,6 +122,32 @@ class AwsS3RepositoryMetadataSpec : StringSpec({
 
         shouldThrow<S3Exception> { repo.getContent("a.txt") }
         shouldThrow<S3Exception> { repo.verify("a.txt") }
+    }
+
+    "an encrypted object gets no content type, and its key's id and method as metadata" {
+        val stub = Stub()
+        val repo = object : EncryptingDepotRepository<Any>(repoOver(stub), InMemoryDepotKeyStore()) {}
+
+        repo.putFile(DepotSubjectId.of(Any::class, "customers", "42"), "a.pdf", "pdf".toByteArray(), mapOf("mime-type" to "application/pdf"))
+
+        val request = stub.puts.single()
+        request.contentType() shouldBe null
+        request.metadata()["mime-type"] shouldBe "application%2Fpdf"
+        request.metadata()["depot-enc"] shouldBe "aes256gcm-v1"
+        request.metadata()["depot-subject"] shouldBe "customers%2F42"
+        (request.metadata()["depot-key"] != null) shouldBe true
+    }
+
+    "two repositories on one bucket are in one place, under any names" {
+        val stub = Stub()
+        val first = repoOver(stub)
+        val renamed = object : AwsS3Repository<Any>(s3 = stub.client, bucketName = "bucket") {
+            override val name = "exports"
+        }
+        val other = object : AwsS3Repository<Any>(s3 = stub.client, bucketName = "other") {}
+
+        first.overlaps(renamed) shouldBe true
+        first.overlaps(other) shouldBe false
     }
 
     "refused metadata never reaches S3" {

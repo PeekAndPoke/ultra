@@ -1,6 +1,7 @@
 package io.peekandpoke.funktor.cluster.depot.keys
 
 import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.depot.DepotException
 import io.peekandpoke.ultra.depot.crypto.DepotKeyStore
 import io.peekandpoke.ultra.depot.crypto.DepotSubjectKey
 import io.peekandpoke.ultra.vault.Repository
@@ -59,7 +60,19 @@ class VaultDepotKeyStore(private val repo: Repo, private val kronos: Kronos) : D
         return record.takeIf { it.keyId == id }?.asKey()
     }
 
-    override suspend fun delete(subject: String): Boolean = repo.remove(docKey(subject)).count > 0
+    /**
+     * Whether there was a key. A repository may answer "nothing removed" for a removal that failed (Karango does,
+     * for any database error): the record is looked up again, and a key that is still there is an exception.
+     */
+    override suspend fun delete(subject: String): Boolean {
+        val docKey = docKey(subject)
+
+        if (repo.remove(docKey).count > 0) return true
+
+        if (repo.findById(docKey) != null) throw DepotException("A depot key could not be erased")
+
+        return false
+    }
 
     private fun DepotSubjectKeyRecord.asKey() = DepotSubjectKey(id = keyId, subject = subject, key = Base64.getDecoder().decode(key))
 

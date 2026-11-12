@@ -9,10 +9,14 @@ import io.peekandpoke.funktor.core.model.default
 import io.peekandpoke.funktor.rest.funktorRest
 import io.peekandpoke.karango.config.ArangoDbConfig
 import io.peekandpoke.karango.karango
+import io.peekandpoke.karango.vault.KarangoDriver
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.depot.crypto.DepotKeyStore
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.security.user.UserProvider
 import io.peekandpoke.ultra.vault.Database
+import io.peekandpoke.ultra.vault.profiling.QueryProfiler
 import kotlinx.coroutines.runBlocking
 
 class KarangoDepotKeyStoreSpec : DepotKeyStoreSpecBase() {
@@ -34,4 +38,9 @@ class KarangoDepotKeyStoreSpec : DepotKeyStoreSpecBase() {
             }
         }
     }
+
+    override fun profiledStore(profiler: QueryProfiler): DepotKeyStore = VaultDepotKeyStore(
+        repo = KarangoDepotKeyRepo(driver = kontainer.get(KarangoDriver::class).withProfiler(profiler), repoName = "system_depot_keys"),
+        kronos = Kronos.systemUtc,
+    )
 }

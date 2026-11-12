@@ -79,8 +79,10 @@ val bytes = content.bytesOrNull()`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>
         An encrypting repository stores every file encrypted, with a key of its own that the key of its data subject
-        wraps. Erasing a subject's key makes all of that subject's files unreadable for good, in backups too. The keys
-        live in the cluster's database (<code>useKarango()</code> or <code>useMonko()</code>); metadata stays plain.
+        wraps. Erasing a subject's key makes all of that subject's files unreadable, in every copy and backup of the
+        files. The keys live in the cluster's database (<code>useKarango()</code> or <code>useMonko()</code>), as
+        they are: a database backup from before the erasure still holds the key until it expires, so keep those
+        backups only as long as an erasure may take. Metadata stays plain.
     </p>
 
     <Code code={`// The inner repository is built here and registered nowhere else
@@ -100,8 +102,14 @@ when (val content = customerFiles.getContent("contract.pdf")) {
     DepotContent.NotFound -> null
 }
 
-// Right to erasure: every file of this customer becomes unreadable
+// Right to erasure: every file of this customer becomes unreadable. Throws when the key could not be erased.
 customerFiles.shred(customer.asDepotSubject())`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>
+        For files that need not be secret but must not be changed unnoticed, a
+        <code>SignedDepotRepository</code> is built the same way. It stores files as they are, with a keyed hash,
+        and its <code>verify(path)</code> finds tampering with the content, the path, the subject or the metadata.
+    </p>
 
     <h2>Distributed locks</h2>
 

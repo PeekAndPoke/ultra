@@ -34,6 +34,23 @@ executed in normal feature work.
 - [ ] 15. The mid-write window: a reader between the metadata move and the content move; three attempts,
       then "corrupted". Force it and check nothing but a retry or an error is ever returned.
 - [ ] 16. `.meta/tmp` leftovers of a crashed write hold ciphertext; confirm never plaintext.
+- [ ] 17. Shred while the database fails, on Karango (`remove` swallows every error): must throw, never `false`.
+- [ ] 18. Rollback: restore an older version of one file, content and metadata, at the same path. It decrypts
+      and verifies; decide whether a version counter must be bound.
+- [ ] 19. A crash between the metadata move and the content move of an encrypted file, same subject and another
+      subject.
+- [ ] 20. An encryption method that is not built in; a repository without it meeting such a file.
+- [ ] 21. S3 repositories on one bucket under overridden names; duplicate repository names in the facade.
+- [ ] 22. The overlap check never running: repositories injected directly, no `DepotFacade` ever created.
+- [ ] 23. The unbound caller metadata of an encrypted file (`mime-type`) changed on disk and served with that
+      type (a signed repository binds it, an encrypting one does not).
+- [ ] 24. A client `Ref` naming the key collection (`system_depot_keys/<hash>`), resolved through `RefCodec`.
+- [ ] 25. Subject ids differing only in Unicode normalisation (NFC and NFD): two subjects, a shred that misses one.
+- [ ] 26. `InMemoryDepotKeyStore` used in production: every file reads as shredded after a restart.
+- [ ] 27. A caller rewriting a file for alternating subjects to exhaust readers' retries.
+- [ ] 28. Slumber's `AwakerException` prints its input value: a malformed key record echoed into logs.
+- [ ] 29. Signed repository: forge a `depot-mac` by reusing one of another file, path or subject; strip the
+      `depot-mac` entry so `verify` answers `NoHash` (a caller that treats `NoHash` as fine).
 
 ## History
 

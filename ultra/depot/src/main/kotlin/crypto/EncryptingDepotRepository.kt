@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.depot.crypto
 
-import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.depot.DepotCorruptedException
 import io.peekandpoke.ultra.depot.DepotException
 import io.peekandpoke.ultra.depot.domain.DepotContent
@@ -22,6 +21,9 @@ import kotlinx.coroutines.delay
  *
  * - A file is bound to its path, subject, key and method: moved or relabelled, it does not decrypt.
  * - The metadata stays plain. [getMeta] leaves out what only the depot reads.
+ * - A file carries its own key material: content and metadata of one subject cannot part ways in a crash.
+ * - Erased means: unreadable from every copy and backup of the files. A backup of the key store taken before
+ *   the erasure still holds the key, until it expires.
  * - A listed size is the stored size, a few bytes more than the content.
  * - System files are refused: there is no subject whose key would protect them.
  */
@@ -31,20 +33,8 @@ abstract class EncryptingDepotRepository<in T>(
     private val encryption: DepotEncryption = Aes256GcmV1,
 ) : DepotRepository<T> {
 
-    private class EncryptedFile(override val repo: EncryptingDepotRepository<*>, private val item: DepotItem.File) : DepotItem.File {
-        override val path: String get() = item.path
-        override val name: String get() = item.name
-        override val lastModifiedAt: MpInstant? get() = item.lastModifiedAt
-        override val size: Long? get() = item.size
-
-        override suspend fun getContent(): DepotContent = repo.getContent(path)
-    }
-
-    private class EncryptedFolder(override val repo: EncryptingDepotRepository<*>, private val item: DepotItem.Folder) : DepotItem.Folder {
-        override val path: String get() = item.path
-        override val name: String get() = item.name
-        override val lastModifiedAt: MpInstant? get() = item.lastModifiedAt
-    }
+    /** The methods this repository reads: the built-in ones, and the one it writes with. */
+    private val readers: Map<String, DepotEncryption> = DepotEncryption.all + (encryption.name to encryption)
 
     override val name: String get() = inner.name
 
@@ -64,11 +54,11 @@ abstract class EncryptingDepotRepository<in T>(
 
     override suspend fun getItem(path: String): DepotItem? = inner.getItem(path)?.wrapped()
 
-    override suspend fun getFile(path: String): DepotItem.File? = inner.getFile(path)?.let { EncryptedFile(this, it) }
+    override suspend fun getFile(path: String): DepotItem.File? = inner.getFile(path)?.let { MiddlewareFile(this, it) }
 
-    override suspend fun getFolder(path: String): DepotItem.Folder? = inner.getFolder(path)?.let { EncryptedFolder(this, it) }
+    override suspend fun getFolder(path: String): DepotItem.Folder? = inner.getFolder(path)?.let { MiddlewareFolder(this, it) }
 
-    /** The metadata without the entries only the depot reads (the key's id, the method's parameters). */
+    /** The metadata without the entries only the depot reads (the key's id). */
     override suspend fun getMeta(path: String): Map<String, String>? = inner.getMeta(path)?.minus(DepotMetadata.internal)
 
     /** Compares the stored (encrypted) bytes with their hash: it needs no key, and works for a shredded file. */
@@ -87,11 +77,10 @@ abstract class EncryptingDepotRepository<in T>(
             val meta = inner.getMeta(path) ?: return DepotContent.NotFound
 
             val method = meta[DepotMetadata.ENC] ?: throw DepotException("A file in '$name' is not encrypted")
-            val reader = DepotEncryption.all[method] ?: throw DepotException("A file in '$name' is encrypted with an unknown method")
+            val reader = readers[method] ?: throw DepotException("A file in '$name' is encrypted with an unknown method")
 
-            val subject = meta[DepotMetadata.SUBJECT] ?: throw DepotCorruptedException()
+            val subject = DepotMetadata.subjectOf(meta) ?: throw DepotCorruptedException()
             val keyId = meta[DepotMetadata.KEY] ?: throw DepotCorruptedException()
-            val params = meta[DepotMetadata.ENC_PARAMS] ?: throw DepotCorruptedException()
 
             val key = keys.get(keyId) ?: return DepotContent.Shredded
 
@@ -103,9 +92,10 @@ abstract class EncryptingDepotRepository<in T>(
             val context = DepotEncryptionContext(method = method, path = inner.storedPath(path), subject = subject, keyId = keyId)
 
             try {
-                return DepotContent.Found(reader.decrypt(stored = stored, params = params, key = key, context = context))
+                return DepotContent.Found(reader.decrypt(stored = stored, key = key, context = context))
             } catch (_: GeneralSecurityException) {
-                // A write of this file may be under way: its metadata and its content are replaced one after the other
+                // A write of this file for another subject may be under way: its metadata and its content are
+                // replaced one after the other
                 if (attempt == READ_ATTEMPTS - 1) throw DepotCorruptedException()
 
                 delay(READ_RETRY_MS)
@@ -134,14 +124,11 @@ abstract class EncryptingDepotRepository<in T>(
 
         val encrypted = encryption.encrypt(plain = content, key = key, context = context)
 
-        val stored = own +
-            (DepotMetadata.SUBJECT to subject.value) +
-            (DepotMetadata.SHA256 to DepotMetadata.sha256(encrypted.bytes)) +
+        val stored = DepotMetadata.stored(subject, own, encrypted) +
             (DepotMetadata.ENC to encryption.name) +
-            (DepotMetadata.KEY to key.id) +
-            (DepotMetadata.ENC_PARAMS to encrypted.params)
+            (DepotMetadata.KEY to key.id)
 
-        return inner.putRaw(path = path, content = encrypted.bytes, stored = stored).wrapped()
+        return inner.putRaw(path = path, content = encrypted, stored = stored).wrapped()
     }
 
     /** Not offered: a raw write would store bytes that are not encrypted. */
@@ -150,15 +137,13 @@ abstract class EncryptingDepotRepository<in T>(
         throw DepotException("An encrypting repository takes no raw writes")
 
     /**
-     * Erases the [subject]'s key: every file written for it reads as [DepotContent.Shredded] from now on, for good.
-     * The files and their metadata stay until they are removed. Whether there was a key.
+     * Erases the [subject]'s key: every file written for it reads as [DepotContent.Shredded] from now on. The files
+     * and their metadata stay until they are removed. Whether there was a key; a key that could not be erased is an
+     * exception, never `false`.
      */
     suspend fun shred(subject: DepotSubjectId<T>): Boolean = keys.delete(subject.value)
 
-    private fun DepotItem.wrapped(): DepotItem = when (this) {
-        is DepotItem.File -> EncryptedFile(this@EncryptingDepotRepository, this)
-        is DepotItem.Folder -> EncryptedFolder(this@EncryptingDepotRepository, this)
-    }
+    private fun DepotItem.wrapped(): DepotItem = wrappedFor(this@EncryptingDepotRepository)
 
     private companion object {
         const val READ_ATTEMPTS = 3
