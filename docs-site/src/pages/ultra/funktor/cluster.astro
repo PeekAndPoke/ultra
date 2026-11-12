@@ -75,6 +75,34 @@ val state = customerFiles.verify("photos/avatar.jpg")
 val content = cluster.depot.getContent(DepotUri("customer-files", "photos/avatar.jpg"))
 val bytes = content.bytesOrNull()`} lang="kotlin" theme="vitesse-dark"/>
 
+    <h3>Encrypted files, erasable per person</h3>
+
+    <p>
+        An encrypting repository stores every file encrypted, with a key of its own that the key of its data subject
+        wraps. Erasing a subject's key makes all of that subject's files unreadable for good, in backups too. The keys
+        live in the cluster's database (<code>useKarango()</code> or <code>useMonko()</code>); metadata stays plain.
+    </p>
+
+    <Code code={`// The inner repository is built here and registered nowhere else
+class CustomerFiles(dir: String, keys: DepotKeyStore) : EncryptingDepotRepository<Customer>(
+    inner = object : FileSystemRepository<Customer>("customer-files", dir) {},
+    keys = keys,
+)
+
+// kontainer: DepotKeyStore comes from funktorCluster { useKarango() }
+dynamic(CustomerFiles::class) { keys: DepotKeyStore -> CustomerFiles("/data/customer-files", keys) }
+
+customerFiles.putFile(customer, "contract.pdf", pdfBytes)
+
+when (val content = customerFiles.getContent("contract.pdf")) {
+    is DepotContent.Found -> content.bytes
+    DepotContent.Shredded -> null   // the customer was erased
+    DepotContent.NotFound -> null
+}
+
+// Right to erasure: every file of this customer becomes unreadable
+customerFiles.shred(customer.asDepotSubject())`} lang="kotlin" theme="vitesse-dark"/>
+
     <h2>Distributed locks</h2>
 
     <p>Coordinate work across server instances with database-backed global locks.</p>

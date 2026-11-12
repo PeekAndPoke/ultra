@@ -1,5 +1,8 @@
 package io.peekandpoke.funktor
 
+import io.peekandpoke.ultra.depot.crypto.DepotKeyStore
+import io.peekandpoke.ultra.depot.crypto.EncryptingDepotRepository
+import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import io.peekandpoke.ultra.common.model.Redacted
 import io.peekandpoke.funktor.core.AppKontainers
 import io.peekandpoke.funktor.core.config.AppConfig
@@ -54,6 +57,9 @@ fun createBlueprint(config: FunktorAllTestConfig) = kontainer {
     // recorded" a fact the tests can assert on.
     dynamic(InsightsRepository::class) { InsightsFileRepository(insightsDepotDir) }
 
+    // An encrypting depot repository on the database key store (ULTRA-00311)
+    dynamic(EncryptedTestFiles::class) { keys: DepotKeyStore -> EncryptedTestFiles(encryptedDepotDir, keys) }
+
     module(TestUserModule)
 }
 
@@ -64,6 +70,22 @@ val insightsDepotDir: String by lazy {
         .also { it.deleteOnExit(); Runtime.getRuntime().addShutdownHook(Thread { it.deleteRecursively() }) }
         .absolutePath
 }
+
+/** Throw-away root of the suite's encrypting depot repository. */
+val encryptedDepotDir: String by lazy {
+    createTempDirectory("funktor-all-encrypted").toFile()
+        .also { it.deleteOnExit(); Runtime.getRuntime().addShutdownHook(Thread { it.deleteRecursively() }) }
+        .absolutePath
+}
+
+/** The data subject of the suite's encrypted files. */
+class TestCustomer
+
+/** An encrypting repository named "encrypted", over a file system repository nobody else reaches. */
+class EncryptedTestFiles(dir: String, keys: DepotKeyStore) : EncryptingDepotRepository<TestCustomer>(
+    inner = object : FileSystemRepository<TestCustomer>("encrypted", dir) {},
+    keys = keys,
+)
 
 val testApp = funktorApp<FunktorAllTestConfig>(
     kontainers = { config ->

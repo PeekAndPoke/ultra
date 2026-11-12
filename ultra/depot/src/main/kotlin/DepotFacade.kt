@@ -12,6 +12,18 @@ import kotlin.reflect.KClass
  */
 class DepotFacade(private val drivers: Lookup<DepotRepository<*>>) {
 
+    init {
+        // Two repositories on one place, or one inside the other, would read and write each other's files and
+        // metadata: around the subject check, and around an encrypting repository
+        val repos = drivers.all()
+
+        repos.forEachIndexed { index, first ->
+            repos.drop(index + 1).firstOrNull { first.overlaps(it) || it.overlaps(first) }?.let { second ->
+                throw DepotException("The depot repositories '${first.name}' and '${second.name}' share their storage")
+            }
+        }
+    }
+
     /**
      * Gets all repositories
      */

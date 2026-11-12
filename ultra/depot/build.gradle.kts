@@ -23,6 +23,8 @@ dependencies {
 
     // The file system repository stores a file's metadata as JSON
     implementation(Deps.KotlinX.serialization_json)
+    // The encrypting repository waits a moment before it reads a file under way again
+    implementation(Deps.KotlinX.coroutines_core)
 
     // Tests /////////////////////////
     Deps.Test {

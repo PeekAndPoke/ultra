@@ -6,6 +6,7 @@ import io.peekandpoke.ultra.depot.domain.DepotContent
 import io.peekandpoke.ultra.depot.domain.DepotItem
 import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
+import io.peekandpoke.ultra.depot.repos.DepotRawWrite
 import io.peekandpoke.ultra.depot.repos.DepotRepository
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
 import java.net.URLDecoder
@@ -233,22 +234,27 @@ abstract class AwsS3Repository<in T>(
      * Puts a file with the given [path] and [content] into the bucket, its metadata as the object's user metadata.
      * A [DepotMetadata.MIME_TYPE] entry also sets the object's content type.
      */
+    @OptIn(DepotRawWrite::class)
     override suspend fun putFile(
         subject: DepotSubjectId<T>,
         path: String,
         content: ByteArray,
         meta: Map<String, String>,
-    ): DepotItem {
+    ): DepotItem = putRaw(path = path, content = content, stored = DepotMetadata.stored(subject, meta, content))
+
+    /** An encrypted file gets no content type: its bytes are not of the type its metadata names. */
+    @DepotRawWrite
+    override suspend fun putRaw(path: String, content: ByteArray, stored: Map<String, String>): DepotItem {
         // A path that could leave the bucket's layout is refused, as in every repository (ULTRA-00304)
         path.validateDepotPath()
 
-        val stored = DepotMetadata.stored(subject, meta, content)
+        DepotMetadata.validateRaw(stored)
 
         val request = PutObjectRequest.builder()
             .bucket(bucketName)
             .key(path)
             .metadata(stored.mapValues { (_, value) -> DepotMetadata.encode(value) })
-            .apply { meta[DepotMetadata.MIME_TYPE]?.let { contentType(it) } }
+            .apply { stored[DepotMetadata.MIME_TYPE]?.takeIf { DepotMetadata.ENC !in stored }?.let { contentType(it) } }
             .build()
 
         val response = s3.putObject(request, AsyncRequestBody.fromBytes(content)).await()

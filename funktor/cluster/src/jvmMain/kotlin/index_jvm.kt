@@ -10,6 +10,10 @@ import io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJo
 import io.peekandpoke.funktor.cluster.backgroundjobs.monko.MonkoBackgroundJobsArchiveRepo
 import io.peekandpoke.funktor.cluster.backgroundjobs.monko.MonkoBackgroundJobsQueueRepo
 import io.peekandpoke.funktor.cluster.backgroundjobs.workers.BackgroundJobsWorker
+import io.peekandpoke.funktor.cluster.depot.keys.KarangoDepotKeyRepo
+import io.peekandpoke.funktor.cluster.depot.keys.MonkoDepotKeyRepo
+import io.peekandpoke.funktor.cluster.depot.keys.NoDepotKeyStore
+import io.peekandpoke.funktor.cluster.depot.keys.VaultDepotKeyStore
 import io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider
 import io.peekandpoke.funktor.cluster.locks.GlobalServerId
 import io.peekandpoke.funktor.cluster.locks.GlobalServerList
@@ -49,6 +53,7 @@ import io.peekandpoke.funktor.core.kontainer
 import io.peekandpoke.karango.vault.KarangoDriver
 import io.peekandpoke.monko.MonkoDriver
 import io.peekandpoke.ultra.depot.DepotFacade
+import io.peekandpoke.ultra.depot.crypto.DepotKeyStore
 import io.peekandpoke.ultra.kontainer.KontainerAware
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.module
@@ -105,6 +110,8 @@ val Funktor_Cluster = module { builder: FunktorClusterBuilder.() -> Unit ->
     // Depot
     // //
     singleton(DepotFacade::class)
+    // The keys of encrypting repositories; a database backend replaces it
+    singleton(DepotKeyStore::class) { NoDepotKeyStore }
 
     /////////////////////////////////////////////////////////////////////////////////
     // Locks
@@ -175,6 +182,7 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
         backgroundJobsArchiveRepoName: String = "system_background_jobs_archive",
         storageRandomDataRepoName: String = "system_random_data",
         storageRandomCacheRepoName: String = "system_random_cache",
+        depotKeysRepoName: String = "system_depot_keys",
     ) {
         with(kontainer) {
 
@@ -266,6 +274,16 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
             singleton(RandomCacheStorage.Adapter::class, RandomCacheStorage.Adapter.Vault::class)
 
             // /////////////////////////////////////////////////////////////////////////////////////////////////
+            // Depot keys
+            // //
+
+            singleton(VaultDepotKeyStore.Repo::class) { driver: KarangoDriver ->
+                KarangoDepotKeyRepo(driver = driver, repoName = depotKeysRepoName)
+            }
+
+            singleton(DepotKeyStore::class, VaultDepotKeyStore::class)
+
+            // /////////////////////////////////////////////////////////////////////////////////////////////////
             // Workers
             // //
 
@@ -288,6 +306,7 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
         backgroundJobsArchiveRepoName: String = "system_background_jobs_archive",
         storageRandomDataRepoName: String = "system_random_data",
         storageRandomCacheRepoName: String = "system_random_cache",
+        depotKeysRepoName: String = "system_depot_keys",
     ) {
         with(kontainer) {
 
@@ -377,6 +396,16 @@ class FunktorClusterBuilder internal constructor(private val kontainer: Kontaine
             }
 
             singleton(RandomCacheStorage.Adapter::class, RandomCacheStorage.Adapter.Vault::class)
+
+            // /////////////////////////////////////////////////////////////////////////////////////////////////
+            // Depot keys
+            // //
+
+            singleton(VaultDepotKeyStore.Repo::class) { driver: MonkoDriver ->
+                MonkoDepotKeyRepo(driver = driver, repoName = depotKeysRepoName)
+            }
+
+            singleton(DepotKeyStore::class, VaultDepotKeyStore::class)
 
             // /////////////////////////////////////////////////////////////////////////////////////////////////
             // Workers

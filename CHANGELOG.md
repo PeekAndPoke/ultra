@@ -365,6 +365,25 @@
   - `DepotMetadata.withoutReserved(meta)` gives the caller's own entries of a `getMeta` result, for writing them
     back. `DepotException` is a `RuntimeException` now (it was a bare `Throwable`); `AwsHelper` (the tag mapping) is gone.
 
+- **Depot: encrypted repositories with a key per data subject, and shredding** (ULTRA-00311, step 3).
+  - `EncryptingDepotRepository<T>(inner, keys)` wraps a repository: every file is encrypted with a key of its own
+    (AES-256-GCM), wrapped by the key of its data subject. `shred(subject)` erases the subject's key; its files then
+    read as `DepotContent.Shredded`, wherever a copy lies. System files are refused, and so is reading a file that
+    is not encrypted.
+  - A file is bound to its path, subject, key and method: copied elsewhere or relabelled, it throws
+    `DepotCorruptedException`. The method's name is stored with each file (`depot-enc`, today `aes256gcm-v1`), so
+    files stay readable when a later version writes with another method.
+  - Metadata stays plain. `getMeta` leaves out the depot's internal entries (`depot-key`, `depot-enc-params`).
+    `depot-sha256` of an encrypted file is the hash of the stored bytes: `verify` needs no key.
+  - Keys: `DepotKeyStore` (`ultra:depot`), with `InMemoryDepotKeyStore` for tests. `funktor:cluster` stores them in
+    the database with `useKarango()` / `useMonko()` (collection `system_depot_keys`, parameter `depotKeysRepoName`)
+    and provides `DepotKeyStore` as a kontainer service. **The keys are stored as they are: who reads the database
+    reads the keys.** Their queries are profiled without values.
+  - **`DepotFacade` now refuses two repositories that hold their files in the same place, or one inside the
+    other** (one folder, one bucket), with a `DepotException` when it is created. Give an encrypting repository an
+    inner repository that is no kontainer service of its own.
+  - For middlewares: `DepotRepository.putRaw` (opt-in `@DepotRawWrite`), `storedPath`, `storage`, `overlaps`.
+
 ### New
 
 - **Kraft: a vis-network addon, `addons-visnetwork`** (ULTRA-00198). `VisNetwork(data, options, height, onReady)`

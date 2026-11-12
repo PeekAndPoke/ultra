@@ -69,6 +69,25 @@ interface DepotRepository<in T> {
         meta: Map<String, String> = emptyMap(),
     ): DepotItem
 
+    /**
+     * For a middleware (the encrypting repository): writes [content] with the metadata [stored] exactly as given,
+     * the depot's own entries included. Only the keys' form and the size are checked.
+     */
+    @DepotRawWrite
+    suspend fun putRaw(path: String, content: ByteArray, stored: Map<String, String>): DepotItem
+
+    /**
+     * The path the file at [path] is stored under: the same for every way to reach one file (a link and its target
+     * in the file system). What an encrypted file is bound to.
+     */
+    suspend fun storedPath(path: String): String = path
+
+    /** The repository that holds the bytes: itself, or the one a middleware wraps. */
+    val storage: DepotRepository<*> get() = this
+
+    /** Whether this repository and [other] hold their files in the same place, or one inside the other. */
+    fun overlaps(other: DepotRepository<*>): Boolean = storage.location == other.storage.location
+
     /** Puts a file with the given [path] and [content] */
     suspend fun putFile(
         subject: DepotSubjectId<T>,

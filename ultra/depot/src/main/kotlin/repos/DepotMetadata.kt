@@ -29,6 +29,18 @@ object DepotMetadata {
     /** The SHA-256 of the bytes as they are stored, in hex, written with every file; see [DepotRepository.verify]. */
     const val SHA256 = "depot-sha256"
 
+    /** The encryption method of an encrypted file, as `DepotEncryption.name`. */
+    const val ENC = "depot-enc"
+
+    /** The id of the subject's key that wraps an encrypted file's own key. */
+    const val KEY = "depot-key"
+
+    /** What the encryption method needs besides the key to read an encrypted file. */
+    const val ENC_PARAMS = "depot-enc-params"
+
+    /** The entries only the depot reads: left out of what `getMeta` of an encrypting repository returns. */
+    val internal: Set<String> = setOf(KEY, ENC_PARAMS)
+
     /**
      * The file's mime type, by convention. It must look like `type/subtype`, with parameters if any. The S3 repository also sets it as the
      * object's content type, which is what a bucket served to browsers answers with: an app that takes it from a user
@@ -81,6 +93,15 @@ object DepotMetadata {
     /** The SHA-256 of [content], in lowercase hex. */
     fun sha256(content: ByteArray): String =
         MessageDigest.getInstance("SHA-256").digest(content).joinToString("") { "%02x".format(it) }
+
+    /** Checks what a middleware stores as it is ([DepotRepository.putRaw]): the keys' form and the size. */
+    fun validateRaw(stored: Map<String, String>): Map<String, String> = validateSize(stored).also {
+        stored.keys.forEach { key ->
+            if (!keyRule.matches(key)) {
+                throw DepotInvalidMetadataException("Invalid metadata key: 1 to 64 characters of a-z, 0-9 and '-'")
+            }
+        }
+    }
 
     /** Checks the size of everything that is stored, the depot's own entries included. */
     fun validateSize(stored: Map<String, String>): Map<String, String> = stored.also {

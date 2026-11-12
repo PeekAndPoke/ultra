@@ -282,6 +282,32 @@ of an encrypting repository is over the stored bytes. Step 3a, built: `getConten
 140, insights 114, funktor-all 288, demo 52; mutations red: X1 S3 reading every error as not found, X2 FS reading
 a missing file as empty content.
 
+**Step 3b, built (2026-11-12).** In `ultra/depot`: `crypto/DepotEncryption.kt` (`DepotEncryption`,
+`Aes256GcmV1`, `DepotEncryptionContext` with length-prefixed fields), `crypto/DepotKeyStore.kt` (`DepotKeyStore`,
+`DepotSubjectKey`, `InMemoryDepotKeyStore`), `crypto/EncryptingDepotRepository.kt`, `DepotCorruptedException`,
+`DepotRepository.putRaw` (`@DepotRawWrite`), `storedPath`, `storage`, `overlaps`, the overlap check in
+`DepotFacade`'s constructor. In `funktor/cluster`: `depot/keys/` (`VaultDepotKeyStore`, `DepotSubjectKeyRecord`,
+`KarangoDepotKeyRepo`, `MonkoDepotKeyRepo`, `NoDepotKeyStore`), wired in `useKarango()` / `useMonko()`.
+Deviations from the design above, each a choice of mine:
+- The method's parameters are one entry, `depot-enc-params` (`iv.wrapIv.wrappedKey`), not `depot-iv` and
+  `depot-wrapped-key`: what a method needs is the method's business.
+- The key record's document key is the SHA-256 of the subject, and a key's id is `<document key>.<uuid>`: one
+  record per subject by construction, found by id without a query or an index, and an erased key's id is never
+  valid again. The store's interface is `getOrCreate(subject)`, `get(id)`, `delete(subject)` as designed.
+- The "boot check" runs when the `DepotFacade` is created (it is created with the first use, per request), not
+  at application start.
+- A check "the key belongs to the file's subject" was removed: mutation E2 showed the binding already covers it.
+- An encrypted S3 object gets no content type.
+- Not built: the keyed hash (HMAC) for unencrypted repositories, the second half of the hash split.
+Verified: depot 89, depot-s3 12, cluster 154 (the key store on Karango and Monko, 7 cases each), insights 114,
+funktor-all 289 (`DepotEncryptionApiSpec`: written, read through the facade, browsed through the API, shredded),
+demo 52. Mutations red: E1 system refused, E3-E6 each bound field, E7 internal entries hidden, E8 shredded, E9 a
+file without marker, E10 the length prefix, E11/E12 the overlap check and nesting, E13 raw write, E14 listed
+items decrypt, E15 the hash over stored bytes, E16 the stored path for links, K1 an erased id, K2 the create
+retry, K3 delete. Found by the tests: Karango's exceptions extend `Throwable`, so the create retry caught
+nothing at first. Not pinned by a test: the mid-write retry of a read (timing), values withheld from the
+profiler for the key repositories. Red team: ULTRA-00312.
+
 Probed and clean (round 2): the subject typing (`of`, `KClass` invariance, `Nothing`, `system` not producible, the
 `Storable` extensions on both backends); forging through `meta`; `.meta` under every spelling and alias; header
 injection towards S3; error messages; the browse API; the size rule; test expectations are literals.

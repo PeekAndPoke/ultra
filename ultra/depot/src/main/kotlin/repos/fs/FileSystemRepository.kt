@@ -9,6 +9,7 @@ import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.DEPOT_META_DIR
 import io.peekandpoke.ultra.depot.repos.DepotInvalidPathException
 import io.peekandpoke.ultra.depot.repos.DepotMetadata
+import io.peekandpoke.ultra.depot.repos.DepotRawWrite
 import io.peekandpoke.ultra.depot.repos.DepotRepository
 import io.peekandpoke.ultra.depot.repos.isDepotMetaDir
 import io.peekandpoke.ultra.depot.repos.validateDepotPath
@@ -133,6 +134,17 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
     override val type = "File system"
 
     override val location: String = root.absolutePath
+
+    /** The same folder, or one inside the other, links resolved. */
+    override fun overlaps(other: DepotRepository<*>): Boolean {
+        val theirs = (other.storage as? FileSystemRepository<*>)?.canonicalRoot?.toPath() ?: return false
+        val mine = canonicalRoot.toPath()
+
+        return mine.startsWith(theirs) || theirs.startsWith(mine)
+    }
+
+    /** The file's own path, links resolved: a link and its target are stored under one. */
+    override suspend fun storedPath(path: String): String = getPathInRepo(resolve(path))
 
     /**
      * The path of [file] in this repository, `/`-separated on every platform: it goes back into [resolve]. For a file
@@ -322,15 +334,20 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
      * leaves content and metadata as they were (not where the move has to copy: a folder on another mount). A reader between the two moves sees the new metadata with the old
      * content for that moment. Several processes on one folder do not take turns.
      */
+    @OptIn(DepotRawWrite::class)
     override suspend fun putFile(
         subject: DepotSubjectId<T>,
         path: String,
         content: ByteArray,
         meta: Map<String, String>,
-    ): DepotItem {
+    ): DepotItem = putRaw(path = path, content = content, stored = DepotMetadata.stored(subject, meta, content))
+
+    /** See [putFile] for how the write is done. */
+    @DepotRawWrite
+    override suspend fun putRaw(path: String, content: ByteArray, stored: Map<String, String>): DepotItem {
         val file = resolve(path)
 
-        val stored = DepotMetadata.stored(subject, meta, content)
+        DepotMetadata.validateRaw(stored)
 
         // A folder, the root included, is no place for a file
         if (file.isDirectory) throw DepotInvalidPathException()
