@@ -57,8 +57,11 @@ kotlin {
             kotlin.srcDir("src/sharedTest/kotlin")
             // The mutator processor does not run in kspJsTest: next to Kotest's JS spec discovery its generated
             // files force a second KSP round, and Kotest 6.2.6's processor then fails in finish() ("PSI has
-            // changed since creation"). The JS tests compile the JVM run's domain mutators instead; the
-            // processor's output does not depend on the platform.
+            // changed since creation"). The JS tests compile the JVM run's domain mutators instead: the processor
+            // has no platform branch, and both outputs were byte-identical on 2026-11-13. JS gets the mutators of
+            // the package io.peekandpoke.mutator.domain only, so a @Mutable test fixture lives in commonTest, in that
+            // package, as common code; anywhere else the JS compile fails with an unresolved reference.
+            // Until Kotest is fixed, no JS compilation runs the mutator processor (ULTRA-00144).
             kotlin.srcDir(
                 files(layout.buildDirectory.dir("generated/ksp/jvm/jvmTest/kotlin/io/peekandpoke/mutator/domain"))
                     .builtBy("kspTestKotlinJvm")

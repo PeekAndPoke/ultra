@@ -57,7 +57,7 @@ count. It is exactly the module where thin coverage is most likely to hide somet
   KSP has no `commonTest` target, and under K2 `commonTest` cannot see a platform source set's
   generated code: the first attempt, specs in `commonTest`, failed to compile on both platforms with
   `Unresolved reference 'mutator'` and the like. The specs therefore live in `mutator/core/src/sharedTest/kotlin`,
-  added as a source directory of both `jvmTest` and `jsTest`. `src/examples` already used this pattern
+  added as a source directory of both `jvmTest` and `jsTest`. `src/examples` is an extra source directory of `jvmTest` only; one directory shared by two source sets is new here
   (a `jvmTest` srcDir). `src/jvmTest` keeps only its package file.
 - **`id("io.kotest")` added.** Without the Kotest Gradle plugin, Kotest 6 discovers no specs on JS (Gradle:
   "the test task did not discover any tests").
@@ -112,3 +112,21 @@ No direct JS assertion on mutator behaviour exists. Worth re-checking once the s
 
 - 2026-10-21: numbered ULTRA-00144 (was `docs/tasks/20260729-mutator-test-coverage-platforms.md`).
 - 2026-11-13: implemented on `wt/mutator`; specs in `src/sharedTest`, running on JVM and JS.
+
+## Review record (the ledger)
+
+Round 1, 2026-11-13, standard gate, level 1 (`reviewer-opus-high`), blind; charters 1 (implementation and build)
+and 2 (domain: multiplatform, KSP, Kotest). Charter 3 (security) not run: tests and build only. **CLEAN: no
+CRITICAL, no MAJOR.**
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR | `build.gradle.kts:62-65` | JS gets the mutators of the package `domain` only: a fixture in another package, or a JVM-only one in `domain`, breaks the JS compile with an unresolved reference; the comment overstated "does not depend on the platform" (impl M1, domain F1, NIT) | fix | The comment states the rule and what was observed |
+| 1 | MINOR | no JS compilation runs the mutator processor any more (domain F2) | | maintainer | A narrow step back against master, where `kspJsTest` ran it. Put to the maintainer with a follow-up ticket for re-enabling it |
+| 1 | MINOR | `Deps.kt` Kotest 6.2.6 | A newer Kotest may fix the crash; nobody could look it up (domain F4) | maintainer | No network access from the session |
+| 1 | MINOR | evidence | No recorded JS-only run from clean (impl M4) | fix | `console/wt-gradle.sh :mutator:core:clean :mutator:core:jsBrowserTest`: green, 159 tests, 0 failures (coordinator, 2026-11-13) |
+| 1 | MINOR | `ListMutatorSubListProbeSpec.kt:12` | The KDoc's reason ("not RandomAccess, so") is wrong: neither stdlib path calls `subList` (impl M3) | fix | States the observed fact only |
+| 1 | MINOR | `mutator/core/CLAUDE.md:4-5`, `.claude/agents/developer-advocate.md:110` | The module's CLAUDE.md still says `chunked()` calls `subList`, names no place for specs; the advocate points at `jvmTest` (impl M2, M3) | coordinator, on master | Needs the maintainer's OK |
+| 1 | MINOR | `build.gradle.kts:7,89,94` | `kapt` with `auto_service` and `kspCommonMainMetadata` look unused (impl M5; older than this change) | open | Not this ticket |
+| 1 | NIT | IntelliJ may assign a directory shared by two source sets to one of them (impl N1, domain F5) | | maintainer | To be seen in the checkout IntelliJ has open, after the merge; the alternative is an unpublished fixtures module |
+| 1 | NIT | ticket: "13 spec files", "`src/examples` already used this pattern" (impl N2) | | fix | |

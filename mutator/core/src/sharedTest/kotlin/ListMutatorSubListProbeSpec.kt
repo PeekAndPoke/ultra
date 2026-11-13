@@ -9,8 +9,8 @@ import io.peekandpoke.mutator.domain.mutator
 /**
  * Which stdlib functions reach the throwing [ListMutator.subList] (ULTRA-00234).
  *
- * [ListMutator] is not `RandomAccess`, so `chunked` and `windowed` take the stdlib's iterator path and never call
- * `subList`; `slice(IntRange)` does call it. `subList` itself is pinned in [ListMutatorSpec].
+ * `chunked` and `windowed` do not call `subList`; `slice(IntRange)` does. `subList` itself is pinned in
+ * [ListMutatorSpec].
  */
 class ListMutatorSubListProbeSpec : StringSpec() {
 
