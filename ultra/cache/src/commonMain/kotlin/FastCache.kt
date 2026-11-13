@@ -670,25 +670,8 @@ class FastCache<K, V>(
                 }
             }
 
-            // Evict hard-expired entries outside refreshLock: removeSilently takes the cache's lock.
-            // (An in-flight refresh cannot resurrect one: its result goes through replaceIfUnchanged,
-            // which refuses once the entry is gone.)
-            //
-            // Only forget a key that was really removed. removeSilently declines when the key was
-            // touched after the batch was taken - forgetting it anyway meant that entry was never
-            // refreshed and never hard-evicted again. Kept, it is retried next loop.
-            val evicted = keysToEvict.filter { key -> cache.removeSilently(key) }
-
-            if (evicted.isNotEmpty()) {
-                RunSync(refreshLock) {
-                    evicted.forEach { key ->
-                        writeTimestamps.remove(key)
-                        refreshClaims.remove(key)
-                    }
-                }
-            }
-
-            // Launch refresh coroutines
+            // Launch refresh coroutines - BEFORE the evictions below: those run user eviction
+            // listeners, and one that throws ended process() with these keys claimed but never loaded.
             for ((key, token) in keysToRefresh) {
                 // The value this refresh replaces. Gone already: nothing to refresh.
                 val startedFrom = cache.currentValue(key)
@@ -725,6 +708,24 @@ class FastCache<K, V>(
                         if (!settled) {
                             release(key, token)
                         }
+                    }
+                }
+            }
+
+            // Evict hard-expired entries outside refreshLock: removeSilently takes the cache's lock.
+            // (An in-flight refresh cannot resurrect one: its result goes through replaceIfUnchanged,
+            // which refuses once the entry is gone.)
+            //
+            // Only forget a key that was really removed. removeSilently declines when the key was
+            // touched after the batch was taken - forgetting it anyway meant that entry was never
+            // refreshed and never hard-evicted again. Kept, it is retried next loop.
+            val evicted = keysToEvict.filter { key -> cache.removeSilently(key) }
+
+            if (evicted.isNotEmpty()) {
+                RunSync(refreshLock) {
+                    evicted.forEach { key ->
+                        writeTimestamps.remove(key)
+                        refreshClaims.remove(key)
                     }
                 }
             }

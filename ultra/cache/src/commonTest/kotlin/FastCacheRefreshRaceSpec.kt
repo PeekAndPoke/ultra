@@ -49,6 +49,40 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             cache.get("a") shouldBe "fresh"
         }
 
+        "keys claimed for refresh are loaded even when a hard-TTL eviction's listener throws" {
+            // Driven by hand, as in FastCacheEvictionDeclineSpec, against a cache whose own loop only
+            // drains: the listener is registered on the cache, the refresh behaviour is not.
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                onEviction { _, _ -> error("eviction listener failed") }
+            }
+            val held = CompletableDeferred<String>()
+            var loadsOfA = 0
+            val behaviour = FastCache.RefreshAfterWriteBehaviour<String, String>(
+                refreshAfter = 100.milliseconds,
+                hardTtl = 400.milliseconds,
+            ) { key ->
+                if (key == "x") held.await() else { loadsOfA++; key }
+            }
+
+            cache.put("x", "1")
+            cache.put("a", "1")
+            delay(60.milliseconds)
+
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("x", "1"))))
+            delay(150.milliseconds)
+
+            // x is stale (its refresh hangs), a is written now
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
+            delay(300.milliseconds)
+
+            // One pass: x is past its hard TTL and its eviction's listener throws; a is stale and claimed
+            runCatching { behaviour.process(cache, FastCache.ActionUpdates(emptyList())) }
+
+            eventually(2.seconds) {
+                loadsOfA shouldBe 1
+            }
+        }
+
         "a failed refresh does not release the claim of a newer refresh of the same key" {
             val loader = GatedLoader(size = 10)
             val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
