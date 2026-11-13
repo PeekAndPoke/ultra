@@ -794,13 +794,15 @@ class FastCache<K, V>(
     /** Number of entries in the cache */
     override val size: Int get() = sync { map.size }
 
-    /** Clears the cache */
-    // TODO(scan): behaviours are never told - their tracking maps, totalSize and refresh timestamps
-    //   survive the clear, and the pending actions dropped here are lost to the statistics.
+    /**
+     * Clears the cache.
+     *
+     * Records a [RemoveAction] per entry, so every behaviour drops its tracking of the cleared entries
+     * on its next iteration. Pending actions are kept, so the statistics still count them.
+     */
     override fun clear() = sync {
+        map.keys.forEach { key -> addAction(RemoveAction(key)) }
         map.clear()
-        lastActions.clear()
-        lastActionsKeys.clear()
     }
 
     /**
