@@ -4,7 +4,10 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The processing loop must outlive a failing behaviour.
@@ -86,6 +89,69 @@ class FastCacheConfigValidationSpec : StringSpec() {
             shouldThrow<IllegalArgumentException> {
                 fastCache<String, String> { maxMemoryUsage(0) }
             }
+        }
+
+        "every TTL rejects a non-positive duration" {
+            listOf(Duration.ZERO, (-1).milliseconds).forEach { ttl ->
+                shouldThrow<IllegalArgumentException> { fastCache<String, String> { expireAfterAccess(ttl) } }
+                shouldThrow<IllegalArgumentException> { fastCache<String, String> { expireAfterWrite(ttl) } }
+                shouldThrow<IllegalArgumentException> { fastCache<String, String> { refreshAfterWrite(ttl) { it } } }
+                shouldThrow<IllegalArgumentException> {
+                    fastCache<String, String> { refreshAfterWrite(1.seconds, hardTtl = ttl) { it } }
+                }
+            }
+        }
+
+        "refreshAfterWrite rejects a hard TTL that does not exceed the refresh TTL" {
+            // The hard branch is checked first, so such an entry was evicted and never refreshed
+            shouldThrow<IllegalArgumentException> {
+                fastCache<String, String> { refreshAfterWrite(2.seconds, hardTtl = 1.seconds) { it } }
+            }
+
+            shouldThrow<IllegalArgumentException> {
+                fastCache<String, String> { refreshAfterWrite(1.seconds, hardTtl = 1.seconds) { it } }
+            }
+
+            fastCache<String, String> { refreshAfterWrite(1.seconds, hardTtl = 2.seconds) { it } }
+                .behaviours.size shouldBe 1
+        }
+
+        "a sub-millisecond expiry TTL counts as 1 ms instead of truncating to 0" {
+            // Driven by hand against a drained cache, as in FastCacheEvictionDeclineSpec: process()
+            // stamps the write with `now` and checks expiry with the same `now`, so only a TTL of 0
+            // evicts in that very call.
+            val behaviours = listOf(
+                FastCache.ExpireAfterAccessBehaviour<String, String>(ttl = 500.microseconds),
+                FastCache.ExpireAfterWriteBehaviour(ttl = 500.microseconds),
+            )
+
+            behaviours.forEach { behaviour ->
+                val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {}
+                cache.put("a", "1")
+                delay(100.milliseconds)
+
+                behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
+
+                cache.keys shouldBe setOf("a")
+            }
+        }
+
+        "a sub-millisecond refresh TTL counts as 1 ms instead of truncating to 0" {
+            var loads = 0
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {}
+            val behaviour = FastCache.RefreshAfterWriteBehaviour<String, String>(refreshAfter = 500.microseconds) {
+                loads++
+                it
+            }
+
+            cache.put("a", "1")
+            delay(100.milliseconds)
+
+            // With a TTL of 0 this very call finds the entry stale and launches the loader
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
+            delay(100.milliseconds)
+
+            loads shouldBe 0
         }
     }
 }

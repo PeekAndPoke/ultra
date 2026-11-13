@@ -29,6 +29,18 @@ fun <K, V> fastCache(
 }
 
 /**
+ * This TTL in whole milliseconds, the resolution of the cache's clock.
+ *
+ * Refuses a non-positive TTL. Rounds a positive one below 1 ms up to 1 ms: truncated to 0 it would
+ * expire an entry in the very iteration that records its write.
+ */
+private fun Duration.ttlMillis(name: String): Long {
+    require(isPositive()) { "$name must be > 0, but was $this" }
+
+    return inWholeMilliseconds.coerceAtLeast(1L)
+}
+
+/**
  * Cache implementation that focuses on performance.
  *
  * The cache can use a number of [behaviours].
@@ -182,6 +194,7 @@ class FastCache<K, V>(
      *
      * Each read or put resets the TTL clock for the affected entry.
      * Expired entries are evicted during the next processing-loop iteration.
+     * [ttl] must be positive; below 1 ms it counts as 1 ms.
      */
     @Suppress("DuplicatedCode")
     class ExpireAfterAccessBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
@@ -191,7 +204,7 @@ class FastCache<K, V>(
             val accessed: Long,
         )
 
-        private val ttlMs = ttl.inWholeMilliseconds
+        private val ttlMs = ttl.ttlMillis("ttl")
         private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry, Long> { it.accessed }
 
@@ -240,6 +253,7 @@ class FastCache<K, V>(
      *
      * Only put operations reset the TTL clock. Reads do NOT extend the entry's lifetime.
      * Expired entries are evicted during the next processing-loop iteration.
+     * [ttl] must be positive; below 1 ms it counts as 1 ms.
      */
     @Suppress("DuplicatedCode")
     class ExpireAfterWriteBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
@@ -248,7 +262,7 @@ class FastCache<K, V>(
             val written: Long,
         )
 
-        private val ttlMs = ttl.inWholeMilliseconds
+        private val ttlMs = ttl.ttlMillis("ttl")
         private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry, Long> { it.written }
 
@@ -555,6 +569,8 @@ class FastCache<K, V>(
      * Only one refresh per key runs at a time.
      *
      * An optional [hardTtl] forces eviction when the write age exceeds it, even during refresh.
+     * Both must be positive, below 1 ms they count as 1 ms, and [hardTtl] must exceed [refreshAfter]:
+     * otherwise the hard eviction always comes first and the entry is never refreshed.
      */
     class RefreshAfterWriteBehaviour<K, V>(
         refreshAfter: Duration,
@@ -562,9 +578,16 @@ class FastCache<K, V>(
         private val loader: suspend (K) -> V,
     ) : Behaviour<K, V> {
 
-        private val refreshAfterMs = refreshAfter.inWholeMilliseconds
-        private val hardTtlMs = hardTtl?.inWholeMilliseconds
+        private val refreshAfterMs = refreshAfter.ttlMillis("refreshAfter")
+        private val hardTtlMs = hardTtl?.ttlMillis("hardTtl")
         private val clock = Kronos.systemUtc
+
+        init {
+            // Compared in milliseconds, the unit the behaviour actually runs on
+            require(hardTtlMs == null || hardTtlMs > refreshAfterMs) {
+                "hardTtl ($hardTtl) must be greater than refreshAfter ($refreshAfter)"
+            }
+        }
 
         // TODO(scan): only a RemoveAction or the hard TTL drops a key here - an entry evicted by any
         //   other behaviour stays and keeps being reloaded, putting the evicted key back into the cache.
