@@ -291,8 +291,7 @@ survive contact with a probe.
 
 ## Changelog text
 
-- `ultra/datetime`: the internal copy of common's `recurse` is gone; `Kronos.Mutable.set` walks its chain with a
-  private linear helper instead of the old quadratic scan (ULTRA-00143).
+- `ultra/datetime`: faster `Kronos.Mutable.set` on deep chains (ULTRA-00143).
 
 ## History
 
