@@ -703,7 +703,8 @@ class FastCache<K, V>(
                     } catch (e: Exception) {
                         // Refresh failed: allow retry on next loop iteration. There is no logger
                         // here, so a repeatedly failing loader would otherwise be entirely silent.
-                        println("FastCache refresh for key [$key] failed: $e")
+                        // The exception's class only: a key or a message can carry a session id or a token.
+                        println("FastCache refresh failed: ${e::class.simpleName}")
                     } finally {
                         if (!settled) {
                             release(key, token)
@@ -773,7 +774,8 @@ class FastCache<K, V>(
                         // cache silently grows without bound. A user onEviction handler throwing is
                         // enough, since removeSilently invokes those from inside process().
                         // There is no logger here, so it goes to the platform's default channel.
-                        println("FastCache behaviour [${behaviour::class.simpleName}] failed: $e")
+                        // The exception's class only: its message can carry cached data.
+                        println("FastCache behaviour [${behaviour::class.simpleName}] failed: ${e::class.simpleName}")
                     }
                 }
 
