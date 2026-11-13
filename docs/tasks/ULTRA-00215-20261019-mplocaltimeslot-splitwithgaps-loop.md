@@ -35,7 +35,13 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
 - Found along the way, same hang: a duration under one millisecond (`500.microseconds`) passed the old
   `duration <= ZERO` guard but added 0 ms per step. The guard now checks whole milliseconds, so it yields no slots.
 - A slot ending at 23:59:59.999 (`completeDay`) hung too: the last step wrapped to 00:00. Now its last slot is 22:00-23:00.
-- Behaviour for all inputs that used to terminate is unchanged (the existing minute-table cases still pass).
+- **Corrected in review round 1:** behaviour is NOT unchanged for every input that used to terminate. The old code took
+  durations and gaps modulo 24 h (`MpLocalTime.plus`) and read `to < from` as a slot across midnight, so these
+  terminated before and now give a different, correct result (re-checked with a simulation of the old loop):
+  `08:00-20:00` by 25 h gave twelve 1-hour slots, now none; by `Duration.INFINITE` one slot (08:00-15:12:55), now
+  none; by 1 h with a 24 h gap twelve slots, now one; by 1 h with a 20 h gap four slots across midnight
+  (08-09, 05-06, 02-03, 23-00), now one; the invalid slot `22:00-02:00` by 2 h two slots (22-00, 00-02), now none.
+  Inputs whose steps never wrapped (the existing minute table) are unchanged.
 - Tests are bounded by `withinTimeLimit` (expect/actual in the test sources): the JVM runs the block on a daemon thread
   and fails after the limit; JS and native call it directly.
 - Red-team scenario (collect only, not executed): an endpoint that passes a caller-chosen duration into
@@ -47,8 +53,11 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
   durations, zero and negative duration, a step that fits exactly with the next one wrapping, a duration + gap that
   wraps, an infinite gap, a gap ending exactly at `to`, a negative and a zero gap, `completeDay` by 1 h and by 3 h + 3 h
   gap, an invalid slot.
-- Before the fix (bounded run, JVM): 10 of the new cases failed with `OutOfMemoryError` from the endless list growth
-  (2522 tests, 10 failures) — the others (zero/negative duration, infinite gap, invalid slot) already terminated.
+- Before the fix (bounded run, JVM): 10 of the new cases failed (2522 tests, 10 failures). Eight hung and failed with
+  `OutOfMemoryError` from the endless list growth (24 h, under 1 ms, 12 h, 4 h + 20 h gap, 4 h + 8 h gap, 6 h with a
+  negative gap, `completeDay` by 1 h and by 3 h + 3 h). 25 h and `Duration.INFINITE` terminated and failed as
+  assertion failures (the modulo-24-h results above). The others (zero/negative duration, infinite gap, invalid slot)
+  already passed. (Corrected in review round 1.)
 - After the fix, from the XML: jvmTest 2522 tests / 0 failures; jsBrowserTest 1887 / 0; linuxX64Test 1875 / 0
   (`MpLocalTimeSlotSpec` 71 / 0 on each).
 - Mutation-checked:
@@ -85,6 +94,10 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
 - `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever when a step or a step plus gap crosses
   midnight (e.g. a duration of 24 h, or a slot ending at 23:59:59.999), nor on a duration under one millisecond; such
   steps now end the split (ULTRA-00215).
+- `ultra/datetime`, behaviour change: `splitWithGaps` no longer takes durations and gaps modulo 24 h. `08:00-20:00`
+  by 25 h or by `Duration.INFINITE` now yields no slots (was twelve 1-hour slots, resp. one), and a gap of 20 h or
+  24 h leaves room for one slot only (was slots across midnight). An invalid slot (`to <= from`, e.g. 22:00-02:00) now
+  yields no slots (was split across midnight) (ULTRA-00215).
 - `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000) and throws
   `IllegalArgumentException` before building a split with more slots, e.g. a whole day in 1 ms steps (ULTRA-00215).
 
@@ -99,3 +112,4 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
 
 - 2026-10-21: numbered ULTRA-00215 (was `docs/tasks/20261019-mplocaltimeslot-splitwithgaps-loop.md`).
 - 2026-11-13: implemented on track A (datetime) of ULTRA-00316; awaiting the review gate.
+- 2026-11-13: review round 1 fixes (`maxSlots`, KDoc boundaries, corrected notes); awaiting round 2.
