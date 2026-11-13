@@ -98,10 +98,12 @@ class NullableCache<K : Any, V : Any> {
                 is Claim.Cached -> return claim.encoded.decode()
 
                 is Claim.Join -> {
-                    // Await outside the lock, then re-claim: if the owner succeeded the value is
+                    // Wait outside the lock, then re-claim: if the owner succeeded the value is
                     // cached, and if it failed this caller takes over rather than inheriting an
-                    // exception raised on somebody else's call stack.
-                    runCatching { claim.deferred.await() }
+                    // exception raised on somebody else's call stack. join(), not await(): it does
+                    // not rethrow the owner's failure, but it does throw when THIS caller is
+                    // cancelled - catching that from await() made a cancelled caller spin here.
+                    claim.deferred.join()
                 }
 
                 is Claim.Own -> {
