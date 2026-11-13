@@ -47,8 +47,9 @@ class NullableCache<K : Any, V : Any> {
     /**
      * Drops every entry.
      *
-     * A [getOrPutAsync] provider still running returns its result to its callers but does not cache
-     * it, and a caller arriving after the clear runs its own provider instead of joining that one.
+     * A [getOrPutAsync] provider still running is not cached when it finishes: its result goes only
+     * to the caller that ran it. Callers that were waiting for it, and callers arriving after the
+     * clear, run their own provider.
      */
     fun clear() {
         RunSync(lock) {
