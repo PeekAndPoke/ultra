@@ -48,6 +48,9 @@
       <module name="ultra.funktor.logging.test" target="17" />
       <module name="ultra.funktor.messaging.main" target="17" />
       <module name="ultra.funktor.messaging.test" target="17" />
+      <module name="ultra.funktor.staticweb" target="17" />
+      <module name="ultra.funktor.staticweb.main" target="17" />
+      <module name="ultra.funktor.staticweb.test" target="17" />
       <module name="ultra.funktor.testing.main" target="17" />
       <module name="ultra.funktor.testing.test" target="17" />
       <module name="ultra.funktor.ui" target="17" />

@@ -40,7 +40,6 @@
             <option value="$PROJECT_DIR$/funktor/messaging" />
             <option value="$PROJECT_DIR$/funktor/rest" />
             <option value="$PROJECT_DIR$/funktor/saas" />
-            <option value="$PROJECT_DIR$/funktor/staticweb" />
             <option value="$PROJECT_DIR$/funktor/testing" />
             <option value="$PROJECT_DIR$/karango" />
             <option value="$PROJECT_DIR$/karango/core" />
@@ -60,6 +59,7 @@
             <option value="$PROJECT_DIR$/kraft/addons/signaturepad" />
             <option value="$PROJECT_DIR$/kraft/addons/sourcemappedstacktrace" />
             <option value="$PROJECT_DIR$/kraft/addons/threejs" />
+            <option value="$PROJECT_DIR$/kraft/addons/visnetwork" />
             <option value="$PROJECT_DIR$/kraft/core" />
             <option value="$PROJECT_DIR$/kraft/core-tests" />
             <option value="$PROJECT_DIR$/kraft/examples" />
@@ -81,6 +81,8 @@
             <option value="$PROJECT_DIR$/ultra/codegen" />
             <option value="$PROJECT_DIR$/ultra/common" />
             <option value="$PROJECT_DIR$/ultra/datetime" />
+            <option value="$PROJECT_DIR$/ultra/depot" />
+            <option value="$PROJECT_DIR$/ultra/depot-s3" />
             <option value="$PROJECT_DIR$/ultra/fixture" />
             <option value="$PROJECT_DIR$/ultra/html" />
             <option value="$PROJECT_DIR$/ultra/i18n" />
