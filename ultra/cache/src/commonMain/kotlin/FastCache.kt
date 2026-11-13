@@ -700,6 +700,10 @@ class FastCache<K, V>(
 
                 refreshClaims[key] = token
                 cache.scope.launch {
+                    // Set once the result reached the cache. Until then, every way out - a failure,
+                    // cancellation, or an Error such as TODO() - must free the key for a retry.
+                    var settled = false
+
                     try {
                         val newValue = loader(key)
 
@@ -709,15 +713,18 @@ class FastCache<K, V>(
                         // A refused result needs no release: the write or removal that changed the
                         // entry recorded an action, and that releases the claim.
                         cache.replaceIfUnchanged(key, startedFrom.value, newValue)
+                        settled = true
                     } catch (e: CancellationException) {
                         // never swallow cancellation - it is how the scope is torn down
-                        release(key, token)
                         throw e
                     } catch (e: Exception) {
                         // Refresh failed: allow retry on next loop iteration. There is no logger
                         // here, so a repeatedly failing loader would otherwise be entirely silent.
-                        release(key, token)
                         println("FastCache refresh for key [$key] failed: $e")
+                    } finally {
+                        if (!settled) {
+                            release(key, token)
+                        }
                     }
                 }
             }
