@@ -2,6 +2,7 @@
 
 package io.peekandpoke.ultra.datetime
 
+import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.datetime.TimeZone
 import java.time.Instant
 import java.time.LocalDate
@@ -139,6 +140,12 @@ val TimeZone.jvm: ZoneId get() = ZoneId.of(id)
 val ZoneId.mp: MpTimezone get() = MpTimezone.of(id)
 
 /**
- * Converts an [MpTimezone] into a [java.time.ZoneId]
+ * Converts an [MpTimezone] into a [java.time.ZoneId]. An id not shaped like a zone id throws [IllegalTimeZoneException]
+ * before java.time sees it.
  */
-val MpTimezone.jvm: ZoneId get() = ZoneId.of(id)
+val MpTimezone.jvm: ZoneId
+    get() {
+        TimezoneEngine.requireConvertibleZoneId(id)
+
+        return ZoneId.of(id)
+    }

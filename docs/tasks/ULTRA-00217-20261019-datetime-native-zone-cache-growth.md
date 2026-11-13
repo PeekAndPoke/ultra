@@ -1,6 +1,6 @@
 # ULTRA-00217: ultra/datetime: native zone cache grows with path variants of zone ids
 
-> **Status (2026-10-19): NOT STARTED.**
+> **Status (2026-11-13): IMPLEMENTED, awaiting the review gate** (track A of ULTRA-00316, worktree `datetime`).
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -23,10 +23,10 @@ Scenario: a Kotlin/Native server decoding user-supplied zone ids (`MpZonedDateTi
 `atZone`) grows the map without bound. JVM is NOT affected (no ultra cache; `ZoneRulesProvider` rejects the variants),
 JS is not either (Intl rejects them). This repo's servers are JVM, so today's exposure is nil.
 
-- [ ] Verify by experiment on linuxX64 (`TimeZone.of("Europe/./Berlin")` resolves?)
-- [ ] Accept only canonical ids before caching (no empty / `.` components, or membership in `MpTimezone.supportedIds`),
-      and/or cap the map; reject non-canonical ids with `IllegalTimeZoneException` like the JVM does
-- [ ] Test on native: variants are rejected (or at least not cached), the map stays bounded
+- [x] Verify by experiment on linuxX64 (`TimeZone.of("Europe/./Berlin")` resolves?) — YES, see Implementation notes
+- [x] Accept only canonical ids before caching (no empty / `.` components, or membership in `MpTimezone.supportedIds`),
+      and/or cap the map — membership in `supportedIds`; rejecting the variants is NOT done (needs a decision, below)
+- [x] Test on native: variants are rejected (or at least not cached), the map stays bounded — not cached
 - [ ] Red-team scenario (collect only, never execute here): flood a native endpoint with distinct id spellings
 
 Related MINORs from the same gate, for the maintainer list (not this task's scope unless chosen):
@@ -37,15 +37,166 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
 
 ## Implementation notes
 
+- **Probe (2026-11-13, linuxX64, kotlinx-datetime as pinned in the repo), a temporary native spec, since removed.**
+  `TimeZone.of` resolves `Europe/./Berlin`, `Europe/././Berlin`, `Europe//Berlin`, `Europe/Berlin/` and
+  `./Europe/Berlin`, and keeps the spelling as the id. It rejects `Europe/../Europe/Berlin`, the absolute path
+  `/usr/share/zoneinfo/Europe/Berlin` and `europe/berlin` (case-sensitive filesystem). Through ultra's public path,
+  `MpInstant.atZone(MpTimezone.of("Europe/./Berlin"))` gave the Berlin wall time with the zone id `Europe/./Berlin`,
+  and every spelling became its own permanent cache entry (`Europe/` + `./` × n: unbounded). The reviewer's reading
+  was right; the comment "bounded by the system's tz database" was wrong.
+- Fix (`ultra/datetime/src/nativeMain/kotlin/TimezoneEngineNative.kt`): only ids in `MpTimezone.supportedIds` (587 at the time; 591 since review round 1)
+  are cached; any other id that resolves is returned uncached. Chosen over a canonical-path check because it bounds the
+  map absolutely on every filesystem: on a case-insensitive one (APFS default on macOS; mingw untested) case variants
+  would resolve too, and a path check would not catch them. Junk spellings also cannot crowd real zones out, as a
+  size cap would let them.
+- Cost: a valid zone missing from `supportedIds` (one newer than the list) is re-read on every lookup on native —
+  correct, only slower.
+- **Review round 1.** `supportedIds` matched roughly the 2021 tz database. Diffed against the system tzdata 2026e
+  (`tzdata.zi`): missing canonical zones were `America/Ciudad_Juarez`, `America/Coyhaique`, `Europe/Kyiv`,
+  `Pacific/Kanton`, `EST`, `HST`, `MST` (and `Factory`, not a real zone). Added the first four; the JVM, the browser
+  (ChromeHeadless 157) and native all accept them. **`EST`, `HST`, `MST` were refused by the JVM** (`ZoneRulesException:
+  Unknown time-zone ID`: java.time's tzdb provider leaves them out, only `ZoneId.SHORT_IDS` maps them to fixed
+  offsets), so they stay out; JS and native accepted them. Links missing from the list (`Etc/UCT`, `GMT+0`, `GMT-0`,
+  `ROC`) were left out on purpose.
+- **JS, same growth, review round 1.** `TimezoneEngineJs.kt` kept two caches (formatter, interval) per id that Intl
+  accepted, and Intl matches ids case-insensitively; the case check rejects variants of LISTED ids only, so every case
+  spelling of an unlisted id (`etc/uct`, `ETC/UCT`, …) added two permanent entries. Now only ids in `supportedIds` get an
+  interval cache; other ids are asked from Intl uncached (`intlOffsetSecondsAt(newFormatter(id), …)`, the same value the
+  cache would memoise). The formatter cache is gone: each interval cache captures its formatter. Chosen over
+  canonicalising through `resolvedOptions().timeZone`, which differs between ICU versions (e.g. `Europe/Kyiv` vs
+  `Europe/Kiev`) and would make the cache key depend on the browser.
+- Fixed-offset ids (`UTC+1`, `GMT-5`) never reach either platform cache: `TimezoneEngine` resolves them in common code
+  (`fixedOffsetSecondsOrNull`).
+- Spelling variants still resolve on native; refusing them is follow-up ULTRA-00317 (not done here).
+- Behaviour is unchanged: the variants still resolve on native, while JVM and JS reject them. **Needs a decision:**
+  reject non-canonical spellings on native with `IllegalTimeZoneException` for parity? It is a behaviour change on
+  native, and on a case-insensitive filesystem it would also need a case check (JS does that via Intl).
+- `cachedZoneIds()` (internal, nativeMain) exposes the cache keys for the test.
+
 ## Test evidence
+
+- New `ultra/datetime/src/nativeTest/kotlin/TimezoneEngineNativeSpec.kt`: a supported id is cached; 203 path variants
+  of `Europe/Berlin` still resolve to the Berlin wall time and leave the cache keys unchanged.
+- Before the fix: the variants test failed (the key set gained the variants); linuxX64Test 1878 / 1 failure.
+- After the fix, from the XML: linuxX64Test 1878 / 0 failures (`TimezoneEngineNativeSpec` 2 / 0); jvmTest 2523 / 0;
+  jsBrowserTest 1888 / 0. `compileTestKotlinLinuxArm64` and `compileTestKotlinMingwX64` compile; the macOS and
+  mingw tests cannot run on this linux host.
+- Mutation-checked:
+  - membership check removed → red: "path variants … are not cached".
+  - nothing cached (check made always true) → red: "a supported zone id is cached".
+  - not run: the cache-hit line; dropping it changes only speed, which no test observes.
+- Review round 1: new `jsTest/kotlin/TimezoneEngineJsCacheSpec.kt` (a listed id, `Pacific/Kanton`, is cached; all 64
+  case spellings of the unlisted `Etc/UCT` resolve to UTC and leave the cache keys unchanged) and four native cases
+  (each newly listed id is cached). RED first: JS 1 failure (the keys grew), native 7 (all seven candidates uncached).
+  After: jvmTest 2543 / 0, jsBrowserTest 1906 / 0, linuxX64Test 1898 / 0; arm64 and mingw test code compiles.
+  Mutation-checked:
+  - JS: the `!in supportedIds` branch disabled (every id cached) → red, the case-variants test.
+  - JS: the store skipped for `Pacific/Kanton` → red, the listed-id test. (Skipping the store for every id, or for
+    `Europe/Berlin`, made `DatetimeJsBenchmarkSpec` so slow that Chrome missed Karma's ping, no XML: red, but not
+    attributable to one test, hence the narrower mutant.)
+  - `Europe/Kyiv` removed from the list → red on native, "the zone id Europe/Kyiv is supported and cached".
+- Review round 2 (MINORs, before the merge):
+  - Item 1, JS hot path: `platformOffsetSecondsAt` looks in `offsetCaches` first and tests `supportedIds` membership only
+    on a miss, as native's `zoneFor` does. Refactor, no behaviour change. jsBrowserTest 1906 / 0. Mutation-checked
+    again on the new structure: membership test removed → red (case variants); store skipped for `Pacific/Kanton` →
+    red (listed id cached).
+  - Item 2, one memo slot for the last unlisted id that resolved (JS: its interval cache with its formatter; native:
+    its `TimeZone`), keyed by the exact string and replaced by the next unlisted id: the caches hold the listed ids plus
+    one. Before, one conversion of an unlisted id (the system zone when it is `EST`, `ROC`, `Etc/UCT`, a zone newer than
+    the list) built a formatter / read the zone file per lookup: RED first, 110 builds (JS) and 110 file reads (native)
+    for 10 days of `atZone` + `atStartOfDay`; now 1. Tests: a flood of unlisted ids (JS: 64 case spellings of
+    `Etc/UCT`; native: `EST`, `HST`, `MST`, `ROC`, `Etc/UCT`) leaves the listed cache unchanged and the slot holding the
+    last; repeated lookups reuse the slot (counted with `intlFormattersBuilt` / `zoneFileReads()`).
+    After: jvmTest 2543 / 0, jsBrowserTest 1907 / 0, linuxX64Test 1900 / 0. Mutation-checked: memo read removed → red
+    (JS 1, native 1: reuse); memo store removed → red (JS 2, native 2: flood and reuse).
+  - Item 3, the ULTRA-00317 work (the maintainer approved it; that ticket lives on master and is not on this branch,
+    so its notes are here): `TimezoneEngine.requireRegionIdShape` refuses, with `IllegalTimeZoneException("Invalid
+    zone id: …")` (the type every platform throws for an unknown zone), any region id longer than 64 characters, with
+    a character outside `A-Z a-z 0-9 _ + - /`, or with an empty path part (leading, trailing or doubled `/`); `.` and
+    `..` parts fall to the character rule. It runs after the fixed-offset parse (fixed ids need `:` and never reach it)
+    and before any platform call, in `offsetSecondsAt`, `toInstant` and `startOfDay`, the only callers of the platform
+    lookup (`plus` goes through the first two), and in `MpTimezone.kotlinx` for region ids. Native refuses
+    `Europe/./Berlin`, `Europe//Berlin`, `Europe/Berlin/`, `./Europe/Berlin` now; `TimezoneEngineNativeSpec` flipped
+    to "refused and not cached". Case variants on a case-insensitive file system are not covered.
+    `MpTimezone.of` was NOT changed: stored data (a serialized `MpTimezone` or `MpZonedDateTime`) could hold such an
+    id, and refusing in `of` would fail the whole decode instead of the conversion; that is the maintainer's call.
+    New `ZoneIdCheckSpec` (commonTest): 11 refused ids × 6 entries (`atZone`, `offsetSecondsAt`, local `atZone`,
+    `atStartOfDay`, `plus` in a zone, `kotlinx`), `..` and absolute paths included, so a kotlinx upgrade cannot widen
+    what an id reaches; every listed id passes; five fixed offsets keep working. RED first: 68 of 73 failed on each
+    platform (JVM and JS already refused, with the platform's message; native threw nothing for 24 of them).
+    After: jvmTest 2617 / 0, jsBrowserTest 1981 / 0, linuxX64Test 1974 / 0. Mutation-checked (JVM unless noted):
+    doubled `/` allowed → 18 red; `.` allowed → 18 red, on native 19 (the native variants test too); the check dropped
+    from `startOfDay` → 11 red, all `atStartOfDay`; no length limit → 6 red; `-` refused → 86 red ("every supported id
+    passes" among them); the `kotlinx` getter unchecked → 11 red, all `kotlinx`; echo unsanitised → 8 red (item 4).
+  - Item 4, messages: the refusal echoes at most 64 characters plus `...`, anything but printable ASCII replaced by `?`
+    (`echo`). The fixed-offset message, which runs BEFORE the check, uses the same echo now (it echoed the raw id).
+    The JS messages (`newFormatter`) and kotlinx's own are reached only after the check. Tests: control characters
+    and a 115-character id; an invalid fixed offset with a control character and 104 characters.
+  - Item 5, `supportedIds` KDoc: its contract (ids that java.time, Intl and the native tz database all resolve as of
+    tzdb 2025b; resolving depends on the platform's tz data, `America/Coyhaique` needs 2025b; ids outside may resolve
+    on some platforms, uncached beyond the memo slot; `EST`, `HST`, `MST`, `ROC` are out because java.time refuses
+    them). Probed on the test JDK (17.0.17, tzdata 2025b) with a temporary spec: `ROC`, `EST`, `HST`, `MST` →
+    `ZoneRulesException`; `Etc/UCT` and `America/Coyhaique` resolve. So the set is not complete: legacy links such as
+    `Etc/UCT` resolve everywhere and are not listed, and the KDoc says so. The specs that resolve every listed id
+    (`MpTimezoneSpec`, one test per id) name the id when a platform does not know it.
+  - **Not run here:** `mingwX64`, `macosArm64` and `linuxArm64` are compiled (`compileTestKotlinLinuxArm64`,
+    `compileTestKotlinMingwX64`) but their tests cannot run on this linux x64 host; `macosArm64` is not even compiled.
+    The native results above are linuxX64 only.
+  - Item 8: the JS comment on the case check claimed "the browser accepts no id the JVM would reject"; it now says
+    that case variants of unlisted ids and ids java.time refuses (`EST`, `ROC`) still resolve on JS.
+
+## Changelog text
+
+- `ultra/datetime` (native): the zone cache holds only the ids in `MpTimezone.supportedIds`. kotlinx/native resolves
+  path variants such as `Europe/./Berlin`, and each spelling used to add a permanent entry, so user-supplied zone ids
+  could grow it without bound. Other ids that resolve (zones newer than the list, legacy links such as `ROC`) are
+  slower, including the system's own zone when it is not in the list: only the last of them is kept, in one memo slot
+  (ULTRA-00217).
+- `ultra/datetime` (JS): the zone cache holds only the ids in `MpTimezone.supportedIds`. Intl matches ids
+  case-insensitively, so each case spelling of an unlisted id used to add permanent entries. Unlisted ids are slower
+  now, including the browser's own zone when it is not in the list: only the last of them keeps its formatter and
+  interval cache, in one memo slot. Case variants of the four ids added below are now refused on JS, as on the JVM
+  (ULTRA-00217).
+- `ultra/datetime`: `MpTimezone.supportedIds` adds `America/Ciudad_Juarez`, `America/Coyhaique`, `Europe/Kyiv` and
+  `Pacific/Kanton`, and its KDoc states the contract (ids java.time, Intl and the native tz database all resolve, as
+  of tzdb 2025b). `EST`, `HST`, `MST` and `ROC` stay out: java.time refuses them as region ids (ULTRA-00217).
+- `ultra/datetime`, behaviour change: a zone id not shaped like an IANA region id is refused with
+  `IllegalTimeZoneException("Invalid zone id: '…'")` before any platform lookup: longer than 64 characters, a character
+  outside `A-Z a-z 0-9 _ + - /`, or an empty path part (leading, trailing or doubled `/`). Native: `Europe/./Berlin`,
+  `Europe//Berlin`, `Europe/Berlin/` and `./Europe/Berlin` resolved as Berlin, now they are refused. JVM and JS: they
+  refused such ids already, only the message changes. The message echoes the id in single quotes
+  (`Invalid zone id: ''` for an empty one), at most 64 characters with `...` after the quote when cut, anything but
+  printable ASCII as `?`; the JS "Unknown time zone" messages quote and bound the id the same way. On every platform
+  `MpTimezone.kotlinx` applies the same check to region ids, and on the JVM so does `MpTimezone.jvm` before
+  `ZoneId.of`: a bad id there throws `IllegalTimeZoneException` with the bounded message instead of java.time's
+  `DateTimeException` with the raw id. Fixed-offset ids (`UTC+01:00`) are unaffected, and `MpTimezone.of` does not
+  check, so stored values still decode. Case variants on a case-insensitive file system (macOS, mingw) are not refused
+  by this (ULTRA-00317).
 
 ## Review record — the LEDGER (filled by /feature-review)
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 3 (delta) | MINOR | `ZoneIdCheckSpec.kt` | the 64-character boundary is not pinned | FIXED 245ff55b | `"A".repeat(64)` passes; a 64-character id with one bad character is echoed whole, without `...`. Mutation-checked: `>` to `>=` in `hasRegionIdShape` (`TimezoneEngine.kt:215`) → red, 1; the same in `echo` → red, 1 |
+| 3 (delta) | MINOR | `ZoneIdCheckSpec.kt:44-45` | the expected message restates the echo rule | FIXED 850ed30e | a table of `id to expectedMessage` literals. Echo mutated (`?` → `_`) → red, 8 |
+| 3 (delta) | MINOR | `jvmMain/kotlin/conversion.kt:144` | `MpTimezone.jvm` passes a bad id to `ZoneId.of`, raw unbounded message | FIXED e1cd26d9 | `TimezoneEngine.requireConvertibleZoneId` (fixed offset parses, or region shape) before `ZoneId.of`, shared with `MpTimezone.kotlinx`. New `ZoneIdCheckJvmSpec`, RED first: 3 of 9 (java.time's `DateTimeException` / `ZoneRulesException`); `Z`, `UTC`, fixed offsets and `Europe/Berlin` still convert. Check removed → red, 3 |
+| 3 (delta) | MINOR | `MpTimezone.kt:32` | KDoc: `Z` is listed but no tz id; "ICU 77" unsourced | FIXED a3299e6c, 1e842cc2 | names `Z` (mapped to `UTC` by `of`); the ICU claim is gone, the JDK claim is now what was probed (17.0.17 has tzdata 2025b) |
+| 3 (delta) | MINOR | `TimezoneEngineJs.kt:135,144,138` | JS messages echo the raw id; the counter counts failed builds | FIXED 50c107cb | both messages use `TimezoneEngine.echo` (now `internal`); `intlFormattersBuilt` counts after a successful build, like native's `zoneFileReads`. Only the reuse test read the counter (valid ids, unaffected). New JS test pins both messages and an unchanged count after two failed builds. Mutants: counter before the build → red, 2; raw id in the unknown-zone message → red, 1 |
+| 3 (delta) | NIT | `TimezoneEngine.kt` `echo` | an empty or blank id is unreadable in the message | FIXED f1ad821a | the echo is quoted (`Invalid zone id: ''`); the refusal is common code, so the message is the same on every platform (no parity to keep). RED first: 69 of 76 literals; quotes dropped → red, 61 |
+| 3 (delta) | – | `MpZonedDateTime.parse`, `MpDateTimeParser` | raw input echoed in parse messages | OPEN, maintainer | recorded by the coordinator, not in this batch |
+| 3 (delta) | – | `nativeMain` | native resolves `posix/…`, `right/…`, `posixrules`, `localtime`, `Factory` | OPEN, maintainer | they pass the shape check; whether to refuse them is open |
+| 3 (delta) | – | decode path | `"SYSTEM"` in the decode path | OPEN, maintainer | `MpTimezone.of("SYSTEM")` maps to the system zone |
+| 3 (delta) | – | `MpTimezone` | a public `isValid` / `ofOrNull` | OPEN, maintainer | API decision |
 
-**Verdict:**
+**Verdict:** round 3 (delta) CLEAN from both reviewers (implementation/domain and security); its MINORs and the NIT are
+fixed above (commits 850ed30e..1e842cc2), the four OPEN rows wait for the maintainer. After the batch: jvmTest,
+jsBrowserTest and linuxX64Test green (counts in the History line below).
 
 ## History
 
 - 2026-10-21: numbered ULTRA-00217 (was `docs/tasks/20261019-datetime-native-zone-cache-growth.md`).
+- 2026-11-13: probed (variants resolve) and implemented on track A (datetime) of ULTRA-00316; awaiting the review gate.
+- 2026-11-13: review round 1 fixes (four ids added, JS cache bounded); awaiting round 2.
+- 2026-11-13: review round 2 MINORs (JS hot path, memo slot, ULTRA-00317 refusal, messages, KDoc, changelog).
+- 2026-11-13: review round 3 (delta) CLEAN; its MINORs fixed. Final XML: jvmTest 2628 / 0, jsBrowserTest 1984 / 0,
+  linuxX64Test 1976 / 0; `compileTestKotlinLinuxArm64` and `compileTestKotlinMingwX64` compile. Ready to merge.

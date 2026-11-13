@@ -28,6 +28,15 @@ data class MpTimezone private constructor(val id: String) {
                 else -> MpTimezone(id = id)
             }
 
+        /**
+         * Zone ids that java.time, Intl and the native tz database all resolve, as of tzdb 2025b, plus `Z`, which is
+         * not a tz database id: [of] maps it to [UTC].
+         *
+         * Resolving one still depends on the platform's tz data: `America/Coyhaique` needs tzdata 2025b (the JDK
+         * 17.0.17 the tests run on has it). Ids outside the set may resolve on some platforms (a few legacy links such
+         * as `Etc/UCT` resolve on all of them); there they are not cached beyond one memo slot. `EST`, `HST`, `MST` and
+         * `ROC` are outside it because java.time refuses them as region ids.
+         */
         val supportedIds = setOf(
             "Africa/Abidjan",
             "Africa/Accra",
@@ -124,9 +133,11 @@ data class MpTimezone private constructor(val id: String) {
             "America/Cayman",
             "America/Chicago",
             "America/Chihuahua",
+            "America/Ciudad_Juarez",
             "America/Coral_Harbour",
             "America/Cordoba",
             "America/Costa_Rica",
+            "America/Coyhaique",
             "America/Creston",
             "America/Cuiaba",
             "America/Curacao",
@@ -476,6 +487,7 @@ data class MpTimezone private constructor(val id: String) {
             "Europe/Kaliningrad",
             "Europe/Kiev",
             "Europe/Kirov",
+            "Europe/Kyiv",
             "Europe/Lisbon",
             "Europe/Ljubljana",
             "Europe/London",
@@ -566,6 +578,7 @@ data class MpTimezone private constructor(val id: String) {
             "Pacific/Guam",
             "Pacific/Honolulu",
             "Pacific/Johnston",
+            "Pacific/Kanton",
             "Pacific/Kiritimati",
             "Pacific/Kosrae",
             "Pacific/Kwajalein",
@@ -623,7 +636,12 @@ data class MpTimezone private constructor(val id: String) {
      * Converts to a kotlinx-datetime [TimeZone].
      *
      * On Kotlin/JS this throws for region ids unless the js-joda time zone database is loaded — ultra itself never
-     * needs it.
+     * needs it. A region id passes the same shape check as ultra's own lookups first.
      */
-    val kotlinx: TimeZone get() = TimeZone.of(id)
+    val kotlinx: TimeZone
+        get() {
+            TimezoneEngine.requireConvertibleZoneId(id)
+
+            return TimeZone.of(id)
+        }
 }

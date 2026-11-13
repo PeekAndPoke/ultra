@@ -86,6 +86,22 @@ interface Kronos {
                 }
             }
         }
+
+        /** Collects this and every [next] after it, until [next] returns null or repeats an element. */
+        private fun <T> T.collectChain(next: T.() -> T?): List<T> {
+            val result = mutableListOf<T>()
+            // A set alongside the list keeps the repeat check a hash lookup, so the walk stays linear.
+            val seen = mutableSetOf<T>()
+
+            var current: T? = this
+
+            while (current != null && seen.add(current)) {
+                result.add(current)
+                current = current.next()
+            }
+
+            return result
+        }
     }
 
     /**
@@ -182,7 +198,7 @@ interface Kronos {
         private var _inner: Kronos = inner
 
         override fun set(inner: Kronos) {
-            val chain = inner.recurse {
+            val chain = inner.collectChain {
                 when (val rec = this) {
                     is MutableImpl -> rec._inner
                     is AdvancedBy -> rec.inner

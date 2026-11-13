@@ -23,9 +23,14 @@ internal object TimezoneEngine {
     private const val PROBE_WINDOW_SECONDS = 86_400
     private const val EXACT_AS_DOUBLE = 4_503_599_627_370_496.0 // 2^52
 
+    private const val MAX_REGION_ID_LENGTH = 64
+
     /** The offset of [timezone] at [instant], in seconds. */
     fun offsetSecondsAt(timezone: MpTimezone, instant: Instant): Int {
-        return fixedOffsetSecondsOrNull(timezone.id) ?: lookup(timezone.id, instant.epochSeconds)
+        fixedOffsetSecondsOrNull(timezone.id)?.let { return it }
+        requireRegionIdShape(timezone.id)
+
+        return lookup(timezone.id, instant.epochSeconds)
     }
 
     /** The wall-clock time of [instant] in [timezone]. */
@@ -45,6 +50,7 @@ internal object TimezoneEngine {
      */
     fun toInstant(timezone: MpTimezone, local: LocalDateTime, preferredOffsetSeconds: Int? = null): Instant {
         fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(local, it) }
+        requireRegionIdShape(timezone.id)
 
         val wall = EpochMath.epochSeconds(local)
 
@@ -69,6 +75,7 @@ internal object TimezoneEngine {
     /** The first instant of [date] in [timezone]: midnight, or the end of the gap when midnight does not exist. */
     fun startOfDay(timezone: MpTimezone, date: LocalDate): Instant {
         fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(date, it) }
+        requireRegionIdShape(timezone.id)
 
         val wall = EpochMath.epochSeconds(date)
 
@@ -190,7 +197,51 @@ internal object TimezoneEngine {
             }
         }
 
-        return parseOffsetSeconds(offset) ?: throw IllegalTimeZoneException("Invalid zone id: $zoneId")
+        return parseOffsetSeconds(offset) ?: throw IllegalTimeZoneException("Invalid zone id: ${echo(zoneId)}")
+    }
+
+    /**
+     * Refuses [zoneId] with [IllegalTimeZoneException] unless it is shaped like an IANA region id: at most 64
+     * characters of `A-Z a-z 0-9 _ + - /` and no empty path part (no leading, trailing or doubled `/`).
+     *
+     * Runs before every platform lookup: kotlinx/native opens a path variant such as `Europe/./Berlin` as the same
+     * zone file (ULTRA-00317). Case variants are not refused here.
+     */
+    internal fun requireRegionIdShape(zoneId: String) {
+        if (!hasRegionIdShape(zoneId)) throw IllegalTimeZoneException("Invalid zone id: ${echo(zoneId)}")
+    }
+
+    /** For a converter to a platform zone: a fixed offset must parse, a region id must pass [requireRegionIdShape]. */
+    internal fun requireConvertibleZoneId(zoneId: String) {
+        if (fixedOffsetSecondsOrNull(zoneId) == null) requireRegionIdShape(zoneId)
+    }
+
+    private fun hasRegionIdShape(zoneId: String): Boolean {
+        if (zoneId.isEmpty() || zoneId.length > MAX_REGION_ID_LENGTH) return false
+
+        // Starts as '/' so that a leading '/' counts as an empty path part.
+        var previous = '/'
+
+        for (char in zoneId) {
+            val allowed = char in 'A'..'Z' || char in 'a'..'z' || char in '0'..'9' ||
+                    char == '_' || char == '+' || char == '-' || char == '/'
+
+            if (!allowed || (char == '/' && previous == '/')) return false
+
+            previous = char
+        }
+
+        return previous != '/'
+    }
+
+    /**
+     * [zoneId] for an error message, in single quotes so an empty or blank id is readable: at most 64 characters
+     * (`...` after the quote when cut), anything but printable ASCII replaced by `?`.
+     */
+    internal fun echo(zoneId: String): String {
+        val shown = zoneId.take(MAX_REGION_ID_LENGTH).map { if (it in ' '..'~') it else '?' }.joinToString("")
+
+        return if (zoneId.length > MAX_REGION_ID_LENGTH) "'$shown'..." else "'$shown'"
     }
 
     // "UTC" before "UT", so the longer prefix wins
