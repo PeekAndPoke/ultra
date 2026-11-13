@@ -1,13 +1,17 @@
 package io.peekandpoke.ultra.datetime
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.common.tuple
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.microseconds
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTime
 
 class MpLocalTimeSlotSpec : StringSpec({
 
@@ -385,6 +389,71 @@ class MpLocalTimeSlotSpec : StringSpec({
                 initial.splitWithGaps(duration, gap)
             } shouldBe expected
         }
+    }
+
+    // maxSlots: a whole day in 1 ms steps would be 86.4 million slots
+
+    "splitWithGaps() - maxSlots: exactly the default limit of 100 000 slots works" {
+        val subject = MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.ofMilliSeconds(100_000))
+
+        val result = subject.splitWithGaps(1.milliseconds)
+
+        result.size shouldBe 100_000
+        result.first() shouldBe MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(0), MpLocalTime.ofMilliSeconds(1))
+        result.last() shouldBe MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(99_999), MpLocalTime.ofMilliSeconds(100_000))
+    }
+
+    "splitWithGaps() - maxSlots: one slot above the default limit throws, naming the count and the limit" {
+        val subject = MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.ofMilliSeconds(100_001))
+
+        val error = shouldThrow<IllegalArgumentException> { subject.splitWithGaps(1.milliseconds) }
+
+        error.message shouldBe "splitWithGaps would create 100001 slots, more than maxSlots = 100000"
+    }
+
+    "splitWithGaps() - maxSlots: a whole day in 1 ms steps throws at once, before allocating the slots" {
+        val elapsed = withinTimeLimit(5.seconds) {
+            measureTime {
+                val error = shouldThrow<IllegalArgumentException> {
+                    MpLocalTimeSlot.completeDay.splitWithGaps(1.milliseconds)
+                }
+
+                error.message shouldBe "splitWithGaps would create 86399999 slots, more than maxSlots = 100000"
+            }
+        }
+
+        elapsed shouldBeLessThan 1.seconds
+    }
+
+    "splitWithGaps() - maxSlots: a custom limit" {
+        val subject = ts(10, 0, 11, 0)
+
+        subject.splitWithGaps(15.minutes, maxSlots = 4) shouldBe listOf(
+            ts(10, 0, 10, 15), ts(10, 15, 10, 30), ts(10, 30, 10, 45), ts(10, 45, 11, 0),
+        )
+
+        shouldThrow<IllegalArgumentException> {
+            subject.splitWithGaps(15.minutes, maxSlots = 3)
+        }.message shouldBe "splitWithGaps would create 4 slots, more than maxSlots = 3"
+
+        subject.splitWithGaps(15.minutes, 5.minutes, maxSlots = 3) shouldBe listOf(
+            ts(10, 0, 10, 15), ts(10, 20, 10, 35), ts(10, 40, 10, 55),
+        )
+    }
+
+    "splitWithGaps() - maxSlots: below 1 is refused" {
+        listOf(0, -1, Int.MIN_VALUE).forEach { maxSlots ->
+            shouldThrow<IllegalArgumentException> {
+                ts(10, 0, 11, 0).splitWithGaps(15.minutes, maxSlots = maxSlots)
+            }.message shouldBe "maxSlots must be at least 1, was $maxSlots"
+        }
+    }
+
+    "splitWithGaps() - maxSlots: an infinite duration or gap is no reason to throw" {
+        val subject = ts(8, 0, 20, 0)
+
+        subject.splitWithGaps(Duration.INFINITE, maxSlots = 1) shouldBe listOf()
+        subject.splitWithGaps(4.hours, Duration.INFINITE, maxSlots = 1) shouldBe listOf(ts(8, 0, 12, 0))
     }
 
     // Partial ////////////////////////////////////////////////////////////////////////////////////////

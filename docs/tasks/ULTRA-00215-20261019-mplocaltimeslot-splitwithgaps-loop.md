@@ -21,10 +21,17 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
 
 ## Implementation notes
 
-- `MpLocalTimeSlot.splitWithGaps` now steps in milliseconds of day (`Long`) instead of `MpLocalTime.plus`, which
-  wraps at midnight. A slot is emitted only while `durationMs <= endMs - currentFromMs`; the next step stops when the
-  gap does not fit (`gapMs > endMs - currentToMs`). Differences rather than sums, because `Duration.INFINITE` is
-  `Long.MAX_VALUE` ms.
+- `MpLocalTimeSlot.splitWithGaps` now counts in milliseconds of day (`Long`) instead of stepping with
+  `MpLocalTime.plus`, which wraps at midnight. Round 1 (first commit): a loop over `durationMs <= endMs - currentFromMs`.
+  Review round 1: the count is worked out before anything is built, `(span - duration) / (duration + gap) + 1`, or 0
+  when `duration > span` (a remainder, not a sum, because `Duration.INFINITE` is `Long.MAX_VALUE` ms); the gap is
+  capped at one day, so `duration + gap` cannot overflow; the slots come from `List(count) { }`, no extra copy.
+- **`maxSlots: Int = 100_000`** (review round 1, MAJOR; the maintainer: "yes to maxSlots and the default"). A whole day
+  in 1 ms steps is 86 399 999 slots. A split above `maxSlots` throws `IllegalArgumentException("splitWithGaps would
+  create <count> slots, more than maxSlots = <limit>")` before any slot exists; a `maxSlots` below 1 throws too. An
+  infinite duration still yields an empty list, not an exception.
+- Callers: only `MpLocalTimeSlotSpec` in the repo; the docs example (`ranges.astro`, named `duration`/`gap`) still
+  compiles and its result (2 slots) holds. The new parameter needs a docs line (coordinator, not this track).
 - Found along the way, same hang: a duration under one millisecond (`500.microseconds`) passed the old
   `duration <= ZERO` guard but added 0 ms per step. The guard now checks whole milliseconds, so it yields no slots.
 - A slot ending at 23:59:59.999 (`completeDay`) hung too: the last step wrapped to 00:00. Now its last slot is 22:00-23:00.
@@ -51,11 +58,27 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
   - removed the gap `break` → stays green: an EQUIVALENT mutant. Without it the next loop check already sees a negative
     remainder, and an overflowing gap wraps to a negative remainder as well. Kept as the explicit guard.
 
+- Review round 1, `maxSlots`: six new tests (exactly 100 000 slots at the default; 100 001 throws with the exact
+  message; `completeDay` in 1 ms steps throws within 1 s, bounded; a custom limit of 4 / 3; `maxSlots` 0, -1 and
+  `Int.MIN_VALUE` refused; infinite duration or gap with `maxSlots = 1` do not throw). RED first with the parameter
+  added but not enforced: 4 failed (no exception thrown; the 1 ms day ran out of memory), the at-limit and infinite
+  cases passed already.
+  After: jvmTest 2529 / 0, jsBrowserTest 1894 / 0, linuxX64Test 1884 / 0 (`MpLocalTimeSlotSpec` 77 / 0 each).
+  Mutation-checked (JVM):
+  - count check removed → red, 3 (one above, the 1 ms day, the custom limit).
+  - `+ 1` dropped from the count → red, 16.
+  - `maxSlots >= 0` instead of `>= 1` → red, 1 (below 1 is refused).
+  - count as a sum (`fromMs + durationMs > fromMs + spanMs`) → red, 2 (both infinite-duration cases).
+  - gap cap removed → stays green: EQUIVALENT. The overflowed `duration + gap` is negative and larger than the
+    remainder, so the quotient is 0 and the count 1, and index 0 never uses the step. Kept: the cap states the bound.
+
 ## Changelog text
 
 - `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever when a step or a step plus gap crosses
   midnight (e.g. a duration of 24 h, or a slot ending at 23:59:59.999), nor on a duration under one millisecond; such
   steps now end the split (ULTRA-00215).
+- `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000) and throws
+  `IllegalArgumentException` before building a split with more slots, e.g. a whole day in 1 ms steps (ULTRA-00215).
 
 ## Review record — the LEDGER (filled by /feature-review)
 

@@ -159,43 +159,49 @@ data class MpLocalTimeSlot(
      *
      * No slot reaches past [to] or midnight. A [duration] under one millisecond yields no slots; a negative [gap]
      * counts as zero.
+     *
+     * [maxSlots] caps the result, so a caller-chosen [duration] cannot make one call allocate millions of slots
+     * (a whole day in 1 ms steps is 86.4 million). A split above it throws [IllegalArgumentException] before any
+     * slot is created, as does a [maxSlots] below 1.
      */
-    fun splitWithGaps(duration: Duration, gap: Duration = Duration.ZERO): List<MpLocalTimeSlot> {
+    fun splitWithGaps(
+        duration: Duration,
+        gap: Duration = Duration.ZERO,
+        maxSlots: Int = 100_000,
+    ): List<MpLocalTimeSlot> {
 
-        // Steps in milliseconds of day: MpLocalTime.plus wraps at midnight, so a step past it would land earlier
-        // and the loop would never end (ULTRA-00215).
+        require(maxSlots >= 1) { "maxSlots must be at least 1, was $maxSlots" }
+
+        // Counts in milliseconds of day: MpLocalTime.plus wraps at midnight, so stepping with it past midnight would
+        // land earlier and never end (ULTRA-00215).
         val durationMs = duration.inWholeMilliseconds
 
         if (durationMs <= 0L) {
             return emptyList()
         }
 
-        val gapMs = maxOf(0L, gap.inWholeMilliseconds)
-        val endMs = to.inWholeMilliSeconds().toLong()
+        val fromMs = from.inWholeMilliSeconds().toLong()
+        val spanMs = to.inWholeMilliSeconds().toLong() - fromMs
+        // A gap of a day or more leaves no room for a second slot either way; the cap keeps the step from overflowing.
+        val gapMs = gap.inWholeMilliseconds.coerceIn(0L, MpLocalTime.MILLIS_PER_DAY.toLong())
 
-        val result = mutableListOf<MpLocalTimeSlot>()
-
-        var currentFromMs = from.inWholeMilliSeconds().toLong()
-
-        // Compares remainders rather than sums: an infinite duration or gap is Long.MAX_VALUE milliseconds.
-        while (durationMs <= endMs - currentFromMs) {
-            val currentToMs = currentFromMs + durationMs
-
-            result.add(
-                MpLocalTimeSlot(
-                    from = MpLocalTime.ofMilliSeconds(currentFromMs.toInt()),
-                    to = MpLocalTime.ofMilliSeconds(currentToMs.toInt()),
-                )
-            )
-
-            if (gapMs > endMs - currentToMs) {
-                break
-            }
-
-            currentFromMs = currentToMs + gapMs
+        // Compares the remainder, not a sum: an infinite duration is Long.MAX_VALUE milliseconds.
+        val count = when {
+            durationMs > spanMs -> 0L
+            else -> (spanMs - durationMs) / (durationMs + gapMs) + 1
         }
 
-        return result.toList()
+        require(count <= maxSlots) { "splitWithGaps would create $count slots, more than maxSlots = $maxSlots" }
+
+        // Runs only for count >= 1, where duration and gap are each at most a day: no overflow.
+        return List(count.toInt()) { index ->
+            val slotFromMs = fromMs + index * (durationMs + gapMs)
+
+            MpLocalTimeSlot(
+                from = MpLocalTime.ofMilliSeconds(slotFromMs.toInt()),
+                to = MpLocalTime.ofMilliSeconds((slotFromMs + durationMs).toInt()),
+            )
+        }
     }
 }
 
