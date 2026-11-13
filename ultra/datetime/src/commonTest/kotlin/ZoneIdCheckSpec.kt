@@ -55,6 +55,18 @@ class ZoneIdCheckSpec : StringSpec({
         failing shouldBe emptyList()
     }
 
+    "an id of exactly 64 characters passes the check" {
+        TimezoneEngine.requireRegionIdShape("A".repeat(64))
+    }
+
+    "a 64-character id with one bad character is echoed whole, without ..." {
+        val id = "A".repeat(63) + "."
+
+        val error = shouldThrow<IllegalTimeZoneException> { TimezoneEngine.requireRegionIdShape(id) }
+
+        error.message shouldBe "Invalid zone id: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA."
+    }
+
     "the refusal echoes at most 64 characters, control characters replaced" {
         val id = "Europe/Berlin" + Char(10) + Char(27) + "x".repeat(100)
 
