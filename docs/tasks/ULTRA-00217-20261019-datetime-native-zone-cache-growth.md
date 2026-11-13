@@ -164,22 +164,39 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
   `IllegalTimeZoneException("Invalid zone id: '…'")` before any platform lookup: longer than 64 characters, a character
   outside `A-Z a-z 0-9 _ + - /`, or an empty path part (leading, trailing or doubled `/`). Native: `Europe/./Berlin`,
   `Europe//Berlin`, `Europe/Berlin/` and `./Europe/Berlin` resolved as Berlin, now they are refused. JVM and JS: they
-  refused such ids already, only the message changes (it echoes the id in single quotes, `Invalid zone id: ''` for an
-  empty one, at most 64 characters with `...` after the quote when cut, anything but printable ASCII as `?`). On every platform `MpTimezone.kotlinx` applies the same check to region ids, and on the JVM so does
-  `MpTimezone.jvm` before `ZoneId.of`: a bad id there throws `IllegalTimeZoneException` with the bounded message instead
-  of java.time's `DateTimeException` with the raw id. Fixed-offset ids (`UTC+01:00`)
-  are unaffected, and `MpTimezone.of` does not check, so stored values still decode. Case variants on a
-  case-insensitive file system (macOS, mingw) are not refused by this (ULTRA-00317).
+  refused such ids already, only the message changes. The message echoes the id in single quotes
+  (`Invalid zone id: ''` for an empty one), at most 64 characters with `...` after the quote when cut, anything but
+  printable ASCII as `?`; the JS "Unknown time zone" messages quote and bound the id the same way. On every platform
+  `MpTimezone.kotlinx` applies the same check to region ids, and on the JVM so does `MpTimezone.jvm` before
+  `ZoneId.of`: a bad id there throws `IllegalTimeZoneException` with the bounded message instead of java.time's
+  `DateTimeException` with the raw id. Fixed-offset ids (`UTC+01:00`) are unaffected, and `MpTimezone.of` does not
+  check, so stored values still decode. Case variants on a case-insensitive file system (macOS, mingw) are not refused
+  by this (ULTRA-00317).
 
 ## Review record — the LEDGER (filled by /feature-review)
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 3 (delta) | MINOR | `ZoneIdCheckSpec.kt` | the 64-character boundary is not pinned | FIXED 245ff55b | `"A".repeat(64)` passes; a 64-character id with one bad character is echoed whole, without `...`. Mutation-checked: `>` to `>=` in `hasRegionIdShape` (`TimezoneEngine.kt:215`) → red, 1; the same in `echo` → red, 1 |
+| 3 (delta) | MINOR | `ZoneIdCheckSpec.kt:44-45` | the expected message restates the echo rule | FIXED 850ed30e | a table of `id to expectedMessage` literals. Echo mutated (`?` → `_`) → red, 8 |
+| 3 (delta) | MINOR | `jvmMain/kotlin/conversion.kt:144` | `MpTimezone.jvm` passes a bad id to `ZoneId.of`, raw unbounded message | FIXED e1cd26d9 | `TimezoneEngine.requireConvertibleZoneId` (fixed offset parses, or region shape) before `ZoneId.of`, shared with `MpTimezone.kotlinx`. New `ZoneIdCheckJvmSpec`, RED first: 3 of 9 (java.time's `DateTimeException` / `ZoneRulesException`); `Z`, `UTC`, fixed offsets and `Europe/Berlin` still convert. Check removed → red, 3 |
+| 3 (delta) | MINOR | `MpTimezone.kt:32` | KDoc: `Z` is listed but no tz id; "ICU 77" unsourced | FIXED a3299e6c, 1e842cc2 | names `Z` (mapped to `UTC` by `of`); the ICU claim is gone, the JDK claim is now what was probed (17.0.17 has tzdata 2025b) |
+| 3 (delta) | MINOR | `TimezoneEngineJs.kt:135,144,138` | JS messages echo the raw id; the counter counts failed builds | FIXED 50c107cb | both messages use `TimezoneEngine.echo` (now `internal`); `intlFormattersBuilt` counts after a successful build, like native's `zoneFileReads`. Only the reuse test read the counter (valid ids, unaffected). New JS test pins both messages and an unchanged count after two failed builds. Mutants: counter before the build → red, 2; raw id in the unknown-zone message → red, 1 |
+| 3 (delta) | NIT | `TimezoneEngine.kt` `echo` | an empty or blank id is unreadable in the message | FIXED f1ad821a | the echo is quoted (`Invalid zone id: ''`); the refusal is common code, so the message is the same on every platform (no parity to keep). RED first: 69 of 76 literals; quotes dropped → red, 61 |
+| 3 (delta) | – | `MpZonedDateTime.parse`, `MpDateTimeParser` | raw input echoed in parse messages | OPEN, maintainer | recorded by the coordinator, not in this batch |
+| 3 (delta) | – | `nativeMain` | native resolves `posix/…`, `right/…`, `posixrules`, `localtime`, `Factory` | OPEN, maintainer | they pass the shape check; whether to refuse them is open |
+| 3 (delta) | – | decode path | `"SYSTEM"` in the decode path | OPEN, maintainer | `MpTimezone.of("SYSTEM")` maps to the system zone |
+| 3 (delta) | – | `MpTimezone` | a public `isValid` / `ofOrNull` | OPEN, maintainer | API decision |
 
-**Verdict:**
+**Verdict:** round 3 (delta) CLEAN from both reviewers (implementation/domain and security); its MINORs and the NIT are
+fixed above (commits 850ed30e..1e842cc2), the four OPEN rows wait for the maintainer. After the batch: jvmTest,
+jsBrowserTest and linuxX64Test green (counts in the History line below).
 
 ## History
 
 - 2026-10-21: numbered ULTRA-00217 (was `docs/tasks/20261019-datetime-native-zone-cache-growth.md`).
 - 2026-11-13: probed (variants resolve) and implemented on track A (datetime) of ULTRA-00316; awaiting the review gate.
 - 2026-11-13: review round 1 fixes (four ids added, JS cache bounded); awaiting round 2.
+- 2026-11-13: review round 2 MINORs (JS hot path, memo slot, ULTRA-00317 refusal, messages, KDoc, changelog).
+- 2026-11-13: review round 3 (delta) CLEAN; its MINORs fixed. Final XML: jvmTest 2628 / 0, jsBrowserTest 1984 / 0,
+  linuxX64Test 1976 / 0; `compileTestKotlinLinuxArm64` and `compileTestKotlinMingwX64` compile. Ready to merge.
