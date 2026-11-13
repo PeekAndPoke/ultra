@@ -1,6 +1,6 @@
 # ULTRA-00144: Mutator: specs are JVM-only, so JS and native are unverified
 
-> **Status (2026-11-13): IN REVIEW.** implemented on `wt/mutator` (track C of ULTRA-00316); the review gate is next
+> **Status (2026-11-13): DONE.** implemented on `wt/mutator` (track C of ULTRA-00316); the review gate is next
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -138,3 +138,10 @@ mutator processor back in `kspJsTest`, `kspTestKotlinJs` fails with the same "PS
 6.2.7 does not fix it; the workaround stays, and both files were restored. Re-enable it when a later Kotest
 survives a second KSP round: add `add("kspJsTest", project(":mutator:ksp"))` back and delete the JVM-output
 `srcDir` of `jsTest`.
+- 2026-11-13: merged to master with track C of ULTRA-00316 (ae0a23cc); on master after the merge: jvmTest 158,
+  jsBrowserTest 159, 0 failures. Layout: `src/sharedTest` (the maintainer: "You pick the one that is less complex.
+  You can also switch if the first attempt turns out to be the wrong/limited approach"); to check in IntelliJ:
+  does `DomainSpec.kt` resolve. Follow-up ULTRA-00318 (the processor on JS again). `mutator/core/CLAUDE.md`
+  corrected. Not covered and noted: no spec asserts that `add(index, element)` notifies observers. No DOCS
+  follow-up: tests and build only.
+- 2026-11-13: DONE.

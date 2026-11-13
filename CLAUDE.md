@@ -51,6 +51,9 @@ by path** — "ULTRA-00221 (insights auth parallel plan)". `console/tools/ticket
   `isolation: "worktree"`.
 - **In a worktree, build only through `console/wt-gradle.sh`** — it gives the tests that worktree's own Arango and
   Mongo databases; a bare `./gradlew` uses the SHARED ones and wipes another worktree's data mid-run.
+- **Browser tests have a fixed Karma port per module** (`console/tools/karma-ports/`), in a block per checkout:
+  a port that is taken fails the run, so two checkouts never share a Karma server. A new module with browser tests
+  gets the next index in `ports.txt`; `karma-ports.py` writes the file.
 - **One full suite at a time, machine-wide:** `console/wt-gradle.sh --full-suite`. Memory allows 2–3 builds at once.
 - A track edits its own area and its own ticket. `CLAUDE.md`, skills, ULTRA-00028 (v1 roadmap), `CHANGELOG.md` and
   `BUILD-LOCK.md` change on master only, by the coordinator, who merges.

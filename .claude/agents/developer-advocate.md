@@ -107,7 +107,7 @@ re-discover it.
 
 - `ultra/*/src/jvmTest/kotlin/` — Ultra module tests
 - `kraft/core-tests/` — Kraft framework tests
-- `mutator/core/src/jvmTest/kotlin/` — Mutator tests
+- `mutator/core/src/sharedTest/kotlin/` — Mutator tests
 - `karango/core/src/jvmTest/kotlin/` — Karango tests
 - `funktor/testing/` — Funktor test utilities
 
