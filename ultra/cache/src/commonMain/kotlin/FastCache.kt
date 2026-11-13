@@ -175,6 +175,23 @@ class FastCache<K, V>(
         val lastByKey: Map<K, Action<K, V>> by lazy {
             byKey.mapValues { (_, actions) -> actions.last() }
         }
+
+        /**
+         * The most recent action for each key that is not a read: what a write-based behaviour acts on.
+         *
+         * With [lastByKey], a read right after a put in the same batch hid the put from them.
+         */
+        internal val lastWriteByKey: Map<K, Action<K, V>> by lazy {
+            val result = LinkedHashMap<K, Action<K, V>>()
+
+            actions.forEach { action ->
+                if (action !is ReadAction) {
+                    result[action.key] = action
+                }
+            }
+
+            result
+        }
     }
 
     // Behaviour interface ////////////////////////////////////////////////////////////////////////////
@@ -225,9 +242,9 @@ class FastCache<K, V>(
                     data[action.key] = Entry(accessed = now)
                 }
 
-                is RemoveAction -> data.remove(key)
-                is MissAction -> { /* no-op */
-                }
+                // A miss as the key's last action means it is gone: a remove followed by a miss
+                // in the same batch left a tracked key that no longer exists.
+                is RemoveAction, is MissAction -> data.remove(key)
             }
         }
 
@@ -270,7 +287,7 @@ class FastCache<K, V>(
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
 
-            updates.lastByKey.forEach { (key, action) ->
+            updates.lastWriteByKey.forEach { (key, action) ->
                 handle(now, key, action)
             }
 
@@ -283,11 +300,9 @@ class FastCache<K, V>(
                     data[key] = Entry(written = now)
                 }
 
-                is RemoveAction -> data.remove(key)
-                is ReadAction -> { /* reads do NOT reset write TTL */
-                }
-
-                is MissAction -> { /* no-op */
+                // A miss as the key's last action means it is gone - see ExpireAfterAccessBehaviour
+                is RemoveAction, is MissAction -> data.remove(key)
+                is ReadAction -> { /* reads do NOT reset write TTL, and lastWriteByKey holds none */
                 }
             }
         }
@@ -349,9 +364,8 @@ class FastCache<K, V>(
                     data[action.key] = Entry(key = action.key, accessed = now)
                 }
 
-                is RemoveAction -> data.remove(key)
-                is MissAction -> { /* no-op */
-                }
+                // A miss as the key's last action means it is gone - see ExpireAfterAccessBehaviour
+                is RemoveAction, is MissAction -> data.remove(key)
             }
         }
 
@@ -447,11 +461,9 @@ class FastCache<K, V>(
                     data[action.key] = Entry(key = action.key, accessed = now, size = newSize)
                 }
 
-                is RemoveAction -> {
+                // A miss as the key's last action means it is gone - see ExpireAfterAccessBehaviour
+                is RemoveAction, is MissAction -> {
                     current?.let { remove(current) }
-                }
-
-                is MissAction -> { /* no-op */
                 }
             }
         }
@@ -613,20 +625,22 @@ class FastCache<K, V>(
             val keysToEvict = mutableListOf<K>()
 
             RunSync(refreshLock) {
-                // Track write timestamps
-                updates.lastByKey.forEach { (key, action) ->
+                // Track write timestamps. lastWriteByKey: a read right after a refresh's put used to
+                // hide that put, so the key stayed claimed and was never refreshed again.
+                updates.lastWriteByKey.forEach { (key, action) ->
                     when (action) {
                         is PutAction -> {
                             writeTimestamps[key] = now
                             refreshingKeys.remove(key)
                         }
 
-                        is RemoveAction -> {
+                        // A miss as the key's last action means it is gone - see ExpireAfterAccessBehaviour
+                        is RemoveAction, is MissAction -> {
                             writeTimestamps.remove(key)
                             refreshingKeys.remove(key)
                         }
 
-                        is ReadAction, is MissAction -> { /* no-op */
+                        is ReadAction -> { /* lastWriteByKey holds none */
                         }
                     }
                 }
