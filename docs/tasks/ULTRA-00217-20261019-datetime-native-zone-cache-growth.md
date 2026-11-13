@@ -161,11 +161,11 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
   `Pacific/Kanton`, and its KDoc states the contract (ids java.time, Intl and the native tz database all resolve, as
   of tzdb 2025b). `EST`, `HST`, `MST` and `ROC` stay out: java.time refuses them as region ids (ULTRA-00217).
 - `ultra/datetime`, behaviour change: a zone id not shaped like an IANA region id is refused with
-  `IllegalTimeZoneException("Invalid zone id: …")` before any platform lookup: longer than 64 characters, a character
+  `IllegalTimeZoneException("Invalid zone id: '…'")` before any platform lookup: longer than 64 characters, a character
   outside `A-Z a-z 0-9 _ + - /`, or an empty path part (leading, trailing or doubled `/`). Native: `Europe/./Berlin`,
   `Europe//Berlin`, `Europe/Berlin/` and `./Europe/Berlin` resolved as Berlin, now they are refused. JVM and JS: they
-  refused such ids already, only the message changes (it echoes at most 64 characters, anything but printable ASCII as
-  `?`). On every platform `MpTimezone.kotlinx` applies the same check to region ids. Fixed-offset ids (`UTC+01:00`)
+  refused such ids already, only the message changes (it echoes the id in single quotes, `Invalid zone id: ''` for an
+  empty one, at most 64 characters with `...` after the quote when cut, anything but printable ASCII as `?`). On every platform `MpTimezone.kotlinx` applies the same check to region ids. Fixed-offset ids (`UTC+01:00`)
   are unaffected, and `MpTimezone.of` does not check, so stored values still decode. Case variants on a
   case-insensitive file system (macOS, mingw) are not refused by this (ULTRA-00317).
 

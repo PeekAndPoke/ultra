@@ -24,17 +24,17 @@ class ZoneIdCheckSpec : StringSpec({
 
     // id to the expected message
     val refused = listOf(
-        "Europe/./Berlin" to "Invalid zone id: Europe/./Berlin",
-        "Europe//Berlin" to "Invalid zone id: Europe//Berlin",
-        "Europe/Berlin/" to "Invalid zone id: Europe/Berlin/",
-        "./Europe/Berlin" to "Invalid zone id: ./Europe/Berlin",
-        "/Europe/Berlin" to "Invalid zone id: /Europe/Berlin",
-        "Europe/../Europe/Berlin" to "Invalid zone id: Europe/../Europe/Berlin",
-        "/usr/share/zoneinfo/Europe/Berlin" to "Invalid zone id: /usr/share/zoneinfo/Europe/Berlin",
-        "Europe/Berlin " to "Invalid zone id: Europe/Berlin ",
-        "Europe/Berlín" to "Invalid zone id: Europe/Berl?n",
-        "" to "Invalid zone id: ",
-        "A".repeat(65) to "Invalid zone id: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...",
+        "Europe/./Berlin" to "Invalid zone id: 'Europe/./Berlin'",
+        "Europe//Berlin" to "Invalid zone id: 'Europe//Berlin'",
+        "Europe/Berlin/" to "Invalid zone id: 'Europe/Berlin/'",
+        "./Europe/Berlin" to "Invalid zone id: './Europe/Berlin'",
+        "/Europe/Berlin" to "Invalid zone id: '/Europe/Berlin'",
+        "Europe/../Europe/Berlin" to "Invalid zone id: 'Europe/../Europe/Berlin'",
+        "/usr/share/zoneinfo/Europe/Berlin" to "Invalid zone id: '/usr/share/zoneinfo/Europe/Berlin'",
+        "Europe/Berlin " to "Invalid zone id: 'Europe/Berlin '",
+        "Europe/Berlín" to "Invalid zone id: 'Europe/Berl?n'",
+        "" to "Invalid zone id: ''",
+        "A".repeat(65) to "Invalid zone id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'...",
     )
 
     refused.forEach { (id, expected) ->
@@ -64,7 +64,7 @@ class ZoneIdCheckSpec : StringSpec({
 
         val error = shouldThrow<IllegalTimeZoneException> { TimezoneEngine.requireRegionIdShape(id) }
 
-        error.message shouldBe "Invalid zone id: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA."
+        error.message shouldBe "Invalid zone id: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.'"
     }
 
     "the refusal echoes at most 64 characters, control characters replaced" {
@@ -72,7 +72,7 @@ class ZoneIdCheckSpec : StringSpec({
 
         val error = shouldThrow<IllegalTimeZoneException> { instant.atZone(MpTimezone.of(id)) }
 
-        error.message shouldBe "Invalid zone id: Europe/Berlin??" + "x".repeat(49) + "..."
+        error.message shouldBe "Invalid zone id: 'Europe/Berlin??" + "x".repeat(49) + "'..."
     }
 
     "an invalid fixed offset is refused with a bounded echo as well" {
@@ -80,7 +80,7 @@ class ZoneIdCheckSpec : StringSpec({
 
         val error = shouldThrow<IllegalTimeZoneException> { instant.atZone(MpTimezone.of(id)) }
 
-        error.message shouldBe "Invalid zone id: +99?" + "9".repeat(60) + "..."
+        error.message shouldBe "Invalid zone id: '+99?" + "9".repeat(60) + "'..."
     }
 
     listOf("UTC+01:00", "+05:30", "GMT-08:00", "UT+1", "-03").forEach { id ->

@@ -229,11 +229,14 @@ internal object TimezoneEngine {
         return previous != '/'
     }
 
-    /** [zoneId] for an error message: at most 64 characters, anything but printable ASCII replaced by `?`. */
-    private fun echo(zoneId: String): String {
+    /**
+     * [zoneId] for an error message, in single quotes so an empty or blank id is readable: at most 64 characters
+     * (`...` after the quote when cut), anything but printable ASCII replaced by `?`.
+     */
+    internal fun echo(zoneId: String): String {
         val shown = zoneId.take(MAX_REGION_ID_LENGTH).map { if (it in ' '..'~') it else '?' }.joinToString("")
 
-        return if (zoneId.length > MAX_REGION_ID_LENGTH) "$shown..." else shown
+        return if (zoneId.length > MAX_REGION_ID_LENGTH) "'$shown'..." else "'$shown'"
     }
 
     // "UTC" before "UT", so the longer prefix wins
