@@ -3,7 +3,7 @@ package io.peekandpoke.ultra.cache
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicIntegerArray
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -15,6 +15,18 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class FastCacheRefreshConcurrencySpec : StringSpec() {
 
+    /** Checks [condition] every 20 ms for up to 10 s; returns whether it became true. */
+    private fun pollUntil(condition: () -> Boolean): Boolean {
+        val deadline = System.currentTimeMillis() + 10_000
+
+        while (System.currentTimeMillis() < deadline) {
+            if (condition()) return true
+            Thread.sleep(20)
+        }
+
+        return condition()
+    }
+
     init {
         "a key released by a failed refresh on another thread is refreshed again" {
             val keys = 20_000
@@ -22,38 +34,35 @@ class FastCacheRefreshConcurrencySpec : StringSpec() {
             // The release is lost mostly while the set grows, so each trial starts with a fresh one.
             // One trial misses the race about one run in five; five trials make a miss very unlikely.
             repeat(5) {
-                val loads = AtomicInteger(0)
+                val loadsPerKey = AtomicIntegerArray(keys)
 
                 // a cache without behaviours: process() is driven by hand from this thread
                 val cache = fastCache<Int, Int>(loopDelay = 1_000.milliseconds) {}
                 val behaviour = FastCache.RefreshAfterWriteBehaviour<Int, Int>(refreshAfter = 1.milliseconds) {
-                    loads.incrementAndGet()
+                    loadsPerKey.incrementAndGet(it)
                     // the release path that prints nothing - the other failure path logs each key
                     throw CancellationException("refresh failed")
                 }
+
+                fun everyKeyLoaded(times: Int) = (0 until keys).all { key -> loadsPerKey.get(key) >= times }
 
                 // cached for real: a refresh only replaces a value that is in the cache
                 (0 until keys).forEach { cache.put(it, it) }
                 behaviour.process(cache, FastCache.ActionUpdates((0 until keys).map { FastCache.PutAction(it, it) }))
 
-                // first round: every key is launched while failed refreshes release keys concurrently;
-                // second round: every key must have been released, so every key is launched again
-                listOf(keys, 2 * keys).forEach { expected ->
-                    Thread.sleep(5)
+                // First round: every key is launched while failed refreshes release keys concurrently
+                Thread.sleep(5)
+                behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
 
+                pollUntil { everyKeyLoaded(1) } shouldBe true
+
+                // Second round: pass again until every key was launched a second time. A key whose
+                // release was merely late is launched by a later pass; one whose release was lost
+                // stays claimed and is never launched again.
+                pollUntil {
                     behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
-
-                    val deadline = System.currentTimeMillis() + 10_000
-
-                    while (loads.get() < expected && System.currentTimeMillis() < deadline) {
-                        Thread.sleep(10)
-                    }
-
-                    // the key is released right after the load is counted
-                    Thread.sleep(100)
-
-                    loads.get() shouldBe expected
-                }
+                    everyKeyLoaded(2)
+                } shouldBe true
             }
         }
     }

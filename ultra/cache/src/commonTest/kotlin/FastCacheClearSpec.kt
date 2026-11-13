@@ -1,11 +1,13 @@
 package io.peekandpoke.ultra.cache
 
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class FastCacheClearSpec : StringSpec() {
     init {
@@ -76,13 +78,15 @@ class FastCacheClearSpec : StringSpec() {
                 .filterIsInstance<FastCache.MaxMemoryUsageBehaviour<String, String>>().single()
 
             cache.put("a", "1")
-            delay(100.milliseconds)
-            (behaviour.totalSize > 0L) shouldBe true
+            eventually(3.seconds) {
+                (behaviour.totalSize > 0L) shouldBe true
+            }
 
             cache.clear()
-            delay(100.milliseconds)
 
-            behaviour.totalSize shouldBe 0L
+            eventually(3.seconds) {
+                behaviour.totalSize shouldBe 0L
+            }
         }
 
         "behaviours forget cleared entries: refreshAfterWrite stops reloading them" {

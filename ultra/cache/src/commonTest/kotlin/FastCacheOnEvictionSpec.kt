@@ -1,10 +1,12 @@
 package io.peekandpoke.ultra.cache
 
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class FastCacheOnEvictionSpec : StringSpec() {
 
@@ -74,9 +76,11 @@ class FastCacheOnEvictionSpec : StringSpec() {
             }
 
             cache.put("x", "hello")
-            delay(500.milliseconds)
 
-            evicted.size shouldBe 1
+            eventually(3.seconds) {
+                evicted.size shouldBe 1
+            }
+
             evicted[0] shouldBe ("x" to "hello")
         }
     }

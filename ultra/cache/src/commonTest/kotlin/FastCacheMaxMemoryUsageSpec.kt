@@ -1,13 +1,14 @@
 // language: kotlin
 package io.peekandpoke.ultra.cache
 
-import io.kotest.assertions.fail
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests for FastCache memory-limit behaviour (MaxMemoryUsageBehaviour).
@@ -210,14 +211,12 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
                     cache.put(num, num)
                 }
 
-                // Let the loop catch up: several of its 50 ms periods. One period was not enough,
-                // the check then ran before the loop had processed the batch.
-                delay(200.milliseconds)
+                // Until the loop has caught up: a fixed wait of one 50 ms period checked before the
+                // loop had processed the batch.
+                eventually(3.seconds) {
+                    val expectedTotalMemoryUsage = (cache.keys.sum() + cache.values.sum()).toLong()
 
-                val expectedTotalMemoryUsage = (cache.keys.sum() + cache.values.sum()).toLong()
-
-                if (behaviour.totalSize != expectedTotalMemoryUsage) {
-                    fail("totalSize is ${behaviour.totalSize} but should be $expectedTotalMemoryUsage")
+                    behaviour.totalSize shouldBe expectedTotalMemoryUsage
                 }
             }
         }
