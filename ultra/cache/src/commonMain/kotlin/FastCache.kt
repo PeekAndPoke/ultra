@@ -603,65 +603,74 @@ class FastCache<K, V>(
         //   other behaviour stays and keeps being reloaded, putting the evicted key back into the cache.
         private val writeTimestamps = mutableMapOf<K, Long>()
 
-        // TODO(scan): also mutated from the launched refresh coroutine, so it races with process().
-        /** Keys currently being refreshed — used for deduplication. */
+        /** Keys currently being refreshed, for deduplication. Guarded by [refreshLock]. */
         private val refreshingKeys = mutableSetOf<K>()
+
+        /** The refresh coroutine releases a key on its own thread, while [process] claims keys on the loop. */
+        private val refreshLock = Any()
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
 
-            // Track write timestamps
-            updates.lastByKey.forEach { (key, action) ->
-                when (action) {
-                    is PutAction -> {
-                        writeTimestamps[key] = now
-                        refreshingKeys.remove(key)
-                    }
-
-                    is RemoveAction -> {
-                        writeTimestamps.remove(key)
-                        refreshingKeys.remove(key)
-                    }
-
-                    is ReadAction, is MissAction -> { /* no-op */
-                    }
-                }
-            }
-
-            // Check for stale entries and schedule refreshes
             val keysToRefresh = mutableListOf<K>()
             val keysToEvict = mutableListOf<K>()
 
-            for ((key, writtenAt) in writeTimestamps) {
-                val age = now - writtenAt
+            RunSync(refreshLock) {
+                // Track write timestamps
+                updates.lastByKey.forEach { (key, action) ->
+                    when (action) {
+                        is PutAction -> {
+                            writeTimestamps[key] = now
+                            refreshingKeys.remove(key)
+                        }
 
-                // Hard TTL: evict if exceeded
-                if (hardTtlMs != null && age >= hardTtlMs) {
-                    keysToEvict.add(key)
-                    continue
+                        is RemoveAction -> {
+                            writeTimestamps.remove(key)
+                            refreshingKeys.remove(key)
+                        }
+
+                        is ReadAction, is MissAction -> { /* no-op */
+                        }
+                    }
                 }
 
-                // Soft TTL: schedule refresh if stale and not already refreshing
-                if (age >= refreshAfterMs && key !in refreshingKeys) {
-                    keysToRefresh.add(key)
+                // Check for stale entries and schedule refreshes
+                for ((key, writtenAt) in writeTimestamps) {
+                    val age = now - writtenAt
+
+                    // Hard TTL: evict if exceeded
+                    if (hardTtlMs != null && age >= hardTtlMs) {
+                        keysToEvict.add(key)
+                        continue
+                    }
+
+                    // Soft TTL: claim a stale key unless a refresh already holds it
+                    if (age >= refreshAfterMs && refreshingKeys.add(key)) {
+                        keysToRefresh.add(key)
+                    }
                 }
             }
 
-            // Evict hard-expired entries. (An in-flight refresh cannot resurrect one: its result
-            // goes through putIfPresent, which refuses once the entry is gone.)
-            for (key in keysToEvict) {
-                // Only forget a key that was really removed. removeSilently declines when the key
-                // was touched after the batch was taken - forgetting it anyway meant that entry
-                // was never refreshed and never hard-evicted again. Kept, it is retried next loop.
-                if (cache.removeSilently(key)) {
-                    writeTimestamps.remove(key)
-                    refreshingKeys.remove(key)
+            // Evict hard-expired entries outside refreshLock: removeSilently takes the cache's lock.
+            // (An in-flight refresh cannot resurrect one: its result goes through putIfPresent, which
+            // refuses once the entry is gone.)
+            //
+            // Only forget a key that was really removed. removeSilently declines when the key was
+            // touched after the batch was taken - forgetting it anyway meant that entry was never
+            // refreshed and never hard-evicted again. Kept, it is retried next loop.
+            val evicted = keysToEvict.filter { key -> cache.removeSilently(key) }
+
+            if (evicted.isNotEmpty()) {
+                RunSync(refreshLock) {
+                    evicted.forEach { key ->
+                        writeTimestamps.remove(key)
+                        refreshingKeys.remove(key)
+                    }
                 }
             }
 
             // Launch refresh coroutines
             for (key in keysToRefresh) {
-                refreshingKeys.add(key)
                 cache.scope.launch {
                     try {
                         val newValue = loader(key)
@@ -673,16 +682,21 @@ class FastCache<K, V>(
                         cache.putIfPresent(key, newValue)
                     } catch (e: CancellationException) {
                         // never swallow cancellation - it is how the scope is torn down
-                        refreshingKeys.remove(key)
+                        release(key)
                         throw e
                     } catch (e: Exception) {
                         // Refresh failed: allow retry on next loop iteration. There is no logger
                         // here, so a repeatedly failing loader would otherwise be entirely silent.
-                        refreshingKeys.remove(key)
+                        release(key)
                         println("FastCache refresh for key [$key] failed: $e")
                     }
                 }
             }
+        }
+
+        /** Frees [key] for the next refresh. Runs on the refresh coroutine's thread. */
+        private fun release(key: K) {
+            RunSync(refreshLock) { refreshingKeys.remove(key) }
         }
     }
 
