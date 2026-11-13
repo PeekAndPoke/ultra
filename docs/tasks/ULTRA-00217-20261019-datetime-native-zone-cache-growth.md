@@ -95,6 +95,11 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
     `Europe/Berlin`, made `DatetimeJsBenchmarkSpec` so slow that Chrome missed Karma's ping, no XML: red, but not
     attributable to one test, hence the narrower mutant.)
   - `Europe/Kyiv` removed from the list → red on native, "the zone id Europe/Kyiv is supported and cached".
+- Review round 2 (MINORs, before the merge):
+  - Item 1, JS hot path: `platformOffsetSecondsAt` looks in `offsetCaches` first and tests `supportedIds` membership only
+    on a miss, as native's `zoneFor` does. Refactor, no behaviour change. jsBrowserTest 1906 / 0. Mutation-checked
+    again on the new structure: membership test removed → red (case variants); store skipped for `Pacific/Kanton` →
+    red (listed id cached).
 
 ## Changelog text
 

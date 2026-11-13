@@ -31,11 +31,18 @@ internal fun cachedZoneIds(): Set<String> {
 }
 
 internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Double): Int {
-    if (zoneId !in MpTimezone.supportedIds) {
-        return intlOffsetSecondsAt(newFormatter(zoneId), epochSeconds)
+    val cached = offsetCaches[zoneId]
+    if (cached != null && cached != undefined) {
+        return cached.unsafeCast<OffsetIntervalCache>().offsetSecondsAt(epochSeconds)
     }
 
-    return offsetCacheFor(zoneId).offsetSecondsAt(epochSeconds)
+    // A miss: only listed ids get a cache.
+    if (zoneId !in MpTimezone.supportedIds) return intlOffsetSecondsAt(newFormatter(zoneId), epochSeconds)
+
+    val cache = newOffsetCache(zoneId)
+    offsetCaches[zoneId] = cache
+
+    return cache.offsetSecondsAt(epochSeconds)
 }
 
 // Only asked from 2^52 s on, far outside the JS Date range: the Double lookup throws there, as it should.
@@ -43,18 +50,13 @@ internal actual fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: L
     return platformOffsetSecondsAt(zoneId, epochSeconds.toDouble())
 }
 
-private fun offsetCacheFor(zoneId: String): OffsetIntervalCache {
-    val cached = offsetCaches[zoneId]
-    if (cached != null && cached != undefined) return cached.unsafeCast<OffsetIntervalCache>()
-
-    // Validates the id first, so unknown ids never get a cache.
+/** A new interval cache for [zoneId]; builds the formatter first, so an unknown id throws before a cache exists. */
+private fun newOffsetCache(zoneId: String): OffsetIntervalCache {
     val formatter = newFormatter(zoneId)
 
-    val cache = OffsetIntervalCache(domainStart = -MAX_DATE_SECONDS, domainEnd = MAX_DATE_SECONDS) { epochSeconds ->
+    return OffsetIntervalCache(domainStart = -MAX_DATE_SECONDS, domainEnd = MAX_DATE_SECONDS) { epochSeconds ->
         intlOffsetSecondsAt(formatter, epochSeconds)
     }
-    offsetCaches[zoneId] = cache
-    return cache
 }
 
 /** The offset at [epochSeconds], from the wall-clock rendering of a [formatter] made by [newFormatter]. */
@@ -105,7 +107,8 @@ private fun wallYear(m: dynamic): Int {
 }
 
 /**
- * An Intl formatter for [zoneId]. Throws [IllegalTimeZoneException] for an unknown id or a case variant of a listed one.
+ * An Intl formatter for [zoneId]. Throws [IllegalTimeZoneException] for an unknown id or a case variant of a
+ * listed one.
  */
 private fun newFormatter(zoneId: String): dynamic {
     val opts: dynamic = js(
