@@ -9,8 +9,6 @@ import kotlin.math.round
 // Zone offsets come from the browser's own IANA database via Intl.DateTimeFormat — no tz data is bundled.
 
 private val intl: dynamic = js("Intl")
-// No prototype: ids like "constructor" must miss the cache, not find an Object.prototype member.
-private val formatterCache: dynamic = js("Object.create(null)")
 
 // JS Date covers ±8.64e15 ms; Intl throws a RangeError outside of it.
 private const val MAX_DATE_MS = 8.64e15
@@ -20,10 +18,23 @@ private const val MAX_DATE_SECONDS = 8_640_000_000_000.0
 // accepts no id the JVM would reject.
 private val supportedIdsByLowercase: Map<String, String> by lazy { MpTimezone.supportedIds.associateBy { it.lowercase() } }
 
-// One interval cache per zone id that resolved; Intl is far too slow to ask on every conversion.
+// One interval cache per zone id in MpTimezone.supportedIds; Intl is far too slow to ask on every conversion. Other
+// ids that resolve are asked uncached: Intl also accepts case variants of unlisted ids, and each would add an entry
+// (ULTRA-00217). No prototype: ids like "constructor" must miss the cache, not find an Object.prototype member.
 private val offsetCaches: dynamic = js("Object.create(null)")
 
+/** The zone ids in the cache, for tests. */
+internal fun cachedZoneIds(): Set<String> {
+    val keys: Array<String> = js("Object.keys")(offsetCaches)
+
+    return keys.toSet()
+}
+
 internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Double): Int {
+    if (zoneId !in MpTimezone.supportedIds) {
+        return intlOffsetSecondsAt(newFormatter(zoneId), epochSeconds)
+    }
+
     return offsetCacheFor(zoneId).offsetSecondsAt(epochSeconds)
 }
 
@@ -37,24 +48,24 @@ private fun offsetCacheFor(zoneId: String): OffsetIntervalCache {
     if (cached != null && cached != undefined) return cached.unsafeCast<OffsetIntervalCache>()
 
     // Validates the id first, so unknown ids never get a cache.
-    formatterFor(zoneId)
+    val formatter = newFormatter(zoneId)
 
     val cache = OffsetIntervalCache(domainStart = -MAX_DATE_SECONDS, domainEnd = MAX_DATE_SECONDS) { epochSeconds ->
-        intlOffsetSecondsAt(zoneId, epochSeconds)
+        intlOffsetSecondsAt(formatter, epochSeconds)
     }
     offsetCaches[zoneId] = cache
     return cache
 }
 
-/** The offset of [zoneId] at [epochSeconds], from Intl's wall-clock rendering. */
-private fun intlOffsetSecondsAt(zoneId: String, epochSeconds: Double): Int {
+/** The offset at [epochSeconds], from the wall-clock rendering of a [formatter] made by [newFormatter]. */
+private fun intlOffsetSecondsAt(formatter: dynamic, epochSeconds: Double): Int {
     // Intl renders to whole seconds, so ask about whole seconds — otherwise sub-second instants
     // (e.g. ...:59.999Z) skew the offset by up to a second.
     val flooredMs = epochSeconds * 1000.0
 
     require(flooredMs in -MAX_DATE_MS..MAX_DATE_MS) { "Instant at $epochSeconds s is outside the range of JS dates" }
 
-    val parts = formatterFor(zoneId).formatToParts(Date(flooredMs))
+    val parts = formatter.formatToParts(Date(flooredMs))
     val m: dynamic = js("({})")
     val len: Int = parts.length
     for (i in 0 until len) {
@@ -93,10 +104,10 @@ private fun wallYear(m: dynamic): Int {
     return if (m.era == "BC" || m.era == "B") 1 - year else year
 }
 
-private fun formatterFor(zoneId: String): dynamic {
-    val cached = formatterCache[zoneId]
-    if (cached != null && cached != undefined) return cached
-
+/**
+ * An Intl formatter for [zoneId]. Throws [IllegalTimeZoneException] for an unknown id or a case variant of a listed one.
+ */
+private fun newFormatter(zoneId: String): dynamic {
     val opts: dynamic = js(
         "({ hour12: false, era: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })"
     )
@@ -106,13 +117,10 @@ private fun formatterFor(zoneId: String): dynamic {
         if (known != zoneId) throw IllegalTimeZoneException("Unknown time zone: $zoneId (ids are case-sensitive: $known)")
     }
 
-    val f = try {
+    return try {
         intl.DateTimeFormat("en-US", opts)
     } catch (e: Throwable) {
         // Intl throws a RangeError for an unknown zone id
         throw IllegalTimeZoneException("Unknown time zone: $zoneId", e)
     }
-
-    formatterCache[zoneId] = f
-    return f
 }

@@ -14,6 +14,17 @@ class TimezoneEngineNativeSpec : StringSpec({
         cachedZoneIds() shouldContain "Europe/Berlin"
     }
 
+    // ULTRA-00217: canonical ids newer than the list of 2021 must be cached too
+    listOf(
+        "America/Ciudad_Juarez", "America/Coyhaique", "Europe/Kyiv", "Pacific/Kanton",
+    ).forEach { id ->
+        "the zone id $id is supported and cached" {
+            instant.atZone(MpTimezone.of(id))
+
+            cachedZoneIds() shouldContain id
+        }
+    }
+
     // ULTRA-00217: kotlinx/native resolves path variants of an id, each one used to become a permanent cache entry
     "path variants of a zone id still resolve, but are not cached" {
         val expected = instant.atZone(MpTimezone.of("Europe/Berlin")).toIsoString()
