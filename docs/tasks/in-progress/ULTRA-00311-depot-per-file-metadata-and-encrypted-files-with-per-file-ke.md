@@ -405,12 +405,15 @@ table by mistake; its finding 1 matches the other two reviewers' independent one
 | 3 | MINOR | erased ids | An erased subject id is burnt for whoever gets it next (security 3); the tombstone keeps a hash of the id: pseudonymous (domain 4) | fix (docs) | KDoc, CHANGELOG, docs |
 | 3 | MINOR | `CHANGELOG.md:376` | "Copied elsewhere" is wrong for the decided same-path case (domain 3) | fix | |
 | 3 | NIT | the in-memory store's check-then-act; `HEADER_BYTES` public | | fix | |
-| 3 | NIT | `SignedDepotRepository` is named for a signature and makes a keyed hash (domain 5); the S3 storage id ignores the endpoint (impl 7, domain 6); `alsoReads` and the custom method are not asked for (domain) | | maintainer | Put to the maintainer |
+| 3 | NIT | `SignedDepotRepository` is named for a signature and makes a keyed hash (domain 5); the S3 storage id ignores the endpoint (impl 7, domain 6); `alsoReads` and the custom method are not asked for (domain) | | settled (maintainer, 2026-11-13) | The name stays, the endpoint stays out of the storage id, the parameters stay |
 
 Verified after round 3: depot 115, depot-s3 14, cluster 160, insights 114, funktor-all 289, demo 52. Mutations
 red: I1 the wrap purpose, I2 the derivation's counter, I3 the context's field order, I5 the metadata's order in
 the keyed hash, I6 its field count, I7 the signing purpose, I8 the size reserve, I9 the decrypting verify, I10
 the key-id guard of the database store, I11 the empty path's uri.
+
+The maintainer on round 3 (2026-11-13): "one more round"; `SignedDepotRepository` keeps its name; two S3
+endpoints with one bucket name stay refused as one storage; `encryption` and `alsoReads` stay.
 
 Probed and clean, step 3 round 1: AES-GCM use (fresh file key, random IVs, 128-bit tag, the bound context on
 content and wrap), parameter parsing, an erased key id never valid again, `getContent`'s distinct answers,
