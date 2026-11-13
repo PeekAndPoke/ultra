@@ -130,3 +130,11 @@ CRITICAL, no MAJOR.**
 | 1 | MINOR | `build.gradle.kts:7,89,94` | `kapt` with `auto_service` and `kspCommonMainMetadata` look unused (impl M5; older than this change) | open | Not this ticket |
 | 1 | NIT | IntelliJ may assign a directory shared by two source sets to one of them (impl N1, domain F5) | | maintainer | To be seen in the checkout IntelliJ has open, after the merge; the alternative is an unpublished fixtures module |
 | 1 | NIT | ticket: "13 spec files", "`src/examples` already used this pattern" (impl N2) | | fix | |
+
+Decisions and a probe after round 1 (the maintainer, 2026-11-13): "yes we accept this ... mutator is anyway not in
+use anywhere at the moment" (no JS compilation runs the mutator processor until Kotest is fixed); "6.2.7 is the
+latest release" of Kotest. Probed by the coordinator the same day: with Kotest 6.2.7 (plugin and library) and the
+mutator processor back in `kspJsTest`, `kspTestKotlinJs` fails with the same "PSI has changed since creation". So
+6.2.7 does not fix it; the workaround stays, and both files were restored. Re-enable it when a later Kotest
+survives a second KSP round: add `add("kspJsTest", project(":mutator:ksp"))` back and delete the JVM-output
+`srcDir` of `jsTest`.
