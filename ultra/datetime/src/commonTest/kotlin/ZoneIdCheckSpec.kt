@@ -22,27 +22,27 @@ class ZoneIdCheckSpec : StringSpec({
         "MpTimezone.kotlinx" to { tz -> tz.kotlinx },
     )
 
+    // id to the expected message
     val refused = listOf(
-        "Europe/./Berlin",
-        "Europe//Berlin",
-        "Europe/Berlin/",
-        "./Europe/Berlin",
-        "/Europe/Berlin",
-        "Europe/../Europe/Berlin",
-        "/usr/share/zoneinfo/Europe/Berlin",
-        "Europe/Berlin ",
-        "Europe/Berlín",
-        "",
-        "A".repeat(65),
+        "Europe/./Berlin" to "Invalid zone id: Europe/./Berlin",
+        "Europe//Berlin" to "Invalid zone id: Europe//Berlin",
+        "Europe/Berlin/" to "Invalid zone id: Europe/Berlin/",
+        "./Europe/Berlin" to "Invalid zone id: ./Europe/Berlin",
+        "/Europe/Berlin" to "Invalid zone id: /Europe/Berlin",
+        "Europe/../Europe/Berlin" to "Invalid zone id: Europe/../Europe/Berlin",
+        "/usr/share/zoneinfo/Europe/Berlin" to "Invalid zone id: /usr/share/zoneinfo/Europe/Berlin",
+        "Europe/Berlin " to "Invalid zone id: Europe/Berlin ",
+        "Europe/Berlín" to "Invalid zone id: Europe/Berl?n",
+        "" to "Invalid zone id: ",
+        "A".repeat(65) to "Invalid zone id: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...",
     )
 
-    refused.forEach { id ->
+    refused.forEach { (id, expected) ->
         entries.forEach { (entry, call) ->
             "'${id.take(20)}' (${id.length} chars) is refused by $entry" {
                 val error = shouldThrow<IllegalTimeZoneException> { call(MpTimezone.of(id)) }
 
-                error.message shouldBe "Invalid zone id: " + id.take(64).replace('í', '?') +
-                        (if (id.length > 64) "..." else "")
+                error.message shouldBe expected
             }
         }
     }
