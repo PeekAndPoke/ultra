@@ -32,13 +32,13 @@ fun <K, V> fastCache(
 /**
  * This TTL in whole milliseconds, the resolution of the cache's clock.
  *
- * Refuses a non-positive TTL. Rounds a positive one below 1 ms up to 1 ms: truncated to 0 it would
- * expire an entry in the very iteration that records its write.
+ * Never throws; each odd value has a fallback. Zero or negative is 0: "do not keep", the entry expires
+ * at the next processing pass. A positive TTL below 1 ms is 1 ms: truncated to 0 it would mean
+ * "do not keep" although a positive TTL was asked for. [Duration.INFINITE] never expires.
  */
-private fun Duration.ttlMillis(name: String): Long {
-    require(isPositive()) { "$name must be > 0, but was $this" }
-
-    return inWholeMilliseconds.coerceAtLeast(1L)
+private fun Duration.ttlMillis(): Long = when {
+    isPositive() -> inWholeMilliseconds.coerceAtLeast(1L)
+    else -> 0L
 }
 
 /**
@@ -212,7 +212,8 @@ class FastCache<K, V>(
      *
      * Each read or put resets the TTL clock for the affected entry.
      * Expired entries are evicted during the next processing-loop iteration.
-     * [ttl] must be positive; below 1 ms it counts as 1 ms.
+     * A zero or negative [ttl] expires entries at the next pass, one below 1 ms counts as 1 ms, and
+     * [Duration.INFINITE] never expires.
      */
     @Suppress("DuplicatedCode")
     class ExpireAfterAccessBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
@@ -222,7 +223,7 @@ class FastCache<K, V>(
             val accessed: Long,
         )
 
-        private val ttlMs = ttl.ttlMillis("ttl")
+        private val ttlMs = ttl.ttlMillis()
         private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry, Long> { it.accessed }
 
@@ -271,7 +272,8 @@ class FastCache<K, V>(
      *
      * Only put operations reset the TTL clock. Reads do NOT extend the entry's lifetime.
      * Expired entries are evicted during the next processing-loop iteration.
-     * [ttl] must be positive; below 1 ms it counts as 1 ms.
+     * A zero or negative [ttl] expires entries at the next pass, one below 1 ms counts as 1 ms, and
+     * [Duration.INFINITE] never expires.
      */
     @Suppress("DuplicatedCode")
     class ExpireAfterWriteBehaviour<K, V>(ttl: Duration) : Behaviour<K, V> {
@@ -280,7 +282,7 @@ class FastCache<K, V>(
             val written: Long,
         )
 
-        private val ttlMs = ttl.ttlMillis("ttl")
+        private val ttlMs = ttl.ttlMillis()
         private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry, Long> { it.written }
 
@@ -590,25 +592,24 @@ class FastCache<K, V>(
      * Only one refresh per key runs at a time.
      *
      * An optional [hardTtl] forces eviction when the write age exceeds it, even during refresh.
-     * Both must be positive, below 1 ms they count as 1 ms, and [hardTtl] must exceed [refreshAfter]:
-     * otherwise the hard eviction always comes first and the entry is never refreshed.
+     *
+     * Odd values fall back instead of throwing. Below 1 ms counts as 1 ms; [Duration.INFINITE] never
+     * expires. A zero or negative [hardTtl] expires entries at the next pass. A zero or negative
+     * [refreshAfter] means "do not keep" as well: entries expire at the next pass and are never
+     * refreshed - not reloaded on every pass, which would hammer the [loader]'s source. A [hardTtl]
+     * not above [refreshAfter] wins: entries expire at [hardTtl] and are never refreshed.
      */
     class RefreshAfterWriteBehaviour<K, V>(
         refreshAfter: Duration,
-        private val hardTtl: Duration? = null,
+        hardTtl: Duration? = null,
         private val loader: suspend (K) -> V,
     ) : Behaviour<K, V> {
 
-        private val refreshAfterMs = refreshAfter.ttlMillis("refreshAfter")
-        private val hardTtlMs = hardTtl?.ttlMillis("hardTtl")
-        private val clock = Kronos.systemUtc
+        private val refreshAfterMs = refreshAfter.ttlMillis()
 
-        init {
-            // Compared in milliseconds, the unit the behaviour actually runs on
-            require(hardTtlMs == null || hardTtlMs > refreshAfterMs) {
-                "hardTtl ($hardTtl) must be greater than refreshAfter ($refreshAfter)"
-            }
-        }
+        // The hard branch is checked first, so 0 here expires every entry before any refresh
+        private val hardTtlMs = if (refreshAfter.isPositive()) hardTtl?.ttlMillis() else 0L
+        private val clock = Kronos.systemUtc
 
         private val writeTimestamps = mutableMapOf<K, Long>()
 

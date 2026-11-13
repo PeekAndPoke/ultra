@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.cache
 
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -91,29 +92,84 @@ class FastCacheConfigValidationSpec : StringSpec() {
             }
         }
 
-        "every TTL rejects a non-positive duration" {
+        "a zero or negative expiry TTL does not throw: the entry expires at the next pass" {
             listOf(Duration.ZERO, (-1).milliseconds).forEach { ttl ->
-                shouldThrow<IllegalArgumentException> { fastCache<String, String> { expireAfterAccess(ttl) } }
-                shouldThrow<IllegalArgumentException> { fastCache<String, String> { expireAfterWrite(ttl) } }
-                shouldThrow<IllegalArgumentException> { fastCache<String, String> { refreshAfterWrite(ttl) { it } } }
-                shouldThrow<IllegalArgumentException> {
-                    fastCache<String, String> { refreshAfterWrite(1.seconds, hardTtl = ttl) { it } }
+                val caches = listOf(
+                    fastCache<String, String>(loopDelay = 20.milliseconds) { expireAfterAccess(ttl) },
+                    fastCache<String, String>(loopDelay = 20.milliseconds) { expireAfterWrite(ttl) },
+                )
+
+                caches.forEach { cache ->
+                    cache.put("a", "1")
+
+                    eventually(3.seconds) {
+                        cache.keys shouldBe emptySet()
+                    }
                 }
             }
         }
 
-        "refreshAfterWrite rejects a hard TTL that does not exceed the refresh TTL" {
-            // The hard branch is checked first, so such an entry was evicted and never refreshed
-            shouldThrow<IllegalArgumentException> {
-                fastCache<String, String> { refreshAfterWrite(2.seconds, hardTtl = 1.seconds) { it } }
+        "an INFINITE expiry TTL never expires" {
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                expireAfterAccess(Duration.INFINITE)
+                expireAfterWrite(Duration.INFINITE)
             }
 
-            shouldThrow<IllegalArgumentException> {
-                fastCache<String, String> { refreshAfterWrite(1.seconds, hardTtl = 1.seconds) { it } }
+            cache.put("a", "1")
+            delay(200.milliseconds)
+
+            cache.keys shouldBe setOf("a")
+        }
+
+        "a zero or negative refresh TTL does not throw: no refresh, the entry expires at the next pass" {
+            // Not the old reading of 0, "reload every key on every pass", which hammers the source
+            listOf(Duration.ZERO, (-1).milliseconds).forEach { ttl ->
+                var loads = 0
+                val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                    refreshAfterWrite(ttl, hardTtl = Duration.INFINITE) { loads++; it }
+                }
+
+                cache.put("a", "1")
+
+                eventually(3.seconds) {
+                    cache.keys shouldBe emptySet()
+                }
+
+                loads shouldBe 0
+            }
+        }
+
+        "a zero or negative hard TTL does not throw: the entry expires at the next pass" {
+            var loads = 0
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                refreshAfterWrite(1.seconds, hardTtl = Duration.ZERO) { loads++; it }
             }
 
-            fastCache<String, String> { refreshAfterWrite(1.seconds, hardTtl = 2.seconds) { it } }
-                .behaviours.size shouldBe 1
+            cache.put("a", "1")
+
+            eventually(3.seconds) {
+                cache.keys shouldBe emptySet()
+            }
+
+            loads shouldBe 0
+        }
+
+        "a hard TTL not above the refresh TTL does not throw: the entry expires at it, unrefreshed" {
+            var loads = 0
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                refreshAfterWrite(200.milliseconds, hardTtl = 100.milliseconds) { loads++; it }
+            }
+
+            cache.put("a", "1")
+
+            eventually(3.seconds) {
+                cache.keys shouldBe emptySet()
+            }
+
+            // well past the refresh TTL: the hard branch is checked first, so it never refreshed
+            delay(200.milliseconds)
+
+            loads shouldBe 0
         }
 
         "a sub-millisecond expiry TTL counts as 1 ms instead of truncating to 0" {
