@@ -30,7 +30,7 @@ internal fun cachedZoneIds(): Set<String> {
     return keys.toSet()
 }
 
-/** How many Intl formatters were built, for tests. */
+/** How many Intl formatters were built successfully, for tests. */
 internal var intlFormattersBuilt: Int = 0
     private set
 
@@ -132,15 +132,21 @@ private fun newFormatter(zoneId: String): dynamic {
     opts.timeZone = zoneId
 
     supportedIdsByLowercase[zoneId.lowercase()]?.let { known ->
-        if (known != zoneId) throw IllegalTimeZoneException("Unknown time zone: $zoneId (ids are case-sensitive: $known)")
+        if (known != zoneId) {
+            throw IllegalTimeZoneException(
+                "Unknown time zone: ${TimezoneEngine.echo(zoneId)} (ids are case-sensitive: $known)"
+            )
+        }
+    }
+
+    val formatter = try {
+        intl.DateTimeFormat("en-US", opts)
+    } catch (e: Throwable) {
+        // Intl throws a RangeError for an unknown zone id
+        throw IllegalTimeZoneException("Unknown time zone: ${TimezoneEngine.echo(zoneId)}", e)
     }
 
     intlFormattersBuilt++
 
-    return try {
-        intl.DateTimeFormat("en-US", opts)
-    } catch (e: Throwable) {
-        // Intl throws a RangeError for an unknown zone id
-        throw IllegalTimeZoneException("Unknown time zone: $zoneId", e)
-    }
+    return formatter
 }
