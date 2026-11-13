@@ -25,7 +25,8 @@ interface Mutator<V> : GetAndSet<V> {
 
         override fun modifyValue(block: (V) -> V) {
             val modified = block(_value)
-            _value = if (modified != _initial) modified else _initial
+            // Back to the baseline: take a snapshot of it, so an in-place change of the value cannot change the baseline
+            _value = if (modified != _initial) modified else snapshotInitial(_initial)
             notifyObservers()
         }
 

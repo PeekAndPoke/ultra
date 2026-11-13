@@ -60,15 +60,42 @@ class ListMutatorSubListSpec : StringSpec() {
             seen shouldBe expected
         }
 
-        "a change through the snapshot finds its element after the parent was restructured" {
+        "a change through the snapshot finds its element by identity after the element moved" {
             val mutator = listOf(a, b, c).mutator()
             val snapshot = mutator.subList(1, 3)
 
+            // c moves from index 2 to 1, and index 2 now holds a different element
             mutator.removeAt(0)
-            mutator.add(0, x)
+            mutator.add(x)
             snapshot[1].street = "C-changed"
 
-            mutator.get() shouldBe listOf(x, b, c.copy(street = "C-changed"))
+            mutator.get() shouldBe listOf(b, c.copy(street = "C-changed"), x)
+        }
+
+        "the snapshot's contains(), containsAll(), indexOf() and lastIndexOf() compare by value, as the list does" {
+            val mutator = listOf(a, b, a).mutator()
+            val snapshot = mutator.subList(0, 3)
+
+            snapshot.indexOf(mutator[2]) shouldBe 0
+            snapshot.indexOf(mutator[1]) shouldBe 1
+            snapshot.lastIndexOf(mutator.getChildMutator(a)) shouldBe 2
+            snapshot.contains(mutator.getChildMutator(b)) shouldBe true
+            snapshot.containsAll(listOf(mutator.getChildMutator(a), mutator.getChildMutator(b))) shouldBe true
+
+            snapshot.indexOf(mutator.getChildMutator(x)) shouldBe -1
+            snapshot.lastIndexOf(mutator.getChildMutator(x)) shouldBe -1
+            snapshot.contains(mutator.getChildMutator(x)) shouldBe false
+            snapshot.containsAll(listOf(mutator.getChildMutator(a), mutator.getChildMutator(x))) shouldBe false
+
+            // the same answers as the list itself
+            mutator.indexOf(mutator[2]) shouldBe 0
+            mutator.lastIndexOf(mutator.getChildMutator(a)) shouldBe 2
+        }
+
+        "the snapshot's toString() shows the values" {
+            val mutator = listOf(a, b, c).mutator()
+
+            mutator.subList(0, 2).toString() shouldBe listOf(a, b).toString()
         }
 
         "the snapshot is not a view: later changes to the parent's structure leave it as it was" {

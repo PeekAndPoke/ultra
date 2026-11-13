@@ -18,26 +18,26 @@ class ListMutatorSubListProbeSpec : StringSpec() {
     private val c = Address("C", "C", "Z")
 
     init {
-        "chunked() does not reach subList()" {
+        "chunked() groups the child mutators in order" {
             val mutator = listOf(a, b, c).mutator()
 
             mutator.chunked(2).map { chunk -> chunk.map { it.get() } } shouldBe listOf(listOf(a, b), listOf(c))
         }
 
-        "windowed() does not reach subList()" {
+        "windowed() returns the overlapping windows of child mutators" {
             val mutator = listOf(a, b, c).mutator()
 
             mutator.windowed(2).map { window -> window.map { it.get() } } shouldBe listOf(listOf(a, b), listOf(b, c))
         }
 
-        "windowed() with partial windows does not reach subList()" {
+        "windowed() with partial windows keeps the short last window" {
             val mutator = listOf(a, b, c).mutator()
 
             mutator.windowed(size = 2, step = 2, partialWindows = true).map { window -> window.map { it.get() } } shouldBe
                 listOf(listOf(a, b), listOf(c))
         }
 
-        "slice(IntRange) works through subList()" {
+        "slice(IntRange) returns the child mutators of the range" {
             val mutator = listOf(a, b, c).mutator()
 
             mutator.slice(0..1).map { it.get() } shouldBe listOf(a, b)
