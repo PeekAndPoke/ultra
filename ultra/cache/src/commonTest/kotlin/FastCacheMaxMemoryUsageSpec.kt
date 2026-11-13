@@ -185,7 +185,7 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             behaviour.totalSize shouldBe 0L
         }
 
-        "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test".config(enabled = false) {
+        "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test" {
             // We estimate the size as the int input value itself.
             class StubEstimator : ObjectSizeEstimator {
                 override fun estimate(obj: Any?): Long = (obj as? Int)?.toLong() ?: 0L
@@ -202,7 +202,7 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
 
             val rand = Random(42)
 
-            // 100 random rounds
+            // 10 random rounds
             repeat(10) {
                 // insert 100 numbers
                 repeat(100) {
@@ -210,8 +210,9 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
                     cache.put(num, num)
                 }
 
-                // Wait for the cache to settle down / inner loop to catch up
-                delay(50.milliseconds)
+                // Let the loop catch up: several of its 50 ms periods. One period was not enough,
+                // the check then ran before the loop had processed the batch.
+                delay(200.milliseconds)
 
                 val expectedTotalMemoryUsage = (cache.keys.sum() + cache.values.sum()).toLong()
 

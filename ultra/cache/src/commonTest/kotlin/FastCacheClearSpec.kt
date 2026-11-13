@@ -72,7 +72,8 @@ class FastCacheClearSpec : StringSpec() {
             val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
                 maxMemoryUsage(1_000_000)
             }
-            val behaviour = cache.behaviours.filterIsInstance<FastCache.MaxMemoryUsageBehaviour<String, String>>().single()
+            val behaviour = cache.behaviours
+                .filterIsInstance<FastCache.MaxMemoryUsageBehaviour<String, String>>().single()
 
             cache.put("a", "1")
             delay(100.milliseconds)
