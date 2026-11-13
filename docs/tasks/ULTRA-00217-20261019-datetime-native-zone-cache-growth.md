@@ -165,7 +165,9 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
   outside `A-Z a-z 0-9 _ + - /`, or an empty path part (leading, trailing or doubled `/`). Native: `Europe/./Berlin`,
   `Europe//Berlin`, `Europe/Berlin/` and `./Europe/Berlin` resolved as Berlin, now they are refused. JVM and JS: they
   refused such ids already, only the message changes (it echoes the id in single quotes, `Invalid zone id: ''` for an
-  empty one, at most 64 characters with `...` after the quote when cut, anything but printable ASCII as `?`). On every platform `MpTimezone.kotlinx` applies the same check to region ids. Fixed-offset ids (`UTC+01:00`)
+  empty one, at most 64 characters with `...` after the quote when cut, anything but printable ASCII as `?`). On every platform `MpTimezone.kotlinx` applies the same check to region ids, and on the JVM so does
+  `MpTimezone.jvm` before `ZoneId.of`: a bad id there throws `IllegalTimeZoneException` with the bounded message instead
+  of java.time's `DateTimeException` with the raw id. Fixed-offset ids (`UTC+01:00`)
   are unaffected, and `MpTimezone.of` does not check, so stored values still decode. Case variants on a
   case-insensitive file system (macOS, mingw) are not refused by this (ULTRA-00317).
 

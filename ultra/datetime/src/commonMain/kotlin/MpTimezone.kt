@@ -639,7 +639,7 @@ data class MpTimezone private constructor(val id: String) {
      */
     val kotlinx: TimeZone
         get() {
-            if (TimezoneEngine.fixedOffsetSecondsOrNull(id) == null) TimezoneEngine.requireRegionIdShape(id)
+            TimezoneEngine.requireConvertibleZoneId(id)
 
             return TimeZone.of(id)
         }

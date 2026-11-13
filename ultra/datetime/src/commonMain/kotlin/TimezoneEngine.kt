@@ -211,6 +211,11 @@ internal object TimezoneEngine {
         if (!hasRegionIdShape(zoneId)) throw IllegalTimeZoneException("Invalid zone id: ${echo(zoneId)}")
     }
 
+    /** For a converter to a platform zone: a fixed offset must parse, a region id must pass [requireRegionIdShape]. */
+    internal fun requireConvertibleZoneId(zoneId: String) {
+        if (fixedOffsetSecondsOrNull(zoneId) == null) requireRegionIdShape(zoneId)
+    }
+
     private fun hasRegionIdShape(zoneId: String): Boolean {
         if (zoneId.isEmpty() || zoneId.length > MAX_REGION_ID_LENGTH) return false
 
