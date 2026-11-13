@@ -1,0 +1,34 @@
+# The Karma port of every module with browser tests (ULTRA-00230): its index in the checkout's block of 33 ports.
+# port = 9931 + ULTRA_KARMA_SLOT * 33 + index. Ultra's range, assigned by Mission Control: 9931-10030.
+# A new module takes the next free index (at most 32). Never change or reuse one: karma-ports.py writes the files.
+0 ultra/common
+1 ultra/datetime
+2 ultra/cache
+3 ultra/maths
+4 ultra/model
+5 ultra/fixture
+6 ultra/i18n
+7 ultra/remote
+8 ultra/semanticui
+9 ultra/slumber
+10 ultra/streams
+11 mutator/core
+12 kraft/core
+13 kraft/core-tests
+14 kraft/semanticui
+15 kraft/addons/avatars
+16 kraft/addons/browserdetect
+17 kraft/addons/chartjs
+18 kraft/addons/datetime
+19 kraft/addons/jwtdecode
+20 kraft/addons/marked
+21 kraft/addons/pdfjs
+22 kraft/addons/pixijs
+23 kraft/addons/prismjs
+24 kraft/addons/signaturepad
+25 kraft/addons/threejs
+26 kraft/addons/visnetwork
+27 funktor/auth
+28 funktor/inspect
+29 funktor/saas
+30 tooling/i18n-fixture

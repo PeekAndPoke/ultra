@@ -32,3 +32,13 @@ Karma on the default 9876/next-free port, a ChromeHeadless joined the other's se
 ## History
 
 - 2026-10-21: numbered ULTRA-00230 (was `docs/tasks/20261019-fixed-karma-ports.md`).
+- 2026-11-13: built with ULTRA-00316 (wave 0). Decided: a fixed index per module in `console/tools/karma-ports/ports.txt`
+  (31 modules with a browser target and test sources), port = 9931 + `ULTRA_KARMA_SLOT` * 33 + index, three blocks
+  in ultra's range; `karma-ports.py` writes `<module>/karma.config.d/karma-port.js` and `--check` finds a missing or
+  stale file and a module without a port. **A port that is taken fails the run** (Karma would move on to the next
+  port, which is another module's): that, not a flock, is what keeps two checkouts apart. `wt-gradle.sh` gives a
+  track worktree block 1 or 2; the main worktree has block 0. Verified by real runs: `:ultra:maths` on 9934 and
+  `:ultra:model` on 9935 in one build; with 9934 held by another process the run fails naming the port and the
+  module; `ULTRA_KARMA_SLOT=1` gives 9967; `ULTRA_KARMA_SLOT=7` is refused. Open: the three Kraft example repos
+  (10061-10080) are other repositories; the module to port list for Mission Control; a line in CLAUDE.md (needs the
+  maintainer's OK); `--own-package` of the test digest (ULTRA-00227 first).

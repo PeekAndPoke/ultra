@@ -13,6 +13,15 @@ if [[ "$root" == */ultra-worktrees/* ]]; then
   db="ultra_wt_$(basename "$root" | tr -c 'a-zA-Z0-9\n' '_')"
   export ULTRA_TEST_ARANGO_DB="$db" ULTRA_TEST_MONGO_DB="$db" ULTRA_TEST_DEMO_DB="${db}_demo"
   echo "wt-gradle: test databases $db / ${db}_demo" >&2
+
+  # Browser tests: each module has a fixed Karma port inside a block of 33 (console/tools/karma-ports). The main
+  # worktree uses block 0; a track worktree block 1 or 2, by its place among the worktrees. Two tracks may share a
+  # block: they own different modules, and a port that is taken fails the run instead of joining another's server.
+  if [[ -z "${ULTRA_KARMA_SLOT:-}" ]]; then
+    place=$(ls -1 "$(dirname "$root")" | sort | grep -n -x "$(basename "$root")" | cut -d: -f1)
+    export ULTRA_KARMA_SLOT=$(( (place - 1) % 2 + 1 ))
+  fi
+  echo "wt-gradle: Karma port block $ULTRA_KARMA_SLOT" >&2
 fi
 
 if [[ "${1:-}" == "--full-suite" ]]; then

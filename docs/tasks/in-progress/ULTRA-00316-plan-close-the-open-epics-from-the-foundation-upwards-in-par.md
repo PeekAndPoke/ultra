@@ -1,0 +1,68 @@
+# ULTRA-00316: Plan: close the open epics from the foundation upwards, in parallel tracks
+
+> **Status (2026-11-13): IN PROGRESS.**
+
+## Why this exists
+
+The maintainer (2026-11-13): "I would like to close open topics by epic starting from the components at the root of
+all dependencies ... finish open epics from the foundation upwards ... with multiple agents in parallel working on
+different epics where they would not interfere." Decisions of 2026-11-13: triage first ("yes"), three tracks
+("three tracks"), the triage proposes do / drop / park for ideas ("yes lets review the tickets after triage"),
+red-team sessions are run as each area closes ("run it"), this plan is stored ("store the plan"). And: "Once the
+three tracks are done i would like to do a deep review on slumber: correctness, performance, bugfixes, eventually
+missing features."
+
+## The rules that keep tracks apart
+
+- **A track owns a set of module directories and nothing else.** Two tracks never share a module.
+- **At most three tracks**, each in a worktree made with `console/worktree-new.sh <track>` and built only through
+  `console/wt-gradle.sh` (its own Arango and Mongo databases). One full suite at a time, machine-wide.
+- **Only the coordinator, on master, touches** `CHANGELOG.md`, `CLAUDE.md`, skills, the roadmap (ULTRA-00028),
+  `settings.gradle`, `buildSrc`, and ticket numbers (`docs/tasks/_next-ticket.txt`). A track writes its changelog
+  text into its ticket; a track that needs a new ticket asks the coordinator for the number.
+- **A ticket that changes a public API of a lower layer runs first** and is merged before a track above it starts.
+  After every merge the other tracks rebase.
+- **Every ticket passes the usual gate** (tests, mutation checks, the three-charter review; standard tier, strict
+  for a ticket marked security-critical). The coordinator merges after a clean gate.
+- **An epic closes** when every child is done, or the maintainer parked it (ideas go to a post-v1 list).
+- **Budget:** cheap work only from 85 % of the week, stop at 90 %; a new wave starts only below 60 %.
+
+## Step 0: triage (read-only, running since 2026-11-13)
+
+One agent per epic group checks every open ticket against today's code: done already, ready, needs a decision,
+drop or park. Reports: one decision list per epic for the maintainer. Results are recorded below as they arrive.
+
+## The waves (by the module dependency graph)
+
+| Wave | Track | Owns | Epic and tickets |
+|---|---|---|---|
+| 0 | coordinator | build, tooling | ULTRA-00230 Karma ports (browser tests of two worktrees collide without it) |
+| 1 | A: datetime | `ultra/datetime` | ULTRA-00210 first (API change), then 00211, 00215, 00217 |
+| 1 | B: common, reflection, log, cache | those four modules | ULTRA-00143, 00148, 00149, 00158, 00159, 00071 |
+| 1 | C: mutator | `mutator/*` | ULTRA-00144, 00234 |
+| 2 | A: slumber, a deep review | `ultra/slumber` | correctness, performance, bugfixes, missing features (maintainer), with ULTRA-00147, 00154, 00163, 00180 |
+| 2 | B: persistence | `ultra/vault`, `karango`, `monko` | ULTRA-00060, 00140, 00141, 00142, 00173, 00313, 00300 |
+| 2 | C: Kraft | `kraft/*` | ULTRA-00165, 00203, 00239, and the ideas the maintainer keeps |
+| 3 | A: rest and core | `funktor/core`, `funktor/rest` | epic ULTRA-00250, ULTRA-00299, 00092, 00151 |
+| 3 | B: messaging, cluster, depot | those modules | ULTRA-00124, 00224, 00164 |
+| 3 | C: codegen | `ultra/codegen`, `funktor/codegen` | epic ULTRA-00252, the parts that need no auth |
+| 4 | A: auth | `funktor/auth` | epic ULTRA-00248; the value-class ids (ULTRA-00109, 00110) first and alone |
+| 4 | B: i18n | `ultra/i18n`, tooling | epic ULTRA-00256 |
+| 5 | A: saas | `funktor/saas` | epic ULTRA-00249, after auth is merged |
+| 5 | B: insights and SDK auth | `funktor/insights`, `funktor/inspect`, codegen | ULTRA-00190, 00166, 00168, 00186 |
+
+Across the waves:
+- **Docs backlog (ULTRA-00260):** a docs ticket runs when its area's wave is merged, by a track that owns only
+  `docs-site`.
+- **Red team (ULTRA-00259):** each session is run, read-only, when its area closes; findings become tickets in
+  that area's epic.
+- **Build and tooling (ULTRA-00261):** ULTRA-00238 (Gradle version catalog) touches every build file: alone,
+  between two waves.
+
+## Progress
+
+- 2026-11-13: plan stored; triage started (nine agents); ULTRA-00230 started on master.
+
+## History
+
+- 2026-11-13: created on the maintainer's word.
