@@ -44,10 +44,17 @@ class NullableCache<K : Any, V : Any> {
     /** Number of cached keys, counting those cached as null. */
     val size: Int get() = RunSync(lock) { entries.size }
 
-    /** Drops every entry. */
+    /**
+     * Drops every entry.
+     *
+     * A [getOrPutAsync] provider still running returns its result to its callers but does not cache
+     * it, and a caller arriving after the clear runs its own provider instead of joining that one.
+     */
     fun clear() {
-        // TODO(scan): an in-flight getOrPutAsync re-inserts its key after this returns.
-        RunSync(lock) { entries.clear() }
+        RunSync(lock) {
+            entries.clear()
+            inFlight.clear()
+        }
     }
 
     /** True when [key] has a cached result, including when that result is null. */
@@ -101,14 +108,17 @@ class NullableCache<K : Any, V : Any> {
                     val encoded = try {
                         provider().encode()
                     } catch (e: Throwable) {
-                        RunSync(lock) { inFlight.remove(key) }
+                        RunSync(lock) { releaseIfCurrent(key, claim) }
                         claim.deferred.completeExceptionally(e)
                         throw e
                     }
 
                     RunSync(lock) {
-                        entries[key] = encoded
-                        inFlight.remove(key)
+                        // Cache only while the claim is current: clear() drops it, and with it the
+                        // result computed before the clear.
+                        if (releaseIfCurrent(key, claim)) {
+                            entries[key] = encoded
+                        }
                     }
 
                     claim.deferred.complete(encoded)
@@ -126,6 +136,20 @@ class NullableCache<K : Any, V : Any> {
         inFlight[key]?.let { return@RunSync Claim.Join(it) }
 
         Claim.Own(CompletableDeferred<Any>().also { inFlight[key] = it })
+    }
+
+    /**
+     * Drops [claim] from the running providers, unless clear() did already; then a newer claim may hold
+     * the key, which must stay. Returns whether [claim] was current. Caller must hold the lock.
+     */
+    private fun releaseIfCurrent(key: K, claim: Claim.Own): Boolean {
+        if (inFlight[key] !== claim.deferred) {
+            return false
+        }
+
+        inFlight.remove(key)
+
+        return true
     }
 
     private fun read(key: K): Any? = RunSync(lock) { entries[key] }
