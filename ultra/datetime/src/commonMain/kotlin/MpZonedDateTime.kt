@@ -4,7 +4,6 @@ import io.peekandpoke.ultra.common.ComparableTo
 import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
@@ -195,7 +194,7 @@ class MpZonedDateTime private constructor(
     val monthNumber: Int get() = datetime.monthNumber
 
     /** The month */
-    val month: Month get() = datetime.month
+    val month: MpMonth get() = datetime.month
 
     /** The day of the month */
     val dayOfMonth: Int get() = datetime.dayOfMonth
@@ -213,7 +212,7 @@ class MpZonedDateTime private constructor(
     val milliSecond: Int get() = datetime.milliSecond
 
     /** The day of the week */
-    val dayOfWeek: DayOfWeek get() = datetime.dayOfWeek
+    val dayOfWeek: MpDayOfWeek get() = datetime.dayOfWeek
 
     /** The day of the year */
     val dayOfYear: Int get() = datetime.dayOfYear
@@ -371,7 +370,12 @@ class MpZonedDateTime private constructor(
     /**
      * Gets the start of the upcoming [dayOfWeek].
      */
-    fun atStartOfNext(dayOfWeek: DayOfWeek): MpZonedDateTime {
+    fun atStartOfNext(dayOfWeek: DayOfWeek): MpZonedDateTime = atStartOfNext(dayOfWeek.mp)
+
+    /**
+     * Gets the start of the upcoming [dayOfWeek].
+     */
+    fun atStartOfNext(dayOfWeek: MpDayOfWeek): MpZonedDateTime {
 
         var result = plus(1, DateTimeUnit.DAY).atStartOfDay()
 
@@ -385,7 +389,12 @@ class MpZonedDateTime private constructor(
     /**
      * Gets the start of the preceding [dayOfWeek].
      */
-    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpZonedDateTime {
+    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpZonedDateTime = atStartOfPrevious(dayOfWeek.mp)
+
+    /**
+     * Gets the start of the preceding [dayOfWeek].
+     */
+    fun atStartOfPrevious(dayOfWeek: MpDayOfWeek): MpZonedDateTime {
 
         var result = atStartOfDay()
 

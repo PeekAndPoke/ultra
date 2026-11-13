@@ -63,9 +63,9 @@ class MpLocalDateSpec : StringSpec() {
 
             subject.year shouldBe 2022
             subject.monthNumber shouldBe 4
-            subject.month shouldBe Month.APRIL
+            subject.month shouldBe MpMonth.APRIL
             subject.day shouldBe 5
-            subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+            subject.dayOfWeek shouldBe MpDayOfWeek.TUESDAY
             subject.dayOfYear shouldBe 95
         }
 
@@ -87,7 +87,7 @@ class MpLocalDateSpec : StringSpec() {
         "Field dayOfWeek" {
             val subject = MpLocalDate.of(2022, Month.APRIL, 5)
 
-            subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+            subject.dayOfWeek shouldBe MpDayOfWeek.TUESDAY
         }
 
         "Field dayOfYear" {
@@ -339,7 +339,7 @@ class MpLocalDateSpec : StringSpec() {
 
                 val startOfDayTs = startOfDay.toEpochSeconds()
 
-                val offset = timezone.offsetAt(instant).totalSeconds
+                val offset = timezone.offsetSecondsAt(instant)
                 val expectedTs = instant.toEpochSeconds() - offset
 
                 startOfDayTs shouldBe expectedTs

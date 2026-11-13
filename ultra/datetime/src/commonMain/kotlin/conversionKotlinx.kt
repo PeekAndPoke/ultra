@@ -4,11 +4,27 @@ package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimePeriod
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.Month
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.number
 import kotlin.jvm.JvmName
 import kotlin.time.Instant
+
+/** Converts an [MpMonth] into a kotlinx [Month]. */
+val MpMonth.kotlinx: Month get() = Month(number)
+
+/** Converts a kotlinx [Month] into an [MpMonth]. */
+val Month.mp: MpMonth get() = MpMonth.of(number)
+
+/** Converts an [MpDayOfWeek] into a kotlinx [DayOfWeek]. */
+val MpDayOfWeek.kotlinx: DayOfWeek get() = DayOfWeek(isoDayNumber)
+
+/** Converts a kotlinx [DayOfWeek] into an [MpDayOfWeek]. */
+val DayOfWeek.mp: MpDayOfWeek get() = MpDayOfWeek.of(isoDayNumber)
 
 /** Converts an [MpInstant] into a kotlinx [Instant]. */
 val MpInstant.kotlinx: Instant get() = value

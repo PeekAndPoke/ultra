@@ -3,7 +3,6 @@ package io.peekandpoke.ultra.datetime
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.UtcOffset
 
 @Suppress("unused")
 class ExtensionsSpec : StringSpec({
@@ -13,16 +12,16 @@ class ExtensionsSpec : StringSpec({
         TimeZone.of("+02:00").mp shouldBe MpTimezone.of("+02:00")
     }
 
-    "TimeZone.offsetAt - fixed offsets need no zone data on any target" {
+    "TimeZone.offsetSecondsAt - fixed offsets need no zone data on any target" {
         TimeZone.UTC.offset.totalMillis shouldBe 0
 
-        TimeZone.UTC.offsetAt(
+        TimeZone.UTC.offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 0)
+        ) shouldBe 0 * 60 * 60
 
-        TimeZone.of("+02:00").offsetAt(
+        TimeZone.of("+02:00").offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 2)
+        ) shouldBe 2 * 60 * 60
 
         TimeZone.of("-05:30").offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
@@ -33,19 +32,19 @@ class ExtensionsSpec : StringSpec({
         ) shouldBe 2 * 60 * 60 * 1_000
     }
 
-    "MpTimeZone.offsetAt" {
+    "MpTimeZone.offsetSecondsAt, by hours" {
 
-        MpTimezone.UTC.offsetAt(
+        MpTimezone.UTC.offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 0)
+        ) shouldBe 0 * 60 * 60
 
-        MpTimezone.of("Europe/Berlin").offsetAt(
+        MpTimezone.of("Europe/Berlin").offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 1)
+        ) shouldBe 1 * 60 * 60
 
-        MpTimezone.of("Europe/Berlin").offsetAt(
+        MpTimezone.of("Europe/Berlin").offsetSecondsAt(
             MpInstant.parse("2022-03-28T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 2)
+        ) shouldBe 2 * 60 * 60
     }
 
     "MpTimeZone.offsetSecondsAt" {

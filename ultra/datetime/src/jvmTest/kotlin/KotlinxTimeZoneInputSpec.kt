@@ -4,7 +4,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.UtcOffset
 
 /**
  * Named kotlinx [TimeZone]s as INPUTS. JVM only: on Kotlin/JS kotlinx cannot create a region zone without the js-joda
@@ -42,28 +41,28 @@ class KotlinxTimeZoneInputSpec : StringSpec({
 
         TimeZone.UTC.offset.totalMillis shouldBe 0
 
-        TimeZone.of("Europe/Berlin").offsetAt(
+        TimeZone.of("Europe/Berlin").offsetMillisAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ).totalMillis shouldBe 1 * 60 * 60 * 1_000
+        ) shouldBe 1 * 60 * 60 * 1_000
 
-        TimeZone.of("Europe/Berlin").offsetAt(
+        TimeZone.of("Europe/Berlin").offsetMillisAt(
             MpInstant.parse("2022-03-28T00:00:00.000Z")
-        ).totalMillis shouldBe 2 * 60 * 60 * 1_000
+        ) shouldBe 2 * 60 * 60 * 1_000
     }
 
-    "TimeZone.offsetAt" {
+    "TimeZone.offsetSecondsAt, by hours" {
 
-        TimeZone.UTC.offsetAt(
+        TimeZone.UTC.offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 0)
+        ) shouldBe 0 * 60 * 60
 
-        TimeZone.of("Europe/Berlin").offsetAt(
+        TimeZone.of("Europe/Berlin").offsetSecondsAt(
             MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 1)
+        ) shouldBe 1 * 60 * 60
 
-        TimeZone.of("Europe/Berlin").offsetAt(
+        TimeZone.of("Europe/Berlin").offsetSecondsAt(
             MpInstant.parse("2022-03-28T00:00:00.000Z")
-        ) shouldBe UtcOffset(hours = 2)
+        ) shouldBe 2 * 60 * 60
     }
 
     "TimeZone.offsetSecondsAt" {

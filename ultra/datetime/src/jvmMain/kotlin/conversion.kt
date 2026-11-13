@@ -4,10 +4,12 @@ package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.datetime.TimeZone
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.Month
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -146,3 +148,23 @@ val MpTimezone.jvm: ZoneId
 
         return ZoneId.of(id)
     }
+
+/**
+ * Converts an [MpMonth] into a [java.time.Month].
+ */
+val MpMonth.jvm: Month get() = Month.of(number)
+
+/**
+ * Converts a [java.time.Month] into an [MpMonth].
+ */
+val Month.mp: MpMonth get() = MpMonth.of(value)
+
+/**
+ * Converts an [MpDayOfWeek] into a [java.time.DayOfWeek].
+ */
+val MpDayOfWeek.jvm: DayOfWeek get() = DayOfWeek.of(isoDayNumber)
+
+/**
+ * Converts a [java.time.DayOfWeek] into an [MpDayOfWeek].
+ */
+val DayOfWeek.mp: MpDayOfWeek get() = MpDayOfWeek.of(value)

@@ -208,9 +208,9 @@ class MpZonedDateTimeSpec : StringSpec({
 
         subject.year shouldBe 2022
         subject.monthNumber shouldBe 4
-        subject.month shouldBe Month.APRIL
+        subject.month shouldBe MpMonth.APRIL
         subject.dayOfMonth shouldBe 5
-        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+        subject.dayOfWeek shouldBe MpDayOfWeek.TUESDAY
         subject.dayOfYear shouldBe 95
 
         subject.hour shouldBe 12
@@ -223,7 +223,7 @@ class MpZonedDateTimeSpec : StringSpec({
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
             .atZone(MpTimezone.of("Europe/Bucharest"))
 
-        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+        subject.dayOfWeek shouldBe MpDayOfWeek.TUESDAY
     }
 
     "Fields dayOfYear" {
