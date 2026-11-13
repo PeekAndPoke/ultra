@@ -3,8 +3,11 @@ package io.peekandpoke.ultra.datetime
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.common.tuple
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class MpLocalTimeSlotSpec : StringSpec({
 
@@ -317,6 +320,70 @@ class MpLocalTimeSlotSpec : StringSpec({
                 "must be ${expected.format()}") {
 
             initial.splitWithGaps(duration.minutes, gap.minutes) shouldBe expected
+        }
+    }
+
+    // ULTRA-00215: a step past midnight wrapped around and the loop never ended
+    val morningToEvening = ts(8, 0, 20, 0)
+
+    listOf(
+        tuple("a duration of 24 hours", morningToEvening, 24.hours, Duration.ZERO, listOf()),
+        tuple("a duration of 25 hours", morningToEvening, 25.hours, Duration.ZERO, listOf()),
+        tuple("an infinite duration", morningToEvening, Duration.INFINITE, Duration.ZERO, listOf()),
+        tuple("a duration under one millisecond", morningToEvening, 500.microseconds, Duration.ZERO, listOf()),
+        tuple("a zero duration", morningToEvening, Duration.ZERO, Duration.ZERO, listOf()),
+        tuple("a negative duration", morningToEvening, (-1).hours, Duration.ZERO, listOf()),
+        tuple(
+            "a step that fits exactly, the next one wraps past midnight",
+            morningToEvening, 12.hours, Duration.ZERO,
+            listOf(ts(8, 0, 20, 0)),
+        ),
+        tuple(
+            "a duration plus gap that wraps past midnight",
+            morningToEvening, 4.hours, 20.hours,
+            listOf(ts(8, 0, 12, 0)),
+        ),
+        tuple(
+            "an infinite gap",
+            morningToEvening, 4.hours, Duration.INFINITE,
+            listOf(ts(8, 0, 12, 0)),
+        ),
+        tuple(
+            "a gap that ends exactly at the end of the slot",
+            morningToEvening, 4.hours, 8.hours,
+            listOf(ts(8, 0, 12, 0)),
+        ),
+        tuple(
+            "a negative gap counts as zero",
+            morningToEvening, 6.hours, (-1).hours,
+            listOf(ts(8, 0, 14, 0), ts(14, 0, 20, 0)),
+        ),
+        tuple(
+            "a zero gap",
+            morningToEvening, 5.hours, Duration.ZERO,
+            listOf(ts(8, 0, 13, 0), ts(13, 0, 18, 0)),
+        ),
+        tuple(
+            "a slot ending at 23:59:59.999",
+            MpLocalTimeSlot.completeDay, 1.hours, Duration.ZERO,
+            (0..22).map { ts(it, 0, it + 1, 0) },
+        ),
+        tuple(
+            "a slot ending at 23:59:59.999 with a gap",
+            MpLocalTimeSlot.completeDay, 3.hours, 3.hours,
+            listOf(ts(0, 0, 3, 0), ts(6, 0, 9, 0), ts(12, 0, 15, 0), ts(18, 0, 21, 0)),
+        ),
+        tuple(
+            "an invalid slot",
+            ts(20, 0, 8, 0), 1.hours, Duration.ZERO,
+            listOf(),
+        ),
+    ).forEach { (title, initial, duration, gap, expected) ->
+
+        "splitWithGaps() - terminates on $title: ${initial.formatHhMmSs()} split by ($duration, $gap)" {
+            withinTimeLimit(5.seconds) {
+                initial.splitWithGaps(duration, gap)
+            } shouldBe expected
         }
     }
 

@@ -156,27 +156,43 @@ data class MpLocalTimeSlot(
 
     /**
      * Splits the timeslot in multiple of [duration] while keeping [gap] between each of them.
+     *
+     * No slot reaches past [to] or midnight. A [duration] under one millisecond yields no slots; a negative [gap]
+     * counts as zero.
      */
     fun splitWithGaps(duration: Duration, gap: Duration = Duration.ZERO): List<MpLocalTimeSlot> {
 
-        if (duration <= Duration.ZERO) {
+        // Steps in milliseconds of day: MpLocalTime.plus wraps at midnight, so a step past it would land earlier
+        // and the loop would never end (ULTRA-00215).
+        val durationMs = duration.inWholeMilliseconds
+
+        if (durationMs <= 0L) {
             return emptyList()
         }
 
-        val effectiveGap = maxOf(Duration.ZERO, gap)
+        val gapMs = maxOf(0L, gap.inWholeMilliseconds)
+        val endMs = to.inWholeMilliSeconds().toLong()
 
         val result = mutableListOf<MpLocalTimeSlot>()
 
-        var currentFrom = from
-        var currentTo = currentFrom.plus(duration)
+        var currentFromMs = from.inWholeMilliSeconds().toLong()
 
-        while (currentTo <= to) {
+        // Compares remainders rather than sums: an infinite duration or gap is Long.MAX_VALUE milliseconds.
+        while (durationMs <= endMs - currentFromMs) {
+            val currentToMs = currentFromMs + durationMs
+
             result.add(
-                MpLocalTimeSlot(currentFrom, currentTo)
+                MpLocalTimeSlot(
+                    from = MpLocalTime.ofMilliSeconds(currentFromMs.toInt()),
+                    to = MpLocalTime.ofMilliSeconds(currentToMs.toInt()),
+                )
             )
 
-            currentFrom = currentTo.plus(effectiveGap)
-            currentTo = currentFrom.plus(duration)
+            if (gapMs > endMs - currentToMs) {
+                break
+            }
+
+            currentFromMs = currentToMs + gapMs
         }
 
         return result.toList()
