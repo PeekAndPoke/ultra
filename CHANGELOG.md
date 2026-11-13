@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- **funktor/logging: the database log stores stack traces again** (ULTRA-00158). `KarangoLogAppender` and
+  `MonkoLogAppender` dropped the error of a log event since 0.109.0, so entries logged with a `Throwable` had no
+  stack trace in the logs GUI. They also stamped an entry with the time it was written, not the time it was
+  logged; `createdAt` is the event's time now. Funktor's own error logs (internal errors, workers, background
+  jobs, repairs, email hooks) hand the exception to the logger: the message is one line, the trace is in the
+  entry's `stackTrace`.
+
 ## 0.118.0
 
 ### Breaking changes

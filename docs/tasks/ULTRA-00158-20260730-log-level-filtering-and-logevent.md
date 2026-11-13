@@ -156,9 +156,20 @@ logic failure, not a build one. `touch` does not invalidate it; the dependent mo
 
 | Reviewer | Verdict | Confirmed findings |
 |---|---|---|
-| 1. Implementation & code style | | |
-| 2. Domain expert | | |
-| 3. Security | | |
+| 1. Implementation & code style | Round 1 (2026-11-13, opus-high): NOT CLEAN | 1 MAJOR |
+| 2. Domain expert | Round 1: NOT CLEAN | 1 MAJOR (the same) |
+| 3. Security | Round 1: NOT CLEAN | 1 MAJOR (the same) |
+
+### Round 1 ledger (2026-11-13; the feature shipped unreviewed in 0.109.0)
+
+| # | Finding | Severity | Verdict | Outcome |
+|---|---|---|---|---|
+| 1 | `KarangoLogAppender` and `MonkoLogAppender` drop `LogEvent.error`: database log entries have no stack trace since 0.109.0; `createdAt` is the append time, not `event.ts` | MAJOR | CONFIRMED: new test "The database appender stores the event's time and the stack trace of its error" in `LogsStorageBaseSpec`, RED on Karango and Monko (line 308, `createdAt`); mutant `stackTrace = null` RED at line 309 on both | FIXED `c218d1a6`; funktor/logging jvmTest 7 + 7 green |
+| 2 | Six callers paste the trace into the message (`EmailHooks`, `error_logging`, `RepairMan`, `BackgroundJobs`, `WorkersFacade` twice) | MINOR | CONFIRMED by reading | FIXED `c218d1a6`: they pass the Throwable |
+| 3 | Timeout of an appender is not reported; anonymous class gives an empty logger name; no test of the console format; trailing blank line; a lazy message block that throws | MINOR | open | next batch, with the console-format decision |
+| 4 | Scoping: `dynamicPrototype` as in the follow-up would not stop a singleton that injects `Log` from making it per-request | design | open | maintainer decision: singleton manager with a per-request sink (reviewer option b) |
+
+Round 2 runs after the open decisions (console whitelist, scoping) are taken and item 3 is in.
 
 ## Follow-ups
 
