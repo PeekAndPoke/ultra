@@ -141,6 +141,60 @@ Mutation checks, each on both platforms and restored:
 
 Fix commit: `15edd63e` (round 1, all rows). Not done (coordinator): a public snapshot type with deprecated mutators.
 
+### Round 2
+
+- Implementation & code style: **CLEAN**.
+- Security / data integrity: **NOT CLEAN** (one MAJOR claim and further claims, below).
+- Domain expert: running.
+
+Two rounds without a clean one: verified with tests only, nothing fixed; the maintainer decides how to go on. Every
+claim was written as a test asserting the EXPECTED behaviour and run on the JVM and JS; all were RED on both, with the
+actual results below. They are pinned as they behave today in `ListMutatorKnownDefectsSpec` (`sharedTest`; each test
+name says "KNOWN DEFECT" and gives the expected behaviour), so the suite stays green. `E` is one shared instance.
+
+| Round | Sev | `path:line` | Claim | Verdict | Evidence (JVM and JS alike) |
+|---|---|---|---|---|---|
+| 2 | MAJOR | `ListMutator.kt:275` identity fallback | A: `[E, E]`; `held = m[0]`; `m[0].street = "S"`; `held.city = "Y"` writes row 1 (expected: dropped) | CONFIRMED | `[ES, EY]` |
+| 2 | MAJOR | same | B: `[E, E, E]`; `row3 = m[2]`; `removeAt(0)`; `row3.street = "X"` (expected `[E, EX]`) | CONFIRMED | `[EX, E]` |
+| 2 | MAJOR | same | C: `[E, b, E]`; `c = m[2]`; `add(0, z)`; `c.street = "X"` (expected index 3) | CONFIRMED | index 1 written: `[z, EX, b, E]` |
+| 2 | MAJOR | same (hint hit) | D: `[a, b]`; `c0 = m[0]`; `c0.set(b)`; `removeAt(0)`; `c0.street = "X"` writes c1's row (expected: dropped) | CONFIRMED | `[bX]` |
+| 2 | MAJOR | same | E: strings `["", "", "z"]`; `e = m[1]`; `add(0, "new")`; `e.set("typed")` (expected `["new", "", "typed", "z"]`) | CONFIRMED | `["new", "typed", "", "z"]` |
+| 2 | MINOR | `ListMutator.kt:275` `getOrNull` | F: nullable `["x", null]`; `e = m[1]`; `removeAt(0)`; `e.set("y")` | CONFIRMED | `IndexOutOfBoundsException` (index 1, size 1): `getOrNull(1) === null` matches the tracked `null` |
+| 2 | MINOR | `trackedChild`, `tracked` updated after `setAt` | G: a parent observer writing through the same held child during the notification | CONFIRMED | nested write dropped: `[Address(S, C, Z)]`, expected city `Y` |
+| 2 | MINOR | outside the change set: generated `MutatorCodeBlocks.kt:134`, `ObjectMutator` identity `snapshotInitial` | H: `pm = book.addresses`; `pm.add(b)`; `book.commit()`; `pm.add(z)` | CONFIRMED | `isModified()` false, `getInitialValue()` holds `z`: the book's baseline shares the held list mutator's live list |
+| 2 | MINOR | `ListMutator.kt` `It` | I: `next()` past the end / `previous()` at 0 throw `IndexOutOfBoundsException`, not `NoSuchElementException`; `listIterator(-1)` and `listIterator(size + 1)` succeed | CONFIRMED | all four as claimed |
+| 2 | MINOR | `ListMutator.kt:275` | J: identity versus equality is not pinned | CONFIRMED | mutant `indexOfFirst { it == tracked }` and mutant `==` in both comparisons: all 201 JVM / 202 JS tests stay green |
+
+On JS `===` on strings compares values, so for E the "identity" lookup is value equality there; the result is the
+same on both platforms.
+
+**Fix shape for A to E, as the reviewer proposes** (on a hint miss accept the identity match only if it is unique,
+else drop; D needs a removal counter or a documented limit): about 10 lines in `trackedChild`. It does not fix A or D.
+In A, after row 0 was replaced, `E` is unique in row 1, so the write still goes there. In D the hint HITS (`b` sits at
+the held index after the removal), so the uniqueness rule never runs. B, C and E become silent drops instead of
+landing on the held row. A removal counter that distrusts the hint after any removal fixes D but also drops B.
+
+**A better shape: a row token per element.** `ListMutatorImpl` keeps a parallel list of opaque tokens, one per row.
+A child captures its row's token and the instance it last wrote. On a write, it finds its row by token (hint first,
+then `indexOf` on the tokens) and writes only if that row still holds the instance the child last saw (`===`); else
+it drops.
+
+- That gives every expected result: A drops (row 0 holds `ES`), B and C land on the held row, D drops (its token went
+  with the removed row), E lands, and F lands (no `getOrNull` ambiguity).
+- G is fixed by setting `tracked = new` before `setAt` notifies.
+- Cost: one small object per row, O(n), and no references to the children, so nothing to leak.
+- Every structural operation must keep the tokens in step: `add`, `add(index)`, both `addAll`, `remove`, `removeAt`,
+  `removeAll`, `retainAll`, `clear`, iterator `add`/`remove`, and whole-value replacement (`set`, `modifyValue`,
+  `reset`, which renew all tokens).
+- Risk: `get()` hands out the live `MutableList`, so a caller changing it in place desyncs the tokens. Detect a size
+  mismatch and drop the writes then, or document it.
+- Size: roughly 80 to 120 lines in `ListMutator.kt`, plus tests.
+
+Registering the children with the parent, so structural changes shift their indexes, would also work. But the parent
+would hold a strong reference to every child it ever handed out: `forEach` on every render grows it without bound,
+unless weak references are used, and those were removed from `ultra/common`'s `Observable` in 2026-07. Not
+recommended. H is a separate defect, in the generated code and `ObjectMutator`'s identity snapshot, not `ListMutator`.
+
 ## Changelog text
 
 - Mutator: `ListMutator.subList()` no longer throws. It returns a read-only snapshot of the child mutators in the
@@ -172,3 +226,5 @@ view) once this settles; not edited here:
 - 2026-11-13: probed which stdlib functions reach `subList` (track C of ULTRA-00316); `chunked` does not, `slice` does.
 - 2026-11-13: decided as a read-only snapshot (maintainer); implemented on `wt/mutator`.
 - 2026-11-13: review round 1 NOT CLEAN (1 MAJOR, 8 MINOR), all confirmed and fixed on `wt/mutator` (`15edd63e`).
+- 2026-11-13: review round 2: implementation CLEAN, security NOT CLEAN; claims A to J verified by tests (all
+  confirmed), pinned as known defects in `ListMutatorKnownDefectsSpec`, not fixed (maintainer decides).
