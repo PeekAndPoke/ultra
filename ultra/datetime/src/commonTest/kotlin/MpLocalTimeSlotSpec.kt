@@ -382,6 +382,17 @@ class MpLocalTimeSlotSpec : StringSpec({
             ts(20, 0, 8, 0), 1.hours, Duration.ZERO,
             listOf(),
         ),
+        tuple(
+            "an invalid slot across midnight",
+            ts(22, 0, 2, 0), 2.hours, Duration.ZERO,
+            listOf(),
+        ),
+        tuple(
+            "a duration cut to whole milliseconds",
+            MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(0), MpLocalTime.ofMilliSeconds(3)),
+            1500.microseconds, Duration.ZERO,
+            (0..2).map { MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(it), MpLocalTime.ofMilliSeconds(it + 1)) },
+        ),
     ).forEach { (title, initial, duration, gap, expected) ->
 
         "splitWithGaps() - terminates on $title: ${initial.formatHhMmSs()} split by ($duration, $gap)" {

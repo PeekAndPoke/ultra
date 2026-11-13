@@ -71,6 +71,14 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
   - count as a sum (`fromMs + durationMs > fromMs + spanMs`) → red, 2 (both infinite-duration cases).
   - gap cap removed → stays green: EQUIVALENT. The overflowed `duration + gap` is negative and larger than the
     remainder, so the quotient is 0 and the count 1, and index 0 never uses the step. Kept: the cap states the bound.
+- Review round 1, KDoc boundaries (no code change): the KDoc states that slots never reach past `to`, a shorter
+  remainder is dropped, an invalid slot (`to <= from`, e.g. 22:00-02:00) yields none, and durations are cut to whole
+  milliseconds. Two pins added (22:00-02:00 by 2 h → none; 00:00:00.000-00:00:00.003 by 1.5 ms → three 1 ms slots).
+  They describe the current behaviour, so they were not RED first; their mutation checks:
+  - span taken modulo a day (`(to - from).mod(day)`) → red, 2 (both invalid-slot cases).
+  - duration rounded up to whole milliseconds → red, 2 (under one millisecond, cut to whole milliseconds).
+  After: jvmTest 2531 / 0, jsBrowserTest 1896 / 0, linuxX64Test 1886 / 0 (`MpLocalTimeSlotSpec` 79 / 0 each).
+  `completeDay.splitWithGaps(1.hours)` still gives 23 slots and its test is unchanged (not decided by the maintainer).
 
 ## Changelog text
 

@@ -157,8 +157,10 @@ data class MpLocalTimeSlot(
     /**
      * Splits the timeslot in multiple of [duration] while keeping [gap] between each of them.
      *
-     * No slot reaches past [to] or midnight. A [duration] under one millisecond yields no slots; a negative [gap]
-     * counts as zero.
+     * - Slots never reach past [to]; a remainder shorter than [duration] is dropped.
+     * - An invalid slot ([to] <= [from], e.g. 22:00-02:00) yields no slots.
+     * - [duration] and [gap] are cut to whole milliseconds: a [duration] under one millisecond yields no slots.
+     *   A negative [gap] counts as zero.
      *
      * [maxSlots] caps the result, so a caller-chosen [duration] cannot make one call allocate millions of slots
      * (a whole day in 1 ms steps is 86.4 million). A split above it throws [IllegalArgumentException] before any
