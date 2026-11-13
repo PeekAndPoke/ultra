@@ -24,9 +24,9 @@ import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
  *   `objectHeader + 2n * pointerSize`, i.e. 16 bytes per entry, against roughly 48 real once the
  *   backing table, its growth slack and each `LinkedHashMap.Entry` are counted. Elements are also
  *   charged their raw value size rather than the box.
- * - **JVM: types whose fields are inaccessible are charged 16 bytes.** Under JPMS `setAccessible`
- *   throws and the field is dropped, so `Instant`, `LocalDate`, `UUID`, `BigDecimal`,
- *   `StringBuilder` and `ByteBuffer` all estimate as an empty object regardless of what they hold.
+ * - **JVM: types whose fields are inaccessible are charged 16 bytes.** JPMS refuses to open their
+ *   fields, which are skipped, so `Instant`, `LocalDate`, `UUID`, `BigDecimal`, `StringBuilder` and
+ *   `ByteBuffer` all estimate as an empty object regardless of what they hold.
  *
  * Errors do not cancel: `String` is over-counted under compact strings, and a key shared with a
  * value is charged twice — both in the safe direction, the ones above are not.
@@ -147,8 +147,6 @@ class ObjectSizeEstimatorImpl(
 
     private fun estimate(obj: Any?, seen: VisitedSet): Long {
         // Primitives: no cycle detection needed, they cannot form reference cycles
-        // TODO(scan): on JS every number is a JS `number`, so the `is Byte` branch swallows Int,
-        //  Short, Float and Double and charges all of them 1 byte.
         when (obj) {
             null -> return NULL_SIZE
             is Boolean -> return BOOL_SIZE
@@ -189,9 +187,6 @@ class ObjectSizeEstimatorImpl(
                 sum
             }
 
-            // TODO(scan): a collection/map is charged one (or two) pointers per entry, which omits
-            //  the backing array and the per-entry node objects, and an element that is a boxed
-            //  primitive is charged its raw value size. Both under-count on the JVM.
             is Collection<*> -> {
                 var sum = cfg.objectHeader + obj.size.toLong() * cfg.pointerSize
                 for (e in obj) sum += estimate(e, seen)
@@ -215,10 +210,10 @@ class ObjectSizeEstimatorImpl(
 
     private fun estimateObject(obj: Any, seen: VisitedSet): Long {
 
-        // TODO(scan): the `2L` is unexplained, and on native this branch is taken for EVERY custom
-        //  object, so a data class holding megabytes is charged a flat 32 bytes.
+        // No reflection (native): a flat guess of a header and two references, whatever the object
+        // holds - see the class KDoc.
         val fields = ObjectSizeEstimatorPlatform.getFieldsOf(obj)
-            ?: return cfg.objectHeader + 2L * cfg.pointerSize // No reflection (e.g., Native): charge a plain object.
+            ?: return cfg.objectHeader + 2L * cfg.pointerSize
 
         var sum = cfg.objectHeader + fields.size.toLong() * cfg.pointerSize
         for (f in fields) sum += estimate(f, seen)

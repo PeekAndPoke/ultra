@@ -49,8 +49,7 @@ interface Cache<K, V> {
     /** Returns `true` if the cache contains the given [key]. */
     fun has(key: K): Boolean
 
-    // TODO(scan): V is unbounded, so a stored null is indistinguishable from an absent key here.
-    /** Returns the value for the given [key], or `null` if not present. */
+    /** Returns the value for the given [key], or `null` if not present or cached as `null`; [has] tells them apart. */
     fun get(key: K): V?
 
     /** Associates the given [value] with the given [key] in the cache. */

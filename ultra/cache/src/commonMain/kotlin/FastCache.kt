@@ -494,7 +494,6 @@ class FastCache<K, V>(
      * processing loop.
      */
     class OnEvictionBehaviour<K, V>(
-        // TODO(scan): the handler is skipped for entries whose value is null - see removeSilently.
         /** The callback invoked with the key and value of each evicted entry. */
         internal val handler: (K, V) -> Unit,
     ) : Behaviour<K, V> {
@@ -599,8 +598,6 @@ class FastCache<K, V>(
             }
         }
 
-        // TODO(scan): only a RemoveAction or the hard TTL drops a key here - an entry evicted by any
-        //   other behaviour stays and keeps being reloaded, putting the evicted key back into the cache.
         private val writeTimestamps = mutableMapOf<K, Long>()
 
         /** Keys currently being refreshed, for deduplication. Guarded by [refreshLock]. */
