@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.days
 
 @Suppress("unused")
 class TimezoneEngineJsCacheSpec : StringSpec({
@@ -40,5 +41,23 @@ class TimezoneEngineJsCacheSpec : StringSpec({
         }
 
         cachedZoneIds() shouldBe before
+        memoizedUnlistedZoneId() shouldBe variants.last()
+    }
+
+    // ULTRA-00217: one conversion asks several times; an unlisted id keeps one memo slot instead of a new formatter each
+    "repeated lookups of one unlisted id reuse its memo slot" {
+        val unlisted = MpTimezone.of("Etc/UCT")
+        // another unlisted id takes the slot first
+        instant.atZone(MpTimezone.of("ETC/UCT"))
+
+        val before = intlFormattersBuilt
+
+        repeat(10) { day ->
+            val zoned = instant.plus(day.days).atZone(unlisted)
+            zoned.toLocalDate().atStartOfDay(unlisted)
+        }
+
+        intlFormattersBuilt - before shouldBe 1
+        memoizedUnlistedZoneId() shouldBe "Etc/UCT"
     }
 })

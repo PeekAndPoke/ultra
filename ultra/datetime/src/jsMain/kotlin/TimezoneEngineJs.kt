@@ -19,8 +19,8 @@ private const val MAX_DATE_SECONDS = 8_640_000_000_000.0
 private val supportedIdsByLowercase: Map<String, String> by lazy { MpTimezone.supportedIds.associateBy { it.lowercase() } }
 
 // One interval cache per zone id in MpTimezone.supportedIds; Intl is far too slow to ask on every conversion. Other
-// ids that resolve are asked uncached: Intl also accepts case variants of unlisted ids, and each would add an entry
-// (ULTRA-00217). No prototype: ids like "constructor" must miss the cache, not find an Object.prototype member.
+// ids that resolve get only the memo slot below: Intl also accepts case variants of unlisted ids, and each would add
+// an entry (ULTRA-00217). No prototype: ids like "constructor" must miss the cache, not find an Object.prototype member.
 private val offsetCaches: dynamic = js("Object.create(null)")
 
 /** The zone ids in the cache, for tests. */
@@ -30,17 +30,32 @@ internal fun cachedZoneIds(): Set<String> {
     return keys.toSet()
 }
 
+/** How many Intl formatters were built, for tests. */
+internal var intlFormattersBuilt: Int = 0
+    private set
+
+// One slot for the last unlisted id that resolved, keyed by the exact string: one conversion asks 3 to 5 times, a
+// start of day inside a gap about 17 more. Replaced by the next unlisted id, so the caches stay bounded.
+private var unlistedMemo: Pair<String, OffsetIntervalCache>? = null
+
+/** The unlisted id in the one-slot memo, for tests. */
+internal fun memoizedUnlistedZoneId(): String? = unlistedMemo?.first
+
 internal actual fun platformOffsetSecondsAt(zoneId: String, epochSeconds: Double): Int {
     val cached = offsetCaches[zoneId]
     if (cached != null && cached != undefined) {
         return cached.unsafeCast<OffsetIntervalCache>().offsetSecondsAt(epochSeconds)
     }
 
-    // A miss: only listed ids get a cache.
-    if (zoneId !in MpTimezone.supportedIds) return intlOffsetSecondsAt(newFormatter(zoneId), epochSeconds)
+    unlistedMemo?.let { (id, cache) -> if (id == zoneId) return cache.offsetSecondsAt(epochSeconds) }
 
+    // A miss: only listed ids get a cache, any other id the memo slot.
     val cache = newOffsetCache(zoneId)
-    offsetCaches[zoneId] = cache
+
+    when (zoneId) {
+        in MpTimezone.supportedIds -> offsetCaches[zoneId] = cache
+        else -> unlistedMemo = zoneId to cache
+    }
 
     return cache.offsetSecondsAt(epochSeconds)
 }
@@ -119,6 +134,8 @@ private fun newFormatter(zoneId: String): dynamic {
     supportedIdsByLowercase[zoneId.lowercase()]?.let { known ->
         if (known != zoneId) throw IllegalTimeZoneException("Unknown time zone: $zoneId (ids are case-sensitive: $known)")
     }
+
+    intlFormattersBuilt++
 
     return try {
         intl.DateTimeFormat("en-US", opts)

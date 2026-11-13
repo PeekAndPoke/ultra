@@ -100,6 +100,15 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
     on a miss, as native's `zoneFor` does. Refactor, no behaviour change. jsBrowserTest 1906 / 0. Mutation-checked
     again on the new structure: membership test removed → red (case variants); store skipped for `Pacific/Kanton` →
     red (listed id cached).
+  - Item 2, one memo slot for the last unlisted id that resolved (JS: its interval cache with its formatter; native:
+    its `TimeZone`), keyed by the exact string and replaced by the next unlisted id: the caches hold the listed ids plus
+    one. Before, one conversion of an unlisted id (the system zone when it is `EST`, `ROC`, `Etc/UCT`, a zone newer than
+    the list) built a formatter / read the zone file per lookup: RED first, 110 builds (JS) and 110 file reads (native)
+    for 10 days of `atZone` + `atStartOfDay`; now 1. Tests: a flood of unlisted ids (JS: 64 case spellings of
+    `Etc/UCT`; native: `EST`, `HST`, `MST`, `ROC`, `Etc/UCT`) leaves the listed cache unchanged and the slot holding the
+    last; repeated lookups reuse the slot (counted with `intlFormattersBuilt` / `zoneFileReads()`).
+    After: jvmTest 2543 / 0, jsBrowserTest 1907 / 0, linuxX64Test 1900 / 0. Mutation-checked: memo read removed → red
+    (JS 1, native 1: reuse); memo store removed → red (JS 2, native 2: flood and reuse).
 
 ## Changelog text
 

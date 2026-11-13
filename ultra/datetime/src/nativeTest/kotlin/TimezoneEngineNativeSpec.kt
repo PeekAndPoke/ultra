@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.datetime
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.days
 
 class TimezoneEngineNativeSpec : StringSpec({
 
@@ -23,6 +24,33 @@ class TimezoneEngineNativeSpec : StringSpec({
 
             cachedZoneIds() shouldContain id
         }
+    }
+
+    // ULTRA-00217: an unlisted id that resolves keeps one memo slot, so the caches stay bounded
+    "a flood of unlisted ids leaves the cache unchanged, the memo slot holds only the last" {
+        val before = cachedZoneIds()
+        val unlisted = listOf("EST", "HST", "MST", "ROC", "Etc/UCT")
+
+        unlisted.forEach { id -> instant.atZone(MpTimezone.of(id)) }
+
+        cachedZoneIds() shouldBe before
+        memoizedUnlistedZoneId() shouldBe "Etc/UCT"
+    }
+
+    "repeated lookups of one unlisted id reuse its memo slot" {
+        val unlisted = MpTimezone.of("HST")
+        // another unlisted id takes the slot first
+        instant.atZone(MpTimezone.of("EST"))
+
+        val before = zoneFileReads()
+
+        repeat(10) { day ->
+            val zoned = instant.plus(day.days).atZone(unlisted)
+            zoned.toLocalDate().atStartOfDay(unlisted)
+        }
+
+        zoneFileReads() - before shouldBe 1
+        memoizedUnlistedZoneId() shouldBe "HST"
     }
 
     // ULTRA-00217: kotlinx/native resolves path variants of an id, each one used to become a permanent cache entry
