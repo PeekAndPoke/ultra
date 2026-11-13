@@ -12,11 +12,8 @@ package io.peekandpoke.ultra.log
  *   Enum declaration order is the reverse of ascending severity, so compare via [severity] -
  *   never via `<`/`compareTo`, which use ordinal order.
  */
-// TODO(scan): OFF/ALL are documented as suppressing/enabling all logging, but nothing in this
-//  module actually filters by severity - UltraLogManager.log() and ConsoleAppender.append()
-//  forward every level unconditionally, so LogLevel.OFF still gets printed.
 enum class LogLevel(val severity: Int) {
-    /** Sentinel meaning "suppress everything"; not enforced by this module - see TODO above. */
+    /** Threshold meaning "log nothing": as a minimum level it drops every event; an event logged at OFF is dropped. */
     OFF(Int.MAX_VALUE),
 
     /** Indicates an error condition that should be investigated. */
@@ -34,6 +31,6 @@ enum class LogLevel(val severity: Int) {
     /** Very detailed diagnostic information. */
     TRACE(100),
 
-    /** Sentinel meaning "log everything"; not enforced by this module - see TODO above. */
+    /** Threshold meaning "log everything": as a minimum level it drops nothing; an event logged at ALL is dropped. */
     ALL(0),
 }
