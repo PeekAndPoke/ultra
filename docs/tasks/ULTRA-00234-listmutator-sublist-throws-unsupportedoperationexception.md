@@ -139,7 +139,7 @@ Mutation checks, each on both platforms and restored:
 | 1 | MINOR | snapshot `toString` | Prints mutator objects | CONFIRMED, fix | RED first; prints the values now |
 | 1 | MINOR | ticket | Changelog lines for not-a-view and the fixes; DOCS follow-up lines | done | see Changelog text and DOCS follow-up |
 
-Fix commit: see History. Not done (coordinator): a public snapshot type with deprecated mutators.
+Fix commit: `15edd63e` (round 1, all rows). Not done (coordinator): a public snapshot type with deprecated mutators.
 
 ## Changelog text
 
@@ -171,4 +171,4 @@ view) once this settles; not edited here:
 - 2026-10-23: created.
 - 2026-11-13: probed which stdlib functions reach `subList` (track C of ULTRA-00316); `chunked` does not, `slice` does.
 - 2026-11-13: decided as a read-only snapshot (maintainer); implemented on `wt/mutator`.
-- 2026-11-13: review round 1 NOT CLEAN (1 MAJOR, 8 MINOR), all confirmed and fixed on `wt/mutator`.
+- 2026-11-13: review round 1 NOT CLEAN (1 MAJOR, 8 MINOR), all confirmed and fixed on `wt/mutator` (`15edd63e`).
