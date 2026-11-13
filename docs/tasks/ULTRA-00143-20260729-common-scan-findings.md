@@ -1,6 +1,6 @@
 # ULTRA-00143: ultra/common scan — findings backlog
 
-> **Status (2026-07-29): PAUSED.** IN PROGRESS — backlog worked through; two items remain, both minor and listed at the bottom
+> **Status (2026-11-13): PAUSED.** IN PROGRESS — the `recurse` item is implemented and awaits the review gate; the one left (`camelCaseSplit`) is DROP/PARK per the ULTRA-00316 triage
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -248,10 +248,10 @@ survive contact with a probe.
 
 ### Worth a decision
 
-- **`ultra/datetime/recurse.kt` is a byte-identical copy of `common/recursion.kt`.** Same root cause
+- **DONE 2026-11-13 (see Implementation notes).** ~~**`ultra/datetime/recurse.kt` is a byte-identical copy of `common/recursion.kt`.** Same root cause
   as `ComparableTo`, and removable now that commonMain can see common. Decided 2026-07-29: rather
   than reuse `common`'s directly, move the function into `Kronos`' companion as a private helper —
-  it exists only for the mutable Kronos. Deferred to the datetime pass. **[verified]**
+  it exists only for the mutable Kronos. Deferred to the datetime pass. **[verified]**~~
 
 ### Correctness, no decision needed
 
@@ -259,7 +259,21 @@ survive contact with a probe.
   word boundary. **[reported]**
 
 
+## Implementation notes
+
+- 2026-11-13, track A (datetime) of ULTRA-00316: `ultra/datetime/src/commonMain/kotlin/recurse.kt` deleted. Its only
+  caller, `Kronos.MutableImpl.set`, now uses `collectChain`, a private helper in `Kronos`' companion with the linear
+  `seen` set that common's `recurse` got in the third pass (the copy still had the O(n²) `!in result` scan).
+  Behaviour kept: the walk follows `Mutable` and `advanceBy` layers, compares with `equals` and stops at a repeat.
+
 ## Test evidence
+
+- 2026-11-13 (`recurse` move): new `KronosSpec` case "set sees through many mutable and advanceBy layers" (1000 layers
+  over the mutable are rejected, 1000 over another mutable are accepted); the existing reject/accept cases kept.
+  From the XML: jvmTest 2523 / 0 failures, jsBrowserTest 1888 / 0, linuxX64Test 1876 / 0 (`KronosSpec` 80 / 0 each).
+  Mutation-checked: `collectChain` stopping after the first element → red, 3 tests (set rejects, mutate rejects,
+  many layers); a cap of 100 elements → red, only the many-layers test; dropping the repeat check → stays green, as
+  expected: only concurrent writers can build a cycle (the `Kronos.Mutable` KDoc says so), so no test can.
 
 - `ultra/common` after the third pass: 351 jvmTest, all three platforms green
 - Full compile sweep across EVERY project, main and test, JVM and JS: 0 errors. Worth doing rather
@@ -275,6 +289,12 @@ survive contact with a probe.
   callers; `unsubscribeAll`, `prepend`, `modifyIf` were used but untested). The `pop`/`shift` specs
   were then removed along with the functions themselves — see item 5.
 
+## Changelog text
+
+- `ultra/datetime`: the internal copy of common's `recurse` is gone; `Kronos.Mutable.set` walks its chain with a
+  private linear helper instead of the old quadratic scan (ULTRA-00143).
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00143 (was `docs/tasks/20260729-common-scan-findings.md`).
+- 2026-11-13: the `recurse` item done on track A (datetime) of ULTRA-00316; per the triage the ticket can close after the review gate.

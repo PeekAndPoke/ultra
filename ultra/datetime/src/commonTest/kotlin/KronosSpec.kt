@@ -507,6 +507,21 @@ class KronosSpec : StringSpec({
         subject.instantNow() shouldBe fixedInstant.plus(1.hours)
     }
 
+    "Kronos.mutable - set sees through many mutable and advanceBy layers" {
+
+        val subject = fixedKronos.mutable()
+        val other = fixedKronos.mutable()
+
+        val deepOverSubject = (1..1_000).fold<Int, Kronos>(subject) { acc, _ -> acc.advanceBy(1.seconds).mutable() }
+        val deepOverOther = (1..1_000).fold<Int, Kronos>(other) { acc, _ -> acc.advanceBy(1.seconds).mutable() }
+
+        shouldThrow<IllegalArgumentException> { subject.set(deepOverSubject) }
+        subject.instantNow() shouldBe fixedInstant
+
+        subject.set(deepOverOther)
+        subject.describe() shouldBe deepOverOther.describe()
+    }
+
     "Kronos.mutable - set accepts another mutable that does not read this one" {
 
         val other = Kronos.fixed(fixedInstant.plus(1.days)).mutable()
