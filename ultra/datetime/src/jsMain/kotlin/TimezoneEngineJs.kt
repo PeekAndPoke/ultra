@@ -14,8 +14,8 @@ private val intl: dynamic = js("Intl")
 private const val MAX_DATE_MS = 8.64e15
 private const val MAX_DATE_SECONDS = 8_640_000_000_000.0
 
-// Intl matches zone ids case-insensitively, java.time does not. Reject case variants of known ids, so the browser
-// accepts no id the JVM would reject.
+// Intl matches zone ids case-insensitively, java.time does not. Case variants of listed ids are refused, as on the
+// JVM; case variants of unlisted ids, and ids java.time refuses such as `EST` or `ROC`, still resolve here.
 private val supportedIdsByLowercase: Map<String, String> by lazy { MpTimezone.supportedIds.associateBy { it.lowercase() } }
 
 // One interval cache per zone id in MpTimezone.supportedIds; Intl is far too slow to ask on every conversion. Other
