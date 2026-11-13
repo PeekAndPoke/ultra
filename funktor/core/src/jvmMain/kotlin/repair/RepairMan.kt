@@ -19,7 +19,7 @@ class RepairMan(
                 it.run()
                 log.info("Finished repair '${it::class}'")
             } catch (t: Throwable) {
-                log.error("Error running repair '${it::class}'\n\n${t.stackTraceToString()}")
+                log.error("Error running repair '${it::class}'", t)
             }
         }
     }

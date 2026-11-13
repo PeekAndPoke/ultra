@@ -51,7 +51,7 @@ class EmailHooks(
                     try {
                         it.invoke(email, result)
                     } catch (e: Throwable) {
-                        log.error("Error on after send EmailHook ${it::class.qualifiedName}\n\n${e.stackTraceToString()}")
+                        log.error("Error on after send EmailHook ${it::class.qualifiedName}", e)
                     }
                 }
             }

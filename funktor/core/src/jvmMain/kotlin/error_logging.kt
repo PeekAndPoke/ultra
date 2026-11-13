@@ -4,6 +4,7 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.log
 import io.ktor.server.plugins.origin
 import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.LogLevel
 
 /** Logs a 404 not-found event with request details, optional hint, and cause. */
 fun ApplicationCall.logNotFound(cause: Throwable? = null, hint: String? = null) {
@@ -69,7 +70,7 @@ fun ApplicationCall.logInternalError(message: String? = null, cause: Throwable? 
         }
 
         else -> {
-            log.error(content + "\n" + (cause?.stackTraceToString() ?: ""))
+            log.log(LogLevel.ERROR, content, cause)
         }
     }
 }

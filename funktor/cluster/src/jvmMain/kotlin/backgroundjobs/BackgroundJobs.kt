@@ -12,6 +12,7 @@ import io.peekandpoke.funktor.core.Retry
 import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.log.Log
+import io.peekandpoke.ultra.log.LogLevel
 import io.peekandpoke.ultra.reflection.TypeRef
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.SlumberConfig
@@ -476,7 +477,7 @@ class BackgroundJobs(
             val job = try {
                 claimNextDueJob()
             } catch (e: Throwable) {
-                log.warning("Could not read next due job\n${e.stackTraceToString()}")
+                log.log(LogLevel.WARNING, "Could not read next due job", e)
                 null
             }
 

@@ -18,10 +18,11 @@ class KarangoLogAppender(
     override suspend fun append(event: LogEvent) {
 
         val entry = KarangoLogEntry(
-            createdAt = System.currentTimeMillis(),
+            createdAt = event.ts.toInstant().toEpochMilli(),
             level = event.level,
             message = event.message,
             loggerName = event.loggerName,
+            stackTrace = event.error?.stackTraceToString(),
             server = serverName,
         )
 

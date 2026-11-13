@@ -6,6 +6,7 @@ import io.peekandpoke.ultra.log.LogAppender
 import io.peekandpoke.ultra.log.LogEvent
 import io.peekandpoke.ultra.log.LogLevel
 
+/** Log appender that persists entries to MongoDB via [MonkoLogRepository]. */
 class MonkoLogAppender(
     repo: Lazy<MonkoLogRepository>,
     override val minLevel: LogLevel,
@@ -18,10 +19,11 @@ class MonkoLogAppender(
     override suspend fun append(event: LogEvent) {
 
         val entry = KarangoLogEntry(
-            createdAt = System.currentTimeMillis(),
+            createdAt = event.ts.toInstant().toEpochMilli(),
             level = event.level,
             message = event.message,
             loggerName = event.loggerName,
+            stackTrace = event.error?.stackTraceToString(),
             server = serverName,
         )
 

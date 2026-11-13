@@ -65,7 +65,7 @@ class WorkersFacade(
                             try {
                                 executeRun(state = state, worker = worker)
                             } catch (e: Throwable) {
-                                log.error("Running worker ${worker.id} failed!\n\n${e.stackTraceToString()}")
+                                log.error("Running worker ${worker.id} failed!", e)
                             }
                         }
                     } else {
@@ -129,7 +129,7 @@ class WorkersFacade(
             WorkerModel.Run.Result.Success
         } catch (t: Throwable) {
 
-            log.error("Error running worker '${worker.id}':\n" + "${t.message}\n" + t.stackTraceToString())
+            log.error("Error running worker '${worker.id}'", t)
 
             WorkerModel.Run.Result.Failure.of(t)
         }

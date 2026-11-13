@@ -4,15 +4,20 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.peekandpoke.funktor.inspect.logging.LogsFilter
 import io.peekandpoke.funktor.inspect.logging.api.LogEntryModel
 import io.peekandpoke.funktor.inspect.logging.api.LogsRequest
 import io.peekandpoke.funktor.logging.karango.KarangoLogEntry
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.log.LogAppender
+import io.peekandpoke.ultra.log.LogEvent
 import io.peekandpoke.ultra.log.LogLevel
+import io.peekandpoke.ultra.log.Slf4jAppender
 import io.peekandpoke.ultra.vault.Database
 import io.peekandpoke.ultra.vault.Repository
+import java.time.ZonedDateTime
 
 abstract class LogsStorageBaseSpec : FreeSpec() {
 
@@ -271,6 +276,40 @@ abstract class LogsStorageBaseSpec : FreeSpec() {
             }.map { it.id }.toSet()
 
             collected shouldHaveSize 5
+        }
+
+        "The database appender stores the event's time and the stack trace of its error" {
+            val kontainer = createKontainer()
+            val storage = kontainer.get(LogsStorage::class)
+            val database = kontainer.get(Database::class)
+
+            database.getRepositories().forEach { it.removeAll() }
+
+            val appender = kontainer.getAll(LogAppender::class).single { it !is Slf4jAppender }
+            val ts = ZonedDateTime.now().minusMinutes(1)
+
+            appender.append(
+                LogEvent(
+                    ts = ts,
+                    level = LogLevel.ERROR,
+                    message = "It broke",
+                    loggerName = "test.logger",
+                    error = IllegalStateException("kaputt", IllegalArgumentException("the cause")),
+                )
+            )
+            appender.append(
+                LogEvent(ts = ts, level = LogLevel.INFO, message = "No error", loggerName = "test.logger")
+            )
+
+            val items = storage.find(defaultFilter()).items
+            items shouldHaveSize 2
+
+            val withError = items.single { it.message == "It broke" }
+            withError.createdAt shouldBe ts.toInstant().toEpochMilli()
+            withError.stackTrace.shouldNotBeNull() shouldContain "java.lang.IllegalStateException: kaputt"
+            withError.stackTrace.shouldNotBeNull() shouldContain "Caused by: java.lang.IllegalArgumentException: the cause"
+
+            items.single { it.message == "No error" }.stackTrace shouldBe null
         }
     }
 
