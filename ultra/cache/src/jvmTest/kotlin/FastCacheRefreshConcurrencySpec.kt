@@ -32,6 +32,8 @@ class FastCacheRefreshConcurrencySpec : StringSpec() {
                     throw CancellationException("refresh failed")
                 }
 
+                // cached for real: a refresh only replaces a value that is in the cache
+                (0 until keys).forEach { cache.put(it, it) }
                 behaviour.process(cache, FastCache.ActionUpdates((0 until keys).map { FastCache.PutAction(it, it) }))
 
                 // first round: every key is launched while failed refreshes release keys concurrently;

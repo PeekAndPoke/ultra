@@ -612,8 +612,14 @@ class FastCache<K, V>(
 
         private val writeTimestamps = mutableMapOf<K, Long>()
 
-        /** Keys currently being refreshed, for deduplication. Guarded by [refreshLock]. */
-        private val refreshingKeys = mutableSetOf<K>()
+        /**
+         * Keys currently being refreshed, each with the token of the refresh that claimed it. Guarded
+         * by [refreshLock].
+         *
+         * A token, not just the key: a write releases a refresh's claim, so a newer refresh can claim
+         * the key while the older one still runs - and the older one, failing, released the newer claim.
+         */
+        private val refreshClaims = mutableMapOf<K, Any>()
 
         /** The refresh coroutine releases a key on its own thread, while [process] claims keys on the loop. */
         private val refreshLock = Any()
@@ -621,7 +627,7 @@ class FastCache<K, V>(
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
             val now = clock.millisNow()
 
-            val keysToRefresh = mutableListOf<K>()
+            val keysToRefresh = mutableListOf<Pair<K, Any>>()
             val keysToEvict = mutableListOf<K>()
 
             RunSync(refreshLock) {
@@ -631,13 +637,13 @@ class FastCache<K, V>(
                     when (action) {
                         is PutAction -> {
                             writeTimestamps[key] = now
-                            refreshingKeys.remove(key)
+                            refreshClaims.remove(key)
                         }
 
                         // A miss as the key's last action means it is gone - see ExpireAfterAccessBehaviour
                         is RemoveAction, is MissAction -> {
                             writeTimestamps.remove(key)
-                            refreshingKeys.remove(key)
+                            refreshClaims.remove(key)
                         }
 
                         is ReadAction -> { /* lastWriteByKey holds none */
@@ -656,15 +662,17 @@ class FastCache<K, V>(
                     }
 
                     // Soft TTL: claim a stale key unless a refresh already holds it
-                    if (age >= refreshAfterMs && refreshingKeys.add(key)) {
-                        keysToRefresh.add(key)
+                    if (age >= refreshAfterMs && key !in refreshClaims) {
+                        val token = Any()
+                        refreshClaims[key] = token
+                        keysToRefresh.add(key to token)
                     }
                 }
             }
 
             // Evict hard-expired entries outside refreshLock: removeSilently takes the cache's lock.
-            // (An in-flight refresh cannot resurrect one: its result goes through putIfPresent, which
-            // refuses once the entry is gone.)
+            // (An in-flight refresh cannot resurrect one: its result goes through replaceIfUnchanged,
+            // which refuses once the entry is gone.)
             //
             // Only forget a key that was really removed. removeSilently declines when the key was
             // touched after the batch was taken - forgetting it anyway meant that entry was never
@@ -675,39 +683,53 @@ class FastCache<K, V>(
                 RunSync(refreshLock) {
                     evicted.forEach { key ->
                         writeTimestamps.remove(key)
-                        refreshingKeys.remove(key)
+                        refreshClaims.remove(key)
                     }
                 }
             }
 
             // Launch refresh coroutines
-            for (key in keysToRefresh) {
+            for ((key, token) in keysToRefresh) {
+                // The value this refresh replaces. Gone already: nothing to refresh.
+                val startedFrom = cache.currentValue(key)
+
+                if (startedFrom == null) {
+                    release(key, token)
+                    continue
+                }
+
+                refreshClaims[key] = token
                 cache.scope.launch {
                     try {
                         val newValue = loader(key)
 
-                        // Only refresh an entry that is still cached. A loader slower than the hard
-                        // TTL used to have its result put back unconditionally, so the entry
-                        // reappeared after being hard-evicted - i.e. the hard TTL was not hard. The
-                        // same applies to an explicit remove() racing an in-flight refresh.
-                        cache.putIfPresent(key, newValue)
+                        // Only replace the value the refresh started from. Unconditionally, a loader
+                        // slower than the hard TTL put an evicted entry back, and a value the
+                        // application wrote while the loader ran was overwritten with an older one.
+                        // A refused result needs no release: the write or removal that changed the
+                        // entry recorded an action, and that releases the claim.
+                        cache.replaceIfUnchanged(key, startedFrom.value, newValue)
                     } catch (e: CancellationException) {
                         // never swallow cancellation - it is how the scope is torn down
-                        release(key)
+                        release(key, token)
                         throw e
                     } catch (e: Exception) {
                         // Refresh failed: allow retry on next loop iteration. There is no logger
                         // here, so a repeatedly failing loader would otherwise be entirely silent.
-                        release(key)
+                        release(key, token)
                         println("FastCache refresh for key [$key] failed: $e")
                     }
                 }
             }
         }
 
-        /** Frees [key] for the next refresh. Runs on the refresh coroutine's thread. */
-        private fun release(key: K) {
-            RunSync(refreshLock) { refreshingKeys.remove(key) }
+        /** Frees [key] for the next refresh, unless a newer refresh holds it. Runs on the refresh's thread. */
+        private fun release(key: K, token: Any) {
+            RunSync(refreshLock) {
+                if (refreshClaims[key] === token) {
+                    refreshClaims.remove(key)
+                }
+            }
         }
     }
 
@@ -914,14 +936,20 @@ class FastCache<K, V>(
         }
     }
 
+    /** The value cached for [key], or `null` when absent - see [lookup]. Records no action. */
+    private fun currentValue(key: K): Holder<V>? = sync { lookup(key) }
+
     /**
-     * Updates [key] to [value] only if it is still cached, and reports whether it did.
+     * Replaces the value of [key] with [value] only while it still holds [expected], and reports
+     * whether it did. Compares by identity, so writing back the very same instance counts as unchanged.
      *
-     * Used by the refresh path: a value loaded for an entry that has since been evicted must not
-     * resurrect it.
+     * Used by the refresh path: a refresh must neither resurrect an entry removed while its loader
+     * ran, nor overwrite a value written meanwhile.
      */
-    private fun putIfPresent(key: K, value: V): Boolean = sync {
-        if (!map.containsKey(key)) {
+    private fun replaceIfUnchanged(key: K, expected: V, value: V): Boolean = sync {
+        val current = lookup(key)
+
+        if (current == null || current.value !== expected) {
             return@sync false
         }
 
