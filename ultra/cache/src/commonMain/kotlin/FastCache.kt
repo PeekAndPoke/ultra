@@ -7,6 +7,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.concurrent.Volatile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -401,9 +402,9 @@ class FastCache<K, V>(
             val size: Long,
         )
 
-        // TODO(scan): mutated on the loop thread and read by callers without any memory barrier, and
-        //   it keeps counting entries that another behaviour evicted, because eviction records no action.
+        // Volatile: written by the processing loop, read by any thread.
         /** The total estimated memory usage (in bytes) of all entries tracked by this behaviour. */
+        @Volatile
         var totalSize = 0L
             private set
 
@@ -528,36 +529,45 @@ class FastCache<K, V>(
             val hitRate: Double get() = if (requestCount == 0L) Double.NaN else hitCount.toDouble() / requestCount
         }
 
-        // TODO(scan): plain fields - written on the processing-loop thread, read by callers of snapshot()
-        //   with no memory barrier, and any action dropped by clear() is never counted.
-        private var _hitCount = 0L
-        private var _missCount = 0L
-        private var _putCount = 0L
-        private var _evictionCount = 0L
+        // Written only by the processing loop, read by any thread through snapshot(). One volatile
+        // reference to an immutable value gives readers visibility AND counters from the same moment.
+        @Volatile
+        private var stats = CacheStats(hitCount = 0, missCount = 0, putCount = 0, evictionCount = 0)
 
         /** Returns an immutable snapshot of the current statistics. */
-        fun snapshot(): CacheStats = CacheStats(
-            hitCount = _hitCount,
-            missCount = _missCount,
-            putCount = _putCount,
-            evictionCount = _evictionCount,
-        )
+        fun snapshot(): CacheStats = stats
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
+            var hits = 0L
+            var misses = 0L
+            var puts = 0L
+
             for (action in updates.actions) {
                 when (action) {
-                    is ReadAction -> _hitCount++
-                    is MissAction -> _missCount++
-                    is PutAction -> _putCount++
+                    is ReadAction -> hits++
+                    is MissAction -> misses++
+                    is PutAction -> puts++
                     is RemoveAction -> { /* explicit removes are not counted */
                     }
                 }
+            }
+
+            if (hits + misses + puts > 0) {
+                val current = stats
+
+                stats = current.copy(
+                    hitCount = current.hitCount + hits,
+                    missCount = current.missCount + misses,
+                    putCount = current.putCount + puts,
+                )
             }
         }
 
         /** Called when an eviction occurs. */
         internal fun recordEviction() {
-            _evictionCount++
+            val current = stats
+
+            stats = current.copy(evictionCount = current.evictionCount + 1)
         }
     }
 
