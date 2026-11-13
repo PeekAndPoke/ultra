@@ -1,6 +1,6 @@
 # ULTRA-00314: DepotUri normalises paths and names: two files can share one uri
 
-> **Status (2026-11-12): IN PROGRESS.**
+> **Status (2026-11-13): DONE.**
 
 ## Why this exists
 
@@ -26,3 +26,8 @@ Reviewed with ULTRA-00311 step 3, round 3.
 ## History
 
 - 2026-11-12: created on the maintainer's word and built.
+- 2026-11-13: review gates passed (ULTRA-00311: step 1, step 2 round 3, step 3 round 4, each clean at the last
+  round); archived. Artifact lines in `site.ts` and on the cluster page. Follow-ups: ULTRA-00312 (red team, 54
+  scenarios), ULTRA-00313 (Karango's `remove`), ULTRA-00315 (DOCS). Not built, by decision: master key / KMS for
+  the key store, bulk re-encryption, a repository identity bound to the ciphertext.
+- 2026-11-13: DONE.

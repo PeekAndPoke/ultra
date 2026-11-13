@@ -1,6 +1,6 @@
 # ULTRA-00311: Depot: per-file metadata, and encrypted files with per-file keys
 
-> **Status (2026-11-11): IN PROGRESS.** Plan confirmed by the maintainer 2026-11-11; step 1 (the move) started.
+> **Status (2026-11-13): DONE.** Plan confirmed by the maintainer 2026-11-11; step 1 (the move) started.
 >
 > The maintainer on 2026-11-11: "I would like to be able to set meta-data for each file. On AWS this should work out
 > of the box. For the file-system we would need to store an additional file ... store personal customer data in aws.
@@ -480,3 +480,8 @@ superuser-only and renders text; the S3 stub is faithful for what the tests clai
   filter, reserved path, metadata removal, the subject entry, S3 encode, S3 decode, S3 validation.
   Not tested: that the compiler refuses a wrong subject type (no compile-test harness in these modules); real S3.
   Deferred to after step 3: the docs page and artifact lines for the two modules. Review gate next.
+- 2026-11-13: review gates passed (ULTRA-00311: step 1, step 2 round 3, step 3 round 4, each clean at the last
+  round); archived. Artifact lines in `site.ts` and on the cluster page. Follow-ups: ULTRA-00312 (red team, 54
+  scenarios), ULTRA-00313 (Karango's `remove`), ULTRA-00315 (DOCS). Not built, by decision: master key / KMS for
+  the key store, bulk re-encryption, a repository identity bound to the ciphertext.
+- 2026-11-13: DONE.

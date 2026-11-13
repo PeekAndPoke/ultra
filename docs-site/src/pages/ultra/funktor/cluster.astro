@@ -3,6 +3,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 import Aside from '../../../components/Aside.astro';
 import {funktorSidebar} from '../../../data/funktor-sidebar';
 import {Code} from 'astro:components';
+import {dep} from '../../../data/site';
 ---
 
 <DocsLayout title="Cluster Module" sidebar={funktorSidebar}
@@ -46,6 +47,13 @@ welcomeEmailHandler.queue(
     <h2>File depot</h2>
 
     <p>Abstract file storage with pluggable backends. Same API for local filesystem and AWS S3.</p>
+
+    <p>
+        The depot is its own library, <code>{dep.depot}</code>, which the cluster module brings along. The S3
+        repository lives in a second one, so only apps that use it carry the AWS SDK:
+    </p>
+
+    <Code code={`implementation("${dep.depotS3}")`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>
         Every write names the data subject the file is about. A repository is typed by the kind of subject it
