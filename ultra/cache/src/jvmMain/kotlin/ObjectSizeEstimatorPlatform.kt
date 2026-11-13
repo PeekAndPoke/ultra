@@ -15,9 +15,10 @@ actual object ObjectSizeEstimatorPlatform {
     /**
      * Reads the instance fields of [obj], walking the class hierarchy up to (excluding) [Any].
      *
-     * Skips static and synthetic fields (an inner class's outer instance, an anonymous object's
-     * captured locals; a lambda's captures are ordinary fields and are read). A field JPMS does not
-     * open is skipped, too. Never returns `null`.
+     * Skips static fields and an inner class's reference to its outer instance (`this$0`): the outer
+     * object is not part of the value. Every other field is read, synthetic ones included - the
+     * captured locals of a lambda or an anonymous object, the `$$delegate_0` of class delegation. A
+     * field JPMS does not open is skipped, too. Never returns `null`.
      */
     actual fun getFieldsOf(obj: Any): List<Any?>? = fieldsByClass.get(obj.javaClass).map { it.get(obj) }
 
@@ -28,7 +29,7 @@ actual object ObjectSizeEstimatorPlatform {
         while (cls != null && cls !== Any::class.java) {
 
             for (f in cls.declaredFields) {
-                if (Modifier.isStatic(f.modifiers) || f.isSynthetic) continue
+                if (Modifier.isStatic(f.modifiers) || f.isOuterInstance()) continue
 
                 // Reports a JPMS refusal instead of throwing it, so nothing needs catching here or in
                 // getFieldsOf - where a blanket catch used to hide real errors as well.
@@ -42,4 +43,7 @@ actual object ObjectSizeEstimatorPlatform {
 
         return out
     }
+
+    /** The compiler's reference from an inner class to its outer instance: `this$0`, `this$1`, ... */
+    private fun Field.isOuterInstance(): Boolean = isSynthetic && name.startsWith("this$")
 }

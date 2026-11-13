@@ -10,6 +10,12 @@ private class EstimatorOuter(val payload: LongArray) {
 
 private class EstimatorPoint(val x: Int, val y: Int)
 
+private interface EstimatorContent
+
+private class EstimatorPayload(val data: LongArray) : EstimatorContent
+
+private class EstimatorDoc(content: EstimatorContent) : EstimatorContent by content
+
 private class EstimatorText(val s: String)
 
 class ObjectSizeEstimatorSpec : StringSpec({
@@ -103,8 +109,7 @@ class ObjectSizeEstimatorSpec : StringSpec({
         ObjectSizeEstimator().estimate(inner) shouldBe cfg.objectHeader + cfg.pointerSize + 4L
     }
 
-    "an anonymous object is not charged its captured locals" {
-        val cfg = ObjectSizeEstimatorImpl.EstimatorConfig()
+    "an anonymous object is charged its captured locals" {
         val captured = LongArray(10_000)
         val anonymous = object {
             val y = 1
@@ -113,7 +118,16 @@ class ObjectSizeEstimatorSpec : StringSpec({
             fun size() = captured.size
         }
 
-        ObjectSizeEstimator().estimate(anonymous) shouldBe cfg.objectHeader + cfg.pointerSize + 4L
+        // header, two references (y and the synthetic $captured), y, then the array
+        ObjectSizeEstimator().estimate(anonymous) shouldBe 16L + 2 * 8L + 4L + (24L + 10_000 * 8L)
+    }
+
+    "a class delegating by `by` is charged its delegate" {
+        val doc = EstimatorDoc(EstimatorPayload(LongArray(1_000)))
+
+        // the doc: header and one reference (the synthetic $$delegate_0); the payload: header,
+        // one reference, the array
+        ObjectSizeEstimator().estimate(doc) shouldBe (16L + 8L) + (16L + 8L + 24L + 1_000 * 8L)
     }
 
     "the field lookup is resolved per class" {

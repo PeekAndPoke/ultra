@@ -24,6 +24,9 @@ import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
  *   `objectHeader + 2n * pointerSize`, i.e. 16 bytes per entry, against roughly 48 real once the
  *   backing table, its growth slack and each `LinkedHashMap.Entry` are counted. Elements are also
  *   charged their raw value size rather than the box.
+ * - **JVM: an inner class is charged without its outer instance; everything else it reaches is
+ *   charged**, the captured locals of a lambda or an anonymous object and the delegate of class
+ *   delegation included - so a value that captures a service graph is charged that graph.
  * - **JVM: types whose fields are inaccessible are charged 16 bytes.** JPMS refuses to open their
  *   fields, which are skipped, so `Instant`, `LocalDate`, `UUID`, `BigDecimal`, `StringBuilder` and
  *   `ByteBuffer` all estimate as an empty object regardless of what they hold.
