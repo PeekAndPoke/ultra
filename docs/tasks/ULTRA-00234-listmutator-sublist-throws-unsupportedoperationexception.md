@@ -145,7 +145,13 @@ Fix commit: `15edd63e` (round 1, all rows). Not done (coordinator): a public sna
 
 - Implementation & code style: **CLEAN**.
 - Security / data integrity: **NOT CLEAN** (one MAJOR claim and further claims, below).
-- Domain expert: running.
+- Domain expert: CLEAN (fable-medium). Nine MINOR, among them: the duplicate-instance write (claims A to E) rated
+  MINOR and "accept and document", against the security reviewer's MAJOR: the maintainer decides; the changelog
+  text overclaims ("every change now lands") and lacks the "no compile signal" list; iterator contract gaps (I);
+  `tracked` updated after the notification (G); the baseline alias in generated code (H) as its own ticket; the
+  snapshot's `equals`/`hashCode` stay as they are, only the KDoc wording at `ListMutator.kt:295-296` is wrong;
+  false lines in `mutator/core/CLAUDE.md:4-5` and `collections.astro:49-50, 74-86`; stdlib calls (sort, shuffle,
+  fill, removeAll, retainAll, asReversed, small reverse) traced as correct but not pinned by specs.
 
 Two rounds without a clean one: verified with tests only, nothing fixed; the maintainer decides how to go on. Every
 claim was written as a test asserting the EXPECTED behaviour and run on the JVM and JS; all were RED on both, with the
