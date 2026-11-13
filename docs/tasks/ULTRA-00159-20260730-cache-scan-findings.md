@@ -556,11 +556,11 @@ change. Every test below was RED before its fix; "mutation" names what was broke
 
 | Item | Commit | Change | Pinned by | Mutation → red |
 |---|---|---|---|---|
-| F14 rest | 90b59048 | Every TTL validated at construction: non-positive refused; a positive TTL below 1 ms counts as 1 ms (the clock's resolution; truncated to 0 it expired an entry in the very iteration that recorded its write; refusing a positive duration would gain nothing); `hardTtl` must exceed `refreshAfter` (compared in ms), else the hard branch always wins and nothing is ever refreshed | `FastCacheConfigValidationSpec` (4 new) | drop the positive `require` → non-positive test; drop the 1 ms floor → both sub-ms tests; drop the hardTtl `require` → hardTtl test |
+| F14 rest | 90b59048, **revised by 1f19eaad** (no throws, see review round 1) | Every TTL validated at construction: non-positive refused; a positive TTL below 1 ms counts as 1 ms (the clock's resolution; truncated to 0 it expired an entry in the very iteration that recorded its write; refusing a positive duration would gain nothing); `hardTtl` must exceed `refreshAfter` (compared in ms), else the hard branch always wins and nothing is ever refreshed | `FastCacheConfigValidationSpec` (4 new) | drop the positive `require` → non-positive test; drop the 1 ms floor → both sub-ms tests; drop the hardTtl `require` → hardTtl test |
 | F9 | b34f1826 | Statistics: one `@Volatile` reference to an immutable `CacheStats` (single writer: the loop), so a snapshot is visible and consistent; `totalSize` `@Volatile`. Also removes the `totalSize` marker (its second half was fixed by the `RemoveAction`) | `FastCacheVisibilitySpec` (jvmTest, 2): a reader thread spins until the value changes; red on the pre-fix code | drop each `@Volatile` → its test (reader never sees the write, JIT-hoisted) |
 | F4 | 710c1dc3 | `refreshingKeys` guarded by the behaviour's own lock, never nested in the cache lock; keys claimed in the scan before any launch; a failed refresh releases under the lock | `FastCacheRefreshConcurrencySpec` (jvmTest): 20 000 keys, failing loaders, 5 fresh trials; pre-fix code red 7 of 8 runs (lost releases: 39994-39999 of 40000) | claims back in the launch loop, unguarded → red (lost release). **Not pinned:** the lock in `release()` alone — that mutant survived 2/2, since with claims made before launch a release only races other releases on distinct buckets |
 | C10/F6 | 1e0b9a1d | `clear()` records a `RemoveAction` per entry (the channel every removal already uses, delivered on the loop thread, so custom behaviours learn too) and keeps the pending actions | `FastCacheClearSpec` (4 new): maxEntries no longer evicts live entries for cleared ones; `totalSize` back to 0; refresh stops; pending actions counted | no `RemoveAction`s → the 3 behaviour tests; drop pending actions → the statistics test |
-| C9, C6, C8 | 74f61fa4 | JVM estimator: fields per class memoized in a `ClassValue` (pins no class loader); static and synthetic fields skipped (an inner class's `this$0`, an anonymous object's captures; an indy lambda's captures are ordinary fields on a hidden class and are still walked — probed); `trySetAccessible` instead of a blanket `catch (Throwable)` | `ObjectSizeEstimatorSpec` (3 new): inner class, anonymous object, per-class lookup | walk synthetic fields → the 2 synthetic tests; a class-blind memo → the per-class test (and 6 others). **Not pinned:** the memo's speed (C9) and the absent catch (C6, no error reachable through an opened field) |
+| C9, C6, C8 | 74f61fa4, **revised by 028ac18b** (only `this$N` skipped, see review round 1) | JVM estimator: fields per class memoized in a `ClassValue` (pins no class loader); static and synthetic fields skipped (an inner class's `this$0`, an anonymous object's captures; an indy lambda's captures are ordinary fields on a hidden class and are still walked — probed); `trySetAccessible` instead of a blanket `catch (Throwable)` | `ObjectSizeEstimatorSpec` (3 new): inner class, anonymous object, per-class lookup | walk synthetic fields → the 2 synthetic tests; a class-blind memo → the per-class test (and 6 others). **Not pinned:** the memo's speed (C9) and the absent catch (C6, no error reachable through an opened field) |
 | `NullableCache.clear()` race | 13777c5b | `clear()` drops the running claims too; a provider caches only while its claim is current and releases only its own claim | `NullableCacheClearSpec` (3, commonTest, deterministic: UNDISPATCHED ordering, no timing) | unconditional insert → tests 1, 2; `clear()` keeps `inFlight` → tests 1, 2; failure path releases unconditionally → test 3 |
 | `Cache.getOrPut` atomicity | 3120ada9 | KDoc: not atomic, FastCache may run the producer more than once, losers get the stored value, `NullableCache` for single-flight | – | – |
 | Stale markers | 5e9bebcc (+ b34f1826, 1e0b9a1d, 74f61fa4) | Removed after checking each: onEviction null skip and refresh of evicted keys (fixed by the `RemoveAction`); `Cache.get` null (Q2 design, now in its KDoc); estimator JS numbers, JVM collections, native flat charge (Q3, stated in the class KDoc's Accuracy section; the `2L` now explained); the JPMS line of that KDoc follows `trySetAccessible`. Kept, still true and PARKed: `FastCache` F17 (`:344`), F15, `lastActions` unbounded, F16; `NullableCache` C11; estimator C7; JS C13 | – | – |
@@ -573,25 +573,77 @@ Seen, not caused here: two timing-tight native tests (`FastCacheRefreshAfterWrit
 per key at a time", `FastCacheOnEvictionSpec` "onEviction receives the correct value") each failed once
 under a parallel JVM + JS + native build at load ~5, and passed 3/3 alone.
 
+### Review round 1 — 2026-11-13
+
+Every finding was first written as a test and run on the code as it stood; CONFIRMED means that test
+was red. Each commit holds the test and the fix.
+
+| Finding | Verdict | Commit | Fix | Mutation → red |
+|---|---|---|---|---|
+| A: cancelled `getOrPutAsync` joiner spins | CONFIRMED (thread still spinning after 5 s) | f2646742 | wait with `join()`: no rethrow of the owner's failure, throws on the caller's own cancellation | back to `runCatching { await() }` → joiner test; bare `await()` → "owner's cancellation is not the joiner's" |
+| B: `lastByKey` hides a put behind a read, a remove behind a miss | CONFIRMED, all of B1 (refresh stuck after a read in the put's batch), B2 (`expireAfterWrite` never applies after put+get), B3 (ghost after clear/remove + miss: maxEntries evicted live entries, maxMemoryUsage kept bytes) | 7309fbd2 | write-based behaviours read an internal `lastWriteByKey` (last non-read action); every behaviour treats a miss as the key being gone. `removeSilently` stays boolean: every disappearance records a `RemoveAction`, and only a later miss could hide it | `lastByKey` back in expireAfterWrite → B2; in refresh → B1; miss arm dropped in maxEntries / maxMemoryUsage / refresh → its test. **Not pinned:** the miss arm of the two expiry behaviours (a ghost there only costs a futile eviction attempt per pass, invisible from outside) |
+| C: in-flight refresh overwrites a newer value; a failed refresh releases a newer claim | CONFIRMED both ("refreshed from old" replaced "fresh"; a third loader started) | 4efb3d9b | the refresh captures the value it starts from and replaces only that (identity compare-and-set); claims carry a token, a refresh releases only its own | identity check dropped → overwrite test; release ignoring the token → claim test; the F4 spec still catches unguarded claims (39998/40000) |
+| Loader throwing an `Error` keeps its key claimed | CONFIRMED (jvmTest) | 54806344 | release in `finally` unless the result reached the cache | no release in `finally` → 3 tests; the old two-catch shape → exactly the Error test |
+| Throwing eviction listener during hard-TTL eviction leaves claimed keys unloaded | CONFIRMED (hand-driven) | 86899928 | launches before evictions | the original order is the experiment that was red |
+| `NullableCache.clear()` KDoc wrong about who gets the result | text | 78be3928 | only the caller that ran the provider; waiting callers re-run | – |
+| `hardTtl` message prints raw durations | superseded | – | the throw itself is gone (maintainer decision 1) | – |
+| `lastActions` TODO says "or the loop dies" | text | 4533b12f | only a cancelled scope stops the loop | – |
+| Key and exception message printed to stdout | CONFIRMED (stdout captured, jvmTest) | 28c77b2a | the exception's class only, at both sites | key back in the refresh line → refresh test; `$e` back in the behaviour line → behaviour test |
+| Timing-dependent tests | test only | cb8cc919 | positive conditions polled with a deadline; the F4 spec polls per-key counts; "only one refresh" checks inside a 250 ms window that cannot hold a legitimate second load (300 ms loading + 200 ms TTL) | unguarded claims → F4 spec; no deduplication → "only one refresh" |
+| `onEviction` / `evictionCount` must not fire on `clear()` | NOT CONFIRMED as a defect: green on current code; test kept | 0145a81b | – | `clear()` calling the listeners → red |
+| `FastCache.getOrPut` KDoc: producer across remove/clear | text | 1d5d5b9d | – | – |
+
+Maintainer decisions applied afterwards:
+- **1f19eaad TTL fallbacks, no throws.** Zero or negative TTL (`expireAfterAccess`, `expireAfterWrite`,
+  `hardTtl`): "do not keep", expires at the next pass. Below 1 ms: 1 ms. `Duration.INFINITE`: never
+  expires. Zero or negative `refreshAfter`: also "do not keep" - no refresh, expiry at the next pass;
+  chosen over the old "reload every key on every pass", which hammers the loader's source and keeps
+  nothing a TTL of 0 asks to keep. `hardTtl` not above `refreshAfter`: expires at `hardTtl`, never
+  refreshed. Tests: 5 fallback tests; mutants (non-positive as "never", the zero-refresh mapping
+  dropped, INFINITE capped) each red.
+- **028ac18b estimator skips only `this$N`.** Probed field names: inner class `this$0` (synthetic);
+  class delegation `$$delegate_0` (synthetic); suspend lambda `$big` (synthetic, beside `label`,
+  `arity`, `_context`, `intercepted`, `completion` from its base classes); anonymous object `$big`
+  (synthetic); a plain lambda compiles to a hidden class with `arg$1` (not synthetic). Tests: the
+  anonymous-object test flipped (the 80 KB array is charged), a delegating wrapper is charged its
+  delegate; mutants "skip every synthetic" and "skip none" each red.
+
+Probe: `ObjectSizeEstimatorPlatform` is a public `expect object`, so `getFieldsOf` is public API,
+reachable from outside the module.
+
+Evidence after the last commit: cache jvm **173** / js **147** / native **146**, consumers slumber **1249** / vault **287**, log jvm **69**; 0 failures, 0 skipped.
+
 ## Changelog text
 
-For the coordinator to put into `CHANGELOG.md`:
+For the coordinator to put into `CHANGELOG.md`. No entry changes a signature; the behaviour changes
+below have **no compile signal**, so each is listed.
 
 ```
 ### ultra:cache
-- FastCache TTLs are validated when the cache is built: a zero or negative TTL throws
-  IllegalArgumentException; a positive TTL below 1 ms counts as 1 ms (it truncated to 0 and expired
-  entries at once); refreshAfterWrite requires hardTtl to exceed the refresh TTL.
-- FastCache.clear() tells the behaviours: maxEntries, maxMemoryUsage, the expiries and
-  refreshAfterWrite forget the cleared entries, and the statistics count actions still pending at
-  the clear. Before, maxEntries evicted live entries in place of cleared ones.
+- FastCache TTLs never throw; odd values fall back. A zero or negative TTL means "do not keep": the
+  entry expires at the next processing pass. A positive TTL below 1 ms counts as 1 ms (it truncated
+  to 0 and expired the entry at once). Duration.INFINITE never expires.
+- refreshAfterWrite with a zero or negative refresh TTL no longer reloads every key on every pass:
+  entries expire at the next pass and are never refreshed. A hardTtl not above the refresh TTL
+  expires entries at hardTtl, unrefreshed (as before).
+- A read in the same loop window no longer hides a put: expireAfterWrite applies to an entry read
+  right after it was written, and a refreshed key that is read constantly keeps being refreshed.
+- A miss in the same loop window no longer hides a remove or clear(): the behaviours forget the key
+  (maxEntries no longer evicts live entries in place of cleared ones, maxMemoryUsage gives the bytes
+  back).
+- FastCache.clear() tells the expiry, maxEntries, maxMemoryUsage and refreshAfterWrite behaviours
+  and the statistics (pending actions are counted). It is not an eviction: onEviction handlers and
+  evictionCount do not fire.
+- refreshAfterWrite: a refresh no longer overwrites a value written while its loader ran; a failed
+  refresh (Exception or Error) frees its key; a refresh can no longer release a newer refresh's
+  claim; a throwing eviction listener no longer stops claimed keys from being loaded.
+- Failures are printed with the exception's class only, without the key or the message.
 - StatisticsBehaviour.snapshot() and MaxMemoryUsageBehaviour.totalSize are safe to read from any
   thread; a snapshot's counters are from one moment.
-- refreshAfterWrite: a failing refresh can no longer leave its key marked as refreshing for good.
-- NullableCache.clear(): a getOrPutAsync provider still running no longer re-inserts its key, and
-  callers after the clear run their own provider instead of joining it.
-- JVM ObjectSizeEstimator: field lookup memoized per class; synthetic fields (an inner class's outer
-  instance, an anonymous object's captured locals) are no longer charged.
+- NullableCache: clear() is no longer undone by a getOrPutAsync still running (its result goes only
+  to the caller that ran it); a cancelled caller waiting on another caller's provider no longer spins.
+- JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
+  outer instance; everything else it reaches is charged.
 - KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null.
 ```
 
@@ -611,3 +663,5 @@ For the coordinator to put into `CHANGELOG.md`:
 - 2026-10-21: numbered ULTRA-00159 (was `docs/tasks/20260730-cache-scan-findings.md`).
 - 2026-11-13: triage round (ULTRA-00316 track B): the READY items implemented on `wt/cache-log`,
   awaiting the coordinator's review gate.
+- 2026-11-13: review round 1 findings verified and fixed; maintainer decisions on TTL fallbacks and
+  the estimator's synthetic fields applied. Awaiting the next gate round.
