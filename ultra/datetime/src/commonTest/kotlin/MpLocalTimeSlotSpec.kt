@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.datetime
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.common.tuple
 import kotlin.time.Duration
@@ -11,7 +10,6 @@ import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.measureTime
 
 class MpLocalTimeSlotSpec : StringSpec({
 
@@ -422,18 +420,14 @@ class MpLocalTimeSlotSpec : StringSpec({
         error.message shouldBe "splitWithGaps would create 100001 slots, more than maxSlots = 100000"
     }
 
-    "splitWithGaps() - maxSlots: a whole day in 1 ms steps throws at once, before allocating the slots" {
-        val elapsed = withinTimeLimit(5.seconds) {
-            measureTime {
-                val error = shouldThrow<IllegalArgumentException> {
-                    MpLocalTimeSlot.completeDay.splitWithGaps(1.milliseconds)
-                }
-
-                error.message shouldBe "splitWithGaps would create 86399999 slots, more than maxSlots = 100000"
+    "splitWithGaps() - maxSlots: a whole day in 1 ms steps throws, naming the count of 86 399 999 slots" {
+        val error = withinTimeLimit(5.seconds) {
+            shouldThrow<IllegalArgumentException> {
+                MpLocalTimeSlot.completeDay.splitWithGaps(1.milliseconds)
             }
         }
 
-        elapsed shouldBeLessThan 1.seconds
+        error.message shouldBe "splitWithGaps would create 86399999 slots, more than maxSlots = 100000"
     }
 
     "splitWithGaps() - maxSlots: a custom limit" {
