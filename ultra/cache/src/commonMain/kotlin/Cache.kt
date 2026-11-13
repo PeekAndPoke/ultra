@@ -59,11 +59,14 @@ interface Cache<K, V> {
     /** Removes and returns the value for the given [key], or `null` if not present. */
     fun remove(key: K): V?
 
-    // TODO(scan): atomicity unspecified - FastCache may run the producer more than once, callers assume it does not.
     /**
      * Returns the value for the given [key] if present.
      *
      * Otherwise calls [producer] to compute the value, stores it, and returns it.
+     *
+     * Not atomic: under contention an implementation may run [producer] more than once for one key.
+     * [FastCache] does, and a caller that loses the race returns the value already stored instead of
+     * its own. Where the producer must run once per key, use [NullableCache].
      */
     fun getOrPut(key: K, producer: () -> V): V
 }
