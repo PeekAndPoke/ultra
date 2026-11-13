@@ -93,7 +93,7 @@ val LocalDate.mp: MpLocalDate
  */
 val MpZonedDateTime.jvm: ZonedDateTime
     get() {
-        return ZonedDateTime.of(datetime.jvm, ZoneId.of(timezone.id))
+        return ZonedDateTime.ofInstant(toInstant().jvm, timezone.jvm)
     }
 
 /**
@@ -101,10 +101,7 @@ val MpZonedDateTime.jvm: ZonedDateTime
  */
 val ZonedDateTime.mp: MpZonedDateTime
     get() {
-        return MpZonedDateTime.of(
-            datetime = toLocalDateTime().mp,
-            timezone = zone.mp,
-        )
+        return toInstant().mp.atZone(zone.mp)
     }
 
 /**

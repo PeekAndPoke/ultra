@@ -9,11 +9,17 @@ import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
+/**
+ * An instant seen in a [timezone].
+ *
+ * The instant is the truth (ULTRA-00211): [datetime] and every local field are derived from it, so both sides of a
+ * DST overlap are distinct values. Build one with [MpInstant.atZone], or from a local time with [of].
+ */
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpZonedDateTimeSerializer::class)
 @Slumber.As(MpDateTimeRawData::class)
-data class MpZonedDateTime(
-    val datetime: MpLocalDateTime,
+class MpZonedDateTime private constructor(
+    private val instant: MpInstant,
     val timezone: MpTimezone,
 ) : MpAbsoluteDateTime, ComparableTo<MpZonedDateTime> {
 
@@ -26,10 +32,29 @@ data class MpZonedDateTime(
         }
 
         /**
-         * Creates from a local [datetime] and a [timezone]
+         * Creates from a local [datetime] and a [timezone].
+         *
+         * In a DST overlap the earlier offset wins; in a gap the time moves forward by the length of the gap, and
+         * [MpZonedDateTime.datetime] reads the resolved wall time.
          */
         fun of(datetime: MpLocalDateTime, timezone: MpTimezone): MpZonedDateTime {
-            return MpZonedDateTime(datetime = datetime, timezone = timezone)
+            return MpZonedDateTime(instant = datetime.toInstant(timezone), timezone = timezone)
+        }
+
+        /** The [instant] in the [timezone], unchanged. */
+        internal fun of(instant: MpInstant, timezone: MpTimezone): MpZonedDateTime {
+            return MpZonedDateTime(instant = instant, timezone = timezone)
+        }
+
+        /** The local [datetime] in the [timezone], keeping [preferredOffsetSeconds] in an overlap when it is valid. */
+        internal fun ofLocal(
+            datetime: MpLocalDateTime,
+            timezone: MpTimezone,
+            preferredOffsetSeconds: Int,
+        ): MpZonedDateTime {
+            val instant = TimezoneEngine.toInstant(timezone, datetime.value, preferredOffsetSeconds)
+
+            return MpZonedDateTime(instant = MpInstant(instant), timezone = timezone)
         }
 
         /**
@@ -148,7 +173,20 @@ data class MpZonedDateTime(
         val Doomsday: MpZonedDateTime = MpInstant.Doomsday.atZone(MpTimezone.UTC)
     }
 
-    private val instant: MpInstant = datetime.toInstant(timezone)
+    /** The wall-clock time of the instant in the [timezone]. */
+    val datetime: MpLocalDateTime = MpLocalDateTime(TimezoneEngine.toLocalDateTime(timezone, instant.value))
+
+    /**
+     * Equal when the instant and the [timezone] are equal (ULTRA-00211): the two sides of a DST overlap differ, a time
+     * in a gap equals the time it resolves to. The one place that decides equality, together with [hashCode].
+     */
+    override fun equals(other: Any?): Boolean {
+        return other is MpZonedDateTime && instant == other.instant && timezone == other.timezone
+    }
+
+    override fun hashCode(): Int {
+        return 31 * instant.hashCode() + timezone.hashCode()
+    }
 
     /** The year */
     val year: Int get() = datetime.year
@@ -294,46 +332,41 @@ data class MpZonedDateTime(
     }
 
     /**
-     * Get the start of the year.
+     * Get the start of the year: the start of its first day, see [atStartOfDay].
      */
-    fun atStartOfYear(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, Month.JANUARY, 1)
-    )
+    fun atStartOfYear(): MpZonedDateTime = MpLocalDate.of(year, 1, 1).atStartOfDay(timezone)
 
     /**
-     * Get the start of the month.
+     * Get the start of the month: the start of its first day, see [atStartOfDay].
      */
-    fun atStartOfMonth(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, 1)
-    )
+    fun atStartOfMonth(): MpZonedDateTime = MpLocalDate.of(year, monthNumber, 1).atStartOfDay(timezone)
 
     /**
-     * Get the start of the day.
+     * Get the start of the day: midnight, or the end of the gap when midnight does not exist (java.time's rule).
      */
-    fun atStartOfDay(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth)
-    )
+    fun atStartOfDay(): MpZonedDateTime = toLocalDate().atStartOfDay(timezone)
 
     /**
-     * Get the start of the hour.
+     * Get the start of the hour, keeping the current offset in a DST overlap.
      */
-    fun atStartOfHour(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour)
-    )
+    fun atStartOfHour(): MpZonedDateTime = withLocal(MpLocalDateTime.of(year, monthNumber, dayOfMonth, hour))
 
     /**
-     * Get the start of the minute.
+     * Get the start of the minute, keeping the current offset in a DST overlap.
      */
-    fun atStartOfMinute(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour, minute)
-    )
+    fun atStartOfMinute(): MpZonedDateTime =
+        withLocal(MpLocalDateTime.of(year, monthNumber, dayOfMonth, hour, minute))
 
     /**
-     * Get the start of the second.
+     * Get the start of the second, keeping the current offset in a DST overlap.
      */
-    fun atStartOfSecond(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour, minute, second)
-    )
+    fun atStartOfSecond(): MpZonedDateTime =
+        withLocal(MpLocalDateTime.of(year, monthNumber, dayOfMonth, hour, minute, second))
+
+    /** The local [datetime] in this zone, keeping the current offset where it is still valid (java.time's rule). */
+    private fun withLocal(datetime: MpLocalDateTime): MpZonedDateTime {
+        return ofLocal(datetime, timezone, preferredOffsetSeconds = timezone.offsetSecondsAt(instant))
+    }
 
     /**
      * Gets the start of the upcoming [dayOfWeek].
@@ -364,13 +397,10 @@ data class MpZonedDateTime(
     }
 
     /**
-     * Sets the time of the day to the given [time].
+     * Sets the time of the day to the given [time], keeping the current offset in a DST overlap.
      */
     fun atTime(time: MpLocalTime): MpZonedDateTime {
-        return MpLocalDateTime.of(
-            date = toLocalDate(),
-            time = time
-        ).atZone(timezone = timezone)
+        return withLocal(MpLocalDateTime.of(date = toLocalDate(), time = time))
     }
 
     /**

@@ -21,10 +21,8 @@ object MpZonedDateTimeAwaker : Awaker {
         val timezone = mpTimezoneOrNull(data[TIMEZONE]) ?: return null
 
         return when (val ts = data[TS]) {
-            is Number -> MpZonedDateTime.of(
-                datetime = MpInstant.fromEpochMillis(ts.toLong()).atZone(timezone).datetime,
-                timezone = timezone,
-            )
+            // ts is the instant: rebuilding from the local time would move the second half of a DST overlap
+            is Number -> MpInstant.fromEpochMillis(ts.toLong()).atZone(timezone)
 
             else -> null
         }

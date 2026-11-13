@@ -26,11 +26,7 @@ object MpZonedDateTimeSerializer : KSerializer<MpZonedDateTime> {
     override fun deserialize(decoder: Decoder): MpZonedDateTime {
         val v = decoder.decodeSerializableValue(MpDateTimeRawData.serializer())
 
-        val timezone = MpTimezone.of(v.timezone)
-
-        return MpZonedDateTime.of(
-            datetime = MpInstant.fromEpochMillis(v.ts).atZone(timezone).datetime,
-            timezone = timezone,
-        )
+        // ts is the instant: rebuilding from the local time would move the second half of a DST overlap (ULTRA-00211)
+        return MpInstant.fromEpochMillis(v.ts).atZone(MpTimezone.of(v.timezone))
     }
 }
