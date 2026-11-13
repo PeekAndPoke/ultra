@@ -613,6 +613,66 @@ reachable from outside the module.
 
 Evidence after the last commit: cache jvm **173** / js **147** / native **146**, consumers slumber **1249** / vault **287**, log jvm **69**; 0 failures, 0 skipped.
 
+### Review round 2 — 2026-11-13
+
+- Implementation & code style: **CLEAN**.
+- Domain expert: **CLEAN**.
+- Security: **NOT CLEAN**, one MAJOR (M1). Two rounds without a clean one: verified with a test only,
+  not fixed; the maintainer decides how to go on.
+
+**M1 — a write TTL and the refresh hard TTL never apply to a key read in every pass: CONFIRMED.**
+`removeSilently` declines on any pending action, reads included (`FastCache.kt` `lastActionsKeys`,
+reset at the loop's swap), so a read between the swap and the eviction spares the key, and the retry
+next pass meets the same condition. Non-asserting probe (JVM, default loop delay, 100 ms TTL, 5 runs
+each, survival measured up to 10 s; "red" = still cached after 2 s):
+
+| Variant | Red | Survived (ms) |
+|---|---|---|
+| `expireAfterWrite`, 1 thread spinning `get("a")` | 0/5 | 172, 1631, 623, 281, 522 (all past the TTL) |
+| `expireAfterWrite`, 4 spinning threads | 1/5 | 8114, 753, 1023, 755, 1418 |
+| hard TTL (`refreshAfterWrite(10 s, hardTtl = 100 ms)`), 1 thread | 4/5 | 3982, 1677, 8291, >10000, >10000 |
+| hard TTL, 4 threads | 4/5 | 6883, 182, 2500, 2127, 4472 |
+| `expireAfterWrite`, one thread flooding misses + one reader of "a" with `yield()` | 5/5 | >10000 ×5 |
+
+The miss flood widens the window: a large batch takes long to process, and a read of the hot key
+always lands in it. Pinned as a known defect (842d2c57, `FastCacheHotKeyKnownDefectSpec`, jvmTest,
+the flood shape, both the write TTL and the hard TTL): asserts the key survives 2 s; 5/5 per test as
+committed; turns red when `removeSilently` stops declining (checked). JS cannot open the window
+(`process()` has no suspension point); native can, untested.
+
+Fix as the reviewer proposes (a second set of keys with a pending put or remove beside
+`lastActionsKeys`; `ExpireAfterWriteBehaviour.evict` and the hard-TTL eviction decline only on that;
+access-ordered behaviours keep today's rule): about 15-20 lines in `FastCache.kt` (the set, its swap,
+`addAction`, a parameter on `removeSilently`, the two callers), plus tests. It must flip two tests
+that bless the defect today: `FastCacheEvictionDeclineSpec` "expireAfterWrite: a declined eviction is
+retried once the pending read drains" and "refreshAfterWrite: a declined hard-TTL eviction is
+retried, not forgotten" (both assert that a pending READ spares the entry), and the known-defect spec.
+Safer shape, same size: one map in place of `lastActionsKeys`, key to "a write is pending", swapped
+once, so the two views cannot drift apart. Only a pending put needs sparing (a pending remove means
+the entry is gone already). Once the per-key write counter (decision for the A-B-A finding) exists,
+"evict only if the write counter is still the one stamped" would replace the doorman for write-based
+evictions altogether; larger, since `PutAction` is public and carries no counter.
+
+MINORs, open:
+- Unlocked redundant write at `FastCache.kt:685`.
+- KDoc "only one refresh per key" at `FastCache.kt:592`.
+- Three tests that no longer guard the tracking drop: `FastCacheBatchOrderSpec.kt:87`,
+  `FastCacheClearSpec.kt:92`, `CacheKnownDefectsSpec.kt:25`.
+- Sleeping tests: `FastCacheRefreshAfterWriteSpec.kt:27-30, 45-53, 96-100, 119-123`; the timing ladder
+  `FastCacheRefreshRaceSpec.kt:52-84`.
+- Identity compare is open to A-B-A (all three reviewers). Maintainer decision: a per-key write counter.
+- `NullableCache.put` during a running `getOrPutAsync` is overwritten by the older result
+  (`NullableCache.kt:68-72, 119-125`).
+- A `getOrPutAsync` provider reaching its own key hangs; the KDoc at `NullableCache.kt:16-18` is wrong
+  for cycles.
+- `catch (e: Exception)` at `FastCache.kt:704, 772` lets other `Throwable`s (e.g. `VaultException`)
+  through.
+- A key in an exception message: `ValueSortedMap.kt:53`.
+- An estimator throwing part-way through a batch leaves ghosts (`FastCache.kt:437-439, 478-485`).
+- `loopDelay` has no fallback (`FastCache.kt:784`).
+- The builder KDoc lacks the TTL fallbacks.
+- One lost-race `getOrPut` counts as both a miss and a hit.
+
 ## Changelog text
 
 For the coordinator to put into `CHANGELOG.md`. No entry changes a signature; the behaviour changes
@@ -665,3 +725,5 @@ below have **no compile signal**, so each is listed.
   awaiting the coordinator's review gate.
 - 2026-11-13: review round 1 findings verified and fixed; maintainer decisions on TTL fallbacks and
   the estimator's synthetic fields applied. Awaiting the next gate round.
+- 2026-11-13: review round 2: implementation and domain CLEAN, security NOT CLEAN (M1 CONFIRMED,
+  pinned as a known defect, not fixed). Two rounds without a clean one: waiting for the maintainer.
