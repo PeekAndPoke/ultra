@@ -906,7 +906,8 @@ class FastCache<K, V>(
      *
      * Otherwise invokes [producer] outside the lock, stores the result, and returns it.
      * Under contention the producer may be called more than once, but only the first
-     * value that lands in the map is returned.
+     * value that lands in the map is returned. A producer running across a [remove] or [clear]
+     * still stores the value it computed before them.
      */
     override fun getOrPut(key: K, producer: () -> V): V {
         // Fast path. Tests presence rather than nullness, so a key cached as null is served from the
