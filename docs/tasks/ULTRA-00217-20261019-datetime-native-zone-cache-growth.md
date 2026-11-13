@@ -142,19 +142,32 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
   - **Not run here:** `mingwX64`, `macosArm64` and `linuxArm64` are compiled (`compileTestKotlinLinuxArm64`,
     `compileTestKotlinMingwX64`) but their tests cannot run on this linux x64 host; `macosArm64` is not even compiled.
     The native results above are linuxX64 only.
+  - Item 8: the JS comment on the case check claimed "the browser accepts no id the JVM would reject"; it now says
+    that case variants of unlisted ids and ids java.time refuses (`EST`, `ROC`) still resolve on JS.
 
 ## Changelog text
 
 - `ultra/datetime` (native): the zone cache holds only the ids in `MpTimezone.supportedIds`. kotlinx/native resolves
   path variants such as `Europe/./Berlin`, and each spelling used to add a permanent entry, so user-supplied zone ids
-  could grow it without bound (ULTRA-00217). Other ids that resolve (zones newer than the list, legacy links such as
-  `ROC`) are not cached and are slower on native. Spelling variants still resolve on native (ULTRA-00317 will refuse
-  them).
+  could grow it without bound. Other ids that resolve (zones newer than the list, legacy links such as `ROC`) are
+  slower, including the system's own zone when it is not in the list: only the last of them is kept, in one memo slot
+  (ULTRA-00217).
 - `ultra/datetime` (JS): the zone cache holds only the ids in `MpTimezone.supportedIds`. Intl matches ids
-  case-insensitively, so each case spelling of an unlisted id used to add permanent entries; other ids are now asked
-  from Intl uncached (ULTRA-00217).
+  case-insensitively, so each case spelling of an unlisted id used to add permanent entries. Unlisted ids are slower
+  now, including the browser's own zone when it is not in the list: only the last of them keeps its formatter and
+  interval cache, in one memo slot. Case variants of the four ids added below are now refused on JS, as on the JVM
+  (ULTRA-00217).
 - `ultra/datetime`: `MpTimezone.supportedIds` adds `America/Ciudad_Juarez`, `America/Coyhaique`, `Europe/Kyiv` and
-  `Pacific/Kanton`. `EST`, `HST` and `MST` stay out: java.time does not know them as region ids (ULTRA-00217).
+  `Pacific/Kanton`, and its KDoc states the contract (ids java.time, Intl and the native tz database all resolve, as
+  of tzdb 2025b). `EST`, `HST`, `MST` and `ROC` stay out: java.time refuses them as region ids (ULTRA-00217).
+- `ultra/datetime`, behaviour change: a zone id not shaped like an IANA region id is refused with
+  `IllegalTimeZoneException("Invalid zone id: …")` before any platform lookup: longer than 64 characters, a character
+  outside `A-Z a-z 0-9 _ + - /`, or an empty path part (leading, trailing or doubled `/`). Native: `Europe/./Berlin`,
+  `Europe//Berlin`, `Europe/Berlin/` and `./Europe/Berlin` resolved as Berlin, now they are refused. JVM and JS: they
+  refused such ids already, only the message changes (it echoes at most 64 characters, anything but printable ASCII as
+  `?`). On every platform `MpTimezone.kotlinx` applies the same check to region ids. Fixed-offset ids (`UTC+01:00`)
+  are unaffected, and `MpTimezone.of` does not check, so stored values still decode. Case variants on a
+  case-insensitive file system (macOS, mingw) are not refused by this (ULTRA-00317).
 
 ## Review record — the LEDGER (filled by /feature-review)
 

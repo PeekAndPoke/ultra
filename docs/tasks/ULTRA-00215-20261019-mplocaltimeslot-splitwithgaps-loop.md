@@ -88,18 +88,26 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
   - duration rounded up to whole milliseconds → red, 2 (under one millisecond, cut to whole milliseconds).
   After: jvmTest 2531 / 0, jsBrowserTest 1896 / 0, linuxX64Test 1886 / 0 (`MpLocalTimeSlotSpec` 79 / 0 each).
   `completeDay.splitWithGaps(1.hours)` still gives 23 slots and its test is unchanged (not decided by the maintainer).
+- Review round 2 (MINORs): the KDoc tells a caller with user input to pass its own lower `maxSlots` (e.g. 1440 for
+  minutes) and turn the `IllegalArgumentException` into a validation error; the 1 ms day test asserts the message (the
+  count) instead of the wall clock, still bounded by `withinTimeLimit`. Mutation-checked again: count check removed →
+  red, 3 (the 1 ms day among them). jvmTest 2617 / 0, jsBrowserTest 1981 / 0, linuxX64Test 1974 / 0
+  (`MpLocalTimeSlotSpec` 79 / 0 each).
 
 ## Changelog text
 
-- `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever when a step or a step plus gap crosses
-  midnight (e.g. a duration of 24 h, or a slot ending at 23:59:59.999), nor on a duration under one millisecond; such
-  steps now end the split (ULTRA-00215).
+- `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever or returns wrapped slots when a step or a
+  step plus gap crosses midnight. A duration of 24 h, a slot ending at 23:59:59.999 or a duration under one millisecond
+  looped; `08:00-20:00` by 17 h returned four slots, three of them invalid (08:00-01:00, 18:00-11:00, 11:00-04:00),
+  now none. Such steps now end the split (ULTRA-00215).
 - `ultra/datetime`, behaviour change: `splitWithGaps` no longer takes durations and gaps modulo 24 h. `08:00-20:00`
-  by 25 h or by `Duration.INFINITE` now yields no slots (was twelve 1-hour slots, resp. one), and a gap of 20 h or
-  24 h leaves room for one slot only (was slots across midnight). An invalid slot (`to <= from`, e.g. 22:00-02:00) now
-  yields no slots (was split across midnight) (ULTRA-00215).
-- `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000) and throws
-  `IllegalArgumentException` before building a split with more slots, e.g. a whole day in 1 ms steps (ULTRA-00215).
+  by 25 h or by `Duration.INFINITE` now yields no slots (was twelve 1-hour slots, resp. one). A gap of 24 h was
+  treated as a gap of 0 h, a gap of 20 h looped or wrapped to slots outside the slot; both now leave room for one slot
+  only. An invalid slot (`to <= from`, e.g. 22:00-02:00) now yields no slots (was split across midnight) (ULTRA-00215).
+- `ultra/datetime`, behaviour change: `MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000, which admits
+  every whole-second split of a day) and throws `IllegalArgumentException` before building a split with more slots,
+  e.g. a whole day in 1 ms steps; pass a higher `maxSlots` if you need more. The added parameter changes the JVM
+  signature: recompile callers (ULTRA-00215).
 
 ## Review record — the LEDGER (filled by /feature-review)
 
