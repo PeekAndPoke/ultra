@@ -164,7 +164,9 @@ data class MpLocalTimeSlot(
      *
      * [maxSlots] caps the result, so a caller-chosen [duration] cannot make one call allocate millions of slots
      * (a whole day in 1 ms steps is 86.4 million). A split above it throws [IllegalArgumentException] before any
-     * slot is created, as does a [maxSlots] below 1.
+     * slot is created, as does a [maxSlots] below 1. The default admits every whole-second split of a day; with user
+     * input, pass your own lower limit (e.g. 1440 for minutes) and turn the [IllegalArgumentException] into a
+     * validation error.
      */
     fun splitWithGaps(
         duration: Duration,
