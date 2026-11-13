@@ -132,6 +132,16 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
     (`echo`). The fixed-offset message, which runs BEFORE the check, uses the same echo now (it echoed the raw id).
     The JS messages (`newFormatter`) and kotlinx's own are reached only after the check. Tests: control characters
     and a 115-character id; an invalid fixed offset with a control character and 104 characters.
+  - Item 5, `supportedIds` KDoc: its contract (ids that java.time, Intl and the native tz database all resolve as of
+    tzdb 2025b; resolving depends on the platform's tz data, `America/Coyhaique` needs 2025b; ids outside may resolve
+    on some platforms, uncached beyond the memo slot; `EST`, `HST`, `MST`, `ROC` are out because java.time refuses
+    them). Probed on the test JDK (17.0.17, tzdata 2025b) with a temporary spec: `ROC`, `EST`, `HST`, `MST` →
+    `ZoneRulesException`; `Etc/UCT` and `America/Coyhaique` resolve. So the set is not complete: legacy links such as
+    `Etc/UCT` resolve everywhere and are not listed, and the KDoc says so. The specs that resolve every listed id
+    (`MpTimezoneSpec`, one test per id) name the id when a platform does not know it.
+  - **Not run here:** `mingwX64`, `macosArm64` and `linuxArm64` are compiled (`compileTestKotlinLinuxArm64`,
+    `compileTestKotlinMingwX64`) but their tests cannot run on this linux x64 host; `macosArm64` is not even compiled.
+    The native results above are linuxX64 only.
 
 ## Changelog text
 

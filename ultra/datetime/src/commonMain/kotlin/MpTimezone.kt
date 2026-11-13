@@ -28,6 +28,14 @@ data class MpTimezone private constructor(val id: String) {
                 else -> MpTimezone(id = id)
             }
 
+        /**
+         * Zone ids that java.time, Intl and the native tz database all resolve, as of tzdb 2025b.
+         *
+         * Resolving one still depends on the platform's tz data: `America/Coyhaique` needs 2025b (JDK update levels
+         * from July 2025, ICU 77). Ids outside the set may resolve on some platforms (a few legacy links such as
+         * `Etc/UCT` resolve on all of them); there they are not cached beyond one memo slot. `EST`, `HST`, `MST` and
+         * `ROC` are outside it because java.time refuses them as region ids.
+         */
         val supportedIds = setOf(
             "Africa/Abidjan",
             "Africa/Accra",
