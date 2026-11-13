@@ -48,9 +48,10 @@ should be committed or at least staged so the change set is well defined.
 Run the loop from `.claude/skills/review-loop/` with the three charters below — round 1 blind, later
 rounds two-phase, findings carried in a ledger, only CRITICAL/MAJOR looping, safety valve at 2 rounds.
 
-All three run in parallel, spawned by review-loop's **effort ladder** (level 1 `reviewer-high`, level 2
-`reviewer-xhigh`, level 3 `reviewer-top`; the level follows the findings and is shared by all three
-charters). This is correctness-critical verification; do not downgrade them to save tokens without
+All three run in parallel, spawned by review-loop's **effort ladder**: a standard gate's levels are
+`reviewer-opus-high`, `reviewer-fable-medium`, `reviewer-fable-xhigh`; a strict one's (a ticket marked
+security-critical) are `reviewer-fable-medium`, `reviewer-fable-high`, `reviewer-fable-xhigh`. The level follows
+the findings and is shared by all three charters. This is correctness-critical verification; do not downgrade them to save tokens without
 saying so in the brief. Ask each the SURPLUS question too. Tell each: cite `path/File.kt:line`, give a
 concrete failure scenario, "NO FINDINGS" is valid, do not pad, and do NOT spawn sub-agents. Give each
 the verdict line word for word: "a round is clean when it has zero CRITICAL and zero MAJOR findings;

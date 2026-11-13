@@ -212,11 +212,28 @@ red-team follow-up, task-file record).
   2026-10-25, MC-00033). The Agent tool has no per-call effort dial, so the levels are agent
   definitions in `.claude/agents/` with model and effort pinned:
 
-  | level | reviewers | spawn with |
+  | rung | reviewers | spawn with |
     |---|---|---|
-  | 1 (the floor, every gate) | `opus`, high | `subagent_type: reviewer-high` |
-  | 2 | `opus`, xhigh | `subagent_type: reviewer-xhigh` (opus, not the strongest tier: maintainer, 2026-09-28) |
-  | 3 | `opus`, max | `subagent_type: reviewer-top` (maintainer, 2026-10-24: "Opus max on the highest review tier. The two lower ones stay as they are"). **No Fable at any rung, also not as an extra reviewer beside Opus** (maintainer, 2026-10-25: "we are burning through credits") |
+  | 1 | `opus`, high | `subagent_type: reviewer-opus-high` |
+  | 2 | `fable`, medium | `subagent_type: reviewer-fable-medium` |
+  | 3 | `fable`, high | `subagent_type: reviewer-fable-high` |
+  | 4 | `fable`, xhigh | `subagent_type: reviewer-fable-xhigh` |
+
+  The names say model and effort and are the same in every project (maintainer, 2026-11-13, through Mission
+  Control: "make sure that everyone is using the same agent names"). `model: fable` follows the newest Fable; Fable
+  replaces Opus on its rungs and does not run beside it. The "no Fable at any rung" rule of 2026-10-25 is ended.
+
+  **A gate has three levels, and its tier says which rungs they are** (maintainer, 2026-11-13: "rungs 1, 2, 4
+  standard, 2, 3, 4 strict"):
+
+  | level | standard | strict |
+    |---|---|---|
+  | 1 (the floor) | rung 1, `reviewer-opus-high` | rung 2, `reviewer-fable-medium` |
+  | 2 | rung 2, `reviewer-fable-medium` | rung 3, `reviewer-fable-high` |
+  | 3 | rung 4, `reviewer-fable-xhigh` | rung 4, `reviewer-fable-xhigh` |
+
+  A gate is strict when its ticket says `**Security-critical:** yes`, or when the maintainer says so; every other
+  gate is standard. The ledger names the tier with the level.
 
   - **A round with any CRITICAL or MAJOR, fixed or rejected, raises the next round one level**, to 3 at
     most. A reconcile-only round after rejections is such a round and goes UP: rejecting must never be
@@ -233,9 +250,9 @@ red-team follow-up, task-file record).
 
   Why a ladder and not the top rung from the start: a round that is not clean means the previous level missed
   something or the fix delta introduced something, and both call for more scrutiny of a SMALLER
-  target; a clean round means the target is calm, and paying the top rung for it is waste. **Ultra's
-  floor is one rung higher than klang's** (klang's level 1 is `opus` at session effort): this repo
-  already specified `opus`/high for round 1, and `reviewer-high` is what makes that enforceable.
+  target; a clean round means the target is calm, and paying the top rung for it is waste. Rung 1 is
+  `opus` with the effort pinned to high, not the session's (maintainer, 2026-11-13: "level 1 should start with Opus
+  high (not session effort as this might be Fable medium)"); `reviewer-opus-high` is what makes that enforceable.
   Tiering a round DOWN to save tokens is allowed when the brief says so (klang does it for prose-only
   deltas). Watch it with the defect-density ledger in `/agent-fleet`: if level 2 keeps finding what
   level 1 missed, the ladder earns its cost.
@@ -406,6 +423,12 @@ in this file:
   level, reconcile-only rounds included (ultra's point); a round after a clean round goes one down; the
   level is per loop, not per charter; the ledger records it and the next step starts from it; the brief's
   verdict line is fixed text. Ultra's floor stays `reviewer-high` for every gate.
+
+- **2026-11-13** — Mission Control's blueprint update (missioncontrol 9310bcc; the maintainer's OK in ultra's session
+  the same day): four rungs named by model and effort, the same names in every project (`reviewer-opus-high`,
+  `reviewer-fable-medium`, `reviewer-fable-high`, `reviewer-fable-xhigh`; `reviewer-high`, `-xhigh` and `-top` are
+  gone, old ledgers keep those names). Fable is back on rungs 2 to 4. Ultra's gates: standard uses rungs 1, 2, 4,
+  strict 2, 3, 4.
 
 - **2026-09-28 — round 2 of this document reviewing itself. Safety valve FIRED; the maintainer decided.**
   7 MAJOR, 6 MINOR, 0 CRITICAL, plus a duty-(b) audit of round 1's twelve fixes. Eight held completely;

@@ -36,12 +36,12 @@ can do its task well.
 | Frontier reasoning | inherit (omit `model`) | architecture judgment, deep cross-cutting analysis the coordinator can't decompose further |
 
 **Review rounds do not use this table** — they follow the effort ladder in `/review-loop`
-(`reviewer-high`, then `reviewer-xhigh`, then `reviewer-top`). Security and domain review is
-correctness-critical: never `sonnet`.
+(`reviewer-opus-high`, `reviewer-fable-medium`, `reviewer-fable-high`, `reviewer-fable-xhigh`; a gate's tier says
+which three it uses). Security and domain review is correctness-critical: never `sonnet`.
 
-**No Fable in reviews, at any rung, also not as an extra reviewer beside Opus** (maintainer, 2026-10-25: "Let us not
-use fable anymore but the newest Opus (5.5) on max instead... we are burning through credits."). The top rung is
-`reviewer-top` (opus, max) alone; ULTRA-00236's pairing is stopped.
+**Fable reviews on rungs 2 to 4, alone** (maintainer, 2026-11-13; the "no Fable in reviews" rule of 2026-10-25 is
+ended). It replaces Opus on those rungs and does not run beside it: ULTRA-00236's pairing stays stopped. Implementing
+workers stay on the table above.
 
 ## Effort tiers
 
@@ -56,8 +56,8 @@ use fable anymore but the newest Opus (5.5) on max instead... we are burning thr
 
 - **Agent tool**: set the `model` parameter per call. There is no per-call effort override —
   effort comes from the agent definition. `fork`-type agents always inherit the parent model;
-  don't set `model` on them. Effort for reviewers is pinned in `.claude/agents/reviewer-high.md`,
-  `reviewer-xhigh.md` and `reviewer-top.md`.
+  don't set `model` on them. Effort for reviewers is pinned in `.claude/agents/reviewer-opus-high.md`,
+  `reviewer-fable-medium.md`, `reviewer-fable-high.md` and `reviewer-fable-xhigh.md`.
 - **Workflow `agent()`**: set both `model` and `effort` in the opts, per stage.
 - **Custom agents** (`.claude/agents/*.md`): can pin model/effort in frontmatter; prefer that
   for agents whose task type never varies.
