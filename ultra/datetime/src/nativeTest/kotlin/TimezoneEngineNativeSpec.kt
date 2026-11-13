@@ -1,8 +1,10 @@
 package io.peekandpoke.ultra.datetime
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import kotlinx.datetime.IllegalTimeZoneException
 import kotlin.time.Duration.Companion.days
 
 class TimezoneEngineNativeSpec : StringSpec({
@@ -53,16 +55,15 @@ class TimezoneEngineNativeSpec : StringSpec({
         memoizedUnlistedZoneId() shouldBe "HST"
     }
 
-    // ULTRA-00217: kotlinx/native resolves path variants of an id, each one used to become a permanent cache entry
-    "path variants of a zone id still resolve, but are not cached" {
-        val expected = instant.atZone(MpTimezone.of("Europe/Berlin")).toIsoString()
+    // ULTRA-00217 / ULTRA-00317: kotlinx/native resolves path variants of an id; ultra refuses them before the lookup
+    "path variants of a zone id are refused and not cached" {
         val before = cachedZoneIds()
 
         val variants = listOf("Europe//Berlin", "Europe/Berlin/", "./Europe/Berlin") +
-                (1..200).map { n -> "Europe/" + "./".repeat(n) + "Berlin" }
+                (1..20).map { n -> "Europe/" + "./".repeat(n) + "Berlin" }
 
         variants.forEach { id ->
-            instant.atZone(MpTimezone.of(id)).toIsoString() shouldBe expected.replace("[Europe/Berlin]", "[$id]")
+            shouldThrow<IllegalTimeZoneException> { instant.atZone(MpTimezone.of(id)) }
         }
 
         cachedZoneIds() shouldBe before

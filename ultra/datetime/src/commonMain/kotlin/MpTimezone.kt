@@ -627,7 +627,12 @@ data class MpTimezone private constructor(val id: String) {
      * Converts to a kotlinx-datetime [TimeZone].
      *
      * On Kotlin/JS this throws for region ids unless the js-joda time zone database is loaded — ultra itself never
-     * needs it.
+     * needs it. A region id passes the same shape check as ultra's own lookups first.
      */
-    val kotlinx: TimeZone get() = TimeZone.of(id)
+    val kotlinx: TimeZone
+        get() {
+            if (TimezoneEngine.fixedOffsetSecondsOrNull(id) == null) TimezoneEngine.requireRegionIdShape(id)
+
+            return TimeZone.of(id)
+        }
 }

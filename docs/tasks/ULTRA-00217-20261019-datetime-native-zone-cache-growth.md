@@ -109,6 +109,29 @@ Related MINORs from the same gate, for the maintainer list (not this task's scop
     last; repeated lookups reuse the slot (counted with `intlFormattersBuilt` / `zoneFileReads()`).
     After: jvmTest 2543 / 0, jsBrowserTest 1907 / 0, linuxX64Test 1900 / 0. Mutation-checked: memo read removed → red
     (JS 1, native 1: reuse); memo store removed → red (JS 2, native 2: flood and reuse).
+  - Item 3, the ULTRA-00317 work (the maintainer approved it; that ticket lives on master and is not on this branch,
+    so its notes are here): `TimezoneEngine.requireRegionIdShape` refuses, with `IllegalTimeZoneException("Invalid
+    zone id: …")` (the type every platform throws for an unknown zone), any region id longer than 64 characters, with
+    a character outside `A-Z a-z 0-9 _ + - /`, or with an empty path part (leading, trailing or doubled `/`); `.` and
+    `..` parts fall to the character rule. It runs after the fixed-offset parse (fixed ids need `:` and never reach it)
+    and before any platform call, in `offsetSecondsAt`, `toInstant` and `startOfDay`, the only callers of the platform
+    lookup (`plus` goes through the first two), and in `MpTimezone.kotlinx` for region ids. Native refuses
+    `Europe/./Berlin`, `Europe//Berlin`, `Europe/Berlin/`, `./Europe/Berlin` now; `TimezoneEngineNativeSpec` flipped
+    to "refused and not cached". Case variants on a case-insensitive file system are not covered.
+    `MpTimezone.of` was NOT changed: stored data (a serialized `MpTimezone` or `MpZonedDateTime`) could hold such an
+    id, and refusing in `of` would fail the whole decode instead of the conversion; that is the maintainer's call.
+    New `ZoneIdCheckSpec` (commonTest): 11 refused ids × 6 entries (`atZone`, `offsetSecondsAt`, local `atZone`,
+    `atStartOfDay`, `plus` in a zone, `kotlinx`), `..` and absolute paths included, so a kotlinx upgrade cannot widen
+    what an id reaches; every listed id passes; five fixed offsets keep working. RED first: 68 of 73 failed on each
+    platform (JVM and JS already refused, with the platform's message; native threw nothing for 24 of them).
+    After: jvmTest 2617 / 0, jsBrowserTest 1981 / 0, linuxX64Test 1974 / 0. Mutation-checked (JVM unless noted):
+    doubled `/` allowed → 18 red; `.` allowed → 18 red, on native 19 (the native variants test too); the check dropped
+    from `startOfDay` → 11 red, all `atStartOfDay`; no length limit → 6 red; `-` refused → 86 red ("every supported id
+    passes" among them); the `kotlinx` getter unchecked → 11 red, all `kotlinx`; echo unsanitised → 8 red (item 4).
+  - Item 4, messages: the refusal echoes at most 64 characters plus `...`, anything but printable ASCII replaced by `?`
+    (`echo`). The fixed-offset message, which runs BEFORE the check, uses the same echo now (it echoed the raw id).
+    The JS messages (`newFormatter`) and kotlinx's own are reached only after the check. Tests: control characters
+    and a 115-character id; an invalid fixed offset with a control character and 104 characters.
 
 ## Changelog text
 
