@@ -113,3 +113,22 @@ loop never ends: `MpLocalTimeSlot(08:00, 20:00).splitWithGaps(24.hours)` adds th
 - 2026-10-21: numbered ULTRA-00215 (was `docs/tasks/20261019-mplocaltimeslot-splitwithgaps-loop.md`).
 - 2026-11-13: implemented on track A (datetime) of ULTRA-00316; awaiting the review gate.
 - 2026-11-13: review round 1 fixes (`maxSlots`, KDoc boundaries, corrected notes); awaiting round 2.
+
+## Review record (the ledger): track A of ULTRA-00316 (ULTRA-00215, 00143, 00217)
+
+Round 1, 2026-11-13, standard gate, level 1 (`reviewer-opus-high`), blind; charters 1, 2 and 3. **NOT clean: 1 MAJOR**
+(security; implementation and domain returned CLEAN).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MAJOR | `MpLocalTimeSlot.kt:167-198` | `splitWithGaps` has no limit on the slots it returns: a day in 1 ms steps is 86.4 million objects from one call (security 1) | fix | The maintainer: "yes to maxSlots and the default". `maxSlots = 100_000`, counted before anything is built (50250f27) |
+| 1 | MINOR | `MpLocalTimeSlot.kt:181` | `completeDay` by 1 h gives 23 slots: 24:00 cannot be represented (domain M2) | maintainer | Open: the maintainer wants a way to represent 24:00; nothing changed in this branch |
+| 1 | MINOR | ULTRA-00215 notes | "Unchanged for all inputs that used to terminate" is false: durations and gaps were taken modulo 24 h (domain M1) | fix | Notes and changelog text corrected (0153b932) |
+| 1 | MINOR | `MpLocalTimeSlot.kt:157` | The KDoc left out the boundary results (domain M3) | fix | b12f920b |
+| 1 | MINOR | `MpTimezone.kt`, `TimezoneEngineNative.kt:33` | `supportedIds` lacks current canonical ids, now uncached on native (impl 1, domain M4) | fix | Four ids added; `EST`, `HST`, `MST` stay out, java.time refuses them (9ebc12c0) |
+| 1 | MINOR | `TimezoneEngineJs.kt:105` | JS caches grow with case variants of unlisted ids (impl 2, domain M6, security 2; older than the branch) | fix | Only listed ids are cached on JS (9ebc12c0) |
+| 1 | MINOR | native | Spelling variants of a zone id resolve on native only (domain M5) | follow-up | ULTRA-00317, the maintainer: "yes follow up" |
+| 1 | MINOR | `MpLocalTime.kt:11` | The public constructor stores an out-of-range value (security 3) | open | A breaking change; deserialised values are normalised; noted for the 24:00 work |
+| 1 | NIT | `time_limit.jvm.kt` | The timed-out thread keeps running (impl NIT) | fix | Interrupts, KDoc says what remains (68f8b436) |
+
+Verified after round 1 (the track): jvmTest 2543, jsBrowserTest 1906, linuxX64Test 1898, 0 failures.
