@@ -333,7 +333,9 @@ abstract class FileSystemRepository<in T>(override val name: String, dir: String
      * Writes content and metadata through temporary files, moved in place: the metadata, then the content. Writers of
      * one file in this process take turns, so a file never ends up with another writer's metadata; a write that fails
      * leaves content and metadata as they were (not where the move has to copy: a folder on another mount). A reader between the two moves sees the new metadata with the old
-     * content for that moment. Several processes on one folder do not take turns.
+     * content for that moment. Several processes on one folder do not take turns, and neither do a write of a path and
+     * a first write below it (`a` and `a/b`) at the same moment: one of them fails, and the other may lose its
+     * metadata.
      */
     @OptIn(DepotRawWrite::class)
     override suspend fun putFile(

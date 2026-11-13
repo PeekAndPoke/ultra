@@ -415,6 +415,25 @@ the key-id guard of the database store, I11 the empty path's uri.
 The maintainer on round 3 (2026-11-13): "one more round"; `SignedDepotRepository` keeps its name; two S3
 endpoints with one bucket name stay refused as one storage; `encryption` and `alsoReads` stay.
 
+Round 4, 2026-11-13, level 2 (`reviewer-xhigh`), blind; charters 1, 2 and 3. **CLEAN: no CRITICAL, no MAJOR**
+from any of the three. **The step-3 gate is passed** (with ULTRA-00314).
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 4 | MINOR | `EncryptingDepotRepository.kt:71-83` | `verify`: `NoHash` for a file whose hash entry was removed, `Intact` for a shredded file (by its plain hash alone) and for one removed between the reads, an exception for a missing method (all three charters) | fix | Only a file that fits its hash and decrypts is `Intact`; no hash or no method is `Damaged`; shredded is `Unverifiable`; no file is null |
+| 4 | MINOR | `VaultDepotKeyStore.kt:95` | The key record's address (SHA-256 hex of the subject's UTF-8) and the key's stored form unpinned: a change would orphan every key, and an erasure would miss the old one silently (domain 1) | fix | Pinned with a hash computed by `sha256sum` and the base64 of the key, on both backends |
+| 4 | MINOR | `DepotStoredFormatSpec.kt:30` | The AES fixture's context was ASCII: the bound fields' encoding unpinned (domain 2); the generator not in the tree (domain 4) | fix | Path and subject not ASCII, bytes made again; the generator in the spec's KDoc |
+| 4 | MINOR | `DepotSubjectId.kt:14` | The checks live in `of`, a codec skips them: `system`, blank, no namespace (security 1) | fix | The shape is checked in `init`; KDoc: never read one from a client's input (`system` is a valid value) |
+| 4 | MINOR | tests | The signed repository's checks before a key, `DOT_MATCHES_ALL`, the mirror-folder guard unpinned (impl 2, 3, 4) | fix / known | The first two pinned; the guard is a race, the KDoc names the limit (`a` and `a/b` at the same moment) |
+| 4 | MINOR | `exception.kt:9` | "Though its key is there" is wrong for a key that never existed (impl 5) | fix | |
+| 4 | NIT | the in-memory store removed a key before recording it as erased (security 2); the content hashed once more for the size check (impl) | | fix / reject | The hash's cost is one pass per write |
+| 4 | — | caller metadata of an encrypted file not bound; the database's own logs keep a key for a while (domain, for the maintainer) | | red team / known | Items 23, 35 |
+
+Verified after round 4: depot 117, depot-s3 14, cluster 162, insights 114, funktor-all 289, demo 52. Mutations
+red: J1 a file without its method, J2 a file without its hash, J3 a shredded file, J4 the bound fields' encoding,
+J5 a line break in a uri's path, J6 the signed repository's key-id reserve (it survived at first: the test's size
+did not tell the reserve from the keyed hash's own length; tightened), J7 the key record's address.
+
 Probed and clean, step 3 round 1: AES-GCM use (fresh file key, random IVs, 128-bit tag, the bound context on
 content and wrap), parameter parsing, an erased key id never valid again, `getContent`'s distinct answers,
 `storedPath` through links, refusals (system, raw write, a file without marker), the file-system overlap check,

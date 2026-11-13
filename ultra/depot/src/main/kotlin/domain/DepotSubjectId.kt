@@ -9,16 +9,26 @@ import kotlin.reflect.KClass
  * `DepotSubjectId<Customer>` (or [system]), not another kind's. The [value], `namespace/id`, is written into the file's metadata.
  *
  * There is no public constructor: an id comes from [of], which names its kind, so the kind is never inferred from
- * what a repository expects.
+ * what a repository expects. Never read one from a client's input: a codec makes it of any kind, and may make
+ * [system].
  */
 @JvmInline
 value class DepotSubjectId<out T> private constructor(val value: String) {
+
+    init {
+        // Also for an id that did not come through [of]: one a codec woke from stored or sent data
+        require(value == SYSTEM || (value.substringBefore('/', "").isNotBlank() && value.substringAfter('/', "").isNotBlank())) {
+            "A subject id is namespace/id"
+        }
+    }
     companion object {
         /**
          * Files not attributed to one person: records of the system itself, technical uploads. No [of] produces it.
          * It says nothing about whether a file holds personal data.
          */
-        val system: DepotSubjectId<Nothing> = DepotSubjectId("system")
+        val system: DepotSubjectId<Nothing> = DepotSubjectId(SYSTEM)
+
+        private const val SYSTEM = "system"
 
         /**
          * The subject [id] of kind [type], stored as `namespace/id`. The [namespace] keeps equal ids of different

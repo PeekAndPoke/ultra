@@ -84,6 +84,9 @@ class InMemoryDepotKeyStore : DepotKeyStore {
     override suspend fun delete(subject: String): Boolean = synchronized(this) {
         erasedSubjects.add(subject)
 
-        bySubject.remove(subject)?.also { erasedIds.add(it.id) } != null
+        // Known as erased before it is gone: a reader never finds neither
+        bySubject[subject]?.let { erasedIds.add(it.id) }
+
+        bySubject.remove(subject) != null
     }
 }

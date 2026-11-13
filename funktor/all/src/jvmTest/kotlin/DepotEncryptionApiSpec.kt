@@ -61,10 +61,12 @@ class DepotEncryptionApiSpec : FunktorApiSpec() {
                     }
                 }
 
+                repository.verify(uri.path) shouldBe DepotVerification.Intact
+
                 repository.shred(anna) shouldBe true
 
                 depot.getContent(uri) shouldBe DepotContent.Shredded
-                repository.verify(uri.path) shouldBe DepotVerification.Intact
+                repository.verify(uri.path) shouldBe DepotVerification.Unverifiable
             }
         }
     }

@@ -20,6 +20,7 @@ import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.vault.profiling.DefaultQueryProfiler
 import io.peekandpoke.ultra.vault.profiling.QueryProfiler
+import java.util.Base64
 import java.util.UUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -64,6 +65,20 @@ abstract class DepotKeyStoreSpecBase : StringSpec() {
             val found = store.get(first.id)!!
             found.subject shouldBe subject
             found.key.toList() shouldBe first.key.toList()
+        }
+
+        "a subject's record is found under the SHA-256 of its id, its key stored as base64" {
+            // printf %s 'kunden/Zoë/1' | sha256sum. A change here orphans every stored key: an erasure would miss it.
+            val docKey = "8f18e73394440637919d0962c597fcd7adc39cd8c626ad276a2be6bee5189a7a"
+            store.delete("kunden/Zoë/1")
+            repo.remove(docKey)
+
+            val key = store.getOrCreate("kunden/Zoë/1")
+
+            key.id.substringBefore('.') shouldBe docKey
+            repo.findById(docKey)!!.value().key shouldBe Base64.getEncoder().encodeToString(key.key)
+
+            repo.remove(docKey)
         }
 
         "two subjects have different keys; a subject with unusual characters works" {

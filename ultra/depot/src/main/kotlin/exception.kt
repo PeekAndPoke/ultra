@@ -7,7 +7,7 @@ open class DepotException(message: String) : RuntimeException(message)
 class DepotSubjectErasedException : DepotException("The data subject was erased")
 
 /**
- * Thrown when an encrypted file cannot be decrypted though its key is there: it was altered, or moved to another
- * path or subject.
+ * Thrown when an encrypted file or its metadata is not what was written: it was altered, moved to another path or
+ * subject, or names a key that never existed. Not for an erased key, which reads as shredded.
  */
 class DepotCorruptedException : DepotException("A depot file is corrupted")

@@ -64,19 +64,25 @@ abstract class EncryptingDepotRepository<in T>(
     override suspend fun getMeta(path: String): Map<String, String>? = inner.getMeta(path)?.minus(DepotMetadata.internal)
 
     /**
-     * Compares the stored (encrypted) bytes with their hash, and, while the subject's key is there, decrypts the
-     * file: bytes replaced together with their hash are [DepotVerification.Damaged]. A shredded file is checked
-     * by its hash alone.
+     * Compares the stored (encrypted) bytes with their hash and decrypts the file: only one that fits its hash and
+     * decrypts is [DepotVerification.Intact]. Bytes replaced together with their hash, a file without its hash or
+     * without its method are [DepotVerification.Damaged]. A shredded file is [DepotVerification.Unverifiable]:
+     * its hash alone proves nothing.
      */
     override suspend fun verify(path: String): DepotVerification? {
-        val hashed = inner.verify(path)
+        val meta = inner.getMeta(path) ?: return null
 
-        if (hashed != DepotVerification.Intact) return hashed
+        // Every file of this repository names its method and has its hash
+        if (DepotMetadata.ENC !in meta) return DepotVerification.Damaged
+
+        val hashed = inner.verify(path) ?: return null
 
         return try {
-            getContent(path)
-
-            DepotVerification.Intact
+            when (getContent(path)) {
+                is DepotContent.Found -> if (hashed == DepotVerification.Intact) DepotVerification.Intact else DepotVerification.Damaged
+                is DepotContent.Shredded -> DepotVerification.Unverifiable
+                is DepotContent.NotFound -> null
+            }
         } catch (_: DepotCorruptedException) {
             DepotVerification.Damaged
         }
@@ -87,7 +93,8 @@ abstract class EncryptingDepotRepository<in T>(
     /**
      * Reads and decrypts the file at [path]: [DepotContent.Shredded] when its subject's key was erased.
      *
-     * @throws DepotCorruptedException when the key is there and the file does not decrypt
+     * @throws DepotCorruptedException when the file or its metadata is not what was written: it does not decrypt
+     *   with its key, or it names no key, or one that never existed
      * @throws DepotException for a file that is not encrypted, or encrypted with a method this version cannot read
      */
     override suspend fun getContent(path: String): DepotContent {

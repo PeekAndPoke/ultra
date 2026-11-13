@@ -83,6 +83,14 @@ executed in normal feature work.
 - [ ] 49. A `DepotUri` made past the name rule (deserialisation).
 - [ ] 50. A custom `VaultDepotKeyStore.Repo` whose `insert` overwrites: the tombstone and "one key, ever" rest
       on insert failing.
+- [ ] 51. A `DepotSubjectId` woken by a codec past `of`: `system` in a typed repository (the shape is checked
+      on every construction, `system` passes). An app that takes one in a request body.
+- [ ] 52. One file-system file under many uris: `/a`, `a//b`, `a/` all read `a`, and `DepotUri` keeps them
+      apart. An app that keys ownership or a deny-list by uri or path prefix.
+- [ ] 53. Erasing predictable future subject ids (sequential keys) through an unchecked `Ref` before they are
+      issued: the tombstone burns them.
+- [ ] 54. `verify` of an encrypting repository on a shredded file: `Unverifiable`, never `Intact`. Forged bytes,
+      a fitting hash and an erased key's id (see 47).
 
 ## History
 

@@ -169,8 +169,9 @@ class EncryptingDepotRepositorySpec : StringSpec({
         s.repo.getContent("anna.txt") shouldBe DepotContent.Shredded
         s.repo.getFile("anna.txt")!!.getContent() shouldBe DepotContent.Shredded
         s.repo.getContent("ben.txt").text() shouldBe "ben's"
-        // The stored bytes are still what was written
-        s.repo.verify("anna.txt") shouldBe DepotVerification.Intact
+        // Nothing can prove a shredded file
+        s.repo.verify("anna.txt") shouldBe DepotVerification.Unverifiable
+        s.repo.verify("ben.txt") shouldBe DepotVerification.Intact
 
         // Erased stays erased: nothing more is stored for the subject
         shouldThrow<DepotSubjectErasedException> { s.repo.putFile(anna, "anna2.txt", "new") }
@@ -256,6 +257,21 @@ class EncryptingDepotRepositorySpec : StringSpec({
         meta.writeText(meta.readText().replace(Regex("\"depot-sha256\":\"[0-9a-f]+\""), "\"depot-sha256\":\"${DepotMetadata.sha256(forged)}\""))
 
         s.repo.verify("a.txt") shouldBe DepotVerification.Damaged
+    }
+
+    "verify: a file without its hash or without its method is damaged; no file is no answer" {
+        val s = setup()
+        s.repo.putFile(anna, "nohash.txt", secret)
+        s.repo.putFile(anna, "nomethod.txt", secret)
+        val noHash = File(s.dir, ".meta/files/nohash.txt")
+        val noMethod = File(s.dir, ".meta/files/nomethod.txt")
+
+        noHash.writeText(noHash.readText().replace(Regex(",?\"depot-sha256\":\"[0-9a-f]+\""), ""))
+        noMethod.writeText(noMethod.readText().replace(Regex(",?\"depot-enc\":\"[^\"]+\""), ""))
+
+        s.repo.verify("nohash.txt") shouldBe DepotVerification.Damaged
+        s.repo.verify("nomethod.txt") shouldBe DepotVerification.Damaged
+        s.repo.verify("nothing.txt") shouldBe null
     }
 
     "altered content does not decrypt" {

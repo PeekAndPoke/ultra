@@ -121,6 +121,16 @@ class SignedDepotRepositorySpec : StringSpec({
         s.repo.verify("a.txt") shouldBe DepotVerification.Unverifiable
     }
 
+    "a refused write makes no key" {
+        val s = setup()
+
+        shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "../out.txt", "content") }
+        // 1947 bytes with subject and hash: fits with the keyed hash (90 more), not with the key's id as well
+        shouldThrow<IllegalArgumentException> { s.repo.putFile(anna, "a.txt", "content", mapOf("note" to "x".repeat(1840))) }
+
+        s.keys.size shouldBe 0
+    }
+
     "system files are signed too; a raw write is refused" {
         val s = setup()
 

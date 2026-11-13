@@ -381,8 +381,8 @@
     also reads the method it was given to write with, and those named in `alsoReads`. A file's key material is part of its stored bytes (88 bytes
     more than the content).
   - Metadata stays plain. `getMeta` leaves out the depot's internal entry (`depot-key`). `depot-sha256` of an
-    encrypted file is the hash of the stored bytes; `verify` also decrypts while the key is there, and checks a
-    shredded file by its hash alone.
+    encrypted file is the hash of the stored bytes. `verify` checks the hash and decrypts: only then `Intact`;
+    a shredded file is `Unverifiable`.
   - `SignedDepotRepository<T>(inner, keys)` stores files as they are, each with a keyed hash (`depot-mac`,
     HMAC-SHA-256 with a key derived from the subject's key) over content, path, subject and metadata. **Only
     `Intact` proves a file:** a file without its keyed hash, or naming a key that never existed, is `Damaged`;

@@ -59,7 +59,7 @@ class DepotUriSpec : FreeSpec() {
         }
 
         "A path is kept as it is: paths that differ have uris that differ, and read back" {
-            val paths = listOf("shared/report.pdf", "shared/report.pdf ", " shared/report.pdf", "shared\\report.pdf", "shared//report.pdf", "/shared/report.pdf")
+            val paths = listOf("shared/report.pdf", "shared/report.pdf ", " shared/report.pdf", "shared\\report.pdf", "shared//report.pdf", "/shared/report.pdf", "shared/re" + Char(10) + "port.pdf")
 
             paths.map { DepotUri(repo = "repo", path = it).uri }.toSet().size shouldBe paths.size
 

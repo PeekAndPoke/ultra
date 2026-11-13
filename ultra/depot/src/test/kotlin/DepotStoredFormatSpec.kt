@@ -12,9 +12,21 @@ import io.peekandpoke.ultra.depot.domain.DepotSubjectId
 import io.peekandpoke.ultra.depot.repos.fs.FileSystemRepository
 
 /**
- * The stored formats `aes256gcm-v1` and `hmac-sha256-v1`, pinned by bytes another implementation made (Python:
- * `hmac`, `cryptography`'s AESGCM): a file an earlier build wrote must read in every later one (ULTRA-00311).
- * A change that turns one of these red changes the format: it needs a new method name, not new expected bytes.
+ * The stored formats `aes256gcm-v1` and `hmac-sha256-v1`, pinned by bytes another implementation made: a file an
+ * earlier build wrote must read in every later one (ULTRA-00311). A change that turns one of these red changes the
+ * format: it needs a new method name, not new expected bytes.
+ *
+ * How the bytes were made (Python 3, `cryptography`):
+ * ```
+ * key = bytes(range(32))
+ * derive = lambda p: hmac.new(key, p.encode() + b"\x01", hashlib.sha256).digest()
+ * aad = b"".join(struct.pack(">I", len(f.encode())) + f.encode() for f in [method, path, subject, keyId])
+ * wrapped = AESGCM(derive("depot aes256gcm-v1 wrap")).encrypt(wrapIv, fileKey, aad)
+ * stored = iv + wrapIv + wrapped + AESGCM(fileKey).encrypt(iv, plain, aad)
+ * # hmac-sha256-v1, fields = [method, path, subject, keyId] + sorted metadata as key, value, ...
+ * h = hmac.new(derive("depot hmac-sha256-v1 sign"), digestmod=hashlib.sha256); h.update(struct.pack(">I", len(fields)))
+ * for f in fields + [content]: h.update(struct.pack(">I", len(f))); h.update(f)
+ * ```
  */
 class DepotStoredFormatSpec : StringSpec({
 
@@ -27,11 +39,12 @@ class DepotStoredFormatSpec : StringSpec({
     fun String.unhex() = chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 
     val key = DepotSubjectKey(id = "key-1", subject = "customers/42", key = bytes(0, 32))
-    val context = DepotEncryptionContext(method = "aes256gcm-v1", path = "docs/contract.txt", subject = "customers/42", keyId = "key-1")
+    // Not ASCII: the bound fields are UTF-8
+    val context = DepotEncryptionContext(method = "aes256gcm-v1", path = "Verträge/März.pdf", subject = "kunden/Zoë", keyId = "key-1")
     val plain = "the customer's contract, Zoë"
 
     val stored = "c8c9cacbcccdcecfd0d1d2d3dcdddedfe0e1e2e3e4e5e6e7e488f7de032f2d606ed321e0b75d4b2cadf7e619b3fc5e54bc0c5118cb3b8e" +
-        "5b98cbc41e05d2917c2e74027bb80ce461182affa53c231606cad433d4228d0209ef2650d0c8d01ab4a74296d1c7841b5414ac811e71c4a7203c61106b2e"
+        "5bf94e4a921508453986fe5f9d325500e8182affa53c231606cad433d4228d0209ef2650d0c8d01ab4a74296d1c7a2812f0519d029ce4846e4425ed8da07"
 
     "a key for one use is HMAC-SHA-256 of the purpose and a 1, as HKDF expands" {
         key.derive("depot aes256gcm-v1 wrap").hex() shouldBe "fb61813ab49b582547a7a884e3fc915f0b7dcf35878d5fd6f9565de344cbb1d4"
