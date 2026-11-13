@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import {releaseNotes} from '../../data/releaseNotes';
+
+export function getStaticPaths() {
+    return releaseNotes.map((note) => ({params: {version: note.version}, props: {version: note.version}}));
+}
+
+const note = releaseNotes.find((n) => n.version === Astro.props.version)!;
+const Content = note.Content;
+---
+
+<BaseLayout title={`Release ${note.version}`} description={note.summary}>
+    <Nav/>
+
+    <main class="pt-28 pb-16 px-4 sm:px-6">
+        <div class="max-w-3xl mx-auto">
+            <p class="text-sm text-gray-500 mb-6">
+                <a href="/release-notes/" class="text-brand-400 hover:text-brand-300 transition-colors">Release notes</a>
+                <span class="mx-1">/</span> {note.date}
+            </p>
+
+            <article class="prose prose-invert max-w-none">
+                <Content/>
+            </article>
+        </div>
+    </main>
+</BaseLayout>

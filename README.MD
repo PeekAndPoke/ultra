@@ -11,6 +11,10 @@ type-safe, all without the ceremony.
 
 **Documentation: [peekandpoke.io](https://peekandpoke.io)**
 
+**Release notes: [docs/release-notes](docs/release-notes/README.md)** (what each release brings and what to change
+when updating), also at [peekandpoke.io/release-notes](https://peekandpoke.io/release-notes/). Every single change
+is in the [changelog](CHANGELOG.md).
+
 ## Libraries
 
 ### [Kontainer](https://peekandpoke.io/ultra/kontainer/) — Dependency Injection

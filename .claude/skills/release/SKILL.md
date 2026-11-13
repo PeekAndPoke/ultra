@@ -9,7 +9,7 @@ argument-hint: [ target version, e.g. 0.107.0 or 1.0.0 ]
 
 Executes a full release for the PeekAndPoke monorepo. The canonical version lives in `gradle.properties` (
 `VERSION_NAME`); a release additionally requires bumping the docs-site constants and the README dependency snippet,
-verifying the docs site and a release commit. The maintainer runs the full build (with the example bundles); then the
+writing the release notes, verifying the docs site and a release commit. The maintainer runs the full build (with the example bundles); then the
 agent commits the bundles and tags; then the maintainer publishes to Maven Central and pushes.
 
 The operator (the human) must approve each destructive step explicitly. This skill prepares the changes — it does not
@@ -36,7 +36,7 @@ releases a month at most. October 2026 used 127 MB in 7 releases.
 ## Preflight (run before anything else)
 
 1. **Clean working tree.** Run `git status`. If there are uncommitted changes, stop and ask the user to commit or stash
-   first — the release commit must contain only version-bump changes.
+   first — the release commit must contain only the version bump and the release notes.
 2. **On the right branch.** Confirm `git branch --show-current` is the release branch (usually `master`). If not, ask
    the user.
 3. **Read the current version.** Grep `gradle.properties` for `VERSION_NAME=` and store as `$CURRENT`.
@@ -72,6 +72,28 @@ Every string below must move from `$CURRENT` to `$1`. Use the Edit tool, not sed
 5. **`CHANGELOG.md`** — the heading `## Unreleased` becomes `## $1`. If there is no `## Unreleased` section, stop and
    ask: a release without notes is the maintainer's call.
 
+## Release notes (every release)
+
+The short read for someone who updates: what the release brings and what to change. `CHANGELOG.md` stays the complete
+record; the note is written from it, never the other way round. Format and rules: `docs/release-notes/README.md`
+(read it before writing).
+
+1. **Write `docs/release-notes/$1.md`** from the section that was `## Unreleased` (now `## $1`): the frontmatter
+   (`version`, `date` = today, `summary` in one line), two or three sentences on what the release is about, then
+   `## Before you update` (every breaking change with what to do, and its ticket number), `## New`, `## Fixed`,
+   `## Artifacts` (new, renamed or removed Maven artifacts; check `settings.gradle` against the last release's tag:
+   `git diff v$CURRENT -- settings.gradle`). Group by library. One or two lines per entry: a long changelog still
+   gives a note of about a page. Absolute links only; the last line links the changelog.
+2. **Check it against the changelog:** every entry under `### Breaking changes` of `## $1` appears in
+   `## Before you update`. Count both and say the two numbers in the report. A breaking change left out of the note
+   is the defect this step exists to prevent.
+3. **Add the release to the list** in `docs/release-notes/README.md`, newest first: version, date, the summary.
+4. **Show the note to the maintainer** before the release commit: it is the public face of the release, and the
+   wording is theirs to change.
+
+The docs site renders the notes from that folder (`docs-site/src/data/releaseNotes.ts`, pages under
+`/release-notes/`): nothing to edit there. `README.MD` links the folder, not a version: nothing to edit either.
+
 **Sanity check after edits:** run
 `grep -rn "$CURRENT" gradle.properties docs-site/src/data/site.ts README.MD "$(console/tools/ticket/ticket.py find ULTRA-00028)"` and confirm
 zero hits.
@@ -92,6 +114,9 @@ That build is also where the Kraft example bundles get refreshed (see Build and 
    ```
    The last grep must return all zeroes — no stale version strings.
 
+   The release notes are part of this build: `<dist>/release-notes/$1/index.html` exists, and
+   `grep -c "$1" <dist>/release-notes/index.html` is at least 1 (the new release heads the overview).
+
 2. **funktor-demo smoke** (optional but recommended for major/minor releases): `./gradlew :funktor-demo:server:run`
    against both ArangoDB and MongoDB configurations. Skip for patch releases unless the user asks.
 
@@ -102,7 +127,8 @@ If any step fails, stop. Report the failure and wait for the user.
 Once verification passes:
 
 1. `git diff` — show the bump diff to the user for final review.
-2. `git add` the bumped files by name, then `git commit -m "Release $1"` — single atomic commit, version-bump only.
+2. `git add` the bumped files and the release notes (`docs/release-notes/$1.md`, `docs/release-notes/README.md`) by
+   name, then `git commit -m "Release $1"` — single atomic commit: the version bump and its notes, nothing else.
 3. **No tag yet, and do NOT push.** The tag comes after the maintainer's build (maintainer, 2026-10-26): a tag made
    before it would point at a commit nobody has built, and at the previous release's example bundles.
 
@@ -146,11 +172,13 @@ landed), skip items marked *(major/minor only)*.
 - [ ] `cd docs-site && pnpm astro build` green; LLM mirrors show the new version
 - [ ] The maintainer's `./gradlew clean build distributeJsExample` green, no warnings; bundles committed on their own
 - [ ] Every library has a README
-- [ ] CHANGELOG.md updated with release notes *(major/minor only)*
+- [ ] CHANGELOG.md's `## Unreleased` holds every change of the release *(major/minor only)*
 - [ ] Root README points at the new version
 - [ ] `gradle.properties`, `docs-site/src/data/site.ts`, `README.MD`, ULTRA-00028 (v1 roadmap) all bumped
 - [ ] funktor-demo runs end-to-end on both ArangoDB and MongoDB *(major/minor only)*
 - [ ] `CHANGELOG.md`: `## Unreleased` → `## $1`
+- [ ] `docs/release-notes/$1.md` written, every breaking change in it, listed in `docs/release-notes/README.md`,
+      shown to the maintainer, rendered at `/release-notes/$1/`
 - [ ] Release commit created (no tag yet, not pushed); handed to the maintainer for the build
 - [ ] After the green build: bundles committed, annotated tag `v$1` on that commit
 - [ ] Handed to the maintainer for `publishAllPublicationsToMavenCentralRepository` and `git push && git push --tags`
@@ -169,8 +197,11 @@ At the end of a successful release, report to the user:
 - ULTRA-00028 (v1 roadmap): header
 - CHANGELOG.md: ## $1
 
+**Release notes:**
+- docs/release-notes/$1.md — <n> breaking changes in the changelog, <n> in the note
+
 **Verified:**
-- docs-site astro build — green, LLM mirrors carry $1
+- docs-site astro build — green, LLM mirrors carry $1, /release-notes/$1/ rendered
 
 **Committed:**
 - Release commit: <short sha> (no tag yet)
@@ -192,6 +223,8 @@ At the end of a successful release, report to the user:
   `{{kraftVersion}}` placeholders on purpose. Only edit them to update actual content.
 - **Never skip the docs-site verification.** A stale version string in the LLM mirrors means something references
   the old version in a way you didn't anticipate. The full Gradle build is the maintainer's, before publishing.
+- **Never write a release note from memory or from the commit log.** It is written from the changelog's section; what
+  is not in the changelog is added there first.
 - **Don't amend the release commit** — create a follow-up commit if changes are needed; the tag goes on the last one.
 - **Don't use `--no-verify` or skip signing** — Maven Central requires signed artifacts.
 
