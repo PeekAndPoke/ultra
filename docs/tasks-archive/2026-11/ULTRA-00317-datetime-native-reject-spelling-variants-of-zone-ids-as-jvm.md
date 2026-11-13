@@ -1,6 +1,6 @@
 # ULTRA-00317: datetime (native): reject spelling variants of zone ids, as JVM and JS do
 
-> **Status (2026-11-13): DESIGNED.** 
+> **Status (2026-11-13): DONE.**
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -23,3 +23,5 @@ path. The maintainer (2026-11-13): "yes follow up".
 ## History
 
 - 2026-11-13: created on the maintainer's word, from the review of track A (ULTRA-00316).
+- 2026-11-13: DONE. Implemented in track A of ULTRA-00316 as `TimezoneEngine.requireRegionIdShape` / `requireConvertibleZoneId`; notes, ledger and changelog text are in ULTRA-00217. `MpTimezone.of` does not check, so stored values still decode. Merged to master (`87ad3489`).
+- 2026-11-13: DONE.

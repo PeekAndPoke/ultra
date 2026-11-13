@@ -2,8 +2,49 @@
 
 ## Unreleased
 
+### Breaking changes
+
+- `ultra/datetime`, behaviour change: a zone id not shaped like an IANA region id is refused with
+  `IllegalTimeZoneException("Invalid zone id: '…'")` before any platform lookup: longer than 64 characters, a character
+  outside `A-Z a-z 0-9 _ + - /`, or an empty path part (leading, trailing or doubled `/`). Native: `Europe/./Berlin`,
+  `Europe//Berlin`, `Europe/Berlin/` and `./Europe/Berlin` resolved as Berlin, now they are refused. JVM and JS: they
+  refused such ids already, only the message changes. The message echoes the id in single quotes
+  (`Invalid zone id: ''` for an empty one), at most 64 characters with `...` after the quote when cut, anything but
+  printable ASCII as `?`; the JS "Unknown time zone" messages quote and bound the id the same way. On every platform
+  `MpTimezone.kotlinx` applies the same check to region ids, and on the JVM so does `MpTimezone.jvm` before
+  `ZoneId.of`: a bad id there throws `IllegalTimeZoneException` with the bounded message instead of java.time's
+  `DateTimeException` with the raw id. Fixed-offset ids (`UTC+01:00`) are unaffected, and `MpTimezone.of` does not
+  check, so stored values still decode. Case variants on a case-insensitive file system (macOS, mingw) are not refused
+  by this (ULTRA-00317).
+- `ultra/datetime`, behaviour change: `splitWithGaps` no longer takes durations and gaps modulo 24 h. `08:00-20:00`
+  by 25 h or by `Duration.INFINITE` now yields no slots (was twelve 1-hour slots, resp. one). A gap of 24 h was
+  treated as a gap of 0 h, a gap of 20 h looped or wrapped to slots outside the slot; both now leave room for one slot
+  only. An invalid slot (`to <= from`, e.g. 22:00-02:00) now yields no slots (was split across midnight) (ULTRA-00215).
+- `ultra/datetime`, behaviour change: `MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000, which admits
+  every whole-second split of a day) and throws `IllegalArgumentException` before building a split with more slots,
+  e.g. a whole day in 1 ms steps; pass a higher `maxSlots` if you need more. The added parameter changes the JVM
+  signature: recompile callers (ULTRA-00215).
+
 ### Fixes
 
+- `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever or returns wrapped slots when a step or a
+  step plus gap crosses midnight. A duration of 24 h, a slot ending at 23:59:59.999 or a duration under one millisecond
+  looped; `08:00-20:00` by 17 h returned four slots, three of them invalid (08:00-01:00, 18:00-11:00, 11:00-04:00),
+  now none. Such steps now end the split (ULTRA-00215).
+- `ultra/datetime` (native): the zone cache holds only the ids in `MpTimezone.supportedIds`. kotlinx/native resolves
+  path variants such as `Europe/./Berlin`, and each spelling used to add a permanent entry, so user-supplied zone ids
+  could grow it without bound. Other ids that resolve (zones newer than the list, legacy links such as `ROC`) are
+  slower, including the system's own zone when it is not in the list: only the last of them is kept, in one memo slot
+  (ULTRA-00217).
+- `ultra/datetime` (JS): the zone cache holds only the ids in `MpTimezone.supportedIds`. Intl matches ids
+  case-insensitively, so each case spelling of an unlisted id used to add permanent entries. Unlisted ids are slower
+  now, including the browser's own zone when it is not in the list: only the last of them keeps its formatter and
+  interval cache, in one memo slot. Case variants of the four ids added below are now refused on JS, as on the JVM
+  (ULTRA-00217).
+- `ultra/datetime`: `MpTimezone.supportedIds` adds `America/Ciudad_Juarez`, `America/Coyhaique`, `Europe/Kyiv` and
+  `Pacific/Kanton`, and its KDoc states the contract (ids java.time, Intl and the native tz database all resolve, as
+  of tzdb 2025b). `EST`, `HST`, `MST` and `ROC` stay out: java.time refuses them as region ids (ULTRA-00217).
+- `ultra/datetime`: faster `Kronos.Mutable.set` on deep chains (ULTRA-00143).
 - **funktor/logging: the database log stores stack traces again** (ULTRA-00158). `KarangoLogAppender` and
   `MonkoLogAppender` dropped the error of a log event since 0.109.0, so entries logged with a `Throwable` had no
   stack trace in the logs GUI. They also stamped an entry with the time it was written, not the time it was

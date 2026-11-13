@@ -1,6 +1,6 @@
 # ULTRA-00215: MpLocalTimeSlot.splitWithGaps loops forever across midnight
 
-> **Status (2026-11-13): IMPLEMENTED, awaiting the review gate** (track A of ULTRA-00316, worktree `datetime`).
+> **Status (2026-11-13): DONE.** awaiting the review gate** (track A of ULTRA-00316, worktree `datetime`).
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -140,3 +140,5 @@ Round 1, 2026-11-13, standard gate, level 1 (`reviewer-opus-high`), blind; chart
 | 1 | NIT | `time_limit.jvm.kt` | The timed-out thread keeps running (impl NIT) | fix | Interrupts, KDoc says what remains (68f8b436) |
 
 Verified after round 1 (the track): jvmTest 2543, jsBrowserTest 1906, linuxX64Test 1898, 0 failures.
+- 2026-11-13: DONE. Review gate: round 1 not clean (1 MAJOR, fixed), round 2 CLEAN, delta round 3 CLEAN. Merged to master with track A of ULTRA-00316 (`87ad3489`). No DOCS follow-up yet: the datetime API is in flux until ULTRA-00210 and ULTRA-00211 land; the docs are written against the settled code then.
+- 2026-11-13: DONE.

@@ -62,6 +62,18 @@ Across the waves:
 ## Progress
 
 - 2026-11-13: plan stored; triage started (nine agents); ULTRA-00230 started on master.
+- 2026-11-13, wave 1:
+  - **Track A (datetime), batch 1 MERGED** (`87ad3489`): ULTRA-00215, ULTRA-00217, ULTRA-00317 DONE, the `recurse`
+    item of ULTRA-00143 done. Gate: round 2 CLEAN, delta round 3 CLEAN. Batch 2 (ULTRA-00211 with ULTRA-00210,
+    shipped together) is next; `completeDay` waits for the 24:00 decision.
+  - **Track B (cache and log), ULTRA-00159: STOPPED, waiting for the maintainer.** Round 2 CLEAN from
+    implementation and domain, NOT CLEAN from security: a hot key outlives its write TTL and the hard TTL
+    (CONFIRMED by probe, pinned as a known-defect spec on `wt/cache-log`). Two rounds without a clean one.
+  - **Track C (mutator): batch 1 MERGED** (`ae0a23cc`, ULTRA-00144 DONE). **ULTRA-00234: STOPPED, waiting for the
+    maintainer.** Round 2 CLEAN from implementation and domain, NOT CLEAN from security: a held child writes to
+    another row when an instance is in the list twice (ten claims CONFIRMED, pinned on `wt/mutator`).
+  - **On master:** ULTRA-00230 (Karma ports), and the MAJOR of ULTRA-00158 (database log lost stack traces) fixed
+    (`c218d1a6`); its gate continues after the open log decisions.
 
 ## History
 

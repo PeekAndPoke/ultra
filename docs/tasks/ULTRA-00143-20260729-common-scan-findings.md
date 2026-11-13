@@ -1,6 +1,6 @@
 # ULTRA-00143: ultra/common scan — findings backlog
 
-> **Status (2026-11-13): PAUSED.** IN PROGRESS — the `recurse` item is implemented and awaits the review gate; the one left (`camelCaseSplit`) is DROP/PARK per the ULTRA-00316 triage
+> **Status (2026-11-13): PAUSED.** The `recurse` item is DONE (merged `87ad3489`); the one left (`camelCaseSplit`) is DROP/PARK per the ULTRA-00316 triage
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -297,3 +297,4 @@ survive contact with a probe.
 
 - 2026-10-21: numbered ULTRA-00143 (was `docs/tasks/20260729-common-scan-findings.md`).
 - 2026-11-13: the `recurse` item done on track A (datetime) of ULTRA-00316; per the triage the ticket can close after the review gate.
+- 2026-11-13: the `recurse` item is DONE (`recurse.kt` removed from datetime, private `collectChain` in Kronos; reviewed with track A of ULTRA-00316, merged `87ad3489`). The ticket stays PAUSED for `camelCaseSplit` (DROP/PARK per the ULTRA-00316 triage).

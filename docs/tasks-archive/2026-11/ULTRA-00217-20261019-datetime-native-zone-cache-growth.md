@@ -1,6 +1,6 @@
 # ULTRA-00217: ultra/datetime: native zone cache grows with path variants of zone ids
 
-> **Status (2026-11-13): IMPLEMENTED, awaiting the review gate** (track A of ULTRA-00316, worktree `datetime`).
+> **Status (2026-11-13): DONE.** awaiting the review gate** (track A of ULTRA-00316, worktree `datetime`).
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -200,3 +200,5 @@ jsBrowserTest and linuxX64Test green (counts in the History line below).
 - 2026-11-13: review round 2 MINORs (JS hot path, memo slot, ULTRA-00317 refusal, messages, KDoc, changelog).
 - 2026-11-13: review round 3 (delta) CLEAN; its MINORs fixed. Final XML: jvmTest 2628 / 0, jsBrowserTest 1984 / 0,
   linuxX64Test 1976 / 0; `compileTestKotlinLinuxArm64` and `compileTestKotlinMingwX64` compile. Ready to merge.
+- 2026-11-13: DONE. Review gate: round 2 CLEAN, delta round 3 CLEAN (both reviewers). Merged to master with track A of ULTRA-00316 (`87ad3489`). Open with the maintainer (see the round-3 ledger): parse messages echoing raw input, native resolving `posix/…`, `right/…`, `posixrules`, `localtime`, `Factory`, `"SYSTEM"` in the decode path, a public `isValid`/`ofOrNull`. No DOCS follow-up yet: the datetime API is in flux until ULTRA-00210 and ULTRA-00211 land.
+- 2026-11-13: DONE.
