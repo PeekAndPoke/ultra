@@ -14,6 +14,8 @@ actual fun <T> withinTimeLimit(limit: Duration, block: () -> T): T {
     worker.join(limit.inWholeMilliseconds)
 
     if (worker.isAlive) {
+        // Best effort: only a block that checks for interruption stops here.
+        worker.interrupt()
         throw AssertionError("Did not finish within $limit")
     }
 
