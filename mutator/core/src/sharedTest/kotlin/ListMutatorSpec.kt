@@ -289,7 +289,7 @@ class ListMutatorSpec : StringSpec() {
             iterator.nextIndex() shouldBe 2 // Because we added one element before B
         }
 
-        "subList() throws UnsupportedOperationException" {
+        "subList() returns a read-only snapshot of the range (details in ListMutatorSubListSpec)" {
             val list = listOf(
                 Address("A", "C", "Z"),
                 Address("B", "C", "Z"),
@@ -297,9 +297,12 @@ class ListMutatorSpec : StringSpec() {
             )
 
             val mutator = list.mutator()
+            val snapshot = mutator.subList(0, 2)
+
+            snapshot.map { it.get() } shouldBe listOf(Address("A", "C", "Z"), Address("B", "C", "Z"))
 
             shouldThrow<UnsupportedOperationException> {
-                mutator.subList(0, 2)
+                snapshot.removeAt(0)
             }
         }
 

@@ -1,16 +1,15 @@
 package io.peekandpoke.mutator
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.mutator.domain.Address
 import io.peekandpoke.mutator.domain.mutator
 
 /**
- * Which stdlib functions reach the throwing [ListMutator.subList] (ULTRA-00234).
+ * Stdlib functions over a [ListMutator] that do or do not go through [ListMutator.subList] (ULTRA-00234).
  *
  * `chunked` and `windowed` do not call `subList`; `slice(IntRange)` does. `subList` itself is pinned in
- * [ListMutatorSpec].
+ * [ListMutatorSubListSpec].
  */
 class ListMutatorSubListProbeSpec : StringSpec() {
 
@@ -38,12 +37,12 @@ class ListMutatorSubListProbeSpec : StringSpec() {
                 listOf(listOf(a, b), listOf(c))
         }
 
-        "slice(IntRange) reaches subList() and throws" {
+        "slice(IntRange) works through subList()" {
             val mutator = listOf(a, b, c).mutator()
 
-            shouldThrow<UnsupportedOperationException> {
-                mutator.slice(0..1)
-            }
+            mutator.slice(0..1).map { it.get() } shouldBe listOf(a, b)
+            mutator.slice(1..2).map { it.get() } shouldBe listOf(b, c)
+            mutator.slice(IntRange.EMPTY) shouldBe emptyList()
         }
     }
 }

@@ -257,8 +257,28 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         return It(index)
     }
 
+    /**
+     * Returns a read-only snapshot of the child mutators from [fromIndex] (inclusive) to [toIndex] (exclusive).
+     *
+     * Each element is a child mutator as [get] returns it: changing it writes back to this list and notifies its
+     * observers. The element is found by identity, so if the same instance is in the list twice, the change goes to
+     * its first position. The snapshot is not a view: later structural changes to this list do not show in it.
+     * Every structural change to the snapshot or its iterators throws [UnsupportedOperationException].
+     *
+     * @throws IndexOutOfBoundsException if [fromIndex] < 0 or [toIndex] > size
+     * @throws IllegalArgumentException if [fromIndex] > [toIndex]
+     */
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<Mutator<V>> {
-        throw UnsupportedOperationException("ListMutator does not support subList()")
+        val size = this.size
+
+        if (fromIndex < 0 || toIndex > size) {
+            throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: $size")
+        }
+        if (fromIndex > toIndex) {
+            throw IllegalArgumentException("fromIndex: $fromIndex > toIndex: $toIndex")
+        }
+
+        return ReadOnlySnapshotList((fromIndex until toIndex).map { get(it) })
     }
 
     //  HELPERS  ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,3 +296,54 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         notifyObservers()
     }
 }
+
+/**
+ * A [MutableList] that refuses every structural change, the same on every platform. Returned by
+ * [ListMutatorImpl.subList].
+ */
+private class ReadOnlySnapshotList<E>(private val elements: List<E>) : MutableList<E> {
+
+    private class It<E>(private val inner: ListIterator<E>) : MutableListIterator<E> {
+        override fun hasNext(): Boolean = inner.hasNext()
+        override fun next(): E = inner.next()
+        override fun hasPrevious(): Boolean = inner.hasPrevious()
+        override fun previous(): E = inner.previous()
+        override fun nextIndex(): Int = inner.nextIndex()
+        override fun previousIndex(): Int = inner.previousIndex()
+        override fun add(element: E) = refuse()
+        override fun remove() = refuse()
+        override fun set(element: E) = refuse()
+    }
+
+    override val size: Int get() = elements.size
+    override fun isEmpty(): Boolean = elements.isEmpty()
+    override fun contains(element: E): Boolean = elements.contains(element)
+    override fun containsAll(elements: Collection<E>): Boolean = this.elements.containsAll(elements)
+    override fun get(index: Int): E = elements[index]
+    override fun indexOf(element: E): Int = elements.indexOf(element)
+    override fun lastIndexOf(element: E): Int = elements.lastIndexOf(element)
+
+    override fun iterator(): MutableIterator<E> = It(elements.listIterator())
+    override fun listIterator(): MutableListIterator<E> = It(elements.listIterator())
+    override fun listIterator(index: Int): MutableListIterator<E> = It(elements.listIterator(index))
+
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> =
+        ReadOnlySnapshotList(elements.subList(fromIndex, toIndex).toList())
+
+    override fun add(element: E): Boolean = refuse()
+    override fun add(index: Int, element: E) = refuse()
+    override fun addAll(elements: Collection<E>): Boolean = refuse()
+    override fun addAll(index: Int, elements: Collection<E>): Boolean = refuse()
+    override fun remove(element: E): Boolean = refuse()
+    override fun removeAt(index: Int): E = refuse()
+    override fun removeAll(elements: Collection<E>): Boolean = refuse()
+    override fun retainAll(elements: Collection<E>): Boolean = refuse()
+    override fun set(index: Int, element: E): E = refuse()
+    override fun clear() = refuse()
+
+    override fun equals(other: Any?): Boolean = other === this || elements == other
+    override fun hashCode(): Int = elements.hashCode()
+    override fun toString(): String = elements.toString()
+}
+
+private fun refuse(): Nothing = throw UnsupportedOperationException("A ListMutator.subList() snapshot is read-only")
