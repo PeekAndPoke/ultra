@@ -100,6 +100,27 @@ class FastCacheClearSpec : StringSpec() {
             loads shouldBe 0
         }
 
+        "clear() is not an eviction: onEviction and evictionCount do not fire" {
+            val evicted = mutableListOf<String>()
+            val stats = FastCache.StatisticsBehaviour<String, String>()
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                onEviction { key, _ -> evicted.add(key) }
+                addBehaviour(stats)
+            }
+
+            cache.put("a", "1")
+            cache.put("b", "2")
+            delay(100.milliseconds)
+
+            cache.clear()
+
+            // several loop passes, so the RemoveActions of the clear have been processed
+            delay(200.milliseconds)
+
+            evicted shouldBe emptyList()
+            stats.snapshot().evictionCount shouldBe 0L
+        }
+
         "actions still pending at clear are counted by the statistics" {
             val stats = FastCache.StatisticsBehaviour<String, String>()
             val cache = fastCache<String, String>(loopDelay = 300.milliseconds) {
