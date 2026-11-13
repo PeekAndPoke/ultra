@@ -36,6 +36,39 @@ and possibly the wire format (`MpDateTimeRawData` already carries `ts`, so decod
 - [ ] Overlap round-trip test through every decode path above, mutation-checked
 - [ ] `MpZonedDateTime.atStartOfDay()` agrees with `MpLocalDate.atStartOfDay(tz)` (Toronto 1919 row)
 
+## Plan as built
+
+Maintainer (2026-11-13): the instant is the truth; the stored and wire format do not change; round trips through every
+serializer give back the same instant for both sides of an overlap and for a gap (mutation-checked, persistence path).
+Shipped together with ULTRA-00210.
+
+**Commits to (expensive to reverse marked ⚠):**
+
+- ⚠ `MpZonedDateTime` holds `(instant, timezone)`; `datetime` (and every local field) is derived from them once, at
+  construction. It stays a `data class`, but with a **private** constructor (`@ConsistentCopyVisibility`), so:
+  - ⚠ the public constructor `MpZonedDateTime(datetime, timezone)`, `copy(...)` and `component1/2` are gone (no repo
+    caller of the constructor; `copy` and destructuring callers, if any, show up at compile time);
+  - ⚠ `equals`/`hashCode` compare instant + zone, not local + zone: the two sides of an overlap are no longer equal;
+    two values built from a gap time and from the time it resolves to are now equal.
+- Builders: `MpInstant.atZone(zone)` keeps the instant exactly. `MpZonedDateTime.of(datetime, zone)` and
+  `MpLocalDateTime.atZone(zone)` resolve a local time as today: an overlap takes the earlier offset, a gap moves
+  forward by its length, and `datetime` is then the resolved wall time (a gap's 02:30 reads back as 03:30).
+- Decode paths read `ts` as the instant: `MpZonedDateTimeSerializer`, `ZonedDateTime.mp`, `MpZonedDateTime.jvm`
+  (`ZonedDateTime.ofInstant`), and slumber's `MpZonedDateTimeAwaker` (`ultra/slumber`, outside this module: a one-line
+  change the maintainer's round-trip decision requires).
+- Wire format unchanged: `{ts, timezone, human}`; `human` (`toIsoString()`) still carries no offset, so both sides of an
+  overlap render the same `human` (debug-only, never read back).
+- `atStartOfDay()` = `MpLocalDate.atStartOfDay(zone)` (java.time's end-of-gap rule; Toronto 1919 row).
+  `atStartOfHour/Minute/Second()` and `atTime()` keep the current offset when it is still valid (java's
+  `truncatedTo`/`with` rule), so the second half of an overlap truncates within its own half.
+  `atStartOfMonth/Year()` resolve like `of`.
+
+**Decided here (the ticket left it open):** keep `data class` with a private constructor rather than a plain class
+(generated `equals`/`hashCode` on the two stored fields); `atStartOfHour/Minute/Second` and `atTime` keep the offset
+like java.time.
+
+**Not changed:** `compareTo` (already by instant), `toIsoString()` format, `MpZonedDateTimeRange` API.
+
 ## Implementation notes
 
 ## Test evidence
