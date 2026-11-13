@@ -792,8 +792,8 @@ class FastCache<K, V>(
     private val evictionListeners = mutableListOf<(K, V) -> Unit>()
 
     /** List with last taken actions, to be processed by the behaviours */
-    // TODO(scan): unbounded - if `scope` is cancelled or the loop dies, this grows forever and pins
-    //   every value that was ever read or written.
+    // TODO(scan): unbounded - if `scope` is cancelled, the loop stops and this grows forever, pinning
+    //   every value that was ever read or written. (A throwing behaviour no longer stops the loop.)
     private var lastActions = ArrayList<Action<K, V>>(1_000)
 
     /** Set of keys that are included in [lastActions] */
