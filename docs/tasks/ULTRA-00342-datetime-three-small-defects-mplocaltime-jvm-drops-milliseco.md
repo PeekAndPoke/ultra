@@ -15,10 +15,9 @@ Three small defects in `ultra/datetime` that track A found and left out of its b
    goes through `ofSecondOfDay`. Confirmed by a probe (track A, 2026-11-14) and pinned as current behaviour in
    `MpLocalTimeEndOfDayJvmSpec`; the fix turns that pin into the right expectation.
 2. **`MpLocalTime.parse`'s error message names the wrong type:** "Could not parse MpLocalDate ...".
-3. **`MpLocalDateRange.numberOfDays` miscounts ranges that reach past Doomsday:** the end is clamped there by
-   `DateTimeRangeConverter`, so a range from 2000 to 12000 counts as 8,000 years. Decide what the right answer is for
-   a range with an end outside the supported span (count the real days, or refuse such a range at construction) once
-   the maintainer has settled what Genesis and Doomsday are.
+3. **`MpLocalDateRange.numberOfDays` for ranges that reach past Doomsday:** settled in ULTRA-00343 (maintainer,
+   2026-11-14: "yes keep clamp and document it"). Not a fix: the clamp stays, the KDoc states the rule and a test pins
+   it; done with ULTRA-00343.
 
 ## The work
 

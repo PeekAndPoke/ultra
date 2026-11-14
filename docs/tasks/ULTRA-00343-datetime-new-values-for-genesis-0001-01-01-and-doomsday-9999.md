@@ -36,8 +36,15 @@ UTC. Reasons: both lie inside ArangoDB's range; Doomsday keeps a four-digit year
 9999-12-31T14:00 in the furthest-ahead zone); year 1 to 9999 is also the range of several other date types (from
 memory, not checked: .NET `DateTime`, Python `datetime`, SQL Server `datetime2`).
 
-Accepted: Genesis shown in a zone west of UTC falls on 0000-12-31; a range that starts before Genesis counts as
-having no start.
+**Three further points, confirmed by the maintainer (2026-11-14):**
+
+1. **Dates outside Genesis to Doomsday stay valid as plain values** ("yes allowed"): `MpLocalDate.of(-500, 3, 15)` and
+   `MpLocalDate.of(12000, 1, 1)` work as today. Genesis and Doomsday only mark "open" in ranges; they are not limits of
+   the date types. Consequence, accepted: a range that starts before year 1 has `hasStart == false`.
+2. **`numberOfDays` keeps its clamp, documented** ("yes keep clamp and document it"): a range that reaches to or past
+   Doomsday counts as open-ended and its length is counted up to Doomsday; the same at Genesis. This settles item 3 of
+   ULTRA-00342: no fix there, the KDoc states the rule and a test pins it.
+3. **Genesis shown in a zone west of UTC falls on 0000-12-31** ("accept it").
 
 ## The work
 
@@ -60,3 +67,4 @@ having no start.
 ## History
 
 - 2026-11-14: created on the maintainer's word.
+- 2026-11-14: the three further points confirmed by the maintainer; the topic is closed.
