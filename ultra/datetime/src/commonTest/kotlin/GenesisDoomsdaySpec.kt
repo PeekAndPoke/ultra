@@ -87,6 +87,14 @@ class GenesisDoomsdaySpec : StringSpec({
         MpInstantRange(MpInstant.Genesis + oneMs, i).hasStart shouldBe true
         MpInstantRange(MpInstant.Genesis, i).hasStart shouldBe false
 
+        // zoned: by instant, in a zone that is not UTC
+        val berlin = MpTimezone.of("Europe/Berlin")
+        val z = i.atZone(berlin)
+        MpZonedDateTimeRange(z, (MpInstant.Doomsday - oneMs).atZone(berlin)).hasEnd shouldBe true
+        MpZonedDateTimeRange(z, MpInstant.Doomsday.atZone(berlin)).hasEnd shouldBe false
+        MpZonedDateTimeRange((MpInstant.Genesis + oneMs).atZone(berlin), z).hasStart shouldBe true
+        MpZonedDateTimeRange(MpInstant.Genesis.atZone(berlin), z).hasStart shouldBe false
+
         // through asOpenRange (to + 1 day): today's behaviour, pinned as it is
         MpClosedLocalDateRange(x, MpLocalDate.of(9999, 12, 29)).hasEnd shouldBe true
         MpClosedLocalDateRange(x, MpLocalDate.of(9999, 12, 30)).hasEnd shouldBe false

@@ -90,8 +90,8 @@ data class MpLocalDateRange(
      * The number of days in this range. A range that reaches past [MpLocalDate.Doomsday] counts as open-ended and is
      * counted only up to Doomsday (the same at [MpLocalDate.Genesis]; ULTRA-00343). Pre-existing detail of that clamp:
      * it rounds a half day to the even number, so Doomsday itself is counted for every second start date. A range that
-     * lies wholly before Genesis or after Doomsday gets a negative count (and an empty [asListOfDates]); the rule for
-     * such ranges is open with the maintainer.
+     * lies wholly before Genesis or after Doomsday gets a wrong count: negative (with an empty [asListOfDates]), or 1
+     * when it ends at Genesis; the rule for such ranges is open with the maintainer.
      */
     val numberOfDays: Int by lazy {
         if (isNotValid) {

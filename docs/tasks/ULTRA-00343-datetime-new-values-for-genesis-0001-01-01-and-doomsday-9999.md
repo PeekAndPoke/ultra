@@ -87,12 +87,14 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
 - **Round 1, `numDaysInMonth`:** it was the `numberOfDays` of the month as a closed range, so it went through the
   clamp: with Genesis at year 1 every month before year 1 got a wrong, mostly negative count (`of(-500, 3, 15)`:
   -182,897), and `getDatesInMonth` (all three overloads) lost dates. Now `atLastOfMonth().day`, from the calendar. The
-  same fix repairs months from 10000-01 on, which were already wrong on master. Every other member of `MpLocalDate`
-  and `MpLocalDateTime` was checked: none other reaches a range, the converter or a sentinel (`toRange`,
-  `toClosedRange`, `toEnclosingMonthRange` build ranges, whose members are range behaviour).
+  same fix repairs months from 10000-01 on and before -10000-01, which were already wrong on master. Every other
+  member of `MpLocalDate` and `MpLocalDateTime` was checked: none other reaches a range, the converter or a sentinel
+  (`toRange`, `toClosedRange`, `toEnclosingMonthRange` build ranges, whose members are range behaviour).
 - **Round 1, `numberOfDays` itself:** NOT changed; the consequences of the kept clamp for ranges before Genesis and
   around Doomsday are with the maintainer (probe results and a calendar-exact proposal in the track A report). The
-  KDoc now also says that a range wholly before Genesis or after Doomsday gets a negative count.
+  KDoc now also says that a range wholly before Genesis or after Doomsday gets a wrong count: negative, or 1 when it
+  ends at Genesis (delta round 2: `MpLocalDateRange(of(0, 12, 30), of(1, 1, 1))` counts 1 and lists `[0000-12-30]`;
+  probed).
 
 ### Test evidence
 
@@ -108,9 +110,9 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
   `ConstantsSpec`, `MpLocalDateTimeSpec` (parse rows) and `MpZonedDateTimeRangeZoneSpec`. The old-sentinel tests are
   green before and after by design (the old values lie outside both); their teeth come from mutants G7 / G8.
 - **Round 1, new tests:** `GenesisDoomsdaySpec` 8 → 12: old sentinels now on all four range types (kotlinx), the
-  open-end predicates at their neighbours (both sides, every range type but zoned), the end boundary at
-  9999-12-31T00:00Z (`9999-12-31T23:59:59.999Z` reads as "no end"; `forever` no longer contains the last day),
-  `beginningAt(d).asOpenRange.to` = 10000-01-01 with its stored `ts`, the mixed old / new `cutAway` sliver;
+  open-end predicates at their neighbours (both sides, all four range types; zoned added in delta round 2), the end
+  boundary at 9999-12-31T00:00Z (`9999-12-31T23:59:59.999Z` reads as "no end"; `forever` no longer contains the last
+  day), `beginningAt(d).asOpenRange.to` = 10000-01-01 with its stored `ts`, the mixed old / new `cutAway` sliver;
   "dates outside stay valid" now pins `numDaysInMonth` ((-500, 3) 31, (0, 12) 31, (0, 6) 30, (0, 2) 29, (1, 2) 28,
   (9999, 12) 31, (10000, 1) 31, (12000, 2) 29) and `getDatesInMonth` for months before year 1 and after 9999 in all
   three overloads. Literals from an independent count (Hinnant's days-from-civil, cross-checked against Python's
@@ -133,6 +135,8 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
 | H7 / H8 `MpInstantRange.hasEnd` 1 ms early / `hasStart` 1 ms late | 1 / 1 (neighbours) |
 | H9 `MpClosedLocalDateRange.hasEnd` as `to < Doomsday` (not through `asOpenRange`) | 1 (neighbours) |
 | H10 `MpClosedLocalDateRange.hasStart` as `from > Genesis.plusDays(1)` | 1 (neighbours) |
+| K1 `MpZonedDateTimeRange.hasEnd` one day early (survived before delta round 2) | 1 (neighbours) |
+| K2 `MpZonedDateTimeRange.hasStart` one day late (survived before delta round 2) | 1 (neighbours) |
 
 **Existing test lines changed:**
 
@@ -175,7 +179,8 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
   `GENESIS_TIMESTAMP` = -62_135_596_800_000 and `DOOMSDAY_TIMESTAMP` = 253_402_214_400_000 (public constants). Both
   now lie inside the range of ArangoDB's date functions, and the text form has a four-digit year (ULTRA-00343).
   - What counts as open moved: an end at or after 9999-12-31T00:00Z is "no end", so `9999-12-31T23:59:59.999Z`
-    (another system's maximum) and a half-open date range with `to` = 9999-12-31 read as open-ended; a start at or
+    (another system's maximum), a half-open date range with `to` = 9999-12-31 and a closed date range ending
+    9999-12-30 (through `asOpenRange`) read as open-ended; a start at or
     before 0001-01-01T00:00Z is "no start", and so is a range that starts before year 1.
   - `forever` and `beginningAt(x)` no longer contain the last day: `MpLocalDateRange.forever.contains(9999-12-31)`
     and `MpInstantRange.forever.contains(9999-12-31T12:00Z)` are false (true before).
@@ -196,8 +201,8 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
 **Fixes:**
 
 - `ultra/datetime`: `MpLocalDate.numDaysInMonth` and `getDatesInMonth` come from the calendar. They went through a
-  date range clamped to Genesis / Doomsday and returned wrong counts (and lost dates) for months from 10000-01 on
-  (ULTRA-00343).
+  date range clamped to Genesis / Doomsday and returned wrong counts (and lost dates) for months before -10000-01 and
+  from 10000-01 on (ULTRA-00343).
 
 ## Review record: round 1 (blind, reviewer-fable-xhigh, two passes)
 
@@ -209,7 +214,7 @@ value and the stored forms: correct. They ran nothing; every item below was chec
 | MAJOR | `numDaysInMonth` goes through `numberOfDays` and the clamp: months before year 1 wrong (`(0, 12)` → 1, `(-500, 3)` → -182,897), `getDatesInMonth` loses dates | CONFIRMED by probe (exact values as reported); FIXED: `atLastOfMonth().day`; RED first; mutant H1 red; all `MpLocalDate` / `MpLocalDateTime` members checked, no other reaches a range |
 | decision | consequences of the kept `numberOfDays` clamp (negative counts before Genesis, clamped count with an unclamped start, half-day rounding drops 9999-12-31 for every second `beginningAt`, `(9999-10-01, 9999-12-31)` → 91) | CONFIRMED by probe, every number as reported; NOT changed: with the maintainer; calendar-exact proposal in the track A report |
 | MINOR | old-sentinel tests miss `MpClosedLocalDateRange` | FIXED: kotlinx and slumber; mutant H4 red (2 + 1) |
-| MINOR | open-end predicates pinned from one side; `to < Doomsday.minusDays(1)` survives | FIXED: neighbours on both sides; mutants H5 to H10 red |
+| MINOR | open-end predicates pinned from one side; `to < Doomsday.minusDays(1)` survives | FIXED: neighbours on both sides for `MpLocalDateRange`, `MpInstantRange`, `MpClosedLocalDateRange`; mutants H5 to H10 red. Zoned was missing: added in delta round 2 |
 | MINOR | changelog imprecise (boundary, `forever` loses the last day, older readers, `asOpenRange.to` = 10000-01-01, mixed slivers); acceptance sentence wrong | FIXED: changelog and acceptance; each pinned by a test |
 | note | Genesis on 0000-12-31 in a western zone is outside what .NET `DateTime`, Python `datetime` and an HTML date input hold | RECORDED for the maintainer, no change |
 
@@ -218,9 +223,25 @@ year as a number (`year.pad(4)`): year -2 prints `00-2-12-30`, year -500 prints 
 It also writes the stored `human` field of `MpLocalDate` and the other datetime types; the decoders read `ts`, so
 values round-trip, but the stored text is malformed for years -1 to -999.
 
+## Review record: delta round 2 (reviewer-fable-xhigh, all charters)
+
+**Verdict:** CLEAN: 0 CRITICAL, 0 MAJOR, 2 MINOR. The `numDaysInMonth` fix holds; every pinned literal and weekday row
+recomputed and right. Applied in one commit, tests and texts only (the KDoc sentence is the one production-file line).
+
+| Sev | Finding | Outcome |
+|---|---|---|
+| MINOR | neighbour pins miss `MpZonedDateTimeRange`: day-early `hasEnd` / day-late `hasStart` mutants survive | FIXED: four rows in Europe/Berlin (Doomsday - 1 ms has an end, Doomsday none; Genesis + 1 ms has a start, Genesis none); mutants K1 / K2 red |
+| MINOR | KDoc / ticket: "wholly before Genesis ... negative count" false at the Genesis edge | FIXED: "a wrong count: negative, or 1 when it ends at Genesis"; probed: every range with `to` = Genesis counts 1 |
+| text | changelog: months before -10000-01 were wrong on master too; a closed range ending 9999-12-30 reads as open-ended | FIXED |
+| deferred | `numDaysInMonth` is `by lazy` | comes with the `numberOfDays` decision (production code) |
+| note | `toIsoString` pads a negative year wrongly; the text goes into the stored `human` field | RECORDED for the maintainer, no action |
+| counts | after delta round 2 (2026-11-14, `--rerun`, XML) | datetime JVM 2814 / 0, JS 2156 / 0, native 2148 / 0 (rows added inside an existing test, so the totals stay) |
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
 - 2026-11-14: the three further points confirmed by the maintainer; the topic is closed.
 - 2026-11-14: built on `wt/datetime` with ULTRA-00341 batch 3b-1; awaiting the review gate (the coordinator moves
   the ticket).
+- 2026-11-14: round 1 NOT CLEAN, handled; delta round 2 CLEAN, its two MINORs applied. `numberOfDays` waits for the
+  maintainer.
