@@ -1,7 +1,6 @@
 # ULTRA-00345: Kontainer: an override naming a registered dynamic exactly replaces that one (exact match wins)
 
-> **Status (2026-11-14): BUILT, gate round 1 CLEAN.** Built by track D on `wt/kontainer`; the five MINOR of round 1
-> are closed out (see Gate round 1), not merged.
+> **Status (2026-11-14): DONE.** Merged into master as `f750497f`: strict gate round 1 CLEAN; the close-out was tests, texts and one visibility narrowing. Docs: ULTRA-00338 (kontainer docs). are closed out (see Gate round 1), not merged.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 > **Plan:** ULTRA-00316 (close the open epics from the foundation upwards)
@@ -191,3 +190,4 @@ errors). The `get` assertion came after the full run; kontainer was re-run with 
 - 2026-11-14: created on the maintainer's decision.
 - 2026-11-14: built by track D (`5762cddd`), not merged; a strict gate follows.
 - 2026-11-14: strict gate round 1 CLEAN (5 MINOR); close-out by track D, not merged.
+- 2026-11-14: DONE.

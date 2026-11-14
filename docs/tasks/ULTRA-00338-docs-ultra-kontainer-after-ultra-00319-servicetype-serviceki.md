@@ -63,3 +63,6 @@ Known behaviours with tickets (ULTRA-00327 to ULTRA-00337) are documented only o
 - 2026-11-14: to mention on the overrides page: two overrides for one service under different classes
   (`with(Base::class) { }` and `with(Derived::class) { }`) both run, and the later wins (maintainer: an edge case,
   the caller takes care).
+- 2026-11-14: in scope after the merge of `f750497f`: an override naming a registered dynamic exactly replaces that
+  service, while reads through the base type stay ambiguous (ULTRA-00345); factories are not constructed by callers
+  (ULTRA-00346).

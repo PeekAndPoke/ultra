@@ -107,6 +107,9 @@ Across the waves:
   ULTRA-00333 back: overrides run eagerly at `create` again, once per kontainer; laziness is built in place by the
   caller. Every refusal comes before any lambda. Gate round 1 CLEAN, delta round 2 CLEAN; fourteen suites green on
   master (kontainer 565).
+- 2026-11-14, **track D (kontainer), ULTRA-00345 and ULTRA-00346: MERGED** (`f750497f`). An override naming a
+  registered dynamic exactly replaces that service; the `ServiceProviderFactory` constructor is internal. Gate round
+  1 CLEAN. Next on the track: K3 (ULTRA-00329), after its plan is re-confirmed.
 - 2026-11-14, **track A (datetime), ULTRA-00341 batches 3b-1 and 3b-2: MERGED** (`e7c882a9`), with master's sentinel
   values restored. `ComputedList`, lazy `asListOfDates()`, `numDaysInMonth` from the calendar; `MpLocalTimeSlot` as
   a start plus a duration. ULTRA-00341 is done. Next: ULTRA-00343 as decided by the maintainer: Genesis and

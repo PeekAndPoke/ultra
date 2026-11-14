@@ -1,7 +1,6 @@
 # ULTRA-00346: Kontainer: the ServiceProviderFactory constructor becomes internal
 
-> **Status (2026-11-14): BUILT, gate round 1 CLEAN.** Built by track D on `wt/kontainer` (`cfd272ab`); round 1
-> close-out done (see Gate round 1), not merged.
+> **Status (2026-11-14): DONE.** Merged into master as `f750497f`: strict gate round 1 CLEAN; the close-out was tests, texts and one visibility narrowing. Docs: ULTRA-00338 (kontainer docs). close-out done (see Gate round 1), not merged.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 > **Plan:** ULTRA-00316 (close the open epics from the foundation upwards)
@@ -104,3 +103,4 @@ Counts: see ULTRA-00345, Gate round 1.
 - 2026-11-14: created on the maintainer's decision.
 - 2026-11-14: built by track D (`cfd272ab`), not merged; a strict gate follows.
 - 2026-11-14: strict gate round 1 CLEAN; close-out by track D, not merged.
+- 2026-11-14: DONE.

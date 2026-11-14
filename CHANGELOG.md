@@ -166,6 +166,14 @@
   `Lazy<T?>`, whose type has two or more candidate services is a validation error ("Parameter '...' is ambiguous. The
   following services collide: ..."). Before, it injected null silently, and still made the service SemiDynamic when a
   candidate was dynamic. With no candidate it is still null; with one it is injected (ULTRA-00335).
+- `ultra/kontainer`: the `ServiceProviderFactory` constructor and `ServiceProviderFactory.dynamics` are internal;
+  kontainers are made by `create` and `clone` only. The public constructor ran the override lambdas without the
+  checks of `create` (ULTRA-00346).
+- `ultra/kontainer`, behaviour change: an override whose class is itself a registered dynamic replaces exactly that
+  service. Before, with `dynamic(UserProvider::class)` and `dynamic(AdminUserProvider::class)` both registered,
+  `with { AdminUserProvider() }` failed with `ServiceAmbiguous`. Otherwise as before: the one registered dynamic the
+  class fits is replaced, several is `ServiceAmbiguous`. Reads through the base type are unchanged: with both
+  registered, `get(UserProvider::class)` stays `ServiceAmbiguous`. Injection is unchanged (ULTRA-00345).
 - `funktor/insights`: `KontainerCollector.Data.Service.type` is a `String` (was `ServiceProvider.Type`). The wire is
   unchanged: records and the graph API keep the names `Singleton`, `SemiDynamic`, `Dynamic`, `Prototype`,
   `DynamicOverride`; every prototype is `Prototype`, whatever its kind (ULTRA-00319).
