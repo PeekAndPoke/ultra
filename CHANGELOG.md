@@ -35,6 +35,69 @@
   from `next()`/`previous()` past the ends (was `IndexOutOfBoundsException`), `IllegalStateException` from
   `remove()`/`set()` without a preceding `next()`/`previous()`, and `IndexOutOfBoundsException` from
   `listIterator(index)` outside `0..size` (was unchecked) (ULTRA-00234).
+- `ultra/kontainer`: the injection type is split into what a service is and what it is bound to (ULTRA-00319).
+  `InjectionType` and `ServiceProvider.Type` are gone. A service now has a `ServiceType` (`Singleton`, `Prototype`),
+  a `ServiceKind` (`Static`, `Dynamic`, `SemiDynamic`) and an `overridden` flag. Only `Static` and `Dynamic` are
+  declared; `SemiDynamic` is derived. A prototype that reaches something dynamic is now reported as
+  (`Prototype`, `SemiDynamic`), where it was `Prototype`. What is created when, how often, and which instance is
+  shared does not change. To migrate:
+  - `provider.type == ServiceProvider.Type.Singleton` -> `type == ServiceType.Singleton && kind == ServiceKind.Static`
+  - `Type.SemiDynamic` -> `ServiceType.Singleton` with `ServiceKind.SemiDynamic`
+  - `Type.Dynamic` -> `ServiceType.Singleton` with `ServiceKind.Dynamic` and `overridden == false` (an overridden
+    provider also reports Singleton and Dynamic; the old `Type.Dynamic` excluded overrides)
+  - `Type.DynamicOverride` -> `ServiceType.Singleton`, `ServiceKind.Dynamic`, `overridden == true`
+  - `Type.Prototype` -> `type == ServiceType.Prototype`; the kind is `Static`, or `SemiDynamic` when it reaches
+    something dynamic
+  - `ServiceDefinition.injectionType` -> `type` and `kind`, as declared: `InjectionType.Singleton` ->
+    (`Singleton`, `Static`), `InjectionType.Dynamic` -> (`Singleton`, `Dynamic`), `InjectionType.Prototype` ->
+    (`Prototype`, `Static`)
+  - `ServiceDefinition.withType(t)` -> `withScope(type, kind)`
+  - `KontainerBuilder.InjectionTypeUpgrade` -> `RedefinitionUpgrade`, same rule
+  - `ServiceProvider.Provider.forInstance(type, definition, instance)` -> `forOverride(definition, instance)`;
+    `forGlobalSingleton(definition)`; `forDynamicSingleton(kind, definition)`;
+    `ServiceProvider.ForSingleton(kind, definition)`, `ForPrototype(kind, definition)`,
+    `ForOverride(definition, instance)` (was `ForInstance`; always a dynamic singleton that is overridden).
+    `forDynamicSingleton` refuses `ServiceKind.Static`. The public constructor
+    `ServiceProvider.ForPrototype.Provider(definition)` is now `ForPrototype.Provider(kind, definition)`
+  - `DebugInfo.ServiceDebugInfo.type` is a `ServiceType`, with new `kind`, `overridden` and `semiDynamicBecauseOf`;
+    `DebugInfo.ServiceDefinitionInfo.injectionType` -> `type` and `kind`
+  - `KontainerTools.dumpKontainer()` has a new `Kind` column; a semi dynamic service names what made it so
+- `funktor/insights`: `KontainerCollector.Data.Service.type` is a `String` (was `ServiceProvider.Type`). The wire is
+  unchanged: records and the graph API keep the names `Singleton`, `SemiDynamic`, `Dynamic`, `Prototype`,
+  `DynamicOverride`; every prototype is `Prototype`, whatever its kind (ULTRA-00319).
+- `ultra/cache`: Dependency: ultra:cache no longer depends on ultra:datetime. A project that used datetime only
+  through cache must now declare it itself (ULTRA-00159).
+- `ultra/cache`: FastCache TTLs run on a monotonic clock (TimeSource.Monotonic) instead of the wall clock: a step of
+  the system clock no longer expires entries early or keeps them past their TTL. Time the machine
+  spends suspended may not count, so an entry can outlive its TTL in wall-clock terms by the length
+  of a pause (as in Caffeine and Guava). New, for tests: FastCache.Builder.timeSource(TimeSource) (ULTRA-00159).
+- `ultra/cache`: FastCache TTLs never throw; odd values fall back. A zero or negative TTL means "do not keep": the
+  entry expires at the next processing pass. A positive TTL below 1 ms counts as 1 ms.
+  Duration.INFINITE never expires. An entry can be served up to its TTL plus two loop periods (ULTRA-00159).
+- `ultra/cache`: refreshAfterWrite with a zero or negative refresh TTL no longer reloads every key on every pass:
+  entries expire at the next pass and are never refreshed. A hardTtl not above the refresh TTL
+  expires entries at hardTtl, unrefreshed (as before) (ULTRA-00159).
+- `ultra/cache`: A loop delay of zero or less runs as 1 ms instead of a loop that never suspends (ULTRA-00159).
+- `ultra/cache`: maxEntries and maxMemoryUsage are soft bounds (documented): an entry read or written in every
+  maintenance pass is not evicted by them, so under such load the cache holds up to the number of
+  distinct keys touched within one pass (ULTRA-00159).
+- `ultra/cache`: NullableCache: a put while getOrPutAsync runs wins over the provider's result; a provider reaching
+  a key its own call chain is resolving fails with IllegalStateException instead of hanging (not
+  detected: a cycle across two concurrent callers, or one reached through a coroutine that does not
+  inherit the provider's context; a coroutine inheriting it that outlives the provider can get a
+  false IllegalStateException); getOrPutAsync runs the provider in a child scope, so coroutines it
+  launches into its own context are awaited before caching, an already cancelled caller does not
+  start it, and a value computed while the caller was cancelled is discarded; clear() is no longer
+  undone by a running provider; a cancelled caller waiting on another caller's provider no longer
+  spins (ULTRA-00159).
+
+### New
+
+- `ultra/kontainer`: `dynamicPrototype()`, next to `singleton()`, `prototype()` and `dynamic()`, with the same
+  overloads. A new instance on every injection like a prototype, bound to the kontainer like a dynamic: a singleton
+  injecting one becomes `SemiDynamic`. It cannot be overridden at `create { with { } }`; such an override is refused
+  with `KontainerInconsistent` like any other non-dynamic; the message adds that only dynamic singletons can be
+  overridden (ULTRA-00319).
 
 ### Fixes
 
@@ -79,6 +142,30 @@
   tracking; row tracking belongs to one list-mutator instance, and a generated list property builds a new one on each
   access (ULTRA-00320); the list iterator's own `remove()` and `set()` go by index after a structural change made
   around a live iterator (ULTRA-00324).
+- `ultra/cache`: expireAfterWrite and the refresh hard TTL apply to a key read in every pass: only a pending write
+  spares an entry from write-based expiry (ULTRA-00159).
+- `ultra/cache`: A read or a miss in the same loop window no longer hides a put or a remove. A size bound counts
+  what the cache really holds: an entry already gone no longer makes it evict a live one in its place (ULTRA-00159).
+- `ultra/cache`: FastCache.clear() tells the expiry, size and refresh behaviours and the statistics. It is not an
+  eviction: onEviction handlers and evictionCount do not fire (ULTRA-00159).
+- `ultra/cache`: No throwable from a behaviour, eviction listener or refresh loader ends the processing loop or
+  reaches the scope's handler (Errors included); a CancellationException thrown by user code is
+  treated as a failure. Each eviction listener runs on its own: a throwing one no longer skips the
+  others. A size estimator throwing for one entry no longer leaves the memory budget off: that
+  entry counts as its previous size, 0 when new (ULTRA-00159).
+- `ultra/cache`: Failures are counted and printed once per kind and processing pass, with the count and the
+  exception's class only (no key, no message), outside the cache's lock (ULTRA-00159).
+- `ultra/cache`: refreshAfterWrite: a refresh replaces only the value it started from (by identity; for booleans,
+  enums, small numbers, interned strings and JS primitives any equal value), skips a key written
+  after the pass decided to refresh it, drops a refused result without notice, frees its key on any
+  failure (also when a pass is cut short before launching it), and keeps serving the stale value
+  while it retries every pass. A refresh's result counts as an access and as a put (open:
+  ULTRA-00321) (ULTRA-00159).
+- `ultra/cache`: StatisticsBehaviour.snapshot() and MaxMemoryUsageBehaviour.totalSize are safe to read from any
+  thread (ULTRA-00159).
+- `ultra/cache`: JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
+  outer instance. KDoc: the estimator's cost is quadratic in the objects of a value (measured) (ULTRA-00159).
+- `ultra/cache`: KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null (ULTRA-00159).
 
 ## 0.118.0
 

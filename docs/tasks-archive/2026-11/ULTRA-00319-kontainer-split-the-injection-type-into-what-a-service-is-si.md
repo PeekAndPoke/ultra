@@ -1,6 +1,6 @@
 # ULTRA-00319: Kontainer: split the injection type into what a service is (singleton, prototype) and how it behaves (static, dynamic)
 
-> **Status (2026-11-13): DESIGNED.** 
+> **Status (2026-11-14): DONE.** Merged b57e9e1d. Strict gate: round 2 CLEAN (reviewer-fable-xhigh). Log stays a plain prototype. Known behaviours: ULTRA-00327 to ULTRA-00337. DOCS follow-up: ULTRA-00338.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -634,3 +634,4 @@ public signature.
 - 2026-11-13: created on the maintainer's word, from the log scoping discussion (ULTRA-00149 L11, ULTRA-00158).
 - 2026-11-14: the model decided with the maintainer (two types, three kinds, override as a flag, `dynamicPrototype()`).
 - 2026-11-14: step 2 decisions (names, cleanest variant, overrides, reporting); ULTRA-00327 to ULTRA-00334 created for the pinned behaviours.
+- 2026-11-14: DONE. Merged b57e9e1d. Strict gate: round 2 CLEAN (reviewer-fable-xhigh). Log stays a plain prototype. Known behaviours: ULTRA-00327 to ULTRA-00337. DOCS follow-up: ULTRA-00338.

@@ -66,9 +66,11 @@ Across the waves:
   - **Track A (datetime), batch 1 MERGED** (`87ad3489`): ULTRA-00215, ULTRA-00217, ULTRA-00317 DONE, the `recurse`
     item of ULTRA-00143 done. Gate: round 2 CLEAN, delta round 3 CLEAN. Batch 2 (ULTRA-00211 with ULTRA-00210,
     shipped together) is next; `completeDay` waits for the 24:00 decision.
-  - **Track B (cache and log), ULTRA-00159: STOPPED, waiting for the maintainer.** Round 2 CLEAN from
-    implementation and domain, NOT CLEAN from security: a hot key outlives its write TTL and the hard TTL
-    (CONFIRMED by probe, pinned as a known-defect spec on `wt/cache-log`). Two rounds without a clean one.
+  - **Track B (cache and log), ULTRA-00159: cache batch MERGED** (`8545866a`, 2026-11-14). Gate: 4 rounds, round 4
+    CLEAN on the top level. Hot-key expiry fixed, the real defects fixed, TTLs on a monotonic clock, `maxEntries` and
+    `maxMemoryUsage` documented as soft bounds (maintainer). **Not green on master under load:** 3 of 200 JVM tests
+    failed in the run after the merge (one hung for 10 minutes); track B finds out whether test or cache. Next on the
+    track: the size estimator batch (maintainer approved the full plan), then common, reflection, log.
   - **Track C (mutator): DONE and closed.** Batch 1 MERGED (`ae0a23cc`, ULTRA-00144 DONE); ULTRA-00234 MERGED
     (`d2a19b0c`), round 3 CLEAN on the top level, master green (JVM 241, JS 241). The maintainer (2026-11-14):
     Mutator is an experiment with no user; open points go to the future mutator epic ULTRA-00322 (ULTRA-00318,
@@ -83,6 +85,12 @@ Across the waves:
   touched** (datetime, cache, log; not Mutator, which is parked in ULTRA-00322). A repo-wide **module review table**
   (which module was reviewed when, which charters, which model) is kept from now on: "we need to review things
   frequently, ideally always with the sharpest models we have available."
+- 2026-11-14, **track D (kontainer), ULTRA-00319: MERGED** (`b57e9e1d`). Step 1: 143 characterization tests on the
+  old code, 21 mutants. Step 2: `ServiceType` and `ServiceKind` replace the injection type, `dynamicPrototype()`.
+  Strict gate, top level from round 1 (maintainer: "ideally always with the sharpest models"): round 1 NOT CLEAN
+  (`Log` as `dynamicPrototype` changed sharing on redefinition; listing order), round 2 CLEAN. `Log` stays a plain
+  prototype. Eleven behaviours of today's Kontainer pinned and ticketed: ULTRA-00327 to ULTRA-00337. Docs:
+  ULTRA-00338.
 
 ## History
 
