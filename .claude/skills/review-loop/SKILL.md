@@ -257,6 +257,8 @@ red-team follow-up, task-file record).
   deltas). Watch it with the defect-density ledger in `/agent-fleet`: if level 2 keeps finding what
   level 1 missed, the ladder earns its cost.
 - **Final report** lists rounds run, each round's findings and outcomes, parked decisions on top.
+- **When the gate closes, update `docs/module-reviews.md`**: the module's Status row and one Log line (date, ticket,
+  scope, charters, highest reviewer level, rounds, verdict). Coordinator only, on master.
 
 ### The reviewer charters
 
