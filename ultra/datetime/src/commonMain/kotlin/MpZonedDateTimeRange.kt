@@ -174,7 +174,8 @@ data class MpZonedDateTimeRange(
     /**
      * Returns `true` when this range is adjacent to the [other] range without overlapping.
      *
-     * Two ranges are adjacent when one ends exactly where the other begins.
+     * Two ranges are adjacent when one ends exactly where the other begins. Compares by equality (instant and zone), so
+     * both zones must match: one instant in two zones is not adjacent.
      */
     fun isAdjacentTo(other: MpZonedDateTimeRange): Boolean {
         return to == other.from || other.to == from

@@ -161,6 +161,9 @@ decided a tie-break on 2026-11-14, see the implementation notes.)
   1252 / 0.
 - After delta round 2 (Apia fix, tie-break, `isSameInstant`, millisecond converters, sign pins): JVM (jvmTest)
   2733 / 0, JS (jsBrowserTest) 2077 / 0, native (linuxX64Test) 2069 / 0.
+- Final run on the tree after delta round 4 (2026-11-14 15:21, `console/wt-gradle.sh` with `--rerun` on each test
+  task): JVM (datetime jvmTest) 2760 / 0, JS (datetime jsBrowserTest) 2104 / 0, native (datetime linuxX64Test)
+  2096 / 0, slumber jvmTest 1254 / 0.
 - Delta round 2 mutants: `ZonedDateTime.mp` keeps the nanos → red 4 (range rows, cut test, floor pin); `.jvm`
   keeps the nanos → red 2 (three fraction digits, floor pin); `toString` sign always `+` → red 1 (New York -05:00 and
   local mean time -04:56:02, checked on JVM, JS and native: all three agree on -04:56:02).
@@ -186,7 +189,8 @@ decided a tie-break on 2026-11-14, see the implementation notes.)
   date-time, then by zone id (like java.time), so it is `0` exactly when `equals`. For two values at the same instant
   in different zones, `a <= b && a >= b` and `isEqualTo` no longer mean "same instant" (use `isSameInstant`), a
   `sortedSetOf` keeps both, and `minOf` / `maxOf` / sorting order them by local time and zone.
-  `MpZonedDateTimeRange` compares its endpoints by instant, unchanged. kraft's generic comparable form rules
+  `MpZonedDateTimeRange` compares its endpoints by instant in every ordering predicate, unchanged; `isAdjacentTo` and
+  `equals` go by equality, as before. kraft's generic comparable form rules
   (`inRange`, `greaterThanOrEqual`, …) on `MpZonedDateTime` bounds in another zone now decide the exact boundary instant
   by local time and zone (ULTRA-00211).
 - `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
@@ -253,6 +257,14 @@ native and whole milliseconds on JS (probe, 200 samples each), for the maintaine
 | 3 (delta) | MINOR | weekday spec | no row for midnight in a gap or a repeated day outside Apia 2011 | FIXED | Toronto 1919 (next/previous MONDAY → 00:30), Sao Paulo 2018 (midnight gap), Apia 1892-07-04 (repeated day) pinned. The `of(date.atTime(Min), zone)` mutant dies on the two Toronto rows (01:00 instead of 00:30); on Sao Paulo and Apia 1892 it gives the same result as `atStartOfDay`, so those rows cannot kill it |
 | 3 (delta) | MINOR | weekday spec | no Kiritimati row (1994-12-31 skipped) | FIXED | previous SATURDAY / FRIDAY from 1995-01-01 (old loop never ended), next SATURDAY from 1994-12-30 (old 1995-01-07) |
 | 3 (delta) | – | `DateTimeRangeConverter.kt:40-41` | (found in the module search) `maxOf(Genesis, from)` / `minOf(Doomsday, to)` on zoned values | FIXED | by instant, Genesis / Doomsday kept on a tie as before; RED first (the tie kept `from`) |
+
+| 4 (delta) | MINOR | `MpZonedDateTimeRange.kt:153` | mutant: `contains(range)` `to` half back on zoned values survives | FIXED (test) | `[10:00Z, 12:00Z]` UTC contains `[11:00Z, 12:00Z]` Berlin; the mutant → red 1 |
+| 4 (delta) | MINOR | `DateTimeRangeConverter.kt:43` | mutant: `to` clamp back to `minOf(Doomsday, to)` survives | FIXED (test) | zone `-01:00`, to 9999-12-31T23:00 (Doomsday's instant) → Doomsday; the mutant → red 1 |
+| 4 (delta) | MINOR | `MpZonedDateTimeRange.kt:197` | mutant: `mergeWith` not touching `sortedBy { it.from }` survives | FIXED (test) | `[10:00Z Berlin, 05:00Z]` and `[10:00Z UTC, 20:00Z]` → `[this, other]`; the mutant → red 1 |
+| 4 (delta) | MINOR | `isAdjacentTo`, spec header, changelog | texts overstate "no predicate depends on the zone"; `isAdjacentTo` goes by equality | FIXED (texts + pin) | behaviour unchanged from master, the maintainer decides; pinned as current behaviour (one instant in two zones: touches, not adjacent); KDoc, spec header and changelog sentence corrected |
+
+Delta round 4 (reviewer-fable-xhigh, all charters): CLEAN, 0 CRITICAL, 0 MAJOR, 4 MINOR; this batch changes tests and
+texts only (the `isAdjacentTo` KDoc is the one production-file edit, a comment).
 
 Delta round 3 (reviewer-fable-medium, all charters): NOT CLEAN, 1 MAJOR, 3 MINOR; all fixed above. Stayed clean: the
 Apia fix, `compareTo` itself, the JVM converters. Module search for other comparisons of zoned values: `DateTimeRangeConverter`
