@@ -24,7 +24,8 @@
   or `of(from, to)`; the constructor `MpLocalTimeSlot(from, to)` is gone (private), and `copy` with it.
   - `to` is derived: the clock time of the end (24:00 for an end at midnight); `endDayOffset` / `crossesMidnight` say
     whether it is a later day. Overnight slots (22:00 to 02:00) and slots longer than a day exist now.
-  - New: `isEmpty`, `isInfinite`, `INFINITE_DURATION_MILLIS`; `Duration.INFINITE` is a slot without an end.
+  - New: `isEmpty`, `MAX_DURATION_MILLIS` (2^53 - 1 ms, about 285,000 years). A slot is always finite:
+    `of(from, duration)` cuts every longer length to it, `Duration.INFINITE` included (ULTRA-00343).
   - The start wraps into the day: `of(EndOfDay, d)` starts at 00:00 (ULTRA-00341).
 - `ultra/datetime`, behaviour change (no compile signal):
   - `of(from, to)` and `ofSecondsOfDay(from, to)` with `to` before `from` are an overnight slot; they were an invalid
@@ -34,8 +35,8 @@
     empty slot at `from`.
   - `Partial.asValidRange()` with `to` before `from` returned null (a form's "end before start" check) and now returns
     an overnight slot; only equal times give null.
-  - A decoded slot is no longer bounded by one day: code that relied on `isValid` now accepts multi-year and endless
-    slots (`isInfinite`).
+  - A decoded slot is no longer bounded by one day: code that relied on `isValid` now accepts slots of up to about
+    285,000 years.
   - `val (from, to) = slot`: `component2()` is the `duration` now.
   - Without a date a slot is a daily pattern on the 24-hour clock: `contains`, `intersects`, `touches`,
     `isAdjacentTo`, `mergeWith` and `cutAway` work across midnight; `contains(EndOfDay)` counts 24:00 as 00:00 (it was
@@ -45,14 +46,19 @@
     moved by the gap length, to 03:30), a repeated hour takes its first occurrence, and a slot that starts and ends
     on a skipped date is empty at the next day's start (one that runs into the next day keeps that part); such cases
     gave inverted ranges before (ULTRA-00341).
+  - `MpLocalDate.toRange(slot, zone)` always returns a two-ended range. An end the platform cannot represent stops at
+    its last representable time (in the browser, in a region zone: +275760-09-11T00:00 local; at the far end of the
+    date range: the last instant of 999 999 999-12-31; on native in a region zone 999 999 999-12-29T00:00 local). A
+    start it cannot represent throws `IllegalArgumentException` naming the date, the zone and the accepted interval;
+    an invalid zone id is an `IllegalTimeZoneException`, whatever the date (ULTRA-00343).
   - `isAdjacentTo` with an empty slot is always false; it was true when the empty slot's point sat on the other's
     end (`10:00-11:00` and `11:00-11:00`).
 - `ultra/datetime` and `ultra/slumber`, stored format: a slot is stored as `{from, duration, to}` in milliseconds
-  (`to` derived, ignored on read; an infinite duration is 9007199254740991). Both decoders still read the old
-  `{from, to}` (`to` before `from` as overnight; a stored `{0, 86399999}` reads as 23:59:59.999 long). A reader of an
-  older version reads `{from, to}`: slumber ignores `duration`, a kotlinx `Json` without `ignoreUnknownKeys` fails on
-  it. There an overnight slot comes out invalid, and a slot of 24 hours or more as its clock times only. Update
-  readers before writers (ULTRA-00341).
+  (`to` derived, ignored on read; a duration is at most 9007199254740991, a larger stored number reads back as
+  that). Both decoders still read the old `{from, to}` (`to` before `from` as overnight; a stored `{0, 86399999}`
+  reads as 23:59:59.999 long). A reader of an older version reads `{from, to}`: slumber ignores `duration`, a
+  kotlinx `Json` without `ignoreUnknownKeys` fails on it. There an overnight slot comes out invalid, and a slot of
+  24 hours or more as its clock times only. Update readers before writers (ULTRA-00341).
 - `ultra/datetime`, breaking: `splitWithGaps` loses `maxSlots` and never throws; it returns a lazy view
   (`ComputedList`; read-only, not a `MutableList`) of at most `Int.MAX_VALUE` parts, and walks overnight and
   multi-day slots. With user input, check `size` before `map` / `toList()`: nothing else bounds the count

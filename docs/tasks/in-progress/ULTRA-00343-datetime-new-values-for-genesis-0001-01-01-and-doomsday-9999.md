@@ -1,6 +1,6 @@
 # ULTRA-00343: datetime: new values for Genesis (0001-01-01) and Doomsday (9999-12-31)
 
-> **Status (2026-11-14): DESIGNED.** 
+> **Status (2026-11-15): IN PROGRESS.** Decided by the maintainer (sections "Decided" and "Confirmed with the maintainer on the track's plan"). Batch A (slots are finite) is merged into master as `ebd62a3d`. Open: batch B (queries on `Partial`), batch C (Genesis and Doomsday removed, the factories return `Partial`). Then ULTRA-00347 (dates BC as text).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -808,4 +808,4 @@ its own against the release. It corrects the Unreleased entries of ULTRA-00341 t
 - `ultra/codegen`, the TypeScript runtime: `MpLocalTimeSlot`'s constant is `MAX_DURATION_MILLIS` (the Unreleased
   entry "the TypeScript runtime has `MpLocalTimeSlot`" names no constant and stays).
 - Line 20 (ULTRA-00215) "by 25 h or by `Duration.INFINITE` now yields no slots" stays true.
-
+- 2026-11-15: IN PROGRESS.

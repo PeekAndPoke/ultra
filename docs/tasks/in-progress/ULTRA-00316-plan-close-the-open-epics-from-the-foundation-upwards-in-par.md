@@ -110,6 +110,9 @@ Across the waves:
 - 2026-11-14, **track D (kontainer), ULTRA-00345 and ULTRA-00346: MERGED** (`f750497f`). An override naming a
   registered dynamic exactly replaces that service; the `ServiceProviderFactory` constructor is internal. Gate round
   1 CLEAN. Next on the track: K3 (ULTRA-00329), after its plan is re-confirmed.
+- 2026-11-15, **track A (datetime), ULTRA-00343 batch A: MERGED** (`ebd62a3d`). Time slots are finite; `toRange`
+  of a slot is always two-ended. Gate round 1 CLEAN, delta round 2 CLEAN. Next: batch B (queries on `Partial`),
+  batch C (Genesis and Doomsday removed, the factories return `Partial`), then ULTRA-00347 (dates BC as text).
 - 2026-11-14, **track A (datetime), ULTRA-00341 batches 3b-1 and 3b-2: MERGED** (`e7c882a9`), with master's sentinel
   values restored. `ComputedList`, lazy `asListOfDates()`, `numDaysInMonth` from the calendar; `MpLocalTimeSlot` as
   a start plus a duration. ULTRA-00341 is done. Next: ULTRA-00343 as decided by the maintainer: Genesis and
