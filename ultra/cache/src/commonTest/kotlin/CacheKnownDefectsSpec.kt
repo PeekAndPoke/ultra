@@ -19,6 +19,7 @@ import kotlin.time.Duration.Companion.seconds
 class CacheKnownDefectsSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
 
         // Q1 - eviction is not announced to other behaviours //////////////////////////////////////
 
@@ -71,14 +72,19 @@ class CacheKnownDefectsSpec : StringSpec() {
             cache.put("b", "2")
             referenceCache.put("b", "2")
 
-            delay(400.milliseconds)
+            // Until both loops have run: a fixed 400 ms was too short under load
+            eventually(10.seconds) {
+                cache.size shouldBe 1
+                referenceCache.size shouldBe 1
+                (reference.totalSize > 0L) shouldBe true
 
-            cache.size shouldBe 1
-            referenceCache.size shouldBe 1
+                // Both caches hold one entry, so the accounted memory must match. It did not when an
+                // eviction was not announced: the evicted "a" was still counted.
+                shared.totalSize shouldBe reference.totalSize
+            }
 
-            // Both caches hold one entry, so the accounted memory must match. It does not: the
-            // evicted "a" is still counted, and the cap is then enforced against freed bytes.
-            shared.totalSize shouldBe reference.totalSize
+            keepReachable(cache)
+            keepReachable(referenceCache)
         }
 
         // Q2 - null values are stored but invisible ///////////////////////////////////////////////

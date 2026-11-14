@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 class FastCacheMaxEntriesSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "maxEntries evicts oldest inserted entries until size <= maxEntries" {
         // Build a cache with maxEntries = 2

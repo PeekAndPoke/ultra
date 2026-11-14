@@ -5,6 +5,8 @@ import io.kotest.matchers.shouldBe
 
 class CacheExtensionsSpec : StringSpec() {
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "isEmpty returns true for empty cache" {
             val cache = fastCache<String, String>()
 

@@ -25,6 +25,7 @@ import kotlin.random.Random
  * (the swap and the evictions run in one task), so there the bound is met in the next pass.
  */
 class FastCacheSoftBoundSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "maxEntries(1) is a soft bound: two keys read in every pass both stay" {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())

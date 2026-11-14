@@ -19,6 +19,8 @@ import kotlin.time.Duration.Companion.seconds
  */
 class FastCacheMaxMemoryUsageSpec : StringSpec() {
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "max memory usage evicts oldest entries until under limit" {
             // Stub estimator that returns deterministic sizes for keys and values.
             class StubEstimator(private val sizes: Map<Any?, Long>) : ObjectSizeEstimator {

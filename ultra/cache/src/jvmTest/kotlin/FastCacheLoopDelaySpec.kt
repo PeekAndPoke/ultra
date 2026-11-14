@@ -17,6 +17,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * JVM only: on JS a loop that never suspends would block the test's own thread.
  */
 class FastCacheLoopDelaySpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "a zero or negative loop delay runs as 1 ms, not as a busy loop" {
         listOf(Duration.ZERO, (-5).milliseconds).forEach { loopDelay ->

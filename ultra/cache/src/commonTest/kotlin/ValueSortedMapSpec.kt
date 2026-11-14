@@ -13,6 +13,8 @@ class ValueSortedMapSpec : StringSpec() {
     data class Person(val name: String, val age: Int)
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "put should store and return previous value when replacing" {
             val m = ValueSortedMap<String, Int, Int> { it } // sort by value itself
 

@@ -22,6 +22,8 @@ import kotlin.time.Duration.Companion.seconds
 class FastCacheBatchOrderSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "expireAfterWrite: a read right after the put does not hide the write" {
             val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
                 expireAfterWrite(100.milliseconds)

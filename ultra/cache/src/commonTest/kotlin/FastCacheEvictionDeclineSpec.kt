@@ -36,6 +36,8 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
     }
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "expireAfterWrite: a pending read does not spare an expired entry" {
             val rig = Rig()
             val behaviour = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 1.milliseconds)

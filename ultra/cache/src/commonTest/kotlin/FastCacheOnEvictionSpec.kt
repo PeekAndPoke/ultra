@@ -11,6 +11,8 @@ import kotlin.time.Duration.Companion.seconds
 class FastCacheOnEvictionSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "onEviction fires when expireAfterAccess evicts" {
             val evicted = mutableListOf<Pair<String, String>>()
 

@@ -18,6 +18,8 @@ class FastCacheBasicSpec : StringSpec() {
     }
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "put / get / has / remove / getOrPut basic behavior" {
             testScope { scope ->
                 val cache = fastCache<String, String>(scope = scope)

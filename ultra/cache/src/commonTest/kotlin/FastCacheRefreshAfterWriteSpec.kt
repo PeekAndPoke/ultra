@@ -11,6 +11,8 @@ import kotlin.time.Duration.Companion.seconds
 class FastCacheRefreshAfterWriteSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "stale entry is refreshed after ttl" {
             var loadCount = 0
 

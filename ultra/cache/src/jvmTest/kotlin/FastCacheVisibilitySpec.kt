@@ -34,6 +34,8 @@ class FastCacheVisibilitySpec : StringSpec() {
     }
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "statistics written on another thread are seen by snapshot()" {
             val cache = fastCache<String, String> {}
             val behaviour = FastCache.StatisticsBehaviour<String, String>()

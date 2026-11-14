@@ -19,6 +19,7 @@ private class EstimatorDoc(content: EstimatorContent) : EstimatorContent by cont
 private class EstimatorText(val s: String)
 
 class ObjectSizeEstimatorSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     val estimator = ObjectSizeEstimator()
 

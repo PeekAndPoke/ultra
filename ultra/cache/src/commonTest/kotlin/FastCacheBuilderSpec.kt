@@ -10,6 +10,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class FastCacheBuilderSpec : StringSpec() {
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "builder with no behaviours creates cache with empty behaviours list" {
             val cache = fastCache<String, String>()
 

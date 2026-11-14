@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 class NullableCacheSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "get returns null for an unknown key" {
         NullableCache<String, String>().get("nope") shouldBe null

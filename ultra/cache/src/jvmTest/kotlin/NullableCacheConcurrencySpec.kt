@@ -18,6 +18,7 @@ import kotlin.concurrent.thread
  * is unreachable without a race.
  */
 class NullableCacheConcurrencySpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "getOrPut runs the provider once for a NULL result, even when callers pile up on the lock" {
         val threadCount = 8

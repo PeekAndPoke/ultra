@@ -9,6 +9,8 @@ class ObjectSizeEstimatorImplSpec : StringSpec() {
     private val cfg = ObjectSizeEstimatorImpl.EstimatorConfig()
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "null estimates to NULL_SIZE" {
             val estimator = ObjectSizeEstimator()
 

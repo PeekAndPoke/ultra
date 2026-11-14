@@ -23,6 +23,7 @@ import kotlin.time.Duration.Companion.seconds
  * native ends the process.
  */
 class FastCacheRefreshFailureSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     /** Runs [block] with stdout captured; returns what was printed. */
     suspend fun capturingStdout(block: suspend () -> Unit): String {

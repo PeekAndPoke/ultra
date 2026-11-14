@@ -15,6 +15,7 @@ import kotlin.time.TestTimeSource
  * that expires then was timed by a wall clock. Then it moves the test time on.
  */
 class FastCacheTimeSourceSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "expireAfterWrite runs on the cache's time source" {
         val time = TestTimeSource()

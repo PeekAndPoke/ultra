@@ -32,6 +32,8 @@ class FastCacheRefreshConcurrencySpec : StringSpec() {
     }
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "a key released by a failed refresh on another thread is refreshed again" {
             val keys = 20_000
 
