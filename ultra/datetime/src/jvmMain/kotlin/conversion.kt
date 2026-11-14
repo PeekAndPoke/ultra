@@ -95,7 +95,13 @@ val LocalDate.mp: MpLocalDate
  */
 val MpZonedDateTime.jvm: ZonedDateTime
     get() {
-        return ZonedDateTime.ofInstant(toInstant().jvm, timezone.jvm)
+        // By epoch second and nanos, not millis: exact over the whole range, and to the nanosecond.
+        val instant = toInstant().kotlinx
+
+        return ZonedDateTime.ofInstant(
+            Instant.ofEpochSecond(instant.epochSeconds, instant.nanosecondsOfSecond.toLong()),
+            timezone.jvm,
+        )
     }
 
 /**
@@ -103,7 +109,10 @@ val MpZonedDateTime.jvm: ZonedDateTime
  */
 val ZonedDateTime.mp: MpZonedDateTime
     get() {
-        return toInstant().mp.atZone(zone.mp)
+        // By epoch second and nanos, not millis: exact over the whole range, and to the nanosecond.
+        val instant = toInstant()
+
+        return MpInstant.fromEpochSeconds(instant.epochSecond, instant.nano).atZone(zone.mp)
     }
 
 /**

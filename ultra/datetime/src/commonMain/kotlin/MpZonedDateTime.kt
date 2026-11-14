@@ -6,6 +6,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 import kotlin.time.Duration
 
 /**
@@ -43,17 +44,6 @@ class MpZonedDateTime private constructor(
         /** The [instant] in the [timezone], unchanged. */
         internal fun of(instant: MpInstant, timezone: MpTimezone): MpZonedDateTime {
             return MpZonedDateTime(instant = instant, timezone = timezone)
-        }
-
-        /** The local [datetime] in the [timezone], keeping [preferredOffsetSeconds] in an overlap when it is valid. */
-        internal fun ofLocal(
-            datetime: MpLocalDateTime,
-            timezone: MpTimezone,
-            preferredOffsetSeconds: Int,
-        ): MpZonedDateTime {
-            val instant = TimezoneEngine.toInstant(timezone, datetime.value, preferredOffsetSeconds)
-
-            return MpZonedDateTime(instant = MpInstant(instant), timezone = timezone)
         }
 
         /**
@@ -228,7 +218,27 @@ class MpZonedDateTime private constructor(
      * Converts to string.
      */
     override fun toString(): String {
-        return "MpZonedDateTime(${toIsoString()})"
+        val iso = toIsoString()
+        val zoneStart = iso.lastIndexOf('[')
+
+        // The offset tells the two sides of a DST overlap apart; toIsoString() stays without it (ULTRA-00211).
+        return when {
+            zoneStart < 0 -> "MpZonedDateTime($iso)"
+            else -> "MpZonedDateTime(${iso.substring(0, zoneStart)}${offsetText()}${iso.substring(zoneStart)})"
+        }
+    }
+
+    /** The offset at the instant as `+hh:mm`, or `+hh:mm:ss` when it has seconds. */
+    private fun offsetText(): String {
+        val total = timezone.offsetSecondsAt(instant)
+        val sign = if (total < 0) "-" else "+"
+        val absolute = abs(total)
+
+        fun Int.pad() = toString().padStart(2, '0')
+
+        val hoursMinutes = "$sign${(absolute / 3600).pad()}:${(absolute % 3600 / 60).pad()}"
+
+        return if (absolute % 60 == 0) hoursMinutes else "$hoursMinutes:${(absolute % 60).pad()}"
     }
 
     /**
@@ -243,7 +253,7 @@ class MpZonedDateTime private constructor(
             offsetMillis == 0L -> "Z"
             else -> {
                 val sign = if (offsetMillis >= 0) "+" else "-"
-                val absMillis = kotlin.math.abs(offsetMillis)
+                val absMillis = abs(offsetMillis)
                 val h = (absMillis / 3_600_000).toInt()
                 val m = ((absMillis % 3_600_000) / 60_000).toInt()
                 "$sign${h.toString().padStart(2, '0')}${m.toString().padStart(2, '0')}"
@@ -347,6 +357,9 @@ class MpZonedDateTime private constructor(
 
     /**
      * Get the start of the hour, keeping the current offset in a DST overlap.
+     *
+     * A start that falls into a DST gap resolves like [of], so the result can be later than this one (Toronto
+     * 1919-03-31T00:45 gives 01:00).
      */
     fun atStartOfHour(): MpZonedDateTime = withLocal(MpLocalDateTime.of(year, monthNumber, dayOfMonth, hour))
 
@@ -364,7 +377,13 @@ class MpZonedDateTime private constructor(
 
     /** The local [datetime] in this zone, keeping the current offset where it is still valid (java.time's rule). */
     private fun withLocal(datetime: MpLocalDateTime): MpZonedDateTime {
-        return ofLocal(datetime, timezone, preferredOffsetSeconds = timezone.offsetSecondsAt(instant))
+        val resolved = TimezoneEngine.toInstant(
+            timezone = timezone,
+            local = datetime.value,
+            preferredOffsetSeconds = timezone.offsetSecondsAt(instant),
+        )
+
+        return MpZonedDateTime(instant = MpInstant(resolved), timezone = timezone)
     }
 
     /**

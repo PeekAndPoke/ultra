@@ -93,6 +93,34 @@ class MpZonedDateTimeOverlapSpec : StringSpec({
         MpInstant.fromEpochMillis(firstHalf).atZone(MpTimezone.UTC) shouldNotBe first
     }
 
+    "overlap: toString shows the offset, so the two sides print differently; toIsoString does not change" {
+        val first = MpInstant.fromEpochMillis(firstHalf).atZone(berlin)
+        val second = MpInstant.fromEpochMillis(secondHalf).atZone(berlin)
+
+        first.toString() shouldBe "MpZonedDateTime(2022-10-30T02:30:00.000+02:00[Europe/Berlin])"
+        second.toString() shouldBe "MpZonedDateTime(2022-10-30T02:30:00.000+01:00[Europe/Berlin])"
+
+        first.toIsoString() shouldBe "2022-10-30T02:30:00.000[Europe/Berlin]"
+        second.toIsoString() shouldBe "2022-10-30T02:30:00.000[Europe/Berlin]"
+    }
+
+    "toString: UTC keeps the Z, an offset with seconds shows them (Berlin local mean time 1890, +00:53:28)" {
+        MpInstant.fromEpochMillis(firstHalf).atZone(MpTimezone.UTC).toString() shouldBe
+                "MpZonedDateTime(2022-10-30T00:30:00.000Z)"
+
+        MpZonedDateTime.of(MpLocalDateTime.of(1890, 6, 1, 12, 0), berlin).toString() shouldBe
+                "MpZonedDateTime(1890-06-01T12:00:00.000+00:53:28[Europe/Berlin])"
+    }
+
+    "gap: a start of the hour inside a gap resolves like of, later than the receiver (Toronto 1919-03-31T00:45)" {
+        val toronto = MpTimezone.of("America/Toronto")
+        val subject = MpZonedDateTime.of(MpLocalDateTime.of(1919, 3, 31, 0, 45), toronto)
+
+        subject.datetime shouldBe MpLocalDateTime.of(1919, 3, 31, 0, 45)
+        subject.atStartOfHour().datetime shouldBe MpLocalDateTime.of(1919, 3, 31, 1, 0)
+        (subject.atStartOfHour() > subject) shouldBe true
+    }
+
     "overlap: of(local, zone) takes the earlier offset" {
         MpZonedDateTime.of(MpLocalDateTime.of(2022, 10, 30, 2, 30), berlin).toEpochMillis() shouldBe firstHalf
     }

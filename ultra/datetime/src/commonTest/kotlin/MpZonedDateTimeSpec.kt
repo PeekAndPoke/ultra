@@ -152,7 +152,7 @@ class MpZonedDateTimeSpec : StringSpec({
             .toString() shouldBe "MpZonedDateTime(2022-04-05T00:00:00.000Z)"
 
         MpZonedDateTime.parse("2022-04-05T00:00:00", MpTimezone.of("Europe/Bucharest"))
-            .toString() shouldBe "MpZonedDateTime(2022-04-05T03:00:00.000[Europe/Bucharest])"
+            .toString() shouldBe "MpZonedDateTime(2022-04-05T03:00:00.000+03:00[Europe/Bucharest])"
     }
 
     "toIsoString" {

@@ -49,7 +49,8 @@ Shipped together with ULTRA-00210.
   - ⚠ the public constructor `MpZonedDateTime(datetime, timezone)`, `copy(...)` and `component1/2` are gone (no repo
     caller of the constructor; `copy` and destructuring callers, if any, show up at compile time);
   - ⚠ `equals`/`hashCode` compare instant + zone, not local + zone: the two sides of an overlap are no longer equal;
-    two values built from a gap time and from the time it resolves to are now equal.
+    two values built from a gap time and from the time it resolves to are equal under either rule, because `datetime`
+    is derived from the instant (corrected in review round 1).
 - Builders: `MpInstant.atZone(zone)` keeps the instant exactly. `MpZonedDateTime.of(datetime, zone)` and
   `MpLocalDateTime.atZone(zone)` resolve a local time as today: an overlap takes the earlier offset, a gap moves
   forward by its length, and `datetime` is then the resolved wall time (a gap's 02:30 reads back as 03:30).
@@ -74,12 +75,14 @@ like java.time.
 - `MpZonedDateTime` (`ultra/datetime/src/commonMain/kotlin/MpZonedDateTime.kt`) is a plain `class` with a private
   constructor `(instant: MpInstant, timezone: MpTimezone)`; `datetime` is derived once at construction
   (`TimezoneEngine.toLocalDateTime`). Built only by `of(datetime, timezone)` (local resolution, unchanged rules),
-  the internal `of(instant, timezone)` (used by `MpInstant.atZone`) and the internal `ofLocal(datetime, timezone,
-  preferredOffsetSeconds)` (used for the offset-keeping operations).
+  the internal `of(instant, timezone)` (used by `MpInstant.atZone`) and the private `withLocal` (the offset-keeping
+  operations; `ofLocal` was folded into it in review round 1).
 - **Equality lives in one place**: the explicit `equals` / `hashCode` in `MpZonedDateTime` (instant + zone). The
   maintainer has not confirmed this yet (2026-11-13: he asked for an example); a change back to local + zone is those
   two functions plus the two tests that pin them (`MpZonedDateTimeOverlapSpec`, "the two sides are different
-  values…" and "equality: instant and zone decide…").
+  values…" and "equality: instant and zone decide…"). **The equality choice only decides the two sides of an
+  overlap**: a value built from a gap time equals the value at its resolved instant under BOTH choices, because
+  `datetime` is derived from the instant (corrected in review round 1).
 - Plain class rather than the planned data class with a private constructor: explicit `equals`/`hashCode` make that
   one place visible, and there is no `copy` to keep private.
 - Decode paths read `ts` as the instant: `MpZonedDateTimeSerializer.deserialize`, slumber `MpZonedDateTimeAwaker`
@@ -129,10 +132,17 @@ like java.time.
   `MpZonedDateTime.jvm` used to move the second half one hour back (e.g. Berlin 2022-10-30T02:30+01:00 became +02:00),
   and a load + save wrote the wrong `ts`. The stored and wire format are unchanged.
 - `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime` equality compares instant and zone, no
-  longer local time and zone. The two sides of an overlap are no longer equal; a value built from a time in a DST gap
-  equals the value at the time it resolves to (ULTRA-00211).
+  longer local time and zone, so the two sides of a DST overlap are no longer equal (ULTRA-00211).
 - `ultra/datetime`, behaviour change (no compile signal): a time in a DST gap now reads back as the resolved time:
-  `MpZonedDateTime.of(2022-03-27T02:30, Berlin).hour` is 3, not 2 (its instant was already 03:30) (ULTRA-00211).
+  `MpZonedDateTime.of(2022-03-27T02:30, Berlin).hour` is 3, not 2 (its instant was already 03:30). So a value built
+  from a gap time now equals the value at its resolved instant (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.toString()` shows the offset, e.g.
+  `MpZonedDateTime(2022-10-30T02:30:00.000+01:00[Europe/Berlin])`, so the two sides of an overlap print differently.
+  `toIsoString()`, the stored `human` field and the wire format are unchanged (ULTRA-00211).
+- `ultra/datetime` (JVM), behaviour change (no compile signal): `MpZonedDateTime.jvm` and `ZonedDateTime.mp` convert
+  by epoch second and nanosecond: exact over the whole range (they went through epoch millis, so beyond about
+  ±292 million years `.jvm` clamped and `.mp` threw `ArithmeticException`), and `ZonedDateTime.mp` keeps
+  sub-millisecond precision instead of truncating it (ULTRA-00211).
 - `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.atStartOfDay()`, `atStartOfMonth()` and
   `atStartOfYear()` follow `MpLocalDate.atStartOfDay(zone)` (java.time): when midnight falls into a gap the day starts at
   the end of the gap (Toronto 1919-03-31: 00:30, was 01:00). `atStartOfHour/Minute/Second()` and `atTime()` keep the
@@ -146,8 +156,23 @@ like java.time.
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MINOR | `MpZonedDateTime.kt:49-57` | `internal fun ofLocal` has one caller | FIXED | folded into `withLocal`; mutant "no preferred offset" in `withLocal` → red 2 |
+| 1 | MINOR | `MpZonedDateTime.kt:246` | fully qualified `kotlin.math.abs` | FIXED | imported |
+| 1 | MINOR | `MpZonedDateTime.toString()` | the two sides of an overlap print the same | FIXED | offset added (`+01:00`, `+hh:mm:ss` with seconds); `toIsoString()`/`human`/wire unchanged. RED first: 2 tests (Berlin halves; UTC + Berlin LMT 1890 `+00:53:28`). Repo pins adapted: `MpZonedDateTimeSpec.kt:155` only. Mutants: offset dropped → red 3; seconds dropped → red 1 |
+| 1 | MINOR | `jvmMain/conversion.kt:96-107` | `.jvm` / `.mp` go through epoch millis: clamp / `ArithmeticException` beyond ±292 M years | FIXED | by epoch second + nanos both ways. RED first: ±10^16 s (year ±317 M) and nanos, 3 tests. Mutants: either side back to millis → red 3 |
+| 1 | MINOR | `MpZonedDateTime.kt:349` | `atStartOfHour()` into a gap can be later than the receiver | FIXED (KDoc + pin) | Toronto 1919-03-31T00:45 → 01:00, pinned as current behaviour |
+| 1 | MINOR | ticket | gap equality attributed to the equality choice | FIXED | it holds under both choices (`datetime` derives from the instant); changelog and notes corrected |
+| 1 | – | `MpZonedDateTime.kt:397-406` | `atStartOfPrevious` loops forever in Pacific/Apia (2011-12-30 skipped) | CONFIRMED, open (maintainer) | probe (bounded copy + real call under a 5 s limit): from 2011-12-31 (Sat) `minus(1 DAY).atStartOfDay()` resolves back to 12-31 00:00+14:00 every step; real call "Did not finish within 5s" (JVM); bounded copy identical on JS. Pre-existing. `atStartOfNext` terminates (moves forward: 2012-01-06); `MpLocalDate` variants terminate (2011-12-30 exists as a date) |
+| 1 | – | `compareTo` vs `equals` | `sortedSetOf(t.atZone(UTC), t.atZone(Berlin))` keeps one | CONFIRMED, no change | probe: `compareTo` 0, `equals` false, sorted set 1, hash set 2 |
+| 1 | – | slumber `MpZonedDateTimeCodec.kt:25` | any Number is a `ts` | CONFIRMED, no change | probe: `NaN` and `-0.7` → 1970-01-01T00:00Z, `Infinity` and `1.5e30` → clamped to +292278994-08-17 |
 
-**Verdict:**
+Stayed CLEAN (round 1, blind, reviewer-opus-high; implementation, domain and security charters all CLEAN, no
+CRITICAL/MAJOR): no construction path loses the instant; no remaining caller of the removed API in the repo; old
+stored documents decode as before; `human` is never read on decode; no production code uses an `MpZonedDateTime` as a
+map, set or cache key; the test arithmetic was recomputed by the domain reviewer.
+
+**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above. Equality by instant + zone still awaits the
+maintainer.
 
 ## History
 
