@@ -92,7 +92,7 @@ class ListMutatorChildWriteBackSpec : StringSpec() {
             mutator.get() shouldBe listOf(a, a.copy(street = "X"))
         }
 
-        "a change finds its element by identity after the element moved" {
+        "a change finds its row after the row moved" {
             val mutator = listOf(a, b, c).mutator()
             val element = mutator[2]
 

@@ -60,7 +60,7 @@ class ListMutatorSubListSpec : StringSpec() {
             seen shouldBe expected
         }
 
-        "a change through the snapshot finds its element by identity after the element moved" {
+        "a change through the snapshot finds its row after the row moved" {
             val mutator = listOf(a, b, c).mutator()
             val snapshot = mutator.subList(1, 3)
 

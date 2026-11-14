@@ -99,5 +99,33 @@ class ListMutatorIteratorSpec : StringSpec() {
 
             mutator.get() shouldBe listOf(a, x, b)
         }
+
+        "next() past the end throws NoSuchElementException and leaves the iterator where it was" {
+            val mutator = listOf(a).mutator()
+            val iterator = mutator.listIterator()
+            iterator.next()
+
+            shouldThrow<NoSuchElementException> { iterator.next() }
+            iterator.nextIndex() shouldBe 1
+            iterator.previous().get() shouldBe a
+        }
+
+        "previous() at the start throws NoSuchElementException" {
+            val mutator = listOf(a).mutator()
+
+            shouldThrow<NoSuchElementException> { mutator.listIterator().previous() }
+            shouldThrow<NoSuchElementException> { listOf<Address>().mutator().iterator().next() }
+        }
+
+        "listIterator(index) checks its bounds like ArrayList: 0 to size are fine" {
+            val mutator = listOf(a, b).mutator()
+
+            shouldThrow<IndexOutOfBoundsException> { mutator.listIterator(-1) }
+            shouldThrow<IndexOutOfBoundsException> { mutator.listIterator(3) }
+
+            mutator.listIterator(0).hasPrevious() shouldBe false
+            mutator.listIterator(2).hasNext() shouldBe false
+            mutator.listIterator(2).previous().get() shouldBe b
+        }
     }
 }

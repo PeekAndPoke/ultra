@@ -33,8 +33,9 @@ class ListMutatorSubListProbeSpec : StringSpec() {
         "windowed() with partial windows keeps the short last window" {
             val mutator = listOf(a, b, c).mutator()
 
-            mutator.windowed(size = 2, step = 2, partialWindows = true).map { window -> window.map { it.get() } } shouldBe
-                listOf(listOf(a, b), listOf(c))
+            val windows = mutator.windowed(size = 2, step = 2, partialWindows = true)
+
+            windows.map { window -> window.map { it.get() } } shouldBe listOf(listOf(a, b), listOf(c))
         }
 
         "slice(IntRange) returns the child mutators of the range" {

@@ -7,6 +7,15 @@ fun <V> ListMutator<V>.add(element: V): Boolean = add(getChildMutator(element))
 
 fun <V> ListMutator<V>.add(index: Int, element: V): Unit = add(index, getChildMutator(element))
 
+/**
+ * A [Mutator] for a list that is also a [MutableList] of mutators for its elements.
+ *
+ * An element mutator from [get], an iterator or [subList] writes back to its own row, wherever later structural
+ * changes move that row. Its write is dropped silently when the row is gone (removed, cleared, the whole value
+ * replaced or reset) or was written by something else since this mutator last saw it (another element mutator,
+ * `set`, or a reorder such as `sort`, `reverse` or `shuffle`). Changing the list from [get] in place bypasses this
+ * tracking.
+ */
 interface ListMutator<V> : Mutator<MutableList<V>>, MutableList<Mutator<V>> {
     fun getChildMutator(child: V): Mutator<V>
 
@@ -14,8 +23,8 @@ interface ListMutator<V> : Mutator<MutableList<V>>, MutableList<Mutator<V>> {
      * Returns a read-only snapshot of the child mutators from [fromIndex] (inclusive) to [toIndex] (exclusive).
      *
      * Unlike `List.subList` it is not a view: later changes of this list do not show in it. A change through one of
-     * its elements writes back to this list and notifies its observers; it is dropped if this list has meanwhile
-     * replaced or removed that element. Structural changes to the snapshot throw [UnsupportedOperationException], so
+     * its elements writes back to its row in this list, as for [get]. Structural changes to the snapshot throw
+     * [UnsupportedOperationException], so
      * `subList(a, b).clear()` throws: to remove or reorder a range, use this list (`removeAt`, `removeAll` /
      * `retainAll`, `listIterator(from)`).
      *
@@ -29,7 +38,23 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
     Mutator.Base<MutableList<V>>(value.toMutableList()),
     ListMutator<V> {
 
+    /** Marks one row; element mutators find their row by it. */
+    private class RowToken
+
+    /** One token per row, kept in step with every structural change made through this mutator. */
+    private val tokens: MutableList<RowToken> = MutableList(get().size) { RowToken() }
+
     override fun snapshotInitial(value: MutableList<V>): MutableList<V> = value.toMutableList()
+
+    /** Replacing the whole value gives every row a new token, so element mutators held before drop their writes. */
+    override fun modifyValue(block: (MutableList<V>) -> MutableList<V>) {
+        super.modifyValue { current -> block(current).also { renewTokens(it.size) } }
+    }
+
+    override fun reset(): MutableList<V> {
+        renewTokens(getInitialValue().size)
+        return super<Mutator.Base>.reset()
+    }
 
     /**
      * Iterator impl
@@ -46,6 +71,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         override fun hasNext(): Boolean = pos < size
 
         override fun next(): Mutator<V> {
+            if (!hasNext()) throw NoSuchElementException()
             val idx = pos
 
             return trackedChild(idx).also {
@@ -59,6 +85,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         override fun previousIndex(): Int = pos - 1
 
         override fun previous(): Mutator<V> {
+            if (!hasPrevious()) throw NoSuchElementException()
             val idx = pos - 1
 
             return trackedChild(idx).also {
@@ -127,6 +154,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
     override fun clear() {
         if (get().isNotEmpty()) {
             get().clear()
+            rows().clear()
             notifyObservers()
         }
     }
@@ -137,14 +165,20 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return `true` because the list is always modified as the result of this operation.
      */
     override fun add(element: Mutator<V>): Boolean {
-        return get().add(element.get()).also { if (it) notifyObservers() }
+        val rows = rows()
+        get().add(element.get())
+        rows.add(RowToken())
+        notifyObservers()
+        return true
     }
 
     /**
      * Inserts an element into the list at the specified [index].
      */
     override fun add(index: Int, element: Mutator<V>) {
+        val rows = rows()
         get().add(index, element.get())
+        rows.add(index, RowToken())
         notifyObservers()
     }
 
@@ -152,14 +186,20 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * Adds all the elements of the specified collection to the end of this list.
      */
     override fun addAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().addAll(elements.extract()).also { if (it) notifyObservers() }
+        return addAll(size, elements)
     }
 
     /**
      * Inserts all the elements of the specified collection [elements] into this list at the specified [index].
      */
     override fun addAll(index: Int, elements: Collection<Mutator<V>>): Boolean {
-        return get().addAll(index, elements.extract()).also { if (it) notifyObservers() }
+        val rows = rows()
+        return get().addAll(index, elements.extract()).also {
+            if (it) {
+                rows.addAll(index, List(elements.size) { RowToken() })
+                notifyObservers()
+            }
+        }
     }
 
     /**
@@ -168,7 +208,11 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return true when the element has been removed from the list
      */
     override fun remove(element: Mutator<V>): Boolean {
-        return get().remove(element.get()).also { if (it) notifyObservers() }
+        val index = get().indexOf(element.get())
+        if (index == -1) return false
+
+        removeAt(index)
+        return true
     }
 
     /**
@@ -179,21 +223,27 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * @return the element that has been removed.
      */
     override fun removeAt(index: Int): Mutator<V> {
-        return get().removeAt(index).childToMutator().also { notifyObservers() }
+        val rows = rows()
+        val removed = get().removeAt(index)
+        rows.removeAt(index)
+        notifyObservers()
+        return removed.childToMutator()
     }
 
     /**
      * Removes all of the given [elements]
      */
     override fun removeAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().removeAll(elements.extract()).also { if (it) notifyObservers() }
+        val values = elements.extract()
+        return removeRowsWhere { it in values }
     }
 
     /**
      * Retains all of the given [elements]
      */
     override fun retainAll(elements: Collection<Mutator<V>>): Boolean {
-        return get().retainAll(elements.extract()).also { if (it) notifyObservers() }
+        val values = elements.extract()
+        return removeRowsWhere { it !in values }
     }
 
     /**
@@ -236,6 +286,8 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * Returns a list iterator starting at the specified [index].
      */
     override fun listIterator(index: Int): MutableListIterator<Mutator<V>> {
+        if (index < 0 || index > size) throw IndexOutOfBoundsException("index: $index, size: $size")
+
         return It(index)
     }
 
@@ -262,24 +314,54 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
     /**
      * The child mutator for the element at [index], as [get], the iterators and [subList] hand it out.
      *
-     * Each change writes back to the element this mutator last wrote: at its last index if it is still there, else
-     * at the first position holding that instance. The change is dropped when the list no longer holds it.
+     * It finds its row by the row's token. A write lands only if the row still holds the very instance this mutator
+     * last saw (identity, not equality: an equal value written by someone else still counts as someone else's).
      */
     private fun trackedChild(index: Int): Mutator<V> {
-        var tracked = get()[index]
+        var seen = get()[index]
+        val token = rows()[index]
         var hint = index
 
-        return tracked.childToMutator().onChange { new ->
-            // Notice: identity '===', not equality, so equal elements elsewhere in the list are never hit
-            val list = get()
-            val pos = if (list.getOrNull(hint) === tracked) hint else list.indexOfFirst { it === tracked }
+        return seen.childToMutator().onChange { new ->
+            val rows = rows()
+            val pos = if (rows.getOrNull(hint) === token) hint else rows.indexOf(token)
 
-            if (pos != -1) {
-                setAt(pos, new)
-                tracked = new
+            if (pos != -1 && get()[pos] === seen) {
+                // Update before notifying, so a write from inside an observer sees this one
+                seen = new
                 hint = pos
+                setAt(pos, new)
             }
         }
+    }
+
+    /** The row tokens; new ones for every row when the list was changed in place, bypassing this mutator. */
+    private fun rows(): MutableList<RowToken> {
+        if (tokens.size != get().size) renewTokens(get().size)
+        return tokens
+    }
+
+    private fun renewTokens(size: Int) {
+        tokens.clear()
+        repeat(size) { tokens.add(RowToken()) }
+    }
+
+    /** Removes the rows whose value matches [predicate], with their tokens. */
+    private fun removeRowsWhere(predicate: (V) -> Boolean): Boolean {
+        val rows = rows()
+        val list = get()
+        var removed = false
+
+        for (i in list.indices.reversed()) {
+            if (predicate(list[i])) {
+                list.removeAt(i)
+                rows.removeAt(i)
+                removed = true
+            }
+        }
+
+        if (removed) notifyObservers()
+        return removed
     }
 
     /**
@@ -293,7 +375,8 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
 
 /**
  * The read-only snapshot [ListMutator.subList] returns: it refuses every structural change, the same on every
- * platform, and compares elements by value, as [ListMutatorImpl] does.
+ * platform. `contains`, `containsAll`, `indexOf` and `lastIndexOf` compare by value, as [ListMutatorImpl] does;
+ * `equals` and `hashCode` compare the element mutators.
  */
 private class ReadOnlySnapshotList<V>(private val elements: List<Mutator<V>>) : MutableList<Mutator<V>> {
 

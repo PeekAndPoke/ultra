@@ -1,7 +1,8 @@
 # ULTRA-00234: ListMutator.subList() throws UnsupportedOperationException
 
-> **Status (2026-11-13): IN REVIEW.** implemented on `wt/mutator` (track C of ULTRA-00316) as a read-only snapshot;
-> the review gate is next
+> **Status (2026-11-14): IN REVIEW.** implemented on `wt/mutator` (track C of ULTRA-00316) as a read-only snapshot;
+> round 2's claims fixed with row tokens (maintainer: "create followup ticket and fix the found issues, tighten the
+> contract"); the review gate is next
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -64,6 +65,7 @@ When `subList` is implemented, the `slice` case flips and must be rewritten. *(D
   `currentTrackedValue` already worked) and the index it last wrote. A change goes to that index when the tracked
   instance is still there, else to the first position holding that instance (by identity), and is dropped when the
   list no longer holds it. The old same-instance-twice quirk is left only for an element that moved.
+  *Superseded in round 2 by row tokens, below.*
 - Round 1: the list iterator keeps `lastReturned`, as `ArrayList`'s iterator does. `remove()` and `set()` act on that
   element; before any `next()`/`previous()`, after `remove()` and after `add()` they throw `IllegalStateException`.
   The old `set()` before `next()` silently overwrote index `pos - 1`.
@@ -75,6 +77,26 @@ When `subList` is implemented, the `slice` case flips and must be rewritten. *(D
   "returns a view".
 - `add(index, element)` notifies its observers: the new test `ListMutatorNotificationsSpec` "add(index, element)
   should notify" was green on the unchanged code. No defect there; it closes the coverage gap found in ULTRA-00144.
+- Round 2, row tokens: `ListMutatorImpl` keeps a private list of `RowToken`s, one per row, in step with every
+  structural change made through it: `add`, `add(index)`, both `addAll`, `remove` (now by index), `removeAt`,
+  `removeAll`/`retainAll` (one loop, `removeRowsWhere`), `clear`, and through those the iterator's `add`/`remove`.
+  `set(index)` and iterator `set` keep the row's token: they change the value, not the row. Replacing the whole value
+  (`set(list)`, `modifyValue`) and `reset()` renew every token. `trackedChild` captures its row's token and the
+  instance it last saw. It finds the row by token (the remembered index first, if that index still holds the token,
+  else `indexOf` on the tokens). It writes only if the row still holds that very instance (`===`), and drops the
+  write otherwise. It updates `seen` before `setAt` notifies, so a write from inside an observer lands (G).
+- Round 2, decisions: a write whose row is gone, or which something else wrote since, is dropped silently, per the
+  maintainer's rule "when a sensible fallback does the job, do not throw"; the `ListMutator` KDoc says so. Reorders
+  (`sort`, `reverse`, `shuffle`) go through `set`, so they change values in place rather than moving rows: a held
+  mutator's write after a reorder lands only if its row still holds its element, else it is dropped. The old
+  identity lookup followed the element instead, but could also land on the wrong row with duplicates. Identity (not
+  equality) in the guard is deliberate and pinned: a row rewritten with an equal value by someone else counts as
+  written by someone else. A list changed in place through `get()` bypasses the tokens. When the row count no longer
+  matches, all tokens are renewed and held mutators drop their writes; a same-size in-place change is not detected.
+- Round 2, iterator contract (I): `next()`/`previous()` past the ends throw `NoSuchElementException`;
+  `listIterator(index)` throws `IndexOutOfBoundsException` outside `0..size`, as `ArrayList` does.
+- Round 2: `ListMutatorKnownDefectsSpec` keeps only H, now naming its follow-up ULTRA-00320 (generated code and
+  `ObjectMutator`'s identity snapshot; out of this ticket).
 - `mutator/core/CLAUDE.md` on master already says `chunked()` and `windowed()` work and names `subList` as a known
   defect. The coordinator removes that line after the merge.
 
@@ -201,6 +223,38 @@ would hold a strong reference to every child it ever handed out: `forEach` on ev
 unless weak references are used, and those were removed from `ultra/common`'s `Observable` in 2026-07. Not
 recommended. H is a separate defect, in the generated code and `ObjectMutator`'s identity snapshot, not `ListMutator`.
 
+### Round 2 outcome (2026-11-14)
+
+Two rounds without a clean one; the maintainer decided: "create followup ticket and fix the found issues, tighten the
+contract". H moved to ULTRA-00320. A to G and I are fixed and J is pinned, in `ListMutatorRowTrackingSpec` (27 tests:
+A to G, the identity pin, `clear`, whole-value `set`, `reset`, `sortBy`, `reverse` of 3 and of 20, `shuffle` over 20
+seeds, `removeAll`, `retainAll`, `remove(element)`, `addAll(index)`, `set(index)`, iterator `remove`/`add`/`set`,
+`subList` elements, in-place change through `get()`) and `ListMutatorIteratorSpec` (I).
+
+| Claim | Outcome |
+|---|---|
+| A, B, C, D, E, F, G | fixed by row tokens; RED before on JVM and JS, green after |
+| H | out of this batch: ULTRA-00320; still pinned as a known defect |
+| I | fixed: `NoSuchElementException`, `listIterator(index)` bounds |
+| J | pinned: the row guard is `===`; the `==` mutant turns the identity test red |
+
+Evidence: `console/wt-gradle.sh :mutator:core:jvmTest :mutator:core:jsBrowserTest -x kotlinStoreYarnLock`, XML counts:
+
+| | jvmTest | jsBrowserTest |
+|---|---|---|
+| tests first, old code | 222, 24 failures | 223, 24 failures |
+| row tokens | 222, 0 failures | 223, 0 failures (222 + Kotest's bootstrap entry) |
+
+Mutation checks, each on both platforms (same tests red on JVM and JS) and restored:
+
+| Mutant | Turned RED |
+|---|---|
+| token lookup replaced by the index hint | 19 tests: B, C, D, E, F, `clear`, whole-value `set`, `reset`, `removeAll`, `retainAll`, `remove(element)`, `addAll(index)`, iterator `remove`/`add`, `subList` shifted row, in-place change through `get()`, both "row moved" tests, `ListMutatorSpec` "structurally modified during iteration" |
+| token list not updated on `removeAt` | 8 tests: B, F, iterator `remove`, `remove(element)`, `subList` shifted row, both "row moved" tests, `ListMutatorSpec` "structurally modified during iteration" |
+| `===` becomes `==` in the row guard (J) | the identity test "a row holding an equal but different instance ..." |
+| `seen` updated after `setAt` notifies | G |
+| whole-value replacement keeps the old tokens | "replacing the whole value: ... set() is dropped" |
+
 ## Changelog text
 
 - Mutator: `ListMutator.subList()` no longer throws. It returns a read-only snapshot of the child mutators in the
@@ -208,23 +262,42 @@ recommended. H is a separate defect, in the generated code and `ObjectMutator`'s
   or replacing elements in the snapshot throws `UnsupportedOperationException`. Unlike `List.subList` it is not a
   view: later changes to the list do not show in it, and `subList(a, b).clear()` throws; remove a range on the list
   itself. `slice(IntRange)` on a `ListMutator` works as a consequence.
-- Mutator fix: a second change through the same element mutator of a `ListMutator` (from `list[i]`, `forEach`, an
-  iterator or `subList`) was lost without a notification; every change now lands.
-- Mutator fix: when the same instance is in a `ListMutator` twice, a change through `list[1]` (or an iterator or
-  `subList` element) went to index 0; it now goes to the element's own index.
+- Mutator fix: an element mutator of a `ListMutator` (from `list[i]`, `forEach`, an iterator or `subList`) now
+  writes to its own row, wherever later adds and removes move it. Before, it lost its second change, and with the same
+  instance in several rows it could write to another row, or throw `IndexOutOfBoundsException` for `null` elements.
+  A write is dropped silently when its row is gone (removed, cleared, the whole list replaced or reset), or when
+  something else wrote that row since (another element mutator, `set`, a reorder such as `sort`, `reverse` or
+  `shuffle`). A write from inside a list observer through the same element mutator now lands.
 - Mutator fix: the `ListMutator` list iterator's `remove()` and `set()` after `previous()` hit the element before the
   one `previous()` returned, so `reverse()` on the JVM silently corrupted lists of 18 or more elements. They now act
   on the element last returned, and throw `IllegalStateException` without a preceding `next()`/`previous()`.
 - Mutator fix: after `set()` back to a value equal to the baseline, a list, set or map mutator's next in-place change
   also changed the baseline (`isModified()` stayed false, `reset()` restored nothing).
+- Mutator: the `ListMutator` list iterator's `next()`/`previous()` past the ends throw `NoSuchElementException` (was
+  `IndexOutOfBoundsException`), and `listIterator(index)` checks `0..size` (was unchecked).
+
+Behaviour changes without a compile signal (same signatures, different behaviour):
+
+- `subList` and `slice(IntRange)` return a read-only snapshot instead of throwing.
+- Iterator exceptions: `NoSuchElementException` past the ends, `IllegalStateException` for `remove()`/`set()`
+  without a preceding `next()`/`previous()`, `IndexOutOfBoundsException` from `listIterator(index)` out of range.
+- Held element mutators: after a reorder (`sort`, `reverse`, `shuffle`), a whole-value `set` or `reset`, a write is
+  dropped where it used to follow the element by identity.
+- `remove(element)`, `removeAll`, `retainAll` now remove through the row bookkeeping; results are unchanged.
+
+Limits: changing the list in place through `get()` bypasses the row tracking (a change of the row count is detected
+and drops held writes; a same-size change is not). Known defect H (ULTRA-00320) is unchanged.
 
 ## DOCS follow-up
 
-Lines that describe `ListMutator` as a full `MutableList` and need a sentence on `subList` (read-only snapshot, not a
-view) once this settles; not edited here:
+False or incomplete lines, to fix once this settles; not edited here:
 
-- `docs-site/src/pages/ultra/mutator/collections.astro:49-50`
-- `docs-site/src/data/llms/mutator.md:89`
+- `docs-site/src/pages/ultra/mutator/collections.astro:49-50`: "implements `MutableList<Mutator<T>>`, so you can use
+  all familiar list operations". `subList` is a read-only snapshot, not a view, and held element mutators drop their
+  writes after a reorder or once their row is gone.
+- `docs-site/src/pages/ultra/mutator/collections.astro:74-86`: the example clears the list and then shows
+  `mutator()  // [Address("Street 3", "City 3", "Zip 3")]`; after `clear()` the list is empty.
+- `docs-site/src/data/llms/mutator.md:89`: "MutableList operations": the same caveat as above.
 
 ## History
 
@@ -234,3 +307,5 @@ view) once this settles; not edited here:
 - 2026-11-13: review round 1 NOT CLEAN (1 MAJOR, 8 MINOR), all confirmed and fixed on `wt/mutator` (`15edd63e`).
 - 2026-11-13: review round 2: implementation CLEAN, security NOT CLEAN; claims A to J verified by tests (all
   confirmed), pinned as known defects in `ListMutatorKnownDefectsSpec`, not fixed (maintainer decides).
+- 2026-11-14: maintainer: fix and tighten the contract; H to ULTRA-00320. A to G fixed with row tokens, I fixed, J
+  pinned, on `wt/mutator`.
