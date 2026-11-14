@@ -348,13 +348,12 @@ data class MpLocalDate(
     }
 
     /**
-     * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
+     * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone], by the clock: it ends at the
+     * slot's `to` on the day [MpLocalTimeSlot.endDayOffset] later, which respects DST. A start moved past the end by a
+     * skipped hour, or an empty slot, gives an empty range; an infinite slot an open end.
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: MpTimezone): MpZonedDateTimeRange {
-        return MpZonedDateTimeRange(
-            from = atTime(timeslot.from, timezone),
-            to = atTime(timeslot.to, timezone)
-        )
+        return timeslot.onDate(date = this, timezone = timezone)
     }
 
     /**

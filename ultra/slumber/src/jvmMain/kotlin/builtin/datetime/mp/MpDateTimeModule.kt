@@ -5,6 +5,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
 import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import io.peekandpoke.ultra.slumber.Awaker
@@ -31,6 +32,9 @@ object MpDateTimeModule : SlumberModule {
             MpLocalTime::class ->
                 type.wrapIfNonNull(MpLocalTimeAwaker)
 
+            MpLocalTimeSlot::class ->
+                type.wrapIfNonNull(MpLocalTimeSlotAwaker)
+
             MpZonedDateTime::class ->
                 type.wrapIfNonNull(MpZonedDateTimeAwaker)
 
@@ -56,6 +60,9 @@ object MpDateTimeModule : SlumberModule {
 
             MpLocalTime::class ->
                 type.wrapIfNonNull(MpLocalTimeSlumberer)
+
+            MpLocalTimeSlot::class ->
+                type.wrapIfNonNull(MpLocalTimeSlotSlumberer)
 
             MpZonedDateTime::class ->
                 type.wrapIfNonNull(MpZonedDateTimeSlumberer)

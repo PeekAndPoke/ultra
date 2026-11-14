@@ -1,0 +1,58 @@
+package io.peekandpoke.ultra.slumber.builtin.datetime.mp
+
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
+import io.peekandpoke.ultra.slumber.slumber
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
+
+/** ULTRA-00341 batch 3b-2: slumber stores a slot as `{from, duration, to}` and still reads the old `{from, to}`. */
+class MpLocalTimeSlotCodecSpec : StringSpec({
+
+    val codec = Codec.default
+    val night = MpLocalTimeSlot.of(MpLocalTime.of(22, 0), 4.hours)
+
+    data class Wrapper(val slot: MpLocalTimeSlot)
+    data class NullableWrapper(val slot: MpLocalTimeSlot?)
+
+    "slumbered as {from, duration, to} in milliseconds; to is derived" {
+        codec.slumber(night) shouldBe mapOf("from" to 79_200_000L, "duration" to 14_400_000L, "to" to 7_200_000L)
+        codec.slumber(MpLocalTimeSlot.completeDay) shouldBe
+                mapOf("from" to 0L, "duration" to 86_400_000L, "to" to 86_400_000L)
+    }
+
+    "awakes equal, also inside an object; a present duration wins over a disagreeing to" {
+        codec.awake<MpLocalTimeSlot>(codec.slumber(night)) shouldBe night
+        codec.awake<Wrapper>(codec.slumber(Wrapper(night))) shouldBe Wrapper(night)
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 79_200_000L, "duration" to 14_400_000, "to" to 0)) shouldBe night
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 79_200_000.0, "duration" to 14_400_000.0)) shouldBe night
+    }
+
+    "an infinite duration is stored as 2^53 - 1 ms and awakes infinite" {
+        val open = MpLocalTimeSlot.of(MpLocalTime.of(10, 0), Duration.INFINITE)
+
+        codec.slumber(open) shouldBe
+                mapOf("from" to 36_000_000L, "duration" to 9_007_199_254_740_991L, "to" to 36_000_000L)
+        codec.awake<MpLocalTimeSlot>(codec.slumber(open)) shouldBe open
+    }
+
+    "the old shape {from, to}: after from is the difference, before from is overnight, equal is empty" {
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 79_200_000L, "to" to 7_200_000L)) shouldBe night
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "to" to 86_400_000L)) shouldBe MpLocalTimeSlot.completeDay
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 36_000_000L, "to" to 36_000_000L))?.isEmpty shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "to" to 86_399_999L))?.duration shouldBe
+                86_399_999.milliseconds
+    }
+
+    "neither duration nor to, or no from, awakes to null, as an incomplete data class did" {
+        codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L)) shouldBe null
+        codec.awake<MpLocalTimeSlot?>(mapOf("to" to 0L)) shouldBe null
+        codec.awake<MpLocalTimeSlot?>("nonsense") shouldBe null
+        codec.awake<NullableWrapper>(mapOf("slot" to mapOf("from" to 0L))) shouldBe NullableWrapper(null)
+    }
+})

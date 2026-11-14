@@ -48,6 +48,20 @@ export const MpLocalTime = z.number()
 export type MpLocalTime = z.infer<typeof MpLocalTime>
 
 /**
+ * A slot of the day: a start and a duration, all in milliseconds (`MpLocalTimeSlotCodec`).
+ *
+ * `from` is milliseconds since midnight; `duration` may exceed a day, and 9007199254740991 means infinite; `to` is
+ * derived (the clock time of the end, 86400000 for an end at 24:00) and ignored when read back. A slot with
+ * `to < from` runs overnight.
+ */
+export const MpLocalTimeSlot = z.object({
+    from: z.number(),
+    duration: z.number(),
+    to: z.number(),
+})
+export type MpLocalTimeSlot = z.infer<typeof MpLocalTimeSlot>
+
+/**
  * An IANA timezone id, e.g. `Europe/Berlin`.
  *
  * A BARE STRING on the wire, not an object — `MpTimezoneCodec` returns `id`.

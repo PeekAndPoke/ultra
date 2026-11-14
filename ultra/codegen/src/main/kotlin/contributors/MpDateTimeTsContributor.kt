@@ -8,6 +8,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
 import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import kotlin.reflect.KClass
@@ -36,6 +37,7 @@ class MpDateTimeTsContributor : TsSdkContributor {
             MpLocalDateTime::class to "MpLocalDateTime",
             MpZonedDateTime::class to "MpZonedDateTime",
             MpLocalTime::class to "MpLocalTime",
+            MpLocalTimeSlot::class to "MpLocalTimeSlot",
             MpTimezone::class to "MpTimezone",
         )
     }

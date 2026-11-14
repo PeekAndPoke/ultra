@@ -306,6 +306,155 @@ Verdict NOT CLEAN; the MAJOR (`numDaysInMonth`) and the sentinel items are recor
 | MINOR | `ComputedList.toString()` builds every element (about 140 MB for `forever.asListOfDates()`) | FIXED: bounded, tested, in the KDoc and changelog; RED first (`OutOfMemoryError`); mutants H2 / H3 red |
 | MINOR | `MpLocalDateRangeLazySpec`: expected value from the view's own `plusDays`; `shouldBeInstanceOf<List<Int>>()` cannot fail | FIXED: literal 2738-11-29 (checked independently); line removed |
 
+## Batch 3b-2: plan as built (the slot redesign)
+
+Built on `wt/datetime` on top of 3b-1, after the maintainer's decisions of 2026-11-14 (master: "Batch 3b: decisions of
+the maintainer"). Not merged, not reviewed.
+
+- **`MpLocalTimeSlot` is a start and a duration:** `data class MpLocalTimeSlot private constructor(from, duration)`
+  with `@ConsistentCopyVisibility`. Created by `of(from, duration)`, `of(from, to)`, `ofSecondsOfDay(from, to)` and
+  `completeDay` (00:00 for 24 h). The factories normalise:
+  - the start wraps into the day, so 24:00 (`EndOfDay`) and a raw out-of-range `MpLocalTime` become a clock time in
+    `[00:00, 24:00)`; **deviation from the plan** (it said "from as given"), because a slot starting at 24:00 has no
+    meaning on the clock face and would need its own rules everywhere;
+  - the duration is cut to whole milliseconds; zero or below is `Duration.ZERO` (an empty slot);
+  - from `INFINITE_DURATION_MILLIS` = 2^53 - 1 ms (about 285,000 years) on, it is `Duration.INFINITE`. **New
+    decision, for the maintainer:** stored, infinity is that number, the largest integer a JS client reads exactly
+    (`Long.MAX_VALUE` would come back from a TypeScript client rounded up and fail to decode).
+- **`of(from, to)`:** `to` after `from` is the difference, before `from` runs overnight, equal is empty (confirmed);
+  a `to` of `EndOfDay` is 24:00. `ofSecondsOfDay` follows it; equal values are empty, also `(86400, 86400)`.
+- **Derived, read-only:** `to` (the clock time of the end; `EndOfDay` for an end exactly at midnight; `from` for an
+  empty or infinite slot), `endDayOffset: Long` (days after the start's date; `Long.MAX_VALUE` when infinite),
+  `crossesMidnight`, `isEmpty`, `isInfinite`; `isValid` is "not empty".
+- **Clock face** (a slot without a date is a daily pattern), as planned: `contains(time)` (24:00 counts as 00:00),
+  `contains(slot)`, `intersects`, `touches` (also across midnight), `isAdjacentTo`, `mergeWith` (a union covering the
+  clock is this slot's start for 24 h; a slot of 24 h or more absorbs the other), `cutAway` (in this slot's frame; the
+  length beyond 24 h is dropped).
+- **On a date** (`MpLocalDate.toRange(slot, zone)`): by the clock, from `from` on the date to `to` on the date
+  `endDayOffset` days later. A start or end in a skipped hour moves forward; a start then past the end, or an empty
+  slot, gives an empty range at the start (the 3a pins of Nuuk and Apia are now empty, no longer inverted). An
+  infinite slot ends at the range's open end, decided in ONE private function (`endOnDate`), today
+  `MpZonedDateTime.Doomsday`, so it follows whatever the sentinel decision (ULTRA-00343, analysis of 2026-11-14) is.
+- **`splitWithGaps(duration, gap)`:** walks the slot's own length from `from` (overnight and longer than a day work),
+  returns a `ComputedList`; `maxSlots` and its exception are gone; the count is capped at `Int.MAX_VALUE` (an infinite
+  slot). An infinite part fits only an infinite slot.
+- **Stored shape `{from, duration, to}`** in milliseconds, `to` derived and ignored on read when `duration` is present:
+  - new public `MpLocalTimeSlotRawData(from: Long, duration: Long? = null, to: Long? = null)` with the extension
+    functions `MpLocalTimeSlot.toRawData()` and `MpLocalTimeSlotRawData.toSlotOrNull()` (public because the slumber
+    codec in another module uses them), `@Slumber.As(MpLocalTimeSlotRawData::class)` on the slot;
+  - kotlinx `MpLocalTimeSlotSerializer`; slumber `MpLocalTimeSlotAwaker` / `MpLocalTimeSlotSlumberer`, registered in
+    `MpDateTimeModule` (`from` / `to` are read through `MpLocalTimeAwaker`, so the 3a rules for 24:00 and fractional
+    numbers hold);
+  - the decoders fall back to the old `{from, to}` (decided); neither `duration` nor `to` is a `SerializationException`
+    in kotlinx and `null` in slumber, as a missing field was before.
+- **TypeScript (planned, outside the module):** `MpDateTimeTsContributor` claims `MpLocalTimeSlot`; `datetime.ts`
+  declares `MpLocalTimeSlot = z.object({from, duration, to})` (numbers); `MpDateTimeFieldParitySpec` checks the
+  slumbered keys and the declaration. `SlumberAsRoundTripSpec` (slumber) has a slot sample, as it demands for every
+  `@Slumber.As` type.
+- **`Partial`** keeps its two clock pickers; `asValidRange()` is `of(from, to)`, null for an empty slot;
+  `asPartialRange()` is lossy for a slot of 24 h or more.
+
+### Test evidence (3b-2)
+
+- **New:** `MpLocalTimeSlotClockSpec` (19), `MpLocalTimeSlotOnDateSpec` (9), `MpLocalTimeSlotSerializationSpec`
+  (6), all commonTest; slumber `MpLocalTimeSlotCodecSpec` (5); codegen parity row (1).
+- **RED first:** the new specs did not compile against the old slot (37 errors: `endDayOffset`, `isEmpty`, `of(from,
+  to)`, ...). After the build, the old specs failed exactly where the redesign changes behaviour (10 in datetime, 1
+  slumber guard, 1 codegen guard); each is listed below.
+- Final run (2026-11-14, `console/wt-gradle.sh`, `--rerun` on each test task, counts from the XML): datetime JVM
+  2845 / 0, JS 2187 / 0, native 2179 / 0 (the three new specs green on all three); slumber jvmTest 1264 / 0; codegen
+  test 326 / 0; karango ksp 11 / 0; monko ksp 6 / 0. Repo-wide compile sweep: exit 0, 0 `e:` lines.
+
+| Mutant (JVM; each restored with `cmp`) | Tests red |
+|---|---|
+| S1 `endDayOffset` without the whole-day rule (`end / DAY`) | 7 |
+| S2 `to` at midnight is 00:00, not `EndOfDay` | 11 |
+| S3 the clock arc without its part after midnight | 5 |
+| S4 `touches` without the meeting at midnight | 1 |
+| S5 `isAdjacentTo` in one direction only | 2 |
+| S6 `mergeWith`: the second branch starts at this start | 4 |
+| S7 `cutAway` without the cut's part after midnight | 2 |
+| S8 on a date by elapsed time (`start.plus(duration)`) instead of by the clock | 7 |
+| S9 on a date without the empty-range rule (inverted again) | 3 |
+| S10 `of(from, to)`: `to` before `from` is empty instead of overnight (persistence: the fallback) | 11 datetime + 1 slumber |
+| S11 no threshold for an infinite duration | 2 datetime + 1 slumber |
+| S12 the start not normalised | 2 |
+| S13 `splitWithGaps` step not taken mod day | 0: equivalent. The count bounds `index * step` by the slot's length, so no overflow is reachable; the reduction is a guard only (checked by computation for the extreme case: infinite slot, 1 ms part, 2^53 ms gap) |
+| P1 kotlinx decoder without the `{from, to}` fallback (persistence) | 1 |
+| P2 kotlinx decoder reads `to` before `duration` (persistence) | 2 |
+| P3 kotlinx / slumber write `Long.MAX_VALUE` for an infinite duration (persistence) | 1 datetime + 1 slumber |
+| P4 stored 86400000 not read as 24:00 (persistence) | 1 |
+| P5 slumber awaker without the `{from, to}` fallback (persistence) | 1 |
+| P6 slumber awaker ignores `duration` (persistence) | 2 |
+
+**Existing test lines changed (3b-2):**
+
+| Spec | Before | After |
+|---|---|---|
+| `MpLocalTimeSlotSpec`, `MpLocalTimeEndOfDaySpec`, `test_helpers.kt` | `MpLocalTimeSlot(from, to)` (35 + 2 calls) | `MpLocalTimeSlot.of(from, to)`: the constructor is private |
+| `MpLocalTimeSlotSpec` "duration must be correct" | 02:15 to 01:00 is `(-75).minutes` | `22.hours + 45.minutes` (overnight) |
+| `MpLocalTimeSlotSpec` isValid row | "Negative duration": 12:00:01 to 12:00:00 is NOT valid | "To before from runs overnight": valid |
+| `MpLocalTimeSlotSpec` split "an invalid slot" | 20:00 to 08:00 by 1 h: no slots | "an overnight slot": 12 slots 20:00 ... 07:00 |
+| `MpLocalTimeSlotSpec` split "an invalid slot across midnight" | 22:00 to 02:00 by 2 h: no slots | `[22:00-00:00, 00:00-02:00]` |
+| `MpLocalTimeSlotSpec` six `maxSlots` tests | default 100 000 works; 100 001 throws; whole day by 1 ms throws; custom limit; below 1 refused; infinite no throw | three tests: 100 000 and 100 001 both work; the quarter-hour splits without a limit; infinite duration or gap gives `[]` / one slot |
+| `MpLocalTimeSlotSpec` "Partial.asValidRange returns null for invalid range" | `Partial(11:00, 10:00)` is null | equal times are null; `Partial(11:00, 10:00)` is `of(11:00, 23 h)` |
+| `MpLocalTimeSlotSpec` "contains(time) / contains(other) / intersects - invalid slot" | used `12:00 to 10:00` as the invalid slot (still green, by coincidence) | an empty slot (`12:00 to 12:00`, `11:00 to 11:00`); titles say "empty" |
+| `MpLocalTimeEndOfDaySpec` "MpLocalTimeSlot up to EndOfDay" | `slot.contains(endOfDay) shouldBe false` | `true` (24:00 is 00:00 on the clock face) |
+| `MpLocalTimeEndOfDaySpec` "M1: completeDay serializes" | `{"from":0,"to":86400000}` | `{"from":0,"duration":86400000,"to":86400000}` |
+| `MpLocalTimeEndOfDaySpec` "delta round 2: ofSecondsOfDay" | title "EndOfDay only for a from inside the day; otherwise both wrap" | title states the 3b-2 rules; rows unchanged and green |
+| `MpLocalTimeEndOfDaySpec` "delta round 2: of(from, duration)" | raw `-3 600 000` + 25 h `to` is `Min`; `of(EndOfDay, 0) == of(EndOfDay, EndOfDay)`; `of(EndOfDay, 1 h) == of(EndOfDay, 01:00)` | the start wraps first: `== of(23:00, 25 h)`, `to == EndOfDay`; `of(EndOfDay, 0) == of(Min, 0)`; `of(EndOfDay, 1 h) == of(Min, 1 h)` |
+| `MpLocalTimeEndOfDaySpec` Nuuk pin | "inverted range": `from > to` | "empty range": `from == to` |
+| `MpLocalTimeEndOfDaySpec` Apia pin | `[09:00, 24:00)` inverted, `completeDay` empty | both empty |
+| `MpLocalTimeSlotOnDateSpec` (new) TimeZone overload | Europe/Berlin through `TimeZone.of` | UTC: kotlinx on JS has no zone database in these tests (red on JS only) |
+| slumber `SlumberAsRoundTripSpec` | six samples | plus an `MpLocalTimeSlot` sample (its guard demands one per `@Slumber.As` type) |
+| codegen `MpDateTimeFieldParitySpec` | - | new row: the slot slumbers to `{from, duration, to}`, all numbers, and `datetime.ts` declares it |
+
+### Docs lines for the DOCS follow-up (3b-2)
+
+- `docs-site/src/pages/ultra/datetime/ranges.astro` 334-353 (the `MpLocalTimeSlot` section: the constructor,
+  `completeDay`, the `ofSecondsOfDay` comments): start and duration, `of(from, to)` overnight, the clock face, on a
+  date by the clock, the lazy `splitWithGaps`, the stored shape.
+- `docs-site/src/data/llms/datetime.md` 228-230 (the slot line and factories).
+- `ultra/codegen/src/main/resources/ts/runtime/datetime.ts`: done in this batch.
+
+## Changelog text (3b-2)
+
+**Breaking changes:**
+
+- `ultra/datetime`: `MpLocalTimeSlot` is a start and a duration. Create it with `MpLocalTimeSlot.of(from, duration)`
+  or `of(from, to)`; the constructor `MpLocalTimeSlot(from, to)` is gone (private), and `copy` with it.
+  - `to` is derived: the clock time of the end (24:00 for an end at midnight); `endDayOffset` / `crossesMidnight` say
+    whether it is a later day. Overnight slots (22:00 to 02:00) and slots longer than a day exist now.
+  - New: `isEmpty`, `isInfinite`, `INFINITE_DURATION_MILLIS`; `Duration.INFINITE` is a slot without an end.
+  - The start wraps into the day: `of(EndOfDay, d)` starts at 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal):
+  - `of(from, to)` with `to` before `from` is an overnight slot; it was an invalid one (`isValid` false, negative
+    `duration`). Equal times are an empty slot, as before.
+  - Without a date a slot is a daily pattern on the 24-hour clock: `contains`, `intersects`, `touches`,
+    `isAdjacentTo`, `mergeWith` and `cutAway` work across midnight; `contains(EndOfDay)` counts 24:00 as 00:00 (it was
+    false); a slot of 24 hours or more covers the whole clock.
+  - `MpLocalDate.toRange(slot, zone)` ends by the clock on the day `endDayOffset` later: a night slot lasts 7 or 9 real
+    hours on DST nights. A start moved past the end by a skipped hour gives an empty range; it gave an inverted one
+    (ULTRA-00341).
+- `ultra/datetime` and `ultra/slumber`, stored format: a slot is stored as `{from, duration, to}` in milliseconds
+  (`to` derived, ignored on read; an infinite duration is 9007199254740991). Both decoders still read the old
+  `{from, to}` (`to` before `from` as overnight; a stored `{0, 86399999}` reads as 23:59:59.999 long). A reader of an
+  older version reads `{from, to}`: slumber ignores `duration`, a kotlinx `Json` without `ignoreUnknownKeys` fails on
+  it. There an overnight slot comes out invalid, and a slot of 24 hours or more as its clock times only. Update
+  readers before writers (ULTRA-00341).
+- `ultra/datetime`, breaking: `splitWithGaps` loses `maxSlots` and never throws; it returns a lazy view
+  (`ComputedList`) and walks overnight and multi-day slots (ULTRA-00341).
+
+**New:**
+
+- `ultra/datetime`: `MpLocalTimeSlotRawData`, `MpLocalTimeSlotSerializer`, `MpLocalTimeSlot.toRawData()`,
+  `MpLocalTimeSlotRawData.toSlotOrNull()`; `@Slumber.As` on the slot, so karango and monko query paths are `from`,
+  `duration`, `to` (ULTRA-00341).
+- `ultra/codegen`: the TypeScript runtime has `MpLocalTimeSlot` (`{from, duration, to}`) (ULTRA-00341).
+
+**Removed API:** the public constructor `MpLocalTimeSlot(from, to)` and `copy`; the `maxSlots` parameter of
+`splitWithGaps` (batch 1, never released).
+
 ## Left out, for one follow-up ticket
 
 - `MpLocalTime.jvm` drops the milliseconds (`Max.jvm` = 23:59:59).
@@ -319,3 +468,5 @@ Verdict NOT CLEAN; the MAJOR (`numDaysInMonth`) and the sentinel items are recor
 - 2026-11-14: batch 3a built (`618a4860`); review round 1 handled on `wt/datetime`, awaiting the delta review.
 - 2026-11-14: batch 3a merged (c6ecca2a). Batch 3b-1 (lazy views, with ULTRA-00343) built on `wt/datetime`,
   awaiting the review gate; 3b-2 waits for the maintainer.
+- 2026-11-14: 3b-1 round 1 and delta round 2 handled; 3b-1 held (the sentinel values are in question). Batch 3b-2
+  (the slot redesign) built on `wt/datetime` on top of it, tests first; not reviewed, not merged.
