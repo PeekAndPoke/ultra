@@ -3,14 +3,17 @@ package io.peekandpoke.ultra.kontainer.e2e.characterization
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.peekandpoke.ultra.common.Lookup
+import io.peekandpoke.ultra.kontainer.DynamicOverrides
 import io.peekandpoke.ultra.kontainer.InvalidClassProvided
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
+import io.peekandpoke.ultra.kontainer.ServiceProviderFactory
 import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -263,7 +266,9 @@ class ValidationCharacterizationSpec : StringSpec({
         assertSoftly {
             error.message!! shouldStartWith "Kontainer has circular dependencies!\n\n"
             error.message shouldContain "  - Circular dependency detected: " +
-                    "${ListCycleOne::class.getName()} -> ${ListCycleTwo::class.getName()} -> ${ListCycleOne::class.getName()}"
+                    "io.peekandpoke.ultra.kontainer.e2e.characterization.ListCycleOne" +
+                    " -> io.peekandpoke.ultra.kontainer.e2e.characterization.ListCycleTwo" +
+                    " -> io.peekandpoke.ultra.kontainer.e2e.characterization.ListCycleOne"
             error.message shouldContain "Hint: Use Lazy<T> injection to break the cycle."
         }
     }
@@ -279,7 +284,109 @@ class ValidationCharacterizationSpec : StringSpec({
         }
 
         error.message shouldContain "Circular dependency detected: " +
-                "${ListOfMany::class.getName()} -> ${ManyCyclic::class.getName()} -> ${ListOfMany::class.getName()}"
+                "io.peekandpoke.ultra.kontainer.e2e.characterization.ListOfMany" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.ManyCyclic" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.ListOfMany"
+    }
+
+    "A List cycle is found when one listed class also has a listed subclass" {
+
+        val error = shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(PartOwner::class)
+                singleton(MidPart::class)
+                singleton(LeafPart::class)
+            }.create()
+        }
+
+        error.message shouldContain "Circular dependency detected: " +
+                "io.peekandpoke.ultra.kontainer.e2e.characterization.PartOwner" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.MidPart" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.PartOwner"
+    }
+
+    "A composite that injects a List of its own super type is in its own list: a cycle with itself" {
+
+        val error = shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(CompositeHandler::class)
+                singleton(PlainHandler::class)
+            }.create()
+        }
+
+        error.message shouldContain "Circular dependency detected: " +
+                "io.peekandpoke.ultra.kontainer.e2e.characterization.CompositeHandler" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.CompositeHandler"
+    }
+
+    "A composite with a Lazy List of its own super type boots, and its list contains the composite itself" {
+
+        val subject = kontainer {
+            singleton(LazyCompositeHandler::class)
+            singleton(PlainHandler::class)
+        }.create()
+
+        val composite = subject.get(LazyCompositeHandler::class)
+
+        assertSoftly {
+            composite.all.value.size shouldBe 2
+            composite.all.value.any { it === composite } shouldBe true
+        }
+    }
+
+    "The checked path through the public ServiceProviderFactory validates an invalid blueprint that never ran create" {
+
+        class Missing
+        class Holder(val missing: Missing)
+
+        val blueprint = kontainer { singleton(Holder::class) }
+
+        val factory = ServiceProviderFactory(
+            blueprint = blueprint,
+            dynamics = DynamicOverrides(emptyMap()),
+            providerProviders = emptyMap(),
+        )
+
+        shouldThrow<KontainerInconsistent> {
+            factory.newKontainer(DynamicOverrides(emptyMap()))
+        }.message!! shouldStartWith "Kontainer is inconsistent!"
+    }
+
+    "A List cycle is found whatever declares the owner: a factory, a dynamic, a prototype" {
+
+        val expected = "Circular dependency detected: " +
+                "io.peekandpoke.ultra.kontainer.e2e.characterization.ListCycleOne" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.ListCycleTwo" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.ListCycleOne"
+
+        assertSoftly {
+            withClue("the owner registered by a factory") {
+                shouldThrow<KontainerInconsistent> {
+                    kontainer {
+                        singleton(ListCycleOne::class) { all: List<ListCycleTwo> -> ListCycleOne(all) }
+                        singleton(ListCycleTwo::class)
+                    }.create()
+                }.message shouldContain expected
+            }
+
+            withClue("the owner registered as a dynamic") {
+                shouldThrow<KontainerInconsistent> {
+                    kontainer {
+                        dynamic(ListCycleOne::class)
+                        singleton(ListCycleTwo::class)
+                    }.create()
+                }.message shouldContain expected
+            }
+
+            withClue("the owner registered as a prototype") {
+                shouldThrow<KontainerInconsistent> {
+                    kontainer {
+                        prototype(ListCycleOne::class)
+                        singleton(ListCycleTwo::class)
+                    }.create()
+                }.message shouldContain expected
+            }
+        }
     }
 
     "A cycle through Lazy<List> is not reported and works, as the list is lazy" {
@@ -306,7 +413,8 @@ class ValidationCharacterizationSpec : StringSpec({
 
         assertSoftly {
             error.message shouldContain "Parameter 'inner' is ambiguous. The following services collide: " +
-                    "${RealRepo::class.getName()}, ${DecoratingRepo::class.getName()}"
+                    "io.peekandpoke.ultra.kontainer.e2e.characterization.RealRepo" +
+                    ", io.peekandpoke.ultra.kontainer.e2e.characterization.DecoratingRepo"
             error.message shouldNotContain "Circular dependency"
         }
     }
@@ -442,7 +550,8 @@ class ValidationCharacterizationSpec : StringSpec({
 
         assertSoftly {
             error.message shouldContain "Parameter 'inner' is ambiguous. The following services collide: " +
-                    "${RealRepo::class.getName()}, ${CachingRepo::class.getName()}"
+                    "io.peekandpoke.ultra.kontainer.e2e.characterization.RealRepo" +
+                    ", io.peekandpoke.ultra.kontainer.e2e.characterization.CachingRepo"
             error.message shouldNotContain "Circular dependency"
         }
     }
@@ -452,7 +561,8 @@ class ValidationCharacterizationSpec : StringSpec({
         shouldThrow<KontainerInconsistent> {
             kontainer { singleton(SelfCycle::class) }.create()
         }.message shouldContain "Circular dependency detected: " +
-                "${SelfCycle::class.getName()} -> ${SelfCycle::class.getName()}"
+                "io.peekandpoke.ultra.kontainer.e2e.characterization.SelfCycle" +
+                " -> io.peekandpoke.ultra.kontainer.e2e.characterization.SelfCycle"
     }
 
     "A decorator naming the concrete class is valid and gets it injected" {
@@ -478,6 +588,16 @@ class LookupCycleTwo(val one: LookupCycleOne)
 
 class ListCycleOne(val all: List<ListCycleTwo>)
 class ListCycleTwo(val one: ListCycleOne)
+
+abstract class Part
+class PartOwner(val all: List<Part>)
+open class MidPart(val owner: PartOwner) : Part()
+class LeafPart(owner: PartOwner) : MidPart(owner)
+
+abstract class HandlerBase
+class CompositeHandler(val all: List<HandlerBase>) : HandlerBase()
+class LazyCompositeHandler(val all: Lazy<List<HandlerBase>>) : HandlerBase()
+class PlainHandler : HandlerBase()
 
 abstract class ManyBase
 class ListOfMany(val all: List<ManyBase>)

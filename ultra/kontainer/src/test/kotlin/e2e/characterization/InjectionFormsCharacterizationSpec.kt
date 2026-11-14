@@ -530,7 +530,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         shouldThrow<KontainerInconsistent> {
             blueprint.create()
         }.message shouldContain "Parameter 'base' is ambiguous. The following services collide: " +
-                "${SingleImpl::class.getName()}, ${DynImpl::class.getName()}"
+                "SingleImpl, DynImpl"
     }
 
     // ULTRA-00335: the same for Lazy<T?>.
@@ -548,14 +548,19 @@ class InjectionFormsCharacterizationSpec : StringSpec({
                 singleton(ImplTwo::class)
             }.create()
         }.message shouldContain "Parameter 'base' is ambiguous. The following services collide: " +
-                "${ImplOne::class.getName()}, ${ImplTwo::class.getName()}"
+                "ImplOne, ImplTwo"
     }
 
     "A nullable parameter with one candidate is injected, with none it is null (unchanged)" {
 
         class Present
         class Absent
-        class Holder(val present: Present?, val absent: Absent?, val lazyPresent: Lazy<Present?>)
+        class Holder(
+            val present: Present?,
+            val absent: Absent?,
+            val lazyPresent: Lazy<Present?>,
+            val lazyAbsent: Lazy<Absent?>,
+        )
 
         val subject = kontainer {
             singleton(Holder::class)
@@ -568,7 +573,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             holder.present shouldBe subject.get(Present::class)
             holder.absent.shouldBeNull()
             holder.lazyPresent.value shouldBe subject.get(Present::class)
+            holder.lazyAbsent.value.shouldBeNull()
         }
     }
-
 })
