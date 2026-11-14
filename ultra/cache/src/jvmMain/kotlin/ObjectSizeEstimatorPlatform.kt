@@ -18,9 +18,16 @@ actual object ObjectSizeEstimatorPlatform {
      * Skips static fields and an inner class's reference to its outer instance (`this$0`): the outer
      * object is not part of the value. Every other field is read, synthetic ones included - the
      * captured locals of a lambda or an anonymous object, the `$$delegate_0` of class delegation. A
-     * field JPMS does not open is skipped, too. Never returns `null`.
+     * field JPMS does not open is skipped, too. A read that fails anyway yields [UnreadableField].
+     * Never returns `null`.
      */
-    actual fun getFieldsOf(obj: Any): List<Any?>? = fieldsByClass.get(obj.javaClass).map { it.get(obj) }
+    actual fun getFieldsOf(obj: Any): List<Any?>? = fieldsByClass.get(obj.javaClass).map { field ->
+        try {
+            field.get(obj)
+        } catch (e: Throwable) {
+            UnreadableField
+        }
+    }
 
     private fun readableFieldsOf(type: Class<*>): List<Field> {
         val out = ArrayList<Field>()
