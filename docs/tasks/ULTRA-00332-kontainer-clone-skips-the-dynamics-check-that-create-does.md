@@ -1,6 +1,6 @@
 # ULTRA-00332: Kontainer: clone skips the dynamics check that create does
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K1, not merged: gate round 1 CLEAN, delta round 2 CLEAN.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -94,7 +94,7 @@ Every item was tested first; each one that claimed a defect survived its test. C
      before a clone. On master, `clone` never validated either.
 2. **The built-ins were still in the overridable set.** Survived: the internal `instantiate` accepted an override of
    `Kontainer` or `InjectionContext` (new test RED).
-   - Fixed: excluded again; they stay dynamic sources of promotion (pinned).
+   - Fixed: excluded again; `Kontainer` and `InjectionContext` stay dynamic sources of promotion (pinned).
    - ULTRA-00336's plan bullet and "Built" sentence now say what the code does.
 3. **Lazy override, unpinned properties:**
    - Concurrency: new test with two threads, B waits BLOCKED while A's lambda runs; one run, one instance.
@@ -160,6 +160,37 @@ identical.
 | `:funktor:all:jvmTest` | 289 |
 
 Repo-wide compile sweep: green, 459 tasks, 0 errors.
+
+## K1 delta review, round 2 (reviewer-fable-xhigh, all three charters)
+
+The same ledger is written into ULTRA-00330, 00331, 00332, 00333, 00336 and 00337.
+
+**Verdict:** CLEAN, with zero CRITICAL, zero MAJOR and six MINOR. The reviewer recomputed the 16-pair `extend` table and
+found every row right; eight pairs differ from master. The reviewer ran nothing. The close-out has no production
+behaviour change (texts and tests only).
+
+### Findings and outcomes
+
+1. **KDoc of the overridable set, and ULTRA-00336 "Built":** "The built-ins stay dynamic sources of promotion" is
+   false for `KontainerBlueprint`, which is static (pinned in `PromotionCharacterizationSpec`). Fixed: "`Kontainer`
+   and `InjectionContext` stay dynamic sources of promotion", in the KDoc and in every ticket sentence.
+2. **"First request" wording** in the KDoc of `ForOverride.definition` and `ForOverride.instances`, and in a comment
+   in `ServiceProviderFactory`: after a throwing lambda, `instances` is still empty and the definition still names
+   the class. Fixed: "until the override has returned a value".
+3. **The live-view mutant of ULTRA-00337, re-run with the reachability fences:** RED, 2 / 546 (both retention
+   tests). Restored, and `git status` was clean for `DynamicsChecker.kt` afterwards.
+4. **`LazyOverrideSpec`:** the same-instance check also held for two nulls. Fixed: a not-null assertion on the first
+   result.
+5. **Status lines:** the six tickets still said NOT STARTED. Set to built, gate round 1 CLEAN, delta round 2 CLEAN.
+6. **ULTRA-00330 changelog:** for `dynamic` then `prototype` or `dynamicPrototype`, two consequences were missing
+   (the user of `dynamic` then `prototype` becomes one per kontainer; an override at create is now accepted). Added,
+   and the text says plainly that eight pairs change.
+
+### Surplus notes, kept as built
+
+- `validateOnFirstUse()` in `createChecked` guards only the public `ServiceProviderFactory(...)` constructor path;
+  every other path validated already.
+- `.minus(builtInServices)` also subtracts `KontainerBlueprint`, which is static and never in the set; harmless.
 
 ## The work
 
