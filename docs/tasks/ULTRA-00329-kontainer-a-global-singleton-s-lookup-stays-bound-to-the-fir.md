@@ -35,6 +35,10 @@ enough", and "ok to both":
    a global singleton reaches nothing dynamic, so both kontainers resolve the same services for it; prove that with
    the characterization specs.
 
+Added from the K1 review (implementation reviewer, 2026-11-14, by reading): the retained first kontainer also keeps
+that request's override lambdas and values reachable for the blueprint's lifetime (the kontainer holds them for
+`clone`). That is the same class of retention as ULTRA-00337, by another path; change 2 above removes it.
+
 ## The work
 
 - Decide what a `Lookup` in a global singleton is bound to (promotion to SemiDynamic already happens when `T` is dynamic; the gap is prototypes and the record of instances). At least: no unbounded record of prototype instances behind a long-lived lookup.
