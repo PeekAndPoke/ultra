@@ -9,9 +9,11 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.DynamicOverrides
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceAmbiguous
+import io.peekandpoke.ultra.kontainer.ServiceProviderFactory
 import io.peekandpoke.ultra.kontainer.e2e.Reported
 import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.getName
@@ -50,7 +52,6 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    // ULTRA-00333: overrides are lazy.
     // ULTRA-00344: overrides run at create (decided; the laziness of ULTRA-00333 is reverted).
     "The override lambda runs at create, once per kontainer, even when the service is never requested" {
 
@@ -356,18 +357,149 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    "An override that matches two dynamics is refused with ServiceAmbiguous" {
+    "An override that matches two dynamics is refused with ServiceAmbiguous before any override lambda runs" {
 
         open class Outer
         class Inner : Outer()
+        class Other
 
         val blueprint = kontainer {
             dynamic(Outer::class)
             dynamic(Inner::class)
+            dynamic(Other::class)
+        }
+
+        val validRuns = AtomicInteger()
+        val ambiguousRuns = AtomicInteger()
+
+        val error = shouldThrow<ServiceAmbiguous> {
+            blueprint.create {
+                with { validRuns.incrementAndGet(); Other() }
+                with { ambiguousRuns.incrementAndGet(); Inner() }
+            }
+        }
+
+        assertSoftly {
+            error.message shouldBe "Service Inner is ambiguous. It has multiple candidates: Outer, Inner"
+            validRuns.get() shouldBe 0
+            ambiguousRuns.get() shouldBe 0
+        }
+    }
+
+    "A clone adding an override that matches two dynamics is refused before the parent's lambdas run again" {
+
+        open class Outer
+        class Inner : Outer()
+        class Other
+
+        val validRuns = AtomicInteger()
+        val ambiguousRuns = AtomicInteger()
+
+        val original = kontainer {
+            dynamic(Outer::class)
+            dynamic(Inner::class)
+            dynamic(Other::class)
+        }.create {
+            with { validRuns.incrementAndGet(); Other() }
         }
 
         shouldThrow<ServiceAmbiguous> {
-            blueprint.create { with { Inner() } }
+            original.clone { with { ambiguousRuns.incrementAndGet(); Inner() } }
+        }
+
+        assertSoftly {
+            withClue("only the parent's create ran the parent's lambda") {
+                validRuns.get() shouldBe 1
+            }
+            ambiguousRuns.get() shouldBe 0
+        }
+    }
+
+    "Override lambdas run in the order of their first with per service; a second with replaces in place" {
+
+        class DynA
+        class DynB
+        class DynC
+
+        val log = mutableListOf<String>()
+
+        val blueprint = kontainer {
+            dynamic(DynA::class)
+            dynamic(DynB::class)
+            dynamic(DynC::class)
+        }
+
+        val original = blueprint.create {
+            with { log.add("A1"); DynA() }
+            with { log.add("B"); DynB() }
+            with { log.add("A2"); DynA() }
+        }
+
+        assertSoftly {
+            withClue("A2 replaces A1 at A's position; A1 never runs") {
+                log shouldBe listOf("A2", "B")
+            }
+
+            log.clear()
+            original.clone {
+                with { log.add("C"); DynC() }
+                with { log.add("A3"); DynA() }
+            }
+
+            withClue("a clone runs the parent's order first, its own override for A at A's position, new keys last") {
+                log shouldBe listOf("A3", "B", "C")
+            }
+        }
+    }
+
+    // Pinned as it is; a question for the maintainer (ULTRA-00344, gate round 1, M3).
+    "CURRENT BEHAVIOUR: two overrides for one service under different classes both run, the later one wins" {
+
+        open class Base
+        class First : Base()
+        class Derived : Base()
+
+        val log = mutableListOf<String>()
+
+        val subject = kontainer {
+            dynamic(Base::class)
+        }.create {
+            with(Base::class) { log.add("first"); First() }
+            with(Derived::class) { log.add("derived"); Derived() }
+        }
+
+        assertSoftly {
+            log shouldBe listOf("first", "derived")
+            subject.get(Base::class)::class shouldBe Derived::class
+        }
+    }
+
+    // Pinned as it is; a question for the maintainer (ULTRA-00344, gate round 1, M4).
+    "CURRENT BEHAVIOUR: the public ServiceProviderFactory constructor runs the lambdas, newKontainer again" {
+
+        class Dyn
+
+        val runs = AtomicInteger()
+
+        val blueprint = kontainer { dynamic(Dyn::class) }
+        val kontainer = blueprint.create { with { runs.incrementAndGet(); Dyn() } }
+
+        val factory = ServiceProviderFactory(
+            blueprint = blueprint,
+            dynamics = kontainer.getServiceProviderFactory().dynamics,
+            providerProviders = emptyMap(),
+        )
+
+        assertSoftly {
+            withClue("one run at create, one unchecked run by the public constructor") {
+                runs.get() shouldBe 2
+            }
+
+            factory.newKontainer(DynamicOverrides(emptyMap()))
+
+            withClue("and one more for the kontainer newKontainer returns") {
+                runs.get() shouldBe 3
+            }
         }
     }
 
@@ -396,6 +528,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
+    // ULTRA-00332: clone runs the same check as create.
     "Cloning with an override for a non-dynamic is refused like create: KontainerInconsistent, the same message" {
 
         class Single

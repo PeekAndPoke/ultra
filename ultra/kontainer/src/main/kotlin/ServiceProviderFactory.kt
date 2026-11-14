@@ -6,6 +6,9 @@ import kotlin.reflect.KClass
  * Creates and caches [ServiceProvider] instances for a [Kontainer].
  *
  * Manages thread-safe access to providers and applies dynamic overrides.
+ *
+ * The constructor runs the override lambdas of [dynamics] without the checks of [KontainerBlueprint.create]; kontainers
+ * are made by [KontainerBlueprint.create] and [Kontainer.clone].
  */
 class ServiceProviderFactory(
     val blueprint: KontainerBlueprint,

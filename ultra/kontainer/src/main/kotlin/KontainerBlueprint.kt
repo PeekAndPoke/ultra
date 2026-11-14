@@ -224,6 +224,9 @@ class KontainerBlueprint internal constructor(
             )
         }
 
+        // Every override resolves to one service now, so an ambiguous one is refused before any override lambda runs
+        overridden.forEach { dynamicsBaseTypeLookUp.getDistinctFor(it) }
+
         return instantiate(dynamics)
     }
 
