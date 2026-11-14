@@ -93,15 +93,15 @@ class MpZonedDateTimeRangeZoneSpec : StringSpec({
 
     "DateTimeRangeConverter clamps to Genesis / Doomsday by instant; on a tie Genesis / Doomsday stay, as before" {
         val plusOne = MpTimezone.of("+01:00")
-        // 0001-01-01T01:00+01:00 is Genesis' instant, 9999-12-31T01:00+01:00 is Doomsday's: both ties (ULTRA-00343)
-        val converter = DateTimeRangeConverter(plusOne, MpLocalDate.of(1, 1, 1), MpLocalDate.of(9999, 12, 31))
+        // -10000-01-01T01:00+01:00 is Genesis' instant, +10000-01-01T01:00+01:00 is Doomsday's: both ties
+        val converter = DateTimeRangeConverter(plusOne, MpLocalDate.of(-10000, 1, 1), MpLocalDate.of(10000, 1, 1))
 
         val range = converter.fromHourToHour(fromHour = 1, toHour = 1)
 
         range.from shouldBe MpZonedDateTime.Genesis
         range.to shouldBe MpZonedDateTime.Doomsday
 
-        val past = DateTimeRangeConverter(plusOne, MpLocalDate.of(1, 1, 1), MpLocalDate.of(1, 1, 1))
+        val past = DateTimeRangeConverter(plusOne, MpLocalDate.of(-10000, 1, 1), MpLocalDate.of(-10000, 1, 1))
             .fromHourToHour(fromHour = 0, toHour = 1)
 
         past.from shouldBe MpZonedDateTime.Genesis
@@ -116,10 +116,9 @@ class MpZonedDateTimeRangeZoneSpec : StringSpec({
         outer.contains(inner) shouldBe true
     }
 
-    "DateTimeRangeConverter: an end exactly at Doomsday (23:00-01:00 on 9999-12-30) is clamped to Doomsday" {
+    "DateTimeRangeConverter: an end exactly at Doomsday (23:00-01:00 on 9999-12-31) is clamped to Doomsday" {
         val minusOne = MpTimezone.of("-01:00")
-        // ULTRA-00343: Doomsday is 9999-12-31T00:00Z, so the tie is 9999-12-30T23:00-01:00
-        val converter = DateTimeRangeConverter(minusOne, MpLocalDate.of(2020, 1, 1), MpLocalDate.of(9999, 12, 30))
+        val converter = DateTimeRangeConverter(minusOne, MpLocalDate.of(2020, 1, 1), MpLocalDate.of(9999, 12, 31))
 
         converter.fromHourToHour(fromHour = 0, toHour = 23).to shouldBe MpZonedDateTime.Doomsday
     }

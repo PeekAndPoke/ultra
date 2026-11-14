@@ -526,6 +526,39 @@ recomputed and right. Applied in one commit, tests and texts only (the KDoc sent
 | note | `toIsoString` pads a negative year wrongly; the text goes into the stored `human` field | RECORDED for the maintainer, no action |
 | counts | after delta round 2 (2026-11-14, `--rerun`, XML) | datetime JVM 2814 / 0, JS 2156 / 0, native 2148 / 0 (rows added inside an existing test, so the totals stay) |
 
+## Master's values restored for the merge (2026-11-14)
+
+The maintainer: "ok please do this so the merge works". For the merge of ULTRA-00341 (3b-1, 3b-2), `wt/datetime`
+carries master's values again: Genesis -10000-01-01T00:00:00Z (`-377_736_739_200_000`), Doomsday
++10000-01-01T00:00:00Z (`253_402_300_800_000`). The values built above (year 1 / 9999) are NOT merged. Which values,
+or whether the sentinels go (the analysis of 2026-11-14: explicit open ends), is open and discussed after the merge.
+
+**What 3b-1 did besides the values, and what it does now with master's values (each pinned in `GenesisDoomsdaySpec`
+or `MpLocalDateRangeLazySpec`, green on JVM, JS and native):**
+
+- Serialization: 3b-1 changed no decoder; nothing maps old values to new ones. Now an open range is stored with ts
+  -377736739200000 / 253402300800000 and reads back open (kotlinx; slumber unchanged from master).
+- Text: `Genesis.toIsoString()` is `-10000-01-01T00:00:00.000Z`, `Doomsday` `+10000-01-01T00:00:00.000Z`; both parse
+  back to the same instant.
+- `forever.asListOfDates()`: a lazy view (`ComputedList`) of 7,304,850 dates, -10000-01-01 to 9999-12-31; nothing is
+  materialised (a mutant back to the eager list fails). The closed `forever`: 7,304,851 dates through 10000-01-01.
+- `numberOfDays` and its clamp: `forever` 7,304,850; a range past Doomsday counts up to it with the half-day rounding:
+  2024-01-01 to 12000-01-01 is 2,913,175 (counts Doomsday itself), from 2024-01-02 it is 2,913,173.
+- `numDaysInMonth` from the calendar (round 1): independent of the values, kept.
+
+**Master's behaviour that the reviews had called a defect, back with these values (NOT fixed here; for the decision):**
+
+- Doomsday is 1 ms past the range of ArangoDB's date functions; Genesis lies outside it too; both texts have a
+  five-digit year.
+- `MpClosedLocalDateRange.beginningAt(d).asOpenRange.to` is 10000-01-02 (ts 253402387200000).
+- Genesis in a zone west of UTC falls on -10001-12-31.
+- The `numberOfDays` clamp counts Doomsday itself for every second start date (above), and
+  `MpClosedLocalDateRange.forever` ends on 10000-01-01 in its list.
+- A range wholly before -10000-01-01 or after 10000-01-01 gets a wrong count (negative, or 1 when it ends at Genesis)
+  and an empty list; BC ranges between -10000 and year 0 work.
+- Independent of the values, still open: `toIsoString` pads years -1 to -999 wrongly (`00-2`), `format("yyyy")` prints
+  `0000` for every BC year (see the analysis of 2026-11-14).
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
@@ -534,3 +567,6 @@ recomputed and right. Applied in one commit, tests and texts only (the KDoc sent
   the ticket).
 - 2026-11-14: round 1 NOT CLEAN, handled; delta round 2 CLEAN, its two MINORs applied. `numberOfDays` waits for the
   maintainer.
+- 2026-11-14: master's values restored on `wt/datetime` for the merge of ULTRA-00341 (maintainer: "ok please do this so
+  the merge works"); the values built here are not merged; the decision (other values, or no sentinels) is open and
+  discussed after the merge.

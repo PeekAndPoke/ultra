@@ -152,12 +152,12 @@ class MpZonedDateTime private constructor(
         }
 
         /**
-         * The Genesis, 0001-01-01T00:00:00Z: stands for "no start" in ranges, see [GENESIS_TIMESTAMP]
+         * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
          */
         val Genesis: MpZonedDateTime = MpInstant.Genesis.atZone(MpTimezone.UTC)
 
         /**
-         * The Doomsday, 9999-12-31T00:00:00Z: stands for "no end" in ranges, see [DOOMSDAY_TIMESTAMP]
+         * The Doomsday, a date in the distant future: +10000-01-01T00:00:00Z
          */
         val Doomsday: MpZonedDateTime = MpInstant.Doomsday.atZone(MpTimezone.UTC)
     }

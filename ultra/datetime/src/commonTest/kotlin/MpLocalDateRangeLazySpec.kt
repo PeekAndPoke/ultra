@@ -8,22 +8,23 @@ import io.peekandpoke.ultra.common.ComputedList
 @Suppress("unused")
 class MpLocalDateRangeLazySpec : StringSpec({
 
-    "forever.asListOfDates() is a lazy view of 3 652 058 dates, cheap to create and to read at its ends" {
+    "forever.asListOfDates() is a lazy view of 7 304 850 dates, cheap to create and to read at its ends" {
         val dates = MpLocalDateRange.forever.asListOfDates()
 
         (dates is ComputedList<*>) shouldBe true
         (dates is RandomAccess) shouldBe true
-        dates.size shouldBe 3_652_058
-        dates.first() shouldBe MpLocalDate.of(1, 1, 1)
-        dates.last() shouldBe MpLocalDate.of(9999, 12, 30)
-        dates[1_000_000] shouldBe MpLocalDate.of(2738, 11, 29)
+        dates.size shouldBe 7_304_850
+        dates.first() shouldBe MpLocalDate.of(-10000, 1, 1)
+        dates.last() shouldBe MpLocalDate.of(9999, 12, 31)
+        dates[1_000_000] shouldBe MpLocalDate.of(-7263, 11, 28) // independent day count
     }
 
-    "MpClosedLocalDateRange.forever: the same kind of view, through Doomsday (9999-12-31) itself" {
+    "MpClosedLocalDateRange.forever: the same kind of view; the clamp's half-day rounding counts Doomsday itself" {
         val dates = MpClosedLocalDateRange.forever.asListOfDates()
 
-        dates.size shouldBe 3_652_059
-        dates.last() shouldBe MpLocalDate.of(9999, 12, 31)
+        (dates is ComputedList<*>) shouldBe true
+        dates.size shouldBe 7_304_851
+        dates.last() shouldBe MpLocalDate.of(10000, 1, 1)
     }
 
     "a small range gives the same dates as before" {

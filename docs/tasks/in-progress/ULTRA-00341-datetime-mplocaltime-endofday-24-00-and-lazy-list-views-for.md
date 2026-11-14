@@ -229,9 +229,10 @@ each of the two slot factories).
 
 ## Batch 3b-1: plan as built
 
-Built on `wt/datetime` in one commit with the new sentinels of ULTRA-00343. 3b-2 (slots as start plus duration)
-waits for the maintainer. 3b-3 (an estimator arm in the cache): the coordinator merges track B's estimator first; this
-batch makes no claim about what it does (round 1).
+Built on `wt/datetime` in one commit with the new sentinels of ULTRA-00343; for the merge, the sentinels are back at
+master's values (maintainer, 2026-11-14; see "Sentinel values restored for the merge"). 3b-2 (slots as start plus
+duration) waits for the maintainer. 3b-3 (an estimator arm in the cache): the coordinator merges track B's estimator
+first; this batch makes no claim about what it does (round 1).
 
 - **`ComputedList<T>(size, compute)`** in `ultra/common` (new, public): a read-only `AbstractList` that computes each
   element from its index on demand and stores nothing; also `RandomAccess`. A negative size is an empty view; an
@@ -240,8 +241,9 @@ batch makes no claim about what it does (round 1).
   what it means for a consumer (each read computes again, which operations build a real list, thread safety).
 - **`MpLocalDateRange.asListOfDates()`:** same signature, returns `ComputedList(numberOfDays) { from.plusDays(it) }`;
   an invalid range still gives `emptyList()`. No cap and no exception: `forever.asListOfDates()` is a view of
-  3,652,058 dates (0001-01-01 to 9999-12-30), cheap to create and to read at its ends.
-  `MpClosedLocalDateRange.asListOfDates()` delegates (3,652,059 dates for its `forever`, through 9999-12-31).
+  7,304,850 dates (-10000-01-01 to 9999-12-31, master's sentinels), cheap to create and to read at its ends.
+  `MpClosedLocalDateRange.asListOfDates()` delegates (7,304,851 dates for its `forever`, through 10000-01-01: the
+  clamp's half-day rounding counts Doomsday itself).
 - **Size estimators:** the KDoc says only what holds whatever the estimator does: one that walks or samples the list
   sees computed elements and charges them as if stored, so it over-counts a view. (Before round 1 it described track
   B's sampling estimator, which is on another branch; on this branch and on master the estimator walks every
@@ -309,8 +311,9 @@ Verdict NOT CLEAN; the MAJOR (`numDaysInMonth`) and the sentinel items are recor
 ## Batch 3b-2: plan as built (the slot redesign)
 
 Built on `wt/datetime` on top of 3b-1, after the maintainer's decisions of 2026-11-14 (master: "Batch 3b: decisions of
-the maintainer"). **Status: 3b-2: BUILT, gate closed: round 1 NOT CLEAN (1 MAJOR), delta 2 CLEAN, delta 3 CLEAN; not
-merged, held with 3b-1 for the maintainer's word on the sentinel constants.**
+the maintainer"). **Status: 3b-2: BUILT, gate closed: round 1 NOT CLEAN (1 MAJOR), delta 2 CLEAN, delta 3 CLEAN.
+3b-1 and 3b-2 carry master's sentinel constants again (maintainer, 2026-11-14: "ok please do this so the merge
+works"); awaiting the delta review of that commit, then the merge. The choice of values stays open in ULTRA-00343.**
 
 - **`MpLocalTimeSlot` is a start and a duration:** `data class MpLocalTimeSlot private constructor(from, duration)`
   with `@ConsistentCopyVisibility`. Created by `of(from, duration)`, `of(from, to)`, `ofSecondsOfDay(from, to)` and
@@ -602,6 +605,38 @@ each item below was settled by a run. Close-out only: test rows, texts and dead 
 | withdrawn | two observations of the reviewer | WITHDRAWN by the reviewer |
 | counts | after round 3 (2026-11-14, `--rerun`, XML) | datetime JVM 2855 / 0, JS 2197 / 0, native 2189 / 0 (`ZoneParitySpec` 55 on all three, `ZoneParityJvmSpec` 4); slumber 1268 / 0 (`MpLocalTimeSlotCodecSpec` 9); codegen 326 / 0; compile sweep 0 `e:`; mutants C1, C2, C3 red (1 each) |
 
+## Sentinel values restored for the merge (2026-11-14)
+
+The maintainer: "ok please do this so the merge works". One commit on top of the merge of master restores master's
+`GENESIS_TIMESTAMP = -377_736_739_200_000L` (-10000-01-01) and `DOOMSDAY_TIMESTAMP = 253_402_300_800_000L`
+(+10000-01-01) and nothing else of 3b-1. Which values (or none) is open in ULTRA-00343, after the merge.
+
+- **Production, now identical to master:** `constants.kt`, `MpInstant.kt`, `MpLocalDateTime.kt`, `MpZonedDateTime.kt`;
+  in `MpLocalDate.kt` the Genesis / Doomsday KDoc (`numDaysInMonth` from the calendar and the slot mapping stay).
+  Kept, as it holds for any values: the `numberOfDays` KDoc on the clamp.
+- **Stay:** `ComputedList`, the lazy `asListOfDates()`, `numDaysInMonth` from the calendar, all of 3b-2.
+- **Tests back to master's files:** `ConstantsSpec`, `MpInstantSpec`, `MpLocalDateSpec` (plus the moved
+  `numDaysInMonth` rows), `MpLocalDateTimeSpec`, `MpZonedDateTimeSpec`, `MpInstantRangeSpec`,
+  `MpZonedDateTimeRangeZoneSpec`. Only the 3b-1 value commit had touched them.
+- **Rewritten:** `GenesisDoomsdaySpec` for master's values (timestamps, text and parse of both, open on every range
+  type, stored ts and read back open, the neighbours on both sides on all four types, `forever` contains 9999-12-31,
+  `beginningAt(d).asOpenRange.to` = 10000-01-02, dates outside, the clamp counts, Genesis in New York on -10001-12-31,
+  the converter clamp). `MpLocalDateRangeLazySpec`: `forever` is 7,304,850 dates, -10000-01-01 to 9999-12-31, index
+  1,000,000 = -7263-11-28 (independent day count); the closed `forever` 7,304,851, through 10000-01-01.
+- **Deleted:** slumber `OldSentinelsCodecSpec`. It pinned that ranges stored with master's values still read as open
+  after the switch to year 1 / 9999; with master's values back there is nothing old to read (master had no
+  equivalent, so nothing comes back).
+- **3b-2 with +10000-01-01, proven by run:** every open-end row (the last date 999 999 999-12-31, the JS open end, the
+  infinite slots, the empty range past the open end) is green unchanged on JVM, JS and native; no 3b-2 expectation
+  changed.
+- **Mutants:** `GENESIS_TIMESTAMP` one day later: red on JVM (15), JS (14) and native (14);
+  `DOOMSDAY_TIMESTAMP` one day later: red on JVM (16), JS (15) and native (15); `asListOfDates()` back to the eager
+  list: red (2, the `ComputedList` checks on both `forever` views). Each restored and checked with `cmp`.
+- **Counts** (2026-11-14, `--rerun`, XML): datetime JVM 2855 / 0, JS 2197 / 0, native 2189 / 0 (`GenesisDoomsdaySpec`
+  11, `MpLocalDateRangeLazySpec` 4 on all three); slumber 1267 / 0 (one spec fewer); codegen 326 / 0; common 389 / 0.
+  No module outside `ultra/datetime` and slumber's tests uses the sentinels or the range types (searched funktor,
+  kraft, vault, karango, monko, codegen). Compile sweep: 0 `e:` lines.
+
 ## Left out, for one follow-up ticket
 
 - `MpLocalTime.jvm` drops the milliseconds (`Max.jvm` = 23:59:59).
@@ -655,3 +690,5 @@ durations are cut to whole milliseconds; `Duration.INFINITE` gives an open end o
 - 2026-11-14: 3b-2 delta round 2 CLEAN; its MINORs, mutants and texts handled; a short delta review before the merge.
 - 2026-11-14: 3b-2 delta round 3 CLEAN; close-out applied. Gate closed; 3b-2 held with 3b-1 for the maintainer's word on
   the sentinel constants.
+- 2026-11-14: master merged into `wt/datetime`; master's sentinel constants restored on top for the merge (maintainer);
+  the choice of values stays open in ULTRA-00343.
