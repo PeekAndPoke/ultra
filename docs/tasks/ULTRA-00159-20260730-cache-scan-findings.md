@@ -841,7 +841,7 @@ collection, deterministically (his idea of "64 random entries", made reproducibl
 | Identity set | expect/actual `IdentitySet`: JVM `IdentityHashMap`, JS `Set`, native `identityHashCode` + `===`; never calls `hashCode()`/`equals()` of a visited object | cycle tests (data classes, list, map containing itself, a cycle through a list) green; mutant "equality set" (JVM) → the hostile-`hashCode` test and "two equal but distinct objects are both counted" red |
 | Sampling | more than 64 elements: 64 at evenly spaced indexes (lists with `RandomAccess`, arrays), else one stepping pass over the first 1 024 elements (`sampleWindow`) with the same evenly spaced targets; the rest charged by the samples' average (weights); no `Random` | stepping cost measured (JVM): 100 000 elements 2-5 ms, 1 000 000 10-15 ms, so the pass is capped at the window. Mutants: indexed sample = first 64 → front and back tests red; stepping = first 64 → the set test red. Building the set test found a defect of the first version: a fixed step of window / 64 rounded down left the window's tail unsampled (fixed: evenly spaced targets) |
 | Cap | at most 10 000 objects visited (`maxObjects`), each further one charged flat (header and two references), no descent | exact pinned value with `maxObjects = 100`; mutant "no cap" → red |
-| Never throws | iterative walk with an explicit stack; field/property reads guarded (`UnreadableField`, charged flat); a last-resort catch charges a failed walk flat | 100 000-deep nesting green on JVM, JS and native (red before on the JVM: stack overflow); JS getter that throws: exact value pinned; mutant (no guard) → red |
+| Never throws | iterative walk with an explicit stack; field/property reads guarded (`UnreadableField`, charged flat); a last-resort catch charges a failed walk flat | 100 000-deep nesting green on JVM, JS and native (red before on the JVM: stack overflow) - **corrected in estimator review round 1:** that test asserted only `> 0`, which a recursive walk with the catch also passes; it now pins the exact value; JS getter that throws: exact value pinned; mutant (no guard) → red |
 | Writes only | `maxMemoryUsage` sizes an entry from the batch's last write; reads reuse the size and still stamp the access time | estimator called twice (key and value) for one put and ten reads; mutant "estimate on reads" → red. Access order: a read entry outlives an older unread one; mutant "reads keep the old stamp" → red (a first version of that test survived: equal stamps within one pass tie, and a re-insert moves the entry behind its peers anyway; fixed by separate passes). A value mutated in place after its put keeps its old size (documented) |
 | Fallback | a new entry whose estimate throws is charged `fallbackSize` (default `DEFAULT_FALLBACK_SIZE` = 1 024), never 0; an existing entry keeps its size | an estimator failing for everything still lets `maxMemoryUsage` evict (2 of 5 kept at a budget of 2.5 fallbacks); mutant "fallback 0" → red |
 | JS numbers | all numbers 8 B (the `Double` check first; on JS every number matches it) | JS test; mutant "`Byte` first" → red |
@@ -896,7 +896,7 @@ Reference cases (JVM), estimate / exact walk:
 | every 64th large | 1.32 | 1.97 |
 | every 100th large (the stride's worst case) | 1.13 | 24.10 |
 | large exactly on the 64 golden positions (golden's worst case) | 24.10 | 1.13 |
-| one object shared by all elements | 7.58 | 7.58 |
+| `Holder(shared, id)`, one 10 000-char string shared by all (a bare list of references to it: 28.9) | 7.58 | 7.58 |
 | set of 1 000, large in the last 100 | 0.95 | 0.95 |
 | map of 5 000 entries | 0.97 | 0.97 |
 
@@ -913,6 +913,97 @@ arithmetic stays below `size` up to `Int.MAX_VALUE` (pinned); de-duplication mak
 just above 64 elements (65 → 55 distinct), each then weighs size / distinct.
 
 Evidence: `--rerun` cache jvm **217** / js **187** / native **184**, slumber **1249** / vault **287**, 0 failures; cache JVM suite under CPU load (load average 16-22): **10 runs, 0 failures**.
+
+### Estimator review round 1 — 2026-11-14
+
+Both passes NOT CLEAN, on the same MAJOR (beyond the cap everything was charged 32 B × weight), plus 13
+MINORs. Every scenario was first written as a test and run on the code as it stood; "did not survive"
+means that test was green before any change (it stays, as a guard against the named mutant). Fixes:
+d4379b22 (MAJOR), 7c379495 (MINORs and texts).
+
+**MAJOR — fixed in two of the three planned steps** (d4379b22). Estimate / exact walk (JVM probe):
+
+| Value | before | step 1: leaves before the cap | step 2: + breadth first |
+|---|---|---|---|
+| a: 100 × 100 × 100 strings (74 MB) | 0.04 | 1.00 | 1.00 |
+| b: `Holder(blob 50 MB, 200 × 200 cells)`, blob first | 0.09 | 1.00 | 1.00 |
+| b: the same, table first | 0.98 | 1.00 | 1.00 |
+| `Doc(raw 10 MB, tree of 9 841 nodes)` | 0.05 | 1.00 | 1.00 |
+| 100 orders × 100 lines × 5 objects | 0.50 | 1.00 | 1.00 |
+| 100 orders × 100 lines × 15 objects | 0.17 | 0.50 | **0.63** |
+| tree of 9 841 data-class nodes (29 524 objects with labels and nulls) | 0.51 | 1.00 | 1.00 |
+| strings 10k / 1 000 maps of 10 / map of 5 000 | 1.00 / 1.00 / 0.97 | same | same |
+| 6 400 strings, 10 % large: front / back / every 10th / every 100th | 0.95 / 0.95 / 1.31 / 1.13 | same | same |
+| 6 400 `Holder(shared 10k string, id)` | 7.58 | 7.58 | 7.58 |
+| set of 1 000, large in the last 100 | 0.95 | 0.95 | 0.95 |
+
+No reference case got worse. Step 3 (a cut element charged its siblings' average) not taken: scenario
+a is at 1.00; the KDoc carries scenario a as the worked example, the rule of thumb (`min(n, 64) * k`
+below `maxObjects`) and the direction: **the cap errs low**.
+
+- The cap now counts only objects queued or visited; a string or primitive array is sized from its
+  length wherever it is reached and never counts. The queue holds at most `maxObjects` entries.
+- **Found while measuring, never committed:** `total += shallowSize(...)` read `total` before
+  `shallowSize` charged the leaves it handed on, and the write dropped them (estimates 0.03-0.14).
+  Now a local first; mutant M4 below turns 16 tests red.
+- **Added, not asked for — the work bound.** With leaves no longer capped, scenario a sized 262 144
+  strings, 67 ms warm, the identity set's hashing most of it. The set now takes at most
+  `2 * maxObjects` objects; after that every object counts as new (a shared one may count again: errs
+  high). Scenario a: 16 ms warm. The work is bounded by the configuration: at most `maxObjects`
+  visits, each handing on at most `sampleSize` elements (a map twice that) or one object's fields.
+- Timings (JVM, warm): strings 10k 0.02-0.03 ms, 100k 0.1 ms, response-shaped 0.2 ms, scenario a
+  16 ms, b 1.8 ms.
+- Tests (common, all three platforms): a blob behind a table that uses up the cap, in four orders; 111
+  lists with 1 000 strings exact under a cap of 200 (HEAD: 12 392 instead of 66 656); breadth first,
+  a shallow big string beside a 1 000-deep chain, both orders; the bounded identity set, exact values.
+  All four red on HEAD. Mutants: M1 LIFO instead of FIFO → the breadth-first test; M2 leaves charged
+  flat past the cap → survived the first version of the blob test (the blob was reached before the
+  cap was full), reshaped (the blob two lists deep) → red; M3 no tracking budget → the identity test;
+  M4 the lost update → 16 tests.
+
+**MINORs**
+
+| Finding | Outcome | Test | Mutant → red |
+|---|---|---|---|
+| Per-object guard | CONFIRMED (whole estimate 32 B). Each object's walk is guarded: charged flat, what it handed on before stays. Shape chosen: internal `ObjectSizeEstimatorImpl.estimateCounted` → `CountedEstimate(bytes, failures, failureClass)`; `MaxMemoryUsageBehaviour` uses it when its estimator is an `ObjectSizeEstimatorImpl` and counts through a new `FastCache.recordFailures(kind, class, count)`; the line reads `FastCache size estimate (part charged flat) failed N time(s): <class>`. The estimator stays stateless (state lives in one call's `Walk`) | `Boom` test: 50 000 088 exact (was 32); counted test (2 failures, `IllegalStateException`); JVM loop report test | guard narrowed → 3 tests; count dropped → 2; report dropped → the loop test |
+| Outer catch | Now reachable only by a failure outside an object's walk (out of memory); kept as the last resort, counted as one failure. No test can make it red | – | – |
+| Config coercion | CONFIRMED for `sampleSize` (0 → list header only; -5 → `NegativeArraySizeException`, caught, 32 B) and `maxObjects` (0 → 32 B). The window already took `max(window, samples)` - did not survive, now one coerced field. `fallbackSize ≤ 0` CONFIRMED (charged 0). Each fallback in the KDoc | four tests | each coercion removed → its test |
+| Small branch past `size` | CONFIRMED: an iterator longer than `size` was followed to its end (10 000 of 10 000) | counting collection: 3 `next()` | bound dropped → red |
+| `size` read once | CONFIRMED: read twice | the same collection: 1 read | header from `obj.size` again → red |
+| JS own properties | CONFIRMED: all read. Sampled like a list (new internal `fieldsForWalk`; public `getFieldsOf` unchanged). A function-valued own property now counts its reference (before: left out) | 1 000 accessor properties: at most 64 reads | read whole → red |
+| JS typed arrays, `ArrayBuffer`, `DataView`, `Blob` | CONFIRMED: `ArrayBuffer` 16 B, `Uint8Array(1000)` walked as 1 000 properties. Sized from `byteLength` / `size` (new internal `leafSizeOf`); JS `Map` / `Set` charged an empty object, documented and pinned | exact values | `byteLength` ignored → red; `Blob` ignored → red |
+| JS non-Error throws | CONFIRMED: `catch (e: Throwable)` does not catch `throw 'x'` - the JS test run aborted. The property read now catches `dynamic` | exact value | back to `Throwable` → red |
+| Saturation | CONFIRMED: key + value wrapped negative (the estimate itself saturated); a negative custom estimate went into the total. Entry size and total saturate, never below 0; a removal floors at 0 (after saturation the total is no longer the exact sum - documented in the code) | `nCopies` four deep (JVM); custom extremes (common) | each of the four guards removed → red |
+| `window = size` mutant | did not survive as a defect | non-List collection of 1 000 000: at most 1 024 `next()` | `window = size` → red |
+| Last-resort catch mutant | see "Outer catch" | – | – |
+| Recursive walk mutant | did not survive: the 100 000-deep test was only `> 0` | now exact (2 400 016, `maxObjects` 200 000) | recursion → red (stack overflow caught per object, wrong value) |
+| `lastWrite as? PutAction` mutant | did not survive | `[Put k 1]`, then `[Put k 30, Read k 30]` → 30 | `action as? PutAction` → red |
+| Map values, `Array<String>`, custom `fallbackSize`, weight in the cap arm | did not survive | exact small map, sampled map ratio, exact array, fallback through constructor and builder, cap + sampling exact (40 016) | values dropped → 2; array elements dropped; fallback ignored; builder drops it; weight dropped → each red |
+| JS equal strings once, native flat object | did not survive | exact values (`nativeTest` source set new) | native fields as empty → red |
+| Cycle values | did not survive: 88 and 112 on all three platforms | pinned | identity check off → red |
+| Texts | fixed: changelog ("up to 64", golden ratio); KDoc "64 elements are"; the JVM comment; `getFieldsOf` KDoc; the `VisitedSet` follow-up (done: `IdentitySet`); "7.58" names its shape (`Holder`; a bare list of references: 28.9); the "100 000-deep green" evidence line (it proved nothing: `> 0`) | – | – |
+| Surplus | removed: the JVM `field.get` catch (`UnreadableField` is JS-only now; a failing read would land in the per-object guard); the `obj == null` arm (gone with the rewrite: null is a primitive) | – | – |
+
+**For the maintainer (left, as briefed):** an entry whose estimate exceeds the whole budget evicts every
+older entry, then itself. Sampling can inflate one entry by up to size / 64 (5 000 elements with one
+1.3 MB string in the middle → about 100 MB). Caffeine evicts an over-weight entry on its own, without
+touching the others. Here that would be: in `MaxMemoryUsageBehaviour.handle`, an entry whose size
+exceeds `maxMemorySize` is evicted alone (spared while a write is pending, like any eviction) and never
+counted into the total - about 10 lines and two tests. The cost: such a value can never be cached, and
+with an inflated estimate that includes values that are really small.
+
+Open on JS, outside the estimator (inferred from the test above, not tested): `catch (e: Throwable)`
+lets a non-Error throw through everywhere in FastCache - a loader, a listener or a custom estimator
+throwing a string would pass the loop's catch. The estimator's own per-object guard catches
+`Throwable` too, so a Kotlin collection whose code throws a string on JS escapes the estimate.
+
+Initialization order: no new field in `FastCache`; `MaxMemoryUsageBehaviour.chargedOnFailure` is
+declared before its `init`; the estimator's coerced settings are plain constructor-time values.
+
+Evidence: `--rerun` cache jvm **238** / js **211** / native **204**, slumber **1249** / vault **287**, 0 failures;
+cache JVM suite under CPU load (load average 17-26): **10 runs, 0 failures**. All 31 mutants above
+restored (byte-compared); one first run of N18 failed to compile and showed the previous run's XML -
+the mutation script now deletes the results before each run, and N18 was redone (red).
 
 ## Changelog text
 
@@ -973,16 +1064,26 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
   undone by a running provider; a cancelled caller waiting on another caller's provider no longer
   spins.
 - The default ObjectSizeEstimator has a bounded cost: an identity set instead of a linear scan; a
-  collection, map or array of more than 64 elements is sampled at 64 evenly spaced positions (fixed,
-  so the same value always gets the same estimate; collections without index access over their first
-  1 024 elements) and the rest charged by the samples' average; at most 10 000 objects are visited,
-  any further one charged flat; the walk is iterative and never throws. The sample positions follow
-  the golden ratio by default (EstimatorConfig.samplePick = SamplePick.GoldenRatio; EvenlySpaced, a
-  fixed stride, is the alternative). Estimates change for large values (measured accuracy and limits
-  in the KDoc). One estimate of 10 000 strings: JVM 17 ms -> 0.08 ms, JS 450 ms -> 0.2 ms, native
-  3.7 s -> 0.7 ms. EstimatorConfig gains sampleSize, sampleWindow, maxObjects and samplePick (source
-  compatible; binary incompatible for its constructor and copy).
-- JS: every number is charged 8 bytes (was 1).
+  collection, map or array (and a JS object's properties) of more than 64 elements is sampled at up
+  to 64 fixed positions, following the golden ratio by default (the same value always gets the same
+  estimate; collections without index access over their first 1 024 elements), and the rest charged
+  by the samples' average; at most 10 000 objects are visited, breadth first, any further one charged
+  flat - strings and primitive arrays are always sized from their length and do not count; the walk
+  is iterative and never throws: an object whose walk fails is charged flat and the rest stands.
+  EstimatorConfig.samplePick = SamplePick.GoldenRatio by default; EvenlySpaced, a fixed stride, is
+  the alternative. Odd settings fall back (sampleSize and maxObjects below 1 count as 1, a window
+  below the sample size as the sample size). Estimates change for large values (measured accuracy and
+  limits in the KDoc). One estimate of 10 000 strings: JVM 17 ms -> 0.03 ms, JS 450 ms -> 0.2 ms,
+  native 3.7 s -> 0.7 ms. EstimatorConfig gains sampleSize, sampleWindow, maxObjects and samplePick
+  (source compatible; binary incompatible for its constructor and copy).
+- maxMemoryUsage: entry sizes and the total saturate at Long.MAX_VALUE and are never negative (a
+  huge value no longer wraps the total negative and switches eviction off); a fallbackSize of zero
+  or below counts as the default; parts of a value the default estimator could not walk are counted
+  in the loop's failure line ("size estimate (part charged flat)").
+- JS: every number is charged 8 bytes (was 1). An ArrayBuffer, a typed array or a DataView is
+  charged its byte length, a Blob its size; a JS Map or Set is charged an empty object. A getter that
+  throws a non-Error value no longer escapes the estimate. An own property holding a function now
+  counts its reference.
 - JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
   outer instance.
 - maxMemoryUsage estimates an entry when it is written; reads reuse that size (a value changed in
@@ -1003,9 +1104,8 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
       not count as access").
 - [x] Estimator: the plan of round 3, built (estimator batch); waits for its review gate.
 - [x] Estimator sampling: golden ratio is the default, the stride configurable (sampling pick section).
-- [ ] `VisitedSet` is now O(n²) by identity scan. Correct, but an identity-keyed set
-      (`IdentityHashMap` / JS `Set` / native fallback) needs an expect/actual — deferred with the
-      estimator design question.
+- [x] `VisitedSet` was O(n²) by identity scan: replaced by the expect/actual `IdentitySet` in the
+      estimator batch (6ef83702).
 - [x] Deferred mechanical, because they touch code the design fixes will rewrite: statistics/`totalSize`
       memory visibility (F9), `getOrPut`'s missing `ReadAction` (F13), JVM `Class -> Field[]`
       memoization (C9), the blanket `catch (_: Throwable)` in JVM `getFieldsOf` (C6). F9, C9, C6 in
@@ -1029,3 +1129,6 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
   waiting for confirmation.
 - 2026-11-14: review round 4 (delta): both passes CLEAN; the MINOR batch applied. The estimator plan
   is approved (constant-time lookups); it starts after the merge.
+- 2026-11-14: estimator review round 1: both passes NOT CLEAN (the same MAJOR, 13 MINORs). The MAJOR
+  fixed (leaves sized past the cap, breadth first, bounded identity set; d4379b22), the MINORs fixed
+  or pinned (7c379495). Awaiting the delta review.
