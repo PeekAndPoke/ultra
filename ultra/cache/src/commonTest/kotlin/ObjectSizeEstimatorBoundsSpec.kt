@@ -206,16 +206,70 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
             (estimator.estimate(listOf(chain, shallow)) >= 200_048L) shouldBe true
         }
 
-        "the identity set is bounded: beyond twice the cap, a shared object counts again" {
+        "the identity set is bounded: past the cap in strings, a shared string counts again" {
             val shared = "x".repeat(1_000)
             val value = List(30) { "s$it" } + List(5) { shared }
             // the list (16 + 35 * 8), 10 strings of 2 chars and 20 of 3 (52 and 54), the shared one (2 048)
             val once = 296L + 10 * 52L + 20 * 54L + 2_048L
 
             ObjectSizeEstimator().estimate(value) shouldBe once
-            // budget 20: the list and the first 19 strings; then every string counts as new, shared too
+            // the first 10 strings are tracked; every later one is sized without the check, shared too
             ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 10)).estimate(value) shouldBe
                 once + 4 * 2_048L
+        }
+
+        "the identity set is bounded, yet a back-reference never walks a cycle again" {
+            val parent = ArrayList<Any>()
+            val child = listOf("a", "b", "c", "d", "e", "f", "g", parent)
+            repeat(80) { parent.add(child) }
+
+            val estimator = ObjectSizeEstimator(
+                ObjectSizeEstimatorImpl.EstimatorConfig(sampleSize = 8, maxObjects = 4)
+            )
+
+            // the parent (16 + 80 * 8); the child, sampled 8 of 80 times, so with the weight 10: itself
+            // (16 + 8 * 8) and its seven strings (50 each); the parent behind it already counted
+            estimator.estimate(parent) shouldBe 656L + 10 * (80L + 7 * 50L)
+        }
+
+        "the identity set is bounded, yet a doubly linked chain is walked once" {
+            fun node(vararg strings: String) = mutableListOf<Any?>(strings[0], strings[1], strings[2], null, null)
+
+            val nodes = List(4) { i -> node("a$i", "b$i", "c$i") } +
+                List(2) { i -> node("x".repeat(999) + i, "y".repeat(999) + i, "z".repeat(999) + i) }
+            nodes.zipWithNext { a, b ->
+                a[4] = b
+                b[3] = a
+            }
+
+            val estimator = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 6))
+
+            // six nodes of five references (56 each), twelve 2-char strings (52), six 1 000-char ones
+            // (2 048), the two nulls at the ends (4 each)
+            estimator.estimate(nodes[0]) shouldBe 6 * 56L + 12 * 52L + 6 * 2_048L + 2 * 4L
+        }
+
+        "with the default settings, parents and children referring to each other are counted once" {
+            val value = List(64) { p ->
+                val parent = ArrayList<Any>()
+                val children = ArrayList<Any>()
+                parent.add(children)
+                repeat(640) { c -> children.add(listOf("a$p-$c", "b$p-$c", "c$p-$c", "d$p-$c", "e$p-$c", parent)) }
+                parent
+            }
+
+            // the same estimate as without any budget: every object is walked once
+            ObjectSizeEstimator().estimate(value) shouldBe
+                ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 1_000_000)).estimate(value)
+        }
+
+        "the cap counts the queued objects too, so it cuts before they are walked" {
+            val value = List(4) { a -> List(4) { b -> listOf("s$a$b") } }
+            val estimator = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 10))
+
+            // walked: the outer list (16 + 4 * 8), the four inner ones (48 each), five of the sixteen
+            // innermost (16 + 8 and a 3-char string of 54); the other eleven charged flat (32)
+            estimator.estimate(value) shouldBe 48L + 4 * 48L + 5 * (24L + 54L) + 11 * 32L
         }
 
         "sampling: large elements at the back of a list are seen" {

@@ -24,31 +24,37 @@ import kotlin.math.roundToLong
  * - **Sampling.** A collection, map or array with more than 64 elements (`sampleSize`) is not walked
  *   whole: up to 64 elements are (just above 64 fewer, as positions coincide - 65 elements give 55),
  *   and the rest is charged by their average; so are the properties of a JS object. The positions
- *   are fixed, never random, so the same value always gets the same estimate; by default they follow the golden ratio
- *   (`SamplePick.GoldenRatio`), spread evenly without a fixed period. `SamplePick.EvenlySpaced`, a
- *   fixed stride, is the alternative - switch with `EstimatorConfig(samplePick = ...)`. A collection
- *   without index access (a set, a linked list, a map) is sampled over its first 1 024 elements only
- *   (`sampleWindow`), to keep the stepping pass short.
+ *   are fixed, never random, so the same value always gets the same estimate; by default they follow
+ *   the golden ratio (`SamplePick.GoldenRatio`), spread evenly without a fixed period.
+ *   `SamplePick.EvenlySpaced`, a fixed stride, is the alternative - switch with
+ *   `EstimatorConfig(samplePick = ...)`. A collection without index access (a set, a linked list, a
+ *   map) is sampled over its first 1 024 elements only (`sampleWindow`), to keep the stepping pass
+ *   short.
  * - **A cap.** At most 10 000 objects are visited per estimate (`maxObjects`), breadth first, so the cap
  *   cuts the deepest levels and never a whole sibling subtree. A string or primitive array is always
  *   sized from its length: it needs no descent and does not count against the cap. Beyond the cap,
  *   any other object is charged a flat header and two references, without looking inside it - **so
  *   the cap errs low**, by what the cut objects hold.
- * - **A bounded identity set.** A shared object is charged once while the set holds fewer than twice
- *   `maxObjects` objects; beyond that every object counts as new, so a shared one may count again -
- *   that errs high.
+ * - **A bounded identity set.** A shared object is charged once. The set holds every object that is
+ *   walked (at most `maxObjects`), so a back-reference never walks a cycle again, and the first
+ *   `maxObjects` strings and primitive arrays - twice `maxObjects` in all. A string or primitive array
+ *   reached after those is sized without the check, and an object beyond the cap that was not walked
+ *   is charged flat each time it is reached: a shared one may count again - **that errs high**.
  * - **No stack, no throw.** The walk is iterative, so a deep graph cannot overflow the stack. An object
  *   whose walk throws (a collection whose iterator fails, a JS getter) is charged flat, and the rest
  *   of the estimate stands; [FastCache.MaxMemoryUsageBehaviour] reports how many in the loop's
- *   failure line. An estimate never throws, and saturates at `Long.MAX_VALUE`.
+ *   failure line. An estimate never throws - on JS not even for a thrown value that is no `Error`,
+ *   or a `Proxy` that refuses to be inspected - and saturates at `Long.MAX_VALUE`.
  * - **Odd settings fall back, never throw:** a `sampleSize` below 1 counts as 1, a `sampleWindow`
  *   below the sample size as the sample size, a `maxObjects` below 1 as 1.
  *
  * The work is bounded by the configuration, not by the value: at most `maxObjects` visits, each
  * handing on at most `sampleSize` elements (twice that for a map) or the fields of one object, each
- * sized or queued in constant time. Worked example: a list of 100 lists of 100 lists of 100 strings
+ * sized or queued in constant time. Not counted in that bound: listing a JS object's own properties,
+ * linear in their number on every visit, and a collection's `size` where that is linear (a concurrent
+ * queue counts its nodes). Worked example: a list of 100 lists of 100 lists of 100 strings
  * (a million strings, 74 MB). Sampling walks 64 of each 100, so 1 + 64 + 4 096 lists are visited and
- * 262 144 strings sized - estimate / exact 1.00, 16-19 ms on the JVM. Rule of thumb for when the cap
+ * 262 144 strings sized - estimate / exact 1.00, 15-35 ms on the JVM. Rule of thumb for when the cap
  * cuts: a value whose top level holds `n` elements of `k` objects each (strings and primitive arrays
  * not counted) stays below the cap while `min(n, 64) * k` stays below `maxObjects`.
  *
@@ -68,7 +74,7 @@ import kotlin.math.roundToLong
  * - a set of 5 000 strings whose large ones are its last 500, beyond the sampling window: **0.24**.
  *
  * Cost of one estimate on the JVM: a list of 10 000 strings 0.03 ms, 100 000 strings 0.1 ms, 1 000
- * maps of 10 entries 0.2-0.6 ms (before sampling and the cap: 17 ms, 1.5 s and 450 ms).
+ * maps of 10 entries 0.2-0.6 ms (before sampling and the cap: 17 ms, 1.5 s and 70 ms).
  *
  * ## Per platform
  *
@@ -123,8 +129,9 @@ interface ObjectSizeEstimator {
  * sums up estimated sizes for primitives, strings, arrays, collections, maps and arbitrary objects.
  *
  * The walk is bounded, so its cost is too - see [ObjectSizeEstimator] for what that costs in accuracy:
- * - an identity set (constant time per object, at most twice [EstimatorConfig.maxObjects] objects)
- *   keeps a shared object from being charged twice; it never calls `hashCode()` or `equals()`;
+ * - an identity set (constant time per object, at most twice [EstimatorConfig.maxObjects] objects:
+ *   every one walked, and the first strings and primitive arrays) keeps a shared object from being
+ *   charged twice and a cycle from being walked again; it never calls `hashCode()` or `equals()`;
  * - a collection, map or array with more than [EstimatorConfig.sampleSize] elements is sampled, and
  *   the rest is charged by the sampled elements' average;
  * - at most [EstimatorConfig.maxObjects] objects are visited per estimate, breadth first; strings and
@@ -184,7 +191,8 @@ class ObjectSizeEstimatorImpl(
      *   short. Below [sampleSize] counts as [sampleSize]
      * @property maxObjects   objects visited per estimate, strings and primitive arrays not counted; any
      *   further one is charged a flat header and two references, without descent. The identity set
-     *   holds at most twice as many. Below 1 counts as 1
+     *   holds at most twice as many: the objects walked and as many strings and primitive arrays.
+     *   Below 1 counts as 1
      * @property samplePick   where the samples sit - see [SamplePick]
      */
     data class EstimatorConfig(
@@ -232,13 +240,12 @@ class ObjectSizeEstimatorImpl(
     override fun estimate(obj: Any?): Long = estimateCounted(obj).bytes
 
     /** [estimate], with how many objects failed to walk and were charged flat. */
-    internal fun estimateCounted(obj: Any?): CountedEstimate = try {
-        Walk().run(obj)
-    } catch (e: Throwable) {
-        // Last resort: each object's walk is guarded, so only a failure outside one lands here - out
-        // of memory, say.
-        CountedEstimate(flatObject(), 1, e::class.simpleName)
-    }
+    internal fun estimateCounted(obj: Any?): CountedEstimate = catchingAll(
+        { Walk().run(obj) },
+        // Last resort: every object's sizing and walk is guarded, so only a failure outside them lands
+        // here - out of memory in the walk's own bookkeeping, say.
+        { e -> CountedEstimate(flatObject(), 1, e.failureName()) },
+    )
 
     /** What an object is charged when it cannot be walked: a header and two references. */
     private fun flatObject(): Long = cfg.objectHeader + 2L * cfg.pointerSize
@@ -262,18 +269,21 @@ class ObjectSizeEstimatorImpl(
     /**
      * One estimate: breadth-first, so the cap cuts the deepest level and never whole sibling subtrees.
      *
-     * The cap counts the objects taken off the queue. Once objects visited plus queued reach it,
-     * nothing more is queued: a string or primitive array is sized on the spot from its length (it
-     * needs no descent), anything else is charged flat. So the queue never holds more than
-     * [EstimatorConfig.maxObjects] entries, and the work is at most that many visits plus one
-     * constant-time sizing per reference they hold.
+     * The cap counts the objects queued, visited or waiting: once they reach it, nothing more is
+     * queued. A string or primitive array is sized on the spot from its length (it needs no descent and
+     * never counts), anything else beyond the cap is charged flat. So at most
+     * [EstimatorConfig.maxObjects] objects are ever queued, and the work is at most that many visits
+     * plus one constant-time sizing per reference they hold.
+     *
+     * The identity set holds every queued object - so a back-reference never walks a cycle again - and
+     * the first [EstimatorConfig.maxObjects] strings and primitive arrays: at most twice the cap.
      */
     private inner class Walk {
         private val seen = IdentitySet()
         private val queue = ArrayDeque<Pending>()
         private var total = 0.0
         private var visited = 0
-        private var tracked = 0
+        private var trackedLeaves = 0
         private var failures = 0
         private var failureClass: String? = null
 
@@ -290,47 +300,64 @@ class ObjectSizeEstimatorImpl(
         }
 
         /**
-         * Charges [obj] now, or queues it: a primitive, an unreadable field, a string or primitive array
-         * (sized from its length, no descent) and anything beyond the cap are charged now.
+         * Charges [obj] now, or queues it. Guarded: an object whose sizing throws (a revoked JS proxy)
+         * is charged flat and counted, and the elements beside it stand.
          */
         fun push(obj: Any?, weight: Double) {
-            val primitive = primitiveSize(obj)
+            val own = catchingAll(
+                { sizeOrQueue(obj, weight) },
+                { e ->
+                    fail(e.failureName())
+                    flatObject().toDouble()
+                },
+            )
 
-            when {
-                primitive != null -> total += primitive * weight
+            total += own * weight
+        }
 
-                obj === UnreadableField -> total += flatObject() * weight
+        /** What [obj] is charged now - 0 when it is queued, or was counted already. */
+        private fun sizeOrQueue(obj: Any?, weight: Double): Double {
+            primitiveSize(obj)?.let { return it.toDouble() }
 
-                obj === SkippedField -> Unit
+            if (obj is UnreadableField) {
+                fail(obj.failureClass)
+                return flatObject().toDouble()
+            }
 
-                // a shared object is charged once - while the identity set has room, see below
-                !firstSighting(obj!!) -> Unit
+            if (obj === SkippedField) return 0.0
 
-                else -> {
-                    // A leaf never counts against the cap: charged flat beyond it, a 50 MB array behind
-                    // a large sibling once counted as 32 bytes.
-                    val leaf = leafSize(obj)
-
-                    when {
-                        leaf != null -> total += leaf * weight
-                        // beyond the cap: no descent
-                        visited + queue.size >= maxObjects -> total += flatObject() * weight
-                        else -> queue.addLast(Pending(obj, weight))
-                    }
+            // a leaf first: it never counts against the cap (charged flat beyond it, a 50 MB array
+            // behind a large sibling once counted as 32 bytes)
+            leafSize(obj!!)?.let { leaf ->
+                // The first maxObjects leaves are tracked, so a shared one counts once; any later one is
+                // sized without the check (the hashing dominated the time on a million strings), so a
+                // shared one may count again: errs high.
+                if (trackedLeaves < maxObjects) {
+                    if (!seen.add(obj)) return 0.0
+                    trackedLeaves++
                 }
+
+                return leaf.toDouble()
+            }
+
+            return when {
+                // beyond the cap: no descent, and not tracked - an object walked already is still
+                // recognised; one charged flat before is charged again (errs high)
+                visited + queue.size >= maxObjects -> if (seen.contains(obj)) 0.0 else flatObject().toDouble()
+
+                // every queued object is tracked: a back-reference never walks a cycle again
+                seen.add(obj) -> {
+                    queue.addLast(Pending(obj, weight))
+                    0.0
+                }
+
+                else -> 0.0
             }
         }
 
-        /**
-         * True unless [obj] was seen before. The identity set takes at most twice
-         * [EstimatorConfig.maxObjects] objects; beyond that, every object counts as new. That bounds
-         * the hashing, which dominated the time on a million-string value; it errs high, on an object
-         * shared beyond that point.
-         */
-        private fun firstSighting(obj: Any): Boolean {
-            if (tracked >= 2L * maxObjects) return true
-
-            return seen.add(obj).also { if (it) tracked++ }
+        private fun fail(failure: String?) {
+            failures++
+            if (failureClass == null) failureClass = failure
         }
 
         /**
@@ -341,13 +368,13 @@ class ObjectSizeEstimatorImpl(
             visited++
             // Not `total += shallowSize(...)`: that reads total before shallowSize charges the leaves it
             // pushes, and the write would drop them.
-            val own = try {
-                shallowSize(next.obj, next.weight, this)
-            } catch (e: Throwable) {
-                failures++
-                if (failureClass == null) failureClass = e::class.simpleName
-                flatObject()
-            }
+            val own = catchingAll(
+                { shallowSize(next.obj, next.weight, this) },
+                { e ->
+                    fail(e.failureName())
+                    flatObject()
+                },
+            )
 
             total += own * next.weight
         }
@@ -502,8 +529,8 @@ internal fun samplePositions(size: Int, samples: Int, pick: ObjectSizeEstimatorI
     }
 }
 
-/** Stands in for a field or property whose read failed: charged flat, never descended into. */
-internal object UnreadableField
+/** Stands in for a field or property whose read failed: charged flat and counted, never descended into. */
+internal class UnreadableField(val failureClass: String?)
 
 /** Stands in for a property the walk leaves out (a function on JS): its reference counts, nothing more. */
 internal object SkippedField

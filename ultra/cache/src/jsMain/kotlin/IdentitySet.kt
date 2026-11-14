@@ -17,4 +17,6 @@ internal actual class IdentitySet actual constructor() {
 
         return true
     }
+
+    actual fun contains(obj: Any): Boolean = seen.has(obj) as Boolean
 }

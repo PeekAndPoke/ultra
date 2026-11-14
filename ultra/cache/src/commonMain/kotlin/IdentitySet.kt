@@ -10,4 +10,7 @@ package io.peekandpoke.ultra.cache
 internal expect class IdentitySet() {
     /** Records [obj]; returns true when it was not in the set yet. */
     fun add(obj: Any): Boolean
+
+    /** Whether [obj] is in the set. */
+    fun contains(obj: Any): Boolean
 }

@@ -18,4 +18,6 @@ internal actual class IdentitySet actual constructor() {
     private val seen = HashSet<ByIdentity>()
 
     actual fun add(obj: Any): Boolean = seen.add(ByIdentity(obj))
+
+    actual fun contains(obj: Any): Boolean = seen.contains(ByIdentity(obj))
 }

@@ -561,13 +561,15 @@ class FastCache<K, V> internal constructor(
                             // A failing estimate must not end the batch: the entries after it went
                             // uncounted and their removals left ghost bytes. The entry keeps its
                             // previous size, or is charged the fallback when new - never 0, so the
-                            // budget still binds when an estimator fails for everything.
-                            try {
-                                saturatingAdd(sizeOf(cache, action.key), sizeOf(cache, value))
-                            } catch (e: Throwable) {
-                                cache.recordFailure("size estimate", e)
-                                if (current != null) currentSize else chargedOnFailure
-                            }
+                            // budget still binds when an estimator fails for everything. catchingAll: on
+                            // JS also a thrown value that is no Error.
+                            catchingAll(
+                                { saturatingAdd(sizeOf(cache, action.key), sizeOf(cache, value)) },
+                                { e ->
+                                    cache.recordFailure("size estimate", e)
+                                    if (current != null) currentSize else chargedOnFailure
+                                },
+                            )
                         }
                     }
 
@@ -862,25 +864,32 @@ class FastCache<K, V> internal constructor(
                         var settled = false
 
                         try {
-                            val newValue = loader(key)
+                            catchingAll(
+                                {
+                                    val newValue = loader(key)
 
-                            // Only replace the value the refresh started from. Unconditionally, a loader
-                            // slower than the hard TTL put an evicted entry back, and a value the
-                            // application wrote while the loader ran was overwritten with an older one.
-                            // A refused result needs no release: the write or removal that changed the
-                            // entry recorded an action, and that releases the claim.
-                            cache.replaceIfUnchanged(key, startedFrom.value, newValue)
-                            settled = true
-                        } catch (e: CancellationException) {
-                            // The loader suspends, so this is cancellation: of the scope, or one the loader
-                            // threw. Either way it ends this refresh quietly; finally frees the key.
-                            throw e
-                        } catch (e: Throwable) {
-                            // Refresh failed: allow retry on next loop iteration. Every Throwable, not only
-                            // Exceptions: one that is not (an Error, or e.g. VaultException) escaped to the
-                            // scope's handler, which on native ends the process. Counted, so a repeatedly
-                            // failing loader is not entirely silent.
-                            cache.recordFailure("refresh", e)
+                                    // Only replace the value the refresh started from. Unconditionally, a
+                                    // loader slower than the hard TTL put an evicted entry back, and a value
+                                    // the application wrote while the loader ran was overwritten with an
+                                    // older one. A refused result needs no release: the write or removal
+                                    // that changed the entry recorded an action, and that releases the claim.
+                                    cache.replaceIfUnchanged(key, startedFrom.value, newValue)
+                                    settled = true
+                                },
+                                { e ->
+                                    // The loader suspends, so a CancellationException is cancellation: of
+                                    // the scope, or one the loader threw. Either way it ends this refresh
+                                    // quietly; finally frees the key.
+                                    if (e is CancellationException) throw e
+
+                                    // Refresh failed: allow retry on next loop iteration. Every Throwable,
+                                    // not only Exceptions: one that is not (an Error, or e.g.
+                                    // VaultException) escaped to the scope's handler, which on native ends
+                                    // the process; on JS also a thrown value that is no Error. Counted, so
+                                    // a repeatedly failing loader is not entirely silent.
+                                    cache.recordFailure("refresh", e)
+                                },
+                            )
                         } finally {
                             if (!settled) {
                                 release(key, token)
@@ -943,22 +952,24 @@ class FastCache<K, V> internal constructor(
                 val updates = ActionUpdates(actions)
 
                 cache.behaviours.forEach { behaviour ->
-                    try {
-                        behaviour.process(cache, updates)
-                    } catch (e: Throwable) {
-                        // process() does not suspend, so a CancellationException from it was thrown by
-                        // user code, not by this loop being cancelled: rethrow only when it is.
-                        if (e is CancellationException && !currentCoroutineContext().isActive) {
-                            throw e
-                        }
+                    catchingAll(
+                        { behaviour.process(cache, updates) },
+                        { e ->
+                            // process() does not suspend, so a CancellationException from it was thrown
+                            // by user code, not by this loop being cancelled: rethrow only when it is.
+                            if (e is CancellationException && !currentCoroutineContext().isActive) {
+                                throw e
+                            }
 
-                        // Without this, one throw ends the coroutine for good: no expiry, no
-                        // eviction, no statistics, no refresh - while get/put keep working, so the
-                        // cache silently grows without bound. Every Throwable, Errors included: a
-                        // StackOverflowError from estimating a deep value must not end the loop, and
-                        // a dead loop turns any failure into unbounded growth.
-                        cache.recordFailure("behaviour [${behaviour::class.simpleName}]", e)
-                    }
+                            // Without this, one throw ends the coroutine for good: no expiry, no
+                            // eviction, no statistics, no refresh - while get/put keep working, so the
+                            // cache silently grows without bound. Every Throwable, Errors included: a
+                            // StackOverflowError from estimating a deep value must not end the loop, and
+                            // a dead loop turns any failure into unbounded growth. On JS also a thrown
+                            // value that is no Error.
+                            cache.recordFailure("behaviour [${behaviour::class.simpleName}]", e)
+                        },
+                    )
                 }
 
                 // Outside every lock, after the pass: one line per kind of failure
@@ -1149,7 +1160,7 @@ class FastCache<K, V> internal constructor(
     }
 
     /** Counts a failure of [kind]. Caller holds the lock. */
-    private fun countFailure(kind: String, e: Throwable) = countFailures(kind, e::class.simpleName)
+    private fun countFailure(kind: String, e: Throwable) = countFailures(kind, e.failureName())
 
     /** Counts a failure of [kind], from any thread. */
     private fun recordFailure(kind: String, e: Throwable) = sync { countFailure(kind, e) }
@@ -1248,13 +1259,15 @@ class FastCache<K, V> internal constructor(
         evictionListeners.forEach { listener ->
             // One at a time: a throwing listener skipped the ones behind it, and ended the
             // calling behaviour's process() - one eviction per behaviour and pass.
-            try {
-                @Suppress("UNCHECKED_CAST")
-                listener(key, removed as V)
-            } catch (e: Throwable) {
-                // Counted only: this runs under the cache's lock, the loop prints after the pass
-                countFailure("eviction listener", e)
-            }
+            catchingAll(
+                {
+                    @Suppress("UNCHECKED_CAST")
+                    listener(key, removed as V)
+                },
+                // Counted only: this runs under the cache's lock, the loop prints after the pass. On JS
+                // also a thrown value that is no Error.
+                { e -> countFailure("eviction listener", e) },
+            )
         }
 
         Eviction.REMOVED

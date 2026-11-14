@@ -8,4 +8,6 @@ internal actual class IdentitySet actual constructor() {
     private val seen = IdentityHashMap<Any, Boolean>()
 
     actual fun add(obj: Any): Boolean = seen.put(obj, true) == null
+
+    actual fun contains(obj: Any): Boolean = seen.containsKey(obj)
 }

@@ -75,4 +75,51 @@ class ObjectSizeEstimatorJsSpec : StringSpec({
         // the header and a reference per property, at the least
         (estimate >= 16L + 1_000 * 8L) shouldBe true
     }
+
+    "a throwing getter is counted as a failure" {
+        val obj: dynamic = js(
+            "(function() { var o = { good: 'fine' }; " +
+                "Object.defineProperty(o, 'bad', { enumerable: true, get: function() { throw new Error('no'); } }); " +
+                "Object.defineProperty(o, 'worse', { enumerable: true, get: function() { throw 'no'; } }); " +
+                "return o; })()"
+        )
+
+        val counted = ObjectSizeEstimatorImpl().estimateCounted(obj)
+
+        counted.failures shouldBe 2
+        // header and three references, two properties flat, "fine"
+        counted.bytes shouldBe (16L + 3 * 8L) + 2 * 32L + 56L
+    }
+
+    "a proxy whose key listing throws a non-Error value is charged flat and counted" {
+        val proxy: dynamic = js("new Proxy({}, { ownKeys: function() { throw 'no keys'; } })")
+
+        val counted = ObjectSizeEstimatorImpl().estimateCounted(proxy)
+
+        counted.bytes shouldBe 32L
+        counted.failures shouldBe 1
+        counted.failureClass shouldBe "ThrownValue"
+
+        // inside a list: the proxy alone is charged flat; the list (16 + 2 * 8) and "ok" (52) stand
+        val inList = ObjectSizeEstimatorImpl().estimateCounted(listOf<Any?>("ok", proxy))
+
+        inList.bytes shouldBe 32L + 52L + 32L
+        inList.failures shouldBe 1
+    }
+
+    "a revoked proxy is charged flat and counted; the elements beside it stand" {
+        fun revoked(): dynamic = js("(function() { var r = Proxy.revocable({}, {}); r.revoke(); return r.proxy; })()")
+
+        val alone = ObjectSizeEstimatorImpl().estimateCounted(revoked())
+
+        alone.bytes shouldBe 32L
+        alone.failures shouldBe 1
+        alone.failureClass shouldBe "TypeError"
+
+        val inList = ObjectSizeEstimatorImpl().estimateCounted(listOf<Any?>("ok", revoked(), "after"))
+
+        // the list (16 + 3 * 8), "ok" (52), the proxy flat (32), "after" (58)
+        inList.bytes shouldBe 40L + 52L + 32L + 58L
+        inList.failures shouldBe 1
+    }
 })

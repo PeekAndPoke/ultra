@@ -18,7 +18,8 @@ private val blobSizeOf: (dynamic) -> Double = js(
 actual object ObjectSizeEstimatorPlatform {
     /**
      * Reads the own properties of [obj], skipping function-valued ones. A read that throws (an
-     * accessor property), whatever it throws, yields [UnreadableField]. Never returns `null`.
+     * accessor property), whatever it throws, yields an [UnreadableField]. Never returns `null`; a
+     * listing of the properties that throws (a JS `Proxy`) is thrown on.
      *
      * Prototype members are not own properties, so inherited state is not seen.
      */
@@ -60,13 +61,8 @@ actual object ObjectSizeEstimatorPlatform {
         js("Object.getOwnPropertyNames")(dyn).unsafeCast<Array<String>>()
 
     private fun read(dyn: dynamic, key: String): Any? {
-        val v: Any? = try {
-            dyn[key]
-        } catch (e: dynamic) {
-            // dynamic, not Throwable: a getter can throw a value that is no Error, and
-            // `catch (e: Throwable)` lets that through
-            UnreadableField
-        }
+        // catchingAll: a getter can throw a value that is no Error, which `catch (e: Throwable)` lets through
+        val v: Any? = catchingAll({ dyn[key] }, { e -> UnreadableField(e.failureName()) })
 
         // jsTypeOf, not js("typeof v === 'function'"): the inlined form reaches for the Kotlin
         // local `v` by name, and a renamed local would make it `typeof <undeclared>`, which
