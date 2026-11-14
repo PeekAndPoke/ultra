@@ -1,5 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-actual val zoneEngineLimitMillis: Long? = null
+actual val isJsPlatform: Boolean = false
 
 actual val isNativePlatform: Boolean = true

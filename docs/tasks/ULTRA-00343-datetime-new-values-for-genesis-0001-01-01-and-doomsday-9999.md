@@ -575,6 +575,8 @@ or `MpLocalDateRangeLazySpec`, green on JVM, JS and native):**
 - 2026-11-14: batch A (slots are finite) built on `wt/datetime`; awaiting the gate. Batches B and C wait for the
   coordinator's word.
 - 2026-11-14: batch A gate round 1 CLEAN (9 MINOR), all handled; a short delta review follows.
+- 2026-11-15: batch A delta round 2 CLEAN (4 MINOR), handled: the zone id is checked before the usable interval
+  (`21eb5143`), tests and texts. Status: batch A BUILT, gate round 1 CLEAN, delta round 2 CLEAN.
 
 ## Decided (maintainer, 2026-11-14): no sentinels, open ranges are `Partial`, slots are finite
 
@@ -683,8 +685,8 @@ simply stops using Doomsday.
 | `MpLocalTimeSlotClockSpec` "splitWithGaps ... an infinite slot by 1 h" | `Int.MAX_VALUE` parts, the last at 16:00 | the same numbers for the longest slot (2.5e9 parts, capped); title only |
 | `MpLocalTimeSlotClockSpec` "splitWithGaps on an infinite slot ..." | `Int.MAX_VALUE` parts by 60 days, the overflow pin at index `Int.MAX_VALUE - 1`; infinite gap gives one part | "on the longest slot": 1 737 499 parts by 60 days, the last `10:00 + 60 d`; 1 736 295 by 1 h + 60 d (by hand); an infinite gap or part is the longest length (one part, or the slot itself) |
 | `MpLocalTimeSlotClockSpec` `night.cutAway(slot(10, 0, INFINITE))` | empty | unchanged (a slot of 24 h or more covers the clock) |
-| `MpLocalTimeSlotOnDateSpec` "an end beyond what the platform can resolve is the open end (JS)" | Berlin: `hasEnd == false` | UTC: the exact end 8 701 705 312 800 000 ms on all three; Berlin: JS stops at 8.64e15 ms, JVM / native resolve beyond it (test-side `expect val zoneEngineLimitMillis`) |
-| (new) `MpLocalTimeSlotOnDateSpec` "a start the platform cannot represent throws ..." | - | JS: `IllegalArgumentException` naming `300000-01-01`, `Europe/Berlin`, `275760-09-13`; JVM / native: a one-hour range; UTC resolves everywhere |
+| `MpLocalTimeSlotOnDateSpec` "an end beyond what the platform can resolve is the open end (JS)" | Berlin: `hasEnd == false` | UTC: the exact end 8 701 705 312 800 000 ms on all three; Berlin: JS stops at +275760-09-11T00:00 local (since round 1), JVM / native resolve beyond it (test-side `expect val isJsPlatform`) |
+| (new) `MpLocalTimeSlotOnDateSpec` "a start the platform cannot represent throws ..." | - | JS: `IllegalArgumentException` with the whole message, the interval `-271821-04-22T00:00 to +275760-09-11T00:00` (since round 1); JVM / native: a one-hour range; UTC resolves everywhere |
 | `MpLocalTimeSlotOnDateSpec` "an end past the last date ... is the open end" | empty at the start, `hasEnd == false` | the end is the last instant of 999 999 999-12-31 (epoch second 31 556 889 832 780 799, .999), also for an end at 24:00 |
 | `MpLocalTimeSlotOnDateSpec` "an end before the start can only come from the open end: past Doomsday ..." | infinite slot on 12000-01-01 empty at the start | deleted: the case cannot happen any more (the guard is gone); the literal `+12000-01-01T09:00:00Z` asked for in the review is moot |
 | `MpLocalTimeSlotOnDateSpec` "an infinite slot gives a range with an open end" | Berlin, `hasEnd == false` | "Duration.INFINITE on a date: the longest slot, a two-ended range": UTC, end 9 008 904 567 540 991 ms (by hand) |
@@ -728,8 +730,8 @@ test first.
 | # | Finding | Outcome |
 |---|---|---|
 | 1 | public KDoc of `MpLocalDate.toRange(slot, zone)` still named the open end | FIXED; the words "infinite", "endless", "open end", "Doomsday" near slots searched repo-wide (code, docs-site, tickets): the remaining hits name `Duration.INFINITE` as an input; the test variable `endless` and a slumber comment fixed |
-| 2 | JS: the fallback end at 8.64e15 ms sits on the edge of the zone engine | CONFIRMED by a JS probe: `to.atStartOfDay()` and `to.atTime(..)` throw ("Instant at 8640000086400 s is outside the range of JS dates"); `to` shows 00:00 where the JVM shows 02:00 (`round(NaN)` = 0). FIXED: local times are checked against the limit minus two days; the end falls back to `+275760-09-11T00:00` local; pinned on JS: the wall clock, the instant (8 639 999 820 000 000 ms, +02:00), `atStartOfDay`, `atStartOfHour`, `atTime`, the range formatter. The start check uses the same interval, both ends included, pinned at both edges |
-| 2 | the NaN swallow in `intlOffsetSecondsAt` | STILL REACHABLE through public API outside slots: `MpInstant.fromEpochMillis(8_640_000_000_000_000).atZone(Europe/Berlin)` shows 00:00 (JVM 02:00). For a separate ticket (JS zone engine at its limit) |
+| 2 | JS: the fallback end at 8.64e15 ms sits on the edge of the zone engine | CONFIRMED by a JS probe: `to.atStartOfDay()` and `to.atTime(..)` throw ("Instant at 8640000086400 s is outside the range of JS dates"); `to` shows 00:00 where the JVM shows 02:00 (`round(NaN)` is NaN, `.toInt()` makes it 0). FIXED: local times are checked against the limit minus two days; the end falls back to `+275760-09-11T00:00` local; pinned on JS: the wall clock, the instant (8 639 999 820 000 000 ms, +02:00), `atStartOfDay`, `atStartOfHour`, `atTime`, the range formatter. The start check uses the same interval, both ends included, pinned at both edges |
+| 2 | the NaN swallow in `intlOffsetSecondsAt` | STILL REACHABLE through public API outside slots, for a range of instants: within the zone's positive offset of the upper limit (e.g. `MpInstant.fromEpochMillis(8_640_000_000_000_000).atZone(Europe/Berlin)` shows 00:00, JVM 02:00), mirrored at the lower limit west of Greenwich. Already listed in the archived ULTRA-00216 (round 2 notes, finding 3) and ULTRA-00217 ("Related MINORs") without a ticket number: it needs a ticket of its own (JS zone engine at its limit) |
 | 3 | the last-date fallback pinned for UTC only; native unverified | CONFIRMED on native: kotlinx-native throws `DateTimeArithmeticException` ("Instant +1000000000-01-01T00:00:00Z is not representable as LocalDateTime") for the engine's +1-day probe from the last date. FIXED: native has a limit for region zones (a day inside the date range) and uses the same two-day scheme. In Berlin: JVM ends at 999 999 999-12-31T23:59:59.999+01:00 and accepts a start on the last date; native ends at local 999 999 999-12-29T00:00 and refuses that start with the clear message; JS refuses the start |
 | 4 | `endDayOffset` "at most 104 249 991" off by one | FIXED: 104 249 992 (`of(22:00, INFINITE)`), pinned, texts corrected |
 | 5a | mutant: delete the `IllegalTimeZoneException` rethrow | the code path is gone (the start check no longer catches); a bad zone id through `toRange` is pinned in `ZoneIdCheckSpec` for every refused id on JVM, JS and native |
@@ -761,6 +763,28 @@ condition at the end; the numbers above are from the rerun.
 - slumber 1268 / 0 (`MpLocalTimeSlotCodecSpec` 10); codegen 326 / 0.
 - Repo-wide compile sweep: 0 `e:` lines.
 
+### Review record: delta round 2 (reviewer-fable-xhigh)
+
+**Verdict:** CLEAN: 0 CRITICAL, 0 MAJOR, 4 MINOR. Margin, edges, the Berlin literal (+02:00 on 11 September), the
+catch, no inversion on any platform and `endDayOffset` 104 249 992 confirmed by trace; none of R1 to R8 survives.
+Status: **batch A: BUILT, gate round 1 CLEAN, delta round 2 CLEAN.**
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | a bad region id masked by the range error, echoed raw (JS: year 300 000; native: 999 999 999-12-31) | CONFIRMED (RED: 12 on JS, 12 on native: the 11 refused ids and a well-shaped unknown id, `IllegalArgumentException` instead of `IllegalTimeZoneException`; JVM green). FIXED in its own commit `21eb5143`: `startOnDate` validates the zone (`TimezoneEngine.offsetSecondsAt`) before refusing the date. `ZoneIdCheckSpec` has the `toRange` entry on 999 999 999-12-31 for every refused id, and the unknown id `Mars/Olympus_Mons` at three dates. Mutant V1 (validation removed): 12 JS + 12 native red. The END cannot see an invalid id first: `onDate` evaluates the start first, and a start inside the interval goes through the engine, which validates |
+| 2 | KDoc of `onDate` and `MpLocalDate.toRange`: native interval missing, "every day operation" overstated, a pointer to a class KDoc without the details | FIXED: both KDocs name the JS and native intervals and the JVM / fixed-offset last-date fallback; `atTime(MpLocalTime.EndOfDay)` throws on the last instant of the last date (no next day); the pointer dropped |
+| 3 | ticket texts | FIXED: the changelog sentence names native's 999 999 999-12-29T00:00; the two "Now" rows give the round-1 state; `round(NaN)` is NaN, `.toInt()` makes it 0; the NaN item is a range of instants, already in the archived ULTRA-00216 and ULTRA-00217 without a ticket number. **Which is true today about the JVM at the last date** (archived ULTRA-00217: a raw `java.time.DateTimeException`): on these paths, no exception. A start on 999 999 999-12-31 10:00 in Berlin (recurring rules) and the fallback at that day's last instant resolve on the JVM; both make the engine probe into year 1 000 000 000. Pinned in `MpLocalTimeSlotOnDateSpec`. Other zones or instants were not probed |
+| 4 | tests: a stale title; the second margin day not pinned; edge rows; JS-only tests asserting nothing elsewhere | FIXED: title; JS `atTime(Max)` = 8 639 999 906 399 999 ms and `atTime(EndOfDay)` = 8 639 999 906 400 000 ms on the 09-11 end (by hand, matched by the browser); native `atStartOfDay`, `atTime(Max)`, `atTime(EndOfDay)` on the 12-29T00:00 end; the upper edge accepted and 1 ms past it refused on JS and native; the two JS-only tests say so in their names |
+| 5 | surplus: `usableLocalTimes` computed several times; `zoneEngineLimitMillis` only a flag | FIXED: computed once in `onDate` and passed down (plain refactoring, in `21eb5143`); the test flag is `isJsPlatform` |
+
+**Counts after delta round 2** (2026-11-15, `--rerun`, from the XML):
+
+- datetime JVM 2881 / 0, JS 2223 / 0, native 2215 / 0 (`MpLocalTimeSlotOnDateSpec` 19 and `ZoneIdCheckSpec` 99 on
+  all three).
+- slumber 1268 / 0; codegen 326 / 0.
+- Compile sweep: 0 `e:` lines.
+- Mutant V1 (zone validation removed): 12 JS + 12 native red.
+
 ### Changelog text (Batch A)
 
 Against release 0.118.0 a slot never was infinite (it was `from` / `to` within one day), so batch A adds no entry of
@@ -777,8 +801,9 @@ its own against the release. It corrects the Unreleased entries of ULTRA-00341 t
   `"duration":9007199254740991,"to":36000000` for 10:00, reads as the longest slot and writes back `"to":68340991`.)
 - Add to the `MpLocalDate.toRange(slot, zone)` bullet (line 43): "Always a two-ended range. An end the platform
   cannot represent stops at its last representable time (in the browser, in a region zone: +275760-09-11T00:00
-  local; at the far end of the date range: the last instant of 999 999 999-12-31, on native two days earlier); a
-  start it cannot represent throws `IllegalArgumentException` naming the date, the zone and the accepted interval
+  local; at the far end of the date range: the last instant of 999 999 999-12-31; on native in a region zone
+  999 999 999-12-29T00:00 local); a start it cannot represent throws `IllegalArgumentException` naming the date, the
+  zone and the accepted interval; an invalid zone id is an `IllegalTimeZoneException`, whatever the date
   (ULTRA-00343)."
 - `ultra/codegen`, the TypeScript runtime: `MpLocalTimeSlot`'s constant is `MAX_DURATION_MILLIS` (the Unreleased
   entry "the TypeScript runtime has `MpLocalTimeSlot`" names no constant and stays).
