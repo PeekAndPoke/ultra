@@ -14,6 +14,12 @@ Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/D
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
 ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
+## Decided (maintainer, 2026-11-14)
+
+"yes check clone like create": `Kontainer.clone { with { ... } }` runs the same dynamics check as
+`KontainerBlueprint.create` and throws the same `KontainerInconsistent` with the same message (it threw
+`ServiceNotFound` from deeper inside). One shared entry point for both paths.
+
 ## The work
 
 - `clone` runs the same dynamics check as `create` and fails with the same exception.
