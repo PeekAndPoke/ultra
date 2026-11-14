@@ -35,7 +35,7 @@ class ServiceProviderFactory(
 
     private val providers: MutableMap<KClass<*>, ServiceProvider> = mutableMapOf()
 
-    /** Creates a new [Kontainer] instance, merging in additional [overrides]; checked like [KontainerBlueprint.create] */
+    /** Creates a new [Kontainer], merging in additional [overrides]; checked like [KontainerBlueprint.create] */
     fun newKontainer(overrides: DynamicOverrides): Kontainer {
         return blueprint.createChecked(
             dynamics.merge(overrides)

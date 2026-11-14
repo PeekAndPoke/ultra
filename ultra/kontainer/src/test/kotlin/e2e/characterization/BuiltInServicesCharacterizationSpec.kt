@@ -4,12 +4,13 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.kontainer.DynamicOverrides
 import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
-import io.peekandpoke.ultra.kontainer.getName
+import io.peekandpoke.ultra.kontainer.ServiceNotFound
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.kontainer.module
 import kotlin.reflect.KClass
@@ -57,9 +58,29 @@ class BuiltInServicesCharacterizationSpec : StringSpec({
         )
     }
 
-    fun registered(cls: KClass<*>) = "${cls.getName()} is managed by the kontainer itself and cannot be registered"
+    fun registered(cls: KClass<*>) = when (cls) {
+        Kontainer::class ->
+            "io.peekandpoke.ultra.kontainer.Kontainer is managed by the kontainer itself " +
+                "and cannot be registered"
+        InjectionContext::class ->
+            "io.peekandpoke.ultra.kontainer.InjectionContext is managed by the kontainer itself " +
+                "and cannot be registered"
+        else ->
+            "io.peekandpoke.ultra.kontainer.KontainerBlueprint is managed by the kontainer itself " +
+                "and cannot be registered"
+    }
 
-    fun overridden(cls: KClass<*>) = "${cls.getName()} is managed by the kontainer itself and cannot be overridden"
+    fun overridden(cls: KClass<*>) = when (cls) {
+        Kontainer::class ->
+            "io.peekandpoke.ultra.kontainer.Kontainer is managed by the kontainer itself " +
+                "and cannot be overridden"
+        InjectionContext::class ->
+            "io.peekandpoke.ultra.kontainer.InjectionContext is managed by the kontainer itself " +
+                "and cannot be overridden"
+        else ->
+            "io.peekandpoke.ultra.kontainer.KontainerBlueprint is managed by the kontainer itself " +
+                "and cannot be overridden"
+    }
 
     listOf(Kontainer::class, InjectionContext::class, KontainerBlueprint::class).forEach { cls ->
         forms(cls).forEach { form ->
@@ -146,5 +167,16 @@ class BuiltInServicesCharacterizationSpec : StringSpec({
                 with { InjectionContext.kontainerRoot }
             }
         }.message shouldBe overridden(InjectionContext::class)
+    }
+
+    "The built-ins are not overridable even past the checks: the internal instantiate finds no service to override" {
+
+        val blueprint = kontainer { }
+
+        listOf(Kontainer::class, InjectionContext::class).forEach { builtIn ->
+            shouldThrow<ServiceNotFound> {
+                blueprint.instantiate(DynamicOverrides(mapOf(builtIn to { Any() })))
+            }
+        }
     }
 })

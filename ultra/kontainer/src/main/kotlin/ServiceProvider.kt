@@ -116,14 +116,15 @@ interface ServiceProvider {
     /**
      * Provides an instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton.
      *
-     * The override runs at the first request, at most once; then only its value is kept, not the lambda.
+     * The override runs at the first request, again at the next one when it threw, until it has returned a value;
+     * then never again, and only its value is kept, not the lambda.
      */
     class ForOverride(
         private val pending: ServiceDefinition,
         create: () -> Any,
     ) : ServiceProvider {
 
-        /** The override, until it ran */
+        /** The override, until it has returned a value */
         @Volatile
         private var create: (() -> Any)? = create
 

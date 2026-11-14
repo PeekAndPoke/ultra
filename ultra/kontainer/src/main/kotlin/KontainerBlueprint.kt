@@ -40,11 +40,14 @@ class KontainerBlueprint internal constructor(
         .keys
 
     /**
-     * Dynamic singletons: the only services that can be overridden at [create]; the built-in ones are refused first
+     * Dynamic singletons, the built-in services excepted: the only services that can be overridden at [create]
+     *
+     * The built-ins stay dynamic sources of promotion, see [dynamicClasses].
      */
     private val overridableClasses: Set<KClass<*>> = definitions
         .filterValues { it.type == ServiceType.Singleton && it.kind == ServiceKind.Dynamic }
         .keys
+        .minus(builtInServices)
 
     /**
      * A lookup for finding the overridable service from the class of an override
@@ -155,7 +158,9 @@ class KontainerBlueprint internal constructor(
         return KontainerBlueprint(
             config = config,
             definitions = definitions.plus(
-                result.definitions.mapValues { (cls, def) -> upgrade.adjust(newDef = def, existingDef = definitions[cls]) }
+                result.definitions.mapValues { (cls, def) ->
+                    upgrade.adjust(newDef = def, existingDef = definitions[cls])
+                }
             ),
         )
     }
@@ -168,7 +173,20 @@ class KontainerBlueprint internal constructor(
      * @throws KontainerInconsistent when there is a problem with the kontainer configuration
      */
     fun create(dynamics: DynamicOverrides.Builder.() -> Unit = {}): Kontainer {
+
+        // Validation comes before the caller's override block runs, as it always did
+        validateOnFirstUse()
+
         return createChecked(DynamicOverrides.Builder().apply(dynamics).build())
+    }
+
+    /**
+     * Validates the blueprint on its first use.
+     */
+    private fun validateOnFirstUse() {
+        if (validated.compareAndSet(false, true)) {
+            validate()
+        }
     }
 
     /**
@@ -179,10 +197,7 @@ class KontainerBlueprint internal constructor(
      */
     internal fun createChecked(dynamics: DynamicOverrides): Kontainer {
 
-        // On the first usage we validate the consistency of the container
-        if (validated.compareAndSet(false, true)) {
-            validate()
-        }
+        validateOnFirstUse()
 
         val overridden = dynamics.overrides.keys
 

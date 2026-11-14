@@ -376,7 +376,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
 
         shouldThrow<KontainerInconsistent> {
             blueprint.create { with<Kontainer> { foreign } }
-        }.message shouldBe "${Kontainer::class.getName()} is managed by the kontainer itself and cannot be overridden"
+        }.message shouldBe
+                "io.peekandpoke.ultra.kontainer.Kontainer is managed by the kontainer itself and cannot be overridden"
     }
 
 })

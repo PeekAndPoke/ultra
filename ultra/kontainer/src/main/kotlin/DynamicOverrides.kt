@@ -14,12 +14,18 @@ class DynamicOverrides internal constructor(
 
         internal fun build() = DynamicOverrides(overrides)
 
-        /** Overrides a dynamic service resolved by reified type; [instance] runs at its first request, once */
+        /**
+         * Overrides a dynamic service resolved by reified type; [instance] runs at its first request, again when it
+         * threw, until it has returned a value
+         */
         inline fun <reified SRV : Any> with(noinline instance: () -> SRV) {
             with(SRV::class, instance)
         }
 
-        /** Overrides a dynamic service resolved by [srv] class; [instance] runs at its first request, once */
+        /**
+         * Overrides a dynamic service resolved by [srv] class; [instance] runs at its first request, again when it
+         * threw, until it has returned a value
+         */
         fun <SRV : Any, IMPL : SRV> with(srv: KClass<SRV>, instance: () -> IMPL) {
             overrides[srv] = instance
         }

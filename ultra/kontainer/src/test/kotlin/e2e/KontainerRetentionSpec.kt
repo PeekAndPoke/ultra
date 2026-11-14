@@ -12,6 +12,7 @@ import io.peekandpoke.ultra.kontainer.ServiceProducer
 import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.ServiceType
 import io.peekandpoke.ultra.kontainer.kontainer
+import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 
 class RetainedDyn(val payload: Any?)
@@ -43,6 +44,9 @@ class KontainerRetentionSpec : StringSpec({
         withClue("the marker captured by the override lambda must be collectable") {
             marker.clearsWithinBoundedGc() shouldBe true
         }
+
+        // The blueprint must stay reachable until here, or the test would prove nothing about it
+        Reference.reachabilityFence(blueprint)
     }
 
     "An override that was used leaves neither its lambda's capture nor its value reachable once its kontainer is gone" {
@@ -58,6 +62,9 @@ class KontainerRetentionSpec : StringSpec({
         withClue("the value the override produced must be collectable") {
             value.clearsWithinBoundedGc() shouldBe true
         }
+
+        // The blueprint must stay reachable until here, or the test would prove nothing about it
+        Reference.reachabilityFence(blueprint)
     }
 
     "An override provider keeps only the value after its first use, not the lambda" {
