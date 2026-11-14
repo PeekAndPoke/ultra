@@ -112,6 +112,24 @@ like java.time.
   2011-12-31T00:00+14:00 (a Saturday); from 2011-12-29 the next FRIDAY is the same (the old loop skipped to 2012-01-06).
   RED first: 7 of 38 on the JVM (6 by the 5 s time limit, "next FRIDAY" with the old 2012-01-06). After: 38 / 0 on
   JVM, JS and native. Mutant: the old `atStartOfPrevious` loop restored → red 6, all "Did not finish within 5s".
+- `compareTo` tie-break (maintainer, 2026-11-14, "yes to tie-break"): instant, then local date-time, then zone id,
+  like java.time's `ChronoZonedDateTime`, so `compareTo == 0` exactly when `equals`. `compareTo` is declared against
+  `MpZonedDateTime` only (`ComparableTo<MpZonedDateTime>`); `MpInstant` has its own `ComparableTo<MpInstant>`, and no
+  comparison between the two exists, so nothing about comparing with an `MpInstant` changes.
+  Callers checked — what changes meaning, only for two values at the same instant in different zones:
+  - `a <= b && a >= b` and `ComparableTo.isEqualTo` no longer mean "same instant"; `isSameInstant` does.
+  - `MpZonedDateTimeRange` (endpoints in different zones at the same instant): `isValid` (`from < to`) can be true
+    for an empty range; `hasStart` / `hasEnd` (against `Genesis` / `Doomsday` in UTC), `contains(range)`,
+    `intersects`, `touches` and `mergeWith`'s `minOf` / `maxOf` order such endpoints by local time and zone.
+    `contains(datetime)` compares instants and is unchanged; `isAdjacentTo` uses `==` (instant + zone).
+  - `DateTimeRangeConverter` `maxOf(Genesis, from)` / `minOf(Doomsday, to)`: on a tie it may now keep the other
+    value; same instant either way.
+  - Not affected: `MpInstantRange` (instants), Kronos, kraft and funktor (no comparisons of zoned values found).
+  - Two tests pinned the old meaning (`MpZonedDateTimeSpec` "Construction - parse(isoString, timezone)", 6 lines, and
+    "Comparison", 1 line: `shouldBeEqualComparingTo` across zones); adapted to a `shouldBeSameInstantAs` helper.
+  New `MpZonedDateTimeCompareSpec` (commonTest, 4) and `MpZonedDateTimeCompareJvmSpec` (`sortedSetOf`, 1): RED first
+  5 of 5. After: jvmTest 2730 / 0, jsBrowserTest 2076 / 0, linuxX64Test 2068 / 0. Mutants: zone-id step dropped → red
+  3 (Berlin/Paris, mixed sort, compareTo-equals table); local step dropped → red 2 (UTC/Berlin, mixed sort).
 
 ### Docs lines for the DOCS follow-up
 
@@ -149,6 +167,12 @@ like java.time.
 - `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime` equality compares instant and zone, no
   longer local time and zone, so the two sides of a DST overlap are no longer equal. To compare by point in time,
   whatever the zone, use `isSameInstant` (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.compareTo` orders by instant, then by local
+  date-time, then by zone id (like java.time), so it is `0` exactly when `equals`. For two values at the same instant
+  in different zones, `a <= b && a >= b` and `isEqualTo` no longer mean "same instant" (use `isSameInstant`), a
+  `sortedSetOf` keeps both, and `minOf` / `maxOf` / sorting order them by local time and zone. `MpZonedDateTimeRange`
+  compares its endpoints this way: a range whose ends are one instant in two zones is no longer always invalid
+  (ULTRA-00211).
 - `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
   same point in time, for `MpInstant` and `MpZonedDateTime` and across the two (ULTRA-00211).
 - `ultra/datetime`, behaviour change (no compile signal): a time in a DST gap now reads back as the resolved time:

@@ -208,10 +208,17 @@ class MpZonedDateTime private constructor(
     val dayOfYear: Int get() = datetime.dayOfYear
 
     /**
-     * Compares to the [other].
+     * Orders by instant, then by local date-time, then by zone id, like java.time's `ChronoZonedDateTime`, so `0`
+     * exactly when [equals]. To compare by point in time only, use [isSameInstant].
      */
     override fun compareTo(other: MpZonedDateTime): Int {
-        return instant.compareTo(other.instant)
+        val byInstant = instant.compareTo(other.instant)
+        if (byInstant != 0) return byInstant
+
+        val byLocal = datetime.compareTo(other.datetime)
+        if (byLocal != 0) return byLocal
+
+        return timezone.id.compareTo(other.timezone.id)
     }
 
     /**
