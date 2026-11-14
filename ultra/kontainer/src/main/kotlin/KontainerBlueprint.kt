@@ -40,12 +40,11 @@ class KontainerBlueprint internal constructor(
         .keys
 
     /**
-     * Dynamic singletons, the built-in services excepted: the only services that can be overridden at [create]
+     * Dynamic singletons: the only services that can be overridden at [create]; the built-in ones are refused first
      */
     private val overridableClasses: Set<KClass<*>> = definitions
         .filterValues { it.type == ServiceType.Singleton && it.kind == ServiceKind.Dynamic }
         .keys
-        .minus(builtInServices)
 
     /**
      * A lookup for finding the overridable service from the class of an override
