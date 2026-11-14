@@ -1,6 +1,6 @@
 # ULTRA-00335: Kontainer: a nullable parameter with several candidates injects null without a validation error
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K2, not merged: gate round 1 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K2, merged into master as `8778c4a9`: strict gate round 1 CLEAN. Behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -174,3 +174,4 @@ alone. No blueprint in the repo turned red in any of these suites.
 ## History
 
 - 2026-11-14: created on the maintainer's standing word for Kontainer oddities ("fix each with its own ticket").
+- 2026-11-14: DONE.

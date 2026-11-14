@@ -1,6 +1,6 @@
 # ULTRA-00328: Kontainer: a dependency cycle through List is not detected
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K2, not merged: gate round 1 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K2, merged into master as `8778c4a9`: strict gate round 1 CLEAN. Behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -209,3 +209,4 @@ alone. No blueprint in the repo turned red in any of these suites.
 ## History
 
 - 2026-11-14: created on the maintainer's word.
+- 2026-11-14: DONE.

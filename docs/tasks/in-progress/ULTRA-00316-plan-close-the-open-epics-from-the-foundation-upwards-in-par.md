@@ -99,6 +99,10 @@ Across the waves:
   neither registered nor overridden, the checker keying its cache with a copy. Strict gate round 1 CLEAN, delta
   round 2 CLEAN. On master: kontainer 546, log 74, vault 287, insights 118, cluster 162, funktor:all 289, all green.
   Next: K2 (ULTRA-00327, 00328, 00334, 00335), then K3 (ULTRA-00329).
+- 2026-11-14, **track D (kontainer), batch K2: MERGED** (`8778c4a9`). ULTRA-00327, 00328, 00334 and 00335: the
+  remembered validation result, the cycle check and dependency graph reading the announced injections, ambiguous
+  injections reported as ambiguous, an ambiguous nullable injection as an error. Strict gate round 1 CLEAN. No
+  blueprint in the repo changed outcome. Next: K3 (ULTRA-00329), after the plan is re-confirmed.
 
 ## History
 

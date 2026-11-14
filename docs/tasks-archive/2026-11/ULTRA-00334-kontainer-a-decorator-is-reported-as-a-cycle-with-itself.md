@@ -1,6 +1,6 @@
-# ULTRA-00327: Kontainer: validation runs only once, even when it failed
+# ULTRA-00334: Kontainer: a decorator is reported as a cycle with itself
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K2, not merged: gate round 1 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K2, merged into master as `8778c4a9`: strict gate round 1 CLEAN. Behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -8,7 +8,7 @@
 
 ## Why this exists
 
-After a failed validation the next `create()` of the same blueprint succeeds: the "validated" flag is set before `validate()` runs. `get` on that kontainer then throws `InvocationTargetException` where the caller should have got the validation error again.
+A decorator with a nullable parameter of its own super type, `DecoratingRepo(inner: Repo?) : Repo`, is reported by validation as a cycle with itself ("DecoratingRepo -> DecoratingRepo").
 
 Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/ValidationCharacterizationSpec.kt`, in a test
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
@@ -16,73 +16,67 @@ ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
 ## Decided (maintainer, 2026-11-14)
 
-"Yes remember the validation result and fail on every create when not valid."
+The maintainer rejected a new resolution rule (leaving a service out of the candidates for its own parameter): "Should
+fail due ambiguity"; "Yes fix the error message, no new refusal rule and no new mechanics ... much simpler".
 
-The validation runs once and its result is remembered: a blueprint that failed validation throws the same
-`KontainerInconsistent` with the same message on every `create()`. The success path stays as cheap as today.
+Why the message is wrong today: an injection of `Repo` has every registered service that is a `Repo` as a candidate
+(`TypeLookup.ForSuperTypes`, `isAssignableFrom`). In `class RealRepo : Repo()`, `class CachingRepo(val inner: Repo) :
+Repo()` that is two, one of them the owner. The dependency graph gets an edge to each candidate, the cycle check runs
+first, sees `CachingRepo -> CachingRepo` and stops before the ambiguity check.
 
-Overrides do not matter for this (the maintainer asked, checked in the code on 2026-11-14): `validate()`
-(`KontainerBlueprint.kt:220`) checks the definitions for cycles and builds one kontainer with NO overrides to ask every
-provider whether its dependencies can be met. Both depend only on the definitions, which never change. The check that
-does depend on overrides ("Unexpected dynamics were provided") runs on every `create()` after the validation and stays
-as it is. An override cannot make an invalid blueprint valid: it can only replace a declared dynamic singleton.
+So, diagnosis only:
+
+- A single-service injection (plain `T`, `Lazy<T>`) with several candidates is reported as ambiguous, with the existing
+  message naming the colliding services.
+- The cycle check follows a single-service injection only when it resolves to exactly one service.
+- A real self-cycle stays a cycle: when the owner is the only candidate, "circular dependency" is right.
+- No change to which service is injected. A decorator names the concrete class: `CachingRepo(val inner: RealRepo)`.
+
+Built with ULTRA-00328 (the cycle check reads the parameter providers' announcements). The nullable variant
+(`inner: Repo?` with several candidates injects null) is ULTRA-00335.
 
 ## Plan as built (track D, batch K2, 2026-11-14)
 
-- `KontainerBlueprint` replaces the `validated` flag with a remembered result:
-  `lazy(LazyThreadSafetyMode.SYNCHRONIZED)` holding the validation message, or null when valid.
-  - Every `create` (and the checked path of `clone`) throws a new `KontainerInconsistent` with that message: the
-    same type and message each time, with a stack trace pointing at the current caller.
-  - The success path is one volatile read, as cheap as the flag.
-- **Order unchanged (K1):** the result is checked before the caller's override block runs.
-- **Concurrency:** the first caller validates under the lazy's lock. Any other caller blocks until it is done and
-  gets the same result. Before, the CAS loser skipped validation and got a kontainer.
-- Only a validation failure (`KontainerInconsistent`) is remembered. Any other exception from `validate()` would be a
-  defect; it is not cached, so the next `create` validates again.
+- In the cycle check (ULTRA-00328), a Direct parameter that announces exactly one type with two or more candidates
+  is an ambiguous single-service injection. It gets no cycle edges, and the parameter check reports it with the
+  existing "is ambiguous" message.
+  - A `List` never falls under this: it announces every candidate.
+  - A real self-cycle (the owner is the only candidate) stays a cycle.
+- No change to which service is injected, and no new refusal rule.
+- The nullable decorator (`inner: Repo?`) becomes ambiguous through ULTRA-00335.
 
 ## Built (batch K2, 2026-11-14)
 
 **Status: built on `wt/kontainer`, not merged; a strict gate follows.**
 
-As planned: the validation result is a `lazy(SYNCHRONIZED)` value holding the message, or null when valid. Every
-`create` of an invalid blueprint throws `KontainerInconsistent` with the same message, still before the override block.
-
-**What a second thread sees while the first validates:** it blocks on the lazy's lock until the result is there, then
-gets the same result. For an invalid blueprint that is the error; for a valid one, a kontainer.
-- Pinned by two tests that release 8 threads at once: all 8 get the same error, or all 8 get a kontainer.
-- On the old code the invalid-blueprint test was RED: the CAS losers skipped validation and got kontainers.
-- The blocking itself cannot be watched from outside, as validation runs no user code. So the mutant that lets every
-  thread validate at once (Q3, `PUBLICATION`) is equivalent: validation is deterministic and has no side effect.
+As planned: a Direct parameter that announces one type with several candidates gets no cycle edges, so the
+parameter check reports it as ambiguous. No change to which service is injected; no new rule.
 
 Pins turned, before -> after:
-- `ValidationCharacterizationSpec`, "CURRENT BEHAVIOUR: after a failed validation the next create succeeds ...":
-  - second `create` succeeded and `get` threw `InvocationTargetException` -> every `create` throws the same
-    `KontainerInconsistent` message
-- New tests:
-  - a later `create` does not run its override block either
-  - concurrent invalid creates
-  - concurrent valid creates
-- `funktor/insights` `KontainerFixture.brokenBlueprint` KDoc: "only the first create fails" -> "every create
-  fails". Text only; its one test uses the first `create`.
+- "CURRENT BEHAVIOUR: a decorator with a nullable parameter of its own super type is reported as a cycle":
+  `Circular dependency detected: DecoratingRepo -> DecoratingRepo` -> `Parameter 'inner' is ambiguous. The following
+  services collide: RealRepo, DecoratingRepo` (with ULTRA-00335).
+- "CURRENT BEHAVIOUR: a decorator with a non-null parameter ..." (pinned first in `8dffdf22`):
+  `CachingRepo -> CachingRepo` -> `Parameter 'inner' is ambiguous. ... RealRepo, CachingRepo`.
+- New:
+  - a real self-cycle, where the owner is the only candidate, stays a cycle
+  - a decorator naming the concrete class (`ConcreteCachingRepo(inner: RealRepo)`) is valid and gets it injected
 
 Mutation:
 
 | Mutant | Result |
 |---|---|
-| Q1: throw only before the result is cached (later creates pass) | RED, 2 / 555 |
-| Q2: throw only once it is cached (first create passes) | RED, 35 / 555 |
-| Q3: `PUBLICATION` instead of `SYNCHRONIZED` | SURVIVED, 0 / 555: equivalent, see above |
-| Validate on every create instead of remembering | equivalent: same outcome, only the cost differs |
-| D3 (gate round 1): the guard in `createChecked` deleted (the public `ServiceProviderFactory` path) | RED, 1 / 561 |
+| A1: ambiguous single-service injections followed by the cycle check again | RED, 2 / 555 |
+| A2: any parameter with several candidates left out (would drop List cycles) | SURVIVED at first; RED, 1 / 556 after the two-candidate List cycle test |
 
-`validate()` builds a throwaway kontainer, and a blueprint with `trackKontainers` tracks it. That is not observable
-from outside (the tracker is internal), so it does not tell the two equivalent mutants apart.
+Changelog (behaviour change, message): `ultra/kontainer`: every single-service injection (`T`, `T?`, `Lazy<T>`)
+whose type has several candidates is reported as ambiguous ("Parameter 'i' is ambiguous. The following services
+collide: ..."), also when a dependency cycle went through it. Examples:
+- A decorator, `CachingRepo(inner: Repo) : Repo`: was "Circular dependency detected: CachingRepo -> CachingRepo".
+- `A(i: I)`, `B(a: A) : I`, `C : I`: was "Circular dependency detected: A -> B -> A".
 
-Changelog (behaviour change, no compile signal): `ultra/kontainer`: a blueprint remembers its validation result.
-Every `create` of an invalid blueprint throws `KontainerInconsistent` with the same message, before the override block
-runs. Before, only the first did: later creates succeeded, and `get` failed with `InvocationTargetException` or worse.
-A `create` arriving while another one validates now waits for the result; before, it skipped validation
-(ULTRA-00327).
+Other parameter errors that the cycle error used to hide now show as well. Both versions refuse the blueprint; only
+the message changes. Which service is injected does not change; a decorator names the concrete class (ULTRA-00334).
 
 Commits:
 - `8dffdf22`: today's pins
@@ -175,7 +169,7 @@ alone. No blueprint in the repo turned red in any of these suites.
 
 ## The work
 
-- The flag is set only after a successful validation (or the failure is remembered and rethrown). A blueprint that failed validation fails on every `create()` with the same `KontainerInconsistent`.
+- See "Decided": the diagnosis changes, the resolution does not.
 - Tests first: the "CURRENT BEHAVIOUR" pin turns into the wanted expectation (RED before the fix); mutation check.
 - CHANGELOG: a behaviour change without a compile signal.
 
@@ -186,3 +180,4 @@ alone. No blueprint in the repo turned red in any of these suites.
 ## History
 
 - 2026-11-14: created on the maintainer's word.
+- 2026-11-14: DONE.

@@ -53,3 +53,7 @@ Known behaviours with tickets (ULTRA-00327 to ULTRA-00337) are documented only o
   applying it (ULTRA-00330), `clone` checking like `create` (ULTRA-00332), lazy overrides (ULTRA-00333), the built-ins
   that can be neither registered nor overridden (ULTRA-00336). Still open and not to be documented yet: ULTRA-00327,
   ULTRA-00328, ULTRA-00329, ULTRA-00334, ULTRA-00335.
+- 2026-11-14: batch K2 is merged (`8778c4a9`) and now in scope: the remembered validation result (ULTRA-00327), the
+  cycle check reading every injection form, with the composite in its own list as the case to explain (ULTRA-00328),
+  ambiguous injections and the decorator (ULTRA-00334), ambiguous nullable injections (ULTRA-00335). Still open:
+  ULTRA-00329.

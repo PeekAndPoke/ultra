@@ -113,6 +113,33 @@
     insights record slice. Until it has returned a value, its definition names the class given to `with`.
   - Public signatures: `ServiceProvider.Provider.forOverride(definition, create: () -> Any)` (was `instance: Any`);
     `ServiceProvider.ForOverride` is no longer a data class and its constructor changed (ULTRA-00333).
+- `ultra/kontainer`, behaviour change (no compile signal): a blueprint remembers its validation result. Every
+  `create` of an invalid blueprint throws `KontainerInconsistent` with the same message, before the override block
+  runs. Before, only the first did: later creates succeeded, and `get` failed with `InvocationTargetException` or
+  worse. A `create` arriving while another one validates now waits for the result; before, it skipped validation
+  (ULTRA-00327).
+- `ultra/kontainer`, behaviour change (no compile signal, can stop an app at boot): the cycle check and the
+  dependency graph read what each parameter provider announces, so every injection form takes part.
+  - A dependency cycle through `List<T>` is now a validation error at the first `create` ("Kontainer has circular
+    dependencies!", with the hint to use `Lazy<T>`). Before, validation passed and `get` ended in
+    `StackOverflowError`.
+  - The likeliest hit is a service that injects a `List` of its own super type, which puts it in its own list:
+    `CompositeHandler(all: List<Handler>) : Handler`. Before, it booted and `get` overflowed; now the first `create`
+    fails. `Lazy<List<Handler>>` only defers this, because the list still contains the composite. The fix is to
+    register the composite under a type outside the list.
+  - The `Lazy<T>` hint helps only when `.value` is first read after construction.
+  - `Lazy<T>`, `Lazy<List<T>>` and `Lookup<T>` still break cycles; promotion to SemiDynamic is unchanged
+    (ULTRA-00328).
+- `ultra/kontainer`, behaviour change (message): every single-service injection (`T`, `T?`, `Lazy<T>`) whose type has
+  several candidates is reported as ambiguous ("Parameter 'i' is ambiguous. The following services collide: ..."),
+  also when a dependency cycle went through it. A decorator, `CachingRepo(inner: Repo) : Repo`, was "Circular
+  dependency detected: CachingRepo -> CachingRepo"; `A(i: I)`, `B(a: A) : I`, `C : I` was "Circular dependency
+  detected: A -> B -> A". Other parameter errors that the cycle error used to hide now show as well. Both versions
+  refuse the blueprint; only the message changes. A decorator names the concrete class (ULTRA-00334).
+- `ultra/kontainer`, behaviour change (no compile signal, can stop an app at boot): a nullable injection, `T?` or
+  `Lazy<T?>`, whose type has two or more candidate services is a validation error ("Parameter '...' is ambiguous. The
+  following services collide: ..."). Before, it injected null silently, and still made the service SemiDynamic when a
+  candidate was dynamic. With no candidate it is still null; with one it is injected (ULTRA-00335).
 - `funktor/insights`: `KontainerCollector.Data.Service.type` is a `String` (was `ServiceProvider.Type`). The wire is
   unchanged: records and the graph API keep the names `Singleton`, `SemiDynamic`, `Dynamic`, `Prototype`,
   `DynamicOverride`; every prototype is `Prototype`, whatever its kind (ULTRA-00319).
