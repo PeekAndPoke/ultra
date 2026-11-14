@@ -6,6 +6,7 @@ import kotlinx.datetime.DateTimeArithmeticException
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 /**
  * A slot of the day: a start ([from]) and a [duration], e.g. 22:00 for 4 hours (ULTRA-00341).
@@ -16,8 +17,8 @@ import kotlin.time.Duration.Companion.milliseconds
  *   [isAdjacentTo], [mergeWith] and [cutAway] work on the clock face, and a slot of 24 hours or more covers it all.
  * - On a date ([MpLocalDate.toRange]) the slot ends by the clock, so a night slot is 7 or 9 real hours on DST nights.
  * - Created only by the factories, which normalise: the start wraps into the day (24:00 is 00:00), the duration is cut
- *   to whole milliseconds, below zero is zero (an empty slot), and from [INFINITE_DURATION_MILLIS] on it is
- *   [Duration.INFINITE].
+ *   to whole milliseconds, below zero is zero (an empty slot), and every length from [MAX_DURATION_MILLIS] on,
+ *   [Duration.INFINITE] included, is cut to it: a slot is always finite (ULTRA-00343).
  */
 @Serializable(with = MpLocalTimeSlotSerializer::class)
 @Slumber.As(MpLocalTimeSlotRawData::class)
@@ -27,8 +28,11 @@ data class MpLocalTimeSlot private constructor(
     val duration: Duration,
 ) {
     companion object {
-        /** Durations from 2^53 - 1 ms on are [Duration.INFINITE]; stored, that is the largest integer exact in JS. */
-        const val INFINITE_DURATION_MILLIS: Long = 9_007_199_254_740_991L
+        /**
+         * The longest slot, 2^53 - 1 ms (about 285,000 years): the largest whole number a JS client reads and writes
+         * exactly, so a stored length round-trips. Every longer length, [Duration.INFINITE] included, is cut to it.
+         */
+        const val MAX_DURATION_MILLIS: Long = 9_007_199_254_740_991L
 
         private const val DAY: Long = MpLocalTime.MILLIS_PER_DAY.toLong()
 
@@ -43,7 +47,7 @@ data class MpLocalTimeSlot private constructor(
                 from = timeAt(from.inWholeMilliSeconds().toLong()),
                 duration = when {
                     millis <= 0L -> Duration.ZERO
-                    millis >= INFINITE_DURATION_MILLIS -> Duration.INFINITE
+                    millis >= MAX_DURATION_MILLIS -> MAX_DURATION_MILLIS.milliseconds
                     else -> millis.milliseconds
                 },
             )
@@ -106,28 +110,22 @@ data class MpLocalTimeSlot private constructor(
 
     private val fromMillis: Long get() = from.inWholeMilliSeconds().toLong()
 
-    private val durationMillis: Long get() = if (isInfinite) Long.MAX_VALUE else duration.inWholeMilliseconds
+    private val durationMillis: Long get() = duration.inWholeMilliseconds
 
     private val coversClock: Boolean get() = durationMillis >= DAY
 
     /** True for a duration of zero. */
     val isEmpty: Boolean get() = duration == Duration.ZERO
 
-    /** True for [Duration.INFINITE]: on a date the slot has an open end. */
-    val isInfinite: Boolean get() = duration.isInfinite()
-
     /** True when the slot is not empty. */
     val isValid: Boolean get() = !isEmpty
 
     val isNotValid: Boolean get() = !isValid
 
-    /**
-     * The clock time of the end; [MpLocalTime.EndOfDay] for an end exactly at midnight. An empty or infinite slot gives
-     * [from].
-     */
+    /** The clock time of the end; [MpLocalTime.EndOfDay] for an end exactly at midnight. An empty slot gives [from]. */
     val to: MpLocalTime
         get() {
-            if (isEmpty || isInfinite) return from
+            if (isEmpty) return from
 
             val end = fromMillis + durationMillis
 
@@ -135,13 +133,12 @@ data class MpLocalTimeSlot private constructor(
         }
 
     /**
-     * On how many days after the start's date the end lies: 0 for a slot ending by 24:00, 1 for 22:00 to 02:00.
-     * [Long.MAX_VALUE] for an infinite slot (so `toInt()` gives -1: check [isInfinite] first).
+     * On how many days after the start's date the end lies: 0 for a slot ending by 24:00, 1 for 22:00 to 02:00. At most
+     * 104 249 992 (the longest slot from 22:00 on), so `toInt()` is always safe.
      */
     val endDayOffset: Long
         get() {
             if (isEmpty) return 0L
-            if (isInfinite) return Long.MAX_VALUE
 
             val end = fromMillis + durationMillis
 
@@ -287,8 +284,7 @@ data class MpLocalTimeSlot private constructor(
      *   count.
      * - Parts never reach past the end; a remainder shorter than [duration] is dropped.
      * - An empty slot, or a [duration] under one millisecond, gives no parts; a negative [gap] counts as zero.
-     * - An infinite slot gives [Int.MAX_VALUE] parts, or one part for an infinite [gap]; an infinite [duration] fits
-     *   only an infinite slot.
+     * - A [duration] or [gap] beyond [MAX_DURATION_MILLIS], [Duration.INFINITE] included, counts as that length.
      * - The parts carry no day: `date.toRange(part, zone)` puts a part after midnight on the morning of `date`, not of
      *   the next day. Part `i` starts `(from + i * (duration + gap)) / 24 h` days after the slot's own date.
      */
@@ -297,71 +293,128 @@ data class MpLocalTimeSlot private constructor(
 
         if (isEmpty || part.isEmpty) return emptyList()
 
-        if (part.isInfinite) return if (isInfinite) listOf(this) else emptyList()
-
         val partMillis = part.durationMillis
-        val gapMillis = gap.inWholeMilliseconds.coerceIn(0L, INFINITE_DURATION_MILLIS)
+        val gapMillis = gap.inWholeMilliseconds.coerceIn(0L, MAX_DURATION_MILLIS)
         val step = partMillis + gapMillis
 
         val count = when {
-            isInfinite && gapMillis == INFINITE_DURATION_MILLIS -> 1L
-            isInfinite -> Int.MAX_VALUE.toLong()
             partMillis > durationMillis -> 0L
             else -> (durationMillis - partMillis) / step + 1
         }.coerceAtMost(Int.MAX_VALUE.toLong())
 
-        // the start of part i on the clock: (from + i * step) mod day; the step taken mod day keeps i * step small
-        val stepOnClock = step % DAY
-
+        // the start of part i on the clock: (from + i * step) mod day; i * step is at most the slot's own length
+        // (2^53 - 1 ms), so it never overflows
         return ComputedList(count.toInt()) { index ->
-            MpLocalTimeSlot(from = timeAt(fromMillis + index * stepOnClock), duration = part.duration)
+            MpLocalTimeSlot(from = timeAt(fromMillis + index * step), duration = part.duration)
         }
     }
 }
 
 /**
  * This slot on [date] in [timezone], by the clock: from [MpLocalTimeSlot.from] on [date] to [MpLocalTimeSlot.to] on
- * the day [MpLocalTimeSlot.endDayOffset] later.
+ * the day [MpLocalTimeSlot.endDayOffset] later. Always a two-ended range.
  *
  * - A start or end that falls into a skipped hour moves to the first existing time, the transition: 02:30 in a 02:00
  *   to 03:00 gap is 03:00. (`MpZonedDateTime.of` and `MpLocalDate.atTime` move it by the length of the gap, to 03:30.)
- * - A time in a repeated hour takes its first occurrence.
- * - So the end never lies before the start; the only exception is the open end (on a date after it, or past the last
- *   date the platform holds), which gives an empty range at the start. An empty slot gives an empty range at its
- *   start.
+ * - A time in a repeated hour takes its first occurrence. So the end never lies before the start, and an empty slot
+ *   gives an empty range at its start.
+ * - The platform's limits: throw when no correct answer exists, fall back when the answer is still right for
+ *   everything the platform can express. In a region zone on JS and on native, only local times the zone engine can
+ *   fully work with are used: two days inside its limit (its one-day probe window plus a zone offset).
+ *   - JS (`Date`'s range): -271821-04-22T00:00 to +275760-09-11T00:00 local.
+ *   - native (kotlinx-native's date range): -999999999-01-04T00:00 to +999999999-12-29T00:00 local.
+ *   - JVM, and fixed offsets (UTC included) everywhere: no such limit.
+ *   - The zone id is checked first: an invalid id is an `IllegalTimeZoneException`, whatever the date.
+ *   - A START outside the interval throws [IllegalArgumentException], naming the date, the zone and the interval.
+ *   - An END past the interval stops at its last local time in the zone. Where nothing limits the engine, an END
+ *     whose date runs past the last date stops at the last instant of 999 999 999-12-31 in the zone.
+ *   - These fallback values format and take day operations (`atStartOfDay`, `atTime`, `atStartOfHour`), except that
+ *     the last instant of 999 999 999-12-31 has no next day: `atTime(MpLocalTime.EndOfDay)` throws there.
+ *   - So the same call can give a different end on JS (past the year 275760) and on native (past
+ *     999 999 999-12-29) than on the JVM.
  */
 internal fun MpLocalTimeSlot.onDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTimeRange {
-    val start = firstExistingTime(date, from, timezone)
-    val end = endOnDate(date, timezone)
+    val usable = usableLocalTimes(timezone)
 
-    return when {
-        end.toInstant() >= start.toInstant() -> MpZonedDateTimeRange(from = start, to = end)
-        else -> MpZonedDateTimeRange(from = start, to = start)
+    return MpZonedDateTimeRange(from = startOnDate(date, timezone, usable), to = endOnDate(date, timezone, usable))
+}
+
+/** The engine's one-day probe window plus the largest zone offset (under a day). */
+private const val ENGINE_MARGIN_SECONDS: Long = 2 * 86_400L
+
+/** The local times (read as UTC) the zone engine fully works with for [timezone], or null where nothing limits it. */
+private fun usableLocalTimes(timezone: MpTimezone): ClosedRange<MpInstant>? {
+    val resolvable = platformResolvableSeconds(timezone.id) ?: return null
+
+    return utcInstant(resolvable.first + ENGINE_MARGIN_SECONDS)..utcInstant(resolvable.last - ENGINE_MARGIN_SECONDS)
+}
+
+private fun utcInstant(epochSeconds: Long): MpInstant = MpInstant(Instant.fromEpochSeconds(epochSeconds))
+
+/** [time] on [date] read as UTC: the local time as an instant, for comparing with [usableLocalTimes]. */
+private fun localTimeAsUtc(date: MpLocalDate, time: MpLocalTime): MpInstant {
+    return MpLocalDateTime.of(date, time).toInstant(MpTimezone.UTC)
+}
+
+/** The start of this slot on [date]; throws when the platform cannot work with it (see [onDate]). */
+private fun MpLocalTimeSlot.startOnDate(
+    date: MpLocalDate,
+    timezone: MpTimezone,
+    usable: ClosedRange<MpInstant>?,
+): MpZonedDateTime {
+    if (usable != null && localTimeAsUtc(date, from) !in usable) {
+        // an invalid id is a zone error, not a range error: check it before refusing the date
+        TimezoneEngine.offsetSecondsAt(timezone, Instant.fromEpochSeconds(0))
+
+        throw IllegalArgumentException(
+            "The start of a time slot, ${date.toIsoString().substringBefore('T')} ${from.formatHhMmSs()} in " +
+                    "${timezone.id}, lies outside what this platform can represent in that zone: a local date and " +
+                    "time from ${usable.start.toIsoString().removeSuffix(":00.000Z")} to " +
+                    usable.endInclusive.toIsoString().removeSuffix(":00.000Z"),
+        )
     }
+
+    return firstExistingTime(date, from, timezone)
 }
 
 /**
- * The end of this slot on [date]. The only place that decides what an end beyond the open end is: an infinite slot,
- * and a finite end the platform cannot resolve (JS dates end at 8.64e15 ms; every platform's dates end at year
- * 999 999 999), get the range's open end, today
- * [MpZonedDateTime.Doomsday] (whatever ULTRA-00343 decides goes here).
+ * The end of this slot on [date]; past what the platform can work with, its last usable time (see [onDate]). The
+ * only place that decides it. A `DateTimeArithmeticException` is the date types' own limit (the end's date, or 24:00
+ * on it, lies past 999 999 999-12-31); every other exception is a real error and passes through. The zone id was
+ * checked by the start, which [onDate] evaluates first.
  */
-private fun MpLocalTimeSlot.endOnDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTime {
-    if (isInfinite) return openEnd()
+private fun MpLocalTimeSlot.endOnDate(
+    date: MpLocalDate,
+    timezone: MpTimezone,
+    usable: ClosedRange<MpInstant>?,
+): MpZonedDateTime {
+    val endDate: MpLocalDate
+    val endAsUtc: MpInstant
 
-    return try {
-        // a finite duration is below 2^53 ms, so the offset is below 2^27 days: an Int
-        firstExistingTime(date.plusDays(endDayOffset.toInt()), to, timezone)
-    } catch (_: IllegalArgumentException) {
-        // the zone is valid (the start resolved in it): the platform cannot resolve an instant this far out
-        openEnd()
+    try {
+        // the longest slot ends 104 249 992 days later at most: an Int
+        endDate = date.plusDays(endDayOffset.toInt())
+        endAsUtc = localTimeAsUtc(endDate, to)
     } catch (_: DateTimeArithmeticException) {
-        // the end's date lies past the last date the platform holds (year 999 999 999)
-        openEnd()
+        return lastRepresentableTime(timezone, usable)
     }
+
+    if (usable != null && endAsUtc > usable.endInclusive) return lastRepresentableTime(timezone, usable)
+
+    return firstExistingTime(endDate, to, timezone)
 }
 
-private fun openEnd(): MpZonedDateTime = MpZonedDateTime.Doomsday
+/**
+ * The last time this platform represents in [timezone]: the last usable local time where the zone engine has a limit,
+ * else the last instant of 999 999 999-12-31.
+ */
+private fun lastRepresentableTime(timezone: MpTimezone, usable: ClosedRange<MpInstant>?): MpZonedDateTime {
+    if (usable == null) return MpLocalDate.of(999_999_999, 12, 31).atTime(MpLocalTime.Max, timezone)
+
+    val last = usable.endInclusive.atZone(MpTimezone.UTC).toLocalDateTime()
+
+    return firstExistingTime(last.toDate(), last.toTime(), timezone)
+}
 
 /**
  * [time] on [date] in [timezone]; a time that does not exist is the first existing time after it, 24:00 the next day.
@@ -374,8 +427,8 @@ private fun firstExistingTime(date: MpLocalDate, time: MpLocalTime, timezone: Mp
 }
 
 /**
- * The slot as clock times, e.g. `22:00 - 02:00`. It drops the days: an empty slot, 24 hours, 48 hours and an infinite
- * slot from one start print the same text.
+ * The slot as clock times, e.g. `22:00 - 02:00`. It drops the days: an empty slot, 24 hours and 48 hours from one start
+ * print the same text.
  */
 fun MpLocalTimeSlot.formatHhMm(): String {
     return "${from.formatHhMm()} - ${to.formatHhMm()}"

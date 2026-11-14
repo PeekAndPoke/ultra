@@ -62,15 +62,21 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         MpLocalTimeSlot.of(MpLocalTime(-3_600_000), 1.hours) shouldBe slot(23, 0, 1.hours)
     }
 
-    "Duration.INFINITE is kept; a duration from 2^53 - 1 ms on is infinite" {
-        val open = slot(10, 0, Duration.INFINITE)
+    "Duration.INFINITE and every length beyond MAX_DURATION_MILLIS (2^53 - 1 ms) are cut to it, no exception" {
+        val longest = slot(10, 0, Duration.INFINITE)
 
-        open.duration shouldBe Duration.INFINITE
-        open.isInfinite shouldBe true
-        open.to shouldBe t(10)
-        open.endDayOffset shouldBe Long.MAX_VALUE
-        slot(10, 0, MpLocalTimeSlot.INFINITE_DURATION_MILLIS.milliseconds) shouldBe open
-        slot(10, 0, (MpLocalTimeSlot.INFINITE_DURATION_MILLIS - 1).milliseconds).isInfinite shouldBe false
+        MpLocalTimeSlot.MAX_DURATION_MILLIS shouldBe 9_007_199_254_740_991L
+        longest.duration shouldBe MpLocalTimeSlot.MAX_DURATION_MILLIS.milliseconds
+        slot(10, 0, (MpLocalTimeSlot.MAX_DURATION_MILLIS + 1).milliseconds) shouldBe longest
+        slot(10, 0, Long.MAX_VALUE.milliseconds) shouldBe longest
+        slot(10, 0, (MpLocalTimeSlot.MAX_DURATION_MILLIS - 1).milliseconds).duration shouldBe
+                (MpLocalTimeSlot.MAX_DURATION_MILLIS - 1).milliseconds
+        // finite: its end is a clock time, 104 249 991 days later (10:00 + 2^53 - 1 ms, by hand)
+        longest.to shouldBe MpLocalTime.of(18, 59, 0, 991)
+        longest.endDayOffset shouldBe 104_249_991L
+        // the largest offset: the longest slot from 22:00 (by hand)
+        slot(22, 0, Duration.INFINITE).endDayOffset shouldBe 104_249_992L
+        longest.crossesMidnight shouldBe true
     }
 
     "of(from, to): to after from is the difference, before from is overnight, equal is empty" {
@@ -212,24 +218,24 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         night.splitWithGaps(2.hours, (-1).hours) shouldBe listOf(slot(22, 0, 2.hours), slot(0, 0, 2.hours))
     }
 
-    "splitWithGaps never throws and is free whatever the count: a whole day by 1 ms, an infinite slot by 1 h" {
+    "splitWithGaps never throws and is free whatever the count: a whole day by 1 ms, the longest slot by 1 h" {
         MpLocalTimeSlot.completeDay.splitWithGaps(1.milliseconds).size shouldBe 86_400_000
 
-        val endless = slot(10, 0, Duration.INFINITE).splitWithGaps(1.hours)
+        val parts = slot(10, 0, Duration.INFINITE).splitWithGaps(1.hours)
 
-        endless.size shouldBe Int.MAX_VALUE // capped: a List cannot be larger
-        endless[Int.MAX_VALUE - 1] shouldBe slot(16, 0, 1.hours) // (10 + 2 147 483 646) mod 24 = 16
+        parts.size shouldBe Int.MAX_VALUE // capped: a List cannot be larger
+        parts[Int.MAX_VALUE - 1] shouldBe slot(16, 0, 1.hours) // (10 + 2 147 483 646) mod 24 = 16
     }
 
-    "splitWithGaps on an infinite slot: endless parts whatever the step; an infinite gap or part gives one part" {
-        val open = slot(10, 0, Duration.INFINITE)
+    "splitWithGaps on the longest slot: a finite count; an infinite gap or part is the longest length" {
+        val longest = slot(10, 0, Duration.INFINITE)
 
-        open.splitWithGaps(60.days).size shouldBe Int.MAX_VALUE
-        // 60 days is whole days, so every part starts at 10:00; without the step taken mod day, i * step overflows
-        open.splitWithGaps(60.days)[Int.MAX_VALUE - 1] shouldBe slot(10, 0, 60.days)
-        open.splitWithGaps(1.hours, 60.days).size shouldBe Int.MAX_VALUE
-        open.splitWithGaps(1.hours, Duration.INFINITE) shouldBe listOf(slot(10, 0, 1.hours))
-        open.splitWithGaps(Duration.INFINITE) shouldBe listOf(open)
+        // (2^53 - 1 - step) / step + 1, by hand
+        longest.splitWithGaps(60.days).size shouldBe 1_737_499
+        longest.splitWithGaps(60.days).last() shouldBe slot(10, 0, 60.days)
+        longest.splitWithGaps(1.hours, 60.days).size shouldBe 1_736_295
+        longest.splitWithGaps(1.hours, Duration.INFINITE) shouldBe listOf(slot(10, 0, 1.hours))
+        longest.splitWithGaps(Duration.INFINITE) shouldBe listOf(longest)
         night.splitWithGaps(Duration.INFINITE) shouldBe emptyList()
         night.splitWithGaps(1.hours, Duration.INFINITE) shouldBe listOf(slot(22, 0, 1.hours))
     }

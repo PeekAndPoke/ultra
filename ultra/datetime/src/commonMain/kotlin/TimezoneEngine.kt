@@ -294,3 +294,13 @@ internal expect fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: L
 
 /** The id of the system's time zone. */
 internal expect fun platformSystemDefaultZoneId(): String
+
+/**
+ * The epoch seconds within which this platform's zone engine works for the zone [zoneId], or null when nothing but
+ * the date types' own range limits it (JVM; fixed offsets everywhere).
+ *
+ * - JS, region zone: +/-8.64e12 s, the range of `Date` (-271821-04-20 to +275760-09-13); `Intl` refuses beyond it.
+ * - native, region zone: the second to the last date of the `LocalDate` range; kotlinx-native refuses an instant
+ *   whose date-time lies past it.
+ */
+internal expect fun platformResolvableSeconds(zoneId: String): LongRange?

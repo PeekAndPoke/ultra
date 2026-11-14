@@ -353,8 +353,13 @@ data class MpLocalDate(
      *
      * - A start or end in a skipped hour moves to the first existing time, the transition (02:30 in a 02:00 to 03:00
      *   gap is 03:00; [atTime] would give 03:30). A time in a repeated hour takes its first occurrence.
-     * - An empty slot gives an empty range at its start; an infinite slot, or an end the platform cannot resolve, ends
-     *   at the open end. A slot starting at 24:00 starts at 00:00 of this date (the slot wraps its start).
+     * - Always a two-ended range; an empty slot gives an empty range at its start. A slot starting at 24:00 starts at
+     *   00:00 of this date (the slot wraps its start).
+     * - An END beyond what the platform can represent stops at its last representable time; a START beyond it throws
+     *   [IllegalArgumentException] naming the date, the zone and the accepted interval. In a region zone the interval
+     *   is -271821-04-22T00:00 to +275760-09-11T00:00 local on JS and -999999999-01-04T00:00 to
+     *   +999999999-12-29T00:00 local on native; on the JVM and for fixed offsets an end past 999 999 999-12-31 stops
+     *   at that date's last instant. An invalid zone id is an `IllegalTimeZoneException`, whatever the date.
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: MpTimezone): MpZonedDateTimeRange {
         return timeslot.onDate(date = this, timezone = timezone)
