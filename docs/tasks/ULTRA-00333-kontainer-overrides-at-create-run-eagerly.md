@@ -14,6 +14,17 @@ Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/D
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
 ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
+## Decided (maintainer, 2026-11-14)
+
+"yes make override lazy": the lambda of `create { with { ... } }` runs the first time the service is requested from
+that kontainer, and its result is kept for that kontainer (at most one run per kontainer). Today it runs at `create`
+(`ServiceProviderFactory.kt:22`), and again at `clone()`.
+
+Behaviour changes without a compile signal, for the changelog: an override that throws now throws at the first `get`;
+side effects run later, or never when the service is not used; a lambda reading something mutable sees the value at
+first use; `clone()` no longer runs the lambda at once. Build it together with ULTRA-00337 (the dynamics checker keeps
+the first request's override lambdas alive) and ULTRA-00332 (one entry point for `create` and `clone`).
+
 ## The work
 
 - Decide: keep eager (simple, an override is a value) and document it, or make it lazy. If it stays, the KDoc of `with` says so.
