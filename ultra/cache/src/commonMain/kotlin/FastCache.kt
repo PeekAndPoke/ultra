@@ -497,13 +497,13 @@ class FastCache<K, V> internal constructor(
             val now = cache.millisNow()
 
             updates.lastByKey.forEach { (key, action) ->
-                handle(now, key, action)
+                handle(cache, now, key, action)
             }
 
             evictAllNecessary(cache)
         }
 
-        private fun handle(now: Long, key: K, action: Action<K, V>) {
+        private fun handle(cache: FastCache<K, V>, now: Long, key: K, action: Action<K, V>) {
             val current = data[key]
             val currentSize = current?.size ?: 0
 
@@ -522,8 +522,7 @@ class FastCache<K, V> internal constructor(
                     val newSize = try {
                         estimator.estimate(action.key) + estimator.estimate(value)
                     } catch (e: Throwable) {
-                        // The exception's class only: its message can carry cached data.
-                        println("FastCache size estimate failed: ${e::class.simpleName}")
+                        cache.recordFailure("size estimate", e)
                         currentSize
                     }
 
@@ -807,10 +806,9 @@ class FastCache<K, V> internal constructor(
                         } catch (e: Throwable) {
                             // Refresh failed: allow retry on next loop iteration. Every Throwable, not only
                             // Exceptions: one that is not (an Error, or e.g. VaultException) escaped to the
-                            // scope's handler, which on native ends the process. There is no logger here,
-                            // so a repeatedly failing loader would otherwise be entirely silent.
-                            // The exception's class only: a key or a message can carry a session id or a token.
-                            println("FastCache refresh failed: ${e::class.simpleName}")
+                            // scope's handler, which on native ends the process. Counted, so a repeatedly
+                            // failing loader is not entirely silent.
+                            cache.recordFailure("refresh", e)
                         } finally {
                             if (!settled) {
                                 release(key, token)
@@ -887,11 +885,12 @@ class FastCache<K, V> internal constructor(
                         // cache silently grows without bound. Every Throwable, Errors included: a
                         // StackOverflowError from estimating a deep value must not end the loop, and
                         // a dead loop turns any failure into unbounded growth.
-                        // There is no logger here, so it goes to the platform's default channel.
-                        // The exception's class only: its message can carry cached data.
-                        println("FastCache behaviour [${behaviour::class.simpleName}] failed: ${e::class.simpleName}")
+                        cache.recordFailure("behaviour [${behaviour::class.simpleName}]", e)
                     }
                 }
+
+                // Outside every lock, after the pass: one line per kind of failure
+                cache.reportFailures()
 
                 // Wait for the next cycle
                 delay(loopDelay)
@@ -1089,6 +1088,36 @@ class FastCache<K, V> internal constructor(
         }
     }
 
+    /** Failures since the last report: how many, per kind and exception class. Guarded by [lock]. */
+    private val failures = LinkedHashMap<Pair<String, String?>, Int>()
+
+    /** Counts a failure of [kind]. Caller holds the lock. */
+    private fun countFailure(kind: String, e: Throwable) {
+        val key = kind to e::class.simpleName
+        failures[key] = (failures[key] ?: 0) + 1
+    }
+
+    /** Counts a failure of [kind], from any thread. */
+    private fun recordFailure(kind: String, e: Throwable) = sync { countFailure(kind, e) }
+
+    /**
+     * Prints the failures counted since the last report, one line per kind and exception class, and
+     * forgets them. Called by the loop after each pass, outside every lock.
+     *
+     * There is no logger here, so it goes to the platform's default channel. The exception's class
+     * only: a key or a message can carry cached data, a session id or a token.
+     */
+    private fun reportFailures() {
+        val report = sync {
+            if (failures.isEmpty()) emptyList() else failures.entries.map { it.key to it.value }.also { failures.clear() }
+        }
+
+        report.forEach { (what, count) ->
+            val (kind, exceptionClass) = what
+            println("FastCache $kind failed $count time(s): $exceptionClass")
+        }
+    }
+
     /** Whether [key] is cached, its value null included. Records no action. */
     private fun isCached(key: K): Boolean = sync { map.containsKey(key) }
 
@@ -1165,8 +1194,8 @@ class FastCache<K, V> internal constructor(
                 @Suppress("UNCHECKED_CAST")
                 listener(key, removed as V)
             } catch (e: Throwable) {
-                // The exception's class only: its message can carry cached data.
-                println("FastCache eviction listener failed: ${e::class.simpleName}")
+                // Counted only: this runs under the cache's lock, the loop prints after the pass
+                countFailure("eviction listener", e)
             }
         }
 
