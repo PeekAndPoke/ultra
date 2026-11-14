@@ -142,15 +142,27 @@ class FastCache<K, V> internal constructor(
          * Adds the [MaxMemoryUsageBehaviour] to the cache.
          *
          * [maxMemorySize] is a **budget in estimated bytes, not a real memory bound** — see
-         * [ObjectSizeEstimator] for how far the estimate can be off, which differs per platform and
-         * is worst on native, where every custom object counts as 32 bytes whatever it holds. Pass a
-         * tuned [estimator], or a purpose-built one, where the number has to mean something.
+         * [ObjectSizeEstimator] for how far the default estimate can be off (sampling, a cap, per
+         * platform) and what it costs. Pass a tuned [estimator], or a purpose-built one, where the number
+         * has to mean something.
+         *
+         * An entry is estimated when it is written; reads reuse that size, so a value changed in place
+         * after its put keeps the size it had then. When [estimator] throws for a new entry, it is
+         * charged [FastCache.MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE] - never 0, so the budget
+         * still binds.
          *
          * A soft bound, like [maxEntries]: an entry read or written in every maintenance pass is not
          * evicted by it, so under such load the cache holds every entry touched within one pass.
          */
         fun maxMemoryUsage(maxMemorySize: Long, estimator: ObjectSizeEstimator = ObjectSizeEstimator()) =
             addBehaviour(MaxMemoryUsageBehaviour(maxMemorySize, estimator))
+
+        /**
+         * [maxMemoryUsage], charging a new entry [fallbackSize] when [estimator] fails for it (the default
+         * is [MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE]).
+         */
+        fun maxMemoryUsage(maxMemorySize: Long, estimator: ObjectSizeEstimator, fallbackSize: Long) =
+            addBehaviour(MaxMemoryUsageBehaviour(maxMemorySize, estimator, fallbackSize))
 
         /** Adds the [OnEvictionBehaviour] that fires [handler] when entries are evicted by other behaviours. */
         fun onEviction(handler: (K, V) -> Unit) = addBehaviour(OnEvictionBehaviour(handler))
@@ -474,8 +486,21 @@ class FastCache<K, V> internal constructor(
         /** The maximum allowed total estimated memory size in bytes. */
         val maxMemorySize: Long,
         /** The estimator used to calculate the in-memory size of keys and values. */
-        val estimator: ObjectSizeEstimator = ObjectSizeEstimator(),
+        val estimator: ObjectSizeEstimator,
+        /** What a new entry is charged when [estimator] throws for it - never 0, so the budget still binds. */
+        val fallbackSize: Long,
     ) : Behaviour<K, V> {
+
+        /** With the default fallback size, [DEFAULT_FALLBACK_SIZE]. */
+        constructor(
+            maxMemorySize: Long,
+            estimator: ObjectSizeEstimator = ObjectSizeEstimator(),
+        ) : this(maxMemorySize, estimator, DEFAULT_FALLBACK_SIZE)
+
+        companion object {
+            /** What a new entry is charged by default when its size cannot be estimated. */
+            const val DEFAULT_FALLBACK_SIZE = 1_024L
+        }
 
         // Holds the key (the eviction loop needs it) but never the value - see ExpireAfterAccess.
         private data class Entry<K>(
@@ -500,33 +525,43 @@ class FastCache<K, V> internal constructor(
             val now = cache.millisNow()
 
             updates.lastByKey.forEach { (key, action) ->
-                handle(cache, now, key, action)
+                handle(cache, now, key, action, updates.lastWriteByKey[key])
             }
 
             evictAllNecessary(cache)
         }
 
-        private fun handle(cache: FastCache<K, V>, now: Long, key: K, action: Action<K, V>) {
+        private fun handle(cache: FastCache<K, V>, now: Long, key: K, action: Action<K, V>, lastWrite: Action<K, V>?) {
             val current = data[key]
             val currentSize = current?.size ?: 0
 
             when (action) {
                 is ReadAction, is PutAction -> {
-                    val value = when (action) {
-                        is ReadAction -> action.value
-                        is PutAction -> action.value
-                    }
+                    val written = lastWrite as? PutAction
 
-                    // TODO(scan): re-walks the whole object graph of key and value on every read, not
-                    //   just on writes.
-                    // A failing estimate must not end the batch: the entries after it went uncounted
-                    // and their removals left ghost bytes. The entry keeps its previous size (0 when
-                    // new), so it stays tracked and evictable, and its removal stays consistent.
-                    val newSize = try {
-                        estimator.estimate(action.key) + estimator.estimate(value)
-                    } catch (e: Throwable) {
-                        cache.recordFailure("size estimate", e)
-                        currentSize
+                    // Estimated on writes only: a read reuses the stored size (a value mutated in place
+                    // after its put keeps the size it had then). An entry not tracked yet is estimated
+                    // from what was read. The access time is stamped either way.
+                    val newSize = when {
+                        current != null && written == null -> currentSize
+
+                        else -> {
+                            val value = written?.value ?: when (action) {
+                                is ReadAction -> action.value
+                                is PutAction -> action.value
+                            }
+
+                            // A failing estimate must not end the batch: the entries after it went
+                            // uncounted and their removals left ghost bytes. The entry keeps its
+                            // previous size, or is charged the fallback when new - never 0, so the
+                            // budget still binds when an estimator fails for everything.
+                            try {
+                                estimator.estimate(action.key) + estimator.estimate(value)
+                            } catch (e: Throwable) {
+                                cache.recordFailure("size estimate", e)
+                                if (current != null) currentSize else fallbackSize
+                            }
+                        }
                     }
 
                     totalSize += newSize - currentSize

@@ -190,6 +190,85 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             keepReachable(cache)
         }
 
+        "the size is estimated on writes only; reads reuse it" {
+            var calls = 0
+
+            class CountingEstimator : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long {
+                    calls++
+                    return 1L
+                }
+            }
+
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                maxMemoryUsage(1_000_000, CountingEstimator())
+            }
+
+            cache.put("a", "1")
+            eventually(3.seconds) { calls shouldBe 2 }
+
+            // reads in many passes: the stored size is reused, nothing is walked again
+            repeat(10) {
+                cache.get("a")
+                delay(30.milliseconds)
+            }
+
+            calls shouldBe 2
+
+            keepReachable(cache)
+        }
+
+        "a read still counts as an access for the eviction order, though it reuses the size" {
+            // every value costs 1, keys nothing: a budget of two entries
+            class OnePerValue : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = if (obj is Int) 1L else 0L
+            }
+
+            // driven by hand against a cache whose loop only drains, once a second
+            val tap = ActionTap<String, Int>()
+            val cache = fastCache<String, Int>(loopDelay = 1.seconds) { addBehaviour(tap) }
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(2, OnePerValue())
+
+            listOf("a", "b", "c").forEachIndexed { i, key -> cache.put(key, i) }
+            eventually(5.seconds) { (tap.actions.size >= 3) shouldBe true }
+
+            // separate passes, so "a" and "b" carry different access times (within one pass they tie)
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", 0))))
+            delay(5.milliseconds)
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("b", 1))))
+            delay(5.milliseconds)
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.ReadAction("a", 0))))
+            delay(5.milliseconds)
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("c", 2))))
+
+            // over budget by one: "b" is the least recently used, "a" was read after it
+            cache.keys shouldBe setOf("a", "c")
+            behaviour.totalSize shouldBe 2L
+        }
+
+        "an estimator that fails for every value still lets maxMemoryUsage evict" {
+            class FailingEstimator : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = error("cannot estimate")
+            }
+
+            // each entry is charged the fallback size: a budget of two and a half entries keeps two
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                maxMemoryUsage(
+                    maxMemorySize = FastCache.MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE * 5 / 2,
+                    estimator = FailingEstimator(),
+                )
+            }
+
+            repeat(5) { i ->
+                cache.put("k$i", "v$i")
+                delay(30.milliseconds)
+            }
+
+            eventually(3.seconds) { cache.size shouldBe 2 }
+
+            keepReachable(cache)
+        }
+
         "an estimator throwing for one entry leaves the rest of the batch applied" {
             // Values are charged their own number; 13 cannot be estimated
             class FailingEstimator : ObjectSizeEstimator {
@@ -210,12 +289,13 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
                 ),
             )
 
-            // "b" after the failing entry is counted; "x" is tracked at 0 bytes
-            behaviour.totalSize shouldBe 3L
+            // "b" after the failing entry is counted; "x" is charged the fallback size, never 0
+            val fallback = FastCache.MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE
+            behaviour.totalSize shouldBe 3L + fallback
 
             // an entry that already has a size keeps it when its new value cannot be estimated
             behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", 13))))
-            behaviour.totalSize shouldBe 3L
+            behaviour.totalSize shouldBe 3L + fallback
 
             behaviour.process(
                 cache,
