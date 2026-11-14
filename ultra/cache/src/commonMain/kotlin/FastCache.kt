@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.cache
 
 import io.peekandpoke.ultra.common.RunSync
 import io.peekandpoke.ultra.common.WeakReference
-import io.peekandpoke.ultra.datetime.Kronos
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -12,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 /**
  * Creates a [FastCache] using the DSL-style [configure] block.
@@ -53,9 +53,9 @@ private fun Duration.ttlMillis(): Long = when {
  * over the limit and something needs to be evicted. Instead, the loop will check the memory usage periodically and
  * evict entries until the memory usage is below the limit.
  */
-class FastCache<K, V>(
+class FastCache<K, V> internal constructor(
     /** The coroutine scope used for the internal processing loop. */
-    val scope: CoroutineScope = Cache.defaultCoroutineScope,
+    val scope: CoroutineScope,
     /** The list of behaviours applied during each processing-loop iteration. */
     val behaviours: List<Behaviour<K, V>>,
     /**
@@ -64,8 +64,23 @@ class FastCache<K, V>(
      * Below 1 ms, zero and negative included, the loop runs with 1 ms: without a pause it would
      * never suspend and hold a thread for good.
      */
-    val loopDelay: Duration = defaultLoopDelay,
+    val loopDelay: Duration,
+    /** The clock of every TTL: monotonic, so a step of the wall clock neither expires nor keeps an entry. */
+    timeSource: TimeSource,
 ) : Cache<K, V> {
+
+    /** A cache on the monotonic clock - see [Builder.timeSource] for another. */
+    constructor(
+        scope: CoroutineScope = Cache.defaultCoroutineScope,
+        behaviours: List<Behaviour<K, V>>,
+        loopDelay: Duration = defaultLoopDelay,
+    ) : this(scope, behaviours, loopDelay, TimeSource.Monotonic)
+
+    /** Where [millisNow] counts from. */
+    private val clockOrigin = timeSource.markNow()
+
+    /** Milliseconds on this cache's clock: the time base of every TTL stamp and comparison. */
+    internal fun millisNow(): Long = clockOrigin.elapsedNow().inWholeMilliseconds
 
     companion object {
         /** Default delay between processing-loop iterations. */
@@ -80,6 +95,15 @@ class FastCache<K, V>(
         private var loopDelay: Duration = defaultLoopDelay,
     ) {
         private val behaviours = mutableListOf<Behaviour<K, V>>()
+
+        private var timeSource: TimeSource = TimeSource.Monotonic
+
+        /**
+         * Sets the clock of every TTL; the default is [TimeSource.Monotonic].
+         *
+         * For tests, e.g. a `TestTimeSource`: TTLs then pass only when the test moves its time on.
+         */
+        fun timeSource(source: TimeSource) = apply { timeSource = source }
 
         /** Sets the loop delay; below 1 ms it runs as 1 ms - see [FastCache.loopDelay]. */
         fun loopDelay(delay: Duration) = apply { loopDelay = delay }
@@ -156,6 +180,7 @@ class FastCache<K, V>(
             // its eviction listener registered - that happens once, in init.
             behaviours = behaviours.toList(),
             loopDelay = loopDelay,
+            timeSource = timeSource,
         )
     }
 
@@ -256,11 +281,10 @@ class FastCache<K, V>(
         )
 
         private val ttlMs = ttl.ttlMillis()
-        private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry, Long> { it.accessed }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
-            val now = clock.millisNow()
+            val now = cache.millisNow()
 
             updates.lastByKey.forEach { (key, action) ->
                 handle(now, key, action)
@@ -316,11 +340,10 @@ class FastCache<K, V>(
         )
 
         private val ttlMs = ttl.ttlMillis()
-        private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry, Long> { it.written }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
-            val now = clock.millisNow()
+            val now = cache.millisNow()
 
             updates.lastWriteByKey.forEach { (key, action) ->
                 handle(now, key, action)
@@ -374,7 +397,6 @@ class FastCache<K, V>(
             val accessed: Long,
         )
 
-        private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry<K>, Long> { it.accessed }
 
         init {
@@ -383,7 +405,7 @@ class FastCache<K, V>(
         }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
-            val now = clock.millisNow()
+            val now = cache.millisNow()
 
             updates.lastByKey.forEach { (key, action) ->
                 handle(now, key, action)
@@ -462,7 +484,6 @@ class FastCache<K, V>(
         var totalSize = 0L
             private set
 
-        private val clock = Kronos.systemUtc
         private val data = ValueSortedMap<K, Entry<K>, Long> { it.accessed }
 
         init {
@@ -470,7 +491,7 @@ class FastCache<K, V>(
         }
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
-            val now = clock.millisNow()
+            val now = cache.millisNow()
 
             updates.lastByKey.forEach { (key, action) ->
                 handle(now, key, action)
@@ -669,7 +690,6 @@ class FastCache<K, V>(
 
         // The hard branch is checked first, so 0 here expires every entry before any refresh
         private val hardTtlMs = if (refreshAfter.isPositive()) hardTtl?.ttlMillis() else 0L
-        private val clock = Kronos.systemUtc
 
         private val writeTimestamps = mutableMapOf<K, Long>()
 
@@ -686,7 +706,7 @@ class FastCache<K, V>(
         private val refreshLock = Any()
 
         override fun process(cache: FastCache<K, V>, updates: ActionUpdates<K, V>) {
-            val now = clock.millisNow()
+            val now = cache.millisNow()
 
             val keysToRefresh = mutableListOf<Pair<K, Any>>()
             val keysToEvict = mutableListOf<K>()
