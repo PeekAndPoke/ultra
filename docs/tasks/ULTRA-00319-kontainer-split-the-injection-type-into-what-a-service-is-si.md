@@ -76,8 +76,9 @@ should stop being dynamic is a separate decision in ULTRA-00158.
       (2026-11-14, see "Characterization (step 1)".)
 - [x] Mutation-check the characterization specs against today's code (the promotion rule, the prototype
       exemption), so they are known to bite. (2026-11-14, 21 mutants, all red.)
-- [x] Then the split, behind the unchanged builder API; the new combination gets its builder function; `Log` in
-      `ultra/log` uses it and its TODO goes. (2026-11-14, see "Step 2: built".)
+- [x] Then the split, behind the unchanged builder API; the new combination gets its builder function. `Log` in
+      `ultra/log` stays `prototype()`: as `dynamicPrototype` it changed redefinitions (round 1); its TODO says so,
+      and ULTRA-00158 and ULTRA-00331 decide. (2026-11-14, see "Step 2: built" and the rounds.)
 - [ ] Every consumer suite green (funktor-all, demo); CHANGELOG; the Kontainer docs page and the skill.
 
 Kontainer is battle-tested (CLAUDE.md, project facts): a strict gate is in order although the ticket is not
@@ -373,7 +374,8 @@ Under "Breaking changes":
   shared does not change. To migrate:
   - `provider.type == ServiceProvider.Type.Singleton` -> `type == ServiceType.Singleton && kind == ServiceKind.Static`
   - `Type.SemiDynamic` -> `ServiceType.Singleton` with `ServiceKind.SemiDynamic`
-  - `Type.Dynamic` -> `ServiceType.Singleton` with `ServiceKind.Dynamic`
+  - `Type.Dynamic` -> `ServiceType.Singleton` with `ServiceKind.Dynamic` and `overridden == false` (an overridden
+    provider also reports Singleton and Dynamic; the old `Type.Dynamic` excluded overrides)
   - `Type.DynamicOverride` -> `ServiceType.Singleton`, `ServiceKind.Dynamic`, `overridden == true`
   - `Type.Prototype` -> `type == ServiceType.Prototype`; the kind is `Static`, or `SemiDynamic` when it reaches
     something dynamic
@@ -386,10 +388,14 @@ Under "Breaking changes":
     `forGlobalSingleton(definition)`; `forDynamicSingleton(kind, definition)`;
     `ServiceProvider.ForSingleton(kind, definition)`, `ForPrototype(kind, definition)`,
     `ForOverride(definition, instance)` (was `ForInstance`; always a dynamic singleton that is overridden).
-    `forDynamicSingleton` refuses `ServiceKind.Static`
+    `forDynamicSingleton` refuses `ServiceKind.Static`. The public constructor
+    `ServiceProvider.ForPrototype.Provider(definition)` is now `ForPrototype.Provider(kind, definition)`
   - `DebugInfo.ServiceDebugInfo.type` is a `ServiceType`, with new `kind`, `overridden` and `semiDynamicBecauseOf`;
     `DebugInfo.ServiceDefinitionInfo.injectionType` -> `type` and `kind`
   - `KontainerTools.dumpKontainer()` has a new `Kind` column; a semi dynamic service names what made it so
+- `funktor/insights`: `KontainerCollector.Data.Service.type` is a `String` (was `ServiceProvider.Type`). The wire is
+  unchanged: records and the graph API keep the names `Singleton`, `SemiDynamic`, `Dynamic`, `Prototype`,
+  `DynamicOverride`; every prototype is `Prototype`, whatever its kind (ULTRA-00319).
 
 Under "New":
 
@@ -398,8 +404,6 @@ Under "New":
   injecting one becomes `SemiDynamic`. It cannot be overridden at `create { with { } }`; such an override is refused
   with `KontainerInconsistent` like any other non-dynamic; the message adds that only dynamic singletons can be
   overridden (ULTRA-00319).
-- `funktor/insights`: no change on the wire. Records and the graph API keep the names `Singleton`, `SemiDynamic`,
-  `Dynamic`, `Prototype`, `DynamicOverride` (ULTRA-00319).
 
 ### Docs lines that become false (list only, not edited)
 
@@ -530,7 +534,7 @@ the step-2 rows included.
 | M9 | No redefinition rule | 16 / 417 |
 | M10 | `Kontainer` registered as singleton | 11 / 417 |
 | M11 | Cycle check follows `List` | 1 / 417 |
-| M12 | `getAllDependents` keeps the initial set | SURVIVED, equivalent (see step 2) |
+| M12 | `getAllDependents` keeps the initial set | SURVIVED, equivalent (see step 2); RED in round 2 |
 
 - **M5b had to be rewritten.** As first written, it handed a static prototype to `forDynamicSingleton`, which the new
   guard refuses. Every blueprint then failed at construction, before any test ran: a script error (no tests in the
@@ -559,6 +563,71 @@ the step-2 rows included.
   - two CURRENT BEHAVIOUR pins
   - minus the duplicate enums test
 - Log, 3 more tests: the redefinition pins.
+
+## Round 2 (strict gate, reviewer-fable-xhigh, blind then reconciled)
+
+### Verdicts
+
+| Charter | Verdict | Findings |
+|---|---|---|
+| Implementation and code style | CLEAN on both passes | 3 MINOR, 1 NIT |
+| Domain and security | CLEAN on both passes | 5 MINOR |
+
+No lifetime, sharing, order or message difference was found for any blueprint the old API can express.
+
+### Findings and outcomes (commit `a337eed4`, no production behaviour changed)
+
+1. **Refusal hint, three surviving mutants.** All are now RED:
+   - **R1:** the hint filter without `&& it.kind == ServiceKind.Dynamic`. The plain-prototype refusals in
+     `DynamicsAtCreateCharacterizationSpec` and `RedefinitionCharacterizationSpec` now assert the whole old message,
+     with no hint.
+   - **R2:** reversed assignability. Two new tests assert the whole message: a `dynamicPrototype(Base, Impl)`
+     overridden with `Impl` names `Base`, and a super type `Wide` of a dynamic prototype gets exactly the old
+     message.
+   - **Two unexpected overrides in one `create`,** one a declared `dynamicPrototype` and one a singleton: the whole
+     message is pinned.
+2. **`semiDynamicSources` without its SemiDynamic filter (R3):** RED now. `because(ChainDynAbove)` and
+   `because(ChainDyn)` are pinned empty.
+3. **The static-kind filter on the semi dynamic set:** removed, as it never dropped anything. `getAllDependents`
+   leaves out the set it starts from, and that set is every service declared dynamic. The KDoc says so. With the
+   filter gone, M12 is no longer equivalent: it puts the dynamic singletons into the semi dynamic group of the
+   listing, and the two listing-order tests turn RED.
+4. **Ticket and changelog text:**
+   - The work item no longer says `Log` uses `dynamicPrototype`.
+   - The insights entry moved to "Breaking changes", naming `KontainerCollector.Data.Service.type` as `String`.
+   - The `ForPrototype.Provider(kind, definition)` constructor is named.
+   - The `Type.Dynamic` migration line adds `overridden == false`.
+5. **KDoc of `dynamicPrototype()`:** says that a plain `prototype()` already makes its users per kontainer when its
+   producer reaches something dynamic, and that a dynamic prototype does so also when it reaches nothing dynamic,
+   and is named as the cause.
+6. **NIT:** the two test titles no longer use the old names.
+7. **Optional, applied:** the hint computes the dynamic prototypes inside the error path; the class-level set is gone.
+
+Not part of this ticket: the dynamics checker keeping the first request's override map alive is ULTRA-00337.
+
+### Mutation runs, round 2
+
+The generated docs file is now backed up and compared with `cmp` by the runner as well.
+
+| # | Mutant | Failed / tests |
+|---|---|---|
+| R1 | Hint for every prototype (kind filter dropped) | 2 / 420 |
+| R2 | Hint with reversed assignability | 2 / 420 |
+| R3 | `semiDynamicSources` without the SemiDynamic filter | 1 / 420 |
+| M12 | `getAllDependents` keeps the initial set | 2 / 420, no longer equivalent |
+| N19 | Refusal hint removed (re-run) | 3 / 420 |
+| N17 | Sources from direct dependents only (re-run) | 1 / 420 |
+
+### Counts (XML, `--rerun`, 0 failures)
+
+| Suite | After round 1 | After round 2 |
+|---|---|---|
+| `:ultra:kontainer:test` | 417 | 420 |
+| `:ultra:log:jvmTest` | 72 | 72 |
+| `:funktor:insights:jvmTest` | 117 | 117 |
+
+Vault and `funktor:all` were not re-run: this round changed only private blueprint code, KDoc and tests, and no
+public signature.
 
 ## History
 
