@@ -72,6 +72,51 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
             estimator.estimate(nested) shouldBe 100 * (16L + 8L) + (16L + 2 * 8L)
         }
 
+        "the cap: a string or primitive array behind a large sibling is sized, not charged flat" {
+            val estimator = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 100))
+            // 241 lists, more than the cap
+            val table = List(60) { r -> List(3) { c -> listOf("s$r-$c") } }
+            val blob = ByteArray(1_000_000)
+            // two lists deep, so in the first order the blob is reached only once the table used up the cap
+            val behind = listOf(listOf(blob))
+
+            (estimator.estimate(listOf(table, behind)) >= 1_000_024L) shouldBe true
+            (estimator.estimate(listOf(behind, table)) >= 1_000_024L) shouldBe true
+            (estimator.estimate(listOf(blob, table)) >= 1_000_024L) shouldBe true
+            (estimator.estimate(listOf(table, blob)) >= 1_000_024L) shouldBe true
+        }
+
+        "the cap: strings never count against it - 111 lists holding 1 000 strings are exact under a cap of 200" {
+            val estimator = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 200))
+            val value = List(10) { a -> List(10) { b -> List(10) { c -> "s$a$b$c" } } }
+
+            // 111 lists of 10 (16 + 10 * 8 each), 1 000 distinct strings of 4 chars (16 + 8 + 24 + 8 each)
+            estimator.estimate(value) shouldBe 111 * 96L + 1_000 * 56L
+        }
+
+        "the cap: breadth first - a deep sibling cannot use it up before a shallow one is reached" {
+            val estimator = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 100))
+            var chain: Any = emptyList<Any>()
+            repeat(1_000) { chain = listOf(chain) }
+            // two lists deep, behind no leaf of its own: a depth-first walk reached it after the chain
+            val shallow = listOf(listOf("x".repeat(100_000)))
+
+            (estimator.estimate(listOf(shallow, chain)) >= 200_048L) shouldBe true
+            (estimator.estimate(listOf(chain, shallow)) >= 200_048L) shouldBe true
+        }
+
+        "the identity set is bounded: beyond twice the cap, a shared object counts again" {
+            val shared = "x".repeat(1_000)
+            val value = List(30) { "s$it" } + List(5) { shared }
+            // the list (16 + 35 * 8), 10 strings of 2 chars and 20 of 3 (52 and 54), the shared one (2 048)
+            val once = 296L + 10 * 52L + 20 * 54L + 2_048L
+
+            ObjectSizeEstimator().estimate(value) shouldBe once
+            // budget 20: the list and the first 19 strings; then every string counts as new, shared too
+            ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 10)).estimate(value) shouldBe
+                once + 4 * 2_048L
+        }
+
         "sampling: large elements at the back of a list are seen" {
             val (list, exact) = mixed(6_400) { it >= 5_760 }
 

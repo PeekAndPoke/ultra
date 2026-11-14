@@ -28,10 +28,24 @@ import kotlin.math.roundToLong
  *   fixed stride, is the alternative - switch with `EstimatorConfig(samplePick = ...)`. A collection
  *   without index access (a set, a linked list, a map) is sampled over its first 1 024 elements only
  *   (`sampleWindow`), to keep the stepping pass short.
- * - **A cap.** At most 10 000 objects are visited per estimate (`maxObjects`); each further one is charged
- *   a flat header and two references, without looking inside it.
+ * - **A cap.** At most 10 000 objects are visited per estimate (`maxObjects`), breadth first, so the cap
+ *   cuts the deepest levels and never a whole sibling subtree. A string or primitive array is always
+ *   sized from its length: it needs no descent and does not count against the cap. Beyond the cap,
+ *   any other object is charged a flat header and two references, without looking inside it - **so
+ *   the cap errs low**, by what the cut objects hold.
+ * - **A bounded identity set.** A shared object is charged once while the set holds fewer than twice
+ *   `maxObjects` objects; beyond that every object counts as new, so a shared one may count again -
+ *   that errs high.
  * - **No stack, no throw.** The walk is iterative, so a deep graph cannot overflow the stack, and a field
  *   that cannot be read is charged flat; an estimate never throws.
+ *
+ * The work is bounded by the configuration, not by the value: at most `maxObjects` visits, each
+ * handing on at most `sampleSize` elements (twice that for a map) or the fields of one object, each
+ * sized or queued in constant time. Worked example: a list of 100 lists of 100 lists of 100 strings
+ * (a million strings, 74 MB). Sampling walks 64 of each 100, so 1 + 64 + 4 096 lists are visited and
+ * 262 144 strings sized - estimate / exact 1.00, 16 ms on the JVM. Rule of thumb for when the cap
+ * cuts: a value whose top level holds `n` elements of `k` objects each (strings and primitive arrays
+ * not counted) stays below the cap while `min(n, 64) * k` stays below `maxObjects`.
  *
  * Measured on the JVM against an exact walk (2026-11-14), estimate / exact, with the default pick
  * (the stride's figure in brackets where it differs):
@@ -39,15 +53,17 @@ import kotlin.math.roundToLong
  *   10th 1.31 (7.8), every 7th 0.90 (1.08), every 64th 1.32 (1.97), every 100th 1.13 (**24.1**: a
  *   period that divides the stride is seen as all large). The golden ratio has its own worst case, a
  *   layout with the large elements exactly on its positions: 24.1 (1.13) - unlikely by accident.
- * - one 10 000-char string shared by all 6 400 elements of a list: **7.6** - the sampled elements reach
- *   it with the weight of all elements.
- * - a tree of 29 524 data-class nodes, beyond the cap: **0.51**.
+ * - 6 400 `Holder(shared, id)` objects, all holding one 10 000-char string: **7.6** - the sampled
+ *   holders reach the string with the weight of all of them. (A plain list of 6 400 references to
+ *   the string: 28.9.)
+ * - 100 orders of 100 lines of 15 objects each, 150 000 objects, far beyond the cap: **0.63**; of 5
+ *   objects each, below it: 1.00.
+ * - a 50 MB byte array beside a table of 40 000 cells, a 10 MB one beside a tree of 9 841 nodes, a
+ *   list of 10 000 strings, a list of 1 000 maps of 10 entries: 1.00; a map of 5 000 entries: 0.97.
  * - a set of 5 000 strings whose large ones are its last 500, beyond the sampling window: **0.24**.
- * - a list of 10 000 strings, a list of 1 000 maps of 10 entries, a map of 5 000 entries: 0.97 to 1.00.
  *
- * Cost of one estimate (list of 10 000 strings / 1 000 maps of 10 entries): JVM 0.08 ms / 1.9 ms,
- * JS 0.2 ms / 3.4 ms, native 0.7 ms / 3.9 ms - before sampling and the cap 17 ms / 70 ms, 450 ms /
- * 537 ms, 3.7 s / 16 s. 100 000 strings: JVM 0.09 ms (1.5 s before).
+ * Cost of one estimate on the JVM: a list of 10 000 strings 0.03 ms, 100 000 strings 0.1 ms, 1 000
+ * maps of 10 entries 0.2 ms (before sampling and the cap: 17 ms, 1.5 s and 450 ms).
  *
  * ## Per platform
  *
@@ -99,12 +115,13 @@ interface ObjectSizeEstimator {
  * sums up estimated sizes for primitives, strings, arrays, collections, maps and arbitrary objects.
  *
  * The walk is bounded, so its cost is too - see [ObjectSizeEstimator] for what that costs in accuracy:
- * - an identity set of visited objects (constant time per object) keeps a shared object from being
- *   charged twice; it never calls `hashCode()` or `equals()` of a visited object;
+ * - an identity set (constant time per object, at most twice [EstimatorConfig.maxObjects] objects)
+ *   keeps a shared object from being charged twice; it never calls `hashCode()` or `equals()`;
  * - a collection, map or array with more than [EstimatorConfig.sampleSize] elements is sampled, and
  *   the rest is charged by the sampled elements' average;
- * - at most [EstimatorConfig.maxObjects] objects are visited per estimate; any further object is
- *   charged a flat header and two references, without descent;
+ * - at most [EstimatorConfig.maxObjects] objects are visited per estimate, breadth first; strings and
+ *   primitive arrays are sized from their length and never count; any further object is charged a
+ *   flat header and two references, without descent;
  * - the walk is iterative, so a deep graph cannot overflow the stack, and an estimate never throws.
  *
  * Each call starts afresh, so one estimate never depends on another. The default [EstimatorConfig]
@@ -156,8 +173,9 @@ class ObjectSizeEstimatorImpl(
      *   charged by the average of these, spread evenly over the elements
      * @property sampleWindow how many elements of a collection or map without index access (a set, a
      *   linked list, a map) the samples are spread over: the first ones, so the stepping pass stays short
-     * @property maxObjects   objects visited per estimate; any further one is charged a flat header and
-     *   two references, without descent
+     * @property maxObjects   objects visited per estimate, strings and primitive arrays not counted; any
+     *   further one is charged a flat header and two references, without descent. The identity set
+     *   holds at most twice as many
      * @property samplePick   where the samples sit - see [SamplePick]
      */
     data class EstimatorConfig(
@@ -190,11 +208,11 @@ class ObjectSizeEstimatorImpl(
     }
 
     /** An object still to visit, and how many times its size counts (more than once when sampled). */
-    private class Pending(val obj: Any?, val weight: Double)
+    private class Pending(val obj: Any, val weight: Double)
 
     /** Estimates the in-memory size of [obj] in bytes. Never throws: a failed walk is charged flat. */
     override fun estimate(obj: Any?): Long = try {
-        walk(obj)
+        Walk().run(obj)
     } catch (e: Throwable) {
         flatObject()
     }
@@ -218,48 +236,88 @@ class ObjectSizeEstimatorImpl(
         else -> null
     }
 
-    private fun walk(root: Any?): Long {
-        primitiveSize(root)?.let { return it }
+    /**
+     * One estimate: breadth-first, so the cap cuts the deepest level and never whole sibling subtrees.
+     *
+     * The cap counts the objects taken off the queue. Once objects visited plus queued reach it,
+     * nothing more is queued: a string or primitive array is sized on the spot from its length (it
+     * needs no descent), anything else is charged flat. So the queue never holds more than
+     * [EstimatorConfig.maxObjects] entries, and the work is at most that many visits plus one
+     * constant-time sizing per reference they hold.
+     */
+    private inner class Walk {
+        private val seen = IdentitySet()
+        private val queue = ArrayDeque<Pending>()
+        private var total = 0.0
+        private var visited = 0
+        private var tracked = 0
 
-        val seen = IdentitySet()
-        val stack = ArrayList<Pending>()
-        var total = 0.0
-        var visited = 0
+        fun run(root: Any?): Long {
+            primitiveSize(root)?.let { return it }
 
-        stack.add(Pending(root, 1.0))
+            push(root, 1.0)
 
-        // Iterative, with an explicit stack: a recursive walk overflowed the stack on a deep graph
-        while (stack.isNotEmpty()) {
-            val next = stack.removeAt(stack.lastIndex)
-            val obj = next.obj
-            val weight = next.weight
+            // Iterative: a recursive walk overflowed the stack on a deep graph
+            while (queue.isNotEmpty()) {
+                visit(queue.removeFirst())
+            }
 
+            return total.roundToLong()
+        }
+
+        /**
+         * Charges [obj] now, or queues it: a primitive, an unreadable field, a string or primitive array
+         * (sized from its length, no descent) and anything beyond the cap are charged now.
+         */
+        fun push(obj: Any?, weight: Double) {
             val primitive = primitiveSize(obj)
 
             when {
                 primitive != null -> total += primitive * weight
 
-                obj == null -> Unit
-
                 obj === UnreadableField -> total += flatObject() * weight
 
-                // already counted: a shared object is charged once
-                !seen.add(obj) -> Unit
-
-                visited >= cfg.maxObjects -> total += flatObject() * weight
+                // a shared object is charged once - while the identity set has room, see below
+                !firstSighting(obj!!) -> Unit
 
                 else -> {
-                    visited++
-                    total += shallowSize(obj, weight, stack) * weight
+                    // A leaf never counts against the cap: charged flat beyond it, a 50 MB array behind
+                    // a large sibling once counted as 32 bytes.
+                    val leaf = leafSize(obj)
+
+                    when {
+                        leaf != null -> total += leaf * weight
+                        // beyond the cap: no descent
+                        visited + queue.size >= cfg.maxObjects -> total += flatObject() * weight
+                        else -> queue.addLast(Pending(obj, weight))
+                    }
                 }
             }
         }
 
-        return total.roundToLong()
+        /**
+         * True unless [obj] was seen before. The identity set takes at most twice
+         * [EstimatorConfig.maxObjects] objects; beyond that, every object counts as new. That bounds
+         * the hashing, which dominated the time on a million-string value; it errs high, on an object
+         * shared beyond that point.
+         */
+        private fun firstSighting(obj: Any): Boolean {
+            if (tracked >= 2L * cfg.maxObjects) return true
+
+            return seen.add(obj).also { if (it) tracked++ }
+        }
+
+        private fun visit(next: Pending) {
+            visited++
+            // Not `total += shallowSize(...)`: that reads total before shallowSize charges the leaves it
+            // pushes, and the write would drop them.
+            val own = shallowSize(next.obj, next.weight, this)
+            total += own * next.weight
+        }
     }
 
-    /** The size of [obj] itself; pushes what it references onto [stack], sampled where large. */
-    private fun shallowSize(obj: Any, weight: Double, stack: MutableList<Pending>): Long = when (obj) {
+    /** The size of a string or primitive array, which needs no descent, or null for anything else. */
+    private fun leafSize(obj: Any): Long? = when (obj) {
         is String -> cfg.objectHeader + cfg.pointerSize + cfg.arrayHeader + obj.length.toLong() * CHAR_SIZE
 
         is BooleanArray -> cfg.arrayHeader + BOOL_SIZE * obj.size
@@ -271,24 +329,29 @@ class ObjectSizeEstimatorImpl(
         is FloatArray -> cfg.arrayHeader + FLOAT_SIZE * obj.size
         is DoubleArray -> cfg.arrayHeader + DOUBLE_SIZE * obj.size
 
+        else -> null
+    }
+
+    /** The size of [obj] itself; pushes what it references to [walk], sampled where large. */
+    private fun shallowSize(obj: Any, weight: Double, walk: Walk): Long = when (obj) {
         is Array<*> -> {
-            pushIndexed(obj.size, weight, stack) { obj[it] }
+            pushIndexed(obj.size, weight, walk) { obj[it] }
             cfg.arrayHeader + obj.size.toLong() * cfg.pointerSize
         }
 
         is Collection<*> -> {
             if (obj is List<*> && obj is RandomAccess) {
-                pushIndexed(obj.size, weight, stack) { obj[it] }
+                pushIndexed(obj.size, weight, walk) { obj[it] }
             } else {
-                pushIterated(obj.size, weight, stack, obj.iterator()) { element, w -> stack.add(Pending(element, w)) }
+                pushIterated(obj.size, weight, walk, obj.iterator()) { element, w -> walk.push(element, w) }
             }
             cfg.objectHeader + obj.size.toLong() * cfg.pointerSize
         }
 
         is Map<*, *> -> {
-            pushIterated(obj.size, weight, stack, obj.entries.iterator()) { entry, w ->
-                stack.add(Pending(entry.key, w))
-                stack.add(Pending(entry.value, w))
+            pushIterated(obj.size, weight, walk, obj.entries.iterator()) { entry, w ->
+                walk.push(entry.key, w)
+                walk.push(entry.value, w)
             }
             cfg.objectHeader + obj.size.toLong() * 2 * cfg.pointerSize
         }
@@ -301,7 +364,7 @@ class ObjectSizeEstimatorImpl(
                 // object holds - see the class KDoc.
                 flatObject()
             } else {
-                fields.forEach { stack.add(Pending(it, weight)) }
+                fields.forEach { walk.push(it, weight) }
                 cfg.objectHeader + fields.size.toLong() * cfg.pointerSize
             }
         }
@@ -312,16 +375,16 @@ class ObjectSizeEstimatorImpl(
      * else that many at the positions [EstimatorConfig.samplePick] gives, each counting for its share of
      * the rest. Deterministic: no random pick, so the same value always gives the same estimate.
      */
-    private fun pushIndexed(size: Int, weight: Double, stack: MutableList<Pending>, elementAt: (Int) -> Any?) {
+    private fun pushIndexed(size: Int, weight: Double, walk: Walk, elementAt: (Int) -> Any?) {
         if (size <= cfg.sampleSize) {
-            for (i in 0 until size) stack.add(Pending(elementAt(i), weight))
+            for (i in 0 until size) walk.push(elementAt(i), weight)
             return
         }
 
         val positions = samplePositions(size, cfg.sampleSize, cfg.samplePick)
         val share = weight * size / positions.size
 
-        positions.forEach { stack.add(Pending(elementAt(it), share)) }
+        positions.forEach { walk.push(elementAt(it), share) }
     }
 
     /**
@@ -332,7 +395,7 @@ class ObjectSizeEstimatorImpl(
     private fun <T> pushIterated(
         size: Int,
         weight: Double,
-        stack: MutableList<Pending>,
+        walk: Walk,
         elements: Iterator<T>,
         push: (T, Double) -> Unit,
     ) {
