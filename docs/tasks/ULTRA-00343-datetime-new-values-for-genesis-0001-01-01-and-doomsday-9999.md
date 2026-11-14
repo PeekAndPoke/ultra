@@ -24,6 +24,19 @@ No production system uses the libraries (maintainer, 2026-11-14), so the values 
 (`MpLocalDateRange.Partial` and its siblings) already exist for callers who want explicit open ends; the sentinel
 design stays.
 
+## REOPENED (maintainer, 2026-11-14, later the same day)
+
+"i am actually planning on some history projects that would need dates BC ... so we need different values or think
+again about getting rid of genesis and doomsday. What would it mean to leave them behind? Bring your analysis up when
+i am back."
+
+So the values decided below (year 1 and year 9999) are in question, and with them the clamp of `numberOfDays`
+("keep the clamp", said before the BC requirement came up). The reviews of batch 3b-1 showed what the year-1 Genesis
+does to ranges before year 1: a negative day count and an empty date list for a range wholly in BC. Batch 3b-1
+(`wt/datetime`, commits `4e9b26c1`, `65514c4a`) is reviewed clean but NOT merged. Track A writes the analysis
+(keep the sentinels with other values, or explicit open ends, or a hybrid); nothing is built before the maintainer
+has seen it.
+
 ## Decided (maintainer, 2026-11-14)
 
 | | Value | As a date | Timestamp in ms |
