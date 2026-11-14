@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.kontainer
 
 import io.peekandpoke.ultra.common.maxLineLength
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo
+import kotlin.reflect.KClass
 
 /**
  * Debugging and introspection tools for a [Kontainer].
@@ -68,6 +69,19 @@ class KontainerTools internal constructor(
     }
 
     /**
+     * The kind as the dump shows it, with the override flag or what made the service semi dynamic.
+     */
+    private fun kindCell(cls: KClass<*>, provider: ServiceProvider): String = when {
+        provider.overridden -> "${provider.kind} (overridden)"
+
+        provider.kind == ServiceKind.SemiDynamic ->
+            "${provider.kind} (" +
+                    blueprint.semiDynamicBecauseOf(cls).joinToString(", ") { it.simpleName ?: it.getName() } + ")"
+
+        else -> provider.kind.toString()
+    }
+
+    /**
      * Returns a human-readable table of all services: their type, kind and current instances.
      */
     fun dumpKontainer(): String {
@@ -81,7 +95,7 @@ class KontainerTools internal constructor(
                 listOf(
                     k.getName(),
                     v.type.toString(),
-                    v.kind.toString() + if (v.overridden) " (overridden)" else "",
+                    kindCell(k, v),
                     v.instances.joinToString("\n") { "${it.createdAt}: ${it.instance::class.getName()}" }
                 )
             }

@@ -18,6 +18,8 @@ class LoggingKontainerModuleSpec : StringSpec() {
 
     class TwoLogs(@Suppress("unused") val first: Log, @Suppress("unused") val second: Log)
 
+    class Cache(@Suppress("unused") val log: Log)
+
     init {
 
         "Kontainer module must work" {
@@ -69,17 +71,73 @@ class LoggingKontainerModuleSpec : StringSpec() {
             kontainer.getProvider(NoLogService::class).kind shouldBe ServiceKind.Static
         }
 
-        "Log is a dynamic prototype" {
+        "Log is a prototype; it reaches dynamic services, so its kind is SemiDynamic" {
 
             val kontainer = kontainer {
                 ultraLogging()
             }.create()
 
             kontainer.getProvider(Log::class).type shouldBe ServiceType.Prototype
-            kontainer.getProvider(Log::class).kind shouldBe ServiceKind.Dynamic
+            kontainer.getProvider(Log::class).kind shouldBe ServiceKind.SemiDynamic
         }
 
-        // Counts what is created per kontainer, so a change of how Log is declared is proven to change nothing.
+        // A Log redefined after the module without anything dynamic behind it keeps its users global. Declaring
+        // the module's Log as `dynamicPrototype` would make them one per kontainer (review of ULTRA-00319).
+        "A Log redefined by instance() after the module keeps a singleton injecting it global" {
+
+            val blueprint = kontainer {
+                ultraLogging()
+                instance(Log::class, NullLog)
+                singleton(Cache::class)
+            }
+
+            val one = blueprint.create()
+            val two = blueprint.create()
+
+            assertSoftly {
+                one.get(Cache::class) shouldBeSameInstanceAs two.get(Cache::class)
+                one.getProvider(Cache::class).type shouldBe ServiceType.Singleton
+                one.getProvider(Cache::class).kind shouldBe ServiceKind.Static
+            }
+        }
+
+        "A Log redefined by singleton() after the module keeps a singleton injecting it global" {
+
+            val blueprint = kontainer {
+                ultraLogging()
+                singleton(Log::class) { NullLog }
+                singleton(Cache::class)
+            }
+
+            val one = blueprint.create()
+            val two = blueprint.create()
+
+            assertSoftly {
+                one.get(Cache::class) shouldBeSameInstanceAs two.get(Cache::class)
+                one.getProvider(Cache::class).type shouldBe ServiceType.Singleton
+                one.getProvider(Cache::class).kind shouldBe ServiceKind.Static
+            }
+        }
+
+        "A Log redefined by prototype() after the module keeps a singleton injecting it global" {
+
+            val blueprint = kontainer {
+                ultraLogging()
+                prototype(Log::class) { NullLog }
+                singleton(Cache::class)
+            }
+
+            val one = blueprint.create()
+            val two = blueprint.create()
+
+            assertSoftly {
+                one.get(Cache::class) shouldBeSameInstanceAs two.get(Cache::class)
+                one.getProvider(Cache::class).type shouldBe ServiceType.Singleton
+                one.getProvider(Cache::class).kind shouldBe ServiceKind.Static
+            }
+        }
+
+        // Counts what is created per kontainer for the module's own Log.
         "A Log is created per injection point and per get, inside the kontainer it is injected in" {
 
             val blueprint = kontainer {

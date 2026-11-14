@@ -9,6 +9,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceAmbiguous
 import io.peekandpoke.ultra.kontainer.ServiceNotFound
@@ -296,5 +297,24 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
 
         error.message shouldContain "was not found"
+    }
+
+    // Pinned as it is; the fix is ticket ULTRA-00336.
+    "CURRENT BEHAVIOUR: an override for the Kontainer itself is accepted, and services injecting it get the foreign one" {
+
+        class UsesKontainer(val kontainer: Kontainer)
+
+        val blueprint = kontainer {
+            singleton(UsesKontainer::class)
+        }
+
+        val foreign = blueprint.create()
+        val subject = blueprint.create { with<Kontainer> { foreign } }
+
+        assertSoftly {
+            subject.get(Kontainer::class) shouldBeSameInstanceAs foreign
+            subject.get(UsesKontainer::class).kontainer shouldBeSameInstanceAs foreign
+            subject.reportedOf(Kontainer::class) shouldBe Reported.OverriddenDynamicSingleton
+        }
     }
 })

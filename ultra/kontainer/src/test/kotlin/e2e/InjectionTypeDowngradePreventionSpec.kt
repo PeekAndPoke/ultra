@@ -7,7 +7,7 @@ import io.peekandpoke.ultra.kontainer.KontainerBlueprint
 import io.peekandpoke.ultra.kontainer.kontainer
 
 /**
- * See [KontainerBlueprint.semiDynamicDefinitions]
+ * See [KontainerBlueprint], which derives the kind
  */
 class InjectionTypeDowngradePreventionSpec : StringSpec() {
 

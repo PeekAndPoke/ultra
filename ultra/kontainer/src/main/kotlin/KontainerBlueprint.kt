@@ -40,6 +40,13 @@ class KontainerBlueprint internal constructor(
         .keys
 
     /**
+     * Services declared as dynamic prototypes; they cannot be overridden at [create]
+     */
+    private val dynamicPrototypeClasses: Set<KClass<*>> = definitions
+        .filterValues { it.type == ServiceType.Prototype && it.kind == ServiceKind.Dynamic }
+        .keys
+
+    /**
      * Dynamic singletons: the only services that can be overridden at [create]
      */
     private val overridableClasses: Set<KClass<*>> = definitions
@@ -75,11 +82,6 @@ class KontainerBlueprint internal constructor(
         .toSet()
 
     /**
-     * The position of each semi dynamic service in [semiDynamicClasses]
-     */
-    private val semiDynamicRank: Map<KClass<*>, Int> = semiDynamicClasses.withIndex().associate { it.value to it.index }
-
-    /**
      * The derived kind of every service: as declared, or [ServiceKind.SemiDynamic] for a static one that reaches
      * a dynamic one.
      */
@@ -94,18 +96,23 @@ class KontainerBlueprint internal constructor(
     /**
      * All precomputed [ServiceProvider.Provider]s.
      *
-     * Listed as static, semi dynamic and dynamic singletons, then prototypes. This order numbers the validation
-     * errors and orders the debug output. Semi dynamic singletons come in discovery order, all others in
-     * definition order.
+     * Listed in four groups: static singletons, semi dynamic singletons, dynamic singletons, prototypes of every
+     * kind. This order numbers the validation errors and orders the debug output. Semi dynamic singletons come in
+     * discovery order, all others in definition order.
      */
-    private val serviceProviderProviders: Map<KClass<*>, ServiceProvider.Provider> = definitions.keys
-        .sortedWith(
-            compareBy(
-                { cls -> listingGroup(definitions.getValue(cls).type, kinds.getValue(cls)) },
-                { cls -> if (kinds.getValue(cls) == ServiceKind.SemiDynamic) semiDynamicRank.getValue(cls) else 0 },
-            )
-        )
-        .associateWith { cls -> providerFor(definitions.getValue(cls), kinds.getValue(cls)) }
+    private val serviceProviderProviders: Map<KClass<*>, ServiceProvider.Provider> = run {
+
+        fun ofType(type: ServiceType) = definitions.keys.filter { definitions.getValue(it).type == type }
+
+        val singletons = ofType(ServiceType.Singleton)
+
+        val listed = singletons.filter { kinds.getValue(it) == ServiceKind.Static } +
+                semiDynamicClasses.filter { definitions.getValue(it).type == ServiceType.Singleton } +
+                singletons.filter { kinds.getValue(it) == ServiceKind.Dynamic } +
+                ofType(ServiceType.Prototype)
+
+        listed.associateWith { cls -> providerFor(definitions.getValue(cls), kinds.getValue(cls)) }
+    }
 
     /**
      * The declared dynamic services each semi dynamic service reaches, in definition order.
@@ -142,19 +149,6 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * The group a service is listed in, see [serviceProviderProviders].
-     */
-    private fun listingGroup(type: ServiceType, kind: ServiceKind): Int = when (type) {
-        ServiceType.Singleton -> when (kind) {
-            ServiceKind.Static -> 0
-            ServiceKind.SemiDynamic -> 1
-            ServiceKind.Dynamic -> 2
-        }
-
-        ServiceType.Prototype -> 3
-    }
-
-    /**
      * Extends the current blueprint with everything in [builder] and returns a new [KontainerBlueprint]
      */
     fun extend(builder: KontainerBuilder.() -> Unit): KontainerBlueprint {
@@ -187,11 +181,28 @@ class KontainerBlueprint internal constructor(
 
         if (unexpectedDynamics.isNotEmpty()) {
             throw KontainerInconsistent(
-                "Unexpected dynamics were provided: " + unexpectedDynamics.joinToString(", ") { it.getName() }
+                "Unexpected dynamics were provided: " + unexpectedDynamics.joinToString(", ") { it.getName() } +
+                        dynamicPrototypeHint(unexpectedDynamics)
             )
         }
 
         return instantiate(dynamicServices)
+    }
+
+    /**
+     * Explains a refused override of a dynamic prototype; empty when none of [unexpected] is one.
+     */
+    private fun dynamicPrototypeHint(unexpected: Set<KClass<*>>): String {
+
+        val dynamicPrototypes = dynamicPrototypeClasses.filter { dynamicPrototype ->
+            unexpected.any { dynamicPrototype.java.isAssignableFrom(it.java) }
+        }
+
+        return when {
+            dynamicPrototypes.isEmpty() -> ""
+            else -> " (only dynamic singletons can be overridden, not the dynamic prototype " +
+                    dynamicPrototypes.joinToString(", ") { it.getName() } + ")"
+        }
     }
 
     /**

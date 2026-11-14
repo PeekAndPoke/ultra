@@ -15,7 +15,7 @@ interface ServiceProvider {
         companion object {
             /** An instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton */
             fun forOverride(definition: ServiceDefinition, instance: Any): Provider {
-                return ForOverride(definition = definition, instance = instance)
+                return OverrideProvider(definition = definition, instance = instance)
             }
 
             /** A static singleton: one provider, so one instance, for all kontainers of the blueprint */
@@ -25,20 +25,19 @@ interface ServiceProvider {
 
             /** A dynamic or semi dynamic singleton: one provider, so one instance, per kontainer */
             fun forDynamicSingleton(kind: ServiceKind, definition: ServiceDefinition): Provider {
+                require(kind != ServiceKind.Static) {
+                    "A per-kontainer singleton is Dynamic or SemiDynamic, not Static"
+                }
+
                 return ForDynamicSingleton(kind = kind, definition = definition)
             }
         }
 
-        private class ForOverride(definition: ServiceDefinition, instance: Any) : Provider {
+        private class OverrideProvider(definition: ServiceDefinition, instance: Any) : Provider {
 
-            private val provider = ForInstance(
-                kind = ServiceKind.Dynamic,
-                overridden = true,
-                definition = definition,
-                instance = instance,
-            )
+            private val provider = ForOverride(definition = definition, instance = instance)
 
-            override fun provide(): ForInstance {
+            override fun provide(): ForOverride {
                 return provider
             }
         }
@@ -115,17 +114,21 @@ interface ServiceProvider {
     fun validate(kontainer: Kontainer): List<String>
 
     /**
-     * Provides an already existing object as a service
+     * Provides an instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton
      */
-    data class ForInstance(
-        override val kind: ServiceKind,
-        override val overridden: Boolean,
+    data class ForOverride(
         override val definition: ServiceDefinition,
         private val instance: Any,
     ) : ServiceProvider {
 
         /** Always a singleton */
         override val type: ServiceType = ServiceType.Singleton
+
+        /** Always dynamic: only dynamic singletons can be overridden */
+        override val kind: ServiceKind = ServiceKind.Dynamic
+
+        /** Always overridden */
+        override val overridden: Boolean = true
 
         /**
          * The list of created instance always holds the [instance]

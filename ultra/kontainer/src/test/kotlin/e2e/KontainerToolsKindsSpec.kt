@@ -7,8 +7,6 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
-import io.peekandpoke.ultra.kontainer.ServiceKind
-import io.peekandpoke.ultra.kontainer.ServiceType
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo
 import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
@@ -23,6 +21,14 @@ class KindsSemiProto(val dynProto: KindsDynProto)
 class KindsSemiTwo(val dyn: KindsDyn, val dynProto: KindsDynProto)
 open class KindsOverridden
 class KindsOverride : KindsOverridden()
+
+class ChainDyn
+class ChainDynAbove(val dyn: ChainDyn)
+class ChainMid(val dyn: ChainDyn)
+class ChainProtoMid(val dyn: ChainDyn)
+class ChainViaSingleton(val mid: ChainMid)
+class ChainViaPrototype(val mid: ChainProtoMid)
+class ChainViaDynamic(val above: ChainDynAbove)
 
 /**
  * Pins what the tools report for each of the six type and kind combinations, plus an overridden dynamic.
@@ -48,13 +54,6 @@ class KontainerToolsKindsSpec : StringSpec() {
     private val DebugInfo.ServiceDebugInfo.reported get() = Reported(type, kind, overridden)
 
     init {
-
-        "The enums" {
-            assertSoftly {
-                ServiceType.entries.map { it.name } shouldBe listOf("Singleton", "Prototype")
-                ServiceKind.entries.map { it.name } shouldBe listOf("Static", "Dynamic", "SemiDynamic")
-            }
-        }
 
         "Debug info: type, kind and the override flag of every service" {
 
@@ -134,6 +133,30 @@ class KontainerToolsKindsSpec : StringSpec() {
             }
         }
 
+        "A SemiDynamic service names the dynamic services it reaches through any chain" {
+
+            val subject = kontainer {
+                dynamic(ChainDyn::class)
+                dynamic(ChainDynAbove::class)
+                singleton(ChainMid::class)
+                prototype(ChainProtoMid::class)
+                singleton(ChainViaSingleton::class)
+                singleton(ChainViaPrototype::class)
+                singleton(ChainViaDynamic::class)
+            }.create()
+
+            val info = subject.tools.getDebugInfo()
+
+            fun because(cls: KClass<*>) = info.service(cls).semiDynamicBecauseOf.map { it.fqn }
+
+            assertSoftly {
+                because(ChainViaSingleton::class) shouldBe listOf(ChainDyn::class.java.name)
+                because(ChainViaPrototype::class) shouldBe listOf(ChainDyn::class.java.name)
+                because(ChainViaDynamic::class) shouldBe
+                        listOf(ChainDyn::class.java.name, ChainDynAbove::class.java.name)
+            }
+        }
+
         "Dump: a header and one row per service with its type and kind" {
 
             val lines = subject().tools.dumpKontainer().lines()
@@ -147,10 +170,11 @@ class KontainerToolsKindsSpec : StringSpec() {
 
                 row(KindsStatic::class) shouldBe listOf("Singleton", "Static")
                 row(KindsDyn::class) shouldBe listOf("Singleton", "Dynamic")
-                row(KindsSemi::class) shouldBe listOf("Singleton", "SemiDynamic")
+                row(KindsSemi::class) shouldBe listOf("Singleton", "SemiDynamic (KindsDyn)")
                 row(KindsProto::class) shouldBe listOf("Prototype", "Static")
                 row(KindsDynProto::class) shouldBe listOf("Prototype", "Dynamic")
-                row(KindsSemiProto::class) shouldBe listOf("Prototype", "SemiDynamic")
+                row(KindsSemiProto::class) shouldBe listOf("Prototype", "SemiDynamic (KindsDynProto)")
+                row(KindsSemiTwo::class) shouldBe listOf("Singleton", "SemiDynamic (KindsDyn, KindsDynProto)")
                 row(KindsOverridden::class) shouldBe listOf("Singleton", "Dynamic (overridden)")
             }
         }

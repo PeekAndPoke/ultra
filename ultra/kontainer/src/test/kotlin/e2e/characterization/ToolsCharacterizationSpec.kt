@@ -197,7 +197,7 @@ class ToolsCharacterizationSpec : StringSpec() {
                 lines[2].split("|").map { it.trim() } shouldBe listOf("Service ID", "Type", "Kind", "Instances")
 
                 rowOf(ToolsSingle::class).columns() shouldBe listOf("Singleton", "Static")
-                rowOf(ToolsPromoted::class).columns() shouldBe listOf("Singleton", "SemiDynamic")
+                rowOf(ToolsPromoted::class).columns() shouldBe listOf("Singleton", "SemiDynamic (ToolsDyn)")
                 rowOf(ToolsDyn::class).columns() shouldBe listOf("Singleton", "Dynamic")
                 rowOf(ToolsOverridden::class).columns() shouldBe listOf("Singleton", "Dynamic (overridden)")
                 rowOf(ToolsProto::class).columns() shouldBe listOf("Prototype", "Static")

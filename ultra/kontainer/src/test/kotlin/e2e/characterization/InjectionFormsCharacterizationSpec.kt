@@ -508,4 +508,28 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             one.reportedOf(Dyn::class) shouldBe Reported.DynamicSingleton
         }
     }
+
+    // Pinned as it is; the fix is ticket ULTRA-00335.
+    "CURRENT BEHAVIOUR: a nullable parameter with two candidates injects null without a validation error, and promotes" {
+
+        abstract class Base
+        class SingleImpl : Base()
+        class DynImpl : Base()
+        class Holder(val base: Base?) : Counted()
+
+        val blueprint = kontainer {
+            singleton(Holder::class)
+            singleton(SingleImpl::class)
+            dynamic(DynImpl::class)
+        }
+
+        val one = blueprint.create()
+        val two = blueprint.create()
+
+        assertSoftly {
+            one.get(Holder::class).base.shouldBeNull()
+            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
+            one.get(Holder::class) shouldNotBeSameInstanceAs two.get(Holder::class)
+        }
+    }
 })

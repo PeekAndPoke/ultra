@@ -7,7 +7,7 @@ import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.kontainer
 
 /**
- * See [KontainerBuilder.InjectionTypeUpgrade]
+ * See [KontainerBuilder.RedefinitionUpgrade]
  */
 class InjectionTypeUpgradeSpec : StringSpec() {
 

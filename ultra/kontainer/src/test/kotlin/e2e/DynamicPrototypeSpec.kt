@@ -228,7 +228,7 @@ class DynamicPrototypeSpec : StringSpec({
         }
     }
 
-    "An override at create is refused like any non-dynamic: KontainerInconsistent naming the class" {
+    "An override at create is refused with KontainerInconsistent, saying only dynamic singletons can be overridden" {
 
         class DynProto
 
@@ -240,7 +240,26 @@ class DynamicPrototypeSpec : StringSpec({
             blueprint.create { with { DynProto() } }
         }
 
-        error.message shouldBe "Unexpected dynamics were provided: ${DynProto::class.getName()}"
+        error.message shouldBe "Unexpected dynamics were provided: ${DynProto::class.getName()}" +
+                " (only dynamic singletons can be overridden, not the dynamic prototype " +
+                "${DynProto::class.getName()})"
+    }
+
+    "Overrides for a singleton next to a dynamicPrototype: the message names only what concerns them" {
+
+        class DynProto
+        class Single
+
+        val blueprint = kontainer {
+            dynamicPrototype(DynProto::class)
+            singleton(Single::class)
+        }
+
+        assertSoftly {
+            shouldThrow<KontainerInconsistent> {
+                blueprint.create { with { Single() } }
+            }.message shouldBe "Unexpected dynamics were provided: ${Single::class.getName()}"
+        }
     }
 
     "An override at clone throws ServiceNotFound, as for any non-dynamic (ULTRA-00332)" {
@@ -276,20 +295,25 @@ class DynamicPrototypeSpec : StringSpec({
         }
     }
 
-    "Redefinition: prototype then dynamicPrototype stays Prototype.Static, its users are not promoted" {
+    // Pinned as it is; it fails open without a signal. Whether Dynamic should win here is ticket ULTRA-00331.
+    "CURRENT BEHAVIOUR: prototype then dynamicPrototype stays Prototype.Static, its users stay global, nothing throws" {
 
         class Target
         class User(val target: Target)
 
-        val subject = kontainer {
+        val blueprint = kontainer {
             prototype(Target::class)
             singleton(User::class)
             dynamicPrototype(Target::class)
-        }.create()
+        }
+
+        val one = blueprint.create()
+        val two = blueprint.create()
 
         assertSoftly {
-            subject.reportedOf(Target::class) shouldBe Reported.StaticPrototype
-            subject.reportedOf(User::class) shouldBe Reported.StaticSingleton
+            one.reportedOf(Target::class) shouldBe Reported.StaticPrototype
+            one.reportedOf(User::class) shouldBe Reported.StaticSingleton
+            one.get(User::class) shouldBeSameInstanceAs two.get(User::class)
         }
     }
 
