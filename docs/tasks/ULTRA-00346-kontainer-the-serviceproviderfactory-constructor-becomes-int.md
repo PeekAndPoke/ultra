@@ -1,6 +1,7 @@
 # ULTRA-00346: Kontainer: the ServiceProviderFactory constructor becomes internal
 
-> **Status (2026-11-14): BUILT.** Built by track D on `wt/kontainer` (`cfd272ab`), not merged; a strict gate follows.
+> **Status (2026-11-14): BUILT, gate round 1 CLEAN.** Built by track D on `wt/kontainer` (`cfd272ab`); round 1
+> close-out done (see Gate round 1), not merged.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 > **Plan:** ULTRA-00316 (close the open epics from the foundation upwards)
@@ -71,12 +72,35 @@ Mutation (failed / 574; each restore checked with `cmp`, the generated docs file
 Suites: the same run as ULTRA-00345 (both commits), fourteen suites green by XML with `--rerun`, kontainer 574;
 the repo-wide compile sweep is green (459 tasks, 0 errors). Table in ULTRA-00345.
 
-**Changelog text (`## Unreleased`, breaking change):**
-- Kontainer: the `ServiceProviderFactory` constructor and `ServiceProviderFactory.dynamics` are internal; kontainers
-  are made by `create` and `clone` only. The public constructor ran the override lambdas without the checks of
-  `create` (ULTRA-00346).
+The changelog text is under Gate round 1, it replaces the one first written here.
+
+## Gate round 1 (strict, reviewer-fable-xhigh, all three charters, with ULTRA-00345)
+
+**Verdict: CLEAN.** No CRITICAL, no MAJOR, 5 MINOR, all closed out under ULTRA-00345. No public path constructs a
+factory or runs an override lambda unchecked. The reviewer ran nothing. One MINOR touches this ticket's area:
+`dynamicsBaseTypeLookUp` is now `private`, so `overriddenServiceOf` is the one resolver in the module. The surplus
+`assertSoftly` in `ServiceProviderFactoryVisibilitySpec` is gone.
+
+**G2 is equivalent single-threaded; the assumption, named:**
+- `DynamicOverrides.Builder.build()` hands the builder's live map to `DynamicOverrides`.
+- A builder leaked to another thread and mutated between the checks and the factory loop could bring an unchecked key
+  into the loop.
+- Today such a key would still be refused before its own lambda runs, because the factory resolves the base type
+  first. G2 swaps exactly that order.
+- No code change.
+
+**For the maintainer:** `newKontainer` stays public and checked, but no caller outside the module has anything to pass
+to it. Make it internal?
+
+Counts: see ULTRA-00345, Gate round 1.
+
+**Changelog text (`## Unreleased`, breaking change; replaces the one written at build):**
+- `ultra/kontainer`: the `ServiceProviderFactory` constructor and `ServiceProviderFactory.dynamics` are internal;
+  kontainers are made by `create` and `clone` only. The public constructor ran the override lambdas without the
+  checks of `create` (ULTRA-00346).
 
 ## History
 
 - 2026-11-14: created on the maintainer's decision.
 - 2026-11-14: built by track D (`cfd272ab`), not merged; a strict gate follows.
+- 2026-11-14: strict gate round 1 CLEAN; close-out by track D, not merged.

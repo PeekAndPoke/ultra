@@ -1,6 +1,7 @@
 # ULTRA-00345: Kontainer: an override naming a registered dynamic exactly replaces that one (exact match wins)
 
-> **Status (2026-11-14): BUILT.** Built by track D on `wt/kontainer` (`5762cddd`), not merged; a strict gate follows.
+> **Status (2026-11-14): BUILT, gate round 1 CLEAN.** Built by track D on `wt/kontainer`; the five MINOR of round 1
+> are closed out (see Gate round 1), not merged.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 > **Plan:** ULTRA-00316 (close the open epics from the foundation upwards)
@@ -123,13 +124,70 @@ Suites (XML, `--rerun`, 0 failures, both commits of this batch):
 Kontainer: 565 + 7 (`ExactOverrideMatchSpec`) + 1 (both registered) + 2 (ULTRA-00346 visibility) - 1 (the public
 constructor pin, ULTRA-00346) = 574. The repo-wide compile sweep is green (459 tasks, 0 errors).
 
-**Changelog text (`## Unreleased`, new behaviour):**
-- Kontainer: an override whose class is itself a registered dynamic replaces exactly that service. Before, with
-  `dynamic(UserProvider::class)` and `dynamic(AdminUserProvider::class)` both registered, `with { AdminUserProvider() }`
-  failed with `ServiceAmbiguous`. Otherwise as before: the one registered dynamic the class fits is replaced, several
-  is `ServiceAmbiguous`. Injection is unchanged (ULTRA-00345).
+The changelog text is under Gate round 1, it replaces the one first written here.
+
+## Gate round 1 (strict, reviewer-fable-xhigh, all three charters, with ULTRA-00346)
+
+**Verdict: CLEAN.** No CRITICAL, no MAJOR, 5 MINOR. Both rules are implemented as decided; refusal order and
+messages are unchanged. The reviewer ran nothing; every mutant below was run by track D.
+
+The five MINOR and their outcomes:
+1. **The exact set was unpinned.** Widening it to every registered class, or to every dynamic, left all 574 tests
+   green. Fixed with two tests, `dynamic(Mailer)` with `singleton(SmtpMailer)` and with `dynamicPrototype(SmtpMailer)`:
+   `with { SmtpMailer() }` overrides `Mailer`, and `SmtpMailer` stays a static singleton or a dynamic prototype. W1
+   and W2 are RED.
+2. **Registration order.** Every fixture registered the base first, so "the last registered candidate" passed for
+   "the exact one". Fixed with one case that registers `dynamic(AdminUserProvider)` first. X6 is RED.
+3. **Surplus assertions.** The `shouldBeInstanceOf` on a value already of that type is dropped; the provider check and
+   the "not the given instance" check remain. The `assertSoftly` around one assertion is unwrapped.
+4. **`dynamicsBaseTypeLookUp`** is now `private`. Its only reader was `overriddenServiceOf`; no test or other file
+   read it.
+5. **The clone flavour** of "two overrides for one service, the later wins" is pinned, with no change (below).
+
+**The clone flavour (5), pinned as decided behaviour:** a parent with `dynamic(Base)` only, created with
+`with(Base::class) { a }` and `with(Sub::class) { b }`, then `clone { with(Base::class) { x } }`. The merged order is
+`Base` (the clone's lambda) and then `Sub` (the parent's). Both lambdas run, the clone's result is dropped, and
+`get(Base::class)` is a new `b`. Test: "A clone's override under the base class runs, but the parent's later override
+under a subclass wins". **For the maintainer:** is this still "an edge case, the user should be careful" at `clone`,
+where the user's own override is the one dropped?
+
+**Primitives (recorded, pinned, no code change):**
+- `dynamic(Int::class)` and `dynamic(Number::class) { 0.5 }`, then `create { with<Int> { 5 } }`:
+  - On master, on a fresh blueprint, this replaced `Number`. The reified `Int::class` is `java.lang.Integer` on the
+    Java side, so `int` is not assignable from it, but `Number` is.
+  - Now it replaces `Int`, because the exact rule uses `KClass` equality.
+  - This is the one blueprint shape where an exact match differs from a previous single candidate. The test is red
+    under X1 (the old lookup), with `Number` reported as overridden.
+- `dynamic(Int::class)` alone with `with { 5 }` is still refused as unexpected on a fresh blueprint, in both versions,
+  with "Unexpected dynamics were provided: kotlin.Int". The checker uses Java assignability; it runs before the
+  exact rule.
+
+Mutation, round 1 (failed / 580; each restore checked with `cmp`, the generated docs file included):
+
+| # | Mutant | Result |
+|---|---|---|
+| W1 | Exact set widened to every registered class but the built-ins | RED, 2 (both new "only overridable" tests) |
+| W2 | Exact set widened to every dynamic (prototypes included) | RED, 1 (the dynamic prototype test) |
+| X6 | The exact match picks the last registered candidate | RED, 2 (registered first; primitives) |
+| X1 | Exact match ignored (re-run) | RED, 7 (now also registered first and primitives) |
+
+Also added: in the first test, `get(UserProvider::class)` stays `ServiceAmbiguous` with both registered (the
+changelog says so).
+
+Counts after round 1 (XML, `--rerun`, 0 failures): kontainer 580 (574 + 2 exact set + 1 registration order + 2
+primitives + 1 clone flavour), log 74, vault 287, insights 118, cluster 162, all 289, core 775, rest 124, auth 322,
+messaging 67, logging 14, codegen 104, saas 50, demo server 52. The repo-wide compile sweep is green (459 tasks, 0
+errors). The `get` assertion came after the full run; kontainer was re-run with it, 580 green.
+
+**Changelog text (`## Unreleased`, new behaviour; replaces the one written at build):**
+- `ultra/kontainer`, behaviour change: an override whose class is itself a registered dynamic replaces exactly that
+  service. Before, with `dynamic(UserProvider::class)` and `dynamic(AdminUserProvider::class)` both registered,
+  `with { AdminUserProvider() }` failed with `ServiceAmbiguous`. Otherwise as before: the one registered dynamic the
+  class fits is replaced, several is `ServiceAmbiguous`. Reads through the base type are unchanged: with both
+  registered, `get(UserProvider::class)` stays `ServiceAmbiguous`. Injection is unchanged (ULTRA-00345).
 
 ## History
 
 - 2026-11-14: created on the maintainer's decision.
 - 2026-11-14: built by track D (`5762cddd`), not merged; a strict gate follows.
+- 2026-11-14: strict gate round 1 CLEAN (5 MINOR); close-out by track D, not merged.
