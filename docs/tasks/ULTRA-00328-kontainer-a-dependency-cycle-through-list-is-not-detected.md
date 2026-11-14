@@ -1,6 +1,6 @@
 # ULTRA-00328: Kontainer: a dependency cycle through List is not detected
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K2, not merged; a strict gate follows.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -63,6 +63,60 @@ for every form (interfaces with several implementations, nullable parameters, `I
   (vault `Database`), `Lookup<InsightsCollector>`, `Lookup<IncomingParamConverter>`, `Lazy<List<...>>`
   (`ValidateRoutesOnAppStarting`), the `Fixtures(repo: Lazy<...Repo>)` loaders, `Lazy<Kronos>` hooks,
   `Lazy<AuthSystem.Deps>`, `Lazy<Adapter>`, `Lazy<LogsStorage>`.
+
+## Built (batch K2, 2026-11-14)
+
+**Status: built on `wt/kontainer`, not merged; a strict gate follows.**
+
+As planned: `DependencyLookup` reads only the announcements. Each announced type maps through the candidates;
+promotion edges come from every parameter, cycle edges from Direct ones. The hard-coded type checks are gone.
+- Promotion is unchanged: every promotion and injection-form characterization test passed untouched.
+- The `funktor:all` suite, which boots the full funktor blueprint, is green, so no `List` cycle exists in it.
+- Lazy cycles in the repo keep working; they stay out of the cycle check as before (list in the plan).
+
+Pins turned, before -> after:
+- `ValidationCharacterizationSpec`, "CURRENT BEHAVIOUR: a cycle through List is not reported and overflows the stack
+  at get":
+  - `StackOverflowError` at `get` -> `KontainerInconsistent` at the first `create`
+  - message `Circular dependency detected: ListCycleOne -> ListCycleTwo -> ListCycleOne`, plus the `Lazy<T>` hint
+- New: a cycle through `Lazy<List<T>>` is not reported and works.
+
+Mutation:
+
+| Mutant | Result |
+|---|---|
+| L1: cycle check follows Lazy injections too | RED, 3 / 556, with `generateDocs` skipped. With docs generation on, the build already fails on the published example `LazyInjectionCycleBreakerExample`, a legitimate lazy cycle in the repo |
+| L2: cycle check skips `List` | RED, 1 / 555 |
+| L3: promotion only from Direct injections | RED, 10 / 555 |
+| L4: announced types not mapped to candidates | RED, 4 / 555 |
+| P2: dependents one step only (re-run) | RED, 27 / 555 |
+| P6a: `Lazy<T>` announces nothing | RED, 7 / 555 |
+| P6e: `InjectionContext` announces nothing | RED, 5 / 555 |
+
+Changelog (behaviour change, no compile signal): `ultra/kontainer`: the cycle check and the dependency graph read
+what each parameter provider announces, so every injection form takes part. A dependency cycle through `List<T>` is
+now a validation error at the first `create` ("Kontainer has circular dependencies!", with the hint to use `Lazy<T>`).
+Before, validation passed and `get` ended in `StackOverflowError`. `Lazy<T>`, `Lazy<List<T>>` and `Lookup<T>` still
+break cycles; promotion to SemiDynamic is unchanged (ULTRA-00328).
+
+Commits:
+- `8dffdf22`: today's pins
+- `4b404195`: the plans
+- `01cbd47d`: the fix, with tests first (8 red before it, all green after)
+- `2281c29d`: a `List` cycle with two candidates, added for mutant A2
+
+Suites (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 556 |
+| `:ultra:log:jvmTest` | 74 |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 |
+| `:funktor:cluster:jvmTest` | 162 |
+| `:funktor:all:jvmTest` | 289 |
+
+The repo-wide compile sweep is green (459 tasks, 0 errors). No blueprint in the repo turned red.
 
 ## The work
 

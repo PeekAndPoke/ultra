@@ -1,6 +1,6 @@
 # ULTRA-00334: Kontainer: a decorator is reported as a cycle with itself
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K2, not merged; a strict gate follows.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -44,6 +44,55 @@ Built with ULTRA-00328 (the cycle check reads the parameter providers' announcem
   - A real self-cycle (the owner is the only candidate) stays a cycle.
 - No change to which service is injected, and no new refusal rule.
 - The nullable decorator (`inner: Repo?`) becomes ambiguous through ULTRA-00335.
+
+## Built (batch K2, 2026-11-14)
+
+**Status: built on `wt/kontainer`, not merged; a strict gate follows.**
+
+As planned: a Direct parameter that announces one type with several candidates gets no cycle edges, so the
+parameter check reports it as ambiguous. No change to which service is injected; no new rule.
+
+Pins turned, before -> after:
+- "CURRENT BEHAVIOUR: a decorator with a nullable parameter of its own super type is reported as a cycle":
+  `Circular dependency detected: DecoratingRepo -> DecoratingRepo` -> `Parameter 'inner' is ambiguous. The following
+  services collide: RealRepo, DecoratingRepo` (with ULTRA-00335).
+- "CURRENT BEHAVIOUR: a decorator with a non-null parameter ..." (pinned first in `8dffdf22`):
+  `CachingRepo -> CachingRepo` -> `Parameter 'inner' is ambiguous. ... RealRepo, CachingRepo`.
+- New:
+  - a real self-cycle, where the owner is the only candidate, stays a cycle
+  - a decorator naming the concrete class (`ConcreteCachingRepo(inner: RealRepo)`) is valid and gets it injected
+
+Mutation:
+
+| Mutant | Result |
+|---|---|
+| A1: ambiguous single-service injections followed by the cycle check again | RED, 2 / 555 |
+| A2: any parameter with several candidates left out (would drop List cycles) | SURVIVED at first; RED, 1 / 556 after the two-candidate List cycle test |
+
+Changelog (behaviour change, message): `ultra/kontainer`: a single-service injection whose type has several
+candidates, one of them the service itself, is reported as ambiguous ("Parameter 'inner' is ambiguous. The following
+services collide: ..."). Before, it was reported as "Circular dependency detected: CachingRepo -> CachingRepo". The
+typical case is a decorator, `CachingRepo(inner: Repo) : Repo`. Which service is injected does not change; a
+decorator names the concrete class (ULTRA-00334).
+
+Commits:
+- `8dffdf22`: today's pins
+- `4b404195`: the plans
+- `01cbd47d`: the fix, with tests first (8 red before it, all green after)
+- `2281c29d`: a `List` cycle with two candidates, added for mutant A2
+
+Suites (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 556 |
+| `:ultra:log:jvmTest` | 74 |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 |
+| `:funktor:cluster:jvmTest` | 162 |
+| `:funktor:all:jvmTest` | 289 |
+
+The repo-wide compile sweep is green (459 tasks, 0 errors). No blueprint in the repo turned red.
 
 ## The work
 

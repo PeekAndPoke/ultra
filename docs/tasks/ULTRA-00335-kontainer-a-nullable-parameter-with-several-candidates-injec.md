@@ -1,6 +1,6 @@
 # ULTRA-00335: Kontainer: a nullable parameter with several candidates injects null without a validation error
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K2, not merged; a strict gate follows.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -36,6 +36,58 @@ A behaviour change that can stop an app at boot: before building, list every nul
   - `RestCodec`: `Database?`, `EntityCache?`
   - `JwtSigningKeyOnAppStarting`: `Log?`
   - `BackgroundJobs`: `Lazy<EntityCache?>`
+
+## Built (batch K2, 2026-11-14)
+
+**Status: built on `wt/kontainer`, not merged; a strict gate follows.**
+
+As planned: `ForService.validate` and `ForLazyService.validate` report two or more candidates as ambiguous, nullable
+or not. `provide` is unchanged.
+
+Survey before building (the `funktor:all` app blueprint): seven nullable service parameters, each with exactly one
+candidate. All suites are green afterwards.
+
+Pins turned, before -> after:
+- `InjectionFormsCharacterizationSpec`, "CURRENT BEHAVIOUR: a nullable parameter with two candidates injects null
+  without a validation error, and promotes": null and SemiDynamic -> `Parameter 'base' is ambiguous. The following
+  services collide: SingleImpl, DynImpl`.
+- "CURRENT BEHAVIOUR: a Lazy nullable parameter with two candidates yields null ..." (pinned first in `8dffdf22`):
+  null -> the same ambiguity error.
+- New: a nullable parameter with one candidate is injected and with none is null, for `T?` and `Lazy<T?>`
+  (unchanged).
+
+Mutation:
+
+| Mutant | Result |
+|---|---|
+| N35a: `T?` with several candidates allowed again | RED, 2 / 555 |
+| N35b: `Lazy<T?>` with several candidates allowed again | RED, 1 / 555 |
+| N35c: `T?` with no candidate turned into an error | RED, 3 / 556, with `generateDocs` skipped (an example also fails on it) |
+
+Changelog (behaviour change, no compile signal, can stop an app at boot): `ultra/kontainer`: a nullable injection,
+`T?` or `Lazy<T?>`, whose type has two or more candidate services is a validation error ("Parameter '...' is
+ambiguous. The following services collide: ..."). Before, it injected null silently, and still made the service
+SemiDynamic when a candidate was dynamic. With no candidate it is still null; with one it is injected. In the
+`funktor:all` blueprint every nullable service parameter has exactly one candidate (ULTRA-00335).
+
+Commits:
+- `8dffdf22`: today's pins
+- `4b404195`: the plans
+- `01cbd47d`: the fix, with tests first (8 red before it, all green after)
+- `2281c29d`: a `List` cycle with two candidates, added for mutant A2
+
+Suites (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 556 |
+| `:ultra:log:jvmTest` | 74 |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 |
+| `:funktor:cluster:jvmTest` | 162 |
+| `:funktor:all:jvmTest` | 289 |
+
+The repo-wide compile sweep is green (459 tasks, 0 errors). No blueprint in the repo turned red.
 
 ## The work
 

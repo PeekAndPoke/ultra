@@ -1,6 +1,6 @@
 # ULTRA-00327: Kontainer: validation runs only once, even when it failed
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K2, not merged; a strict gate follows.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -39,6 +39,64 @@ as it is. An override cannot make an invalid blueprint valid: it can only replac
   gets the same result. Before, the CAS loser skipped validation and got a kontainer.
 - Only a validation failure (`KontainerInconsistent`) is remembered. Any other exception from `validate()` would be a
   defect; it is not cached, so the next `create` validates again.
+
+## Built (batch K2, 2026-11-14)
+
+**Status: built on `wt/kontainer`, not merged; a strict gate follows.**
+
+As planned: the validation result is a `lazy(SYNCHRONIZED)` value holding the message, or null when valid. Every
+`create` of an invalid blueprint throws `KontainerInconsistent` with the same message, still before the override block.
+
+**What a second thread sees while the first validates:** it blocks on the lazy's lock until the result is there, then
+gets the same result. For an invalid blueprint that is the error; for a valid one, a kontainer.
+- Pinned by two tests that release 8 threads at once: all 8 get the same error, or all 8 get a kontainer.
+- On the old code the invalid-blueprint test was RED: the CAS losers skipped validation and got kontainers.
+- The blocking itself cannot be watched from outside, as validation runs no user code. So the mutant that lets every
+  thread validate at once (Q3, `PUBLICATION`) is equivalent: validation is deterministic and has no side effect.
+
+Pins turned, before -> after:
+- `ValidationCharacterizationSpec`, "CURRENT BEHAVIOUR: after a failed validation the next create succeeds ...":
+  - second `create` succeeded and `get` threw `InvocationTargetException` -> every `create` throws the same
+    `KontainerInconsistent` message
+- New tests:
+  - a later `create` does not run its override block either
+  - concurrent invalid creates
+  - concurrent valid creates
+- `funktor/insights` `KontainerFixture.brokenBlueprint` KDoc: "only the first create fails" -> "every create
+  fails". Text only; its one test uses the first `create`.
+
+Mutation:
+
+| Mutant | Result |
+|---|---|
+| Q1: throw only before the result is cached (later creates pass) | RED, 2 / 555 |
+| Q2: throw only once it is cached (first create passes) | RED, 35 / 555 |
+| Q3: `PUBLICATION` instead of `SYNCHRONIZED` | SURVIVED, 0 / 555: equivalent, see above |
+
+Changelog (behaviour change, no compile signal): `ultra/kontainer`: a blueprint remembers its validation result.
+Every `create` of an invalid blueprint throws `KontainerInconsistent` with the same message, before the override block
+runs. Before, only the first did: later creates succeeded, and `get` failed with `InvocationTargetException` or worse.
+A `create` arriving while another one validates now waits for the result; before, it skipped validation
+(ULTRA-00327).
+
+Commits:
+- `8dffdf22`: today's pins
+- `4b404195`: the plans
+- `01cbd47d`: the fix, with tests first (8 red before it, all green after)
+- `2281c29d`: a `List` cycle with two candidates, added for mutant A2
+
+Suites (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 556 |
+| `:ultra:log:jvmTest` | 74 |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 |
+| `:funktor:cluster:jvmTest` | 162 |
+| `:funktor:all:jvmTest` | 289 |
+
+The repo-wide compile sweep is green (459 tasks, 0 errors). No blueprint in the repo turned red.
 
 ## The work
 
