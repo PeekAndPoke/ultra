@@ -257,11 +257,15 @@ lazy view and what that means for the consumer"), and the new Genesis and Doomsd
 - `splitWithGaps` returns the lazy view; `maxSlots` and its exception go ("yes to splitWithGaps using the same
   mechanism").
 
-**Not yet confirmed (the track's choices in its plan):** `of(from, to)` with equal times gives an empty slot;
-`contains(EndOfDay)` counts 24:00 as 00:00; a merge that covers the whole clock gives one 24-hour slot starting at the
-first slot's start; `cutAway` on a slot longer than 24 hours drops the length beyond 24 hours; the constructor is
-private and durations are cut to whole milliseconds; `Duration.INFINITE` gives an open end on a date. 3b-2 does not
-start before the maintainer has seen these.
+**Confirmed by the maintainer (2026-11-14): `of(from, to)` with equal times gives an empty slot** ("yes equal times
+in an empty slot"). A full day is written `of(from, 24.hours)` or `completeDay`.
+
+**Taken as the track proposed, announced to the maintainer without objection:** `contains(EndOfDay)` counts 24:00 as
+00:00; a merge that covers the whole clock gives one 24-hour slot starting at the first slot's start; `cutAway` on a
+slot longer than 24 hours works on the full clock and drops the length beyond 24 hours; the constructor is private and
+durations are cut to whole milliseconds; `Duration.INFINITE` gives an open end on a date.
+
+3b-2 starts when round 1 of 3b-1 is back: no edits in the worktree while a review round reads it.
 
 ## History
 
