@@ -1,6 +1,6 @@
 # ULTRA-00210: ultra/datetime: no kotlinx types as return values
 
-> **Status (2026-11-13): IMPLEMENTED, awaiting the review gate** (track A of ULTRA-00316, batch 2, with ULTRA-00211).
+> **Status (2026-11-14): DONE.** Merged 14376f44 with ULTRA-00211. DOCS follow-up: ULTRA-00339.
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -151,3 +151,4 @@ CRITICAL/MAJOR): no remaining caller of the removed API in the repo; old stored 
 
 - 2026-10-21: numbered ULTRA-00210 (was `docs/tasks/20261018-datetime-no-kotlinx-return-types.md`).
 - 2026-11-13: implemented on track A, batch 2 (with ULTRA-00211).
+- 2026-11-14: DONE. Merged 14376f44 with ULTRA-00211. DOCS follow-up: ULTRA-00339.

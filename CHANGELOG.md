@@ -90,6 +90,50 @@
   start it, and a value computed while the caller was cancelled is discarded; clear() is no longer
   undone by a running provider; a cancelled caller waiting on another caller's provider no longer
   spins (ULTRA-00159).
+- `ultra/datetime`, breaking: new `MpMonth` and `MpDayOfWeek` enums (`number` / `isoDayNumber`; `of(n)`, which throws
+  for a bad number, `ofOrNull(n)`, `ofOrDefault(n, default)`; converters `kotlinx` / `mp`, on the JVM `jvm` / `mp`).
+  `month` and `dayOfWeek` on `MpLocalDate`, `MpLocalDateTime` and `MpZonedDateTime` return them instead of
+  kotlinx's `Month` / `DayOfWeek`. Every function that takes a month or a day of week accepts both (ULTRA-00210).
+- `ultra/datetime`, behaviour change (no compile signal): a comparison of `month` / `dayOfWeek` with a kotlinx entry
+  through an untyped API compiles and is now false: `date.month.equals(Month.APRIL)`, kotest's
+  `date.month shouldBe Month.APRIL`, `assertEquals(Month.APRIL, date.month)`, a lookup in a `Set<Any>` or `Map<Any, …>`.
+  `==` and `when` against kotlinx entries do not compile. `name`, `ordinal` and `toString()` are unchanged, so values
+  stored by name keep their meaning (ULTRA-00210).
+- **Before you update** (removed API): `MpTimezone.offsetAt(MpInstant)` and `TimeZone.offsetAt(MpInstant)`, which
+  returned kotlinx's `UtcOffset`: use `offsetSecondsAt` / `offsetMillisAt`. Changed return types: `month` → `MpMonth`,
+  `dayOfWeek` → `MpDayOfWeek` (use `.kotlinx` where a kotlinx value is needed) (ULTRA-00210).
+- `ultra/datetime`, behaviour change: `MpZonedDateTime` keeps its instant (ULTRA-00211). Both sides of a DST overlap
+  are now distinct values: `MpInstant.atZone`, the kotlinx serializer, the slumber codec, `ZonedDateTime.mp` and
+  `MpZonedDateTime.jvm` used to move the second half one hour back (e.g. Berlin 2022-10-30T02:30+01:00 became +02:00),
+  and a load + save wrote the wrong `ts`. The stored and wire format are unchanged.
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime` equality compares instant and zone, no
+  longer local time and zone, so the two sides of a DST overlap are no longer equal. To compare by point in time,
+  whatever the zone, use `isSameInstant` (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.compareTo` orders by instant, then by local
+  date-time, then by zone id (like java.time), so it is `0` exactly when `equals`. For two values at the same instant
+  in different zones, `a <= b && a >= b` and `isEqualTo` no longer mean "same instant" (use `isSameInstant`), a
+  `sortedSetOf` keeps both, and `minOf` / `maxOf` / sorting order them by local time and zone.
+  `MpZonedDateTimeRange` compares its endpoints by instant in every ordering predicate, unchanged; `isAdjacentTo` and
+  `equals` go by equality, as before. kraft's generic comparable form rules
+  (`inRange`, `greaterThanOrEqual`, …) on `MpZonedDateTime` bounds in another zone now decide the exact boundary instant
+  by local time and zone (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): a time in a DST gap now reads back as the resolved time:
+  `MpZonedDateTime.of(2022-03-27T02:30, Berlin).hour` is 3, not 2 (its instant was already 03:30). So a value built
+  from a gap time now equals the value at its resolved instant (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.toString()` shows the offset, e.g.
+  `MpZonedDateTime(2022-10-30T02:30:00.000+01:00[Europe/Berlin])`, so the two sides of an overlap print differently.
+  `toIsoString()`, the stored `human` field and the wire format are unchanged (ULTRA-00211).
+- `ultra/datetime` (JVM), behaviour change (no compile signal): `MpZonedDateTime.jvm` and `ZonedDateTime.mp` are exact
+  over the whole range: beyond about ±292 million years `.jvm` clamped and `.mp` threw `ArithmeticException`. Both stay
+  at millisecond precision (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.atStartOfDay()`, `atStartOfMonth()` and
+  `atStartOfYear()` follow `MpLocalDate.atStartOfDay(zone)` (java.time): when midnight falls into a gap the day starts at
+  the end of the gap (Toronto 1919-03-31: 00:30, was 01:00). `atStartOfHour/Minute/Second()` and `atTime()` keep the
+  current offset in an overlap (ULTRA-00211).
+- **Before you update** (removed API): the public constructor `MpZonedDateTime(datetime, timezone)` - use
+  `MpZonedDateTime.of(datetime, timezone)` or `instant.atZone(timezone)`; `MpZonedDateTime.copy(...)` - e.g.
+  `x.copy(timezone = tz)` becomes `MpZonedDateTime.of(x.datetime, tz)`; destructuring (`component1/2`)
+  (ULTRA-00211).
 
 ### New
 
@@ -98,6 +142,8 @@
   injecting one becomes `SemiDynamic`. It cannot be overridden at `create { with { } }`; such an override is refused
   with `KontainerInconsistent` like any other non-dynamic; the message adds that only dynamic singletons can be
   overridden (ULTRA-00319).
+- `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
+  same point in time, for `MpInstant` and `MpZonedDateTime` and across the two (ULTRA-00211).
 
 ### Fixes
 
@@ -166,6 +212,13 @@
 - `ultra/cache`: JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
   outer instance. KDoc: the estimator's cost is quadratic in the objects of a value (measured) (ULTRA-00159).
 - `ultra/cache`: KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null (ULTRA-00159).
+- `ultra/datetime`, fix: `MpZonedDateTime.atStartOfPrevious` no longer loops forever when the previous day does not
+  exist in the zone (Pacific/Apia and Pacific/Fakaofo skipped 2011-12-30). `atStartOfNext` and `atStartOfPrevious` step
+  on the date; on a skipped date they return the start of the day after it, like `atStartOfDay` (from Apia 2011-12-29,
+  the next FRIDAY is 2011-12-31T00:00+14:00, a Saturday; it was 2012-01-06; Pacific/Kiritimati skipped 1994-12-31 the
+  same way). Second fixed case: where a DST gap ends at or crosses midnight the old loop skipped a whole week
+  (America/Nuuk 2024-03-29T23:30, next SATURDAY: was 2024-04-06, now 2024-03-30T00:00-02:00). Ordinary results are
+  unchanged (ULTRA-00211).
 
 ## 0.118.0
 

@@ -32,10 +32,10 @@ Last updated 2026-11-14.
 | common | 2026-07-29 scan, ULTRA-00143, model not recorded | 2026-07-20, ULTRA-00071, Placeholders injection fix | C D S | Opus | none | findings of ULTRA-00143 paused |
 | reflection | 2026-07-29 scan, ULTRA-00148, model not recorded | none | | | none | findings of ULTRA-00148 paused |
 | log | 2026-07-30 scan, ULTRA-00149, model not recorded | 2026-11-13, ULTRA-00158, level filtering and LogEvent, round 1 NOT CLEAN | C D S | `reviewer-opus-high` | planned (ULTRA-00316) | gate of ULTRA-00158 open |
-| cache | 2026-07-30 scan, ULTRA-00159, model not recorded | 2026-11-14, ULTRA-00159, scan fixes, hot-key expiry, real defects, monotonic clock; 4 rounds, round 4 clean; merged | C D S | `reviewer-fable-xhigh` | planned (ULTRA-00316) | 3 tests failed on master under load, being investigated; estimator batch next |
-| datetime | never | 2026-11-14, ULTRA-00211 and ULTRA-00210, zoned date-time keeps its instant, Mp enums; delta round 3 NOT CLEAN, fix running | C D S | `reviewer-fable-medium` | planned (ULTRA-00316) | batch 2 not merged |
+| cache | 2026-07-30 scan, ULTRA-00159, model not recorded | 2026-11-14, ULTRA-00159, scan fixes, hot-key expiry, real defects, monotonic clock; 4 rounds, round 4 clean; merged | C D S | `reviewer-fable-xhigh` | planned (ULTRA-00316) | estimator batch running; an unreviewed MINOR batch broke the loop for an hour (incident 2026-11-14, fixed) |
+| datetime | never | 2026-11-14, ULTRA-00211 and ULTRA-00210, zoned date-time keeps its instant, equality and ordering, Mp enums; round 1 clean, four delta rounds, the last clean; merged | C D S | `reviewer-fable-xhigh` | planned (ULTRA-00316) | next batch: 24:00 value, `MpLocalDateRange` cap |
 | slumber | 2026-07-31 scan, ULTRA-00163, model not recorded, adjudication unfinished | 2026-11-06, ULTRA-00294, date awakers | C D S | `reviewer-high` | none | **deep review next** (ULTRA-00316) |
-| kontainer | never (step 1 of ULTRA-00319 pinned today's behaviour in 143 characterization tests) | 2026-11-14, ULTRA-00319, ServiceType and ServiceKind replace the injection type, dynamicPrototype; strict gate, 2 rounds, round 2 clean; merged | C D S | `reviewer-fable-xhigh` | none | eleven known behaviours, ULTRA-00327 to ULTRA-00337 |
+| kontainer | never (step 1 of ULTRA-00319 pinned today's behaviour in 143 characterization tests) | 2026-11-14, ULTRA-00319, ServiceType and ServiceKind replace the injection type, dynamicPrototype; strict gate, 2 rounds, round 2 clean, delta review of the last batch clean; merged | C D S | `reviewer-fable-xhigh` | none | eleven known behaviours, ULTRA-00327 to ULTRA-00337 |
 | streams | 2026-11-11 operator audit, ULTRA-00307, model not recorded | 2026-11-11, ULTRA-00307, operator fixes, 2 rounds, clean | C D | `reviewer-xhigh` | none | |
 | vault | 2026-07-28 scan, ULTRA-00140, model not recorded | 2026-07-20, ULTRA-00061, hook scope | C D S | not recorded | none | findings of ULTRA-00140 |
 | depot, depot-s3 | never | 2026-11-13, ULTRA-00311, metadata, encryption and erasure, 4 rounds, clean | not recorded | `reviewer-xhigh` | collected | |
@@ -85,7 +85,7 @@ Last updated 2026-11-14.
 
 **What the table shows (2026-11-14):** no module has had a whole-module review under the three charters. Seven had a
 scan or audit (common, reflection, log, cache, slumber, vault, streams), none of them with a recorded model. Fable
-has reviewed five changes so far (ULTRA-00176, ULTRA-00234, ULTRA-00211, ULTRA-00159, ULTRA-00319). No red-team session has been run.
+has reviewed five changes so far (ULTRA-00176, ULTRA-00234, ULTRA-00211 with ULTRA-00210, ULTRA-00159, ULTRA-00319). No red-team session has been run.
 
 ## Log
 
@@ -95,6 +95,8 @@ column set I = implementation and code style (C above), D = domain, S = security
 
 | Module | Date | Ticket | Kind | Scope | Charters | Model or reviewer level | Rounds | Verdict |
 |---|---|---|---|---|---|---|---|---|
+| ultra/datetime | 2026-11-14 | ULTRA-00211, ULTRA-00210 | Feature review gate | `MpZonedDateTime` keeps its instant, equality by instant and zone, `compareTo` tie-break, `isSameInstant`, range predicates by instant, `atStartOfNext/Previous` on a skipped day, `MpMonth` and `MpDayOfWeek` | I + D + S (round 1 three reviewers; delta rounds in one or two passes) | round 1 `reviewer-opus-high`, deltas 2 and 3 `reviewer-fable-medium`, delta 4 `reviewer-fable-xhigh` | 1 + 3 delta rounds | round 1 CLEAN, delta 2 CLEAN, delta 3 NOT CLEAN (1 MAJOR: range predicates depended on the zones after the tie-break), delta 4 CLEAN; merged 14376f44 |
+| ultra/kontainer | 2026-11-14 | ULTRA-00319 | Delta review | the last MINOR batch (a redundant filter removed, the refusal hint computed on the error path), merged before it was reviewed | I + D + S in one pass | `reviewer-fable-xhigh` | 1 | CLEAN |
 | ultra/kontainer | 2026-11-14 | ULTRA-00319 | Feature review gate (strict) | the injection type split into `ServiceType` and `ServiceKind`, `dynamicPrototype()`; step 1: 143 characterization tests on the old code | I + D + S (round 2: I, and D + S in one pass) | `reviewer-fable-xhigh` | 2 | round 1 NOT CLEAN (I: 2 MAJOR, D: 1 MAJOR, S: clean), round 2 CLEAN; merged b57e9e1d |
 | ultra/cache | 2026-11-14 | ULTRA-00159 | Feature review gate | hot-key expiry, real defects, monotonic clock, soft bounds documented | I + D + S (round 4: I, and D + S in one pass) | `reviewer-fable-xhigh` | 4 (rounds 1 and 2 on 2026-11-13) | round 3 NOT CLEAN (D: 1 MAJOR, settled by the maintainer as documented soft bounds), round 4 CLEAN; merged 8545866a |
 | mutator/core | 2026-11-14 | ULTRA-00234 | Feature review gate | ListMutator row tokens, iterator contract | I + D + S | `reviewer-fable-xhigh` | 3 | round 3 CLEAN; merged d2a19b0c |

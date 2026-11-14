@@ -1,6 +1,6 @@
 # ULTRA-00211: MpZonedDateTime loses the offset in a DST overlap
 
-> **Status (2026-11-13): IMPLEMENTED, awaiting the review gate** (track A of ULTRA-00316, batch 2, with ULTRA-00210).
+> **Status (2026-11-14): DONE.** Merged 14376f44. Round 1 CLEAN, delta round 4 CLEAN (reviewer-fable-xhigh). DOCS follow-up: ULTRA-00339.
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -281,3 +281,4 @@ the maintainer (2026-11-14); `isSameInstant` added on his word.
 - 2026-10-21: numbered ULTRA-00211 (was `docs/tasks/20261018-mpzoneddatetime-overlap-offset.md`).
 - 2026-11-13: implemented on track A, batch 2 (with ULTRA-00210); equality by instant + zone awaits the maintainer.
 - 2026-11-14: review round 1 CLEAN, MINORs applied; equality by instant + zone confirmed; `isSameInstant` added.
+- 2026-11-14: DONE. Merged 14376f44. Round 1 CLEAN, delta round 4 CLEAN (reviewer-fable-xhigh). DOCS follow-up: ULTRA-00339.
