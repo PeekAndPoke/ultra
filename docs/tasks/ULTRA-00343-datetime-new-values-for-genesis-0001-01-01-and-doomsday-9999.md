@@ -1,0 +1,62 @@
+# ULTRA-00343: datetime: new values for Genesis (0001-01-01) and Doomsday (9999-12-31)
+
+> **Status (2026-11-14): DESIGNED.** 
+>
+> **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
+
+**Plan:** ULTRA-00316 (close the open epics), track A; built together with the lazy list views of ULTRA-00341
+(maintainer, 2026-11-14: "ok to the new dates. New ticket and build it with the lazy list views").
+
+## Why this exists
+
+`Genesis` and `Doomsday` exist for one purpose: they stand in for "no start" and "no end" of a range
+(`forever`, `beginningAt`, `endingAt`, `hasStart = from > Genesis`, `hasEnd = to < Doomsday`, and the clamp in
+`DateTimeRangeConverter`). Nothing outside `ultra/datetime` uses them in main code. Their values today are
+-10000-01-01T00:00:00Z and +10000-01-01T00:00:00Z (`constants.kt`: -377_736_739_200_000 and 253_402_300_800_000 ms).
+
+What that costs: the values are stored with every open-ended range, and they lie outside what databases and tools
+accept. ArangoDB's AQL date functions accept timestamps from -62167219200000 to 253402300799999, i.e.
+"0000-01-01T00:00:00.000Z" to "9999-12-31T23:59:59.999Z"; outside it they return null with a warning (ArangoDB docs,
+AQL date functions, read through webq on 2026-11-14, request 20261114T160814-caeb7e52e911). Today's Doomsday is one
+millisecond past that limit. The text form has a five-digit year.
+
+No production system uses the libraries (maintainer, 2026-11-14), so the values can change now. The nullable variants
+(`MpLocalDateRange.Partial` and its siblings) already exist for callers who want explicit open ends; the sentinel
+design stays.
+
+## Decided (maintainer, 2026-11-14)
+
+| | Value | As a date | Timestamp in ms |
+|---|---|---|---|
+| Genesis | 0001-01-01T00:00:00Z | 0001-01-01 | -62_135_596_800_000 |
+| Doomsday | 9999-12-31T00:00:00Z | 9999-12-31 | 253_402_214_400_000 |
+
+Genesis is the first day of year 1, Doomsday the last day of year 9999; as instants each is the start of that day in
+UTC. Reasons: both lie inside ArangoDB's range; Doomsday keeps a four-digit year in every zone (at 00:00 UTC it is
+9999-12-31T14:00 in the furthest-ahead zone); year 1 to 9999 is also the range of several other date types (from
+memory, not checked: .NET `DateTime`, Python `datetime`, SQL Server `datetime2`).
+
+Accepted: Genesis shown in a zone west of UTC falls on 0000-12-31; a range that starts before Genesis counts as
+having no start.
+
+## The work
+
+- Tests first: the four constants on each type (`MpInstant`, `MpLocalDate`, `MpLocalDateTime`, `MpZonedDateTime`) and
+  the JVM helpers in `jvmMain/constants.kt`; `forever`, `beginningAt`, `endingAt`, `hasStart`, `hasEnd` on every range
+  type; a value stored with the OLD sentinels still reads as open (`to < Doomsday` is false for the old, later value;
+  `from > Genesis` is false for the old, earlier one): kotlinx and slumber round trips; the clamp in
+  `DateTimeRangeConverter`; `numberOfDays` of `forever` and of a range that reaches past Doomsday (item 3 of
+  ULTRA-00342: decide and pin the rule here).
+- Search the repo for the old numbers and years in code, tests, docs and the TypeScript runtime.
+- Mutation checks on the constants and on the open-end predicates.
+- CHANGELOG: breaking, a behaviour change without a compile signal (new values; what counts as open).
+- Docs lines for ULTRA-00339: `mp-instant.astro:49-50`, `mp-local-date.astro:37-38`, `llms/datetime.md:65-66`.
+
+## Acceptance
+
+- The constants have the decided values on JVM, JS and native; an open range's stored timestamps lie inside
+  ArangoDB's range; datetime and slumber suites green.
+
+## History
+
+- 2026-11-14: created on the maintainer's word.
