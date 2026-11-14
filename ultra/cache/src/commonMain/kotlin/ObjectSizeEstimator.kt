@@ -122,10 +122,11 @@ class ObjectSizeEstimatorImpl(
      * user-supplied `hashCode()` off the cache's hot path.
      */
     private class VisitedSet {
-        // Linear scan by identity: O(n^2) in graph size, traded for correctness. A keyed structure
-        // would have to hash its keys, which is the defect above; an identity-keyed set needs an
-        // expect/actual (IdentityHashMap / JS Set / native fallback) and is tracked as a follow-up.
-        // The practical bound is the recursion depth the stack allows, since estimate() has none.
+        // Linear scan by identity: O(n^2) in the number of distinct objects, traded for correctness.
+        // A keyed structure would have to hash its keys, which is the defect above; an identity-keyed
+        // set needs an expect/actual (IdentityHashMap / JS Set / native fallback), a follow-up. A wide
+        // graph pays first, long before the stack depth matters: on the JVM a list of 10 000 strings
+        // takes about 17 ms, of 100 000 strings about 1.5 s (measured 2026-11-14).
         private val seen = mutableListOf<Any>()
 
         /** Records [obj] and returns true when it had not been visited before. */

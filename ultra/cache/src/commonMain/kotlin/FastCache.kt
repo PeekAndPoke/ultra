@@ -234,7 +234,8 @@ class FastCache<K, V>(
      * Behaviour that expires entries after a fixed [ttl] since their last access.
      *
      * Each read or put resets the TTL clock for the affected entry.
-     * Expired entries are evicted during the next processing-loop iteration.
+     * Expired entries are evicted during the next processing-loop iteration. The clock starts at the
+     * pass that sees the access, so an entry can be served up to [ttl] plus two loop periods after it.
      * A zero or negative [ttl] expires entries at the next pass, one below 1 ms counts as 1 ms, and
      * [Duration.INFINITE] never expires.
      */
@@ -294,7 +295,8 @@ class FastCache<K, V>(
      * Behaviour that expires entries after a fixed [ttl] since they were last written.
      *
      * Only put operations reset the TTL clock. Reads do NOT extend the entry's lifetime.
-     * Expired entries are evicted during the next processing-loop iteration.
+     * Expired entries are evicted during the next processing-loop iteration. The clock starts at the
+     * pass that sees the write, so an entry can be served up to [ttl] plus two loop periods after it.
      * A zero or negative [ttl] expires entries at the next pass, one below 1 ms counts as 1 ms, and
      * [Duration.INFINITE] never expires.
      */
@@ -627,12 +629,16 @@ class FastCache<K, V>(
      * while the loader ran, the loaded value is dropped, without any notice. The comparison is by
      * identity: when the application writes back the very instance the refresh started from, the
      * refresh still replaces it, and readers get the loaded value until the next write or refresh -
-     * what the refresh would have installed without that write.
+     * what the refresh would have installed without that write. For booleans, enum constants, small
+     * boxed numbers, interned strings and JS primitives "the very instance" is any equal value.
      *
      * The refresh's result is recorded like a put: it counts as an access for
      * [ExpireAfterAccessBehaviour] and for the least-recently-used order of [MaxEntriesBehaviour] and
      * [MaxMemoryUsageBehaviour], and as a put in [StatisticsBehaviour]. Whether a refresh should count
      * as an access is open in ULTRA-00321.
+     *
+     * A failed refresh keeps serving the stale value and retries the load in every pass, until it
+     * succeeds or [hardTtl] evicts the entry.
      *
      * An optional [hardTtl] forces eviction when the write age exceeds it, even during refresh.
      *
