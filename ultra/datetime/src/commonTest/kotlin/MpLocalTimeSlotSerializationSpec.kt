@@ -31,6 +31,7 @@ class MpLocalTimeSlotSerializationSpec : StringSpec({
         decode(encode(MpLocalTimeSlot.completeDay)) shouldBe MpLocalTimeSlot.completeDay
         decode("""{"from":79200000,"duration":14400000,"to":0}""") shouldBe night
         decode("""{"from":79200000,"duration":-5}""") shouldBe MpLocalTimeSlot.of(t(22), Duration.ZERO)
+        decode("""{"from":0,"duration":-1,"to":3600000}""") shouldBe MpLocalTimeSlot.of(t(0), Duration.ZERO)
     }
 
     "an infinite duration is stored as 2^53 - 1 ms, which a JS client reads exactly, and reads back infinite" {

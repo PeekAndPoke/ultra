@@ -109,6 +109,20 @@ class MpLocalTimeSlotOnDateSpec : StringSpec({
         range.hasEnd shouldBe false
     }
 
+    "a fixed offset has no gaps: 02:30 + 1 h at +02:00 is just 00:30Z to 01:30Z" {
+        MpLocalDate.of(2024, 3, 31).toRange(slot(2, 30, 1.hours), MpTimezone.of("+02:00")).instants() shouldBe
+                (i("2024-03-31T00:30:00Z") to i("2024-03-31T01:30:00Z"))
+    }
+
+    "an end past the last date the platform holds is the open end (999 999 999-12-31, overnight)" {
+        val last = MpLocalDate.of(999_999_999, 12, 31)
+        val range = last.toRange(slot(22, 0, 4.hours), MpTimezone.UTC)
+
+        range.from.toInstant() shouldBe last.atTime(t(22), MpTimezone.UTC).toInstant()
+        range.hasEnd shouldBe false
+        last.toRange(slot(22, 0, 2.hours), MpTimezone.UTC).hasEnd shouldBe false
+    }
+
     "an end before the start can only come from the open end: past Doomsday the range is empty at the start" {
         val date = MpLocalDate.of(12000, 1, 1)
         val range = date.toRange(slot(10, 0, Duration.INFINITE), berlin)

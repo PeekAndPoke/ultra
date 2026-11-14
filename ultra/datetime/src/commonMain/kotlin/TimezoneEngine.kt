@@ -4,6 +4,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.plus
 import kotlin.math.abs
 import kotlin.time.Instant
@@ -102,24 +103,7 @@ internal object TimezoneEngine {
 
     /** The first instant of [date] in [timezone]: midnight, or the end of the gap when midnight does not exist. */
     fun startOfDay(timezone: MpTimezone, date: LocalDate): Instant {
-        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(date, it) }
-        requireRegionIdShape(timezone.id)
-
-        val wall = EpochMath.epochSeconds(date)
-
-        val resolution = when {
-            abs(wall) < EXACT_AS_DOUBLE -> resolve { platformOffsetSecondsAt(timezone.id, wall + it) }
-            else -> EpochMath.instant(date, 0).epochSeconds.let { exact -> resolve { lookup(timezone.id, exact + it) } }
-        }
-
-        return when (resolution) {
-            is Resolution.Unique -> EpochMath.instant(date, resolution.offset)
-            is Resolution.Overlap -> EpochMath.instant(date, resolution.earlier)
-            is Resolution.Gap -> {
-                val midnight = EpochMath.instant(date, 0).epochSeconds
-                Instant.fromEpochSeconds(transitionAfter(timezone.id, midnight - PROBE_WINDOW_SECONDS, resolution.before))
-            }
-        }
+        return toInstantOrTransition(timezone, LocalDateTime(date, LocalTime(0, 0)))
     }
 
     /**
@@ -191,8 +175,8 @@ internal object TimezoneEngine {
      * The first second after [from] at which [zoneId] stops using the offset [before].
      *
      * Bisects on Long, not Double: beyond 2^53 a Double midpoint can round onto a bound and never make progress. This
-     * runs only for a time inside a gap (a start of day, or a time slot's end on a date), so the emulated Long on JS
-     * does not matter.
+     * runs only for a time inside a gap (a start of day, or a time slot's start or end on a date), so the emulated Long
+     * on JS does not matter.
      */
     private fun transitionAfter(zoneId: String, from: Long, before: Int): Long {
         var lo = from

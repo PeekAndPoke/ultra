@@ -30,7 +30,8 @@ object MpLocalTimeSlotAwaker : Awaker {
         val raw = when {
             data.containsKey("duration") -> MpLocalTimeSlotRawData(
                 from = from.toLong(),
-                duration = (data["duration"] as? Number ?: return null).toSaturatedLong(),
+                duration = (data["duration"] as? Number)?.takeUnless { it.isNotANumber() }?.toSaturatedLong()
+                    ?: return null,
                 to = to,
             )
 
@@ -40,18 +41,28 @@ object MpLocalTimeSlotAwaker : Awaker {
         return raw.toSlotOrNull()
     }
 
+    /** NaN is no duration: a decode failure, as a non-number is. */
+    private fun Number.isNotANumber(): Boolean = (this is Double && isNaN()) || (this is Float && isNaN())
+
     /**
-     * A whole number of milliseconds; beyond [Long] (a `BigInteger` or `BigDecimal` from Jackson) it saturates. The
-     * bottom is one above [Long.MIN_VALUE], which the raw shape uses for "absent": any negative duration is empty.
+     * A whole number of milliseconds; beyond [Long] (a `BigInteger` or `BigDecimal` from Jackson) it saturates, by
+     * comparing, never by expanding a huge exponent. The bottom is one above [Long.MIN_VALUE], which the raw shape uses
+     * for "absent": any negative duration is empty. A Double or Float infinity saturates as well.
      */
     private fun Number.toSaturatedLong(): Long = when (this) {
-        is BigInteger -> maxOf(minOf(this, LONG_MAX), LONG_MIN).toLong()
-        is BigDecimal -> toBigInteger().toSaturatedLong()
-        else -> toLong().coerceAtLeast(Long.MIN_VALUE + 1) // Double and Float saturate on their own
+        is BigInteger -> maxOf(minOf(this, BIG_INTEGER_MAX), BIG_INTEGER_MIN).toLong()
+        is BigDecimal -> when {
+            this >= BIG_DECIMAL_MAX -> Long.MAX_VALUE
+            this <= BIG_DECIMAL_MIN -> Long.MIN_VALUE + 1
+            else -> toLong()
+        }
+        else -> toLong().coerceAtLeast(Long.MIN_VALUE + 1)
     }
 
-    private val LONG_MAX: BigInteger = BigInteger.valueOf(Long.MAX_VALUE)
-    private val LONG_MIN: BigInteger = BigInteger.valueOf(Long.MIN_VALUE + 1)
+    private val BIG_INTEGER_MAX: BigInteger = BigInteger.valueOf(Long.MAX_VALUE)
+    private val BIG_INTEGER_MIN: BigInteger = BigInteger.valueOf(Long.MIN_VALUE + 1)
+    private val BIG_DECIMAL_MAX: BigDecimal = BigDecimal(Long.MAX_VALUE)
+    private val BIG_DECIMAL_MIN: BigDecimal = BigDecimal(Long.MIN_VALUE + 1)
 }
 
 /** Slumberer for [MpLocalTimeSlot] values. Writes `{from, duration, to}` in milliseconds, `to` derived. */

@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComputedList
 import io.peekandpoke.ultra.common.slumber.Slumber
+import kotlinx.datetime.DateTimeArithmeticException
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -279,11 +280,15 @@ data class MpLocalTimeSlot private constructor(
      * Splits the slot into parts of [duration], with [gap] between them, walking the slot's own length from [from]
      * (overnight and longer than a day work).
      *
-     * - Returns a lazy view ([ComputedList]): each part is computed when read, so any count is free to create.
+     * - Returns a lazy view ([ComputedList], read-only, not a `MutableList`): each part is computed when read.
+     * - At most [Int.MAX_VALUE] parts, for any slot (a list cannot be larger): beyond that the parts do not cover the
+     *   whole slot (`of(00:00, 30.days).splitWithGaps(1.milliseconds)` would need 2 592 000 000).
+     * - With user input, check `size` before `map` or `toList()`: they build every part, and nothing else bounds the
+     *   count.
      * - Parts never reach past the end; a remainder shorter than [duration] is dropped.
      * - An empty slot, or a [duration] under one millisecond, gives no parts; a negative [gap] counts as zero.
-     * - An infinite slot gives [Int.MAX_VALUE] parts (a list cannot be larger), or one part for an infinite [gap]; an
-     *   infinite [duration] fits only an infinite slot.
+     * - An infinite slot gives [Int.MAX_VALUE] parts, or one part for an infinite [gap]; an infinite [duration] fits
+     *   only an infinite slot.
      * - The parts carry no day: `date.toRange(part, zone)` puts a part after midnight on the morning of `date`, not of
      *   the next day. Part `i` starts `(from + i * (duration + gap)) / 24 h` days after the slot's own date.
      */
@@ -336,7 +341,8 @@ internal fun MpLocalTimeSlot.onDate(date: MpLocalDate, timezone: MpTimezone): Mp
 
 /**
  * The end of this slot on [date]. The only place that decides what an end beyond the open end is: an infinite slot,
- * and a finite end the platform cannot resolve (JS dates end at 8.64e15 ms), get the range's open end, today
+ * and a finite end the platform cannot resolve (JS dates end at 8.64e15 ms; every platform's dates end at year
+ * 999 999 999), get the range's open end, today
  * [MpZonedDateTime.Doomsday] (whatever ULTRA-00343 decides goes here).
  */
 private fun MpLocalTimeSlot.endOnDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTime {
@@ -348,6 +354,9 @@ private fun MpLocalTimeSlot.endOnDate(date: MpLocalDate, timezone: MpTimezone): 
     } catch (_: IllegalArgumentException) {
         // the zone is valid (the start resolved in it): the platform cannot resolve an instant this far out
         openEnd()
+    } catch (_: DateTimeArithmeticException) {
+        // the end's date lies past the last date the platform holds (year 999 999 999)
+        openEnd()
     }
 }
 
@@ -357,8 +366,7 @@ private fun openEnd(): MpZonedDateTime = MpZonedDateTime.Doomsday
  * [time] on [date] in [timezone]; a time that does not exist is the first existing time after it, 24:00 the next day.
  */
 private fun firstExistingTime(date: MpLocalDate, time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
-    if (time.isEndOfDay) return date.plusDays(1).atStartOfDay(timezone)
-
+    // 24:00 needs no branch: MpLocalDateTime.of(date, EndOfDay) is 00:00 of the next day
     val instant = TimezoneEngine.toInstantOrTransition(timezone, MpLocalDateTime.of(date, time).value)
 
     return MpZonedDateTime.of(instant = MpInstant(instant), timezone = timezone)

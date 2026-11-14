@@ -348,7 +348,8 @@ the maintainer"). Not merged, not reviewed.
   part for an infinite gap (round 1: the count was an artefact of `Long.MAX_VALUE / step`); an infinite part fits only
   an infinite slot. The parts carry no day (KDoc says how to place them).
 - **Stored shape `{from, duration, to}`** in milliseconds, `to` derived and ignored on read when `duration` is present:
-  - new public `MpLocalTimeSlotRawData(from: Long, duration: Long? = null, to: Long? = null)` with the extension
+  - new public `MpLocalTimeSlotRawData(from: Long, duration: Long? = <absent marker>, to: Long? = null)` with the
+    extension
     functions `MpLocalTimeSlot.toRawData()` and `MpLocalTimeSlotRawData.toSlotOrNull()` (public because the slumber
     codec in another module uses them), `@Slumber.As(MpLocalTimeSlotRawData::class)` on the slot;
   - kotlinx `MpLocalTimeSlotSerializer`; slumber `MpLocalTimeSlotAwaker` / `MpLocalTimeSlotSlumberer`, registered in
@@ -395,7 +396,7 @@ the maintainer"). Not merged, not reviewed.
 | S10 `of(from, to)`: `to` before `from` is empty instead of overnight (persistence: the fallback) | 11 datetime + 1 slumber |
 | S11 no threshold for an infinite duration | 2 datetime + 1 slumber |
 | S12 the start not normalised | 2 |
-| S13 `splitWithGaps` step not taken mod day | 0: equivalent. The count bounds `index * step` by the slot's length, so no overflow is reachable; the reduction is a guard only (checked by computation for the extreme case: infinite slot, 1 ms part, 2^53 ms gap) |
+| S13 `splitWithGaps` step not taken mod day | 0 at the time; the note "equivalent" was right only for the count of that build. Since round 1 an infinite slot gives `Int.MAX_VALUE` parts, `i * step` overflows, and the reduction is load-bearing: pinned in round 2, mutant red (see round 2) |
 | P1 kotlinx decoder without the `{from, to}` fallback (persistence) | 1 |
 | P2 kotlinx decoder reads `to` before `duration` (persistence) | 2 |
 | P3 kotlinx / slumber write `Long.MAX_VALUE` for an infinite duration (persistence) | 1 datetime + 1 slumber |
@@ -470,8 +471,11 @@ the maintainer"). Not merged, not reviewed.
     false); a slot of 24 hours or more covers the whole clock.
   - `MpLocalDate.toRange(slot, zone)` ends by the clock on the day `endDayOffset` later: a night slot lasts 7 or 9 real
     hours on DST nights. A start or end in a skipped hour moves to the first existing time (02:30 becomes 03:00; it
-    moved by the gap length, to 03:30), a repeated hour takes its first occurrence, and a slot on a skipped date is
-    empty at the next day's start; such cases gave inverted ranges before (ULTRA-00341).
+    moved by the gap length, to 03:30), a repeated hour takes its first occurrence, and a slot that starts and ends
+    on a skipped date is empty at the next day's start (one that runs into the next day keeps that part); such cases
+    gave inverted ranges before (ULTRA-00341).
+  - `isAdjacentTo` with an empty slot is always false; it was true when the empty slot's point sat on the other's
+    end (`10:00-11:00` and `11:00-11:00`).
 - `ultra/datetime` and `ultra/slumber`, stored format: a slot is stored as `{from, duration, to}` in milliseconds
   (`to` derived, ignored on read; an infinite duration is 9007199254740991). Both decoders still read the old
   `{from, to}` (`to` before `from` as overnight; a stored `{0, 86399999}` reads as 23:59:59.999 long). A reader of an
@@ -479,7 +483,9 @@ the maintainer"). Not merged, not reviewed.
   it. There an overnight slot comes out invalid, and a slot of 24 hours or more as its clock times only. Update
   readers before writers (ULTRA-00341).
 - `ultra/datetime`, breaking: `splitWithGaps` loses `maxSlots` and never throws; it returns a lazy view
-  (`ComputedList`) and walks overnight and multi-day slots (ULTRA-00341).
+  (`ComputedList`; read-only, not a `MutableList`) of at most `Int.MAX_VALUE` parts, and walks overnight and
+  multi-day slots. With user input, check `size` before `map` / `toList()`: nothing else bounds the count
+  (ULTRA-00341).
 
 **New:**
 
@@ -540,6 +546,41 @@ JVM, the JS row on JS).
 | K15 `cutAway` without the `coversClock` branch | 1 |
 | K16 JS: no open end for an unresolvable end (run on JS) | 1 |
 
+## Review record 3b-2: delta round 2 (reviewer-fable-xhigh, all charters)
+
+**Verdict:** CLEAN: 0 CRITICAL, 0 MAJOR; 9 MINOR, 6 surviving mutants, 4 text corrections. Every round-1 FIXED entry
+holds; all DST instant pairs and every `MpLocalTimeSlotOnDateSpec` row recomputed and right. The reviewer ran
+nothing; each item was settled by a test first.
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | slumber: `BigDecimal` expanded through `toBigInteger()` (costly, can throw for a huge exponent) | CONFIRMED: `1e400000000` took more than 5 s (RED: `TimeoutException`). FIXED: compared against `Long` bounds, never expanded; `1e400000000`, `-1e400000000`, `1e-400000000` pinned under a 5 s limit; mutant B3 red |
+| 2 | the `BigDecimal("1e30")` row cannot fail | FIXED: `BigDecimal("1e19")` (wraps negative without the arm) is infinite; mutant B1 (no arm) red (2) |
+| 3 | the `BigInteger` lower clamp unpinned | FIXED: `BigInteger("-18446744073709551611")` (low 64 bits +5) is empty; mutant B2 red |
+| 4 | `step % DAY` load-bearing since round 1 | CONFIRMED: `of(10:00, INFINITE).splitWithGaps(60.days)[Int.MAX_VALUE - 1] == of(10:00, 60 days)` (whole days: every part at 10:00); mutant S13 red; the round-1 S13 note corrected |
+| 5 | `plusDays` past the last date throws `DateTimeArithmeticException`, not caught | CONFIRMED: the last date is 999 999 999-12-31 on JVM, JS and native (probe of 2026-11-14: `LocalDate(1_000_000_000, 1, 1)` throws on all three); `of(22:00, 4 h)` there threw (RED). FIXED: caught in `endOnDate`, the open end; green on all three; mutant D1 red |
+| 6 | KDoc "any count is free to create" false above 2^31 - 1 | FIXED: "at most `Int.MAX_VALUE` parts, for any slot", and a line for callers with user input (check `size` before `map` / `toList()`) |
+| 7 | surplus: the `isEndOfDay` return in `firstExistingTime`; `startOfDay` duplicates the resolution | CONFIRMED equivalent: both removed / delegated (`startOfDay` = `toInstantOrTransition(date at 00:00)`), suites green on JVM, JS and native with the start-of-day tests untouched (Cairo, Beirut, Nuuk, Apia, Sao Paulo) |
+| 8 | `NaN` duration awoke as an empty slot | CONFIRMED (RED). FIXED: null; `+Infinity` is an infinite slot, `-Infinity` an empty one (they saturate), all pinned; mutant B4 red |
+| 9 | KDoc `transitionAfter`: also a slot's start | FIXED |
+| 10 | surviving mutants: fixed-offset return, the marker as `-1L`, `>` to `>=` in the covering merge | FIXED: the reviewer's rows (`+02:00` gives 00:30Z to 01:30Z; `{"from":0,"duration":-1,"to":3600000}` is empty; two 24 h slots keep `this`); mutants F1 (3 red, also two converter rows through `startOfDay`), F2, F3 red |
+| 11 | texts: the skipped-date sentence; `isAdjacentTo` with an empty slot; `splitWithGaps` bound and not a `MutableList`; the plan line of the raw class | FIXED |
+| note | the round-1 note on `Long.MIN_VALUE` as an absent duration | WITHDRAWN by the reviewer (a stored slot never writes it; slumber clamps above it) |
+| decision | `map` / `toList()` on a split are unbounded now that `maxSlots` is gone | FOR THE MAINTAINER: documented in the KDoc and the changelog; no limit added |
+| counts | after round 2 (2026-11-14, `--rerun`, XML) | datetime JVM 2854 / 0, JS 2196 / 0, native 2188 / 0 (`MpLocalTimeSlotOnDateSpec` 16, `MpLocalTimeSlotClockSpec` 20, `MpLocalTimeSlotSerializationSpec` 7 on all three); slumber 1268 / 0 (`MpLocalTimeSlotCodecSpec` 9); codegen 326 / 0; compile sweep 0 `e:` |
+
+| Mutant (round 2; each restored with `cmp`) | Tests red |
+|---|---|
+| B1 slumber: no `BigDecimal` arm (persistence) | 2 |
+| B2 slumber: `BigInteger` without the lower clamp (persistence) | 1 |
+| B3 slumber: `BigDecimal` expanded through `toBigInteger()` (persistence) | 1 (timeout) |
+| B4 slumber: `NaN` accepted (persistence) | 1 |
+| S13 `splitWithGaps` step not taken mod day | 1 |
+| F1 `toInstantOrTransition` without the fixed-offset return | 3 |
+| F2 the absent marker as `-1L` (persistence) | 1 |
+| F3 covering merge with `>=` | 1 |
+| D1 no catch for `DateTimeArithmeticException` | 1 |
+
 ## Left out, for one follow-up ticket
 
 - `MpLocalTime.jvm` drops the milliseconds (`Max.jvm` = 23:59:59).
@@ -556,3 +597,4 @@ JVM, the JS row on JS).
 - 2026-11-14: 3b-1 round 1 and delta round 2 handled; 3b-1 held (the sentinel values are in question). Batch 3b-2
   (the slot redesign) built on `wt/datetime` on top of it, tests first; not reviewed, not merged.
 - 2026-11-14: 3b-2 round 1 NOT CLEAN (1 MAJOR: the gap rule), all findings handled; awaiting the delta review.
+- 2026-11-14: 3b-2 delta round 2 CLEAN; its MINORs, mutants and texts handled; a short delta review before the merge.

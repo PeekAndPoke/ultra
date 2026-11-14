@@ -168,6 +168,8 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         slot(20, 0, 8.hours).mergeWith(slot(2, 0, 20.hours)) shouldBe listOf(slot(20, 0, 24.hours))
         slot(5, 0, 30.hours).mergeWith(slot(10, 0, 1.hours)) shouldBe listOf(slot(5, 0, 30.hours))
         slot(10, 0, 1.hours).mergeWith(slot(5, 0, 30.hours)) shouldBe listOf(slot(5, 0, 30.hours))
+        // two whole-clock slots of equal length: this one stays
+        slot(5, 0, 24.hours).mergeWith(slot(7, 0, 24.hours)) shouldBe listOf(slot(5, 0, 24.hours))
         night.mergeWith(slot(23, 0, Duration.ZERO)) shouldBe listOf(night)
     }
 
@@ -223,6 +225,8 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         val open = slot(10, 0, Duration.INFINITE)
 
         open.splitWithGaps(60.days).size shouldBe Int.MAX_VALUE
+        // 60 days is whole days, so every part starts at 10:00; without the step taken mod day, i * step overflows
+        open.splitWithGaps(60.days)[Int.MAX_VALUE - 1] shouldBe slot(10, 0, 60.days)
         open.splitWithGaps(1.hours, 60.days).size shouldBe Int.MAX_VALUE
         open.splitWithGaps(1.hours, Duration.INFINITE) shouldBe listOf(slot(10, 0, 1.hours))
         open.splitWithGaps(Duration.INFINITE) shouldBe listOf(open)
