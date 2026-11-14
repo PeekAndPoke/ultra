@@ -31,6 +31,31 @@ class LogLevelFilteringSpec : StringSpec({
         rec.levels shouldContainExactly listOf(LogLevel.INFO)
     }
 
+    "OFF as the global lower bound logs nothing" {
+        val rec = Recording()
+        val log = UltraLogManager(listOf(rec), minLevel = LogLevel.OFF).getLogger(LogLevelFilteringSpec::class)
+
+        log.error("e")
+        log.warning("w")
+        log.info("i")
+        log.debug("d")
+        log.trace("t")
+
+        rec.events.shouldBeEmpty()
+    }
+
+    "OFF as an appender's bound gives that appender nothing" {
+        val everything = Recording(LogLevel.ALL)
+        val nothing = Recording(LogLevel.OFF)
+        val log = UltraLogManager(listOf(everything, nothing)).getLogger(LogLevelFilteringSpec::class)
+
+        log.error("e")
+        log.trace("t")
+
+        everything.levels shouldContainExactly listOf(LogLevel.ERROR, LogLevel.TRACE)
+        nothing.events.shouldBeEmpty()
+    }
+
     "the global lower bound drops everything less critical" {
         val rec = Recording()
         val log = UltraLogManager(listOf(rec), minLevel = LogLevel.WARNING)

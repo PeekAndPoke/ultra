@@ -549,16 +549,347 @@ compile sweep clean.
 - Test hygiene: two filename/class mismatches, and `FastCacheMaxMemoryUsageSpec.kt:188` is still
   `.config(enabled = false)` — it can be re-enabled now that `totalSize` is correct.
 
+## TRIAGE ROUND — 2026-11-13 (ULTRA-00316 track B, branch `wt/cache-log`)
+
+The READY items of the epic triage (ULTRA-00255 report, cache table), one commit each, no public API
+change. Every test below was RED before its fix; "mutation" names what was broken to see it go red again.
+
+| Item | Commit | Change | Pinned by | Mutation → red |
+|---|---|---|---|---|
+| F14 rest | 90b59048, **revised by 1f19eaad** (no throws, see review round 1) | Every TTL validated at construction: non-positive refused; a positive TTL below 1 ms counts as 1 ms (the clock's resolution; truncated to 0 it expired an entry in the very iteration that recorded its write; refusing a positive duration would gain nothing); `hardTtl` must exceed `refreshAfter` (compared in ms), else the hard branch always wins and nothing is ever refreshed | `FastCacheConfigValidationSpec` (4 new) | drop the positive `require` → non-positive test; drop the 1 ms floor → both sub-ms tests; drop the hardTtl `require` → hardTtl test |
+| F9 | b34f1826 | Statistics: one `@Volatile` reference to an immutable `CacheStats` (single writer: the loop), so a snapshot is visible and consistent; `totalSize` `@Volatile`. Also removes the `totalSize` marker (its second half was fixed by the `RemoveAction`) | `FastCacheVisibilitySpec` (jvmTest, 2): a reader thread spins until the value changes; red on the pre-fix code | drop each `@Volatile` → its test (reader never sees the write, JIT-hoisted) |
+| F4 | 710c1dc3 | `refreshingKeys` guarded by the behaviour's own lock, never nested in the cache lock; keys claimed in the scan before any launch; a failed refresh releases under the lock | `FastCacheRefreshConcurrencySpec` (jvmTest): 20 000 keys, failing loaders, 5 fresh trials; pre-fix code red 7 of 8 runs (lost releases: 39994-39999 of 40000) | claims back in the launch loop, unguarded → red (lost release). **Not pinned:** the lock in `release()` alone — that mutant survived 2/2, since with claims made before launch a release only races other releases on distinct buckets |
+| C10/F6 | 1e0b9a1d | `clear()` records a `RemoveAction` per entry (the channel every removal already uses, delivered on the loop thread, so custom behaviours learn too) and keeps the pending actions | `FastCacheClearSpec` (4 new): maxEntries no longer evicts live entries for cleared ones; `totalSize` back to 0; refresh stops; pending actions counted | no `RemoveAction`s → the 3 behaviour tests; drop pending actions → the statistics test |
+| C9, C6, C8 | 74f61fa4, **revised by 028ac18b** (only `this$N` skipped, see review round 1) | JVM estimator: fields per class memoized in a `ClassValue` (pins no class loader); static and synthetic fields skipped (an inner class's `this$0`, an anonymous object's captures; an indy lambda's captures are ordinary fields on a hidden class and are still walked — probed); `trySetAccessible` instead of a blanket `catch (Throwable)` | `ObjectSizeEstimatorSpec` (3 new): inner class, anonymous object, per-class lookup | walk synthetic fields → the 2 synthetic tests; a class-blind memo → the per-class test (and 6 others). **Not pinned:** the memo's speed (C9) and the absent catch (C6, no error reachable through an opened field) |
+| `NullableCache.clear()` race | 13777c5b | `clear()` drops the running claims too; a provider caches only while its claim is current and releases only its own claim | `NullableCacheClearSpec` (3, commonTest, deterministic: UNDISPATCHED ordering, no timing) | unconditional insert → tests 1, 2; `clear()` keeps `inFlight` → tests 1, 2; failure path releases unconditionally → test 3 |
+| `Cache.getOrPut` atomicity | 3120ada9 | KDoc: not atomic, FastCache may run the producer more than once, losers get the stored value, `NullableCache` for single-flight | – | – |
+| Stale markers | 5e9bebcc (+ b34f1826, 1e0b9a1d, 74f61fa4) | Removed after checking each: onEviction null skip and refresh of evicted keys (fixed by the `RemoveAction`); `Cache.get` null (Q2 design, now in its KDoc); estimator JS numbers, JVM collections, native flat charge (Q3, stated in the class KDoc's Accuracy section; the `2L` now explained); the JPMS line of that KDoc follows `trySetAccessible`. Kept, still true and PARKed: `FastCache` F17 (`:344`), F15, `lastActions` unbounded, F16; `NullableCache` C11; estimator C7; JS C13 | – | – |
+| Test hygiene | 6fe65429 | `FastCacheEntryExpirationSpec.kt` → `FastCacheExpireAfterAccessSpec.kt`, `FastCacheMaxEntriesEvictionSpec.kt` → `FastCacheMaxEntriesSpec.kt`; randomized `totalSize` test enabled. It failed on JVM and native (not JS) only because it checked 50 ms after the puts against a 50 ms loop period; with 200 ms it passed 20/20 on each of JVM, JS, native | – | eviction keeps the bytes → the randomized test (and 3 others) |
+
+Evidence (XML, after the last commit): cache jvm **155** / js **135** / native **134**, 0 failures,
+0 skipped; the two consumers slumber **1249** and vault **287**, 0 failures. Log jvm 69 (ULTRA-00149).
+
+Seen, not caused here (later traced to tests letting their cache be collected, see round 2 outcome): two timing-tight native tests (`FastCacheRefreshAfterWriteSpec` "only one refresh
+per key at a time", `FastCacheOnEvictionSpec` "onEviction receives the correct value") each failed once
+under a parallel JVM + JS + native build at load ~5, and passed 3/3 alone.
+
+### Review round 1 — 2026-11-13
+
+Every finding was first written as a test and run on the code as it stood; CONFIRMED means that test
+was red. Each commit holds the test and the fix.
+
+| Finding | Verdict | Commit | Fix | Mutation → red |
+|---|---|---|---|---|
+| A: cancelled `getOrPutAsync` joiner spins | CONFIRMED (thread still spinning after 5 s) | f2646742 | wait with `join()`: no rethrow of the owner's failure, throws on the caller's own cancellation | back to `runCatching { await() }` → joiner test; bare `await()` → "owner's cancellation is not the joiner's" |
+| B: `lastByKey` hides a put behind a read, a remove behind a miss | CONFIRMED, all of B1 (refresh stuck after a read in the put's batch), B2 (`expireAfterWrite` never applies after put+get), B3 (ghost after clear/remove + miss: maxEntries evicted live entries, maxMemoryUsage kept bytes) | 7309fbd2 | write-based behaviours read an internal `lastWriteByKey` (last non-read action); every behaviour treats a miss as the key being gone. `removeSilently` stays boolean: every disappearance records a `RemoveAction`, and only a later miss could hide it | `lastByKey` back in expireAfterWrite → B2; in refresh → B1; miss arm dropped in maxEntries / maxMemoryUsage / refresh → its test. **Not pinned:** the miss arm of the two expiry behaviours (a ghost there only costs a futile eviction attempt per pass, invisible from outside) |
+| C: in-flight refresh overwrites a newer value; a failed refresh releases a newer claim | CONFIRMED both ("refreshed from old" replaced "fresh"; a third loader started) | 4efb3d9b | the refresh captures the value it starts from and replaces only that (identity compare-and-set); claims carry a token, a refresh releases only its own | identity check dropped → overwrite test; release ignoring the token → claim test; the F4 spec still catches unguarded claims (39998/40000) |
+| Loader throwing an `Error` keeps its key claimed | CONFIRMED (jvmTest) | 54806344 | release in `finally` unless the result reached the cache | no release in `finally` → 3 tests; the old two-catch shape → exactly the Error test |
+| Throwing eviction listener during hard-TTL eviction leaves claimed keys unloaded | CONFIRMED (hand-driven) | 86899928 | launches before evictions | the original order is the experiment that was red |
+| `NullableCache.clear()` KDoc wrong about who gets the result | text | 78be3928 | only the caller that ran the provider; waiting callers re-run | – |
+| `hardTtl` message prints raw durations | superseded | – | the throw itself is gone (maintainer decision 1) | – |
+| `lastActions` TODO says "or the loop dies" | text | 4533b12f | only a cancelled scope stops the loop | – |
+| Key and exception message printed to stdout | CONFIRMED (stdout captured, jvmTest) | 28c77b2a | the exception's class only, at both sites | key back in the refresh line → refresh test; `$e` back in the behaviour line → behaviour test |
+| Timing-dependent tests | test only | cb8cc919 | positive conditions polled with a deadline; the F4 spec polls per-key counts; "only one refresh" checks inside a 250 ms window that cannot hold a legitimate second load (300 ms loading + 200 ms TTL) | unguarded claims → F4 spec; no deduplication → "only one refresh" |
+| `onEviction` / `evictionCount` must not fire on `clear()` | NOT CONFIRMED as a defect: green on current code; test kept | 0145a81b | – | `clear()` calling the listeners → red |
+| `FastCache.getOrPut` KDoc: producer across remove/clear | text | 1d5d5b9d | – | – |
+
+Maintainer decisions applied afterwards:
+- **1f19eaad TTL fallbacks, no throws.** Zero or negative TTL (`expireAfterAccess`, `expireAfterWrite`,
+  `hardTtl`): "do not keep", expires at the next pass. Below 1 ms: 1 ms. `Duration.INFINITE`: never
+  expires. Zero or negative `refreshAfter`: also "do not keep" - no refresh, expiry at the next pass;
+  chosen over the old "reload every key on every pass", which hammers the loader's source and keeps
+  nothing a TTL of 0 asks to keep. `hardTtl` not above `refreshAfter`: expires at `hardTtl`, never
+  refreshed. Tests: 5 fallback tests; mutants (non-positive as "never", the zero-refresh mapping
+  dropped, INFINITE capped) each red.
+- **028ac18b estimator skips only `this$N`.** Probed field names: inner class `this$0` (synthetic);
+  class delegation `$$delegate_0` (synthetic); suspend lambda `$big` (synthetic, beside `label`,
+  `arity`, `_context`, `intercepted`, `completion` from its base classes); anonymous object `$big`
+  (synthetic); a plain lambda compiles to a hidden class with `arg$1` (not synthetic). Tests: the
+  anonymous-object test flipped (the 80 KB array is charged), a delegating wrapper is charged its
+  delegate; mutants "skip every synthetic" and "skip none" each red.
+
+Probe: `ObjectSizeEstimatorPlatform` is a public `expect object`, so `getFieldsOf` is public API,
+reachable from outside the module.
+
+Evidence after the last commit: cache jvm **173** / js **147** / native **146**, consumers slumber **1249** / vault **287**, log jvm **69**; 0 failures, 0 skipped.
+
+### Review round 2 — 2026-11-13
+
+- Implementation & code style: **CLEAN**.
+- Domain expert: **CLEAN**.
+- Security: **NOT CLEAN**, one MAJOR (M1). Two rounds without a clean one: verified with a test only,
+  not fixed; the maintainer decides how to go on.
+
+**M1 — a write TTL and the refresh hard TTL never apply to a key read in every pass: CONFIRMED.**
+`removeSilently` declines on any pending action, reads included (`FastCache.kt` `lastActionsKeys`,
+reset at the loop's swap), so a read between the swap and the eviction spares the key, and the retry
+next pass meets the same condition. Non-asserting probe (JVM, default loop delay, 100 ms TTL, 5 runs
+each, survival measured up to 10 s; "red" = still cached after 2 s):
+
+| Variant | Red | Survived (ms) |
+|---|---|---|
+| `expireAfterWrite`, 1 thread spinning `get("a")` | 0/5 | 172, 1631, 623, 281, 522 (all past the TTL) |
+| `expireAfterWrite`, 4 spinning threads | 1/5 | 8114, 753, 1023, 755, 1418 |
+| hard TTL (`refreshAfterWrite(10 s, hardTtl = 100 ms)`), 1 thread | 4/5 | 3982, 1677, 8291, >10000, >10000 |
+| hard TTL, 4 threads | 4/5 | 6883, 182, 2500, 2127, 4472 |
+| `expireAfterWrite`, one thread flooding misses + one reader of "a" with `yield()` | 5/5 | >10000 ×5 |
+
+The miss flood widens the window: a large batch takes long to process, and a read of the hot key
+always lands in it. Pinned as a known defect (842d2c57, `FastCacheHotKeyKnownDefectSpec`, jvmTest,
+the flood shape, both the write TTL and the hard TTL): asserts the key survives 2 s; 5/5 per test as
+committed; turns red when `removeSilently` stops declining (checked). JS cannot open the window
+(`process()` has no suspension point); native can, untested.
+
+Fix as the reviewer proposes (a second set of keys with a pending put or remove beside
+`lastActionsKeys`; `ExpireAfterWriteBehaviour.evict` and the hard-TTL eviction decline only on that;
+access-ordered behaviours keep today's rule): about 15-20 lines in `FastCache.kt` (the set, its swap,
+`addAction`, a parameter on `removeSilently`, the two callers), plus tests. It must flip two tests
+that bless the defect today: `FastCacheEvictionDeclineSpec` "expireAfterWrite: a declined eviction is
+retried once the pending read drains" and "refreshAfterWrite: a declined hard-TTL eviction is
+retried, not forgotten" (both assert that a pending READ spares the entry), and the known-defect spec.
+Safer shape, same size: one map in place of `lastActionsKeys`, key to "a write is pending", swapped
+once, so the two views cannot drift apart. Only a pending put needs sparing (a pending remove means
+the entry is gone already). Once the per-key write counter (decision for the A-B-A finding) exists,
+"evict only if the write counter is still the one stamped" would replace the doorman for write-based
+evictions altogether; larger, since `PutAction` is public and carries no counter.
+
+MINORs, open:
+- Unlocked redundant write at `FastCache.kt:685`.
+- KDoc "only one refresh per key" at `FastCache.kt:592`.
+- Three tests that no longer guard the tracking drop: `FastCacheBatchOrderSpec.kt:87`,
+  `FastCacheClearSpec.kt:92`, `CacheKnownDefectsSpec.kt:25`.
+- Sleeping tests: `FastCacheRefreshAfterWriteSpec.kt:27-30, 45-53, 96-100, 119-123`; the timing ladder
+  `FastCacheRefreshRaceSpec.kt:52-84`.
+- Identity compare is open to A-B-A (all three reviewers). Maintainer decision: a per-key write counter.
+- `NullableCache.put` during a running `getOrPutAsync` is overwritten by the older result
+  (`NullableCache.kt:68-72, 119-125`).
+- A `getOrPutAsync` provider reaching its own key hangs; the KDoc at `NullableCache.kt:16-18` is wrong
+  for cycles.
+- `catch (e: Exception)` at `FastCache.kt:704, 772` lets other `Throwable`s (e.g. `VaultException`)
+  through.
+- A key in an exception message: `ValueSortedMap.kt:53`.
+- An estimator throwing part-way through a batch leaves ghosts (`FastCache.kt:437-439, 478-485`).
+- `loopDelay` has no fallback (`FastCache.kt:784`).
+- The builder KDoc lacks the TTL fallbacks.
+- One lost-race `getOrPut` counts as both a miss and a hit.
+
+### Round 2 outcome — maintainer decisions 2026-11-14, applied
+
+| Item | Decision | Commit | What changed | Evidence |
+|---|---|---|---|---|
+| M1 hot key outlives the write TTL and hard TTL | "yes fix it" | e0f2efb8, 75b707d4 | One map replaces `lastActionsKeys`: each pending key, and whether a put is among its actions. Write-based expiry (`expireAfterWrite`, the hard TTL) is spared only by a pending put; the access-ordered behaviours keep sparing any pending action | `FastCacheHotKeySpec` (the known-defect spec turned expectation) and the two flipped `FastCacheEvictionDeclineSpec` tests: red on the pre-fix code, green after; two new tests pin that a pending put still spares. Mutants: fix removed → the 2 hot-key and 2 pending-read tests red; a put never marked → the 2 pending-put tests red; access-ordered rule narrowed to puts → the maxMemory/maxEntries decline tests red. The hot-key spec got a scope per cache and a fixed pool of missing keys (e75d59ed) |
+| A-B-A in the refresh identity compare | "only document it" if nothing breaks | a2f55876 | KDoc only | See below |
+| Background refresh counts as an access | ULTRA-00321 | a2f55876 | KDoc names it: a refresh result is recorded like a put, so it counts as an access for `expireAfterAccess` and the LRU of `maxEntries`/`maxMemoryUsage`, and as a put in the statistics | behaviour unchanged |
+| Dropped refresh result is silent | document | a2f55876 | KDoc: a result is dropped without notice when the entry was written, removed or evicted while the loader ran | – |
+
+**A-B-A, worst outcome:** when the application writes back the very instance a running refresh started
+from (put Y then put the original X again, or remove then put X), the refresh's compare-by-identity
+still matches and it replaces X with the loaded value. A reader then gets the loaded value instead of X
+until the next write or refresh (at most one refresh TTL) - i.e. what the refresh would have installed
+had the write not happened, and never a miss. No documented guarantee
+breaks: the docs promise no miss, one refresh at a time and retry on failure, and say nothing about an
+application write beating a running refresh. So KDoc only, no per-key write counter.
+
+MINORs from round 2:
+
+| MINOR | Verdict | Commit |
+|---|---|---|
+| Unlocked redundant claim write (`FastCache.kt:685`) | CONFIRMED; it was mutation text from the round-1 F4 re-check that survived the restore and went into 4efb3d9b; an unlocked write beside locked releases, so it partly re-opened F4. Deleted | f190a0b4 |
+| KDoc "only one refresh per key at a time" (592) | CONFIRMED wrong: a write frees the key, so a later refresh can run beside the older one. Corrected. **The same sentence is in the public docs** (`docs-site/src/pages/ultra/cache/refresh.astro` "Deduplication", `docs-site/src/data/llms/cache.md:123`), outside this track: needs a DOCS follow-up | a2f55876 |
+| Three tests no longer guard the tracking drop | CONFIRMED: with the refresh never dropping a write time, all three stayed green (a refresh skips a key that is not cached, so "the loader is never called" held anyway). Rewritten to drive the refresh by hand with what the cache recorded (`ActionTap`), then put the key back unseen: refresh drops nothing → all three red; ignores only misses → the miss test red; `clear()` records no removals → the clear test red; an eviction records no removal → Q1a red. A first version fed everything as one batch and stayed green under the mutant (the miss superseded the put); now batch by batch | e0569dc2 |
+| Builder KDoc lacks the TTL fallbacks | CONFIRMED. Added to `expireAfterAccess`, `expireAfterWrite`, `refreshAfterWrite` | 636a4db5 |
+| (found here) Tests let their cache be collected while waiting for its loop | The loop holds its cache only weakly and stops once it is collected (by design). Twenty tests stopped using the cache after the put and then waited for the loop: three stalls in about 15 suite runs this round ("only one refresh per key", "onEviction receives the correct value", the loader-Error test), and negative tests ("no load", "no eviction") could pass vacuously. Shown with a latency probe: the dispatcher never stalled (max 3 ms) while the onEviction test failed 5/5; with the cache kept referenced, 3/3 green. `keepReachable(cache)` after the last wait in every such test; 3/3 green under the probe. The two "native timing flakes" recorded in the triage round are these same tests, so most likely the same cause | 04154daa |
+
+Left for the maintainer, one-line verdicts:
+- `NullableCache.put` during a running `getOrPutAsync`: **real defect**, a lost write. The provider loads
+  the old value, the application puts the new one meanwhile, the provider's result overwrites it - and
+  `NullableCache` never evicts, so the old value stays for the instance's lifetime.
+- A provider reaching its own key: **real defect**, a permanent hang. `getOrPutAsync(a)` whose provider
+  resolves `b` whose provider resolves `a` joins `a`'s own run and waits on itself. The KDoc ("may safely
+  resolve other keys") is wrong for cycles, and vault reference resolution can meet cycles.
+- `catch (e: Exception)` at `FastCache.kt:704, 772`: **real defect at 772**: a behaviour or eviction
+  listener throwing a non-`Exception` `Throwable` (an `Error`, or `VaultException`, which extends
+  `Throwable` directly) ends the loop for good, as A2 did for exceptions. At 704 a quirk: the claim is
+  released (54806344), but the throwable reaches the scope's handler (on native that ends the process).
+- The key in the message of `ValueSortedMap.kt:53`: **quirk, unreachable today**: only a broken
+  `compareTo` raises it, and every sort key is a `Long`; the loop prints the class only.
+- Estimator throwing part-way through a batch: **real defect**, budget drift: the rest of that batch is
+  never applied, so its puts go uncounted and its removals leave ghost bytes (an estimate that throws,
+  e.g. a JS accessor, C13).
+- `loopDelay` without a fallback: **real defect for odd values**: zero or negative makes `delay` return
+  at once, so the loop never suspends and holds a thread busy for good. A fallback such as "at least
+  1 ms" would match the TTL decision.
+- A lost-race `getOrPut` counts a miss and a hit: **quirk**, statistics only: one call adds 2 to
+  `requestCount`.
+- Sleeping tests (`FastCacheRefreshAfterWriteSpec.kt:27-30, 45-53, 96-100, 119-123`,
+  `FastCacheRefreshRaceSpec.kt:52-84`): **quirk**, flake risk under load, no product defect.
+
+Evidence after the last code commit: cache jvm **177** / js **149** / native **148**, consumers slumber **1249** / vault **287**; 0 failures, 0 skipped.
+
+### Review round 3 — 2026-11-14 (top level, blind then reconciled)
+
+- Implementation & code style: **CLEAN** (6 MINOR).
+- Security: **CLEAN** (6 MINOR; "M1 is closed, including the variants I tried").
+- Domain expert: **NOT CLEAN**, 1 MAJOR, 4 MINOR.
+
+The maintainer (2026-11-14): "Yes fix the real defects in cache." Every scenario was written as a test
+and run on the code as it stood first; "CONFIRMED" means that test was red.
+
+| Finding | Outcome | Commit | Evidence |
+|---|---|---|---|
+| MAJOR: `maxEntries`/`maxMemoryUsage` do not bind for keys read in every pass | CONFIRMED (JVM: two hot keys with `maxEntries(1)` stay at 2, 5/5; a pool of 1 000 keys read through `getOrPut` with `maxEntries(10)` grows to 1 000, 5/5; JS cannot hit it: nothing is pending while `process()` runs). **Settled by the maintainer: soft bounds, documented** ("let us not overcomplicate things. Since this cache is called FastCache it is ok, when it is not 100% accurate. So documenting as soft bounds might be already enough here.") | 2dd51e25, bf8ce249 | `FastCacheSoftBoundSpec` pins the documented behaviour (1 s per test, 10/10 stable each); KDoc on the builder methods and both behaviours; the "for one round" comments corrected |
+| B1 `NullableCache.put` during a running `getOrPutAsync` overwritten | CONFIRMED, fixed: the put wins; every caller, the provider's own included, gets the cached value (as `FastCache.getOrPut`) | 15a84c98 | mutant "provider always stores" → red |
+| B2 a provider reaching its own key hangs | CONFIRMED (a → a and a → b → a hung until the timeout), fixed: the chain of keys being resolved travels in the coroutine context; reaching a key further up the own chain fails with `IllegalStateException`, the claim is released. **Not covered, in the KDoc:** a cycle across two concurrent callers (one resolving a then b, the other b then a) still deadlocks; detecting that needs a wait-for graph across callers, not small | b288d043 | mutants: check disabled, chain not propagated, check dropped from the join path → each red. The check on the owner path is reachable only after `clear()` mid-run, not pinned |
+| B3 non-`Exception` throwables and `CancellationException` from user code | CONFIRMED (a behaviour throwing `CancellationException` or a plain `Throwable` ended the loop; `maxEntries(1)` + a listener throwing `CancellationException` stopped evicting; a loader's plain `Throwable` reached the scope's handler), fixed: the loop catches every `Throwable` and rethrows a `CancellationException` only when its own job is cancelled; the refresh catches every `Throwable` (a loader's `CancellationException` still ends that refresh quietly, the key is freed). **Errors:** swallowed too, by choice - common code has no `VirtualMachineError` to single out, a `StackOverflowError` from estimating a deep value is exactly what must not end the loop, a dead loop turns any failure into unbounded growth, and an `OutOfMemoryError` resurfaces elsewhere anyway | 42ae84ed | 4 mutants, each red on its tests |
+| B4 a throwing listener: one eviction per behaviour and pass, listeners behind it skipped | CONFIRMED (hand-driven: 100 expired keys, 99 left), fixed: each listener in its own try | 42ae84ed | the old pin "a throwing listener starves the ones behind it" flipped; mutant → red |
+| B5 estimator throwing mid-batch | CONFIRMED, fixed: a failing estimate keeps the entry at its previous size (0 when new), the batch goes on | 78c8574c | mutant → red |
+| B6 `loopDelay` of 0 or below | CONFIRMED (7.2 million passes in 300 ms), fixed: runs as 1 ms, named in the KDoc | 0543b71c | mutant → red |
+| C an entry gone earlier in the pass counted as spared, a live one evicted instead | CONFIRMED, fixed: `removeSilently` reports REMOVED / SPARED / ABSENT | d762d242 | mutant → red |
+| C a refresh started from a value written after the batch | CONFIRMED, fixed: a key with a put pending is skipped, its claim freed | d762d242 | mutant → red |
+| C surviving mutants (sticky put mark; `PENDING_PUT` in `expireAfterAccess`) | both now killed: a read after the put in the pending-put tests; a new `expireAfterAccess` decline test | d762d242 | both mutants → red |
+| C sleep-timed decline tests | observe the drain with `ActionTap` | d762d242 | – |
+| C `addAction` two lookups | one for a key already pending | d762d242 | – |
+| C decline-spec header wrong since M1 | rewritten | d762d242 | – |
+| C hung loaders in the race spec; two unneeded `keepReachable` | scope per cache, cancelled; both calls gone | dc2d90ff | – |
+| C KDoc: TTL served up to ttl + two loop periods; a failed refresh serves stale and retries every pass; A-B-A for equal-valued instances; the estimator comment | written; the estimator comment now gives measured cost | 447d80e6 | – |
+| D estimator cost | measured (JVM): a list of 1k strings 0.22 ms, 10k 17 ms, 30k 138 ms, 100k 1.54 s - quadratic; a response-shaped value of about 21k objects 70 ms. funktor's response cache (`maxMemoryUsage` only, slumber keys = the data-class instances, values = their serialized maps, one entry per nested object): every pass re-estimates key and value of each entry read or written in it, so a response of about 20k objects costs its root entry ~140 ms per pass plus its children; a few such responses per 50 ms keep the loop thread busy back to back | – | plan below, not built |
+| D `ValueSortedMap` re-stamp | measured: re-stamping every tracked key in one pass, 1k keys 0.2 ms, 10k keys 5.8 ms (quadratic in array shifts, small constant). Report only | – | – |
+| D TTLs on the wall clock | confirmed by reading (`Kronos.systemUtc` in all five behaviours). **Maintainer: "ok switch to a monotonic clock."** Done: `TimeSource.Monotonic` by default, seam `Builder.timeSource(...)` (new public method; the constructor that takes it is internal, the public one keeps its old parameters). Wall clock no longer used anywhere in the module; nothing stores or shows a wall-clock time | 8c3b3797 | `FastCacheTimeSourceSpec`: with a still `TestTimeSource`, 300 ms of real time expire nothing (they did on the wall clock: red before); mutant "ignore the given source" → red |
+
+Stayed CLEAN in round 3 (per the reviewers): implementation and security; M1 and its variants.
+
+**Estimator plan (maintainer decision 3; not built, waiting for confirmation):** see the round-3
+report; in short: an identity set where the platform has one (JVM `IdentityHashMap`, JS `Set`, native
+an identity-hash wrapper) instead of the linear scan; per collection walk the first 64 elements and
+extrapolate the rest by their average; a cap of visited objects per estimate (default 10 000) beyond
+which objects are charged a flat header plus pointer without descent; an iterative walk with an
+explicit stack, so a deep graph never overflows; per-field/per-property failures charged flat, so an
+estimate never throws; optionally size on writes only (reads reuse the stored size, F15). KDoc: what is
+counted, limits per platform, cost, and how to plug in an own estimator.
+
+Evidence after the last code commit: cache jvm **196** / js **165** / native **164**, consumers slumber **1249** / vault **287**; 0 failures, 0 skipped.
+
+### Review round 4 — 2026-11-14 (delta, top level)
+
+- Implementation & code style: **CLEAN** (7 MINOR).
+- Domain + security: **CLEAN** (7 MINOR). All fixes in the code as recorded; M1 intact.
+
+The MINOR batch, each written as a test and run on the code as it stood first:
+
+| MINOR | Outcome | Commit | Mutation → red |
+|---|---|---|---|
+| A size bound evicted a live entry in place of one already gone that was not first in LRU order | CONFIRMED (hand-driven, both bounds: {C} instead of {B, C}), fixed: `maxEntries` takes its overshoot from `min(tracked, cache.size)`, an absent key only drops tracking; `maxMemoryUsage`, when over budget, first releases the bytes of tracked entries already gone (one presence check each, only while over budget) | 4060eae0 | overshoot from the tracked count → both maxEntries tests; no release of gone entries → the memory test |
+| Refresh claims never launched when a throwable cuts `process()` short | CONFIRMED (twin keys whose `equals()` throws once in the lookup: neither key refreshed again), fixed: the launch loop releases unhandled claims in `finally`. The test's first version lost an add in a plain list from two threads (2 of 6 runs red); it uses a lock-guarded set. It then failed on JS and native, where a map may call `equals()` on the cached key: the twins share one trap since | 6b2c666c, c9036516 | no release in `finally` → red |
+| One printed line per failing item, one inside the cache lock | CONFIRMED (a listener failing for 1 000 evictions printed 1 000 lines under the lock), fixed: failures counted per kind and exception class where they happen, printed by the loop once per kind and pass, outside every lock | e0b1ceda | the listener printing per failure → red |
+| Dead `api` dependency on `ultra:datetime` | CONFIRMED unused (no source set references it), removed. Repo-wide compile sweep (JVM, JS, native main and test compiles; 88 Kotlin compile tasks re-run, among them slumber, vault, funktor, karango, monko): **zero errors, no module relied on it transitively** | 53d007b6 | – |
+| Tests that do not pin what they claim | soft bound pool test counts producer runs (survived a hard-bound mutant before); two-key test waits for both readers; memory test adds an entry with a size; NullableCache two-cache test; time-source test moves time inside `eventually`; the launch-order race test **deleted** (listeners cannot throw out of `process()` any more; cut-short passes are pinned by the `equals()` test) | 06c017ad | hard bound → both soft-bound tests; `currentSize` → 0 → the memory test; cycle check ignoring the cache → the two-cache test |
+| KDoc: suspended time on the monotonic clock, `timeSource` as a test hook (like Caffeine's ticker), `withContext` in `getOrPutAsync`, the cycle check's limits | written | 9cee040b | – |
+
+Left open for the maintainer (estimate only, no change):
+- A failed estimate charges a NEW entry 0 bytes (`FastCache.kt`, `MaxMemoryUsageBehaviour.handle`): a
+  flat default charge, or evicting it - tied to the estimator plan (the plan proposes a configurable
+  flat charge, never 0).
+- The false-positive edge of the cycle check (a coroutine inheriting the context outlives the
+  provider): a fix would let each chain link hold its claim's deferred and ignore completed links;
+  about 10 lines.
+- `Eviction.REMOVED` vs `ABSENT` could be a Boolean for some callers: left as it is.
+
+Evidence after the last code commit: cache jvm **200** / js **168** / native **167**, consumers slumber **1249** / vault **287**; 0 failures, 0 skipped. Items 2-6 were first run on the JVM only; the final run caught the item-2 test failing on JS and native (a JVM-only HashMap detail in the test), fixed in the test.
+
+## Changelog text
+
+For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
+`FastCache.Builder.timeSource(TimeSource)`. Dependency change: `ultra:cache` no longer exports
+`ultra:datetime`. The behaviour changes below have **no compile signal**, so each is listed.
+
+```
+### ultra:cache
+- Dependency: ultra:cache no longer depends on ultra:datetime. A project that used datetime only
+  through cache must now declare it itself.
+- FastCache TTLs run on a monotonic clock (TimeSource.Monotonic) instead of the wall clock: a step of
+  the system clock no longer expires entries early or keeps them past their TTL. Time the machine
+  spends suspended may not count, so an entry can outlive its TTL in wall-clock terms by the length
+  of a pause (as in Caffeine and Guava). New, for tests: FastCache.Builder.timeSource(TimeSource).
+- FastCache TTLs never throw; odd values fall back. A zero or negative TTL means "do not keep": the
+  entry expires at the next processing pass. A positive TTL below 1 ms counts as 1 ms.
+  Duration.INFINITE never expires. An entry can be served up to its TTL plus two loop periods.
+- refreshAfterWrite with a zero or negative refresh TTL no longer reloads every key on every pass:
+  entries expire at the next pass and are never refreshed. A hardTtl not above the refresh TTL
+  expires entries at hardTtl, unrefreshed (as before).
+- A loop delay of zero or less runs as 1 ms instead of a loop that never suspends.
+- maxEntries and maxMemoryUsage are soft bounds (documented): an entry read or written in every
+  maintenance pass is not evicted by them, so under such load the cache holds up to the number of
+  distinct keys touched within one pass.
+- expireAfterWrite and the refresh hard TTL apply to a key read in every pass: only a pending write
+  spares an entry from write-based expiry.
+- A read or a miss in the same loop window no longer hides a put or a remove. A size bound counts
+  what the cache really holds: an entry already gone no longer makes it evict a live one in its place.
+- FastCache.clear() tells the expiry, size and refresh behaviours and the statistics. It is not an
+  eviction: onEviction handlers and evictionCount do not fire.
+- No throwable from a behaviour, eviction listener or refresh loader ends the processing loop or
+  reaches the scope's handler (Errors included); a CancellationException thrown by user code is
+  treated as a failure. Each eviction listener runs on its own: a throwing one no longer skips the
+  others. A size estimator throwing for one entry no longer leaves the memory budget off: that
+  entry counts as its previous size, 0 when new.
+- Failures are counted and printed once per kind and processing pass, with the count and the
+  exception's class only (no key, no message), outside the cache's lock.
+- refreshAfterWrite: a refresh replaces only the value it started from (by identity; for booleans,
+  enums, small numbers, interned strings and JS primitives any equal value), skips a key written
+  after the pass decided to refresh it, drops a refused result without notice, frees its key on any
+  failure (also when a pass is cut short before launching it), and keeps serving the stale value
+  while it retries every pass. A refresh's result counts as an access and as a put (open:
+  ULTRA-00321).
+- StatisticsBehaviour.snapshot() and MaxMemoryUsageBehaviour.totalSize are safe to read from any
+  thread.
+- NullableCache: a put while getOrPutAsync runs wins over the provider's result; a provider reaching
+  a key its own call chain is resolving fails with IllegalStateException instead of hanging (not
+  detected: a cycle across two concurrent callers, or one reached through a coroutine that does not
+  inherit the provider's context; a coroutine inheriting it that outlives the provider can get a
+  false IllegalStateException); getOrPutAsync runs the provider in a child scope, so coroutines it
+  launches into its own context are awaited before caching, an already cancelled caller does not
+  start it, and a value computed while the caller was cancelled is discarded; clear() is no longer
+  undone by a running provider; a cancelled caller waiting on another caller's provider no longer
+  spins.
+- JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
+  outer instance. KDoc: the estimator's cost is quadratic in the objects of a value (measured).
+- KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null.
+```
+
 ## Follow-ups
+- [ ] ULTRA-00326 (cache docs after ULTRA-00159): the public docs say "only one refresh per key at a
+      time", which is wrong (a write frees the key, a later refresh can run beside the older one):
+      `docs-site/src/pages/ultra/cache/refresh.astro:74` and `docs-site/src/data/llms/cache.md:123`.
+      Also to document there: soft size bounds; TTLs on a monotonic clock and `Builder.timeSource`;
+      the TTL fallbacks (zero/negative, below 1 ms, `INFINITE`) and the loop-delay fallback; an entry
+      served up to ttl plus two loop periods; refresh semantics (identity compare, dropped results,
+      retry every pass, refresh counts as an access - ULTRA-00321); `clear()` is not an eviction;
+      `NullableCache` cycles; the estimator's limits and cost, and how to plug in an own estimator.
+- [ ] ULTRA-00321: should a background refresh count as an access? (maintainer: "I guess it should
+      not count as access").
+- [ ] Estimator: the plan in round 3 waits for the maintainer's confirmation.
 - [ ] `VisitedSet` is now O(n²) by identity scan. Correct, but an identity-keyed set
       (`IdentityHashMap` / JS `Set` / native fallback) needs an expect/actual — deferred with the
       estimator design question.
-- [ ] Deferred mechanical, because they touch code the design fixes will rewrite: statistics/`totalSize`
+- [x] Deferred mechanical, because they touch code the design fixes will rewrite: statistics/`totalSize`
       memory visibility (F9), `getOrPut`'s missing `ReadAction` (F13), JVM `Class -> Field[]`
-      memoization (C9), the blanket `catch (_: Throwable)` in JVM `getFieldsOf` (C6).
-- [ ] Test-suite hygiene: two filename/class mismatches, and re-enable
-      `FastCacheMaxMemoryUsageSpec.kt:188` once `totalSize` is correct.
+      memoization (C9), the blanket `catch (_: Throwable)` in JVM `getFieldsOf` (C6). F9, C9, C6 in
+      the triage round 2026-11-13; F13 earlier.
+- [x] Test-suite hygiene: two filename/class mismatches, and re-enable
+      `FastCacheMaxMemoryUsageSpec.kt:188` once `totalSize` is correct. Triage round, 6fe65429.
 
 ## History
 
 - 2026-10-21: numbered ULTRA-00159 (was `docs/tasks/20260730-cache-scan-findings.md`).
+- 2026-11-13: triage round (ULTRA-00316 track B): the READY items implemented on `wt/cache-log`,
+  awaiting the coordinator's review gate.
+- 2026-11-13: review round 1 findings verified and fixed; maintainer decisions on TTL fallbacks and
+  the estimator's synthetic fields applied. Awaiting the next gate round.
+- 2026-11-13: review round 2: implementation and domain CLEAN, security NOT CLEAN (M1 CONFIRMED,
+  pinned as a known defect, not fixed). Two rounds without a clean one: waiting for the maintainer.
+- 2026-11-14: maintainer decisions applied: M1 fixed; A-B-A, refresh-as-access (ULTRA-00321) and the
+  silent dropped result documented; the small MINORs fixed. Awaiting round 3.
+- 2026-11-14: review round 3: implementation and security CLEAN, domain NOT CLEAN (soft bounds by the
+  maintainer's decision); real defects B1-B6 and the MINORs fixed; monotonic clock; estimator plan
+  waiting for confirmation.
+- 2026-11-14: review round 4 (delta): both passes CLEAN; the MINOR batch applied. The estimator plan
+  is approved (constant-time lookups); it starts after the merge.

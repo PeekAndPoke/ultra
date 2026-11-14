@@ -170,6 +170,26 @@ L2/L3 thread-safe list + per-appender `try/catch`) are separable from the design
 (L4 where filtering belongs, L8 changing the `append` signature, L9 per-class SLF4J loggers,
 L10 dispatcher choice, L11 Kontainer scoping) — the latter change a published API or its behaviour.
 
+## TRIAGE ROUND — 2026-11-13 (ULTRA-00316 track B, branch `wt/cache-log`)
+
+| Item | Commit | Change | Pinned by | Mutation → red |
+|---|---|---|---|---|
+| Stale TODO and KDoc "OFF not enforced" (`LogLevel.kt:15-17,19,37`) | 7510c194 | TODO(scan) removed; `OFF` and `ALL` described as the thresholds they are since ff874432: as a minimum level OFF drops every event, ALL drops none, and an event logged at either is dropped | `LogLevelFilteringSpec` (2 new): OFF as the manager's bound logs nothing; OFF as one appender's bound gives that appender nothing while another gets everything. An event logged AT OFF was already pinned | manager bound skipped for OFF → test 1; per-appender bound skipped for OFF → test 2 |
+
+Not done here, waiting for the maintainer: L1/L15 log forging (D5), L11/L12 kontainer scoping (D6).
+Evidence: log jvm **69**, 0 failures (the module has no JS tests).
+
+## Changelog text
+
+For the coordinator to put into `CHANGELOG.md`:
+
+```
+### ultra:log
+- KDoc: LogLevel.OFF and ALL are described as the enforced thresholds they are; two tests pin OFF as
+  a manager's and an appender's minimum level.
+```
+
 ## History
 
 - 2026-10-21: numbered ULTRA-00149 (was `docs/tasks/20260729-log-scan-findings.md`).
+- 2026-11-13: triage round (ULTRA-00316 track B): the stale `LogLevel` KDoc corrected on `wt/cache-log`.

@@ -1,10 +1,12 @@
 package io.peekandpoke.ultra.cache
 
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class FastCacheRefreshAfterWriteSpec : StringSpec() {
 
@@ -64,11 +66,18 @@ class FastCacheRefreshAfterWriteSpec : StringSpec() {
 
             cache.put("a", "initial")
 
-            // Wait long enough for multiple loop iterations past TTL
-            delay(500.milliseconds)
+            eventually(3.seconds) {
+                (loadCount >= 1) shouldBe true
+            }
 
-            // Only one load should have been triggered
+            // A second load cannot rightly start before the first has put its value (300 ms of
+            // loading) and that value has gone stale (200 ms). Without the deduplication it starts on
+            // the next loop pass, 50 ms later. This window covers several passes and neither of those.
+            delay(250.milliseconds)
+
             loadCount shouldBe 1
+
+            keepReachable(cache)
         }
 
         "hard ttl evicts even during refresh" {

@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.cache
 
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
@@ -22,29 +22,35 @@ class CacheKnownDefectsSpec : StringSpec() {
 
         // Q1 - eviction is not announced to other behaviours //////////////////////////////////////
 
-        "Q1a: a key evicted by maxEntries is not resurrected by refreshAfterWrite" {
-            val loadedKeys = mutableListOf<String>()
-
+        "Q1a: a key evicted by maxEntries is dropped by refreshAfterWrite" {
+            // The refresh behaviour is driven by hand with what the cache recorded. Asserting only that
+            // the loader is never called stopped guarding this: a refresh now skips a key that is not
+            // cached, so only a key that comes back shows a write time left behind.
+            val tap = ActionTap<String, String>()
             val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
                 maxEntries(1)
-                refreshAfterWrite(100.milliseconds) { key ->
-                    loadedKeys.add(key)
-                    "reloaded-$key"
-                }
+                addBehaviour(tap)
             }
+            var loads = 0
+            val refresh = FastCache.RefreshAfterWriteBehaviour<String, String>(100.milliseconds) { loads++; it }
 
             cache.put("a", "1")
-            delay(60.milliseconds)
+            eventually(2.seconds) {
+                tap.actions.any { it is FastCache.PutAction && it.key == "a" } shouldBe true
+            }
+            refresh.process(cache, FastCache.ActionUpdates(tap.takeNew()))
+
             cache.put("b", "2")
 
-            // several refresh windows
-            delay(600.milliseconds)
+            // "a" was evicted by maxEntries. When removeSilently recorded no action, the refresh
+            // behaviour kept its write time and reloaded it - then maxEntries evicted it again,
+            // forever, hammering the backing store.
+            eventually(2.seconds) {
+                tap.actions.any { it is FastCache.RemoveAction && it.key == "a" } shouldBe true
+            }
+            refresh.process(cache, FastCache.ActionUpdates(tap.takeNew()))
 
-            // "a" was evicted by maxEntries. removeSilently records no action, so the refresh
-            // behaviour still holds its write timestamp and reloads it - then maxEntries evicts
-            // again, forever, hammering the backing store.
-            loadedKeys shouldNotContain "a"
-            cache.keys shouldNotContain "a"
+            refreshStillTracksA(cache, refresh) { loads } shouldBe false
         }
 
         "Q1b: totalSize stops counting an entry another behaviour evicted" {

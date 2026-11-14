@@ -1,13 +1,14 @@
 // language: kotlin
 package io.peekandpoke.ultra.cache
 
-import io.kotest.assertions.fail
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests for FastCache memory-limit behaviour (MaxMemoryUsageBehaviour).
@@ -183,9 +184,49 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             delay(100.milliseconds)
 
             behaviour.totalSize shouldBe 0L
+
+            keepReachable(cache)
         }
 
-        "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test".config(enabled = false) {
+        "an estimator throwing for one entry leaves the rest of the batch applied" {
+            // Values are charged their own number; 13 cannot be estimated
+            class FailingEstimator : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = when (obj) {
+                    13 -> error("cannot estimate")
+                    is Int -> obj.toLong()
+                    else -> 0L
+                }
+            }
+
+            val cache = fastCache<String, Int>(loopDelay = 20.milliseconds) {}
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(1_000_000, FailingEstimator())
+
+            behaviour.process(
+                cache,
+                FastCache.ActionUpdates(
+                    listOf(FastCache.PutAction("a", 1), FastCache.PutAction("x", 13), FastCache.PutAction("b", 2))
+                ),
+            )
+
+            // "b" after the failing entry is counted; "x" is tracked at 0 bytes
+            behaviour.totalSize shouldBe 3L
+
+            // an entry that already has a size keeps it when its new value cannot be estimated
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", 13))))
+            behaviour.totalSize shouldBe 3L
+
+            behaviour.process(
+                cache,
+                FastCache.ActionUpdates(
+                    listOf(FastCache.RemoveAction("a"), FastCache.RemoveAction("x"), FastCache.RemoveAction("b"))
+                ),
+            )
+
+            // no ghost bytes left behind
+            behaviour.totalSize shouldBe 0L
+        }
+
+        "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test" {
             // We estimate the size as the int input value itself.
             class StubEstimator : ObjectSizeEstimator {
                 override fun estimate(obj: Any?): Long = (obj as? Int)?.toLong() ?: 0L
@@ -202,7 +243,7 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
 
             val rand = Random(42)
 
-            // 100 random rounds
+            // 10 random rounds
             repeat(10) {
                 // insert 100 numbers
                 repeat(100) {
@@ -210,13 +251,12 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
                     cache.put(num, num)
                 }
 
-                // Wait for the cache to settle down / inner loop to catch up
-                delay(50.milliseconds)
+                // Until the loop has caught up: a fixed wait of one 50 ms period checked before the
+                // loop had processed the batch.
+                eventually(3.seconds) {
+                    val expectedTotalMemoryUsage = (cache.keys.sum() + cache.values.sum()).toLong()
 
-                val expectedTotalMemoryUsage = (cache.keys.sum() + cache.values.sum()).toLong()
-
-                if (behaviour.totalSize != expectedTotalMemoryUsage) {
-                    fail("totalSize is ${behaviour.totalSize} but should be $expectedTotalMemoryUsage")
+                    behaviour.totalSize shouldBe expectedTotalMemoryUsage
                 }
             }
         }

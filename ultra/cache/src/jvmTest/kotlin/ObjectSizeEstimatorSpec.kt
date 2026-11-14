@@ -4,6 +4,20 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 
+private class EstimatorOuter(val payload: LongArray) {
+    inner class Inner(val x: Int)
+}
+
+private class EstimatorPoint(val x: Int, val y: Int)
+
+private interface EstimatorContent
+
+private class EstimatorPayload(val data: LongArray) : EstimatorContent
+
+private class EstimatorDoc(content: EstimatorContent) : EstimatorContent by content
+
+private class EstimatorText(val s: String)
+
 class ObjectSizeEstimatorSpec : StringSpec({
 
     val estimator = ObjectSizeEstimator()
@@ -85,6 +99,43 @@ class ObjectSizeEstimatorSpec : StringSpec({
         val cfg = ObjectSizeEstimatorImpl.EstimatorConfig()
         val expectedApprox = cfg.objectHeader + 3 * cfg.pointerSize + singleSize
         listSize shouldBe expectedApprox
+    }
+
+    "an inner class is not charged its outer instance" {
+        val cfg = ObjectSizeEstimatorImpl.EstimatorConfig()
+        val inner = EstimatorOuter(LongArray(10_000)).Inner(1)
+
+        // the synthetic this$0 is skipped, so only `x` is charged - not the outer's 80 KB payload
+        ObjectSizeEstimator().estimate(inner) shouldBe cfg.objectHeader + cfg.pointerSize + 4L
+    }
+
+    "an anonymous object is charged its captured locals" {
+        val captured = LongArray(10_000)
+        val anonymous = object {
+            val y = 1
+
+            @Suppress("unused")
+            fun size() = captured.size
+        }
+
+        // header, two references (y and the synthetic $captured), y, then the array
+        ObjectSizeEstimator().estimate(anonymous) shouldBe 16L + 2 * 8L + 4L + (24L + 10_000 * 8L)
+    }
+
+    "a class delegating by `by` is charged its delegate" {
+        val doc = EstimatorDoc(EstimatorPayload(LongArray(1_000)))
+
+        // the doc: header and one reference (the synthetic $$delegate_0); the payload: header,
+        // one reference, the array
+        ObjectSizeEstimator().estimate(doc) shouldBe (16L + 8L) + (16L + 8L + 24L + 1_000 * 8L)
+    }
+
+    "the field lookup is resolved per class" {
+        // Alternating two classes catches a memo that hands one class's fields to another
+        repeat(2) {
+            ObjectSizeEstimator().estimate(EstimatorPoint(1, 2)) shouldBe 16L + 2 * 8L + 4L + 4L
+            ObjectSizeEstimator().estimate(EstimatorText("ab")) shouldBe 16L + 8L + (16L + 8L + 24L + 2 * 2L)
+        }
     }
 
     "larger objects estimate larger" {
