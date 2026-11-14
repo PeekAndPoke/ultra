@@ -20,7 +20,7 @@ class ServiceProviderFactory(
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
         .plus(
             dynamics.overrides.map { (cls, provider) ->
-                val baseType = blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls)
+                val baseType = blueprint.overriddenServiceOf(cls)
 
                 // The override runs here, at create, once per kontainer; when it throws, no kontainer results
                 val instance = provider()
