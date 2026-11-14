@@ -69,9 +69,11 @@ Across the waves:
   - **Track B (cache and log), ULTRA-00159: STOPPED, waiting for the maintainer.** Round 2 CLEAN from
     implementation and domain, NOT CLEAN from security: a hot key outlives its write TTL and the hard TTL
     (CONFIRMED by probe, pinned as a known-defect spec on `wt/cache-log`). Two rounds without a clean one.
-  - **Track C (mutator): batch 1 MERGED** (`ae0a23cc`, ULTRA-00144 DONE). **ULTRA-00234: STOPPED, waiting for the
-    maintainer.** Round 2 CLEAN from implementation and domain, NOT CLEAN from security: a held child writes to
-    another row when an instance is in the list twice (ten claims CONFIRMED, pinned on `wt/mutator`).
+  - **Track C (mutator): DONE and closed.** Batch 1 MERGED (`ae0a23cc`, ULTRA-00144 DONE); ULTRA-00234 MERGED
+    (`d2a19b0c`), round 3 CLEAN on the top level, master green (JVM 241, JS 241). The maintainer (2026-11-14):
+    Mutator is an experiment with no user; open points go to the future mutator epic ULTRA-00322 (ULTRA-00318,
+    ULTRA-00320, ULTRA-00323 design for element tracking, ULTRA-00324, ULTRA-00325). No further mutator work in this
+    plan.
   - **On master:** ULTRA-00230 (Karma ports), and the MAJOR of ULTRA-00158 (database log lost stack traces) fixed
     (`c218d1a6`); its gate continues after the open log decisions.
 

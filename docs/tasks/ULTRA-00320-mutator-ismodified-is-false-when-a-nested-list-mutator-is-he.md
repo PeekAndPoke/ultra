@@ -16,10 +16,14 @@ Confirmed on JVM and JS; pinned as a known defect in `ListMutatorKnownDefectsSpe
 `wt/mutator`). The cause sits outside ULTRA-00234: the generated code (`mutator/ksp/src/main/kotlin/MutatorCodeBlocks.kt:134`)
 and `ObjectMutator`'s snapshot by identity.
 
-**Same root, traced by the round-3 implementation reviewer of ULTRA-00234, not yet confirmed by a test:** the
+**Same root, traced by the round-3 reviewers of ULTRA-00234 and CONFIRMED by a throwaway probe on JVM and JS
+(track C, 2026-11-14; the probe is not committed):** the
 generated getter builds a new list mutator on every access (`MutatorCodeBlocks.kt:132-134`), so row tracking does not
 reach across two accesses. `held = book.addresses[0]`; `book.addresses.removeAt(0)`; `held.street = "X"`: the write
-goes into the first mutator's own copy and the removed row comes back. Verify first, then fix with claim H.
+goes into the first mutator's own copy and the removed row comes back (`[aX, b]`). Also confirmed, in a hand-built list
+of mutable lists: `outer = listOf(mutableListOf(a)).mutator { mutator() }`; `inner = outer[0]`;
+`inner.modifyValue { it.apply { add(b) } }`; `outer.commit()`; `inner.modifyValue { it.apply { add(z) } }` leaves
+`outer.isModified()` false with the initial value `[[a, b, z]]`. So the defect is not limited to generated code.
 
 ## Decide before implementing
 

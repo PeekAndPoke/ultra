@@ -28,6 +28,10 @@ scenarios.
    read-only snapshot.
 7. **Not pinned by specs:** `fill`, `asReversed`, the small `reverse` (traced as correct by the domain reviewer).
 8. **`mutator/core/CLAUDE.md`** still names `subList()` as a known defect; the corrected lines need the maintainer's OK.
+9. **Docs lines that are false since ULTRA-00234** (no DOCS follow-up ticket was made; Mutator is not scheduled):
+   `docs-site/src/pages/ultra/mutator/collections.astro:49-50, 74-86` (the example at 74-86 shows a row after
+   `clear()`), `docs-site/src/data/llms/mutator.md:89`; to add: `subList` is a read-only snapshot, the dropped-write
+   rule, `Collections.rotate`. The full list is in ULTRA-00234's "DOCS follow-up" section.
 
 ## Acceptance
 

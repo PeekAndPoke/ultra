@@ -24,6 +24,17 @@
   every whole-second split of a day) and throws `IllegalArgumentException` before building a split with more slots,
   e.g. a whole day in 1 ms steps; pass a higher `maxSlots` if you need more. The added parameter changes the JVM
   signature: recompile callers (ULTRA-00215).
+- `mutator`, behaviour change (no compile signal): a write through a held element mutator of a `ListMutator` is
+  dropped silently when its row is gone (removed, cleared, the whole list replaced or reset) or holds another instance
+  than the mutator last saw (another element mutator, `set`, a reorder such as `sort`, `reverse` or `shuffle`, or a
+  move such as `add(j, removeAt(i))`, as in drag and drop). Before, the write followed the element by identity. The
+  element mutator keeps its value, so a later write that does land carries the dropped change. The check is identity:
+  for strings, numbers and booleans an equal value written by someone else may or may not count as the same instance,
+  depending on platform and interning (ULTRA-00234; design ticket ULTRA-00323).
+- `mutator`, behaviour change (no compile signal): the `ListMutator` list iterator throws `NoSuchElementException`
+  from `next()`/`previous()` past the ends (was `IndexOutOfBoundsException`), `IllegalStateException` from
+  `remove()`/`set()` without a preceding `next()`/`previous()`, and `IndexOutOfBoundsException` from
+  `listIterator(index)` outside `0..size` (was unchecked) (ULTRA-00234).
 
 ### Fixes
 
@@ -51,6 +62,23 @@
   logged; `createdAt` is the event's time now. Funktor's own error logs (internal errors, workers, background
   jobs, repairs, email hooks) hand the exception to the logger: the message is one line, the trace is in the
   entry's `stackTrace`.
+- `mutator`: `ListMutator.subList()` no longer throws, and so `slice(IntRange)` works. It returns a read-only snapshot
+  of the element mutators in the range: changing an element through it updates the list and notifies its observers;
+  adding, removing or replacing elements in the snapshot throws `UnsupportedOperationException`. Unlike
+  `List.subList` it is not a view: later changes to the list do not show in it (ULTRA-00234).
+- `mutator`: an element mutator of a `ListMutator` (from `list[i]`, `forEach`, an iterator or `subList`) writes to its
+  own row, wherever later adds and removes move it. Before, it lost its second change, and with the same instance in
+  several rows it could write to another row. A write from inside a list observer through the same element mutator
+  now lands (ULTRA-00234).
+- `mutator`: the `ListMutator` list iterator's `remove()` and `set()` after `previous()` hit the element before the
+  one `previous()` returned, so `reverse()` on the JVM silently corrupted lists of 18 or more elements (ULTRA-00234).
+- `mutator`: after `set()` back to a value equal to the baseline, a list, set or map mutator's next in-place change
+  also changed the baseline: `isModified()` stayed false and `reset()` restored nothing (ULTRA-00234).
+- `mutator`, known limits, documented and not fixed (ULTRA-00322): `remove(element)`, `indexOf` and `contains` take
+  the first equal row; the value from `get()` is for reading, and a change made on it in place bypasses the row
+  tracking; row tracking belongs to one list-mutator instance, and a generated list property builds a new one on each
+  access (ULTRA-00320); the list iterator's own `remove()` and `set()` go by index after a structural change made
+  around a live iterator (ULTRA-00324).
 
 ## 0.118.0
 

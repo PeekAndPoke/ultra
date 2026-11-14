@@ -1,8 +1,6 @@
 # ULTRA-00234: ListMutator.subList() throws UnsupportedOperationException
 
-> **Status (2026-11-14): IN REVIEW.** implemented on `wt/mutator` (track C of ULTRA-00316) as a read-only snapshot;
-> round 2's claims fixed with row tokens (maintainer: "create followup ticket and fix the found issues, tighten the
-> contract"); the review gate is next
+> **Status (2026-11-14): DONE.** Merged d2a19b0c. Round 3 CLEAN; open points in ULTRA-00320, ULTRA-00323, ULTRA-00324, ULTRA-00325 (epic ULTRA-00322). No DOCS follow-up ticket: the false docs lines are point 9 of ULTRA-00325.
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -392,3 +390,4 @@ False or incomplete lines, to fix once this settles; not edited here:
   pinned, on `wt/mutator`.
 - 2026-11-14: review round 3 (level 3) CLEAN on all three charters; the MINOR batch applied and probed. Maintainer:
   last batch for the mutator; open points in ULTRA-00320, ULTRA-00323, ULTRA-00324, ULTRA-00325 (epic ULTRA-00322).
+- 2026-11-14: DONE. Merged d2a19b0c. Round 3 CLEAN; open points in ULTRA-00320, ULTRA-00323, ULTRA-00324, ULTRA-00325 (epic ULTRA-00322). No DOCS follow-up ticket: the false docs lines are point 9 of ULTRA-00325.
