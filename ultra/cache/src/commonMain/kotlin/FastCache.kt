@@ -588,7 +588,19 @@ class FastCache<K, V>(
      *
      * When an entry's write age exceeds [refreshAfter], the [loader] is called asynchronously
      * to compute a new value. The stale value continues to be served during the refresh.
-     * Only one refresh per key runs at a time.
+     * One refresh per key runs at a time, unless the key is written meanwhile: the write frees the
+     * key, so a later refresh can run beside the older one.
+     *
+     * A refresh replaces only the value it started from. If the entry was written, removed or evicted
+     * while the loader ran, the loaded value is dropped, without any notice. The comparison is by
+     * identity: when the application writes back the very instance the refresh started from, the
+     * refresh still replaces it, and readers get the loaded value until the next write or refresh -
+     * what the refresh would have installed without that write.
+     *
+     * The refresh's result is recorded like a put: it counts as an access for
+     * [ExpireAfterAccessBehaviour] and for the least-recently-used order of [MaxEntriesBehaviour] and
+     * [MaxMemoryUsageBehaviour], and as a put in [StatisticsBehaviour]. Whether a refresh should count
+     * as an access is open in ULTRA-00321.
      *
      * An optional [hardTtl] forces eviction when the write age exceeds it, even during refresh.
      *
