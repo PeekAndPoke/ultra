@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.IllegalTimeZoneException
+import kotlin.time.Duration.Companion.hours
 
 /** ULTRA-00317: ids not shaped like an IANA region id are refused in common code, before any platform lookup. */
 @Suppress("unused")
@@ -20,6 +21,9 @@ class ZoneIdCheckSpec : StringSpec({
         "MpLocalDate.atStartOfDay" to { tz -> MpLocalDate.of(2023, 11, 14).atStartOfDay(tz) },
         "MpInstant.plus in a zone" to { tz -> instant.plus(1, DateTimeUnit.DAY, tz) },
         "MpTimezone.kotlinx" to { tz -> tz.kotlinx },
+        "MpLocalDate.toRange(slot, zone)" to { tz ->
+            MpLocalDate.of(2023, 11, 14).toRange(MpLocalTimeSlot.of(MpLocalTime.of(10, 0), 1.hours), tz)
+        },
     )
 
     // id to the expected message

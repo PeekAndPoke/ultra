@@ -74,6 +74,8 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         // finite: its end is a clock time, 104 249 991 days later (10:00 + 2^53 - 1 ms, by hand)
         longest.to shouldBe MpLocalTime.of(18, 59, 0, 991)
         longest.endDayOffset shouldBe 104_249_991L
+        // the largest offset: the longest slot from 22:00 (by hand)
+        slot(22, 0, Duration.INFINITE).endDayOffset shouldBe 104_249_992L
         longest.crossesMidnight shouldBe true
     }
 
@@ -219,10 +221,10 @@ class MpLocalTimeSlotClockSpec : StringSpec({
     "splitWithGaps never throws and is free whatever the count: a whole day by 1 ms, the longest slot by 1 h" {
         MpLocalTimeSlot.completeDay.splitWithGaps(1.milliseconds).size shouldBe 86_400_000
 
-        val endless = slot(10, 0, Duration.INFINITE).splitWithGaps(1.hours)
+        val parts = slot(10, 0, Duration.INFINITE).splitWithGaps(1.hours)
 
-        endless.size shouldBe Int.MAX_VALUE // capped: a List cannot be larger
-        endless[Int.MAX_VALUE - 1] shouldBe slot(16, 0, 1.hours) // (10 + 2 147 483 646) mod 24 = 16
+        parts.size shouldBe Int.MAX_VALUE // capped: a List cannot be larger
+        parts[Int.MAX_VALUE - 1] shouldBe slot(16, 0, 1.hours) // (10 + 2 147 483 646) mod 24 = 16
     }
 
     "splitWithGaps on the longest slot: a finite count; an infinite gap or part is the longest length" {

@@ -5,3 +5,6 @@ package io.peekandpoke.ultra.datetime
  * has no such limit (JVM, native: only the date types' own range). JS: 8.64e15 ms, the range of `Date`.
  */
 expect val zoneEngineLimitMillis: Long?
+
+/** True on native: its zone engine stops a day inside each end of the date range (kotlinx-native's own limit). */
+expect val isNativePlatform: Boolean

@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -110,30 +111,69 @@ class MpLocalTimeSlotOnDateSpec : StringSpec({
         MpLocalDate.of(2024, 1, 15).toRange(far, MpTimezone.UTC).instants() shouldBe
                 (i("2024-01-15T10:00:00Z") to MpInstant.fromEpochMillis(8_701_705_312_800_000L))
 
-        // a region zone: JS stops at the end of its Date range, JVM and native resolve the end
+        // a region zone: JVM and native resolve the end; JS stops at the last local time its engine fully works with
         val range = MpLocalDate.of(2024, 1, 15).toRange(far, berlin)
         range.from.toInstant() shouldBe i("2024-01-15T09:00:00Z")
-        when (val limit = zoneEngineLimitMillis) {
+        when (zoneEngineLimitMillis) {
             null -> (range.to.toInstant() > MpInstant.fromEpochMillis(8_640_000_000_000_000L)) shouldBe true
-            else -> range.to.toInstant() shouldBe MpInstant.fromEpochMillis(limit)
+            else -> range.to.toLocalDateTime() shouldBe MpLocalDateTime.of(275760, 9, 11, 0, 0)
         }
     }
 
-    "a start the platform cannot represent throws, naming the date, the zone and the limit (JS only)" {
+    "JS, region zone: the fallback end is fully usable: wall clock, instant, day operations, formatting" {
+        // 8.64e15 ms minus two days (the engine's one-day probe window plus a zone offset), as a local time
+        val range = MpLocalDate.of(2024, 1, 15).toRange(slot(10, 0, Duration.INFINITE), berlin)
+
+        if (zoneEngineLimitMillis != null) {
+            range.to.toLocalDateTime() shouldBe MpLocalDateTime.of(275760, 9, 11, 0, 0)
+            // Berlin keeps summer time in September: +02:00, so 275760-09-10T22:00Z (by hand)
+            range.to.toInstant() shouldBe MpInstant.fromEpochMillis(8_639_999_820_000_000L)
+            range.to.atStartOfDay() shouldBe range.to
+            range.to.atStartOfHour() shouldBe range.to
+            range.to.atTime(MpLocalTime.of(12, 0)).toLocalDateTime() shouldBe MpLocalDateTime.of(275760, 9, 11, 12, 0)
+            range.formatDdMmmYyyyHhMm() shouldContain "275760"
+        }
+    }
+
+    "a start the platform cannot represent throws, naming the date, the zone and the exact accepted interval" {
         val date = MpLocalDate.of(300_000, 1, 1)
 
         when (zoneEngineLimitMillis) {
             null -> date.toRange(slot(10, 0, 1.hours), berlin).duration shouldBe 1.hours
             else -> {
-                val error = shouldThrow<IllegalArgumentException> { date.toRange(slot(10, 0, 1.hours), berlin) }
-
-                error.message shouldContain "300000-01-01"
-                error.message shouldContain "Europe/Berlin"
-                error.message shouldContain "275760-09-13"
+                shouldThrow<IllegalArgumentException> { date.toRange(slot(10, 0, 1.hours), berlin) }.message shouldBe
+                        "The start of a time slot, +300000-01-01 10:00:00 in Europe/Berlin, lies outside what this " +
+                        "platform can represent in that zone: a local date and time from -271821-04-22T00:00 to " +
+                        "+275760-09-11T00:00"
+                shouldThrow<IllegalArgumentException> {
+                    MpLocalDate.of(-300_000, 1, 1).toRange(slot(10, 0, 1.hours), berlin)
+                }.message shouldBe
+                        "The start of a time slot, -300000-01-01 10:00:00 in Europe/Berlin, lies outside what this " +
+                        "platform can represent in that zone: a local date and time from -271821-04-22T00:00 to " +
+                        "+275760-09-11T00:00"
             }
         }
         // UTC resolves everywhere
         date.toRange(slot(10, 0, 1.hours), MpTimezone.UTC).duration shouldBe 1.hours
+    }
+
+    "JS, region zone: the accepted starts are exactly the message's interval, both ends included" {
+        if (zoneEngineLimitMillis != null) {
+            val last = MpLocalDate.of(275760, 9, 11).toRange(slot(0, 0, 1.hours), berlin)
+            // accepted; its end lies past the limit and falls back to the same local time: empty at the start
+            last.from.toLocalDateTime() shouldBe MpLocalDateTime.of(275760, 9, 11, 0, 0)
+            last.to shouldBe last.from
+
+            MpLocalDate.of(-271821, 4, 22).toRange(slot(0, 0, 1.hours), berlin).duration shouldBe 1.hours
+
+            shouldThrow<IllegalArgumentException> {
+                MpLocalDate.of(275760, 9, 12).toRange(slot(10, 0, 1.hours), berlin)
+            }
+            shouldThrow<IllegalArgumentException> { MpLocalDate.of(275760, 9, 11).toRange(slot(0, 1, 1.hours), berlin) }
+            shouldThrow<IllegalArgumentException> {
+                MpLocalDate.of(-271821, 4, 21).toRange(slot(23, 59, 1.hours), berlin)
+            }
+        }
     }
 
     "a fixed offset has no gaps: 02:30 + 1 h at +02:00 is just 00:30Z to 01:30Z" {
@@ -153,6 +193,40 @@ class MpLocalTimeSlotOnDateSpec : StringSpec({
         range.to.toInstant().value.nanosecondsOfSecond shouldBe 999_000_000
         // an end at 24:00 of the last date falls back the same way
         last.toRange(slot(22, 0, 2.hours), MpTimezone.UTC).to shouldBe range.to
+    }
+
+    "the last-date fallback in a region zone (Berlin): the last instant of 999 999 999-12-31 there (JVM)" {
+        val first = MpLocalDate.of(999_999_999, 12, 1)
+
+        when {
+            // JS: the start lies beyond the engine's limit
+            zoneEngineLimitMillis != null -> shouldThrow<IllegalArgumentException> {
+                first.toRange(slot(10, 0, 60.days), berlin)
+            }
+
+            // native: the engine stops two days inside the last date; the end stops at that local time
+            isNativePlatform -> {
+                first.toRange(slot(10, 0, 60.days), berlin).to.toLocalDateTime() shouldBe
+                        MpLocalDateTime.of(999_999_999, 12, 29, 0, 0)
+
+                shouldThrow<IllegalArgumentException> {
+                    MpLocalDate.of(999_999_999, 12, 31).toRange(slot(10, 0, 1.hours), berlin)
+                }.message shouldBe
+                        "The start of a time slot, +999999999-12-31 10:00:00 in Europe/Berlin, lies outside what " +
+                        "this platform can represent in that zone: a local date and time from " +
+                        "-999999999-01-04T00:00 to +999999999-12-29T00:00"
+            }
+
+            else -> {
+                val range = first.toRange(slot(10, 0, 60.days), berlin)
+
+                // 999 999 999-12-31T23:59:59.999+01:00: the UTC value minus 3600 s
+                range.to.toInstant().value.epochSeconds shouldBe 31_556_889_832_780_799L - 3_600L
+                range.to.toInstant().value.nanosecondsOfSecond shouldBe 999_000_000
+                // a start on the last date in Berlin
+                MpLocalDate.of(999_999_999, 12, 31).toRange(slot(10, 0, 1.hours), berlin).duration shouldBe 1.hours
+            }
+        }
     }
 
     "an empty slot gives an empty range at its start" {

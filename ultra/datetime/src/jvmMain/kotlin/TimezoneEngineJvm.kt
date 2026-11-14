@@ -16,4 +16,4 @@ internal actual fun platformSystemDefaultZoneId(): String {
     return TimeZone.currentSystemDefault().id
 }
 
-internal actual fun platformInstantLimitMillis(zoneId: String): Long? = null
+internal actual fun platformResolvableSeconds(zoneId: String): LongRange? = null

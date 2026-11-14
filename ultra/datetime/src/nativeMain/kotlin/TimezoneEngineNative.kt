@@ -1,6 +1,8 @@
 package io.peekandpoke.ultra.datetime
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.offsetAt
 import kotlin.concurrent.AtomicInt
 import kotlin.concurrent.AtomicReference
@@ -56,4 +58,13 @@ private fun zoneFor(zoneId: String): TimeZone {
     }
 }
 
-internal actual fun platformInstantLimitMillis(zoneId: String): Long? = null
+// The second to the last date of the LocalDate range, at 00:00 UTC: a day inside each edge, so that the engine's probes
+// and a zone offset stay within what kotlinx-native turns into a date-time.
+private val nativeResolvableSeconds: LongRange =
+    LocalDate(-999_999_999, 1, 2).atStartOfDayIn(TimeZone.UTC).epochSeconds..
+            LocalDate(999_999_999, 12, 31).atStartOfDayIn(TimeZone.UTC).epochSeconds
+
+internal actual fun platformResolvableSeconds(zoneId: String): LongRange? = when {
+    TimezoneEngine.fixedOffsetSecondsOrNull(zoneId) != null -> null
+    else -> nativeResolvableSeconds
+}

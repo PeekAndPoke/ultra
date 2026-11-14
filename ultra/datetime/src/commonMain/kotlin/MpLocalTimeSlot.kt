@@ -3,10 +3,10 @@ package io.peekandpoke.ultra.datetime
 import io.peekandpoke.ultra.common.ComputedList
 import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DateTimeArithmeticException
-import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 /**
  * A slot of the day: a start ([from]) and a [duration], e.g. 22:00 for 4 hours (ULTRA-00341).
@@ -29,7 +29,7 @@ data class MpLocalTimeSlot private constructor(
 ) {
     companion object {
         /**
-         * The longest slot, 2^53 - 1 ms (about 285 616 years): the largest whole number a JS client reads and writes
+         * The longest slot, 2^53 - 1 ms (about 285,000 years): the largest whole number a JS client reads and writes
          * exactly, so a stored length round-trips. Every longer length, [Duration.INFINITE] included, is cut to it.
          */
         const val MAX_DURATION_MILLIS: Long = 9_007_199_254_740_991L
@@ -134,7 +134,7 @@ data class MpLocalTimeSlot private constructor(
 
     /**
      * On how many days after the start's date the end lies: 0 for a slot ending by 24:00, 1 for 22:00 to 02:00. At most
-     * 104 249 991 (the longest slot), so `toInt()` is always safe.
+     * 104 249 992 (the longest slot from 22:00 on), so `toInt()` is always safe.
      */
     val endDayOffset: Long
         get() {
@@ -319,57 +319,87 @@ data class MpLocalTimeSlot private constructor(
  * - A time in a repeated hour takes its first occurrence. So the end never lies before the start, and an empty slot
  *   gives an empty range at its start.
  * - The platform's limits: throw when no correct answer exists, fall back when the answer is still right for
- *   everything the platform can express. A START the platform cannot represent throws [IllegalArgumentException],
- *   naming the date, the zone and the limit (only JS has one: in a region zone `Date` ends at +/-8.64e15 ms,
- *   -271821-04-20 to +275760-09-13). An END beyond what the platform can represent stops at its last representable
- *   instant: on JS in a region zone +275760-09-13T00:00Z, on every platform the last instant of 999 999 999-12-31. So
- *   the same call can give a different end on JS than on JVM and native once the end lies past the year 275760.
+ *   everything the platform can express. Where the zone engine has a limit (a region zone on JS: `Date`'s range; on
+ *   native: the far ends of the date range), only local times it can fully work with are used: two days inside the
+ *   limit (its one-day probe window plus a zone offset). On JS that is -271821-04-22T00:00 to +275760-09-11T00:00.
+ *   - A START outside throws [IllegalArgumentException], naming the date, the zone and exactly that interval.
+ *   - An END past it stops at the interval's last local time in the zone; an END whose date runs past the last date
+ *     (999 999 999-12-31) stops at that date's last instant in the zone. Both values take every day operation and
+ *     format.
+ *   - So the same call can give a different end on JS than on JVM and native once the end lies past the year 275760.
  */
 internal fun MpLocalTimeSlot.onDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTimeRange {
     return MpZonedDateTimeRange(from = startOnDate(date, timezone), to = endOnDate(date, timezone))
 }
 
-/** The start of this slot on [date]; throws when the platform cannot represent it (see [onDate]). */
-private fun MpLocalTimeSlot.startOnDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTime {
-    return try {
-        firstExistingTime(date, from, timezone)
-    } catch (e: IllegalTimeZoneException) {
-        throw e
-    } catch (e: IllegalArgumentException) {
-        val limit = platformInstantLimitMillis(timezone.id) ?: throw e
+/** The engine's one-day probe window plus the largest zone offset (under a day). */
+private const val ENGINE_MARGIN_SECONDS: Long = 2 * 86_400L
 
+/** The local times (read as UTC) the zone engine fully works with for [timezone], or null where nothing limits it. */
+private fun usableLocalTimes(timezone: MpTimezone): ClosedRange<MpInstant>? {
+    val resolvable = platformResolvableSeconds(timezone.id) ?: return null
+
+    return utcInstant(resolvable.first + ENGINE_MARGIN_SECONDS)..utcInstant(resolvable.last - ENGINE_MARGIN_SECONDS)
+}
+
+private fun utcInstant(epochSeconds: Long): MpInstant = MpInstant(Instant.fromEpochSeconds(epochSeconds))
+
+/** [time] on [date] read as UTC: the local time as an instant, for comparing with [usableLocalTimes]. */
+private fun localTimeAsUtc(date: MpLocalDate, time: MpLocalTime): MpInstant {
+    return MpLocalDateTime.of(date, time).toInstant(MpTimezone.UTC)
+}
+
+/** The start of this slot on [date]; throws when the platform cannot work with it (see [onDate]). */
+private fun MpLocalTimeSlot.startOnDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTime {
+    val usable = usableLocalTimes(timezone)
+
+    if (usable != null && localTimeAsUtc(date, from) !in usable) {
         throw IllegalArgumentException(
             "The start of a time slot, ${date.toIsoString().substringBefore('T')} ${from.formatHhMmSs()} in " +
-                    "${timezone.id}, lies outside what this platform can represent in that zone: " +
-                    "${MpInstant.fromEpochMillis(-limit).toIsoString()} to " +
-                    MpInstant.fromEpochMillis(limit).toIsoString(),
-            e,
+                    "${timezone.id}, lies outside what this platform can represent in that zone: a local date and " +
+                    "time from ${usable.start.toIsoString().removeSuffix(":00.000Z")} to " +
+                    usable.endInclusive.toIsoString().removeSuffix(":00.000Z"),
         )
     }
+
+    return firstExistingTime(date, from, timezone)
 }
 
 /**
- * The end of this slot on [date]: when the platform cannot represent it, its last representable instant (see
- * [onDate]). The only place that decides it.
+ * The end of this slot on [date]; past what the platform can work with, its last usable time (see [onDate]). The
+ * only place that decides it. A `DateTimeArithmeticException` is the date types' own limit (the end's date, or 24:00
+ * on it, lies past 999 999 999-12-31); every other exception is a real error and passes through.
  */
 private fun MpLocalTimeSlot.endOnDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTime {
-    return try {
-        // the longest slot ends 104 249 991 days later at most: an Int
-        firstExistingTime(date.plusDays(endDayOffset.toInt()), to, timezone)
-    } catch (_: IllegalArgumentException) {
-        // the zone is valid (the start resolved in it): the platform cannot resolve an instant this far out
-        lastRepresentableTime(timezone)
+    val endDate: MpLocalDate
+    val endAsUtc: MpInstant
+
+    try {
+        // the longest slot ends 104 249 992 days later at most: an Int
+        endDate = date.plusDays(endDayOffset.toInt())
+        endAsUtc = localTimeAsUtc(endDate, to)
     } catch (_: DateTimeArithmeticException) {
-        // the end's date lies past the last date the platform holds (year 999 999 999)
-        lastRepresentableTime(timezone)
+        return lastRepresentableTime(timezone)
     }
+
+    val usable = usableLocalTimes(timezone)
+
+    if (usable != null && endAsUtc > usable.endInclusive) return lastRepresentableTime(timezone)
+
+    return firstExistingTime(endDate, to, timezone)
 }
 
-/** The last instant this platform represents in [timezone]: its zone-engine limit, else the end of the last date. */
+/**
+ * The last time this platform represents in [timezone]: the last usable local time where the zone engine has a limit,
+ * else the last instant of 999 999 999-12-31.
+ */
 private fun lastRepresentableTime(timezone: MpTimezone): MpZonedDateTime {
-    platformInstantLimitMillis(timezone.id)?.let { return MpInstant.fromEpochMillis(it).atZone(timezone) }
+    val usable = usableLocalTimes(timezone)
+        ?: return MpLocalDate.of(999_999_999, 12, 31).atTime(MpLocalTime.Max, timezone)
 
-    return MpLocalDate.of(999_999_999, 12, 31).atTime(MpLocalTime.Max, timezone)
+    val last = usable.endInclusive.atZone(MpTimezone.UTC).toLocalDateTime()
+
+    return firstExistingTime(last.toDate(), last.toTime(), timezone)
 }
 
 /**

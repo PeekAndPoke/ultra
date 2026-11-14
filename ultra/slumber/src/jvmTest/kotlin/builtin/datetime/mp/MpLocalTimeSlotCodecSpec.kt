@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class MpLocalTimeSlotCodecSpec : StringSpec({
 
     val codec = Codec.default
-    val longest = MpLocalTimeSlot.MAX_DURATION_MILLIS.milliseconds
+    val longest = 9_007_199_254_740_991L.milliseconds
     val night = MpLocalTimeSlot.of(MpLocalTime.of(22, 0), 4.hours)
 
     data class Wrapper(val slot: MpLocalTimeSlot)
@@ -88,6 +88,17 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to Double.NEGATIVE_INFINITY))?.isEmpty shouldBe true
     }
 
+    "at the cap: 2^53 - 1 stays, 2^53 and just above are cut to it, just below stays (BigInteger, BigDecimal, Double)" {
+        fun awake(duration: Number) =
+            codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to duration))?.duration
+
+        awake(BigInteger("9007199254740991")) shouldBe longest
+        awake(BigInteger("9007199254740992")) shouldBe longest
+        awake(BigDecimal("9007199254740990.5")) shouldBe 9_007_199_254_740_990L.milliseconds
+        awake(BigDecimal("9007199254740991.5")) shouldBe longest
+        awake(9.007199254740993e15) shouldBe longest
+    }
+
     "only an ABSENT duration falls back to to: an explicit null or a non-number duration awakes to null" {
         codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L, "duration" to null, "to" to 3_600_000L)) shouldBe null
         codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L, "duration" to "x", "to" to 3_600_000L)) shouldBe null
@@ -101,7 +112,7 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e30")))?.duration shouldBe longest
         // 1e19 wraps negative through toLong(); -18446744073709551611 has +5 as its low 64 bits
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e19")))?.duration shouldBe longest
-        // -1e19 has positive low 64 bits: without the lower arm it would be an infinite slot
+        // -1e19 has positive low 64 bits: without the lower arm it would be the longest slot
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("-1e19")))?.isEmpty shouldBe true
         // in range: the value itself, a fraction cut to whole milliseconds
         val decimal = BigDecimal("14400000.9")

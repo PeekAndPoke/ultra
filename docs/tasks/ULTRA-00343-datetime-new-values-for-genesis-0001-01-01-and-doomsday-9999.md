@@ -574,6 +574,7 @@ or `MpLocalDateRangeLazySpec`, green on JVM, JS and native):**
   below replaces the question of which values to use.
 - 2026-11-14: batch A (slots are finite) built on `wt/datetime`; awaiting the gate. Batches B and C wait for the
   coordinator's word.
+- 2026-11-14: batch A gate round 1 CLEAN (9 MINOR), all handled; a short delta review follows.
 
 ## Decided (maintainer, 2026-11-14): no sentinels, open ranges are `Partial`, slots are finite
 
@@ -630,12 +631,13 @@ Built on `wt/datetime`, at master `f750497f`, as confirmed with the maintainer. 
 C (no sentinels) wait for the coordinator's word. Batch A does not touch Genesis or Doomsday anywhere else: the slot
 simply stops using Doomsday.
 
-- **`MpLocalTimeSlot.MAX_DURATION_MILLIS = 9_007_199_254_740_991`** (2^53 - 1 ms, about 285 616 years; renamed from
+- **`MpLocalTimeSlot.MAX_DURATION_MILLIS = 9_007_199_254_740_991`** (2^53 - 1 ms, about 285,000 years; renamed from
   `INFINITE_DURATION_MILLIS`, same value). It is the largest whole number a JS client reads and writes exactly, so a
   stored length round-trips. `of(from, duration)` cuts every longer length to it, `Duration.INFINITE` included; no
   exception.
 - **Gone:** `isInfinite`; `openEnd()`; every infinite branch (`durationMillis`, `to`, `endDayOffset`,
-  `splitWithGaps`, `toRawData`, the KDoc of the formatters). `endDayOffset` is at most 104 249 991.
+  `splitWithGaps`, `toRawData`, the KDoc of the formatters). `endDayOffset` is at most 104 249 992 (the longest
+  slot from 22:00 on; corrected in round 1).
 - **`splitWithGaps`:** one finite formula, still capped at `Int.MAX_VALUE` parts with the KDoc line about checking
   `size`. A `gap` beyond the longest length counts as it. The `step % DAY` reduction is gone again: `i * step` is at
   most the slot's own length (2^53 - 1 ms), so it cannot overflow any more (it could while slots were infinite).
@@ -646,17 +648,23 @@ simply stops using Doomsday.
   - NaN stays a decode failure; a negative duration stays empty; an explicit `"duration": null` stays an error.
 - **`toRange(slot, zone)` is always two-ended.** The rule, in the KDoc: throw when no correct answer exists, fall back
   when the answer is still right for everything the platform can express.
-  - A START the platform cannot represent throws `IllegalArgumentException` (the type the zone engine throws today),
-    naming the date, the time, the zone and the limit. Example (JS):
-    `The start of a time slot, +300000-01-01 10:00:00 in Europe/Berlin, lies outside what this platform can represent
-    in that zone: -271821-04-20T00:00:00.000Z to +275760-09-13T00:00:00.000Z`. Only JS has such a limit, for region
-    zones; on JVM and native every start on a valid date resolves, so the type is the same wherever a limit exists.
-    A zone error (`IllegalTimeZoneException`) passes through unchanged.
-  - An END beyond what the platform can represent stops at its last representable instant, through one `expect`
-    function (`platformInstantLimitMillis(zoneId)`: JS 8.64e15 ms for region zones, else null):
-    - JS, region zone: +275760-09-13T00:00Z;
-    - every platform and zone: the last instant of 999 999 999-12-31 in the zone, when the end's date runs past the
-      last date (a start cannot overflow).
+  - Where the zone engine has a limit, only local times it can fully work with are used: the limit minus two days
+    (its one-day probe window plus a zone offset). Round 1 changed this; see the ledger. One `expect` function,
+    `platformResolvableSeconds(zoneId)`:
+    - JVM: no limit;
+    - JS, region zone: the range of `Date`, ±8.64e12 s;
+    - native, region zone: the second to the last date of the `LocalDate` range (kotlinx-native refuses an instant in
+      year 1 000 000 000, which the engine's +1-day probe from the last date reaches);
+    - fixed offsets: no limit anywhere.
+  - A START outside throws `IllegalArgumentException` (the type the zone engine throws), naming the date, the time,
+    the zone and exactly the accepted interval. Example (JS): `The start of a time slot, +300000-01-01 10:00:00 in
+    Europe/Berlin, lies outside what this platform can represent in that zone: a local date and time from
+    -271821-04-22T00:00 to +275760-09-11T00:00`. Native: `-999999999-01-04T00:00 to +999999999-12-29T00:00`. A zone
+    error (`IllegalTimeZoneException`) passes through unchanged (pinned in `ZoneIdCheckSpec`).
+  - An END past the interval stops at the interval's last local time in the zone (JS: +275760-09-11T00:00 local);
+    an END whose date, or 24:00 on it, runs past 999 999 999-12-31 stops at that date's last instant in the zone
+    (JVM, and fixed offsets everywhere). Only `DateTimeArithmeticException` (the date types' own limit) leads to a
+    fallback; every other exception passes through (round 1).
   - So the same call can differ by platform once the end lies past the year 275760; the KDoc says so.
   - The "empty range at the start" guard in `onDate` is gone. With the first-existing-time rule and an end that
     falls back to the platform's last instant, the end can no longer lie before the start (the start is
@@ -711,6 +719,48 @@ start's plain engine message), slumber 4, codegen 1.
 - slumber 1267 / 0; codegen 326 / 0.
 - Repo-wide compile sweep: exit 0, 0 `e:` lines.
 
+### Review record: round 1 (reviewer-fable-xhigh, all three charters)
+
+**Verdict:** CLEAN: 0 CRITICAL, 0 MAJOR, 9 MINOR. The cap holds on every path, the three removals are sound, G1 is
+equivalent, the stored shape is unchanged for finite slots. The reviewer ran nothing; every item was settled by a
+test first.
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | public KDoc of `MpLocalDate.toRange(slot, zone)` still named the open end | FIXED; the words "infinite", "endless", "open end", "Doomsday" near slots searched repo-wide (code, docs-site, tickets): the remaining hits name `Duration.INFINITE` as an input; the test variable `endless` and a slumber comment fixed |
+| 2 | JS: the fallback end at 8.64e15 ms sits on the edge of the zone engine | CONFIRMED by a JS probe: `to.atStartOfDay()` and `to.atTime(..)` throw ("Instant at 8640000086400 s is outside the range of JS dates"); `to` shows 00:00 where the JVM shows 02:00 (`round(NaN)` = 0). FIXED: local times are checked against the limit minus two days; the end falls back to `+275760-09-11T00:00` local; pinned on JS: the wall clock, the instant (8 639 999 820 000 000 ms, +02:00), `atStartOfDay`, `atStartOfHour`, `atTime`, the range formatter. The start check uses the same interval, both ends included, pinned at both edges |
+| 2 | the NaN swallow in `intlOffsetSecondsAt` | STILL REACHABLE through public API outside slots: `MpInstant.fromEpochMillis(8_640_000_000_000_000).atZone(Europe/Berlin)` shows 00:00 (JVM 02:00). For a separate ticket (JS zone engine at its limit) |
+| 3 | the last-date fallback pinned for UTC only; native unverified | CONFIRMED on native: kotlinx-native throws `DateTimeArithmeticException` ("Instant +1000000000-01-01T00:00:00Z is not representable as LocalDateTime") for the engine's +1-day probe from the last date. FIXED: native has a limit for region zones (a day inside the date range) and uses the same two-day scheme. In Berlin: JVM ends at 999 999 999-12-31T23:59:59.999+01:00 and accepts a start on the last date; native ends at local 999 999 999-12-29T00:00 and refuses that start with the clear message; JS refuses the start |
+| 4 | `endDayOffset` "at most 104 249 991" off by one | FIXED: 104 249 992 (`of(22:00, INFINITE)`), pinned, texts corrected |
+| 5a | mutant: delete the `IllegalTimeZoneException` rethrow | the code path is gone (the start check no longer catches); a bad zone id through `toRange` is pinned in `ZoneIdCheckSpec` for every refused id on JVM, JS and native |
+| 5b | mutant: swap or mis-sign the message's bounds | the whole message is a literal (JS and native); mutant R1 red |
+| 5c | a start before the lower limit (year -300000) | pinned on JS with the whole message |
+| 6 | slumber `longest` derived from the constant; no rows at the cap | FIXED: the literal 9_007_199_254_740_991 ms; rows `BigInteger` 2^53 - 1 and 2^53, `BigDecimal` 9007199254740990.5 (stays, truncated) and 9007199254740991.5 (cut), Double 9.007199254740993e15 (cut) |
+| 7 | the END catch wider than needed | FIXED: no `IllegalArgumentException` catch at all; the platform limit is checked before the engine is asked. Only `DateTimeArithmeticException` (the end's date, or 24:00 on it, past 999 999 999-12-31: the date types' own limit) leads to the fallback |
+| 8 | "about 285 616 years" counts 365-day years; the changelog advice lacked the master-written record | FIXED: "about 285,000 years"; the clause on `"duration":9007199254740991,"to":36000000` |
+| 9 | the kotlinx decoder reads `duration: Long.MIN_VALUE` as absent; docs pages `ranges.astro:341`, `mp-local-date.astro:164` show the removed public constructor | RECORDED: the marker note is settled (round 2 of 3b-2); the docs lines go to ULTRA-00339 |
+
+| Mutant (round 1; each restored with `cmp`) | Tests red |
+|---|---|
+| R1 the message's two bounds swapped | 1 JS + 1 native |
+| R2 no start check | 2 JS + 1 native |
+| R3 the engine margin one day instead of two | 4 JS |
+| R4 no end check against the usable interval | 3 JS |
+| R5 the last-date fallback at 00:00 instead of 23:59:59.999 | 2 JVM |
+| R6 no catch for the date types' own limit (`DateTimeArithmeticException`) | 2 JVM |
+| R7 native: the usable range a day short | 1 native |
+| R8 native: no limit for region zones | 1 native |
+
+The first R2 / R4 runs did not compile (a `false &&` in front breaks the smart cast). They were rerun with the
+condition at the end; the numbers above are from the rerun.
+
+**Counts after round 1** (2026-11-14, `--rerun`, from the XML):
+
+- datetime JVM 2869 / 0, JS 2211 / 0, native 2203 / 0 (`MpLocalTimeSlotOnDateSpec` 19 and `ZoneIdCheckSpec` 87 on
+  all three).
+- slumber 1268 / 0 (`MpLocalTimeSlotCodecSpec` 10); codegen 326 / 0.
+- Repo-wide compile sweep: 0 `e:` lines.
+
 ### Changelog text (Batch A)
 
 Against release 0.118.0 a slot never was infinite (it was `from` / `to` within one day), so batch A adds no entry of
@@ -718,16 +768,18 @@ its own against the release. It corrects the Unreleased entries of ULTRA-00341 t
 (for the coordinator at the merge):
 
 - Line 27: replace "New: `isEmpty`, `isInfinite`, `INFINITE_DURATION_MILLIS`; `Duration.INFINITE` is a slot without
-  an end" with: "New: `isEmpty`, `MAX_DURATION_MILLIS` (2^53 - 1 ms, about 285 616 years). A slot is always finite:
+  an end" with: "New: `isEmpty`, `MAX_DURATION_MILLIS` (2^53 - 1 ms, about 285,000 years). A slot is always finite:
   `of(from, duration)` cuts every longer length to it, `Duration.INFINITE` included (ULTRA-00343)."
 - Lines 37-38: "code that relied on `isValid` now accepts multi-year and endless slots (`isInfinite`)" becomes "code
-  that relied on `isValid` now accepts slots of up to about 285 616 years".
+  that relied on `isValid` now accepts slots of up to about 285,000 years".
 - Line 51: "an infinite duration is 9007199254740991" becomes "a duration is at most 9007199254740991; a larger
-  stored number reads back as that".
-- Add to the `MpLocalDate.toRange(slot, zone)` bullet (line 43): "Always a two-ended range: an end the platform cannot
-  represent stops at its last representable instant (JS in a region zone: +275760-09-13T00:00Z; any platform: the
-  end of 999 999 999-12-31); a start it cannot represent throws `IllegalArgumentException` naming the date, the
-  zone and the limit (ULTRA-00343)."
+  stored number reads back as that". (A record master's unreleased writer made for an infinite slot,
+  `"duration":9007199254740991,"to":36000000` for 10:00, reads as the longest slot and writes back `"to":68340991`.)
+- Add to the `MpLocalDate.toRange(slot, zone)` bullet (line 43): "Always a two-ended range. An end the platform
+  cannot represent stops at its last representable time (in the browser, in a region zone: +275760-09-11T00:00
+  local; at the far end of the date range: the last instant of 999 999 999-12-31, on native two days earlier); a
+  start it cannot represent throws `IllegalArgumentException` naming the date, the zone and the accepted interval
+  (ULTRA-00343)."
 - `ultra/codegen`, the TypeScript runtime: `MpLocalTimeSlot`'s constant is `MAX_DURATION_MILLIS` (the Unreleased
   entry "the TypeScript runtime has `MpLocalTimeSlot`" names no constant and stays).
 - Line 20 (ULTRA-00215) "by 25 h or by `Duration.INFINITE` now yields no slots" stays true.
