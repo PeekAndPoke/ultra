@@ -21,6 +21,12 @@ ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 The validation runs once and its result is remembered: a blueprint that failed validation throws the same
 `KontainerInconsistent` with the same message on every `create()`. The success path stays as cheap as today.
 
+Overrides do not matter for this (the maintainer asked, checked in the code on 2026-11-14): `validate()`
+(`KontainerBlueprint.kt:220`) checks the definitions for cycles and builds one kontainer with NO overrides to ask every
+provider whether its dependencies can be met. Both depend only on the definitions, which never change. The check that
+does depend on overrides ("Unexpected dynamics were provided") runs on every `create()` after the validation and stays
+as it is. An override cannot make an invalid blueprint valid: it can only replace a declared dynamic singleton.
+
 ## The work
 
 - The flag is set only after a successful validation (or the failure is remembered and rethrown). A blueprint that failed validation fails on every `create()` with the same `KontainerInconsistent`.
