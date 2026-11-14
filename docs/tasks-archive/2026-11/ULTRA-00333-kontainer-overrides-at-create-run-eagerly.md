@@ -1,6 +1,6 @@
-# ULTRA-00330: Kontainer: extend skips the injection type upgrade
+# ULTRA-00333: Kontainer: overrides at create run eagerly
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K1, not merged: gate round 1 CLEAN, delta round 2 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K1, merged into master as `f575dd29`: gate round 1 CLEAN, delta round 2 CLEAN. Public API and behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -8,68 +8,109 @@
 
 ## Why this exists
 
-In `base.extend { singleton(X) }`, a prototype or dynamic `X` becomes a plain `Singleton`: `extend` does not apply the type upgrade that a redefinition inside one builder applies. The base blueprint's singletons that inject `X` lose their promotion to SemiDynamic, so a service that was per request silently becomes shared across requests.
+The lambda in `create { with { X() } }` runs at create, even when `X` is never requested from that kontainer; `clone()` runs it again.
 
-Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/RedefinitionCharacterizationSpec.kt`, in a test
+Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/DynamicsAtCreateCharacterizationSpec.kt`, in a test
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
 ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
 ## Decided (maintainer, 2026-11-14)
 
-"here we should also prevent the downgrade from dynamic to singleton. The service needs to stay dynamic. We do not
-throw or log anything. This is just how the kontainer works."
+"yes make override lazy": the lambda of `create { with { ... } }` runs the first time the service is requested from
+that kontainer, and its result is kept for that kontainer (at most one run per kontainer). Today it runs at `create`
+(`ServiceProviderFactory.kt:22`), and again at `clone()`.
 
-So `extend` applies the same redefinition rule as a redefinition inside one builder: a service that was dynamic stays
-dynamic when an extension redefines it as a singleton, and a prototype stays a prototype. Silently: no exception, no
-log line.
+Behaviour changes without a compile signal, for the changelog: an override that throws now throws at the first `get`;
+side effects run later, or never when the service is not used; a lambda reading something mutable sees the value at
+first use; `clone()` no longer runs the lambda at once. Build it together with ULTRA-00337 (the dynamics checker keeps
+the first request's override lambdas alive) and ULTRA-00332 (one entry point for `create` and `clone`).
 
 ## Plan as built (track D, batch K1, 2026-11-14)
 
-- `KontainerBlueprint.extend` applies `RedefinitionUpgrade` (ULTRA-00331) to every extension definition against the
-  base definition of the same class, after the extension's own block ran.
-  - The rule is associative, so this equals one builder holding base and extension.
-  - Silent.
-- `overwrites` stays as today (null for an extension's definitions). Recording the base definition there would change
-  the debug output; not built.
-- Tests first: the two CURRENT BEHAVIOUR pins in `RedefinitionCharacterizationSpec` and the one in
-  `DynamicPrototypeSpec` turn into the decided expectation.
-- Callers: no production code calls `extend` (searched); only kontainer tests do.
+- **Laziness:**
+  - `ServiceProviderFactory` no longer calls the override lambda; `ServiceProvider.ForOverride` holds it.
+  - The first `provide` runs it under the provider's lock, keeps the value and drops the lambda. A lambda that throws
+    keeps nothing, so the next request runs it again: it runs until it has returned a value, then never again (round
+    1).
+  - The base-type lookup of an override (`ServiceAmbiguous` for an ambiguous one) stays at create.
+- **`clone()`:** does not run any lambda. The clone gets its own lazy cells from the same lambdas, as it gets fresh
+  instances today.
+- **The kontainer still holds its override lambdas,** in `ServiceProviderFactory.dynamics`, because `clone` needs
+  them. "After first use only the value is kept" holds for the provider. A collected kontainer leaves nothing
+  reachable from the blueprint (proven in ULTRA-00337).
+- **Consequences without a compile signal, beyond the ticket's list:**
+  - The definition of an override can no longer name the instance's class before it exists. `creates` is the class
+    given to `with` (the same as today for `with { X() }`, the base class for `with(Base::class) { Derived() }`).
+  - An override that was never requested has no instance. It reports none in `instances`, the dump and debug info,
+    and it no longer appears in the insights record slice, which lists only services with instances.
+- **Callers whose lambda now runs later:**
+  - `with { call.currentUserProvider() }` (funktor-demo, the `funktor:all` test server): it only builds a
+    `UserProvider.lazy { }`, so nothing observable moves.
+  - `with { UserProvider.system() }`, `with { NullQueryProfiler }` (`AppKontainers.system()`) and
+    `with { kronos }` (`WorkersFacade`): values, no side effect.
+  - Test fixtures in `funktor/cluster` and `funktor/insights`: listed in the track report.
 
 ## Built (batch K1, 2026-11-14)
 
-As planned: `KontainerBlueprint.extend` applies `RedefinitionUpgrade` against the base definitions; `overwrites`
-unchanged.
+As planned, with one refinement: once an override has run, its definition names the instance's class and keeps the
+code location of `create`, exactly as before. Only an override that was never requested differs: its definition
+names the class given to `with`.
+
+**Open point:** "after first use only the value is kept, not the lambda" holds for the provider, and a test pins that.
+The kontainer itself still holds its override lambdas for its lifetime, because `clone` re-runs them for the clone's
+own instances. A collected kontainer leaves nothing reachable (ULTRA-00337 tests). If the maintainer wants the
+kontainer to drop them too, `clone` would have to change meaning.
 
 Pins turned, before -> after:
-- `RedefinitionCharacterizationSpec`, "CURRENT BEHAVIOUR: extend ..., a prototype redefined as singleton becomes
-  Singleton": (Singleton, Static) -> stays (Prototype, Static).
-- `RedefinitionCharacterizationSpec`, "CURRENT BEHAVIOUR: extend ..., a dynamic redefined as singleton ends the
-  promotion": Target (Singleton, Static) -> (Singleton, Dynamic); User (Singleton, Static), shared -> SemiDynamic,
-  one per kontainer.
-- `DynamicPrototypeSpec`, "Redefinition across extend skips the rule": Target (Singleton, Static) -> (Prototype,
-  Dynamic); User global -> SemiDynamic.
-- New, for the rule across extend: prototype in the base and dynamic in the extension gives (Prototype, Dynamic); a
-  static singleton in the base is replaced as is.
+- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: the override lambda runs at create ..." -> "The
+  override lambda runs at the first request of the service, once per kontainer, never at create":
+  - runs after create: 1 -> 0
+  - after two gets: 1 -> 1
+  - after a second `create`: 2 -> 1
+- `DynamicsAtCreateCharacterizationSpec`, "Cloning keeps the overrides and runs their lambdas again": runs right
+  after `clone()`: 2 -> 0; after a get in each kontainer: 2.
+- `ToolsCharacterizationSpec`: one clue text, "created at create" -> "created at its first request".
+- `ScopeGuardsSpec`: `forOverride(definition, instance = ...)` -> `forOverride(definition, create = { ... })`, the
+  new signature.
+- `funktor/insights` `KontainerWireNamesSpec`: the end-to-end wire test now also requests the overridden service.
+  Without that, its never-requested override has no instance and is missing from the slice, the consequence named
+  above. A new test there pins that consequence.
+- New tests:
+  - a never-requested override never runs and has no instance
+  - a throwing override fails at the first get with its own exception
+  - mutable state is read at first use
+  - the definition's class before and after first use
+  - the provider keeps only the value
 
-Mutation: KE, `extend` without the rule: RED, 4 / 524.
+Mutation (failed / 524 or 525):
 
-Changelog (behaviour change, no compile signal): `ultra/kontainer`: `KontainerBlueprint.extend` applies the
-redefinition rule against the base blueprint. Silent. Eight of the 16 pairs change, base then extension (all 16 are
-pinned in `ExtendRedefinitionCharacterizationSpec`):
-- `dynamic` then `singleton`: stays a dynamic singleton, and its users stay one per kontainer (it became a global
-  singleton and its users global).
-- `dynamic` then `prototype` or `dynamicPrototype`: one instance per kontainer (was one per injection), and an
-  override at create is now accepted where it was refused. For `dynamic` then `prototype`, a singleton injecting it
-  goes from global to one per kontainer.
-- `prototype` then `singleton`: stays a prototype, one instance per injection (it became a global singleton).
-- `prototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
-  `extended.create { with { X() } }` throws `KontainerInconsistent` where it was accepted.
-- `dynamicPrototype` then `singleton`: stays a dynamic prototype, its users stay one per kontainer (it became a global
-  singleton).
-- `dynamicPrototype` then `prototype`: stays a dynamic prototype, its users stay one per kontainer (it became a static
-  prototype and its users global).
-- `dynamicPrototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and an
-  override at create throws `KontainerInconsistent` where it was accepted (ULTRA-00330).
+| Mutant | Result |
+|---|---|
+| KL1: evaluated eagerly at create | RED, 5 |
+| KL2: evaluated on every request | RED, 7 |
+| KL3: the lambda kept after use | SURVIVED at first; RED, 1 after the provider test was added |
+
+Changelog (behaviour change, no compile signal): `ultra/kontainer`: overrides at `create { with { ... } }` are lazy.
+The lambda runs at the first request of that service from that kontainer, on whichever thread asks first, under the
+provider's lock; it runs until it has returned a value, then never again. `clone()` no longer runs it at once.
+Consequences:
+- An override that throws now throws at the first `get`, and again at the next, as no value was kept.
+- An override used as a gate, throwing at `create` to reject a request, no longer rejects requests that never ask for
+  the service.
+- A clone runs its parent's lambdas at the clone's first use, possibly after the parent's request ended and
+  concurrently with the parent.
+- A lambda that requests its own service ends in `StackOverflowError`.
+- Side effects run later, or never when the service is not used.
+- A lambda reading something mutable sees the value at first use.
+- An override never requested has no instance: none in `instances`, the debug info or the dump, and none in the
+  insights record slice.
+- Until it has returned a value, its definition names the class given to `with`.
+- Public signatures: `ServiceProvider.Provider.forOverride(definition, create: () -> Any)` (was `instance: Any`);
+  `ServiceProvider.ForOverride` is no longer a data class and its constructor changed (ULTRA-00333).
+
+Callers checked, nothing observable moves:
+- `with { call.currentUserProvider() }` only builds `UserProvider.lazy { }`
+- `with { UserProvider.system() }`, `with { NullQueryProfiler }` and `with { kronos }` are values
 
 Commits:
 - `9fe4095b`: the plans
@@ -215,7 +256,7 @@ behaviour change (texts and tests only).
 
 ## The work
 
-- `extend` applies the same redefinition rule as the builder, or refuses a redefinition that lowers the type.
+- Decide: keep eager (simple, an override is a value) and document it, or make it lazy. If it stays, the KDoc of `with` says so.
 - Tests first: the "CURRENT BEHAVIOUR" pin turns into the wanted expectation (RED before the fix); mutation check.
 - CHANGELOG: a behaviour change without a compile signal.
 
@@ -226,3 +267,4 @@ behaviour change (texts and tests only).
 ## History
 
 - 2026-11-14: created on the maintainer's word.
+- 2026-11-14: DONE.

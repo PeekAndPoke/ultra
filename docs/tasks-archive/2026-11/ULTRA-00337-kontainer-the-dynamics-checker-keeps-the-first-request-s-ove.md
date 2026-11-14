@@ -1,96 +1,55 @@
-# ULTRA-00331: Kontainer: a prototype redefined as dynamic stays a prototype
+# ULTRA-00337: Kontainer: the dynamics checker keeps the first request's override lambdas alive
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K1, not merged: gate round 1 CLEAN, delta round 2 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K1, merged into master as `f575dd29`: gate round 1 CLEAN, delta round 2 CLEAN. Public API and behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
-**Found by:** the characterization specs of ULTRA-00319 (Kontainer injection type split), step 1, 2026-11-14.
-
 ## Why this exists
 
-A prototype redefined as dynamic stays `Prototype`: singletons that inject it are not promoted, and `create { with { } }` refuses an override for it.
+`KontainerBlueprint.create` passes `dynamicServices.overrides.keys` to `DynamicsChecker.getUnexpected`, which stores
+that object as the key of a `ConcurrentHashMap` (`DynamicsChecker.kt:28`, `getOrPut`). The key is the live `keySet()`
+view of the builder's `LinkedHashMap`, so it holds the whole map, including the `() -> Any` override lambdas. For each
+distinct set of override classes, the first request's lambdas, and through them whatever they capture (an
+`ApplicationCall` with its headers and cookies, the current user), stay reachable from the blueprint until the process
+ends.
 
-Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/RedefinitionCharacterizationSpec.kt`, in a test
-whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
-ticket (maintainer, 2026-11-14: "fix each with its own ticket").
+It is retention only: nothing reads the lambdas back and no other request can see them; it is bounded to one map per
+distinct class set. Found by reading (domain and security reviewer, round 2 of ULTRA-00319); the same on master; not
+yet confirmed by a test.
 
 ## Decided (maintainer, 2026-11-14)
 
-The maintainer weighed throwing ("The initial author wants the service to be a prototype so making it a singleton
-must fail") against allowing the upgrade to a dynamic singleton, and agreed to the rule below: "ok yes we do it like
-this."
-
-**The redefinition rule, two sentences:**
-
-1. The first definition fixes what the service is, singleton or prototype. The one exception stays: a plain static
-   singleton can be replaced by anything.
-2. Request binding is never lost and can always be added: if either definition is dynamic, the service is dynamic.
-
-| Redefinition | Today | With the rule |
-|---|---|---|
-| `prototype` then `dynamic` | (Prototype, Static) | (Prototype, Dynamic) |
-| `prototype` then `dynamicPrototype` | (Prototype, Static) | (Prototype, Dynamic) |
-| every other pair | | unchanged |
-
-Silent: no exception, no log line, as for `extend` (ULTRA-00330). Why no upgrade to a dynamic singleton: a prototype
-promises every injector its own instance; services written against the first definition may keep state in it, and one
-shared instance per request would mix that state without any failure. Why no exception: consistency with ULTRA-00330,
-redefinition is the normal way to swap an implementation, and a safe resolution exists.
-
-Consequence, accepted: `create { with { ... } }` for such a service is still refused (only dynamic singletons can be
-overridden; the message says so). `extend` follows the same rule (ULTRA-00330).
+"yes to storing the copy as the cache key": `DynamicsChecker.getUnexpected` keys its cache with a copy of the classes
+(`given.toSet()`), not with the live key view of the request's override map. Test first: the retention is proven
+(an override capturing a marker, all references dropped, the marker still reachable), then the fix. Built with the
+lazy overrides of ULTRA-00333, where the same care applies: after first use the lambda is dropped and only the value
+is kept.
 
 ## Plan as built (track D, batch K1, 2026-11-14)
 
-- `KontainerBuilder.RedefinitionUpgrade.adjust(newDef, existingDef)`:
-  - no earlier definition, or the earlier one is a static singleton: the later definition as it is
-  - otherwise: type = the earlier type; kind = Dynamic if either is Dynamic, else Static
-  - the producer is always the later one, as today
-- The rule is associative, so applying it per redefinition (builder) or to a whole extension (`extend`, ULTRA-00330)
-  gives the same result for the same sequence of definitions.
-- Only `prototype` then `dynamic` and `prototype` then `dynamicPrototype` change, both to (Prototype, Dynamic); the
-  other pairs are pinned unchanged.
-- Silent; an override at create is refused for such a service, with the existing message and its dynamic prototype
-  hint.
-- Tests first:
-  - the CURRENT BEHAVIOUR pins (`RedefinitionCharacterizationSpec`, `DynamicPrototypeSpec`) turn into the decided
-    expectation
-  - `InjectionTypeUpgradeSpec` "A Prototype service must not be downgraded to a dynamic" changes with the decision
-- Callers: no production code redefines a prototype as dynamic (searched).
+- **Fix:** `DynamicsChecker.getUnexpected` looks up with the given set and stores a copy (`given.toSet()`) as the key.
+- **Test first** (`KontainerRetentionSpec`):
+  - A kontainer gets an override capturing a marker.
+  - Every reference is dropped, inside a helper function so no local keeps one.
+  - A `WeakReference` to the marker must clear within a bounded number of GC attempts. It is RED before the fix.
+- **A second test:** an override that was used, with the kontainer collected, leaves neither its lambda's capture nor
+  its value reachable.
 
 ## Built (batch K1, 2026-11-14)
 
-As planned; the rule is in `KontainerBuilder.RedefinitionUpgrade`.
+As planned. Confirmed first: both retention tests were RED before the fix (the captured marker was never collected),
+green after.
 
-Pins turned, before -> after:
-- `RedefinitionCharacterizationSpec`, "CURRENT BEHAVIOUR: prototype redefined as dynamic stays Prototype ..." ->
-  "Prototype redefined as dynamic: Prototype.Dynamic, its users are promoted, an override at create is refused":
-  - Target: (Prototype, Static) -> (Prototype, Dynamic)
-  - User: (Singleton, Static), shared -> (Singleton, SemiDynamic), one per kontainer
-  - Refusal message: `Unexpected dynamics were provided: Target` -> the same plus `(only dynamic singletons can be
-    overridden, not the dynamic prototype Target)`
-- `RedefinitionCharacterizationSpec`, "singleton, prototype, dynamic ends as Prototype": (Prototype, Static) ->
-  (Prototype, Dynamic).
-- `DynamicPrototypeSpec`, "CURRENT BEHAVIOUR: prototype then dynamicPrototype stays Prototype.Static ...": Target
-  (Prototype, Static) -> (Prototype, Dynamic); User global -> SemiDynamic, one per kontainer.
-- `InjectionTypeUpgradeSpec`, "A Prototype service must not be downgraded to a dynamic ..." -> "... stays a Prototype
-  and becomes Dynamic": (Prototype, Static) -> (Prototype, Dynamic).
+Tests, `KontainerRetentionSpec`:
+- an unused override, kontainer dropped: the lambda's capture is collected
+- a used override, kontainer dropped: neither the capture nor the value stays reachable
+- a held override provider after first use: the capture is collected (ULTRA-00333)
 
-Mutation (failed / 524):
+Mutation: KC, the cache keyed by the live view again: RED, 2 / 524; re-run in round 2 with the reachability
+fences: RED, 2 / 546.
 
-| Mutant | Result |
-|---|---|
-| KR1: the static-singleton arm off | RED, 6 |
-| KR2: the type from the later definition | RED, 14 |
-| KR3: the later kind ignored (the old rule) | RED, 5 |
-| KR4: the earlier kind ignored | RED, 10 |
-| KR5: always dynamic | RED, 3 |
-
-Changelog (behaviour change, no compile signal): `ultra/kontainer`: the redefinition rule. The first definition
-fixes whether a service is a singleton or a prototype; a plain static singleton can still be replaced by anything. If
-either definition is dynamic, the service is dynamic. `prototype(X)` then `dynamic(X)` or `dynamicPrototype(X)` now
-gives a dynamic prototype (was a static prototype), so singletons injecting `X` become one per kontainer. An override
-of `X` at create is still refused; the message now names it as a dynamic prototype (ULTRA-00331).
+Changelog (fix): `ultra/kontainer`: the dynamics check no longer keeps the first request's override lambdas, and
+what they capture, alive for the life of the blueprint (ULTRA-00337).
 
 Commits:
 - `9fe4095b`: the plans
@@ -236,14 +195,16 @@ behaviour change (texts and tests only).
 
 ## The work
 
-- Decide the redefinition table for all pairs of (ServiceType, ServiceKind), `dynamicPrototype` included, and make builder and `extend` follow it (see ULTRA-00330).
-- Tests first: the "CURRENT BEHAVIOUR" pin turns into the wanted expectation (RED before the fix); mutation check.
-- CHANGELOG: a behaviour change without a compile signal.
+- Confirm first: a test that creates a kontainer with an override capturing a marker object, drops every reference,
+  and shows the marker is still reachable from the blueprint (a `WeakReference` that does not clear after GC).
+- Fix: key the cache with a copy (`given.toSet()`).
+- Mutation check; CHANGELOG (fix).
 
 ## Acceptance
 
-- The pin no longer says "CURRENT BEHAVIOUR"; `:ultra:kontainer:test` and the consumer suites are green.
+- The marker is collected; `:ultra:kontainer:test` green.
 
 ## History
 
-- 2026-11-14: created on the maintainer's word.
+- 2026-11-14: created on the maintainer's standing word for Kontainer oddities ("fix each with its own ticket").
+- 2026-11-14: DONE.

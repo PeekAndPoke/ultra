@@ -94,6 +94,11 @@ Across the waves:
   (`Log` as `dynamicPrototype` changed sharing on redefinition; listing order), round 2 CLEAN. `Log` stays a plain
   prototype. Eleven behaviours of today's Kontainer pinned and ticketed: ULTRA-00327 to ULTRA-00337. Docs:
   ULTRA-00338.
+- 2026-11-14, **track D (kontainer), batch K1: MERGED** (`f575dd29`). ULTRA-00330, 00331, 00332, 00333, 00336 and
+  00337: the redefinition rule, `extend` applying it, `clone` checking like `create`, lazy overrides, built-ins
+  neither registered nor overridden, the checker keying its cache with a copy. Strict gate round 1 CLEAN, delta
+  round 2 CLEAN. On master: kontainer 546, log 74, vault 287, insights 118, cluster 162, funktor:all 289, all green.
+  Next: K2 (ULTRA-00327, 00328, 00334, 00335), then K3 (ULTRA-00329).
 
 ## History
 

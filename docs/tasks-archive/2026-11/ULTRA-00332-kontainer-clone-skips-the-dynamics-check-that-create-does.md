@@ -1,6 +1,6 @@
-# ULTRA-00333: Kontainer: overrides at create run eagerly
+# ULTRA-00332: Kontainer: clone skips the dynamics check that create does
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K1, not merged: gate round 1 CLEAN, delta round 2 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K1, merged into master as `f575dd29`: gate round 1 CLEAN, delta round 2 CLEAN. Public API and behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -8,7 +8,7 @@
 
 ## Why this exists
 
-The lambda in `create { with { X() } }` runs at create, even when `X` is never requested from that kontainer; `clone()` runs it again.
+`clone { with { X() } }` for a non-dynamic `X` skips the dynamics check and throws `ServiceNotFound`, where `create { with { X() } }` throws `KontainerInconsistent`.
 
 Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/DynamicsAtCreateCharacterizationSpec.kt`, in a test
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
@@ -16,101 +16,39 @@ ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
 ## Decided (maintainer, 2026-11-14)
 
-"yes make override lazy": the lambda of `create { with { ... } }` runs the first time the service is requested from
-that kontainer, and its result is kept for that kontainer (at most one run per kontainer). Today it runs at `create`
-(`ServiceProviderFactory.kt:22`), and again at `clone()`.
-
-Behaviour changes without a compile signal, for the changelog: an override that throws now throws at the first `get`;
-side effects run later, or never when the service is not used; a lambda reading something mutable sees the value at
-first use; `clone()` no longer runs the lambda at once. Build it together with ULTRA-00337 (the dynamics checker keeps
-the first request's override lambdas alive) and ULTRA-00332 (one entry point for `create` and `clone`).
+"yes check clone like create": `Kontainer.clone { with { ... } }` runs the same dynamics check as
+`KontainerBlueprint.create` and throws the same `KontainerInconsistent` with the same message (it threw
+`ServiceNotFound` from deeper inside). One shared entry point for both paths.
 
 ## Plan as built (track D, batch K1, 2026-11-14)
 
-- **Laziness:**
-  - `ServiceProviderFactory` no longer calls the override lambda; `ServiceProvider.ForOverride` holds it.
-  - The first `provide` runs it under the provider's lock, keeps the value and drops the lambda. A lambda that throws
-    keeps nothing, so the next request runs it again: it runs until it has returned a value, then never again (round
-    1).
-  - The base-type lookup of an override (`ServiceAmbiguous` for an ambiguous one) stays at create.
-- **`clone()`:** does not run any lambda. The clone gets its own lazy cells from the same lambdas, as it gets fresh
-  instances today.
-- **The kontainer still holds its override lambdas,** in `ServiceProviderFactory.dynamics`, because `clone` needs
-  them. "After first use only the value is kept" holds for the provider. A collected kontainer leaves nothing
-  reachable from the blueprint (proven in ULTRA-00337).
-- **Consequences without a compile signal, beyond the ticket's list:**
-  - The definition of an override can no longer name the instance's class before it exists. `creates` is the class
-    given to `with` (the same as today for `with { X() }`, the base class for `with(Base::class) { Derived() }`).
-  - An override that was never requested has no instance. It reports none in `instances`, the dump and debug info,
-    and it no longer appears in the insights record slice, which lists only services with instances.
-- **Callers whose lambda now runs later:**
-  - `with { call.currentUserProvider() }` (funktor-demo, the `funktor:all` test server): it only builds a
-    `UserProvider.lazy { }`, so nothing observable moves.
-  - `with { UserProvider.system() }`, `with { NullQueryProfiler }` (`AppKontainers.system()`) and
-    `with { kronos }` (`WorkersFacade`): values, no side effect.
-  - Test fixtures in `funktor/cluster` and `funktor/insights`: listed in the track report.
+- One internal entry point, `KontainerBlueprint.createChecked(overrides)`:
+  - validation on first use
+  - the built-in check (ULTRA-00336)
+  - the dynamics check
+  - instantiate
+- `create` builds the overrides and calls it. `Kontainer.clone` calls it with the kontainer's overrides merged with
+  the new ones, as `newKontainer` does today, so `clone { with { X() } }` for a non-dynamic `X` throws the same
+  `KontainerInconsistent` with the same message.
+- Callers: `WorkersFacade` (`clone { with { kronos } }`, a dynamic, accepted as before); `InstallFixturesCliCommand`
+  and the demo's `init.clone()` (no overrides).
 
 ## Built (batch K1, 2026-11-14)
 
-As planned, with one refinement: once an override has run, its definition names the instance's class and keeps the
-code location of `create`, exactly as before. Only an override that was never requested differs: its definition
-names the class given to `with`.
-
-**Open point:** "after first use only the value is kept, not the lambda" holds for the provider, and a test pins that.
-The kontainer itself still holds its override lambdas for its lifetime, because `clone` re-runs them for the clone's
-own instances. A collected kontainer leaves nothing reachable (ULTRA-00337 tests). If the maintainer wants the
-kontainer to drop them too, `clone` would have to change meaning.
+As planned: `KontainerBlueprint.createChecked` is the one entry point; `Kontainer.clone` reaches it through
+`ServiceProviderFactory.newKontainer`.
 
 Pins turned, before -> after:
-- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: the override lambda runs at create ..." -> "The
-  override lambda runs at the first request of the service, once per kontainer, never at create":
-  - runs after create: 1 -> 0
-  - after two gets: 1 -> 1
-  - after a second `create`: 2 -> 1
-- `DynamicsAtCreateCharacterizationSpec`, "Cloning keeps the overrides and runs their lambdas again": runs right
-  after `clone()`: 2 -> 0; after a get in each kontainer: 2.
-- `ToolsCharacterizationSpec`: one clue text, "created at create" -> "created at its first request".
-- `ScopeGuardsSpec`: `forOverride(definition, instance = ...)` -> `forOverride(definition, create = { ... })`, the
-  new signature.
-- `funktor/insights` `KontainerWireNamesSpec`: the end-to-end wire test now also requests the overridden service.
-  Without that, its never-requested override has no instance and is missing from the slice, the consequence named
-  above. A new test there pins that consequence.
-- New tests:
-  - a never-requested override never runs and has no instance
-  - a throwing override fails at the first get with its own exception
-  - mutable state is read at first use
-  - the definition's class before and after first use
-  - the provider keeps only the value
+- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: cloning with an override for a non-dynamic ... throws
+  ServiceNotFound" -> `KontainerInconsistent("Unexpected dynamics were provided: Single")`, the message of `create`.
+- `DynamicPrototypeSpec`, "An override at clone throws ServiceNotFound" -> `KontainerInconsistent` with the message of
+  `create`, the dynamic prototype hint included.
 
-Mutation (failed / 524 or 525):
+Mutation: KS, `clone` skipping the check: RED, 5 / 524.
 
-| Mutant | Result |
-|---|---|
-| KL1: evaluated eagerly at create | RED, 5 |
-| KL2: evaluated on every request | RED, 7 |
-| KL3: the lambda kept after use | SURVIVED at first; RED, 1 after the provider test was added |
-
-Changelog (behaviour change, no compile signal): `ultra/kontainer`: overrides at `create { with { ... } }` are lazy.
-The lambda runs at the first request of that service from that kontainer, on whichever thread asks first, under the
-provider's lock; it runs until it has returned a value, then never again. `clone()` no longer runs it at once.
-Consequences:
-- An override that throws now throws at the first `get`, and again at the next, as no value was kept.
-- An override used as a gate, throwing at `create` to reject a request, no longer rejects requests that never ask for
-  the service.
-- A clone runs its parent's lambdas at the clone's first use, possibly after the parent's request ended and
-  concurrently with the parent.
-- A lambda that requests its own service ends in `StackOverflowError`.
-- Side effects run later, or never when the service is not used.
-- A lambda reading something mutable sees the value at first use.
-- An override never requested has no instance: none in `instances`, the debug info or the dump, and none in the
-  insights record slice.
-- Until it has returned a value, its definition names the class given to `with`.
-- Public signatures: `ServiceProvider.Provider.forOverride(definition, create: () -> Any)` (was `instance: Any`);
-  `ServiceProvider.ForOverride` is no longer a data class and its constructor changed (ULTRA-00333).
-
-Callers checked, nothing observable moves:
-- `with { call.currentUserProvider() }` only builds `UserProvider.lazy { }`
-- `with { UserProvider.system() }`, `with { NullQueryProfiler }` and `with { kronos }` are values
+Changelog (behaviour change): `ultra/kontainer`: `Kontainer.clone { with { ... } }` runs the same checks as `create`.
+An override for a non-dynamic throws `KontainerInconsistent("Unexpected dynamics were provided: ...")` (was
+`ServiceNotFound`); an override of a built-in is refused as at `create` (ULTRA-00332, ULTRA-00336).
 
 Commits:
 - `9fe4095b`: the plans
@@ -256,7 +194,7 @@ behaviour change (texts and tests only).
 
 ## The work
 
-- Decide: keep eager (simple, an override is a value) and document it, or make it lazy. If it stays, the KDoc of `with` says so.
+- `clone` runs the same dynamics check as `create` and fails with the same exception.
 - Tests first: the "CURRENT BEHAVIOUR" pin turns into the wanted expectation (RED before the fix); mutation check.
 - CHANGELOG: a behaviour change without a compile signal.
 
@@ -267,3 +205,4 @@ behaviour change (texts and tests only).
 ## History
 
 - 2026-11-14: created on the maintainer's word.
+- 2026-11-14: DONE.

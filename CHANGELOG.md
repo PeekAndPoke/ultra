@@ -62,6 +62,57 @@
   - `DebugInfo.ServiceDebugInfo.type` is a `ServiceType`, with new `kind`, `overridden` and `semiDynamicBecauseOf`;
     `DebugInfo.ServiceDefinitionInfo.injectionType` -> `type` and `kind`
   - `KontainerTools.dumpKontainer()` has a new `Kind` column; a semi dynamic service names what made it so
+- `ultra/kontainer`, behaviour change (no compile signal): the redefinition rule. The first definition fixes whether
+  a service is a singleton or a prototype; a plain static singleton can still be replaced by anything. If either
+  definition is dynamic, the service is dynamic. `prototype(X)` then `dynamic(X)` or `dynamicPrototype(X)` now gives
+  a dynamic prototype (was a static prototype), so singletons injecting `X` become one per kontainer. An override of
+  `X` at create is still refused; the message now names it as a dynamic prototype (ULTRA-00331).
+- `ultra/kontainer`, behaviour change (no compile signal): `KontainerBlueprint.extend` applies the redefinition rule
+  against the base blueprint. Silent. Eight of the 16 pairs change, base then extension (all 16 are pinned in
+  `ExtendRedefinitionCharacterizationSpec`):
+  - `dynamic` then `singleton`: stays a dynamic singleton, and its users stay one per kontainer (it became a global
+    singleton and its users global).
+  - `dynamic` then `prototype` or `dynamicPrototype`: one instance per kontainer (was one per injection), and an
+    override at create is now accepted where it was refused. For `dynamic` then `prototype`, a singleton injecting it
+    goes from global to one per kontainer.
+  - `prototype` then `singleton`: stays a prototype, one instance per injection (it became a global singleton).
+  - `prototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
+    `extended.create { with { X() } }` throws `KontainerInconsistent` where it was accepted.
+  - `dynamicPrototype` then `singleton`: stays a dynamic prototype, its users stay one per kontainer (it became a
+    global singleton).
+  - `dynamicPrototype` then `prototype`: stays a dynamic prototype, its users stay one per kontainer (it became a
+    static prototype and its users global).
+  - `dynamicPrototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
+    an override at create throws `KontainerInconsistent` where it was accepted (ULTRA-00330).
+- `ultra/kontainer`: `Kontainer`, `InjectionContext` and `KontainerBlueprint` cannot be registered. Every form of
+  `singleton`, `prototype`, `dynamic`, `dynamicPrototype` and `instance` is refused, in `kontainer { }`, a module and
+  `extend`: `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`, thrown at
+  the defining call. Before, the registration was accepted silently and the built-in still provided its value, though
+  the declared form could change its reported type and kind: `prototype(Kontainer::class)` made a singleton injecting
+  only `Kontainer` a global singleton that held the first request's kontainer (ULTRA-00336).
+- `ultra/kontainer`: the built-ins cannot be overridden at `create` or `clone`:
+  `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`. Before, overrides
+  of `Kontainer` and `InjectionContext` were accepted, and services injecting `Kontainer` got the foreign one
+  (ULTRA-00336).
+- `ultra/kontainer`: `Kontainer.clone { with { ... } }` runs the same checks as `create`. An override for a
+  non-dynamic throws `KontainerInconsistent("Unexpected dynamics were provided: ...")` (was `ServiceNotFound`); an
+  override of a built-in is refused as at `create` (ULTRA-00332, ULTRA-00336).
+- `ultra/kontainer`, behaviour change (no compile signal): overrides at `create { with { ... } }` are lazy. The
+  lambda runs at the first request of that service from that kontainer, on whichever thread asks first, under the
+  provider's lock; it runs until it has returned a value, then never again. `clone()` no longer runs it at once.
+  Consequences:
+  - An override that throws now throws at the first `get`, and again at the next, as no value was kept.
+  - An override used as a gate, throwing at `create` to reject a request, no longer rejects requests that never ask
+    for the service.
+  - A clone runs its parent's lambdas at the clone's first use, possibly after the parent's request ended and
+    concurrently with the parent.
+  - A lambda that requests its own service ends in `StackOverflowError`.
+  - Side effects run later, or never when the service is not used. A lambda reading something mutable sees the value
+    at first use.
+  - An override never requested has no instance: none in `instances`, the debug info or the dump, and none in the
+    insights record slice. Until it has returned a value, its definition names the class given to `with`.
+  - Public signatures: `ServiceProvider.Provider.forOverride(definition, create: () -> Any)` (was `instance: Any`);
+    `ServiceProvider.ForOverride` is no longer a data class and its constructor changed (ULTRA-00333).
 - `funktor/insights`: `KontainerCollector.Data.Service.type` is a `String` (was `ServiceProvider.Type`). The wire is
   unchanged: records and the graph API keep the names `Singleton`, `SemiDynamic`, `Dynamic`, `Prototype`,
   `DynamicOverride`; every prototype is `Prototype`, whatever its kind (ULTRA-00319).
@@ -190,6 +241,8 @@
 
 ### Fixes
 
+- `ultra/kontainer`: the dynamics check no longer keeps the first request's override lambdas, and what they capture,
+  alive for the life of the blueprint (ULTRA-00337).
 - `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever or returns wrapped slots when a step or a
   step plus gap crosses midnight. A duration of 24 h, a slot ending at 23:59:59.999 or a duration under one millisecond
   looped; `08:00-20:00` by 17 h returned four slots, three of them invalid (08:00-01:00, 18:00-11:00, 11:00-04:00),

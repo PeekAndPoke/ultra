@@ -1,55 +1,75 @@
-# ULTRA-00337: Kontainer: the dynamics checker keeps the first request's override lambdas alive
+# ULTRA-00330: Kontainer: extend skips the injection type upgrade
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K1, not merged: gate round 1 CLEAN, delta round 2 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K1, merged into master as `f575dd29`: gate round 1 CLEAN, delta round 2 CLEAN. Public API and behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
+**Found by:** the characterization specs of ULTRA-00319 (Kontainer injection type split), step 1, 2026-11-14.
+
 ## Why this exists
 
-`KontainerBlueprint.create` passes `dynamicServices.overrides.keys` to `DynamicsChecker.getUnexpected`, which stores
-that object as the key of a `ConcurrentHashMap` (`DynamicsChecker.kt:28`, `getOrPut`). The key is the live `keySet()`
-view of the builder's `LinkedHashMap`, so it holds the whole map, including the `() -> Any` override lambdas. For each
-distinct set of override classes, the first request's lambdas, and through them whatever they capture (an
-`ApplicationCall` with its headers and cookies, the current user), stay reachable from the blueprint until the process
-ends.
+In `base.extend { singleton(X) }`, a prototype or dynamic `X` becomes a plain `Singleton`: `extend` does not apply the type upgrade that a redefinition inside one builder applies. The base blueprint's singletons that inject `X` lose their promotion to SemiDynamic, so a service that was per request silently becomes shared across requests.
 
-It is retention only: nothing reads the lambdas back and no other request can see them; it is bounded to one map per
-distinct class set. Found by reading (domain and security reviewer, round 2 of ULTRA-00319); the same on master; not
-yet confirmed by a test.
+Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/RedefinitionCharacterizationSpec.kt`, in a test
+whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
+ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
 ## Decided (maintainer, 2026-11-14)
 
-"yes to storing the copy as the cache key": `DynamicsChecker.getUnexpected` keys its cache with a copy of the classes
-(`given.toSet()`), not with the live key view of the request's override map. Test first: the retention is proven
-(an override capturing a marker, all references dropped, the marker still reachable), then the fix. Built with the
-lazy overrides of ULTRA-00333, where the same care applies: after first use the lambda is dropped and only the value
-is kept.
+"here we should also prevent the downgrade from dynamic to singleton. The service needs to stay dynamic. We do not
+throw or log anything. This is just how the kontainer works."
+
+So `extend` applies the same redefinition rule as a redefinition inside one builder: a service that was dynamic stays
+dynamic when an extension redefines it as a singleton, and a prototype stays a prototype. Silently: no exception, no
+log line.
 
 ## Plan as built (track D, batch K1, 2026-11-14)
 
-- **Fix:** `DynamicsChecker.getUnexpected` looks up with the given set and stores a copy (`given.toSet()`) as the key.
-- **Test first** (`KontainerRetentionSpec`):
-  - A kontainer gets an override capturing a marker.
-  - Every reference is dropped, inside a helper function so no local keeps one.
-  - A `WeakReference` to the marker must clear within a bounded number of GC attempts. It is RED before the fix.
-- **A second test:** an override that was used, with the kontainer collected, leaves neither its lambda's capture nor
-  its value reachable.
+- `KontainerBlueprint.extend` applies `RedefinitionUpgrade` (ULTRA-00331) to every extension definition against the
+  base definition of the same class, after the extension's own block ran.
+  - The rule is associative, so this equals one builder holding base and extension.
+  - Silent.
+- `overwrites` stays as today (null for an extension's definitions). Recording the base definition there would change
+  the debug output; not built.
+- Tests first: the two CURRENT BEHAVIOUR pins in `RedefinitionCharacterizationSpec` and the one in
+  `DynamicPrototypeSpec` turn into the decided expectation.
+- Callers: no production code calls `extend` (searched); only kontainer tests do.
 
 ## Built (batch K1, 2026-11-14)
 
-As planned. Confirmed first: both retention tests were RED before the fix (the captured marker was never collected),
-green after.
+As planned: `KontainerBlueprint.extend` applies `RedefinitionUpgrade` against the base definitions; `overwrites`
+unchanged.
 
-Tests, `KontainerRetentionSpec`:
-- an unused override, kontainer dropped: the lambda's capture is collected
-- a used override, kontainer dropped: neither the capture nor the value stays reachable
-- a held override provider after first use: the capture is collected (ULTRA-00333)
+Pins turned, before -> after:
+- `RedefinitionCharacterizationSpec`, "CURRENT BEHAVIOUR: extend ..., a prototype redefined as singleton becomes
+  Singleton": (Singleton, Static) -> stays (Prototype, Static).
+- `RedefinitionCharacterizationSpec`, "CURRENT BEHAVIOUR: extend ..., a dynamic redefined as singleton ends the
+  promotion": Target (Singleton, Static) -> (Singleton, Dynamic); User (Singleton, Static), shared -> SemiDynamic,
+  one per kontainer.
+- `DynamicPrototypeSpec`, "Redefinition across extend skips the rule": Target (Singleton, Static) -> (Prototype,
+  Dynamic); User global -> SemiDynamic.
+- New, for the rule across extend: prototype in the base and dynamic in the extension gives (Prototype, Dynamic); a
+  static singleton in the base is replaced as is.
 
-Mutation: KC, the cache keyed by the live view again: RED, 2 / 524; re-run in round 2 with the reachability
-fences: RED, 2 / 546.
+Mutation: KE, `extend` without the rule: RED, 4 / 524.
 
-Changelog (fix): `ultra/kontainer`: the dynamics check no longer keeps the first request's override lambdas, and
-what they capture, alive for the life of the blueprint (ULTRA-00337).
+Changelog (behaviour change, no compile signal): `ultra/kontainer`: `KontainerBlueprint.extend` applies the
+redefinition rule against the base blueprint. Silent. Eight of the 16 pairs change, base then extension (all 16 are
+pinned in `ExtendRedefinitionCharacterizationSpec`):
+- `dynamic` then `singleton`: stays a dynamic singleton, and its users stay one per kontainer (it became a global
+  singleton and its users global).
+- `dynamic` then `prototype` or `dynamicPrototype`: one instance per kontainer (was one per injection), and an
+  override at create is now accepted where it was refused. For `dynamic` then `prototype`, a singleton injecting it
+  goes from global to one per kontainer.
+- `prototype` then `singleton`: stays a prototype, one instance per injection (it became a global singleton).
+- `prototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
+  `extended.create { with { X() } }` throws `KontainerInconsistent` where it was accepted.
+- `dynamicPrototype` then `singleton`: stays a dynamic prototype, its users stay one per kontainer (it became a global
+  singleton).
+- `dynamicPrototype` then `prototype`: stays a dynamic prototype, its users stay one per kontainer (it became a static
+  prototype and its users global).
+- `dynamicPrototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and an
+  override at create throws `KontainerInconsistent` where it was accepted (ULTRA-00330).
 
 Commits:
 - `9fe4095b`: the plans
@@ -195,15 +215,15 @@ behaviour change (texts and tests only).
 
 ## The work
 
-- Confirm first: a test that creates a kontainer with an override capturing a marker object, drops every reference,
-  and shows the marker is still reachable from the blueprint (a `WeakReference` that does not clear after GC).
-- Fix: key the cache with a copy (`given.toSet()`).
-- Mutation check; CHANGELOG (fix).
+- `extend` applies the same redefinition rule as the builder, or refuses a redefinition that lowers the type.
+- Tests first: the "CURRENT BEHAVIOUR" pin turns into the wanted expectation (RED before the fix); mutation check.
+- CHANGELOG: a behaviour change without a compile signal.
 
 ## Acceptance
 
-- The marker is collected; `:ultra:kontainer:test` green.
+- The pin no longer says "CURRENT BEHAVIOUR"; `:ultra:kontainer:test` and the consumer suites are green.
 
 ## History
 
-- 2026-11-14: created on the maintainer's standing word for Kontainer oddities ("fix each with its own ticket").
+- 2026-11-14: created on the maintainer's word.
+- 2026-11-14: DONE.

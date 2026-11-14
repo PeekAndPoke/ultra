@@ -1,96 +1,96 @@
-# ULTRA-00336: Kontainer: the built-in Kontainer service can be overridden at create
+# ULTRA-00331: Kontainer: a prototype redefined as dynamic stays a prototype
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K1, not merged: gate round 1 CLEAN, delta round 2 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K1, merged into master as `f575dd29`: gate round 1 CLEAN, delta round 2 CLEAN. Public API and behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
+**Found by:** the characterization specs of ULTRA-00319 (Kontainer injection type split), step 1, 2026-11-14.
+
 ## Why this exists
 
-The built-in `Kontainer` service is declared dynamic (`KontainerBuilder.kt`), so `create { with<Kontainer> { other } }` is accepted: `get(Kontainer::class)` and every service that injects `Kontainer` then get the foreign kontainer, and with it another request's services. The same holds for `InjectionContext`. Found by reading (security reviewer, round 1 of ULTRA-00319); the same on master; not yet pinned by a test.
+A prototype redefined as dynamic stays `Prototype`: singletons that inject it are not promoted, and `create { with { } }` refuses an override for it.
+
+Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/RedefinitionCharacterizationSpec.kt`, in a test
+whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
+ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
 ## Decided (maintainer, 2026-11-14)
 
-"Yes refuse the override for the built-in services. All three i suppose."
+The maintainer weighed throwing ("The initial author wants the service to be a prototype so making it a singleton
+must fail") against allowing the upgrade to a dynamic singleton, and agreed to the rule below: "ok yes we do it like
+this."
 
-`create` and `clone` refuse an override of `Kontainer`, `InjectionContext` and `KontainerBlueprint` with
-`KontainerInconsistent`, naming the class and saying that it is managed by the kontainer itself. `KontainerBlueprint`
-is a static singleton and is already refused today as "unexpected"; it gets the same clear message as the other two.
+**The redefinition rule, two sentences:**
 
-**And they cannot be registered at all** (maintainer, 2026-11-14: "This also means it must not be possible to
-register any of these at all."): a blueprint builder, a module or an `extend` block that defines `Kontainer`,
-`InjectionContext` or `KontainerBlueprint` (`singleton`, `prototype`, `dynamic`, `dynamicPrototype`, `instance`, by
-class or with a factory) is refused with `KontainerInconsistent`, naming the class and saying that it is managed by
-the kontainer itself. Test first what happens today (the built-ins are added after the builder block ran,
-`KontainerBuilder.kt:527-546`, so a user definition is probably replaced silently): pin it, then refuse it. Decide in
-the plan whether the refusal comes when the definition is made or when the blueprint is built; either way before any
-kontainer exists.
+1. The first definition fixes what the service is, singleton or prototype. The one exception stays: a plain static
+   singleton can be replaced by anything.
+2. Request binding is never lost and can always be added: if either definition is dynamic, the service is dynamic.
+
+| Redefinition | Today | With the rule |
+|---|---|---|
+| `prototype` then `dynamic` | (Prototype, Static) | (Prototype, Dynamic) |
+| `prototype` then `dynamicPrototype` | (Prototype, Static) | (Prototype, Dynamic) |
+| every other pair | | unchanged |
+
+Silent: no exception, no log line, as for `extend` (ULTRA-00330). Why no upgrade to a dynamic singleton: a prototype
+promises every injector its own instance; services written against the first definition may keep state in it, and one
+shared instance per request would mix that state without any failure. Why no exception: consistency with ULTRA-00330,
+redefinition is the normal way to swap an implementation, and a safe resolution exists.
+
+Consequence, accepted: `create { with { ... } }` for such a service is still refused (only dynamic singletons can be
+overridden; the message says so). `extend` follows the same rule (ULTRA-00330).
 
 ## Plan as built (track D, batch K1, 2026-11-14)
 
-- **Registration: refused at the defining call**, so the stack trace points at the line.
-  - Covered: the `singleton`, `prototype`, `dynamic` and `dynamicPrototype` service builders (every overload goes
-    through them) and both `instance()` forms, inside `kontainer { }`, a module and `extend { }`.
-  - `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`.
-  - The kontainer's own registration of the three bypasses the check.
-  - Today's behaviour is pinned first, in every form, as CURRENT BEHAVIOUR.
-- **Override: refused at `create` and `clone`**, through the shared entry point of ULTRA-00332, before the dynamics
-  check.
-  - `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`.
-  - `Kontainer` and `InjectionContext` leave the set of overridable dynamics; `Kontainer` and `InjectionContext` stay dynamic sources of promotion.
-- Matching is by class equality. All three classes are final, so no subclass can be registered under them.
-- Callers: no code registers or overrides a built-in (searched).
+- `KontainerBuilder.RedefinitionUpgrade.adjust(newDef, existingDef)`:
+  - no earlier definition, or the earlier one is a static singleton: the later definition as it is
+  - otherwise: type = the earlier type; kind = Dynamic if either is Dynamic, else Static
+  - the producer is always the later one, as today
+- The rule is associative, so applying it per redefinition (builder) or to a whole extension (`extend`, ULTRA-00330)
+  gives the same result for the same sequence of definitions.
+- Only `prototype` then `dynamic` and `prototype` then `dynamicPrototype` change, both to (Prototype, Dynamic); the
+  other pairs are pinned unchanged.
+- Silent; an override at create is refused for such a service, with the existing message and its dynamic prototype
+  hint.
+- Tests first:
+  - the CURRENT BEHAVIOUR pins (`RedefinitionCharacterizationSpec`, `DynamicPrototypeSpec`) turn into the decided
+    expectation
+  - `InjectionTypeUpgradeSpec` "A Prototype service must not be downgraded to a dynamic" changes with the decision
+- Callers: no production code redefines a prototype as dynamic (searched).
 
 ## Built (batch K1, 2026-11-14)
 
-As planned. Registration is refused at the defining call: a statement after the registration in the same block does
-not run, which a test pins.
-
-Today's behaviour, pinned first and confirmed by a run (commit `a4977d16`, 95 tests): every registration form of the
-three was accepted silently and the built-in still provided its value. The form could change what it reported:
-- a `prototype` registration made the built-in (Prototype, Static)
-- a `dynamicPrototype` registration made it (Prototype, Dynamic)
-- a `dynamic` registration made `KontainerBlueprint` (Singleton, Dynamic)
-
-Overrides of `Kontainer` and `InjectionContext` were accepted at `create` and `clone`; `KontainerBlueprint` was
-refused as "Unexpected dynamics were provided" at `create` and threw `ServiceNotFound` at `clone`.
+As planned; the rule is in `KontainerBuilder.RedefinitionUpgrade`.
 
 Pins turned, before -> after:
-- `BuiltInServicesCharacterizationSpec`:
-  - 90 registration pins ("accepted, the built-in wins") -> refused with
-    `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`
-  - 5 override pins -> refused with `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be
-    overridden")`
-  - plus one test with a built-in and an unexpected class together: the built-in is named first.
-- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: an override for the Kontainer itself is accepted ..." ->
-  refused, same message.
+- `RedefinitionCharacterizationSpec`, "CURRENT BEHAVIOUR: prototype redefined as dynamic stays Prototype ..." ->
+  "Prototype redefined as dynamic: Prototype.Dynamic, its users are promoted, an override at create is refused":
+  - Target: (Prototype, Static) -> (Prototype, Dynamic)
+  - User: (Singleton, Static), shared -> (Singleton, SemiDynamic), one per kontainer
+  - Refusal message: `Unexpected dynamics were provided: Target` -> the same plus `(only dynamic singletons can be
+    overridden, not the dynamic prototype Target)`
+- `RedefinitionCharacterizationSpec`, "singleton, prototype, dynamic ends as Prototype": (Prototype, Static) ->
+  (Prototype, Dynamic).
+- `DynamicPrototypeSpec`, "CURRENT BEHAVIOUR: prototype then dynamicPrototype stays Prototype.Static ...": Target
+  (Prototype, Static) -> (Prototype, Dynamic); User global -> SemiDynamic, one per kontainer.
+- `InjectionTypeUpgradeSpec`, "A Prototype service must not be downgraded to a dynamic ..." -> "... stays a Prototype
+  and becomes Dynamic": (Prototype, Static) -> (Prototype, Dynamic).
 
 Mutation (failed / 524):
 
 | Mutant | Result |
 |---|---|
-| KB1 to KB4: refusal removed from `singleton` / `prototype` / `dynamic` / `dynamicPrototype` | RED, 18 each |
-| KB5 and KB6: refusal removed from `instance(value)` / `instance(class, value)` | RED, 9 each |
-| KB7: override refusal removed | RED, 7 |
-| KB8, KB9, KB10: `Kontainer` / `InjectionContext` / `KontainerBlueprint` taken out of the built-in set | RED, 32 / 33 / 32 |
+| KR1: the static-singleton arm off | RED, 6 |
+| KR2: the type from the later definition | RED, 14 |
+| KR3: the later kind ignored (the old rule) | RED, 5 |
+| KR4: the earlier kind ignored | RED, 10 |
+| KR5: always dynamic | RED, 3 |
 
-The built-ins are also excluded from the overridable set (removed while building as redundant, restored in round 1):
-not even the internal `instantiate` accepts an override of them. `Kontainer` and `InjectionContext` stay dynamic
-sources of promotion.
-
-Changelog (behaviour change):
-- `ultra/kontainer`: `Kontainer`, `InjectionContext` and `KontainerBlueprint` cannot be registered. Every form of
-  `singleton`, `prototype`, `dynamic`, `dynamicPrototype` and `instance` is refused, in `kontainer { }`, a module and
-  `extend`: `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`, thrown at
-  the defining call. Before, the registration was accepted silently and the built-in still provided its value, though
-  the declared form could change its reported type and kind.
-- `ultra/kontainer`: they cannot be overridden at `create` or `clone`:
-  `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`. Before, overrides of
-  `Kontainer` and `InjectionContext` were accepted, and services injecting `Kontainer` got the foreign one.
-  `KontainerBlueprint` was refused as "Unexpected dynamics were provided" at `create` and with `ServiceNotFound` at
-  `clone`.
-- What was really fixed by refusing registrations: on master `prototype(Kontainer::class)` made `Kontainer`
-  (Prototype, Static), so a singleton injecting only `Kontainer` was a global singleton and held the first request's
-  kontainer (ULTRA-00336).
+Changelog (behaviour change, no compile signal): `ultra/kontainer`: the redefinition rule. The first definition
+fixes whether a service is a singleton or a prototype; a plain static singleton can still be replaced by anything. If
+either definition is dynamic, the service is dynamic. `prototype(X)` then `dynamic(X)` or `dynamicPrototype(X)` now
+gives a dynamic prototype (was a static prototype), so singletons injecting `X` become one per kontainer. An override
+of `X` at create is still refused; the message now names it as a dynamic prototype (ULTRA-00331).
 
 Commits:
 - `9fe4095b`: the plans
@@ -236,10 +236,9 @@ behaviour change (texts and tests only).
 
 ## The work
 
-- First pin today's behaviour in `ultra/kontainer/src/test/kotlin/e2e/characterization/` as "CURRENT BEHAVIOUR" (track D
-  does this with the round-1 fixes of ULTRA-00319), so the scenario is confirmed by a run.
-- Refuse an override of the built-in services at `create` and `clone` with `KontainerInconsistent`.
-- Tests first, mutation check, CHANGELOG (behaviour change without a compile signal).
+- Decide the redefinition table for all pairs of (ServiceType, ServiceKind), `dynamicPrototype` included, and make builder and `extend` follow it (see ULTRA-00330).
+- Tests first: the "CURRENT BEHAVIOUR" pin turns into the wanted expectation (RED before the fix); mutation check.
+- CHANGELOG: a behaviour change without a compile signal.
 
 ## Acceptance
 
@@ -247,4 +246,5 @@ behaviour change (texts and tests only).
 
 ## History
 
-- 2026-11-14: created on the maintainer's standing word for Kontainer oddities ("fix each with its own ticket").
+- 2026-11-14: created on the maintainer's word.
+- 2026-11-14: DONE.

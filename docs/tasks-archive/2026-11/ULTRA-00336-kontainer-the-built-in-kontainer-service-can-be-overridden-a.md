@@ -1,54 +1,96 @@
-# ULTRA-00332: Kontainer: clone skips the dynamics check that create does
+# ULTRA-00336: Kontainer: the built-in Kontainer service can be overridden at create
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, batch K1, not merged: gate round 1 CLEAN, delta round 2 CLEAN.
+> **Status (2026-11-14): DONE.** Batch K1, merged into master as `f575dd29`: gate round 1 CLEAN, delta round 2 CLEAN. Public API and behaviour changed; the docs follow in ULTRA-00338 (kontainer docs).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
-**Found by:** the characterization specs of ULTRA-00319 (Kontainer injection type split), step 1, 2026-11-14.
-
 ## Why this exists
 
-`clone { with { X() } }` for a non-dynamic `X` skips the dynamics check and throws `ServiceNotFound`, where `create { with { X() } }` throws `KontainerInconsistent`.
-
-Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/DynamicsAtCreateCharacterizationSpec.kt`, in a test
-whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
-ticket (maintainer, 2026-11-14: "fix each with its own ticket").
+The built-in `Kontainer` service is declared dynamic (`KontainerBuilder.kt`), so `create { with<Kontainer> { other } }` is accepted: `get(Kontainer::class)` and every service that injects `Kontainer` then get the foreign kontainer, and with it another request's services. The same holds for `InjectionContext`. Found by reading (security reviewer, round 1 of ULTRA-00319); the same on master; not yet pinned by a test.
 
 ## Decided (maintainer, 2026-11-14)
 
-"yes check clone like create": `Kontainer.clone { with { ... } }` runs the same dynamics check as
-`KontainerBlueprint.create` and throws the same `KontainerInconsistent` with the same message (it threw
-`ServiceNotFound` from deeper inside). One shared entry point for both paths.
+"Yes refuse the override for the built-in services. All three i suppose."
+
+`create` and `clone` refuse an override of `Kontainer`, `InjectionContext` and `KontainerBlueprint` with
+`KontainerInconsistent`, naming the class and saying that it is managed by the kontainer itself. `KontainerBlueprint`
+is a static singleton and is already refused today as "unexpected"; it gets the same clear message as the other two.
+
+**And they cannot be registered at all** (maintainer, 2026-11-14: "This also means it must not be possible to
+register any of these at all."): a blueprint builder, a module or an `extend` block that defines `Kontainer`,
+`InjectionContext` or `KontainerBlueprint` (`singleton`, `prototype`, `dynamic`, `dynamicPrototype`, `instance`, by
+class or with a factory) is refused with `KontainerInconsistent`, naming the class and saying that it is managed by
+the kontainer itself. Test first what happens today (the built-ins are added after the builder block ran,
+`KontainerBuilder.kt:527-546`, so a user definition is probably replaced silently): pin it, then refuse it. Decide in
+the plan whether the refusal comes when the definition is made or when the blueprint is built; either way before any
+kontainer exists.
 
 ## Plan as built (track D, batch K1, 2026-11-14)
 
-- One internal entry point, `KontainerBlueprint.createChecked(overrides)`:
-  - validation on first use
-  - the built-in check (ULTRA-00336)
-  - the dynamics check
-  - instantiate
-- `create` builds the overrides and calls it. `Kontainer.clone` calls it with the kontainer's overrides merged with
-  the new ones, as `newKontainer` does today, so `clone { with { X() } }` for a non-dynamic `X` throws the same
-  `KontainerInconsistent` with the same message.
-- Callers: `WorkersFacade` (`clone { with { kronos } }`, a dynamic, accepted as before); `InstallFixturesCliCommand`
-  and the demo's `init.clone()` (no overrides).
+- **Registration: refused at the defining call**, so the stack trace points at the line.
+  - Covered: the `singleton`, `prototype`, `dynamic` and `dynamicPrototype` service builders (every overload goes
+    through them) and both `instance()` forms, inside `kontainer { }`, a module and `extend { }`.
+  - `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`.
+  - The kontainer's own registration of the three bypasses the check.
+  - Today's behaviour is pinned first, in every form, as CURRENT BEHAVIOUR.
+- **Override: refused at `create` and `clone`**, through the shared entry point of ULTRA-00332, before the dynamics
+  check.
+  - `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`.
+  - `Kontainer` and `InjectionContext` leave the set of overridable dynamics; `Kontainer` and `InjectionContext` stay dynamic sources of promotion.
+- Matching is by class equality. All three classes are final, so no subclass can be registered under them.
+- Callers: no code registers or overrides a built-in (searched).
 
 ## Built (batch K1, 2026-11-14)
 
-As planned: `KontainerBlueprint.createChecked` is the one entry point; `Kontainer.clone` reaches it through
-`ServiceProviderFactory.newKontainer`.
+As planned. Registration is refused at the defining call: a statement after the registration in the same block does
+not run, which a test pins.
+
+Today's behaviour, pinned first and confirmed by a run (commit `a4977d16`, 95 tests): every registration form of the
+three was accepted silently and the built-in still provided its value. The form could change what it reported:
+- a `prototype` registration made the built-in (Prototype, Static)
+- a `dynamicPrototype` registration made it (Prototype, Dynamic)
+- a `dynamic` registration made `KontainerBlueprint` (Singleton, Dynamic)
+
+Overrides of `Kontainer` and `InjectionContext` were accepted at `create` and `clone`; `KontainerBlueprint` was
+refused as "Unexpected dynamics were provided" at `create` and threw `ServiceNotFound` at `clone`.
 
 Pins turned, before -> after:
-- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: cloning with an override for a non-dynamic ... throws
-  ServiceNotFound" -> `KontainerInconsistent("Unexpected dynamics were provided: Single")`, the message of `create`.
-- `DynamicPrototypeSpec`, "An override at clone throws ServiceNotFound" -> `KontainerInconsistent` with the message of
-  `create`, the dynamic prototype hint included.
+- `BuiltInServicesCharacterizationSpec`:
+  - 90 registration pins ("accepted, the built-in wins") -> refused with
+    `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`
+  - 5 override pins -> refused with `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be
+    overridden")`
+  - plus one test with a built-in and an unexpected class together: the built-in is named first.
+- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: an override for the Kontainer itself is accepted ..." ->
+  refused, same message.
 
-Mutation: KS, `clone` skipping the check: RED, 5 / 524.
+Mutation (failed / 524):
 
-Changelog (behaviour change): `ultra/kontainer`: `Kontainer.clone { with { ... } }` runs the same checks as `create`.
-An override for a non-dynamic throws `KontainerInconsistent("Unexpected dynamics were provided: ...")` (was
-`ServiceNotFound`); an override of a built-in is refused as at `create` (ULTRA-00332, ULTRA-00336).
+| Mutant | Result |
+|---|---|
+| KB1 to KB4: refusal removed from `singleton` / `prototype` / `dynamic` / `dynamicPrototype` | RED, 18 each |
+| KB5 and KB6: refusal removed from `instance(value)` / `instance(class, value)` | RED, 9 each |
+| KB7: override refusal removed | RED, 7 |
+| KB8, KB9, KB10: `Kontainer` / `InjectionContext` / `KontainerBlueprint` taken out of the built-in set | RED, 32 / 33 / 32 |
+
+The built-ins are also excluded from the overridable set (removed while building as redundant, restored in round 1):
+not even the internal `instantiate` accepts an override of them. `Kontainer` and `InjectionContext` stay dynamic
+sources of promotion.
+
+Changelog (behaviour change):
+- `ultra/kontainer`: `Kontainer`, `InjectionContext` and `KontainerBlueprint` cannot be registered. Every form of
+  `singleton`, `prototype`, `dynamic`, `dynamicPrototype` and `instance` is refused, in `kontainer { }`, a module and
+  `extend`: `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`, thrown at
+  the defining call. Before, the registration was accepted silently and the built-in still provided its value, though
+  the declared form could change its reported type and kind.
+- `ultra/kontainer`: they cannot be overridden at `create` or `clone`:
+  `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`. Before, overrides of
+  `Kontainer` and `InjectionContext` were accepted, and services injecting `Kontainer` got the foreign one.
+  `KontainerBlueprint` was refused as "Unexpected dynamics were provided" at `create` and with `ServiceNotFound` at
+  `clone`.
+- What was really fixed by refusing registrations: on master `prototype(Kontainer::class)` made `Kontainer`
+  (Prototype, Static), so a singleton injecting only `Kontainer` was a global singleton and held the first request's
+  kontainer (ULTRA-00336).
 
 Commits:
 - `9fe4095b`: the plans
@@ -194,9 +236,10 @@ behaviour change (texts and tests only).
 
 ## The work
 
-- `clone` runs the same dynamics check as `create` and fails with the same exception.
-- Tests first: the "CURRENT BEHAVIOUR" pin turns into the wanted expectation (RED before the fix); mutation check.
-- CHANGELOG: a behaviour change without a compile signal.
+- First pin today's behaviour in `ultra/kontainer/src/test/kotlin/e2e/characterization/` as "CURRENT BEHAVIOUR" (track D
+  does this with the round-1 fixes of ULTRA-00319), so the scenario is confirmed by a run.
+- Refuse an override of the built-in services at `create` and `clone` with `KontainerInconsistent`.
+- Tests first, mutation check, CHANGELOG (behaviour change without a compile signal).
 
 ## Acceptance
 
@@ -204,4 +247,5 @@ behaviour change (texts and tests only).
 
 ## History
 
-- 2026-11-14: created on the maintainer's word.
+- 2026-11-14: created on the maintainer's standing word for Kontainer oddities ("fix each with its own ticket").
+- 2026-11-14: DONE.

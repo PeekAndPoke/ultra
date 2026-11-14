@@ -49,3 +49,7 @@ Known behaviours with tickets (ULTRA-00327 to ULTRA-00337) are documented only o
 ## History
 
 - 2026-11-14: created with the archive of ULTRA-00319 (public API changed, code settled).
+- 2026-11-14: batch K1 is merged (`f575dd29`) and now in scope: the redefinition rule (ULTRA-00331), `extend`
+  applying it (ULTRA-00330), `clone` checking like `create` (ULTRA-00332), lazy overrides (ULTRA-00333), the built-ins
+  that can be neither registered nor overridden (ULTRA-00336). Still open and not to be documented yet: ULTRA-00327,
+  ULTRA-00328, ULTRA-00329, ULTRA-00334, ULTRA-00335.
