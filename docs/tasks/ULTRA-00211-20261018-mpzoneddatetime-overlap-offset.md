@@ -103,6 +103,15 @@ like java.time.
   `MpZonedDateTime.of(x.datetime, tz)` (what `copy` did: keep the local time, resolve it in the new zone).
 - Behaviour fix outside the module (maintainer-approved): `ultra/slumber/.../mp/MpZonedDateTimeCodec.kt`, the awaker
   builds from `ts` with `atZone`.
+- Apia loop (maintainer, 2026-11-14, "yes fix it now"): `atStartOfNext` / `atStartOfPrevious` (both overloads; the
+  kotlinx ones delegate) step on the date: `toLocalDate().atStartOfNext/Previous(day).atStartOfDay(timezone)`. The
+  `MpLocalDate` variants have the same meaning for the starting day (next: strictly after today; previous: today
+  included), so every ordinary result is unchanged: 27 Europe/Berlin rows across both 2022 DST switches, computed with
+  the old code by a throwaway probe and pinned (`MpZonedDateTimeWeekdaySpec`). On a date the zone skips the result is
+  that date's `atStartOfDay`, i.e. the start of the day after it: from Apia 2011-12-31 the previous FRIDAY is
+  2011-12-31T00:00+14:00 (a Saturday); from 2011-12-29 the next FRIDAY is the same (the old loop skipped to 2012-01-06).
+  RED first: 7 of 38 on the JVM (6 by the 5 s time limit, "next FRIDAY" with the old 2012-01-06). After: 38 / 0 on
+  JVM, JS and native. Mutant: the old `atStartOfPrevious` loop restored → red 6, all "Did not finish within 5s".
 
 ### Docs lines for the DOCS follow-up
 
@@ -156,6 +165,11 @@ like java.time.
   `atStartOfYear()` follow `MpLocalDate.atStartOfDay(zone)` (java.time): when midnight falls into a gap the day starts at
   the end of the gap (Toronto 1919-03-31: 00:30, was 01:00). `atStartOfHour/Minute/Second()` and `atTime()` keep the
   current offset in an overlap (ULTRA-00211).
+- `ultra/datetime`, fix: `MpZonedDateTime.atStartOfPrevious` no longer loops forever when the previous day does not
+  exist in the zone (Pacific/Apia and Pacific/Fakaofo skipped 2011-12-30). `atStartOfNext` and `atStartOfPrevious` step
+  on the date; on a skipped date they return the start of the day after it, like `atStartOfDay` (from Apia 2011-12-29,
+  the next FRIDAY is 2011-12-31T00:00+14:00, a Saturday; it was 2012-01-06). Every ordinary result is unchanged
+  (ULTRA-00211).
 - **Before you update** (removed API): the public constructor `MpZonedDateTime(datetime, timezone)` — use
   `MpZonedDateTime.of(datetime, timezone)` or `instant.atZone(timezone)`; `MpZonedDateTime.copy(...)` — e.g.
   `x.copy(timezone = tz)` becomes `MpZonedDateTime.of(x.datetime, tz)`; destructuring (`component1/2`)
@@ -171,7 +185,7 @@ like java.time.
 | 1 | MINOR | `jvmMain/conversion.kt:96-107` | `.jvm` / `.mp` go through epoch millis: clamp / `ArithmeticException` beyond ±292 M years | FIXED | by epoch second + nanos both ways. RED first: ±10^16 s (year ±317 M) and nanos, 3 tests. Mutants: either side back to millis → red 3 |
 | 1 | MINOR | `MpZonedDateTime.kt:349` | `atStartOfHour()` into a gap can be later than the receiver | FIXED (KDoc + pin) | Toronto 1919-03-31T00:45 → 01:00, pinned as current behaviour |
 | 1 | MINOR | ticket | gap equality attributed to the equality choice | FIXED | it holds under both choices (`datetime` derives from the instant); changelog and notes corrected |
-| 1 | – | `MpZonedDateTime.kt:397-406` | `atStartOfPrevious` loops forever in Pacific/Apia (2011-12-30 skipped) | CONFIRMED, open (maintainer) | probe (bounded copy + real call under a 5 s limit): from 2011-12-31 (Sat) `minus(1 DAY).atStartOfDay()` resolves back to 12-31 00:00+14:00 every step; real call "Did not finish within 5s" (JVM); bounded copy identical on JS. Pre-existing. `atStartOfNext` terminates (moves forward: 2012-01-06); `MpLocalDate` variants terminate (2011-12-30 exists as a date) |
+| 1 | – | `MpZonedDateTime.kt:397-406` | `atStartOfPrevious` loops forever in Pacific/Apia (2011-12-30 skipped) | CONFIRMED, FIXED 2026-11-14 (maintainer: "yes fix it now") | probe (bounded copy + real call under a 5 s limit): from 2011-12-31 (Sat) `minus(1 DAY).atStartOfDay()` resolves back to 12-31 00:00+14:00 every step; real call "Did not finish within 5s" (JVM); bounded copy identical on JS. Pre-existing. `atStartOfNext` terminates (moves forward: 2012-01-06); `MpLocalDate` variants terminate (2011-12-30 exists as a date) |
 | 1 | – | `compareTo` vs `equals` | `sortedSetOf(t.atZone(UTC), t.atZone(Berlin))` keeps one | CONFIRMED, no change | probe: `compareTo` 0, `equals` false, sorted set 1, hash set 2 |
 | 1 | – | slumber `MpZonedDateTimeCodec.kt:25` | any Number is a `ts` | CONFIRMED, no change | probe: `NaN` and `-0.7` → 1970-01-01T00:00Z, `Infinity` and `1.5e30` → clamped to +292278994-08-17 |
 

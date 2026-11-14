@@ -392,17 +392,13 @@ class MpZonedDateTime private constructor(
     fun atStartOfNext(dayOfWeek: DayOfWeek): MpZonedDateTime = atStartOfNext(dayOfWeek.mp)
 
     /**
-     * Gets the start of the upcoming [dayOfWeek].
+     * Gets the start of the upcoming [dayOfWeek], after today.
+     *
+     * When the zone skips that date (Samoa skipped 2011-12-30), the start of the day after it, like [atStartOfDay].
      */
     fun atStartOfNext(dayOfWeek: MpDayOfWeek): MpZonedDateTime {
-
-        var result = plus(1, DateTimeUnit.DAY).atStartOfDay()
-
-        while (result.dayOfWeek != dayOfWeek) {
-            result = result.plus(1, DateTimeUnit.DAY).atStartOfDay()
-        }
-
-        return result
+        // Steps on the date: stepping on the zoned value looped forever over a day the zone skips (ULTRA-00211)
+        return toLocalDate().atStartOfNext(dayOfWeek).atStartOfDay(timezone)
     }
 
     /**
@@ -411,17 +407,13 @@ class MpZonedDateTime private constructor(
     fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpZonedDateTime = atStartOfPrevious(dayOfWeek.mp)
 
     /**
-     * Gets the start of the preceding [dayOfWeek].
+     * Gets the start of the preceding [dayOfWeek], today included.
+     *
+     * When the zone skips that date (Samoa skipped 2011-12-30), the start of the day after it, like [atStartOfDay].
      */
     fun atStartOfPrevious(dayOfWeek: MpDayOfWeek): MpZonedDateTime {
-
-        var result = atStartOfDay()
-
-        while (result.dayOfWeek != dayOfWeek) {
-            result = result.minus(1, DateTimeUnit.DAY).atStartOfDay()
-        }
-
-        return result
+        // Steps on the date: stepping on the zoned value looped forever over a day the zone skips (ULTRA-00211)
+        return toLocalDate().atStartOfPrevious(dayOfWeek).atStartOfDay(timezone)
     }
 
     /**
