@@ -55,3 +55,5 @@ private fun zoneFor(zoneId: String): TimeZone {
         if (zones.compareAndSet(current, current + (zoneId to zone))) return zone
     }
 }
+
+internal actual fun platformInstantLimitMillis(zoneId: String): Long? = null

@@ -34,12 +34,15 @@ class MpLocalTimeSlotSerializationSpec : StringSpec({
         decode("""{"from":0,"duration":-1,"to":3600000}""") shouldBe MpLocalTimeSlot.of(t(0), Duration.ZERO)
     }
 
-    "an infinite duration is stored as 2^53 - 1 ms, which a JS client reads exactly, and reads back infinite" {
+    "Duration.INFINITE is the longest slot, stored as 2^53 - 1 ms (exact in JS); a larger number reads back as it" {
         val open = MpLocalTimeSlot.of(t(10), Duration.INFINITE)
 
-        encode(open) shouldBe """{"from":36000000,"duration":9007199254740991,"to":36000000}"""
+        // finite now: to is the clock time of its end, 18:59:00.991 (by hand)
+        encode(open) shouldBe """{"from":36000000,"duration":9007199254740991,"to":68340991}"""
         decode(encode(open)) shouldBe open
-        decode("""{"from":36000000,"duration":9223372036854775807}""").isInfinite shouldBe true
+        decode("""{"from":36000000,"duration":9223372036854775807}""") shouldBe open
+        // just past the longest: cut to it, not wrapped (2^53 + 5 would wrap to 5)
+        decode("""{"from":36000000,"duration":9007199254740997}""") shouldBe open
     }
 
     "the old shape {from, to}: after from is the difference, before from is overnight, equal is empty" {

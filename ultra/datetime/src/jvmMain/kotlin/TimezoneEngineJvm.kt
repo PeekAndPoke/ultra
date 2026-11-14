@@ -15,3 +15,5 @@ internal actual fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: L
 internal actual fun platformSystemDefaultZoneId(): String {
     return TimeZone.currentSystemDefault().id
 }
+
+internal actual fun platformInstantLimitMillis(zoneId: String): Long? = null

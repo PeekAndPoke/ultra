@@ -124,7 +124,7 @@ class MpDateTimeFieldParitySpec : FreeSpec() {
             }
 
             runtimeTs shouldContain
-                    "export const INFINITE_DURATION_MILLIS = ${MpLocalTimeSlot.INFINITE_DURATION_MILLIS}\n"
+                    "export const MAX_DURATION_MILLIS = ${MpLocalTimeSlot.MAX_DURATION_MILLIS}\n"
             runtimeTs shouldContain "export const MpLocalTimeSlot = z.object({\n    from: z.number(),\n" +
                     "    duration: z.number(),\n    to: z.number(),\n})"
         }

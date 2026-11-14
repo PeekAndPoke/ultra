@@ -294,3 +294,10 @@ internal expect fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: L
 
 /** The id of the system's time zone. */
 internal expect fun platformSystemDefaultZoneId(): String
+
+/**
+ * The limit, in epoch milliseconds either side of 1970, up to which this platform resolves times in the zone [zoneId],
+ * or null when only the date types' own range limits it (JVM, native; on JS UTC and fixed offsets). JS: 8.64e15 ms for
+ * a region zone, the range of `Date` (-271821-04-20 to +275760-09-13).
+ */
+internal expect fun platformInstantLimitMillis(zoneId: String): Long?

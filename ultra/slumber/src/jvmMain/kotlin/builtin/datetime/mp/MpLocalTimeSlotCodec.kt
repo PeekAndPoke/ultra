@@ -47,7 +47,8 @@ object MpLocalTimeSlotAwaker : Awaker {
     /**
      * A whole number of milliseconds; beyond [Long] (a `BigInteger` or `BigDecimal` from Jackson) it saturates, by
      * comparing, never by expanding a huge exponent. The bottom is one above [Long.MIN_VALUE], which the raw shape uses
-     * for "absent": any negative duration is empty. A Double or Float infinity saturates as well.
+     * for "absent": any negative duration is empty. A Double or Float infinity saturates as well; the slot then cuts
+     * every length beyond `MpLocalTimeSlot.MAX_DURATION_MILLIS` to it.
      */
     private fun Number.toSaturatedLong(): Long = when (this) {
         is BigInteger -> maxOf(minOf(this, BIG_INTEGER_MAX), BIG_INTEGER_MIN).toLong()

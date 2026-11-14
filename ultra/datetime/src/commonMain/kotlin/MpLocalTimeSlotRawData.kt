@@ -14,12 +14,13 @@ private const val DURATION_ABSENT: Long = Long.MIN_VALUE
 /**
  * The stored shape of an [MpLocalTimeSlot], in milliseconds: `{from, duration, to}` (ULTRA-00341).
  *
- * - [duration] decides; an infinite one is written as [MpLocalTimeSlot.INFINITE_DURATION_MILLIS].
+ * - [duration] decides; it is at most [MpLocalTimeSlot.MAX_DURATION_MILLIS], and a larger stored number reads back as
+ *   that (ULTRA-00343).
  * - [to] is derived and written for queries and readers. It is read only when [duration] is ABSENT, i.e. from the
  *   shape `{from, to}` written before ULTRA-00341 (`to` after `from` is the difference, before `from` overnight, equal
  *   empty). An explicit `"duration": null` (what a TypeScript client's `Infinity` or `NaN` becomes) is an error.
  * - What a query on the stored [to] sees: an overnight slot has `to < from`; a slot ending at midnight has 86400000;
- *   a slot longer than a day has only the clock time of its end; an infinite or empty slot has `to = from`. Query
+ *   a slot longer than a day has only the clock time of its end; an empty slot has `to = from`. Query
  *   [duration] for the length.
  * - Public for the same reason as [MpDateTimeRawData]: slumber declares it through `@Slumber.As`, so karango and
  *   monko see it as their query paths; the slumber codec decodes through [toSlotOrNull].
@@ -51,7 +52,7 @@ object MpLocalTimeSlotSerializer : KSerializer<MpLocalTimeSlot> {
 /** The stored shape of this slot. */
 fun MpLocalTimeSlot.toRawData(): MpLocalTimeSlotRawData = MpLocalTimeSlotRawData(
     from = from.inWholeMilliSeconds().toLong(),
-    duration = if (isInfinite) MpLocalTimeSlot.INFINITE_DURATION_MILLIS else duration.inWholeMilliseconds,
+    duration = duration.inWholeMilliseconds,
     to = to.inWholeMilliSeconds().toLong(),
 )
 

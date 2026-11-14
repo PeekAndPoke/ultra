@@ -572,6 +572,8 @@ or `MpLocalDateRangeLazySpec`, green on JVM, JS and native):**
   discussed after the merge.
 - 2026-11-14: master's values were restored for the merge of ULTRA-00341 (`e7c882a9`); the maintainer's decision
   below replaces the question of which values to use.
+- 2026-11-14: batch A (slots are finite) built on `wt/datetime`; awaiting the gate. Batches B and C wait for the
+  coordinator's word.
 
 ## Decided (maintainer, 2026-11-14): no sentinels, open ranges are `Partial`, slots are finite
 
@@ -621,3 +623,112 @@ MINORs of that review (the count-1 case lists one date, not none; `numDaysInMont
   choice through `Json { encodeDefaults = true }`; a missing key and a null key mean the same. No codec in this repo
   sets it today.
 - Dates BC as text: ULTRA-00347, a separate ticket in the same work package, directly after this one.
+
+## Batch A: slots are finite (plan as built, 2026-11-14)
+
+Built on `wt/datetime`, at master `f750497f`, as confirmed with the maintainer. Batches B (queries on `Partial`) and
+C (no sentinels) wait for the coordinator's word. Batch A does not touch Genesis or Doomsday anywhere else: the slot
+simply stops using Doomsday.
+
+- **`MpLocalTimeSlot.MAX_DURATION_MILLIS = 9_007_199_254_740_991`** (2^53 - 1 ms, about 285 616 years; renamed from
+  `INFINITE_DURATION_MILLIS`, same value). It is the largest whole number a JS client reads and writes exactly, so a
+  stored length round-trips. `of(from, duration)` cuts every longer length to it, `Duration.INFINITE` included; no
+  exception.
+- **Gone:** `isInfinite`; `openEnd()`; every infinite branch (`durationMillis`, `to`, `endDayOffset`,
+  `splitWithGaps`, `toRawData`, the KDoc of the formatters). `endDayOffset` is at most 104 249 991.
+- **`splitWithGaps`:** one finite formula, still capped at `Int.MAX_VALUE` parts with the KDoc line about checking
+  `size`. A `gap` beyond the longest length counts as it. The `step % DAY` reduction is gone again: `i * step` is at
+  most the slot's own length (2^53 - 1 ms), so it cannot overflow any more (it could while slots were infinite).
+- **Decoders:**
+  - Both read through `toSlotOrNull()` into `of(from, duration)`, so everything beyond the longest length is cut to
+    it: a stored 9007199254740991 (today's writer) is the longest slot, and so is `Long.MAX_VALUE`.
+  - slumber saturates a `BigInteger` / `BigDecimal` beyond `Long`, and `+Infinity`, before the cut.
+  - NaN stays a decode failure; a negative duration stays empty; an explicit `"duration": null` stays an error.
+- **`toRange(slot, zone)` is always two-ended.** The rule, in the KDoc: throw when no correct answer exists, fall back
+  when the answer is still right for everything the platform can express.
+  - A START the platform cannot represent throws `IllegalArgumentException` (the type the zone engine throws today),
+    naming the date, the time, the zone and the limit. Example (JS):
+    `The start of a time slot, +300000-01-01 10:00:00 in Europe/Berlin, lies outside what this platform can represent
+    in that zone: -271821-04-20T00:00:00.000Z to +275760-09-13T00:00:00.000Z`. Only JS has such a limit, for region
+    zones; on JVM and native every start on a valid date resolves, so the type is the same wherever a limit exists.
+    A zone error (`IllegalTimeZoneException`) passes through unchanged.
+  - An END beyond what the platform can represent stops at its last representable instant, through one `expect`
+    function (`platformInstantLimitMillis(zoneId)`: JS 8.64e15 ms for region zones, else null):
+    - JS, region zone: +275760-09-13T00:00Z;
+    - every platform and zone: the last instant of 999 999 999-12-31 in the zone, when the end's date runs past the
+      last date (a start cannot overflow).
+  - So the same call can differ by platform once the end lies past the year 275760; the KDoc says so.
+  - The "empty range at the start" guard in `onDate` is gone. With the first-existing-time rule and an end that
+    falls back to the platform's last instant, the end can no longer lie before the start (the start is
+    representable, so the fallback is at or after it).
+- **TypeScript:** `datetime.ts` exports `MAX_DURATION_MILLIS` ("a slot is always finite: a longer length is cut to
+  this"); `INFINITE_DURATION_MILLIS` is gone. The parity spec pins the value against Kotlin.
+- **Repo search:** no `isInfinite` on a slot and no `INFINITE_DURATION_MILLIS` left in code. The remaining
+  `isInfinite()` uses are on `Duration` / `Double` (`Kronos.kt:78`, streams `sampled.kt:123`, funktor
+  `slices.kt:67`), unrelated. Master's `CHANGELOG.md` still names them (below).
+
+### Tests: the 3b-2 rows that pinned infinite behaviour, and what each became
+
+| Spec, test | Was | Now |
+|---|---|---|
+| `MpLocalTimeSlotClockSpec` "Duration.INFINITE is kept; a duration from 2^53 - 1 ms on is infinite" | `duration == INFINITE`, `isInfinite`, `to == from`, `endDayOffset == Long.MAX_VALUE` | "... are cut to it": `MAX_DURATION_MILLIS == 9_007_199_254_740_991`, `duration == MAX ms`, `MAX + 1` and `Long.MAX_VALUE` give the same slot, `MAX - 1` stays; `to` 18:59:00.991, `endDayOffset` 104 249 991 (by hand), `crossesMidnight` |
+| `MpLocalTimeSlotClockSpec` "splitWithGaps ... an infinite slot by 1 h" | `Int.MAX_VALUE` parts, the last at 16:00 | the same numbers for the longest slot (2.5e9 parts, capped); title only |
+| `MpLocalTimeSlotClockSpec` "splitWithGaps on an infinite slot ..." | `Int.MAX_VALUE` parts by 60 days, the overflow pin at index `Int.MAX_VALUE - 1`; infinite gap gives one part | "on the longest slot": 1 737 499 parts by 60 days, the last `10:00 + 60 d`; 1 736 295 by 1 h + 60 d (by hand); an infinite gap or part is the longest length (one part, or the slot itself) |
+| `MpLocalTimeSlotClockSpec` `night.cutAway(slot(10, 0, INFINITE))` | empty | unchanged (a slot of 24 h or more covers the clock) |
+| `MpLocalTimeSlotOnDateSpec` "an end beyond what the platform can resolve is the open end (JS)" | Berlin: `hasEnd == false` | UTC: the exact end 8 701 705 312 800 000 ms on all three; Berlin: JS stops at 8.64e15 ms, JVM / native resolve beyond it (test-side `expect val zoneEngineLimitMillis`) |
+| (new) `MpLocalTimeSlotOnDateSpec` "a start the platform cannot represent throws ..." | - | JS: `IllegalArgumentException` naming `300000-01-01`, `Europe/Berlin`, `275760-09-13`; JVM / native: a one-hour range; UTC resolves everywhere |
+| `MpLocalTimeSlotOnDateSpec` "an end past the last date ... is the open end" | empty at the start, `hasEnd == false` | the end is the last instant of 999 999 999-12-31 (epoch second 31 556 889 832 780 799, .999), also for an end at 24:00 |
+| `MpLocalTimeSlotOnDateSpec` "an end before the start can only come from the open end: past Doomsday ..." | infinite slot on 12000-01-01 empty at the start | deleted: the case cannot happen any more (the guard is gone); the literal `+12000-01-01T09:00:00Z` asked for in the review is moot |
+| `MpLocalTimeSlotOnDateSpec` "an infinite slot gives a range with an open end" | Berlin, `hasEnd == false` | "Duration.INFINITE on a date: the longest slot, a two-ended range": UTC, end 9 008 904 567 540 991 ms (by hand) |
+| `MpLocalTimeSlotSerializationSpec` "an infinite duration is stored as 2^53 - 1 ms ... reads back infinite" | `{"from":36000000,"duration":9007199254740991,"to":36000000}`; `Long.MAX_VALUE` reads as infinite | `..."to":68340991}` (the clock time of the end); `Long.MAX_VALUE` reads back as the longest slot |
+| slumber `MpLocalTimeSlotCodecSpec` (four tests) | `isInfinite` for `Duration.INFINITE`, `1e400000000`, `+Infinity`, a `BigInteger` / `BigDecimal` beyond `Long` | `duration == MAX_DURATION_MILLIS ms`; the stored `to` of the longest slot is 68340991 |
+| codegen `MpDateTimeFieldParitySpec` | `INFINITE_DURATION_MILLIS` in `datetime.ts` | `MAX_DURATION_MILLIS` |
+| `MpLocalTimeSlotSpec` rows "an infinite duration" (split part) and the infinite gap | `[]` and one slot | unchanged and green: a part of the longest length does not fit a 12-hour slot |
+
+**RED first:** with `MAX_DURATION_MILLIS` added as a temporary alias of the old constant (no behaviour change), the
+rewritten rows failed for the right reason: JVM 5, JS 7 (with the two JS-only rows: the end not at 8.64e15 ms, the
+start's plain engine message), slumber 4, codegen 1.
+
+| Mutant (Batch A; each restored with `cmp`) | Tests red |
+|---|---|
+| A1 `of`: a length from the longest on is `Duration.INFINITE` again | 4 |
+| A2 `of`: cut one millisecond below the longest | 3 |
+| P1 kotlinx / slumber write `Long.MAX_VALUE` for the longest slot (persistence: both codecs) | 1 datetime + 1 slumber |
+| P2 kotlinx decoder wraps a length beyond the longest instead of cutting it (persistence; first survived: `Long.MAX_VALUE mod 2^53` is exactly the longest; killed by the row 9007199254740997) | 1 |
+| P3 slumber: a `BigInteger` beyond `Long` wraps (persistence) | 1 |
+| P4 slumber: `+Infinity` read as 0 (persistence) | 1 |
+| E1 the end's date overflow (year 999 999 999) rethrown | 1 |
+| E2 the last date's fallback at 00:00 instead of 23:59:59.999 | 1 |
+| E3 JS: an end beyond 8.64e15 ms rethrown (run on JS) | 1 |
+| E4 JS: the start error without date, zone and limit (run on JS) | 1 |
+| E5 JS: no limit for region zones (run on JS) | 2 |
+| G1 the gap not capped at the longest length | 0: equivalent. Any gap of at least the slot's remaining length gives one part; without the cap `part + gap` wraps negative and the truncating division happens to give the same count. The cap only keeps the arithmetic from overflowing |
+
+**Counts** (2026-11-14, `console/wt-gradle.sh`, `--rerun` on each test task, from the XML):
+
+- datetime JVM 2855 / 0, JS 2197 / 0, native 2189 / 0. `MpLocalTimeSlotClockSpec` 20, `MpLocalTimeSlotOnDateSpec` 16
+  and `MpLocalTimeSlotSerializationSpec` 7 on all three; one test deleted, one added, so the totals stay.
+- slumber 1267 / 0; codegen 326 / 0.
+- Repo-wide compile sweep: exit 0, 0 `e:` lines.
+
+### Changelog text (Batch A)
+
+Against release 0.118.0 a slot never was infinite (it was `from` / `to` within one day), so batch A adds no entry of
+its own against the release. It corrects the Unreleased entries of ULTRA-00341 that master's `CHANGELOG.md` carries
+(for the coordinator at the merge):
+
+- Line 27: replace "New: `isEmpty`, `isInfinite`, `INFINITE_DURATION_MILLIS`; `Duration.INFINITE` is a slot without
+  an end" with: "New: `isEmpty`, `MAX_DURATION_MILLIS` (2^53 - 1 ms, about 285 616 years). A slot is always finite:
+  `of(from, duration)` cuts every longer length to it, `Duration.INFINITE` included (ULTRA-00343)."
+- Lines 37-38: "code that relied on `isValid` now accepts multi-year and endless slots (`isInfinite`)" becomes "code
+  that relied on `isValid` now accepts slots of up to about 285 616 years".
+- Line 51: "an infinite duration is 9007199254740991" becomes "a duration is at most 9007199254740991; a larger
+  stored number reads back as that".
+- Add to the `MpLocalDate.toRange(slot, zone)` bullet (line 43): "Always a two-ended range: an end the platform cannot
+  represent stops at its last representable instant (JS in a region zone: +275760-09-13T00:00Z; any platform: the
+  end of 999 999 999-12-31); a start it cannot represent throws `IllegalArgumentException` naming the date, the
+  zone and the limit (ULTRA-00343)."
+- `ultra/codegen`, the TypeScript runtime: `MpLocalTimeSlot`'s constant is `MAX_DURATION_MILLIS` (the Unreleased
+  entry "the TypeScript runtime has `MpLocalTimeSlot`" names no constant and stays).
+- Line 20 (ULTRA-00215) "by 25 h or by `Duration.INFINITE` now yields no slots" stays true.
+

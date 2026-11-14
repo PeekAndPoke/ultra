@@ -150,3 +150,8 @@ private fun newFormatter(zoneId: String): dynamic {
 
     return formatter
 }
+
+internal actual fun platformInstantLimitMillis(zoneId: String): Long? = when {
+    TimezoneEngine.fixedOffsetSecondsOrNull(zoneId) != null -> null
+    else -> MAX_DATE_MS.toLong()
+}

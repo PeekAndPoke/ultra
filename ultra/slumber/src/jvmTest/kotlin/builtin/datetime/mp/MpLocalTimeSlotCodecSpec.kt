@@ -19,6 +19,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class MpLocalTimeSlotCodecSpec : StringSpec({
 
     val codec = Codec.default
+    val longest = MpLocalTimeSlot.MAX_DURATION_MILLIS.milliseconds
     val night = MpLocalTimeSlot.of(MpLocalTime.of(22, 0), 4.hours)
 
     data class Wrapper(val slot: MpLocalTimeSlot)
@@ -37,11 +38,11 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 79_200_000.0, "duration" to 14_400_000.0)) shouldBe night
     }
 
-    "an infinite duration is stored as 2^53 - 1 ms and awakes infinite" {
+    "Duration.INFINITE is the longest slot, 2^53 - 1 ms, stored as that number with the clock time of its end" {
         val open = MpLocalTimeSlot.of(MpLocalTime.of(10, 0), Duration.INFINITE)
 
         codec.slumber(open) shouldBe
-                mapOf("from" to 36_000_000L, "duration" to 9_007_199_254_740_991L, "to" to 36_000_000L)
+                mapOf("from" to 36_000_000L, "duration" to 9_007_199_254_740_991L, "to" to 68_340_991L)
         codec.awake<MpLocalTimeSlot>(codec.slumber(open)) shouldBe open
     }
 
@@ -74,16 +75,16 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
             }
         }
 
-        awakeWithin(BigDecimal("1e400000000"))?.isInfinite shouldBe true
+        awakeWithin(BigDecimal("1e400000000"))?.duration shouldBe longest
         awakeWithin(BigDecimal("-1e400000000"))?.isEmpty shouldBe true
         awakeWithin(BigDecimal("1e-400000000"))?.isEmpty shouldBe true
     }
 
-    "NaN is not a duration (null); +Infinity is an infinite slot, -Infinity an empty one" {
+    "NaN is not a duration (null); +Infinity is the longest slot, -Infinity an empty one" {
         codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L, "duration" to Double.NaN)) shouldBe null
         codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L, "duration" to Float.NaN)) shouldBe null
-        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to Double.POSITIVE_INFINITY))?.isInfinite shouldBe
-                true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to Double.POSITIVE_INFINITY))?.duration shouldBe
+                longest
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to Double.NEGATIVE_INFINITY))?.isEmpty shouldBe true
     }
 
@@ -92,14 +93,14 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
         codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L, "duration" to "x", "to" to 3_600_000L)) shouldBe null
     }
 
-    "a duration beyond Long (a BigInteger from Jackson) saturates to infinite, a negative one to empty" {
+    "a duration beyond Long (a BigInteger from Jackson) saturates to the longest slot, a negative one to empty" {
         val huge = BigInteger("18446744073709551621")
 
-        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to huge))?.isInfinite shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to huge))?.duration shouldBe longest
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to huge.negate()))?.isEmpty shouldBe true
-        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e30")))?.isInfinite shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e30")))?.duration shouldBe longest
         // 1e19 wraps negative through toLong(); -18446744073709551611 has +5 as its low 64 bits
-        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e19")))?.isInfinite shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e19")))?.duration shouldBe longest
         // -1e19 has positive low 64 bits: without the lower arm it would be an infinite slot
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("-1e19")))?.isEmpty shouldBe true
         // in range: the value itself, a fraction cut to whole milliseconds
