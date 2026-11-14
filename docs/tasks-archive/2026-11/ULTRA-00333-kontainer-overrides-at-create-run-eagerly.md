@@ -268,6 +268,6 @@ behaviour change (texts and tests only).
 
 - 2026-11-14: created on the maintainer's word.
 - 2026-11-14: DONE.
-- 2026-11-14: the maintainer confirmed the retry as built ("yes then we can keep it as is"). A new kontainer per
-  HTTP request runs its own override lambda; a throw is never remembered, so the next `get` on the same kontainer
-  runs the lambda again; a returned value is shared within its own kontainer.
+- 2026-11-14: the maintainer first agreed to keep the retry as built, then reconsidered: eager overrides are the
+  most predictable variant. Laziness is reverted in ULTRA-00344 (eager overrides again); this ticket's change does
+  not ship.
