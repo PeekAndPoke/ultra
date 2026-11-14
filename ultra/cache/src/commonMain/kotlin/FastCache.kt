@@ -80,10 +80,20 @@ class FastCache<K, V>(
         /** Adds a behaviour to the cache. */
         fun addBehaviour(behaviour: Behaviour<K, V>) = apply { behaviours.add(behaviour) }
 
-        /** Adds the [ExpireAfterAccessBehaviour] to the cache. */
+        /**
+         * Adds the [ExpireAfterAccessBehaviour] to the cache.
+         *
+         * Never throws: a zero or negative [ttl] expires entries at the next pass, one below 1 ms
+         * counts as 1 ms, and [Duration.INFINITE] never expires.
+         */
         fun expireAfterAccess(ttl: Duration) = addBehaviour(ExpireAfterAccessBehaviour(ttl))
 
-        /** Adds the [ExpireAfterWriteBehaviour] to the cache. */
+        /**
+         * Adds the [ExpireAfterWriteBehaviour] to the cache.
+         *
+         * Never throws: a zero or negative [ttl] expires entries at the next pass, one below 1 ms
+         * counts as 1 ms, and [Duration.INFINITE] never expires.
+         */
         fun expireAfterWrite(ttl: Duration) = addBehaviour(ExpireAfterWriteBehaviour(ttl))
 
         /** Adds the [MaxEntriesBehaviour] to the cache. */
@@ -110,7 +120,13 @@ class FastCache<K, V>(
             return behaviour
         }
 
-        /** Adds the [RefreshAfterWriteBehaviour] to the cache. */
+        /**
+         * Adds the [RefreshAfterWriteBehaviour] to the cache, refreshing entries older than [ttl].
+         *
+         * Never throws. A zero or negative [ttl] or [hardTtl] expires entries at the next pass,
+         * unrefreshed; below 1 ms counts as 1 ms; [Duration.INFINITE] never expires; a [hardTtl] not
+         * above [ttl] expires entries at [hardTtl], unrefreshed.
+         */
         fun refreshAfterWrite(
             ttl: Duration,
             hardTtl: Duration? = null,
