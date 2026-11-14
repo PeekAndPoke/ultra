@@ -9,25 +9,37 @@ data class MpLocalTimeSlot(
     val to: MpLocalTime,
 ) {
     companion object {
-        /** The whole day, from 00:00 to 24:00 ([MpLocalTime.EndOfDay]). */
+        /**
+         * The whole day, from 00:00 to 24:00 ([MpLocalTime.EndOfDay]); it ended at `MpLocalTime.Max` before
+         * ULTRA-00341.
+         *
+         * Stored, its end is 86 400 000 ms, which a reader of an older version reads as 00:00: there the slot becomes
+         * the empty `[00:00, 00:00)`.
+         */
         val completeDay: MpLocalTimeSlot = MpLocalTimeSlot(
             from = MpLocalTime.Min,
             to = MpLocalTime.EndOfDay,
         )
 
+        /** The slot from [from] for [duration]; an end of exactly 24:00 is [MpLocalTime.EndOfDay], beyond it wraps. */
         fun of(from: MpLocalTime, duration: Duration): MpLocalTimeSlot {
+            val endMs = from.inWholeMilliSeconds().toLong() + duration.inWholeMilliseconds
+
             return MpLocalTimeSlot(
                 from = from,
-                to = from.plus(duration),
+                to = if (endMs == MpLocalTime.MILLIS_PER_DAY.toLong()) MpLocalTime.EndOfDay else from.plus(duration),
             )
         }
 
+        /** The slot between two seconds of the day; a [to] of exactly 86 400 is 24:00, beyond it wraps. */
         fun ofSecondsOfDay(from: Int, to: Int): MpLocalTimeSlot {
             return MpLocalTimeSlot(
                 from = MpLocalTime.ofSecondOfDay(from),
-                to = MpLocalTime.ofSecondOfDay(to),
+                to = if (to == SECONDS_PER_DAY) MpLocalTime.EndOfDay else MpLocalTime.ofSecondOfDay(to),
             )
         }
+
+        private const val SECONDS_PER_DAY = 86_400
     }
 
     @Serializable
@@ -203,7 +215,8 @@ data class MpLocalTimeSlot(
             val slotFromMs = fromMs + index * (durationMs + gapMs)
 
             MpLocalTimeSlot(
-                from = timeOfDay(slotFromMs),
+                // a slot that fits starts before 24:00, so its start never needs EndOfDay
+                from = MpLocalTime.ofMilliSeconds(slotFromMs.toInt()),
                 to = timeOfDay(slotFromMs + durationMs),
             )
         }

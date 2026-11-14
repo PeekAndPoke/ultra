@@ -20,6 +20,13 @@ class MpLocalTimeEndOfDayCodecSpec : StringSpec({
         codec.awake<MpLocalTime>(86_400_000) shouldBe MpLocalTime.EndOfDay
     }
 
+    "only a number that is exactly one day gives EndOfDay: Int, Long, whole Double; a fractional Double wraps" {
+        codec.awake<MpLocalTime>(86_400_000) shouldBe MpLocalTime.EndOfDay
+        codec.awake<MpLocalTime>(86_400_000L) shouldBe MpLocalTime.EndOfDay
+        codec.awake<MpLocalTime>(86_400_000.0) shouldBe MpLocalTime.EndOfDay
+        codec.awake<MpLocalTime>(86_400_000.5) shouldBe MpLocalTime.Min
+    }
+
     "every other out-of-range number still wraps, as before" {
         codec.awake<MpLocalTime>(86_400_001L) shouldBe MpLocalTime.of(0, 0, 0, 1)
         codec.awake<MpLocalTime>(172_800_000L) shouldBe MpLocalTime.Min

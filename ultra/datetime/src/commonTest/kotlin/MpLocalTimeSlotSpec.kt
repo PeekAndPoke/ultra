@@ -377,10 +377,12 @@ class MpLocalTimeSlotSpec : StringSpec({
             MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.Max), 1.hours, Duration.ZERO,
             (0..22).map { ts(it, 0, it + 1, 0) },
         ),
+        // round 1: the gap row pins the end: its last slot reaches 24:00 (with 3 h + 3 h it ended at 21:00 for Max too)
         tuple(
             "completeDay, ending at 24:00, with a gap",
-            MpLocalTimeSlot.completeDay, 3.hours, 3.hours,
-            listOf(ts(0, 0, 3, 0), ts(6, 0, 9, 0), ts(12, 0, 15, 0), ts(18, 0, 21, 0)),
+            MpLocalTimeSlot.completeDay, 3.hours, 4.hours,
+            listOf(ts(0, 0, 3, 0), ts(7, 0, 10, 0), ts(14, 0, 17, 0)) +
+                    MpLocalTimeSlot(MpLocalTime.of(21, 0), MpLocalTime.EndOfDay),
         ),
         tuple(
             "an invalid slot",
