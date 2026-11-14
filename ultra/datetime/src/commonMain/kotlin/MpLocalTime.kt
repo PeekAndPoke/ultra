@@ -106,7 +106,7 @@ data class MpLocalTime(
             return ofMilliSeconds(milliSecondsOfDay = secondsOfDay.mod(SECONDS_PER_DAY) * MILLIS_PER_SECOND)
         }
 
-        private const val SECONDS_PER_DAY = 86_400
+        internal const val SECONDS_PER_DAY = 86_400
 
         /**
          * The minimal possible time at 00:00:00.000

@@ -16,8 +16,7 @@ class MpLocalTimeEndOfDayCodecSpec : StringSpec({
 
     "EndOfDay is slumbered as the Long 86400000 and awakes as EndOfDay" {
         codec.slumber(MpLocalTime.EndOfDay) shouldBe 86_400_000L
-        codec.awake<MpLocalTime>(86_400_000L) shouldBe MpLocalTime.EndOfDay
-        codec.awake<MpLocalTime>(86_400_000) shouldBe MpLocalTime.EndOfDay
+        codec.awake<MpLocalTime>(codec.slumber(MpLocalTime.EndOfDay)) shouldBe MpLocalTime.EndOfDay
     }
 
     "only a number that is exactly one day gives EndOfDay: Int, Long, whole Double; a fractional Double wraps" {

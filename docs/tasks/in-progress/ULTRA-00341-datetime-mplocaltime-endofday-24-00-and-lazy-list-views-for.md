@@ -44,7 +44,8 @@ Commits on `wt/datetime`: `618a4860` (it references "ULTRA-00316 track A batch 3
   wraps (round 1). Every other value wraps as before.
 - **Slots:** `MpLocalTimeSlot.completeDay = [Min, EndOfDay)`. `MpLocalTimeSlot.of(from, duration)`,
   `ofSecondsOfDay(from, to)` and `splitWithGaps` end a slot of exactly 24:00 at `EndOfDay` (round 1 for `of` /
-  `ofSecondsOfDay`, coordinator's call); beyond 24:00 they wrap.
+  `ofSecondsOfDay`, coordinator's call). Only for a `from` inside the day (delta round 2); every other end wraps as
+  before, so `ofSecondsOfDay(86_400, 86_400)` stays the empty `[00:00, 00:00)`.
 - **`DateTimeRangeConverter`:** `fromHourToHour(_, 24)` ends at the next day's start, while `fromHour` wraps as before
   (round 1 removed the `fromHour = 24` arm). `fromMorningToEvening` ends at `to.atTime(EndOfDay, zone)`, fixing a
   pre-existing hour-late end where that day's midnight is in a DST gap (round 1).
@@ -52,10 +53,13 @@ Commits on `wt/datetime`: `618a4860` (it references "ULTRA-00316 track A batch 3
   `<input type="time">` (probe, 2026-11-14), so a kraft time field shows `EndOfDay` as empty; that test was dropped in
   round 1 because no kraft or datetime change can turn it red.
 
-### Known consequence, documented for the maintainer
+### Known consequences, documented for the maintainer
 
-Where a DST gap ends at midnight (America/Nuuk 2024-03-30: 23:00 to 24:00 is missing), `[23:30, EndOfDay)` on that
-date gives an inverted zoned range: the start is shifted past the end by the gap rule. Pinned as current behaviour.
+- Where a DST gap ends at midnight (America/Nuuk 2024-03-30: 23:00 to 24:00 is missing), `[23:30, EndOfDay)` on that
+  date gives an inverted zoned range: the start is shifted past the end by the gap rule. Pinned as current behaviour.
+- On a date the zone skipped (Pacific/Apia 2011-12-30), `[x, EndOfDay)` with `x > 00:00` is an inverted range
+  (`[09:00, 24:00)`), and `completeDay` there is empty (start == end). Pinned (delta round 2). The slot redesign's
+  empty-range rule (batch 3b plan) covers both.
 
 ### Test evidence
 
@@ -152,7 +156,8 @@ date gives an inverted zoned range: the start is shifted past the end by the gap
 - `ultra/datetime`, behaviour change (no compile signal):
   - `hour` can be 24.
   - `MpLocalTime.of(t.hour, t.minute, …)` and `ofMilliSeconds(t.inWholeMilliSeconds())` turn `EndOfDay` into 00:00;
-    only `parse(toIsoString())` and the decoders round-trip it.
+    `parse(toIsoString())`, the decoders and the unchecked constructor `MpLocalTime(t.inWholeMilliSeconds())`
+    round-trip it.
   - A JSON client sending `86400000` used to be normalised to 00:00 and is now stored as 24:00.
   - `.kotlinx` and `.jvm` give the last instant of the day for it, which is lossy (`EndOfDay.kotlinx.mp == Max`);
     they threw before.
@@ -167,9 +172,14 @@ date gives an inverted zoned range: the start is shifted past the end by the gap
 - `ultra/datetime`, behaviour change (no compile signal): `DateTimeRangeConverter.fromHourToHour(_, 24)` (e.g.
   `toZonedTimeRange(zone).fromHourToHour(8, 24)`) ends at the start of the day after the last day; it ended at 00:00
   of the last day. A `fromHour` of 24 still wraps to 00:00 (ULTRA-00341).
-- `ultra/datetime`, fix: `DateTimeRangeConverter.fromMorningToEvening` ends at the start of the next day; where that
-  day's own midnight is in a DST gap it ended an hour late (America/Havana 2024-03-10, America/Santiago 2024-09-08).
-  Ordinary days are unchanged (ULTRA-00341).
+- `ultra/datetime`, fix: `DateTimeRangeConverter.fromMorningToEvening` ends at the start of the next day. Before:
+  - where the last day's own midnight is in a DST gap it ended an hour late (America/Havana 2024-03-10,
+    America/Santiago 2024-09-08);
+  - on a last day the zone skipped it ended a day late (Pacific/Apia 2011-12-30: 2012-01-01T00:00+14:00, now
+    2011-12-31T00:00+14:00);
+  - where the next midnight is inside a gap that starts before midnight it ended at the wrong time
+    (America/Toronto 1919-03-30: 01:00 EDT, now 00:30 EDT).
+  - Ordinary days are unchanged (ULTRA-00341).
 - `ultra/datetime` and `ultra/slumber`, stored format: `EndOfDay` is stored as `86400000` milliseconds of day; exactly
   that number reads back as `EndOfDay` (slumber: only a number equal to one day, so `86400000.5` still wraps), and
   every other number wraps into the day as before. A reader of an older version reads `86400000` as 00:00 without an
@@ -200,6 +210,22 @@ ran nothing; every item below was verified by a test first.
 
 **Verdict:** round 1 NOT CLEAN (1 MAJOR, record only), all findings handled; this batch touches production code, so a
 delta review comes before any merge.
+
+## Review record: delta round 2 (reviewer-fable-xhigh, all charters)
+
+**Verdict:** CLEAN: 0 CRITICAL, 0 MAJOR, 3 MINOR, 2 text NITs; all applied in one small commit (one production line in
+each of the two slot factories).
+
+| Sev | Finding | Outcome |
+|---|---|---|
+| MINOR | `ofSecondsOfDay` (new with fix 5): `from` wraps while `to == 86_400` does not, so `(86_400, 86_400)` = `completeDay`, `(90_000, 86_400)` valid `[01:00, 24:00)` | FIXED: `EndOfDay` only for a `from` inside the day; RED first for both; mutant D2 (no `from` check) red. Checked `of(from, duration)`: a raw out-of-range `from` whose end lands on one day (`MpLocalTime(-3_600_000)` + 25 h) gave `EndOfDay`; fixed the same way, RED first; mutant D3 red. `of(EndOfDay, ZERO)` = `[24:00, 24:00)`, `of(EndOfDay, 1 h)` = `[24:00, 01:00)`, pinned |
+| MINOR | the lower edge of the `plus` guard untested (mutant `inWholeSeconds == 0L` survived) | FIXED: `EndOfDay.plus(1 ms)` = 00:00:00.001, `minus(1 ms)` = `Max`; mutant D1 red |
+| MINOR | the seven Berlin rows of `fromMorningToEvening` took the expected value from library code | FIXED: literal instants (checked: next day's start in Berlin, +01:00 or +02:00) |
+| NIT | changelog: "only `parse(toIsoString())` and the decoders round-trip it" | FIXED: the unchecked constructor round-trips it too |
+| NIT | changelog: the `fromMorningToEvening` entry misses a skipped last day and a gap that starts before midnight | FIXED: Apia 2011-12-30 and Toronto 1919-03-30 named |
+| note | on a skipped date `[x, EndOfDay)` is inverted and `completeDay` empty | DOCUMENTED and pinned (Apia 2011-12-30) |
+| counts | final run after delta round 2 (2026-11-14 17:40, `--rerun`) | JVM 2798 / 0, JS 2140 / 0, native 2129 → 2132 / 0, slumber 1258 / 0 |
+| tidy | repeated rows: the gap split in `MpLocalTimeEndOfDaySpec` (duplicates the `MpLocalTimeSlotSpec` row), two awake lines in `MpLocalTimeEndOfDayCodecSpec`, a second `SECONDS_PER_DAY` | DONE: the duplicate test and lines removed; `MpLocalTime.SECONDS_PER_DAY` is `internal` and shared |
 
 ## Left out, for one follow-up ticket
 

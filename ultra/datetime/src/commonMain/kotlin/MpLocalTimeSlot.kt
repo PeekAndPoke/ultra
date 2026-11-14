@@ -21,25 +21,33 @@ data class MpLocalTimeSlot(
             to = MpLocalTime.EndOfDay,
         )
 
-        /** The slot from [from] for [duration]; an end of exactly 24:00 is [MpLocalTime.EndOfDay], beyond it wraps. */
+        /**
+         * The slot from [from] for [duration]. For a [from] inside the day an end of exactly 24:00 is
+         * [MpLocalTime.EndOfDay]; every other end wraps.
+         */
         fun of(from: MpLocalTime, duration: Duration): MpLocalTimeSlot {
-            val endMs = from.inWholeMilliSeconds().toLong() + duration.inWholeMilliseconds
+            val fromMs = from.inWholeMilliSeconds()
+            val endsAtMidnight = fromMs in 0..<MpLocalTime.MILLIS_PER_DAY &&
+                    fromMs.toLong() + duration.inWholeMilliseconds == MpLocalTime.MILLIS_PER_DAY.toLong()
 
             return MpLocalTimeSlot(
                 from = from,
-                to = if (endMs == MpLocalTime.MILLIS_PER_DAY.toLong()) MpLocalTime.EndOfDay else from.plus(duration),
+                to = if (endsAtMidnight) MpLocalTime.EndOfDay else from.plus(duration),
             )
         }
 
-        /** The slot between two seconds of the day; a [to] of exactly 86 400 is 24:00, beyond it wraps. */
+        /**
+         * The slot between two seconds of the day. For a [from] inside the day a [to] of exactly 86 400 is 24:00;
+         * every other value wraps.
+         */
         fun ofSecondsOfDay(from: Int, to: Int): MpLocalTimeSlot {
+            val endsAtMidnight = from in 0..<MpLocalTime.SECONDS_PER_DAY && to == MpLocalTime.SECONDS_PER_DAY
+
             return MpLocalTimeSlot(
                 from = MpLocalTime.ofSecondOfDay(from),
-                to = if (to == SECONDS_PER_DAY) MpLocalTime.EndOfDay else MpLocalTime.ofSecondOfDay(to),
+                to = if (endsAtMidnight) MpLocalTime.EndOfDay else MpLocalTime.ofSecondOfDay(to),
             )
         }
-
-        private const val SECONDS_PER_DAY = 86_400
     }
 
     @Serializable
