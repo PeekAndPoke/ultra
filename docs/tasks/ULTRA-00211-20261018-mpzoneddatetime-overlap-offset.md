@@ -77,12 +77,18 @@ like java.time.
   (`TimezoneEngine.toLocalDateTime`). Built only by `of(datetime, timezone)` (local resolution, unchanged rules),
   the internal `of(instant, timezone)` (used by `MpInstant.atZone`) and the private `withLocal` (the offset-keeping
   operations; `ofLocal` was folded into it in review round 1).
-- **Equality lives in one place**: the explicit `equals` / `hashCode` in `MpZonedDateTime` (instant + zone). The
-  maintainer has not confirmed this yet (2026-11-13: he asked for an example); a change back to local + zone is those
-  two functions plus the two tests that pin them (`MpZonedDateTimeOverlapSpec`, "the two sides are different
+- **Equality lives in one place**: the explicit `equals` / `hashCode` in `MpZonedDateTime` (instant + zone).
+  **Confirmed by the maintainer (2026-11-14)**: they stay instant + zone. They are pinned by two tests (`MpZonedDateTimeOverlapSpec`, "the two sides are different
   values…" and "equality: instant and zone decide…"). **The equality choice only decides the two sides of an
   overlap**: a value built from a gap time equals the value at its resolved instant under BOTH choices, because
   `datetime` is derived from the instant (corrected in review round 1).
+- `isSameInstant(other: MpAbsoluteDateTime)` (maintainer, 2026-11-14): a default method on the interface
+  `MpAbsoluteDateTime` (`toInstant() == other.toInstant()`), so it works for `MpInstant` and `MpZonedDateTime` and
+  across the two. `compareTo` stays by instant only; a tie-break between zones is not decided and not built.
+  New `MpAbsoluteDateTimeSameInstantSpec` (commonTest, 4 tests: 09:00 Berlin / 08:00 London same instant, not equal;
+  the overlap halves are not the same instant; `MpInstant` vs `MpZonedDateTime` both directions; a value against
+  itself). RED first as a compile failure (new API). Mutants: `isSameInstant` = `this == other` → red 2;
+  = `true` → red 2.
 - Plain class rather than the planned data class with a private constructor: explicit `equals`/`hashCode` make that
   one place visible, and there is no `copy` to keep private.
 - Decode paths read `ts` as the instant: `MpZonedDateTimeSerializer.deserialize`, slumber `MpZonedDateTimeAwaker`
@@ -132,7 +138,10 @@ like java.time.
   `MpZonedDateTime.jvm` used to move the second half one hour back (e.g. Berlin 2022-10-30T02:30+01:00 became +02:00),
   and a load + save wrote the wrong `ts`. The stored and wire format are unchanged.
 - `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime` equality compares instant and zone, no
-  longer local time and zone, so the two sides of a DST overlap are no longer equal (ULTRA-00211).
+  longer local time and zone, so the two sides of a DST overlap are no longer equal. To compare by point in time,
+  whatever the zone, use `isSameInstant` (ULTRA-00211).
+- `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
+  same point in time, for `MpInstant` and `MpZonedDateTime` and across the two (ULTRA-00211).
 - `ultra/datetime`, behaviour change (no compile signal): a time in a DST gap now reads back as the resolved time:
   `MpZonedDateTime.of(2022-03-27T02:30, Berlin).hour` is 3, not 2 (its instant was already 03:30). So a value built
   from a gap time now equals the value at its resolved instant (ULTRA-00211).
@@ -171,10 +180,11 @@ CRITICAL/MAJOR): no construction path loses the instant; no remaining caller of 
 stored documents decode as before; `human` is never read on decode; no production code uses an `MpZonedDateTime` as a
 map, set or cache key; the test arithmetic was recomputed by the domain reviewer.
 
-**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above. Equality by instant + zone still awaits the
-maintainer.
+**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above. Equality by instant + zone confirmed by
+the maintainer (2026-11-14); `isSameInstant` added on his word.
 
 ## History
 
 - 2026-10-21: numbered ULTRA-00211 (was `docs/tasks/20261018-mpzoneddatetime-overlap-offset.md`).
 - 2026-11-13: implemented on track A, batch 2 (with ULTRA-00210); equality by instant + zone awaits the maintainer.
+- 2026-11-14: review round 1 CLEAN, MINORs applied; equality by instant + zone confirmed; `isSameInstant` added.
