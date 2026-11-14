@@ -606,3 +606,18 @@ empty range counts as adjacent, the two date range types disagree on the open en
 MINORs of that review (the count-1 case lists one date, not none; `numDaysInMonth` is pinned in `MpLocalDateSpec`;
 `MpLocalTimeSlotOnDateSpec.kt:134` needs the literal `+12000-01-01T09:00:00Z`).
 
+
+## Confirmed with the maintainer on the track's plan (2026-11-14)
+
+- `Partial` gets `contains(point)`, `contains(twoEndedRange)` and `contains(Partial)` ("yes add both contain
+  variants"), next to `intersects`.
+- `toRange(slot, zone)`: a START the platform cannot represent throws, with a message naming the date and the limit
+  ("this is a case where we should actually throw an error when the platform does not support it"). An END beyond
+  the limit stops at the last representable instant ("as proposed ... will not really happen in normal
+  applications"). The rule: throw when no correct answer exists, fall back when the answer is still right for
+  everything the platform can express.
+- `Partial`: `from` and `to` get the default `null` in every range class ("yes defaults only"). kotlinx then reads
+  a missing key as null, as slumber does. No `@EncodeDefault`: whether a null end is written as a key is the app's
+  choice through `Json { encodeDefaults = true }`; a missing key and a null key mean the same. No codec in this repo
+  sets it today.
+- Dates BC as text: ULTRA-00347, a separate ticket in the same work package, directly after this one.
