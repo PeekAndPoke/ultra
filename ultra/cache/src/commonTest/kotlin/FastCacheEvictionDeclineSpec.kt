@@ -157,7 +157,8 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
                 )
             )
 
-            // Over capacity for one round is the accepted trade-off of declining
+            // Over capacity while the pending reads last is the trade-off of declining; for keys read in
+            // every pass that is for good (known defect, FastCacheHotKeyBoundKnownDefectSpec)
             cache.size shouldBe 2
 
             // Once the pendings drain, the retry brings the cache back under its limit

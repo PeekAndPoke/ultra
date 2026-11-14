@@ -401,8 +401,9 @@ class FastCache<K, V>(
 
             // A snapshot, NOT `while (data.size > maxEntries)`: a declined eviction keeps the key
             // tracked, so a size-based loop would pick the same key again and spin the processing
-            // coroutine forever. Skipped keys stay over-capacity for one round and are retried
-            // next iteration, when their pending action has drained.
+            // coroutine forever. A skipped key is retried next pass. A key accessed in EVERY pass is
+            // skipped in every pass, so the cache stays over its bound for as long as that lasts
+            // (known defect, FastCacheHotKeyBoundKnownDefectSpec).
             for ((key, _) in data.ascending().toList()) {
                 if (overshoot <= 0) break
 
