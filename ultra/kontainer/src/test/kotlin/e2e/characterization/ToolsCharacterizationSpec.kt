@@ -11,12 +11,13 @@ import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldStartWith
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.kontainer.InjectionContext
-import io.peekandpoke.ultra.kontainer.InjectionType
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
-import io.peekandpoke.ultra.kontainer.ServiceProvider.Type
+import io.peekandpoke.ultra.kontainer.ServiceKind
+import io.peekandpoke.ultra.kontainer.ServiceType
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo.ParamInfo.ProvisionType
+import io.peekandpoke.ultra.kontainer.e2e.Reported
 import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 import kotlin.reflect.KClass
@@ -40,7 +41,7 @@ class ToolsForms(
 )
 
 /**
- * Pins what [Kontainer.tools] report for one blueprint holding one service of each [Type].
+ * Pins what [Kontainer.tools] report for one blueprint holding one service of each provider type of the old model.
  */
 class ToolsCharacterizationSpec : StringSpec() {
 
@@ -69,9 +70,8 @@ class ToolsCharacterizationSpec : StringSpec() {
 
         "The enums the tools report with" {
             assertSoftly {
-                Type.entries.map { it.name } shouldBe
-                        listOf("Singleton", "Prototype", "SemiDynamic", "Dynamic", "DynamicOverride")
-                InjectionType.entries.map { it.name } shouldBe listOf("Singleton", "Prototype", "Dynamic")
+                ServiceType.entries.map { it.name } shouldBe listOf("Singleton", "Prototype")
+                ServiceKind.entries.map { it.name } shouldBe listOf("Static", "Dynamic", "SemiDynamic")
                 ProvisionType.entries.map { it.name } shouldBe listOf("Direct", "Lazy")
             }
         }
@@ -80,16 +80,16 @@ class ToolsCharacterizationSpec : StringSpec() {
 
             val info = createAndUse().tools.getDebugInfo()
 
-            info.services.associate { it.cls.fqn to it.type } shouldBe mapOf(
-                ToolsSingle::class.java.name to Type.Singleton,
-                KontainerBlueprint::class.java.name to Type.Singleton,
-                ToolsPromoted::class.java.name to Type.SemiDynamic,
-                ToolsDyn::class.java.name to Type.Dynamic,
-                ToolsOverridden::class.java.name to Type.DynamicOverride,
-                Kontainer::class.java.name to Type.Dynamic,
-                InjectionContext::class.java.name to Type.Dynamic,
-                ToolsProto::class.java.name to Type.Prototype,
-                ToolsForms::class.java.name to Type.Prototype,
+            info.services.associate { it.cls.fqn to Reported(it.type, it.kind, it.overridden) } shouldBe mapOf(
+                ToolsSingle::class.java.name to Reported.StaticSingleton,
+                KontainerBlueprint::class.java.name to Reported.StaticSingleton,
+                ToolsPromoted::class.java.name to Reported.SemiDynamicSingleton,
+                ToolsDyn::class.java.name to Reported.DynamicSingleton,
+                ToolsOverridden::class.java.name to Reported.OverriddenDynamicSingleton,
+                Kontainer::class.java.name to Reported.DynamicSingleton,
+                InjectionContext::class.java.name to Reported.DynamicSingleton,
+                ToolsProto::class.java.name to Reported.StaticPrototype,
+                ToolsForms::class.java.name to Reported.SemiDynamicPrototype,
             )
         }
 
@@ -115,14 +115,14 @@ class ToolsCharacterizationSpec : StringSpec() {
             val info = createAndUse().tools.getDebugInfo()
 
             assertSoftly {
-                info.service(ToolsSingle::class).definition.injectionType shouldBe InjectionType.Singleton
-                info.service(ToolsPromoted::class).definition.injectionType shouldBe InjectionType.Singleton
-                info.service(ToolsDyn::class).definition.injectionType shouldBe InjectionType.Dynamic
-                info.service(ToolsOverridden::class).definition.injectionType shouldBe InjectionType.Dynamic
-                info.service(ToolsProto::class).definition.injectionType shouldBe InjectionType.Prototype
-                info.service(Kontainer::class).definition.injectionType shouldBe InjectionType.Dynamic
-                info.service(InjectionContext::class).definition.injectionType shouldBe InjectionType.Dynamic
-                info.service(KontainerBlueprint::class).definition.injectionType shouldBe InjectionType.Singleton
+                info.service(ToolsSingle::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.StaticSingleton
+                info.service(ToolsPromoted::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.StaticSingleton
+                info.service(ToolsDyn::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.DynamicSingleton
+                info.service(ToolsOverridden::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.DynamicSingleton
+                info.service(ToolsProto::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.StaticPrototype
+                info.service(Kontainer::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.DynamicSingleton
+                info.service(InjectionContext::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.DynamicSingleton
+                info.service(KontainerBlueprint::class).definition.let { Reported(it.type, it.kind) } shouldBe Reported.StaticSingleton
             }
         }
 
@@ -137,7 +137,7 @@ class ToolsCharacterizationSpec : StringSpec() {
 
                 val overwrites = overridden.definition.overwrites.shouldNotBeNull()
                 overwrites.creates.fqn shouldBe ToolsOverridden::class.java.name
-                overwrites.injectionType shouldBe InjectionType.Dynamic
+                Reported(overwrites.type, overwrites.kind) shouldBe Reported.DynamicSingleton
                 overwrites.overwrites.shouldBeNull()
 
                 info.service(ToolsDyn::class).definition.overwrites.shouldBeNull()
@@ -190,20 +190,22 @@ class ToolsCharacterizationSpec : StringSpec() {
 
             fun String.column(idx: Int) = split("|")[idx].trim()
 
+            fun String.columns() = listOf(column(1), column(2))
+
             assertSoftly {
                 dump shouldStartWith "Kontainer dump:\n\n"
-                lines[2].split("|").map { it.trim() } shouldBe listOf("Service ID", "Type", "Instances")
+                lines[2].split("|").map { it.trim() } shouldBe listOf("Service ID", "Type", "Kind", "Instances")
 
-                rowOf(ToolsSingle::class).column(1) shouldBe "Singleton"
-                rowOf(ToolsPromoted::class).column(1) shouldBe "SemiDynamic"
-                rowOf(ToolsDyn::class).column(1) shouldBe "Dynamic"
-                rowOf(ToolsOverridden::class).column(1) shouldBe "DynamicOverride"
-                rowOf(ToolsProto::class).column(1) shouldBe "Prototype"
-                rowOf(Kontainer::class).column(1) shouldBe "Dynamic"
-                rowOf(InjectionContext::class).column(1) shouldBe "Dynamic"
-                rowOf(KontainerBlueprint::class).column(1) shouldBe "Singleton"
+                rowOf(ToolsSingle::class).columns() shouldBe listOf("Singleton", "Static")
+                rowOf(ToolsPromoted::class).columns() shouldBe listOf("Singleton", "SemiDynamic")
+                rowOf(ToolsDyn::class).columns() shouldBe listOf("Singleton", "Dynamic")
+                rowOf(ToolsOverridden::class).columns() shouldBe listOf("Singleton", "Dynamic (overridden)")
+                rowOf(ToolsProto::class).columns() shouldBe listOf("Prototype", "Static")
+                rowOf(Kontainer::class).columns() shouldBe listOf("Singleton", "Dynamic")
+                rowOf(InjectionContext::class).columns() shouldBe listOf("Singleton", "Dynamic")
+                rowOf(KontainerBlueprint::class).columns() shouldBe listOf("Singleton", "Static")
 
-                rowOf(ToolsOverridden::class).column(2) shouldEndWith ": " + ToolsOverride::class.getName()
+                rowOf(ToolsOverridden::class).column(3) shouldEndWith ": " + ToolsOverride::class.getName()
 
                 lines.drop(3).filter { it.contains(" | ") } shouldHaveSize 9
             }

@@ -6,7 +6,10 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
-import io.peekandpoke.ultra.kontainer.ServiceProvider.Type
+import io.peekandpoke.ultra.kontainer.ServiceKind
+import io.peekandpoke.ultra.kontainer.ServiceType
+import io.peekandpoke.ultra.kontainer.e2e.Reported
+import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.kontainer
 import kotlin.reflect.KClass
 
@@ -48,10 +51,11 @@ class ProviderMatrixCharacterizationSpec : StringSpec() {
                 "S" -> Declared.Singleton
                 "P" -> Declared.Prototype
                 "D" -> Declared.Dynamic
+                "DP" -> Declared.DynamicPrototype
                 else -> error("unknown declaration $it")
             }
         }
-        val types: List<Type> = types.split(" ").map { Type.valueOf(it) }
+        val types: List<Reported> = types.split(" ").map { Reported.parse(it) }
         val births: List<Int> = births.split(" ").map { it.toInt() }
 
         val name = this.declared.joinToString(" -> ") + " gives " + this.types.joinToString(", ") +
@@ -82,32 +86,30 @@ class ProviderMatrixCharacterizationSpec : StringSpec() {
             }
 
             withClue("types reported by kontainer one") {
-                classes.map { one.typeOf(it) } shouldBe row.types
+                classes.map { one.reportedOf(it) } shouldBe row.types
             }
 
             withClue("types reported by kontainer two") {
-                classes.map { two.typeOf(it) } shouldBe row.types
+                classes.map { two.reportedOf(it) } shouldBe row.types
             }
 
-            classes.zip(row.types).forEach { (cls, type) ->
-                withClue("${cls.simpleName} is $type") {
-                    when (type) {
-                        Type.Singleton -> {
+            classes.zip(row.types).forEach { (cls, reported) ->
+                withClue("${cls.simpleName} is $reported") {
+                    when {
+                        reported.type == ServiceType.Prototype -> {
+                            one.get(cls) shouldNotBeSameInstanceAs one.get(cls)
+                        }
+
+                        reported.kind == ServiceKind.Static -> {
                             one.get(cls) shouldBeSameInstanceAs one.get(cls)
                             one.get(cls) shouldBeSameInstanceAs two.get(cls)
                         }
 
-                        Type.SemiDynamic, Type.Dynamic -> {
+                        else -> {
                             one.get(cls) shouldBeSameInstanceAs one.get(cls)
                             two.get(cls) shouldBeSameInstanceAs two.get(cls)
                             one.get(cls) shouldNotBeSameInstanceAs two.get(cls)
                         }
-
-                        Type.Prototype -> {
-                            one.get(cls) shouldNotBeSameInstanceAs one.get(cls)
-                        }
-
-                        Type.DynamicOverride -> error("not used here")
                     }
                 }
             }
@@ -122,9 +124,9 @@ class ProviderMatrixCharacterizationSpec : StringSpec() {
 
                         seen::class shouldBe childCls
 
-                        when (row.types[idx]) {
-                            Type.Prototype -> seen shouldNotBeSameInstanceAs k.get(childCls)
-                            else -> seen shouldBeSameInstanceAs k.get(childCls)
+                        when (row.types[idx].type) {
+                            ServiceType.Prototype -> seen shouldNotBeSameInstanceAs k.get(childCls)
+                            ServiceType.Singleton -> seen shouldBeSameInstanceAs k.get(childCls)
                         }
                     }
                 }
@@ -136,15 +138,15 @@ class ProviderMatrixCharacterizationSpec : StringSpec() {
         val direct = listOf(DirectA::class, DirectB::class)
 
         listOf(
-            Row("S S", "Singleton Singleton", "1 1"),
-            Row("S P", "Singleton Prototype", "1 1"),
-            Row("S D", "SemiDynamic Dynamic", "2 2"),
-            Row("P S", "Prototype Singleton", "4 1"),
-            Row("P P", "Prototype Prototype", "4 4"),
-            Row("P D", "Prototype Dynamic", "4 2"),
-            Row("D S", "Dynamic Singleton", "2 1"),
-            Row("D P", "Dynamic Prototype", "2 2"),
-            Row("D D", "Dynamic Dynamic", "2 2"),
+            Row("S S", "Singleton.Static Singleton.Static", "1 1"),
+            Row("S P", "Singleton.Static Prototype.Static", "1 1"),
+            Row("S D", "Singleton.SemiDynamic Singleton.Dynamic", "2 2"),
+            Row("P S", "Prototype.Static Singleton.Static", "4 1"),
+            Row("P P", "Prototype.Static Prototype.Static", "4 4"),
+            Row("P D", "Prototype.SemiDynamic Singleton.Dynamic", "4 2"),
+            Row("D S", "Singleton.Dynamic Singleton.Static", "2 1"),
+            Row("D P", "Singleton.Dynamic Prototype.Static", "2 2"),
+            Row("D D", "Singleton.Dynamic Singleton.Dynamic", "2 2"),
         ).forEach { row ->
             "Direct: ${row.name}" { run(direct, row) }
         }
@@ -152,33 +154,33 @@ class ProviderMatrixCharacterizationSpec : StringSpec() {
         val two = listOf(TwoA::class, TwoB::class, TwoC::class)
 
         listOf(
-            Row("S S S", "Singleton Singleton Singleton", "1 1 1"),
-            Row("S S P", "Singleton Singleton Prototype", "1 1 1"),
-            Row("S S D", "SemiDynamic SemiDynamic Dynamic", "2 2 2"),
-            Row("S P S", "Singleton Prototype Singleton", "1 1 1"),
-            Row("S P P", "Singleton Prototype Prototype", "1 1 1"),
-            Row("S P D", "SemiDynamic Prototype Dynamic", "2 2 2"),
-            Row("S D S", "SemiDynamic Dynamic Singleton", "2 2 1"),
-            Row("S D P", "SemiDynamic Dynamic Prototype", "2 2 2"),
-            Row("S D D", "SemiDynamic Dynamic Dynamic", "2 2 2"),
-            Row("P S S", "Prototype Singleton Singleton", "4 1 1"),
-            Row("P S P", "Prototype Singleton Prototype", "4 1 1"),
-            Row("P S D", "Prototype SemiDynamic Dynamic", "4 2 2"),
-            Row("P P S", "Prototype Prototype Singleton", "4 4 1"),
-            Row("P P P", "Prototype Prototype Prototype", "4 4 4"),
-            Row("P P D", "Prototype Prototype Dynamic", "4 4 2"),
-            Row("P D S", "Prototype Dynamic Singleton", "4 2 1"),
-            Row("P D P", "Prototype Dynamic Prototype", "4 2 2"),
-            Row("P D D", "Prototype Dynamic Dynamic", "4 2 2"),
-            Row("D S S", "Dynamic Singleton Singleton", "2 1 1"),
-            Row("D S P", "Dynamic Singleton Prototype", "2 1 1"),
-            Row("D S D", "Dynamic SemiDynamic Dynamic", "2 2 2"),
-            Row("D P S", "Dynamic Prototype Singleton", "2 2 1"),
-            Row("D P P", "Dynamic Prototype Prototype", "2 2 2"),
-            Row("D P D", "Dynamic Prototype Dynamic", "2 2 2"),
-            Row("D D S", "Dynamic Dynamic Singleton", "2 2 1"),
-            Row("D D P", "Dynamic Dynamic Prototype", "2 2 2"),
-            Row("D D D", "Dynamic Dynamic Dynamic", "2 2 2"),
+            Row("S S S", "Singleton.Static Singleton.Static Singleton.Static", "1 1 1"),
+            Row("S S P", "Singleton.Static Singleton.Static Prototype.Static", "1 1 1"),
+            Row("S S D", "Singleton.SemiDynamic Singleton.SemiDynamic Singleton.Dynamic", "2 2 2"),
+            Row("S P S", "Singleton.Static Prototype.Static Singleton.Static", "1 1 1"),
+            Row("S P P", "Singleton.Static Prototype.Static Prototype.Static", "1 1 1"),
+            Row("S P D", "Singleton.SemiDynamic Prototype.SemiDynamic Singleton.Dynamic", "2 2 2"),
+            Row("S D S", "Singleton.SemiDynamic Singleton.Dynamic Singleton.Static", "2 2 1"),
+            Row("S D P", "Singleton.SemiDynamic Singleton.Dynamic Prototype.Static", "2 2 2"),
+            Row("S D D", "Singleton.SemiDynamic Singleton.Dynamic Singleton.Dynamic", "2 2 2"),
+            Row("P S S", "Prototype.Static Singleton.Static Singleton.Static", "4 1 1"),
+            Row("P S P", "Prototype.Static Singleton.Static Prototype.Static", "4 1 1"),
+            Row("P S D", "Prototype.SemiDynamic Singleton.SemiDynamic Singleton.Dynamic", "4 2 2"),
+            Row("P P S", "Prototype.Static Prototype.Static Singleton.Static", "4 4 1"),
+            Row("P P P", "Prototype.Static Prototype.Static Prototype.Static", "4 4 4"),
+            Row("P P D", "Prototype.SemiDynamic Prototype.SemiDynamic Singleton.Dynamic", "4 4 2"),
+            Row("P D S", "Prototype.SemiDynamic Singleton.Dynamic Singleton.Static", "4 2 1"),
+            Row("P D P", "Prototype.SemiDynamic Singleton.Dynamic Prototype.Static", "4 2 2"),
+            Row("P D D", "Prototype.SemiDynamic Singleton.Dynamic Singleton.Dynamic", "4 2 2"),
+            Row("D S S", "Singleton.Dynamic Singleton.Static Singleton.Static", "2 1 1"),
+            Row("D S P", "Singleton.Dynamic Singleton.Static Prototype.Static", "2 1 1"),
+            Row("D S D", "Singleton.Dynamic Singleton.SemiDynamic Singleton.Dynamic", "2 2 2"),
+            Row("D P S", "Singleton.Dynamic Prototype.Static Singleton.Static", "2 2 1"),
+            Row("D P P", "Singleton.Dynamic Prototype.Static Prototype.Static", "2 2 2"),
+            Row("D P D", "Singleton.Dynamic Prototype.SemiDynamic Singleton.Dynamic", "2 2 2"),
+            Row("D D S", "Singleton.Dynamic Singleton.Dynamic Singleton.Static", "2 2 1"),
+            Row("D D P", "Singleton.Dynamic Singleton.Dynamic Prototype.Static", "2 2 2"),
+            Row("D D D", "Singleton.Dynamic Singleton.Dynamic Singleton.Dynamic", "2 2 2"),
         ).forEach { row ->
             "Two levels: ${row.name}" { run(two, row) }
         }
@@ -186,18 +188,72 @@ class ProviderMatrixCharacterizationSpec : StringSpec() {
         val three = listOf(ThreeA::class, ThreeB::class, ThreeC::class, ThreeD::class)
 
         listOf(
-            Row("S S S D", "SemiDynamic SemiDynamic SemiDynamic Dynamic", "2 2 2 2"),
-            Row("S P P D", "SemiDynamic Prototype Prototype Dynamic", "2 2 2 2"),
-            Row("S P S D", "SemiDynamic Prototype SemiDynamic Dynamic", "2 2 2 2"),
-            Row("P S S D", "Prototype SemiDynamic SemiDynamic Dynamic", "4 2 2 2"),
-            Row("S S P S", "Singleton Singleton Prototype Singleton", "1 1 1 1"),
-            Row("D S S S", "Dynamic Singleton Singleton Singleton", "2 1 1 1"),
-            Row("S D P S", "SemiDynamic Dynamic Prototype Singleton", "2 2 2 1"),
-            Row("P P P D", "Prototype Prototype Prototype Dynamic", "4 4 4 2"),
-            Row("D S P D", "Dynamic SemiDynamic Prototype Dynamic", "2 2 2 2"),
-            Row("S P D S", "SemiDynamic Prototype Dynamic Singleton", "2 2 2 1"),
+            Row("S S S D", "Singleton.SemiDynamic Singleton.SemiDynamic Singleton.SemiDynamic Singleton.Dynamic", "2 2 2 2"),
+            Row("S P P D", "Singleton.SemiDynamic Prototype.SemiDynamic Prototype.SemiDynamic Singleton.Dynamic", "2 2 2 2"),
+            Row("S P S D", "Singleton.SemiDynamic Prototype.SemiDynamic Singleton.SemiDynamic Singleton.Dynamic", "2 2 2 2"),
+            Row("P S S D", "Prototype.SemiDynamic Singleton.SemiDynamic Singleton.SemiDynamic Singleton.Dynamic", "4 2 2 2"),
+            Row("S S P S", "Singleton.Static Singleton.Static Prototype.Static Singleton.Static", "1 1 1 1"),
+            Row("D S S S", "Singleton.Dynamic Singleton.Static Singleton.Static Singleton.Static", "2 1 1 1"),
+            Row("S D P S", "Singleton.SemiDynamic Singleton.Dynamic Prototype.Static Singleton.Static", "2 2 2 1"),
+            Row("P P P D", "Prototype.SemiDynamic Prototype.SemiDynamic Prototype.SemiDynamic Singleton.Dynamic", "4 4 4 2"),
+            Row("D S P D", "Singleton.Dynamic Singleton.SemiDynamic Prototype.SemiDynamic Singleton.Dynamic", "2 2 2 2"),
+            Row("S P D S", "Singleton.SemiDynamic Prototype.SemiDynamic Singleton.Dynamic Singleton.Static", "2 2 2 1"),
         ).forEach { row ->
             "Three levels: ${row.name}" { run(three, row) }
+        }
+
+        listOf(
+            Row("S DP", "Singleton.SemiDynamic Prototype.Dynamic", "2 2"),
+            Row("P DP", "Prototype.SemiDynamic Prototype.Dynamic", "4 4"),
+            Row("D DP", "Singleton.Dynamic Prototype.Dynamic", "2 2"),
+            Row("DP S", "Prototype.Dynamic Singleton.Static", "4 1"),
+            Row("DP P", "Prototype.Dynamic Prototype.Static", "4 4"),
+            Row("DP D", "Prototype.Dynamic Singleton.Dynamic", "4 2"),
+            Row("DP DP", "Prototype.Dynamic Prototype.Dynamic", "4 4"),
+        ).forEach { row ->
+            "Direct, dynamicPrototype: ${row.name}" { run(direct, row) }
+        }
+
+        listOf(
+            Row("S S DP", "Singleton.SemiDynamic Singleton.SemiDynamic Prototype.Dynamic", "2 2 2"),
+            Row("S P DP", "Singleton.SemiDynamic Prototype.SemiDynamic Prototype.Dynamic", "2 2 2"),
+            Row("S D DP", "Singleton.SemiDynamic Singleton.Dynamic Prototype.Dynamic", "2 2 2"),
+            Row("S DP S", "Singleton.SemiDynamic Prototype.Dynamic Singleton.Static", "2 2 1"),
+            Row("S DP P", "Singleton.SemiDynamic Prototype.Dynamic Prototype.Static", "2 2 2"),
+            Row("S DP D", "Singleton.SemiDynamic Prototype.Dynamic Singleton.Dynamic", "2 2 2"),
+            Row("S DP DP", "Singleton.SemiDynamic Prototype.Dynamic Prototype.Dynamic", "2 2 2"),
+            Row("P S DP", "Prototype.SemiDynamic Singleton.SemiDynamic Prototype.Dynamic", "4 2 2"),
+            Row("P P DP", "Prototype.SemiDynamic Prototype.SemiDynamic Prototype.Dynamic", "4 4 4"),
+            Row("P D DP", "Prototype.SemiDynamic Singleton.Dynamic Prototype.Dynamic", "4 2 2"),
+            Row("P DP S", "Prototype.SemiDynamic Prototype.Dynamic Singleton.Static", "4 4 1"),
+            Row("P DP P", "Prototype.SemiDynamic Prototype.Dynamic Prototype.Static", "4 4 4"),
+            Row("P DP D", "Prototype.SemiDynamic Prototype.Dynamic Singleton.Dynamic", "4 4 2"),
+            Row("P DP DP", "Prototype.SemiDynamic Prototype.Dynamic Prototype.Dynamic", "4 4 4"),
+            Row("D S DP", "Singleton.Dynamic Singleton.SemiDynamic Prototype.Dynamic", "2 2 2"),
+            Row("D P DP", "Singleton.Dynamic Prototype.SemiDynamic Prototype.Dynamic", "2 2 2"),
+            Row("D D DP", "Singleton.Dynamic Singleton.Dynamic Prototype.Dynamic", "2 2 2"),
+            Row("D DP S", "Singleton.Dynamic Prototype.Dynamic Singleton.Static", "2 2 1"),
+            Row("D DP P", "Singleton.Dynamic Prototype.Dynamic Prototype.Static", "2 2 2"),
+            Row("D DP D", "Singleton.Dynamic Prototype.Dynamic Singleton.Dynamic", "2 2 2"),
+            Row("D DP DP", "Singleton.Dynamic Prototype.Dynamic Prototype.Dynamic", "2 2 2"),
+            Row("DP S S", "Prototype.Dynamic Singleton.Static Singleton.Static", "4 1 1"),
+            Row("DP S P", "Prototype.Dynamic Singleton.Static Prototype.Static", "4 1 1"),
+            Row("DP S D", "Prototype.Dynamic Singleton.SemiDynamic Singleton.Dynamic", "4 2 2"),
+            Row("DP S DP", "Prototype.Dynamic Singleton.SemiDynamic Prototype.Dynamic", "4 2 2"),
+            Row("DP P S", "Prototype.Dynamic Prototype.Static Singleton.Static", "4 4 1"),
+            Row("DP P P", "Prototype.Dynamic Prototype.Static Prototype.Static", "4 4 4"),
+            Row("DP P D", "Prototype.Dynamic Prototype.SemiDynamic Singleton.Dynamic", "4 4 2"),
+            Row("DP P DP", "Prototype.Dynamic Prototype.SemiDynamic Prototype.Dynamic", "4 4 4"),
+            Row("DP D S", "Prototype.Dynamic Singleton.Dynamic Singleton.Static", "4 2 1"),
+            Row("DP D P", "Prototype.Dynamic Singleton.Dynamic Prototype.Static", "4 2 2"),
+            Row("DP D D", "Prototype.Dynamic Singleton.Dynamic Singleton.Dynamic", "4 2 2"),
+            Row("DP D DP", "Prototype.Dynamic Singleton.Dynamic Prototype.Dynamic", "4 2 2"),
+            Row("DP DP S", "Prototype.Dynamic Prototype.Dynamic Singleton.Static", "4 4 1"),
+            Row("DP DP P", "Prototype.Dynamic Prototype.Dynamic Prototype.Static", "4 4 4"),
+            Row("DP DP D", "Prototype.Dynamic Prototype.Dynamic Singleton.Dynamic", "4 4 2"),
+            Row("DP DP DP", "Prototype.Dynamic Prototype.Dynamic Prototype.Dynamic", "4 4 4"),
+        ).forEach { row ->
+            "Two levels, dynamicPrototype: ${row.name}" { run(two, row) }
         }
 
         "Singleton -> Prototype -> Dynamic: the singleton becomes SemiDynamic, the prototype stays Prototype" {
@@ -217,9 +273,9 @@ class ProviderMatrixCharacterizationSpec : StringSpec() {
             val headTwo = two.get(TwoA::class)
 
             assertSoftly {
-                one.typeOf(TwoA::class) shouldBe Type.SemiDynamic
-                one.typeOf(TwoB::class) shouldBe Type.Prototype
-                one.typeOf(TwoC::class) shouldBe Type.Dynamic
+                one.reportedOf(TwoA::class) shouldBe Reported.SemiDynamicSingleton
+                one.reportedOf(TwoB::class) shouldBe Reported.SemiDynamicPrototype
+                one.reportedOf(TwoC::class) shouldBe Reported.DynamicSingleton
 
                 withClue("one singleton, one prototype and one dynamic per kontainer") {
                     Births.of(TwoA::class) shouldBe 2

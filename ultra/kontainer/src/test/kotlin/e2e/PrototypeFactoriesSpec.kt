@@ -9,7 +9,6 @@ import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceNotFound
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 
@@ -28,7 +27,7 @@ class PrototypeFactoriesSpec : StringSpec({
 
             subject.get<Base>()::class shouldBe Config::class
             subject.get<Config>()::class shouldBe Config::class
-            subject.getProvider<Config>().type shouldBe ServiceProvider.Type.Prototype
+            subject.getProvider<Config>().reported shouldBe Reported.StaticPrototype
 
             subject.get<Config>().value shouldBe value
         }
@@ -44,7 +43,7 @@ class PrototypeFactoriesSpec : StringSpec({
             subject.get<Base>() shouldNotBeSameInstanceAs subject.get<Base>()
 
             subject.get<Base>()::class shouldBe Config::class
-            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Prototype
+            subject.getProvider<Base>().reported shouldBe Reported.StaticPrototype
 
             subject.get<Base>().value shouldBe value
         }

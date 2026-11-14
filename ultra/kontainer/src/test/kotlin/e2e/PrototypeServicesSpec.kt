@@ -5,7 +5,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.kontainer
 
 class PrototypeServicesSpec : StringSpec({
@@ -24,7 +23,7 @@ class PrototypeServicesSpec : StringSpec({
         assertSoftly {
             first shouldNotBeSameInstanceAs second
 
-            subject.getProvider(MyPrototype::class).type shouldBe ServiceProvider.Type.Prototype
+            subject.getProvider(MyPrototype::class).reported shouldBe Reported.StaticPrototype
         }
     }
 
@@ -49,8 +48,8 @@ class PrototypeServicesSpec : StringSpec({
 
             first.proto shouldNotBeSameInstanceAs prototype
 
-            subject.getProvider(Injecting::class).type shouldBe ServiceProvider.Type.Singleton
-            subject.getProvider(MyPrototype::class).type shouldBe ServiceProvider.Type.Prototype
+            subject.getProvider(Injecting::class).reported shouldBe Reported.StaticSingleton
+            subject.getProvider(MyPrototype::class).reported shouldBe Reported.StaticPrototype
         }
     }
 

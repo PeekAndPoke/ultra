@@ -7,7 +7,6 @@ import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.kontainer
 import kotlin.reflect.KClass
 
@@ -181,11 +180,11 @@ class InjectionContextSpec : StringSpec({
         assertSoftly {
 
             withClue("MyInjected injects the InjectionContext and must be promoted to a semi dynamic service") {
-                kontainer.getProvider(MyInjected::class).type shouldBe ServiceProvider.Type.SemiDynamic
+                kontainer.getProvider(MyInjected::class).reported shouldBe Reported.SemiDynamicSingleton
             }
 
             withClue("MyInjector must be promoted to a semi dynamic service as it injects MyInjected") {
-                kontainer.getProvider(MyInjector::class).type shouldBe ServiceProvider.Type.SemiDynamic
+                kontainer.getProvider(MyInjector::class).reported shouldBe Reported.SemiDynamicSingleton
             }
         }
     }

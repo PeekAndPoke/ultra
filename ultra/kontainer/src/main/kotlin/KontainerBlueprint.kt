@@ -31,31 +31,30 @@ class KontainerBlueprint internal constructor(
     private val validated = AtomicBoolean(false)
 
     /**
-     * Collect dynamic service definitions
+     * Services declared dynamic, singletons and prototypes alike.
+     *
+     * Everything that reaches one of them through its injections is bound to one kontainer.
      */
-    private val dynamicDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
-        .filterValues { it.injectionType == InjectionType.Dynamic }
+    private val dynamicClasses: Set<KClass<*>> = definitions
+        .filterValues { it.kind == ServiceKind.Dynamic }
+        .keys
 
     /**
-     * Collect Prototype service definitions
+     * Dynamic singletons: the only services that can be overridden at [create]
      */
-    private val prototypeDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
-        .filterValues { it.injectionType == InjectionType.Prototype }
+    private val overridableClasses: Set<KClass<*>> = definitions
+        .filterValues { it.type == ServiceType.Singleton && it.kind == ServiceKind.Dynamic }
+        .keys
 
     /**
-     * A set of all dynamic service classes
+     * A lookup for finding the overridable service from the class of an override
      */
-    private val dynamicsClasses = dynamicDefinitions.keys
-
-    /**
-     * A lookup for finding the base types of dynamic services from given super types
-     */
-    internal val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(dynamicsClasses)
+    internal val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(overridableClasses)
 
     /**
      * Used to check whether unexpected instances are passed to [create]
      */
-    private val dynamicsChecker = DynamicsChecker(dynamicsClasses)
+    private val dynamicsChecker = DynamicsChecker(overridableClasses)
 
     /**
      * Base type lookup for finding all candidate services by a given super type
@@ -69,50 +68,91 @@ class KontainerBlueprint internal constructor(
     private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions)
 
     /**
-     * Semi dynamic services
-     *
-     * These are services that where initially defined as singletons, but which inject dynamic services.
-     * Or which inject services that themselves inject dynamic services etc...
+     * Services declared static that reach a dynamic service, directly or through any chain; in discovery order.
      */
-    private val semiDynamicDefinitions: Map<KClass<*>, ServiceDefinition> =
-        dependencyLookUp.getAllDependents(dynamicsClasses)
-            // prototypes cannot be "downgraded" to semi-dynamic singletons
-            .filter { !prototypeDefinitions.contains(it) }
-            .associateWith { definitions.getValue(it) }
+    private val semiDynamicClasses: Set<KClass<*>> = dependencyLookUp.getAllDependents(dynamicClasses)
+        .filter { definitions.getValue(it).kind == ServiceKind.Static }
+        .toSet()
 
     /**
-     * Collect Singletons services/
-     *
-     * These are the services that
-     * - have no transitive dependency to any of the dynamic services
-     * - are no prototype services
+     * The position of each semi dynamic service in [semiDynamicClasses]
      */
-    private val singletonDefinitions: Map<KClass<*>, ServiceDefinition> = definitions
-        .filterKeys { !dynamicDefinitions.contains(it) }
-        .filterKeys { !semiDynamicDefinitions.contains(it) }
-        .filterKeys { !prototypeDefinitions.contains(it) }
+    private val semiDynamicRank: Map<KClass<*>, Int> = semiDynamicClasses.withIndex().associate { it.value to it.index }
 
     /**
-     * All precomputed [ServiceProvider.Provider]s
+     * The derived kind of every service: as declared, or [ServiceKind.SemiDynamic] for a static one that reaches
+     * a dynamic one.
      */
-    private val serviceProviderProviders = mapOf<KClass<*>, ServiceProvider.Provider>()
-        .plus(
-            singletonDefinitions.mapValues { (_, v) ->
-                ServiceProvider.Provider.forGlobalSingleton(ServiceProvider.Type.Singleton, v)
-            }
-        ).plus(
-            semiDynamicDefinitions.mapValues { (_, v) ->
-                ServiceProvider.Provider.forDynamicSingleton(ServiceProvider.Type.SemiDynamic, v)
-            }
-        ).plus(
-            dynamicDefinitions.mapValues { (_, v) ->
-                ServiceProvider.Provider.forDynamicSingleton(ServiceProvider.Type.Dynamic, v)
-            }
-        ).plus(
-            prototypeDefinitions.mapValues { (_, v) ->
-                ServiceProvider.ForPrototype.Provider(v)
-            }
+    private val kinds: Map<KClass<*>, ServiceKind> = definitions.mapValues { (cls, def) ->
+        when {
+            def.kind == ServiceKind.Dynamic -> ServiceKind.Dynamic
+            cls in semiDynamicClasses -> ServiceKind.SemiDynamic
+            else -> ServiceKind.Static
+        }
+    }
+
+    /**
+     * All precomputed [ServiceProvider.Provider]s.
+     *
+     * Listed as static, semi dynamic and dynamic singletons, then prototypes. This order numbers the validation
+     * errors and orders the debug output. Semi dynamic singletons come in discovery order, all others in
+     * definition order.
+     */
+    private val serviceProviderProviders: Map<KClass<*>, ServiceProvider.Provider> = definitions.keys
+        .sortedWith(
+            compareBy(
+                { cls -> listingGroup(definitions.getValue(cls).type, kinds.getValue(cls)) },
+                { cls -> if (kinds.getValue(cls) == ServiceKind.SemiDynamic) semiDynamicRank.getValue(cls) else 0 },
+            )
         )
+        .associateWith { cls -> providerFor(definitions.getValue(cls), kinds.getValue(cls)) }
+
+    /**
+     * The declared dynamic services each semi dynamic service reaches, in definition order.
+     */
+    private val semiDynamicSources: Map<KClass<*>, List<KClass<*>>> by lazy {
+        val sources = mutableMapOf<KClass<*>, MutableList<KClass<*>>>()
+
+        dynamicClasses.forEach { source ->
+            dependencyLookUp.getAllDependents(setOf(source))
+                .filter { kinds[it] == ServiceKind.SemiDynamic }
+                .forEach { sources.getOrPut(it) { mutableListOf() }.add(source) }
+        }
+
+        sources
+    }
+
+    /**
+     * The declared dynamic services that make [cls] semi dynamic; empty when it is not.
+     */
+    internal fun semiDynamicBecauseOf(cls: KClass<*>): List<KClass<*>> = semiDynamicSources[cls] ?: emptyList()
+
+    /**
+     * Chooses the provider by the type first: a prototype is created per injection whatever its kind, so it can
+     * never end up as a singleton of any kind.
+     */
+    private fun providerFor(def: ServiceDefinition, kind: ServiceKind): ServiceProvider.Provider = when (def.type) {
+        ServiceType.Prototype -> ServiceProvider.ForPrototype.Provider(kind = kind, definition = def)
+
+        ServiceType.Singleton -> when (kind) {
+            ServiceKind.Static -> ServiceProvider.Provider.forGlobalSingleton(definition = def)
+            ServiceKind.Dynamic, ServiceKind.SemiDynamic ->
+                ServiceProvider.Provider.forDynamicSingleton(kind = kind, definition = def)
+        }
+    }
+
+    /**
+     * The group a service is listed in, see [serviceProviderProviders].
+     */
+    private fun listingGroup(type: ServiceType, kind: ServiceKind): Int = when (type) {
+        ServiceType.Singleton -> when (kind) {
+            ServiceKind.Static -> 0
+            ServiceKind.SemiDynamic -> 1
+            ServiceKind.Dynamic -> 2
+        }
+
+        ServiceType.Prototype -> 3
+    }
 
     /**
      * Extends the current blueprint with everything in [builder] and returns a new [KontainerBlueprint]

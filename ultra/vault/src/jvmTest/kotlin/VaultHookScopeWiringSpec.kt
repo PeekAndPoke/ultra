@@ -3,7 +3,8 @@ package io.peekandpoke.ultra.vault
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.datetime.Kronos
-import io.peekandpoke.ultra.kontainer.ServiceProvider
+import io.peekandpoke.ultra.kontainer.ServiceKind
+import io.peekandpoke.ultra.kontainer.ServiceType
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.log.ultraLogging
 
@@ -36,7 +37,9 @@ class VaultHookScopeWiringSpec : StringSpec({
 
         // Guards the root cause directly: any (transitively) dynamic constructor dependency
         // promotes this to SemiDynamic, which is one instance per kontainer
-        blueprint.create().getProvider(DeferredVaultHookScope::class).type shouldBe
-                ServiceProvider.Type.Singleton
+        val provider = blueprint.create().getProvider(DeferredVaultHookScope::class)
+
+        provider.type shouldBe ServiceType.Singleton
+        provider.kind shouldBe ServiceKind.Static
     }
 })

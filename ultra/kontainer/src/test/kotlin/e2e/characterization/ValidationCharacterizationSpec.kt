@@ -250,6 +250,7 @@ class ValidationCharacterizationSpec : StringSpec({
         one.lookup.get(LookupCycleTwo::class).one shouldBe one
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00328.
     "CURRENT BEHAVIOUR: a cycle through List is not reported and overflows the stack at get" {
 
         val subject = kontainer {
@@ -262,6 +263,7 @@ class ValidationCharacterizationSpec : StringSpec({
         }
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00334.
     "CURRENT BEHAVIOUR: a decorator with a nullable parameter of its own super type is reported as a cycle" {
 
         val error = shouldThrow<KontainerInconsistent> {
@@ -275,6 +277,7 @@ class ValidationCharacterizationSpec : StringSpec({
                 "${DecoratingRepo::class.getName()} -> ${DecoratingRepo::class.getName()}"
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00327.
     "CURRENT BEHAVIOUR: after a failed validation the next create succeeds, as validation runs only once" {
 
         class Missing

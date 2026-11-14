@@ -21,11 +21,11 @@ class ServiceProviderFactory(
 
                 val instance = provider()
 
-                baseType to ServiceProvider.Provider.forInstance(
-                    type = ServiceProvider.Type.DynamicOverride,
+                baseType to ServiceProvider.Provider.forOverride(
                     definition = ServiceDefinition(
                         serviceCls = cls,
-                        injectionType = InjectionType.Dynamic,
+                        type = ServiceType.Singleton,
+                        kind = ServiceKind.Dynamic,
                         producer = ServiceProducer.forInstance(instance),
                         overwrites = blueprint.definitions[baseType]
                     ),

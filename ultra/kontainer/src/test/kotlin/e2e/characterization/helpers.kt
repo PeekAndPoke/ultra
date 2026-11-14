@@ -1,8 +1,6 @@
 package io.peekandpoke.ultra.kontainer.e2e.characterization
 
-import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
@@ -32,15 +30,13 @@ abstract class Counted {
     }
 }
 
-/** The three ways a service can be declared today. */
-enum class Declared { Singleton, Prototype, Dynamic }
+/** The four ways a service can be declared. */
+enum class Declared { Singleton, Prototype, Dynamic, DynamicPrototype }
 
 /** The service builder for [declared]. */
 fun KontainerBuilder.declare(declared: Declared): KontainerBuilder.ServiceBuilder = when (declared) {
     Declared.Singleton -> singleton
     Declared.Prototype -> prototype
     Declared.Dynamic -> dynamic
+    Declared.DynamicPrototype -> dynamicPrototype
 }
-
-/** The provider type the kontainer reports for [cls]. */
-fun <T : Any> Kontainer.typeOf(cls: KClass<T>): ServiceProvider.Type = getProvider(cls).type

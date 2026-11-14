@@ -45,10 +45,9 @@ val Ultra_Logging = module { minLevel: LogLevel ->
         UltraLogManager(appenders = appenders, minLevel = minLevel)
     }
 
-    // TODO: we need another injection type: dynamicPrototype.
-    //       It must upgrade the injecting service to SemiDynamic.
-    //       But it must be instantiated like a prototype.
-    prototype(Log::class) { manager: UltraLogManager, context: InjectionContext ->
+    // A dynamic prototype: created per injection, like a prototype, and bound to the kontainer, so a service
+    // injecting a Log is SemiDynamic. Whether Log stays dynamic is decided in ULTRA-00158.
+    dynamicPrototype(Log::class) { manager: UltraLogManager, context: InjectionContext ->
         manager.getLogger(context.requestingClass)
     }
 }

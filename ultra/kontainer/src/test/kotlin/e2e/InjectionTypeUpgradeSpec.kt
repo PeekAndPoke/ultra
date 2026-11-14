@@ -4,7 +4,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.kontainer
 
 /**
@@ -28,7 +27,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             val subject = blueprint.create()
 
             assertSoftly {
-                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Dynamic
+                subject.getProvider(Service::class).reported shouldBe Reported.DynamicSingleton
             }
         }
 
@@ -44,7 +43,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             val subject = blueprint.create()
 
             assertSoftly {
-                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Prototype
+                subject.getProvider(Service::class).reported shouldBe Reported.StaticPrototype
             }
         }
 
@@ -60,7 +59,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             val subject = blueprint.create()
 
             assertSoftly {
-                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Dynamic
+                subject.getProvider(Service::class).reported shouldBe Reported.DynamicSingleton
             }
         }
 
@@ -76,7 +75,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             val subject = blueprint.create()
 
             assertSoftly {
-                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Dynamic
+                subject.getProvider(Service::class).reported shouldBe Reported.DynamicSingleton
             }
         }
 
@@ -92,7 +91,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             val subject = blueprint.create()
 
             assertSoftly {
-                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Prototype
+                subject.getProvider(Service::class).reported shouldBe Reported.StaticPrototype
             }
         }
 
@@ -108,7 +107,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             val subject = blueprint.create()
 
             assertSoftly {
-                subject.getProvider(Service::class).type shouldBe ServiceProvider.Type.Prototype
+                subject.getProvider(Service::class).reported shouldBe Reported.StaticPrototype
             }
         }
     }

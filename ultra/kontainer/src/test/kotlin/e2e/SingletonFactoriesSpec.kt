@@ -9,7 +9,6 @@ import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceNotFound
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 
@@ -28,7 +27,7 @@ class SingletonFactoriesSpec : StringSpec({
 
             subject.get<Base>()::class shouldBe Config::class
             subject.get<Config>()::class shouldBe Config::class
-            subject.getProvider<Config>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<Config>().reported shouldBe Reported.StaticSingleton
 
             subject.get<Config>().value shouldBe value
         }
@@ -44,7 +43,7 @@ class SingletonFactoriesSpec : StringSpec({
             subject.get<Base>() shouldBeSameInstanceAs subject.get<Base>()
 
             subject.get<Base>()::class shouldBe Config::class
-            subject.getProvider<Base>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<Base>().reported shouldBe Reported.StaticSingleton
 
             subject.get<Base>().value shouldBe value
         }
