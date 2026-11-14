@@ -16,7 +16,7 @@ class MpLocalDateRangeLazySpec : StringSpec({
         dates.size shouldBe 3_652_058
         dates.first() shouldBe MpLocalDate.of(1, 1, 1)
         dates.last() shouldBe MpLocalDate.of(9999, 12, 30)
-        dates[1_000_000] shouldBe MpLocalDate.of(1, 1, 1).plusDays(1_000_000)
+        dates[1_000_000] shouldBe MpLocalDate.of(2738, 11, 29)
     }
 
     "MpClosedLocalDateRange.forever: the same kind of view, through Doomsday (9999-12-31) itself" {

@@ -63,6 +63,9 @@ memory, not checked: .NET `DateTime`, Python `datetime`, SQL Server `datetime2`)
 
 - The constants have the decided values on JVM, JS and native; an open range's stored timestamps lie inside
   ArangoDB's range; datetime and slumber suites green.
+- Corrected in review round 1: one exception stays. `MpClosedLocalDateRange.beginningAt(d).asOpenRange` stores
+  `to` = 10000-01-01 (Doomsday plus one day, which is the old Doomsday: 1 ms outside ArangoDB's range, a five-digit
+  year). Pinned and named in the changelog.
 
 ## Plan as built
 
@@ -81,6 +84,15 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
   clamped to Doomsday (00:00), divided by a day and rounded with `kotlin.math.round` (half to even). A range past
   Doomsday therefore ends on a half day, and Doomsday itself is counted for every second start date:
   2024-01-01 → 12000-01-01 and 2024-01-02 → 12000-01-01 both give 2_913_173. Pinned as is, documented in the KDoc.
+- **Round 1, `numDaysInMonth`:** it was the `numberOfDays` of the month as a closed range, so it went through the
+  clamp: with Genesis at year 1 every month before year 1 got a wrong, mostly negative count (`of(-500, 3, 15)`:
+  -182,897), and `getDatesInMonth` (all three overloads) lost dates. Now `atLastOfMonth().day`, from the calendar. The
+  same fix repairs months from 10000-01 on, which were already wrong on master. Every other member of `MpLocalDate`
+  and `MpLocalDateTime` was checked: none other reaches a range, the converter or a sentinel (`toRange`,
+  `toClosedRange`, `toEnclosingMonthRange` build ranges, whose members are range behaviour).
+- **Round 1, `numberOfDays` itself:** NOT changed; the consequences of the kept clamp for ranges before Genesis and
+  around Doomsday are with the maintainer (probe results and a calendar-exact proposal in the track A report). The
+  KDoc now also says that a range wholly before Genesis or after Doomsday gets a negative count.
 
 ### Test evidence
 
@@ -95,6 +107,16 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
   `GenesisDoomsdaySpec` 6 of 8, `MpLocalDateRangeLazySpec` 2 of 4 (the `forever` sizes), and the changed rows of
   `ConstantsSpec`, `MpLocalDateTimeSpec` (parse rows) and `MpZonedDateTimeRangeZoneSpec`. The old-sentinel tests are
   green before and after by design (the old values lie outside both); their teeth come from mutants G7 / G8.
+- **Round 1, new tests:** `GenesisDoomsdaySpec` 8 → 12: old sentinels now on all four range types (kotlinx), the
+  open-end predicates at their neighbours (both sides, every range type but zoned), the end boundary at
+  9999-12-31T00:00Z (`9999-12-31T23:59:59.999Z` reads as "no end"; `forever` no longer contains the last day),
+  `beginningAt(d).asOpenRange.to` = 10000-01-01 with its stored `ts`, the mixed old / new `cutAway` sliver;
+  "dates outside stay valid" now pins `numDaysInMonth` ((-500, 3) 31, (0, 12) 31, (0, 6) 30, (0, 2) 29, (1, 2) 28,
+  (9999, 12) 31, (10000, 1) 31, (12000, 2) 29) and `getDatesInMonth` for months before year 1 and after 9999 in all
+  three overloads. Literals from an independent count (Hinnant's days-from-civil, cross-checked against Python's
+  `datetime` through the 400-year cycle). Slumber `OldSentinelsCodecSpec` adds `MpClosedLocalDateRange`.
+- **RED first (round 1):** "dates outside stay valid" (`expected 31 but was -182897`). The other new rows pin today's
+  behaviour; their teeth come from mutants H4 to H10.
 - Counts: see the 3b-1 section of ULTRA-00341.
 
 | Mutant (JVM; each restored with `cmp`) | Tests red |
@@ -104,6 +126,13 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
 | G4 `MpLocalDateRange.hasEnd` with `<=` | 1 (`forever` / `beginningAt` / `endingAt` row) |
 | G7 `MpLocalDateRange.hasEnd` as `!=` (persistence: old values read as closed) | 4 datetime (incl. the kotlinx old-sentinel test) + 1 slumber (`OldSentinelsCodecSpec`) |
 | G8 `MpInstantRange.hasStart` as `!=` (persistence: old values read as closed) | 1 datetime (the kotlinx old-sentinel test) + 1 slumber (`OldSentinelsCodecSpec`) |
+| H1 `numDaysInMonth` back to the closed range's `numberOfDays` | 1 |
+| H4 `MpClosedLocalDateRange.hasEnd` as `to != Doomsday` (persistence) | 2 datetime (kotlinx old-sentinel, neighbours) + 1 slumber |
+| H5 `MpLocalDateRange.hasEnd` as `to < Doomsday.minusDays(1)` (survived before round 1) | 1 (neighbours) |
+| H6 `MpLocalDateRange.hasStart` as `from > Genesis.plusDays(1)` | 1 (neighbours) |
+| H7 / H8 `MpInstantRange.hasEnd` 1 ms early / `hasStart` 1 ms late | 1 / 1 (neighbours) |
+| H9 `MpClosedLocalDateRange.hasEnd` as `to < Doomsday` (not through `asOpenRange`) | 1 (neighbours) |
+| H10 `MpClosedLocalDateRange.hasStart` as `from > Genesis.plusDays(1)` | 1 (neighbours) |
 
 **Existing test lines changed:**
 
@@ -134,7 +163,8 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
 - `docs-site/src/pages/ultra/datetime/mp-local-date.astro:37-38`: the same.
 - `docs-site/src/pages/ultra/datetime/mp-instant.astro:49-50`: the same.
 - New to say: they stand for "no start" / "no end" in ranges and are not limits of the date types; a stored range
-  with the old values still reads as open; `numberOfDays` counts an open-ended range up to Doomsday.
+  with the old values still reads as open; `numberOfDays` counts an open-ended range up to Doomsday; `forever` does
+  not contain 9999-12-31.
 
 ## Changelog text
 
@@ -144,14 +174,49 @@ Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batc
   `MpLocalDate`, `MpLocalDateTime`, `MpZonedDateTime` and the JVM helpers (they were -10000-01-01 and +10000-01-01);
   `GENESIS_TIMESTAMP` = -62_135_596_800_000 and `DOOMSDAY_TIMESTAMP` = 253_402_214_400_000 (public constants). Both
   now lie inside the range of ArangoDB's date functions, and the text form has a four-digit year (ULTRA-00343).
+  - What counts as open moved: an end at or after 9999-12-31T00:00Z is "no end", so `9999-12-31T23:59:59.999Z`
+    (another system's maximum) and a half-open date range with `to` = 9999-12-31 read as open-ended; a start at or
+    before 0001-01-01T00:00Z is "no start", and so is a range that starts before year 1.
+  - `forever` and `beginningAt(x)` no longer contain the last day: `MpLocalDateRange.forever.contains(9999-12-31)`
+    and `MpInstantRange.forever.contains(9999-12-31T12:00Z)` are false (true before).
   - Ranges stored with the old values still read as open (`hasStart` / `hasEnd` false), but they are not equal to
-    the new `forever` / `beginningAt` / `endingAt`, and their stored `to` stays 10000-01-01.
+    the new `forever` / `beginningAt` / `endingAt`, and their stored `to` stays 10000-01-01. Mixing them leaves
+    slivers: an old `beginningAt(x).cutAway(new beginningAt(y))` keeps `[9999-12-31, 10000-01-01)`, which reads as
+    open-ended.
+  - An OLDER reader (a service or browser tab not yet upgraded) reads a range written with the new values as closed:
+    an end in 9999, a start in year 1. Update readers before writers.
+  - `MpClosedLocalDateRange.beginningAt(d).asOpenRange` stores `to` = 10000-01-01 (Doomsday plus one day): 1 ms
+    outside ArangoDB's date range, with a five-digit year.
   - `forever.numberOfDays` is 3,652,058 (was 7,304,850); `MpInstantRange.forever.duration` is 3,652,058 days.
   - `forever.asListOfDates()` ends at 9999-12-30 (`MpClosedLocalDateRange.forever` at 9999-12-31).
   - Genesis shown in a zone west of UTC falls on 0000-12-31.
-  - Dates outside Genesis to Doomsday stay valid plain values; a range that starts before year 1 has
-    `hasStart == false`, one that ends after 9999-12-31 has `hasEnd == false`.
+  - Dates outside Genesis to Doomsday stay valid plain values.
   - `numberOfDays` counts a range that reaches past Doomsday only up to Doomsday (unchanged, now documented).
+
+**Fixes:**
+
+- `ultra/datetime`: `MpLocalDate.numDaysInMonth` and `getDatesInMonth` come from the calendar. They went through a
+  date range clamped to Genesis / Doomsday and returned wrong counts (and lost dates) for months from 10000-01 on
+  (ULTRA-00343).
+
+## Review record: round 1 (blind, reviewer-fable-xhigh, two passes)
+
+**Verdict:** NOT CLEAN on both passes, the same MAJOR from each. Reviewers recomputed the constants, every derived
+value and the stored forms: correct. They ran nothing; every item below was checked by a test or probe first.
+
+| Sev | Finding | Outcome |
+|---|---|---|
+| MAJOR | `numDaysInMonth` goes through `numberOfDays` and the clamp: months before year 1 wrong (`(0, 12)` → 1, `(-500, 3)` → -182,897), `getDatesInMonth` loses dates | CONFIRMED by probe (exact values as reported); FIXED: `atLastOfMonth().day`; RED first; mutant H1 red; all `MpLocalDate` / `MpLocalDateTime` members checked, no other reaches a range |
+| decision | consequences of the kept `numberOfDays` clamp (negative counts before Genesis, clamped count with an unclamped start, half-day rounding drops 9999-12-31 for every second `beginningAt`, `(9999-10-01, 9999-12-31)` → 91) | CONFIRMED by probe, every number as reported; NOT changed: with the maintainer; calendar-exact proposal in the track A report |
+| MINOR | old-sentinel tests miss `MpClosedLocalDateRange` | FIXED: kotlinx and slumber; mutant H4 red (2 + 1) |
+| MINOR | open-end predicates pinned from one side; `to < Doomsday.minusDays(1)` survives | FIXED: neighbours on both sides; mutants H5 to H10 red |
+| MINOR | changelog imprecise (boundary, `forever` loses the last day, older readers, `asOpenRange.to` = 10000-01-01, mixed slivers); acceptance sentence wrong | FIXED: changelog and acceptance; each pinned by a test |
+| note | Genesis on 0000-12-31 in a western zone is outside what .NET `DateTime`, Python `datetime` and an HTML date input hold | RECORDED for the maintainer, no change |
+
+**Found while probing, pre-existing, not fixed (outside this round):** `MpZonedDateTime.toIsoString` pads a negative
+year as a number (`year.pad(4)`): year -2 prints `00-2-12-30`, year -500 prints `-500-03-15` (ISO: `-0002`, `-0500`).
+It also writes the stored `human` field of `MpLocalDate` and the other datetime types; the decoders read `ts`, so
+values round-trip, but the stored text is malformed for years -1 to -999.
 
 ## History
 

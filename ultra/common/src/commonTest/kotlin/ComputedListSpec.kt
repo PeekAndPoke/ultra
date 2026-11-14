@@ -3,7 +3,6 @@ package io.peekandpoke.ultra.common
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 
 /** ULTRA-00341: [ComputedList], a read-only list view that computes each element on demand. */
 @Suppress("unused")
@@ -73,7 +72,7 @@ class ComputedListSpec : StringSpec({
         subject.indexOf(3) shouldBe 2
     }
 
-    "it is RandomAccess, so the cache's size estimator samples it by index" {
+    "it is RandomAccess" {
         (ComputedList(10) { it } is RandomAccess) shouldBe true
     }
 
@@ -85,11 +84,20 @@ class ComputedListSpec : StringSpec({
         subject.last() shouldBe (Int.MAX_VALUE - 1).toLong() * 2
     }
 
+    "toString is bounded: the size and the first three elements, whatever the size" {
+        var computed = 0
+        val huge = ComputedList(Int.MAX_VALUE) { computed++; it }
+
+        huge.toString() shouldBe "ComputedList(size=2147483647, [0, 1, 2, ...])"
+        computed shouldBe 3
+        ComputedList(3) { it }.toString() shouldBe "ComputedList(size=3, [0, 1, 2])"
+        ComputedList(0) { it }.toString() shouldBe "ComputedList(size=0, [])"
+    }
+
     "toList builds a real list" {
         val copy = ComputedList(3) { it }.toList()
 
         copy shouldBe listOf(0, 1, 2)
         (copy is ComputedList<*>) shouldBe false
-        copy.shouldBeInstanceOf<List<Int>>()
     }
 })

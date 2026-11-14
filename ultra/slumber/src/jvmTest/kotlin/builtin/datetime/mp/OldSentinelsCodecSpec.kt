@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.slumber.builtin.datetime.mp
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.datetime.MpClosedLocalDateRange
 import io.peekandpoke.ultra.datetime.MpInstantRange
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateRange
@@ -18,16 +19,19 @@ class OldSentinelsCodecSpec : StringSpec({
     val oldDoomsday = mapOf("ts" to 253_402_300_800_000L, "timezone" to "UTC", "human" to "+10000-01-01T00:00:00.000Z")
     val stored = mapOf("from" to oldGenesis, "to" to oldDoomsday)
 
-    "MpInstantRange, MpLocalDateRange and MpZonedDateTimeRange stored with the old sentinels have no start and no end" {
+    "every range type stored with the old sentinels has no start and no end" {
         val instants = codec.awake(MpInstantRange::class, stored)
         val dates = codec.awake(MpLocalDateRange::class, stored)
+        val closed = codec.awake(MpClosedLocalDateRange::class, stored)
         val zoned = codec.awake(MpZonedDateTimeRange::class, stored)
 
         val flags = listOf(
-            instants?.hasStart, instants?.hasEnd, dates?.hasStart, dates?.hasEnd, zoned?.hasStart, zoned?.hasEnd,
+            instants?.hasStart, instants?.hasEnd, dates?.hasStart, dates?.hasEnd,
+            closed?.hasStart, closed?.hasEnd, zoned?.hasStart, zoned?.hasEnd,
         )
 
-        flags shouldBe List(6) { false }
+        flags shouldBe List(8) { false }
         dates?.to shouldBe MpLocalDate.of(10000, 1, 1)
+        closed?.to shouldBe MpLocalDate.of(10000, 1, 1)
     }
 })

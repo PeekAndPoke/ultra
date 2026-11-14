@@ -2,7 +2,10 @@ package io.peekandpoke.ultra.datetime
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import kotlinx.datetime.DayOfWeek
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.milliseconds
 
 /** ULTRA-00343: Genesis = 0001-01-01T00:00:00Z, Doomsday = 9999-12-31T00:00:00Z. */
 @Suppress("unused")
@@ -58,11 +61,68 @@ class GenesisDoomsdaySpec : StringSpec({
 
         val instants = Json.decodeFromString(MpInstantRange.serializer(), stored)
         val dates = Json.decodeFromString(MpLocalDateRange.serializer(), stored)
+        val closed = Json.decodeFromString(MpClosedLocalDateRange.serializer(), stored)
         val zoned = Json.decodeFromString(MpZonedDateTimeRange.serializer(), stored)
 
-        listOf(instants.hasStart, instants.hasEnd, dates.hasStart, dates.hasEnd, zoned.hasStart, zoned.hasEnd) shouldBe
-                List(6) { false }
+        listOf(
+            instants.hasStart, instants.hasEnd, dates.hasStart, dates.hasEnd,
+            closed.hasStart, closed.hasEnd, zoned.hasStart, zoned.hasEnd,
+        ) shouldBe List(8) { false }
         dates.to shouldBe MpLocalDate.of(10000, 1, 1)
+        closed.to shouldBe MpLocalDate.of(10000, 1, 1)
+    }
+
+    "the open-end predicates at the neighbours of the sentinels" {
+        val x = MpLocalDate.of(2024, 1, 1)
+        val i = MpInstant.parse("2024-01-01T00:00:00Z")
+        val oneMs = 1.milliseconds
+
+        MpLocalDateRange(x, MpLocalDate.of(9999, 12, 30)).hasEnd shouldBe true
+        MpLocalDateRange(x, MpLocalDate.of(9999, 12, 31)).hasEnd shouldBe false
+        MpLocalDateRange(MpLocalDate.of(1, 1, 2), x).hasStart shouldBe true
+        MpLocalDateRange(MpLocalDate.of(1, 1, 1), x).hasStart shouldBe false
+
+        MpInstantRange(i, MpInstant.Doomsday - oneMs).hasEnd shouldBe true
+        MpInstantRange(i, MpInstant.Doomsday).hasEnd shouldBe false
+        MpInstantRange(MpInstant.Genesis + oneMs, i).hasStart shouldBe true
+        MpInstantRange(MpInstant.Genesis, i).hasStart shouldBe false
+
+        // through asOpenRange (to + 1 day): today's behaviour, pinned as it is
+        MpClosedLocalDateRange(x, MpLocalDate.of(9999, 12, 29)).hasEnd shouldBe true
+        MpClosedLocalDateRange(x, MpLocalDate.of(9999, 12, 30)).hasEnd shouldBe false
+        MpClosedLocalDateRange(MpLocalDate.of(1, 1, 2), x).hasStart shouldBe true
+        MpClosedLocalDateRange(MpLocalDate.of(1, 1, 1), x).hasStart shouldBe false
+    }
+
+    "the end is open at or after 9999-12-31T00:00Z, so forever no longer contains the last day" {
+        val i = MpInstant.parse("2024-01-01T00:00:00Z")
+
+        // another system's maximum reads as "no end"
+        MpInstantRange(i, MpInstant.parse("9999-12-31T23:59:59.999Z")).hasEnd shouldBe false
+
+        MpLocalDateRange.forever.contains(MpLocalDate.of(9999, 12, 31)) shouldBe false
+        MpLocalDateRange.forever.contains(MpLocalDate.of(9999, 12, 30)) shouldBe true
+        MpInstantRange.forever.contains(MpInstant.parse("9999-12-31T12:00:00Z")) shouldBe false
+        MpInstantRange.forever.contains(MpInstant.parse("9999-12-30T12:00:00Z")) shouldBe true
+    }
+
+    "MpClosedLocalDateRange.beginningAt(d).asOpenRange stores to = 10000-01-01, the old Doomsday" {
+        val open = MpClosedLocalDateRange.beginningAt(MpLocalDate.of(2024, 1, 1)).asOpenRange
+
+        open.to shouldBe MpLocalDate.of(10000, 1, 1)
+        open.hasEnd shouldBe false
+        Json.encodeToString(MpLocalDateRange.serializer(), open) shouldContain "\"ts\":253402300800000"
+    }
+
+    "old and new sentinels mixed: cutting a new beginningAt out of an old one leaves an open-ended sliver" {
+        val old = MpLocalDateRange(MpLocalDate.of(2024, 1, 1), MpLocalDate.of(10000, 1, 1))
+        val pieces = old.cutAway(MpLocalDateRange.beginningAt(MpLocalDate.of(2025, 1, 1)))
+
+        pieces shouldBe listOf(
+            MpLocalDateRange(MpLocalDate.of(2024, 1, 1), MpLocalDate.of(2025, 1, 1)),
+            MpLocalDateRange(MpLocalDate.of(9999, 12, 31), MpLocalDate.of(10000, 1, 1)),
+        )
+        pieces.map { it.hasEnd } shouldBe listOf(true, false)
     }
 
     "dates outside Genesis to Doomsday stay valid plain values" {
@@ -70,6 +130,29 @@ class GenesisDoomsdaySpec : StringSpec({
         MpLocalDate.of(12000, 1, 1).plusDays(1) shouldBe MpLocalDate.of(12000, 1, 2)
         MpLocalDateTime.parse("-10000-01-01T00:00:00Z") shouldBe MpLocalDateTime.of(-10000, 1, 1)
         MpLocalDateTime.parse("+10000-01-01T00:00:00Z") shouldBe MpLocalDateTime.of(10000, 1, 1)
+
+        // numDaysInMonth from the calendar; literals from an independent count (400-year cycle: -500-03 = 1100-03)
+        MpLocalDate.of(-500, 3, 15).numDaysInMonth shouldBe 31
+        MpLocalDate.of(0, 12, 31).numDaysInMonth shouldBe 31
+        MpLocalDate.of(0, 6, 15).numDaysInMonth shouldBe 30
+        MpLocalDate.of(0, 2, 1).numDaysInMonth shouldBe 29
+        MpLocalDate.of(1, 2, 1).numDaysInMonth shouldBe 28
+        MpLocalDate.of(9999, 12, 1).numDaysInMonth shouldBe 31
+        MpLocalDate.of(10000, 1, 1).numDaysInMonth shouldBe 31
+        MpLocalDate.of(12000, 2, 1).numDaysInMonth shouldBe 29
+
+        MpLocalDate.of(0, 12, 31).getDatesInMonth(listOf(1, 15, 31)) shouldBe listOf(
+            MpLocalDate.of(0, 12, 1), MpLocalDate.of(0, 12, 15), MpLocalDate.of(0, 12, 31),
+        )
+        MpLocalDate.of(-500, 3, 15).getDatesInMonth(listOf(1, 31, 32)) shouldBe listOf(
+            MpLocalDate.of(-500, 3, 1), MpLocalDate.of(-500, 3, 31),
+        )
+        MpLocalDate.of(-500, 3, 15).getDatesInMonth(listOf(MpDayOfWeek.MONDAY)) shouldBe
+                listOf(5, 12, 19, 26).map { MpLocalDate.of(-500, 3, it) }
+        MpLocalDate.of(0, 12, 31).getDatesInMonth(listOf(DayOfWeek.MONDAY)) shouldBe
+                listOf(4, 11, 18, 25).map { MpLocalDate.of(0, 12, it) }
+        MpLocalDate.of(10000, 1, 1).getDatesInMonth(listOf(MpDayOfWeek.MONDAY)) shouldBe
+                listOf(3, 10, 17, 24, 31).map { MpLocalDate.of(10000, 1, it) }
 
         // a range that starts before year 1 counts as open at its start (accepted)
         MpLocalDateRange(MpLocalDate.of(-500, 1, 1), MpLocalDate.of(2024, 1, 1)).hasStart shouldBe false

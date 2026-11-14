@@ -230,19 +230,22 @@ each of the two slot factories).
 ## Batch 3b-1: plan as built
 
 Built on `wt/datetime` in one commit with the new sentinels of ULTRA-00343. 3b-2 (slots as start plus duration)
-waits for the maintainer; 3b-3 (an estimator arm in the cache) is not needed: see below.
+waits for the maintainer. 3b-3 (an estimator arm in the cache): the coordinator merges track B's estimator first; this
+batch makes no claim about what it does (round 1).
 
 - **`ComputedList<T>(size, compute)`** in `ultra/common` (new, public): a read-only `AbstractList` that computes each
   element from its index on demand and stores nothing; also `RandomAccess`. A negative size is an empty view; an
-  index out of range throws `IndexOutOfBoundsException`. `subList` is a view (from `AbstractList`). The KDoc lists
+  index out of range throws `IndexOutOfBoundsException`. `subList` is a view (from `AbstractList`). `toString()` is
+  bounded (round 1): `ComputedList(size=N, [e0, e1, e2, ...])`, it computes at most three elements. The KDoc lists
   what it means for a consumer (each read computes again, which operations build a real list, thread safety).
 - **`MpLocalDateRange.asListOfDates()`:** same signature, returns `ComputedList(numberOfDays) { from.plusDays(it) }`;
   an invalid range still gives `emptyList()`. No cap and no exception: `forever.asListOfDates()` is a view of
   3,652,058 dates (0001-01-01 to 9999-12-30), cheap to create and to read at its ends.
   `MpClosedLocalDateRange.asListOfDates()` delegates (3,652,059 dates for its `forever`, through 9999-12-31).
-- **Cache estimator (track B):** it samples a `RandomAccess` list by 64 index reads, so a view is never walked. The
-  estimate charges the sampled elements as if stored, i.e. it over-counts a view (the safe direction); stated in the
-  `ComputedList` KDoc.
+- **Size estimators:** the KDoc says only what holds whatever the estimator does: one that walks or samples the list
+  sees computed elements and charges them as if stored, so it over-counts a view. (Before round 1 it described track
+  B's sampling estimator, which is on another branch; on this branch and on master the estimator walks every
+  element.)
 
 ### Test evidence (3b-1 with ULTRA-00343)
 
@@ -250,7 +253,16 @@ waits for the maintainer; 3b-3 (an estimator arm in the cache) is not needed: se
   ULTRA-00343 specs (`GenesisDoomsdaySpec` 8, slumber `OldSentinelsCodecSpec` 1).
 - **RED first:** `ComputedListSpec` as a compile failure (no class); `MpLocalDateRangeLazySpec` 2 of 4 (the `forever`
   sizes against the old sentinels), the type checks red against the eager `map` (mutant G3).
-- Final run (2026-11-14, `console/wt-gradle.sh`, `--rerun` on each test task, counts from the XML): datetime JVM
+- **Round 1:** `ComputedListSpec` 10 → 11 (bounded `toString`; RED first with an `OutOfMemoryError` on a view of
+  `Int.MAX_VALUE`; the always-true `shouldBeInstanceOf<List<Int>>()` removed; the `RandomAccess` test no longer names
+  the cache). `MpLocalDateRangeLazySpec`: index 1,000,000 of `forever` is the literal 2738-11-29 (checked
+  independently), no longer the view's own `plusDays`.
+- Final run after round 1 (2026-11-14, `console/wt-gradle.sh`, `--rerun` on each test task, counts from the XML):
+  datetime JVM 2814 / 0, JS 2156 / 0, native 2148 / 0; common JVM 389 / 0, JS 203 / 0 (1 skipped: the pre-existing
+  `WeakReferenceSpec` GC case), native 197 / 0; slumber jvmTest 1259 / 0. `GenesisDoomsdaySpec` (12) and
+  `ComputedListSpec` (11) ran on all three targets. Repo-wide compile sweep (JVM, JS, native, main and test):
+  exit 0, 0 `e:` lines.
+- Before round 1 (2026-11-14, `console/wt-gradle.sh`, `--rerun` on each test task, counts from the XML): datetime JVM
   2810 / 0, JS 2152 / 0, native 2144 / 0; common JVM 388 / 0, JS 202 / 0 (1 skipped: the pre-existing
   `WeakReferenceSpec` GC case), native 196 / 0; slumber jvmTest 1259 / 0. The new specs ran on all three targets.
   Repo-wide compile sweep (JVM, JS, native, main and test): 0 `e:` lines.
@@ -260,6 +272,8 @@ waits for the maintainer; 3b-3 (an estimator arm in the cache) is not needed: se
 | G3 `asListOfDates` back to the eager `(0 until n).map { … }` | 1 (the `ComputedList` / `RandomAccess` check on `forever`) |
 | G5 `ComputedList.get` computes `index + 1` | 6 (common) |
 | G6 `ComputedList.size` not coerced to ≥ 0 | 1 (common, negative size) |
+| H2 `ComputedList.toString()` back to `super.toString()` | 1 (common, `OutOfMemoryError`) |
+| H3 the ellipsis at `size >= 3` | 1 (common) |
 
 ### Docs lines for the DOCS follow-up (3b-1)
 
@@ -272,20 +286,32 @@ waits for the maintainer; 3b-3 (an estimator arm in the cache) is not needed: se
 **New and changed:**
 
 - `ultra/common`, new: `ComputedList<T>(size) { index -> … }`, a read-only list view that computes each element on
-  demand and stores nothing; `RandomAccess` (ULTRA-00341).
+  demand and stores nothing; `RandomAccess`; its `toString()` shows the size and the first three elements
+  (ULTRA-00341).
 - `ultra/datetime`, behaviour change (no compile signal): `MpLocalDateRange.asListOfDates()` and
   `MpClosedLocalDateRange.asListOfDates()` return a lazy view (`ComputedList`) instead of a built list. Same type
   (`List<MpLocalDate>`), same elements; any length is cheap to create and to read (`forever.asListOfDates()` included).
   - Each read computes the date again: equal, not the same instance.
   - `toList()`, `map`, `filter`, `sorted` build a real list of every date: for an open range that is millions.
-  - It is not a `MutableList`: a cast to `MutableList` or `ArrayList` that used to work now fails (ULTRA-00341).
+  - It is not a `MutableList`: a cast to `MutableList` or `ArrayList` that used to work now fails.
+  - `toString()` no longer lists every date: `ComputedList(size=N, [d0, d1, d2, ...])` (ULTRA-00341).
+
+## Review record 3b-1: round 1 (blind, reviewer-fable-xhigh, two passes)
+
+Verdict NOT CLEAN; the MAJOR (`numDaysInMonth`) and the sentinel items are recorded in ULTRA-00343. The 3b-1 items:
+
+| Sev | Finding | Outcome |
+|---|---|---|
+| MINOR | `ComputedList` KDoc, a test title and this ticket describe track B's estimator, which is on another branch | FIXED: only a sentence true for any estimator; test title neutral; 3b-3 paragraph corrected |
+| MINOR | `ComputedList.toString()` builds every element (about 140 MB for `forever.asListOfDates()`) | FIXED: bounded, tested, in the KDoc and changelog; RED first (`OutOfMemoryError`); mutants H2 / H3 red |
+| MINOR | `MpLocalDateRangeLazySpec`: expected value from the view's own `plusDays`; `shouldBeInstanceOf<List<Int>>()` cannot fail | FIXED: literal 2738-11-29 (checked independently); line removed |
 
 ## Left out, for one follow-up ticket
 
 - `MpLocalTime.jvm` drops the milliseconds (`Max.jvm` = 23:59:59).
 - `MpLocalTime.parse`'s error message names `MpLocalDate`.
-- ~~`MpLocalDateRange.numberOfDays` miscounts ranges past Doomsday.~~ Settled in ULTRA-00343: the clamp stays,
-  documented and pinned.
+- ~~`MpLocalDateRange.numberOfDays` miscounts ranges past Doomsday.~~ Moved to ULTRA-00343: the clamp stays,
+  documented and pinned; its consequences before Genesis and around Doomsday are with the maintainer (round 1).
 
 ## History
 

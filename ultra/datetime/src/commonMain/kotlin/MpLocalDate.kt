@@ -121,9 +121,9 @@ data class MpLocalDate(
     /** The day of the year */
     val dayOfYear: Int get() = value.dayOfYear
 
-    /** The number of days of the current month */
+    /** The number of days of the current month, from the calendar (no range, so no Genesis / Doomsday clamp). */
     val numDaysInMonth: Int by lazy {
-        atFirstOfMonth().toClosedRange(atLastOfMonth()).numberOfDays
+        atLastOfMonth().day
     }
 
     /**
