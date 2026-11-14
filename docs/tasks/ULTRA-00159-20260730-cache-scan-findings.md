@@ -769,17 +769,47 @@ counted, limits per platform, cost, and how to plug in an own estimator.
 
 Evidence after the last code commit: cache jvm **196** / js **165** / native **164**, consumers slumber **1249** / vault **287**; 0 failures, 0 skipped.
 
+### Review round 4 — 2026-11-14 (delta, top level)
+
+- Implementation & code style: **CLEAN** (7 MINOR).
+- Domain + security: **CLEAN** (7 MINOR). All fixes in the code as recorded; M1 intact.
+
+The MINOR batch, each written as a test and run on the code as it stood first:
+
+| MINOR | Outcome | Commit | Mutation → red |
+|---|---|---|---|
+| A size bound evicted a live entry in place of one already gone that was not first in LRU order | CONFIRMED (hand-driven, both bounds: {C} instead of {B, C}), fixed: `maxEntries` takes its overshoot from `min(tracked, cache.size)`, an absent key only drops tracking; `maxMemoryUsage`, when over budget, first releases the bytes of tracked entries already gone (one presence check each, only while over budget) | 4060eae0 | overshoot from the tracked count → both maxEntries tests; no release of gone entries → the memory test |
+| Refresh claims never launched when a throwable cuts `process()` short | CONFIRMED (twin keys whose `equals()` throws once in the lookup: neither key refreshed again), fixed: the launch loop releases unhandled claims in `finally`. The test's first version lost an add in a plain list from two threads (2 of 6 runs red); it uses a lock-guarded set. It then failed on JS and native, where a map may call `equals()` on the cached key: the twins share one trap since | 6b2c666c, final test fix after 9cee040b | no release in `finally` → red |
+| One printed line per failing item, one inside the cache lock | CONFIRMED (a listener failing for 1 000 evictions printed 1 000 lines under the lock), fixed: failures counted per kind and exception class where they happen, printed by the loop once per kind and pass, outside every lock | e0b1ceda | the listener printing per failure → red |
+| Dead `api` dependency on `ultra:datetime` | CONFIRMED unused (no source set references it), removed. Repo-wide compile sweep (JVM, JS, native main and test compiles; 88 Kotlin compile tasks re-run, among them slumber, vault, funktor, karango, monko): **zero errors, no module relied on it transitively** | 53d007b6 | – |
+| Tests that do not pin what they claim | soft bound pool test counts producer runs (survived a hard-bound mutant before); two-key test waits for both readers; memory test adds an entry with a size; NullableCache two-cache test; time-source test moves time inside `eventually`; the launch-order race test **deleted** (listeners cannot throw out of `process()` any more; cut-short passes are pinned by the `equals()` test) | 06c017ad | hard bound → both soft-bound tests; `currentSize` → 0 → the memory test; cycle check ignoring the cache → the two-cache test |
+| KDoc: suspended time on the monotonic clock, `timeSource` as a test hook (like Caffeine's ticker), `withContext` in `getOrPutAsync`, the cycle check's limits | written | 9cee040b | – |
+
+Left open for the maintainer (estimate only, no change):
+- A failed estimate charges a NEW entry 0 bytes (`FastCache.kt`, `MaxMemoryUsageBehaviour.handle`): a
+  flat default charge, or evicting it - tied to the estimator plan (the plan proposes a configurable
+  flat charge, never 0).
+- The false-positive edge of the cycle check (a coroutine inheriting the context outlives the
+  provider): a fix would let each chain link hold its claim's deferred and ignore completed links;
+  about 10 lines.
+- `Eviction.REMOVED` vs `ABSENT` could be a Boolean for some callers: left as it is.
+
+Evidence after the last code commit: cache jvm **200** / js **168** / native **167**, consumers slumber **1249** / vault **287**; 0 failures, 0 skipped. Items 2-6 were first run on the JVM only; the final run caught the item-2 test failing on JS and native (a JVM-only HashMap detail in the test), fixed in the test.
+
 ## Changelog text
 
 For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
-`FastCache.Builder.timeSource(TimeSource)`. The behaviour changes below have **no compile signal**, so
-each is listed.
+`FastCache.Builder.timeSource(TimeSource)`. Dependency change: `ultra:cache` no longer exports
+`ultra:datetime`. The behaviour changes below have **no compile signal**, so each is listed.
 
 ```
 ### ultra:cache
-- FastCache TTLs run on a monotonic clock (TimeSource.Monotonic) instead of the wall clock: a step
-  of the system clock no longer expires entries early or keeps them past their TTL. New:
-  FastCache.Builder.timeSource(TimeSource), e.g. a TestTimeSource in tests.
+- Dependency: ultra:cache no longer depends on ultra:datetime. A project that used datetime only
+  through cache must now declare it itself.
+- FastCache TTLs run on a monotonic clock (TimeSource.Monotonic) instead of the wall clock: a step of
+  the system clock no longer expires entries early or keeps them past their TTL. Time the machine
+  spends suspended may not count, so an entry can outlive its TTL in wall-clock terms by the length
+  of a pause (as in Caffeine and Guava). New, for tests: FastCache.Builder.timeSource(TimeSource).
 - FastCache TTLs never throw; odd values fall back. A zero or negative TTL means "do not keep": the
   entry expires at the next processing pass. A positive TTL below 1 ms counts as 1 ms.
   Duration.INFINITE never expires. An entry can be served up to its TTL plus two loop periods.
@@ -792,26 +822,34 @@ each is listed.
   distinct keys touched within one pass.
 - expireAfterWrite and the refresh hard TTL apply to a key read in every pass: only a pending write
   spares an entry from write-based expiry.
-- A read or a miss in the same loop window no longer hides a put or a remove; an entry already gone
-  is no longer counted as spared, so a size bound no longer evicts a live entry in its place.
+- A read or a miss in the same loop window no longer hides a put or a remove. A size bound counts
+  what the cache really holds: an entry already gone no longer makes it evict a live one in its place.
 - FastCache.clear() tells the expiry, size and refresh behaviours and the statistics. It is not an
   eviction: onEviction handlers and evictionCount do not fire.
 - No throwable from a behaviour, eviction listener or refresh loader ends the processing loop or
   reaches the scope's handler (Errors included); a CancellationException thrown by user code is
   treated as a failure. Each eviction listener runs on its own: a throwing one no longer skips the
-  others. A size estimator throwing for one entry no longer leaves the memory budget off.
+  others. A size estimator throwing for one entry no longer leaves the memory budget off: that
+  entry counts as its previous size, 0 when new.
+- Failures are counted and printed once per kind and processing pass, with the count and the
+  exception's class only (no key, no message), outside the cache's lock.
 - refreshAfterWrite: a refresh replaces only the value it started from (by identity; for booleans,
   enums, small numbers, interned strings and JS primitives any equal value), skips a key written
   after the pass decided to refresh it, drops a refused result without notice, frees its key on any
-  failure, and keeps serving the stale value while it retries every pass. A refresh's result counts
-  as an access and as a put (open: ULTRA-00321).
-- Failures are printed with the exception's class only, without the key or the message.
+  failure (also when a pass is cut short before launching it), and keeps serving the stale value
+  while it retries every pass. A refresh's result counts as an access and as a put (open:
+  ULTRA-00321).
 - StatisticsBehaviour.snapshot() and MaxMemoryUsageBehaviour.totalSize are safe to read from any
   thread.
 - NullableCache: a put while getOrPutAsync runs wins over the provider's result; a provider reaching
-  a key its own call chain is resolving fails with IllegalStateException instead of hanging (a cycle
-  across two concurrent callers still deadlocks); clear() is no longer undone by a running provider;
-  a cancelled caller waiting on another caller's provider no longer spins.
+  a key its own call chain is resolving fails with IllegalStateException instead of hanging (not
+  detected: a cycle across two concurrent callers, or one reached through a coroutine that does not
+  inherit the provider's context; a coroutine inheriting it that outlives the provider can get a
+  false IllegalStateException); getOrPutAsync runs the provider in a child scope, so coroutines it
+  launches into its own context are awaited before caching, an already cancelled caller does not
+  start it, and a value computed while the caller was cancelled is discarded; clear() is no longer
+  undone by a running provider; a cancelled caller waiting on another caller's provider no longer
+  spins.
 - JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
   outer instance. KDoc: the estimator's cost is quadratic in the objects of a value (measured).
 - KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null.
@@ -853,3 +891,5 @@ each is listed.
 - 2026-11-14: review round 3: implementation and security CLEAN, domain NOT CLEAN (soft bounds by the
   maintainer's decision); real defects B1-B6 and the MINORs fixed; monotonic clock; estimator plan
   waiting for confirmation.
+- 2026-11-14: review round 4 (delta): both passes CLEAN; the MINOR batch applied. The estimator plan
+  is approved (constant-time lookups); it starts after the merge.
