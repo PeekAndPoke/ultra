@@ -1,8 +1,8 @@
 # ULTRA-00320: Mutator: isModified() is false when a nested list mutator is held across the parent's commit()
 
-> **Status (2026-11-14): DESIGNED.**
+> **Status (2026-11-14): PAUSED.** Not scheduled: Mutator is an experiment (maintainer, 2026-11-14); part of ULTRA-00322.
 >
-> **Part of:** ULTRA-00255 (Ultra libraries epic)
+> **Part of:** ULTRA-00322 (Epic: Mutator, future work (an experiment, not in use))
 
 **Plan:** ULTRA-00316 (close the open epics), track C. Found by the security review of ULTRA-00234, round 2 (claim H).
 
@@ -42,3 +42,4 @@ goes into the first mutator's own copy and the removed row comes back. Verify fi
 ## History
 
 - 2026-11-14: created on the maintainer's word ("create followup ticket").
+- 2026-11-14: PAUSED. Not scheduled: Mutator is an experiment (maintainer, 2026-11-14); part of ULTRA-00322.
