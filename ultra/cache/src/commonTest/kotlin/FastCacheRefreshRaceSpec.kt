@@ -4,12 +4,19 @@ import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * A refresh racing the application's own writes.
+ *
+ * Each cache runs in a scope of its own, cancelled at the end, so a loader left hanging on its gate
+ * does not outlive the test.
  *
  * Each loader call is held by a gate of its own, so the order of loads, writes and completions is
  * fixed by the test; the waits only give the loop time to run.
@@ -33,7 +40,8 @@ class FastCacheRefreshRaceSpec : StringSpec() {
     init {
         "a refresh does not overwrite a value written while its loader ran" {
             val loader = GatedLoader(size = 10)
-            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+            val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+            val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
                 refreshAfterWrite(100.milliseconds) { loader.load() }
             }
 
@@ -47,6 +55,8 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             delay(60.milliseconds)
 
             cache.get("a") shouldBe "fresh"
+
+            scope.cancel()
         }
 
         "a refresh does not start from a value written after the batch it decided on" {
@@ -73,7 +83,8 @@ class FastCacheRefreshRaceSpec : StringSpec() {
         "keys claimed for refresh are loaded even when a hard-TTL eviction's listener throws" {
             // Driven by hand, as in FastCacheEvictionDeclineSpec, against a cache whose own loop only
             // drains: the listener is registered on the cache, the refresh behaviour is not.
-            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+            val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+            val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
                 onEviction { _, _ -> error("eviction listener failed") }
             }
             val held = CompletableDeferred<String>()
@@ -103,12 +114,13 @@ class FastCacheRefreshRaceSpec : StringSpec() {
                 loadsOfA shouldBe 1
             }
 
-            keepReachable(cache)
+            scope.cancel()
         }
 
         "a failed refresh does not release the claim of a newer refresh of the same key" {
             val loader = GatedLoader(size = 10)
-            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+            val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+            val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
                 refreshAfterWrite(100.milliseconds) { loader.load() }
             }
 
@@ -129,6 +141,7 @@ class FastCacheRefreshRaceSpec : StringSpec() {
 
             loader.gates[1].complete("done")
 
+            scope.cancel()
             keepReachable(cache)
         }
     }

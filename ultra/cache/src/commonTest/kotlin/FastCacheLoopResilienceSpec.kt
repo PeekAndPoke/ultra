@@ -322,8 +322,6 @@ class FastCacheConfigValidationSpec : StringSpec() {
             delay(100.milliseconds)
 
             loads shouldBe 0
-
-            keepReachable(cache)
         }
     }
 }
