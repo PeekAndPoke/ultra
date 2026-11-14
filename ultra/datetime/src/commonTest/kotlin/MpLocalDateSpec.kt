@@ -30,13 +30,13 @@ class MpLocalDateSpec : StringSpec() {
 
         "Genesis and Doomsday" {
 
-            MpLocalDate.Genesis shouldBe MpLocalDate.of(-10000, Month.JANUARY, 1)
+            MpLocalDate.Genesis shouldBe MpLocalDate.of(1, Month.JANUARY, 1)
 
-            MpLocalDate.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"
+            MpLocalDate.Genesis.toIsoString() shouldBe "0001-01-01T00:00:00.000Z"
 
-            MpLocalDate.Doomsday shouldBe MpLocalDate.of(10000, Month.JANUARY, 1)
+            MpLocalDate.Doomsday shouldBe MpLocalDate.of(9999, Month.DECEMBER, 31)
 
-            MpLocalDate.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
+            MpLocalDate.Doomsday.toIsoString() shouldBe "9999-12-31T00:00:00.000Z"
         }
 
         "parse - toIsoString - round trip" {

@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
+import io.peekandpoke.ultra.common.ComputedList
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
 import kotlin.math.max
@@ -85,6 +86,11 @@ data class MpLocalDateRange(
         MpDatePeriod(years = years, months = months, days = days)
     }
 
+    /**
+     * The number of days in this range. A range that reaches past [MpLocalDate.Doomsday] counts as open-ended and is
+     * counted only up to Doomsday (the same at [MpLocalDate.Genesis]; ULTRA-00343). Pre-existing detail of that clamp:
+     * it rounds a half day to the even number, so Doomsday itself is counted for every second start date.
+     */
     val numberOfDays: Int by lazy {
         if (isNotValid) {
             return@lazy 0
@@ -115,12 +121,20 @@ data class MpLocalDateRange(
         return Partial(from = from, to = to)
     }
 
+    /**
+     * The dates of this range as a lazy view ([ComputedList]): each date is computed when read, nothing is stored.
+     *
+     * Cheap whatever the length (even for [forever]): `size`, `get`, `first`, `last` and iteration. `toList()`, `map`,
+     * `filter` and the like build a real list of every date. Reads compute again: equal dates, not the same
+     * instances. Read-only. Its length is [numberOfDays] (counted up to Doomsday); an invalid range gives an
+     * empty list.
+     */
     fun asListOfDates(): List<MpLocalDate> {
         if (isNotValid) {
             return emptyList()
         }
 
-        return (0 until numberOfDays).map { from.plusDays(it) }
+        return ComputedList(numberOfDays) { index -> from.plusDays(index) }
     }
 
     override fun compareTo(other: MpDatePeriod): Int {

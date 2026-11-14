@@ -25,14 +25,14 @@ data class MpLocalDate(
 
     companion object {
         /**
-         * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
+         * The Genesis, 0001-01-01T00:00:00Z: stands for "no start" in ranges, see [GENESIS_TIMESTAMP]
          */
         val Genesis: MpLocalDate = MpLocalDate(
             Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP).toLocalDateTime(TimeZone.UTC).date
         )
 
         /**
-         * The Doomsday, a date in the distant future: +10000-01-01T00:00:00Z
+         * The Doomsday, 9999-12-31T00:00:00Z: stands for "no end" in ranges, see [DOOMSDAY_TIMESTAMP]
          */
         val Doomsday: MpLocalDate = MpLocalDate(
             Instant.fromEpochMilliseconds(DOOMSDAY_TIMESTAMP).toLocalDateTime(TimeZone.UTC).date

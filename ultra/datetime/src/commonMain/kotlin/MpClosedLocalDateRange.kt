@@ -55,6 +55,7 @@ data class MpClosedLocalDateRange(
 
     val asDatePeriod: MpDatePeriod by lazy { asOpenRange.asDatePeriod }
 
+    /** The number of days, counted up to Doomsday, see [MpLocalDateRange.numberOfDays]. */
     val numberOfDays: Int by lazy { asOpenRange.numberOfDays }
 
     val numberOfNights: Int by lazy { asOpenRange.numberOfNights }
@@ -75,6 +76,7 @@ data class MpClosedLocalDateRange(
         return Partial(from = from, to = to)
     }
 
+    /** The dates of this range as a lazy view, see [MpLocalDateRange.asListOfDates]. */
     fun asListOfDates(): List<MpLocalDate> = asOpenRange.asListOfDates()
 
     override fun compareTo(other: MpDatePeriod): Int {

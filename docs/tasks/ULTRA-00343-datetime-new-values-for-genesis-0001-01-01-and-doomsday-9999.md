@@ -64,7 +64,98 @@ memory, not checked: .NET `DateTime`, Python `datetime`, SQL Server `datetime2`)
 - The constants have the decided values on JVM, JS and native; an open range's stored timestamps lie inside
   ArangoDB's range; datetime and slumber suites green.
 
+## Plan as built
+
+Built on `wt/datetime` in one commit with the lazy list views (ULTRA-00341, batch 3b-1).
+
+- **`constants.kt`:** `GENESIS_TIMESTAMP = -62_135_596_800_000L` (0001-01-01T00:00:00Z), `DOOMSDAY_TIMESTAMP =
+  253_402_214_400_000L` (9999-12-31T00:00:00Z). Every `Genesis` / `Doomsday` of `MpInstant`, `MpLocalDate`,
+  `MpLocalDateTime`, `MpZonedDateTime` and the JVM helpers (`GenesisInstant`, …) derive from them; only the KDoc
+  changed there. The KDoc says what they stand for and that they are not limits of the date types.
+- **Unchanged code:** `hasStart = from > Genesis`, `hasEnd = to < Doomsday` on every range type, the clamp in
+  `DateTimeRangeConverter`. Because the old values lie outside the new ones, a range stored with them still reads as
+  open (pinned for kotlinx and slumber).
+- **`numberOfDays`:** keeps its clamp (item 2); KDoc on `MpLocalDateRange.numberOfDays` and
+  `MpClosedLocalDateRange.numberOfDays`. This settles item 3 of ULTRA-00342.
+- **Found while pinning the clamp, pre-existing, for the maintainer:** `numberOfDays` is the noon-to-noon span in UTC,
+  clamped to Doomsday (00:00), divided by a day and rounded with `kotlin.math.round` (half to even). A range past
+  Doomsday therefore ends on a half day, and Doomsday itself is counted for every second start date:
+  2024-01-01 → 12000-01-01 and 2024-01-02 → 12000-01-01 both give 2_913_173. Pinned as is, documented in the KDoc.
+
+### Test evidence
+
+- **New:** `GenesisDoomsdaySpec` (commonTest, 8): the timestamps; every type's constants; `forever` / `beginningAt` /
+  `endingAt` with `hasStart` / `hasEnd` on `MpInstantRange`, `MpLocalDateRange`, `MpClosedLocalDateRange`,
+  `MpZonedDateTimeRange`; ranges with the OLD sentinels through kotlinx Json read as open (and `dates.to` stays
+  10000-01-01); dates outside stay valid, a range from year -500 has `hasStart == false`; the `numberOfDays` clamp
+  (2024-01-01 → 12000: 2_913_173, `forever`: 3_652_058, 2024-01-02 → 12000: 2_913_173); Genesis in America/New_York
+  is 0000-12-31; the converter clamps to the sentinels. Slumber `OldSentinelsCodecSpec` (jvmTest, 1): the old values
+  through the slumber codecs read as open.
+- **RED first** (new tests and changed rows against the old constants, JVM): 17 red, among them
+  `GenesisDoomsdaySpec` 6 of 8, `MpLocalDateRangeLazySpec` 2 of 4 (the `forever` sizes), and the changed rows of
+  `ConstantsSpec`, `MpLocalDateTimeSpec` (parse rows) and `MpZonedDateTimeRangeZoneSpec`. The old-sentinel tests are
+  green before and after by design (the old values lie outside both); their teeth come from mutants G7 / G8.
+- Counts: see the 3b-1 section of ULTRA-00341.
+
+| Mutant (JVM; each restored with `cmp`) | Tests red |
+|---|---|
+| G1 `GENESIS_TIMESTAMP` one day later | 13 (datetime) |
+| G2 `DOOMSDAY_TIMESTAMP` one day later | 13 (datetime) |
+| G4 `MpLocalDateRange.hasEnd` with `<=` | 1 (`forever` / `beginningAt` / `endingAt` row) |
+| G7 `MpLocalDateRange.hasEnd` as `!=` (persistence: old values read as closed) | 4 datetime (incl. the kotlinx old-sentinel test) + 1 slumber (`OldSentinelsCodecSpec`) |
+| G8 `MpInstantRange.hasStart` as `!=` (persistence: old values read as closed) | 1 datetime (the kotlinx old-sentinel test) + 1 slumber (`OldSentinelsCodecSpec`) |
+
+**Existing test lines changed:**
+
+| Spec | Before | After |
+|---|---|---|
+| `ConstantsSpec` (jvmTest) | `GenesisInstant` "-10000-01-01T00:00:00Z", `DoomsdayInstant` "+10000-01-01T00:00:00Z" | "0001-01-01T00:00:00Z", "9999-12-31T00:00:00Z" |
+| `ConstantsSpec` | `GenesisLocalDate` "-10000-01-01", `DoomsdayLocalDate` "+10000-01-01" | "0001-01-01", "9999-12-31" |
+| `ConstantsSpec` | `GenesisLocalDateTime` "-10000-01-01T00:00", `DoomsdayLocalDateTime` "+10000-01-01T00:00" | "0001-01-01T00:00", "9999-12-31T00:00" |
+| `MpInstantSpec` | Genesis / Doomsday `toIsoString` "-10000-01-01T00:00:00.000Z" / "+10000-01-01T00:00:00.000Z" | "0001-01-01T00:00:00.000Z" / "9999-12-31T00:00:00.000Z" |
+| `MpLocalDateSpec` "Genesis and Doomsday" | `of(-10000, JANUARY, 1)`, `of(10000, JANUARY, 1)`, the old ISO literals | `of(1, JANUARY, 1)`, `of(9999, DECEMBER, 31)`, the new ISO literals |
+| `MpLocalDateTimeSpec` | the same constants; "parse - Genesis" / "parse - Doomsday" on "-10000-01-01T00:00:00(.000Z, Z, none)" / "+10000-01-01T00:00:00(.000Z)" | the same rows on "0001-01-01…" / "9999-12-31…" |
+| `MpZonedDateTimeSpec` | Genesis / Doomsday `toIsoString` as in `MpInstantSpec` | the new literals |
+| `MpInstantRangeSpec` "Creation - forever" | `duration shouldBe 7304850.days` | `3652058.days` |
+| `MpZonedDateTimeRangeZoneSpec` converter tie test | dates (-10000, 1, 1) / (10000, 1, 1); `past` from (-10000, 1, 1) | (1, 1, 1) / (9999, 12, 31); `past` from (1, 1, 1); comment updated |
+| `MpZonedDateTimeRangeZoneSpec` round-4 test | "-01:00" to-date 9999-12-31 | 9999-12-30, which keeps it a tie at the new Doomsday; title updated |
+
+### Repo search (old numbers -377736739200000, 253402300800000 and the years ±10000)
+
+- Main code: only `ultra/datetime` (`constants.kt`, the KDoc of `MpInstant`, `MpLocalDate`, `MpZonedDateTime`); all
+  changed. The JVM helpers derive from the constants.
+- Tests: the rows above. Slumber's `MpZonedDateTimeRangeCodecSpec` uses `beginningAt` without literals.
+- No hits in the TypeScript runtime, karango, monko or funktor (funktor's hits are the English word "forever").
+- Docs (for ULTRA-00339): see below.
+
+### Docs lines for ULTRA-00339
+
+- `docs-site/src/data/llms/datetime.md:65-66`: Genesis / Doomsday as -10000-01-01 / +10000-01-01.
+- `docs-site/src/pages/ultra/datetime/mp-local-date.astro:37-38`: the same.
+- `docs-site/src/pages/ultra/datetime/mp-instant.astro:49-50`: the same.
+- New to say: they stand for "no start" / "no end" in ranges and are not limits of the date types; a stored range
+  with the old values still reads as open; `numberOfDays` counts an open-ended range up to Doomsday.
+
+## Changelog text
+
+**Breaking changes, behaviour change (no compile signal):**
+
+- `ultra/datetime`: `Genesis` is now 0001-01-01T00:00:00Z and `Doomsday` 9999-12-31T00:00:00Z on `MpInstant`,
+  `MpLocalDate`, `MpLocalDateTime`, `MpZonedDateTime` and the JVM helpers (they were -10000-01-01 and +10000-01-01);
+  `GENESIS_TIMESTAMP` = -62_135_596_800_000 and `DOOMSDAY_TIMESTAMP` = 253_402_214_400_000 (public constants). Both
+  now lie inside the range of ArangoDB's date functions, and the text form has a four-digit year (ULTRA-00343).
+  - Ranges stored with the old values still read as open (`hasStart` / `hasEnd` false), but they are not equal to
+    the new `forever` / `beginningAt` / `endingAt`, and their stored `to` stays 10000-01-01.
+  - `forever.numberOfDays` is 3,652,058 (was 7,304,850); `MpInstantRange.forever.duration` is 3,652,058 days.
+  - `forever.asListOfDates()` ends at 9999-12-30 (`MpClosedLocalDateRange.forever` at 9999-12-31).
+  - Genesis shown in a zone west of UTC falls on 0000-12-31.
+  - Dates outside Genesis to Doomsday stay valid plain values; a range that starts before year 1 has
+    `hasStart == false`, one that ends after 9999-12-31 has `hasEnd == false`.
+  - `numberOfDays` counts a range that reaches past Doomsday only up to Doomsday (unchanged, now documented).
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
 - 2026-11-14: the three further points confirmed by the maintainer; the topic is closed.
+- 2026-11-14: built on `wt/datetime` with ULTRA-00341 batch 3b-1; awaiting the review gate (the coordinator moves
+  the ticket).

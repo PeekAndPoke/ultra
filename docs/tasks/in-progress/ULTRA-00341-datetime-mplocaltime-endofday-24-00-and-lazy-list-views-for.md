@@ -227,13 +227,69 @@ each of the two slot factories).
 | counts | final run after delta round 2 (2026-11-14 17:40, `--rerun`) | JVM 2798 / 0, JS 2140 / 0, native 2129 → 2132 / 0, slumber 1258 / 0 |
 | tidy | repeated rows: the gap split in `MpLocalTimeEndOfDaySpec` (duplicates the `MpLocalTimeSlotSpec` row), two awake lines in `MpLocalTimeEndOfDayCodecSpec`, a second `SECONDS_PER_DAY` | DONE: the duplicate test and lines removed; `MpLocalTime.SECONDS_PER_DAY` is `internal` and shared |
 
+## Batch 3b-1: plan as built
+
+Built on `wt/datetime` in one commit with the new sentinels of ULTRA-00343. 3b-2 (slots as start plus duration)
+waits for the maintainer; 3b-3 (an estimator arm in the cache) is not needed: see below.
+
+- **`ComputedList<T>(size, compute)`** in `ultra/common` (new, public): a read-only `AbstractList` that computes each
+  element from its index on demand and stores nothing; also `RandomAccess`. A negative size is an empty view; an
+  index out of range throws `IndexOutOfBoundsException`. `subList` is a view (from `AbstractList`). The KDoc lists
+  what it means for a consumer (each read computes again, which operations build a real list, thread safety).
+- **`MpLocalDateRange.asListOfDates()`:** same signature, returns `ComputedList(numberOfDays) { from.plusDays(it) }`;
+  an invalid range still gives `emptyList()`. No cap and no exception: `forever.asListOfDates()` is a view of
+  3,652,058 dates (0001-01-01 to 9999-12-30), cheap to create and to read at its ends.
+  `MpClosedLocalDateRange.asListOfDates()` delegates (3,652,059 dates for its `forever`, through 9999-12-31).
+- **Cache estimator (track B):** it samples a `RandomAccess` list by 64 index reads, so a view is never walked. The
+  estimate charges the sampled elements as if stored, i.e. it over-counts a view (the safe direction); stated in the
+  `ComputedList` KDoc.
+
+### Test evidence (3b-1 with ULTRA-00343)
+
+- **New:** `ComputedListSpec` (common commonTest, 10), `MpLocalDateRangeLazySpec` (datetime commonTest, 4), and the
+  ULTRA-00343 specs (`GenesisDoomsdaySpec` 8, slumber `OldSentinelsCodecSpec` 1).
+- **RED first:** `ComputedListSpec` as a compile failure (no class); `MpLocalDateRangeLazySpec` 2 of 4 (the `forever`
+  sizes against the old sentinels), the type checks red against the eager `map` (mutant G3).
+- Final run (2026-11-14, `console/wt-gradle.sh`, `--rerun` on each test task, counts from the XML): datetime JVM
+  2810 / 0, JS 2152 / 0, native 2144 / 0; common JVM 388 / 0, JS 202 / 0 (1 skipped: the pre-existing
+  `WeakReferenceSpec` GC case), native 196 / 0; slumber jvmTest 1259 / 0. The new specs ran on all three targets.
+  Repo-wide compile sweep (JVM, JS, native, main and test): 0 `e:` lines.
+
+| Mutant (JVM; each restored with `cmp`) | Tests red |
+|---|---|
+| G3 `asListOfDates` back to the eager `(0 until n).map { … }` | 1 (the `ComputedList` / `RandomAccess` check on `forever`) |
+| G5 `ComputedList.get` computes `index + 1` | 6 (common) |
+| G6 `ComputedList.size` not coerced to ≥ 0 | 1 (common, negative size) |
+
+### Docs lines for the DOCS follow-up (3b-1)
+
+- `docs-site/src/pages/ultra/datetime/ranges.astro` and `docs-site/src/data/llms/datetime.md`: wherever
+  `asListOfDates()` appears, say that it returns a lazy view (cheap to read, `toList()` / `map` build a real list).
+- `docs-site/src/pages/ultra/common/*` and the common LLM mirror: `ComputedList` is new.
+
+## Changelog text (3b-1)
+
+**New and changed:**
+
+- `ultra/common`, new: `ComputedList<T>(size) { index -> … }`, a read-only list view that computes each element on
+  demand and stores nothing; `RandomAccess` (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalDateRange.asListOfDates()` and
+  `MpClosedLocalDateRange.asListOfDates()` return a lazy view (`ComputedList`) instead of a built list. Same type
+  (`List<MpLocalDate>`), same elements; any length is cheap to create and to read (`forever.asListOfDates()` included).
+  - Each read computes the date again: equal, not the same instance.
+  - `toList()`, `map`, `filter`, `sorted` build a real list of every date: for an open range that is millions.
+  - It is not a `MutableList`: a cast to `MutableList` or `ArrayList` that used to work now fails (ULTRA-00341).
+
 ## Left out, for one follow-up ticket
 
 - `MpLocalTime.jvm` drops the milliseconds (`Max.jvm` = 23:59:59).
 - `MpLocalTime.parse`'s error message names `MpLocalDate`.
-- `MpLocalDateRange.numberOfDays` miscounts ranges past Doomsday.
+- ~~`MpLocalDateRange.numberOfDays` miscounts ranges past Doomsday.~~ Settled in ULTRA-00343: the clamp stays,
+  documented and pinned.
 
 ## History
 
 - 2026-11-14: created by the coordinator for batch 3 of track A.
 - 2026-11-14: batch 3a built (`618a4860`); review round 1 handled on `wt/datetime`, awaiting the delta review.
+- 2026-11-14: batch 3a merged (c6ecca2a). Batch 3b-1 (lazy views, with ULTRA-00343) built on `wt/datetime`,
+  awaiting the review gate; 3b-2 waits for the maintainer.

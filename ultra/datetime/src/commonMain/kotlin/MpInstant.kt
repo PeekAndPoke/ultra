@@ -60,14 +60,14 @@ data class MpInstant(
         val Epoch: MpInstant = fromEpochMillis(0)
 
         /**
-         * The Genesis, a date in the distant past: -10000-01-01T00:00:00Z
+         * The Genesis, 0001-01-01T00:00:00Z: stands for "no start" in ranges, see [GENESIS_TIMESTAMP]
          */
         val Genesis: MpInstant = MpInstant(
             Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP)
         )
 
         /**
-         * The Doomsday, a date in the distant future: +10000-01-01T00:00:00Z
+         * The Doomsday, 9999-12-31T00:00:00Z: stands for "no end" in ranges, see [DOOMSDAY_TIMESTAMP]
          */
         val Doomsday: MpInstant = MpInstant(
             Instant.fromEpochMilliseconds(DOOMSDAY_TIMESTAMP)

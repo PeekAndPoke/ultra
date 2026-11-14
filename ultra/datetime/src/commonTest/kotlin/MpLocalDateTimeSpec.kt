@@ -40,13 +40,13 @@ class MpLocalDateTimeSpec : StringSpec({
 
     "Genesis and Doomsday" {
 
-        MpLocalDateTime.Genesis shouldBe MpLocalDateTime.of(-10000, Month.JANUARY, 1)
+        MpLocalDateTime.Genesis shouldBe MpLocalDateTime.of(1, Month.JANUARY, 1)
 
-        MpLocalDateTime.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"
+        MpLocalDateTime.Genesis.toIsoString() shouldBe "0001-01-01T00:00:00.000Z"
 
-        MpLocalDateTime.Doomsday shouldBe MpLocalDateTime.of(10000, Month.JANUARY, 1)
+        MpLocalDateTime.Doomsday shouldBe MpLocalDateTime.of(9999, Month.DECEMBER, 31)
 
-        MpLocalDateTime.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
+        MpLocalDateTime.Doomsday.toIsoString() shouldBe "9999-12-31T00:00:00.000Z"
     }
 
     "Equality" {
@@ -98,7 +98,7 @@ class MpLocalDateTimeSpec : StringSpec({
         }
 
         run {
-            val start = MpLocalDateTime.parse("-10000-01-01T00:00:00.000Z")
+            val start = MpLocalDateTime.parse("0001-01-01T00:00:00.000Z")
             val result = MpLocalDateTime.parse(start.toIsoString())
 
             start shouldBe result
@@ -106,7 +106,7 @@ class MpLocalDateTimeSpec : StringSpec({
         }
 
         run {
-            val start = MpLocalDateTime.parse("-10000-01-01T00:00:00Z")
+            val start = MpLocalDateTime.parse("0001-01-01T00:00:00Z")
             val result = MpLocalDateTime.parse(start.toIsoString())
 
             start shouldBe result
@@ -114,7 +114,7 @@ class MpLocalDateTimeSpec : StringSpec({
         }
 
         run {
-            val start = MpLocalDateTime.parse("-10000-01-01T00:00:00")
+            val start = MpLocalDateTime.parse("0001-01-01T00:00:00")
             val result = MpLocalDateTime.parse(start.toIsoString())
 
             start shouldBe result
@@ -132,7 +132,7 @@ class MpLocalDateTimeSpec : StringSpec({
         }
 
         run {
-            val start = MpLocalDateTime.parse("+10000-01-01T00:00:00")
+            val start = MpLocalDateTime.parse("9999-12-31T00:00:00")
             val result = MpLocalDateTime.parse(start.toIsoString())
 
             start shouldBe result
@@ -140,7 +140,7 @@ class MpLocalDateTimeSpec : StringSpec({
         }
 
         run {
-            val start = MpLocalDateTime.parse("+10000-01-01T00:00:00.000Z")
+            val start = MpLocalDateTime.parse("9999-12-31T00:00:00.000Z")
             val result = MpLocalDateTime.parse(start.toIsoString())
 
             start shouldBe result

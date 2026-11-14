@@ -23,7 +23,7 @@ class MpInstantRangeSpec : StringSpec({
         forever.from shouldBe MpInstant.Genesis
         forever.to shouldBe MpInstant.Doomsday
 
-        forever.duration shouldBe 7304850.days
+        forever.duration shouldBe 3652058.days
 
         forever.isValid shouldBe true
 

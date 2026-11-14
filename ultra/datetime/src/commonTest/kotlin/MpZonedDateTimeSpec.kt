@@ -119,11 +119,11 @@ class MpZonedDateTimeSpec : StringSpec({
     "Genesis and Doomsday" {
         MpZonedDateTime.Genesis.toEpochMillis() shouldBe GENESIS_TIMESTAMP
 
-        MpZonedDateTime.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"
+        MpZonedDateTime.Genesis.toIsoString() shouldBe "0001-01-01T00:00:00.000Z"
 
         MpZonedDateTime.Doomsday.toEpochMillis() shouldBe DOOMSDAY_TIMESTAMP
 
-        MpZonedDateTime.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
+        MpZonedDateTime.Doomsday.toIsoString() shouldBe "9999-12-31T00:00:00.000Z"
     }
 
     "Comparison" {

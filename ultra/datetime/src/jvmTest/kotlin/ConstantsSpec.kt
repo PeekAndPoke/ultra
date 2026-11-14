@@ -11,20 +11,20 @@ class ConstantsSpec : FreeSpec() {
         "Genesis and Doomsday Constants" {
 
             assertSoftly {
-                GenesisInstant.toString() shouldBe "-10000-01-01T00:00:00Z"
+                GenesisInstant.toString() shouldBe "0001-01-01T00:00:00Z"
                 GenesisInstant.toEpochMilli() shouldBe GENESIS_TIMESTAMP
 
-                DoomsdayInstant.toString() shouldBe "+10000-01-01T00:00:00Z"
+                DoomsdayInstant.toString() shouldBe "9999-12-31T00:00:00Z"
                 DoomsdayInstant.toEpochMilli() shouldBe DOOMSDAY_TIMESTAMP
 
-                GenesisLocalDate.toString() shouldBe "-10000-01-01"
+                GenesisLocalDate.toString() shouldBe "0001-01-01"
 
-                DoomsdayLocalDate.toString() shouldBe "+10000-01-01"
+                DoomsdayLocalDate.toString() shouldBe "9999-12-31"
 
-                GenesisLocalDateTime.toString() shouldBe "-10000-01-01T00:00"
+                GenesisLocalDateTime.toString() shouldBe "0001-01-01T00:00"
                 GenesisLocalDateTime.toInstant(utc).toEpochMilli() shouldBe GENESIS_TIMESTAMP
 
-                DoomsdayLocalDateTime.toString() shouldBe "+10000-01-01T00:00"
+                DoomsdayLocalDateTime.toString() shouldBe "9999-12-31T00:00"
                 DoomsdayLocalDateTime.toInstant(utc).toEpochMilli() shouldBe DOOMSDAY_TIMESTAMP
             }
         }

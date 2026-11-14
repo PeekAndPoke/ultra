@@ -122,10 +122,12 @@ data class MpLocalDateTime(
             return MpDateTimeParser.parseInstant(isoString).atZone(MpTimezone.UTC).datetime
         }
 
+        /** The Genesis, 0001-01-01T00:00:00: stands for "no start" in ranges, see [GENESIS_TIMESTAMP] */
         val Genesis: MpLocalDateTime = MpLocalDateTime(
             Instant.fromEpochMilliseconds(GENESIS_TIMESTAMP).toLocalDateTime(TimeZone.UTC)
         )
 
+        /** The Doomsday, 9999-12-31T00:00:00: stands for "no end" in ranges, see [DOOMSDAY_TIMESTAMP] */
         val Doomsday: MpLocalDateTime = MpLocalDateTime(
             Instant.fromEpochMilliseconds(DOOMSDAY_TIMESTAMP).toLocalDateTime(TimeZone.UTC)
         )

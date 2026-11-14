@@ -64,11 +64,11 @@ class MpInstantSpec : StringSpec({
 
     "Genesis and Doomsday" {
 
-        MpInstant.Genesis.toIsoString() shouldBe "-10000-01-01T00:00:00.000Z"
+        MpInstant.Genesis.toIsoString() shouldBe "0001-01-01T00:00:00.000Z"
 
         MpInstant.Genesis.toEpochMillis() shouldBe GENESIS_TIMESTAMP
 
-        MpInstant.Doomsday.toIsoString() shouldBe "+10000-01-01T00:00:00.000Z"
+        MpInstant.Doomsday.toIsoString() shouldBe "9999-12-31T00:00:00.000Z"
 
         MpInstant.Doomsday.toEpochMillis() shouldBe DOOMSDAY_TIMESTAMP
     }
