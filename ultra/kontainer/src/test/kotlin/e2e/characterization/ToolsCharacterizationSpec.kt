@@ -154,7 +154,7 @@ class ToolsCharacterizationSpec : StringSpec() {
                 info.service(ToolsPromoted::class).instances shouldHaveSize 1
                 info.service(ToolsForms::class).instances shouldHaveSize 0
 
-                withClue("an override reports its instance, created at create") {
+                withClue("an override reports its instance, created at its first request") {
                     info.service(ToolsOverridden::class).instances.map { it.cls.fqn } shouldBe
                             listOf(ToolsOverride::class.java.name)
                 }
