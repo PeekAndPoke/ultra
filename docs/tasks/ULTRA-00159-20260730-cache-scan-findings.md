@@ -1005,6 +1005,66 @@ cache JVM suite under CPU load (load average 17-26): **10 runs, 0 failures**. Al
 restored (byte-compared); one first run of N18 failed to compile and showed the previous run's XML -
 the mutation script now deletes the results before each run, and N18 was redone (red).
 
+### Estimator delta round 2 — 2026-11-14 (reviewer-fable-xhigh, all charters)
+
+NOT CLEAN: 1 MAJOR, 6 MINOR. The second round without a clean one, so the coordinator asks the
+maintainer before another round; the fix is built meanwhile, not merged. Every finding was first
+written as a test and run on the code as it stood. Fix: d16021e4.
+
+**MAJOR — CONFIRMED: once the identity set was full, a back-reference walked the cycle again.** It
+sat in the part of round 1 that was added without being asked (the cap on the set). The reviewer's
+values, checked against the estimator's constants and confirmed by the red runs:
+
+| Test | right value | before the fix |
+|---|---|---|
+| parent of 80 references to one child that points back, `sampleSize = 8`, `maxObjects = 4` | 4 956 = 656 + 10 × (80 + 7 × 50) | 80 116 |
+| six nodes linked both ways, `maxObjects = 6` | 13 256 = 6 × 56 + 12 × 52 + 6 × 2 048 + 2 × 4 (the reviewer's figure; the two nulls at the ends are the 8) | 1 408 |
+| default settings: 64 parents, each with 640 children that point back | the estimate without any budget (15 515 408) | 401 896 608 |
+
+Fixed as recommended: the budget applies to leaves only. A leaf (string or primitive array) is
+tested first and tracked while fewer than `maxObjects` leaves are; a later one is sized without the
+check (a shared one may count again). Every queued object is tracked - at most `maxObjects` are ever
+queued, since the cap counts visited plus queued - so the set holds at most `2 × maxObjects`. Beyond
+the cap an object is charged flat without descent as before; it is looked up (`IdentitySet.contains`,
+new) but not added, so an object already walked is still recognised, and one charged flat before is
+charged again. Both errors from the bound now err high, as the KDoc says; no object is walked twice.
+Scenario a after the change: estimate / exact 1.00, 15 ms best of ten, 28-36 ms for a single warm
+run (JVM; the reference table is unchanged in every row). Mutants: queued objects untracked once
+the leaf budget is full (the defect) → the three tests red (54 516, 1 376, 182 575 008); no lookup
+beyond the cap → the chain test (13 288); every leaf tracked → the shared-string test; no leaf tracked
+→ three tests.
+
+**MINORs**
+
+| # | Finding | Outcome | Test | Mutant → red |
+|---|---|---|---|---|
+| 1 | `visited + queue.size` → `visited` survived | did not survive as a defect; pinned: `List(4) { List(4) { listOf("s$a$b") } }`, `maxObjects = 10` → 982 (= 48 + 4 × 48 + 5 × 78 + 11 × 32; the mutant gives 1 488, as the reviewer said) | exact value | `visited >= maxObjects` → red |
+| 2 | a throwing JS getter charged flat but not counted | CONFIRMED (failures 0). `UnreadableField` is now a class carrying the failure's name; the walk counts it | JS: two throwing getters (an `Error`, a string) → failures 2, exact bytes | count dropped → red |
+| 3a | `Object.getOwnPropertyNames` on a `Proxy` whose `ownKeys` throws `'x'` escaped `estimate()` | CONFIRMED (the JS run aborted: "the string \"no keys\" was thrown"). A new expect/actual `catchingAll(block, onFailure)` (inline; JS catches `dynamic` and wraps a non-`Error` in `ThrownValue`) guards each object's walk, each `push`, the property reads and the last resort | JS: the proxy alone (32, 1 failure, `ThrownValue`) and in a list (116: the list and `"ok"` stand) | visit guard `Throwable`-only → red |
+| 3b | `push(root)` outside the per-object guard: a revoked `Proxy` throws `TypeError` on `instanceof` | CONFIRMED through the mutant: with `push` unguarded, a revoked proxy in a list makes the whole list flat and drops the element after it (84 instead of 182); the red run before the fix aborted before this test. Now `push` is guarded: the element alone is charged flat, the elements beside it stand. The class first came out `null` (a JS error has no Kotlin class name); failure names now come from a new `failureName()` (JS: the error's own `name`): `TypeError`, as the reviewer expected | JS: revoked proxy alone (32, 1, `TypeError`) and in a list (182, not 84) | `push` unguarded → red; `name` dropped → red |
+| 3c | last-resort catch | it is no longer reachable from a value: the root goes through the guarded `push` too. Kept for the walk's own bookkeeping (out of memory); no test can make it red | - | `Throwable`-only → survived, as expected |
+| 3d | the open item: non-Error throws at FastCache's catch sites | CONFIRMED (the JS run aborted on "not an Error"). Closed with `catchingAll` at all four sites (size estimate, refresh loader, loop, eviction listener); a non-`Error` is reported as `ThrownValue` | JS spec `FastCacheNonErrorThrowSpec`: estimator (loop survives; by hand the batch goes on, fallback charged), a behaviour, two listeners (the second still runs), a loader (retried every pass, and its coroutine completes) | each site `Throwable`-only → its test red. The loader site survived the first version (its `finally` still frees the key, so retries go on); the escaped throw leaves the refresh coroutine active for good - the test now waits for the scope to hold only the loop: 4 children instead of 1 → red |
+| 4 | the work bound is not configuration-only on JS | KDoc: listing a JS object's own properties is linear in their number on each visit, and a collection's `size` can be linear (a concurrent queue) | - | - |
+| 5 | "450 ms" before-figure | corrected to 70 ms (JVM, 1 000 maps of 10 entries, the batch's measurement) | - | - |
+| 6 | `ObjectSizeEstimatorPlatform.getFieldsOf` has no caller | listed for the maintainer below; not removed | - | - |
+
+**For the maintainer:** `ObjectSizeEstimatorPlatform.getFieldsOf` (public) has no caller since the
+walk reads fields through `fieldsForWalk`. Remove it, or deprecate it first. Still open, untested:
+`NullableCache.getOrPutAsync` catches `Throwable` around the provider (`NullableCache.kt:131`), so on
+JS a provider throwing a non-`Error` would skip releasing its claim.
+
+**Stayed clean (checked again):** the queue bound (at most `maxObjects` ever queued: the cap counts
+visited plus queued); termination (every queued object is tracked, so each is visited once; a leaf
+has no descent); the leaf bounds (sized from their length, never queued); saturation (estimate and
+`MaxMemoryUsageBehaviour` sizes and total); `FastCache` bookkeeping (failure counts, fallback); the
+initialization order (no new field in `FastCache`; the estimator's new state lives in one call's
+`Walk`); the recomputed test values above.
+
+Evidence: `--rerun` cache jvm **242** / js **222** / native **208**, slumber **1249** / vault **287**,
+0 failures; cache JVM suite under CPU load (load average 10-18): **10 runs, 0 failures**. 16 mutants
+for this round (plus the loader site's second run), all restored; all red except the last-resort
+catch, which nothing can reach now.
+
 ## Changelog text
 
 For the coordinator to put into `CHANGELOG.md`. Signature changes: the new
@@ -1068,8 +1128,11 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
   to 64 fixed positions, following the golden ratio by default (the same value always gets the same
   estimate; collections without index access over their first 1 024 elements), and the rest charged
   by the samples' average; at most 10 000 objects are visited, breadth first, any further one charged
-  flat - strings and primitive arrays are always sized from their length and do not count; the walk
-  is iterative and never throws: an object whose walk fails is charged flat and the rest stands.
+  flat - strings and primitive arrays are always sized from their length and do not count; the
+  identity set holds at most twice maxObjects objects (every object walked, and the first maxObjects
+  strings and primitive arrays): a string or array reached after those, or an object beyond the cap
+  reached twice, may count again - that errs high, and no object is ever walked twice. The walk is
+  iterative and never throws: an object whose walk fails is charged flat and the rest stands.
   EstimatorConfig.samplePick = SamplePick.GoldenRatio by default; EvenlySpaced, a fixed stride, is
   the alternative. Odd settings fall back (sampleSize and maxObjects below 1 count as 1, a window
   below the sample size as the sample size). Estimates change for large values (measured accuracy and
@@ -1082,8 +1145,11 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
   in the loop's failure line ("size estimate (part charged flat)").
 - JS: every number is charged 8 bytes (was 1). An ArrayBuffer, a typed array or a DataView is
   charged its byte length, a Blob its size; a JS Map or Set is charged an empty object. A getter that
-  throws a non-Error value no longer escapes the estimate. An own property holding a function now
-  counts its reference.
+  throws, or a Proxy that refuses to be inspected, is charged flat and counted - also when it throws
+  a value that is no Error. An own property holding a function now counts its reference.
+- JS: a size estimator, behaviour, eviction listener or refresh loader throwing a value that is no
+  Error (throw 'x') no longer ends the processing loop; it is counted like any failure, as
+  "ThrownValue".
 - JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
   outer instance.
 - maxMemoryUsage estimates an entry when it is written; reads reuse that size (a value changed in
@@ -1132,3 +1198,6 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
 - 2026-11-14: estimator review round 1: both passes NOT CLEAN (the same MAJOR, 13 MINORs). The MAJOR
   fixed (leaves sized past the cap, breadth first, bounded identity set; d4379b22), the MINORs fixed
   or pinned (7c379495). Awaiting the delta review.
+- 2026-11-14: estimator delta round 2 (reviewer-fable-xhigh): NOT CLEAN, 1 MAJOR (a cycle walked again
+  once the identity set was full) and 6 MINORs, all fixed or pinned (d16021e4). Second round without
+  a clean one: the coordinator asks the maintainer before the next round.
