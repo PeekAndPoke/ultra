@@ -64,7 +64,7 @@ class NullableCache<K : Any, V : Any> {
     /** The value cached for [key], or null when it is absent OR cached as null — see [has]. */
     fun get(key: K): V? = read(key)?.decode()
 
-    /** Caches [value] for [key], nulls included, and returns it. */
+    /** Caches [value] for [key], nulls included, and returns it. Wins over a [getOrPutAsync] still running for [key]. */
     fun put(key: K, value: V?): V? {
         RunSync(lock) { entries[key] = value.encode() }
 
@@ -116,17 +116,20 @@ class NullableCache<K : Any, V : Any> {
                         throw e
                     }
 
-                    RunSync(lock) {
+                    val result = RunSync(lock) {
                         // Cache only while the claim is current: clear() drops it, and with it the
-                        // result computed before the clear.
+                        // result computed before the clear. A put while the provider ran wins: the
+                        // provider's result is older, and every caller gets the cached value.
                         if (releaseIfCurrent(key, claim)) {
-                            entries[key] = encoded
+                            entries.getOrPut(key) { encoded }
+                        } else {
+                            encoded
                         }
                     }
 
-                    claim.deferred.complete(encoded)
+                    claim.deferred.complete(result)
 
-                    return encoded.decode()
+                    return result.decode()
                 }
             }
         }

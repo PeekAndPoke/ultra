@@ -59,6 +59,25 @@ class NullableCacheClearSpec : StringSpec({
         cache.get("k") shouldBe "new"
     }
 
+    "a put while a provider runs wins over the provider's result" {
+        val cache = NullableCache<String, String>()
+        val gate = CompletableDeferred<Unit>()
+
+        coroutineScope {
+            val running = async(start = CoroutineStart.UNDISPATCHED) {
+                cache.getOrPutAsync("k") { gate.await(); "loaded before the put" }
+            }
+
+            cache.put("k", "put meanwhile")
+            gate.complete(Unit)
+
+            // as FastCache.getOrPut: the value in the cache wins, its caller included
+            running.await() shouldBe "put meanwhile"
+        }
+
+        cache.get("k") shouldBe "put meanwhile"
+    }
+
     "a provider from before clear() that fails does not release the claim made after it" {
         val cache = NullableCache<String, String>()
         val oldGate = CompletableDeferred<Unit>()
