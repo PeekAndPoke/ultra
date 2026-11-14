@@ -3,14 +3,7 @@ package io.peekandpoke.ultra.kontainer.e2e
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeSameInstanceAs
-import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
-import io.peekandpoke.ultra.kontainer.ServiceDefinition
-import io.peekandpoke.ultra.kontainer.ServiceKind
-import io.peekandpoke.ultra.kontainer.ServiceProducer
-import io.peekandpoke.ultra.kontainer.ServiceProvider
-import io.peekandpoke.ultra.kontainer.ServiceType
 import io.peekandpoke.ultra.kontainer.kontainer
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
@@ -19,7 +12,7 @@ class RetainedDyn(val payload: Any?)
 
 /**
  * Pins that a kontainer, once dropped, leaves neither its override lambdas nor their values reachable from the
- * blueprint (ULTRA-00337, ULTRA-00333).
+ * blueprint (ULTRA-00337).
  */
 class KontainerRetentionSpec : StringSpec({
 
@@ -35,7 +28,7 @@ class KontainerRetentionSpec : StringSpec({
         return get() == null
     }
 
-    "An override lambda that was never run is not kept alive by the blueprint once its kontainer is gone" {
+    "An override that was never requested is not kept alive by the blueprint once its kontainer is gone" {
 
         val blueprint = kontainer { dynamic(RetainedDyn::class) { RetainedDyn(null) } }
 
@@ -49,7 +42,7 @@ class KontainerRetentionSpec : StringSpec({
         Reference.reachabilityFence(blueprint)
     }
 
-    "An override that was used leaves neither its lambda's capture nor its value reachable once its kontainer is gone" {
+    "An override that was requested leaves neither its lambda's capture nor its value reachable once its kontainer is gone" {
 
         val blueprint = kontainer { dynamic(RetainedDyn::class) { RetainedDyn(null) } }
 
@@ -65,22 +58,6 @@ class KontainerRetentionSpec : StringSpec({
 
         // The blueprint must stay reachable until here, or the test would prove nothing about it
         Reference.reachabilityFence(blueprint)
-    }
-
-    "An override provider keeps only the value after its first use, not the lambda" {
-
-        val (provider, captured) = overrideProviderCapturingMarker()
-        val kontainer = kontainer { }.create()
-
-        val first = provider.provide(kontainer, InjectionContext.kontainerRoot)
-
-        withClue("the marker captured by the lambda must be collectable while the provider is held") {
-            captured.clearsWithinBoundedGc() shouldBe true
-        }
-
-        withClue("the value stays") {
-            provider.provide(kontainer, InjectionContext.kontainerRoot) shouldBeSameInstanceAs first
-        }
     }
 })
 
@@ -101,22 +78,4 @@ private fun createWithUsedOverride(blueprint: KontainerBlueprint): Pair<WeakRefe
     val value = kontainer.get(RetainedDyn::class)
 
     return WeakReference(marker) to WeakReference<Any>(value)
-}
-
-/** An override provider whose lambda captures a marker; only the provider and a weak reference leave this function. */
-private fun overrideProviderCapturingMarker(): Pair<ServiceProvider, WeakReference<Any>> {
-    val marker = Any()
-
-    val provider = ServiceProvider.Provider.forOverride(
-        definition = ServiceDefinition(
-            serviceCls = RetainedDyn::class,
-            type = ServiceType.Singleton,
-            kind = ServiceKind.Dynamic,
-            producer = ServiceProducer.forInstance(RetainedDyn(null)),
-            overwrites = null,
-        ),
-        create = { RetainedDyn(marker.hashCode()) },
-    ).provide()
-
-    return provider to WeakReference(marker)
 }

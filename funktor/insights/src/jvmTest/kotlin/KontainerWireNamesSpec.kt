@@ -2,7 +2,6 @@ package io.peekandpoke.funktor.insights
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.funktor.insights.collectors.KontainerCollector
 import io.peekandpoke.ultra.kontainer.ServiceKind
@@ -62,15 +61,8 @@ class KontainerWireNamesSpec : StringSpec({
         fun graphInjectionType(cls: Class<*>) = graph.services.single { it.cls == cls.name }.definition.injectionType
 
         val request = blueprint.create { with { WireOverride() } }
-        // The override is requested too: overrides run at their first request (ULTRA-00333)
-        listOf(
-            WireStatic::class,
-            WireSemi::class,
-            WireProto::class,
-            WireDynProto::class,
-            WireSemiProto::class,
-            WireOverridden::class,
-        ).forEach { request.get(it) }
+        listOf(WireStatic::class, WireSemi::class, WireProto::class, WireDynProto::class, WireSemiProto::class)
+            .forEach { request.get(it) }
 
         val slice = KontainerCollector.Data.of(
             graphFingerprint = graph.fingerprint,
@@ -102,7 +94,7 @@ class KontainerWireNamesSpec : StringSpec({
         }
     }
 
-    "An override that was never requested has no instance, so it is not in the record slice (ULTRA-00333)" {
+    "An override that was never requested has its instance, so it is in the record slice (ULTRA-00344)" {
 
         val blueprint = kontainer {
             dynamic(WireOverridden::class)
@@ -115,6 +107,6 @@ class KontainerWireNamesSpec : StringSpec({
             providers = request.tools.factory.getAllProviders(),
         )
 
-        slice.services.map { it.cls } shouldNotContain WireOverridden::class.java.name
+        slice.services.single { it.cls == WireOverridden::class.java.name }.type shouldBe "DynamicOverride"
     }
 })

@@ -5,12 +5,15 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.DynamicOverrides
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceAmbiguous
+import io.peekandpoke.ultra.kontainer.ServiceProviderFactory
 import io.peekandpoke.ultra.kontainer.e2e.Reported
 import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.getName
@@ -49,8 +52,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    // ULTRA-00333: overrides are lazy.
-    "The override lambda runs at the first request of the service, once per kontainer, never at create" {
+    // ULTRA-00344: overrides run at create (decided; the laziness of ULTRA-00333 is reverted).
+    "The override lambda runs at create, once per kontainer, even when the service is never requested" {
 
         class Dyn : Counted()
 
@@ -63,8 +66,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         val subject = blueprint.create { with { runs.incrementAndGet(); Dyn() } }
 
         assertSoftly {
-            withClue("lazy: not run while the dynamic was never requested") {
-                runs.get() shouldBe 0
+            withClue("eager: ran at create, before anything was requested") {
+                runs.get() shouldBe 1
             }
 
             subject.get(Dyn::class)
@@ -72,27 +75,27 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             runs.get() shouldBe 1
 
             blueprint.create { with { runs.incrementAndGet(); Dyn() } }
-            runs.get() shouldBe 1
+            runs.get() shouldBe 2
         }
     }
 
-    "An override that is never requested never runs, and reports no instance" {
+    "An override that is never requested has its instance in instances, the debug info and the dump" {
 
         class Dyn
 
-        val runs = AtomicInteger()
-
         val subject = kontainer {
             dynamic(Dyn::class)
-        }.create { with { runs.incrementAndGet(); Dyn() } }
+        }.create { with { Dyn() } }
 
         assertSoftly {
-            subject.getProvider(Dyn::class).instances.size shouldBe 0
-            runs.get() shouldBe 0
+            subject.getProvider(Dyn::class).instances.size shouldBe 1
+            subject.tools.getDebugInfo().services
+                .first { it.cls.fqn == Dyn::class.java.name }.instances.size shouldBe 1
+            subject.tools.dumpKontainer() shouldContain ": ${Dyn::class.getName()}"
         }
     }
 
-    "An override that throws: create succeeds, the first get throws the lambda's exception" {
+    "An override that throws fails create with its own exception, and no kontainer results" {
 
         class Dyn
 
@@ -100,14 +103,67 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             dynamic(Dyn::class)
         }
 
-        val subject = blueprint.create { with<Dyn> { error("no override today") } }
+        var subject: Kontainer? = null
 
         shouldThrow<IllegalStateException> {
-            subject.get(Dyn::class)
+            subject = blueprint.create { with<Dyn> { error("no override today") } }
         }.message shouldBe "no override today"
+
+        assertSoftly {
+            subject shouldBe null
+            withClue("nothing is remembered: the next create with a working override succeeds") {
+                blueprint.create { with { Dyn() } }.get(Dyn::class)::class shouldBe Dyn::class
+            }
+        }
     }
 
-    "An override reads mutable state at its first use, not at create" {
+    "An override that throws fails clone with its own exception" {
+
+        class Dyn
+
+        val runs = AtomicInteger()
+
+        val original = kontainer {
+            dynamic(Dyn::class)
+        }.create {
+            with<Dyn> { if (runs.incrementAndGet() > 1) error("no second override") else Dyn() }
+        }
+
+        shouldThrow<IllegalStateException> {
+            original.clone()
+        }.message shouldBe "no second override"
+    }
+
+    "A refused override's lambda never runs, at create and at clone" {
+
+        class Single
+        class Dyn
+
+        val runs = AtomicInteger()
+
+        val blueprint = kontainer {
+            singleton(Single::class)
+            dynamic(Dyn::class)
+        }
+
+        assertSoftly {
+            shouldThrow<KontainerInconsistent> {
+                blueprint.create { with { runs.incrementAndGet(); Single() } }
+            }
+
+            shouldThrow<KontainerInconsistent> {
+                blueprint.create { with<Kontainer> { runs.incrementAndGet(); blueprint.create() } }
+            }
+
+            shouldThrow<KontainerInconsistent> {
+                blueprint.create().clone { with { runs.incrementAndGet(); Single() } }
+            }
+
+            runs.get() shouldBe 0
+        }
+    }
+
+    "An override reads mutable state at create" {
 
         class Dyn(val value: Int)
 
@@ -119,10 +175,10 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
 
         current = 2
 
-        subject.get(Dyn::class).value shouldBe 2
+        subject.get(Dyn::class).value shouldBe 1
     }
 
-    "An override's definition names the class given to with before first use, the instance's class after" {
+    "An override's definition names the instance's class, right from create" {
 
         open class Base
         class Derived : Base()
@@ -131,14 +187,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             dynamic(Base::class)
         }.create { with(Base::class) { Derived() } }
 
-        fun creates() = subject.tools.getDebugInfo().services
-            .first { it.cls.fqn == Base::class.java.name }.definition.creates.fqn
-
-        assertSoftly {
-            creates() shouldBe Base::class.java.name
-            subject.get(Base::class)
-            creates() shouldBe Derived::class.java.name
-        }
+        subject.tools.getDebugInfo().services
+            .first { it.cls.fqn == Base::class.java.name }.definition.creates.fqn shouldBe Derived::class.java.name
     }
 
     "A dynamic without an override: reported as Dynamic, built lazily from its definition, once per kontainer" {
@@ -307,22 +357,153 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    "An override that matches two dynamics is refused with ServiceAmbiguous" {
+    "An override that matches two dynamics is refused with ServiceAmbiguous before any override lambda runs" {
 
         open class Outer
         class Inner : Outer()
+        class Other
 
         val blueprint = kontainer {
             dynamic(Outer::class)
             dynamic(Inner::class)
+            dynamic(Other::class)
         }
 
-        shouldThrow<ServiceAmbiguous> {
-            blueprint.create { with { Inner() } }
+        val validRuns = AtomicInteger()
+        val ambiguousRuns = AtomicInteger()
+
+        val error = shouldThrow<ServiceAmbiguous> {
+            blueprint.create {
+                with { validRuns.incrementAndGet(); Other() }
+                with { ambiguousRuns.incrementAndGet(); Inner() }
+            }
+        }
+
+        assertSoftly {
+            error.message shouldBe "Service Inner is ambiguous. It has multiple candidates: Outer, Inner"
+            validRuns.get() shouldBe 0
+            ambiguousRuns.get() shouldBe 0
         }
     }
 
-    "Cloning keeps the overrides and runs their lambdas again, at first use in the clone (ULTRA-00333)" {
+    "A clone adding an override that matches two dynamics is refused before the parent's lambdas run again" {
+
+        open class Outer
+        class Inner : Outer()
+        class Other
+
+        val validRuns = AtomicInteger()
+        val ambiguousRuns = AtomicInteger()
+
+        val original = kontainer {
+            dynamic(Outer::class)
+            dynamic(Inner::class)
+            dynamic(Other::class)
+        }.create {
+            with { validRuns.incrementAndGet(); Other() }
+        }
+
+        shouldThrow<ServiceAmbiguous> {
+            original.clone { with { ambiguousRuns.incrementAndGet(); Inner() } }
+        }
+
+        assertSoftly {
+            withClue("only the parent's create ran the parent's lambda") {
+                validRuns.get() shouldBe 1
+            }
+            ambiguousRuns.get() shouldBe 0
+        }
+    }
+
+    "Override lambdas run in the order of their first with per service; a second with replaces in place" {
+
+        class DynA
+        class DynB
+        class DynC
+
+        val log = mutableListOf<String>()
+
+        val blueprint = kontainer {
+            dynamic(DynA::class)
+            dynamic(DynB::class)
+            dynamic(DynC::class)
+        }
+
+        val original = blueprint.create {
+            with { log.add("A1"); DynA() }
+            with { log.add("B"); DynB() }
+            with { log.add("A2"); DynA() }
+        }
+
+        assertSoftly {
+            withClue("A2 replaces A1 at A's position; A1 never runs") {
+                log shouldBe listOf("A2", "B")
+            }
+
+            log.clear()
+            original.clone {
+                with { log.add("C"); DynC() }
+                with { log.add("A3"); DynA() }
+            }
+
+            withClue("a clone runs the parent's order first, its own override for A at A's position, new keys last") {
+                log shouldBe listOf("A3", "B", "C")
+            }
+        }
+    }
+
+    // Pinned as it is; a question for the maintainer (ULTRA-00344, gate round 1, M3).
+    "CURRENT BEHAVIOUR: two overrides for one service under different classes both run, the later one wins" {
+
+        open class Base
+        class First : Base()
+        class Derived : Base()
+
+        val log = mutableListOf<String>()
+
+        val subject = kontainer {
+            dynamic(Base::class)
+        }.create {
+            with(Base::class) { log.add("first"); First() }
+            with(Derived::class) { log.add("derived"); Derived() }
+        }
+
+        assertSoftly {
+            log shouldBe listOf("first", "derived")
+            subject.get(Base::class)::class shouldBe Derived::class
+        }
+    }
+
+    // Pinned as it is; a question for the maintainer (ULTRA-00344, gate round 1, M4).
+    "CURRENT BEHAVIOUR: the public ServiceProviderFactory constructor runs the lambdas, newKontainer again" {
+
+        class Dyn
+
+        val runs = AtomicInteger()
+
+        val blueprint = kontainer { dynamic(Dyn::class) }
+        val kontainer = blueprint.create { with { runs.incrementAndGet(); Dyn() } }
+
+        val factory = ServiceProviderFactory(
+            blueprint = blueprint,
+            dynamics = kontainer.getServiceProviderFactory().dynamics,
+            providerProviders = emptyMap(),
+        )
+
+        assertSoftly {
+            withClue("one run at create, one unchecked run by the public constructor") {
+                runs.get() shouldBe 2
+            }
+
+            factory.newKontainer(DynamicOverrides(emptyMap()))
+
+            withClue("and one more for the kontainer newKontainer returns") {
+                runs.get() shouldBe 3
+            }
+        }
+    }
+
+    "Cloning keeps the overrides and runs their lambdas once more for the clone, at clone" {
 
         class Dyn : Counted()
         class Holder(val dyn: Dyn) : Counted()
@@ -339,7 +520,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         val clone = original.clone()
 
         assertSoftly {
-            runs.get() shouldBe 0
+            runs.get() shouldBe 2
             clone.reportedOf(Dyn::class) shouldBe Reported.OverriddenDynamicSingleton
             clone.get(Dyn::class) shouldNotBeSameInstanceAs original.get(Dyn::class)
             clone.get(Holder::class) shouldNotBeSameInstanceAs original.get(Holder::class)

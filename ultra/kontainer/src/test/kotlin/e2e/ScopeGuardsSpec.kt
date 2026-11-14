@@ -45,7 +45,7 @@ class ScopeGuardsSpec : StringSpec({
 
         val provider = ServiceProvider.Provider.forOverride(
             definition = definition(ServiceType.Singleton, ServiceKind.Dynamic),
-            create = { Service() },
+            instance = Service(),
         ).provide()
 
         provider.reported shouldBe Reported.OverriddenDynamicSingleton
