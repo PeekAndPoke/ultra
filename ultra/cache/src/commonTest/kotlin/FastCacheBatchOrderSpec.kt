@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -84,22 +85,30 @@ class FastCacheBatchOrderSpec : StringSpec() {
             cache.keys shouldBe setOf("c", "d")
         }
 
-        "refreshAfterWrite: a miss right after remove() stops the key being reloaded" {
+        "refreshAfterWrite: a miss right after remove() drops the key's write time" {
+            // The refresh behaviour is driven by hand with what the cache recorded: a refresh skips a
+            // key that is not cached, so only a key that comes back shows a write time left behind.
+            val tap = ActionTap<String, String>()
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) { addBehaviour(tap) }
             var loads = 0
-            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
-                refreshAfterWrite(100.milliseconds) { loads++; it }
-            }
+            val refresh = FastCache.RefreshAfterWriteBehaviour<String, String>(100.milliseconds) { loads++; it }
 
+            // the write, in a pass of its own, as the loop delivers it
             cache.put("a", "1")
-            delay(50.milliseconds)
+            eventually(2.seconds) {
+                tap.actions.lastOrNull().shouldBeInstanceOf<FastCache.PutAction<String, String>>()
+            }
+            refresh.process(cache, FastCache.ActionUpdates(tap.takeNew()))
 
+            // the remove, hidden behind a miss in one batch
             cache.remove("a")
             cache.get("a")
+            eventually(2.seconds) {
+                tap.actions.lastOrNull().shouldBeInstanceOf<FastCache.MissAction<String, String>>()
+            }
+            refresh.process(cache, FastCache.ActionUpdates(tap.takeNew()))
 
-            // well past the refresh TTL: a ghost write time would have launched the loader by now
-            delay(300.milliseconds)
-
-            loads shouldBe 0
+            refreshStillTracksA(cache, refresh) { loads } shouldBe false
         }
 
         "maxMemoryUsage: a miss right after remove() gives the bytes back" {

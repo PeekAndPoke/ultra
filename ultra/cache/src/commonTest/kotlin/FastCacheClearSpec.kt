@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -89,19 +90,26 @@ class FastCacheClearSpec : StringSpec() {
             }
         }
 
-        "behaviours forget cleared entries: refreshAfterWrite stops reloading them" {
+        "behaviours forget cleared entries: refreshAfterWrite drops their write times" {
+            // Driven by hand with what the cache recorded - see FastCacheBatchOrderSpec
+            val tap = ActionTap<String, String>()
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) { addBehaviour(tap) }
             var loads = 0
-            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
-                refreshAfterWrite(100.milliseconds) { loads++; it }
-            }
+            val refresh = FastCache.RefreshAfterWriteBehaviour<String, String>(100.milliseconds) { loads++; it }
 
             cache.put("a", "1")
-            delay(60.milliseconds)
+            eventually(2.seconds) {
+                tap.actions.lastOrNull().shouldBeInstanceOf<FastCache.PutAction<String, String>>()
+            }
+            refresh.process(cache, FastCache.ActionUpdates(tap.takeNew()))
 
             cache.clear()
-            delay(300.milliseconds)
+            eventually(2.seconds) {
+                tap.actions.lastOrNull().shouldBeInstanceOf<FastCache.RemoveAction<String, String>>()
+            }
+            refresh.process(cache, FastCache.ActionUpdates(tap.takeNew()))
 
-            loads shouldBe 0
+            refreshStillTracksA(cache, refresh) { loads } shouldBe false
         }
 
         "clear() is not an eviction: onEviction and evictionCount do not fire" {
