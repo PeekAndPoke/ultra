@@ -71,15 +71,21 @@ data class MpZonedDateTimeRange(
 
     val duration: Duration by lazy { to - from }
 
-    val hasStart: Boolean get() = from > MpZonedDateTime.Genesis
+    // Endpoints compare by instant: MpZonedDateTime.compareTo also orders one instant in two zones by local time and
+    // zone id, which would make these predicates depend on the zones of the endpoints (ULTRA-00211).
+    private val fromInstant: MpInstant get() = from.toInstant()
 
-    val hasEnd: Boolean get() = to < MpZonedDateTime.Doomsday
+    private val toInstant: MpInstant get() = to.toInstant()
+
+    val hasStart: Boolean get() = fromInstant > MpInstant.Genesis
+
+    val hasEnd: Boolean get() = toInstant < MpInstant.Doomsday
 
     val isOpen: Boolean get() = !hasStart || !hasEnd
 
     val isNotOpen: Boolean get() = !isOpen
 
-    val isValid: Boolean get() = from < to
+    val isValid: Boolean get() = fromInstant < toInstant
 
     val isNotValid: Boolean get() = !isValid
 
@@ -87,7 +93,7 @@ data class MpZonedDateTimeRange(
      * Compares the duration to the given period.
      */
     override operator fun compareTo(other: MpTemporalPeriod): Int {
-        return to.compareTo(from.plus(other))
+        return toInstant.compareTo(from.plus(other).toInstant())
     }
 
     /**
@@ -122,7 +128,7 @@ data class MpZonedDateTimeRange(
      */
     fun contains(datetime: MpAbsoluteDateTime): Boolean {
         val instant = datetime.toInstant()
-        return isValid && instant in from.toInstant()..<to.toInstant()
+        return isValid && instant in fromInstant..<toInstant
     }
 
     /**
@@ -144,13 +150,13 @@ data class MpZonedDateTimeRange(
      */
     fun contains(other: MpZonedDateTimeRange): Boolean {
         return (isValid && other.isValid) &&
-                (from <= other.from && to >= other.to)
+                (fromInstant <= other.fromInstant && toInstant >= other.toInstant)
     }
 
     fun intersects(other: MpZonedDateTimeRange): Boolean {
         return (isValid && other.isValid) && (
-                (other.from in from..<to) ||
-                        (other.to > from && other.to <= to) ||
+                (other.fromInstant in fromInstant..<toInstant) ||
+                        (other.toInstant > fromInstant && other.toInstant <= toInstant) ||
                         contains(other) ||
                         other.contains(this)
                 )
@@ -162,7 +168,7 @@ data class MpZonedDateTimeRange(
      * In other words, returns `true` when the union of both ranges is contiguous (has no gap).
      */
     fun touches(other: MpZonedDateTimeRange): Boolean {
-        return to >= other.from && from <= other.to
+        return toInstant >= other.fromInstant && fromInstant <= other.toInstant
     }
 
     /**
@@ -182,12 +188,13 @@ data class MpZonedDateTimeRange(
     fun mergeWith(other: MpZonedDateTimeRange): List<MpZonedDateTimeRange> = when {
         touches(other) -> listOf(
             MpZonedDateTimeRange(
-                from = minOf(from, other.from),
-                to = maxOf(to, other.to),
+                // on a tie this range's endpoint stays, as minOf / maxOf did
+                from = if (other.fromInstant < fromInstant) other.from else from,
+                to = if (other.toInstant > toInstant) other.to else to,
             )
         )
 
-        else -> listOf(this, other).sortedBy { it.from }
+        else -> listOf(this, other).sortedBy { it.fromInstant }
     }
 
     /**

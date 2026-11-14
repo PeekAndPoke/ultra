@@ -68,7 +68,8 @@ Shipped together with ULTRA-00210.
 (generated `equals`/`hashCode` on the two stored fields); `atStartOfHour/Minute/Second` and `atTime` keep the offset
 like java.time.
 
-**Not changed:** `compareTo` (already by instant), `toIsoString()` format, `MpZonedDateTimeRange` API.
+**Not changed:** `toIsoString()` format, `MpZonedDateTimeRange` API. (`compareTo` was planned unchanged; the maintainer
+decided a tie-break on 2026-11-14, see the implementation notes.)
 
 ## Implementation notes
 
@@ -84,7 +85,7 @@ like java.time.
   `datetime` is derived from the instant (corrected in review round 1).
 - `isSameInstant(other: MpAbsoluteDateTime)` (maintainer, 2026-11-14): a default method on the interface
   `MpAbsoluteDateTime` (`toInstant() == other.toInstant()`), so it works for `MpInstant` and `MpZonedDateTime` and
-  across the two. `compareTo` stays by instant only; a tie-break between zones is not decided and not built.
+  across the two. (`compareTo` got the tie-break later the same day, see below.)
   New `MpAbsoluteDateTimeSameInstantSpec` (commonTest, 4 tests: 09:00 Berlin / 08:00 London same instant, not equal;
   the overlap halves are not the same instant; `MpInstant` vs `MpZonedDateTime` both directions; a value against
   itself). RED first as a compile failure (new API). Mutants: `isSameInstant` = `this == other` → red 2;
@@ -109,7 +110,7 @@ like java.time.
 - Apia loop (maintainer, 2026-11-14, "yes fix it now"): `atStartOfNext` / `atStartOfPrevious` (both overloads; the
   kotlinx ones delegate) step on the date: `toLocalDate().atStartOfNext/Previous(day).atStartOfDay(timezone)`. The
   `MpLocalDate` variants have the same meaning for the starting day (next: strictly after today; previous: today
-  included), so every ordinary result is unchanged: 27 Europe/Berlin rows across both 2022 DST switches, computed with
+  included), so the ordinary results are unchanged: 27 Europe/Berlin rows across both 2022 DST switches, computed with
   the old code by a throwaway probe and pinned (`MpZonedDateTimeWeekdaySpec`). On a date the zone skips the result is
   that date's `atStartOfDay`, i.e. the start of the day after it: from Apia 2011-12-31 the previous FRIDAY is
   2011-12-31T00:00+14:00 (a Saturday); from 2011-12-29 the next FRIDAY is the same (the old loop skipped to 2012-01-06).
@@ -121,12 +122,13 @@ like java.time.
   comparison between the two exists, so nothing about comparing with an `MpInstant` changes.
   Callers checked — what changes meaning, only for two values at the same instant in different zones:
   - `a <= b && a >= b` and `ComparableTo.isEqualTo` no longer mean "same instant"; `isSameInstant` does.
-  - `MpZonedDateTimeRange` (endpoints in different zones at the same instant): `isValid` (`from < to`) can be true
-    for an empty range; `hasStart` / `hasEnd` (against `Genesis` / `Doomsday` in UTC), `contains(range)`,
-    `intersects`, `touches` and `mergeWith`'s `minOf` / `maxOf` order such endpoints by local time and zone.
-    `contains(datetime)` compares instants and is unchanged; `isAdjacentTo` uses `==` (instant + zone).
-  - `DateTimeRangeConverter` `maxOf(Genesis, from)` / `minOf(Doomsday, to)`: on a tie it may now keep the other
-    value; same instant either way.
+  - `MpZonedDateTimeRange`: its predicates compared zoned endpoints with `<`, `<=`, `in`, `minOf`/`maxOf` and so
+    picked up the tie-break (delta round 3, MAJOR). Fixed: the range compares its endpoints by instant everywhere
+    (`hasStart`, `hasEnd`, `isOpen`, `isValid`, `compareTo(period)`, `contains`, `intersects`, `touches`, `mergeWith`,
+    which keeps this range's endpoint on a tie as `minOf`/`maxOf` did), so every result is what it was before the
+    tie-break. `isAdjacentTo` uses `==` (instant + zone), unchanged; `cutAway` already went through `MpInstantRange`.
+  - `DateTimeRangeConverter` `create`: clamps by instant; on a tie Genesis / Doomsday stay, as before (fixed in delta
+    round 3; it means "by instant" on purpose).
   - Not affected: `MpInstantRange` (instants), Kronos, kraft and funktor (no comparisons of zoned values found).
   - Two tests pinned the old meaning (`MpZonedDateTimeSpec` "Construction - parse(isoString, timezone)", 6 lines, and
     "Comparison", 1 line: `shouldBeEqualComparingTo` across zones); adapted to a `shouldBeSameInstantAs` helper.
@@ -183,9 +185,10 @@ like java.time.
 - `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.compareTo` orders by instant, then by local
   date-time, then by zone id (like java.time), so it is `0` exactly when `equals`. For two values at the same instant
   in different zones, `a <= b && a >= b` and `isEqualTo` no longer mean "same instant" (use `isSameInstant`), a
-  `sortedSetOf` keeps both, and `minOf` / `maxOf` / sorting order them by local time and zone. `MpZonedDateTimeRange`
-  compares its endpoints this way: a range whose ends are one instant in two zones is no longer always invalid
-  (ULTRA-00211).
+  `sortedSetOf` keeps both, and `minOf` / `maxOf` / sorting order them by local time and zone.
+  `MpZonedDateTimeRange` compares its endpoints by instant, unchanged. kraft's generic comparable form rules
+  (`inRange`, `greaterThanOrEqual`, …) on `MpZonedDateTime` bounds in another zone now decide the exact boundary instant
+  by local time and zone (ULTRA-00211).
 - `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
   same point in time, for `MpInstant` and `MpZonedDateTime` and across the two (ULTRA-00211).
 - `ultra/datetime`, behaviour change (no compile signal): a time in a DST gap now reads back as the resolved time:
@@ -204,8 +207,10 @@ like java.time.
 - `ultra/datetime`, fix: `MpZonedDateTime.atStartOfPrevious` no longer loops forever when the previous day does not
   exist in the zone (Pacific/Apia and Pacific/Fakaofo skipped 2011-12-30). `atStartOfNext` and `atStartOfPrevious` step
   on the date; on a skipped date they return the start of the day after it, like `atStartOfDay` (from Apia 2011-12-29,
-  the next FRIDAY is 2011-12-31T00:00+14:00, a Saturday; it was 2012-01-06). Every ordinary result is unchanged
-  (ULTRA-00211).
+  the next FRIDAY is 2011-12-31T00:00+14:00, a Saturday; it was 2012-01-06; Pacific/Kiritimati skipped 1994-12-31 the
+  same way). Second fixed case: where a DST gap ends at or crosses midnight the old loop skipped a whole week
+  (America/Nuuk 2024-03-29T23:30, next SATURDAY: was 2024-04-06, now 2024-03-30T00:00-02:00). Ordinary results are
+  unchanged (ULTRA-00211).
 - **Before you update** (removed API): the public constructor `MpZonedDateTime(datetime, timezone)` — use
   `MpZonedDateTime.of(datetime, timezone)` or `instant.atZone(timezone)`; `MpZonedDateTime.copy(...)` — e.g.
   `x.copy(timezone = tz)` becomes `MpZonedDateTime.of(x.datetime, tz)`; destructuring (`component1/2`)
@@ -222,7 +227,7 @@ like java.time.
 | 1 | MINOR | `MpZonedDateTime.kt:349` | `atStartOfHour()` into a gap can be later than the receiver | FIXED (KDoc + pin) | Toronto 1919-03-31T00:45 → 01:00, pinned as current behaviour |
 | 1 | MINOR | ticket | gap equality attributed to the equality choice | FIXED | it holds under both choices (`datetime` derives from the instant); changelog and notes corrected |
 | 1 | – | `MpZonedDateTime.kt:397-406` | `atStartOfPrevious` loops forever in Pacific/Apia (2011-12-30 skipped) | CONFIRMED, FIXED 2026-11-14 (maintainer: "yes fix it now") | probe (bounded copy + real call under a 5 s limit): from 2011-12-31 (Sat) `minus(1 DAY).atStartOfDay()` resolves back to 12-31 00:00+14:00 every step; real call "Did not finish within 5s" (JVM); bounded copy identical on JS. Pre-existing. `atStartOfNext` terminates (moves forward: 2012-01-06); `MpLocalDate` variants terminate (2011-12-30 exists as a date) |
-| 1 | – | `compareTo` vs `equals` | `sortedSetOf(t.atZone(UTC), t.atZone(Berlin))` keeps one | CONFIRMED, no change | probe: `compareTo` 0, `equals` false, sorted set 1, hash set 2 |
+| 1 | – | `compareTo` vs `equals` | `sortedSetOf(t.atZone(UTC), t.atZone(Berlin))` keeps one | CONFIRMED; tie-break decided 2026-11-14 (maintainer: "yes to tie-break"), built in delta round 2 | probe: `compareTo` 0, `equals` false, sorted set 1, hash set 2 |
 | 1 | – | slumber `MpZonedDateTimeCodec.kt:25` | any Number is a `ts` | CONFIRMED, no change | probe: `NaN` and `-0.7` → 1970-01-01T00:00Z, `Infinity` and `1.5e30` → clamped to +292278994-08-17 |
 
 Stayed CLEAN (round 1, blind, reviewer-opus-high; implementation, domain and security charters all CLEAN, no
@@ -243,7 +248,20 @@ Delta round 2 (reviewer-fable-medium): implementation CLEAN (4 MINOR), domain an
 the rows above. `MpInstant` itself is unchanged: `MpInstant.now()` carries sub-millisecond precision on the JVM and
 native and whole milliseconds on JS (probe, 200 samples each), for the maintainer to decide separately.
 
-**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above. Delta round 2 CLEAN, MINORs applied. Equality by instant + zone confirmed by
+| 3 (delta) | MAJOR | `MpZonedDateTimeRange.kt` 74-90, 145-191 | predicates compare zoned endpoints and pick up the tie-break | FIXED | by instant everywhere; RED first 12 of 13 (+ slumber 1 of 1); not RED: `beginningAt(x).atZone(Berlin)` (Berlin's local time at Doomsday is later than UTC's, right by accident). Added `compareTo(period)` across zones and `mergeWith` keeping this range's endpoint on a tie. Mutants: `isValid` zoned → red 1; `touches` zoned → red 1; `hasEnd` zoned → red 5 |
+| 3 (delta) | MINOR | changelog | "every ordinary result is unchanged" false where a DST gap ends at or crosses midnight | FIXED | Nuuk 2024-03-29T23:30 next SATURDAY: old loop 2024-04-06 (confirmed by a probe), new 2024-03-30T00:00-02:00; pinned; changelog names it |
+| 3 (delta) | MINOR | weekday spec | no row for midnight in a gap or a repeated day outside Apia 2011 | FIXED | Toronto 1919 (next/previous MONDAY → 00:30), Sao Paulo 2018 (midnight gap), Apia 1892-07-04 (repeated day) pinned. The `of(date.atTime(Min), zone)` mutant dies on the two Toronto rows (01:00 instead of 00:30); on Sao Paulo and Apia 1892 it gives the same result as `atStartOfDay`, so those rows cannot kill it |
+| 3 (delta) | MINOR | weekday spec | no Kiritimati row (1994-12-31 skipped) | FIXED | previous SATURDAY / FRIDAY from 1995-01-01 (old loop never ended), next SATURDAY from 1994-12-30 (old 1995-01-07) |
+| 3 (delta) | – | `DateTimeRangeConverter.kt:40-41` | (found in the module search) `maxOf(Genesis, from)` / `minOf(Doomsday, to)` on zoned values | FIXED | by instant, Genesis / Doomsday kept on a tie as before; RED first (the tie kept `from`) |
+
+Delta round 3 (reviewer-fable-medium, all charters): NOT CLEAN, 1 MAJOR, 3 MINOR; all fixed above. Stayed clean: the
+Apia fix, `compareTo` itself, the JVM converters. Module search for other comparisons of zoned values: `DateTimeRangeConverter`
+(by instant on purpose, fixed); `MpInstantRange` (instants); `MpLocalDateRange` and `MpLocalTimeSlot` (local types);
+Kronos (none); `MpZonedDateTimeRange.formatDdMmmYyyyHhMm` uses `==` of `atStartOfDay()` (full equality on purpose:
+same day in the same zone).
+
+**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above. Delta round 2 CLEAN, MINORs applied. Delta
+round 3 NOT CLEAN (1 MAJOR), fixed; awaits the next round. Equality by instant + zone confirmed by
 the maintainer (2026-11-14); `isSameInstant` added on his word.
 
 ## History

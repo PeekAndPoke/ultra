@@ -28,6 +28,14 @@ class MpZonedDateTimeWeekdaySpec : StringSpec({
     val apiaTue = at(apia, 2012, 1, 3, 12)
     val apiaThu = at(apia, 2011, 12, 29, 12)
     val fakaofoSat = at(fakaofo, 2011, 12, 31, 12)
+    val nuukFri = MpZonedDateTime.of(MpLocalDateTime.of(2024, 3, 29, 23, 30), MpTimezone.of("America/Nuuk"))
+    val torontoSun = at(MpTimezone.of("America/Toronto"), 1919, 3, 30, 12)
+    val torontoWed = at(MpTimezone.of("America/Toronto"), 1919, 4, 2, 12)
+    val saoPauloSat = at(MpTimezone.of("America/Sao_Paulo"), 2018, 11, 3, 12)
+    val apia1892Sun = at(apia, 1892, 7, 3, 12)
+    val apia1892Wed = at(apia, 1892, 7, 6, 12)
+    val kiritimatiSun = at(MpTimezone.of("Pacific/Kiritimati"), 1995, 1, 1, 12)
+    val kiritimatiFri = at(MpTimezone.of("Pacific/Kiritimati"), 1994, 12, 30, 12)
 
     listOf(
         // the skipped Friday resolves like atStartOfDay of that date: the end of the gap, the start of 12-31
@@ -53,6 +61,29 @@ class MpZonedDateTimeWeekdaySpec : StringSpec({
             MpLocalDateTime.of(2011, 12, 31, 0, 0), "2011-12-30T10:00:00Z"),
         Case("Apia 2011-12-29T12:00, next SUNDAY", { apiaThu.atStartOfNext(MpDayOfWeek.SUNDAY) },
             MpLocalDateTime.of(2012, 1, 1, 0, 0), "2011-12-31T10:00:00Z"),
+        // delta round 3: a DST gap that ends at or crosses midnight (old loop: Nuuk 2024-04-06), midnight inside a gap
+        // that starts before it (Toronto: 00:30, not 01:00), a repeated day (Apia 1892-07-04), Kiritimati skipped
+        // 1994-12-31 (old loop: previous SATURDAY and FRIDAY never ended, next SATURDAY was 1995-01-07)
+        Case("Nuuk 2024-03-29T23:30, next SATURDAY", { nuukFri.atStartOfNext(MpDayOfWeek.SATURDAY) },
+            MpLocalDateTime.of(2024, 3, 30, 0, 0), "2024-03-30T02:00:00Z"),
+        Case("Toronto 1919-03-30T12:00, next MONDAY", { torontoSun.atStartOfNext(MpDayOfWeek.MONDAY) },
+            MpLocalDateTime.of(1919, 3, 31, 0, 30), "1919-03-31T04:30:00Z"),
+        Case("Toronto 1919-04-02T12:00, previous MONDAY", { torontoWed.atStartOfPrevious(MpDayOfWeek.MONDAY) },
+            MpLocalDateTime.of(1919, 3, 31, 0, 30), "1919-03-31T04:30:00Z"),
+        Case("Sao Paulo 2018-11-03T12:00, next SUNDAY", { saoPauloSat.atStartOfNext(MpDayOfWeek.SUNDAY) },
+            MpLocalDateTime.of(2018, 11, 4, 1, 0), "2018-11-04T03:00:00Z"),
+        Case("Apia 1892-07-03T12:00, next MONDAY", { apia1892Sun.atStartOfNext(MpDayOfWeek.MONDAY) },
+            MpLocalDateTime.of(1892, 7, 4, 0, 0), "1892-07-03T11:26:56Z"),
+        Case("Apia 1892-07-06T12:00, previous MONDAY", { apia1892Wed.atStartOfPrevious(MpDayOfWeek.MONDAY) },
+            MpLocalDateTime.of(1892, 7, 4, 0, 0), "1892-07-03T11:26:56Z"),
+        Case(
+            "Kiritimati 1995-01-01T12:00, previous SATURDAY",
+            { kiritimatiSun.atStartOfPrevious(MpDayOfWeek.SATURDAY) },
+            MpLocalDateTime.of(1995, 1, 1, 0, 0), "1994-12-31T10:00:00Z"),
+        Case("Kiritimati 1995-01-01T12:00, previous FRIDAY", { kiritimatiSun.atStartOfPrevious(MpDayOfWeek.FRIDAY) },
+            MpLocalDateTime.of(1994, 12, 30, 0, 0), "1994-12-30T10:00:00Z"),
+        Case("Kiritimati 1994-12-30T12:00, next SATURDAY", { kiritimatiFri.atStartOfNext(MpDayOfWeek.SATURDAY) },
+            MpLocalDateTime.of(1995, 1, 1, 0, 0), "1994-12-31T10:00:00Z"),
     ).forEach { case ->
         "${case.title} terminates at ${case.datetime}" {
             val result = withinTimeLimit(5.seconds) { case.call() }
