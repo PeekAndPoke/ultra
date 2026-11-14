@@ -14,6 +14,15 @@ Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/R
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
 ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
+## Decided (maintainer, 2026-11-14)
+
+"here we should also prevent the downgrade from dynamic to singleton. The service needs to stay dynamic. We do not
+throw or log anything. This is just how the kontainer works."
+
+So `extend` applies the same redefinition rule as a redefinition inside one builder: a service that was dynamic stays
+dynamic when an extension redefines it as a singleton, and a prototype stays a prototype. Silently: no exception, no
+log line.
+
 ## The work
 
 - `extend` applies the same redefinition rule as the builder, or refuses a redefinition that lowers the type.
