@@ -49,9 +49,7 @@ object KontainerFixture {
     }
 
     /**
-     * Injects a service nobody registered, so its first `create()` fails validation: a graph that cannot be built.
-     *
-     * Only the FIRST: the blueprint marks itself validated before validating, so a second `create()` succeeds.
+     * Injects a service nobody registered, so every `create()` fails validation: a graph that cannot be built.
      */
     fun brokenBlueprint(): KontainerBlueprint = kontainer { singleton(Needy::class) }
 
