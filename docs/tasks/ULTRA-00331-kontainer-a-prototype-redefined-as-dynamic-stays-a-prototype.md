@@ -14,6 +14,32 @@ Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/R
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
 ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
+## Decided (maintainer, 2026-11-14)
+
+The maintainer weighed throwing ("The initial author wants the service to be a prototype so making it a singleton
+must fail") against allowing the upgrade to a dynamic singleton, and agreed to the rule below: "ok yes we do it like
+this."
+
+**The redefinition rule, two sentences:**
+
+1. The first definition fixes what the service is, singleton or prototype. The one exception stays: a plain static
+   singleton can be replaced by anything.
+2. Request binding is never lost and can always be added: if either definition is dynamic, the service is dynamic.
+
+| Redefinition | Today | With the rule |
+|---|---|---|
+| `prototype` then `dynamic` | (Prototype, Static) | (Prototype, Dynamic) |
+| `prototype` then `dynamicPrototype` | (Prototype, Static) | (Prototype, Dynamic) |
+| every other pair | | unchanged |
+
+Silent: no exception, no log line, as for `extend` (ULTRA-00330). Why no upgrade to a dynamic singleton: a prototype
+promises every injector its own instance; services written against the first definition may keep state in it, and one
+shared instance per request would mix that state without any failure. Why no exception: consistency with ULTRA-00330,
+redefinition is the normal way to swap an implementation, and a safe resolution exists.
+
+Consequence, accepted: `create { with { ... } }` for such a service is still refused (only dynamic singletons can be
+overridden; the message says so). `extend` follows the same rule (ULTRA-00330).
+
 ## The work
 
 - Decide the redefinition table for all pairs of (ServiceType, ServiceKind), `dynamicPrototype` included, and make builder and `extend` follow it (see ULTRA-00330).
