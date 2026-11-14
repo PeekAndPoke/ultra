@@ -323,6 +323,20 @@ class ValidationCharacterizationSpec : StringSpec({
             blueprint.create { error("the block throws") }
         }.message!! shouldStartWith "Kontainer is inconsistent!"
     }
+
+    // Pinned as it is; the fix is ticket ULTRA-00334.
+    "CURRENT BEHAVIOUR: a decorator with a non-null parameter of its own super type is reported as a cycle" {
+
+        val error = shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(RealRepo::class)
+                singleton(CachingRepo::class)
+            }.create()
+        }
+
+        error.message shouldContain "Circular dependency detected: " +
+                "${CachingRepo::class.getName()} -> ${CachingRepo::class.getName()}"
+    }
 })
 
 class CycleOne(val two: CycleTwo)
@@ -340,3 +354,4 @@ class ListCycleTwo(val one: ListCycleOne)
 abstract class Repo
 class RealRepo : Repo()
 class DecoratingRepo(val inner: Repo?) : Repo()
+class CachingRepo(val inner: Repo) : Repo()

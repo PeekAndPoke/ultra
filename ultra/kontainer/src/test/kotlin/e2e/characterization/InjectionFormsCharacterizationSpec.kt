@@ -532,4 +532,21 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             one.get(Holder::class) shouldNotBeSameInstanceAs two.get(Holder::class)
         }
     }
+
+    // Pinned as it is; the fix is ticket ULTRA-00335.
+    "CURRENT BEHAVIOUR: a Lazy nullable parameter with two candidates yields null without a validation error" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+        class Holder(val base: Lazy<Base?>)
+
+        val subject = kontainer {
+            singleton(Holder::class)
+            singleton(ImplOne::class)
+            singleton(ImplTwo::class)
+        }.create()
+
+        subject.get(Holder::class).base.value.shouldBeNull()
+    }
 })
