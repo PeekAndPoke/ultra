@@ -17,6 +17,14 @@ It is retention only: nothing reads the lambdas back and no other request can se
 distinct class set. Found by reading (domain and security reviewer, round 2 of ULTRA-00319); the same on master; not
 yet confirmed by a test.
 
+## Decided (maintainer, 2026-11-14)
+
+"yes to storing the copy as the cache key": `DynamicsChecker.getUnexpected` keys its cache with a copy of the classes
+(`given.toSet()`), not with the live key view of the request's override map. Test first: the retention is proven
+(an override capturing a marker, all references dropped, the marker still reachable), then the fix. Built with the
+lazy overrides of ULTRA-00333, where the same care applies: after first use the lambda is dropped and only the value
+is kept.
+
 ## The work
 
 - Confirm first: a test that creates a kontainer with an override capturing a marker object, drops every reference,
