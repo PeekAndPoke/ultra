@@ -1,17 +1,21 @@
 package io.peekandpoke.ultra.kontainer.e2e.characterization
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.e2e.Reported
 import io.peekandpoke.ultra.kontainer.e2e.reportedOf
+import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -509,8 +513,8 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00335.
-    "CURRENT BEHAVIOUR: a nullable parameter with two candidates injects null without a validation error, and promotes" {
+    // ULTRA-00335: an ambiguous nullable injection is a validation error.
+    "A nullable parameter with two candidates is a validation error naming the colliding services" {
 
         abstract class Base
         class SingleImpl : Base()
@@ -523,30 +527,48 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             dynamic(DynImpl::class)
         }
 
-        val one = blueprint.create()
-        val two = blueprint.create()
-
-        assertSoftly {
-            one.get(Holder::class).base.shouldBeNull()
-            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
-            one.get(Holder::class) shouldNotBeSameInstanceAs two.get(Holder::class)
-        }
+        shouldThrow<KontainerInconsistent> {
+            blueprint.create()
+        }.message shouldContain "Parameter 'base' is ambiguous. The following services collide: " +
+                "${SingleImpl::class.getName()}, ${DynImpl::class.getName()}"
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00335.
-    "CURRENT BEHAVIOUR: a Lazy nullable parameter with two candidates yields null without a validation error" {
+    // ULTRA-00335: the same for Lazy<T?>.
+    "A Lazy nullable parameter with two candidates is a validation error naming the colliding services" {
 
         abstract class Base
         class ImplOne : Base()
         class ImplTwo : Base()
         class Holder(val base: Lazy<Base?>)
 
+        shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(Holder::class)
+                singleton(ImplOne::class)
+                singleton(ImplTwo::class)
+            }.create()
+        }.message shouldContain "Parameter 'base' is ambiguous. The following services collide: " +
+                "${ImplOne::class.getName()}, ${ImplTwo::class.getName()}"
+    }
+
+    "A nullable parameter with one candidate is injected, with none it is null (unchanged)" {
+
+        class Present
+        class Absent
+        class Holder(val present: Present?, val absent: Absent?, val lazyPresent: Lazy<Present?>)
+
         val subject = kontainer {
             singleton(Holder::class)
-            singleton(ImplOne::class)
-            singleton(ImplTwo::class)
+            singleton(Present::class)
         }.create()
 
-        subject.get(Holder::class).base.value.shouldBeNull()
+        val holder = subject.get(Holder::class)
+
+        assertSoftly {
+            holder.present shouldBe subject.get(Present::class)
+            holder.absent.shouldBeNull()
+            holder.lazyPresent.value shouldBe subject.get(Present::class)
+        }
     }
+
 })

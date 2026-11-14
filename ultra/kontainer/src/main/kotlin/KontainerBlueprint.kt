@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.kontainer
 
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 /**
@@ -26,9 +25,18 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Tracks whether the blueprint has been validated
+     * The validation result, computed once on first use: the error message, or null when the blueprint is valid.
+     *
+     * A caller arriving while another one validates waits for that result.
      */
-    private val validated = AtomicBoolean(false)
+    private val validationError: Lazy<String?> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        try {
+            validate()
+            null
+        } catch (e: KontainerInconsistent) {
+            e.message ?: "Kontainer is inconsistent!"
+        }
+    }
 
     /**
      * Services declared dynamic, singletons and prototypes alike.
@@ -66,9 +74,11 @@ class KontainerBlueprint internal constructor(
     internal val superTypeLookup = TypeLookup.ForSuperTypes(definitions.keys)
 
     /**
-     * Dependency lookup for figuring out which service depends on which other services
+     * Dependency lookup for figuring out which service depends on which other services.
+     *
+     * Reads the parameters' announcements, which use only [superTypeLookup], initialized above.
      */
-    private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions)
+    private val dependencyLookUp = DependencyLookup(blueprint = this, definitions = definitions)
 
     /**
      * Services declared static that reach a dynamic service, directly or through any chain; in discovery order.
@@ -181,12 +191,10 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Validates the blueprint on its first use.
+     * Validates the blueprint on its first use and fails every use of an invalid one with the same message.
      */
     private fun validateOnFirstUse() {
-        if (validated.compareAndSet(false, true)) {
-            validate()
-        }
+        validationError.value?.let { throw KontainerInconsistent(it) }
     }
 
     /**

@@ -3,8 +3,6 @@ package io.peekandpoke.ultra.kontainer.e2e.characterization
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.assertions.throwables.shouldThrowAny
-import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -15,7 +13,9 @@ import io.peekandpoke.ultra.kontainer.InvalidClassProvided
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
-import java.lang.reflect.InvocationTargetException
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Pins the validation of a blueprint: when it runs, the exception type and the essential part of the message.
@@ -250,21 +250,38 @@ class ValidationCharacterizationSpec : StringSpec({
         one.lookup.get(LookupCycleTwo::class).one shouldBe one
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00328.
-    "CURRENT BEHAVIOUR: a cycle through List is not reported and overflows the stack at get" {
+    // ULTRA-00328: the cycle check follows every Direct injection, List included.
+    "A cycle through List is a validation error with the cycle and the hint" {
 
-        val subject = kontainer {
-            singleton(ListCycleOne::class)
-            singleton(ListCycleTwo::class)
-        }.create()
+        val error = shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(ListCycleOne::class)
+                singleton(ListCycleTwo::class)
+            }.create()
+        }
 
-        shouldThrow<StackOverflowError> {
-            subject.get(ListCycleOne::class)
+        assertSoftly {
+            error.message!! shouldStartWith "Kontainer has circular dependencies!\n\n"
+            error.message shouldContain "  - Circular dependency detected: " +
+                    "${ListCycleOne::class.getName()} -> ${ListCycleTwo::class.getName()} -> ${ListCycleOne::class.getName()}"
+            error.message shouldContain "Hint: Use Lazy<T> injection to break the cycle."
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00334.
-    "CURRENT BEHAVIOUR: a decorator with a nullable parameter of its own super type is reported as a cycle" {
+    "A cycle through Lazy<List> is not reported and works, as the list is lazy" {
+
+        val subject = kontainer {
+            singleton(LazyListCycleOne::class)
+            singleton(LazyListCycleTwo::class)
+        }.create()
+
+        val one = subject.get(LazyListCycleOne::class)
+
+        one.all.value.single().one shouldBe one
+    }
+
+    // ULTRA-00334 and ULTRA-00335: ambiguous, not a cycle.
+    "A decorator with a nullable parameter of its own super type is reported as ambiguous, not as a cycle" {
 
         val error = shouldThrow<KontainerInconsistent> {
             kontainer {
@@ -273,12 +290,33 @@ class ValidationCharacterizationSpec : StringSpec({
             }.create()
         }
 
-        error.message shouldContain "Circular dependency detected: " +
-                "${DecoratingRepo::class.getName()} -> ${DecoratingRepo::class.getName()}"
+        assertSoftly {
+            error.message shouldContain "Parameter 'inner' is ambiguous. The following services collide: " +
+                    "${RealRepo::class.getName()}, ${DecoratingRepo::class.getName()}"
+            error.message shouldNotContain "Circular dependency"
+        }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00327.
-    "CURRENT BEHAVIOUR: after a failed validation the next create succeeds, as validation runs only once" {
+    // ULTRA-00327: the validation result is remembered.
+    "After a failed validation every create throws the same error with the same message" {
+
+        class Missing
+        class Holder(val missing: Missing)
+
+        val blueprint = kontainer { singleton(Holder::class) }
+
+        val first = shouldThrow<KontainerInconsistent> { blueprint.create() }
+        val second = shouldThrow<KontainerInconsistent> { blueprint.create() }
+        val third = shouldThrow<KontainerInconsistent> { blueprint.create() }
+
+        assertSoftly {
+            first.message!! shouldStartWith "Kontainer is inconsistent!"
+            second.message shouldBe first.message
+            third.message shouldBe first.message
+        }
+    }
+
+    "After a failed validation the override block of a later create does not run either" {
 
         class Missing
         class Holder(val missing: Missing)
@@ -287,13 +325,67 @@ class ValidationCharacterizationSpec : StringSpec({
 
         shouldThrow<KontainerInconsistent> { blueprint.create() }
 
-        val subject = shouldNotThrowAny { blueprint.create() }
+        var ran = false
+        shouldThrow<KontainerInconsistent> { blueprint.create { ran = true } }
 
-        val thrown = shouldThrowAny { subject.get(Holder::class) }
+        ran shouldBe false
+    }
 
-        withClue("the missing dependency surfaces at get, as a reflection error of the constructor call") {
-            thrown::class shouldBe InvocationTargetException::class
+    "Concurrent first creates of an invalid blueprint: every one of them gets the validation error" {
+
+        class Missing
+        class Holder(val missing: Missing)
+
+        val blueprint = kontainer { singleton(Holder::class) }
+
+        val start = CountDownLatch(1)
+        val outcomes = ConcurrentLinkedQueue<String>()
+
+        val threads = (1..8).map {
+            Thread {
+                start.await()
+                outcomes.add(
+                    try {
+                        blueprint.create()
+                        "kontainer"
+                    } catch (e: KontainerInconsistent) {
+                        e.message!!
+                    }
+                )
+            }.apply { start() }
         }
+
+        start.countDown()
+        threads.forEach { it.join(10_000) }
+
+        assertSoftly {
+            outcomes.size shouldBe 8
+            outcomes.toSet().size shouldBe 1
+            outcomes.first() shouldStartWith "Kontainer is inconsistent!"
+        }
+    }
+
+    "Concurrent first creates of a valid blueprint: every one of them gets a kontainer" {
+
+        class Single
+
+        val blueprint = kontainer { singleton(Single::class) }
+
+        val start = CountDownLatch(1)
+        val created = AtomicInteger()
+
+        val threads = (1..8).map {
+            Thread {
+                start.await()
+                blueprint.create()
+                created.incrementAndGet()
+            }.apply { start() }
+        }
+
+        start.countDown()
+        threads.forEach { it.join(10_000) }
+
+        created.get() shouldBe 8
     }
 
     "Validation runs before the override block of the first create: the block does not run on an invalid blueprint" {
@@ -324,8 +416,8 @@ class ValidationCharacterizationSpec : StringSpec({
         }.message!! shouldStartWith "Kontainer is inconsistent!"
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00334.
-    "CURRENT BEHAVIOUR: a decorator with a non-null parameter of its own super type is reported as a cycle" {
+    // ULTRA-00334: ambiguous, not a cycle.
+    "A decorator with a non-null parameter of its own super type is reported as ambiguous, not as a cycle" {
 
         val error = shouldThrow<KontainerInconsistent> {
             kontainer {
@@ -334,9 +426,31 @@ class ValidationCharacterizationSpec : StringSpec({
             }.create()
         }
 
-        error.message shouldContain "Circular dependency detected: " +
-                "${CachingRepo::class.getName()} -> ${CachingRepo::class.getName()}"
+        assertSoftly {
+            error.message shouldContain "Parameter 'inner' is ambiguous. The following services collide: " +
+                    "${RealRepo::class.getName()}, ${CachingRepo::class.getName()}"
+            error.message shouldNotContain "Circular dependency"
+        }
     }
+
+    "A real self-cycle, the owner the only candidate, stays a cycle" {
+
+        shouldThrow<KontainerInconsistent> {
+            kontainer { singleton(SelfCycle::class) }.create()
+        }.message shouldContain "Circular dependency detected: " +
+                "${SelfCycle::class.getName()} -> ${SelfCycle::class.getName()}"
+    }
+
+    "A decorator naming the concrete class is valid and gets it injected" {
+
+        val subject = kontainer {
+            singleton(RealRepo::class)
+            singleton(ConcreteCachingRepo::class)
+        }.create()
+
+        subject.get(ConcreteCachingRepo::class).inner shouldBe subject.get(RealRepo::class)
+    }
+
 })
 
 class CycleOne(val two: CycleTwo)
@@ -351,7 +465,12 @@ class LookupCycleTwo(val one: LookupCycleOne)
 class ListCycleOne(val all: List<ListCycleTwo>)
 class ListCycleTwo(val one: ListCycleOne)
 
+class LazyListCycleOne(val all: Lazy<List<LazyListCycleTwo>>)
+class LazyListCycleTwo(val one: LazyListCycleOne)
+
 abstract class Repo
 class RealRepo : Repo()
 class DecoratingRepo(val inner: Repo?) : Repo()
 class CachingRepo(val inner: Repo) : Repo()
+class ConcreteCachingRepo(val inner: RealRepo) : Repo()
+class SelfCycle(val self: SelfCycle)
