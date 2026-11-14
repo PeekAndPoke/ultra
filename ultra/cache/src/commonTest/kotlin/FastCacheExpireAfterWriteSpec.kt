@@ -10,6 +10,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class FastCacheExpireAfterWriteSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "entries expire after ttl since write" {
             val ttl = 500.milliseconds
 

@@ -8,6 +8,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class FastCacheStatisticsSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "statistics tracks hits and misses" {
             lateinit var stats: FastCache.StatisticsBehaviour<String, String>
 

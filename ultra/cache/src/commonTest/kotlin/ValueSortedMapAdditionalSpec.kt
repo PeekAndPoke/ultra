@@ -5,6 +5,8 @@ import io.kotest.matchers.shouldBe
 
 class ValueSortedMapAdditionalSpec : StringSpec() {
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "isEmpty returns true for new map" {
             val m = ValueSortedMap<String, Int, Int> { it }
 

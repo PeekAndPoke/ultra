@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,6 +40,8 @@ class FastCacheRefreshRaceSpec : StringSpec() {
     }
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "a refresh does not overwrite a value written while its loader ran" {
             val loader = GatedLoader(size = 10)
             val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -47,7 +50,7 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             }
 
             cache.put("a", "old")
-            loader.started[0].await()
+            withTimeout(10.seconds) { loader.started[0].await() }
 
             cache.put("a", "fresh")
             loader.gates[0].complete("refreshed from old")
@@ -125,7 +128,7 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             }
 
             cache.put("a", "1")
-            loader.started[0].await()
+            withTimeout(10.seconds) { loader.started[0].await() }
 
             // A write releases the first refresh's claim; once stale again, a second refresh claims the key
             cache.put("a", "2")

@@ -12,6 +12,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class FastCacheClearSpec : StringSpec() {
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "clear removes all entries" {
             val cache = fastCache<String, String>()
 

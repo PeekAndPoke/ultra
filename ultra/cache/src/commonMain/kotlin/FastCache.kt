@@ -948,27 +948,6 @@ class FastCache<K, V> internal constructor(
     /** Internal data map */
     private val map = mutableMapOf<K, V>()
 
-    init {
-        // Important:
-        //   Capture NOTHING from the Cache object inside scope.launch
-        //   Otherwise the GC will not be able to collect the FastCache instance.
-        val ref = WeakReference(this)
-        val delay = loopDelay.coerceAtLeast(1.milliseconds)
-
-        // Run the processing loop
-        scope.launch {
-            ActionProcessingLoop(ref = ref, loopDelay = delay).run()
-        }
-
-        // Register eviction listeners from behaviours
-        behaviours.filterIsInstance<OnEvictionBehaviour<K, V>>().forEach { behaviour ->
-            evictionListeners.add(behaviour.handler)
-        }
-        behaviours.filterIsInstance<StatisticsBehaviour<K, V>>().forEach { behaviour ->
-            evictionListeners.add { _, _ -> behaviour.recordEviction() }
-        }
-    }
-
     /** All current keys */
     override val keys: Set<K> get() = sync { map.keys.toSet() }
 
@@ -1218,5 +1197,30 @@ class FastCache<K, V> internal constructor(
     @Suppress("NOTHING_TO_INLINE")
     private inline fun <T> sync(noinline block: () -> T): T {
         return RunSync(lock, block)
+    }
+
+    // LAST in the class body, on purpose: the loop can run its first pass on another thread at once
+    // (or inside this constructor, on an unconfined dispatcher). Every field it touches must be
+    // initialized before the launch - a property declared below an earlier version of this block was
+    // still null there, and the loop died for good on its first pass.
+    init {
+        // Register eviction listeners from behaviours, before the loop can evict anything
+        behaviours.filterIsInstance<OnEvictionBehaviour<K, V>>().forEach { behaviour ->
+            evictionListeners.add(behaviour.handler)
+        }
+        behaviours.filterIsInstance<StatisticsBehaviour<K, V>>().forEach { behaviour ->
+            evictionListeners.add { _, _ -> behaviour.recordEviction() }
+        }
+
+        // Important:
+        //   Capture NOTHING from the Cache object inside scope.launch
+        //   Otherwise the GC will not be able to collect the FastCache instance.
+        val ref = WeakReference(this)
+        val delay = loopDelay.coerceAtLeast(1.milliseconds)
+
+        // Run the processing loop
+        scope.launch {
+            ActionProcessingLoop(ref = ref, loopDelay = delay).run()
+        }
     }
 }

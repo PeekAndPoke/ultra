@@ -27,6 +27,7 @@ import kotlin.time.Duration.Companion.seconds
  * a suspension point.
  */
 class FastCacheHotKeySpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     /** Whether "a" leaves the cache within [millis], with one thread flooding misses and one reading "a". */
     fun expiresUnderHotReads(millis: Long, configure: FastCache.Builder<String, String>.() -> Unit): Boolean {

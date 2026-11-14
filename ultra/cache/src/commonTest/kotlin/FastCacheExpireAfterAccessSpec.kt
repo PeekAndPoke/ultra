@@ -11,6 +11,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class FastCacheExpireAfterAccessSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "entries expire after ttl since last access" {
             // Use a small TTL so the test is fast
             val ttl = 500.milliseconds

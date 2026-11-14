@@ -12,6 +12,7 @@ import kotlin.time.Duration.Companion.seconds
  * hang shows as a failure rather than a stuck run.
  */
 class NullableCacheCycleSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "a provider resolving its own key fails instead of waiting on itself" {
         val cache = NullableCache<String, String>()

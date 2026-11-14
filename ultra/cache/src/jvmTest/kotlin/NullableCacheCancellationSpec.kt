@@ -19,6 +19,7 @@ import kotlin.concurrent.thread
  * the test sees the thread still alive. The thread is a daemon, so it dies with the test JVM.
  */
 class NullableCacheCancellationSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     fun finishesWithin(millis: Long, block: suspend () -> Unit): Boolean {
         val worker = thread(isDaemon = true) { runBlocking { block() } }

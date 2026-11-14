@@ -796,6 +796,40 @@ Left open for the maintainer (estimate only, no change):
 
 Evidence after the last code commit: cache jvm **200** / js **168** / native **167**, consumers slumber **1249** / vault **287**; 0 failures, 0 skipped. Items 2-6 were first run on the JVM only; the final run caught the item-2 test failing on JS and native (a JVM-only HashMap detail in the test), fixed in the test.
 
+### After the merge (8545866a) — 2026-11-14: master's run was red
+
+Three cache tests failed on master (a 10-minute hang in the refresh race spec, a drain never seen in the
+decline spec, Q1b's memory total 0). **All three had one cause, a real defect of the merged code**,
+introduced in review round 4 (e0b1ceda): the processing loop is launched in an `init` block, and the
+failure counter declared below that block was still null when a pass on another thread reached it. The
+`NullPointerException` ended the loop for good - silently. Most likely under load, when the constructing
+thread is preempted right after the launch.
+
+| | Before (master code) | After (022a9c02, 5be1d29d) |
+|---|---|---|
+| cache JVM suite under load (8 busy processes, load average 12-26) | 2 runs: 18 and 22 of 200 tests failed (stopped there; run 3 hung) | 20 runs: 0 failures |
+| the three tests in isolation, no load, 20 invocations each | the race test hung within 20 | 0 failures |
+
+- **Fix (022a9c02):** the `init` block is last in the class body, so every field is set before the
+  launch; it registers the eviction listeners before launching. Deterministic test: with
+  `Dispatchers.Unconfined` the first pass runs inside the constructor - red before with the same
+  `NullPointerException`, green after; mutant (the block above the counter again) → red.
+- **Tests (5be1d29d):** every spec of the module bounds its tests at one minute (`TEST_TIMEOUT_MS`),
+  so no test can hold the build for 10 minutes; the race spec's waits for a refresh have a 10 s bound.
+  Q1b and the failure-report test no longer depend on a real-time window (the report test failed in 2 of
+  3 loaded runs after the fix, by a fixed 150/200 ms wait and by expecting one line where a report may
+  split the count over two; it now observes the drain with `ActionTap` and checks the sum).
+- **Sweep of the suite:** tests that depend on the loop running within a real-time window
+  (the older expiry, max-entries, statistics, refresh and on-eviction specs, fixed `delay` then a positive
+  check) passed all 20 loaded runs once the loop no longer died: left as they are, bounded. Tests that
+  depend on thread scheduling (visibility, hot key, soft bound, refresh concurrency, NullableCache
+  concurrency) passed all 20 too. Deterministic by construction: the decline spec (`ActionTap` rig), the
+  `NullableCache` specs (UNDISPATCHED ordering), the gated race tests, the estimator and
+  `ValueSortedMap` specs.
+
+Evidence (`--rerun`): cache jvm **201** / js **169** / native **168**, slumber **1249** / vault **287**;
+0 failures, 0 skipped.
+
 ## Changelog text
 
 For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new

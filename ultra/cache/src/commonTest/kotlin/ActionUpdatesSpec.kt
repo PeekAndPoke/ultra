@@ -9,6 +9,8 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 
 class ActionUpdatesSpec : StringSpec() {
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "empty actions yields empty groupings" {
             val updates = FastCache.ActionUpdates<String, String>(actions = emptyList())
 

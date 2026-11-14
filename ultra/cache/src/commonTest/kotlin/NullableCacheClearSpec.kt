@@ -14,6 +14,7 @@ import kotlinx.coroutines.coroutineScope
  * the order of claim, clear and completion is fixed, with no timing involved.
  */
 class NullableCacheClearSpec : StringSpec({
+    timeout = TEST_TIMEOUT_MS
 
     "a provider still running at clear() does not cache its result" {
         val cache = NullableCache<String, String>()
