@@ -504,6 +504,33 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
+    // Decided to stay (ULTRA-00345), the clone flavour of the case above.
+    "A clone's override under the base class runs, but the parent's later override under a subclass wins" {
+
+        open class Base
+        class Sub : Base()
+
+        val log = mutableListOf<String>()
+
+        val original = kontainer {
+            dynamic(Base::class)
+        }.create {
+            with(Base::class) { log.add("a"); Base() }
+            with(Sub::class) { log.add("b"); Sub() }
+        }
+
+        log.clear()
+        val clone = original.clone { with(Base::class) { log.add("x"); Base() } }
+
+        assertSoftly {
+            withClue("merged order: Base with the clone's lambda, then Sub with the parent's") {
+                log shouldBe listOf("x", "b")
+            }
+            clone.get(Base::class)::class shouldBe Sub::class
+            clone.get(Base::class) shouldNotBeSameInstanceAs original.get(Base::class)
+        }
+    }
+
     "Cloning keeps the overrides and runs their lambdas once more for the clone, at clone" {
 
         class Dyn : Counted()

@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.kontainer.e2e
 
-import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.kontainer.ServiceProviderFactory
@@ -18,8 +17,6 @@ class ServiceProviderFactoryVisibilitySpec : StringSpec({
 
     "The override lambdas of a factory are not public" {
 
-        assertSoftly {
-            ServiceProviderFactory::dynamics.visibility shouldBe KVisibility.INTERNAL
-        }
+        ServiceProviderFactory::dynamics.visibility shouldBe KVisibility.INTERNAL
     }
 })

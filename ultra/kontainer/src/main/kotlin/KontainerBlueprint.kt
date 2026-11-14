@@ -60,7 +60,7 @@ class KontainerBlueprint internal constructor(
     /**
      * A lookup for finding the overridable service from the class of an override
      */
-    internal val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(overridableClasses)
+    private val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(overridableClasses)
 
     /**
      * Used to check whether unexpected instances are passed to [create]

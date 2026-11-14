@@ -2,10 +2,10 @@ package io.peekandpoke.ultra.kontainer.e2e
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.kontainer.InjectionContext
@@ -19,6 +19,9 @@ open class UserProvider
 open class AdminUserProvider : UserProvider()
 class SuperAdmin : AdminUserProvider()
 class NeedsUserProvider(val users: UserProvider)
+
+open class Mailer
+class SmtpMailer : Mailer()
 
 /**
  * Pins the exact override match (ULTRA-00345): an override whose class is itself a registered dynamic replaces that
@@ -47,6 +50,10 @@ class ExactOverrideMatchSpec : StringSpec({
 
             subject.providerOf(UserProvider::class).reported shouldBe Reported.DynamicSingleton
             subject.valueOf(UserProvider::class)::class shouldBe UserProvider::class
+
+            withClue("reads through the base type are unchanged") {
+                shouldThrow<ServiceAmbiguous> { subject.get(UserProvider::class) }
+            }
         }
     }
 
@@ -75,7 +82,6 @@ class ExactOverrideMatchSpec : StringSpec({
 
             subject.providerOf(AdminUserProvider::class).reported shouldBe Reported.DynamicSingleton
             subject.get(AdminUserProvider::class) shouldNotBeSameInstanceAs given
-            subject.get(AdminUserProvider::class).shouldBeInstanceOf<AdminUserProvider>()
         }
     }
 
@@ -120,6 +126,84 @@ class ExactOverrideMatchSpec : StringSpec({
             clone.get(AdminUserProvider::class) shouldBeSameInstanceAs cloneAdmin
             clone.valueOf(UserProvider::class) shouldBeSameInstanceAs parentUser
         }
+    }
+
+    "The registration order does not matter: with the derived class registered first, the exact match still wins" {
+
+        val given = AdminUserProvider()
+
+        val subject = kontainer {
+            dynamic(AdminUserProvider::class)
+            dynamic(UserProvider::class)
+        }.create {
+            with { given }
+        }
+
+        assertSoftly {
+            subject.providerOf(AdminUserProvider::class).reported shouldBe Reported.OverriddenDynamicSingleton
+            subject.get(AdminUserProvider::class) shouldBeSameInstanceAs given
+            subject.providerOf(UserProvider::class).reported shouldBe Reported.DynamicSingleton
+        }
+    }
+
+    "Only overridable services count as exact: a subclass registered as a singleton overrides its dynamic base" {
+
+        val given = SmtpMailer()
+
+        val subject = kontainer {
+            dynamic(Mailer::class)
+            singleton(SmtpMailer::class)
+        }.create {
+            with { given }
+        }
+
+        assertSoftly {
+            subject.providerOf(Mailer::class).reported shouldBe Reported.OverriddenDynamicSingleton
+            subject.valueOf(Mailer::class) shouldBeSameInstanceAs given
+            subject.providerOf(SmtpMailer::class).reported shouldBe Reported.StaticSingleton
+            subject.get(SmtpMailer::class) shouldNotBeSameInstanceAs given
+        }
+    }
+
+    "Only overridable services count as exact: a subclass registered as a dynamic prototype overrides its base" {
+
+        val given = SmtpMailer()
+
+        val subject = kontainer {
+            dynamic(Mailer::class)
+            dynamicPrototype(SmtpMailer::class)
+        }.create {
+            with { given }
+        }
+
+        assertSoftly {
+            subject.providerOf(Mailer::class).reported shouldBe Reported.OverriddenDynamicSingleton
+            subject.valueOf(Mailer::class) shouldBeSameInstanceAs given
+            subject.providerOf(SmtpMailer::class).reported shouldBe Reported.DynamicPrototype
+            subject.get(SmtpMailer::class) shouldNotBeSameInstanceAs given
+        }
+    }
+
+    "Primitives: with Int and Number registered, with<Int> replaces Int, by class equality" {
+
+        val subject = kontainer {
+            dynamic(Int::class)
+            dynamic(Number::class) { 0.5 }
+        }.create {
+            with<Int> { 5 }
+        }
+
+        assertSoftly {
+            subject.providerOf(Int::class).reported shouldBe Reported.OverriddenDynamicSingleton
+            subject.providerOf(Number::class).reported shouldBe Reported.DynamicSingleton
+        }
+    }
+
+    "Primitives: with Int alone registered, with { 5 } is refused as unexpected, the checker asks Java assignability" {
+
+        shouldThrow<KontainerInconsistent> {
+            kontainer { dynamic(Int::class) }.create { with { 5 } }
+        }.message shouldBe "Unexpected dynamics were provided: kotlin.Int"
     }
 
     "Injection is not changed: injecting the base type stays ambiguous" {
