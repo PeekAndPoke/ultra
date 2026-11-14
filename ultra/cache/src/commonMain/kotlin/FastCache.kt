@@ -682,7 +682,6 @@ class FastCache<K, V>(
                     continue
                 }
 
-                refreshClaims[key] = token
                 cache.scope.launch {
                     // Set once the result reached the cache. Until then, every way out - a failure,
                     // cancellation, or an Error such as TODO() - must free the key for a retry.
