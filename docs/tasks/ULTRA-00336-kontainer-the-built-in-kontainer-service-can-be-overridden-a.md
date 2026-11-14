@@ -25,6 +25,21 @@ the kontainer itself. Test first what happens today (the built-ins are added aft
 the plan whether the refusal comes when the definition is made or when the blueprint is built; either way before any
 kontainer exists.
 
+## Plan as built (track D, batch K1, 2026-11-14)
+
+- **Registration: refused at the defining call**, so the stack trace points at the line.
+  - Covered: the `singleton`, `prototype`, `dynamic` and `dynamicPrototype` service builders (every overload goes
+    through them) and both `instance()` forms, inside `kontainer { }`, a module and `extend { }`.
+  - `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`.
+  - The kontainer's own registration of the three bypasses the check.
+  - Today's behaviour is pinned first, in every form, as CURRENT BEHAVIOUR.
+- **Override: refused at `create` and `clone`**, through the shared entry point of ULTRA-00332, before the dynamics
+  check.
+  - `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`.
+  - `Kontainer` and `InjectionContext` leave the set of overridable dynamics.
+- Matching is by class equality. All three classes are final, so no subclass can be registered under them.
+- Callers: no code registers or overrides a built-in (searched).
+
 ## The work
 
 - First pin today's behaviour in `ultra/kontainer/src/test/kotlin/e2e/characterization/` as "CURRENT BEHAVIOUR" (track D

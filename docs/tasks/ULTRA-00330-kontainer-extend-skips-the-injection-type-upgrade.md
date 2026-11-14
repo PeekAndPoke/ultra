@@ -23,6 +23,18 @@ So `extend` applies the same redefinition rule as a redefinition inside one buil
 dynamic when an extension redefines it as a singleton, and a prototype stays a prototype. Silently: no exception, no
 log line.
 
+## Plan as built (track D, batch K1, 2026-11-14)
+
+- `KontainerBlueprint.extend` applies `RedefinitionUpgrade` (ULTRA-00331) to every extension definition against the
+  base definition of the same class, after the extension's own block ran.
+  - The rule is associative, so this equals one builder holding base and extension.
+  - Silent.
+- `overwrites` stays as today (null for an extension's definitions). Recording the base definition there would change
+  the debug output; not built.
+- Tests first: the two CURRENT BEHAVIOUR pins in `RedefinitionCharacterizationSpec` and the one in
+  `DynamicPrototypeSpec` turn into the decided expectation.
+- Callers: no production code calls `extend` (searched); only kontainer tests do.
+
 ## The work
 
 - `extend` applies the same redefinition rule as the builder, or refuses a redefinition that lowers the type.

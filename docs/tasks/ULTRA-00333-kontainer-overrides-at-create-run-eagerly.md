@@ -25,6 +25,30 @@ side effects run later, or never when the service is not used; a lambda reading 
 first use; `clone()` no longer runs the lambda at once. Build it together with ULTRA-00337 (the dynamics checker keeps
 the first request's override lambdas alive) and ULTRA-00332 (one entry point for `create` and `clone`).
 
+## Plan as built (track D, batch K1, 2026-11-14)
+
+- **Laziness:**
+  - `ServiceProviderFactory` no longer calls the override lambda; `ServiceProvider.ForOverride` holds it.
+  - The first `provide` runs it under the provider's lock, keeps the value and drops the lambda, so it runs at most
+    once per kontainer.
+  - The base-type lookup of an override (`ServiceAmbiguous` for an ambiguous one) stays at create.
+- **`clone()`:** does not run any lambda. The clone gets its own lazy cells from the same lambdas, as it gets fresh
+  instances today.
+- **The kontainer still holds its override lambdas,** in `ServiceProviderFactory.dynamics`, because `clone` needs
+  them. "After first use only the value is kept" holds for the provider. A collected kontainer leaves nothing
+  reachable from the blueprint (proven in ULTRA-00337).
+- **Consequences without a compile signal, beyond the ticket's list:**
+  - The definition of an override can no longer name the instance's class before it exists. `creates` is the class
+    given to `with` (the same as today for `with { X() }`, the base class for `with(Base::class) { Derived() }`).
+  - An override that was never requested has no instance. It reports none in `instances`, the dump and debug info,
+    and it no longer appears in the insights record slice, which lists only services with instances.
+- **Callers whose lambda now runs later:**
+  - `with { call.currentUserProvider() }` (funktor-demo, the `funktor:all` test server): it only builds a
+    `UserProvider.lazy { }`, so nothing observable moves.
+  - `with { UserProvider.system() }`, `with { NullQueryProfiler }` (`AppKontainers.system()`) and
+    `with { kronos }` (`WorkersFacade`): values, no side effect.
+  - Test fixtures in `funktor/cluster` and `funktor/insights`: listed in the track report.
+
 ## The work
 
 - Decide: keep eager (simple, an override is a value) and document it, or make it lazy. If it stays, the KDoc of `with` says so.

@@ -25,6 +25,16 @@ yet confirmed by a test.
 lazy overrides of ULTRA-00333, where the same care applies: after first use the lambda is dropped and only the value
 is kept.
 
+## Plan as built (track D, batch K1, 2026-11-14)
+
+- **Fix:** `DynamicsChecker.getUnexpected` looks up with the given set and stores a copy (`given.toSet()`) as the key.
+- **Test first** (`KontainerRetentionSpec`):
+  - A kontainer gets an override capturing a marker.
+  - Every reference is dropped, inside a helper function so no local keeps one.
+  - A `WeakReference` to the marker must clear within a bounded number of GC attempts. It is RED before the fix.
+- **A second test:** an override that was used, with the kontainer collected, leaves neither its lambda's capture nor
+  its value reachable.
+
 ## The work
 
 - Confirm first: a test that creates a kontainer with an override capturing a marker object, drops every reference,

@@ -20,6 +20,19 @@ ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 `KontainerBlueprint.create` and throws the same `KontainerInconsistent` with the same message (it threw
 `ServiceNotFound` from deeper inside). One shared entry point for both paths.
 
+## Plan as built (track D, batch K1, 2026-11-14)
+
+- One internal entry point, `KontainerBlueprint.createChecked(overrides)`:
+  - validation on first use
+  - the built-in check (ULTRA-00336)
+  - the dynamics check
+  - instantiate
+- `create` builds the overrides and calls it. `Kontainer.clone` calls it with the kontainer's overrides merged with
+  the new ones, as `newKontainer` does today, so `clone { with { X() } }` for a non-dynamic `X` throws the same
+  `KontainerInconsistent` with the same message.
+- Callers: `WorkersFacade` (`clone { with { kronos } }`, a dynamic, accepted as before); `InstallFixturesCliCommand`
+  and the demo's `init.clone()` (no overrides).
+
 ## The work
 
 - `clone` runs the same dynamics check as `create` and fails with the same exception.

@@ -40,6 +40,24 @@ redefinition is the normal way to swap an implementation, and a safe resolution 
 Consequence, accepted: `create { with { ... } }` for such a service is still refused (only dynamic singletons can be
 overridden; the message says so). `extend` follows the same rule (ULTRA-00330).
 
+## Plan as built (track D, batch K1, 2026-11-14)
+
+- `KontainerBuilder.RedefinitionUpgrade.adjust(newDef, existingDef)`:
+  - no earlier definition, or the earlier one is a static singleton: the later definition as it is
+  - otherwise: type = the earlier type; kind = Dynamic if either is Dynamic, else Static
+  - the producer is always the later one, as today
+- The rule is associative, so applying it per redefinition (builder) or to a whole extension (`extend`, ULTRA-00330)
+  gives the same result for the same sequence of definitions.
+- Only `prototype` then `dynamic` and `prototype` then `dynamicPrototype` change, both to (Prototype, Dynamic); the
+  other pairs are pinned unchanged.
+- Silent; an override at create is refused for such a service, with the existing message and its dynamic prototype
+  hint.
+- Tests first:
+  - the CURRENT BEHAVIOUR pins (`RedefinitionCharacterizationSpec`, `DynamicPrototypeSpec`) turn into the decided
+    expectation
+  - `InjectionTypeUpgradeSpec` "A Prototype service must not be downgraded to a dynamic" changes with the decision
+- Callers: no production code redefines a prototype as dynamic (searched).
+
 ## The work
 
 - Decide the redefinition table for all pairs of (ServiceType, ServiceKind), `dynamicPrototype` included, and make builder and `extend` follow it (see ULTRA-00330).
