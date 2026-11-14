@@ -830,11 +830,60 @@ thread is preempted right after the launch.
 Evidence (`--rerun`): cache jvm **201** / js **169** / native **168**, slumber **1249** / vault **287**;
 0 failures, 0 skipped.
 
+### Estimator batch (maintainer decision 3) — 2026-11-14
+
+The maintainer: "yes go for the constant time lookups please. It is called FastCache, so speed is its
+selling point. And eventual accuracy tradeoffs will be documented." Sampling spread over the
+collection, deterministically (his idea of "64 random entries", made reproducible).
+
+| Item | What | Evidence |
+|---|---|---|
+| Identity set | expect/actual `IdentitySet`: JVM `IdentityHashMap`, JS `Set`, native `identityHashCode` + `===`; never calls `hashCode()`/`equals()` of a visited object | cycle tests (data classes, list, map containing itself, a cycle through a list) green; mutant "equality set" (JVM) → the hostile-`hashCode` test and "two equal but distinct objects are both counted" red |
+| Sampling | more than 64 elements: 64 at evenly spaced indexes (lists with `RandomAccess`, arrays), else one stepping pass over the first 1 024 elements (`sampleWindow`) with the same evenly spaced targets; the rest charged by the samples' average (weights); no `Random` | stepping cost measured (JVM): 100 000 elements 2-5 ms, 1 000 000 10-15 ms, so the pass is capped at the window. Mutants: indexed sample = first 64 → front and back tests red; stepping = first 64 → the set test red. Building the set test found a defect of the first version: a fixed step of window / 64 rounded down left the window's tail unsampled (fixed: evenly spaced targets) |
+| Cap | at most 10 000 objects visited (`maxObjects`), each further one charged flat (header and two references), no descent | exact pinned value with `maxObjects = 100`; mutant "no cap" → red |
+| Never throws | iterative walk with an explicit stack; field/property reads guarded (`UnreadableField`, charged flat); a last-resort catch charges a failed walk flat | 100 000-deep nesting green on JVM, JS and native (red before on the JVM: stack overflow); JS getter that throws: exact value pinned; mutant (no guard) → red |
+| Writes only | `maxMemoryUsage` sizes an entry from the batch's last write; reads reuse the size and still stamp the access time | estimator called twice (key and value) for one put and ten reads; mutant "estimate on reads" → red. Access order: a read entry outlives an older unread one; mutant "reads keep the old stamp" → red (a first version of that test survived: equal stamps within one pass tie, and a re-insert moves the entry behind its peers anyway; fixed by separate passes). A value mutated in place after its put keeps its old size (documented) |
+| Fallback | a new entry whose estimate throws is charged `fallbackSize` (default `DEFAULT_FALLBACK_SIZE` = 1 024), never 0; an existing entry keeps its size | an estimator failing for everything still lets `maxMemoryUsage` evict (2 of 5 kept at a budget of 2.5 fallbacks); mutant "fallback 0" → red |
+| JS numbers | all numbers 8 B (the `Double` check first; on JS every number matches it) | JS test; mutant "`Byte` first" → red |
+| KDoc | what is counted, the bounded cost and its accuracy with measured examples, per platform, measured runtime, an own estimator | - |
+
+Accuracy, estimate / old exact walk (JVM): strings 10k 1.00; 1 000 maps of 10 entries 1.00; map of 5 000
+0.97; 6 400 strings with 10 % large at the front 1.07, at the back 0.95, **every tenth 7.8** (the evenly
+spaced indexes - every 100th - align with the period and see only large ones); one object shared by all
+6 400 elements **7.6**; a 29 524-node data-class tree beyond the cap **0.51**; a set of 5 000 whose large
+elements are its last 500, beyond the window, **0.24**.
+
+**For the maintainer:** a deterministic low-discrepancy pick (the golden-ratio sequence,
+`frac(i * 0.618 + 0.5) * size`) instead of the stride would hit 9 of 64 large elements in the every-tenth
+case (true share 10 %) instead of 64 of 64, with front and back unchanged (6/64 each) - a one-line change,
+not made because the brief specified the stride.
+
+Timings, one estimate, before → after: JVM strings 1k 0.22 → 0.14 ms, 10k 17 → 0.08 ms, 100k 1 540 →
+0.09 ms, response-shaped 70 → 1.9 ms; JS strings 10k 450 → 0.2 ms, response 537 → 3.4 ms; native
+strings 10k 3 690 → 0.7 ms, response 16 300 → 3.9 ms.
+
+API: `EstimatorConfig` gains `sampleSize`, `sampleWindow`, `maxObjects` (defaults): source compatible,
+**binary incompatible** for its constructor and `copy` (`component1-3` unchanged).
+`MaxMemoryUsageBehaviour` gains `fallbackSize` (new primary constructor; the old two-parameter one is
+kept, so old calls stay source and binary compatible) and `DEFAULT_FALLBACK_SIZE`. New builder overload
+`maxMemoryUsage(maxMemorySize, estimator, fallbackSize)`; the old one is unchanged.
+`ObjectSizeEstimatorPlatform.getFieldsOf` (public) may now return an internal marker object in its list
+for a field it could not read.
+
+Initialization order: no field in `FastCache` after the `init` block that launches the loop (checked);
+the estimator's state (identity set, stack) is local to each `estimate()` call; `fallbackSize` is a
+constructor value of the behaviour, fixed before the cache is built.
+
+Evidence: `--rerun` cache jvm **212** / js **182** / native **179**, slumber **1249** / vault **287**, 0 failures; cache JVM suite under CPU load (load average 10-19): **10 runs, 0 failures**. Commits 6ef83702 (estimator), cde01a7d (maxMemoryUsage).
+
 ## Changelog text
 
-For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
-`FastCache.Builder.timeSource(TimeSource)`. Dependency change: `ultra:cache` no longer exports
-`ultra:datetime`. The behaviour changes below have **no compile signal**, so each is listed.
+For the coordinator to put into `CHANGELOG.md`. Signature changes: the new
+`FastCache.Builder.timeSource(TimeSource)`, the new overload `maxMemoryUsage(maxMemorySize, estimator,
+fallbackSize)`, `MaxMemoryUsageBehaviour.fallbackSize` and `DEFAULT_FALLBACK_SIZE`, and three new
+`EstimatorConfig` fields (source compatible; binary incompatible for its constructor and `copy`).
+Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behaviour changes below have
+**no compile signal**, so each is listed.
 
 ```
 ### ultra:cache
@@ -864,7 +913,7 @@ For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
   reaches the scope's handler (Errors included); a CancellationException thrown by user code is
   treated as a failure. Each eviction listener runs on its own: a throwing one no longer skips the
   others. A size estimator throwing for one entry no longer leaves the memory budget off: that
-  entry counts as its previous size, 0 when new.
+  entry keeps its previous size, or is charged the fallback (default 1 024 bytes) when new - never 0.
 - Failures are counted and printed once per kind and processing pass, with the count and the
   exception's class only (no key, no message), outside the cache's lock.
 - refreshAfterWrite: a refresh replaces only the value it started from (by identity; for booleans,
@@ -884,8 +933,19 @@ For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
   start it, and a value computed while the caller was cancelled is discarded; clear() is no longer
   undone by a running provider; a cancelled caller waiting on another caller's provider no longer
   spins.
+- The default ObjectSizeEstimator has a bounded cost: an identity set instead of a linear scan; a
+  collection, map or array of more than 64 elements is sampled at 64 evenly spaced positions (fixed,
+  so the same value always gets the same estimate; collections without index access over their first
+  1 024 elements) and the rest charged by the samples' average; at most 10 000 objects are visited,
+  any further one charged flat; the walk is iterative and never throws. Estimates change for large
+  values (measured accuracy and limits in the KDoc; a periodic layout can be over-counted several
+  times). One estimate of 10 000 strings: JVM 17 ms -> 0.08 ms, JS 450 ms -> 0.2 ms, native 3.7 s ->
+  0.7 ms. EstimatorConfig gains sampleSize, sampleWindow and maxObjects.
+- JS: every number is charged 8 bytes (was 1).
 - JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
-  outer instance. KDoc: the estimator's cost is quadratic in the objects of a value (measured).
+  outer instance.
+- maxMemoryUsage estimates an entry when it is written; reads reuse that size (a value changed in
+  place after its put keeps its old size) and still count as an access for the eviction order.
 - KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null.
 ```
 
@@ -900,7 +960,9 @@ For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
       `NullableCache` cycles; the estimator's limits and cost, and how to plug in an own estimator.
 - [ ] ULTRA-00321: should a background refresh count as an access? (maintainer: "I guess it should
       not count as access").
-- [ ] Estimator: the plan in round 3 waits for the maintainer's confirmation.
+- [x] Estimator: the plan of round 3, built (estimator batch); waits for its review gate.
+- [ ] Estimator sampling: stride vs a low-discrepancy pick (golden ratio) - the maintainer's decision,
+      see the estimator batch.
 - [ ] `VisitedSet` is now O(n²) by identity scan. Correct, but an identity-keyed set
       (`IdentityHashMap` / JS `Set` / native fallback) needs an expect/actual — deferred with the
       estimator design question.
