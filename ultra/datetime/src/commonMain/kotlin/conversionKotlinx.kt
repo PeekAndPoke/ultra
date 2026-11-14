@@ -44,8 +44,15 @@ val MpLocalDateTime.kotlinx: LocalDateTime get() = value
 /** Converts a kotlinx [LocalDateTime] into an [MpLocalDateTime]. */
 val LocalDateTime.mp: MpLocalDateTime get() = MpLocalDateTime(this)
 
-/** Converts an [MpLocalTime] into a kotlinx [LocalTime]. */
-val MpLocalTime.kotlinx: LocalTime get() = LocalTime.fromMillisecondOfDay(inWholeMilliSeconds())
+/**
+ * Converts an [MpLocalTime] into a kotlinx [LocalTime]. [MpLocalTime.EndOfDay], which it cannot hold, gives the last
+ * instant of the day, 23:59:59.999999999.
+ */
+val MpLocalTime.kotlinx: LocalTime
+    get() = when (this) {
+        MpLocalTime.EndOfDay -> LocalTime(23, 59, 59, 999_999_999)
+        else -> LocalTime.fromMillisecondOfDay(inWholeMilliSeconds())
+    }
 
 /** Converts a kotlinx [LocalTime] into an [MpLocalTime], truncated to milliseconds. */
 val LocalTime.mp: MpLocalTime get() = MpLocalTime.ofMilliSeconds(toMillisecondOfDay())

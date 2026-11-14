@@ -287,6 +287,9 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
      */
     fun atTime(time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
+        // EndOfDay (24:00) is the start of the next day, also when this date itself does not exist in the zone
+        if (time.isEndOfDay) return plusDays(1).atStartOfDay(timezone)
+
         return atStartOfDay(timezone).atTime(time)
     }
 

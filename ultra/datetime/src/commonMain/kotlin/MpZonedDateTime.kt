@@ -425,8 +425,12 @@ class MpZonedDateTime private constructor(
 
     /**
      * Sets the time of the day to the given [time], keeping the current offset in a DST overlap.
+     *
+     * [MpLocalTime.EndOfDay] (24:00) gives the start of the next day, see [atStartOfDay].
      */
     fun atTime(time: MpLocalTime): MpZonedDateTime {
+        if (time.isEndOfDay) return toLocalDate().plusDays(1).atStartOfDay(timezone)
+
         return withLocal(MpLocalDateTime.of(date = toLocalDate(), time = time))
     }
 

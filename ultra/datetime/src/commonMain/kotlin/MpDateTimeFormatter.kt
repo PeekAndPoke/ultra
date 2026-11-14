@@ -9,7 +9,7 @@ package io.peekandpoke.ultra.datetime
  * - `MM` — zero-padded month (01-12)
  * - `MMM` — abbreviated month name (Jan-Dec, English)
  * - `dd` — zero-padded day (01-31)
- * - `HH` — zero-padded hour 0-23
+ * - `HH` — zero-padded hour 0-23, and 24 for `MpLocalTime.EndOfDay`
  * - `mm` — zero-padded minute (00-59)
  * - `ss` — zero-padded second (00-59)
  * - `SSS` — zero-padded milliseconds (000-999)

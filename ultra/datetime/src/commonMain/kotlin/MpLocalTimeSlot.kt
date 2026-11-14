@@ -9,22 +9,43 @@ data class MpLocalTimeSlot(
     val to: MpLocalTime,
 ) {
     companion object {
+        /**
+         * The whole day, from 00:00 to 24:00 ([MpLocalTime.EndOfDay]); it ended at `MpLocalTime.Max` before
+         * ULTRA-00341.
+         *
+         * Stored, its end is 86 400 000 ms, which a reader of an older version reads as 00:00: there the slot becomes
+         * the empty `[00:00, 00:00)`.
+         */
         val completeDay: MpLocalTimeSlot = MpLocalTimeSlot(
             from = MpLocalTime.Min,
-            to = MpLocalTime.Max,
+            to = MpLocalTime.EndOfDay,
         )
 
+        /**
+         * The slot from [from] for [duration]. For a [from] inside the day an end of exactly 24:00 is
+         * [MpLocalTime.EndOfDay]; every other end wraps.
+         */
         fun of(from: MpLocalTime, duration: Duration): MpLocalTimeSlot {
+            val fromMs = from.inWholeMilliSeconds()
+            val endsAtMidnight = fromMs in 0..<MpLocalTime.MILLIS_PER_DAY &&
+                    fromMs.toLong() + duration.inWholeMilliseconds == MpLocalTime.MILLIS_PER_DAY.toLong()
+
             return MpLocalTimeSlot(
                 from = from,
-                to = from.plus(duration),
+                to = if (endsAtMidnight) MpLocalTime.EndOfDay else from.plus(duration),
             )
         }
 
+        /**
+         * The slot between two seconds of the day. For a [from] inside the day a [to] of exactly 86 400 is 24:00;
+         * every other value wraps.
+         */
         fun ofSecondsOfDay(from: Int, to: Int): MpLocalTimeSlot {
+            val endsAtMidnight = from in 0..<MpLocalTime.SECONDS_PER_DAY && to == MpLocalTime.SECONDS_PER_DAY
+
             return MpLocalTimeSlot(
                 from = MpLocalTime.ofSecondOfDay(from),
-                to = MpLocalTime.ofSecondOfDay(to),
+                to = if (endsAtMidnight) MpLocalTime.EndOfDay else MpLocalTime.ofSecondOfDay(to),
             )
         }
     }
@@ -202,11 +223,18 @@ data class MpLocalTimeSlot(
             val slotFromMs = fromMs + index * (durationMs + gapMs)
 
             MpLocalTimeSlot(
+                // a slot that fits starts before 24:00, so its start never needs EndOfDay
                 from = MpLocalTime.ofMilliSeconds(slotFromMs.toInt()),
-                to = MpLocalTime.ofMilliSeconds((slotFromMs + durationMs).toInt()),
+                to = timeOfDay(slotFromMs + durationMs),
             )
         }
     }
+}
+
+/** The time at [millisOfDay]; one whole day is [MpLocalTime.EndOfDay], the end of a slot up to 24:00. */
+private fun timeOfDay(millisOfDay: Long): MpLocalTime = when (millisOfDay) {
+    MpLocalTime.MILLIS_PER_DAY.toLong() -> MpLocalTime.EndOfDay
+    else -> MpLocalTime.ofMilliSeconds(millisOfDay.toInt())
 }
 
 fun MpLocalTimeSlot.formatHhMm(): String {
