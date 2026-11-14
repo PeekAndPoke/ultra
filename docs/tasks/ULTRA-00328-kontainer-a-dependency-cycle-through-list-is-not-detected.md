@@ -39,6 +39,31 @@ To verify by test before changing anything: the provider's candidate sets equal 
 for every form (interfaces with several implementations, nullable parameters, `InjectionContext`, the built-in
 `Kontainer`), so promotion does not change; the characterization specs and the promotion mutants are the proof.
 
+## Plan as built (track D, batch K2, 2026-11-14)
+
+- `DependencyLookup` walks each definition's `ParameterProvider`s and reads only their announcements.
+  - Each announced type maps through `superTypeLookup.getAllCandidatesFor`: the candidates of a declared type, and
+    unchanged for `List` and `Lookup` announcements, which are candidates already.
+  - Promotion edges come from every parameter.
+  - Cycle edges come from parameters whose provision is Direct (plain, nullable, `List`, `InjectionContext`). The
+    Lazy ones (`Lazy<T>`, `Lazy<List<T>>`, `Lookup<T>`) stay out, as today.
+- The hard-coded type checks in `DependencyLookup` go.
+- `getInjectedServiceTypes` keeps its signature. `DependencyLookup` receives the blueprint under construction after
+  `superTypeLookup` is set, the only member the announcements read; no public API change.
+- What breaks a cycle today, and what the announcements say:
+
+  | Injection | Breaks a cycle today | Announces |
+  |---|---|---|
+  | `Lazy<T>`, `Lazy<List<T>>`, `Lookup<T>` | yes, deliberately | Lazy |
+  | `List<T>` | yes, by omission | Direct |
+  | plain, nullable, `InjectionContext` | no | Direct |
+
+  So only `List` changes.
+- Lazy injections in the repo keep working, as they stay out of the cycle check. Searched: `Lookup<Repository<*>>`
+  (vault `Database`), `Lookup<InsightsCollector>`, `Lookup<IncomingParamConverter>`, `Lazy<List<...>>`
+  (`ValidateRoutesOnAppStarting`), the `Fixtures(repo: Lazy<...Repo>)` loaders, `Lazy<Kronos>` hooks,
+  `Lazy<AuthSystem.Deps>`, `Lazy<Adapter>`, `Lazy<LogsStorage>`.
+
 ## The work
 
 - Decide whether a cycle through `List`, `Lazy<List>` and `Lookup` is an error at validation (as for plain parameters) or allowed where the injection is lazy; a non-lazy `List` cycle must be reported at validation, not as a stack overflow at `get`.

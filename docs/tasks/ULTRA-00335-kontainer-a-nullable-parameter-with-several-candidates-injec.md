@@ -24,6 +24,19 @@ no longer makes a service SemiDynamic for a dynamic service it never receives.
 A behaviour change that can stop an app at boot: before building, list every nullable service parameter in the repo
 (funktor's optional injections, e.g. `RestCodec` with `Database?` and `EntityCache?`) with its candidates.
 
+## Plan as built (track D, batch K2, 2026-11-14)
+
+- `ParameterProvider.ForService.validate` and `ForLazyService.validate`: a nullable parameter with no candidate is
+  fine (null), with one is fine, with two or more gets the existing "is ambiguous" message.
+- `provide` is unchanged.
+- Survey before building: the `funktor:all` app blueprint has seven nullable service parameters, each with exactly
+  one candidate, so none turns red:
+  - `AppConfigCollector`: `AppConfig?`, `AppInfo?`
+  - `Mailing`: `Log?`
+  - `RestCodec`: `Database?`, `EntityCache?`
+  - `JwtSigningKeyOnAppStarting`: `Log?`
+  - `BackgroundJobs`: `Lazy<EntityCache?>`
+
 ## The work
 
 - First pin today's behaviour in `ultra/kontainer/src/test/kotlin/e2e/characterization/` as "CURRENT BEHAVIOUR" (track D

@@ -35,6 +35,16 @@ So, diagnosis only:
 Built with ULTRA-00328 (the cycle check reads the parameter providers' announcements). The nullable variant
 (`inner: Repo?` with several candidates injects null) is ULTRA-00335.
 
+## Plan as built (track D, batch K2, 2026-11-14)
+
+- In the cycle check (ULTRA-00328), a Direct parameter that announces exactly one type with two or more candidates
+  is an ambiguous single-service injection. It gets no cycle edges, and the parameter check reports it with the
+  existing "is ambiguous" message.
+  - A `List` never falls under this: it announces every candidate.
+  - A real self-cycle (the owner is the only candidate) stays a cycle.
+- No change to which service is injected, and no new refusal rule.
+- The nullable decorator (`inner: Repo?`) becomes ambiguous through ULTRA-00335.
+
 ## The work
 
 - See "Decided": the diagnosis changes, the resolution does not.

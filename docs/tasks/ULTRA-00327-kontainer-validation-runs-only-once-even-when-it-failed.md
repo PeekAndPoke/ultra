@@ -27,6 +27,19 @@ provider whether its dependencies can be met. Both depend only on the definition
 does depend on overrides ("Unexpected dynamics were provided") runs on every `create()` after the validation and stays
 as it is. An override cannot make an invalid blueprint valid: it can only replace a declared dynamic singleton.
 
+## Plan as built (track D, batch K2, 2026-11-14)
+
+- `KontainerBlueprint` replaces the `validated` flag with a remembered result:
+  `lazy(LazyThreadSafetyMode.SYNCHRONIZED)` holding the validation message, or null when valid.
+  - Every `create` (and the checked path of `clone`) throws a new `KontainerInconsistent` with that message: the
+    same type and message each time, with a stack trace pointing at the current caller.
+  - The success path is one volatile read, as cheap as the flag.
+- **Order unchanged (K1):** the result is checked before the caller's override block runs.
+- **Concurrency:** the first caller validates under the lazy's lock. Any other caller blocks until it is done and
+  gets the same result. Before, the CAS loser skipped validation and got a kontainer.
+- Only a validation failure (`KontainerInconsistent`) is remembered. Any other exception from `validate()` would be a
+  defect; it is not cached, so the next `create` validates again.
+
 ## The work
 
 - The flag is set only after a successful validation (or the failure is remembered and rethrown). A blueprint that failed validation fails on every `create()` with the same `KontainerInconsistent`.
