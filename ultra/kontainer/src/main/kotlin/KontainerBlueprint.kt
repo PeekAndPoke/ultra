@@ -40,13 +40,6 @@ class KontainerBlueprint internal constructor(
         .keys
 
     /**
-     * Services declared as dynamic prototypes; they cannot be overridden at [create]
-     */
-    private val dynamicPrototypeClasses: Set<KClass<*>> = definitions
-        .filterValues { it.type == ServiceType.Prototype && it.kind == ServiceKind.Dynamic }
-        .keys
-
-    /**
      * Dynamic singletons: the only services that can be overridden at [create]
      */
     private val overridableClasses: Set<KClass<*>> = definitions
@@ -76,10 +69,11 @@ class KontainerBlueprint internal constructor(
 
     /**
      * Services declared static that reach a dynamic service, directly or through any chain; in discovery order.
+     *
+     * Declared static by construction: [dynamicClasses] holds every service declared dynamic, and
+     * [DependencyLookup.getAllDependents] leaves out the set it starts from.
      */
     private val semiDynamicClasses: Set<KClass<*>> = dependencyLookUp.getAllDependents(dynamicClasses)
-        .filter { definitions.getValue(it).kind == ServiceKind.Static }
-        .toSet()
 
     /**
      * The derived kind of every service: as declared, or [ServiceKind.SemiDynamic] for a static one that reaches
@@ -194,9 +188,10 @@ class KontainerBlueprint internal constructor(
      */
     private fun dynamicPrototypeHint(unexpected: Set<KClass<*>>): String {
 
-        val dynamicPrototypes = dynamicPrototypeClasses.filter { dynamicPrototype ->
-            unexpected.any { dynamicPrototype.java.isAssignableFrom(it.java) }
-        }
+        val dynamicPrototypes = definitions
+            .filterValues { it.type == ServiceType.Prototype && it.kind == ServiceKind.Dynamic }
+            .keys
+            .filter { dynamicPrototype -> unexpected.any { dynamicPrototype.java.isAssignableFrom(it.java) } }
 
         return when {
             dynamicPrototypes.isEmpty() -> ""

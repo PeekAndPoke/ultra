@@ -516,6 +516,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      *
      * Created like a prototype, on every injection; bound to the kontainer like a dynamic, so a singleton that
      * injects one becomes [ServiceKind.SemiDynamic]. Cannot be overridden at [KontainerBlueprint.create].
+     * A plain [prototype] already makes its users per kontainer whenever its producer reaches something dynamic;
+     * a dynamic prototype does so also when its producer reaches nothing dynamic, and is named as the cause.
      */
     val dynamicPrototype = ServiceBuilder { cls, producer ->
         @Suppress("UNCHECKED_CAST")

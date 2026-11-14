@@ -262,6 +262,54 @@ class DynamicPrototypeSpec : StringSpec({
         }
     }
 
+    "An override of the implementation of a dynamicPrototype declared by its base: the hint names the base" {
+
+        abstract class Base
+        class Impl : Base()
+
+        val blueprint = kontainer {
+            dynamicPrototype(Base::class, Impl::class)
+        }
+
+        shouldThrow<KontainerInconsistent> {
+            blueprint.create { with { Impl() } }
+        }.message shouldBe "Unexpected dynamics were provided: ${Impl::class.getName()}" +
+                " (only dynamic singletons can be overridden, not the dynamic prototype ${Base::class.getName()})"
+    }
+
+    "An override of a super type of a dynamicPrototype: exactly the old message, no hint" {
+
+        open class Wide
+        class DynProto : Wide()
+
+        val blueprint = kontainer {
+            dynamicPrototype(DynProto::class)
+        }
+
+        shouldThrow<KontainerInconsistent> {
+            blueprint.create { with { Wide() } }
+        }.message shouldBe "Unexpected dynamics were provided: ${Wide::class.getName()}"
+    }
+
+    "Two refused overrides, one a dynamicPrototype and one a singleton: both named, the hint for the first only" {
+
+        class DynProto
+        class Single
+
+        val blueprint = kontainer {
+            dynamicPrototype(DynProto::class)
+            singleton(Single::class)
+        }
+
+        shouldThrow<KontainerInconsistent> {
+            blueprint.create {
+                with { DynProto() }
+                with { Single() }
+            }
+        }.message shouldBe "Unexpected dynamics were provided: ${DynProto::class.getName()}, ${Single::class.getName()}" +
+                " (only dynamic singletons can be overridden, not the dynamic prototype ${DynProto::class.getName()})"
+    }
+
     "An override at clone throws ServiceNotFound, as for any non-dynamic (ULTRA-00332)" {
 
         class DynProto

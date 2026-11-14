@@ -154,6 +154,9 @@ class KontainerToolsKindsSpec : StringSpec() {
                 because(ChainViaPrototype::class) shouldBe listOf(ChainDyn::class.java.name)
                 because(ChainViaDynamic::class) shouldBe
                         listOf(ChainDyn::class.java.name, ChainDynAbove::class.java.name)
+
+                because(ChainDynAbove::class) shouldBe emptyList()
+                because(ChainDyn::class) shouldBe emptyList()
             }
         }
 

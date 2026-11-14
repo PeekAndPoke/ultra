@@ -110,7 +110,7 @@ class ToolsCharacterizationSpec : StringSpec() {
             ).map { it.java.name }
         }
 
-        "Debug info: the declared injection type, which for a SemiDynamic is Singleton" {
+        "Debug info: the declared type and kind, which for a SemiDynamic is a static singleton" {
 
             val info = createAndUse().tools.getDebugInfo()
 

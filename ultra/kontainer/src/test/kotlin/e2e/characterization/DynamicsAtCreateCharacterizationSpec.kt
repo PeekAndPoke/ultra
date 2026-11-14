@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class DynamicsAtCreateCharacterizationSpec : StringSpec({
 
-    "An override replaces the dynamic: reported as DynamicOverride, the default producer never runs" {
+    "An override replaces the dynamic: reported as an overridden dynamic singleton, the default producer never runs" {
 
         open class Dyn(val value: Int) : Counted()
         class Holder(val dyn: Dyn) : Counted()
@@ -177,7 +177,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             blueprint.create { with { Proto() } }
         }
 
-        error.message!! shouldStartWith "Unexpected dynamics were provided: "
+        error.message shouldBe "Unexpected dynamics were provided: ${Proto::class.getName()}"
     }
 
     "An override for a SemiDynamic is refused with KontainerInconsistent" {
