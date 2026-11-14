@@ -78,7 +78,7 @@ class MpZonedDateTimeOverlapSpec : StringSpec({
         second.atTime(MpLocalTime.of(2, 10)).toEpochMillis() shouldBe secondHalf - 20 * 60_000L // 02:10+01:00
     }
 
-    // equality is decided in one place, MpZonedDateTime.equals / hashCode (ULTRA-00211, pending the maintainer)
+    // equality is decided in one place, MpZonedDateTime.equals / hashCode (ULTRA-00211, confirmed 2026-11-14)
     "equality: instant and zone decide; equal values have equal hash codes" {
         val first = MpInstant.fromEpochMillis(firstHalf).atZone(berlin)
         val second = MpInstant.fromEpochMillis(secondHalf).atZone(berlin)
@@ -110,6 +110,16 @@ class MpZonedDateTimeOverlapSpec : StringSpec({
 
         MpZonedDateTime.of(MpLocalDateTime.of(1890, 6, 1, 12, 0), berlin).toString() shouldBe
                 "MpZonedDateTime(1890-06-01T12:00:00.000+00:53:28[Europe/Berlin])"
+    }
+
+    "toString: west of UTC the sign is minus (New York in winter, -05:00; local mean time before 1883, -04:56:02)" {
+        val newYork = MpTimezone.of("America/New_York")
+
+        MpZonedDateTime.of(MpLocalDateTime.of(2022, 1, 15, 12, 0), newYork).toString() shouldBe
+                "MpZonedDateTime(2022-01-15T12:00:00.000-05:00[America/New_York])"
+
+        MpZonedDateTime.of(MpLocalDateTime.of(1880, 6, 1, 12, 0), newYork).toString() shouldBe
+                "MpZonedDateTime(1880-06-01T12:00:00.000-04:56:02[America/New_York])"
     }
 
     "gap: a start of the hour inside a gap resolves like of, later than the receiver (Toronto 1919-03-31T00:45)" {

@@ -92,12 +92,15 @@ like java.time.
 - Plain class rather than the planned data class with a private constructor: explicit `equals`/`hashCode` make that
   one place visible, and there is no `copy` to keep private.
 - Decode paths read `ts` as the instant: `MpZonedDateTimeSerializer.deserialize`, slumber `MpZonedDateTimeAwaker`
-  (`ultra/slumber`), `ZonedDateTime.mp` (`toInstant().mp.atZone(zone.mp)`), `MpZonedDateTime.jvm`
-  (`ZonedDateTime.ofInstant(toInstant().jvm, timezone.jvm)`).
+  (`ultra/slumber`), `ZonedDateTime.mp` and `MpZonedDateTime.jvm`. The two JVM converters go by epoch second +
+  nanos (exact over the whole range; through epoch millis they clamped or threw beyond about ±292 million years), with
+  the nanos cut to whole milliseconds in both directions (maintainer, 2026-11-14: "Truncate MpZonedDateTime to
+  milliseconds please to avoid confusion"). With a floored second and nanos in 0..999,999,999 the cut is a floor, as
+  `toEpochMilli()` was (pinned: 1 ns before the epoch gives -1 ms).
 - `atStartOfDay()` delegates to `MpLocalDate.atStartOfDay(timezone)`; `atStartOfMonth()`/`atStartOfYear()` take the
   start of their first day the same way (decided here: the plan said "resolve like `of`"; the start-of-day rule is the
   consistent one when midnight falls into a gap). `atStartOfHour/Minute/Second()` and `atTime()` keep the current offset
-  where it is valid (`ofLocal` with the current offset as the preferred one).
+  where it is valid (`withLocal`, with the current offset as the preferred one).
 - Call sites adapted outside the module (mechanical, no behaviour change):
   `kraft/semanticui/src/jsMain/kotlin/forms/field_input.kt` 692, 719, 765, 792: `x.copy(timezone = tz)` →
   `MpZonedDateTime.of(x.datetime, tz)` (what `copy` did: keep the local time, resolve it in the new zone).
@@ -136,8 +139,12 @@ like java.time.
 - `docs-site/src/pages/ultra/datetime/js-timezones.astro` 31-36: still true, but add that an `MpZonedDateTime` built
   from an instant keeps it, so both sides of an overlap are distinct values (`MpInstant.atZone`), and that a time built
   from a gap reads back as the resolved time (02:30 → 03:30 in `.hour`/`.datetime`).
-- `docs-site/src/pages/ultra/datetime/mp-zoned-date-time.astro`: no line becomes false; a constructor or `copy` is
-  not shown anywhere. Worth a line that `MpZonedDateTime` is built with `atZone` / `of`, not a constructor.
+- `docs-site/src/pages/ultra/datetime/mp-zoned-date-time.astro`: two lines are false, and were before this change
+  (corrected in delta round 2; my first list said none): line 41 shows
+  `MpZonedDateTime.parse("2025-06-15T14:00:00+02:00[Europe/Berlin]")`, which the parser refuses (probe: "Could not parse
+  MpZonedDateTime from '…'"); lines 155-156 show `toIsoString()` as `"2025-06-15T14:00:00.000+02:00[Europe/Berlin]"`, but
+  it never carried the offset (probe: `2025-06-15T14:00:00.000[Europe/Berlin]`). A constructor or `copy` is not shown
+  anywhere; worth a line that `MpZonedDateTime` is built with `atZone` / `of`, and that `toString()` now shows the offset.
 - `docs-site/src/data/llms/datetime.md`: no line becomes false.
 
 ## Test evidence
@@ -148,7 +155,13 @@ like java.time.
   added with the fix (offset kept through `atStartOfMinute/Second`/`atTime`; equality and hash codes): 16 / 0.
 - `ZonedDateTimeOverlapJvmSpec`: RED 2 of 6 (`ZonedDateTime.mp`, `.jvm`, second half); 6 / 0.
 - `ultra/slumber` `MpZonedDateTimeOverlapCodecSpec`: RED 1 of 3 (second half); 3 / 0.
-- After: datetime jvmTest 2660 / 0, jsBrowserTest 2010 / 0, linuxX64Test 2002 / 0; slumber jvmTest 1252 / 0.
+- After the first build: datetime jvmTest 2660 / 0, jsBrowserTest 2010 / 0, linuxX64Test 2002 / 0; slumber jvmTest
+  1252 / 0.
+- After delta round 2 (Apia fix, tie-break, `isSameInstant`, millisecond converters, sign pins): JVM (jvmTest)
+  2733 / 0, JS (jsBrowserTest) 2077 / 0, native (linuxX64Test) 2069 / 0.
+- Delta round 2 mutants: `ZonedDateTime.mp` keeps the nanos → red 4 (range rows, cut test, floor pin); `.jvm`
+  keeps the nanos → red 2 (three fraction digits, floor pin); `toString` sign always `+` → red 1 (New York -05:00 and
+  local mean time -04:56:02, checked on JVM, JS and native: all three agree on -04:56:02).
 - Mutation-checked (JVM; each restored with `cmp`):
   - serializer decodes via the local time → red 1 (kotlinx round trip, second half);
   - slumber awaker via the local time → red 1 (slumber round trip, second half);
@@ -181,10 +194,9 @@ like java.time.
 - `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.toString()` shows the offset, e.g.
   `MpZonedDateTime(2022-10-30T02:30:00.000+01:00[Europe/Berlin])`, so the two sides of an overlap print differently.
   `toIsoString()`, the stored `human` field and the wire format are unchanged (ULTRA-00211).
-- `ultra/datetime` (JVM), behaviour change (no compile signal): `MpZonedDateTime.jvm` and `ZonedDateTime.mp` convert
-  by epoch second and nanosecond: exact over the whole range (they went through epoch millis, so beyond about
-  ±292 million years `.jvm` clamped and `.mp` threw `ArithmeticException`), and `ZonedDateTime.mp` keeps
-  sub-millisecond precision instead of truncating it (ULTRA-00211).
+- `ultra/datetime` (JVM), behaviour change (no compile signal): `MpZonedDateTime.jvm` and `ZonedDateTime.mp` are exact
+  over the whole range: beyond about ±292 million years `.jvm` clamped and `.mp` threw `ArithmeticException`. Both stay
+  at millisecond precision (ULTRA-00211).
 - `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.atStartOfDay()`, `atStartOfMonth()` and
   `atStartOfYear()` follow `MpLocalDate.atStartOfDay(zone)` (java.time): when midnight falls into a gap the day starts at
   the end of the gap (Toronto 1919-03-31: 00:30, was 01:00). `atStartOfHour/Minute/Second()` and `atTime()` keep the
@@ -218,7 +230,20 @@ CRITICAL/MAJOR): no construction path loses the instant; no remaining caller of 
 stored documents decode as before; `human` is never read on decode; no production code uses an `MpZonedDateTime` as a
 map, set or cache key; the test arithmetic was recomputed by the domain reviewer.
 
-**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above. Equality by instant + zone confirmed by
+| 2 (delta) | MINOR | `MpZonedDateTime.toString()` | the offset sign has no test; a sign-always-`+` mutant survives | FIXED | New York winter `-05:00` and local mean time before 1883 `-04:56:02`, same on JVM, JS and native; the sign mutant → red 1 |
+| 2 (delta) | MINOR | `ZonedDateTimeOverlapJvmSpec.kt:25-29` | title says "to the nanosecond", the test checks millis | FIXED | dropped from the title |
+| 2 (delta) | MINOR | `MpZonedDateTimeOverlapSpec.kt:81` | comment "pending the maintainer" stale | FIXED | "confirmed 2026-11-14" |
+| 2 (delta) | MINOR | this ticket | notes show the millis converter paths, name `ofLocal`, counts from before the delta | FIXED | notes and test evidence updated, totals per platform |
+| 2 (delta) | MINOR | changelog | the JVM-conversion entry named only one direction of the precision change | CLOSED by the maintainer's decision | both converters stay at millisecond precision; the entry says exact range, millisecond precision |
+| 2 (delta) | MINOR | `ZonedDateTime.mp` / `.jvm` | sub-millisecond precision crosses the converters (`zoned.jvm.toInstant() != zoned.toInstant().jvm`) | CLOSED by the maintainer's decision (2026-11-14) | both cut to whole milliseconds; tests: cut in both directions, `isSameInstant` with `toInstant().mp`, floor before 1970; mutants red |
+| 2 (delta) | MINOR | DOCS list | `mp-zoned-date-time.astro` 41 and 155-156 false | FIXED (listed) | verified by reading and by a probe; both false before this change |
+| 2 (delta) | MINOR | test evidence | totals after the delta per platform | FIXED | above |
+
+Delta round 2 (reviewer-fable-medium): implementation CLEAN (4 MINOR), domain and data CLEAN (6 MINOR); outcomes in
+the rows above. `MpInstant` itself is unchanged: `MpInstant.now()` carries sub-millisecond precision on the JVM and
+native and whole milliseconds on JS (probe, 200 samples each), for the maintainer to decide separately.
+
+**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above. Delta round 2 CLEAN, MINORs applied. Equality by instant + zone confirmed by
 the maintainer (2026-11-14); `isSameInstant` added on his word.
 
 ## History
