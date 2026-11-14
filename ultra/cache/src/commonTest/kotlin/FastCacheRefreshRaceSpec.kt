@@ -92,17 +92,22 @@ class FastCacheRefreshRaceSpec : StringSpec() {
                 "loaded"
             }
 
-            cache.put(FlakyKey("a"), "1")
-            cache.put(FlakyKey("b"), "2")
+            // equal twins share one trap: whichever side's equals() a map calls, it throws once
+            val trapA = EqualsTrap()
+            cache.put(FlakyKey("a", trapA), "1")
+            cache.put(FlakyKey("b", EqualsTrap()), "2")
             eventually(3.seconds) { (tap.actions.size >= 2) shouldBe true }
 
             // The behaviour holds equal twins of the cached keys, so launching a refresh looks the
-            // twin up in the cache and calls its equals() - which throws once for "a"
-            val twinA = FlakyKey("a")
-            refresh.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction(twinA, "1"), FastCache.PutAction(FlakyKey("b"), "2"))))
+            // twin up in the cache and compares it with the cached key - which throws once for "a"
+            val twinA = FlakyKey("a", trapA)
+            refresh.process(
+                cache,
+                FastCache.ActionUpdates(listOf(FastCache.PutAction(twinA, "1"), FastCache.PutAction(FlakyKey("b", EqualsTrap()), "2"))),
+            )
             delay(50.milliseconds)
 
-            twinA.failNextEquals = true
+            trapA.armed = true
             runCatching { refresh.process(cache, FastCache.ActionUpdates(emptyList())) }
 
             // Both were claimed, neither launched: the next pass must find them free again
@@ -142,13 +147,16 @@ class FastCacheRefreshRaceSpec : StringSpec() {
     }
 }
 
-/** A key whose equals() throws once when told to. */
-private class FlakyKey(val id: String) {
-    var failNextEquals = false
+/** Makes the equals() of the keys sharing it throw once, when armed. */
+private class EqualsTrap {
+    var armed = false
+}
 
+/** A key whose equals() throws once when its [trap] is armed - on either side of the comparison. */
+private class FlakyKey(val id: String, private val trap: EqualsTrap) {
     override fun equals(other: Any?): Boolean {
-        if (failNextEquals) {
-            failNextEquals = false
+        if (trap.armed) {
+            trap.armed = false
             error("equals failed once")
         }
 
