@@ -125,9 +125,15 @@ val LocalTime.mp: MpLocalTime
         MpLocalTime.ofMilliSeconds(milliSecondsOfDay = 1000 * (hour * 60 * 60 + minute * 60 + second))
 
 /**
- * Converts an [MpLocalTime] into a [java.time.LocalTime]
+ * Converts an [MpLocalTime] into a [java.time.LocalTime]. [MpLocalTime.EndOfDay], which it cannot hold, gives
+ * [LocalTime.MAX].
  */
-val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay((inWholeMilliSeconds() / 1000).toLong())
+val MpLocalTime.jvm: LocalTime
+    get() = when (this) {
+        // java.time cannot hold 24:00: the last instant of the day keeps the order
+        MpLocalTime.EndOfDay -> LocalTime.MAX
+        else -> LocalTime.ofSecondOfDay((inWholeMilliSeconds() / 1000).toLong())
+    }
 
 /**
  * Converts a [java.time.ZoneId] to a [TimeZone].

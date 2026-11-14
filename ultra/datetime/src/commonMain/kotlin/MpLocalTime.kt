@@ -30,6 +30,8 @@ data class MpLocalTime(
         /**
          * Parses the given input into an [MpLocalTime].
          *
+         * `24:00`, `24:00:00` and `24:00:00.000` give [EndOfDay]; an hour of 24 with anything else is refused.
+         *
          * @throws IllegalArgumentException
          */
         fun parse(input: String): MpLocalTime {
@@ -64,6 +66,10 @@ data class MpLocalTime(
 
                     Pair(seconds, millis)
                 }
+            }
+
+            if (hour == 24) {
+                return if (minute == 0 && seconds == 0 && millis == 0) EndOfDay else ex()
             }
 
             return of(
@@ -113,16 +119,27 @@ data class MpLocalTime(
         val Max: MpLocalTime = of(hour = 23, minute = 59, second = 59, milliSecond = 999)
 
         /**
+         * The end of the day, 24:00: one millisecond after [Max], for the end of a half-open time slot.
+         *
+         * [hour] is 24 and it prints `24:00:00.000`. In arithmetic it counts as 00:00 of the next day; a date at this
+         * time is 00:00 of the next day. [of], [ofMilliSeconds] and [ofSecondOfDay] never return it: they wrap.
+         */
+        val EndOfDay: MpLocalTime = MpLocalTime(milliSeconds = MILLIS_PER_DAY)
+
+        /**
          * The time at noon at 12:00:00.000
          */
         val Noon: MpLocalTime = of(hour = 12, minute = 0, second = 0, milliSecond = 0)
     }
 
-    /** The hour component. */
+    /** The hour component; 24 for [EndOfDay]. */
     val hour: Int
         get() {
-            return (milliSeconds % MILLIS_PER_DAY) / MILLIS_PER_HOUR
+            return if (isEndOfDay) 24 else (milliSeconds % MILLIS_PER_DAY) / MILLIS_PER_HOUR
         }
+
+    /** Whether this is [EndOfDay], 24:00. */
+    internal val isEndOfDay: Boolean get() = milliSeconds == MILLIS_PER_DAY
 
     /** The minute component. */
     val minute: Int
@@ -186,9 +203,12 @@ data class MpLocalTime(
     }
 
     /**
-     * Adds the given [duration].
+     * Adds the given [duration], wrapping at midnight. [EndOfDay] counts as 00:00 of the next day; adding nothing
+     * keeps it.
      */
     fun plus(duration: Duration): MpLocalTime {
+        if (duration == Duration.ZERO) return this
+
         // Duration is Long-based: reduce it to less than a day once, then stay in Int.
         return ofMilliSeconds(milliSeconds + (duration.inWholeMilliseconds % MILLIS_PER_DAY).toInt())
     }

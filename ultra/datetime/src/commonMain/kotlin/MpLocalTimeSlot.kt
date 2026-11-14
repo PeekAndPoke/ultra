@@ -9,9 +9,10 @@ data class MpLocalTimeSlot(
     val to: MpLocalTime,
 ) {
     companion object {
+        /** The whole day, from 00:00 to 24:00 ([MpLocalTime.EndOfDay]). */
         val completeDay: MpLocalTimeSlot = MpLocalTimeSlot(
             from = MpLocalTime.Min,
-            to = MpLocalTime.Max,
+            to = MpLocalTime.EndOfDay,
         )
 
         fun of(from: MpLocalTime, duration: Duration): MpLocalTimeSlot {
@@ -202,11 +203,17 @@ data class MpLocalTimeSlot(
             val slotFromMs = fromMs + index * (durationMs + gapMs)
 
             MpLocalTimeSlot(
-                from = MpLocalTime.ofMilliSeconds(slotFromMs.toInt()),
-                to = MpLocalTime.ofMilliSeconds((slotFromMs + durationMs).toInt()),
+                from = timeOfDay(slotFromMs),
+                to = timeOfDay(slotFromMs + durationMs),
             )
         }
     }
+}
+
+/** The time at [millisOfDay]; one whole day is [MpLocalTime.EndOfDay], the end of a slot up to 24:00. */
+private fun timeOfDay(millisOfDay: Long): MpLocalTime = when (millisOfDay) {
+    MpLocalTime.MILLIS_PER_DAY.toLong() -> MpLocalTime.EndOfDay
+    else -> MpLocalTime.ofMilliSeconds(millisOfDay.toInt())
 }
 
 fun MpLocalTimeSlot.formatHhMm(): String {

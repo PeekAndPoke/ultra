@@ -17,7 +17,12 @@ object MpLocalTimeAwaker : Awaker {
         //  the same wall-clock time serializes 1000x apart depending on which codec produced it.
         // TODO(scan): no range validation, unlike the javatime sibling. A negative or >= one-day value
         //  is accepted and wrapped into the day (e.g. -1000 awakes as 23:59:59) instead of awaking to null.
-        return MpLocalTime.ofMilliSeconds(data.toLong().mod(MpLocalTime.MILLIS_PER_DAY.toLong()).toInt())
+        val millis = data.toLong()
+
+        // Exactly one day is 24:00 (MpLocalTime.EndOfDay); every other value wraps into the day, as before.
+        if (millis == MpLocalTime.MILLIS_PER_DAY.toLong()) return MpLocalTime.EndOfDay
+
+        return MpLocalTime.ofMilliSeconds(millis.mod(MpLocalTime.MILLIS_PER_DAY.toLong()).toInt())
     }
 }
 

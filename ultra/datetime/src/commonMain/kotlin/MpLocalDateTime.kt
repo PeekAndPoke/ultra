@@ -74,15 +74,22 @@ data class MpLocalDateTime(
             milliSecond = milliSecond,
         )
 
-        fun of(date: MpLocalDate, time: MpLocalTime): MpLocalDateTime = of(
-            year = date.year,
-            month = date.month,
-            day = date.day,
-            hour = time.hour,
-            minute = time.minute,
-            second = time.second,
-            milliSecond = time.milliSecond,
-        )
+        /**
+         * Combines [date] and [time]; [MpLocalTime.EndOfDay] (24:00) gives 00:00 of the next day.
+         */
+        fun of(date: MpLocalDate, time: MpLocalTime): MpLocalDateTime {
+            if (time.isEndOfDay) return of(date = date.plusDays(1), time = MpLocalTime.Min)
+
+            return of(
+                year = date.year,
+                month = date.month,
+                day = date.day,
+                hour = time.hour,
+                minute = time.minute,
+                second = time.second,
+                milliSecond = time.milliSecond,
+            )
+        }
 
         /**
          * Parses an [MpLocalDateTime] from the given [isoString].

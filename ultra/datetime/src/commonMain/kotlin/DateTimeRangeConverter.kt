@@ -21,11 +21,17 @@ class DateTimeRangeConverter(
         )
     }
 
+    /** The range from [fromHour] on the first day to [toHour] on the last; hour 24 is [MpLocalTime.EndOfDay]. */
     fun fromHourToHour(fromHour: Int, toHour: Int): MpZonedDateTimeRange {
         return fromTimeToTime(
-            fromTime = MpLocalTime.of(hour = fromHour, minute = 0),
-            toTime = MpLocalTime.of(hour = toHour, minute = 0),
+            fromTime = hourAsTime(fromHour),
+            toTime = hourAsTime(toHour),
         )
+    }
+
+    private fun hourAsTime(hour: Int): MpLocalTime = when (hour) {
+        24 -> MpLocalTime.EndOfDay
+        else -> MpLocalTime.of(hour = hour, minute = 0)
     }
 
     fun fromTimeToTime(fromTime: MpLocalTime, toTime: MpLocalTime): MpZonedDateTimeRange {

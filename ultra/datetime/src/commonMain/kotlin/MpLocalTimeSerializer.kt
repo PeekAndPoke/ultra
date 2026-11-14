@@ -20,6 +20,9 @@ object MpLocalTimeSerializer : KSerializer<MpLocalTime> {
     override fun deserialize(decoder: Decoder): MpLocalTime {
         val v = decoder.decodeLong()
 
+        // Exactly one day is 24:00; every other value wraps into the day, as before.
+        if (v == MpLocalTime.MILLIS_PER_DAY.toLong()) return MpLocalTime.EndOfDay
+
         return MpLocalTime.ofMilliSeconds(v.mod(MpLocalTime.MILLIS_PER_DAY.toLong()).toInt())
     }
 }
