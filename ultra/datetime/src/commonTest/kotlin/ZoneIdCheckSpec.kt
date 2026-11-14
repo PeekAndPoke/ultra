@@ -24,6 +24,10 @@ class ZoneIdCheckSpec : StringSpec({
         "MpLocalDate.toRange(slot, zone)" to { tz ->
             MpLocalDate.of(2023, 11, 14).toRange(MpLocalTimeSlot.of(MpLocalTime.of(10, 0), 1.hours), tz)
         },
+        // outside the usable interval on JS and native, inside on the JVM: the id is checked first everywhere
+        "MpLocalDate.toRange(slot, zone) on 999 999 999-12-31" to { tz ->
+            MpLocalDate.of(999_999_999, 12, 31).toRange(MpLocalTimeSlot.of(MpLocalTime.of(10, 0), 1.hours), tz)
+        },
     )
 
     // id to the expected message
@@ -49,6 +53,15 @@ class ZoneIdCheckSpec : StringSpec({
                 error.message shouldBe expected
             }
         }
+    }
+
+    "a well-shaped unknown id through toRange is a zone error, also where the date lies outside the usable interval" {
+        val slot = MpLocalTimeSlot.of(MpLocalTime.of(10, 0), 1.hours)
+
+        listOf(MpLocalDate.of(2023, 11, 14), MpLocalDate.of(300_000, 1, 1), MpLocalDate.of(999_999_999, 12, 31))
+            .forEach { date ->
+                shouldThrow<IllegalTimeZoneException> { date.toRange(slot, MpTimezone.of("Mars/Olympus_Mons")) }
+            }
     }
 
     "every supported id passes the check" {
