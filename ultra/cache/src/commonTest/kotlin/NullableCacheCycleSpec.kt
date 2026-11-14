@@ -45,6 +45,17 @@ class NullableCacheCycleSpec : StringSpec({
         cache.has("b") shouldBe false
     }
 
+    "the same key resolved through another cache inside a provider is no cycle" {
+        val outer = NullableCache<String, String>()
+        val inner = NullableCache<String, String>()
+
+        withTimeout(2.seconds) {
+            outer.getOrPutAsync("a") {
+                "outer+" + inner.getOrPutAsync("a") { "inner" }
+            } shouldBe "outer+inner"
+        }
+    }
+
     "nested resolution of other keys still works" {
         val cache = NullableCache<String, String>()
 

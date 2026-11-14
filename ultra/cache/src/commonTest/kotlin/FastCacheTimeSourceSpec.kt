@@ -61,13 +61,14 @@ class FastCacheTimeSourceSpec : StringSpec({
         time += 150.milliseconds
         eventually(3.seconds) { cache.get("a") shouldBe "loaded" }
 
-        // let the loop stamp the refreshed value (its put) before the clock moves on
-        delay(100.milliseconds)
-
-        // past the hard TTL of the refreshed value: evicted, not refreshed
+        // Past the hard TTL of the refreshed value: evicted, not refreshed. The time moves on inside
+        // the check, so it does not matter when the loop stamps the refreshed value: each step jumps
+        // past the hard TTL in one go, never into the refresh window.
         val loadsBefore = loads
-        time += 2.seconds
-        eventually(3.seconds) { cache.keys shouldBe emptySet() }
+        eventually(3.seconds) {
+            time += 2.seconds
+            cache.keys shouldBe emptySet()
+        }
         loads shouldBe loadsBefore
     }
 })

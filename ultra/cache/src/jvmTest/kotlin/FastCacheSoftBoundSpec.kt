@@ -1,13 +1,14 @@
 package io.peekandpoke.ultra.cache
 
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.thread
 import kotlin.random.Random
 
@@ -30,24 +31,33 @@ class FastCacheSoftBoundSpec : StringSpec({
         val cache = fastCache<String, String>(scope = scope) { maxEntries(1) }
         val stop = AtomicBoolean(false)
         val missingKeys = List(1_000) { "miss-$it" }
+        val floods = AtomicLong(0)
+        val reads = AtomicLong(0)
 
         cache.put("a", "1")
 
         val readers = listOf(
             thread(isDaemon = true) {
                 val random = Random(1)
-                while (!stop.get()) cache.get(missingKeys[random.nextInt(missingKeys.size)])
+                while (!stop.get()) {
+                    cache.get(missingKeys[random.nextInt(missingKeys.size)])
+                    floods.incrementAndGet()
+                }
             },
             thread(isDaemon = true) {
                 while (!stop.get()) {
                     cache.get("a")
                     cache.get("b")
+                    reads.incrementAndGet()
                     Thread.yield()
                 }
             },
         )
 
         try {
+            // both readers running before "b" arrives: from its first pass on, it is read in every one
+            while (floods.get() < 1_000 || reads.get() < 1_000) Thread.sleep(1)
+
             cache.put("b", "2")
             Thread.sleep(1_000)
 
@@ -64,20 +74,22 @@ class FastCacheSoftBoundSpec : StringSpec({
         val cache = fastCache<String, String>(scope = scope) { maxEntries(10) }
         val stop = AtomicBoolean(false)
         val pool = List(1_000) { "key-$it" }
+        val produced = AtomicLong(0)
 
         val reader = thread(isDaemon = true) {
             val random = Random(2)
             while (!stop.get()) {
                 val key = pool[random.nextInt(pool.size)]
-                cache.getOrPut(key) { key }
+                cache.getOrPut(key) { produced.incrementAndGet(); key }
             }
         }
 
         try {
             Thread.sleep(1_000)
 
-            // seen: all 1 000, against a bound of 10
-            cache.size shouldBeGreaterThan 500
+            // Spared, each key is produced about once. A hard bound of 10 would evict about 990 keys per
+            // pass and produce them again: tens of thousands in a second.
+            produced.get() shouldBeLessThan 2_000L
         } finally {
             stop.set(true)
             reader.join()

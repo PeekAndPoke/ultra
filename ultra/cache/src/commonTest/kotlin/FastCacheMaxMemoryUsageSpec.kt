@@ -211,6 +211,10 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             // "b" after the failing entry is counted; "x" is tracked at 0 bytes
             behaviour.totalSize shouldBe 3L
 
+            // an entry that already has a size keeps it when its new value cannot be estimated
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", 13))))
+            behaviour.totalSize shouldBe 3L
+
             behaviour.process(
                 cache,
                 FastCache.ActionUpdates(
