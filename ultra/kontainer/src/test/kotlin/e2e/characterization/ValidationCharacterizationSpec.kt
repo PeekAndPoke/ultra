@@ -295,6 +295,34 @@ class ValidationCharacterizationSpec : StringSpec({
             thrown::class shouldBe InvocationTargetException::class
         }
     }
+
+    "Validation runs before the override block of the first create: the block does not run on an invalid blueprint" {
+
+        class Missing
+        class Holder(val missing: Missing)
+
+        val blueprint = kontainer { singleton(Holder::class) }
+
+        var ran = false
+
+        shouldThrow<KontainerInconsistent> {
+            blueprint.create { ran = true }
+        }.message!! shouldStartWith "Kontainer is inconsistent!"
+
+        ran shouldBe false
+    }
+
+    "Validation runs before the override block of the first create: a throwing block does not postpone it" {
+
+        class Missing
+        class Holder(val missing: Missing)
+
+        val blueprint = kontainer { singleton(Holder::class) }
+
+        shouldThrow<KontainerInconsistent> {
+            blueprint.create { error("the block throws") }
+        }.message!! shouldStartWith "Kontainer is inconsistent!"
+    }
 })
 
 class CycleOne(val two: CycleTwo)

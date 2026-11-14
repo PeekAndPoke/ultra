@@ -40,11 +40,14 @@ class KontainerBlueprint internal constructor(
         .keys
 
     /**
-     * Dynamic singletons: the only services that can be overridden at [create]
+     * Dynamic singletons, the built-in services excepted: the only services that can be overridden at [create]
+     *
+     * `Kontainer` and `InjectionContext` stay dynamic sources of promotion, see [dynamicClasses].
      */
     private val overridableClasses: Set<KClass<*>> = definitions
         .filterValues { it.type == ServiceType.Singleton && it.kind == ServiceKind.Dynamic }
         .keys
+        .minus(builtInServices)
 
     /**
      * A lookup for finding the overridable service from the class of an override
@@ -149,9 +152,16 @@ class KontainerBlueprint internal constructor(
 
         val result = KontainerBuilder(builder).build()
 
+        // The same redefinition rule as within one builder; it is associative, so the order of application is free
+        val upgrade = KontainerBuilder.RedefinitionUpgrade()
+
         return KontainerBlueprint(
             config = config,
-            definitions = definitions.plus(result.definitions),
+            definitions = definitions.plus(
+                result.definitions.mapValues { (cls, def) ->
+                    upgrade.adjust(newDef = def, existingDef = definitions[cls])
+                }
+            ),
         )
     }
 
@@ -164,14 +174,40 @@ class KontainerBlueprint internal constructor(
      */
     fun create(dynamics: DynamicOverrides.Builder.() -> Unit = {}): Kontainer {
 
-        // On the first usage we validate the consistency of the container
+        // Validation comes before the caller's override block runs, as it always did
+        validateOnFirstUse()
+
+        return createChecked(DynamicOverrides.Builder().apply(dynamics).build())
+    }
+
+    /**
+     * Validates the blueprint on its first use.
+     */
+    private fun validateOnFirstUse() {
         if (validated.compareAndSet(false, true)) {
             validate()
         }
+    }
 
-        val dynamicServices = DynamicOverrides.Builder().apply(dynamics).build()
+    /**
+     * The one entry point of [create] and [Kontainer.clone]: validates on first use, checks the [dynamics] and
+     * creates the kontainer.
+     *
+     * @throws KontainerInconsistent when there is a problem with the kontainer configuration or the overrides
+     */
+    internal fun createChecked(dynamics: DynamicOverrides): Kontainer {
 
-        val unexpectedDynamics = dynamicsChecker.getUnexpected(dynamicServices.overrides.keys)
+        validateOnFirstUse()
+
+        val overridden = dynamics.overrides.keys
+
+        overridden.firstOrNull { it in builtInServices }?.let { builtIn ->
+            throw KontainerInconsistent(
+                "${builtIn.getName()} is managed by the kontainer itself and cannot be overridden"
+            )
+        }
+
+        val unexpectedDynamics = dynamicsChecker.getUnexpected(overridden)
 
         if (unexpectedDynamics.isNotEmpty()) {
             throw KontainerInconsistent(
@@ -180,7 +216,7 @@ class KontainerBlueprint internal constructor(
             )
         }
 
-        return instantiate(dynamicServices)
+        return instantiate(dynamics)
     }
 
     /**

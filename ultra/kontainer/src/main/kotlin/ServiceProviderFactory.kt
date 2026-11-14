@@ -16,29 +16,28 @@ class ServiceProviderFactory(
 
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
         .plus(
-            dynamics.overrides.map { (cls, provider) ->
+            dynamics.overrides.map { (cls, create) ->
                 val baseType = blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls)
 
-                val instance = provider()
-
+                // The override runs lazily; until it has returned a value, its definition names the class given to with
                 baseType to ServiceProvider.Provider.forOverride(
                     definition = ServiceDefinition(
                         serviceCls = cls,
                         type = ServiceType.Singleton,
                         kind = ServiceKind.Dynamic,
-                        producer = ServiceProducer.forInstance(instance),
+                        producer = ServiceProducer.forPendingOverride(cls),
                         overwrites = blueprint.definitions[baseType]
                     ),
-                    instance = instance,
+                    create = create,
                 )
             }
         )
 
     private val providers: MutableMap<KClass<*>, ServiceProvider> = mutableMapOf()
 
-    /** Creates a new [Kontainer] instance, merging in additional [overrides] */
+    /** Creates a new [Kontainer], merging in additional [overrides]; checked like [KontainerBlueprint.create] */
     fun newKontainer(overrides: DynamicOverrides): Kontainer {
-        return blueprint.instantiate(
+        return blueprint.createChecked(
             dynamics.merge(overrides)
         )
     }

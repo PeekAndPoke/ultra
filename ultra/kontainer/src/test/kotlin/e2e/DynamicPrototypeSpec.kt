@@ -5,7 +5,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.common.Lookup
@@ -310,7 +309,7 @@ class DynamicPrototypeSpec : StringSpec({
                 " (only dynamic singletons can be overridden, not the dynamic prototype ${DynProto::class.getName()})"
     }
 
-    "An override at clone throws ServiceNotFound, as for any non-dynamic (ULTRA-00332)" {
+    "An override at clone is refused like at create (ULTRA-00332): the same message with the hint" {
 
         class DynProto
 
@@ -318,13 +317,14 @@ class DynamicPrototypeSpec : StringSpec({
             dynamicPrototype(DynProto::class)
         }.create()
 
-        shouldThrow<ServiceNotFound> {
+        shouldThrow<KontainerInconsistent> {
             original.clone { with { DynProto() } }
-        }.message shouldContain "was not found"
+        }.message shouldBe "Unexpected dynamics were provided: ${DynProto::class.getName()}" +
+                " (only dynamic singletons can be overridden, not the dynamic prototype ${DynProto::class.getName()})"
     }
 
-    // Redefinitions involving dynamicPrototype. The rule: a later definition keeps the type and kind of the one it
-    // replaces, unless that one is a static singleton. Each case is a choice handed to ULTRA-00331.
+    // Redefinitions involving dynamicPrototype. The rule (ULTRA-00331): the first definition fixes the type, unless it
+    // is a static singleton; if either definition is dynamic, the service is dynamic.
 
     "Redefinition: singleton then dynamicPrototype ends as Prototype.Dynamic and promotes its users" {
 
@@ -343,8 +343,8 @@ class DynamicPrototypeSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; it fails open without a signal. Whether Dynamic should win here is ticket ULTRA-00331.
-    "CURRENT BEHAVIOUR: prototype then dynamicPrototype stays Prototype.Static, its users stay global, nothing throws" {
+    // ULTRA-00331: the first definition fixes the type, a dynamic one adds the binding.
+    "Redefinition: prototype then dynamicPrototype is Prototype.Dynamic, its users are promoted" {
 
         class Target
         class User(val target: Target)
@@ -359,9 +359,9 @@ class DynamicPrototypeSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.reportedOf(Target::class) shouldBe Reported.StaticPrototype
-            one.reportedOf(User::class) shouldBe Reported.StaticSingleton
-            one.get(User::class) shouldBeSameInstanceAs two.get(User::class)
+            one.reportedOf(Target::class) shouldBe Reported.DynamicPrototype
+            one.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
+            one.get(User::class) shouldNotBeSameInstanceAs two.get(User::class)
         }
     }
 
@@ -446,7 +446,7 @@ class DynamicPrototypeSpec : StringSpec({
         subject.reportedOf(Target::class) shouldBe Reported.DynamicPrototype
     }
 
-    "Redefinition across extend skips the rule (ULTRA-00330): a dynamicPrototype redefined as singleton is Singleton" {
+    "Redefinition across extend follows the rule (ULTRA-00330): a dynamicPrototype redefined as singleton stays one" {
 
         class Target
         class User(val target: Target)
@@ -463,10 +463,11 @@ class DynamicPrototypeSpec : StringSpec({
         assertSoftly {
             base.create().reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
 
-            withClue("the extension ends the promotion") {
-                extended.create().reportedOf(Target::class) shouldBe Reported.StaticSingleton
-                extended.create().reportedOf(User::class) shouldBe Reported.StaticSingleton
+            withClue("the extension keeps the promotion") {
+                extended.create().reportedOf(Target::class) shouldBe Reported.DynamicPrototype
+                extended.create().reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
             }
         }
     }
+
 })
