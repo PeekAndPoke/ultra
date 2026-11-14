@@ -45,9 +45,11 @@ val Ultra_Logging = module { minLevel: LogLevel ->
         UltraLogManager(appenders = appenders, minLevel = minLevel)
     }
 
-    // TODO: we need another injection type: dynamicPrototype.
-    //       It must upgrade the injecting service to SemiDynamic.
-    //       But it must be instantiated like a prototype.
+    // A prototype that reaches the dynamic manager and the InjectionContext, so its kind is SemiDynamic and a
+    // service injecting a Log is SemiDynamic too.
+    // TODO: declaring it `dynamicPrototype()` would name that promotion, but a Log redefined after this module
+    //       would then keep (Prototype, Dynamic) and still promote its users. ULTRA-00158 (does Log stay dynamic)
+    //       and ULTRA-00331 (the redefinition rule) decide.
     prototype(Log::class) { manager: UltraLogManager, context: InjectionContext ->
         manager.getLogger(context.requestingClass)
     }

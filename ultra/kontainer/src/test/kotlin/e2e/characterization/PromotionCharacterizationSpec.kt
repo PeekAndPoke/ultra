@@ -8,7 +8,8 @@ import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
-import io.peekandpoke.ultra.kontainer.ServiceProvider.Type
+import io.peekandpoke.ultra.kontainer.e2e.Reported
+import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.kontainer
 
 /**
@@ -38,10 +39,10 @@ class PromotionCharacterizationSpec : StringSpec({
         val topTwo = two.get(Top::class)
 
         assertSoftly {
-            one.typeOf(Top::class) shouldBe Type.SemiDynamic
-            one.typeOf(Left::class) shouldBe Type.SemiDynamic
-            one.typeOf(Right::class) shouldBe Type.SemiDynamic
-            one.typeOf(Dyn::class) shouldBe Type.Dynamic
+            one.reportedOf(Top::class) shouldBe Reported.SemiDynamicSingleton
+            one.reportedOf(Left::class) shouldBe Reported.SemiDynamicSingleton
+            one.reportedOf(Right::class) shouldBe Reported.SemiDynamicSingleton
+            one.reportedOf(Dyn::class) shouldBe Reported.DynamicSingleton
 
             Births.of(Top::class) shouldBe 2
             Births.of(Left::class) shouldBe 2
@@ -76,8 +77,8 @@ class PromotionCharacterizationSpec : StringSpec({
         val promotedTwo = two.get(Promoted::class)
 
         assertSoftly {
-            one.typeOf(Promoted::class) shouldBe Type.SemiDynamic
-            one.typeOf(Below::class) shouldBe Type.Singleton
+            one.reportedOf(Promoted::class) shouldBe Reported.SemiDynamicSingleton
+            one.reportedOf(Below::class) shouldBe Reported.StaticSingleton
 
             Births.of(Promoted::class) shouldBe 2
             Births.of(Below::class) shouldBe 1
@@ -105,8 +106,8 @@ class PromotionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Unrelated::class) shouldBe Type.Singleton
-            two.typeOf(Unrelated::class) shouldBe Type.Singleton
+            one.reportedOf(Unrelated::class) shouldBe Reported.StaticSingleton
+            two.reportedOf(Unrelated::class) shouldBe Reported.StaticSingleton
 
             one.get(Unrelated::class) shouldBeSameInstanceAs two.get(Unrelated::class)
             Births.of(Unrelated::class) shouldBe 1
@@ -130,9 +131,9 @@ class PromotionCharacterizationSpec : StringSpec({
         val subject = blueprint.create()
 
         assertSoftly {
-            subject.typeOf(Promoted::class) shouldBe Type.SemiDynamic
-            subject.typeOf(Plain::class) shouldBe Type.Singleton
-            subject.typeOf(InjectsPlain::class) shouldBe Type.Singleton
+            subject.reportedOf(Promoted::class) shouldBe Reported.SemiDynamicSingleton
+            subject.reportedOf(Plain::class) shouldBe Reported.StaticSingleton
+            subject.reportedOf(InjectsPlain::class) shouldBe Reported.StaticSingleton
         }
     }
 
@@ -158,9 +159,9 @@ class PromotionCharacterizationSpec : StringSpec({
         val topTwo = two.get(Top::class)
 
         assertSoftly {
-            one.typeOf(Top::class) shouldBe Type.SemiDynamic
-            one.typeOf(ProtoHigh::class) shouldBe Type.Prototype
-            one.typeOf(ProtoLow::class) shouldBe Type.Prototype
+            one.reportedOf(Top::class) shouldBe Reported.SemiDynamicSingleton
+            one.reportedOf(ProtoHigh::class) shouldBe Reported.SemiDynamicPrototype
+            one.reportedOf(ProtoLow::class) shouldBe Reported.SemiDynamicPrototype
 
             Births.of(Top::class) shouldBe 2
             Births.of(ProtoHigh::class) shouldBe 2
@@ -187,8 +188,8 @@ class PromotionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(User::class) shouldBe Type.SemiDynamic
-            one.typeOf(DynAdapter::class) shouldBe Type.Dynamic
+            one.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
+            one.reportedOf(DynAdapter::class) shouldBe Reported.DynamicSingleton
 
             one.get(User::class).port shouldBeSameInstanceAs one.get(DynAdapter::class)
             one.get(User::class) shouldNotBeSameInstanceAs two.get(User::class)
@@ -212,8 +213,8 @@ class PromotionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(User::class) shouldBe Type.SemiDynamic
-            one.typeOf(Adapter::class) shouldBe Type.SemiDynamic
+            one.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
+            one.reportedOf(Adapter::class) shouldBe Reported.SemiDynamicSingleton
 
             (one.get(User::class).port as Adapter).dyn shouldBeSameInstanceAs one.get(Dyn::class)
             one.get(User::class) shouldNotBeSameInstanceAs two.get(User::class)
@@ -232,8 +233,8 @@ class PromotionCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(User::class) shouldBe Type.SemiDynamic
-            subject.typeOf(Base::class) shouldBe Type.Dynamic
+            subject.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
+            subject.reportedOf(Base::class) shouldBe Reported.DynamicSingleton
         }
     }
 
@@ -253,8 +254,8 @@ class PromotionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Proto::class) shouldBe Type.Prototype
-            one.typeOf(Promoted::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Proto::class) shouldBe Reported.SemiDynamicPrototype
+            one.reportedOf(Promoted::class) shouldBe Reported.SemiDynamicSingleton
 
             one.get(Proto::class).promoted shouldBeSameInstanceAs one.get(Promoted::class)
             two.get(Proto::class).promoted shouldBeSameInstanceAs two.get(Promoted::class)
@@ -275,8 +276,8 @@ class PromotionCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(DynTop::class) shouldBe Type.Dynamic
-            subject.typeOf(Promoted::class) shouldBe Type.SemiDynamic
+            subject.reportedOf(DynTop::class) shouldBe Reported.DynamicSingleton
+            subject.reportedOf(Promoted::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
@@ -294,8 +295,8 @@ class PromotionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Kontainer::class) shouldBe Type.Dynamic
-            one.typeOf(UsesKontainer::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Kontainer::class) shouldBe Reported.DynamicSingleton
+            one.reportedOf(UsesKontainer::class) shouldBe Reported.SemiDynamicSingleton
 
             one.get(UsesKontainer::class).kontainer shouldBeSameInstanceAs one
             two.get(UsesKontainer::class).kontainer shouldBeSameInstanceAs two
@@ -317,8 +318,8 @@ class PromotionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(KontainerBlueprint::class) shouldBe Type.Singleton
-            one.typeOf(UsesBlueprint::class) shouldBe Type.Singleton
+            one.reportedOf(KontainerBlueprint::class) shouldBe Reported.StaticSingleton
+            one.reportedOf(UsesBlueprint::class) shouldBe Reported.StaticSingleton
 
             one.get(UsesBlueprint::class) shouldBeSameInstanceAs two.get(UsesBlueprint::class)
             Births.of(UsesBlueprint::class) shouldBe 1
@@ -341,8 +342,8 @@ class PromotionCharacterizationSpec : StringSpec({
         }
 
         assertSoftly {
-            withSingleton.create().typeOf(User::class) shouldBe Type.Singleton
-            withDynamic.create().typeOf(User::class) shouldBe Type.SemiDynamic
+            withSingleton.create().reportedOf(User::class) shouldBe Reported.StaticSingleton
+            withDynamic.create().reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 })

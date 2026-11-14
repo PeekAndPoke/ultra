@@ -10,7 +10,8 @@ import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
-import io.peekandpoke.ultra.kontainer.ServiceProvider.Type
+import io.peekandpoke.ultra.kontainer.e2e.Reported
+import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.kontainer
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -45,7 +46,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             Births.of(Holder::class) shouldBe 2
             Births.of(Dyn::class) shouldBe 2
 
-            one.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
@@ -73,7 +74,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             Births.of(Dyn::class) shouldBe 2
             Births.of(Holder::class) shouldBe 2
 
-            one.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
@@ -92,7 +93,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Holder::class) shouldBe Type.Singleton
+            one.reportedOf(Holder::class) shouldBe Reported.StaticSingleton
             one.get(Holder::class).missing.shouldBeNull()
             one.get(Holder::class) shouldBeSameInstanceAs two.get(Holder::class)
             Births.of(Holder::class) shouldBe 1
@@ -129,7 +130,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             Births.of(Dyn::class) shouldBe 2
             Births.of(Holder::class) shouldBe 2
 
-            one.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
@@ -144,7 +145,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            subject.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
             subject.get(Holder::class).dyn.value shouldBeSameInstanceAs subject.get(Dyn::class)
         }
     }
@@ -164,7 +165,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         val holder = subject.get(Holder::class)
 
         assertSoftly {
-            subject.typeOf(Holder::class) shouldBe Type.Singleton
+            subject.reportedOf(Holder::class) shouldBe Reported.StaticSingleton
             Births.of(Proto::class) shouldBe 0
 
             holder.proto.value shouldBeSameInstanceAs holder.proto.value
@@ -211,7 +212,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             Births.of(DynImpl::class) shouldBe 2
             Births.of(ProtoImpl::class) shouldBe 2
 
-            one.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
@@ -241,7 +242,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             Births.of(SingleImpl::class) shouldBe 1
             Births.of(DynImpl::class) shouldBe 1
 
-            subject.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            subject.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
@@ -284,10 +285,11 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             Births.of(DynImpl::class) shouldBe 2
             Births.of(Holder::class) shouldBe 2
 
-            one.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00329.
     "CURRENT BEHAVIOUR: a global singleton's Lookup stays bound to the first kontainer, which records every prototype" {
 
         abstract class Base : Counted()
@@ -305,7 +307,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         one.get(Holder::class)
 
         assertSoftly {
-            one.typeOf(Holder::class) shouldBe Type.Singleton
+            one.reportedOf(Holder::class) shouldBe Reported.StaticSingleton
             two.get(Holder::class) shouldBeSameInstanceAs one.get(Holder::class)
 
             repeat(3) { two.get(Holder::class).lookup.get(ProtoImpl::class) }
@@ -335,8 +337,8 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(InjectionContext::class) shouldBe Type.Dynamic
-            one.typeOf(WithContext::class) shouldBe Type.SemiDynamic
+            one.reportedOf(InjectionContext::class) shouldBe Reported.DynamicSingleton
+            one.reportedOf(WithContext::class) shouldBe Reported.SemiDynamicSingleton
 
             one.get(FirstUser::class).ctx.context.requestingClass shouldBe FirstUser::class
             one.get(SecondUser::class).ctx.context.requestingClass shouldBe FirstUser::class
@@ -358,7 +360,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(WithContext::class) shouldBe Type.Prototype
+            subject.reportedOf(WithContext::class) shouldBe Reported.SemiDynamicPrototype
 
             subject.get(WithContext::class).context.requestingClass shouldBe Kontainer::class
             subject.get(User::class).ctx.context.requestingClass shouldBe User::class
@@ -374,7 +376,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(WithContext::class) shouldBe Type.Dynamic
+            subject.reportedOf(WithContext::class) shouldBe Reported.DynamicSingleton
         }
     }
 
@@ -390,7 +392,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(UsesKontainer::class) shouldBe Type.Prototype
+            one.reportedOf(UsesKontainer::class) shouldBe Reported.SemiDynamicPrototype
             one.get(UsesKontainer::class).kontainer shouldBeSameInstanceAs one
             two.get(UsesKontainer::class).kontainer shouldBeSameInstanceAs two
         }
@@ -419,7 +421,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
 
         assertSoftly {
             one.get(Built::class) shouldBeSameInstanceAs two.get(Built::class)
-            one.typeOf(Built::class) shouldBe Type.Singleton
+            one.reportedOf(Built::class) shouldBe Reported.StaticSingleton
 
             runs.get() shouldBe 1
             Births.of(Single::class) shouldBe 1
@@ -458,7 +460,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             one.get(Built::class) shouldNotBeSameInstanceAs two.get(Built::class)
             one.get(Built::class).dyn shouldBeSameInstanceAs one.get(Dyn::class)
             one.get(Built::class).single shouldBeSameInstanceAs two.get(Built::class).single
-            one.typeOf(Built::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Built::class) shouldBe Reported.SemiDynamicSingleton
 
             runs.get() shouldBe 2
             Births.of(Single::class) shouldBe 1
@@ -478,7 +480,7 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(Built::class) shouldBe Type.SemiDynamic
+            subject.reportedOf(Built::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
@@ -503,7 +505,31 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             two.get(Dyn::class)
 
             runs.get() shouldBe 2
-            one.typeOf(Dyn::class) shouldBe Type.Dynamic
+            one.reportedOf(Dyn::class) shouldBe Reported.DynamicSingleton
+        }
+    }
+
+    // Pinned as it is; the fix is ticket ULTRA-00335.
+    "CURRENT BEHAVIOUR: a nullable parameter with two candidates injects null without a validation error, and promotes" {
+
+        abstract class Base
+        class SingleImpl : Base()
+        class DynImpl : Base()
+        class Holder(val base: Base?) : Counted()
+
+        val blueprint = kontainer {
+            singleton(Holder::class)
+            singleton(SingleImpl::class)
+            dynamic(DynImpl::class)
+        }
+
+        val one = blueprint.create()
+        val two = blueprint.create()
+
+        assertSoftly {
+            one.get(Holder::class).base.shouldBeNull()
+            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
+            one.get(Holder::class) shouldNotBeSameInstanceAs two.get(Holder::class)
         }
     }
 })

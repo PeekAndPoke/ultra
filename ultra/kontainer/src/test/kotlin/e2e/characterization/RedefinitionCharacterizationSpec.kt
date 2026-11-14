@@ -4,11 +4,12 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
-import io.peekandpoke.ultra.kontainer.ServiceProvider.Type
+import io.peekandpoke.ultra.kontainer.e2e.Reported
+import io.peekandpoke.ultra.kontainer.e2e.reportedOf
+import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.kontainer.module
 
@@ -32,8 +33,8 @@ class RedefinitionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Target::class) shouldBe Type.Dynamic
-            one.typeOf(User::class) shouldBe Type.SemiDynamic
+            one.reportedOf(Target::class) shouldBe Reported.DynamicSingleton
+            one.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
             one.get(User::class) shouldNotBeSameInstanceAs two.get(User::class)
         }
     }
@@ -55,12 +56,12 @@ class RedefinitionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Target::class) shouldBe Type.Dynamic
+            one.reportedOf(Target::class) shouldBe Reported.DynamicSingleton
             one.get(Target::class)::class shouldBe Second::class
             one.get(Target::class) shouldNotBeSameInstanceAs two.get(Target::class)
-            one.typeOf(User::class) shouldBe Type.SemiDynamic
+            one.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
 
-            blueprint.create { with<Target> { First() } }.typeOf(Target::class) shouldBe Type.DynamicOverride
+            blueprint.create { with<Target> { First() } }.reportedOf(Target::class) shouldBe Reported.OverriddenDynamicSingleton
         }
     }
 
@@ -79,9 +80,9 @@ class RedefinitionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Target::class) shouldBe Type.Prototype
+            one.reportedOf(Target::class) shouldBe Reported.StaticPrototype
             one.get(Target::class) shouldNotBeSameInstanceAs one.get(Target::class)
-            one.typeOf(User::class) shouldBe Type.Singleton
+            one.reportedOf(User::class) shouldBe Reported.StaticSingleton
             one.get(User::class) shouldBeSameInstanceAs two.get(User::class)
         }
     }
@@ -98,12 +99,13 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(Target::class) shouldBe Type.Prototype
+            subject.reportedOf(Target::class) shouldBe Reported.StaticPrototype
             subject.get(Target::class)::class shouldBe Second::class
             subject.get(Target::class) shouldNotBeSameInstanceAs subject.get(Target::class)
         }
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00331.
     "CURRENT BEHAVIOUR: prototype redefined as dynamic stays Prototype: no promotion of users, no override at create" {
 
         class Target : Counted()
@@ -119,13 +121,13 @@ class RedefinitionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.typeOf(Target::class) shouldBe Type.Prototype
-            one.typeOf(User::class) shouldBe Type.Singleton
+            one.reportedOf(Target::class) shouldBe Reported.StaticPrototype
+            one.reportedOf(User::class) shouldBe Reported.StaticSingleton
             one.get(User::class) shouldBeSameInstanceAs two.get(User::class)
 
             shouldThrow<KontainerInconsistent> {
                 blueprint.create { with { Target() } }
-            }.message!! shouldStartWith "Unexpected dynamics were provided: "
+            }.message shouldBe "Unexpected dynamics were provided: ${Target::class.getName()}"
         }
     }
 
@@ -139,7 +141,7 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            subject.typeOf(Target::class) shouldBe Type.Dynamic
+            subject.reportedOf(Target::class) shouldBe Reported.DynamicSingleton
             subject.get(Target::class) shouldBeSameInstanceAs subject.get(Target::class)
         }
     }
@@ -154,7 +156,7 @@ class RedefinitionCharacterizationSpec : StringSpec({
             dynamic(Target::class)
         }.create()
 
-        subject.typeOf(Target::class) shouldBe Type.Prototype
+        subject.reportedOf(Target::class) shouldBe Reported.StaticPrototype
     }
 
     "The order of redefinitions decides: singleton, dynamic, prototype ends as Dynamic" {
@@ -167,7 +169,7 @@ class RedefinitionCharacterizationSpec : StringSpec({
             prototype(Target::class)
         }.create()
 
-        subject.typeOf(Target::class) shouldBe Type.Dynamic
+        subject.reportedOf(Target::class) shouldBe Reported.DynamicSingleton
     }
 
     "Promotion uses the parameters of the final definition only: a redefinition without the dynamic stays global" {
@@ -188,10 +190,10 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            withDynamicFirst.typeOf(Target::class) shouldBe Type.Singleton
+            withDynamicFirst.reportedOf(Target::class) shouldBe Reported.StaticSingleton
             withDynamicFirst.get(Target::class).label shouldBe "second"
 
-            withDynamicLast.typeOf(Target::class) shouldBe Type.SemiDynamic
+            withDynamicLast.reportedOf(Target::class) shouldBe Reported.SemiDynamicSingleton
             withDynamicLast.get(Target::class).label shouldBe "second"
         }
     }
@@ -221,14 +223,15 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }.create()
 
         assertSoftly {
-            forward.typeOf(Target::class) shouldBe Type.Dynamic
-            forward.typeOf(User::class) shouldBe Type.SemiDynamic
+            forward.reportedOf(Target::class) shouldBe Reported.DynamicSingleton
+            forward.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
 
-            backward.typeOf(Target::class) shouldBe Type.Dynamic
-            backward.typeOf(User::class) shouldBe Type.SemiDynamic
+            backward.reportedOf(Target::class) shouldBe Reported.DynamicSingleton
+            backward.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00330.
     "CURRENT BEHAVIOUR: extend does not apply the type upgrade, a prototype redefined as singleton becomes Singleton" {
 
         class Target
@@ -242,11 +245,12 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }
 
         assertSoftly {
-            base.create().typeOf(Target::class) shouldBe Type.Prototype
-            extended.create().typeOf(Target::class) shouldBe Type.Singleton
+            base.create().reportedOf(Target::class) shouldBe Reported.StaticPrototype
+            extended.create().reportedOf(Target::class) shouldBe Reported.StaticSingleton
         }
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00330.
     "CURRENT BEHAVIOUR: extend does not apply the type upgrade, a dynamic redefined as singleton ends the promotion" {
 
         class Target
@@ -265,10 +269,10 @@ class RedefinitionCharacterizationSpec : StringSpec({
         val two = extended.create()
 
         assertSoftly {
-            base.create().typeOf(User::class) shouldBe Type.SemiDynamic
+            base.create().reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
 
-            one.typeOf(Target::class) shouldBe Type.Singleton
-            one.typeOf(User::class) shouldBe Type.Singleton
+            one.reportedOf(Target::class) shouldBe Reported.StaticSingleton
+            one.reportedOf(User::class) shouldBe Reported.StaticSingleton
             one.get(User::class) shouldBeSameInstanceAs two.get(User::class)
         }
     }
@@ -288,8 +292,8 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }
 
         assertSoftly {
-            base.create().typeOf(User::class) shouldBe Type.Singleton
-            extended.create().typeOf(User::class) shouldBe Type.SemiDynamic
+            base.create().reportedOf(User::class) shouldBe Reported.StaticSingleton
+            extended.create().reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
         }
     }
 })

@@ -1,7 +1,7 @@
 package io.peekandpoke.ultra.kontainer.domain
 
-import io.peekandpoke.ultra.kontainer.InjectionType
-import io.peekandpoke.ultra.kontainer.ServiceProvider
+import io.peekandpoke.ultra.kontainer.ServiceKind
+import io.peekandpoke.ultra.kontainer.ServiceType
 import java.time.Instant
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -18,7 +18,13 @@ data class DebugInfo(
     /** Debug information for a single registered service */
     data class ServiceDebugInfo(
         val cls: ClassInfo,
-        val type: ServiceProvider.Type,
+        val type: ServiceType,
+        /** As derived by the blueprint */
+        val kind: ServiceKind,
+        /** True when the instance was handed in at create */
+        val overridden: Boolean,
+        /** The declared dynamic services that make it [ServiceKind.SemiDynamic]; empty otherwise */
+        val semiDynamicBecauseOf: List<ClassInfo>,
         val definition: ServiceDefinitionInfo,
         val instances: List<InstanceDebugInfo>,
     )
@@ -26,7 +32,9 @@ data class DebugInfo(
     /** Details about a service definition, including what it creates and its dependencies */
     data class ServiceDefinitionInfo(
         val creates: ClassInfo,
-        val injectionType: InjectionType,
+        val type: ServiceType,
+        /** As declared: [ServiceKind.Static] or [ServiceKind.Dynamic] */
+        val kind: ServiceKind,
         val injects: List<ParamInfo>,
         val codeLocation: CodeLocation,
         val overwrites: ServiceDefinitionInfo?,

@@ -7,7 +7,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.kontainer
 
 class ServiceProviderFactorySpec : StringSpec({
@@ -60,7 +59,7 @@ class ServiceProviderFactorySpec : StringSpec({
                 kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
         kontainer.getServiceProviderFactory()
-            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Singleton
+            .getProvider(CounterService::class).reported shouldBe Reported.StaticSingleton
     }
 
     "Instance service providers must be shared across kontainer instances" {
@@ -103,7 +102,7 @@ class ServiceProviderFactorySpec : StringSpec({
                 kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
         kontainer.getServiceProviderFactory()
-            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Singleton
+            .getProvider(CounterService::class).reported shouldBe Reported.StaticSingleton
     }
 
     "Singleton service providers must be shared across kontainer instances" {
@@ -147,8 +146,8 @@ class ServiceProviderFactorySpec : StringSpec({
                 kontainer.getServiceProviderFactory().getProvider(AnotherInjectingService::class)
 
         kontainer.getServiceProviderFactory()
-            .getProvider(AnotherInjectingService::class).type shouldBe
-                ServiceProvider.Type.SemiDynamic
+            .getProvider(AnotherInjectingService::class).reported shouldBe
+                Reported.SemiDynamicSingleton
     }
 
     "Semi Dynamic service providers must NOT be shared across kontainer instances" {
@@ -192,7 +191,7 @@ class ServiceProviderFactorySpec : StringSpec({
                 kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
         kontainer.getServiceProviderFactory()
-            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.Dynamic
+            .getProvider(CounterService::class).reported shouldBe Reported.DynamicSingleton
     }
 
     "Dynamic service providers must NOT be shared across kontainer instances" {
@@ -236,7 +235,7 @@ class ServiceProviderFactorySpec : StringSpec({
                 kontainer.getServiceProviderFactory().getProvider(CounterService::class)
 
         kontainer.getServiceProviderFactory()
-            .getProvider(CounterService::class).type shouldBe ServiceProvider.Type.DynamicOverride
+            .getProvider(CounterService::class).reported shouldBe Reported.OverriddenDynamicSingleton
 
         kontainer.get(CounterService::class).shouldBeInstanceOf<CounterServiceEx01>()
     }

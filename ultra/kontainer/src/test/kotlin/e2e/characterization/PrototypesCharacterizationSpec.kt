@@ -6,7 +6,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
-import io.peekandpoke.ultra.kontainer.ServiceProvider.Type
+import io.peekandpoke.ultra.kontainer.e2e.Reported
+import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.kontainer
 
 /**
@@ -28,7 +29,7 @@ class PrototypesCharacterizationSpec : StringSpec({
             subject.get(Proto::class) shouldNotBeSameInstanceAs subject.get(Proto::class)
             Births.of(Proto::class) shouldBe 2
             subject.getProvider(Proto::class).instances.size shouldBe 2
-            subject.typeOf(Proto::class) shouldBe Type.Prototype
+            subject.reportedOf(Proto::class) shouldBe Reported.StaticPrototype
         }
     }
 
@@ -70,7 +71,7 @@ class PrototypesCharacterizationSpec : StringSpec({
         assertSoftly {
             one.get(Single::class).proto shouldBeSameInstanceAs two.get(Single::class).proto
             Births.of(Proto::class) shouldBe 1
-            one.typeOf(Single::class) shouldBe Type.Singleton
+            one.reportedOf(Single::class) shouldBe Reported.StaticSingleton
         }
     }
 
@@ -137,7 +138,7 @@ class PrototypesCharacterizationSpec : StringSpec({
             one.get(Dyn::class) shouldNotBeSameInstanceAs two.get(Dyn::class)
 
             Births.of(Dyn::class) shouldBe 2
-            one.typeOf(Proto::class) shouldBe Type.Prototype
+            one.reportedOf(Proto::class) shouldBe Reported.SemiDynamicPrototype
         }
     }
 

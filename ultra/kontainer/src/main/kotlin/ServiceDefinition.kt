@@ -7,17 +7,23 @@ import kotlin.reflect.KClass
  *
  * [serviceCls] is the base class as which this service is registered.
  *
- * [injectionType] is how the service is to be injected.
+ * [type] and [kind] are what the service is declared as; the kind is [ServiceKind.Static] or
+ * [ServiceKind.Dynamic], as [ServiceKind.SemiDynamic] is only ever derived by the [KontainerBlueprint].
  *
  * [ServiceProducer] is used to create an instance of the service.
  */
 class ServiceDefinition internal constructor(
     val serviceCls: KClass<*>,
-    val injectionType: InjectionType,
+    val type: ServiceType,
+    val kind: ServiceKind,
     val producer: ServiceProducer<*>,
     val overwrites: ServiceDefinition?,
     val codeLocation: CodeLocation = CodeLocation.create(),
 ) {
+    init {
+        require(kind != ServiceKind.SemiDynamic) { "SemiDynamic cannot be declared, it is derived by the blueprint" }
+    }
+
     /** Captures the code location where a service was defined, for debugging */
     class CodeLocation private constructor(
         private val throwable: Throwable,
@@ -74,10 +80,11 @@ class ServiceDefinition internal constructor(
         }
     }
 
-    /** Returns a copy of this definition with a different [newType] */
-    fun withType(newType: InjectionType) = ServiceDefinition(
+    /** Returns a copy of this definition declared as [type] and [kind] */
+    fun withScope(type: ServiceType, kind: ServiceKind) = ServiceDefinition(
         serviceCls = this.serviceCls,
-        injectionType = newType,
+        type = type,
+        kind = kind,
         producer = this.producer,
         overwrites = this.overwrites,
         codeLocation = this.codeLocation,

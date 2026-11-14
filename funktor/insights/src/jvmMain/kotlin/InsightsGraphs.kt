@@ -44,14 +44,14 @@ class InsightsGraphs(private val blueprint: KontainerBlueprint) {
 
     private fun DebugInfo.ServiceDebugInfo.toGraph() = InsightsKontainerGraph.Service(
         cls = cls.fqn,
-        type = type.name,
+        type = wireProviderType(type, kind, overridden),
         definition = definition.toGraph(),
     )
 
     private fun DebugInfo.ServiceDefinitionInfo.toGraph(): InsightsKontainerGraph.Definition =
         InsightsKontainerGraph.Definition(
             creates = creates.fqn,
-            injectionType = injectionType.name,
+            injectionType = wireInjectionType(type, kind),
             injects = injects.map { param ->
                 InsightsKontainerGraph.Injection(
                     name = param.name,

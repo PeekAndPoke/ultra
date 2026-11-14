@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.kontainer
 
 import io.peekandpoke.ultra.common.maxLineLength
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo
+import kotlin.reflect.KClass
 
 /**
  * Debugging and introspection tools for a [Kontainer].
@@ -26,7 +27,8 @@ class KontainerTools internal constructor(
         fun ServiceDefinition.toInfo(): DebugInfo.ServiceDefinitionInfo {
             return DebugInfo.ServiceDefinitionInfo(
                 creates = DebugInfo.ClassInfo.of(producer.creates),
-                injectionType = injectionType,
+                type = type,
+                kind = kind,
                 injects = producer.params.map { parameter ->
                     DebugInfo.ParamInfo(
                         name = parameter.name,
@@ -50,6 +52,9 @@ class KontainerTools internal constructor(
             DebugInfo.ServiceDebugInfo(
                 cls = DebugInfo.ClassInfo.of(cls),
                 type = provider.type,
+                kind = provider.kind,
+                overridden = provider.overridden,
+                semiDynamicBecauseOf = blueprint.semiDynamicBecauseOf(cls).map { DebugInfo.ClassInfo.of(it) },
                 instances = provider.instances.map { instance ->
                     DebugInfo.InstanceDebugInfo(
                         createdAt = instance.createdAt,
@@ -64,32 +69,42 @@ class KontainerTools internal constructor(
     }
 
     /**
-     * Returns a human-readable table of all services, their types, and current instances.
+     * The kind as the dump shows it, with the override flag or what made the service semi dynamic.
+     */
+    private fun kindCell(cls: KClass<*>, provider: ServiceProvider): String = when {
+        provider.overridden -> "${provider.kind} (overridden)"
+
+        provider.kind == ServiceKind.SemiDynamic ->
+            "${provider.kind} (" +
+                    blueprint.semiDynamicBecauseOf(cls).joinToString(", ") { it.simpleName ?: it.getName() } + ")"
+
+        else -> provider.kind.toString()
+    }
+
+    /**
+     * Returns a human-readable table of all services: their type, kind and current instances.
      */
     fun dumpKontainer(): String {
 
         val rows = mutableListOf(
-            Triple("Service ID", "Type", "Instances")
+            listOf("Service ID", "Type", "Kind", "Instances")
         )
 
         rows.addAll(
             factory.getAllProviders().map { (k, v) ->
-                Triple(
+                listOf(
                     k.getName(),
                     v.type.toString(),
+                    kindCell(k, v),
                     v.instances.joinToString("\n") { "${it.createdAt}: ${it.instance::class.getName()}" }
                 )
             }
         )
 
-        val lens = Triple(
-            rows.maxOfOrNull { it.first.maxLineLength() } ?: 0,
-            rows.maxOfOrNull { it.second.maxLineLength() } ?: 0,
-            rows.maxOfOrNull { it.third.maxLineLength() } ?: 0
-        )
+        val lens = rows.first().indices.map { col -> rows.maxOf { it[col].maxLineLength() } }
 
-        val services = rows.map {
-            "${it.first.padEnd(lens.first)} | ${it.second.padEnd(lens.second)} | ${it.third.padEnd(lens.third)}"
+        val services = rows.map { row ->
+            row.mapIndexed { col, cell -> cell.padEnd(lens[col]) }.joinToString(" | ")
         }
 
         return "Kontainer dump:" +

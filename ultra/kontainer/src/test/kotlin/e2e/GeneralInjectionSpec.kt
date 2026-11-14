@@ -13,7 +13,6 @@ import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceNotFound
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.kontainer
 
 class GeneralInjectionSpec : StringSpec({
@@ -52,7 +51,7 @@ class GeneralInjectionSpec : StringSpec({
             }
 
             withClue("The service type must be correct") {
-                subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
+                subject.getProvider<CounterService>().reported shouldBe Reported.StaticSingleton
             }
         }
     }
@@ -66,7 +65,7 @@ class GeneralInjectionSpec : StringSpec({
         assertSoftly {
 
             subject.get<CounterService>()::class shouldBe CounterService::class
-            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<CounterService>().reported shouldBe Reported.StaticSingleton
         }
     }
 
@@ -81,7 +80,7 @@ class GeneralInjectionSpec : StringSpec({
             subject.get<CounterService>() shouldBeSameInstanceAs subject.get(CounterService::class)
 
             subject.get<CounterService>()::class shouldBe CounterService::class
-            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<CounterService>().reported shouldBe Reported.StaticSingleton
         }
     }
 
@@ -114,7 +113,7 @@ class GeneralInjectionSpec : StringSpec({
             subject.get<CounterService>() shouldBeSameInstanceAs subject.get(CounterService::class)
 
             subject.get<CounterService>()::class shouldBe CounterServiceEx01::class
-            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<CounterService>().reported shouldBe Reported.StaticSingleton
         }
     }
 
@@ -127,10 +126,10 @@ class GeneralInjectionSpec : StringSpec({
 
         assertSoftly {
             subject.get<CounterService>()::class shouldBe CounterService::class
-            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<CounterService>().reported shouldBe Reported.StaticSingleton
 
             subject.get<AnotherSimpleService>()::class shouldBe AnotherSimpleService::class
-            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<AnotherSimpleService>().reported shouldBe Reported.StaticSingleton
         }
     }
 
@@ -178,19 +177,19 @@ class GeneralInjectionSpec : StringSpec({
 
         assertSoftly {
             subject.get<CounterService>()::class shouldBe CounterService::class
-            subject.getProvider<CounterService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<CounterService>().reported shouldBe Reported.StaticSingleton
 
             subject.get<AnotherSimpleService>()::class shouldBe AnotherSimpleService::class
-            subject.getProvider<AnotherSimpleService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<AnotherSimpleService>().reported shouldBe Reported.StaticSingleton
 
             subject.get<InjectingService>()::class shouldBe InjectingService::class
-            subject.getProvider<InjectingService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<InjectingService>().reported shouldBe Reported.StaticSingleton
 
             subject.get<AnotherInjectingService>()::class shouldBe AnotherInjectingService::class
-            subject.getProvider<AnotherInjectingService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<AnotherInjectingService>().reported shouldBe Reported.StaticSingleton
 
             subject.get<DeeperInjectingService>()::class shouldBe DeeperInjectingService::class
-            subject.getProvider<DeeperInjectingService>().type shouldBe ServiceProvider.Type.Singleton
+            subject.getProvider<DeeperInjectingService>().reported shouldBe Reported.StaticSingleton
         }
     }
 
@@ -294,11 +293,11 @@ class GeneralInjectionSpec : StringSpec({
         assertSoftly {
 
             subjectOne.get(Kontainer::class) shouldBeSameInstanceAs subjectOne
-            subjectOne.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.Dynamic
+            subjectOne.getProvider(Kontainer::class).reported shouldBe Reported.DynamicSingleton
             subjectOne.get(MyService::class).kontainer shouldBeSameInstanceAs subjectOne
 
             subjectTwo.get(Kontainer::class) shouldBeSameInstanceAs subjectTwo
-            subjectTwo.getProvider(Kontainer::class).type shouldBe ServiceProvider.Type.Dynamic
+            subjectTwo.getProvider(Kontainer::class).reported shouldBe Reported.DynamicSingleton
             subjectTwo.get(MyService::class).kontainer shouldBeSameInstanceAs subjectTwo
 
             subjectOne.get(Kontainer::class) shouldNotBeSameInstanceAs subjectTwo.get(Kontainer::class)
@@ -319,11 +318,11 @@ class GeneralInjectionSpec : StringSpec({
         assertSoftly {
 
             subjectOne.get(KontainerBlueprint::class) shouldBeSameInstanceAs blueprint
-            subjectOne.getProvider(KontainerBlueprint::class).type shouldBe ServiceProvider.Type.Singleton
+            subjectOne.getProvider(KontainerBlueprint::class).reported shouldBe Reported.StaticSingleton
             subjectOne.get(MyService::class).blueprint shouldBeSameInstanceAs blueprint
 
             subjectTwo.get(KontainerBlueprint::class) shouldBeSameInstanceAs blueprint
-            subjectTwo.getProvider(KontainerBlueprint::class).type shouldBe ServiceProvider.Type.Singleton
+            subjectTwo.getProvider(KontainerBlueprint::class).reported shouldBe Reported.StaticSingleton
             subjectTwo.get(MyService::class).blueprint shouldBeSameInstanceAs blueprint
         }
     }

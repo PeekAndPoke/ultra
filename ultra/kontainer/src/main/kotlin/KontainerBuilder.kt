@@ -16,40 +16,32 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
 
     private val definitions = mutableMapOf<KClass<*>, ServiceDefinition>()
 
-    private val injectionTypeUpgrade = InjectionTypeUpgrade()
+    private val redefinitionUpgrade = RedefinitionUpgrade()
 
     /**
-     * Ensures that overriding a service definition preserves the injection type of the original.
+     * Decides the type and kind of a service that is defined again.
+     *
+     * A later definition keeps the [ServiceType] and [ServiceKind] of the one it replaces, unless that one is a
+     * static singleton: then the later definition is taken as it is. The producer is always the later one.
      */
-    class InjectionTypeUpgrade {
+    class RedefinitionUpgrade {
 
-        /** Adjusts the injection type of [def] based on the definition it overwrites. */
+        /** Adjusts [def] based on the definition it overwrites. */
         fun adjust(def: ServiceDefinition): ServiceDefinition {
             return adjust(newDef = def, existingDef = def.overwrites)
         }
 
-        /** Adjusts [newDef] so its injection type is at least as broad as the [existingDef] it replaces. */
+        /** Adjusts [newDef] to the type and kind of the [existingDef] it replaces, see [RedefinitionUpgrade]. */
         fun adjust(newDef: ServiceDefinition, existingDef: ServiceDefinition?): ServiceDefinition {
-            return when (existingDef) {
-                // When there is no existing definition, we can use the new definition as is
-                null -> newDef
+            return when {
+                // Nothing replaced: the new definition as is
+                existingDef == null -> newDef
 
-                else -> when (existingDef.injectionType) {
-                    // When the existing definition is a prototype,
-                    InjectionType.Prototype ->
-                        // Then we need to upgrade the new definition to a prototype as well
-                        newDef.withType(InjectionType.Prototype)
+                // A static singleton replaced: the new definition as is
+                existingDef.type == ServiceType.Singleton && existingDef.kind == ServiceKind.Static -> newDef
 
-                    // When the existing definition is a dynamic
-                    InjectionType.Dynamic ->
-                        // Then the type will stay dynamic
-                        newDef.withType(InjectionType.Dynamic)
-
-                    // When the existing definition is a singleton
-                    InjectionType.Singleton ->
-                        // Then we can use it as is
-                        newDef
-                }
+                // A prototype or anything dynamic replaced: it keeps what it was
+                else -> newDef.withScope(type = existingDef.type, kind = existingDef.kind)
             }
         }
     }
@@ -515,6 +507,23 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         addDynamic(cls as KClass<Any>, producer as ServiceProducer<Any>)
     }
 
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic Prototype Services
+    // //
+
+    /**
+     * DSL entry point for registering dynamic prototype services.
+     *
+     * Created like a prototype, on every injection; bound to the kontainer like a dynamic, so a singleton that
+     * injects one becomes [ServiceKind.SemiDynamic]. Cannot be overridden at [KontainerBlueprint.create].
+     * A plain [prototype] already makes its users per kontainer whenever its producer reaches something dynamic;
+     * a dynamic prototype does so also when its producer reaches nothing dynamic, and is named as the cause.
+     */
+    val dynamicPrototype = ServiceBuilder { cls, producer ->
+        @Suppress("UNCHECKED_CAST")
+        addDynamicPrototype(cls as KClass<Any>, producer as ServiceProducer<Any>)
+    }
+
     init {
         builder(this)
 
@@ -550,27 +559,27 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     }
 
     /**
-     * Performs injection type upgrade.
-     *
-     * See [injectionTypeUpgrade] and [InjectionTypeUpgrade].
+     * Applies the [RedefinitionUpgrade].
      */
-    private fun ServiceDefinition.withTypeUpgrade() = injectionTypeUpgrade.adjust(this)
+    private fun ServiceDefinition.withRedefinitionUpgrade() = redefinitionUpgrade.adjust(this)
 
     /**
      * Add a service with the given parameters
      */
     private fun <SRV : Any, IMPL : SRV> add(
         serviceCls: KClass<SRV>,
-        type: InjectionType,
+        type: ServiceType,
+        kind: ServiceKind,
         producer: ServiceProducer<IMPL>,
     ): KontainerBuilder = apply {
 
         val service = ServiceDefinition(
             serviceCls = serviceCls,
-            injectionType = type,
+            type = type,
+            kind = kind,
             producer = producer,
             overwrites = definitions[serviceCls]
-        ).withTypeUpgrade()
+        ).withRedefinitionUpgrade()
 
         definitions[service.serviceCls] = service
     }
@@ -582,7 +591,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         serviceCls: KClass<SRV>,
         producer: ServiceProducer<out IMPL>,
     ): KontainerBuilder {
-        return add(serviceCls, InjectionType.Singleton, producer)
+        return add(serviceCls, ServiceType.Singleton, ServiceKind.Static, producer)
     }
 
     /**
@@ -592,7 +601,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         srv: KClass<SRV>,
         producer: ServiceProducer<IMPL>,
     ): KontainerBuilder {
-        return add(srv, InjectionType.Prototype, producer)
+        return add(srv, ServiceType.Prototype, ServiceKind.Static, producer)
     }
 
     /**
@@ -602,7 +611,17 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         srv: KClass<SRV>,
         producer: ServiceProducer<IMPL>,
     ): KontainerBuilder {
-        return add(srv, InjectionType.Dynamic, producer)
+        return add(srv, ServiceType.Singleton, ServiceKind.Dynamic, producer)
+    }
+
+    /**
+     * Adds a dynamic prototype service definition
+     */
+    private fun <SRV : Any, IMPL : SRV> addDynamicPrototype(
+        srv: KClass<SRV>,
+        producer: ServiceProducer<IMPL>,
+    ): KontainerBuilder {
+        return add(srv, ServiceType.Prototype, ServiceKind.Dynamic, producer)
     }
 
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -9,10 +9,12 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceAmbiguous
 import io.peekandpoke.ultra.kontainer.ServiceNotFound
-import io.peekandpoke.ultra.kontainer.ServiceProvider.Type
+import io.peekandpoke.ultra.kontainer.e2e.Reported
+import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 import java.util.concurrent.atomic.AtomicInteger
@@ -22,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class DynamicsAtCreateCharacterizationSpec : StringSpec({
 
-    "An override replaces the dynamic: reported as DynamicOverride, the default producer never runs" {
+    "An override replaces the dynamic: reported as an overridden dynamic singleton, the default producer never runs" {
 
         open class Dyn(val value: Int) : Counted()
         class Holder(val dyn: Dyn) : Counted()
@@ -39,8 +41,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         val subject = blueprint.create { with { given } }
 
         assertSoftly {
-            subject.typeOf(Dyn::class) shouldBe Type.DynamicOverride
-            subject.typeOf(Holder::class) shouldBe Type.SemiDynamic
+            subject.reportedOf(Dyn::class) shouldBe Reported.OverriddenDynamicSingleton
+            subject.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
 
             subject.get(Dyn::class) shouldBeSameInstanceAs given
             subject.get(Holder::class).dyn shouldBeSameInstanceAs given
@@ -49,6 +51,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00333.
     "CURRENT BEHAVIOUR: the override lambda runs at create, before anything is requested, once per kontainer" {
 
         class Dyn : Counted()
@@ -95,7 +98,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             one.get(Dyn::class) shouldNotBeSameInstanceAs two.get(Dyn::class)
             Births.of(Dyn::class) shouldBe 2
 
-            one.typeOf(Dyn::class) shouldBe Type.Dynamic
+            one.reportedOf(Dyn::class) shouldBe Reported.DynamicSingleton
         }
     }
 
@@ -120,8 +123,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             two.get(Holder::class).dyn.value shouldBe 2
             three.get(Holder::class).dyn.value shouldBe 0
 
-            one.typeOf(Dyn::class) shouldBe Type.DynamicOverride
-            three.typeOf(Dyn::class) shouldBe Type.Dynamic
+            one.reportedOf(Dyn::class) shouldBe Reported.OverriddenDynamicSingleton
+            three.reportedOf(Dyn::class) shouldBe Reported.DynamicSingleton
 
             Births.of(Holder::class) shouldBe 3
         }
@@ -140,7 +143,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
 
         assertSoftly {
             subject.get(Dyn::class)::class shouldBe Sub::class
-            subject.typeOf(Dyn::class) shouldBe Type.DynamicOverride
+            subject.reportedOf(Dyn::class) shouldBe Reported.OverriddenDynamicSingleton
         }
     }
 
@@ -174,7 +177,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             blueprint.create { with { Proto() } }
         }
 
-        error.message!! shouldStartWith "Unexpected dynamics were provided: "
+        error.message shouldBe "Unexpected dynamics were provided: ${Proto::class.getName()}"
     }
 
     "An override for a SemiDynamic is refused with KontainerInconsistent" {
@@ -274,12 +277,13 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
 
         assertSoftly {
             runs.get() shouldBe 2
-            clone.typeOf(Dyn::class) shouldBe Type.DynamicOverride
+            clone.reportedOf(Dyn::class) shouldBe Reported.OverriddenDynamicSingleton
             clone.get(Dyn::class) shouldNotBeSameInstanceAs original.get(Dyn::class)
             clone.get(Holder::class) shouldNotBeSameInstanceAs original.get(Holder::class)
         }
     }
 
+    // Pinned as it is; the fix is ticket ULTRA-00332.
     "CURRENT BEHAVIOUR: cloning with an override for a non-dynamic skips the dynamics check and throws ServiceNotFound" {
 
         class Single
@@ -293,5 +297,24 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
 
         error.message shouldContain "was not found"
+    }
+
+    // Pinned as it is; the fix is ticket ULTRA-00336.
+    "CURRENT BEHAVIOUR: an override for the Kontainer itself is accepted, and services injecting it get the foreign one" {
+
+        class UsesKontainer(val kontainer: Kontainer)
+
+        val blueprint = kontainer {
+            singleton(UsesKontainer::class)
+        }
+
+        val foreign = blueprint.create()
+        val subject = blueprint.create { with<Kontainer> { foreign } }
+
+        assertSoftly {
+            subject.get(Kontainer::class) shouldBeSameInstanceAs foreign
+            subject.get(UsesKontainer::class).kontainer shouldBeSameInstanceAs foreign
+            subject.reportedOf(Kontainer::class) shouldBe Reported.OverriddenDynamicSingleton
+        }
     }
 })

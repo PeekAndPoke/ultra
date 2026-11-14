@@ -13,32 +13,38 @@ interface ServiceProvider {
     interface Provider {
 
         companion object {
-            fun forInstance(type: Type, definition: ServiceDefinition, instance: Any): Provider {
-                return ForInstance(type = type, definition = definition, instance = instance)
+            /** An instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton */
+            fun forOverride(definition: ServiceDefinition, instance: Any): Provider {
+                return OverrideProvider(definition = definition, instance = instance)
             }
 
-            fun forGlobalSingleton(type: Type, definition: ServiceDefinition): Provider {
-                return ForGlobalSingleton(type = type, definition = definition)
+            /** A static singleton: one provider, so one instance, for all kontainers of the blueprint */
+            fun forGlobalSingleton(definition: ServiceDefinition): Provider {
+                return ForGlobalSingleton(definition = definition)
             }
 
-            fun forDynamicSingleton(type: Type, definition: ServiceDefinition): Provider {
-                return ForDynamicSingleton(type = type, definition = definition)
+            /** A dynamic or semi dynamic singleton: one provider, so one instance, per kontainer */
+            fun forDynamicSingleton(kind: ServiceKind, definition: ServiceDefinition): Provider {
+                require(kind != ServiceKind.Static) {
+                    "A per-kontainer singleton is Dynamic or SemiDynamic, not Static"
+                }
+
+                return ForDynamicSingleton(kind = kind, definition = definition)
             }
         }
 
-        private class ForInstance(type: Type, definition: ServiceDefinition, instance: Any) : Provider {
+        private class OverrideProvider(definition: ServiceDefinition, instance: Any) : Provider {
 
-            private val provider =
-                ServiceProvider.ForInstance(type = type, definition = definition, instance = instance)
+            private val provider = ForOverride(definition = definition, instance = instance)
 
-            override fun provide(): ServiceProvider.ForInstance {
+            override fun provide(): ForOverride {
                 return provider
             }
         }
 
-        private class ForGlobalSingleton(type: Type, definition: ServiceDefinition) : Provider {
+        private class ForGlobalSingleton(definition: ServiceDefinition) : Provider {
 
-            private val provider = ForSingleton(type = type, definition = definition)
+            private val provider = ForSingleton(kind = ServiceKind.Static, definition = definition)
 
             override fun provide(): ForSingleton {
                 return provider
@@ -46,38 +52,16 @@ interface ServiceProvider {
         }
 
         private class ForDynamicSingleton(
-            private val type: Type,
+            private val kind: ServiceKind,
             private val definition: ServiceDefinition,
         ) : Provider {
 
             override fun provide(): ForSingleton {
-                return ForSingleton(type = type, definition = definition)
+                return ForSingleton(kind = kind, definition = definition)
             }
         }
 
         fun provide(): ServiceProvider
-    }
-
-    /**
-     * Ways in which services are provided.
-     *
-     * This is mostly used for debugging and testing.
-     */
-    enum class Type {
-        /** Pure singleton services are shared across multiple Kontainer instances */
-        Singleton,
-
-        /** Prototype service are instantiate for each injection */
-        Prototype,
-
-        /** Semi Dynamic singletons are not defined as dynamic but inject dynamic services */
-        SemiDynamic,
-
-        /** Dynamic singletons are explicitly defined as dynamic and live only within a single Kontainer instance */
-        Dynamic,
-
-        /** Like Dynamic singletons, but these are overriding dynamics while creating a Kontainer from a Blueprint */
-        DynamicOverride,
     }
 
     /**
@@ -92,9 +76,19 @@ interface ServiceProvider {
     )
 
     /**
-     * The type of the service that is created.
+     * What the service is: singleton or prototype.
      */
-    val type: Type
+    val type: ServiceType
+
+    /**
+     * What the service is bound to, as derived by the blueprint.
+     */
+    val kind: ServiceKind
+
+    /**
+     * True when the instance was handed in at [KontainerBlueprint.create], replacing a dynamic singleton.
+     */
+    val overridden: Boolean
 
     /**
      * A list of all instances created by the provider.
@@ -120,13 +114,21 @@ interface ServiceProvider {
     fun validate(kontainer: Kontainer): List<String>
 
     /**
-     * Provides an already existing object as a service
+     * Provides an instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton
      */
-    data class ForInstance(
-        override val type: Type,
+    data class ForOverride(
         override val definition: ServiceDefinition,
         private val instance: Any,
     ) : ServiceProvider {
+
+        /** Always a singleton */
+        override val type: ServiceType = ServiceType.Singleton
+
+        /** Always dynamic: only dynamic singletons can be overridden */
+        override val kind: ServiceKind = ServiceKind.Dynamic
+
+        /** Always overridden */
+        override val overridden: Boolean = true
 
         /**
          * The list of created instance always holds the [instance]
@@ -150,9 +152,15 @@ interface ServiceProvider {
      * Provides a global singleton service
      */
     data class ForSingleton(
-        override val type: Type,
+        override val kind: ServiceKind,
         override val definition: ServiceDefinition,
     ) : ServiceProvider {
+
+        /** Always a singleton */
+        override val type: ServiceType = ServiceType.Singleton
+
+        /** Never handed in at create */
+        override val overridden: Boolean = false
 
         /**
          * True when the service instance was created
@@ -206,20 +214,26 @@ interface ServiceProvider {
      * Each call to [provide] will create a new instance.
      */
     data class ForPrototype(
+        override val kind: ServiceKind,
         override val definition: ServiceDefinition,
     ) : ServiceProvider {
 
-        class Provider(private val definition: ServiceDefinition) : ServiceProvider.Provider {
+        /** One provider per kontainer, whatever the [kind] */
+        class Provider(
+            private val kind: ServiceKind,
+            private val definition: ServiceDefinition,
+        ) : ServiceProvider.Provider {
 
             override fun provide(): ForPrototype {
-                return ForPrototype(definition = definition)
+                return ForPrototype(kind = kind, definition = definition)
             }
         }
 
-        /**
-         * The type is always prototype
-         */
-        override val type: Type = Type.Prototype
+        /** Always a prototype */
+        override val type: ServiceType = ServiceType.Prototype
+
+        /** Never handed in at create */
+        override val overridden: Boolean = false
 
         /**
          * True when the service instance was created

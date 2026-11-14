@@ -5,6 +5,7 @@ import io.peekandpoke.funktor.insights.InsightsCollector
 import io.peekandpoke.funktor.insights.InsightsCollectorData
 import io.peekandpoke.funktor.insights.InsightsGraphs
 import io.peekandpoke.funktor.insights.api.InsightsKontainerGraph
+import io.peekandpoke.funktor.insights.wireProviderType
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.domain.DebugInfo
@@ -78,8 +79,11 @@ class KontainerCollector(
         data class Service(
             /** The FQN the service is registered under: the join key into [InsightsKontainerGraph.services]. */
             val cls: String,
-            /** As provided in THIS kontainer, so `DynamicOverride` when the instance was handed in at creation. */
-            val type: ServiceProvider.Type,
+            /**
+             * As provided in THIS kontainer, so `DynamicOverride` when the instance was handed in at creation.
+             * One of the five wire names of [wireProviderType], unchanged since before the type and kind split.
+             */
+            val type: String,
             val instances: List<Instance>,
         )
 
@@ -106,7 +110,7 @@ class KontainerCollector(
                     .map { (cls, provider) ->
                         Service(
                             cls = DebugInfo.ClassInfo.of(cls).fqn,
-                            type = provider.type,
+                            type = wireProviderType(provider.type, provider.kind, provider.overridden),
                             instances = provider.instances.map {
                                 Instance(cls = DebugInfo.ClassInfo.of(it.instance::class).fqn, createdAt = it.createdAt)
                             },

@@ -4,11 +4,10 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
-import io.peekandpoke.ultra.kontainer.ServiceProvider
 import io.peekandpoke.ultra.kontainer.kontainer
 
 /**
- * See [KontainerBlueprint.semiDynamicDefinitions]
+ * See [KontainerBlueprint], which derives the kind
  */
 class InjectionTypeDowngradePreventionSpec : StringSpec() {
 
@@ -25,8 +24,8 @@ class InjectionTypeDowngradePreventionSpec : StringSpec() {
             }.create()
 
             assertSoftly {
-                subject.getProvider(Prototype::class).type shouldBe ServiceProvider.Type.Prototype
-                subject.getProvider(Dynamic::class).type shouldBe ServiceProvider.Type.Dynamic
+                subject.getProvider(Prototype::class).reported shouldBe Reported.SemiDynamicPrototype
+                subject.getProvider(Dynamic::class).reported shouldBe Reported.DynamicSingleton
 
                 subject.get(Prototype::class).dynamic::class shouldBe Dynamic::class
             }
