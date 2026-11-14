@@ -42,7 +42,7 @@ class KontainerBlueprint internal constructor(
     /**
      * Dynamic singletons, the built-in services excepted: the only services that can be overridden at [create]
      *
-     * The built-ins stay dynamic sources of promotion, see [dynamicClasses].
+     * `Kontainer` and `InjectionContext` stay dynamic sources of promotion, see [dynamicClasses].
      */
     private val overridableClasses: Set<KClass<*>> = definitions
         .filterValues { it.type == ServiceType.Singleton && it.kind == ServiceKind.Dynamic }

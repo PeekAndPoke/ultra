@@ -19,7 +19,7 @@ class ServiceProviderFactory(
             dynamics.overrides.map { (cls, create) ->
                 val baseType = blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls)
 
-                // The override runs at the first request, so until then its definition names the class given to with
+                // The override runs lazily; until it has returned a value, its definition names the class given to with
                 baseType to ServiceProvider.Provider.forOverride(
                     definition = ServiceDefinition(
                         serviceCls = cls,

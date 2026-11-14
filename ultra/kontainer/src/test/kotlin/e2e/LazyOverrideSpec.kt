@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.kontainer.e2e
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.peekandpoke.ultra.kontainer.kontainer
@@ -55,6 +56,7 @@ class LazyOverrideSpec : StringSpec({
         assertSoftly {
             stateOfB shouldBe Thread.State.BLOCKED
             runs.get() shouldBe 1
+            first.get().shouldNotBeNull()
             first.get() shouldBeSameInstanceAs second.get()
         }
     }

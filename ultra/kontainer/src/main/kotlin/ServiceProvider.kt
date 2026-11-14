@@ -145,12 +145,12 @@ interface ServiceProvider {
         override val overridden: Boolean = true
 
         /**
-         * Before the first request: names the class given to `with`. After: the class of the instance.
+         * Until the override has returned a value: names the class given to `with`. After: the class of the instance.
          */
         override val definition: ServiceDefinition get() = created ?: pending
 
         /**
-         * Empty until the first request, then the one instance
+         * Empty until the override has returned a value, then the one instance
          */
         override val instances = mutableListOf<CreatedInstance>()
 
