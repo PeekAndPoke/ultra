@@ -49,7 +49,22 @@ should stop being dynamic is a separate decision in ULTRA-00158.
   `DependencyLookup.getAllDependents` walks through prototypes; prototypes are filtered out of the set). One of the
   first cases the characterization specs pin.
 
-Still to re-confirm before the split is built: the final identifiers of the two axes.
+**Decided for step 2 (maintainer, 2026-11-14):**
+
+- **Names:** `ServiceType` (Singleton, Prototype) and `ServiceKind` (Static, Dynamic, SemiDynamic).
+- **Cleanest variant, backward compatibility is not an issue:** `InjectionType` and `ServiceProvider.Type` with their
+  mixed names go; a service carries `ServiceType`, `ServiceKind` and the override flag. Tools and debug output show
+  those. The characterization specs that pin the old enum entries and the listing order change on purpose, each such
+  change listed in the ledger.
+- **Overrides at `create { with { } }`: only for dynamic singletons, as today.** No override for a prototype of any
+  kind, `dynamicPrototype` included.
+- **A prototype that injects something dynamic is reported as Prototype with kind SemiDynamic.**
+- **The eight CURRENT BEHAVIOUR findings stay unchanged through the split;** each is fixed in its own ticket:
+  ULTRA-00327 (validation once), ULTRA-00328 (cycle through List), ULTRA-00329 (Lookup bound to the first
+  kontainer), ULTRA-00330 (extend skips the upgrade), ULTRA-00331 (prototype redefined as dynamic), ULTRA-00332
+  (clone skips the dynamics check), ULTRA-00333 (eager overrides), ULTRA-00334 (decorator self-cycle).
+- The guard that keeps prototypes out of the SemiDynamic singletons is made explicit (today only the order of the
+  provider map does it; mutant M1).
 
 ## The work
 
@@ -150,3 +165,4 @@ Pinned as they are, test names start with "CURRENT BEHAVIOUR"; whether any chang
 
 - 2026-11-13: created on the maintainer's word, from the log scoping discussion (ULTRA-00149 L11, ULTRA-00158).
 - 2026-11-14: the model decided with the maintainer (two types, three kinds, override as a flag, `dynamicPrototype()`).
+- 2026-11-14: step 2 decisions (names, cleanest variant, overrides, reporting); ULTRA-00327 to ULTRA-00334 created for the pinned behaviours.
