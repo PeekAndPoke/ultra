@@ -23,12 +23,13 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
 
     init {
         "expireAfterWrite: a pending read does not spare an expired entry" {
-            val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
+            val cache = fastCache<String, String>(loopDelay = 500.milliseconds) {}
             val behaviour = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 1.milliseconds)
 
             cache.put("a", "1")
-            // let the loop drain that put: a pending put spares the entry
-            delay(250.milliseconds)
+            // Let the loop drain that put: a pending put spares the entry. A 500 ms loop period puts
+            // the read or put below about 250 ms away from any drain.
+            delay(700.milliseconds)
             behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
 
             // the entry is now well past its ttl
@@ -43,12 +44,13 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
         }
 
         "expireAfterWrite: a pending put spares the entry it just wrote" {
-            val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
+            val cache = fastCache<String, String>(loopDelay = 500.milliseconds) {}
             val behaviour = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 1.milliseconds)
 
             cache.put("a", "1")
-            // let the loop drain that put: a pending put spares the entry
-            delay(250.milliseconds)
+            // Let the loop drain that put: a pending put spares the entry. A 500 ms loop period puts
+            // the read or put below about 250 ms away from any drain.
+            delay(700.milliseconds)
             behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
             delay(50.milliseconds)
 
@@ -61,15 +63,16 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
         }
 
         "refreshAfterWrite: a pending read does not spare a hard-expired entry" {
-            val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
+            val cache = fastCache<String, String>(loopDelay = 500.milliseconds) {}
             val behaviour = FastCache.RefreshAfterWriteBehaviour<String, String>(
                 refreshAfter = 5.milliseconds,
                 hardTtl = 10.milliseconds,
             ) { error("a hard-expired entry must not be refreshed") }
 
             cache.put("a", "1")
-            // let the loop drain that put: a pending put spares the entry
-            delay(250.milliseconds)
+            // Let the loop drain that put: a pending put spares the entry. A 500 ms loop period puts
+            // the read or put below about 250 ms away from any drain.
+            delay(700.milliseconds)
             behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
 
             // well past the hard ttl - the hard branch wins over the refresh branch
@@ -82,15 +85,16 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
         }
 
         "refreshAfterWrite: a pending put spares the entry from the hard TTL" {
-            val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
+            val cache = fastCache<String, String>(loopDelay = 500.milliseconds) {}
             val behaviour = FastCache.RefreshAfterWriteBehaviour<String, String>(
                 refreshAfter = 5.milliseconds,
                 hardTtl = 10.milliseconds,
             ) { error("a hard-expired entry must not be refreshed") }
 
             cache.put("a", "1")
-            // let the loop drain that put: a pending put spares the entry
-            delay(250.milliseconds)
+            // Let the loop drain that put: a pending put spares the entry. A 500 ms loop period puts
+            // the read or put below about 250 ms away from any drain.
+            delay(700.milliseconds)
             behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
             delay(50.milliseconds)
 
