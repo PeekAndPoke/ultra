@@ -268,6 +268,20 @@ class ValidationCharacterizationSpec : StringSpec({
         }
     }
 
+    "A cycle through a List with two candidates is a validation error too" {
+
+        val error = shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(ListOfMany::class)
+                singleton(ManyCyclic::class)
+                singleton(ManyPlain::class)
+            }.create()
+        }
+
+        error.message shouldContain "Circular dependency detected: " +
+                "${ListOfMany::class.getName()} -> ${ManyCyclic::class.getName()} -> ${ListOfMany::class.getName()}"
+    }
+
     "A cycle through Lazy<List> is not reported and works, as the list is lazy" {
 
         val subject = kontainer {
@@ -464,6 +478,11 @@ class LookupCycleTwo(val one: LookupCycleOne)
 
 class ListCycleOne(val all: List<ListCycleTwo>)
 class ListCycleTwo(val one: ListCycleOne)
+
+abstract class ManyBase
+class ListOfMany(val all: List<ManyBase>)
+class ManyCyclic(val owner: ListOfMany) : ManyBase()
+class ManyPlain : ManyBase()
 
 class LazyListCycleOne(val all: Lazy<List<LazyListCycleTwo>>)
 class LazyListCycleTwo(val one: LazyListCycleOne)
