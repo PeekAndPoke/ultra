@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * Creates a [FastCache] using the DSL-style [configure] block.
  *
  * @param scope       the [CoroutineScope] for the internal processing loop
- * @param loopDelay   the delay between processing-loop iterations
+ * @param loopDelay   the delay between processing-loop iterations; below 1 ms it runs as 1 ms
  * @param configure   builder DSL to add behaviours such as TTL, max-entries or memory limits
  * @return a configured [FastCache] instance
  */
@@ -58,7 +58,12 @@ class FastCache<K, V>(
     val scope: CoroutineScope = Cache.defaultCoroutineScope,
     /** The list of behaviours applied during each processing-loop iteration. */
     val behaviours: List<Behaviour<K, V>>,
-    /** The delay between processing-loop iterations. */
+    /**
+     * The delay between processing-loop iterations, as given.
+     *
+     * Below 1 ms, zero and negative included, the loop runs with 1 ms: without a pause it would
+     * never suspend and hold a thread for good.
+     */
     val loopDelay: Duration = defaultLoopDelay,
 ) : Cache<K, V> {
 
@@ -76,7 +81,7 @@ class FastCache<K, V>(
     ) {
         private val behaviours = mutableListOf<Behaviour<K, V>>()
 
-        /** Sets the loop delay. */
+        /** Sets the loop delay; below 1 ms it runs as 1 ms - see [FastCache.loopDelay]. */
         fun loopDelay(delay: Duration) = apply { loopDelay = delay }
 
         /** Adds a behaviour to the cache. */
@@ -870,7 +875,7 @@ class FastCache<K, V>(
         //   Capture NOTHING from the Cache object inside scope.launch
         //   Otherwise the GC will not be able to collect the FastCache instance.
         val ref = WeakReference(this)
-        val delay = loopDelay
+        val delay = loopDelay.coerceAtLeast(1.milliseconds)
 
         // Run the processing loop
         scope.launch {
