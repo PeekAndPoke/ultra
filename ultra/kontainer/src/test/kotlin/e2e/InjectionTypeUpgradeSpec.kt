@@ -95,7 +95,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             }
         }
 
-        "A Prototype service must not be downgraded to a dynamic when it is overridden" {
+        "A Prototype service redefined as dynamic stays a Prototype and becomes Dynamic (ULTRA-00331)" {
 
             val blueprint = kontainer {
                 // First we define the service as a prototype
@@ -107,7 +107,7 @@ class InjectionTypeUpgradeSpec : StringSpec() {
             val subject = blueprint.create()
 
             assertSoftly {
-                subject.getProvider(Service::class).reported shouldBe Reported.StaticPrototype
+                subject.getProvider(Service::class).reported shouldBe Reported.DynamicPrototype
             }
         }
     }

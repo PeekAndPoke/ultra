@@ -105,8 +105,8 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00331.
-    "CURRENT BEHAVIOUR: prototype redefined as dynamic stays Prototype: no promotion of users, no override at create" {
+    // ULTRA-00331: the first definition fixes the type, a dynamic one adds the binding.
+    "Prototype redefined as dynamic: Prototype.Dynamic, its users are promoted, an override at create is refused" {
 
         class Target : Counted()
         class User(val target: Target) : Counted()
@@ -121,13 +121,15 @@ class RedefinitionCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         assertSoftly {
-            one.reportedOf(Target::class) shouldBe Reported.StaticPrototype
-            one.reportedOf(User::class) shouldBe Reported.StaticSingleton
-            one.get(User::class) shouldBeSameInstanceAs two.get(User::class)
+            one.reportedOf(Target::class) shouldBe Reported.DynamicPrototype
+            one.get(Target::class) shouldNotBeSameInstanceAs one.get(Target::class)
+            one.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
+            one.get(User::class) shouldNotBeSameInstanceAs two.get(User::class)
 
             shouldThrow<KontainerInconsistent> {
                 blueprint.create { with { Target() } }
-            }.message shouldBe "Unexpected dynamics were provided: ${Target::class.getName()}"
+            }.message shouldBe "Unexpected dynamics were provided: ${Target::class.getName()}" +
+                    " (only dynamic singletons can be overridden, not the dynamic prototype ${Target::class.getName()})"
         }
     }
 
@@ -146,7 +148,7 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }
     }
 
-    "The order of redefinitions decides: singleton, prototype, dynamic ends as Prototype" {
+    "The order of redefinitions decides: singleton, prototype, dynamic ends as Prototype.Dynamic (ULTRA-00331)" {
 
         class Target
 
@@ -156,7 +158,7 @@ class RedefinitionCharacterizationSpec : StringSpec({
             dynamic(Target::class)
         }.create()
 
-        subject.reportedOf(Target::class) shouldBe Reported.StaticPrototype
+        subject.reportedOf(Target::class) shouldBe Reported.DynamicPrototype
     }
 
     "The order of redefinitions decides: singleton, dynamic, prototype ends as Dynamic" {
@@ -231,8 +233,8 @@ class RedefinitionCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00330.
-    "CURRENT BEHAVIOUR: extend does not apply the type upgrade, a prototype redefined as singleton becomes Singleton" {
+    // ULTRA-00330: extend applies the redefinition rule.
+    "Extend applies the redefinition rule: a prototype redefined as singleton stays Prototype" {
 
         class Target
 
@@ -246,12 +248,12 @@ class RedefinitionCharacterizationSpec : StringSpec({
 
         assertSoftly {
             base.create().reportedOf(Target::class) shouldBe Reported.StaticPrototype
-            extended.create().reportedOf(Target::class) shouldBe Reported.StaticSingleton
+            extended.create().reportedOf(Target::class) shouldBe Reported.StaticPrototype
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00330.
-    "CURRENT BEHAVIOUR: extend does not apply the type upgrade, a dynamic redefined as singleton ends the promotion" {
+    // ULTRA-00330: extend applies the redefinition rule.
+    "Extend applies the redefinition rule: a dynamic redefined as singleton stays Dynamic, the promotion stays" {
 
         class Target
         class User(val target: Target)
@@ -271,10 +273,36 @@ class RedefinitionCharacterizationSpec : StringSpec({
         assertSoftly {
             base.create().reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
 
-            one.reportedOf(Target::class) shouldBe Reported.StaticSingleton
-            one.reportedOf(User::class) shouldBe Reported.StaticSingleton
-            one.get(User::class) shouldBeSameInstanceAs two.get(User::class)
+            one.reportedOf(Target::class) shouldBe Reported.DynamicSingleton
+            one.reportedOf(User::class) shouldBe Reported.SemiDynamicSingleton
+            one.get(User::class) shouldNotBeSameInstanceAs two.get(User::class)
         }
+    }
+
+    "Extend applies the redefinition rule like one builder: prototype in the base, dynamic in the extension" {
+
+        class Target
+
+        val extended = kontainer {
+            prototype(Target::class)
+        }.extend {
+            dynamic(Target::class)
+        }
+
+        extended.create().reportedOf(Target::class) shouldBe Reported.DynamicPrototype
+    }
+
+    "Extend applies the redefinition rule like one builder: a static singleton in the base is replaced as is" {
+
+        class Target
+
+        val extended = kontainer {
+            singleton(Target::class)
+        }.extend {
+            prototype(Target::class)
+        }
+
+        extended.create().reportedOf(Target::class) shouldBe Reported.StaticPrototype
     }
 
     "Extend with a dynamic promotes singletons of the base blueprint" {

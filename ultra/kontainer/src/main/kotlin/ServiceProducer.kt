@@ -37,6 +37,14 @@ class ServiceProducer<T : Any> internal constructor(
             }
 
         /**
+         * The producer of an override that has not run yet: it names the class given to `with` and is never called.
+         */
+        internal fun forPendingOverride(cls: KClass<out Any>): ServiceProducer<Any> =
+            ServiceProducer(listOf(), cls) { _, _ ->
+                error("An override is created by its provider, not by its producer")
+            }
+
+        /**
          * Creates a producer for an already existing service instance.
          */
         fun <T : Any> forInstance(instance: T): ServiceProducer<T> =

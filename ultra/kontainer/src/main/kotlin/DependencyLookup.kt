@@ -4,9 +4,11 @@ import kotlin.reflect.KClass
 
 /**
  * A lookup for mapping service class to service classes that they request for injection.
+ *
+ * Built only from what each [ParameterProvider] announces: the injected service types and the provision type.
  */
 class DependencyLookup internal constructor(
-    superTypeLookUp: TypeLookup.ForSuperTypes,
+    blueprint: KontainerBlueprint,
     definitions: Map<KClass<*>, ServiceDefinition>
 ) {
 
@@ -19,10 +21,11 @@ class DependencyLookup internal constructor(
     private val dependencies: Map<KClass<*>, Set<KClass<*>>>
 
     /**
-     * Forward dependency map of non-lazy dependencies (for cycle detection).
+     * Forward dependency map of the Direct injections (for cycle detection).
      *
      * Map Key:   A service class
-     * Map Value: The set of service classes it directly depends on (excluding lazy/list/lookup)
+     * Map Value: The set of service classes it directly depends on, without Lazy injections and without an ambiguous
+     *            single-service injection, which the parameter check reports
      */
     private val directDependencies: Map<KClass<*>, Set<KClass<*>>>
 
@@ -37,25 +40,19 @@ class DependencyLookup internal constructor(
 
             def.producer.params.forEach { parameter ->
 
-                val type = parameter.type
-                val paramCls = type.classifier as KClass<*>
+                // The candidates of each announced type; a List or Lookup announces candidates already
+                val candidatesPerType = parameter.getInjectedServiceTypes(blueprint)
+                    .map { blueprint.superTypeLookup.getAllCandidatesFor(it) }
 
-                val isLazy = type.isLazyListType() || type.isLazyServiceType()
+                val candidates = candidatesPerType.flatten().toSet()
 
-                val candidates = when {
-                    type.isLazyListType() -> superTypeLookUp.getAllCandidatesFor(type.getInnerInnerClass())
-                    type.isListType() || type.isLazyServiceType() || type.isLookupType() ->
-                        superTypeLookUp.getAllCandidatesFor(type.getInnerClass())
-                    paramCls.isServiceType() -> superTypeLookUp.getAllCandidatesFor(paramCls)
-                    else -> setOf()
-                }
+                candidates.forEach { tmp.add(it, def.serviceCls) }
 
-                candidates.forEach { superType ->
-                    tmp.add(superType, def.serviceCls)
-                    // Only track non-lazy, non-list, non-lookup deps for cycle detection
-                    if (!isLazy && !type.isListType() && !type.isLookupType()) {
-                        forwardTmp.add(def.serviceCls, superType)
-                    }
+                // One announced type with several candidates: an ambiguous single-service injection, not a cycle
+                val ambiguous = candidatesPerType.size == 1 && candidatesPerType.single().size > 1
+
+                if (parameter.getProvisionType() == ParameterProvider.ProvisionType.Direct && !ambiguous) {
+                    candidates.forEach { forwardTmp.add(def.serviceCls, it) }
                 }
             }
         }

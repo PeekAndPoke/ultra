@@ -14,8 +14,8 @@ interface ServiceProvider {
 
         companion object {
             /** An instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton */
-            fun forOverride(definition: ServiceDefinition, instance: Any): Provider {
-                return OverrideProvider(definition = definition, instance = instance)
+            fun forOverride(definition: ServiceDefinition, create: () -> Any): Provider {
+                return OverrideProvider(definition = definition, create = create)
             }
 
             /** A static singleton: one provider, so one instance, for all kontainers of the blueprint */
@@ -33,9 +33,9 @@ interface ServiceProvider {
             }
         }
 
-        private class OverrideProvider(definition: ServiceDefinition, instance: Any) : Provider {
+        private class OverrideProvider(definition: ServiceDefinition, create: () -> Any) : Provider {
 
-            private val provider = ForOverride(definition = definition, instance = instance)
+            private val provider = ForOverride(pending = definition, create = create)
 
             override fun provide(): ForOverride {
                 return provider
@@ -114,12 +114,26 @@ interface ServiceProvider {
     fun validate(kontainer: Kontainer): List<String>
 
     /**
-     * Provides an instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton
+     * Provides an instance handed in at [KontainerBlueprint.create], replacing a dynamic singleton.
+     *
+     * The override runs at the first request, again at the next one when it threw, until it has returned a value;
+     * then never again, and only its value is kept, not the lambda.
      */
-    data class ForOverride(
-        override val definition: ServiceDefinition,
-        private val instance: Any,
+    class ForOverride(
+        private val pending: ServiceDefinition,
+        create: () -> Any,
     ) : ServiceProvider {
+
+        /** The override, until it has returned a value */
+        @Volatile
+        private var create: (() -> Any)? = create
+
+        @Volatile
+        private var instance: Any? = null
+
+        /** The definition after the override ran, naming the class it created */
+        @Volatile
+        private var created: ServiceDefinition? = null
 
         /** Always a singleton */
         override val type: ServiceType = ServiceType.Singleton
@@ -131,16 +145,35 @@ interface ServiceProvider {
         override val overridden: Boolean = true
 
         /**
-         * The list of created instance always holds the [instance]
+         * Until the override has returned a value: names the class given to `with`. After: the class of the instance.
          */
-        override val instances = listOf(
-            CreatedInstance(instance, Instant.now())
-        )
+        override val definition: ServiceDefinition get() = created ?: pending
 
         /**
-         * Simply returns the [instance]
+         * Empty until the override has returned a value, then the one instance
          */
-        override fun provide(kontainer: Kontainer, context: InjectionContext) = instance
+        override val instances = mutableListOf<CreatedInstance>()
+
+        /**
+         * Runs the override at the first request and keeps its value
+         */
+        override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
+            return instance ?: synchronized(this) {
+                instance ?: create!!().also { value ->
+                    created = ServiceDefinition(
+                        serviceCls = pending.serviceCls,
+                        type = pending.type,
+                        kind = pending.kind,
+                        producer = ServiceProducer.forInstance(value),
+                        overwrites = pending.overwrites,
+                        codeLocation = pending.codeLocation,
+                    )
+                    instances.add(CreatedInstance(value, Instant.now()))
+                    instance = value
+                    create = null
+                }
+            }
+        }
 
         /**
          * Always valid

@@ -164,27 +164,23 @@ interface ParameterProvider {
         /**
          * Validates if the service can be provided by the container
          */
-        override fun validate(kontainer: Kontainer): List<String> = when {
+        override fun validate(kontainer: Kontainer): List<String> = kontainer.getCandidates(cls).let {
 
-            isNullable -> listOf()
+            when {
+                // When there is exactly one candidate everything is fine
+                it.size == 1 -> listOf()
 
-            else -> kontainer.getCandidates(cls).let {
-
-                when {
-                    // When there is exactly one candidate everything is fine
-                    it.size == 1 -> listOf()
-
-                    // When there is no candidate then we cannot satisfy the dependency
-                    it.isEmpty() -> listOf(
-                        "Parameter '$name' misses a dependency to ${cls.getName()}"
-                    )
-
-                    // When there is more than one candidate we cannot distinctly satisfy the dependency
-                    else -> listOf(
-                        "Parameter '$name' is ambiguous. The following services collide: " +
-                                it.joinToString(", ") { c -> c.getName() }
-                    )
+                // When there is no candidate: fine for a nullable parameter, otherwise a missing dependency
+                it.isEmpty() -> when {
+                    isNullable -> listOf()
+                    else -> listOf("Parameter '$name' misses a dependency to ${cls.getName()}")
                 }
+
+                // When there is more than one candidate we cannot distinctly satisfy the dependency, nullable or not
+                else -> listOf(
+                    "Parameter '$name' is ambiguous. The following services collide: " +
+                            it.joinToString(", ") { c -> c.getName() }
+                )
             }
         }
     }
@@ -345,27 +341,23 @@ interface ParameterProvider {
         /**
          * Validates if the service can be provided by the container
          */
-        override fun validate(kontainer: Kontainer): List<String> = when {
+        override fun validate(kontainer: Kontainer): List<String> = kontainer.getCandidates(paramCls).let {
 
-            isNullable -> listOf()
+            when {
+                // When there is exactly one candidate everything is fine
+                it.size == 1 -> listOf()
 
-            else -> kontainer.getCandidates(paramCls).let {
-
-                when {
-                    // When there is exactly one candidate everything is fine
-                    it.size == 1 -> listOf()
-
-                    // When there is no candidate then we cannot satisfy the dependency
-                    it.isEmpty() -> listOf(
-                        "Parameter '$name' misses a lazy dependency to '${paramCls.getName()}'"
-                    )
-
-                    // When there is more than one candidate we cannot distinctly satisfy the dependency
-                    else -> listOf(
-                        "Parameter '$name' is ambiguous. The following services collide: " +
-                                it.joinToString(", ") { c -> c.getName() }
-                    )
+                // When there is no candidate: fine for a nullable parameter, otherwise a missing dependency
+                it.isEmpty() -> when {
+                    isNullable -> listOf()
+                    else -> listOf("Parameter '$name' misses a lazy dependency to '${paramCls.getName()}'")
                 }
+
+                // When there is more than one candidate we cannot distinctly satisfy the dependency, nullable or not
+                else -> listOf(
+                    "Parameter '$name' is ambiguous. The following services collide: " +
+                            it.joinToString(", ") { c -> c.getName() }
+                )
             }
         }
     }

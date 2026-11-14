@@ -62,6 +62,84 @@
   - `DebugInfo.ServiceDebugInfo.type` is a `ServiceType`, with new `kind`, `overridden` and `semiDynamicBecauseOf`;
     `DebugInfo.ServiceDefinitionInfo.injectionType` -> `type` and `kind`
   - `KontainerTools.dumpKontainer()` has a new `Kind` column; a semi dynamic service names what made it so
+- `ultra/kontainer`, behaviour change (no compile signal): the redefinition rule. The first definition fixes whether
+  a service is a singleton or a prototype; a plain static singleton can still be replaced by anything. If either
+  definition is dynamic, the service is dynamic. `prototype(X)` then `dynamic(X)` or `dynamicPrototype(X)` now gives
+  a dynamic prototype (was a static prototype), so singletons injecting `X` become one per kontainer. An override of
+  `X` at create is still refused; the message now names it as a dynamic prototype (ULTRA-00331).
+- `ultra/kontainer`, behaviour change (no compile signal): `KontainerBlueprint.extend` applies the redefinition rule
+  against the base blueprint. Silent. Eight of the 16 pairs change, base then extension (all 16 are pinned in
+  `ExtendRedefinitionCharacterizationSpec`):
+  - `dynamic` then `singleton`: stays a dynamic singleton, and its users stay one per kontainer (it became a global
+    singleton and its users global).
+  - `dynamic` then `prototype` or `dynamicPrototype`: one instance per kontainer (was one per injection), and an
+    override at create is now accepted where it was refused. For `dynamic` then `prototype`, a singleton injecting it
+    goes from global to one per kontainer.
+  - `prototype` then `singleton`: stays a prototype, one instance per injection (it became a global singleton).
+  - `prototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
+    `extended.create { with { X() } }` throws `KontainerInconsistent` where it was accepted.
+  - `dynamicPrototype` then `singleton`: stays a dynamic prototype, its users stay one per kontainer (it became a
+    global singleton).
+  - `dynamicPrototype` then `prototype`: stays a dynamic prototype, its users stay one per kontainer (it became a
+    static prototype and its users global).
+  - `dynamicPrototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
+    an override at create throws `KontainerInconsistent` where it was accepted (ULTRA-00330).
+- `ultra/kontainer`: `Kontainer`, `InjectionContext` and `KontainerBlueprint` cannot be registered. Every form of
+  `singleton`, `prototype`, `dynamic`, `dynamicPrototype` and `instance` is refused, in `kontainer { }`, a module and
+  `extend`: `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`, thrown at
+  the defining call. Before, the registration was accepted silently and the built-in still provided its value, though
+  the declared form could change its reported type and kind: `prototype(Kontainer::class)` made a singleton injecting
+  only `Kontainer` a global singleton that held the first request's kontainer (ULTRA-00336).
+- `ultra/kontainer`: the built-ins cannot be overridden at `create` or `clone`:
+  `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`. Before, overrides
+  of `Kontainer` and `InjectionContext` were accepted, and services injecting `Kontainer` got the foreign one
+  (ULTRA-00336).
+- `ultra/kontainer`: `Kontainer.clone { with { ... } }` runs the same checks as `create`. An override for a
+  non-dynamic throws `KontainerInconsistent("Unexpected dynamics were provided: ...")` (was `ServiceNotFound`); an
+  override of a built-in is refused as at `create` (ULTRA-00332, ULTRA-00336).
+- `ultra/kontainer`, behaviour change (no compile signal): overrides at `create { with { ... } }` are lazy. The
+  lambda runs at the first request of that service from that kontainer, on whichever thread asks first, under the
+  provider's lock; it runs until it has returned a value, then never again. `clone()` no longer runs it at once.
+  Consequences:
+  - An override that throws now throws at the first `get`, and again at the next, as no value was kept.
+  - An override used as a gate, throwing at `create` to reject a request, no longer rejects requests that never ask
+    for the service.
+  - A clone runs its parent's lambdas at the clone's first use, possibly after the parent's request ended and
+    concurrently with the parent.
+  - A lambda that requests its own service ends in `StackOverflowError`.
+  - Side effects run later, or never when the service is not used. A lambda reading something mutable sees the value
+    at first use.
+  - An override never requested has no instance: none in `instances`, the debug info or the dump, and none in the
+    insights record slice. Until it has returned a value, its definition names the class given to `with`.
+  - Public signatures: `ServiceProvider.Provider.forOverride(definition, create: () -> Any)` (was `instance: Any`);
+    `ServiceProvider.ForOverride` is no longer a data class and its constructor changed (ULTRA-00333).
+- `ultra/kontainer`, behaviour change (no compile signal): a blueprint remembers its validation result. Every
+  `create` of an invalid blueprint throws `KontainerInconsistent` with the same message, before the override block
+  runs. Before, only the first did: later creates succeeded, and `get` failed with `InvocationTargetException` or
+  worse. A `create` arriving while another one validates now waits for the result; before, it skipped validation
+  (ULTRA-00327).
+- `ultra/kontainer`, behaviour change (no compile signal, can stop an app at boot): the cycle check and the
+  dependency graph read what each parameter provider announces, so every injection form takes part.
+  - A dependency cycle through `List<T>` is now a validation error at the first `create` ("Kontainer has circular
+    dependencies!", with the hint to use `Lazy<T>`). Before, validation passed and `get` ended in
+    `StackOverflowError`.
+  - The likeliest hit is a service that injects a `List` of its own super type, which puts it in its own list:
+    `CompositeHandler(all: List<Handler>) : Handler`. Before, it booted and `get` overflowed; now the first `create`
+    fails. `Lazy<List<Handler>>` only defers this, because the list still contains the composite. The fix is to
+    register the composite under a type outside the list.
+  - The `Lazy<T>` hint helps only when `.value` is first read after construction.
+  - `Lazy<T>`, `Lazy<List<T>>` and `Lookup<T>` still break cycles; promotion to SemiDynamic is unchanged
+    (ULTRA-00328).
+- `ultra/kontainer`, behaviour change (message): every single-service injection (`T`, `T?`, `Lazy<T>`) whose type has
+  several candidates is reported as ambiguous ("Parameter 'i' is ambiguous. The following services collide: ..."),
+  also when a dependency cycle went through it. A decorator, `CachingRepo(inner: Repo) : Repo`, was "Circular
+  dependency detected: CachingRepo -> CachingRepo"; `A(i: I)`, `B(a: A) : I`, `C : I` was "Circular dependency
+  detected: A -> B -> A". Other parameter errors that the cycle error used to hide now show as well. Both versions
+  refuse the blueprint; only the message changes. A decorator names the concrete class (ULTRA-00334).
+- `ultra/kontainer`, behaviour change (no compile signal, can stop an app at boot): a nullable injection, `T?` or
+  `Lazy<T?>`, whose type has two or more candidate services is a validation error ("Parameter '...' is ambiguous. The
+  following services collide: ..."). Before, it injected null silently, and still made the service SemiDynamic when a
+  candidate was dynamic. With no candidate it is still null; with one it is injected (ULTRA-00335).
 - `funktor/insights`: `KontainerCollector.Data.Service.type` is a `String` (was `ServiceProvider.Type`). The wire is
   unchanged: records and the graph API keep the names `Singleton`, `SemiDynamic`, `Dynamic`, `Prototype`,
   `DynamicOverride`; every prototype is `Prototype`, whatever its kind (ULTRA-00319).
@@ -134,6 +212,40 @@
   `MpZonedDateTime.of(datetime, timezone)` or `instant.atZone(timezone)`; `MpZonedDateTime.copy(...)` - e.g.
   `x.copy(timezone = tz)` becomes `MpZonedDateTime.of(x.datetime, tz)`; destructuring (`component1/2`)
   (ULTRA-00211).
+- `ultra/datetime`: `MpLocalTimeSlot.completeDay` now ends at `MpLocalTime.EndOfDay` (24:00) instead of `Max`
+  (23:59:59.999). An app that uses `completeDay` writes `86400000` after the upgrade without any code change.
+  - A reader of an older version, including a browser tab left open across a deploy, reads the slot
+    `{"from":0,"to":86400000}` as `[00:00, 00:00)`: an invalid slot, so "open all day" becomes "never open". Saving
+    it there persists `{"from":0,"to":0}`. Update readers before writers.
+  - Slots stored from the old `completeDay` hold `to = 86399999`: `MpLocalTimeSlot(Min, Max) == completeDay` is now
+    false, and `completeDay.cutAway(MpLocalTimeSlot(Min, Max))` is `[MpLocalTimeSlot(Max, EndOfDay)]`, a 1 ms slot
+    (it was empty).
+  - `completeDay.splitWithGaps(1.hours)` gives 24 slots (23 before).
+  - A kraft time field bound to `completeDay.to` renders empty (it showed 23:59:59): the browser's time input does
+    not accept 24:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal):
+  - `hour` can be 24.
+  - `MpLocalTime.of(t.hour, t.minute, …)` and `ofMilliSeconds(t.inWholeMilliSeconds())` turn `EndOfDay` into 00:00;
+    `parse(toIsoString())`, the decoders and the unchecked constructor `MpLocalTime(t.inWholeMilliSeconds())`
+    round-trip it.
+  - A JSON client sending `86400000` used to be normalised to 00:00 and is now stored as 24:00.
+  - `.kotlinx` and `.jvm` give the last instant of the day for it, which is lossy (`EndOfDay.kotlinx.mp == Max`);
+    they threw before.
+  - The value `MpLocalTime(86_400_000)` of the unchecked constructor now is `EndOfDay` (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalTime.parse` refuses an hour of 24 with a non-zero
+  rest ("24:00:01", "24:30"), which it used to wrap to 00:00:01 / 00:30; `tryParse` returns null for them.
+  `of(24, 0)`, `ofMilliSeconds(86_400_000)` and `ofSecondOfDay(86_400)` still wrap to 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalTimeSlot.of(from, duration)` and
+  `ofSecondsOfDay(from, to)` end a slot of exactly 24:00 at `EndOfDay`: `of(23:00, 1.hours)` is `[23:00, 24:00)`, it
+  was the invalid `[23:00, 00:00)`. An end beyond 24:00 still wraps. `splitWithGaps` ends a slot reaching 24:00 at
+  `EndOfDay` instead of building an invalid last slot ending at 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `DateTimeRangeConverter.fromHourToHour(_, 24)` (e.g.
+  `toZonedTimeRange(zone).fromHourToHour(8, 24)`) ends at the start of the day after the last day; it ended at 00:00
+  of the last day. A `fromHour` of 24 still wraps to 00:00 (ULTRA-00341).
+- `ultra/datetime` and `ultra/slumber`, stored format: `EndOfDay` is stored as `86400000` milliseconds of day; exactly
+  that number reads back as `EndOfDay` (slumber: only a number equal to one day, so `86400000.5` still wraps), and
+  every other number wraps into the day as before. A reader of an older version reads `86400000` as 00:00 without an
+  error, so update readers before writers (ULTRA-00341).
 
 ### New
 
@@ -144,9 +256,20 @@
   overridden (ULTRA-00319).
 - `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
   same point in time, for `MpInstant` and `MpZonedDateTime` and across the two (ULTRA-00211).
+- `ultra/datetime`, new: `MpLocalTime.EndOfDay`, the time 24:00, one millisecond after `Max`, for the end of a
+  half-open time slot.
+  - Its `hour` is 24 and it prints `24:00:00.000`; it counts as 00:00 of the next day in arithmetic, and adding less
+    than a millisecond keeps it.
+  - `MpLocalDate.atTime(EndOfDay)` is 00:00 of the next day; `atTime(EndOfDay, zone)` and
+    `MpZonedDateTime.atTime(EndOfDay)` give the start of the next day.
+  - It is produced by this constant, `parse("24:00")` (`"24:00:00"`, `"24:00:00.000"`), the decoders, `completeDay`,
+    slot ends of exactly 24:00 (`MpLocalTimeSlot.of`, `ofSecondsOfDay`, `splitWithGaps`) and
+    `DateTimeRangeConverter.fromHourToHour(_, 24)` (ULTRA-00341).
 
 ### Fixes
 
+- `ultra/kontainer`: the dynamics check no longer keeps the first request's override lambdas, and what they capture,
+  alive for the life of the blueprint (ULTRA-00337).
 - `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever or returns wrapped slots when a step or a
   step plus gap crosses midnight. A duration of 24 h, a slot ending at 23:59:59.999 or a duration under one millisecond
   looped; `08:00-20:00` by 17 h returned four slots, three of them invalid (08:00-01:00, 18:00-11:00, 11:00-04:00),
@@ -219,6 +342,14 @@
   same way). Second fixed case: where a DST gap ends at or crosses midnight the old loop skipped a whole week
   (America/Nuuk 2024-03-29T23:30, next SATURDAY: was 2024-04-06, now 2024-03-30T00:00-02:00). Ordinary results are
   unchanged (ULTRA-00211).
+- `ultra/datetime`, fix: `DateTimeRangeConverter.fromMorningToEvening` ends at the start of the next day. Before:
+  - where the last day's own midnight is in a DST gap it ended an hour late (America/Havana 2024-03-10,
+    America/Santiago 2024-09-08);
+  - on a last day the zone skipped it ended a day late (Pacific/Apia 2011-12-30: 2012-01-01T00:00+14:00, now
+    2011-12-31T00:00+14:00);
+  - where the next midnight is inside a gap that starts before midnight it ended at the wrong time
+    (America/Toronto 1919-03-30: 01:00 EDT, now 00:30 EDT).
+  - Ordinary days are unchanged (ULTRA-00341).
 
 ## 0.118.0
 

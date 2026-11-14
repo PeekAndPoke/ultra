@@ -609,6 +609,40 @@ each item below was settled by a run. Close-out only: test rows, texts and dead 
 - ~~`MpLocalDateRange.numberOfDays` miscounts ranges past Doomsday.~~ Moved to ULTRA-00343: the clamp stays,
   documented and pinned; its consequences before Genesis and around Doomsday are with the maintainer (round 1).
 
+## Batch 3b: decisions of the maintainer (2026-11-14)
+
+The track's plan is `track-a-plan-batch3b.md` in the session scratchpad; it goes into this ticket as built.
+
+**3b-1, started:** `ComputedList` in `ultra/common` (package `io.peekandpoke.ultra.common`, also `RandomAccess`),
+`asListOfDates()` on both date range types as a lazy view ("yes go for this and document that the returned list is a
+lazy view and what that means for the consumer"), and the new Genesis and Doomsday of ULTRA-00343.
+
+**3b-2, the slot redesign, decided so far:**
+
+- `MpLocalTimeSlot` is a start and a duration ("two different params: start: MpLocalTime and duration ... then we can
+  represent everything also overnight"); "no backward compat needed"; "no limits to the duration".
+- `to: MpLocalTime` is a derived property, and on a date the range ends at that clock time ("what this returns must
+  be the time on the result, so we have to respect DST"): by the clock, not by elapsed time.
+- Elapsed time: "out for now". If wanted later, a second function, not a flag.
+- Predicates work on the 24-hour clock face; a duration of 24 hours or more covers the whole clock ("yes correct").
+- Edge rules without exceptions ("yes to the exception rules"): a start or end in a skipped hour moves forward; a start
+  past the end gives an empty range; a duration of zero or below is an empty slot.
+- Stored shape: "we write {from, duration, to}", `to` derived and read-only; the decoders fall back to the old
+  `{from, to}` ("we could build a fallback in the deserializers for the shape {from, to}"): `to` after `from` is the
+  difference, `to` before `from` is an overnight slot, `to` equal to `from` is empty.
+- `splitWithGaps` returns the lazy view; `maxSlots` and its exception go ("yes to splitWithGaps using the same
+  mechanism").
+
+**Confirmed by the maintainer (2026-11-14): `of(from, to)` with equal times gives an empty slot** ("yes equal times
+in an empty slot"). A full day is written `of(from, 24.hours)` or `completeDay`.
+
+**Taken as the track proposed, announced to the maintainer without objection:** `contains(EndOfDay)` counts 24:00 as
+00:00; a merge that covers the whole clock gives one 24-hour slot starting at the first slot's start; `cutAway` on a
+slot longer than 24 hours works on the full clock and drops the length beyond 24 hours; the constructor is private and
+durations are cut to whole milliseconds; `Duration.INFINITE` gives an open end on a date.
+
+3b-2 starts when round 1 of 3b-1 is back: no edits in the worktree while a review round reads it.
+
 ## History
 
 - 2026-11-14: created by the coordinator for batch 3 of track A.
