@@ -22,33 +22,45 @@ import kotlin.time.Duration.Companion.milliseconds
 class FastCacheEvictionDeclineSpec : StringSpec() {
 
     init {
-        "expireAfterWrite: a declined eviction is retried once the pending read drains" {
+        "expireAfterWrite: a pending read does not spare an expired entry" {
             val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
             val behaviour = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 1.milliseconds)
 
             cache.put("a", "1")
+            // let the loop drain that put: a pending put spares the entry
+            delay(250.milliseconds)
             behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
 
             // the entry is now well past its ttl
             delay(50.milliseconds)
 
-            // A read lands before the expiry runs. Its pending action makes removeSilently decline.
+            // A read lands before the expiry runs. Reads do not reset a write TTL, so it spares
+            // nothing: sparing it let a key read in every pass outlive its TTL for good (M1).
             cache.get("a")
-            behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
-
-            // Sparing the just-read entry is the doorman's job and is correct
-            cache.keys.contains("a") shouldBe true
-
-            // Let the pending read drain, then run the expiry again. This behaviour deliberately
-            // ignores reads, so nothing re-adds the key to its tracking - dropping it on the
-            // declined attempt made the entry immortal.
-            delay(300.milliseconds)
             behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
 
             cache.keys.contains("a") shouldBe false
         }
 
-        "refreshAfterWrite: a declined hard-TTL eviction is retried, not forgotten" {
+        "expireAfterWrite: a pending put spares the entry it just wrote" {
+            val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
+            val behaviour = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 1.milliseconds)
+
+            cache.put("a", "1")
+            // let the loop drain that put: a pending put spares the entry
+            delay(250.milliseconds)
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
+            delay(50.milliseconds)
+
+            // A write lands before the expiry runs: the expiry acts on the old write time, the new
+            // value must survive. Its put re-stamps the entry next pass.
+            cache.put("a", "2")
+            behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
+
+            cache.entries shouldBe mapOf("a" to "2")
+        }
+
+        "refreshAfterWrite: a pending read does not spare a hard-expired entry" {
             val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
             val behaviour = FastCache.RefreshAfterWriteBehaviour<String, String>(
                 refreshAfter = 5.milliseconds,
@@ -56,6 +68,8 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
             ) { error("a hard-expired entry must not be refreshed") }
 
             cache.put("a", "1")
+            // let the loop drain that put: a pending put spares the entry
+            delay(250.milliseconds)
             behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
 
             // well past the hard ttl - the hard branch wins over the refresh branch
@@ -64,14 +78,26 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
             cache.get("a")
             behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
 
-            cache.keys.contains("a") shouldBe true
+            cache.keys.contains("a") shouldBe false
+        }
 
-            // Forgetting writeTimestamps on the declined attempt meant this entry would never be
-            // refreshed and never hard-evicted again
-            delay(300.milliseconds)
+        "refreshAfterWrite: a pending put spares the entry from the hard TTL" {
+            val cache = fastCache<String, String>(loopDelay = 100.milliseconds) {}
+            val behaviour = FastCache.RefreshAfterWriteBehaviour<String, String>(
+                refreshAfter = 5.milliseconds,
+                hardTtl = 10.milliseconds,
+            ) { error("a hard-expired entry must not be refreshed") }
+
+            cache.put("a", "1")
+            // let the loop drain that put: a pending put spares the entry
+            delay(250.milliseconds)
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
+            delay(50.milliseconds)
+
+            cache.put("a", "2")
             behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
 
-            cache.keys.contains("a") shouldBe false
+            cache.entries shouldBe mapOf("a" to "2")
         }
 
         "maxMemoryUsage: a declined eviction does not corrupt totalSize" {

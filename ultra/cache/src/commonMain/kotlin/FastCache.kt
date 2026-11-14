@@ -254,7 +254,7 @@ class FastCache<K, V>(
             // taken, and dropping our tracking for a declined eviction left the entry in the map
             // with nothing watching it. A declined key stays tracked; the pending read that spared
             // it re-stamps its access time next iteration, which is exactly this behaviour's rule.
-            if (cache.removeSilently(key)) {
+            if (cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION)) {
                 data.remove(key)
             }
         }
@@ -310,11 +310,10 @@ class FastCache<K, V>(
         }
 
         private fun evict(cache: FastCache<K, V>, key: K) {
-            // Ask FIRST - the one behaviour where remove-before-ask was unrecoverable. Reads are
-            // deliberately ignored here, so only a PutAction could re-track a dropped key; an entry
-            // whose eviction was declined because of a pending READ therefore stayed in the map
-            // forever. Kept tracked, it is simply retried once the pending action has drained.
-            if (cache.removeSilently(key)) {
+            // Ask FIRST, and only a pending PUT spares the entry: a read does not reset a write TTL,
+            // and sparing reads let a key read in every pass outlive its TTL for good. A spared key
+            // stays tracked; its pending put re-stamps it next pass.
+            if (cache.removeSilently(key, SparedBy.PENDING_PUT)) {
                 data.remove(key)
             }
         }
@@ -374,7 +373,7 @@ class FastCache<K, V>(
         private fun evict(cache: FastCache<K, V>, key: K): Boolean {
             // Ask FIRST - see ExpireAfterAccessBehaviour.evict. Reports whether it really evicted,
             // because the loop below must not count a declined attempt as progress.
-            return cache.removeSilently(key).also { removed ->
+            return cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION).also { removed ->
                 if (removed) data.remove(key)
             }
         }
@@ -479,7 +478,7 @@ class FastCache<K, V>(
             // Ask FIRST, and only release the bytes for an entry that was really removed:
             // decrementing totalSize for a declined eviction under-counted a cache that still
             // holds the entry.
-            return cache.removeSilently(entry.key).also { removed ->
+            return cache.removeSilently(entry.key, SparedBy.ANY_PENDING_ACTION).also { removed ->
                 if (removed) remove(entry)
             }
         }
@@ -718,9 +717,10 @@ class FastCache<K, V>(
             // which refuses once the entry is gone.)
             //
             // Only forget a key that was really removed. removeSilently declines when the key was
-            // touched after the batch was taken - forgetting it anyway meant that entry was never
-            // refreshed and never hard-evicted again. Kept, it is retried next loop.
-            val evicted = keysToEvict.filter { key -> cache.removeSilently(key) }
+            // rewritten after the batch was taken (a read spares nothing here, as in
+            // ExpireAfterWriteBehaviour) - forgetting it anyway meant that entry was never refreshed
+            // and never hard-evicted again. Kept, it is retried next loop.
+            val evicted = keysToEvict.filter { key -> cache.removeSilently(key, SparedBy.PENDING_PUT) }
 
             if (evicted.isNotEmpty()) {
                 RunSync(refreshLock) {
@@ -756,7 +756,7 @@ class FastCache<K, V>(
                 val actions = cache.sync {
                     cache.lastActions.also { currentActions ->
                         cache.lastActions = ArrayList(currentActions.size)
-                        cache.lastActionsKeys = HashSet(cache.lastActionsKeys.size)
+                        cache.pendingKeys = HashMap(cache.pendingKeys.size)
                     }
                 }
 
@@ -798,8 +798,24 @@ class FastCache<K, V>(
     //   every value that was ever read or written. (A throwing behaviour no longer stops the loop.)
     private var lastActions = ArrayList<Action<K, V>>(1_000)
 
-    /** Set of keys that are included in [lastActions] */
-    private var lastActionsKeys = HashSet<K>()
+    /**
+     * The keys with an action in [lastActions], each mapped to whether a put is among them.
+     *
+     * One map, not two sets, so the two views are swapped together and cannot drift apart.
+     */
+    private var pendingKeys = HashMap<K, Boolean>()
+
+    /** What spares a key from [removeSilently]: any pending action, or only a pending put. */
+    private enum class SparedBy {
+        /** For the access-ordered behaviours: a pending read is an access, the entry is in use. */
+        ANY_PENDING_ACTION,
+
+        /**
+         * For write-based expiry: a read does not reset a write TTL, so only a pending put spares the
+         * entry. Sparing reads let a key read in every pass outlive its TTL for good.
+         */
+        PENDING_PUT,
+    }
 
     /** Internal data map */
     private val map = mutableMapOf<K, V>()
@@ -971,7 +987,9 @@ class FastCache<K, V>(
     }
 
     /**
-     * Evicts [key] on behalf of a behaviour, unless it was touched since the current batch was taken.
+     * Evicts [key] on behalf of a behaviour, unless it was touched since the current batch was taken
+     * in a way that [sparedBy] counts: any action for the access-ordered behaviours, only a put for
+     * write-based expiry.
      *
      * Returns true when the entry was actually removed. Callers must not drop their own tracking for
      * a key this declined, or the entry stays in the map with no behaviour watching it — never
@@ -981,12 +999,18 @@ class FastCache<K, V>(
      * that asked for it. Without it, `refreshAfterWrite` kept reloading keys `maxEntries` had
      * evicted, and `MaxMemoryUsageBehaviour.totalSize` kept counting bytes that were already freed.
      */
-    private fun removeSilently(key: K): Boolean = sync {
-        // If there is a pending action for this key (e.g. it was just Put or Read),
-        // it means the entry was recently updated or accessed, so we should NOT evict it.
-        val hasPendingUpdates = lastActionsKeys.contains(key)
+    private fun removeSilently(key: K, sparedBy: SparedBy): Boolean = sync {
+        // A pending action means the entry was used or rewritten after the batch the caller decided
+        // on was taken - unless the caller expires by write time, where only a rewrite counts.
+        val pendingPut = pendingKeys[key] ?: false
+        val pendingAny = pendingKeys.containsKey(key)
 
-        if (hasPendingUpdates) {
+        val spared = when (sparedBy) {
+            SparedBy.ANY_PENDING_ACTION -> pendingAny
+            SparedBy.PENDING_PUT -> pendingPut
+        }
+
+        if (spared) {
             return@sync false
         }
 
@@ -1009,7 +1033,7 @@ class FastCache<K, V>(
 
     private fun addAction(action: Action<K, V>) {
         lastActions.add(action)
-        lastActionsKeys.add(action.key)
+        pendingKeys[action.key] = pendingKeys[action.key] == true || action is PutAction
     }
 
     @Suppress("NOTHING_TO_INLINE")
