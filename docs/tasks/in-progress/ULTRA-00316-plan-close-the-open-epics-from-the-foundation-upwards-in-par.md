@@ -77,6 +77,13 @@ Across the waves:
   - **On master:** ULTRA-00230 (Karma ports), and the MAJOR of ULTRA-00158 (database log lost stack traces) fixed
     (`c218d1a6`); its gate continues after the open log decisions.
 
+- 2026-11-14, the maintainer's order after wave 1 ("my idea is to harden everything we have here, starting from the
+  foundational libs"): (1) finish tracks A and B, including the five real defects left open in the cache; (2) the
+  **Slumber deep review** next, planned and shown to him before it starts; (3) then **red-team the modules just
+  touched** (datetime, cache, log; not Mutator, which is parked in ULTRA-00322). A repo-wide **module review table**
+  (which module was reviewed when, which charters, which model) is kept from now on: "we need to review things
+  frequently, ideally always with the sharpest models we have available."
+
 ## History
 
 - 2026-11-13: created on the maintainer's word.
