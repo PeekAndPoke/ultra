@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.cache
 
 import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
+import kotlin.math.floor
 import kotlin.math.roundToLong
 
 /**
@@ -21,8 +22,10 @@ import kotlin.math.roundToLong
  * ## Bounded cost, and what it costs in accuracy
  *
  * - **Sampling.** A collection, map or array with more than 64 elements (`sampleSize`) is not walked
- *   whole: 64 elements at evenly spaced positions are, and the rest is charged by their average. The
- *   positions are fixed, never random, so the same value always gets the same estimate. A collection
+ *   whole: 64 elements are, and the rest is charged by their average. The positions are fixed, never
+ *   random, so the same value always gets the same estimate; by default they follow the golden ratio
+ *   (`SamplePick.GoldenRatio`), spread evenly without a fixed period. `SamplePick.EvenlySpaced`, a
+ *   fixed stride, is the alternative - switch with `EstimatorConfig(samplePick = ...)`. A collection
  *   without index access (a set, a linked list, a map) is sampled over its first 1 024 elements only
  *   (`sampleWindow`), to keep the stepping pass short.
  * - **A cap.** At most 10 000 objects are visited per estimate (`maxObjects`); each further one is charged
@@ -30,10 +33,12 @@ import kotlin.math.roundToLong
  * - **No stack, no throw.** The walk is iterative, so a deep graph cannot overflow the stack, and a field
  *   that cannot be read is charged flat; an estimate never throws.
  *
- * Measured on the JVM against an exact walk (2026-11-14), estimate / exact:
- * - 6 400 strings, 640 of them 1 000 chars long: at the front 1.07, at the back 0.95; **every tenth
- *   7.8** - the evenly spaced positions (every 100th here) can line up with a periodic layout and see
- *   only the large elements.
+ * Measured on the JVM against an exact walk (2026-11-14), estimate / exact, with the default pick
+ * (the stride's figure in brackets where it differs):
+ * - 6 400 strings, 10 % of them 1 000 chars long: at the front 0.95 (1.07), at the back 0.95; every
+ *   10th 1.31 (7.8), every 7th 0.90 (1.08), every 64th 1.32 (1.97), every 100th 1.13 (**24.1**: a
+ *   period that divides the stride is seen as all large). The golden ratio has its own worst case, a
+ *   layout with the large elements exactly on its positions: 24.1 (1.13) - unlikely by accident.
  * - one 10 000-char string shared by all 6 400 elements of a list: **7.6** - the sampled elements reach
  *   it with the weight of all elements.
  * - a tree of 29 524 data-class nodes, beyond the cap: **0.51**.
@@ -153,6 +158,7 @@ class ObjectSizeEstimatorImpl(
      *   linked list, a map) the samples are spread over: the first ones, so the stepping pass stays short
      * @property maxObjects   objects visited per estimate; any further one is charged a flat header and
      *   two references, without descent
+     * @property samplePick   where the samples sit - see [SamplePick]
      */
     data class EstimatorConfig(
         val objectHeader: Long = 16L,
@@ -161,7 +167,27 @@ class ObjectSizeEstimatorImpl(
         val sampleSize: Int = 64,
         val sampleWindow: Int = 1_024,
         val maxObjects: Int = 10_000,
+        val samplePick: SamplePick = SamplePick.GoldenRatio,
     )
+
+    /**
+     * Where the samples of a large collection sit. Both are deterministic: the same size always gives
+     * the same positions, on every platform.
+     */
+    enum class SamplePick {
+        /**
+         * The default: positions `frac(i * 0.618... + 0.5) * size`, a low-discrepancy sequence. Spread
+         * evenly without a fixed period, so a periodic layout is not missed or hit wholesale. Weak only
+         * at a layout that happens to put the large elements on exactly these positions.
+         */
+        GoldenRatio,
+
+        /**
+         * Positions `i * size / sampleSize`, a fixed stride. Weak at a periodic layout whose period
+         * divides the stride: every tenth element large, with a stride of 100, is seen as all large.
+         */
+        EvenlySpaced,
+    }
 
     /** An object still to visit, and how many times its size counts (more than once when sampled). */
     private class Pending(val obj: Any?, val weight: Double)
@@ -283,28 +309,25 @@ class ObjectSizeEstimatorImpl(
 
     /**
      * Pushes the elements of an indexed list or array: all of them up to [EstimatorConfig.sampleSize],
-     * else that many at evenly spaced indexes, each counting for its share of the rest. Deterministic:
-     * no random pick, so the same value always gives the same estimate.
+     * else that many at the positions [EstimatorConfig.samplePick] gives, each counting for its share of
+     * the rest. Deterministic: no random pick, so the same value always gives the same estimate.
      */
     private fun pushIndexed(size: Int, weight: Double, stack: MutableList<Pending>, elementAt: (Int) -> Any?) {
-        val samples = cfg.sampleSize
-
-        if (size <= samples) {
+        if (size <= cfg.sampleSize) {
             for (i in 0 until size) stack.add(Pending(elementAt(i), weight))
             return
         }
 
-        val share = weight * size / samples
+        val positions = samplePositions(size, cfg.sampleSize, cfg.samplePick)
+        val share = weight * size / positions.size
 
-        for (i in 0 until samples) {
-            stack.add(Pending(elementAt((i.toLong() * size / samples).toInt()), share))
-        }
+        positions.forEach { stack.add(Pending(elementAt(it), share)) }
     }
 
     /**
      * Pushes the elements of a collection or map without index access: all of them up to
-     * [EstimatorConfig.sampleSize], else that many spread evenly over the first
-     * [EstimatorConfig.sampleWindow] - one stepping pass, kept short.
+     * [EstimatorConfig.sampleSize], else that many at the positions [EstimatorConfig.samplePick] gives
+     * over the first [EstimatorConfig.sampleWindow] - one stepping pass, kept short.
      */
     private fun <T> pushIterated(
         size: Int,
@@ -320,25 +343,50 @@ class ObjectSizeEstimatorImpl(
             return
         }
 
-        val share = weight * size / samples
         val window = minOf(size, maxOf(cfg.sampleWindow, samples))
-        var index = 0L
+        // The same positions as pushIndexed, over the window, ascending. (A fixed step of
+        // window / samples rounded down once left the window's tail unsampled.)
+        val positions = samplePositions(window, samples, cfg.samplePick)
+        val share = weight * size / positions.size
+        var index = 0
         var taken = 0
-        // The same evenly spaced targets as pushIndexed, over the window. A fixed step of
-        // window / samples rounded down left the window's tail unsampled.
-        var target = 0L
 
-        while (taken < samples && index < window && elements.hasNext()) {
+        while (taken < positions.size && elements.hasNext()) {
             val element = elements.next()
 
-            if (index == target) {
+            if (index == positions[taken]) {
                 push(element, share)
                 taken++
-                target = taken.toLong() * window / samples
             }
 
             index++
         }
+    }
+}
+
+/** The golden ratio's fractional part, for [ObjectSizeEstimatorImpl.SamplePick.GoldenRatio]. */
+private const val GOLDEN_FRACTION = 0.6180339887498949
+
+/**
+ * The distinct positions to sample from `0 until size`, ascending: all of them when [size] is at most
+ * [samples], else up to [samples] picked by [pick]. Never [size] or above.
+ */
+internal fun samplePositions(size: Int, samples: Int, pick: ObjectSizeEstimatorImpl.SamplePick): IntArray {
+    if (size <= samples) {
+        return IntArray(size) { it }
+    }
+
+    return when (pick) {
+        ObjectSizeEstimatorImpl.SamplePick.EvenlySpaced ->
+            IntArray(samples) { i -> (i.toLong() * size / samples).toInt() }
+
+        ObjectSizeEstimatorImpl.SamplePick.GoldenRatio ->
+            IntArray(samples) { i ->
+                val x = i * GOLDEN_FRACTION + 0.5
+                val fraction = x - floor(x)
+                // fraction < 1, so the product is below size; the clamp guards floating point rounding
+                minOf((fraction * size).toLong(), size - 1L).toInt()
+            }.distinct().sorted().toIntArray()
     }
 }
 
