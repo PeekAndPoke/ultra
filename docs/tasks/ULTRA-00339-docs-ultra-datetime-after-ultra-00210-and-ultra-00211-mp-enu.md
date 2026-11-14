@@ -42,6 +42,21 @@ From ULTRA-00211:
   anywhere; worth a line that `MpZonedDateTime` is built with `atZone` / `of`, and that `toString()` now shows the offset.
 - `docs-site/src/data/llms/datetime.md`: no line becomes false.
 
+From ULTRA-00343 (new Genesis and Doomsday) and ULTRA-00341 (24:00, lazy views), added 2026-11-14:
+
+- False since ULTRA-00343: `docs-site/src/data/llms/datetime.md:65-66`, `mp-instant.astro:49-50`,
+  `mp-local-date.astro:37-38` (Genesis and Doomsday as -10000-01-01 and +10000-01-01; now 0001-01-01 and 9999-12-31).
+- To add: the sentinels stand for "no start" and "no end" in ranges and are not limits of the date types; ranges stored
+  with the old values still read as open; where `asListOfDates()` appears, that it returns a lazy view and what that
+  means; `ComputedList` on the common page and its LLM mirror.
+- False since ULTRA-00341 batch 3a: `ranges.astro:353` (`completeDay // 00:00 to 23:59:59.999`),
+  `mp-local-time.astro:42` (`val endOfDay = MpLocalTime.Max`), `llms/datetime.md:103-106`; to add: `EndOfDay`,
+  `parse("24:00")`, `atTime(EndOfDay)`; the TypeScript runtime comment `datetime.ts:42-48`.
+- Already false before this work: `mp-zoned-date-time.astro:41` (a `parse` example with an offset, which the parser
+  refuses) and `:155-156` (`toIsoString()` shown with an offset).
+- After the slot redesign (ULTRA-00341 batch 3b-2): the whole `MpLocalTimeSlot` section of `ranges.astro` (334-353) and
+  `llms/datetime.md:228-230`.
+
 ## Acceptance
 
 - Every statement and example on the datetime pages is true against the merged code; `pnpm astro build` is green.
