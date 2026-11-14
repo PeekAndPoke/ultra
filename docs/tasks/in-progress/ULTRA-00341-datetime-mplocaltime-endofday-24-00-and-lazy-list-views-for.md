@@ -322,7 +322,8 @@ the maintainer"). Not merged, not reviewed.
     decision, for the maintainer:** stored, infinity is that number, the largest integer a JS client reads exactly
     (`Long.MAX_VALUE` would come back from a TypeScript client rounded up and fail to decode).
 - **`of(from, to)`:** `to` after `from` is the difference, before `from` runs overnight, equal is empty (confirmed);
-  a `to` of `EndOfDay` is 24:00. `ofSecondsOfDay` follows it; equal values are empty, also `(86400, 86400)`.
+  equal is compared as given, so `of(EndOfDay, EndOfDay)` is empty too (round 1); a `to` of `EndOfDay` is 24:00, so
+  `of(00:00, EndOfDay)` is the whole day. `ofSecondsOfDay` follows it; equal values are empty, also `(86400, 86400)`.
 - **Derived, read-only:** `to` (the clock time of the end; `EndOfDay` for an end exactly at midnight; `from` for an
   empty or infinite slot), `endDayOffset: Long` (days after the start's date; `Long.MAX_VALUE` when infinite),
   `crossesMidnight`, `isEmpty`, `isInfinite`; `isValid` is "not empty".
@@ -331,13 +332,21 @@ the maintainer"). Not merged, not reviewed.
   clock is this slot's start for 24 h; a slot of 24 h or more absorbs the other), `cutAway` (in this slot's frame; the
   length beyond 24 h is dropped).
 - **On a date** (`MpLocalDate.toRange(slot, zone)`): by the clock, from `from` on the date to `to` on the date
-  `endDayOffset` days later. A start or end in a skipped hour moves forward; a start then past the end, or an empty
-  slot, gives an empty range at the start (the 3a pins of Nuuk and Apia are now empty, no longer inverted). An
-  infinite slot ends at the range's open end, decided in ONE private function (`endOnDate`), today
-  `MpZonedDateTime.Doomsday`, so it follows whatever the sentinel decision (ULTRA-00343, analysis of 2026-11-14) is.
+  `endDayOffset` days later.
+  - A start or end in a skipped hour moves to the first existing time, the transition (round 1: 02:30 in a 02:00 to
+    03:00 gap is 03:00, as agreed with the maintainer; `atTime` / `MpZonedDateTime.of` keep moving by the gap length,
+    03:30). New `TimezoneEngine.toInstantOrTransition`, used only here. A time in a repeated hour takes its first
+    occurrence.
+  - So the end never lies before the start. On a skipped date (Apia 2011-12-30) every slot ending that day is empty at
+    the next day's start; the 3a pins of Nuuk and Apia are now empty at the transition, no longer inverted.
+  - An infinite slot, and a finite end the platform cannot resolve (JS dates end at 8.64e15 ms; round 1), end at the
+    range's open end, decided in ONE private function (`endOnDate`, today `MpZonedDateTime.Doomsday`), so it follows
+    whatever the sentinel decision (ULTRA-00343, analysis of 2026-11-14) is. An infinite slot on a date after the open
+    end gives an empty range at the start: the only end-before-start case left.
 - **`splitWithGaps(duration, gap)`:** walks the slot's own length from `from` (overnight and longer than a day work),
-  returns a `ComputedList`; `maxSlots` and its exception are gone; the count is capped at `Int.MAX_VALUE` (an infinite
-  slot). An infinite part fits only an infinite slot.
+  returns a `ComputedList`; `maxSlots` and its exception are gone. An infinite slot gives `Int.MAX_VALUE` parts, or one
+  part for an infinite gap (round 1: the count was an artefact of `Long.MAX_VALUE / step`); an infinite part fits only
+  an infinite slot. The parts carry no day (KDoc says how to place them).
 - **Stored shape `{from, duration, to}`** in milliseconds, `to` derived and ignored on read when `duration` is present:
   - new public `MpLocalTimeSlotRawData(from: Long, duration: Long? = null, to: Long? = null)` with the extension
     functions `MpLocalTimeSlot.toRawData()` and `MpLocalTimeSlotRawData.toSlotOrNull()` (public because the slumber
@@ -345,8 +354,15 @@ the maintainer"). Not merged, not reviewed.
   - kotlinx `MpLocalTimeSlotSerializer`; slumber `MpLocalTimeSlotAwaker` / `MpLocalTimeSlotSlumberer`, registered in
     `MpDateTimeModule` (`from` / `to` are read through `MpLocalTimeAwaker`, so the 3a rules for 24:00 and fractional
     numbers hold);
-  - the decoders fall back to the old `{from, to}` (decided); neither `duration` nor `to` is a `SerializationException`
-    in kotlinx and `null` in slumber, as a missing field was before.
+  - the decoders fall back to the old `{from, to}` (decided) only when `duration` is ABSENT (round 1): an explicit
+    `"duration": null` (a TypeScript client's `Infinity` or `NaN`) or a non-number is an error (kotlinx
+    `SerializationException`, slumber `null`). kotlinx tells absent from null by the raw class's default value, a
+    private marker `Long.MIN_VALUE` that no slot writes (an input of exactly that number reads as absent; the slumber
+    awaker clamps to one above it, so any negative number is an empty slot);
+  - one home for the rule: both codecs decode through `MpLocalTimeSlotRawData.toSlotOrNull()` (round 1; that is why it
+    is public); slumber saturates a `BigInteger` / `BigDecimal` beyond `Long` to infinite or empty;
+  - neither `duration` nor `to` is a `SerializationException` in kotlinx and `null` in slumber, as a missing field was
+    before.
 - **TypeScript (planned, outside the module):** `MpDateTimeTsContributor` claims `MpLocalTimeSlot`; `datetime.ts`
   declares `MpLocalTimeSlot = z.object({from, duration, to})` (numbers); `MpDateTimeFieldParitySpec` checks the
   slumbered keys and the declaration. `SlumberAsRoundTripSpec` (slumber) has a slot sample, as it demands for every
@@ -409,13 +425,24 @@ the maintainer"). Not merged, not reviewed.
 | slumber `SlumberAsRoundTripSpec` | six samples | plus an `MpLocalTimeSlot` sample (its guard demands one per `@Slumber.As` type) |
 | codegen `MpDateTimeFieldParitySpec` | - | new row: the slot slumbers to `{from, duration, to}`, all numbers, and `datetime.ts` declares it |
 
+**Existing test lines changed in round 1** (all in specs new in 3b-2, plus one import):
+
+| Spec | Before | After |
+|---|---|---|
+| `MpLocalTimeSlotOnDateSpec` gap test | "moves forward": `02:30 + 2 h` = 01:30Z to 02:30Z; `01:00 + 90 min` = 00:00Z to 01:30Z | "moves to the first existing time": 01:00Z to 02:30Z; 00:00Z to 01:00Z; plus the reviewer's rows `02:30 + 1 h`, `01:00 + 2 h`, `02:00 + 1 h`, `02:15 + 30 min` |
+| `MpLocalTimeSlotOnDateSpec` "a start moved past the end gives an empty range" | Nuuk: duration zero and `from == to`; Apia `09:00 + 15 h` and `completeDay`: duration zero | split in two tests that pin the instants: Nuuk empty at 2024-03-31T01:00Z; Apia `09:00 + 8 h`, `09:00 + 14 h 59 min`, `completeDay` empty at 2011-12-30T10:00Z, `09:00 + 16 h` = 10:00Z to 11:00Z |
+| `MpLocalTimeSlotSpec` | `import io.kotest.assertions.throwables.shouldThrow` | removed (unused since the `maxSlots` tests went) |
+
 ### Docs lines for the DOCS follow-up (3b-2)
 
 - `docs-site/src/pages/ultra/datetime/ranges.astro` 334-353 (the `MpLocalTimeSlot` section: the constructor,
   `completeDay`, the `ofSecondsOfDay` comments): start and duration, `of(from, to)` overnight, the clock face, on a
   date by the clock, the lazy `splitWithGaps`, the stored shape.
 - `docs-site/src/data/llms/datetime.md` 228-230 (the slot line and factories).
-- `ultra/codegen/src/main/resources/ts/runtime/datetime.ts`: done in this batch.
+- `docs-site/src/pages/ultra/datetime/ranges.astro` 361-377, 384 and 388, and `mp-local-date.astro` 164 (round 1:
+  further slot examples and `toRange(slot, zone)`).
+- `ultra/codegen/src/main/resources/ts/runtime/datetime.ts`: done in this batch (`MpLocalTimeSlot`,
+  `INFINITE_DURATION_MILLIS`).
 
 ## Changelog text (3b-2)
 
@@ -428,14 +455,23 @@ the maintainer"). Not merged, not reviewed.
   - New: `isEmpty`, `isInfinite`, `INFINITE_DURATION_MILLIS`; `Duration.INFINITE` is a slot without an end.
   - The start wraps into the day: `of(EndOfDay, d)` starts at 00:00 (ULTRA-00341).
 - `ultra/datetime`, behaviour change (no compile signal):
-  - `of(from, to)` with `to` before `from` is an overnight slot; it was an invalid one (`isValid` false, negative
-    `duration`). Equal times are an empty slot, as before.
+  - `of(from, to)` and `ofSecondsOfDay(from, to)` with `to` before `from` are an overnight slot; they were an invalid
+    one (`isValid` false, negative `duration`). Equal times are an empty slot, as before (also 24:00 to 24:00).
+  - `of(from, duration)` keeps the whole duration: `of(10:00, 25.hours)` was the 1-hour slot 10:00 to 11:00 (the end
+    wrapped), now it is 25 hours; `of(23:00, 2.hours)` was invalid, now it is overnight; a negative duration is an
+    empty slot at `from`.
+  - `Partial.asValidRange()` with `to` before `from` returned null (a form's "end before start" check) and now returns
+    an overnight slot; only equal times give null.
+  - A decoded slot is no longer bounded by one day: code that relied on `isValid` now accepts multi-year and endless
+    slots (`isInfinite`).
+  - `val (from, to) = slot`: `component2()` is the `duration` now.
   - Without a date a slot is a daily pattern on the 24-hour clock: `contains`, `intersects`, `touches`,
     `isAdjacentTo`, `mergeWith` and `cutAway` work across midnight; `contains(EndOfDay)` counts 24:00 as 00:00 (it was
     false); a slot of 24 hours or more covers the whole clock.
   - `MpLocalDate.toRange(slot, zone)` ends by the clock on the day `endDayOffset` later: a night slot lasts 7 or 9 real
-    hours on DST nights. A start moved past the end by a skipped hour gives an empty range; it gave an inverted one
-    (ULTRA-00341).
+    hours on DST nights. A start or end in a skipped hour moves to the first existing time (02:30 becomes 03:00; it
+    moved by the gap length, to 03:30), a repeated hour takes its first occurrence, and a slot on a skipped date is
+    empty at the next day's start; such cases gave inverted ranges before (ULTRA-00341).
 - `ultra/datetime` and `ultra/slumber`, stored format: a slot is stored as `{from, duration, to}` in milliseconds
   (`to` derived, ignored on read; an infinite duration is 9007199254740991). Both decoders still read the old
   `{from, to}` (`to` before `from` as overnight; a stored `{0, 86399999}` reads as 23:59:59.999 long). A reader of an
@@ -455,6 +491,55 @@ the maintainer"). Not merged, not reviewed.
 **Removed API:** the public constructor `MpLocalTimeSlot(from, to)` and `copy`; the `maxSlots` parameter of
 `splitWithGaps` (batch 1, never released).
 
+**Existing Unreleased entries of `CHANGELOG.md` that become false (for the coordinator to replace at the merge):**
+
+- ULTRA-00215 entry "`splitWithGaps` no longer takes durations and gaps modulo 24 h ...": its last sentence "An invalid
+  slot (`to <= from`, e.g. 22:00-02:00) now yields no slots (was split across midnight)" (22:00-02:00 is an overnight
+  slot now and is split across midnight).
+- ULTRA-00215 entry "`MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000 ...) and throws
+  `IllegalArgumentException` ...": `maxSlots` and the exception are gone.
+
+## Review record 3b-2: round 1 (blind, reviewer-fable-xhigh, two passes)
+
+**Verdicts:** implementation CLEAN (8 MINOR); domain and data NOT CLEAN (1 MAJOR, 9 MINOR). The reviewers recomputed
+every expected value of the four specs (right) and ran nothing; every item below was shown by a test first (RED on
+JVM, the JS row on JS).
+
+| Sev | Finding | Outcome |
+|---|---|---|
+| MAJOR | a start or end in a skipped hour moved by the gap length (02:30 to 03:30), not to the first existing time as agreed with the maintainer | FIXED: `TimezoneEngine.toInstantOrTransition` (gap: the transition; overlap: the first occurrence), used only by the slot on a date; the reviewer's five Berlin rows, the split that sums to the whole, the repeated hour, Nuuk and Apia pinned with instants; RED first; mutants K1, K2 red |
+| deviation | `of(EndOfDay, EndOfDay)` was 24 h (start wrapped, end not) | FIXED: equal as given is empty; factory, `Partial` and both decoders pinned; RED first; mutant K3 red |
+| deviation | the start wraps into the day (my choice 1) | KEPT, as the reviewers found it sound; `date.toRange(of(EndOfDay, d))` starts at 00:00 of the date, stated in the KDoc |
+| MINOR | `splitWithGaps` on an infinite slot: count an artefact of `Long.MAX_VALUE / step`; an infinite gap gave 1024 | FIXED: `Int.MAX_VALUE`, or one part for an infinite gap; RED first; mutants K4, K5 red; K6 (infinite part on infinite slot) red |
+| MINOR | an explicit `duration: null` fell back to `to` (a TS client's `Infinity` / `NaN` became an empty slot) | FIXED: fallback only when ABSENT (kotlinx: a private default marker in the raw class, no custom decoder); RED first; mutants K7 (both codecs), K8 red |
+| MINOR | slumber: a duration beyond `Long` wrapped (18446744073709551621 awoke as 5 ms) | FIXED: saturates; the bottom is clamped one above the absent marker (found while fixing: `-huge` collided with it); RED first; mutants K9, K10 red |
+| MINOR | JS: `toRange` threw for a finite end beyond the JS date range | FIXED in `endOnDate` only: such an end is the open end; RED first on JS; mutant K16 red on JS |
+| MINOR | `toSlotOrNull()` public but the awaker repeated the rule; dead `?: 0L` / `?: raw.from`; implied `coversClock` terms; `if (isEmpty) return` in `onDate` | FIXED: the awaker decodes through `toSlotOrNull()` (one home, public justified); dead arms and implied terms removed (equivalent by construction) |
+| MINOR | surviving mutants: `!intersects` and the first `isEmpty` in `isAdjacentTo`; `mergeWith` covering branch always `this`; `cutAway` without the `coversClock` branch; the empty range at the end | FIXED: the reviewers' rows added; mutants K11 to K15 red (K11 through a date after the open end, the only remaining end-before-start case) |
+| MINOR | the repeated hour unpinned | FIXED: Berlin 2024-10-27 `01:30 + 1 h` (23:30Z to 00:30Z) and 2024-10-26 `22:00 + 4.5 h` (to 00:30Z); first occurrence in the KDoc |
+| MINOR | KDoc gaps: parts of a split carry no day; `formatHhMm` drops days; `endDayOffset` of an infinite slot; `toRange(of(EndOfDay, d))`; what a query on the stored `to` sees; the TS infinity number | FIXED: all in KDoc; `datetime.ts` exports `INFINITE_DURATION_MILLIS`, pinned against the Kotlin value by the parity spec |
+| text | unused `shouldThrow` import; "two of the six"; docs list incomplete | FIXED |
+| text | changelog: "equal times ... as before" and missing changes without a compile signal; the two `CHANGELOG.md` entries that become false | FIXED (see "Changelog text (3b-2)") |
+| note | reviewers on my six choices: all sound except `toSlotOrNull()` public | settled by the one-home change above |
+| counts | after round 1 (2026-11-14, `--rerun`, XML) | datetime JVM 2852 / 0, JS 2194 / 0, native 2186 / 0 (`MpLocalTimeSlotClockSpec` 20, `MpLocalTimeSlotOnDateSpec` 14, `MpLocalTimeSlotSerializationSpec` 7 on all three); slumber 1266 / 0 (`MpLocalTimeSlotCodecSpec` 7); codegen 326 / 0; compile sweep 0 `e:` |
+
+| Mutant (round 1; each restored with `cmp`) | Tests red |
+|---|---|
+| K1 the slot's times on a date through `atTime` (gap moves by its length) | 4 |
+| K2 a repeated hour takes the later occurrence | 1 |
+| K3 `of(from, to)` without the equal-as-given check (persistence: both decoders) | 3 datetime + 1 slumber |
+| K4 / K5 / K6 `splitWithGaps`: no one-part arm for an infinite gap / no endless arm / an infinite part gives nothing | 1 / 1 / 1 |
+| K7 an explicit null duration falls back to `to` (persistence: kotlinx; slumber returns null before the shared rule, K8) | 1 |
+| K8 slumber: a non-number duration falls back to `to` (persistence) | 1 |
+| K9 slumber: `BigInteger` without saturation (persistence) | 1 |
+| K10 slumber: no clamp above the absent marker (persistence) | 1 |
+| K11 the empty range at the end, not the start | 1 |
+| K12 `isAdjacentTo` without `!intersects` | 1 |
+| K13 `isAdjacentTo` without the first `isEmpty` | 1 |
+| K14 `mergeWith` covering branch always `this` | 1 |
+| K15 `cutAway` without the `coversClock` branch | 1 |
+| K16 JS: no open end for an unresolvable end (run on JS) | 1 |
+
 ## Left out, for one follow-up ticket
 
 - `MpLocalTime.jvm` drops the milliseconds (`Max.jvm` = 23:59:59).
@@ -470,3 +555,4 @@ the maintainer"). Not merged, not reviewed.
   awaiting the review gate; 3b-2 waits for the maintainer.
 - 2026-11-14: 3b-1 round 1 and delta round 2 handled; 3b-1 held (the sentinel values are in question). Batch 3b-2
   (the slot redesign) built on `wt/datetime` on top of it, tests first; not reviewed, not merged.
+- 2026-11-14: 3b-2 round 1 NOT CLEAN (1 MAJOR: the gap rule), all findings handled; awaiting the delta review.

@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 /** ULTRA-00341 batch 3b-2: on a date a slot ends by the clock, which respects DST. */
@@ -46,26 +47,74 @@ class MpLocalTimeSlotOnDateSpec : StringSpec({
                 (i("2024-01-15T09:00:00Z") to i("2024-01-17T09:00:00Z"))
     }
 
-    "a start or end in a skipped hour moves forward (Berlin 2024-03-31, 02:00 to 03:00 is missing)" {
+    "a start or end in a skipped hour moves to the first existing time, the transition (Berlin 2024-03-31)" {
+        // 02:00 to 03:00 is missing; the transition is 01:00Z (03:00+02:00)
         val date = MpLocalDate.of(2024, 3, 31)
 
+        date.toRange(slot(2, 30, 1.hours), berlin).instants() shouldBe
+                (i("2024-03-31T01:00:00Z") to i("2024-03-31T01:30:00Z"))
         date.toRange(slot(2, 30, 2.hours), berlin).instants() shouldBe
-                (i("2024-03-31T01:30:00Z") to i("2024-03-31T02:30:00Z"))
+                (i("2024-03-31T01:00:00Z") to i("2024-03-31T02:30:00Z"))
         date.toRange(slot(1, 0, 90.minutes), berlin).instants() shouldBe
-                (i("2024-03-31T00:00:00Z") to i("2024-03-31T01:30:00Z"))
+                (i("2024-03-31T00:00:00Z") to i("2024-03-31T01:00:00Z"))
+        date.toRange(slot(1, 0, 2.hours), berlin).instants() shouldBe
+                (i("2024-03-31T00:00:00Z") to i("2024-03-31T01:00:00Z"))
+        date.toRange(slot(2, 0, 1.hours), berlin).instants() shouldBe
+                (i("2024-03-31T01:00:00Z") to i("2024-03-31T01:00:00Z"))
+        date.toRange(slot(2, 15, 30.minutes), berlin).instants() shouldBe
+                (i("2024-03-31T01:00:00Z") to i("2024-03-31T01:00:00Z"))
     }
 
-    "a start moved past the end gives an empty range (it was inverted before)" {
-        // Nuuk 2024-03-30: 23:00 to 24:00 is missing, so 23:30 moves to 00:30, past the end at 24:00
-        val nuuk = MpLocalDate.of(2024, 3, 30).toRange(slot(23, 30, 30.minutes), MpTimezone.of("America/Nuuk"))
-        nuuk.duration shouldBe Duration.ZERO
-        nuuk.from shouldBe nuuk.to
+    "on a DST night the parts of a split add up to the whole slot's real length" {
+        val date = MpLocalDate.of(2024, 3, 31)
+        val whole = slot(1, 0, 3.hours)
 
-        // Apia skipped 2011-12-30 entirely
+        val parts = whole.splitWithGaps(30.minutes).map { date.toRange(it, berlin).duration }
+
+        parts shouldBe listOf(30.minutes, 30.minutes, Duration.ZERO, Duration.ZERO, 30.minutes, 30.minutes)
+        parts.reduce { a, b -> a + b } shouldBe date.toRange(whole, berlin).duration
+        date.toRange(whole, berlin).duration shouldBe 2.hours
+    }
+
+    "a repeated hour takes its first occurrence (Berlin 2024-10-27, 02:00 to 03:00 twice)" {
+        MpLocalDate.of(2024, 10, 27).toRange(slot(1, 30, 1.hours), berlin).instants() shouldBe
+                (i("2024-10-26T23:30:00Z") to i("2024-10-27T00:30:00Z"))
+        MpLocalDate.of(2024, 10, 26).toRange(slot(22, 0, 270.minutes), berlin).instants() shouldBe
+                (i("2024-10-26T20:00:00Z") to i("2024-10-27T00:30:00Z"))
+    }
+
+    "a gap that ends at midnight (Nuuk 2024-03-30, 23:00 to 24:00 missing): [23:30, 24:00) is empty at the transition" {
+        val nuuk = MpLocalDate.of(2024, 3, 30).toRange(slot(23, 30, 30.minutes), MpTimezone.of("America/Nuuk"))
+
+        nuuk.instants() shouldBe (i("2024-03-31T01:00:00Z") to i("2024-03-31T01:00:00Z"))
+    }
+
+    "on a skipped date (Apia 2011-12-30) every slot ending that day is empty at the next day's start" {
         val apia = MpTimezone.of("Pacific/Apia")
         val skipped = MpLocalDate.of(2011, 12, 30)
-        skipped.toRange(slot(9, 0, 15.hours), apia).duration shouldBe Duration.ZERO
-        skipped.toRange(MpLocalTimeSlot.completeDay, apia).duration shouldBe Duration.ZERO
+        val nextDayStart = i("2011-12-30T10:00:00Z") // 2011-12-31T00:00+14:00
+
+        skipped.toRange(slot(9, 0, 8.hours), apia).instants() shouldBe (nextDayStart to nextDayStart)
+        skipped.toRange(slot(9, 0, 899.minutes), apia).instants() shouldBe (nextDayStart to nextDayStart)
+        skipped.toRange(MpLocalTimeSlot.completeDay, apia).instants() shouldBe (nextDayStart to nextDayStart)
+        // a slot running into the next day keeps its part there
+        skipped.toRange(slot(9, 0, 16.hours), apia).instants() shouldBe (nextDayStart to i("2011-12-30T11:00:00Z"))
+    }
+
+    "an end beyond what the platform can resolve is the open end (JS dates end at 8.64e15 ms)" {
+        val far = slot(10, 0, 8_700_000_000_000_000L.milliseconds)
+        val range = MpLocalDate.of(2024, 1, 15).toRange(far, berlin)
+
+        range.from.toInstant() shouldBe i("2024-01-15T09:00:00Z")
+        range.hasEnd shouldBe false
+    }
+
+    "an end before the start can only come from the open end: past Doomsday the range is empty at the start" {
+        val date = MpLocalDate.of(12000, 1, 1)
+        val range = date.toRange(slot(10, 0, Duration.INFINITE), berlin)
+
+        range.from.toInstant() shouldBe date.atTime(t(10), berlin).toInstant()
+        range.to.toInstant() shouldBe range.from.toInstant()
     }
 
     "an empty slot gives an empty range at its start" {

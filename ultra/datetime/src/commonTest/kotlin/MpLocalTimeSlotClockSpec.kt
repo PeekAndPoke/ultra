@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.common.ComputedList
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
@@ -76,6 +77,8 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         MpLocalTimeSlot.of(t(22), t(2)) shouldBe night
         MpLocalTimeSlot.of(t(10), t(12)) shouldBe slot(10, 0, 2.hours)
         MpLocalTimeSlot.of(t(10), t(10)).isEmpty shouldBe true
+        // equal as given: 24:00 to 24:00 is empty too, not a whole day
+        MpLocalTimeSlot.of(MpLocalTime.EndOfDay, MpLocalTime.EndOfDay).isEmpty shouldBe true
         MpLocalTimeSlot.of(t(0), MpLocalTime.EndOfDay) shouldBe MpLocalTimeSlot.completeDay
         MpLocalTimeSlot.of(t(23), MpLocalTime.EndOfDay) shouldBe slot(23, 0, 1.hours)
     }
@@ -90,6 +93,7 @@ class MpLocalTimeSlotClockSpec : StringSpec({
     "Partial is the two-picker form helper: from and to, an empty slot is not valid" {
         MpLocalTimeSlot.Partial(t(22), t(2)).asValidRange() shouldBe night
         MpLocalTimeSlot.Partial(t(10), t(10)).asValidRange() shouldBe null
+        MpLocalTimeSlot.Partial(MpLocalTime.EndOfDay, MpLocalTime.EndOfDay).asValidRange() shouldBe null
         MpLocalTimeSlot.Partial(null, t(10)).asValidRange() shouldBe null
         night.asPartialRange() shouldBe MpLocalTimeSlot.Partial(t(22), t(2))
     }
@@ -149,6 +153,10 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         night.isAdjacentTo(slot(1, 0, 2.hours)) shouldBe false
         MpLocalTimeSlot.completeDay.isAdjacentTo(slot(0, 0, 1.hours)) shouldBe false
         night.isAdjacentTo(slot(2, 0, Duration.ZERO)) shouldBe false
+        slot(2, 0, Duration.ZERO).isAdjacentTo(night) shouldBe false
+        // the ends meet, but the slots overlap elsewhere on the clock
+        slot(10, 0, 20.hours).isAdjacentTo(slot(6, 0, 10.hours)) shouldBe false
+        slot(10, 0, 2.hours).isAdjacentTo(slot(12, 0, 23.hours)) shouldBe false
     }
 
     "mergeWith: touching slots give the union arc; apart they stay sorted by start; a whole clock is 24 hours" {
@@ -159,6 +167,7 @@ class MpLocalTimeSlotClockSpec : StringSpec({
         slot(0, 30, 2.hours).mergeWith(slot(23, 0, 2.hours)) shouldBe listOf(slot(23, 0, 210.minutes))
         slot(20, 0, 8.hours).mergeWith(slot(2, 0, 20.hours)) shouldBe listOf(slot(20, 0, 24.hours))
         slot(5, 0, 30.hours).mergeWith(slot(10, 0, 1.hours)) shouldBe listOf(slot(5, 0, 30.hours))
+        slot(10, 0, 1.hours).mergeWith(slot(5, 0, 30.hours)) shouldBe listOf(slot(5, 0, 30.hours))
         night.mergeWith(slot(23, 0, Duration.ZERO)) shouldBe listOf(night)
     }
 
@@ -168,6 +177,7 @@ class MpLocalTimeSlotClockSpec : StringSpec({
                 listOf(slot(0, 0, 10.hours), slot(11, 0, 13.hours))
         night.cutAway(slot(12, 0, 1.hours)) shouldBe listOf(night)
         night.cutAway(MpLocalTimeSlot.completeDay) shouldBe emptyList()
+        night.cutAway(slot(10, 0, Duration.INFINITE)) shouldBe emptyList()
         night.cutAway(slot(1, 0, 3.hours)) shouldBe listOf(slot(22, 0, 3.hours))
         night.cutAway(slot(21, 0, 2.hours)) shouldBe listOf(slot(23, 0, 3.hours))
         slot(5, 0, 30.hours).cutAway(slot(10, 0, 1.hours)) shouldBe listOf(slot(5, 0, 5.hours), slot(11, 0, 18.hours))
@@ -207,5 +217,16 @@ class MpLocalTimeSlotClockSpec : StringSpec({
 
         endless.size shouldBe Int.MAX_VALUE // capped: a List cannot be larger
         endless[Int.MAX_VALUE - 1] shouldBe slot(16, 0, 1.hours) // (10 + 2 147 483 646) mod 24 = 16
+    }
+
+    "splitWithGaps on an infinite slot: endless parts whatever the step; an infinite gap or part gives one part" {
+        val open = slot(10, 0, Duration.INFINITE)
+
+        open.splitWithGaps(60.days).size shouldBe Int.MAX_VALUE
+        open.splitWithGaps(1.hours, 60.days).size shouldBe Int.MAX_VALUE
+        open.splitWithGaps(1.hours, Duration.INFINITE) shouldBe listOf(slot(10, 0, 1.hours))
+        open.splitWithGaps(Duration.INFINITE) shouldBe listOf(open)
+        night.splitWithGaps(Duration.INFINITE) shouldBe emptyList()
+        night.splitWithGaps(1.hours, Duration.INFINITE) shouldBe listOf(slot(22, 0, 1.hours))
     }
 })

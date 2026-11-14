@@ -50,9 +50,12 @@ data class MpLocalTimeSlot private constructor(
 
         /**
          * The slot from [from] to [to] on the clock: [to] after [from] is the difference, [to] before [from] runs
-         * overnight, and equal times give an empty slot. A [to] of [MpLocalTime.EndOfDay] is 24:00.
+         * overnight, and equal times give an empty slot (also 24:00 to 24:00). A [to] of [MpLocalTime.EndOfDay] is
+         * 24:00, so 00:00 to 24:00 is the whole day.
          */
         fun of(from: MpLocalTime, to: MpLocalTime): MpLocalTimeSlot {
+            if (from == to) return of(from = from, duration = Duration.ZERO)
+
             val start = from.inWholeMilliSeconds().toLong().mod(DAY)
             val end = if (to.isEndOfDay) DAY else to.inWholeMilliSeconds().toLong().mod(DAY)
 
@@ -132,7 +135,7 @@ data class MpLocalTimeSlot private constructor(
 
     /**
      * On how many days after the start's date the end lies: 0 for a slot ending by 24:00, 1 for 22:00 to 02:00.
-     * [Long.MAX_VALUE] for an infinite slot.
+     * [Long.MAX_VALUE] for an infinite slot (so `toInt()` gives -1: check [isInfinite] first).
      */
     val endDayOffset: Long
         get() {
@@ -207,7 +210,8 @@ data class MpLocalTimeSlot private constructor(
      * True when one ends where the other begins, without overlap. Empty slots and slots of 24 hours or more never are.
      */
     fun isAdjacentTo(other: MpLocalTimeSlot): Boolean {
-        if (isEmpty || other.isEmpty || coversClock || other.coversClock) return false
+        // a slot of 24 hours or more intersects every non-empty slot, so it never gets past the intersects check
+        if (isEmpty || other.isEmpty) return false
 
         return !intersects(other) && (endOnClock == other.fromMillis || other.endOnClock == fromMillis)
     }
@@ -278,7 +282,10 @@ data class MpLocalTimeSlot private constructor(
      * - Returns a lazy view ([ComputedList]): each part is computed when read, so any count is free to create.
      * - Parts never reach past the end; a remainder shorter than [duration] is dropped.
      * - An empty slot, or a [duration] under one millisecond, gives no parts; a negative [gap] counts as zero.
-     * - The count is capped at [Int.MAX_VALUE] (an infinite slot), as a list cannot be larger.
+     * - An infinite slot gives [Int.MAX_VALUE] parts (a list cannot be larger), or one part for an infinite [gap]; an
+     *   infinite [duration] fits only an infinite slot.
+     * - The parts carry no day: `date.toRange(part, zone)` puts a part after midnight on the morning of `date`, not of
+     *   the next day. Part `i` starts `(from + i * (duration + gap)) / 24 h` days after the slot's own date.
      */
     fun splitWithGaps(duration: Duration, gap: Duration = Duration.ZERO): List<MpLocalTimeSlot> {
         val part = of(MpLocalTime.Min, duration)
@@ -292,6 +299,8 @@ data class MpLocalTimeSlot private constructor(
         val step = partMillis + gapMillis
 
         val count = when {
+            isInfinite && gapMillis == INFINITE_DURATION_MILLIS -> 1L
+            isInfinite -> Int.MAX_VALUE.toLong()
             partMillis > durationMillis -> 0L
             else -> (durationMillis - partMillis) / step + 1
         }.coerceAtMost(Int.MAX_VALUE.toLong())
@@ -307,37 +316,63 @@ data class MpLocalTimeSlot private constructor(
 
 /**
  * This slot on [date] in [timezone], by the clock: from [MpLocalTimeSlot.from] on [date] to [MpLocalTimeSlot.to] on
- * the day [MpLocalTimeSlot.endDayOffset] later. A start or end in a skipped hour moves forward; a start that then lies
- * past the end, or an empty slot, gives an empty range at the start.
+ * the day [MpLocalTimeSlot.endDayOffset] later.
+ *
+ * - A start or end that falls into a skipped hour moves to the first existing time, the transition: 02:30 in a 02:00
+ *   to 03:00 gap is 03:00. (`MpZonedDateTime.of` and `MpLocalDate.atTime` move it by the length of the gap, to 03:30.)
+ * - A time in a repeated hour takes its first occurrence.
+ * - So the end never lies before the start; the only exception is the open end (an infinite slot on a date after it),
+ *   which gives an empty range at the start. An empty slot gives an empty range at its start.
  */
 internal fun MpLocalTimeSlot.onDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTimeRange {
-    val start = date.atTime(from, timezone)
-
-    if (isEmpty) return MpZonedDateTimeRange(from = start, to = start)
-
+    val start = firstExistingTime(date, from, timezone)
     val end = endOnDate(date, timezone)
 
     return when {
-        end.toInstant() > start.toInstant() -> MpZonedDateTimeRange(from = start, to = end)
+        end.toInstant() >= start.toInstant() -> MpZonedDateTimeRange(from = start, to = end)
         else -> MpZonedDateTimeRange(from = start, to = start)
     }
 }
 
 /**
- * The end of this slot on [date]. The only place that decides what an end beyond the open end is: an infinite slot
- * gets the range's open end, today [MpZonedDateTime.Doomsday] (whatever ULTRA-00343 decides goes here).
+ * The end of this slot on [date]. The only place that decides what an end beyond the open end is: an infinite slot,
+ * and a finite end the platform cannot resolve (JS dates end at 8.64e15 ms), get the range's open end, today
+ * [MpZonedDateTime.Doomsday] (whatever ULTRA-00343 decides goes here).
  */
 private fun MpLocalTimeSlot.endOnDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTime {
-    if (isInfinite) return MpZonedDateTime.Doomsday
+    if (isInfinite) return openEnd()
 
-    // a finite duration is below 2^53 ms, so the offset is below 2^27 days: an Int
-    return date.plusDays(endDayOffset.toInt()).atTime(to, timezone)
+    return try {
+        // a finite duration is below 2^53 ms, so the offset is below 2^27 days: an Int
+        firstExistingTime(date.plusDays(endDayOffset.toInt()), to, timezone)
+    } catch (_: IllegalArgumentException) {
+        // the zone is valid (the start resolved in it): the platform cannot resolve an instant this far out
+        openEnd()
+    }
 }
 
+private fun openEnd(): MpZonedDateTime = MpZonedDateTime.Doomsday
+
+/**
+ * [time] on [date] in [timezone]; a time that does not exist is the first existing time after it, 24:00 the next day.
+ */
+private fun firstExistingTime(date: MpLocalDate, time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
+    if (time.isEndOfDay) return date.plusDays(1).atStartOfDay(timezone)
+
+    val instant = TimezoneEngine.toInstantOrTransition(timezone, MpLocalDateTime.of(date, time).value)
+
+    return MpZonedDateTime.of(instant = MpInstant(instant), timezone = timezone)
+}
+
+/**
+ * The slot as clock times, e.g. `22:00 - 02:00`. It drops the days: an empty slot, 24 hours, 48 hours and an infinite
+ * slot from one start print the same text.
+ */
 fun MpLocalTimeSlot.formatHhMm(): String {
     return "${from.formatHhMm()} - ${to.formatHhMm()}"
 }
 
+/** As [formatHhMm], with seconds; the same caveat about the days. */
 fun MpLocalTimeSlot.formatHhMmSs(): String {
     return "${from.formatHhMmSs()} - ${to.formatHhMmSs()}"
 }

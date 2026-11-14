@@ -7,6 +7,8 @@ import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.slumber.Codec
 import io.peekandpoke.ultra.slumber.awake
 import io.peekandpoke.ultra.slumber.slumber
+import java.math.BigDecimal
+import java.math.BigInteger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -45,6 +47,7 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 79_200_000L, "to" to 7_200_000L)) shouldBe night
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "to" to 86_400_000L)) shouldBe MpLocalTimeSlot.completeDay
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 36_000_000L, "to" to 36_000_000L))?.isEmpty shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 86_400_000L, "to" to 86_400_000L))?.isEmpty shouldBe true
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "to" to 86_399_999L))?.duration shouldBe
                 86_399_999.milliseconds
     }
@@ -54,5 +57,20 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
         codec.awake<MpLocalTimeSlot?>(mapOf("to" to 0L)) shouldBe null
         codec.awake<MpLocalTimeSlot?>("nonsense") shouldBe null
         codec.awake<NullableWrapper>(mapOf("slot" to mapOf("from" to 0L))) shouldBe NullableWrapper(null)
+    }
+
+    "only an ABSENT duration falls back to to: an explicit null or a non-number duration awakes to null" {
+        codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L, "duration" to null, "to" to 3_600_000L)) shouldBe null
+        codec.awake<MpLocalTimeSlot?>(mapOf("from" to 0L, "duration" to "x", "to" to 3_600_000L)) shouldBe null
+    }
+
+    "a duration beyond Long (a BigInteger from Jackson) saturates to infinite, a negative one to empty" {
+        val huge = BigInteger("18446744073709551621")
+
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to huge))?.isInfinite shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to huge.negate()))?.isEmpty shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e30")))?.isInfinite shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to -1e30))?.isEmpty shouldBe true
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to Long.MIN_VALUE))?.isEmpty shouldBe true
     }
 })

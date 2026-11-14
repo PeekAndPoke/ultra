@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  * Claims the ultra/datetime types and ships their hand-written TypeScript.
  *
  * These all go through custom Slumber codecs, so their JSON shape cannot be derived — `MpInstant` is a
- * data class over a single value yet writes `{ts, timezone, human}`. Two of the six are not objects at
+ * data class over a single value yet writes `{ts, timezone, human}`. Two of the seven are not objects at
  * all: `MpLocalTime` is a bare number and `MpTimezone` a bare string.
  *
  * The TypeScript lives in `resources/ts/runtime/datetime.ts` as a checked-in resource, maintained by

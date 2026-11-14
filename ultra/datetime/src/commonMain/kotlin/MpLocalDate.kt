@@ -349,8 +349,12 @@ data class MpLocalDate(
 
     /**
      * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone], by the clock: it ends at the
-     * slot's `to` on the day [MpLocalTimeSlot.endDayOffset] later, which respects DST. A start moved past the end by a
-     * skipped hour, or an empty slot, gives an empty range; an infinite slot an open end.
+     * slot's `to` on the day [MpLocalTimeSlot.endDayOffset] later, which respects DST.
+     *
+     * - A start or end in a skipped hour moves to the first existing time, the transition (02:30 in a 02:00 to 03:00
+     *   gap is 03:00; [atTime] would give 03:30). A time in a repeated hour takes its first occurrence.
+     * - An empty slot gives an empty range at its start; an infinite slot, or an end the platform cannot resolve, ends
+     *   at the open end. A slot starting at 24:00 starts at 00:00 of this date (the slot wraps its start).
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: MpTimezone): MpZonedDateTimeRange {
         return timeslot.onDate(date = this, timezone = timezone)

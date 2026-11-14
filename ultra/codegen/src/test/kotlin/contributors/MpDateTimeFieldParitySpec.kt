@@ -123,6 +123,8 @@ class MpDateTimeFieldParitySpec : FreeSpec() {
                 slumbered.values.all { it is Number } shouldBe true
             }
 
+            runtimeTs shouldContain
+                    "export const INFINITE_DURATION_MILLIS = ${MpLocalTimeSlot.INFINITE_DURATION_MILLIS}\n"
             runtimeTs shouldContain "export const MpLocalTimeSlot = z.object({\n    from: z.number(),\n" +
                     "    duration: z.number(),\n    to: z.number(),\n})"
         }

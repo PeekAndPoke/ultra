@@ -72,6 +72,34 @@ internal object TimezoneEngine {
         return EpochMath.instant(local, offset)
     }
 
+    /**
+     * The instant of the wall-clock time [local] in [timezone], with the first existing time for a time that does not
+     * exist: in a gap the transition (02:30 in a 02:00 to 03:00 gap is 03:00), in an overlap the first occurrence.
+     * Unlike [toInstant], which moves a time in a gap forward by the length of the gap (02:30 becomes 03:30).
+     */
+    fun toInstantOrTransition(timezone: MpTimezone, local: LocalDateTime): Instant {
+        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(local, it) }
+        requireRegionIdShape(timezone.id)
+
+        val wall = EpochMath.epochSeconds(local)
+
+        val resolution = when {
+            abs(wall) < EXACT_AS_DOUBLE -> resolve { platformOffsetSecondsAt(timezone.id, wall + it) }
+            else -> EpochMath.instant(local, 0).epochSeconds.let { exact ->
+                resolve { lookup(timezone.id, exact + it) }
+            }
+        }
+
+        return when (resolution) {
+            is Resolution.Unique -> EpochMath.instant(local, resolution.offset)
+            is Resolution.Overlap -> EpochMath.instant(local, resolution.earlier)
+            is Resolution.Gap -> {
+                val asUtc = EpochMath.instant(local, 0).epochSeconds
+                Instant.fromEpochSeconds(transitionAfter(timezone.id, asUtc - PROBE_WINDOW_SECONDS, resolution.before))
+            }
+        }
+    }
+
     /** The first instant of [date] in [timezone]: midnight, or the end of the gap when midnight does not exist. */
     fun startOfDay(timezone: MpTimezone, date: LocalDate): Instant {
         fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(date, it) }
@@ -163,7 +191,8 @@ internal object TimezoneEngine {
      * The first second after [from] at which [zoneId] stops using the offset [before].
      *
      * Bisects on Long, not Double: beyond 2^53 a Double midpoint can round onto a bound and never make progress. This
-     * runs only for a start of day inside a gap, so the emulated Long on JS does not matter.
+     * runs only for a time inside a gap (a start of day, or a time slot's end on a date), so the emulated Long on JS
+     * does not matter.
      */
     private fun transitionAfter(zoneId: String, from: Long, before: Int): Long {
         var lo = from

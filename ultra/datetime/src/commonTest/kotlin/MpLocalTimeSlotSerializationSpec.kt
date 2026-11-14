@@ -45,6 +45,7 @@ class MpLocalTimeSlotSerializationSpec : StringSpec({
         decode("""{"from":79200000,"to":7200000}""") shouldBe night
         decode("""{"from":36000000,"to":43200000}""") shouldBe MpLocalTimeSlot.of(t(10), 2.hours)
         decode("""{"from":36000000,"to":36000000}""").isEmpty shouldBe true
+        decode("""{"from":86400000,"to":86400000}""").isEmpty shouldBe true
         decode("""{"from":0,"to":86400000}""") shouldBe MpLocalTimeSlot.completeDay
         // the completeDay of versions before ULTRA-00341 ended at 23:59:59.999
         decode("""{"from":0,"to":86399999}""").duration shouldBe 86_399_999.milliseconds
@@ -52,6 +53,11 @@ class MpLocalTimeSlotSerializationSpec : StringSpec({
 
     "neither duration nor to is an error, as a missing field was before" {
         shouldThrow<SerializationException> { decode("""{"from":0}""") }
+    }
+
+    "only an ABSENT duration falls back to to; an explicit null (a JS client's Infinity or NaN) is an error" {
+        shouldThrow<SerializationException> { decode("""{"from":0,"duration":null,"to":3600000}""") }
+        shouldThrow<SerializationException> { decode("""{"from":0,"duration":null}""") }
     }
 
     "inside a list" {
