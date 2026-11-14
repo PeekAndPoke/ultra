@@ -334,7 +334,7 @@ class ValidationCharacterizationSpec : StringSpec({
         }
     }
 
-    "The checked path through the public ServiceProviderFactory validates an invalid blueprint that never ran create" {
+    "The checked path through newKontainer validates an invalid blueprint that never ran create" {
 
         class Missing
         class Holder(val missing: Missing)
