@@ -49,6 +49,78 @@ the first request's override lambdas alive) and ULTRA-00332 (one entry point for
     `with { kronos }` (`WorkersFacade`): values, no side effect.
   - Test fixtures in `funktor/cluster` and `funktor/insights`: listed in the track report.
 
+## Built (batch K1, 2026-11-14)
+
+As planned, with one refinement: once an override has run, its definition names the instance's class and keeps the
+code location of `create`, exactly as before. Only an override that was never requested differs: its definition
+names the class given to `with`.
+
+**Open point:** "after first use only the value is kept, not the lambda" holds for the provider, and a test pins that.
+The kontainer itself still holds its override lambdas for its lifetime, because `clone` re-runs them for the clone's
+own instances. A collected kontainer leaves nothing reachable (ULTRA-00337 tests). If the maintainer wants the
+kontainer to drop them too, `clone` would have to change meaning.
+
+Pins turned, before -> after:
+- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: the override lambda runs at create ..." -> "The
+  override lambda runs at the first request of the service, once per kontainer, never at create":
+  - runs after create: 1 -> 0
+  - after two gets: 1 -> 1
+  - after a second `create`: 2 -> 1
+- `DynamicsAtCreateCharacterizationSpec`, "Cloning keeps the overrides and runs their lambdas again": runs right
+  after `clone()`: 2 -> 0; after a get in each kontainer: 2.
+- `ToolsCharacterizationSpec`: one clue text, "created at create" -> "created at its first request".
+- `ScopeGuardsSpec`: `forOverride(definition, instance = ...)` -> `forOverride(definition, create = { ... })`, the
+  new signature.
+- `funktor/insights` `KontainerWireNamesSpec`: the end-to-end wire test now also requests the overridden service.
+  Without that, its never-requested override has no instance and is missing from the slice, the consequence named
+  above. A new test there pins that consequence.
+- New tests:
+  - a never-requested override never runs and has no instance
+  - a throwing override fails at the first get with its own exception
+  - mutable state is read at first use
+  - the definition's class before and after first use
+  - the provider keeps only the value
+
+Mutation (failed / 524 or 525):
+
+| Mutant | Result |
+|---|---|
+| KL1: evaluated eagerly at create | RED, 5 |
+| KL2: evaluated on every request | RED, 7 |
+| KL3: the lambda kept after use | SURVIVED at first; RED, 1 after the provider test was added |
+
+Changelog (behaviour change, no compile signal): `ultra/kontainer`: overrides at `create { with { ... } }` are lazy.
+The lambda runs at the first request of that service from that kontainer, at most once per kontainer; `clone()` no
+longer runs it at once. Consequences:
+- An override that throws now throws at the first `get`, and again at the next, as no value was kept.
+- Side effects run later, or never when the service is not used.
+- A lambda reading something mutable sees the value at first use.
+- An override never requested has no instance: none in `instances`, the debug info or the dump, and none in the
+  insights record slice.
+- Until its first use, its definition names the class given to `with` (ULTRA-00333).
+
+Callers checked, nothing observable moves:
+- `with { call.currentUserProvider() }` only builds `UserProvider.lazy { }`
+- `with { UserProvider.system() }`, `with { NullQueryProfiler }` and `with { kronos }` are values
+
+Commits:
+- `9fe4095b`: the plans
+- `a4977d16`: today's built-in behaviour pinned
+- `dc73ee47`: tests first and the fix, 115 tests red before it and all green after
+- `55ff797f`, `cf5358fc`, `d6ed8dd9`: follow-ups
+
+Suites after K1 (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 525 (420 before K1) |
+| `:ultra:log:jvmTest` | 74 (no log file touched) |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 (117 before) |
+| `:funktor:all:jvmTest` | 289 |
+
+Repo-wide compile sweep: green, 459 tasks, 0 errors.
+
 ## The work
 
 - Decide: keep eager (simple, an override is a value) and document it, or make it lazy. If it stays, the KDoc of `with` says so.

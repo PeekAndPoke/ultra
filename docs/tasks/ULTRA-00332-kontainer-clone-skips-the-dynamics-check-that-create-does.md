@@ -33,6 +33,41 @@ ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 - Callers: `WorkersFacade` (`clone { with { kronos } }`, a dynamic, accepted as before); `InstallFixturesCliCommand`
   and the demo's `init.clone()` (no overrides).
 
+## Built (batch K1, 2026-11-14)
+
+As planned: `KontainerBlueprint.createChecked` is the one entry point; `Kontainer.clone` reaches it through
+`ServiceProviderFactory.newKontainer`.
+
+Pins turned, before -> after:
+- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: cloning with an override for a non-dynamic ... throws
+  ServiceNotFound" -> `KontainerInconsistent("Unexpected dynamics were provided: Single")`, the message of `create`.
+- `DynamicPrototypeSpec`, "An override at clone throws ServiceNotFound" -> `KontainerInconsistent` with the message of
+  `create`, the dynamic prototype hint included.
+
+Mutation: KS, `clone` skipping the check: RED, 5 / 524.
+
+Changelog (behaviour change): `ultra/kontainer`: `Kontainer.clone { with { ... } }` runs the same checks as `create`.
+An override for a non-dynamic throws `KontainerInconsistent("Unexpected dynamics were provided: ...")` (was
+`ServiceNotFound`); an override of a built-in is refused as at `create` (ULTRA-00332, ULTRA-00336).
+
+Commits:
+- `9fe4095b`: the plans
+- `a4977d16`: today's built-in behaviour pinned
+- `dc73ee47`: tests first and the fix, 115 tests red before it and all green after
+- `55ff797f`, `cf5358fc`, `d6ed8dd9`: follow-ups
+
+Suites after K1 (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 525 (420 before K1) |
+| `:ultra:log:jvmTest` | 74 (no log file touched) |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 (117 before) |
+| `:funktor:all:jvmTest` | 289 |
+
+Repo-wide compile sweep: green, 459 tasks, 0 errors.
+
 ## The work
 
 - `clone` runs the same dynamics check as `create` and fails with the same exception.

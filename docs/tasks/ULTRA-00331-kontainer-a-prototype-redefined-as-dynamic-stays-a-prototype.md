@@ -58,6 +58,58 @@ overridden; the message says so). `extend` follows the same rule (ULTRA-00330).
   - `InjectionTypeUpgradeSpec` "A Prototype service must not be downgraded to a dynamic" changes with the decision
 - Callers: no production code redefines a prototype as dynamic (searched).
 
+## Built (batch K1, 2026-11-14)
+
+As planned; the rule is in `KontainerBuilder.RedefinitionUpgrade`.
+
+Pins turned, before -> after:
+- `RedefinitionCharacterizationSpec`, "CURRENT BEHAVIOUR: prototype redefined as dynamic stays Prototype ..." ->
+  "Prototype redefined as dynamic: Prototype.Dynamic, its users are promoted, an override at create is refused":
+  - Target: (Prototype, Static) -> (Prototype, Dynamic)
+  - User: (Singleton, Static), shared -> (Singleton, SemiDynamic), one per kontainer
+  - Refusal message: `Unexpected dynamics were provided: Target` -> the same plus `(only dynamic singletons can be
+    overridden, not the dynamic prototype Target)`
+- `RedefinitionCharacterizationSpec`, "singleton, prototype, dynamic ends as Prototype": (Prototype, Static) ->
+  (Prototype, Dynamic).
+- `DynamicPrototypeSpec`, "CURRENT BEHAVIOUR: prototype then dynamicPrototype stays Prototype.Static ...": Target
+  (Prototype, Static) -> (Prototype, Dynamic); User global -> SemiDynamic, one per kontainer.
+- `InjectionTypeUpgradeSpec`, "A Prototype service must not be downgraded to a dynamic ..." -> "... stays a Prototype
+  and becomes Dynamic": (Prototype, Static) -> (Prototype, Dynamic).
+
+Mutation (failed / 524):
+
+| Mutant | Result |
+|---|---|
+| KR1: the static-singleton arm off | RED, 6 |
+| KR2: the type from the later definition | RED, 14 |
+| KR3: the later kind ignored (the old rule) | RED, 5 |
+| KR4: the earlier kind ignored | RED, 10 |
+| KR5: always dynamic | RED, 3 |
+
+Changelog (behaviour change, no compile signal): `ultra/kontainer`: the redefinition rule. The first definition
+fixes whether a service is a singleton or a prototype; a plain static singleton can still be replaced by anything. If
+either definition is dynamic, the service is dynamic. `prototype(X)` then `dynamic(X)` or `dynamicPrototype(X)` now
+gives a dynamic prototype (was a static prototype), so singletons injecting `X` become one per kontainer. An override
+of `X` at create is still refused; the message now names it as a dynamic prototype (ULTRA-00331).
+
+Commits:
+- `9fe4095b`: the plans
+- `a4977d16`: today's built-in behaviour pinned
+- `dc73ee47`: tests first and the fix, 115 tests red before it and all green after
+- `55ff797f`, `cf5358fc`, `d6ed8dd9`: follow-ups
+
+Suites after K1 (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 525 (420 before K1) |
+| `:ultra:log:jvmTest` | 74 (no log file touched) |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 (117 before) |
+| `:funktor:all:jvmTest` | 289 |
+
+Repo-wide compile sweep: green, 459 tasks, 0 errors.
+
 ## The work
 
 - Decide the redefinition table for all pairs of (ServiceType, ServiceKind), `dynamicPrototype` included, and make builder and `extend` follow it (see ULTRA-00330).

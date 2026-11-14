@@ -40,6 +40,72 @@ kontainer exists.
 - Matching is by class equality. All three classes are final, so no subclass can be registered under them.
 - Callers: no code registers or overrides a built-in (searched).
 
+## Built (batch K1, 2026-11-14)
+
+As planned. Registration is refused at the defining call: a statement after the registration in the same block does
+not run, which a test pins.
+
+Today's behaviour, pinned first and confirmed by a run (commit `a4977d16`, 95 tests): every registration form of the
+three was accepted silently and the built-in still provided its value. The form could change what it reported:
+- a `prototype` registration made the built-in (Prototype, Static)
+- a `dynamicPrototype` registration made it (Prototype, Dynamic)
+- a `dynamic` registration made `KontainerBlueprint` (Singleton, Dynamic)
+
+Overrides of `Kontainer` and `InjectionContext` were accepted at `create` and `clone`; `KontainerBlueprint` was
+refused as "Unexpected dynamics were provided" at `create` and threw `ServiceNotFound` at `clone`.
+
+Pins turned, before -> after:
+- `BuiltInServicesCharacterizationSpec`:
+  - 90 registration pins ("accepted, the built-in wins") -> refused with
+    `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`
+  - 5 override pins -> refused with `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be
+    overridden")`
+  - plus one test with a built-in and an unexpected class together: the built-in is named first.
+- `DynamicsAtCreateCharacterizationSpec`, "CURRENT BEHAVIOUR: an override for the Kontainer itself is accepted ..." ->
+  refused, same message.
+
+Mutation (failed / 524):
+
+| Mutant | Result |
+|---|---|
+| KB1 to KB4: refusal removed from `singleton` / `prototype` / `dynamic` / `dynamicPrototype` | RED, 18 each |
+| KB5 and KB6: refusal removed from `instance(value)` / `instance(class, value)` | RED, 9 each |
+| KB7: override refusal removed | RED, 7 |
+| KB8, KB9, KB10: `Kontainer` / `InjectionContext` / `KontainerBlueprint` taken out of the built-in set | RED, 32 / 33 / 32 |
+
+Removed while building: the built-ins were also taken out of the overridable set. That never mattered, since the
+built-in check runs first on the only path that reads the set.
+
+Changelog (behaviour change):
+- `ultra/kontainer`: `Kontainer`, `InjectionContext` and `KontainerBlueprint` cannot be registered. Every form of
+  `singleton`, `prototype`, `dynamic`, `dynamicPrototype` and `instance` is refused, in `kontainer { }`, a module and
+  `extend`: `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`, thrown at
+  the defining call. Before, the registration was accepted silently and the built-in still provided its value, though
+  the declared form could change its reported type and kind.
+- `ultra/kontainer`: they cannot be overridden at `create` or `clone`:
+  `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`. Before, overrides of
+  `Kontainer` and `InjectionContext` were accepted, and services injecting `Kontainer` got the foreign one.
+  `KontainerBlueprint` was refused as "Unexpected dynamics were provided" at `create` and with `ServiceNotFound` at
+  `clone` (ULTRA-00336).
+
+Commits:
+- `9fe4095b`: the plans
+- `a4977d16`: today's built-in behaviour pinned
+- `dc73ee47`: tests first and the fix, 115 tests red before it and all green after
+- `55ff797f`, `cf5358fc`, `d6ed8dd9`: follow-ups
+
+Suites after K1 (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 525 (420 before K1) |
+| `:ultra:log:jvmTest` | 74 (no log file touched) |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 (117 before) |
+| `:funktor:all:jvmTest` | 289 |
+
+Repo-wide compile sweep: green, 459 tasks, 0 errors.
+
 ## The work
 
 - First pin today's behaviour in `ultra/kontainer/src/test/kotlin/e2e/characterization/` as "CURRENT BEHAVIOUR" (track D

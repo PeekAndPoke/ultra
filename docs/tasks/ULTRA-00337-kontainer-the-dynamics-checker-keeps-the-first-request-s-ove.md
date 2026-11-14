@@ -35,6 +35,39 @@ is kept.
 - **A second test:** an override that was used, with the kontainer collected, leaves neither its lambda's capture nor
   its value reachable.
 
+## Built (batch K1, 2026-11-14)
+
+As planned. Confirmed first: both retention tests were RED before the fix (the captured marker was never collected),
+green after.
+
+Tests, `KontainerRetentionSpec`:
+- an unused override, kontainer dropped: the lambda's capture is collected
+- a used override, kontainer dropped: neither the capture nor the value stays reachable
+- a held override provider after first use: the capture is collected (ULTRA-00333)
+
+Mutation: KC, the cache keyed by the live view again: RED, 2 / 524.
+
+Changelog (fix): `ultra/kontainer`: the dynamics check no longer keeps the first request's override lambdas, and
+what they capture, alive for the life of the blueprint (ULTRA-00337).
+
+Commits:
+- `9fe4095b`: the plans
+- `a4977d16`: today's built-in behaviour pinned
+- `dc73ee47`: tests first and the fix, 115 tests red before it and all green after
+- `55ff797f`, `cf5358fc`, `d6ed8dd9`: follow-ups
+
+Suites after K1 (XML, `--rerun`, 0 failures):
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 525 (420 before K1) |
+| `:ultra:log:jvmTest` | 74 (no log file touched) |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 (117 before) |
+| `:funktor:all:jvmTest` | 289 |
+
+Repo-wide compile sweep: green, 459 tasks, 0 errors.
+
 ## The work
 
 - Confirm first: a test that creates a kontainer with an override capturing a marker object, drops every reference,
