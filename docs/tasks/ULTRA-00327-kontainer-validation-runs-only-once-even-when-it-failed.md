@@ -14,6 +14,13 @@ Pinned as it is today in `ultra/kontainer/src/test/kotlin/e2e/characterization/V
 whose name starts with "CURRENT BEHAVIOUR". The split of ULTRA-00319 keeps this behaviour unchanged; the fix is this
 ticket (maintainer, 2026-11-14: "fix each with its own ticket").
 
+## Decided (maintainer, 2026-11-14)
+
+"Yes remember the validation result and fail on every create when not valid."
+
+The validation runs once and its result is remembered: a blueprint that failed validation throws the same
+`KontainerInconsistent` with the same message on every `create()`. The success path stays as cheap as today.
+
 ## The work
 
 - The flag is set only after a successful validation (or the failure is remembered and rethrown). A blueprint that failed validation fails on every `create()` with the same `KontainerInconsistent`.
