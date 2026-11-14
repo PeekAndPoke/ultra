@@ -91,7 +91,9 @@ a new type; `UtcOffset.totalMillis` (an extension on a kotlinx receiver returnin
   removed; `offsetSecondsAt` / `offsetMillisAt`.
 - Still compile, could show the Mp types: `mp-local-date.astro` 32, 117-121; `mp-local-date-time.astro` 32;
   `mp-zoned-date-time.astro` 131-132; `index.astro` 94 (kotlinx `Month.MARCH` / `DayOfWeek.X` inputs).
-- `docs-site/src/data/llms/datetime.md` 74 (`date.dayOfWeek // SATURDAY`): still true by name; no line becomes false.
+- `docs-site/src/data/llms/datetime.md` 155 (`berlin.offsetAt(instant) // +02:00 in summer…`): `offsetAt` is removed
+  (corrected in review round 1; my first list missed it). Line 74 (`date.dayOfWeek // SATURDAY`) is still true by
+  name; lines 86, 89 (kotlinx `DayOfWeek.MONDAY` inputs) still compile.
 
 ## Test evidence
 
@@ -136,8 +138,14 @@ a new type; `UtcOffset.totalMillis` (an extension on a kotlinx receiver returnin
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MINOR | `ExtensionsSpec.kt:35-48`, `KotlinxTimeZoneInputSpec.kt:53-66` | the "…offsetSecondsAt, by hours" tests repeat the tests below them | FIXED | verified identical instants and values; both deleted |
+| 1 | MINOR | `MpLocalDateTime.kt:5` | unused import `kotlinx.datetime.DayOfWeek` | FIXED | removed (`value.dayOfWeek.mp` needs no type import) |
+| 1 | MINOR | ticket | `llms/datetime.md:155` (`offsetAt`) missing from the docs list | FIXED | added; the "nothing becomes false" sentence corrected |
 
-**Verdict:**
+Stayed CLEAN (round 1, blind, reviewer-opus-high; implementation, domain and security charters all CLEAN, no
+CRITICAL/MAJOR): no remaining caller of the removed API in the repo; old stored documents decode as before.
+
+**Verdict:** round 1 CLEAN (no CRITICAL, no MAJOR); MINORs applied above.
 
 ## History
 

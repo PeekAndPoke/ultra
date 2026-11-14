@@ -32,21 +32,6 @@ class ExtensionsSpec : StringSpec({
         ) shouldBe 2 * 60 * 60 * 1_000
     }
 
-    "MpTimeZone.offsetSecondsAt, by hours" {
-
-        MpTimezone.UTC.offsetSecondsAt(
-            MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe 0 * 60 * 60
-
-        MpTimezone.of("Europe/Berlin").offsetSecondsAt(
-            MpInstant.parse("2022-03-27T00:00:00.000Z")
-        ) shouldBe 1 * 60 * 60
-
-        MpTimezone.of("Europe/Berlin").offsetSecondsAt(
-            MpInstant.parse("2022-03-28T00:00:00.000Z")
-        ) shouldBe 2 * 60 * 60
-    }
-
     "MpTimeZone.offsetSecondsAt" {
 
         MpTimezone.UTC.offsetSecondsAt(

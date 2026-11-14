@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
 import io.peekandpoke.ultra.common.slumber.Slumber
-import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
