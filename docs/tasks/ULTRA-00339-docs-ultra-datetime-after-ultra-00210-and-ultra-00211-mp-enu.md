@@ -44,11 +44,12 @@ From ULTRA-00211:
 
 From ULTRA-00343 (new Genesis and Doomsday) and ULTRA-00341 (24:00, lazy views), added 2026-11-14:
 
-- False since ULTRA-00343: `docs-site/src/data/llms/datetime.md:65-66`, `mp-instant.astro:49-50`,
-  `mp-local-date.astro:37-38` (Genesis and Doomsday as -10000-01-01 and +10000-01-01; now 0001-01-01 and 9999-12-31).
-- To add: the sentinels stand for "no start" and "no end" in ranges and are not limits of the date types; ranges stored
-  with the old values still read as open; where `asListOfDates()` appears, that it returns a lazy view and what that
-  means; `ComputedList` on the common page and its LLM mirror.
+- The sentinels: master's values (-10000-01-01, +10000-01-01) were restored for the merge of ULTRA-00341, so
+  `llms/datetime.md:65-66`, `mp-instant.astro:49-50` and `mp-local-date.astro:37-38` are true again. Do not document
+  them further: ULTRA-00343 drops Genesis and Doomsday (open ranges become `Partial`); write the range pages after it.
+- To add: where `asListOfDates()` appears, that it returns a lazy view and what that means; `ComputedList` on the
+  common page and its LLM mirror; the slot redesign of ULTRA-00341 batch 3b-2 (`MpLocalTimeSlot.of(from, duration)`,
+  overnight slots, the skipped-hour rule on a date, the stored shape), after ULTRA-00343 made slots finite.
 - False since ULTRA-00341 batch 3a: `ranges.astro:353` (`completeDay // 00:00 to 23:59:59.999`),
   `mp-local-time.astro:42` (`val endOfDay = MpLocalTime.Max`), `llms/datetime.md:103-106`; to add: `EndOfDay`,
   `parse("24:00")`, `atTime(EndOfDay)`; the TypeScript runtime comment `datetime.ts:42-48`.

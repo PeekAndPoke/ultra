@@ -19,11 +19,51 @@
 - `ultra/datetime`, behaviour change: `splitWithGaps` no longer takes durations and gaps modulo 24 h. `08:00-20:00`
   by 25 h or by `Duration.INFINITE` now yields no slots (was twelve 1-hour slots, resp. one). A gap of 24 h was
   treated as a gap of 0 h, a gap of 20 h looped or wrapped to slots outside the slot; both now leave room for one slot
-  only. An invalid slot (`to <= from`, e.g. 22:00-02:00) now yields no slots (was split across midnight) (ULTRA-00215).
-- `ultra/datetime`, behaviour change: `MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000, which admits
-  every whole-second split of a day) and throws `IllegalArgumentException` before building a split with more slots,
-  e.g. a whole day in 1 ms steps; pass a higher `maxSlots` if you need more. The added parameter changes the JVM
-  signature: recompile callers (ULTRA-00215).
+  only. (ULTRA-00215).
+- `ultra/datetime`: `MpLocalTimeSlot` is a start and a duration. Create it with `MpLocalTimeSlot.of(from, duration)`
+  or `of(from, to)`; the constructor `MpLocalTimeSlot(from, to)` is gone (private), and `copy` with it.
+  - `to` is derived: the clock time of the end (24:00 for an end at midnight); `endDayOffset` / `crossesMidnight` say
+    whether it is a later day. Overnight slots (22:00 to 02:00) and slots longer than a day exist now.
+  - New: `isEmpty`, `isInfinite`, `INFINITE_DURATION_MILLIS`; `Duration.INFINITE` is a slot without an end.
+  - The start wraps into the day: `of(EndOfDay, d)` starts at 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal):
+  - `of(from, to)` and `ofSecondsOfDay(from, to)` with `to` before `from` are an overnight slot; they were an invalid
+    one (`isValid` false, negative `duration`). Equal times are an empty slot, as before (also 24:00 to 24:00).
+  - `of(from, duration)` keeps the whole duration: `of(10:00, 25.hours)` was the 1-hour slot 10:00 to 11:00 (the end
+    wrapped), now it is 25 hours; `of(23:00, 2.hours)` was invalid, now it is overnight; a negative duration is an
+    empty slot at `from`.
+  - `Partial.asValidRange()` with `to` before `from` returned null (a form's "end before start" check) and now returns
+    an overnight slot; only equal times give null.
+  - A decoded slot is no longer bounded by one day: code that relied on `isValid` now accepts multi-year and endless
+    slots (`isInfinite`).
+  - `val (from, to) = slot`: `component2()` is the `duration` now.
+  - Without a date a slot is a daily pattern on the 24-hour clock: `contains`, `intersects`, `touches`,
+    `isAdjacentTo`, `mergeWith` and `cutAway` work across midnight; `contains(EndOfDay)` counts 24:00 as 00:00 (it was
+    false); a slot of 24 hours or more covers the whole clock.
+  - `MpLocalDate.toRange(slot, zone)` ends by the clock on the day `endDayOffset` later: a night slot lasts 7 or 9 real
+    hours on DST nights. A start or end in a skipped hour moves to the first existing time (02:30 becomes 03:00; it
+    moved by the gap length, to 03:30), a repeated hour takes its first occurrence, and a slot that starts and ends
+    on a skipped date is empty at the next day's start (one that runs into the next day keeps that part); such cases
+    gave inverted ranges before (ULTRA-00341).
+  - `isAdjacentTo` with an empty slot is always false; it was true when the empty slot's point sat on the other's
+    end (`10:00-11:00` and `11:00-11:00`).
+- `ultra/datetime` and `ultra/slumber`, stored format: a slot is stored as `{from, duration, to}` in milliseconds
+  (`to` derived, ignored on read; an infinite duration is 9007199254740991). Both decoders still read the old
+  `{from, to}` (`to` before `from` as overnight; a stored `{0, 86399999}` reads as 23:59:59.999 long). A reader of an
+  older version reads `{from, to}`: slumber ignores `duration`, a kotlinx `Json` without `ignoreUnknownKeys` fails on
+  it. There an overnight slot comes out invalid, and a slot of 24 hours or more as its clock times only. Update
+  readers before writers (ULTRA-00341).
+- `ultra/datetime`, breaking: `splitWithGaps` loses `maxSlots` and never throws; it returns a lazy view
+  (`ComputedList`; read-only, not a `MutableList`) of at most `Int.MAX_VALUE` parts, and walks overnight and
+  multi-day slots. With user input, check `size` before `map` / `toList()`: nothing else bounds the count
+  (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalDateRange.asListOfDates()` and
+  `MpClosedLocalDateRange.asListOfDates()` return a lazy view (`ComputedList`) instead of a built list. Same type
+  (`List<MpLocalDate>`), same elements; any length is cheap to create and to read (`forever.asListOfDates()` included).
+  - Each read computes the date again: equal, not the same instance.
+  - `toList()`, `map`, `filter`, `sorted` build a real list of every date: for an open range that is millions.
+  - It is not a `MutableList`: a cast to `MutableList` or `ArrayList` that used to work now fails.
+  - `toString()` no longer lists every date: `ComputedList(size=N, [d0, d1, d2, ...])` (ULTRA-00341).
 - `mutator`, behaviour change (no compile signal): a write through a held element mutator of a `ListMutator` is
   dropped silently when its row is gone (removed, cleared, the whole list replaced or reset) or holds another instance
   than the mutator last saw (another element mutator, `set`, a reorder such as `sort`, `reverse` or `shuffle`, or a
@@ -215,10 +255,10 @@
 - `ultra/datetime`: `MpLocalTimeSlot.completeDay` now ends at `MpLocalTime.EndOfDay` (24:00) instead of `Max`
   (23:59:59.999). An app that uses `completeDay` writes `86400000` after the upgrade without any code change.
   - A reader of an older version, including a browser tab left open across a deploy, reads the slot
-    `{"from":0,"to":86400000}` as `[00:00, 00:00)`: an invalid slot, so "open all day" becomes "never open". Saving
-    it there persists `{"from":0,"to":0}`. Update readers before writers.
-  - Slots stored from the old `completeDay` hold `to = 86399999`: `MpLocalTimeSlot(Min, Max) == completeDay` is now
-    false, and `completeDay.cutAway(MpLocalTimeSlot(Min, Max))` is `[MpLocalTimeSlot(Max, EndOfDay)]`, a 1 ms slot
+    `{"from":0,"duration":86400000,"to":86400000}` by its `from` and `to`, as `[00:00, 00:00)`: an invalid slot, so
+    "open all day" becomes "never open". Saving it there persists `{"from":0,"to":0}`. Update readers before writers.
+  - Slots stored from the old `completeDay` hold `to = 86399999`: `MpLocalTimeSlot.of(Min, Max) == completeDay` is now
+    false, and `completeDay.cutAway(MpLocalTimeSlot.of(Min, Max))` is `[MpLocalTimeSlot.of(Max, EndOfDay)]`, a 1 ms slot
     (it was empty).
   - `completeDay.splitWithGaps(1.hours)` gives 24 slots (23 before).
   - A kraft time field bound to `completeDay.to` renders empty (it showed 23:59:59): the browser's time input does
@@ -237,7 +277,8 @@
   `of(24, 0)`, `ofMilliSeconds(86_400_000)` and `ofSecondOfDay(86_400)` still wrap to 00:00 (ULTRA-00341).
 - `ultra/datetime`, behaviour change (no compile signal): `MpLocalTimeSlot.of(from, duration)` and
   `ofSecondsOfDay(from, to)` end a slot of exactly 24:00 at `EndOfDay`: `of(23:00, 1.hours)` is `[23:00, 24:00)`, it
-  was the invalid `[23:00, 00:00)`. An end beyond 24:00 still wraps. `splitWithGaps` ends a slot reaching 24:00 at
+  was the invalid `[23:00, 00:00)`. An end beyond 24:00 makes an overnight slot (see the
+  slot redesign above). `splitWithGaps` ends a slot reaching 24:00 at
   `EndOfDay` instead of building an invalid last slot ending at 00:00 (ULTRA-00341).
 - `ultra/datetime`, behaviour change (no compile signal): `DateTimeRangeConverter.fromHourToHour(_, 24)` (e.g.
   `toZonedTimeRange(zone).fromHourToHour(8, 24)`) ends at the start of the day after the last day; it ended at 00:00
@@ -249,6 +290,13 @@
 
 ### New
 
+- `ultra/common`, new: `ComputedList<T>(size) { index -> … }`, a read-only list view that computes each element on
+  demand and stores nothing; `RandomAccess`; its `toString()` shows the size and the first three elements
+  (ULTRA-00341).
+- `ultra/datetime`: `MpLocalTimeSlotRawData`, `MpLocalTimeSlotSerializer`, `MpLocalTimeSlot.toRawData()`,
+  `MpLocalTimeSlotRawData.toSlotOrNull()`; `@Slumber.As` on the slot, so karango and monko query paths are `from`,
+  `duration`, `to` (ULTRA-00341).
+- `ultra/codegen`: the TypeScript runtime has `MpLocalTimeSlot` (`{from, duration, to}`) (ULTRA-00341).
 - `ultra/kontainer`: `dynamicPrototype()`, next to `singleton()`, `prototype()` and `dynamic()`, with the same
   overloads. A new instance on every injection like a prototype, bound to the kontainer like a dynamic: a singleton
   injecting one becomes `SemiDynamic`. It cannot be overridden at `create { with { } }`; such an override is refused
@@ -268,6 +316,9 @@
 
 ### Fixes
 
+- `ultra/datetime`: `MpLocalDate.numDaysInMonth` and `getDatesInMonth` come from the calendar. They went through a
+  date range clamped to Genesis / Doomsday and returned wrong counts (and lost dates) for months before -10000-01 and
+  from 10000-01 on (ULTRA-00341).
 - `ultra/kontainer`: the dynamics check no longer keeps the first request's override lambdas, and what they capture,
   alive for the life of the blueprint (ULTRA-00337).
 - `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever or returns wrapped slots when a step or a

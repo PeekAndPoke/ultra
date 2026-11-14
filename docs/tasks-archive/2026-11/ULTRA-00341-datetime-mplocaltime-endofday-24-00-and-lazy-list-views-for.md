@@ -1,6 +1,6 @@
 # ULTRA-00341: datetime: MpLocalTime.EndOfDay (24:00), and lazy list views for date ranges and slot splits
 
-> **Status (2026-11-14): IN PROGRESS.** 
+> **Status (2026-11-14): DONE.** Batches 3a (`c6ecca2a`), 3b-1 and 3b-2 (`e7c882a9`) are merged into master, every gate closed. Master's sentinel values were restored for the merge; ULTRA-00343 drops them and makes slots finite, so the slot API is still in flux: the docs (ULTRA-00339, datetime docs) are written after ULTRA-00343.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -692,3 +692,4 @@ durations are cut to whole milliseconds; `Duration.INFINITE` gives an open end o
   the sentinel constants.
 - 2026-11-14: master merged into `wt/datetime`; master's sentinel constants restored on top for the merge (maintainer);
   the choice of values stays open in ULTRA-00343.
+- 2026-11-14: DONE.

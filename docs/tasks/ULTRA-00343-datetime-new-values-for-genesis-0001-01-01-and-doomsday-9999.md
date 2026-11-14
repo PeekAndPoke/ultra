@@ -570,3 +570,39 @@ or `MpLocalDateRangeLazySpec`, green on JVM, JS and native):**
 - 2026-11-14: master's values restored on `wt/datetime` for the merge of ULTRA-00341 (maintainer: "ok please do this so
   the merge works"); the values built here are not merged; the decision (other values, or no sentinels) is open and
   discussed after the merge.
+- 2026-11-14: master's values were restored for the merge of ULTRA-00341 (`e7c882a9`); the maintainer's decision
+  below replaces the question of which values to use.
+
+## Decided (maintainer, 2026-11-14): no sentinels, open ranges are `Partial`, slots are finite
+
+The other projects do not use the constants. In the maintainer's words: "we return Partial and add the query methods
+you proposed, where from = null means open start and to = null means open end. Use the same pattern for all ranges
+that need it and drop doomsday and genesis please."
+
+- **Open ranges:** `beginningAt()`, `endingAt()` and `forever` return `Partial`. `from = null` is an open start,
+  `to = null` an open end. The same pattern for every range type that needs it (`MpInstantRange`,
+  `MpZonedDateTimeRange`, `MpLocalDateRange`, `MpClosedLocalDateRange`).
+- **Queries on `Partial`:** `contains` and `intersects`, null read as unbounded. A `Partial` with its ends in the
+  wrong order contains nothing; no exception.
+- **The two-ended ranges stay plain,** not part of a sealed hierarchy ("this would clutter the usage sides with when
+  statements, it would also break the serialization"). `hasStart`, `hasEnd` and `isOpen` belong to `Partial`. Length
+  questions (`numberOfDays`, `numberOfNights`, `asListOfDates`, `asDatePeriod`) stay on the two-ended ranges only.
+- **Genesis and Doomsday are dropped** from all date types and `constants.kt`. No decoder translates old sentinel
+  values: nothing in production holds them.
+- **Slots are finite:** "the underlying problem is that we allow Duration.INFINITE for the timeslot. I think we should
+  not allow this one." `MpLocalTimeSlot.of(from, Duration.INFINITE)` gives a slot cut to the largest finite length it
+  can store ("Yes take A"); no exception. `isInfinite`, the open end of `toRange(slot, zone)`, and the "counts as
+  infinite" rule of the decoders and of `datetime.ts` go. `toRange` always returns a two-ended range; an end beyond
+  what the platform can represent ends at the last representable instant.
+- Considered and not taken: a sealed family per range type; separate `OpenStart` / `OpenEnd` types; a separate
+  `OpenEnded` type next to `Partial`.
+
+To settle in the track's plan before building, each with an example: the stored shape of an open range and what a
+database query on a null end looks like in karango and monko; what `Partial` means for form input now that null
+also means unbounded (`asValidRange()` stays "both ends set and in order"); the behaviours of master listed above as
+"back and not fixed", which this change removes or leaves; from the review of the sentinel restore: a range that
+starts before Genesis lists wrong dates, an open end lost in a zone conversion, shifting an open range closes it, an
+empty range counts as adjacent, the two date range types disagree on the open end by a day; and three text or test
+MINORs of that review (the count-1 case lists one date, not none; `numDaysInMonth` is pinned in `MpLocalDateSpec`;
+`MpLocalTimeSlotOnDateSpec.kt:134` needs the literal `+12000-01-01T09:00:00Z`).
+

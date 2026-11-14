@@ -103,6 +103,13 @@ Across the waves:
   remembered validation result, the cycle check and dependency graph reading the announced injections, ambiguous
   injections reported as ambiguous, an ambiguous nullable injection as an error. Strict gate round 1 CLEAN. No
   blueprint in the repo changed outcome. Next: K3 (ULTRA-00329), after the plan is re-confirmed.
+- 2026-11-14, **track D (kontainer), ULTRA-00344: in review.** The maintainer took the lazy overrides of
+  ULTRA-00333 back: overrides run eagerly at `create` again, once per kontainer; laziness is built in place by the
+  caller. Gate round 1 CLEAN; one refusal moved in front of the lambdas, delta review pending.
+- 2026-11-14, **track A (datetime), ULTRA-00341 batches 3b-1 and 3b-2: MERGED** (`e7c882a9`), with master's sentinel
+  values restored. `ComputedList`, lazy `asListOfDates()`, `numDaysInMonth` from the calendar; `MpLocalTimeSlot` as
+  a start plus a duration. ULTRA-00341 is done. Next: ULTRA-00343 as decided by the maintainer: Genesis and
+  Doomsday dropped, open ranges are `Partial` with queries, slots are finite.
 
 ## History
 
