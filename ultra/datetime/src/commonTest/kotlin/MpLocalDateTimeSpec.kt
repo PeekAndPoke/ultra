@@ -7,7 +7,6 @@ import io.kotest.matchers.comparables.shouldBeEqualComparingTo
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 
@@ -165,9 +164,9 @@ class MpLocalDateTimeSpec : StringSpec({
 
         subject.year shouldBe 2022
         subject.monthNumber shouldBe 4
-        subject.month shouldBe Month.APRIL
+        subject.month shouldBe MpMonth.APRIL
         subject.dayOfMonth shouldBe 5
-        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+        subject.dayOfWeek shouldBe MpDayOfWeek.TUESDAY
         subject.dayOfYear shouldBe 95
 
         subject.hour shouldBe 12
@@ -177,10 +176,10 @@ class MpLocalDateTimeSpec : StringSpec({
     }
 
     "dayOfWeek" {
-        MpLocalDateTime.of(2022, Month.APRIL, 4, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.MONDAY
-        MpLocalDateTime.of(2022, Month.APRIL, 5, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.TUESDAY
-        MpLocalDateTime.of(2022, Month.APRIL, 6, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.WEDNESDAY
-        MpLocalDateTime.of(2022, Month.APRIL, 10, 10, 0, 0).dayOfWeek shouldBe DayOfWeek.SUNDAY
+        MpLocalDateTime.of(2022, Month.APRIL, 4, 10, 0, 0).dayOfWeek shouldBe MpDayOfWeek.MONDAY
+        MpLocalDateTime.of(2022, Month.APRIL, 5, 10, 0, 0).dayOfWeek shouldBe MpDayOfWeek.TUESDAY
+        MpLocalDateTime.of(2022, Month.APRIL, 6, 10, 0, 0).dayOfWeek shouldBe MpDayOfWeek.WEDNESDAY
+        MpLocalDateTime.of(2022, Month.APRIL, 10, 10, 0, 0).dayOfWeek shouldBe MpDayOfWeek.SUNDAY
     }
 
     "dayOfYear" {

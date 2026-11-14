@@ -106,10 +106,7 @@ data class MpInstant(
      * Create a [MpZonedDateTime] at the given [timezone]
      */
     override fun atZone(timezone: MpTimezone): MpZonedDateTime {
-        return MpZonedDateTime.of(
-            MpLocalDateTime(TimezoneEngine.toLocalDateTime(timezone, value)),
-            timezone,
-        )
+        return MpZonedDateTime.of(instant = this, timezone = timezone)
     }
 
     /**

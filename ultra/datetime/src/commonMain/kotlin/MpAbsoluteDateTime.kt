@@ -9,6 +9,11 @@ interface MpAbsoluteDateTime {
      */
     fun toInstant(): MpInstant
 
+    /** Whether [other] is the same point in time, whatever the zone; unlike equals, which also compares the zone. */
+    fun isSameInstant(other: MpAbsoluteDateTime): Boolean {
+        return toInstant() == other.toInstant()
+    }
+
     /**
      * Converts to an [MpZonedDateTime] at the given [timezone].
      */

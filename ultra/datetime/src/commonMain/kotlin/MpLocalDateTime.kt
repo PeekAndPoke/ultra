@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.datetime
 
 import io.peekandpoke.ultra.common.ComparableTo
 import io.peekandpoke.ultra.common.slumber.Slumber
-import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
@@ -42,6 +41,24 @@ data class MpLocalDateTime(
         fun of(
             year: Int,
             month: Month,
+            day: Int,
+            hour: Int = 0,
+            minute: Int = 0,
+            second: Int = 0,
+            milliSecond: Int = 0,
+        ): MpLocalDateTime = of(
+            year = year,
+            month = month.number,
+            day = day,
+            hour = hour,
+            minute = minute,
+            second = second,
+            milliSecond = milliSecond,
+        )
+
+        fun of(
+            year: Int,
+            month: MpMonth,
             day: Int,
             hour: Int = 0,
             minute: Int = 0,
@@ -114,7 +131,7 @@ data class MpLocalDateTime(
     val monthNumber: Int get() = value.month.number
 
     /** The month */
-    val month: Month get() = value.month
+    val month: MpMonth get() = value.month.mp
 
     /** The day of the month */
     val dayOfMonth: Int get() = value.day
@@ -132,7 +149,7 @@ data class MpLocalDateTime(
     val milliSecond: Int get() = value.nanosecond / 1_000_000
 
     /** The day of the week */
-    val dayOfWeek: DayOfWeek get() = value.dayOfWeek
+    val dayOfWeek: MpDayOfWeek get() = value.dayOfWeek.mp
     /** The day of the year */
     val dayOfYear: Int get() = value.dayOfYear
 

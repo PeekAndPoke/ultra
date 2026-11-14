@@ -59,6 +59,15 @@ data class MpLocalDate(
         )
 
         /**
+         * Creates an [MpLocalDate] from [year], [month] and [day].
+         */
+        fun of(year: Int, month: MpMonth, day: Int): MpLocalDate = of(
+            year = year,
+            month = month.number,
+            day = day,
+        )
+
+        /**
          * Parses an [MpLocalDate] from the given [isoString].
          *
          * Throws an [IllegalArgumentException] if parsing fails.
@@ -101,13 +110,13 @@ data class MpLocalDate(
     val monthNumber: Int get() = value.month.number
 
     /** The month */
-    val month: Month get() = value.month
+    val month: MpMonth get() = value.month.mp
 
     /** The day of the month */
     val day: Int get() = value.day
 
     /** The day of the week */
-    val dayOfWeek: DayOfWeek get() = value.dayOfWeek
+    val dayOfWeek: MpDayOfWeek get() = value.dayOfWeek.mp
 
     /** The day of the year */
     val dayOfYear: Int get() = value.dayOfYear
@@ -211,7 +220,12 @@ data class MpLocalDate(
     /**
      * Gets the upcoming day that is of the given [dayOfWeek].
      */
-    fun atStartOfNext(dayOfWeek: DayOfWeek): MpLocalDate {
+    fun atStartOfNext(dayOfWeek: DayOfWeek): MpLocalDate = atStartOfNext(dayOfWeek.mp)
+
+    /**
+     * Gets the upcoming day that is of the given [dayOfWeek].
+     */
+    fun atStartOfNext(dayOfWeek: MpDayOfWeek): MpLocalDate {
 
         var result = plus(1, DateTimeUnit.DAY)
 
@@ -225,7 +239,12 @@ data class MpLocalDate(
     /**
      * Gets the previous day that is of the given [dayOfWeek].
      */
-    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpLocalDate {
+    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpLocalDate = atStartOfPrevious(dayOfWeek.mp)
+
+    /**
+     * Gets the previous day that is of the given [dayOfWeek].
+     */
+    fun atStartOfPrevious(dayOfWeek: MpDayOfWeek): MpLocalDate {
 
         var result = this
 
@@ -509,7 +528,13 @@ data class MpLocalDate(
      * @return A list of MpLocalDate objects for the specified weekdays in the current month.
      */
     @JvmName("getDatesInMonth_by_weekdays")
-    fun getDatesInMonth(weekdays: Iterable<DayOfWeek>): List<MpLocalDate> {
+    fun getDatesInMonth(weekdays: Iterable<DayOfWeek>): List<MpLocalDate> = getDatesInMonth(weekdays.map { it.mp })
+
+    /**
+     * Retrieves a list of dates in the current month that match the specified [weekdays], without duplicates.
+     */
+    @JvmName("getDatesInMonth_by_mp_weekdays")
+    fun getDatesInMonth(weekdays: Iterable<MpDayOfWeek>): List<MpLocalDate> {
         val days = weekdays.toSet()
 
         return (1..numDaysInMonth)

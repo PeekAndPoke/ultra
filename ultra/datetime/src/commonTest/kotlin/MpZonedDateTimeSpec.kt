@@ -24,32 +24,32 @@ class MpZonedDateTimeSpec : StringSpec({
 
         val utc = MpZonedDateTime.parse("2022-04-05T00:00", MpTimezone.of("UTC"))
 
-        utc shouldBeEqualComparingTo MpZonedDateTime.parse(
+        utc shouldBeSameInstantAs MpZonedDateTime.parse(
             isoString = "2022-04-05T00:00",
             timezone = MpTimezone.of("Europe/Bucharest")
         )
 
-        utc shouldBeEqualComparingTo MpZonedDateTime.parse(
+        utc shouldBeSameInstantAs MpZonedDateTime.parse(
             isoString = "2022-04-05T00:00:00.000Z",
             timezone = MpTimezone.of("Europe/Bucharest")
         )
 
-        utc shouldBeEqualComparingTo MpZonedDateTime.parse(
+        utc shouldBeSameInstantAs MpZonedDateTime.parse(
             isoString = "2022-04-05T03:00:00[Europe/Bucharest]",
             timezone = MpTimezone.of("Europe/Bucharest")
         )
 
-        utc shouldBeEqualComparingTo MpZonedDateTime.parse(
+        utc shouldBeSameInstantAs MpZonedDateTime.parse(
             isoString = "2022-04-05T00:00",
             timezone = MpTimezone.of("Europe/Berlin")
         )
 
-        utc shouldBeEqualComparingTo MpZonedDateTime.parse(
+        utc shouldBeSameInstantAs MpZonedDateTime.parse(
             isoString = "2022-04-05T02:00:00[Europe/Berlin]",
             timezone = MpTimezone.of("Europe/Berlin")
         )
 
-        utc shouldBeEqualComparingTo MpZonedDateTime.parse(
+        utc shouldBeSameInstantAs MpZonedDateTime.parse(
             isoString = "2022-04-05T02:00:00[Europe/Berlin]",
             timezone = MpTimezone.of("Europe/Bucharest")
         )
@@ -137,7 +137,8 @@ class MpZonedDateTimeSpec : StringSpec({
         MpZonedDateTime.parse("2022-04-05T00:00:01Z") shouldBeGreaterThan
                 MpZonedDateTime.parse("2022-04-05T00:00:00Z")
 
-        MpZonedDateTime.parse("2022-04-05T00:00:00Z") shouldBeEqualComparingTo
+        // the same instant in another zone: compareTo is no longer 0 (ULTRA-00211), isSameInstant is true
+        MpZonedDateTime.parse("2022-04-05T00:00:00Z") shouldBeSameInstantAs
                 MpZonedDateTime.parse("2022-04-05T03:00:00[Europe/Bucharest]")
 
         MpZonedDateTime.parse("2022-04-05T00:00:00Z") shouldBeGreaterThan
@@ -152,7 +153,7 @@ class MpZonedDateTimeSpec : StringSpec({
             .toString() shouldBe "MpZonedDateTime(2022-04-05T00:00:00.000Z)"
 
         MpZonedDateTime.parse("2022-04-05T00:00:00", MpTimezone.of("Europe/Bucharest"))
-            .toString() shouldBe "MpZonedDateTime(2022-04-05T03:00:00.000[Europe/Bucharest])"
+            .toString() shouldBe "MpZonedDateTime(2022-04-05T03:00:00.000+03:00[Europe/Bucharest])"
     }
 
     "toIsoString" {
@@ -208,9 +209,9 @@ class MpZonedDateTimeSpec : StringSpec({
 
         subject.year shouldBe 2022
         subject.monthNumber shouldBe 4
-        subject.month shouldBe Month.APRIL
+        subject.month shouldBe MpMonth.APRIL
         subject.dayOfMonth shouldBe 5
-        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+        subject.dayOfWeek shouldBe MpDayOfWeek.TUESDAY
         subject.dayOfYear shouldBe 95
 
         subject.hour shouldBe 12
@@ -223,7 +224,7 @@ class MpZonedDateTimeSpec : StringSpec({
         val subject = MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14, 15)
             .atZone(MpTimezone.of("Europe/Bucharest"))
 
-        subject.dayOfWeek shouldBe DayOfWeek.TUESDAY
+        subject.dayOfWeek shouldBe MpDayOfWeek.TUESDAY
     }
 
     "Fields dayOfYear" {
@@ -697,3 +698,9 @@ class MpZonedDateTimeSpec : StringSpec({
         result.toEpochMillis() shouldBe source.toEpochMillis()
     }
 })
+
+/** Asserts the same point in time, whatever the zones (ULTRA-00211: compareTo also compares local time and zone). */
+private infix fun MpZonedDateTime.shouldBeSameInstantAs(other: MpZonedDateTime) {
+    isSameInstant(other) shouldBe true
+}
+

@@ -36,9 +36,11 @@ class DateTimeRangeConverter(
     }
 
     private fun create(from: MpZonedDateTime, to: MpZonedDateTime): MpZonedDateTimeRange {
+        // Clamped by instant, not by MpZonedDateTime.compareTo (which also orders by local time and zone); on a tie
+        // Genesis / Doomsday stay, as maxOf / minOf kept them before (ULTRA-00211).
         return MpZonedDateTimeRange(
-            from = maxOf(MpZonedDateTime.Genesis, from),
-            to = minOf(MpZonedDateTime.Doomsday, to),
+            from = if (from.toInstant() > MpInstant.Genesis) from else MpZonedDateTime.Genesis,
+            to = if (to.toInstant() < MpInstant.Doomsday) to else MpZonedDateTime.Doomsday,
         )
     }
 }
