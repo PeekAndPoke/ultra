@@ -60,7 +60,7 @@ class KontainerBlueprint internal constructor(
     /**
      * A lookup for finding the overridable service from the class of an override
      */
-    internal val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(overridableClasses)
+    private val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(overridableClasses)
 
     /**
      * Used to check whether unexpected instances are passed to [create]
@@ -225,9 +225,22 @@ class KontainerBlueprint internal constructor(
         }
 
         // Every override resolves to one service now, so an ambiguous one is refused before any override lambda runs
-        overridden.forEach { dynamicsBaseTypeLookUp.getDistinctFor(it) }
+        overridden.forEach { overriddenServiceOf(it) }
 
         return instantiate(dynamics)
+    }
+
+    /**
+     * The service an override given as [cls] replaces: [cls] itself when it is an overridable dynamic, otherwise the
+     * one overridable dynamic it is assignable to.
+     *
+     * Exact membership uses class equality, as the definitions do; only the fallback asks Java assignability.
+     *
+     * @throws ServiceAmbiguous when [cls] is not overridable itself and fits several
+     */
+    internal fun overriddenServiceOf(cls: KClass<*>): KClass<*> = when (cls) {
+        in overridableClasses -> cls
+        else -> dynamicsBaseTypeLookUp.getDistinctFor(cls)
     }
 
     /**

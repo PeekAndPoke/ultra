@@ -6,13 +6,10 @@ import kotlin.reflect.KClass
  * Creates and caches [ServiceProvider] instances for a [Kontainer].
  *
  * Manages thread-safe access to providers and applies dynamic overrides.
- *
- * The constructor runs the override lambdas of [dynamics] without the checks of [KontainerBlueprint.create]; kontainers
- * are made by [KontainerBlueprint.create] and [Kontainer.clone].
  */
-class ServiceProviderFactory(
+class ServiceProviderFactory internal constructor(
     val blueprint: KontainerBlueprint,
-    val dynamics: DynamicOverrides,
+    internal val dynamics: DynamicOverrides,
     providerProviders: Map<KClass<*>, ServiceProvider.Provider>,
 ) {
     private val lock: Any = Any()
@@ -20,7 +17,7 @@ class ServiceProviderFactory(
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
         .plus(
             dynamics.overrides.map { (cls, provider) ->
-                val baseType = blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls)
+                val baseType = blueprint.overriddenServiceOf(cls)
 
                 // The override runs here, at create, once per kontainer; when it throws, no kontainer results
                 val instance = provider()

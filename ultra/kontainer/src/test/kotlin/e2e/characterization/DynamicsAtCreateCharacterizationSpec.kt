@@ -9,11 +9,10 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
-import io.peekandpoke.ultra.kontainer.DynamicOverrides
+import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceAmbiguous
-import io.peekandpoke.ultra.kontainer.ServiceProviderFactory
 import io.peekandpoke.ultra.kontainer.e2e.Reported
 import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.getName
@@ -357,10 +356,12 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
+    // An unregistered subclass of two dynamics: no exact match, so ambiguous (ULTRA-00345)
     "An override that matches two dynamics is refused with ServiceAmbiguous before any override lambda runs" {
 
         open class Outer
-        class Inner : Outer()
+        open class Inner : Outer()
+        class Leaf : Inner()
         class Other
 
         val blueprint = kontainer {
@@ -375,12 +376,12 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         val error = shouldThrow<ServiceAmbiguous> {
             blueprint.create {
                 with { validRuns.incrementAndGet(); Other() }
-                with { ambiguousRuns.incrementAndGet(); Inner() }
+                with { ambiguousRuns.incrementAndGet(); Leaf() }
             }
         }
 
         assertSoftly {
-            error.message shouldBe "Service Inner is ambiguous. It has multiple candidates: Outer, Inner"
+            error.message shouldBe "Service Leaf is ambiguous. It has multiple candidates: Outer, Inner"
             validRuns.get() shouldBe 0
             ambiguousRuns.get() shouldBe 0
         }
@@ -389,7 +390,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
     "A clone adding an override that matches two dynamics is refused before the parent's lambdas run again" {
 
         open class Outer
-        class Inner : Outer()
+        open class Inner : Outer()
+        class Leaf : Inner()
         class Other
 
         val validRuns = AtomicInteger()
@@ -404,7 +406,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
 
         shouldThrow<ServiceAmbiguous> {
-            original.clone { with { ambiguousRuns.incrementAndGet(); Inner() } }
+            original.clone { with { ambiguousRuns.incrementAndGet(); Leaf() } }
         }
 
         assertSoftly {
@@ -452,8 +454,36 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; a question for the maintainer (ULTRA-00344, gate round 1, M3).
-    "CURRENT BEHAVIOUR: two overrides for one service under different classes both run, the later one wins" {
+    "Two overrides under different classes for two registered services are two overrides (ULTRA-00345)" {
+
+        open class Base
+        class Derived : Base()
+
+        val log = mutableListOf<String>()
+
+        val baseGiven = Base()
+        val derivedGiven = Derived()
+
+        val subject = kontainer {
+            dynamic(Base::class)
+            dynamic(Derived::class)
+        }.create {
+            with(Base::class) { log.add("base"); baseGiven }
+            with(Derived::class) { log.add("derived"); derivedGiven }
+        }
+
+        val factory = subject.getServiceProviderFactory()
+
+        assertSoftly {
+            log shouldBe listOf("base", "derived")
+            factory.getProvider(Base::class).provide(subject, InjectionContext.kontainerRoot) shouldBeSameInstanceAs
+                    baseGiven
+            subject.get(Derived::class) shouldBeSameInstanceAs derivedGiven
+        }
+    }
+
+    // Decided to stay (ULTRA-00345): an edge case, the user should be careful.
+    "Two overrides for one service under different classes both run, the later one wins" {
 
         open class Base
         class First : Base()
@@ -474,32 +504,30 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; a question for the maintainer (ULTRA-00344, gate round 1, M4).
-    "CURRENT BEHAVIOUR: the public ServiceProviderFactory constructor runs the lambdas, newKontainer again" {
+    // Decided to stay (ULTRA-00345), the clone flavour of the case above.
+    "A clone's override under the base class runs, but the parent's later override under a subclass wins" {
 
-        class Dyn
+        open class Base
+        class Sub : Base()
 
-        val runs = AtomicInteger()
+        val log = mutableListOf<String>()
 
-        val blueprint = kontainer { dynamic(Dyn::class) }
-        val kontainer = blueprint.create { with { runs.incrementAndGet(); Dyn() } }
+        val original = kontainer {
+            dynamic(Base::class)
+        }.create {
+            with(Base::class) { log.add("a"); Base() }
+            with(Sub::class) { log.add("b"); Sub() }
+        }
 
-        val factory = ServiceProviderFactory(
-            blueprint = blueprint,
-            dynamics = kontainer.getServiceProviderFactory().dynamics,
-            providerProviders = emptyMap(),
-        )
+        log.clear()
+        val clone = original.clone { with(Base::class) { log.add("x"); Base() } }
 
         assertSoftly {
-            withClue("one run at create, one unchecked run by the public constructor") {
-                runs.get() shouldBe 2
+            withClue("merged order: Base with the clone's lambda, then Sub with the parent's") {
+                log shouldBe listOf("x", "b")
             }
-
-            factory.newKontainer(DynamicOverrides(emptyMap()))
-
-            withClue("and one more for the kontainer newKontainer returns") {
-                runs.get() shouldBe 3
-            }
+            clone.get(Base::class)::class shouldBe Sub::class
+            clone.get(Base::class) shouldNotBeSameInstanceAs original.get(Base::class)
         }
     }
 
