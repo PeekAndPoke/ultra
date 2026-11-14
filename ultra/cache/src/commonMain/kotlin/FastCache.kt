@@ -472,9 +472,16 @@ class FastCache<K, V>(
 
                     // TODO(scan): re-walks the whole object graph of key and value on every read, not
                     //   just on writes.
-                    val newKeySize = estimator.estimate(action.key)
-                    val newValueSize = estimator.estimate(value)
-                    val newSize = newKeySize + newValueSize
+                    // A failing estimate must not end the batch: the entries after it went uncounted
+                    // and their removals left ghost bytes. The entry keeps its previous size (0 when
+                    // new), so it stays tracked and evictable, and its removal stays consistent.
+                    val newSize = try {
+                        estimator.estimate(action.key) + estimator.estimate(value)
+                    } catch (e: Throwable) {
+                        // The exception's class only: its message can carry cached data.
+                        println("FastCache size estimate failed: ${e::class.simpleName}")
+                        currentSize
+                    }
 
                     totalSize += newSize - currentSize
 

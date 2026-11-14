@@ -188,6 +188,40 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             keepReachable(cache)
         }
 
+        "an estimator throwing for one entry leaves the rest of the batch applied" {
+            // Values are charged their own number; 13 cannot be estimated
+            class FailingEstimator : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = when (obj) {
+                    13 -> error("cannot estimate")
+                    is Int -> obj.toLong()
+                    else -> 0L
+                }
+            }
+
+            val cache = fastCache<String, Int>(loopDelay = 20.milliseconds) {}
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(1_000_000, FailingEstimator())
+
+            behaviour.process(
+                cache,
+                FastCache.ActionUpdates(
+                    listOf(FastCache.PutAction("a", 1), FastCache.PutAction("x", 13), FastCache.PutAction("b", 2))
+                ),
+            )
+
+            // "b" after the failing entry is counted; "x" is tracked at 0 bytes
+            behaviour.totalSize shouldBe 3L
+
+            behaviour.process(
+                cache,
+                FastCache.ActionUpdates(
+                    listOf(FastCache.RemoveAction("a"), FastCache.RemoveAction("x"), FastCache.RemoveAction("b"))
+                ),
+            )
+
+            // no ghost bytes left behind
+            behaviour.totalSize shouldBe 0L
+        }
+
         "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test" {
             // We estimate the size as the int input value itself.
             class StubEstimator : ObjectSizeEstimator {
