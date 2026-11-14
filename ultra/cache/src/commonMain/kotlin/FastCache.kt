@@ -277,7 +277,7 @@ class FastCache<K, V>(
             // taken, and dropping our tracking for a declined eviction left the entry in the map
             // with nothing watching it. A declined key stays tracked; the pending read that spared
             // it re-stamps its access time next iteration, which is exactly this behaviour's rule.
-            if (cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION)) {
+            if (cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION) != Eviction.SPARED) {
                 data.remove(key)
             }
         }
@@ -336,7 +336,7 @@ class FastCache<K, V>(
             // Ask FIRST, and only a pending PUT spares the entry: a read does not reset a write TTL,
             // and sparing reads let a key read in every pass outlive its TTL for good. A spared key
             // stays tracked; its pending put re-stamps it next pass.
-            if (cache.removeSilently(key, SparedBy.PENDING_PUT)) {
+            if (cache.removeSilently(key, SparedBy.PENDING_PUT) != Eviction.SPARED) {
                 data.remove(key)
             }
         }
@@ -394,10 +394,12 @@ class FastCache<K, V>(
         }
 
         private fun evict(cache: FastCache<K, V>, key: K): Boolean {
-            // Ask FIRST - see ExpireAfterAccessBehaviour.evict. Reports whether it really evicted,
-            // because the loop below must not count a declined attempt as progress.
-            return cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION).also { removed ->
-                if (removed) data.remove(key)
+            // Ask FIRST - see ExpireAfterAccessBehaviour.evict. Reports whether the entry is gone now,
+            // because the loop below must not count a spared one as progress. One that was already
+            // gone counts: it is no longer in the cache, and treating it as spared evicted a live
+            // entry in its place.
+            return (cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION) != Eviction.SPARED).also { gone ->
+                if (gone) data.remove(key)
             }
         }
 
@@ -506,11 +508,10 @@ class FastCache<K, V>(
         }
 
         private fun evict(cache: FastCache<K, V>, entry: Entry<K>): Boolean {
-            // Ask FIRST, and only release the bytes for an entry that was really removed:
-            // decrementing totalSize for a declined eviction under-counted a cache that still
-            // holds the entry.
-            return cache.removeSilently(entry.key, SparedBy.ANY_PENDING_ACTION).also { removed ->
-                if (removed) remove(entry)
+            // Ask FIRST, and only release the bytes of an entry that is gone: decrementing totalSize
+            // for a spared one under-counted a cache that still holds the entry.
+            return (cache.removeSilently(entry.key, SparedBy.ANY_PENDING_ACTION) != Eviction.SPARED).also { gone ->
+                if (gone) remove(entry)
             }
         }
 
@@ -716,8 +717,9 @@ class FastCache<K, V>(
             // Launch refresh coroutines - BEFORE the evictions below: those run user eviction
             // listeners, and one that throws ended process() with these keys claimed but never loaded.
             for ((key, token) in keysToRefresh) {
-                // The value this refresh replaces. Gone already: nothing to refresh.
-                val startedFrom = cache.currentValue(key)
+                // The value this refresh replaces. Gone already: nothing to refresh. Written after the
+                // batch (a put pending): that value is not stale, and its put re-stamps the key.
+                val startedFrom = cache.refreshableValue(key)
 
                 if (startedFrom == null) {
                     release(key, token)
@@ -762,11 +764,11 @@ class FastCache<K, V>(
             // (An in-flight refresh cannot resurrect one: its result goes through replaceIfUnchanged,
             // which refuses once the entry is gone.)
             //
-            // Only forget a key that was really removed. removeSilently declines when the key was
-            // rewritten after the batch was taken (a read spares nothing here, as in
-            // ExpireAfterWriteBehaviour) - forgetting it anyway meant that entry was never refreshed
-            // and never hard-evicted again. Kept, it is retried next loop.
-            val evicted = keysToEvict.filter { key -> cache.removeSilently(key, SparedBy.PENDING_PUT) }
+            // Only forget a key that is gone. removeSilently spares a key that was rewritten after the
+            // batch was taken (a read spares nothing here, as in ExpireAfterWriteBehaviour) -
+            // forgetting it anyway meant that entry was never refreshed and never hard-evicted again.
+            // Kept, it is retried next loop.
+            val evicted = keysToEvict.filter { key -> cache.removeSilently(key, SparedBy.PENDING_PUT) != Eviction.SPARED }
 
             if (evicted.isNotEmpty()) {
                 RunSync(refreshLock) {
@@ -854,6 +856,18 @@ class FastCache<K, V>(
      * One map, not two sets, so the two views are swapped together and cannot drift apart.
      */
     private var pendingKeys = HashMap<K, Boolean>()
+
+    /** What [removeSilently] did with a key. */
+    private enum class Eviction {
+        /** Removed now. */
+        REMOVED,
+
+        /** Kept: touched after the caller's batch was taken. */
+        SPARED,
+
+        /** Not cached any more: removed earlier, for example in the same pass. */
+        ABSENT,
+    }
 
     /** What spares a key from [removeSilently]: any pending action, or only a pending put. */
     private enum class SparedBy {
@@ -1013,8 +1027,13 @@ class FastCache<K, V>(
         }
     }
 
-    /** The value cached for [key], or `null` when absent - see [lookup]. Records no action. */
-    private fun currentValue(key: K): Holder<V>? = sync { lookup(key) }
+    /**
+     * The value cached for [key], or `null` when absent or written after the current batch was taken
+     * (a put pending) - see [lookup]. Records no action.
+     */
+    private fun refreshableValue(key: K): Holder<V>? = sync {
+        if (pendingKeys[key] == true) null else lookup(key)
+    }
 
     /**
      * Replaces the value of [key] with [value] only while it still holds [expected], and reports
@@ -1041,58 +1060,62 @@ class FastCache<K, V>(
      * in a way that [sparedBy] counts: any action for the access-ordered behaviours, only a put for
      * write-based expiry.
      *
-     * Returns true when the entry was actually removed. Callers must not drop their own tracking for
-     * a key this declined, or the entry stays in the map with no behaviour watching it — never
-     * expired and never evicted again.
+     * Reports what happened: [Eviction.REMOVED], [Eviction.SPARED], or [Eviction.ABSENT] when the key
+     * is not cached any more. Callers must not drop their own tracking for a SPARED key, or the entry
+     * stays in the map with no behaviour watching it — never expired and never evicted again.
      *
      * Records a [RemoveAction] so that *every* behaviour learns about the eviction, not just the one
      * that asked for it. Without it, `refreshAfterWrite` kept reloading keys `maxEntries` had
      * evicted, and `MaxMemoryUsageBehaviour.totalSize` kept counting bytes that were already freed.
      */
-    private fun removeSilently(key: K, sparedBy: SparedBy): Boolean = sync {
+    private fun removeSilently(key: K, sparedBy: SparedBy): Eviction = sync {
+        // Presence first: a key removed earlier in the same pass has a pending RemoveAction, and
+        // reporting it as spared made a size bound evict a live entry in its place. containsKey, not
+        // `removed != null`: a null value is a real entry.
+        if (!map.containsKey(key)) {
+            return@sync Eviction.ABSENT
+        }
+
         // A pending action means the entry was used or rewritten after the batch the caller decided
         // on was taken - unless the caller expires by write time, where only a rewrite counts.
-        val pendingPut = pendingKeys[key] ?: false
-        val pendingAny = pendingKeys.containsKey(key)
-
         val spared = when (sparedBy) {
-            SparedBy.ANY_PENDING_ACTION -> pendingAny
-            SparedBy.PENDING_PUT -> pendingPut
+            SparedBy.ANY_PENDING_ACTION -> pendingKeys.containsKey(key)
+            SparedBy.PENDING_PUT -> pendingKeys[key] == true
         }
 
         if (spared) {
-            return@sync false
+            return@sync Eviction.SPARED
         }
 
-        // containsKey, not `removed != null`: a null value is a real entry, and testing for null
-        // meant evicting one fired no listener and bumped no eviction count.
-        val wasPresent = map.containsKey(key)
         val removed = map.remove(key)
 
-        if (wasPresent) {
-            addAction(RemoveAction(key))
+        addAction(RemoveAction(key))
 
-            // TODO(scan): user callbacks run while the lock is held - on native that is the single
-            //   process-wide spin lock.
-            evictionListeners.forEach { listener ->
-                // One at a time: a throwing listener skipped the ones behind it, and ended the
-                // calling behaviour's process() - one eviction per behaviour and pass.
-                try {
-                    @Suppress("UNCHECKED_CAST")
-                    listener(key, removed as V)
-                } catch (e: Throwable) {
-                    // The exception's class only: its message can carry cached data.
-                    println("FastCache eviction listener failed: ${e::class.simpleName}")
-                }
+        // TODO(scan): user callbacks run while the lock is held - on native that is the single
+        //   process-wide spin lock.
+        evictionListeners.forEach { listener ->
+            // One at a time: a throwing listener skipped the ones behind it, and ended the
+            // calling behaviour's process() - one eviction per behaviour and pass.
+            try {
+                @Suppress("UNCHECKED_CAST")
+                listener(key, removed as V)
+            } catch (e: Throwable) {
+                // The exception's class only: its message can carry cached data.
+                println("FastCache eviction listener failed: ${e::class.simpleName}")
             }
         }
 
-        wasPresent
+        Eviction.REMOVED
     }
 
     private fun addAction(action: Action<K, V>) {
         lastActions.add(action)
-        pendingKeys[action.key] = pendingKeys[action.key] == true || action is PutAction
+        // One lookup for a key already pending: a put marks it, anything else only adds it unmarked
+        if (action is PutAction) {
+            pendingKeys[action.key] = true
+        } else {
+            pendingKeys.getOrPut(action.key) { false }
+        }
     }
 
     @Suppress("NOTHING_TO_INLINE")

@@ -45,8 +45,9 @@ class FastCacheRefreshConcurrencySpec : StringSpec() {
                 // after the spec, starving the next spec's refresh.
                 val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-                // a cache without behaviours: process() is driven by hand from this thread
-                val cache = fastCache<Int, Int>(scope = scope, loopDelay = 1_000.milliseconds) {}
+                // a cache whose loop only drains: process() is driven by hand from this thread
+                val tap = ActionTap<Int, Int>()
+                val cache = fastCache<Int, Int>(scope = scope, loopDelay = 20.milliseconds) { addBehaviour(tap) }
                 val behaviour = FastCache.RefreshAfterWriteBehaviour<Int, Int>(refreshAfter = 1.milliseconds) {
                     loadsPerKey.incrementAndGet(it)
                     // the release path that prints nothing - the other failure path logs each key
@@ -55,8 +56,10 @@ class FastCacheRefreshConcurrencySpec : StringSpec() {
 
                 fun everyKeyLoaded(times: Int) = (0 until keys).all { key -> loadsPerKey.get(key) >= times }
 
-                // cached for real: a refresh only replaces a value that is in the cache
+                // Cached for real, and drained: a refresh only starts from a value that is cached and
+                // has no put pending.
                 (0 until keys).forEach { cache.put(it, it) }
+                pollUntil { tap.actions.size >= keys } shouldBe true
                 behaviour.process(cache, FastCache.ActionUpdates((0 until keys).map { FastCache.PutAction(it, it) }))
 
                 // First round: every key is launched while failed refreshes release keys concurrently

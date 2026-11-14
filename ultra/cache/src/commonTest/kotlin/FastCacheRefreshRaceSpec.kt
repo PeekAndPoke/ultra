@@ -49,6 +49,27 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             cache.get("a") shouldBe "fresh"
         }
 
+        "a refresh does not start from a value written after the batch it decided on" {
+            val tap = ActionTap<String, String>()
+            val cache = fastCache<String, String>(loopDelay = 500.milliseconds) { addBehaviour(tap) }
+            var loads = 0
+            val refresh = FastCache.RefreshAfterWriteBehaviour<String, String>(10.milliseconds) { loads++; "loaded" }
+
+            cache.put("a", "old")
+            eventually(3.seconds) { (tap.actions.size >= 1) shouldBe true }
+            refresh.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "old"))))
+            delay(50.milliseconds)
+
+            // Written after the batch: the pass decided "a" is stale, but the fresh value is not.
+            // Starting from it, the refresh would replace it with a load the write already made moot.
+            cache.put("a", "fresh")
+            refresh.process(cache, FastCache.ActionUpdates(emptyList()))
+            delay(100.milliseconds)
+
+            cache.get("a") shouldBe "fresh"
+            loads shouldBe 0
+        }
+
         "keys claimed for refresh are loaded even when a hard-TTL eviction's listener throws" {
             // Driven by hand, as in FastCacheEvictionDeclineSpec, against a cache whose own loop only
             // drains: the listener is registered on the cache, the refresh behaviour is not.
