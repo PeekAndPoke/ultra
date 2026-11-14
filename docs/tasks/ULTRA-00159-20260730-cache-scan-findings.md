@@ -876,12 +876,51 @@ constructor value of the behaviour, fixed before the cache is built.
 
 Evidence: `--rerun` cache jvm **212** / js **182** / native **179**, slumber **1249** / vault **287**, 0 failures; cache JVM suite under CPU load (load average 10-19): **10 runs, 0 failures**. Commits 6ef83702 (estimator), cde01a7d (maxMemoryUsage).
 
+### Sampling pick (maintainer decision, 2026-11-14) — "try the golden-ratio ... Then close this topic"
+
+`EstimatorConfig.samplePick: SamplePick` (`GoldenRatio`, `EvenlySpaced`); both sampling paths honour
+it, both deterministic. Golden-ratio positions `frac(i * 0.618... + 0.5) * size`, de-duplicated and
+sorted, clamped below `size`; pinned for sizes 6 400, 1 000 003, `Int.MAX_VALUE` and 65 (55 distinct)
+and identical on JVM, JS and native (the same test passes on all three). `First` left out: it saves
+nothing over the window and nobody would choose it.
+
+Reference cases (JVM), estimate / exact walk:
+
+| Layout (6 400 elements unless noted) | GoldenRatio | EvenlySpaced |
+|---|---|---|
+| uniform (all 100 chars) | 1.00 | 1.00 |
+| 10 % large at the front | 0.95 | 1.07 |
+| 10 % large at the back | 0.95 | 0.95 |
+| every 10th large | 1.31 | 7.77 |
+| every 7th large | 0.90 | 1.08 |
+| every 64th large | 1.32 | 1.97 |
+| every 100th large (the stride's worst case) | 1.13 | 24.10 |
+| large exactly on the 64 golden positions (golden's worst case) | 24.10 | 1.13 |
+| one object shared by all elements | 7.58 | 7.58 |
+| set of 1 000, large in the last 100 | 0.95 | 0.95 |
+| map of 5 000 entries | 0.97 | 0.97 |
+
+**Default: GoldenRatio** - at least as good on the non-periodic cases and clearly better on the periodic
+ones; its own worst case needs a layout that matches its irrational positions, the stride's worst case
+is any period dividing the stride.
+
+Mutants: default back to EvenlySpaced → the periodic test red; the pick ignored in the indexed path →
+the EvenlySpaced test red; ignored in the stepping pass → survived at first (no test covered that path
+with EvenlySpaced), a set test added → red.
+
+Decided by the rules, without asking: `First` omitted; the clamp `size - 1` kept although the
+arithmetic stays below `size` up to `Int.MAX_VALUE` (pinned); de-duplication makes the sample smaller
+just above 64 elements (65 → 55 distinct), each then weighs size / distinct.
+
+Evidence: `--rerun` cache jvm **217** / js **187** / native **184**, slumber **1249** / vault **287**, 0 failures; cache JVM suite under CPU load (load average 16-22): **10 runs, 0 failures**.
+
 ## Changelog text
 
 For the coordinator to put into `CHANGELOG.md`. Signature changes: the new
 `FastCache.Builder.timeSource(TimeSource)`, the new overload `maxMemoryUsage(maxMemorySize, estimator,
-fallbackSize)`, `MaxMemoryUsageBehaviour.fallbackSize` and `DEFAULT_FALLBACK_SIZE`, and three new
-`EstimatorConfig` fields (source compatible; binary incompatible for its constructor and `copy`).
+fallbackSize)`, `MaxMemoryUsageBehaviour.fallbackSize` and `DEFAULT_FALLBACK_SIZE`, four new `EstimatorConfig` fields
+and the enum `ObjectSizeEstimatorImpl.SamplePick` (source compatible; binary incompatible for the
+config's constructor and `copy`).
 Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behaviour changes below have
 **no compile signal**, so each is listed.
 
@@ -937,10 +976,12 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
   collection, map or array of more than 64 elements is sampled at 64 evenly spaced positions (fixed,
   so the same value always gets the same estimate; collections without index access over their first
   1 024 elements) and the rest charged by the samples' average; at most 10 000 objects are visited,
-  any further one charged flat; the walk is iterative and never throws. Estimates change for large
-  values (measured accuracy and limits in the KDoc; a periodic layout can be over-counted several
-  times). One estimate of 10 000 strings: JVM 17 ms -> 0.08 ms, JS 450 ms -> 0.2 ms, native 3.7 s ->
-  0.7 ms. EstimatorConfig gains sampleSize, sampleWindow and maxObjects.
+  any further one charged flat; the walk is iterative and never throws. The sample positions follow
+  the golden ratio by default (EstimatorConfig.samplePick = SamplePick.GoldenRatio; EvenlySpaced, a
+  fixed stride, is the alternative). Estimates change for large values (measured accuracy and limits
+  in the KDoc). One estimate of 10 000 strings: JVM 17 ms -> 0.08 ms, JS 450 ms -> 0.2 ms, native
+  3.7 s -> 0.7 ms. EstimatorConfig gains sampleSize, sampleWindow, maxObjects and samplePick (source
+  compatible; binary incompatible for its constructor and copy).
 - JS: every number is charged 8 bytes (was 1).
 - JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
   outer instance.
@@ -961,8 +1002,7 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
 - [ ] ULTRA-00321: should a background refresh count as an access? (maintainer: "I guess it should
       not count as access").
 - [x] Estimator: the plan of round 3, built (estimator batch); waits for its review gate.
-- [ ] Estimator sampling: stride vs a low-discrepancy pick (golden ratio) - the maintainer's decision,
-      see the estimator batch.
+- [x] Estimator sampling: golden ratio is the default, the stride configurable (sampling pick section).
 - [ ] `VisitedSet` is now O(n²) by identity scan. Correct, but an identity-keyed set
       (`IdentityHashMap` / JS `Set` / native fallback) needs an expect/actual — deferred with the
       estimator design question.
