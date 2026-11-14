@@ -766,48 +766,60 @@ class FastCache<K, V> internal constructor(
 
             // Launch refresh coroutines - BEFORE the evictions below: those run user eviction
             // listeners, and one that throws ended process() with these keys claimed but never loaded.
-            for ((key, token) in keysToRefresh) {
-                // The value this refresh replaces. Gone already: nothing to refresh. Written after the
-                // batch (a put pending): that value is not stale, and its put re-stamps the key.
-                val startedFrom = cache.refreshableValue(key)
+            // Every claimed key is either launched or released, also when a throwable (e.g. from a
+            // key's equals() in the lookup) cuts this loop short: a claim never launched blocked
+            // the key's refresh for good.
+            var handled = 0
 
-                if (startedFrom == null) {
-                    release(key, token)
-                    continue
-                }
+            try {
+                for ((key, token) in keysToRefresh) {
+                    // The value this refresh replaces. Gone already: nothing to refresh. Written after the
+                    // batch (a put pending): that value is not stale, and its put re-stamps the key.
+                    val startedFrom = cache.refreshableValue(key)
 
-                cache.scope.launch {
-                    // Set once the result reached the cache. Until then, every way out - a failure,
-                    // cancellation, or an Error such as TODO() - must free the key for a retry.
-                    var settled = false
+                    // past the lookup: from here on this key is either released or launched
+                    handled++
 
-                    try {
-                        val newValue = loader(key)
+                    if (startedFrom == null) {
+                        release(key, token)
+                        continue
+                    }
 
-                        // Only replace the value the refresh started from. Unconditionally, a loader
-                        // slower than the hard TTL put an evicted entry back, and a value the
-                        // application wrote while the loader ran was overwritten with an older one.
-                        // A refused result needs no release: the write or removal that changed the
-                        // entry recorded an action, and that releases the claim.
-                        cache.replaceIfUnchanged(key, startedFrom.value, newValue)
-                        settled = true
-                    } catch (e: CancellationException) {
-                        // The loader suspends, so this is cancellation: of the scope, or one the loader
-                        // threw. Either way it ends this refresh quietly; finally frees the key.
-                        throw e
-                    } catch (e: Throwable) {
-                        // Refresh failed: allow retry on next loop iteration. Every Throwable, not only
-                        // Exceptions: one that is not (an Error, or e.g. VaultException) escaped to the
-                        // scope's handler, which on native ends the process. There is no logger here,
-                        // so a repeatedly failing loader would otherwise be entirely silent.
-                        // The exception's class only: a key or a message can carry a session id or a token.
-                        println("FastCache refresh failed: ${e::class.simpleName}")
-                    } finally {
-                        if (!settled) {
-                            release(key, token)
+                    cache.scope.launch {
+                        // Set once the result reached the cache. Until then, every way out - a failure,
+                        // cancellation, or an Error such as TODO() - must free the key for a retry.
+                        var settled = false
+
+                        try {
+                            val newValue = loader(key)
+
+                            // Only replace the value the refresh started from. Unconditionally, a loader
+                            // slower than the hard TTL put an evicted entry back, and a value the
+                            // application wrote while the loader ran was overwritten with an older one.
+                            // A refused result needs no release: the write or removal that changed the
+                            // entry recorded an action, and that releases the claim.
+                            cache.replaceIfUnchanged(key, startedFrom.value, newValue)
+                            settled = true
+                        } catch (e: CancellationException) {
+                            // The loader suspends, so this is cancellation: of the scope, or one the loader
+                            // threw. Either way it ends this refresh quietly; finally frees the key.
+                            throw e
+                        } catch (e: Throwable) {
+                            // Refresh failed: allow retry on next loop iteration. Every Throwable, not only
+                            // Exceptions: one that is not (an Error, or e.g. VaultException) escaped to the
+                            // scope's handler, which on native ends the process. There is no logger here,
+                            // so a repeatedly failing loader would otherwise be entirely silent.
+                            // The exception's class only: a key or a message can carry a session id or a token.
+                            println("FastCache refresh failed: ${e::class.simpleName}")
+                        } finally {
+                            if (!settled) {
+                                release(key, token)
+                            }
                         }
                     }
                 }
+            } finally {
+                keysToRefresh.drop(handled).forEach { (key, token) -> release(key, token) }
             }
 
             // Evict hard-expired entries outside refreshLock: removeSilently takes the cache's lock.

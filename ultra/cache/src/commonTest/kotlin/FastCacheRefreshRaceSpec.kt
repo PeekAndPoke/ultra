@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.cache
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.peekandpoke.ultra.common.RunSync
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,6 +81,37 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             loads shouldBe 0
         }
 
+        "a throwable cutting process() short leaves no claimed key unlaunched for good" {
+            val tap = ActionTap<FlakyKey, String>()
+            val cache = fastCache<FlakyKey, String>(loopDelay = 500.milliseconds) { addBehaviour(tap) }
+            // Both refreshes run at once on different threads: a plain list lost one of the adds
+            val lock = Any()
+            val loaded = mutableSetOf<String>()
+            val refresh = FastCache.RefreshAfterWriteBehaviour<FlakyKey, String>(10.milliseconds) { key ->
+                RunSync(lock) { loaded.add(key.id) }
+                "loaded"
+            }
+
+            cache.put(FlakyKey("a"), "1")
+            cache.put(FlakyKey("b"), "2")
+            eventually(3.seconds) { (tap.actions.size >= 2) shouldBe true }
+
+            // The behaviour holds equal twins of the cached keys, so launching a refresh looks the
+            // twin up in the cache and calls its equals() - which throws once for "a"
+            val twinA = FlakyKey("a")
+            refresh.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction(twinA, "1"), FastCache.PutAction(FlakyKey("b"), "2"))))
+            delay(50.milliseconds)
+
+            twinA.failNextEquals = true
+            runCatching { refresh.process(cache, FastCache.ActionUpdates(emptyList())) }
+
+            // Both were claimed, neither launched: the next pass must find them free again
+            delay(50.milliseconds)
+            refresh.process(cache, FastCache.ActionUpdates(emptyList()))
+
+            eventually(3.seconds) { RunSync(lock) { loaded.toSet() } shouldBe setOf("a", "b") }
+        }
+
         "keys claimed for refresh are loaded even when a hard-TTL eviction's listener throws" {
             // Driven by hand, as in FastCacheEvictionDeclineSpec, against a cache whose own loop only
             // drains: the listener is registered on the cache, the refresh behaviour is not.
@@ -145,4 +177,20 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             keepReachable(cache)
         }
     }
+}
+
+/** A key whose equals() throws once when told to. */
+private class FlakyKey(val id: String) {
+    var failNextEquals = false
+
+    override fun equals(other: Any?): Boolean {
+        if (failNextEquals) {
+            failNextEquals = false
+            error("equals failed once")
+        }
+
+        return other is FlakyKey && other.id == id
+    }
+
+    override fun hashCode(): Int = id.hashCode()
 }
