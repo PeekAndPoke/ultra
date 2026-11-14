@@ -2,6 +2,10 @@ package io.peekandpoke.ultra.cache
 
 import io.peekandpoke.ultra.common.RunSync
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Memoizes lookups that can legitimately resolve to nothing, so a miss is only paid for once.
@@ -13,9 +17,11 @@ import kotlinx.coroutines.CompletableDeferred
  * bounded or the instance is short-lived.
  *
  * [getOrPutAsync] is single-flight **per key**: concurrent callers for one key share one provider
- * run, and callers for different keys never wait on each other. A provider may therefore safely
- * resolve other keys through the same cache — which is the normal shape for nested reference
- * resolution.
+ * run, and callers for different keys never wait on each other. A provider may therefore resolve
+ * other keys through the same cache — which is the normal shape for nested reference resolution.
+ * A provider that reaches a key its own call chain is resolving (a cycle such as a -> b -> a) fails
+ * that call with an [IllegalStateException] instead of waiting on itself. A cycle across two
+ * concurrent callers - one resolving a then b, the other b then a - is not detected and deadlocks.
  *
  * [getOrPut] is single-flight per key among blocking callers. The two do not coordinate with each
  * other, so a blocking and a suspending caller racing for the same key can both run their provider.
@@ -94,6 +100,8 @@ class NullableCache<K : Any, V : Any> {
      * behind each other's round trips.
      */
     suspend fun getOrPutAsync(key: K, provider: suspend () -> V?): V? {
+        val chain = currentCoroutineContext()[ResolvingChain]
+
         while (true) {
             when (val claim = claim(key)) {
                 is Claim.Cached -> return claim.encoded.decode()
@@ -104,12 +112,14 @@ class NullableCache<K : Any, V : Any> {
                     // exception raised on somebody else's call stack. join(), not await(): it does
                     // not rethrow the owner's failure, but it does throw when THIS caller is
                     // cancelled - catching that from await() made a cancelled caller spin here.
+                    failOnCycle(chain, key)
                     claim.deferred.join()
                 }
 
                 is Claim.Own -> {
                     val encoded = try {
-                        provider().encode()
+                        failOnCycle(chain, key)
+                        withContext(ResolvingChain(this, key, chain)) { provider() }.encode()
                     } catch (e: Throwable) {
                         RunSync(lock) { releaseIfCurrent(key, claim) }
                         claim.deferred.completeExceptionally(e)
@@ -132,6 +142,13 @@ class NullableCache<K : Any, V : Any> {
                     return result.decode()
                 }
             }
+        }
+    }
+
+    /** Fails when [key] is being resolved further up the caller's own [chain]: waiting would never end. */
+    private fun failOnCycle(chain: ResolvingChain?, key: K) {
+        check(chain?.contains(this, key) != true) {
+            "NullableCache: a provider reached a key its own call chain is resolving (a cycle)"
         }
     }
 
@@ -169,4 +186,18 @@ class NullableCache<K : Any, V : Any> {
         /** Stands in for a cached null, so an absent key stays distinguishable from a null one. */
         private val MISSING = Any()
     }
+}
+
+/** The keys whose providers run further up a coroutine's call chain, each with its cache. */
+private class ResolvingChain(
+    private val cache: NullableCache<*, *>,
+    private val resolving: Any,
+    private val outer: ResolvingChain?,
+) : AbstractCoroutineContextElement(ResolvingChain) {
+
+    companion object Key : CoroutineContext.Key<ResolvingChain>
+
+    /** Whether [key] of [cache] is being resolved in this chain. */
+    fun contains(cache: NullableCache<*, *>, key: Any): Boolean =
+        generateSequence(this) { it.outer }.any { it.cache === cache && it.resolving == key }
 }
