@@ -103,7 +103,12 @@ class FastCache<K, V>(
          */
         fun expireAfterWrite(ttl: Duration) = addBehaviour(ExpireAfterWriteBehaviour(ttl))
 
-        /** Adds the [MaxEntriesBehaviour] to the cache. */
+        /**
+         * Adds the [MaxEntriesBehaviour] to the cache.
+         *
+         * A soft bound: an entry read or written in every maintenance pass is not evicted by it, so
+         * under such load the cache holds up to the number of distinct keys touched within one pass.
+         */
         fun maxEntries(maxEntries: Int) = addBehaviour(MaxEntriesBehaviour(maxEntries))
 
         /**
@@ -113,6 +118,9 @@ class FastCache<K, V>(
          * [ObjectSizeEstimator] for how far the estimate can be off, which differs per platform and
          * is worst on native, where every custom object counts as 32 bytes whatever it holds. Pass a
          * tuned [estimator], or a purpose-built one, where the number has to mean something.
+         *
+         * A soft bound, like [maxEntries]: an entry read or written in every maintenance pass is not
+         * evicted by it, so under such load the cache holds every entry touched within one pass.
          */
         fun maxMemoryUsage(maxMemorySize: Long, estimator: ObjectSizeEstimator = ObjectSizeEstimator()) =
             addBehaviour(MaxMemoryUsageBehaviour(maxMemorySize, estimator))
@@ -354,7 +362,9 @@ class FastCache<K, V>(
     /**
      * Behaviour that keeps a maximum number of entries in the cache.
      *
-     * The least recently accessed entries are evicted first.
+     * The least recently accessed entries are evicted first. A soft bound: an entry
+     * read or written in every maintenance pass is not evicted by it, so under such load the cache
+     * holds up to the number of distinct keys touched within one pass.
      */
     @Suppress("DuplicatedCode")
     class MaxEntriesBehaviour<K, V>(private val maxEntries: Int) : Behaviour<K, V> {
@@ -413,8 +423,8 @@ class FastCache<K, V>(
             // A snapshot, NOT `while (data.size > maxEntries)`: a declined eviction keeps the key
             // tracked, so a size-based loop would pick the same key again and spin the processing
             // coroutine forever. A skipped key is retried next pass. A key accessed in EVERY pass is
-            // skipped in every pass, so the cache stays over its bound for as long as that lasts
-            // (known defect, FastCacheHotKeyBoundKnownDefectSpec).
+            // skipped in every pass, so the cache stays over its bound for as long as that lasts: a
+            // soft bound by decision (FastCacheSoftBoundSpec).
             for ((key, _) in data.ascending().toList()) {
                 if (overshoot <= 0) break
 
@@ -428,7 +438,8 @@ class FastCache<K, V>(
     /**
      * Behaviour that keeps a maximum memory size in the cache.
      *
-     * The least recently accessed entries are evicted first.
+     * The least recently accessed entries are evicted first. A soft bound, like
+     * [MaxEntriesBehaviour]: an entry read or written in every maintenance pass is not evicted by it.
      */
     @Suppress("DuplicatedCode")
     class MaxMemoryUsageBehaviour<K, V>(

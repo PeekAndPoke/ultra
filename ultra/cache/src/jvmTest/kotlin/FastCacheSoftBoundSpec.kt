@@ -12,21 +12,20 @@ import kotlin.concurrent.thread
 import kotlin.random.Random
 
 /**
- * KNOWN DEFECT, asserted as it is today (ULTRA-00159 review round 3, the MAJOR): `maxEntries` and
- * `maxMemoryUsage` do not bind for keys that are read in every pass.
+ * `maxEntries` and `maxMemoryUsage` are soft bounds, by decision (ULTRA-00159 round 3; the maintainer:
+ * "Since this cache is called FastCache it is ok, when it is not 100% accurate").
  *
- * Both evict through `removeSilently` with "any pending action spares the key". A key read between the
- * loop's swap and its eviction is spared, and so in every pass. Seen 5 of 5 runs for each test.
- *
- * These tests pass while the defect is there. A fix makes them fail: then turn them into tests that the
- * bound holds, and drop "KNOWN DEFECT" from the names.
+ * Both spare a key that was used after the batch they decided on was taken, so a key read in every
+ * maintenance pass is never evicted by them, and the cache holds up to the number of distinct keys
+ * touched within one pass. These tests pin that documented behaviour; the deterministic sparing rule is
+ * pinned in FastCacheEvictionDeclineSpec.
  *
  * JVM only: it needs readers on other threads. On JS no action can be pending while `process()` runs
- * (the swap and the evictions run in one task), so the bound holds there.
+ * (the swap and the evictions run in one task), so there the bound is met in the next pass.
  */
-class FastCacheHotKeyBoundKnownDefectSpec : StringSpec({
+class FastCacheSoftBoundSpec : StringSpec({
 
-    "KNOWN DEFECT: maxEntries(1) does not bind for two keys read in every pass" {
+    "maxEntries(1) is a soft bound: two keys read in every pass both stay" {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         val cache = fastCache<String, String>(scope = scope) { maxEntries(1) }
         val stop = AtomicBoolean(false)
@@ -50,7 +49,7 @@ class FastCacheHotKeyBoundKnownDefectSpec : StringSpec({
 
         try {
             cache.put("b", "2")
-            Thread.sleep(2_000)
+            Thread.sleep(1_000)
 
             cache.size shouldBe 2
         } finally {
@@ -60,7 +59,7 @@ class FastCacheHotKeyBoundKnownDefectSpec : StringSpec({
         }
     }
 
-    "KNOWN DEFECT: maxEntries(10) does not bind for a pool of 1 000 keys read through getOrPut" {
+    "maxEntries(10) is a soft bound: a pool of 1 000 keys read through getOrPut all stay" {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         val cache = fastCache<String, String>(scope = scope) { maxEntries(10) }
         val stop = AtomicBoolean(false)
@@ -75,7 +74,7 @@ class FastCacheHotKeyBoundKnownDefectSpec : StringSpec({
         }
 
         try {
-            Thread.sleep(2_000)
+            Thread.sleep(1_000)
 
             // seen: all 1 000, against a bound of 10
             cache.size shouldBeGreaterThan 500

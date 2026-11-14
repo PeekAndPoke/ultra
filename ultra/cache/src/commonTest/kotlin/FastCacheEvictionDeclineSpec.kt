@@ -197,7 +197,7 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
             )
 
             // A soft bound: over it while the reads are pending (and for keys read in every pass, for
-            // as long as that lasts - FastCacheHotKeyBoundKnownDefectSpec)
+            // as long as that lasts - a soft bound by decision, FastCacheSoftBoundSpec)
             rig.cache.size shouldBe 2
 
             // Once the reads drain, the retry brings the cache back under its bound
