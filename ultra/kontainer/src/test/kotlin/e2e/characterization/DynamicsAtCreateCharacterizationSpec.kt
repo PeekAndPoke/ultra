@@ -5,6 +5,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
@@ -50,7 +51,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
     }
 
     // ULTRA-00333: overrides are lazy.
-    "The override lambda runs at the first request of the service, once per kontainer, never at create" {
+    // ULTRA-00344: overrides run at create (decided; the laziness of ULTRA-00333 is reverted).
+    "The override lambda runs at create, once per kontainer, even when the service is never requested" {
 
         class Dyn : Counted()
 
@@ -63,8 +65,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         val subject = blueprint.create { with { runs.incrementAndGet(); Dyn() } }
 
         assertSoftly {
-            withClue("lazy: not run while the dynamic was never requested") {
-                runs.get() shouldBe 0
+            withClue("eager: ran at create, before anything was requested") {
+                runs.get() shouldBe 1
             }
 
             subject.get(Dyn::class)
@@ -72,27 +74,27 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             runs.get() shouldBe 1
 
             blueprint.create { with { runs.incrementAndGet(); Dyn() } }
-            runs.get() shouldBe 1
+            runs.get() shouldBe 2
         }
     }
 
-    "An override that is never requested never runs, and reports no instance" {
+    "An override that is never requested has its instance in instances, the debug info and the dump" {
 
         class Dyn
 
-        val runs = AtomicInteger()
-
         val subject = kontainer {
             dynamic(Dyn::class)
-        }.create { with { runs.incrementAndGet(); Dyn() } }
+        }.create { with { Dyn() } }
 
         assertSoftly {
-            subject.getProvider(Dyn::class).instances.size shouldBe 0
-            runs.get() shouldBe 0
+            subject.getProvider(Dyn::class).instances.size shouldBe 1
+            subject.tools.getDebugInfo().services
+                .first { it.cls.fqn == Dyn::class.java.name }.instances.size shouldBe 1
+            subject.tools.dumpKontainer() shouldContain ": ${Dyn::class.getName()}"
         }
     }
 
-    "An override that throws: create succeeds, the first get throws the lambda's exception" {
+    "An override that throws fails create with its own exception, and no kontainer results" {
 
         class Dyn
 
@@ -100,14 +102,67 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             dynamic(Dyn::class)
         }
 
-        val subject = blueprint.create { with<Dyn> { error("no override today") } }
+        var subject: Kontainer? = null
 
         shouldThrow<IllegalStateException> {
-            subject.get(Dyn::class)
+            subject = blueprint.create { with<Dyn> { error("no override today") } }
         }.message shouldBe "no override today"
+
+        assertSoftly {
+            subject shouldBe null
+            withClue("nothing is remembered: the next create with a working override succeeds") {
+                blueprint.create { with { Dyn() } }.get(Dyn::class)::class shouldBe Dyn::class
+            }
+        }
     }
 
-    "An override reads mutable state at its first use, not at create" {
+    "An override that throws fails clone with its own exception" {
+
+        class Dyn
+
+        val runs = AtomicInteger()
+
+        val original = kontainer {
+            dynamic(Dyn::class)
+        }.create {
+            with<Dyn> { if (runs.incrementAndGet() > 1) error("no second override") else Dyn() }
+        }
+
+        shouldThrow<IllegalStateException> {
+            original.clone()
+        }.message shouldBe "no second override"
+    }
+
+    "A refused override's lambda never runs, at create and at clone" {
+
+        class Single
+        class Dyn
+
+        val runs = AtomicInteger()
+
+        val blueprint = kontainer {
+            singleton(Single::class)
+            dynamic(Dyn::class)
+        }
+
+        assertSoftly {
+            shouldThrow<KontainerInconsistent> {
+                blueprint.create { with { runs.incrementAndGet(); Single() } }
+            }
+
+            shouldThrow<KontainerInconsistent> {
+                blueprint.create { with<Kontainer> { runs.incrementAndGet(); blueprint.create() } }
+            }
+
+            shouldThrow<KontainerInconsistent> {
+                blueprint.create().clone { with { runs.incrementAndGet(); Single() } }
+            }
+
+            runs.get() shouldBe 0
+        }
+    }
+
+    "An override reads mutable state at create" {
 
         class Dyn(val value: Int)
 
@@ -119,10 +174,10 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
 
         current = 2
 
-        subject.get(Dyn::class).value shouldBe 2
+        subject.get(Dyn::class).value shouldBe 1
     }
 
-    "An override's definition names the class given to with before first use, the instance's class after" {
+    "An override's definition names the instance's class, right from create" {
 
         open class Base
         class Derived : Base()
@@ -131,14 +186,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             dynamic(Base::class)
         }.create { with(Base::class) { Derived() } }
 
-        fun creates() = subject.tools.getDebugInfo().services
-            .first { it.cls.fqn == Base::class.java.name }.definition.creates.fqn
-
-        assertSoftly {
-            creates() shouldBe Base::class.java.name
-            subject.get(Base::class)
-            creates() shouldBe Derived::class.java.name
-        }
+        subject.tools.getDebugInfo().services
+            .first { it.cls.fqn == Base::class.java.name }.definition.creates.fqn shouldBe Derived::class.java.name
     }
 
     "A dynamic without an override: reported as Dynamic, built lazily from its definition, once per kontainer" {
@@ -322,7 +371,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    "Cloning keeps the overrides and runs their lambdas again, at first use in the clone (ULTRA-00333)" {
+    "Cloning keeps the overrides and runs their lambdas once more for the clone, at clone" {
 
         class Dyn : Counted()
         class Holder(val dyn: Dyn) : Counted()
@@ -339,7 +388,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         val clone = original.clone()
 
         assertSoftly {
-            runs.get() shouldBe 0
+            runs.get() shouldBe 2
             clone.reportedOf(Dyn::class) shouldBe Reported.OverriddenDynamicSingleton
             clone.get(Dyn::class) shouldNotBeSameInstanceAs original.get(Dyn::class)
             clone.get(Holder::class) shouldNotBeSameInstanceAs original.get(Holder::class)
@@ -347,7 +396,6 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    // ULTRA-00332: clone runs the same check as create.
     "Cloning with an override for a non-dynamic is refused like create: KontainerInconsistent, the same message" {
 
         class Single
