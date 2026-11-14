@@ -161,6 +161,89 @@ Pinned as they are, test names start with "CURRENT BEHAVIOUR"; whether any chang
 8. `extend` does not apply the type upgrade: a prototype or dynamic redefined as singleton in an extension becomes
    Singleton, which also ends the promotion of the base blueprint's singletons (Redefinition).
 
+## Step 2: the split, plan as built
+
+Written before the build (2026-11-14); updated where the build differed.
+
+### The types (`ultra/kontainer/src/main/kotlin/`)
+
+- `ServiceType.kt`: `enum class ServiceType { Singleton, Prototype }`, what a service is.
+- `ServiceKind.kt`: `enum class ServiceKind { Static, Dynamic, SemiDynamic }`, what it is bound to.
+- `InjectionType.kt` is deleted; `ServiceProvider.Type` is deleted.
+- `ServiceDefinition`: `injectionType` becomes `type: ServiceType` and `kind: ServiceKind`, the DECLARED kind,
+  Static or Dynamic only (`require` in the constructor). `withType(...)` becomes `withScope(type, kind)`.
+- `ServiceProvider`: `type: Type` becomes `type: ServiceType`, `kind: ServiceKind` (the derived kind) and
+  `overridden: Boolean` (today's `DynamicOverride`). The provider factories become `forGlobalSingleton(definition)`,
+  `forDynamicSingleton(kind, definition)`, `forOverride(definition, instance)` and `ForPrototype.Provider(kind,
+  definition)`.
+
+### The builder
+
+- `singleton`, `prototype`, `dynamic` unchanged. New `dynamicPrototype`, a `ServiceBuilder` like the other three, so
+  it has every overload they have (class, class with impl, factories with 0 to 10 parameters). `instance()` stays
+  singleton only, as today.
+- Built-ins unchanged: `Kontainer` and `InjectionContext` are (Singleton, Dynamic), `KontainerBlueprint` is
+  (Singleton, Static).
+- The redefinition rule (`KontainerBuilder.InjectionTypeUpgrade`, renamed `RedefinitionUpgrade`): a later
+  definition keeps the type AND kind of the one it replaces, unless that one is a static singleton, in which case
+  the later definition is taken as it is. This is today's rule restated: Prototype forced Prototype, Dynamic forced
+  Dynamic, Singleton let the new one through. For `dynamicPrototype`: over a static singleton it is taken as is; over
+  a prototype it stays a static prototype; over a dynamic singleton it stays a dynamic singleton; and a
+  `dynamicPrototype` replaced by anything stays a `dynamicPrototype`. These choices are pinned and handed to
+  ULTRA-00331.
+
+### How the blueprint derives the kind
+
+1. Sources: every definition declared Dynamic, singletons and prototypes alike.
+2. `DependencyLookup.getAllDependents(sources)` as today; every service in it that is not itself a source is
+   SemiDynamic, whatever its type. So a prototype above a dynamic is (Prototype, SemiDynamic), a declared
+   `dynamicPrototype` is (Prototype, Dynamic), and both promote a singleton above them as a prototype-in-between
+   does today.
+3. Everything else is Static.
+4. Overridable at `create { with { } }`: only (Singleton, Dynamic). The dynamics checker and the base type lookup
+   for overrides take this set; a `dynamicPrototype` override is refused like any other non-dynamic
+   (`KontainerInconsistent`, "Unexpected dynamics were provided").
+
+### The provider map, and the explicit prototype guard
+
+One `when` per definition, on the type first: a Prototype gets `ForPrototype` whatever its kind; a static Singleton
+the shared global provider; a Dynamic or SemiDynamic Singleton one provider per kontainer. The guard (M1) no longer
+depends on the order of the map. The map keeps today's listing order on purpose (it numbers validation errors and
+orders the debug listing): static singletons, semi dynamic singletons, dynamic singletons, prototypes; each group in
+definition order (the semi dynamic group was in discovery order before; only visible with several of them).
+
+### Tools and debug output
+
+- `DebugInfo.ServiceDebugInfo`: `type: ServiceType`, `kind: ServiceKind`, `overridden: Boolean` and
+  `semiDynamicBecauseOf: List<ClassInfo>`, the declared dynamic services a SemiDynamic service reaches (empty
+  otherwise).
+- `DebugInfo.ServiceDefinitionInfo`: `type: ServiceType` and `kind: ServiceKind` (declared) replace `injectionType`.
+- `dumpKontainer()`: columns `Service ID | Type | Kind | Instances`; an overridden service shows its kind as
+  `Dynamic (overridden)`.
+
+### Callers outside the module
+
+| Where | What changes |
+|---|---|
+| `funktor/insights/.../collectors/KontainerCollector.kt` | `Data.Service.type` from `ServiceProvider.Type` to `String`, mapped to the five old names (wire kept) |
+| `funktor/insights/.../InsightsGraphs.kt` | `Service.type` and `Definition.injectionType` mapped to the old names (wire kept) |
+| `ultra/log/src/jvmMain/kotlin/index_jvm.kt` | `Log` as `dynamicPrototype`, only if nothing changes at runtime (counting test first) |
+| `ultra/log/.../LoggingKontainerModuleSpec.kt`, `ultra/vault/.../VaultHookScopeWiringSpec.kt` | assertions on the old enum, translated |
+| GUIs (`funktor/codegen/.../ts/insights/*`, `funktor/inspect/.../insights/*`) | none, they read the unchanged wire |
+
+### Wire shapes that carry these names (kept unchanged end to end)
+
+1. **Insights records on disk**, slice `kontainer.services[].type`: `Singleton`, `SemiDynamic`, `Dynamic`,
+   `Prototype`, `DynamicOverride`. Written by `KontainerCollector`, read raw by both GUIs (`isProcessWide` is
+   `type == "Singleton"`, the colour table, the override join on `DynamicOverride`).
+2. **Insights graph API** (`InsightsKontainerGraph`): `services[].type` (same names minus `DynamicOverride`) and
+   `definition.injectionType` (`Singleton`, `Dynamic`, `Prototype`); the graph fingerprint hashes them.
+3. Mapping, one function in `funktor/insights`: overridden -> `DynamicOverride`; any Prototype -> `Prototype`
+   (also SemiDynamic and Dynamic prototypes, so the GUIs see no unknown value); Singleton Static -> `Singleton`,
+   SemiDynamic -> `SemiDynamic`, Dynamic -> `Dynamic`. Definitions: Singleton Static -> `Singleton`, Singleton
+   Dynamic -> `Dynamic`, any Prototype -> `Prototype`. Records written before the split and after it are the same.
+   Showing the kind of a prototype in the GUIs would need new wire fields: an open choice, not built.
+
 ## History
 
 - 2026-11-13: created on the maintainer's word, from the log scoping discussion (ULTRA-00149 L11, ULTRA-00158).
