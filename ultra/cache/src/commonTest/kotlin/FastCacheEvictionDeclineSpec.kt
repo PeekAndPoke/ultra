@@ -152,6 +152,63 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
             rig.cache.keys shouldBe setOf("C")
         }
 
+        "maxEntries: an entry gone earlier in the pass, but not first in LRU order, is not replaced by a live one" {
+            val rig = Rig()
+            val expiry = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 1.milliseconds)
+            val bound = FastCache.MaxEntriesBehaviour<String, String>(maxEntries = 2)
+
+            listOf("A", "B", "C").forEach { rig.cache.put(it, it) }
+            rig.drained(3)
+
+            val first = FastCache.ActionUpdates(listOf(FastCache.PutAction("A", "A")))
+            expiry.process(rig.cache, first)
+            bound.process(rig.cache, first)
+            delay(50.milliseconds)
+
+            // One pass: the expiry removes A. The bound saw A read after B was written, so its LRU
+            // order is B, A, C - the gone entry is not first. The cache really holds B and C.
+            expiry.process(rig.cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("B", "B"), FastCache.PutAction("C", "C"))))
+            bound.process(
+                rig.cache,
+                FastCache.ActionUpdates(
+                    listOf(FastCache.PutAction("B", "B"), FastCache.ReadAction("A", "A"), FastCache.PutAction("C", "C"))
+                ),
+            )
+
+            rig.cache.keys shouldBe setOf("B", "C")
+        }
+
+        "maxMemoryUsage: an entry gone earlier in the pass, but not first in LRU order, is not replaced by a live one" {
+            val rig = Rig()
+            val expiry = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 1.milliseconds)
+            // every value costs 1, keys nothing: a budget of 2 entries
+            val bound = FastCache.MaxMemoryUsageBehaviour<String, String>(
+                maxMemorySize = 2,
+                estimator = object : ObjectSizeEstimator {
+                    override fun estimate(obj: Any?): Long = if (obj is String && obj.length == 1 && obj[0].isLowerCase()) 1L else 0L
+                },
+            )
+
+            listOf("A", "B", "C").forEach { rig.cache.put(it, it.lowercase()) }
+            rig.drained(3)
+
+            val first = FastCache.ActionUpdates(listOf(FastCache.PutAction("A", "a")))
+            expiry.process(rig.cache, first)
+            bound.process(rig.cache, first)
+            delay(50.milliseconds)
+
+            expiry.process(rig.cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("B", "b"), FastCache.PutAction("C", "c"))))
+            bound.process(
+                rig.cache,
+                FastCache.ActionUpdates(
+                    listOf(FastCache.PutAction("B", "b"), FastCache.ReadAction("A", "a"), FastCache.PutAction("C", "c"))
+                ),
+            )
+
+            rig.cache.keys shouldBe setOf("B", "C")
+            bound.totalSize shouldBe 2L
+        }
+
         "maxMemoryUsage: a declined eviction does not corrupt totalSize" {
             val rig = Rig()
             val behaviour = FastCache.MaxMemoryUsageBehaviour<String, String>(maxMemorySize = 1)

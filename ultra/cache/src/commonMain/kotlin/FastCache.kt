@@ -428,17 +428,20 @@ class FastCache<K, V> internal constructor(
         }
 
         private fun evict(cache: FastCache<K, V>, key: K): Boolean {
-            // Ask FIRST - see ExpireAfterAccessBehaviour.evict. Reports whether the entry is gone now,
-            // because the loop below must not count a spared one as progress. One that was already
-            // gone counts: it is no longer in the cache, and treating it as spared evicted a live
-            // entry in its place.
-            return (cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION) != Eviction.SPARED).also { gone ->
-                if (gone) data.remove(key)
+            // Ask FIRST - see ExpireAfterAccessBehaviour.evict. Reports whether this evicted an entry:
+            // a spared one is no progress, and neither is one already gone - the overshoot below is
+            // taken from what the cache really holds, which no longer counts it. Its tracking goes.
+            return when (cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION)) {
+                Eviction.REMOVED -> true.also { data.remove(key) }
+                Eviction.ABSENT -> false.also { data.remove(key) }
+                Eviction.SPARED -> false
             }
         }
 
         private fun evictAllNecessary(cache: FastCache<K, V>) {
-            var overshoot = data.size - maxEntries
+            // From what the cache really holds: tracked entries already gone (removed earlier in this
+            // pass, their removal still pending) made it evict live ones in their place.
+            var overshoot = minOf(data.size, cache.size) - maxEntries
 
             if (overshoot <= 0) return
 
@@ -551,6 +554,16 @@ class FastCache<K, V> internal constructor(
 
         private fun evictAllNecessary(cache: FastCache<K, V>) {
             var overflow = totalSize - maxMemorySize
+
+            if (overflow <= 0) return
+
+            // Entries already gone (removed earlier in this pass, their removal still pending) hold
+            // no bytes: release them first, so no live entry is evicted in place of one.
+            data.ascending().toList().forEach { (_, entry) ->
+                if (!cache.isCached(entry.key)) remove(entry)
+            }
+
+            overflow = totalSize - maxMemorySize
 
             if (overflow <= 0) return
 
@@ -1063,6 +1076,9 @@ class FastCache<K, V> internal constructor(
             addAction(RemoveAction(key))
         }
     }
+
+    /** Whether [key] is cached, its value null included. Records no action. */
+    private fun isCached(key: K): Boolean = sync { map.containsKey(key) }
 
     /**
      * The value cached for [key], or `null` when absent or written after the current batch was taken
