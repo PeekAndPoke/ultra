@@ -8,6 +8,22 @@
 
 A nullable constructor parameter whose type has two or more candidate services is injected as `null`, and validation reports nothing (`ParameterProvider.kt:160-169`, `TypeLookup.kt:108-116`). The service still counts as depending on those candidates, so it is promoted to SemiDynamic when one of them is dynamic, and `semiDynamicBecauseOf` can name a dynamic service it never receives. Found by reading (domain reviewer, round 1 of ULTRA-00319); unchanged by the split; not yet pinned by a test.
 
+## Decided (maintainer, 2026-11-14)
+
+"Yes the ambiguous error must be raised here." Nullable means "may be absent", nothing more:
+
+| Candidates | Non-null `T` | Nullable `T?` today | Nullable `T?` decided |
+|---|---|---|---|
+| none | error: misses a dependency | `null` | `null` |
+| exactly one | injected | injected | injected |
+| two or more | error: ambiguous | `null`, silently | error: ambiguous |
+
+The same for `Lazy<T?>`. The existing message names the colliding services. With the error, an ambiguous parameter
+no longer makes a service SemiDynamic for a dynamic service it never receives.
+
+A behaviour change that can stop an app at boot: before building, list every nullable service parameter in the repo
+(funktor's optional injections, e.g. `RestCodec` with `Database?` and `EntityCache?`) with its candidates.
+
 ## The work
 
 - First pin today's behaviour in `ultra/kontainer/src/test/kotlin/e2e/characterization/` as "CURRENT BEHAVIOUR" (track D
