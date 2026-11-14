@@ -4,6 +4,11 @@ import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
@@ -63,12 +68,119 @@ class FastCacheLoopResilienceSpec : StringSpec() {
             // The cap is still enforced after repeated failures
             cache.size shouldBe 1
 
-            // A throwing listener still starves the ones registered behind it - that is a separate
-            // defect from the loop dying, and it is deliberately pinned here rather than fixed
-            evicted.size shouldBe 0
+            // A throwing listener no longer starves the ones registered behind it
+            eventually(3.seconds) {
+                evicted shouldBe listOf("k0", "k1", "k2")
+            }
+
+            keepReachable(cache)
+        }
+
+        "a behaviour throwing a CancellationException does not end the loop" {
+            // process() does not suspend, so this is user code failing, not the loop being cancelled
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                addBehaviour(ThrowingBehaviour { CancellationException("thrown by a behaviour") })
+                maxEntries(1)
+            }
+
+            cache.put("a", "1")
+            cache.put("b", "2")
+
+            eventually(3.seconds) { cache.size shouldBe 1 }
+
+            // still alive later
+            cache.put("c", "3")
+            eventually(3.seconds) { cache.keys shouldBe setOf("c") }
+
+            keepReachable(cache)
+        }
+
+        "a behaviour throwing a Throwable that is not an Exception does not end the loop" {
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                addBehaviour(ThrowingBehaviour { NotAnException() })
+                maxEntries(1)
+            }
+
+            cache.put("a", "1")
+            cache.put("b", "2")
+
+            eventually(3.seconds) { cache.size shouldBe 1 }
+
+            cache.put("c", "3")
+            eventually(3.seconds) { cache.keys shouldBe setOf("c") }
+
+            keepReachable(cache)
+        }
+
+        "an eviction listener throwing a CancellationException does not end the loop" {
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                maxEntries(1)
+                onEviction { _, _ -> throw CancellationException("thrown by a listener") }
+            }
+
+            cache.put("a", "1")
+            delay(60.milliseconds)
+            cache.put("b", "2")
+            delay(60.milliseconds)
+            cache.put("c", "3")
+
+            eventually(3.seconds) { cache.keys shouldBe setOf("c") }
+
+            keepReachable(cache)
+        }
+
+        "a refresh loader throwing a Throwable that is not an Exception does not reach the scope's handler" {
+            val handled = mutableListOf<Throwable>()
+            val scope = CoroutineScope(SupervisorJob() + CoroutineExceptionHandler { _, e -> handled.add(e) })
+            var loads = 0
+
+            val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
+                refreshAfterWrite(50.milliseconds) { loads++; throw NotAnException() }
+            }
+
+            cache.put("a", "1")
+
+            // retried, i.e. the key was released each time
+            eventually(3.seconds) { (loads >= 2) shouldBe true }
+
+            handled shouldBe emptyList()
+
+            scope.cancel()
+            keepReachable(cache)
+        }
+
+        "an eviction listener that throws neither stops the other evictions of the pass nor the listeners behind it" {
+            // Driven by hand: one process() call is one pass
+            val called = mutableListOf<String>()
+            val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
+                onEviction { _, _ -> error("first listener fails") }
+                onEviction { key, _ -> called.add(key) }
+            }
+            val behaviour = FastCache.ExpireAfterWriteBehaviour<String, String>(ttl = 50.milliseconds)
+            val keys = List(100) { "k$it" }
+
+            keys.forEach { cache.put(it, it) }
+            delay(100.milliseconds)
+            behaviour.process(cache, FastCache.ActionUpdates(keys.map { FastCache.PutAction(it, it) }))
+            delay(100.milliseconds)
+
+            runCatching { behaviour.process(cache, FastCache.ActionUpdates(emptyList())) }
+
+            cache.size shouldBe 0
+            called.size shouldBe 100
         }
     }
 }
+
+/** A behaviour that throws what [error] makes, in every pass. */
+private class ThrowingBehaviour<K, V>(private val error: () -> Throwable) : FastCache.Behaviour<K, V> {
+    override fun process(cache: FastCache<K, V>, updates: FastCache.ActionUpdates<K, V>) {
+        throw error()
+    }
+}
+
+/** Like `VaultException`: a Throwable that is not an Exception. */
+private class NotAnException : Throwable("not an exception")
 
 /** Config validation: a silently coerced limit is a misconfiguration that never surfaces. */
 class FastCacheConfigValidationSpec : StringSpec() {

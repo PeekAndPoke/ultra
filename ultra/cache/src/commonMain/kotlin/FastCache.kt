@@ -5,7 +5,9 @@ import io.peekandpoke.ultra.common.WeakReference
 import io.peekandpoke.ultra.datetime.Kronos
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 import kotlin.time.Duration
@@ -726,11 +728,14 @@ class FastCache<K, V>(
                         cache.replaceIfUnchanged(key, startedFrom.value, newValue)
                         settled = true
                     } catch (e: CancellationException) {
-                        // never swallow cancellation - it is how the scope is torn down
+                        // The loader suspends, so this is cancellation: of the scope, or one the loader
+                        // threw. Either way it ends this refresh quietly; finally frees the key.
                         throw e
-                    } catch (e: Exception) {
-                        // Refresh failed: allow retry on next loop iteration. There is no logger
-                        // here, so a repeatedly failing loader would otherwise be entirely silent.
+                    } catch (e: Throwable) {
+                        // Refresh failed: allow retry on next loop iteration. Every Throwable, not only
+                        // Exceptions: one that is not (an Error, or e.g. VaultException) escaped to the
+                        // scope's handler, which on native ends the process. There is no logger here,
+                        // so a repeatedly failing loader would otherwise be entirely silent.
                         // The exception's class only: a key or a message can carry a session id or a token.
                         println("FastCache refresh failed: ${e::class.simpleName}")
                     } finally {
@@ -794,14 +799,18 @@ class FastCache<K, V>(
                 cache.behaviours.forEach { behaviour ->
                     try {
                         behaviour.process(cache, updates)
-                    } catch (e: CancellationException) {
-                        // never swallow cancellation - it is how the scope is torn down
-                        throw e
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
+                        // process() does not suspend, so a CancellationException from it was thrown by
+                        // user code, not by this loop being cancelled: rethrow only when it is.
+                        if (e is CancellationException && !currentCoroutineContext().isActive) {
+                            throw e
+                        }
+
                         // Without this, one throw ends the coroutine for good: no expiry, no
                         // eviction, no statistics, no refresh - while get/put keep working, so the
-                        // cache silently grows without bound. A user onEviction handler throwing is
-                        // enough, since removeSilently invokes those from inside process().
+                        // cache silently grows without bound. Every Throwable, Errors included: a
+                        // StackOverflowError from estimating a deep value must not end the loop, and
+                        // a dead loop turns any failure into unbounded growth.
                         // There is no logger here, so it goes to the platform's default channel.
                         // The exception's class only: its message can carry cached data.
                         println("FastCache behaviour [${behaviour::class.simpleName}] failed: ${e::class.simpleName}")
@@ -1052,9 +1061,18 @@ class FastCache<K, V>(
             addAction(RemoveAction(key))
 
             // TODO(scan): user callbacks run while the lock is held - on native that is the single
-            //   process-wide spin lock, and a throwing callback starves the listeners behind it.
-            @Suppress("UNCHECKED_CAST")
-            evictionListeners.forEach { listener -> listener(key, removed as V) }
+            //   process-wide spin lock.
+            evictionListeners.forEach { listener ->
+                // One at a time: a throwing listener skipped the ones behind it, and ended the
+                // calling behaviour's process() - one eviction per behaviour and pass.
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    listener(key, removed as V)
+                } catch (e: Throwable) {
+                    // The exception's class only: its message can carry cached data.
+                    println("FastCache eviction listener failed: ${e::class.simpleName}")
+                }
+            }
         }
 
         wasPresent
