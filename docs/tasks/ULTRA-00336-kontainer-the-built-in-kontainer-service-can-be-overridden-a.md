@@ -16,9 +16,14 @@ The built-in `Kontainer` service is declared dynamic (`KontainerBuilder.kt`), so
 `KontainerInconsistent`, naming the class and saying that it is managed by the kontainer itself. `KontainerBlueprint`
 is a static singleton and is already refused today as "unexpected"; it gets the same clear message as the other two.
 
-Also check, by test first: what happens when a blueprint's own builder defines one of the three
-(`singleton(Kontainer::class) { ... }`); the built-ins are added after the builder block ran (`KontainerBuilder.kt:527-546`).
-Pin today's result and report it; refuse it the same way if it can replace a built-in.
+**And they cannot be registered at all** (maintainer, 2026-11-14: "This also means it must not be possible to
+register any of these at all."): a blueprint builder, a module or an `extend` block that defines `Kontainer`,
+`InjectionContext` or `KontainerBlueprint` (`singleton`, `prototype`, `dynamic`, `dynamicPrototype`, `instance`, by
+class or with a factory) is refused with `KontainerInconsistent`, naming the class and saying that it is managed by
+the kontainer itself. Test first what happens today (the built-ins are added after the builder block ran,
+`KontainerBuilder.kt:527-546`, so a user definition is probably replaced silently): pin it, then refuse it. Decide in
+the plan whether the refusal comes when the definition is made or when the blueprint is built; either way before any
+kontainer exists.
 
 ## The work
 
