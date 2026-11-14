@@ -3,6 +3,10 @@ package io.peekandpoke.ultra.cache
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import java.util.concurrent.atomic.AtomicIntegerArray
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -36,8 +40,13 @@ class FastCacheRefreshConcurrencySpec : StringSpec() {
             repeat(5) {
                 val loadsPerKey = AtomicIntegerArray(keys)
 
+                // A scope per trial, cancelled at its end: each pass launches a loader for every
+                // released key, and the backlog left by the last passes kept the shared dispatcher busy
+                // after the spec, starving the next spec's refresh.
+                val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
                 // a cache without behaviours: process() is driven by hand from this thread
-                val cache = fastCache<Int, Int>(loopDelay = 1_000.milliseconds) {}
+                val cache = fastCache<Int, Int>(scope = scope, loopDelay = 1_000.milliseconds) {}
                 val behaviour = FastCache.RefreshAfterWriteBehaviour<Int, Int>(refreshAfter = 1.milliseconds) {
                     loadsPerKey.incrementAndGet(it)
                     // the release path that prints nothing - the other failure path logs each key
@@ -59,10 +68,14 @@ class FastCacheRefreshConcurrencySpec : StringSpec() {
                 // Second round: pass again until every key was launched a second time. A key whose
                 // release was merely late is launched by a later pass; one whose release was lost
                 // stays claimed and is never launched again.
-                pollUntil {
-                    behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
-                    everyKeyLoaded(2)
-                } shouldBe true
+                try {
+                    pollUntil {
+                        behaviour.process(cache, FastCache.ActionUpdates(emptyList()))
+                        everyKeyLoaded(2)
+                    } shouldBe true
+                } finally {
+                    scope.cancel()
+                }
             }
         }
     }

@@ -36,10 +36,14 @@ class FastCacheHotKeySpec : StringSpec({
 
         cache.put("a", "1")
 
+        // A fixed pool of missing keys: the batches stay long, but the per-key maps stay small. A
+        // million distinct keys filled the test JVM's default heap and stalled the specs after this one.
+        val missingKeys = List(1_000) { "miss-$it" }
+
         val readers = listOf(
             thread(isDaemon = true) {
                 val random = Random(1)
-                while (!stop.get()) cache.get("miss-" + random.nextInt(1_000_000))
+                while (!stop.get()) cache.get(missingKeys[random.nextInt(missingKeys.size)])
             },
             thread(isDaemon = true) {
                 while (!stop.get()) {
