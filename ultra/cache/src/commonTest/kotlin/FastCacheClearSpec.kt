@@ -88,6 +88,8 @@ class FastCacheClearSpec : StringSpec() {
             eventually(3.seconds) {
                 behaviour.totalSize shouldBe 0L
             }
+
+            keepReachable(cache)
         }
 
         "behaviours forget cleared entries: refreshAfterWrite drops their write times" {
@@ -131,6 +133,8 @@ class FastCacheClearSpec : StringSpec() {
 
             evicted shouldBe emptyList()
             stats.snapshot().evictionCount shouldBe 0L
+
+            keepReachable(cache)
         }
 
         "actions still pending at clear are counted by the statistics" {
@@ -155,6 +159,8 @@ class FastCacheClearSpec : StringSpec() {
                 putCount = 1,
                 evictionCount = 0,
             )
+
+            keepReachable(cache)
         }
     }
 }

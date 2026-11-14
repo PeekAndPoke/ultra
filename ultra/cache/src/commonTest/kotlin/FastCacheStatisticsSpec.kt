@@ -26,6 +26,8 @@ class FastCacheStatisticsSpec : StringSpec() {
             snapshot.putCount shouldBe 1
             snapshot.hitCount shouldBe 1
             snapshot.missCount shouldBe 1
+
+            keepReachable(cache)
         }
 
         "statistics tracks put count" {
@@ -42,6 +44,8 @@ class FastCacheStatisticsSpec : StringSpec() {
             delay(100.milliseconds)
 
             stats.snapshot().putCount shouldBe 3
+
+            keepReachable(cache)
         }
 
         "statistics tracks eviction count" {
@@ -59,6 +63,8 @@ class FastCacheStatisticsSpec : StringSpec() {
             delay(200.milliseconds)
 
             stats.snapshot().evictionCount shouldBe 1
+
+            keepReachable(cache)
         }
 
         "statistics hitRate calculation" {
@@ -79,6 +85,8 @@ class FastCacheStatisticsSpec : StringSpec() {
             val snapshot = stats.snapshot()
             snapshot.requestCount shouldBe 4
             snapshot.hitRate shouldBe 0.75
+
+            keepReachable(cache)
         }
 
         "statistics snapshot is immutable - new operations do not change old snapshot" {
@@ -105,6 +113,8 @@ class FastCacheStatisticsSpec : StringSpec() {
 
             // New snapshot reflects updates
             stats.snapshot().hitCount shouldBe 2
+
+            keepReachable(cache)
         }
 
         "has() counts as hit when key exists, miss when absent" {
@@ -123,6 +133,8 @@ class FastCacheStatisticsSpec : StringSpec() {
             val snapshot = stats.snapshot()
             snapshot.hitCount shouldBe 1
             snapshot.missCount shouldBe 1
+
+            keepReachable(cache)
         }
     }
 }

@@ -170,6 +170,8 @@ class FastCacheConfigValidationSpec : StringSpec() {
             delay(200.milliseconds)
 
             loads shouldBe 0
+
+            keepReachable(cache)
         }
 
         "a sub-millisecond expiry TTL counts as 1 ms instead of truncating to 0" {
@@ -208,6 +210,8 @@ class FastCacheConfigValidationSpec : StringSpec() {
             delay(100.milliseconds)
 
             loads shouldBe 0
+
+            keepReachable(cache)
         }
     }
 }

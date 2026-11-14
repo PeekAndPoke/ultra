@@ -59,6 +59,8 @@ class FastCacheBatchOrderSpec : StringSpec() {
 
                 reader.cancel()
             }
+
+            keepReachable(cache)
         }
 
         "maxEntries: a miss right after clear() does not keep the cleared key tracked" {
@@ -129,6 +131,8 @@ class FastCacheBatchOrderSpec : StringSpec() {
             eventually(2.seconds) {
                 behaviour.totalSize shouldBe 0L
             }
+
+            keepReachable(cache)
         }
     }
 }

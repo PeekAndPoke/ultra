@@ -81,6 +81,8 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             eventually(2.seconds) {
                 loadsOfA shouldBe 1
             }
+
+            keepReachable(cache)
         }
 
         "a failed refresh does not release the claim of a newer refresh of the same key" {
@@ -105,6 +107,8 @@ class FastCacheRefreshRaceSpec : StringSpec() {
             loader.calls shouldBe 2
 
             loader.gates[1].complete("done")
+
+            keepReachable(cache)
         }
     }
 }

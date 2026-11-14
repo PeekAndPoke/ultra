@@ -56,6 +56,8 @@ class FastCacheRefreshFailureSpec : StringSpec({
 
             eventually(3.seconds) { (loads >= 1) shouldBe true }
             Thread.sleep(50)
+
+            keepReachable(cache)
         }
 
         scope.cancel()
@@ -69,7 +71,7 @@ class FastCacheRefreshFailureSpec : StringSpec({
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
         val output = capturingStdout {
-            fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
+            val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
                 addBehaviour(object : FastCache.Behaviour<String, String> {
                     override fun process(cache: FastCache<String, String>, updates: FastCache.ActionUpdates<String, String>) {
                         calls++
@@ -80,6 +82,8 @@ class FastCacheRefreshFailureSpec : StringSpec({
 
             eventually(3.seconds) { (calls >= 1) shouldBe true }
             Thread.sleep(50)
+
+            keepReachable(cache)
         }
 
         scope.cancel()
@@ -103,5 +107,7 @@ class FastCacheRefreshFailureSpec : StringSpec({
         eventually(3.seconds) {
             loads.get() shouldBeGreaterThanOrEqual 2
         }
+
+        keepReachable(cache)
     }
 })

@@ -76,6 +76,8 @@ class FastCacheRefreshAfterWriteSpec : StringSpec() {
             delay(250.milliseconds)
 
             loadCount shouldBe 1
+
+            keepReachable(cache)
         }
 
         "hard ttl evicts even during refresh" {

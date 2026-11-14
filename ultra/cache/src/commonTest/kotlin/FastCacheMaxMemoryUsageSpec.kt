@@ -184,6 +184,8 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             delay(100.milliseconds)
 
             behaviour.totalSize shouldBe 0L
+
+            keepReachable(cache)
         }
 
         "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test" {

@@ -26,6 +26,8 @@ class FastCacheOnEvictionSpec : StringSpec() {
             delay(800.milliseconds)
 
             evicted shouldContainExactlyInAnyOrder listOf("a" to "1", "b" to "2")
+
+            keepReachable(cache)
         }
 
         "onEviction does NOT fire on explicit remove()" {
@@ -45,6 +47,8 @@ class FastCacheOnEvictionSpec : StringSpec() {
             delay(100.milliseconds)
 
             evicted.size shouldBe 0
+
+            keepReachable(cache)
         }
 
         "onEviction fires for each evicted entry with maxEntries" {
@@ -65,6 +69,8 @@ class FastCacheOnEvictionSpec : StringSpec() {
             evicted.size shouldBe 1
             // "a" was the least recently accessed
             evicted[0].first shouldBe "a"
+
+            keepReachable(cache)
         }
 
         "onEviction receives the correct value" {
@@ -82,6 +88,8 @@ class FastCacheOnEvictionSpec : StringSpec() {
             }
 
             evicted[0] shouldBe ("x" to "hello")
+
+            keepReachable(cache)
         }
     }
 }
