@@ -11,10 +11,17 @@ fun <V> ListMutator<V>.add(index: Int, element: V): Unit = add(index, getChildMu
  * A [Mutator] for a list that is also a [MutableList] of mutators for its elements.
  *
  * An element mutator from [get], an iterator or [subList] writes back to its own row, wherever later structural
- * changes move that row. Its write is dropped silently when the row is gone (removed, cleared, the whole value
- * replaced or reset) or was written by something else since this mutator last saw it (another element mutator,
- * `set`, or a reorder such as `sort`, `reverse` or `shuffle`). Changing the list from [get] in place bypasses this
- * tracking.
+ * changes move that row. Its write is not applied when the row is gone (removed, cleared, the whole value replaced or
+ * reset) or holds another instance than the one this mutator last saw: something else wrote it (another element
+ * mutator, `set`, a reorder such as `sort`, `reverse` or `shuffle`, or a move such as `add(j, removeAt(i))`).
+ * Such a write is dropped silently, but the element mutator keeps its value, so a later write that does land
+ * carries it. Following an element across a reorder is a design question (ULTRA-00323). The check is identity:
+ * for strings, numbers and booleans an equal value written by someone else may or may not count as the same
+ * instance, depending on platform and interning.
+ *
+ * Row tracking belongs to this mutator instance. Change the list through it: the value from [get] is for reading,
+ * and the list passed to `set(list)` is kept by reference. `remove(element)`, `indexOf` and `contains` compare by
+ * value and take the first equal row; for a specific row use `removeAt` or an iterator.
  */
 interface ListMutator<V> : Mutator<MutableList<V>>, MutableList<Mutator<V>> {
     fun getChildMutator(child: V): Mutator<V>
@@ -24,9 +31,8 @@ interface ListMutator<V> : Mutator<MutableList<V>>, MutableList<Mutator<V>> {
      *
      * Unlike `List.subList` it is not a view: later changes of this list do not show in it. A change through one of
      * its elements writes back to its row in this list, as for [get]. Structural changes to the snapshot throw
-     * [UnsupportedOperationException], so
-     * `subList(a, b).clear()` throws: to remove or reorder a range, use this list (`removeAt`, `removeAll` /
-     * `retainAll`, `listIterator(from)`).
+     * [UnsupportedOperationException], so `subList(a, b).clear()` throws: to remove or reorder a range, use this list
+     * (`removeAt`, `removeAll` / `retainAll`, `listIterator(from)`).
      *
      * @throws IndexOutOfBoundsException if [fromIndex] < 0 or [toIndex] > size
      * @throws IllegalArgumentException if [fromIndex] > [toIndex]
@@ -193,10 +199,12 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      * Inserts all the elements of the specified collection [elements] into this list at the specified [index].
      */
     override fun addAll(index: Int, elements: Collection<Mutator<V>>): Boolean {
+        // Read the values once, before the insert: elements may be this list itself or a view of it
+        val values = elements.extract()
         val rows = rows()
-        return get().addAll(index, elements.extract()).also {
+        return get().addAll(index, values).also {
             if (it) {
-                rows.addAll(index, List(elements.size) { RowToken() })
+                rows.addAll(index, List(values.size) { RowToken() })
                 notifyObservers()
             }
         }
@@ -316,6 +324,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
      *
      * It finds its row by the row's token. A write lands only if the row still holds the very instance this mutator
      * last saw (identity, not equality: an equal value written by someone else still counts as someone else's).
+     * Two NaN count as the same instance: on JS `NaN === NaN` is false.
      */
     private fun trackedChild(index: Int): Mutator<V> {
         var seen = get()[index]
@@ -326,7 +335,7 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
             val rows = rows()
             val pos = if (rows.getOrNull(hint) === token) hint else rows.indexOf(token)
 
-            if (pos != -1 && get()[pos] === seen) {
+            if (pos != -1 && sameInstance(get()[pos], seen)) {
                 // Update before notifying, so a write from inside an observer sees this one
                 seen = new
                 hint = pos
@@ -345,6 +354,11 @@ class ListMutatorImpl<V>(value: List<V>, private val childToMutator: V.() -> Mut
         tokens.clear()
         repeat(size) { tokens.add(RowToken()) }
     }
+
+    /** Identity, except that two NaN of the same type count as the same instance. */
+    private fun sameInstance(a: Any?, b: Any?): Boolean = a === b ||
+        (a is Double && b is Double && a.isNaN() && b.isNaN()) ||
+        (a is Float && b is Float && a.isNaN() && b.isNaN())
 
     /** Removes the rows whose value matches [predicate], with their tokens. */
     private fun removeRowsWhere(predicate: (V) -> Boolean): Boolean {

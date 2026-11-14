@@ -6,6 +6,7 @@ import io.peekandpoke.mutator.domain.Address
 import io.peekandpoke.mutator.domain.city
 import io.peekandpoke.mutator.domain.mutator
 import io.peekandpoke.mutator.domain.street
+import io.peekandpoke.mutator.domain.zip
 import kotlin.random.Random
 
 /**
@@ -55,7 +56,6 @@ class ListMutatorRowTrackingSpec : StringSpec() {
         "D: a write through a mutator whose row was removed is dropped, even when another row holds its value" {
             val m = listOf(a, b).mutator()
             val c0 = m[0]
-            m[1]
             c0.set(b)
             m.removeAt(0)
             var notified = 0
@@ -135,10 +135,10 @@ class ListMutatorRowTrackingSpec : StringSpec() {
             m.get() shouldBe listOf(a, b)
         }
 
-        "reset(): a write through a mutator held across reset() is dropped" {
+        "reset(): a write through a mutator held across reset() is dropped (same row count before and after)" {
             val m = listOf(a, b).mutator()
             val held = m[0]
-            m.add(c)
+            m[1].street = "S"
             m.reset()
             held.street = "X"
 
@@ -163,6 +163,24 @@ class ListMutatorRowTrackingSpec : StringSpec() {
             m.get() shouldBe listOf(c, b, a)
         }
 
+        "reverse(): a held mutator whose row still holds its element after the reorder writes to it" {
+            val m = listOf(a, b, c).mutator()
+            val held = m[1]
+            m.reverse()
+            held.street = "X"
+
+            m.get() shouldBe listOf(c, b.copy(street = "X"), a)
+        }
+
+        "sortBy(): a held mutator whose row still holds its element after the reorder writes to it" {
+            val m = listOf(a, c, b).mutator()
+            val held = m[0]
+            m.sortBy { it.get().street }
+            held.street = "X"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), b, c)
+        }
+
         "reverse() of 20: a write through a mutator held across the JVM's iterator-based reverse is dropped" {
             val list = (1..20).map { Address("S$it", "C", "Z") }
             val m = list.mutator()
@@ -181,6 +199,7 @@ class ListMutatorRowTrackingSpec : StringSpec() {
                 val held = m[3]
                 m.shuffle(Random(seed))
                 val shuffled = m.get().toList()
+                shuffled shouldBe list.toMutableList().apply { shuffle(Random(seed)) }
                 held.street = "X"
 
                 val expected = if (shuffled[3] === list[3]) {
@@ -302,6 +321,141 @@ class ListMutatorRowTrackingSpec : StringSpec() {
             held.street = "X"
 
             m.get() shouldBe listOf(z, e, e)
+        }
+
+        // addAll() with the list itself or a view of it ////////////////////////////////////////////////////////////
+
+        "addAll(itself): held mutators keep their rows" {
+            val m = listOf(a, b).mutator()
+            val held = m[0]
+            m.addAll(m)
+            held.street = "X"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), b, a, b)
+        }
+
+        "addAll(index, itself): held mutators keep their rows" {
+            val m = listOf(a, b).mutator()
+            val first = m[0]
+            val last = m[1]
+            m.addAll(1, m)
+            first.street = "X"
+            last.street = "Y"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), a, b, b.copy(street = "Y"))
+        }
+
+        "addAll(asReversed()): held mutators keep their rows" {
+            val m = listOf(a, b).mutator()
+            val held = m[0]
+            m.addAll(m.asReversed())
+            held.street = "X"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), b, b, a)
+        }
+
+        // Rows on both sides of a change in the middle //////////////////////////////////////////////////////////////
+
+        "removeAt(middle): the rows before and after keep their mutators" {
+            val m = listOf(a, b, c).mutator()
+            val first = m[0]
+            val last = m[2]
+            m.removeAt(1)
+            first.street = "X"
+            last.street = "Y"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), c.copy(street = "Y"))
+        }
+
+        "add(middle): the rows before and after keep their mutators" {
+            val m = listOf(a, b).mutator()
+            val first = m[0]
+            val last = m[1]
+            m.add(1, z)
+            first.street = "X"
+            last.street = "Y"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), z, b.copy(street = "Y"))
+        }
+
+        "addAll(middle): the rows before and after keep their mutators" {
+            val m = listOf(a, b).mutator()
+            val first = m[0]
+            val last = m[1]
+            m.addAll(1, listOf(m.getChildMutator(z)))
+            first.street = "X"
+            last.street = "Y"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), z, b.copy(street = "Y"))
+        }
+
+        "removeAll(middle): the rows before and after keep their mutators" {
+            val m = listOf(a, b, c).mutator()
+            val first = m[0]
+            val last = m[2]
+            m.removeAll(listOf(m.getChildMutator(b)))
+            first.street = "X"
+            last.street = "Y"
+
+            m.get() shouldBe listOf(a.copy(street = "X"), c.copy(street = "Y"))
+        }
+
+        // NaN ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        "a row holding Double.NaN can be written (on JS NaN === NaN is false)" {
+            val m = listOf(Double.NaN, 1.0).mutator { ObjectMutator(this) }
+            m[0].set(2.0)
+
+            m.get() shouldBe listOf(2.0, 1.0)
+        }
+
+        "a row holding Float.NaN can be written" {
+            val m = listOf(Float.NaN, 1.0f).mutator { ObjectMutator(this) }
+            m[0].set(2.0f)
+
+            m.get() shouldBe listOf(2.0f, 1.0f)
+        }
+
+        // Current behaviour, pinned //////////////////////////////////////////////////////////////////////////////
+
+        "a dropped write is kept by the mutator: after a second reverse() its next write carries it" {
+            val m = listOf(a, b, c).mutator()
+            val held = m[0]
+            m.reverse()
+            held.street = "X"
+            m.get() shouldBe listOf(c, b, a)
+
+            m.reverse()
+            held.city = "Y"
+
+            m.get() shouldBe listOf(Address("X", "Y", "Z"), b, c)
+        }
+
+        "a dropped write is kept by the mutator: once another mutator restores the row, the next write carries it" {
+            val m = listOf(a).mutator()
+            val held = m[0]
+            val other = m[0]
+            other.street = "S"
+            held.city = "Y"
+            m.get() shouldBe listOf(a.copy(street = "S"))
+
+            // back to its baseline: the other mutator writes the very instance a again
+            other.street = "A"
+            m.get()[0] shouldBe a
+            held.zip = "Q"
+
+            m.get() shouldBe listOf(Address("A", "Y", "Q"))
+        }
+
+        "remove(element) removes the first equal row, not the row of the mutator passed in" {
+            val m = listOf(e, b, e).mutator()
+            val first = m[0]
+            val last = m[2]
+            m.remove(last)
+            first.street = "X"
+            last.city = "Y"
+
+            m.get() shouldBe listOf(b, e.copy(city = "Y"))
         }
     }
 }

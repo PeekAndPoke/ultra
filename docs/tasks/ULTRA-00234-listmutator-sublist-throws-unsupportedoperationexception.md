@@ -38,7 +38,7 @@ When `subList` is implemented, the `slice` case flips and must be rewritten. *(D
 ## Acceptance
 
 - [x] `subList(from, to)` returns the child mutators of the range; a change through one writes back to the parent
-      (found by identity, as `get(index)` does) and notifies the parent's observers.
+      (found by row token, as `get(index)` does) and notifies the parent's observers.
 - [x] The snapshot refuses `add`, `remove`, `set`, `clear`, `addAll`, `removeAll`, `retainAll` and its iterators'
       `add`/`remove`/`set` with `UnsupportedOperationException`, the same on the JVM and JS.
 - [x] Not a view: later structural changes to the parent leave the snapshot's size and order as they were.
@@ -255,6 +255,55 @@ Mutation checks, each on both platforms (same tests red on JVM and JS) and resto
 | `seen` updated after `setAt` notifies | G |
 | whole-value replacement keeps the old tokens | "replacing the whole value: ... set() is dropped" |
 
+### Round 3 (2026-11-14): level 3, reviewer-fable-xhigh, blind then reconciled
+
+- Implementation & code style: **CLEAN** (0 CRITICAL, 0 MAJOR, 5 MINOR).
+- Domain expert: **CLEAN** (0 CRITICAL, 0 MAJOR, 6 MINOR).
+- Security / data integrity: **CLEAN** (0 CRITICAL, 0 MAJOR, 6 MINOR).
+
+All three confirmed A to G, I and J fixed. The reviewers were read-only, so every scenario below was first written
+as a test and run on the JVM and JS.
+
+| # | MINOR (raised by) | Verdict | Evidence | Outcome |
+|---|---|---|---|---|
+| 1 | `addAll` with the list itself or a view of it reads `elements.size` after the insert (all three) | CONFIRMED | `addAll(m)`, `addAll(1, m)`, `addAll(m.asReversed())` RED on JVM and JS: the token count no longer matched the rows, so all tokens were renewed and held writes dropped | fixed: values extracted once, `values.size` tokens |
+| 2 | the `reset()` test passes without the `reset()` override (the row count changed) | CONFIRMED | replaced by a same-size case; mutant "no `renewTokens` in `reset()`" turns it RED | test fixed |
+| 3 | position mutants on `rows.removeAt(index)`, `rows.add(index, ...)`, `rows.addAll(index, ...)`, `rows.removeAt(i)` survive (security) | CONFIRMED | four "rows on both sides of a change in the middle" tests; each mutant turns its test RED (table below) | tests added |
+| 4 | reorder tests only show drops; the shuffle test does not check the shuffle; D has a bare `m[1]` | CONFIRMED | deterministic `reverse()` and `sortBy()` cases where the row keeps its element and the write lands; shuffle asserted against `list.toMutableList().apply { shuffle(Random(seed)) }`; the bare `m[1]` only built a discarded child, removed | tests added |
+| 5 | JS: a row holding `NaN` cannot be written (`NaN === NaN` is false) | CONFIRMED on JS only (JVM green: boxes keep their identity) | `Double.NaN` and `Float.NaN` tests RED on JS | fixed: `sameInstance` treats two NaN of the same type as the same |
+| 6 | KDoc and changelog wording: "dropped" keeps the value; identity versus interning; move idiom; false `null` clause; first equal row; `get()` for reading; per-instance tracking; acceptance wording; `Collections.rotate` | CONFIRMED, except one detail | pinned: a dropped write carried by a later write (reverse twice; another mutator restoring the row's instance), `remove(element)` takes the first equal row (`[b, eY]`), JS equal numbers identical. NOT SURVIVED: "JVM: 100 lands, 1000 drops". On this test JVM even `listOf(100)[0] === (100 as Any)` is false, so boxed identity is not stable; documented only, no JVM pin. `Collections.rotate` on 100 rows confirmed to throw `UnsupportedOperationException` (JVM pin) | documented and pinned |
+| 7 | the iterator's own `remove()`/`set()` are index-addressed | CONFIRMED on JVM and JS: `[b, x]`, `[b]`, `[a, b]` as traced | pinned as known behaviour next to H, named ULTRA-00324 | no fix (maintainer) |
+| 8 | ULTRA-00320 scenarios | CONFIRMED on JVM and JS by a throwaway probe (not committed): a held element of `book.addresses` brings a removed row back; the nested list variant leaves `outer.isModified()` false with initial value `[[a, b, z]]` | | for ULTRA-00320 |
+
+Views on the three open decisions of round 2:
+
+- Identity versus equality in the row guard: implementation and security for identity, domain for equality.
+  Maintainer: identity, final.
+- Following an element across a reorder: not built; design ticket ULTRA-00323.
+- In-place changes through `get()`: documented ("`get()` is for reading; the list passed to `set(list)` is kept by
+  reference").
+
+What stayed CLEAN (all three): tokens and rows in step on every structural path except `addAll(self)` (fixed); the
+stdlib paths on the JVM and JS; an exception half-way through an operation; reentrancy; memory (one token per row,
+no references to children); tokens cannot collide.
+
+Mutation checks of round 3, each on JVM and JS and restored:
+
+| Mutant | Turned RED |
+|---|---|
+| `rows.removeAt(index)` → `removeAt(0)` | "removeAt(middle)" |
+| `rows.add(index, ...)` → `add(0, ...)` | "add(middle)" |
+| `rows.addAll(index, ...)` → `addAll(0, ...)` | "addAll(middle)" and the three `addAll(self)` tests |
+| `rows.removeAt(i)` → `removeAt(0)` in `removeRowsWhere` | "removeAll(middle)" |
+| no `renewTokens` in `reset()` | the same-size `reset()` test |
+| `addAll` creates `elements.size` tokens again | the three `addAll(self)` tests |
+| `sameInstance` back to bare `===` | both NaN tests, on JS only (JVM: boxes keep identity) |
+
+Counts (`console/wt-gradle.sh :mutator:core:jvmTest :mutator:core:jsBrowserTest -x kotlinStoreYarnLock`, XML): jvmTest
+241, 0 failures; jsBrowserTest 241, 0 failures. JS is not JVM + 1 here: the JVM runs the two-test
+`ListMutatorJvmCollectionsSpec`, JS runs the one-test `ListMutatorIdentityJsSpec` and Kotest's bootstrap entry.
+`ListMutatorRowTrackingSpec` has 41 tests and `ListMutatorKnownDefectsSpec` 4, on both platforms.
+
 ## Changelog text
 
 - Mutator: `ListMutator.subList()` no longer throws. It returns a read-only snapshot of the child mutators in the
@@ -264,10 +313,12 @@ Mutation checks, each on both platforms (same tests red on JVM and JS) and resto
   itself. `slice(IntRange)` on a `ListMutator` works as a consequence.
 - Mutator fix: an element mutator of a `ListMutator` (from `list[i]`, `forEach`, an iterator or `subList`) now
   writes to its own row, wherever later adds and removes move it. Before, it lost its second change, and with the same
-  instance in several rows it could write to another row, or throw `IndexOutOfBoundsException` for `null` elements.
-  A write is dropped silently when its row is gone (removed, cleared, the whole list replaced or reset), or when
-  something else wrote that row since (another element mutator, `set`, a reorder such as `sort`, `reverse` or
-  `shuffle`). A write from inside a list observer through the same element mutator now lands.
+  instance in several rows it could write to another row. A write from inside a list observer through the same
+  element mutator now lands, and so does a write to a row holding `NaN`.
+- Mutator: a write through an element mutator is not applied when its row is gone (removed, cleared, the whole list
+  replaced or reset) or holds another instance than the mutator last saw (another element mutator, `set`, a reorder
+  such as `sort`, `reverse` or `shuffle`, or a move such as `add(j, removeAt(i))`). It is dropped silently, but the
+  element mutator keeps its value, so a later write that does land carries it.
 - Mutator fix: the `ListMutator` list iterator's `remove()` and `set()` after `previous()` hit the element before the
   one `previous()` returned, so `reverse()` on the JVM silently corrupted lists of 18 or more elements. They now act
   on the element last returned, and throw `IllegalStateException` without a preceding `next()`/`previous()`.
@@ -281,12 +332,39 @@ Behaviour changes without a compile signal (same signatures, different behaviour
 - `subList` and `slice(IntRange)` return a read-only snapshot instead of throwing.
 - Iterator exceptions: `NoSuchElementException` past the ends, `IllegalStateException` for `remove()`/`set()`
   without a preceding `next()`/`previous()`, `IndexOutOfBoundsException` from `listIterator(index)` out of range.
-- Held element mutators: after a reorder (`sort`, `reverse`, `shuffle`), a whole-value `set` or `reset`, a write is
-  dropped where it used to follow the element by identity.
+- Held element mutators: after a reorder (`sort`, `reverse`, `shuffle`), a move such as `m.add(j, m.removeAt(i))`
+  (drag and drop), a whole-value `set` or `reset`, a held mutator's later write is dropped where it used to follow
+  the element by identity.
 - `remove(element)`, `removeAll`, `retainAll` now remove through the row bookkeeping; results are unchanged.
 
-Limits: changing the list in place through `get()` bypasses the row tracking (a change of the row count is detected
-and drops held writes; a same-size change is not). Known defect H (ULTRA-00320) is unchanged.
+Limits:
+
+- The write check is identity. For strings, numbers and booleans, an equal value written by someone else may or may
+  not count as the same instance, depending on platform and interning (on JS equal numbers and strings are identical;
+  on the JVM boxed numbers usually are not).
+- `remove(element)`, `indexOf` and `contains` compare by value and take the first equal row; for a specific row use
+  `removeAt` or an iterator.
+- The value from `get()` is for reading, and the list passed to `set(list)` is kept by reference: change the list
+  through the mutator. Changing it in place bypasses the row tracking (a change of the row count is detected and drops
+  held writes; a same-size change is not).
+- Row tracking belongs to one list-mutator instance. A generated list property builds a new list mutator on each
+  access, so element mutators from earlier accesses are not tracked by later ones (ULTRA-00320, together with known
+  defect H).
+- The list iterator's own `remove()` and `set()` address rows by index: after a structural change made around a live
+  iterator they act on whatever row is at that index now (ULTRA-00324, pinned in `ListMutatorKnownDefectsSpec`).
+- Held element mutators do not follow their element across a reorder (design ticket ULTRA-00323).
+
+## Open points, not fixed
+
+Decided by the maintainer (2026-11-14): Mutator is an experiment with no user, and this batch is the last one for it.
+The row guard stays identity (`===`), final. The open points live on master, under the epic ULTRA-00322:
+
+- ULTRA-00320 (paused): generated list properties build a new list mutator on each access, so a held list mutator's
+  in-place change alters the baseline after `commit()` (H), a held element brings a removed row back, and a nested
+  list mutator alters the outer baseline. Probed in round 3, item 8.
+- ULTRA-00323 (design): held element mutators do not follow their element across a reorder.
+- ULTRA-00324: the list iterator's own `remove()`/`set()` address rows by index (round 3, item 7; no fix, pinned).
+- ULTRA-00325: the other open points of the review rounds.
 
 ## DOCS follow-up
 
@@ -298,6 +376,9 @@ False or incomplete lines, to fix once this settles; not edited here:
 - `docs-site/src/pages/ultra/mutator/collections.astro:74-86`: the example clears the list and then shows
   `mutator()  // [Address("Street 3", "City 3", "Zip 3")]`; after `clear()` the list is empty.
 - `docs-site/src/data/llms/mutator.md:89`: "MutableList operations": the same caveat as above.
+- Worth one line there: on the JVM, `Collections.rotate` on a `ListMutator` of 100 or more rows throws
+  `UnsupportedOperationException`. For large non-random-access lists it reverses `subList` ranges, and the snapshot is
+  read-only.
 
 ## History
 
@@ -309,3 +390,5 @@ False or incomplete lines, to fix once this settles; not edited here:
   confirmed), pinned as known defects in `ListMutatorKnownDefectsSpec`, not fixed (maintainer decides).
 - 2026-11-14: maintainer: fix and tighten the contract; H to ULTRA-00320. A to G fixed with row tokens, I fixed, J
   pinned, on `wt/mutator`.
+- 2026-11-14: review round 3 (level 3) CLEAN on all three charters; the MINOR batch applied and probed. Maintainer:
+  last batch for the mutator; open points in ULTRA-00320, ULTRA-00323, ULTRA-00324, ULTRA-00325 (epic ULTRA-00322).
