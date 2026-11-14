@@ -37,8 +37,10 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
             val node = mutableMapOf<String, Any>("list" to holder)
             holder.add(node)
 
-            (ObjectSizeEstimator().estimate(map) > 0L) shouldBe true
-            (ObjectSizeEstimator().estimate(holder) > 0L) shouldBe true
+            // the map (16 + 2 * 8) and its key "self" (16 + 8 + 24 + 8); reached again, it counts nothing
+            ObjectSizeEstimator().estimate(map) shouldBe 88L
+            // the list (16 + 8), the map (32), its key "list" (56)
+            ObjectSizeEstimator().estimate(holder) shouldBe 112L
         }
 
         "objects whose hashCode and equals throw are estimated, each counted" {
@@ -55,10 +57,109 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
         }
 
         "a 100 000-deep nesting does not overflow the stack" {
+            val estimator = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 200_000))
             var nested: Any = emptyList<Any>()
             repeat(100_000) { nested = listOf(nested) }
 
-            (ObjectSizeEstimator().estimate(nested) > 0L) shouldBe true
+            // every list walked, none charged flat: 16 + 8 each, and the empty one at the bottom
+            estimator.estimate(nested) shouldBe 100_000 * 24L + 16L
+        }
+
+        "an object that fails to walk is charged flat; the rest of the estimate stands" {
+            val estimate = ObjectSizeEstimator().estimate(listOf(ByteArray(50_000_000), Boom()))
+
+            // the list (16 + 2 * 8), the array (24 + 50 000 000), Boom flat (16 + 2 * 8)
+            estimate shouldBe 32L + 50_000_024L + 32L
+        }
+
+        "failures are counted, with the class of the first one" {
+            val counted = ObjectSizeEstimatorImpl().estimateCounted(listOf(Boom(), "ok", Boom()))
+
+            // the list (16 + 3 * 8), each Boom flat (32), "ok" (52)
+            counted.bytes shouldBe 40L + 32L + 52L + 32L
+            counted.failures shouldBe 2
+            counted.failureClass shouldBe "IllegalStateException"
+
+            ObjectSizeEstimatorImpl().estimateCounted(listOf("ok")).failures shouldBe 0
+        }
+
+        "a sample size below one counts as one" {
+            fun estimateWith(sampleSize: Int) = ObjectSizeEstimator(
+                ObjectSizeEstimatorImpl.EstimatorConfig(sampleSize = sampleSize)
+            ).estimate(List(100) { "s$it" })
+
+            val one = estimateWith(1)
+
+            // the list (16 + 100 * 8) and more: the one sample counts for all 100 strings
+            (one > 816L + 100 * 50L) shouldBe true
+            estimateWith(0) shouldBe one
+            estimateWith(-5) shouldBe one
+        }
+
+        "a sampling window below the sample size counts as the sample size" {
+            val (list, _) = mixed(1_000) { it % 10 == 0 }
+            val set = LinkedHashSet(list)
+
+            fun estimateWith(window: Int) = ObjectSizeEstimator(
+                ObjectSizeEstimatorImpl.EstimatorConfig(sampleWindow = window)
+            ).estimate(set)
+
+            estimateWith(0) shouldBe estimateWith(64)
+            estimateWith(-1) shouldBe estimateWith(64)
+        }
+
+        "a cap below one counts as one" {
+            fun estimateWith(maxObjects: Int) = ObjectSizeEstimator(
+                ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = maxObjects)
+            ).estimate(listOf("a", "b"))
+
+            // the list walked (16 + 2 * 8), its strings sized (50 each)
+            estimateWith(1) shouldBe 132L
+            estimateWith(0) shouldBe 132L
+            estimateWith(-1) shouldBe 132L
+        }
+
+        "a collection is read for its size once, and iterated no further than that size" {
+            val counting = CountingCollection(claimed = 3, length = 10_000)
+
+            // the collection (16 + 3 * 8), "s" once: a shared string counts once
+            ObjectSizeEstimator().estimate(counting) shouldBe 40L + 50L
+            counting.sizeReads shouldBe 1
+            counting.nexts shouldBe 3
+        }
+
+        "a large collection without index access is stepped through its sampling window only" {
+            val counting = CountingCollection(claimed = 1_000_000, length = 1_000_000)
+
+            ObjectSizeEstimator().estimate(counting)
+
+            (counting.nexts <= 1_024) shouldBe true
+        }
+
+        "a small map is exact, keys and values" {
+            // the map (16 + 2 * 2 * 8), keys "a" and "b" (50 each), values "xy" (52) and "z" (50)
+            ObjectSizeEstimator().estimate(mapOf("a" to "xy", "b" to "z")) shouldBe 48L + 50L + 52L + 50L + 50L
+        }
+
+        "a sampled map charges keys and values" {
+            val map = (0 until 1_000).associate { "k$it" to "v$it" }
+            val exact = 16L + 1_000 * 16L +
+                map.entries.sumOf { stringCost(it.key.length) + stringCost(it.value.length) }
+
+            (ObjectSizeEstimator().estimate(map).toDouble() / exact).shouldBeBetween(0.95, 1.05, 0.0)
+        }
+
+        "an array of strings is exact" {
+            // the array (24 + 2 * 8), "ab" (52), "cde" (54)
+            ObjectSizeEstimator().estimate(arrayOf("ab", "cde")) shouldBe 40L + 52L + 54L
+        }
+
+        "beyond the cap, a sampled element is charged flat for its whole share" {
+            val estimator = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 1))
+
+            // the list (16 + 1 000 * 8) walked; its sampled elements, beyond the cap, charged flat for
+            // all 1 000 of them
+            estimator.estimate(List(1_000) { listOf(it) }) shouldBe 8_016L + 1_000 * 32L
         }
 
         "beyond the cap, objects are charged flat without descent" {
@@ -197,6 +298,34 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
             val (list, _) = mixed(6_400) { it % 7 == 0 }
 
             ObjectSizeEstimator().estimate(list) shouldBe ObjectSizeEstimator().estimate(list)
+        }
+    }
+}
+
+/** A list whose elements cannot be read: every access throws. */
+private class Boom : AbstractList<String>() {
+    override val size: Int = 3
+
+    override fun get(index: Int): String = error("boom")
+}
+
+/** Claims [claimed] elements, yields [length] of them, and counts the reads of its size and elements. */
+private class CountingCollection(private val claimed: Int, private val length: Int) : AbstractCollection<String>() {
+    var sizeReads = 0
+    var nexts = 0
+
+    override val size: Int
+        get() {
+            sizeReads++
+            return claimed
+        }
+
+    override fun iterator(): Iterator<String> = object : Iterator<String> {
+        override fun hasNext(): Boolean = nexts < length
+
+        override fun next(): String {
+            nexts++
+            return "s"
         }
     }
 }

@@ -149,7 +149,8 @@ class FastCache<K, V> internal constructor(
          * An entry is estimated when it is written; reads reuse that size, so a value changed in place
          * after its put keeps the size it had then. When [estimator] throws for a new entry, it is
          * charged [FastCache.MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE] - never 0, so the budget
-         * still binds.
+         * still binds. Parts of a value the default estimator could not walk are charged flat and
+         * counted in the loop's failure line. Sizes saturate at `Long.MAX_VALUE` and are never negative.
          *
          * A soft bound, like [maxEntries]: an entry read or written in every maintenance pass is not
          * evicted by it, so under such load the cache holds every entry touched within one pass.
@@ -159,7 +160,7 @@ class FastCache<K, V> internal constructor(
 
         /**
          * [maxMemoryUsage], charging a new entry [fallbackSize] when [estimator] fails for it (the default
-         * is [MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE]).
+         * is [MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE]; zero or below counts as the default).
          */
         fun maxMemoryUsage(maxMemorySize: Long, estimator: ObjectSizeEstimator, fallbackSize: Long) =
             addBehaviour(MaxMemoryUsageBehaviour(maxMemorySize, estimator, fallbackSize))
@@ -487,7 +488,10 @@ class FastCache<K, V> internal constructor(
         val maxMemorySize: Long,
         /** The estimator used to calculate the in-memory size of keys and values. */
         val estimator: ObjectSizeEstimator,
-        /** What a new entry is charged when [estimator] throws for it - never 0, so the budget still binds. */
+        /**
+         * What a new entry is charged when [estimator] throws for it - never 0, so the budget still
+         * binds: zero or below counts as [DEFAULT_FALLBACK_SIZE].
+         */
         val fallbackSize: Long,
     ) : Behaviour<K, V> {
 
@@ -516,6 +520,9 @@ class FastCache<K, V> internal constructor(
             private set
 
         private val data = ValueSortedMap<K, Entry<K>, Long> { it.accessed }
+
+        /** [fallbackSize], or the default where it is zero or below. */
+        private val chargedOnFailure = if (fallbackSize > 0) fallbackSize else DEFAULT_FALLBACK_SIZE
 
         init {
             require(maxMemorySize > 0) { "maxMemorySize must be > 0, but was $maxMemorySize" }
@@ -556,15 +563,16 @@ class FastCache<K, V> internal constructor(
                             // previous size, or is charged the fallback when new - never 0, so the
                             // budget still binds when an estimator fails for everything.
                             try {
-                                estimator.estimate(action.key) + estimator.estimate(value)
+                                saturatingAdd(sizeOf(cache, action.key), sizeOf(cache, value))
                             } catch (e: Throwable) {
                                 cache.recordFailure("size estimate", e)
-                                if (current != null) currentSize else fallbackSize
+                                if (current != null) currentSize else chargedOnFailure
                             }
                         }
                     }
 
-                    totalSize += newSize - currentSize
+                    // both sizes are in 0..Long.MAX_VALUE, so the difference cannot overflow
+                    totalSize = saturatingAdd(totalSize, newSize - currentSize)
 
                     data[action.key] = Entry(key = action.key, accessed = now, size = newSize)
                 }
@@ -577,8 +585,34 @@ class FastCache<K, V> internal constructor(
         }
 
         private fun remove(entry: Entry<K>) {
-            totalSize -= entry.size
+            // never below 0: once the total saturated, it no longer is the exact sum of the sizes
+            totalSize = (totalSize - entry.size).coerceAtLeast(0)
             data.remove(entry.key)
+        }
+
+        /**
+         * The estimate of [obj], never below 0. The default estimator's objects that failed to walk
+         * (and were charged flat) go to the loop's failure report.
+         */
+        private fun sizeOf(cache: FastCache<K, V>, obj: Any?): Long {
+            val counted = (estimator as? ObjectSizeEstimatorImpl)?.estimateCounted(obj)
+                ?: return estimator.estimate(obj).coerceAtLeast(0)
+
+            if (counted.failures > 0) {
+                cache.recordFailures("size estimate (part charged flat)", counted.failureClass, counted.failures)
+            }
+
+            return counted.bytes.coerceAtLeast(0)
+        }
+
+        /** [a] + [b] for a total in 0..Long.MAX_VALUE: clamped there instead of wrapping. */
+        private fun saturatingAdd(a: Long, b: Long): Long {
+            val sum = a + b
+            // overflow only when both have the same sign and the sum has the other
+            return when {
+                a > 0 && b > 0 && sum < 0 -> Long.MAX_VALUE
+                else -> sum.coerceAtLeast(0)
+            }
         }
 
         private fun evict(cache: FastCache<K, V>, entry: Entry<K>): Boolean {
@@ -1108,14 +1142,21 @@ class FastCache<K, V> internal constructor(
     /** Failures since the last report: how many, per kind and exception class. Guarded by [lock]. */
     private val failures = LinkedHashMap<Pair<String, String?>, Int>()
 
-    /** Counts a failure of [kind]. Caller holds the lock. */
-    private fun countFailure(kind: String, e: Throwable) {
-        val key = kind to e::class.simpleName
-        failures[key] = (failures[key] ?: 0) + 1
+    /** Counts [count] failures of [kind], by [exceptionClass]. Caller holds the lock. */
+    private fun countFailures(kind: String, exceptionClass: String?, count: Int = 1) {
+        val key = kind to exceptionClass
+        failures[key] = (failures[key] ?: 0) + count
     }
+
+    /** Counts a failure of [kind]. Caller holds the lock. */
+    private fun countFailure(kind: String, e: Throwable) = countFailures(kind, e::class.simpleName)
 
     /** Counts a failure of [kind], from any thread. */
     private fun recordFailure(kind: String, e: Throwable) = sync { countFailure(kind, e) }
+
+    /** Counts [count] failures of [kind], by [exceptionClass], from any thread. */
+    private fun recordFailures(kind: String, exceptionClass: String?, count: Int) =
+        sync { countFailures(kind, exceptionClass, count) }
 
     /**
      * Prints the failures counted since the last report, one line per kind and exception class, and

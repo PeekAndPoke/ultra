@@ -3,6 +3,8 @@ package io.peekandpoke.ultra.cache
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
+import java.util.Collections
+import kotlin.time.Duration.Companion.seconds
 
 private class EstimatorOuter(val payload: LongArray) {
     inner class Inner(val x: Int)
@@ -147,5 +149,23 @@ class ObjectSizeEstimatorSpec : StringSpec({
         val largeSize = ObjectSizeEstimator().estimate(Large(1, 2, "hello", listOf(1, 2, 3)))
 
         largeSize shouldBeGreaterThan smallSize
+    }
+
+    "an estimate past what a Long holds saturates, and so does the key plus value of a cache entry" {
+        // four levels of a million references to one element: the sampled weights multiply past Long
+        var huge: Any = "x"
+        repeat(4) { huge = Collections.nCopies(1_000_000, huge) }
+
+        ObjectSizeEstimator().estimate(huge) shouldBe Long.MAX_VALUE
+
+        // driven by hand, with a budget nothing exceeds: a wrapped sum shows as a negative total
+        val cache = fastCache<String, Any>(loopDelay = 1.seconds) {}
+        val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Any>(Long.MAX_VALUE)
+
+        behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("huge", huge))))
+        behaviour.totalSize shouldBe Long.MAX_VALUE
+
+        behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("small", "x"))))
+        behaviour.totalSize shouldBe Long.MAX_VALUE
     }
 })

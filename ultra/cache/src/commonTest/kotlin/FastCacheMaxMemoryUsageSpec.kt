@@ -308,6 +308,92 @@ class FastCacheMaxMemoryUsageSpec : StringSpec() {
             behaviour.totalSize shouldBe 0L
         }
 
+        "a read after a put in the same pass charges the put's value" {
+            class OwnNumber : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = (obj as? Int)?.toLong() ?: 0L
+            }
+
+            val cache = fastCache<String, Int>(loopDelay = 1.seconds) {}
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(1_000_000, OwnNumber())
+
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("k", 1))))
+            behaviour.totalSize shouldBe 1L
+
+            // the key's last action is the read, but it was written in this pass: estimated anew
+            behaviour.process(
+                cache,
+                FastCache.ActionUpdates(listOf(FastCache.PutAction("k", 30), FastCache.ReadAction("k", 30))),
+            )
+            behaviour.totalSize shouldBe 30L
+        }
+
+        "a custom fallback size is charged when the estimator fails - set directly or through the builder" {
+            class FailingEstimator : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = error("cannot estimate")
+            }
+
+            val cache = fastCache<String, Int>(loopDelay = 1.seconds) {}
+            val direct = FastCache.MaxMemoryUsageBehaviour<String, Int>(1_000_000, FailingEstimator(), 7)
+
+            direct.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("k", 1))))
+            direct.totalSize shouldBe 7L
+
+            val built = fastCache<String, Int>(loopDelay = 1.seconds) {
+                maxMemoryUsage(1_000_000, FailingEstimator(), fallbackSize = 9)
+            }.behaviours.single() as FastCache.MaxMemoryUsageBehaviour<String, Int>
+
+            built.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("k", 1))))
+            built.totalSize shouldBe 9L
+        }
+
+        "a fallback size of zero or below counts as the default" {
+            class FailingEstimator : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = error("cannot estimate")
+            }
+
+            val cache = fastCache<String, Int>(loopDelay = 1.seconds) {}
+
+            listOf(0L, -5L).forEach { fallback ->
+                val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(1_000_000, FailingEstimator(), fallback)
+
+                behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("k", 1))))
+                behaviour.totalSize shouldBe FastCache.MaxMemoryUsageBehaviour.DEFAULT_FALLBACK_SIZE
+            }
+        }
+
+        "sizes saturate instead of overflowing, and never go below zero" {
+            // keys cost 1; the value 1 costs as much as a Long holds, the value -1 a negative amount
+            class Extremes : ObjectSizeEstimator {
+                override fun estimate(obj: Any?): Long = when (obj) {
+                    1 -> Long.MAX_VALUE
+                    -1 -> -100L
+                    else -> 1L
+                }
+            }
+
+            val cache = fastCache<String, Int>(loopDelay = 1.seconds) {}
+            // a budget nothing exceeds, so nothing is released by eviction
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(Long.MAX_VALUE, Extremes())
+
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("neg", -1))))
+            // the key's 1, the value's negative estimate counted as 0
+            behaviour.totalSize shouldBe 1L
+
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", 1))))
+            behaviour.totalSize shouldBe Long.MAX_VALUE
+
+            behaviour.process(cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("b", 1))))
+            behaviour.totalSize shouldBe Long.MAX_VALUE
+
+            behaviour.process(
+                cache,
+                FastCache.ActionUpdates(
+                    listOf(FastCache.RemoveAction("a"), FastCache.RemoveAction("b"), FastCache.RemoveAction("neg"))
+                ),
+            )
+            behaviour.totalSize shouldBe 0L
+        }
+
         "MaxMemoryUsageBehaviour.totalSize must match total size ... randomized test" {
             // We estimate the size as the int input value itself.
             class StubEstimator : ObjectSizeEstimator {

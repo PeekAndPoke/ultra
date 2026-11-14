@@ -65,4 +65,38 @@ class FastCacheFailureReportSpec : StringSpec({
             scope.cancel()
         }
     }
+
+    "an object the default estimator cannot walk is reported by the loop" {
+        val original = System.out
+        val buffer = ByteArrayOutputStream()
+        val line = Regex(
+            "FastCache size estimate \\(part charged flat\\) failed (\\d+) time\\(s\\): IllegalStateException"
+        )
+
+        System.setOut(PrintStream(buffer, true))
+
+        try {
+            val cache = fastCache<String, Any>(loopDelay = 20.milliseconds) {
+                maxMemoryUsage(1_000_000)
+            }
+
+            // two elements that throw when read: one value, two failures
+            cache.put("k", listOf(Unreadable(), "ok", Unreadable()))
+
+            eventually(5.seconds) {
+                buffer.toString().lines().mapNotNull { line.find(it)?.groupValues?.get(1)?.toInt() }.sum() shouldBe 2
+            }
+
+            keepReachable(cache)
+        } finally {
+            System.setOut(original)
+        }
+    }
 })
+
+/** A list whose elements cannot be read: every access throws. */
+private class Unreadable : AbstractList<String>() {
+    override val size: Int = 3
+
+    override fun get(index: Int): String = error("unreadable")
+}
