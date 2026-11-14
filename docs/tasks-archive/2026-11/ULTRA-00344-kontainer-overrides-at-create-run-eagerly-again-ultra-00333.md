@@ -1,6 +1,6 @@
 # ULTRA-00344: Kontainer: overrides at create run eagerly again (ULTRA-00333 reverted)
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, not merged: gate round 1 CLEAN, a delta review follows.
+> **Status (2026-11-14): DONE.** Merged into master as `eb25d8d0`: strict gate round 1 CLEAN, delta round 2 CLEAN. Eager overrides are what the last release did, so no docs follow-up; two older behaviours are open with the maintainer (see History).
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 > **Plan:** ULTRA-00316 (close the open epics from the foundation upwards)
@@ -245,3 +245,23 @@ The repo-wide compile sweep is green (459 tasks, 0 errors).
 ## History
 
 - 2026-11-14: created on the maintainer's decision, after the discussion of the retry in ULTRA-00333.
+- 2026-11-14: delta review round 2 (reviewer-fable-xhigh, all three charters): CLEAN, 6 MINOR, none needing a
+  production change. Corrections to the texts above: "`ServiceNotFound` cannot be reached after the dynamics check"
+  holds except for a primitive class next to its wrapper (`Int::class` and its object type are one cache key with two
+  answers; refused before any lambda either way); mutant G2 is equivalent for `create` and `clone` only, not for the
+  public constructor or the internal `instantiate`; the four-step list under "Built" is superseded by the refusal
+  order of round 1 (validation, built-in, dynamics, ambiguity, then the lambdas); the class KDoc of
+  `ServiceProviderFactory` says the constructor runs the lambdas unchecked, the pin's name carries "and
+  `newKontainer` runs them again". The KDoc of `TypeLookup.getDistinctFor` named the wrong exception for "more than
+  one" and is corrected on master. Not pinned directly: the ambiguity check next to an unexpected or built-in key.
+- 2026-11-14: merged into master (`eb25d8d0`). Open with the maintainer, pinned as CURRENT BEHAVIOUR: two overrides
+  for one service under different classes both run and the later wins; the public `ServiceProviderFactory(...)`
+  constructor runs override lambdas without the checks. Also noted by the reviewer: with `dynamic(Outer)` and
+  `dynamic(Inner : Outer)`, `Inner` can never be overridden (even the exact class is ambiguous).
+
+- 2026-11-14: the maintainer on two overrides for one service under different classes: "seems to be an edge-cases
+  and the user should be careful". It stays as built: both lambdas run, the later wins. A refusal would also forbid a
+  clone from replacing its parent's `with(Base::class)` override through `with(Derived::class)`. To do with the next
+  kontainer batch: the pin loses its "CURRENT BEHAVIOUR" prefix and its open-question comment; one sentence for the
+  docs (ULTRA-00338).
+- 2026-11-14: DONE.

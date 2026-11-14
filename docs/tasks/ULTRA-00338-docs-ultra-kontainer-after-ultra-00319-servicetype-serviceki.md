@@ -60,3 +60,6 @@ Known behaviours with tickets (ULTRA-00327 to ULTRA-00337) are documented only o
 - 2026-11-14: lazy overrides are NOT in scope: ULTRA-00344 reverted ULTRA-00333, overrides run eagerly at `create`
   as in the last release. Worth one sentence on the page: a caller who needs laziness builds it in place, as
   `UserProvider.lazy { }` does.
+- 2026-11-14: to mention on the overrides page: two overrides for one service under different classes
+  (`with(Base::class) { }` and `with(Derived::class) { }`) both run, and the later wins (maintainer: an edge case,
+  the caller takes care).

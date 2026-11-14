@@ -16,7 +16,7 @@ abstract class TypeLookup {
     /**
      * Gets a distinct candidate for the given [type]
      *
-     * If there is no super type or more than one found, a [ServiceNotFound] is thrown.
+     * No candidate throws [ServiceNotFound], more than one throws [ServiceAmbiguous].
      */
     fun getDistinctFor(type: KClass<*>): KClass<*> {
 

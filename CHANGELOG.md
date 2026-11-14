@@ -136,23 +136,9 @@
   (ULTRA-00336).
 - `ultra/kontainer`: `Kontainer.clone { with { ... } }` runs the same checks as `create`. An override for a
   non-dynamic throws `KontainerInconsistent("Unexpected dynamics were provided: ...")` (was `ServiceNotFound`); an
-  override of a built-in is refused as at `create` (ULTRA-00332, ULTRA-00336).
-- `ultra/kontainer`, behaviour change (no compile signal): overrides at `create { with { ... } }` are lazy. The
-  lambda runs at the first request of that service from that kontainer, on whichever thread asks first, under the
-  provider's lock; it runs until it has returned a value, then never again. `clone()` no longer runs it at once.
-  Consequences:
-  - An override that throws now throws at the first `get`, and again at the next, as no value was kept.
-  - An override used as a gate, throwing at `create` to reject a request, no longer rejects requests that never ask
-    for the service.
-  - A clone runs its parent's lambdas at the clone's first use, possibly after the parent's request ended and
-    concurrently with the parent.
-  - A lambda that requests its own service ends in `StackOverflowError`.
-  - Side effects run later, or never when the service is not used. A lambda reading something mutable sees the value
-    at first use.
-  - An override never requested has no instance: none in `instances`, the debug info or the dump, and none in the
-    insights record slice. Until it has returned a value, its definition names the class given to `with`.
-  - Public signatures: `ServiceProvider.Provider.forOverride(definition, create: () -> Any)` (was `instance: Any`);
-    `ServiceProvider.ForOverride` is no longer a data class and its constructor changed (ULTRA-00333).
+  override of a built-in is refused as at `create`. No override lambda runs before a refusal, at `create` or at
+  `clone`: in 0.118.0 a refused clone ran the parent's override lambdas first, and an override matching two dynamics
+  was refused only after the lambdas listed before it had run (ULTRA-00332, ULTRA-00336, ULTRA-00344).
 - `ultra/kontainer`, behaviour change (no compile signal): a blueprint remembers its validation result. Every
   `create` of an invalid blueprint throws `KontainerInconsistent` with the same message, before the override block
   runs. Before, only the first did: later creates succeeded, and `get` failed with `InvocationTargetException` or
