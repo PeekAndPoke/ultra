@@ -134,6 +134,40 @@
   `MpZonedDateTime.of(datetime, timezone)` or `instant.atZone(timezone)`; `MpZonedDateTime.copy(...)` - e.g.
   `x.copy(timezone = tz)` becomes `MpZonedDateTime.of(x.datetime, tz)`; destructuring (`component1/2`)
   (ULTRA-00211).
+- `ultra/datetime`: `MpLocalTimeSlot.completeDay` now ends at `MpLocalTime.EndOfDay` (24:00) instead of `Max`
+  (23:59:59.999). An app that uses `completeDay` writes `86400000` after the upgrade without any code change.
+  - A reader of an older version, including a browser tab left open across a deploy, reads the slot
+    `{"from":0,"to":86400000}` as `[00:00, 00:00)`: an invalid slot, so "open all day" becomes "never open". Saving
+    it there persists `{"from":0,"to":0}`. Update readers before writers.
+  - Slots stored from the old `completeDay` hold `to = 86399999`: `MpLocalTimeSlot(Min, Max) == completeDay` is now
+    false, and `completeDay.cutAway(MpLocalTimeSlot(Min, Max))` is `[MpLocalTimeSlot(Max, EndOfDay)]`, a 1 ms slot
+    (it was empty).
+  - `completeDay.splitWithGaps(1.hours)` gives 24 slots (23 before).
+  - A kraft time field bound to `completeDay.to` renders empty (it showed 23:59:59): the browser's time input does
+    not accept 24:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal):
+  - `hour` can be 24.
+  - `MpLocalTime.of(t.hour, t.minute, …)` and `ofMilliSeconds(t.inWholeMilliSeconds())` turn `EndOfDay` into 00:00;
+    `parse(toIsoString())`, the decoders and the unchecked constructor `MpLocalTime(t.inWholeMilliSeconds())`
+    round-trip it.
+  - A JSON client sending `86400000` used to be normalised to 00:00 and is now stored as 24:00.
+  - `.kotlinx` and `.jvm` give the last instant of the day for it, which is lossy (`EndOfDay.kotlinx.mp == Max`);
+    they threw before.
+  - The value `MpLocalTime(86_400_000)` of the unchecked constructor now is `EndOfDay` (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalTime.parse` refuses an hour of 24 with a non-zero
+  rest ("24:00:01", "24:30"), which it used to wrap to 00:00:01 / 00:30; `tryParse` returns null for them.
+  `of(24, 0)`, `ofMilliSeconds(86_400_000)` and `ofSecondOfDay(86_400)` still wrap to 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalTimeSlot.of(from, duration)` and
+  `ofSecondsOfDay(from, to)` end a slot of exactly 24:00 at `EndOfDay`: `of(23:00, 1.hours)` is `[23:00, 24:00)`, it
+  was the invalid `[23:00, 00:00)`. An end beyond 24:00 still wraps. `splitWithGaps` ends a slot reaching 24:00 at
+  `EndOfDay` instead of building an invalid last slot ending at 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `DateTimeRangeConverter.fromHourToHour(_, 24)` (e.g.
+  `toZonedTimeRange(zone).fromHourToHour(8, 24)`) ends at the start of the day after the last day; it ended at 00:00
+  of the last day. A `fromHour` of 24 still wraps to 00:00 (ULTRA-00341).
+- `ultra/datetime` and `ultra/slumber`, stored format: `EndOfDay` is stored as `86400000` milliseconds of day; exactly
+  that number reads back as `EndOfDay` (slumber: only a number equal to one day, so `86400000.5` still wraps), and
+  every other number wraps into the day as before. A reader of an older version reads `86400000` as 00:00 without an
+  error, so update readers before writers (ULTRA-00341).
 
 ### New
 
@@ -144,6 +178,15 @@
   overridden (ULTRA-00319).
 - `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
   same point in time, for `MpInstant` and `MpZonedDateTime` and across the two (ULTRA-00211).
+- `ultra/datetime`, new: `MpLocalTime.EndOfDay`, the time 24:00, one millisecond after `Max`, for the end of a
+  half-open time slot.
+  - Its `hour` is 24 and it prints `24:00:00.000`; it counts as 00:00 of the next day in arithmetic, and adding less
+    than a millisecond keeps it.
+  - `MpLocalDate.atTime(EndOfDay)` is 00:00 of the next day; `atTime(EndOfDay, zone)` and
+    `MpZonedDateTime.atTime(EndOfDay)` give the start of the next day.
+  - It is produced by this constant, `parse("24:00")` (`"24:00:00"`, `"24:00:00.000"`), the decoders, `completeDay`,
+    slot ends of exactly 24:00 (`MpLocalTimeSlot.of`, `ofSecondsOfDay`, `splitWithGaps`) and
+    `DateTimeRangeConverter.fromHourToHour(_, 24)` (ULTRA-00341).
 
 ### Fixes
 
@@ -219,6 +262,14 @@
   same way). Second fixed case: where a DST gap ends at or crosses midnight the old loop skipped a whole week
   (America/Nuuk 2024-03-29T23:30, next SATURDAY: was 2024-04-06, now 2024-03-30T00:00-02:00). Ordinary results are
   unchanged (ULTRA-00211).
+- `ultra/datetime`, fix: `DateTimeRangeConverter.fromMorningToEvening` ends at the start of the next day. Before:
+  - where the last day's own midnight is in a DST gap it ended an hour late (America/Havana 2024-03-10,
+    America/Santiago 2024-09-08);
+  - on a last day the zone skipped it ended a day late (Pacific/Apia 2011-12-30: 2012-01-01T00:00+14:00, now
+    2011-12-31T00:00+14:00);
+  - where the next midnight is inside a gap that starts before midnight it ended at the wrong time
+    (America/Toronto 1919-03-30: 01:00 EDT, now 00:30 EDT).
+  - Ordinary days are unchanged (ULTRA-00341).
 
 ## 0.118.0
 
