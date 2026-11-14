@@ -8,6 +8,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
 import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import kotlin.reflect.KClass
@@ -16,7 +17,7 @@ import kotlin.reflect.KClass
  * Claims the ultra/datetime types and ships their hand-written TypeScript.
  *
  * These all go through custom Slumber codecs, so their JSON shape cannot be derived — `MpInstant` is a
- * data class over a single value yet writes `{ts, timezone, human}`. Two of the six are not objects at
+ * data class over a single value yet writes `{ts, timezone, human}`. Two of the seven are not objects at
  * all: `MpLocalTime` is a bare number and `MpTimezone` a bare string.
  *
  * The TypeScript lives in `resources/ts/runtime/datetime.ts` as a checked-in resource, maintained by
@@ -36,6 +37,7 @@ class MpDateTimeTsContributor : TsSdkContributor {
             MpLocalDateTime::class to "MpLocalDateTime",
             MpZonedDateTime::class to "MpZonedDateTime",
             MpLocalTime::class to "MpLocalTime",
+            MpLocalTimeSlot::class to "MpLocalTimeSlot",
             MpTimezone::class to "MpTimezone",
         )
     }

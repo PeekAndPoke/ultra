@@ -8,6 +8,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
 import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import kotlinx.datetime.Month
@@ -17,6 +18,7 @@ import java.util.jar.JarFile
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.findAnnotation
+import kotlin.time.Duration.Companion.hours
 
 /**
  * Checks that every `@Slumber.As` declaration tells the truth about its codec.
@@ -48,6 +50,7 @@ class SlumberAsRoundTripSpec : StringSpec({
         MpLocalDateTime.of(2022, Month.APRIL, 5, 12, 13, 14),
         MpLocalDate.of(2022, Month.APRIL, 5),
         MpLocalTime.ofMilliSeconds(123),
+        MpLocalTimeSlot.of(MpLocalTime.of(22, 0), 4.hours),
         MpTimezone.of("Europe/Berlin"),
     )
 

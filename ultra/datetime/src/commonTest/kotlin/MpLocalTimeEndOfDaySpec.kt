@@ -109,9 +109,11 @@ class MpLocalTimeEndOfDaySpec : StringSpec({
 
     "MpLocalDate.toRange(slot to EndOfDay, zone) ends at the start of the next day" {
         val berlin = MpTimezone.of("Europe/Berlin")
-        val range = MpLocalDate.of(2024, 3, 30).toRange(MpLocalTimeSlot(MpLocalTime.Noon, endOfDay), berlin)
+        val range = MpLocalDate.of(2024, 3, 30).toRange(MpLocalTimeSlot.of(MpLocalTime.Noon, endOfDay), berlin)
 
         range.to shouldBe MpLocalDate.of(2024, 3, 31).atStartOfDay(berlin)
+        // both sides come from the same function since 3b-2: pin the instant itself (midnight is still +01:00)
+        range.to.toInstant() shouldBe MpInstant.parse("2024-03-30T23:00:00Z")
     }
 
     "DateTimeRangeConverter.fromHourToHour(_, 24) ends at the start of the next day" {
@@ -124,41 +126,43 @@ class MpLocalTimeEndOfDaySpec : StringSpec({
         range.to shouldBe MpLocalDate.of(2024, 3, 31).atStartOfDay(berlin)
     }
 
-    "MpLocalTimeSlot up to EndOfDay: valid, 24 h, contains Max, split by 1 h ends with 23:00 to 24:00" {
-        val slot = MpLocalTimeSlot(MpLocalTime.Min, endOfDay)
+    "MpLocalTimeSlot up to EndOfDay: valid, 24 h, contains Max and 24:00 (as 00:00), split by 1 h ends at 24:00" {
+        val slot = MpLocalTimeSlot.of(MpLocalTime.Min, endOfDay)
         val split = slot.splitWithGaps(1.hours)
 
         slot.isValid shouldBe true
         slot.duration shouldBe 24.hours
         slot.contains(MpLocalTime.Max) shouldBe true
-        slot.contains(endOfDay) shouldBe false
+        // batch 3b-2: on the clock face 24:00 is 00:00, which a whole day contains (it was false)
+        slot.contains(endOfDay) shouldBe true
         split.size shouldBe 24
-        split.last() shouldBe MpLocalTimeSlot(MpLocalTime.of(23, 0), endOfDay)
+        split.last() shouldBe MpLocalTimeSlot.of(MpLocalTime.of(23, 0), endOfDay)
         split.last().formatHhMm() shouldBe "23:00 - 24:00"
-        slot.intersects(MpLocalTimeSlot(MpLocalTime.of(23, 0), MpLocalTime.Max)) shouldBe true
+        slot.intersects(MpLocalTimeSlot.of(MpLocalTime.of(23, 0), MpLocalTime.Max)) shouldBe true
     }
 
     "a slot from Noon split by 5 h with a 1 h gap stops before 24:00 is passed" {
-        MpLocalTimeSlot(MpLocalTime.Noon, endOfDay).splitWithGaps(5.hours, 1.hours) shouldBe listOf(
-            MpLocalTimeSlot(MpLocalTime.Noon, MpLocalTime.of(17, 0)),
-            MpLocalTimeSlot(MpLocalTime.of(18, 0), MpLocalTime.of(23, 0)),
+        MpLocalTimeSlot.of(MpLocalTime.Noon, endOfDay).splitWithGaps(5.hours, 1.hours) shouldBe listOf(
+            MpLocalTimeSlot.of(MpLocalTime.Noon, MpLocalTime.of(17, 0)),
+            MpLocalTimeSlot.of(MpLocalTime.of(18, 0), MpLocalTime.of(23, 0)),
         )
     }
 
     // ---- ULTRA-00341 round 1 ------------------------------------------------------------------------------------
 
     "M1: completeDay is no longer [Min, Max); an old stored slot [Min, Max) leaves a 1 ms remainder when cut away" {
-        val oldCompleteDay = MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.Max)
+        val oldCompleteDay = MpLocalTimeSlot.of(MpLocalTime.Min, MpLocalTime.Max)
 
         (oldCompleteDay == MpLocalTimeSlot.completeDay) shouldBe false
         MpLocalTimeSlot.completeDay.cutAway(oldCompleteDay) shouldBe
-                listOf(MpLocalTimeSlot(MpLocalTime.Max, MpLocalTime.EndOfDay))
+                listOf(MpLocalTimeSlot.of(MpLocalTime.Max, MpLocalTime.EndOfDay))
     }
 
-    "M1: completeDay serializes as {\"from\":0,\"to\":86400000} and reads back" {
+    "M1: completeDay serializes as {\"from\":0,\"duration\":86400000,\"to\":86400000} and reads back" {
         val json = Json.encodeToString(MpLocalTimeSlot.serializer(), MpLocalTimeSlot.completeDay)
 
-        json shouldBe """{"from":0,"to":86400000}"""
+        // batch 3b-2: the stored shape gained duration (it was {"from":0,"to":86400000})
+        json shouldBe """{"from":0,"duration":86400000,"to":86400000}"""
         Json.decodeFromString(MpLocalTimeSlot.serializer(), json) shouldBe MpLocalTimeSlot.completeDay
     }
 
@@ -178,19 +182,21 @@ class MpLocalTimeEndOfDaySpec : StringSpec({
         endOfDay.minus(1.milliseconds) shouldBe MpLocalTime.Max
     }
 
-    "delta round 2: ofSecondsOfDay gives EndOfDay only for a from inside the day; otherwise both wrap, as before" {
-        MpLocalTimeSlot.ofSecondsOfDay(86_400, 86_400) shouldBe MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.Min)
-        MpLocalTimeSlot.ofSecondsOfDay(90_000, 86_400) shouldBe MpLocalTimeSlot(MpLocalTime.of(1, 0), MpLocalTime.Min)
+    "ofSecondsOfDay: equal values give an empty slot; a to of 86 400 is 24:00 (batch 3b-2 rules)" {
+        MpLocalTimeSlot.ofSecondsOfDay(86_400, 86_400) shouldBe MpLocalTimeSlot.of(MpLocalTime.Min, MpLocalTime.Min)
+        MpLocalTimeSlot.ofSecondsOfDay(90_000, 86_400) shouldBe
+                MpLocalTimeSlot.of(MpLocalTime.of(1, 0), MpLocalTime.Min)
         MpLocalTimeSlot.ofSecondsOfDay(86_399, 86_400) shouldBe
-                MpLocalTimeSlot(MpLocalTime.of(23, 59, 59), endOfDay)
+                MpLocalTimeSlot.of(MpLocalTime.of(23, 59, 59), endOfDay)
     }
 
-    "delta round 2: of(from, duration) gives EndOfDay only for a from inside the day; otherwise as before" {
-        // a raw out-of-range from (the unchecked constructor) whose end lands on one day keeps wrapping
-        MpLocalTimeSlot.of(MpLocalTime(-3_600_000), 25.hours).to shouldBe MpLocalTime.Min
-        // from = EndOfDay: the end is from.plus(duration), as for any from outside the day
-        MpLocalTimeSlot.of(endOfDay, Duration.ZERO) shouldBe MpLocalTimeSlot(endOfDay, endOfDay)
-        MpLocalTimeSlot.of(endOfDay, 1.hours) shouldBe MpLocalTimeSlot(endOfDay, MpLocalTime.of(1, 0))
+    "of(from, duration): the start wraps into the day first, 24:00 is 00:00 (batch 3b-2)" {
+        // a raw out-of-range from (the unchecked constructor) is 23:00; + 25 h ends at 24:00 the next day
+        MpLocalTimeSlot.of(MpLocalTime(-3_600_000), 25.hours) shouldBe
+                MpLocalTimeSlot.of(MpLocalTime.of(23, 0), 25.hours)
+        MpLocalTimeSlot.of(MpLocalTime(-3_600_000), 25.hours).to shouldBe endOfDay
+        MpLocalTimeSlot.of(endOfDay, Duration.ZERO) shouldBe MpLocalTimeSlot.of(MpLocalTime.Min, Duration.ZERO)
+        MpLocalTimeSlot.of(endOfDay, 1.hours) shouldBe MpLocalTimeSlot.of(MpLocalTime.Min, 1.hours)
     }
 
     "fix 2: adding nothing keeps EndOfDay, also below a millisecond; every other value behaves as before" {
@@ -214,13 +220,13 @@ class MpLocalTimeEndOfDaySpec : StringSpec({
     }
 
     "fix 5: MpLocalTimeSlot.of / ofSecondsOfDay end at EndOfDay when the end is exactly 24:00; beyond it they wrap" {
-        MpLocalTimeSlot.of(MpLocalTime.of(23, 0), 1.hours) shouldBe MpLocalTimeSlot(MpLocalTime.of(23, 0), endOfDay)
+        MpLocalTimeSlot.of(MpLocalTime.of(23, 0), 1.hours) shouldBe MpLocalTimeSlot.of(MpLocalTime.of(23, 0), endOfDay)
         MpLocalTimeSlot.of(MpLocalTime.Min, 24.hours) shouldBe MpLocalTimeSlot.completeDay
         MpLocalTimeSlot.ofSecondsOfDay(0, 86_400) shouldBe MpLocalTimeSlot.completeDay
 
         MpLocalTimeSlot.of(MpLocalTime.of(23, 0), 2.hours) shouldBe
-                MpLocalTimeSlot(MpLocalTime.of(23, 0), MpLocalTime.of(1, 0))
-        MpLocalTimeSlot.ofSecondsOfDay(0, 90_000) shouldBe MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.of(1, 0))
+                MpLocalTimeSlot.of(MpLocalTime.of(23, 0), MpLocalTime.of(1, 0))
+        MpLocalTimeSlot.ofSecondsOfDay(0, 90_000) shouldBe MpLocalTimeSlot.of(MpLocalTime.Min, MpLocalTime.of(1, 0))
     }
 
     "fix 6: fromMorningToEvening ends at the start of the next day where midnight is in a gap (Havana, Santiago)" {
@@ -255,22 +261,22 @@ class MpLocalTimeEndOfDaySpec : StringSpec({
         }
     }
 
-    "known consequence, pinned: where a gap ends at midnight (Nuuk 2024-03-30) [23:30, 24:00) is an inverted range" {
+    "where a gap ends at midnight (Nuuk 2024-03-30) [23:30, 24:00) is an empty range (batch 3b-2; was inverted)" {
         val nuuk = MpTimezone.of("America/Nuuk")
-        val range = MpLocalDate.of(2024, 3, 30).toRange(MpLocalTimeSlot(MpLocalTime.of(23, 30), endOfDay), nuuk)
+        val range = MpLocalDate.of(2024, 3, 30).toRange(MpLocalTimeSlot.of(MpLocalTime.of(23, 30), endOfDay), nuuk)
 
-        (range.from.toInstant() > range.to.toInstant()) shouldBe true
+        range.from.toInstant() shouldBe range.to.toInstant()
         range.isValid shouldBe false
     }
 
-    "known consequence, pinned: on a skipped date (Apia 2011-12-30) [09:00, 24:00) is inverted, completeDay empty" {
+    "on a skipped date (Apia 2011-12-30) [09:00, 24:00) and completeDay are empty (3b-2: the first was inverted)" {
         val apia = MpTimezone.of("Pacific/Apia")
         val date = MpLocalDate.of(2011, 12, 30)
 
-        val morning = date.toRange(MpLocalTimeSlot(MpLocalTime.of(9, 0), endOfDay), apia)
+        val morning = date.toRange(MpLocalTimeSlot.of(MpLocalTime.of(9, 0), endOfDay), apia)
         val wholeDay = date.toRange(MpLocalTimeSlot.completeDay, apia)
 
-        (morning.from.toInstant() > morning.to.toInstant()) shouldBe true
+        morning.from.toInstant() shouldBe morning.to.toInstant()
         morning.isValid shouldBe false
         wholeDay.from.toInstant() shouldBe wholeDay.to.toInstant()
         wholeDay.isValid shouldBe false

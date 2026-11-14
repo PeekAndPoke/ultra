@@ -11,6 +11,7 @@ import io.peekandpoke.ultra.datetime.MpInstant
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpLocalDateTime
 import io.peekandpoke.ultra.datetime.MpLocalTime
+import io.peekandpoke.ultra.datetime.MpLocalTimeSlot
 import io.peekandpoke.ultra.datetime.MpTimezone
 import io.peekandpoke.ultra.datetime.MpZonedDateTime
 import io.peekandpoke.ultra.slumber.Codec
@@ -20,6 +21,7 @@ import java.util.zip.ZipFile
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
 import kotlin.reflect.typeOf
+import kotlin.time.Duration.Companion.hours
 
 /**
  * Guards the hand-written `runtime/datetime.ts` against the codecs it mirrors.
@@ -111,6 +113,20 @@ class MpDateTimeFieldParitySpec : FreeSpec() {
             }
 
             runtimeTs shouldContain "export const MpLocalTime = z.number()"
+        }
+
+        "MpLocalTimeSlot slumbers to {from, duration, to}, all numbers" {
+            val slumbered = codec.slumber(typeOf<MpLocalTimeSlot>(), MpLocalTimeSlot.of(MpLocalTime.of(22, 0), 4.hours))
+
+            withClue("datetime.ts declares MpLocalTimeSlot as z.object over three numbers") {
+                (slumbered as Map<*, *>).keys shouldBe setOf("from", "duration", "to")
+                slumbered.values.all { it is Number } shouldBe true
+            }
+
+            runtimeTs shouldContain
+                    "export const INFINITE_DURATION_MILLIS = ${MpLocalTimeSlot.INFINITE_DURATION_MILLIS}\n"
+            runtimeTs shouldContain "export const MpLocalTimeSlot = z.object({\n    from: z.number(),\n" +
+                    "    duration: z.number(),\n    to: z.number(),\n})"
         }
 
         "MpTimezone slumbers to a BARE STRING, not an object" {

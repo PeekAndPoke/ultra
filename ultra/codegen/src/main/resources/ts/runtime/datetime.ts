@@ -48,6 +48,26 @@ export const MpLocalTime = z.number()
 export type MpLocalTime = z.infer<typeof MpLocalTime>
 
 /**
+ * A `duration` of an `MpLocalTimeSlot` from this many milliseconds on counts as infinite (2^53 - 1, the largest
+ * integer a JS number holds exactly). Send this for an endless slot, never `Infinity`: JSON turns that into `null`.
+ */
+export const INFINITE_DURATION_MILLIS = 9007199254740991
+
+/**
+ * A slot of the day: a start and a duration, all in milliseconds (`MpLocalTimeSlotCodec`).
+ *
+ * `from` is milliseconds since midnight; `duration` may exceed a day, from `INFINITE_DURATION_MILLIS` on it is
+ * infinite; `to` is derived (the clock time of the end, 86400000 for an end at 24:00) and ignored when read back. A
+ * slot with `to < from` runs overnight.
+ */
+export const MpLocalTimeSlot = z.object({
+    from: z.number(),
+    duration: z.number(),
+    to: z.number(),
+})
+export type MpLocalTimeSlot = z.infer<typeof MpLocalTimeSlot>
+
+/**
  * An IANA timezone id, e.g. `Europe/Berlin`.
  *
  * A BARE STRING on the wire, not an object — `MpTimezoneCodec` returns `id`.

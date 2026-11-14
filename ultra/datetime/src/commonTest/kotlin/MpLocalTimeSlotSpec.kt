@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.datetime
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.peekandpoke.ultra.common.tuple
@@ -15,7 +14,7 @@ class MpLocalTimeSlotSpec : StringSpec({
 
     "Creation - via constructor" {
 
-        val subject = MpLocalTimeSlot(
+        val subject = MpLocalTimeSlot.of(
             from = MpLocalTime.of(0, 1, 2),
             to = MpLocalTime.of(12, 13, 14)
         )
@@ -56,19 +55,20 @@ class MpLocalTimeSlotSpec : StringSpec({
 
     "duration must be correct" {
 
-        val subject = MpLocalTimeSlot(
+        val subject = MpLocalTimeSlot.of(
             from = MpLocalTime.of(1, 0),
             to = MpLocalTime.of(2, 15),
         )
 
         subject.duration shouldBe 75.minutes
 
-        val subject2 = MpLocalTimeSlot(
+        val subject2 = MpLocalTimeSlot.of(
             from = MpLocalTime.of(2, 15),
             to = MpLocalTime.of(1, 0),
         )
 
-        subject2.duration shouldBe (-75).minutes
+        // batch 3b-2: to before from runs overnight (it was a negative duration, -1 h 15 min)
+        subject2.duration shouldBe 22.hours + 45.minutes
     }
 
     listOf(
@@ -78,9 +78,9 @@ class MpLocalTimeSlotSpec : StringSpec({
             false
         ),
         tuple(
-            "Negative duration",
+            "To before from runs overnight (batch 3b-2; it was a negative duration)",
             ts(12, 0, 1, 12, 0, 0),
-            false
+            true
         ),
         tuple(
             "Positive duration",
@@ -370,11 +370,11 @@ class MpLocalTimeSlotSpec : StringSpec({
         tuple(
             "completeDay, ending at 24:00",
             MpLocalTimeSlot.completeDay, 1.hours, Duration.ZERO,
-            (0..22).map { ts(it, 0, it + 1, 0) } + MpLocalTimeSlot(MpLocalTime.of(23, 0), MpLocalTime.EndOfDay),
+            (0..22).map { ts(it, 0, it + 1, 0) } + MpLocalTimeSlot.of(MpLocalTime.of(23, 0), MpLocalTime.EndOfDay),
         ),
         tuple(
             "a slot ending at 23:59:59.999",
-            MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.Max), 1.hours, Duration.ZERO,
+            MpLocalTimeSlot.of(MpLocalTime.Min, MpLocalTime.Max), 1.hours, Duration.ZERO,
             (0..22).map { ts(it, 0, it + 1, 0) },
         ),
         // round 1: the gap row pins the end: its last slot reaches 24:00 (with 3 h + 3 h it ended at 21:00 for Max too)
@@ -382,23 +382,24 @@ class MpLocalTimeSlotSpec : StringSpec({
             "completeDay, ending at 24:00, with a gap",
             MpLocalTimeSlot.completeDay, 3.hours, 4.hours,
             listOf(ts(0, 0, 3, 0), ts(7, 0, 10, 0), ts(14, 0, 17, 0)) +
-                    MpLocalTimeSlot(MpLocalTime.of(21, 0), MpLocalTime.EndOfDay),
+                    MpLocalTimeSlot.of(MpLocalTime.of(21, 0), MpLocalTime.EndOfDay),
         ),
+        // batch 3b-2: to before from is an overnight slot (these two were invalid and gave no slots)
         tuple(
-            "an invalid slot",
+            "an overnight slot",
             ts(20, 0, 8, 0), 1.hours, Duration.ZERO,
-            listOf(),
+            (0..11).map { MpLocalTimeSlot.of(MpLocalTime.of((20 + it) % 24, 0), 1.hours) },
         ),
         tuple(
-            "an invalid slot across midnight",
+            "an overnight slot across midnight",
             ts(22, 0, 2, 0), 2.hours, Duration.ZERO,
-            listOf(),
+            listOf(ts(22, 0, 0, 0), ts(0, 0, 2, 0)),
         ),
         tuple(
             "a duration cut to whole milliseconds",
-            MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(0), MpLocalTime.ofMilliSeconds(3)),
+            MpLocalTimeSlot.of(MpLocalTime.ofMilliSeconds(0), MpLocalTime.ofMilliSeconds(3)),
             1500.microseconds, Duration.ZERO,
-            (0..2).map { MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(it), MpLocalTime.ofMilliSeconds(it + 1)) },
+            (0..2).map { MpLocalTimeSlot.of(MpLocalTime.ofMilliSeconds(it), MpLocalTime.ofMilliSeconds(it + 1)) },
         ),
     ).forEach { (title, initial, duration, gap, expected) ->
 
@@ -409,66 +410,40 @@ class MpLocalTimeSlotSpec : StringSpec({
         }
     }
 
-    // maxSlots: a whole day in 1 ms steps would be 86.4 million slots
+    // batch 3b-2: maxSlots and its exception are gone; the result is a lazy view, so any count is free
 
-    "splitWithGaps() - maxSlots: exactly the default limit of 100 000 slots works" {
-        val subject = MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.ofMilliSeconds(100_000))
+    "splitWithGaps() - 100 000 slots and one more both work, no limit" {
+        val subject = MpLocalTimeSlot.of(MpLocalTime.Min, MpLocalTime.ofMilliSeconds(100_000))
 
         val result = subject.splitWithGaps(1.milliseconds)
 
         result.size shouldBe 100_000
-        result.first() shouldBe MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(0), MpLocalTime.ofMilliSeconds(1))
-        result.last() shouldBe MpLocalTimeSlot(MpLocalTime.ofMilliSeconds(99_999), MpLocalTime.ofMilliSeconds(100_000))
+        result.first() shouldBe MpLocalTimeSlot.of(MpLocalTime.ofMilliSeconds(0), MpLocalTime.ofMilliSeconds(1))
+        result.last() shouldBe
+                MpLocalTimeSlot.of(MpLocalTime.ofMilliSeconds(99_999), MpLocalTime.ofMilliSeconds(100_000))
+
+        val oneMore = MpLocalTimeSlot.of(MpLocalTime.Min, MpLocalTime.ofMilliSeconds(100_001))
+
+        oneMore.splitWithGaps(1.milliseconds).size shouldBe 100_001
     }
 
-    "splitWithGaps() - maxSlots: one slot above the default limit throws, naming the count and the limit" {
-        val subject = MpLocalTimeSlot(MpLocalTime.Min, MpLocalTime.ofMilliSeconds(100_001))
-
-        val error = shouldThrow<IllegalArgumentException> { subject.splitWithGaps(1.milliseconds) }
-
-        error.message shouldBe "splitWithGaps would create 100001 slots, more than maxSlots = 100000"
-    }
-
-    "splitWithGaps() - maxSlots: a whole day in 1 ms steps throws, naming the count of 86 400 000 slots" {
-        val error = withinTimeLimit(5.seconds) {
-            shouldThrow<IllegalArgumentException> {
-                MpLocalTimeSlot.completeDay.splitWithGaps(1.milliseconds)
-            }
-        }
-
-        // batch 3a: completeDay ends at 24:00, so the whole day has 86 400 000 one-millisecond slots (was 86 399 999)
-        error.message shouldBe "splitWithGaps would create 86400000 slots, more than maxSlots = 100000"
-    }
-
-    "splitWithGaps() - maxSlots: a custom limit" {
+    "splitWithGaps() - quarter hours, with and without a gap" {
         val subject = ts(10, 0, 11, 0)
 
-        subject.splitWithGaps(15.minutes, maxSlots = 4) shouldBe listOf(
+        subject.splitWithGaps(15.minutes) shouldBe listOf(
             ts(10, 0, 10, 15), ts(10, 15, 10, 30), ts(10, 30, 10, 45), ts(10, 45, 11, 0),
         )
 
-        shouldThrow<IllegalArgumentException> {
-            subject.splitWithGaps(15.minutes, maxSlots = 3)
-        }.message shouldBe "splitWithGaps would create 4 slots, more than maxSlots = 3"
-
-        subject.splitWithGaps(15.minutes, 5.minutes, maxSlots = 3) shouldBe listOf(
+        subject.splitWithGaps(15.minutes, 5.minutes) shouldBe listOf(
             ts(10, 0, 10, 15), ts(10, 20, 10, 35), ts(10, 40, 10, 55),
         )
     }
 
-    "splitWithGaps() - maxSlots: below 1 is refused" {
-        listOf(0, -1, Int.MIN_VALUE).forEach { maxSlots ->
-            shouldThrow<IllegalArgumentException> {
-                ts(10, 0, 11, 0).splitWithGaps(15.minutes, maxSlots = maxSlots)
-            }.message shouldBe "maxSlots must be at least 1, was $maxSlots"
-        }
-    }
-
-    "splitWithGaps() - maxSlots: an infinite duration or gap is no reason to throw" {
+    "splitWithGaps() - an infinite duration or gap is no reason to throw" {
         val subject = ts(8, 0, 20, 0)
 
-        subject.splitWithGaps(Duration.INFINITE, maxSlots = 1) shouldBe listOf()
-        subject.splitWithGaps(4.hours, Duration.INFINITE, maxSlots = 1) shouldBe listOf(ts(8, 0, 12, 0))
+        subject.splitWithGaps(Duration.INFINITE) shouldBe listOf()
+        subject.splitWithGaps(4.hours, Duration.INFINITE) shouldBe listOf(ts(8, 0, 12, 0))
     }
 
     // Partial ////////////////////////////////////////////////////////////////////////////////////////
@@ -482,14 +457,15 @@ class MpLocalTimeSlotSpec : StringSpec({
         val from = MpLocalTime.of(10, 0)
         val to = MpLocalTime.of(11, 0)
 
-        MpLocalTimeSlot.Partial(from, to).asValidRange() shouldBe MpLocalTimeSlot(from, to)
+        MpLocalTimeSlot.Partial(from, to).asValidRange() shouldBe MpLocalTimeSlot.of(from, to)
     }
 
-    "Partial.asValidRange returns null for invalid range" {
+    "Partial.asValidRange returns null for equal times; to before from is an overnight slot (batch 3b-2)" {
         val from = MpLocalTime.of(11, 0)
         val to = MpLocalTime.of(10, 0)
 
-        MpLocalTimeSlot.Partial(from, to).asValidRange() shouldBe null
+        MpLocalTimeSlot.Partial(from, from).asValidRange() shouldBe null
+        MpLocalTimeSlot.Partial(from, to).asValidRange() shouldBe MpLocalTimeSlot.of(from, 23.hours)
     }
 
     "Partial.asValidRange returns null when from or to is null" {
@@ -505,7 +481,7 @@ class MpLocalTimeSlotSpec : StringSpec({
     "asPartialRange converts to Partial with same from and to" {
         val from = MpLocalTime.of(9, 0)
         val to = MpLocalTime.of(17, 0)
-        val slot = MpLocalTimeSlot(from, to)
+        val slot = MpLocalTimeSlot.of(from, to)
 
         val partial = slot.asPartialRange()
 
@@ -526,10 +502,10 @@ class MpLocalTimeSlotSpec : StringSpec({
         slot.contains(MpLocalTime.of(12, 1)) shouldBe false
     }
 
-    "contains(time) - invalid slot returns false" {
-        val slot = ts(12, 0, 10, 0)
+    "contains(time) - an empty slot contains nothing, not even its start" {
+        val slot = ts(12, 0, 12, 0)
 
-        slot.contains(MpLocalTime.of(11, 0)) shouldBe false
+        slot.contains(MpLocalTime.of(12, 0)) shouldBe false
     }
 
     "contains(other) - one slot fully contains another" {
@@ -546,9 +522,9 @@ class MpLocalTimeSlotSpec : StringSpec({
         slot.contains(slot) shouldBe true
     }
 
-    "contains(other) - invalid slots return false" {
+    "contains(other) - empty slots return false" {
         val valid = ts(10, 0, 12, 0)
-        val invalid = ts(12, 0, 10, 0)
+        val invalid = ts(11, 0, 11, 0)
 
         valid.contains(invalid) shouldBe false
         invalid.contains(valid) shouldBe false
@@ -587,9 +563,9 @@ class MpLocalTimeSlotSpec : StringSpec({
         inner.intersects(outer) shouldBe true
     }
 
-    "intersects - invalid slot returns false" {
+    "intersects - an empty slot returns false" {
         val valid = ts(10, 0, 12, 0)
-        val invalid = ts(12, 0, 10, 0)
+        val invalid = ts(11, 0, 11, 0)
 
         valid.intersects(invalid) shouldBe false
     }
@@ -621,7 +597,7 @@ class MpLocalTimeSlotSpec : StringSpec({
     // formatHhMm / formatHhMmSs ///////////////////////////////////////////////////////////////////////
 
     "formatHhMm" {
-        val subject = MpLocalTimeSlot(
+        val subject = MpLocalTimeSlot.of(
             from = MpLocalTime.of(10, 15),
             to = MpLocalTime.of(12, 30),
         )
@@ -630,7 +606,7 @@ class MpLocalTimeSlotSpec : StringSpec({
     }
 
     "formatHhMmSs" {
-        val subject = MpLocalTimeSlot(
+        val subject = MpLocalTimeSlot.of(
             from = MpLocalTime.of(10, 15, 30),
             to = MpLocalTime.of(12, 30, 45),
         )

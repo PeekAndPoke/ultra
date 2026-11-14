@@ -1,55 +1,90 @@
 package io.peekandpoke.ultra.datetime
 
+import io.peekandpoke.ultra.common.ComputedList
+import io.peekandpoke.ultra.common.slumber.Slumber
+import kotlinx.datetime.DateTimeArithmeticException
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
-@Serializable
-data class MpLocalTimeSlot(
+/**
+ * A slot of the day: a start ([from]) and a [duration], e.g. 22:00 for 4 hours (ULTRA-00341).
+ *
+ * - [to] is derived: the clock time of the end ([MpLocalTime.EndOfDay] when it ends exactly at midnight), and
+ *   [endDayOffset] says how many days later. A slot may cross midnight and may be longer than a day.
+ * - Without a date a slot is a daily pattern on the 24-hour clock: [contains], [intersects], [touches],
+ *   [isAdjacentTo], [mergeWith] and [cutAway] work on the clock face, and a slot of 24 hours or more covers it all.
+ * - On a date ([MpLocalDate.toRange]) the slot ends by the clock, so a night slot is 7 or 9 real hours on DST nights.
+ * - Created only by the factories, which normalise: the start wraps into the day (24:00 is 00:00), the duration is cut
+ *   to whole milliseconds, below zero is zero (an empty slot), and from [INFINITE_DURATION_MILLIS] on it is
+ *   [Duration.INFINITE].
+ */
+@Serializable(with = MpLocalTimeSlotSerializer::class)
+@Slumber.As(MpLocalTimeSlotRawData::class)
+@ConsistentCopyVisibility
+data class MpLocalTimeSlot private constructor(
     val from: MpLocalTime,
-    val to: MpLocalTime,
+    val duration: Duration,
 ) {
     companion object {
-        /**
-         * The whole day, from 00:00 to 24:00 ([MpLocalTime.EndOfDay]); it ended at `MpLocalTime.Max` before
-         * ULTRA-00341.
-         *
-         * Stored, its end is 86 400 000 ms, which a reader of an older version reads as 00:00: there the slot becomes
-         * the empty `[00:00, 00:00)`.
-         */
-        val completeDay: MpLocalTimeSlot = MpLocalTimeSlot(
-            from = MpLocalTime.Min,
-            to = MpLocalTime.EndOfDay,
-        )
+        /** Durations from 2^53 - 1 ms on are [Duration.INFINITE]; stored, that is the largest integer exact in JS. */
+        const val INFINITE_DURATION_MILLIS: Long = 9_007_199_254_740_991L
 
-        /**
-         * The slot from [from] for [duration]. For a [from] inside the day an end of exactly 24:00 is
-         * [MpLocalTime.EndOfDay]; every other end wraps.
-         */
+        private const val DAY: Long = MpLocalTime.MILLIS_PER_DAY.toLong()
+
+        /** The whole day, 00:00 for 24 hours; its [to] is [MpLocalTime.EndOfDay]. */
+        val completeDay: MpLocalTimeSlot = of(MpLocalTime.Min, DAY.milliseconds)
+
+        /** The slot from [from] for [duration]; see the class for how both are normalised. */
         fun of(from: MpLocalTime, duration: Duration): MpLocalTimeSlot {
-            val fromMs = from.inWholeMilliSeconds()
-            val endsAtMidnight = fromMs in 0..<MpLocalTime.MILLIS_PER_DAY &&
-                    fromMs.toLong() + duration.inWholeMilliseconds == MpLocalTime.MILLIS_PER_DAY.toLong()
+            val millis = duration.inWholeMilliseconds
 
             return MpLocalTimeSlot(
-                from = from,
-                to = if (endsAtMidnight) MpLocalTime.EndOfDay else from.plus(duration),
+                from = timeAt(from.inWholeMilliSeconds().toLong()),
+                duration = when {
+                    millis <= 0L -> Duration.ZERO
+                    millis >= INFINITE_DURATION_MILLIS -> Duration.INFINITE
+                    else -> millis.milliseconds
+                },
             )
         }
 
         /**
-         * The slot between two seconds of the day. For a [from] inside the day a [to] of exactly 86 400 is 24:00;
-         * every other value wraps.
+         * The slot from [from] to [to] on the clock: [to] after [from] is the difference, [to] before [from] runs
+         * overnight, and equal times give an empty slot (also 24:00 to 24:00). A [to] of [MpLocalTime.EndOfDay] is
+         * 24:00, so 00:00 to 24:00 is the whole day.
          */
-        fun ofSecondsOfDay(from: Int, to: Int): MpLocalTimeSlot {
-            val endsAtMidnight = from in 0..<MpLocalTime.SECONDS_PER_DAY && to == MpLocalTime.SECONDS_PER_DAY
+        fun of(from: MpLocalTime, to: MpLocalTime): MpLocalTimeSlot {
+            if (from == to) return of(from = from, duration = Duration.ZERO)
 
-            return MpLocalTimeSlot(
-                from = MpLocalTime.ofSecondOfDay(from),
-                to = if (endsAtMidnight) MpLocalTime.EndOfDay else MpLocalTime.ofSecondOfDay(to),
+            val start = from.inWholeMilliSeconds().toLong().mod(DAY)
+            val end = if (to.isEndOfDay) DAY else to.inWholeMilliSeconds().toLong().mod(DAY)
+
+            val length = when {
+                end == start -> 0L
+                end > start -> end - start
+                else -> end + DAY - start
+            }
+
+            return of(from = from, duration = length.milliseconds)
+        }
+
+        /** The slot between two seconds of the day, by the rules of `of(from, to)`; a [to] of 86 400 is 24:00. */
+        fun ofSecondsOfDay(from: Int, to: Int): MpLocalTimeSlot {
+            val start = MpLocalTime.ofSecondOfDay(from)
+
+            if (from == to) return of(from = start, duration = Duration.ZERO)
+
+            return of(
+                from = start,
+                to = if (to == MpLocalTime.SECONDS_PER_DAY) MpLocalTime.EndOfDay else MpLocalTime.ofSecondOfDay(to),
             )
         }
+
+        private fun timeAt(millis: Long): MpLocalTime = MpLocalTime.ofMilliSeconds(millis.mod(DAY).toInt())
     }
 
+    /** Two time pickers in a form: both ends as clock times, either one not filled in yet. */
     @Serializable
     data class Partial(
         val from: MpLocalTime?,
@@ -59,188 +94,294 @@ data class MpLocalTimeSlot(
             val empty = Partial(from = null, to = null)
         }
 
+        /** The slot `of(from, to)`, or null when an end is missing or the slot is empty. */
         fun asValidRange(): MpLocalTimeSlot? = when (from != null && to != null) {
-            true -> MpLocalTimeSlot(from = from, to = to).takeIf { it.isValid }
+            true -> of(from = from, to = to).takeIf { it.isValid }
             false -> null
         }
     }
 
-    val duration: Duration by lazy { to - from }
+    /** A half-open arc `[start, end)` on the clock face, in milliseconds of the day. */
+    private data class Arc(val start: Long, val end: Long)
 
-    val isValid: Boolean get() = duration > Duration.ZERO
+    private val fromMillis: Long get() = from.inWholeMilliSeconds().toLong()
+
+    private val durationMillis: Long get() = if (isInfinite) Long.MAX_VALUE else duration.inWholeMilliseconds
+
+    private val coversClock: Boolean get() = durationMillis >= DAY
+
+    /** True for a duration of zero. */
+    val isEmpty: Boolean get() = duration == Duration.ZERO
+
+    /** True for [Duration.INFINITE]: on a date the slot has an open end. */
+    val isInfinite: Boolean get() = duration.isInfinite()
+
+    /** True when the slot is not empty. */
+    val isValid: Boolean get() = !isEmpty
 
     val isNotValid: Boolean get() = !isValid
 
+    /**
+     * The clock time of the end; [MpLocalTime.EndOfDay] for an end exactly at midnight. An empty or infinite slot gives
+     * [from].
+     */
+    val to: MpLocalTime
+        get() {
+            if (isEmpty || isInfinite) return from
+
+            val end = fromMillis + durationMillis
+
+            return if (end % DAY == 0L) MpLocalTime.EndOfDay else timeAt(end)
+        }
+
+    /**
+     * On how many days after the start's date the end lies: 0 for a slot ending by 24:00, 1 for 22:00 to 02:00.
+     * [Long.MAX_VALUE] for an infinite slot (so `toInt()` gives -1: check [isInfinite] first).
+     */
+    val endDayOffset: Long
+        get() {
+            if (isEmpty) return 0L
+            if (isInfinite) return Long.MAX_VALUE
+
+            val end = fromMillis + durationMillis
+
+            return if (end % DAY == 0L) end / DAY - 1 else end / DAY
+        }
+
+    /** True when the slot runs past midnight; one ending exactly at 24:00 does not. */
+    val crossesMidnight: Boolean get() = endDayOffset > 0L
+
+    /** The two clock pickers of a form; lossy for a slot of 24 hours or more. */
     fun asPartialRange(): Partial {
         return Partial(from = from, to = to)
     }
 
-    /**
-     * Checks if this time slot contains the given [time].
-     *
-     * Returns `true` when the time slot is valid and
-     * [time] >= [from] and [time] < [to].
-     */
+    private fun arcs(): List<Arc> = when {
+        isEmpty -> emptyList()
+        coversClock -> listOf(Arc(0L, DAY))
+        fromMillis + durationMillis <= DAY -> listOf(Arc(fromMillis, fromMillis + durationMillis))
+        else -> listOf(Arc(fromMillis, DAY), Arc(0L, fromMillis + durationMillis - DAY))
+    }
+
+    /** The arcs as closed intervals; an empty slot is the point at its start. */
+    private fun closedArcs(): List<Arc> = if (isEmpty) listOf(Arc(fromMillis, fromMillis)) else arcs()
+
+    /** The end on the clock face, `[0, DAY)`. */
+    private val endOnClock: Long get() = (fromMillis + durationMillis).mod(DAY)
+
+    /** True when [time] lies in the slot on the clock face; 24:00 counts as 00:00. An empty slot contains nothing. */
     fun contains(time: MpLocalTime): Boolean {
-        return isValid && time in from..<to
+        val point = time.inWholeMilliSeconds().toLong().mod(DAY)
+
+        return arcs().any { point >= it.start && point < it.end }
     }
 
-    /**
-     * Checks if this time slot fully contains the [other] time slot.
-     *
-     * Returns `true` when both are valid and
-     * this [from] <= other [from] and this [to] >= other [to].
-     */
+    /** True when every part of [other] lies in this slot on the clock face; never for an empty slot on either side. */
     fun contains(other: MpLocalTimeSlot): Boolean {
-        return (isValid && other.isValid) &&
-                (from <= other.from && to >= other.to)
+        if (isEmpty || other.isEmpty) return false
+
+        val mine = arcs()
+
+        return other.arcs().all { o -> mine.any { it.start <= o.start && o.end <= it.end } }
     }
 
-    /**
-     * Checks if this time slot intersects the [other] time slot.
-     *
-     * Adjacent time slots (one ends where the other begins) do NOT intersect.
-     */
+    /** True when both share a positive length on the clock face; adjacent slots do NOT intersect. */
     fun intersects(other: MpLocalTimeSlot): Boolean {
-        return (isValid && other.isValid) && (
-                (other.from in from..<to) ||
-                        (other.to > from && other.to <= to) ||
-                        contains(other) ||
-                        other.contains(this)
-                )
+        val theirs = other.arcs()
+
+        return arcs().any { a -> theirs.any { b -> maxOf(a.start, b.start) < minOf(a.end, b.end) } }
     }
 
     /**
-     * Returns `true` when this time slot touches or overlaps the [other] time slot.
-     *
-     * In other words, returns `true` when the union of both time slots is contiguous (has no gap).
+     * True when the union of both slots is contiguous on the clock face: they overlap or share an end, also across
+     * midnight. An empty slot touches a slot whose closed arc holds its point.
      */
     fun touches(other: MpLocalTimeSlot): Boolean {
-        return to >= other.from && from <= other.to
+        val mine = closedArcs()
+        val theirs = other.closedArcs()
+
+        val overlapOrMeet = mine.any { a -> theirs.any { b -> a.start <= b.end && b.start <= a.end } }
+        val meetAtMidnight = (mine.any { it.end == DAY } && theirs.any { it.start == 0L }) ||
+                (theirs.any { it.end == DAY } && mine.any { it.start == 0L })
+
+        return overlapOrMeet || meetAtMidnight
     }
 
     /**
-     * Returns `true` when this time slot is adjacent to the [other] without overlapping.
-     *
-     * Two time slots are adjacent when one ends exactly where the other begins.
+     * True when one ends where the other begins, without overlap. Empty slots and slots of 24 hours or more never are.
      */
     fun isAdjacentTo(other: MpLocalTimeSlot): Boolean {
-        return to == other.from || other.to == from
+        // a slot of 24 hours or more intersects every non-empty slot, so it never gets past the intersects check
+        if (isEmpty || other.isEmpty) return false
+
+        return !intersects(other) && (endOnClock == other.fromMillis || other.endOnClock == fromMillis)
     }
 
     /**
-     * Merges this timeslot with the [other] one, by taking the minimal [from] and the maximal [to]
+     * Touching slots give one slot for their union on the clock face, starting where the union starts; a union that
+     * covers the whole clock is this slot's start for 24 hours, and a slot of 24 hours or more absorbs the other.
+     * Slots that do not touch stay two, sorted by start.
      */
-    fun mergeWith(other: MpLocalTimeSlot): List<MpLocalTimeSlot> = when {
-        touches(other) -> listOf(
-            MpLocalTimeSlot(
-                from = minOf(from, other.from),
-                to = maxOf(to, other.to),
-            )
-        )
+    fun mergeWith(other: MpLocalTimeSlot): List<MpLocalTimeSlot> {
+        if (!touches(other)) return listOf(this, other).sortedBy { it.fromMillis }
 
-        else -> listOf(this, other).sortedBy { it.from }
-    }
+        if (coversClock || other.coversClock) return listOf(if (other.durationMillis > durationMillis) other else this)
 
-    /**
-     * Removes all overlapping time with the [other] from this time slot.
-     */
-    fun cutAway(other: MpLocalTimeSlot): List<MpLocalTimeSlot> {
+        // the other's start, seen from this start
+        val offset = (other.fromMillis - fromMillis).mod(DAY)
+
+        val (start, length) = when {
+            offset <= durationMillis -> fromMillis to maxOf(durationMillis, offset + other.durationMillis)
+            else -> other.fromMillis to maxOf(other.durationMillis, DAY - offset + durationMillis)
+        }
 
         return when {
-            // other has invalid length
-            this.isNotValid || other.isNotValid -> listOf(this)
-
-            // all eaten up
-            other.from <= from && to <= other.to -> emptyList()
-
-            // the other one is inside and cuts the timeslot into two pieces
-            from < other.from && other.to < to -> listOf(
-                MpLocalTimeSlot(from = from, to = other.from),
-                MpLocalTimeSlot(from = other.to, to = to)
-            )
-
-            // eating away on the right side
-            other.from < to && to <= other.to -> listOf(
-                MpLocalTimeSlot(from = from, to = other.from)
-            )
-
-            // eating away on the left side
-            other.from <= from && from < other.to -> listOf(
-                MpLocalTimeSlot(from = other.to, to = to)
-            )
-
-            // Nothing happened
-            else -> listOf(this)
+            length >= DAY -> listOf(MpLocalTimeSlot(from = from, duration = DAY.milliseconds))
+            else -> listOf(MpLocalTimeSlot(from = timeAt(start), duration = length.milliseconds))
         }
     }
 
     /**
-     * Splits the timeslot in multiple of [duration] while keeping [gap] between each of them.
-     *
-     * - Slots never reach past [to]; a remainder shorter than [duration] is dropped.
-     * - An invalid slot ([to] <= [from], e.g. 22:00-02:00) yields no slots.
-     * - [duration] and [gap] are cut to whole milliseconds: a [duration] under one millisecond yields no slots.
-     *   A negative [gap] counts as zero.
-     *
-     * [maxSlots] caps the result, so a caller-chosen [duration] cannot make one call allocate millions of slots
-     * (a whole day in 1 ms steps is 86.4 million). A split above it throws [IllegalArgumentException] before any
-     * slot is created, as does a [maxSlots] below 1. The default admits every whole-second split of a day; with user
-     * input, pass your own lower limit (e.g. 1440 for minutes) and turn the [IllegalArgumentException] into a
-     * validation error.
+     * Removes the time of [other] from this slot, on the clock face and in this slot's own frame: the result is 0, 1 or
+     * 2 slots in the order they follow from [from]. A slot of 24 hours or more is cut as the whole clock from [from];
+     * its length beyond 24 hours is dropped from the pieces. Nothing to cut gives this slot unchanged.
      */
-    fun splitWithGaps(
-        duration: Duration,
-        gap: Duration = Duration.ZERO,
-        maxSlots: Int = 100_000,
-    ): List<MpLocalTimeSlot> {
+    fun cutAway(other: MpLocalTimeSlot): List<MpLocalTimeSlot> {
+        if (!intersects(other)) return listOf(this)
 
-        require(maxSlots >= 1) { "maxSlots must be at least 1, was $maxSlots" }
+        val cuts = when {
+            other.coversClock -> listOf(Arc(0L, DAY))
+            else -> {
+                val start = (other.fromMillis - fromMillis).mod(DAY)
+                val end = start + other.durationMillis
 
-        // Counts in milliseconds of day: MpLocalTime.plus wraps at midnight, so stepping with it past midnight would
-        // land earlier and never end (ULTRA-00215).
-        val durationMs = duration.inWholeMilliseconds
-
-        if (durationMs <= 0L) {
-            return emptyList()
+                listOfNotNull(Arc(start, minOf(end, DAY)), if (end > DAY) Arc(0L, end - DAY) else null)
+            }
         }
 
-        val fromMs = from.inWholeMilliSeconds().toLong()
-        val spanMs = to.inWholeMilliSeconds().toLong() - fromMs
-        // A gap of a day or more leaves no room for a second slot either way; the cap keeps the step from overflowing.
-        val gapMs = gap.inWholeMilliseconds.coerceIn(0L, MpLocalTime.MILLIS_PER_DAY.toLong())
+        val pieces = cuts.fold(listOf(Arc(0L, minOf(durationMillis, DAY)))) { remaining, cut ->
+            remaining.flatMap { piece ->
+                when {
+                    cut.end <= piece.start || piece.end <= cut.start -> listOf(piece)
+                    else -> listOfNotNull(
+                        Arc(piece.start, cut.start).takeIf { cut.start > piece.start },
+                        Arc(cut.end, piece.end).takeIf { cut.end < piece.end },
+                    )
+                }
+            }
+        }
 
-        // Compares the remainder, not a sum: an infinite duration is Long.MAX_VALUE milliseconds.
+        return pieces.sortedBy { it.start }.map {
+            MpLocalTimeSlot(from = timeAt(fromMillis + it.start), duration = (it.end - it.start).milliseconds)
+        }
+    }
+
+    /**
+     * Splits the slot into parts of [duration], with [gap] between them, walking the slot's own length from [from]
+     * (overnight and longer than a day work).
+     *
+     * - Returns a lazy view ([ComputedList], read-only, not a `MutableList`): each part is computed when read.
+     * - At most [Int.MAX_VALUE] parts, for any slot (a list cannot be larger): beyond that the parts do not cover the
+     *   whole slot (`of(00:00, 30.days).splitWithGaps(1.milliseconds)` would need 2 592 000 000).
+     * - With user input, check `size` before `map` or `toList()`: they build every part, and nothing else bounds the
+     *   count.
+     * - Parts never reach past the end; a remainder shorter than [duration] is dropped.
+     * - An empty slot, or a [duration] under one millisecond, gives no parts; a negative [gap] counts as zero.
+     * - An infinite slot gives [Int.MAX_VALUE] parts, or one part for an infinite [gap]; an infinite [duration] fits
+     *   only an infinite slot.
+     * - The parts carry no day: `date.toRange(part, zone)` puts a part after midnight on the morning of `date`, not of
+     *   the next day. Part `i` starts `(from + i * (duration + gap)) / 24 h` days after the slot's own date.
+     */
+    fun splitWithGaps(duration: Duration, gap: Duration = Duration.ZERO): List<MpLocalTimeSlot> {
+        val part = of(MpLocalTime.Min, duration)
+
+        if (isEmpty || part.isEmpty) return emptyList()
+
+        if (part.isInfinite) return if (isInfinite) listOf(this) else emptyList()
+
+        val partMillis = part.durationMillis
+        val gapMillis = gap.inWholeMilliseconds.coerceIn(0L, INFINITE_DURATION_MILLIS)
+        val step = partMillis + gapMillis
+
         val count = when {
-            durationMs > spanMs -> 0L
-            else -> (spanMs - durationMs) / (durationMs + gapMs) + 1
-        }
+            isInfinite && gapMillis == INFINITE_DURATION_MILLIS -> 1L
+            isInfinite -> Int.MAX_VALUE.toLong()
+            partMillis > durationMillis -> 0L
+            else -> (durationMillis - partMillis) / step + 1
+        }.coerceAtMost(Int.MAX_VALUE.toLong())
 
-        require(count <= maxSlots) { "splitWithGaps would create $count slots, more than maxSlots = $maxSlots" }
+        // the start of part i on the clock: (from + i * step) mod day; the step taken mod day keeps i * step small
+        val stepOnClock = step % DAY
 
-        // Runs only for count >= 1, where duration and gap are each at most a day: no overflow.
-        return List(count.toInt()) { index ->
-            val slotFromMs = fromMs + index * (durationMs + gapMs)
-
-            MpLocalTimeSlot(
-                // a slot that fits starts before 24:00, so its start never needs EndOfDay
-                from = MpLocalTime.ofMilliSeconds(slotFromMs.toInt()),
-                to = timeOfDay(slotFromMs + durationMs),
-            )
+        return ComputedList(count.toInt()) { index ->
+            MpLocalTimeSlot(from = timeAt(fromMillis + index * stepOnClock), duration = part.duration)
         }
     }
 }
 
-/** The time at [millisOfDay]; one whole day is [MpLocalTime.EndOfDay], the end of a slot up to 24:00. */
-private fun timeOfDay(millisOfDay: Long): MpLocalTime = when (millisOfDay) {
-    MpLocalTime.MILLIS_PER_DAY.toLong() -> MpLocalTime.EndOfDay
-    else -> MpLocalTime.ofMilliSeconds(millisOfDay.toInt())
+/**
+ * This slot on [date] in [timezone], by the clock: from [MpLocalTimeSlot.from] on [date] to [MpLocalTimeSlot.to] on
+ * the day [MpLocalTimeSlot.endDayOffset] later.
+ *
+ * - A start or end that falls into a skipped hour moves to the first existing time, the transition: 02:30 in a 02:00
+ *   to 03:00 gap is 03:00. (`MpZonedDateTime.of` and `MpLocalDate.atTime` move it by the length of the gap, to 03:30.)
+ * - A time in a repeated hour takes its first occurrence.
+ * - So the end never lies before the start; the only exception is the open end (on a date after it, or past the last
+ *   date the platform holds), which gives an empty range at the start. An empty slot gives an empty range at its
+ *   start.
+ */
+internal fun MpLocalTimeSlot.onDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTimeRange {
+    val start = firstExistingTime(date, from, timezone)
+    val end = endOnDate(date, timezone)
+
+    return when {
+        end.toInstant() >= start.toInstant() -> MpZonedDateTimeRange(from = start, to = end)
+        else -> MpZonedDateTimeRange(from = start, to = start)
+    }
 }
 
+/**
+ * The end of this slot on [date]. The only place that decides what an end beyond the open end is: an infinite slot,
+ * and a finite end the platform cannot resolve (JS dates end at 8.64e15 ms; every platform's dates end at year
+ * 999 999 999), get the range's open end, today
+ * [MpZonedDateTime.Doomsday] (whatever ULTRA-00343 decides goes here).
+ */
+private fun MpLocalTimeSlot.endOnDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTime {
+    if (isInfinite) return openEnd()
+
+    return try {
+        // a finite duration is below 2^53 ms, so the offset is below 2^27 days: an Int
+        firstExistingTime(date.plusDays(endDayOffset.toInt()), to, timezone)
+    } catch (_: IllegalArgumentException) {
+        // the zone is valid (the start resolved in it): the platform cannot resolve an instant this far out
+        openEnd()
+    } catch (_: DateTimeArithmeticException) {
+        // the end's date lies past the last date the platform holds (year 999 999 999)
+        openEnd()
+    }
+}
+
+private fun openEnd(): MpZonedDateTime = MpZonedDateTime.Doomsday
+
+/**
+ * [time] on [date] in [timezone]; a time that does not exist is the first existing time after it, 24:00 the next day.
+ */
+private fun firstExistingTime(date: MpLocalDate, time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
+    // 24:00 needs no branch: MpLocalDateTime.of(date, EndOfDay) is 00:00 of the next day
+    val instant = TimezoneEngine.toInstantOrTransition(timezone, MpLocalDateTime.of(date, time).value)
+
+    return MpZonedDateTime.of(instant = MpInstant(instant), timezone = timezone)
+}
+
+/**
+ * The slot as clock times, e.g. `22:00 - 02:00`. It drops the days: an empty slot, 24 hours, 48 hours and an infinite
+ * slot from one start print the same text.
+ */
 fun MpLocalTimeSlot.formatHhMm(): String {
     return "${from.formatHhMm()} - ${to.formatHhMm()}"
 }
 
+/** As [formatHhMm], with seconds; the same caveat about the days. */
 fun MpLocalTimeSlot.formatHhMmSs(): String {
     return "${from.formatHhMmSs()} - ${to.formatHhMmSs()}"
 }

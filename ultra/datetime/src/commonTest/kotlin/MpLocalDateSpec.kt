@@ -838,5 +838,32 @@ class MpLocalDateSpec : StringSpec() {
                 MpLocalDate.of(2024, 2, 27) // Tuesday
             )
         }
+
+        // ULTRA-00341 3b-1 (moved from GenesisDoomsdaySpec): numDaysInMonth comes from the calendar, never from a range
+        "numDaysInMonth and getDatesInMonth for months before year 1 and after 9999" {
+            // literals from an independent count (400-year cycle: -500-03 = 1100-03)
+            MpLocalDate.of(-500, 3, 15).numDaysInMonth shouldBe 31
+            MpLocalDate.of(0, 12, 31).numDaysInMonth shouldBe 31
+            MpLocalDate.of(0, 6, 15).numDaysInMonth shouldBe 30
+            MpLocalDate.of(0, 2, 1).numDaysInMonth shouldBe 29
+            MpLocalDate.of(1, 2, 1).numDaysInMonth shouldBe 28
+            MpLocalDate.of(9999, 12, 1).numDaysInMonth shouldBe 31
+            MpLocalDate.of(10000, 1, 1).numDaysInMonth shouldBe 31
+            MpLocalDate.of(12000, 2, 1).numDaysInMonth shouldBe 29
+            MpLocalDate.of(-12000, 2, 1).numDaysInMonth shouldBe 29
+
+            MpLocalDate.of(0, 12, 31).getDatesInMonth(listOf(1, 15, 31)) shouldBe listOf(
+                MpLocalDate.of(0, 12, 1), MpLocalDate.of(0, 12, 15), MpLocalDate.of(0, 12, 31),
+            )
+            MpLocalDate.of(-500, 3, 15).getDatesInMonth(listOf(1, 31, 32)) shouldBe listOf(
+                MpLocalDate.of(-500, 3, 1), MpLocalDate.of(-500, 3, 31),
+            )
+            MpLocalDate.of(-500, 3, 15).getDatesInMonth(listOf(MpDayOfWeek.MONDAY)) shouldBe
+                    listOf(5, 12, 19, 26).map { MpLocalDate.of(-500, 3, it) }
+            MpLocalDate.of(0, 12, 31).getDatesInMonth(listOf(DayOfWeek.MONDAY)) shouldBe
+                    listOf(4, 11, 18, 25).map { MpLocalDate.of(0, 12, it) }
+            MpLocalDate.of(10000, 1, 1).getDatesInMonth(listOf(MpDayOfWeek.MONDAY)) shouldBe
+                    listOf(3, 10, 17, 24, 31).map { MpLocalDate.of(10000, 1, it) }
+        }
     }
 }

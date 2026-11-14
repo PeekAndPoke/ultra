@@ -5,6 +5,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toInstant
@@ -81,7 +83,8 @@ class EpochMathSpec : StringSpec({
 
                 // odd offsets: a midnight read as UTC is exact in a Double, a midnight minus an odd offset is not
                 listOf(0, 1, -1_521, 3_600, -9_001).forEach { offset ->
-                    EpochMath.instant(date, offset) shouldBe expected.minus(offset.seconds)
+                    EpochMath.instant(LocalDateTime(date, LocalTime(0, 0)), offset) shouldBe
+                            expected.minus(offset.seconds)
                 }
             }
         }
