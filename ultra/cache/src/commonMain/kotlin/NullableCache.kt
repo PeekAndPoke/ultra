@@ -20,8 +20,12 @@ import kotlin.coroutines.CoroutineContext
  * run, and callers for different keys never wait on each other. A provider may therefore resolve
  * other keys through the same cache — which is the normal shape for nested reference resolution.
  * A provider that reaches a key its own call chain is resolving (a cycle such as a -> b -> a) fails
- * that call with an [IllegalStateException] instead of waiting on itself. A cycle across two
- * concurrent callers - one resolving a then b, the other b then a - is not detected and deadlocks.
+ * that call with an [IllegalStateException] instead of waiting on itself. The chain travels in the
+ * coroutine context, which limits the check: a cycle across two concurrent callers - one resolving a
+ * then b, the other b then a - is not detected and deadlocks; so is a provider that reaches its key
+ * through a coroutine not inheriting its context (`runBlocking`, another scope's `async`); and a
+ * coroutine that inherits the context and outlives the provider can get a false
+ * [IllegalStateException] for that key.
  *
  * [getOrPut] is single-flight per key among blocking callers. The two do not coordinate with each
  * other, so a blocking and a suspending caller racing for the same key can both run their provider.
@@ -98,6 +102,10 @@ class NullableCache<K : Any, V : Any> {
      * cache. A single process-wide [kotlinx.coroutines.sync.Mutex] used to span the provider here;
      * being non-reentrant, any nested resolve deadlocked permanently, and unrelated keys serialised
      * behind each other's round trips.
+     *
+     * The provider runs in a child scope (`withContext`): coroutines it launches into its own context
+     * are awaited before its value is cached; a caller already cancelled does not start it; and a
+     * value computed while the caller was cancelled is discarded.
      */
     suspend fun getOrPutAsync(key: K, provider: suspend () -> V?): V? {
         val chain = currentCoroutineContext()[ResolvingChain]

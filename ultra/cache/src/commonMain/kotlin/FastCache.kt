@@ -101,7 +101,10 @@ class FastCache<K, V> internal constructor(
         /**
          * Sets the clock of every TTL; the default is [TimeSource.Monotonic].
          *
-         * For tests, e.g. a `TestTimeSource`: TTLs then pass only when the test moves its time on.
+         * It exists for tests, like Caffeine's ticker: with a `TestTimeSource`, TTLs pass only when the
+         * test moves its time on. On the monotonic clock, time the machine spends suspended (sleep, a
+         * paused VM) may not count, so in wall-clock terms an entry can outlive its TTL by the length
+         * of the pause - as in Caffeine and Guava.
          */
         fun timeSource(source: TimeSource) = apply { timeSource = source }
 
@@ -115,7 +118,7 @@ class FastCache<K, V> internal constructor(
          * Adds the [ExpireAfterAccessBehaviour] to the cache.
          *
          * Never throws: a zero or negative [ttl] expires entries at the next pass, one below 1 ms
-         * counts as 1 ms, and [Duration.INFINITE] never expires.
+         * counts as 1 ms, and [Duration.INFINITE] never expires. On a monotonic clock, see [timeSource].
          */
         fun expireAfterAccess(ttl: Duration) = addBehaviour(ExpireAfterAccessBehaviour(ttl))
 
@@ -123,7 +126,7 @@ class FastCache<K, V> internal constructor(
          * Adds the [ExpireAfterWriteBehaviour] to the cache.
          *
          * Never throws: a zero or negative [ttl] expires entries at the next pass, one below 1 ms
-         * counts as 1 ms, and [Duration.INFINITE] never expires.
+         * counts as 1 ms, and [Duration.INFINITE] never expires. On a monotonic clock, see [timeSource].
          */
         fun expireAfterWrite(ttl: Duration) = addBehaviour(ExpireAfterWriteBehaviour(ttl))
 
@@ -164,7 +167,7 @@ class FastCache<K, V> internal constructor(
          *
          * Never throws. A zero or negative [ttl] or [hardTtl] expires entries at the next pass,
          * unrefreshed; below 1 ms counts as 1 ms; [Duration.INFINITE] never expires; a [hardTtl] not
-         * above [ttl] expires entries at [hardTtl], unrefreshed.
+         * above [ttl] expires entries at [hardTtl], unrefreshed. On a monotonic clock, see [timeSource].
          */
         fun refreshAfterWrite(
             ttl: Duration,
